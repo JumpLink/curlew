@@ -25,6 +25,13 @@
  * Envelopes that cannot be decrypted are acknowledged and counted — they would never decrypt on
  * a later run either, and postbote sends no retry request (`guard.ts`) — and the count is reported
  * as the session's error, so a sync that lost messages says so.
+ *
+ * Envelopes that DO decrypt are never dropped, even when nothing of them is understood: once the
+ * ratchet has moved, the server's copy is one acknowledgement away from gone. So a plaintext this
+ * build cannot parse, or content it does not know, goes into the account file's ledger
+ * (`setAside`) — written by the same `flush()` as the ratchet state, before the acknowledgement —
+ * and the outcome carries the count. A contact whose safety number changed is not swallowed
+ * either: each change becomes a notice in the direct chat with that contact.
  */
 
 import type { DeliveryEvent, DeliveryMode, DeliveryOutcome, DeliverySession } from '@postbote/protocol';
@@ -32,8 +39,15 @@ import type { AttachmentDownloader } from './contacts.ts';
 import { readContactsSync } from './contacts.ts';
 import type { DecryptResult } from './decrypt.ts';
 import type { EventJournal } from './journal.ts';
-import type { SignalMapper } from './map.ts';
-import { decodeEnvelope, type Envelope } from './schema.ts';
+import { type SignalMapper, peerOf } from './map.ts';
+import { SET_ASIDE_LIMIT, type SetAsideEntry, toBase64 } from './protocol-store.ts';
+import { type Content, decodeEnvelope, type Envelope } from './schema.ts';
+
+/** What a notice about a contact's identity key says, in the conversation with that contact. */
+export const SAFETY_NUMBER_CHANGED = 'Safety number changed';
+
+/** The one `DecryptResult` that carries a decrypted plaintext. */
+type Decrypted = Extract<DecryptResult, { kind: 'content' }>;
 
 export const RELINK_HINT = 'link it again with `postbote accounts add signal`';
 
@@ -65,7 +79,62 @@ export interface EnvelopeDecryptorLike {
 
 /** The protocol store's write step. */
 export interface Flushable {
+  /**
+   * Keep a plaintext this build could not map, in the account's secret state. The next `flush()`
+   * writes it with the ratchet state — the one `commit()` makes before acknowledging the envelope
+   * it came from, so a plaintext Signal is about to forget is on disk first. Returns how many
+   * older entries this call pushed out of the ledger's limit.
+   */
+  setAside(entry: SetAsideEntry): number;
   flush(): void;
+}
+
+/**
+ * Why nothing of a decrypted content could be mapped, or null when it was understood — or when it
+ * is content postbote deliberately does not show (typing, a disappearing-messages timer, a
+ * reaction): those are dropped on purpose, not kept.
+ *
+ * Only what this build does not UNDERSTAND counts: a field a newer Signal added. A field it knows
+ * but ignores (a reaction next to a body) is no loss, and a content whose body was mapped is in
+ * the index whatever else it carries.
+ */
+function unmappedReason(result: Decrypted, mappedEvents: number): string | null {
+  if (result.content === null) return result.parseError ?? 'the plaintext did not parse';
+  if (mappedEvents > 0) return null;
+  if (result.content.unknownFields.length > 0)
+    return `content field(s) ${result.content.unknownFields.join(', ')} this postbote does not know`;
+  const data = result.content.dataMessage;
+  if (data && data.unknownFields.length > 0)
+    return `data message field(s) ${data.unknownFields.join(', ')} this postbote does not know`;
+  return null;
+}
+
+/**
+ * A safety-number change as a notice in the direct chat with that contact: something Signal
+ * reported about the conversation that nobody wrote. The contact is that chat's peer, so it shows
+ * up under their name; the `notice` presentation says what it is.
+ */
+function safetyNumberNotice(aci: string, at: number): DeliveryEvent {
+  return {
+    type: 'message',
+    chatRemoteId: aci,
+    chatKind: 'direct',
+    message: {
+      remoteId: `identity:${aci}:${at}`,
+      seq: at,
+      sentAt: new Date(at).toISOString(),
+      editedAt: null,
+      sender: peerOf(aci),
+      fromSelf: false,
+      text: SAFETY_NUMBER_CHANGED,
+      hasAttachments: false,
+      replyToRemoteId: null,
+      threadRemoteId: null,
+      notice: true,
+    },
+    // Nobody waits for the network's own news: a notice is never unread.
+    seen: true,
+  };
 }
 
 export interface ReceiverOptions {
@@ -124,6 +193,10 @@ export class SignalReceiver implements DeliverySession {
   private undecryptable = 0;
   /** The first decryption error of the run — reported with the count, never message content. */
   private firstFailure: string | null = null;
+  /** Decrypted plaintexts this run could not map, now kept raw in the account file. */
+  private setAside = 0;
+  /** And how many of those the ledger's limit pushed out — data that is really gone. */
+  private setAsideDropped = 0;
   private contactsProblem: string | null = null;
   private maxTimer: unknown = null;
   private finishRequested: DeliveryOutcome | null = null;
@@ -256,12 +329,15 @@ export class SignalReceiver implements DeliverySession {
       return;
     }
     if (result.kind !== 'content') return;
-    const mapped = this.mapper.map(result.content, {
-      senderAci: result.senderAci,
-      timestamp: envelope.clientTimestamp ?? envelope.serverTimestamp ?? Date.now(),
-      groupId: result.groupId,
-    });
+    const at = envelope.clientTimestamp ?? envelope.serverTimestamp ?? Date.now();
+    const mapped = result.content
+      ? this.mapper.map(result.content, { senderAci: result.senderAci, timestamp: at, groupId: result.groupId })
+      : { events: [] as DeliveryEvent[], contactsBlob: null };
     this.pendingEvents.push(...mapped.events);
+    // A changed safety number is news about the contact, not about the message: it belongs in
+    // their conversation, once per change.
+    for (const changed of result.identityChanged) this.pendingEvents.push(safetyNumberNotice(changed, at));
+    this.keepUnmapped(result, mapped.events.length, at);
     if (mapped.contactsBlob) {
       if (!this.download) {
         this.contactsProblem = 'the contact list from the phone was not read (no downloader)';
@@ -279,6 +355,27 @@ export class SignalReceiver implements DeliverySession {
   private failed(err: unknown): void {
     this.undecryptable++;
     this.firstFailure ??= err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+  }
+
+  /**
+   * Keep a decrypted plaintext nothing was mapped from, in the account file.
+   *
+   * This is the one place where losing data is still avoidable: the ratchet has moved, so the
+   * server forgets this envelope as soon as it is acknowledged, and the next postbote may well
+   * understand the content. `setAside` only marks the entry — `commit()`'s `flush()`, before the
+   * acknowledgement, writes it with the ratchet state. A ledger that was already full drops its
+   * oldest entry, and the outcome says so rather than pretending nothing was lost.
+   */
+  private keepUnmapped(result: Decrypted, mappedEvents: number, at: number): void {
+    const reason = unmappedReason(result, mappedEvents);
+    if (reason === null) return;
+    this.setAsideDropped += this.store.setAside({
+      senderAci: result.senderAci,
+      sentAt: new Date(at).toISOString(),
+      reason,
+      plaintext: toBase64(result.plaintext),
+    });
+    this.setAside++;
   }
 
   /**
@@ -369,9 +466,19 @@ export class SignalReceiver implements DeliverySession {
         `${this.undecryptable} envelope(s) could not be decrypted and were dropped (Signal keeps no copy; the phone still has them) — first: ${this.firstFailure}`,
       );
     }
+    if (this.setAsideDropped > 0) {
+      problems.push(
+        `${this.setAsideDropped} plaintext(s) postbote could not read were pushed out of the session file's ledger (it keeps the newest ${SET_ASIDE_LIMIT}) — those are gone`,
+      );
+    }
     if (this.contactsProblem) problems.push(this.contactsProblem);
     const error = problems.filter(Boolean).join('; ') || null;
-    return { caughtUp: this.result.caughtUp || (this.mode === 'follow' && this.caughtUp), error };
+    return {
+      caughtUp: this.result.caughtUp || (this.mode === 'follow' && this.caughtUp),
+      error,
+      ...(this.setAside > 0 ? { setAside: this.setAside } : {}),
+      ...(this.undecryptable > 0 ? { undecryptable: this.undecryptable } : {}),
+    };
   }
 
   async close(): Promise<void> {

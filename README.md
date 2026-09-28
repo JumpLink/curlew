@@ -284,6 +284,19 @@ the phone sends it (it does after linking and when contacts change; the
 download needs Node for now, see below). Groups appear without their name —
 Signal keeps group names encrypted on its group server, which postbote does not
 query. Reading a chat on the phone is not mirrored: messages arrive unread.
+Reactions, typing, calls and a disappearing-messages timer are read and dropped
+on purpose; they are settings, not messages.
+
+Two things postbote reports instead of swallowing:
+
+- A **changed safety number** shows up in that contact's conversation as a
+  *Safety number changed* notice — already read, never unread. Compare the
+  number on the phone before you trust the conversation.
+- A message postbote decrypted but **could not read** (a message type a newer
+  Signal added, or a bug in the decoder) is **not** thrown away: the raw
+  plaintext goes into the session file, and `sync` reports how many. Nothing is
+  lost on Signal's side either — postbote only acknowledges an envelope once
+  that plaintext is on disk.
 
 What postbote sends: at link time, two requests — it registers the device with
 the one-time code the phone sent, and publishes one batch of pre-keys so

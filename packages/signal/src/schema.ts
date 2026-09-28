@@ -170,6 +170,10 @@ export interface DataMessage {
   /** A reply to a story, a gift badge, a payment, a group call notice: not a written message. */
   special: 'story-reply' | 'gift' | 'payment' | 'group-call' | 'poll-vote' | 'pin' | null;
   profileKey: Uint8Array | null;
+  /** A disappearing-messages timer is set (fields 5, 23): a setting, not a message. */
+  expireTimer: boolean;
+  /** Field numbers this decoder does not know — a message type newer than this postbote. */
+  unknownFields: number[];
 }
 
 /** DataMessage.Flags — END_SESSION, EXPIRATION_TIMER_UPDATE, PROFILE_KEY_UPDATE are not messages. */
@@ -185,6 +189,9 @@ function contactCardName(f: Fields): string {
   const parts = [stringField(name, 3), stringField(name, 1), stringField(name, 5), stringField(name, 2)];
   return parts.filter(Boolean).join(' ').trim() || stringField(name, 7) || stringField(f, 7) || '';
 }
+
+/** Every field number Signal-Desktop's `DataMessage` declares (1–29; 3 and 13 are unused there). */
+const KNOWN_DATA_FIELDS = new Set([1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]);
 
 export function decodeDataMessage(f: Fields): DataMessage {
   const group = messageField(f, 15);
@@ -221,6 +228,8 @@ export function decodeDataMessage(f: Fields): DataMessage {
     isViewOnce: boolField(f, 14) ?? false,
     special,
     profileKey: bytesField(f, 6),
+    expireTimer: f.has(5) || f.has(23),
+    unknownFields: [...f.keys()].filter((n) => !KNOWN_DATA_FIELDS.has(n)),
   };
 }
 
@@ -333,6 +342,8 @@ export interface Content {
   senderKeyDistribution: Uint8Array | null;
   /** Typing, calls, stories, null messages, decryption-error requests: nothing to store. */
   other: boolean;
+  /** Top-level field numbers this decoder does not know — content newer than this postbote. */
+  unknownFields: number[];
 }
 
 export function decodeContent(bytes: Uint8Array): Content {
@@ -347,7 +358,10 @@ export function decodeContent(bytes: Uint8Array): Content {
     editMessage: edit ? decodeEditMessage(edit) : null,
     receipt: receipt ? { type: numberField(receipt, 1) ?? 0, timestamps: repeatedNumbers(receipt, 2) } : null,
     senderKeyDistribution: bytesField(f, 7),
-    other: [3, 4, 6, 8, 9].some((n) => f.has(n)),
+    other: [3, 4, 6, 8, 9, 10].some((n) => f.has(n)),
+    // `Content` declares fields 1–11 (1, 2, 5, 7, 11 are the ones read; the rest are dropped
+    // on purpose). A number above that is a message type from a newer Signal.
+    unknownFields: [...f.keys()].filter((n) => n > 11),
   };
 }
 

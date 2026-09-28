@@ -3,7 +3,10 @@
  *
  * What it holds is everything this linked device is — the account's identity key pair, the
  * device's password and registration id, its signed, Kyber and one-time pre-keys, a session per
- * contact device, the identity key seen for each contact, and a sender key per group sender.
+ * contact device, the identity key seen for each contact, and a sender key per group sender. Two
+ * of postbote's own namespaces live here too: when a contact's safety number changed, and the
+ * ledger of plaintexts this build could not map (Signal deletes an acknowledged envelope, so a
+ * plaintext nobody could read would otherwise exist nowhere).
  * Whoever holds the file can read the account's incoming messages: it is SECRET (0600 in a 0700
  * directory, never logged, never in a DTO or MCP output).
  *
@@ -31,11 +34,39 @@ export const NS = {
   signedPreKey: 'signal.signedprekey',
   kyberPreKey: 'signal.kyberprekey',
   kyberUsed: 'signal.kyberused',
+  identityChanged: 'signal.identitychanged',
   senderKey: 'signal.senderkey',
 } as const;
 
 /** postbote's own namespace in the same file: which account this is, for `accounts list`. */
 export const ACCOUNT_NAMESPACE = 'postbote.account';
+
+/** The ledger of plaintexts this build could not map, in the account file. One key, a JSON array. */
+export const SET_ASIDE_NAMESPACE = 'signal.setaside';
+
+/** The one key of that namespace — the ledger itself, oldest entry first. */
+const LEDGER_KEY = 'entries';
+/** And the count of plaintexts the limit pushed out of it. */
+const DROPPED_KEY = 'dropped';
+
+/**
+ * How many plaintexts one account keeps. Signal deletes an envelope once this device acknowledged
+ * it, so a plaintext postbote could not read is the only copy left anywhere: the ledger is bounded
+ * so a decoder bug cannot fill the account file, and a run that pushes an entry out says so.
+ */
+export const SET_ASIDE_LIMIT = 200;
+
+/** One decrypted plaintext this build could not map, kept verbatim. */
+export interface SetAsideEntry {
+  /** Who sent it: the ACI to look the plaintext up by on the phone. */
+  senderAci: string;
+  /** When they sent it — the envelope's client timestamp, ISO. */
+  sentAt: string;
+  /** Why nothing was mapped: a parse error, or fields a newer Signal added. */
+  reason: string;
+  /** The decrypted plaintext, base64 (padded, when unpadding itself failed). */
+  plaintext: string;
+}
 
 export function toBase64(bytes: Uint8Array): string {
   let binary = '';
@@ -71,6 +102,8 @@ export class SignalProtocolStore {
   private readonly dirty = new Map<string, Set<string>>();
   /** How many times the file was written — a test measures the batching with it. */
   writes = 0;
+  /** Identity keys that changed since the last `takeIdentityChanges()` — a new safety number. */
+  private identityChanges: Array<{ aci: string; at: string }> = [];
 
   private constructor(lib: SignalLib, store: SecretStore) {
     this.lib = lib;
@@ -131,6 +164,57 @@ export class SignalProtocolStore {
     this.store.apply(changes);
     this.dirty.clear();
     this.writes++;
+  }
+
+  /** The contacts whose identity key changed since the last call, and when. */
+  takeIdentityChanges(): Array<{ aci: string; at: string }> {
+    const changes = this.identityChanges;
+    this.identityChanges = [];
+    return changes;
+  }
+
+  /** When a contact's safety number last changed, as recorded — null when it never did. */
+  identityChangedAt(aci: string): string | null {
+    return this.get(NS.identityChanged, aci);
+  }
+
+  // ── the ledger of plaintexts postbote could not map ──
+
+  /**
+   * Keep a plaintext this build could not map, base64 as given, oldest first.
+   *
+   * It joins the dirty set here, so the next `flush()` — the one the receiver makes BEFORE it
+   * acknowledges the envelopes these came from — writes it with the ratchet state. Signal deletes
+   * an acknowledged envelope: without this the plaintext would exist nowhere at all.
+   */
+  setAside(entry: SetAsideEntry): number {
+    const ledger = this.setAsideEntries();
+    ledger.push(entry);
+    let dropped = 0;
+    while (ledger.length > SET_ASIDE_LIMIT) {
+      ledger.shift();
+      dropped++;
+    }
+    if (dropped > 0) this.set(SET_ASIDE_NAMESPACE, DROPPED_KEY, String(this.setAsideDropped() + dropped));
+    this.set(SET_ASIDE_NAMESPACE, LEDGER_KEY, JSON.stringify(ledger));
+    return dropped;
+  }
+
+  /** The kept plaintexts, oldest first. A damaged ledger reads as empty, never as a throw. */
+  setAsideEntries(): SetAsideEntry[] {
+    const stored = this.get(SET_ASIDE_NAMESPACE, LEDGER_KEY);
+    if (!stored) return [];
+    try {
+      const parsed = JSON.parse(stored) as unknown;
+      return Array.isArray(parsed) ? (parsed as SetAsideEntry[]) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  /** How many plaintexts the limit pushed out of the ledger — data that really is gone. */
+  setAsideDropped(): number {
+    return Number(this.get(SET_ASIDE_NAMESPACE, DROPPED_KEY) ?? 0) || 0;
   }
 
   /** Drop unwritten changes (a link that failed before the phone confirmed it). */
@@ -203,16 +287,23 @@ export class SignalProtocolStore {
       if (!id) throw new Error('the Signal session has no registration id');
       return Number(id);
     },
-    // Read-only client: every identity is accepted and recorded. postbote never sends, so there is
-    // no message a changed key could leak; what a key change means is the phone's to show.
+    // Read-only client: every identity is accepted. postbote never sends, so there is no message a
+    // changed key could leak to the wrong person — but a change is not swallowed: `saveIdentity`
+    // records it and the conversation shows a "safety number changed" notice.
     isTrustedIdentity: async (): Promise<boolean> => true,
     saveIdentity: async (address: Address, key: Core.PublicKey): Promise<Core.IdentityChange> => {
       const previous = this.get(NS.identity, address.name());
       const next = toBase64(key.serialize());
       this.set(NS.identity, address.name(), next);
-      return previous && previous !== next
-        ? this.lib.core.IdentityChange.ReplacedExisting
-        : this.lib.core.IdentityChange.NewOrUnchanged;
+      if (previous && previous !== next) {
+        // Accepted (see `isTrustedIdentity`) but never silently: the change is recorded per
+        // contact and reported to the receiver, which shows it in the conversation.
+        const at = new Date().toISOString();
+        this.set(NS.identityChanged, address.name(), at);
+        this.identityChanges.push({ aci: address.name(), at });
+        return this.lib.core.IdentityChange.ReplacedExisting;
+      }
+      return this.lib.core.IdentityChange.NewOrUnchanged;
     },
     getIdentity: async (address: Address): Promise<Core.PublicKey | null> => {
       const stored = this.get(NS.identity, address.name());

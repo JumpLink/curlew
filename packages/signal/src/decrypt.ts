@@ -27,9 +27,15 @@ export type DecryptResult =
       kind: 'content';
       senderAci: string;
       senderDevice: number;
-      content: Content;
+      /** The decrypted, unpadded plaintext — kept raw when it cannot be parsed or mapped. */
+      plaintext: Uint8Array;
+      /** The parsed content; null when the plaintext did not parse (see `parseError`). */
+      content: Content | null;
+      parseError: string | null;
       /** Sealed sender: for a sender-key message, the group it was sent to. */
       groupId: Uint8Array | null;
+      /** Contacts whose identity key (safety number) changed while decrypting this envelope. */
+      identityChanged: string[];
     }
   /** Already decrypted in an earlier, unacknowledged run. */
   | { kind: 'duplicate' }
@@ -61,8 +67,13 @@ export class EnvelopeDecryptor {
   }
 
   async decrypt(envelope: Envelope): Promise<DecryptResult> {
+    // Drop what a failed attempt left behind: a key change belongs to the envelope that caused
+    // it, never to whatever comes next.
+    this.store.takeIdentityChanges();
     try {
-      return await this.decryptInner(envelope);
+      const result = await this.decryptInner(envelope);
+      if (result.kind === 'content') result.identityChanged = this.store.takeIdentityChanges().map((c) => c.aci);
+      return result;
     } catch (err) {
       if (
         err instanceof this.lib.core.LibSignalErrorBase &&
@@ -179,14 +190,23 @@ export class EnvelopeDecryptor {
     groupId: Uint8Array | null,
   ): Promise<DecryptResult> {
     const S = this.lib.core;
-    const content = decodeContent(unpadPlaintext(padded));
-    if (content.senderKeyDistribution) {
+    // Decrypted means the ratchet moved: from here on, nothing may throw the plaintext away.
+    let plaintext: Uint8Array = padded;
+    let content: Content | null = null;
+    let parseError: string | null = null;
+    try {
+      plaintext = unpadPlaintext(padded);
+      content = decodeContent(plaintext);
+    } catch (err) {
+      parseError = err instanceof Error ? err.message : String(err);
+    }
+    if (content?.senderKeyDistribution) {
       await S.processSenderKeyDistributionMessage(
         S.ProtocolAddress.new(senderAci, senderDevice),
         S.SenderKeyDistributionMessage.deserialize(content.senderKeyDistribution as Uint8Array<ArrayBuffer>),
         this.store.senderKeys,
       );
     }
-    return { kind: 'content', senderAci, senderDevice, content, groupId };
+    return { kind: 'content', senderAci, senderDevice, plaintext, content, parseError, groupId, identityChanged: [] };
   }
 }

@@ -583,6 +583,11 @@ function loadVerdicts(db: IndexDatabase, conversationIds: string[]): Map<string,
   return result;
 }
 
+function presentationOf(value: unknown): ConversationMessage['presentation'] {
+  const v = String(value);
+  return v === 'bubble' || v === 'notice' ? v : 'document';
+}
+
 function rowToConversation(
   r: Record<string, unknown>,
   participants: Participant[],
@@ -694,7 +699,7 @@ export function getConversation(
       id: String(r.id),
       conversationId: String(r.conversation_id),
       backend: String(r.backend),
-      presentation: String(r.presentation) === 'bubble' ? 'bubble' : 'document',
+      presentation: presentationOf(r.presentation),
       senderId: str(r.sender_participant_id),
       senderName: str(r.sender_name),
       senderAddress:
@@ -724,6 +729,8 @@ export function getConversation(
       message.threadRemoteId = str(r.thread_remote_id);
       if (message.fromSelf) message.readByPeer = Number(r.peer_read) === 1;
     }
+    // A notice is what the network said about the chat: shown with or without bodies.
+    if (message.presentation === 'notice') message.notice = str(r.body);
     if (options.includeBodies) {
       // Mail keeps its body once, in the FTS table; a chat message keeps it on its own row.
       const body =

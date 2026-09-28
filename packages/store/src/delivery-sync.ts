@@ -62,6 +62,10 @@ export interface DeliveryAccountSyncResult {
   caughtUp: boolean;
   /** An error that stopped the account (connect, a dropped session, a failed write). */
   error: string | null;
+  /** Received but not mapped; kept raw by the backend for a later version (`DeliveryOutcome.setAside`). */
+  setAside?: number;
+  /** Received but not decryptable (`DeliveryOutcome.undecryptable`). */
+  undecryptable?: number;
 }
 
 export interface DeliverySyncResult {
@@ -365,13 +369,13 @@ function messageRow(batch: DeliveryBatch, id: string, pending: PendingMessage): 
     chatConversationId(batch.backend, batch.accountId, pending.chatRemoteId),
     batch.backend,
     batch.accountId,
-    'bubble',
+    m.notice ? 'notice' : 'bubble',
     sender?.displayName ?? null,
     address?.kind ?? null,
     address?.value ?? null,
     m.fromSelf ? 1 : 0,
     m.sentAt,
-    pending.seen ? 1 : 0,
+    pending.seen || m.notice ? 1 : 0,
     m.hasAttachments ? 1 : 0,
     verdict.classification,
     verdict.reason,
@@ -634,6 +638,8 @@ async function receiveAccount(
     const outcome = session.outcome();
     result.caughtUp = outcome.caughtUp;
     result.error = outcome.error;
+    if (outcome.setAside) result.setAside = outcome.setAside;
+    if (outcome.undecryptable) result.undecryptable = outcome.undecryptable;
   } catch (err) {
     result.error = err instanceof Error ? err.message : String(err);
   } finally {

@@ -5,6 +5,10 @@
  *
  * Every envelope is ENCRYPTED with libsignal by an in-process party, so what postbote decrypts is
  * real Signal protocol traffic — only the transport is scripted. All identities are synthetic.
+ *
+ * A `Party` is one ACI on one device, and every `Party` gets its OWN identity key. A contact that
+ * changed its safety number is a second `Party` with the same ACI and a fresh key; a contact's
+ * second device is a `Party` handed the first one's key.
  */
 
 import * as Signal from '@signalapp/libsignal-client';
@@ -170,8 +174,20 @@ export async function directEnvelope(
   content: ContentInput,
   timestamp: number,
 ): Promise<Uint8Array> {
+  return directEnvelopeBytes(party, padPlaintext(encodeContent(content)), timestamp);
+}
+
+/**
+ * A plain (not sealed) envelope carrying exactly these plaintext bytes — for content this build
+ * cannot parse or does not know, which `encodeContent` would never produce.
+ */
+export async function directEnvelopeBytes(
+  party: Party,
+  padded: Uint8Array<ArrayBuffer>,
+  timestamp: number,
+): Promise<Uint8Array> {
   const cipher = await Signal.signalEncrypt(
-    padPlaintext(encodeContent(content)),
+    padded,
     ourAddress(),
     party.address,
     party.sessions,

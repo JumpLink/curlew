@@ -57,9 +57,13 @@ import {
   parseContactsBlob,
   parseSettings,
   PENDING_STALE_MS,
+  ProtoWriter,
   readContactsSync,
   ReadOnlyViolation,
   RELINK_HINT,
+  SAFETY_NUMBER_CHANGED,
+  type SetAsideEntry,
+  SET_ASIDE_LIMIT,
   serviceIdFromBinary,
   sessionPath,
   SIGNAL_MANIFEST,
@@ -81,6 +85,7 @@ import {
   CAROL_ACI,
   context,
   directEnvelope,
+  directEnvelopeBytes,
   FakeServer,
   GroupSender,
   groupIdOf,
@@ -614,6 +619,63 @@ export default async () => {
     });
   });
 
+  await it('records a changed identity key, and bounds the ledger of unreadable plaintexts', async () => {
+    const dir = tempDir();
+    try {
+      await link(dir);
+      const { file, store } = openStore(dir);
+      const alice = new Party(ALICE_ACI, 1, 5);
+      const rekeyed = new Party(ALICE_ACI, 2, 5);
+      const entry = (n: number): SetAsideEntry => ({
+        senderAci: ALICE_ACI,
+        sentAt: new Date(n).toISOString(),
+        reason: `field(s) ${n} this postbote does not know`,
+        plaintext: 'AAAA',
+      });
+      try {
+        // A key seen for the first time is no change; a different key for the same contact is.
+        expect(
+          await store.identities.saveIdentity(alice.address, alice.identity.identity.getPublicKey()),
+        ).toBe(LIB.core.IdentityChange.NewOrUnchanged);
+        expect(store.takeIdentityChanges()).toHaveLength(0);
+        expect(
+          await store.identities.saveIdentity(alice.address, rekeyed.identity.identity.getPublicKey()),
+        ).toBe(LIB.core.IdentityChange.ReplacedExisting);
+        expect(
+          store
+            .takeIdentityChanges()
+            .map((c) => c.aci)
+            .join(','),
+        ).toBe(ALICE_ACI);
+        expect(store.identityChangedAt(ALICE_ACI) !== null).toBe(true);
+        // The same key again is no further change, so a contact cannot spam the conversation.
+        await store.identities.saveIdentity(alice.address, rekeyed.identity.identity.getPublicKey());
+        expect(store.takeIdentityChanges()).toHaveLength(0);
+
+        for (let n = 0; n < SET_ASIDE_LIMIT + 1; n++) store.setAside(entry(n));
+        store.flush();
+        const ledger = store.setAsideEntries();
+        expect(ledger.length).toBe(SET_ASIDE_LIMIT);
+        // Bounded, and the entries the limit pushed out are counted, not silently lost.
+        expect(ledger[0].sentAt).toBe(new Date(1).toISOString());
+        expect(store.setAsideDropped()).toBe(1);
+      } finally {
+        file.close();
+      }
+      // And the ledger is really in the file, not only in memory.
+      const reopened = openStore(dir);
+      try {
+        expect(reopened.store.setAsideEntries().length).toBe(SET_ASIDE_LIMIT);
+        expect(reopened.store.setAsideDropped()).toBe(1);
+        expect(reopened.store.identityChangedAt(ALICE_ACI) !== null).toBe(true);
+      } finally {
+        reopened.file.close();
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   await describe('Signal mapping', async () => {
     const mapper = new SignalMapper(OWN_ACI, groupIdOf);
     const ctx = { senderAci: ALICE_ACI, timestamp: 1000, groupId: null };
@@ -844,6 +906,7 @@ export default async () => {
           new EnvelopeDecryptor(LIB, store, { trustRoots: trust.publicKeys }),
           new SignalMapper(OWN_ACI, groupIdOf),
           {
+            setAside: () => 0,
             flush: () => {
               throw new Error('disk full');
             },
@@ -900,9 +963,132 @@ export default async () => {
         );
         const result = await receiveDeliveries(db, backendFor(dir, server, trust));
         expect(result.accounts[0].error ?? '').toMatch(/2 envelope\(s\) could not be decrypted/);
+        expect(result.accounts[0].undecryptable).toBe(2);
+        expect(result.accounts[0].setAside).toBe(undefined);
         expect(server.queue.length).toBe(0);
         rebuildConversations(db);
         expect(bodies(db, ALICE_ACI)).toBe('ok');
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('keeps a plaintext it cannot read in the session file, and acknowledges the envelope', async () => {
+      const dir = tempDir();
+      const db = freshDb();
+      try {
+        await link(dir);
+        const trust = new TrustRoot();
+        const alice = new Party(ALICE_ACI, 1, 11);
+        await introduceAll(dir, alice);
+        const server = new FakeServer();
+        server.push(
+          // Not protobuf at all: the plaintext does not even parse.
+          await directEnvelopeBytes(alice, padPlaintext(new Uint8Array([0xff, 0xff, 0xff, 0xff])), 7000),
+          // A field a newer Signal added, and nothing this postbote can show.
+          await directEnvelopeBytes(alice, padPlaintext(new ProtoWriter().uint(99, 7).finish()), 7001),
+          // The same, one level down, inside the data message.
+          await directEnvelopeBytes(
+            alice,
+            padPlaintext(new ProtoWriter().bytes(1, new ProtoWriter().uint(77, 3).finish()).finish()),
+            7002,
+          ),
+          // A new field NEXT TO a body: the body is mapped, so the index is not missing anything.
+          await directEnvelopeBytes(
+            alice,
+            padPlaintext(
+              new ProtoWriter()
+                .bytes(1, new ProtoWriter().string(1, 'gelesen').uint(77, 3).finish())
+                .finish(),
+            ),
+            7003,
+          ),
+          // Only a disappearing-messages timer: a setting — neither shown nor kept.
+          await directEnvelopeBytes(
+            alice,
+            padPlaintext(new ProtoWriter().bytes(1, new ProtoWriter().uint(5, 3600).finish()).finish()),
+            7004,
+          ),
+        );
+        const result = await receiveDeliveries(db, backendFor(dir, server, trust));
+        // Received, not lost: every envelope is acknowledged and the three unreadable plaintexts
+        // are counted. A plaintext this run did map is no loss, so it is not counted.
+        expect(result.accounts[0].setAside).toBe(3);
+        expect(result.accounts[0].error).toBe(null);
+        expect(server.acked.length).toBe(5);
+        expect(server.queue.length).toBe(0);
+        rebuildConversations(db);
+        expect(bodies(db, ALICE_ACI)).toBe('gelesen');
+
+        // The plaintexts are really in the account file, with the sender and why they were kept.
+        const { file, store } = openStore(dir);
+        try {
+          const ledger = store.setAsideEntries();
+          expect(ledger.length).toBe(3);
+          expect(ledger.map((e) => e.senderAci).join(',')).toBe(`${ALICE_ACI},${ALICE_ACI},${ALICE_ACI}`);
+          expect(ledger.map((e) => e.sentAt).join(',')).toBe(
+            '1970-01-01T00:00:07.000Z,1970-01-01T00:00:07.001Z,1970-01-01T00:00:07.002Z',
+          );
+          expect(ledger[0].reason).toMatch(/protobuf/);
+          expect(ledger[1].reason).toMatch(/content field\(s\) 99/);
+          expect(ledger[2].reason).toMatch(/data message field\(s\) 77/);
+          expect(Array.from(fromBase64(ledger[0].plaintext)).join(',')).toBe('255,255,255,255');
+          // Written in the flush the commit makes, so nothing waits in memory for one.
+          expect(store.pending).toBe(0);
+        } finally {
+          file.close();
+        }
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('shows a changed safety number as a notice in that contact conversation', async () => {
+      const dir = tempDir();
+      const db = freshDb();
+      try {
+        await link(dir);
+        const trust = new TrustRoot();
+        const alice = new Party(ALICE_ACI, 1, 11);
+        // The same key on a second device: a new session, no new safety number.
+        const second = new Party(ALICE_ACI, 2, 11, alice.identity.identity);
+        // A fresh key for the same contact: the safety number changed.
+        const rekeyed = new Party(ALICE_ACI, 3, 11);
+        await introduceAll(dir, alice, second, rekeyed);
+        const server = new FakeServer();
+        server.push(
+          await sealedEnvelope(alice, trust, { dataMessage: { body: 'hallo', timestamp: 8000 } }, 8000),
+          await sealedEnvelope(second, trust, { dataMessage: { body: 'vom handy', timestamp: 8001 } }, 8001),
+          await sealedEnvelope(
+            rekeyed,
+            trust,
+            { dataMessage: { body: 'neuer schlüssel', timestamp: 8002 } },
+            8002,
+          ),
+        );
+        const result = await receiveDeliveries(db, backendFor(dir, server, trust));
+        expect(result.accounts[0].error).toBe(null);
+        expect(result.accounts[0].setAside).toBe(undefined);
+        rebuildConversations(db);
+        expect(bodies(db, ALICE_ACI)).toBe('hallo|vom handy|Safety number changed|neuer schlüssel');
+
+        const chat = chatConversationId('signal', ACCOUNT, ALICE_ACI);
+        const withoutBodies = getConversation(db, chat);
+        const notice = withoutBodies?.messages.find((m) => m.presentation === 'notice');
+        // The network said it, not the contact: a notice, never unread, and it says so without
+        // the bodies being asked for.
+        expect(notice?.notice).toBe(SAFETY_NUMBER_CHANGED);
+        expect(notice?.seen).toBe(true);
+        expect(notice?.bodyText).toBe(undefined);
+        expect(withoutBodies?.messages.filter((m) => !m.seen).length).toBe(3);
+        expect(listConversations(db).find((c) => c.id === chat)?.unreadCount).toBe(3);
+        // And the change is recorded in the account file, with when it happened.
+        const { file, store } = openStore(dir);
+        try {
+          expect(store.identityChangedAt(ALICE_ACI) !== null).toBe(true);
+        } finally {
+          file.close();
+        }
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }

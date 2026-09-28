@@ -114,7 +114,12 @@ the MCP server via `run_in_background` when driving it.
   first (Signal deletes acknowledged envelopes), and never flush the protocol store on `close`
   (`store.discard()`): a saved ratchet step for an unacknowledged envelope turns its redelivery
   into a "duplicate" and loses the message. libsignal is never imported at module level — it is
-  loaded on first use (`lib.ts`) so postbote starts where the addon does not.
+  loaded on first use (`lib.ts`) so postbote starts where the addon does not. A plaintext that
+  decrypts but that this build cannot map (a field a newer Signal added, a parser bug) joins that
+  same flush in the account file's `signal.setaside` ledger — received, not lost, and counted in
+  `DeliveryOutcome.setAside`; the ledger is bounded (`SET_ASIDE_LIMIT`) and a run that pushes an
+  entry out says so. An accepted identity-key change is never silent: it becomes a
+  `presentation: 'notice'` message in that contact's direct chat.
 - **Matrix is read-only through a gate, not through good intentions.** Every request of
   matrix-js-sdk goes through `readOnlyFetch` (`packages/matrix/src/guard.ts`): GETs, login,
   the sync filter and the E2EE key protocol pass; a `/sync` without `set_presence=offline`
