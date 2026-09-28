@@ -72,10 +72,13 @@ function expect(ok, what) {
   log(`ok: ${what}`);
 }
 
+/** The SGR colour codes podman's logs carry — built, so no control character sits in a regex literal. */
+const ANSI_COLOURS = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g');
+
 async function json(url, init) {
   const res = await fetch(url, {
     ...init,
-    headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) },
+    headers: { 'content-type': 'application/json', ...init?.headers },
   });
   return res.json();
 }
@@ -157,7 +160,7 @@ try {
     const logs = spawnSync('podman', ['logs', name], { encoding: 'utf8' });
     firstToken =
       /registration token \S*?([A-Za-z0-9]{16})\S*? \./.exec(
-        `${logs.stdout}${logs.stderr}`.replace(/\x1b\[[0-9;]*m/g, ''),
+        `${logs.stdout}${logs.stderr}`.replace(ANSI_COLOURS, ''),
       )?.[1] ?? null;
   }
   if (!firstToken) throw new Error('the homeserver printed no first-run registration token');
