@@ -43,6 +43,7 @@ import registry from './unit/core/registry.test.ts';
 import capabilities from './unit/core/capabilities.test.ts';
 import daemon from './unit/core/daemon.test.ts';
 import deliveries from './unit/core/deliveries.test.ts';
+import setup from './unit/core/setup.test.ts';
 
 import mcpGate from './unit/mcp/gate.test.ts';
 import mcpTools from './unit/mcp/tools.test.ts';
@@ -85,6 +86,7 @@ run({
   registry,
   daemon,
   deliveries,
+  setup,
   capabilities,
   mcpGate,
   mcpTools,
