@@ -136,8 +136,8 @@ export default async () => {
       expect(validateManifest(WHATSAPP_MANIFEST).length).toBe(0);
       expect(WHATSAPP_MANIFEST.syncModel).toBe('delivery-only');
       const c = WHATSAPP_MANIFEST.capabilities;
-      expect(c.e2ee && c.edits && c.reactions && c.groups && c.readReceipts && c.attachments).toBe(true);
-      expect(c.subject || c.folders || c.threads).toBe(false);
+      expect(c.e2ee && c.edits && c.readReceipts && c.groups).toBe(true);
+      expect(c.reactions && c.attachments && c.subject && c.folders && c.threads).toBe(false);
       expect(WHATSAPP_MANIFEST.addressKinds.join(',')).toBe('whatsapp,phone');
       const terms = WHATSAPP_MANIFEST.terms?.summary ?? '';
       expect(terms.includes('UNOFFICIAL')).toBe(true);
@@ -310,6 +310,28 @@ export default async () => {
       expect(mapper.chat({ id: ANNA_LID, unreadCount: 0 }, false).some((e) => e.type === 'chat-read')).toBe(
         true,
       );
+    });
+
+    await it('capability audit: manifest matches what the mapper delivers', async () => {
+      const caps = WHATSAPP_MANIFEST.capabilities;
+      // edits: true — protocolMessage type 14 produces 'edit' events (map.ts:159-171)
+      expect(caps.edits).toBe(true);
+      // reactions: false — reactionMessage produces no events (map.ts:248, line 175 drops stubs)
+      expect(caps.reactions).toBe(false); // the network has reactions; map.ts drops them
+      // threads: false — threadRemoteId is always null (map.ts:199)
+      expect(caps.threads).toBe(false);
+      // readReceipts: true — messages.update and message-receipt.update produce 'peer-read' (map.ts:278-307)
+      expect(caps.readReceipts).toBe(true);
+      // groups: true — groups.upsert produces chat events with members (map.ts:241-259)
+      expect(caps.groups).toBe(true);
+      // e2ee: true — every chat is end-to-end encrypted (Signal protocol)
+      expect(caps.e2ee).toBe(true);
+      // subject: false — no subject field in messages
+      expect(caps.subject).toBe(false);
+      // folders: false — no server-side folders
+      expect(caps.folders).toBe(false);
+      // attachments: false — hasAttachments is set but nothing downloads attachment bytes (map.ts:70,73; receiver.ts has no attachment download)
+      expect(caps.attachments).toBe(false); // hasAttachments metadata only; no download path
     });
 
     await it('maps "delete for me" and "clear chat" from another device', async () => {

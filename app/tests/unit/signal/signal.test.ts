@@ -788,6 +788,28 @@ export default async () => {
       ).events[0] as Extract<DeliveryEvent, { type: 'delete' }>;
       expect(del.remoteId).toBe(`${ALICE_ACI}:900`);
     });
+
+    await it('capability audit: manifest matches what the mapper delivers', async () => {
+      const caps = SIGNAL_MANIFEST.capabilities;
+      // edits: true — editMessage produces 'edit' events (line 707-715)
+      expect(caps.edits).toBe(true);
+      // reactions: false — reaction messages produce no events (line 694-695: drops reactions)
+      expect(caps.reactions).toBe(false); // the network has reactions; map.ts drops them
+      // threads: false — threadRemoteId is always null (map.ts:274)
+      expect(caps.threads).toBe(false);
+      // readReceipts: true — receipt messages produce 'peer-read' events (map.ts:132-147)
+      expect(caps.readReceipts).toBe(true);
+      // groups: true — groupMasterKey creates group chats (map.ts:92-95)
+      expect(caps.groups).toBe(true);
+      // e2ee: true — every chat is end-to-end encrypted
+      expect(caps.e2ee).toBe(true);
+      // subject: false — no subject field in messages
+      expect(caps.subject).toBe(false);
+      // folders: false — no server-side folders
+      expect(caps.folders).toBe(false);
+      // attachments: false — hasAttachments is set but nothing downloads attachment bytes (map.ts:219; receiver.ts has no attachment download)
+      expect(caps.attachments).toBe(false); // hasAttachments metadata only; no download path
+    });
   });
 
   await describe('Signal receive journal', async () => {

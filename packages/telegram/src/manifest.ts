@@ -15,7 +15,8 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
   // a feature; postbote v1 only reads, so none of this is a promise that postbote can SEND it.
   capabilities: {
     edits: true,
-    reactions: true,
+    // The network has reactions (message reactions); map.ts drops them.
+    reactions: false,
     // Forum topics in supergroups, and reply chains everywhere.
     threads: true,
     // Telegram reports how far each side has read (read_inbox / read_outbox markers).
@@ -26,7 +27,8 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
     e2ee: false,
     subject: false,
     folders: false,
-    attachments: true,
+    // hasAttachments metadata only; no download path in session.ts.
+    attachments: false,
   },
   // Telegram keeps the full history of cloud chats: the index is rebuildable (`derived`).
   // The session file with the auth key is not — it is `secret`, and kept apart from the index.

@@ -99,8 +99,24 @@ export default async () => {
       expect(XMPP_MANIFEST.terms).toBe(null);
       const c = XMPP_MANIFEST.capabilities;
       expect(c.e2ee).toBe(false);
-      expect(c.edits && c.reactions && c.readReceipts && c.groups && c.attachments).toBe(true);
-      expect(c.subject || c.folders || c.threads).toBe(false);
+      // edits: true — XEP-0308 corrections produce edits (map.ts:226-235)
+      expect(c.edits).toBe(true);
+      // reactions: false — reactions are archive entries, not messages (map.ts:239)
+      expect(c.reactions).toBe(false); // the network has reactions (XEP-0444); map.ts drops them
+      // threads: false — XMPP has <thread/> but no client shows threads (manifest comment)
+      expect(c.threads).toBe(false);
+      // readReceipts: false — chat markers archived by some servers only; no reliable read state (map.ts:72-75)
+      expect(c.readReceipts).toBe(false); // chat markers (XEP-0333) not reliably archived
+      // groups: true — MUCs with their own archive (manifest comment)
+      expect(c.groups).toBe(true);
+      // e2ee: false — OMEMO not implemented (manifest comment)
+      expect(c.e2ee).toBe(false);
+      // subject: false — no subject field
+      expect(c.subject).toBe(false);
+      // folders: false — no server-side folders
+      expect(c.folders).toBe(false);
+      // attachments: false — attachmentUrls stored but not downloaded (map.ts:253; session.ts has no download)
+      expect(c.attachments).toBe(false); // attachment URLs metadata only; no download path
     });
   });
 

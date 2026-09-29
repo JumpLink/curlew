@@ -15,21 +15,21 @@ export const XMPP_MANIFEST: BackendManifest = {
   capabilities: {
     // Last message correction (XEP-0308): applied to the stored message.
     edits: true,
-    // Message reactions (XEP-0444) exist on the network; postbote does not store them yet.
-    reactions: true,
+    // Message reactions (XEP-0444) exist on the network; map.ts drops them (map.ts:239).
+    reactions: false,
     // XMPP has `<thread/>`, but no client shows threads; claiming them would promise a view
     // nobody fills.
     threads: false,
-    // Chat markers (XEP-0333) are readable where the server archives them.
-    readReceipts: true,
+    // Chat markers (XEP-0333) are readable where the server archives them; not reliably available.
+    readReceipts: false,
     // Multi-user chats (XEP-0045), their history through the room's own archive.
     groups: true,
     // OMEMO (XEP-0384) is not implemented: an encrypted message is indexed without its text.
     e2ee: false,
     subject: false,
     folders: false,
-    // Out-of-band links (XEP-0066), which HTTP File Upload (XEP-0363) produces.
-    attachments: true,
+    // Out-of-band links (XEP-0066), which HTTP File Upload (XEP-0363) produces; URLs only, no download.
+    attachments: false,
   },
   // With MAM (XEP-0313) the server keeps the history: the index is rebuildable (`derived`).
   // A server WITHOUT MAM leaves nothing to read — postbote says so at connect and does not
