@@ -37,6 +37,14 @@ import { chatConversationId, classifyChatMessage } from './chat-sync.ts';
 import type { IndexDatabase } from './db.ts';
 import { insertMany, placeholders, type SqlValue, withTransaction } from './db.ts';
 import { upsertAccount } from './index-store.ts';
+import {
+  leaseKey,
+  LEASE_HEARTBEAT_MS,
+  receiveLeases,
+  refreshReceiveLease,
+  releaseReceiveLease,
+  takeReceiveLease,
+} from './receive-lease.ts';
 import { stableId } from './threads.ts';
 
 export interface DeliverySyncOptions {
@@ -49,6 +57,14 @@ export interface DeliverySyncOptions {
    * ends **normally** — what was written stays written, and a stopped daemon is not an error.
    */
   signal?: AbortSignal;
+  /**
+   * Who holds the receive lease in `follow` mode (ADR 0002 §4) — the pid by default. Two delivery
+   * devices on one account each acknowledge half the messages, so this is the lock between a
+   * daemon and a `sync`; it is a lease, so a crashed holder expires without a cleanup.
+   */
+  holder?: string;
+  /** How often the lease is refreshed. Short only in tests. */
+  leaseIntervalMs?: number;
   /** Clock, injected so tests are deterministic. */
   now?: () => Date;
   /** How long to wait before a reconnect, injected so a backoff costs no wall clock in a test. */
@@ -76,6 +92,8 @@ export type DeliveryProgress =
     }
   | { backend: string; accountId: string; type: 'reconnect'; delayMs: number; attempt: number }
   | { backend: string; accountId: string; type: 'logged-out'; error: string | null }
+  | { backend: string; accountId: string; type: 'lease-held'; holder: string }
+  | { backend: string; accountId: string; type: 'lease-lost' }
   | { backend: string; accountId: string; type: 'stopped'; reason: 'aborted' | 'logged-out' };
 
 /** The first wait after a dropped session, and its ceiling. Both are the daemon's, not the port's. */
@@ -102,6 +120,12 @@ export interface DeliveryAccountSyncResult {
    * caller stops the account rather than reconnecting (`DeliveryOutcome.loggedOut`).
    */
   loggedOut?: boolean;
+  /**
+   * The account is being received by another holder (a running daemon, on `sync`): this run left
+   * it alone, and that is a success — nothing failed, the messages are arriving. Absent: this run
+   * received it, or nothing holds it.
+   */
+  heldBy?: string;
   /** Received but not mapped; kept raw by the backend for a later version (`DeliveryOutcome.setAside`). */
   setAside?: number;
   /** Received but not decryptable (`DeliveryOutcome.undecryptable`). */
@@ -773,37 +797,76 @@ async function receiveAccount(
   };
   upsertAccount(db, account);
 
+  // The lease (ADR 0002 §4): taken before the first connect, refreshed while it runs, dropped
+  // when it ends — so a `postbote sync` on the same account stands down. A lease somebody else
+  // holds is not an error: those messages ARE arriving, and a run that red-flagged a working
+  // daemon would teach the user to ignore red flags.
+  const holder = options.holder ?? String(process.pid);
+  const lease = mode === 'follow' ? takeReceiveLease(db, name, account.id, holder, now()) : null;
+  if (lease && !lease.acquired) {
+    result.heldBy = lease.holder;
+    onProgress?.({ backend: name, accountId: account.id, type: 'lease-held', holder: lease.holder });
+    return result;
+  }
+  // This account's own stop signal: the run's abort, plus a lost lease. Per account, so one
+  // stolen lease stops one account and not the daemon.
+  const stop = new AbortController();
+  const onRunAbort = () => stop.abort();
+  options.signal?.addEventListener('abort', onRunAbort);
+  // A lease that cannot be refreshed means another receiver is on this account now: two of them
+  // split the copy, so this one stops instead of writing into the race.
+  let leaseLost = false;
+  const heartbeat = lease
+    ? setInterval(() => {
+        if (refreshReceiveLease(db, name, account.id, holder, now())) return;
+        leaseLost = true;
+        onProgress?.({ backend: name, accountId: account.id, type: 'lease-lost' });
+        stop.abort();
+      }, options.leaseIntervalMs ?? LEASE_HEARTBEAT_MS)
+    : null;
+
   let wait = RECONNECT_FIRST_MS;
   let attempt = 0;
-  for (;;) {
-    const openedAt = now().getTime();
-    attempt++;
-    const outcome = await runSession(db, backend, account, mode, now, options.signal, onProgress, result);
-    if (mode !== 'follow') return result;
-    if (options.signal?.aborted) {
-      onProgress?.({ backend: name, accountId: account.id, type: 'stopped', reason: 'aborted' });
-      return result;
+  const stopped = (reason: 'aborted' | 'logged-out') => {
+    onProgress?.({ backend: name, accountId: account.id, type: 'stopped', reason });
+    return result;
+  };
+  try {
+    for (;;) {
+      const openedAt = now().getTime();
+      attempt++;
+      const outcome = await runSession(db, backend, account, mode, now, stop.signal, onProgress, result);
+      if (mode !== 'follow') return result;
+      if (stop.signal.aborted) return stopped('aborted');
+      // The network dropped the device (logged out, unlinked): the credentials are gone, and
+      // every reconnect would fail the same way — the run says so and stops this account.
+      if (outcome.loggedOut) {
+        onProgress?.({
+          backend: name,
+          accountId: account.id,
+          type: 'logged-out',
+          error: outcome.error,
+        });
+        return stopped('logged-out');
+      }
+      // A session that outlived the cap is a healthy network: the next drop starts at the
+      // beginning again instead of inheriting a backoff from a bad hour.
+      if (now().getTime() - openedAt >= RECONNECT_CAP_MS) wait = RECONNECT_FIRST_MS;
+      onProgress?.({ backend: name, accountId: account.id, type: 'reconnect', delayMs: wait, attempt });
+      // The wait is interruptible by default: a daemon that is asked to stop does not sit out a
+      // backoff first. An injected `sleep` is the test's own, and answers at once.
+      const sleep = options.sleep ?? ((ms: number) => abortableSleep(ms, stop.signal));
+      await sleep(wait);
+      if (stop.signal.aborted) return stopped('aborted');
+      wait = Math.min(wait * 2, RECONNECT_CAP_MS);
     }
-    // The network dropped the device (logged out, unlinked): the credentials are gone, and
-    // every reconnect would fail the same way — the run says so and stops this account.
-    if (outcome.loggedOut) {
-      onProgress?.({ backend: name, accountId: account.id, type: 'logged-out', error: outcome.error });
-      onProgress?.({ backend: name, accountId: account.id, type: 'stopped', reason: 'logged-out' });
-      return result;
+  } finally {
+    options.signal?.removeEventListener('abort', onRunAbort);
+    if (heartbeat) clearInterval(heartbeat);
+    if (lease) releaseReceiveLease(db, name, account.id, holder);
+    if (leaseLost) {
+      result.error = 'the receive lease was taken by another process — this account stopped receiving';
     }
-    // A session that outlived the cap is a healthy network: the next drop starts at the
-    // beginning again instead of inheriting a backoff from a bad hour.
-    if (now().getTime() - openedAt >= RECONNECT_CAP_MS) wait = RECONNECT_FIRST_MS;
-    onProgress?.({ backend: name, accountId: account.id, type: 'reconnect', delayMs: wait, attempt });
-    // The wait is interruptible by default: a daemon that is asked to stop does not sit out a
-    // backoff first. An injected `sleep` is the test's own, and answers at once.
-    const sleep = options.sleep ?? ((ms: number) => abortableSleep(ms, options.signal));
-    await sleep(wait);
-    if (options.signal?.aborted) {
-      onProgress?.({ backend: name, accountId: account.id, type: 'stopped', reason: 'aborted' });
-      return result;
-    }
-    wait = Math.min(wait * 2, RECONNECT_CAP_MS);
   }
 }
 
@@ -819,17 +882,53 @@ export async function receiveDeliveries(
   backend: DeliveryBackend,
   options: DeliverySyncOptions = {},
 ): Promise<DeliverySyncResult> {
+  const mode = options.mode ?? 'catch-up';
+  const now = options.now ?? (() => new Date());
+  const name = backend.manifest.name;
   const accounts = (await backend.listAccounts()).filter(
     (a) => !options.accountId || a.id === options.accountId,
   );
-  const receive = (account: (typeof accounts)[number]) => receiveAccount(db, backend, account, options);
-  const results =
-    (options.mode ?? 'catch-up') === 'follow'
-      ? await Promise.all(accounts.map(receive))
-      : await accounts.reduce<Promise<DeliveryAccountSyncResult[]>>(
-          (chain, account) => chain.then((done) => receive(account).then((r) => [...done, r])),
-          Promise.resolve([]),
-        );
+  // A `sync` stands down for every account a running daemon holds (ADR 0002 §4), and reports the
+  // holder instead of failing: nothing failed, and those messages are on their way in.
+  const holder = options.holder ?? String(process.pid);
+  const leases = mode === 'follow' ? null : receiveLeases(db, now());
+  const heldBy = (accountId: string): string | null => {
+    const held = leases?.get(leaseKey(name, accountId)) ?? null;
+    return held === null || held === holder ? null : held;
+  };
+  const standingDown = (accountId: string, held: string): DeliveryAccountSyncResult => ({
+    backend: name,
+    accountId,
+    batches: 0,
+    added: 0,
+    edited: 0,
+    removed: 0,
+    caughtUp: false,
+    error: null,
+    heldBy: held,
+  });
+  const settled = new Map<string, DeliveryAccountSyncResult>();
+  if (mode === 'follow') {
+    // Every account at once: a follow session ends only when it is closed, so a queue would
+    // starve every account behind the first.
+    await Promise.all(
+      accounts.map(async (account) => {
+        settled.set(account.id, await receiveAccount(db, backend, account, options));
+      }),
+    );
+  } else {
+    // `catch-up` stays sequential: a bounded run reports per account, and one slow account must
+    // not eat the whole budget.
+    for (const account of accounts) {
+      const held = heldBy(account.id);
+      if (held !== null) {
+        settled.set(account.id, standingDown(account.id, held));
+        continue;
+      }
+      settled.set(account.id, await receiveAccount(db, backend, account, options));
+    }
+  }
+  const results = accounts.map((account) => settled.get(account.id) as DeliveryAccountSyncResult);
   const errors = results.filter((r) => r.error !== null).length;
   return {
     accounts: results,

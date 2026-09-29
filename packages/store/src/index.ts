@@ -15,3 +15,4 @@ export * from './conversations.ts';
 export * from './secret-store.ts';
 export * from './chat-sync.ts';
 export * from './delivery-sync.ts';
+export * from './receive-lease.ts';

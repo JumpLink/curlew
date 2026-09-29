@@ -29,6 +29,7 @@ import storeConversations from './unit/store/conversations.test.ts';
 import storeChatSync from './unit/store/chat-sync.test.ts';
 import storeDeliverySync from './unit/store/delivery-sync.test.ts';
 import storeDeliveryFollow from './unit/store/delivery-follow.test.ts';
+import storeReceiveLease from './unit/store/receive-lease.test.ts';
 
 import telegram from './unit/telegram/telegram.test.ts';
 import signal from './unit/signal/signal.test.ts';
@@ -70,6 +71,7 @@ run({
   storeChatSync,
   storeDeliverySync,
   storeDeliveryFollow,
+  storeReceiveLease,
   telegram,
   signal,
   whatsapp,
