@@ -168,10 +168,12 @@ export function registerSetupTools(server: McpServer): void {
 
         const ctx = mcpSetupContext();
         if (params.dry_run === true) {
-          // A dry run here means "do not run it", not "run it with the writes off". The core's
-          // own `SetupRunOptions.dryRun` is declared but not honoured by any step, so passing it
-          // through would be a lie: this tool would say it did nothing while a stage wrote a
-          // unit file. Reporting the stage and its state is the only dry run that is true.
+          // A dry run here means "do not run it", not "run it with the writes off". There is no
+          // core flag to pass down: a `dryRun` option was declared on `SetupRunOptions` and
+          // removed again precisely because no step honoured it — the `unit` stage writes its
+          // file before it ever asks a question, so a "dry" run of it would have written
+          // something and then reported that it had not. Reporting the stage and its state is
+          // the only dry run that is true, and it is decided here, above the core.
           const status = await setupStatus(ctx, [step]);
           return mcpSuccess({ dryRun: true, changed: false, step: status.steps[0] });
         }

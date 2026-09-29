@@ -661,11 +661,17 @@ export function humanOnlyRefusal(step: SetupStep): Error {
   );
 }
 
+/**
+ * Every option here is honoured by `runSetup` itself. There is deliberately no `dryRun`: it was
+ * declared once and no step ever read it, so it guaranteed nothing while promising "this will not
+ * write" — a caller passing it got a stage that wrote anyway, and a type that said otherwise. A
+ * step that cannot write nothing has no business advertising that it can. A surface that wants a
+ * dry run decides so ITSELF, before the core is involved: that is what the MCP `setup_run` tool
+ * does, by not running the stage at all.
+ */
 export interface SetupRunOptions {
   /** Run only these stages, by name; the default is all of them, in order. */
   only?: readonly string[];
-  /** Report what would be done without changing anything. A step that writes gets a dry run. */
-  dryRun?: boolean;
   /** Stop after the first stage that did not finish. The default is false: one failure must not
    * hide the rest of the report. */
   bail?: boolean;
