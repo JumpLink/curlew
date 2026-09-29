@@ -69,7 +69,6 @@ export type SetupOutcome =
   /** The stage could not finish. Carries the reason, never a payload or a backend's output. */
   | { status: 'failed'; reason: string };
 
-
 /** What the run tells a step about the machine. Everything a step may touch is in here, so a
  * test drives the whole run with a fake host and a fake prompter. */
 export interface SetupContext {
@@ -234,8 +233,9 @@ function readinessStep(): SetupStep {
           return {
             status: 'failed',
             reason:
-              `no bundle at ${readiness.bundle}. Build it with \`gjsify workspace postbote-cli ` +
-              'build\`, then run this again — a command does not build itself.',
+              `no bundle at ${readiness.bundle}. Build it with ` +
+              '`gjsify workspace postbote-cli build`, then run this again — a command does not ' +
+              'build itself.',
           };
         }
         await say(`Bundle: ${readiness.bundle}`);
@@ -249,7 +249,9 @@ function readinessStep(): SetupStep {
       await say(`  runtime: ${runtime}${runtime === 'gjs' ? '' : ' — the GNOME backends need GJS'}`);
       try {
         const result = await accountsCheck();
-        await say(`  GNOME Online Accounts: ${result.ok ? 'reachable' : 'not reachable'} — ${result.message}`);
+        await say(
+          `  GNOME Online Accounts: ${result.ok ? 'reachable' : 'not reachable'} — ${result.message}`,
+        );
       } catch (err: unknown) {
         await say(
           `  GNOME Online Accounts: unavailable — ${err instanceof Error ? err.message : String(err)}`,
@@ -440,9 +442,7 @@ function daemonStep(): SetupStep {
     async probe(ctx) {
       // A daemon is "set up" when the unit that runs it is enabled — that is what makes it
       // receive while nobody is watching, which is the entire point of it.
-      return ctx.host.run(['systemctl', '--user', 'is-enabled', UNIT_NAME]).code === 0
-        ? 'done'
-        : 'remaining';
+      return ctx.host.run(['systemctl', '--user', 'is-enabled', UNIT_NAME]).code === 0 ? 'done' : 'remaining';
     },
     async run(ctx) {
       const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
@@ -455,12 +455,16 @@ function daemonStep(): SetupStep {
           reason: 'no delivery backend is enabled — the daemon refuses to start without one',
         };
       }
-      await say('The daemon receives in the background without walking the index, and keeps going while you do nothing.');
+      await say(
+        'The daemon receives in the background without walking the index, and keeps going while you do nothing.',
+      );
       await say(
         `Receiving from ${receiving.join(', ')} for ${SETUP_DAEMON_SMOKE_SECONDS} seconds, then it ` +
           'stops itself.',
       );
-      await say('Expect one line per account as it connects — account ids, never phone numbers or message text.');
+      await say(
+        'Expect one line per account as it connects — account ids, never phone numbers or message text.',
+      );
       if (!(await ctx.prompter.confirm('Run the daemon briefly now?'))) {
         return { status: 'skipped', reason: 'not started — the systemd unit is the real receiver' };
       }
@@ -577,7 +581,6 @@ function finishStep(): SetupStep {
     },
   };
 }
-
 
 /** A step that cannot be driven by the surface asking for it. Throws a message that names the
  * command a person would run instead, so a refusal is actionable. */

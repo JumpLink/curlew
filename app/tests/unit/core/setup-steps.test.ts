@@ -23,7 +23,7 @@ import {
   runSetup,
   setupStatus,
 } from '../../../src/core/actions/setup.ts';
-import type { SetupContext, SetupStep, SetupStepState } from '../../../src/core/actions/setup.ts';
+import type { SetupContext, SetupStepState } from '../../../src/core/actions/setup.ts';
 import { FAKE_PAIRING_PAYLOAD, fakeContext, fakeHost, fakePrompter } from './setup-fakes.ts';
 
 /** Every word the run said, joined — the whole surface a person or a log could have seen. */
@@ -159,7 +159,7 @@ export default async function setupSteps(): Promise<void> {
       expect(question > notice).toBe(true);
     });
 
-    it('never accepts on the person\'s behalf', async () => {
+    it("never accepts on the person's behalf", async () => {
       // Declined, with a linked account and a notice on screen: the config must be untouched.
       const ctx = fakeContext({
         prompter: fakePrompter([false, false]),
@@ -238,7 +238,7 @@ export default async function setupSteps(): Promise<void> {
       );
     });
 
-    it('returns systemd-analyze\'s OWN exit code and does not enable a unit that failed', async () => {
+    it("returns systemd-analyze's OWN exit code and does not enable a unit that failed", async () => {
       const host = fakeHost();
       host.commands.set('systemd-analyze', { path: '/usr/bin/systemd-analyze', code: 3, output: 'bad' });
       const ctx = fakeContext({ host, prompter: fakePrompter([true]) });

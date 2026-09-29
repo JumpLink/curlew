@@ -104,8 +104,7 @@ export function nodeHost(env: NodeJS.ProcessEnv = process.env): CommandRunner {
         stdio: options.capture === true ? ['inherit', 'pipe', 'pipe'] : 'inherit',
         timeout: options.timeout === undefined ? undefined : options.timeout * 1000,
       });
-      const output =
-        options.capture === true ? `${result.stdout ?? ''}${result.stderr ?? ''}` : '';
+      const output = options.capture === true ? `${result.stdout ?? ''}${result.stderr ?? ''}` : '';
       return { code: result.status ?? (result.error ? 127 : 1), output };
     },
     readFile(path) {

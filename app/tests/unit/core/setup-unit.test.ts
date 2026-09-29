@@ -105,11 +105,21 @@ export default async function setupUnit(): Promise<void> {
         runner: '/home/anna/.local/bin/gjsify',
         args: 'run /home/anna/postbote/app/dist/postbote.gjs.mjs daemon',
       });
-      expect(text.includes('ExecStart=/usr/bin/env /home/anna/.local/bin/gjsify run /home/anna/postbote/app/dist/postbote.gjs.mjs daemon')).toBe(true);
+      expect(
+        text.includes(
+          'ExecStart=/usr/bin/env /home/anna/.local/bin/gjsify run /home/anna/postbote/app/dist/postbote.gjs.mjs daemon',
+        ),
+      ).toBe(true);
     });
 
     it('runs the plain command in a published install — no bundle, no gjsify', () => {
-      const paths = unitPathsFor({ mode: 'published', home: '/home/anna', checkout: null, gjsify: null, bundle: null });
+      const paths = unitPathsFor({
+        mode: 'published',
+        home: '/home/anna',
+        checkout: null,
+        gjsify: null,
+        bundle: null,
+      });
       expect(paths.runner).toBe('postbote');
       expect(paths.args).toBe('daemon');
       expect(renderUnit(paths).includes('ExecStart=/usr/bin/env postbote daemon')).toBe(true);
@@ -117,8 +127,14 @@ export default async function setupUnit(): Promise<void> {
 
     it('falls back to the plain command when a checkout has no gjsify or no bundle', () => {
       // Readiness fails on that machine; the unit must still be writable and runnable.
-      expect(unitPathsFor({ mode: 'checkout', home: '/h', checkout: '/h/postbote', gjsify: null, bundle: '/b' }).runner).toBe('postbote');
-      expect(unitPathsFor({ mode: 'checkout', home: '/h', checkout: '/h/postbote', gjsify: '/g', bundle: null }).runner).toBe('postbote');
+      expect(
+        unitPathsFor({ mode: 'checkout', home: '/h', checkout: '/h/postbote', gjsify: null, bundle: '/b' })
+          .runner,
+      ).toBe('postbote');
+      expect(
+        unitPathsFor({ mode: 'checkout', home: '/h', checkout: '/h/postbote', gjsify: '/g', bundle: null })
+          .runner,
+      ).toBe('postbote');
     });
 
     it('gives a user unit a PATH that can find the runner', () => {
@@ -128,7 +144,7 @@ export default async function setupUnit(): Promise<void> {
       expect(unitPath('/opt/bin/gjsify', '/home/anna')).toBe('/opt/bin:/usr/local/bin:/usr/bin:/bin');
     });
 
-    it('keeps the restart policy the daemon\'s exit code depends on', () => {
+    it("keeps the restart policy the daemon's exit code depends on", () => {
       // Exit 2 means every account is logged out; a restart cannot relink a device.
       expect(UNIT_TEMPLATE_LINES().includes('RestartPreventExitStatus=2')).toBe(true);
       expect(UNIT_TEMPLATE_LINES().includes('Restart=on-failure')).toBe(true);

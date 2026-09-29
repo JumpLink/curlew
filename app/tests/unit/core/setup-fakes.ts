@@ -151,11 +151,13 @@ export function fakeContext(options: FakeContextOptions = {}): FakeContext {
     configPath: options.configPath ?? join(SANDBOX, 'postbote', 'config.json'),
     indexPath: options.indexPath ?? join(SANDBOX, 'postbote', 'index.db'),
     countAccounts: options.countAccounts ?? (async () => 0),
-    link: options.link ?? (async (backend, p) => {
-      linked.push(backend);
-      p.notify(`▓▒░ pairing: ${FAKE_PAIRING_PAYLOAD} ░▒▓`);
-      p.notify('scanned — linked');
-    }),
+    link:
+      options.link ??
+      (async (backend, p) => {
+        linked.push(backend);
+        p.notify(`▓▒░ pairing: ${FAKE_PAIRING_PAYLOAD} ░▒▓`);
+        p.notify('scanned — linked');
+      }),
     done: new Map(),
     linked,
   };

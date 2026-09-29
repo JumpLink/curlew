@@ -9,7 +9,13 @@
 
 import { describe, expect, it } from '@gjsify/unit';
 
-import { SETUP_FOLLOW_UPS, SETUP_STEPS, humanOnlyRefusal, runSetup, setupStatus } from '../../../src/core/actions/setup.ts';
+import {
+  SETUP_FOLLOW_UPS,
+  SETUP_STEPS,
+  humanOnlyRefusal,
+  runSetup,
+  setupStatus,
+} from '../../../src/core/actions/setup.ts';
 import type { SetupStep, SetupStepState } from '../../../src/core/actions/setup.ts';
 import { fakeContext, fakeHost, fakePrompter } from './setup-fakes.ts';
 
