@@ -453,6 +453,11 @@ export interface DeliverySession {
   nextBatch(): Promise<DeliveryEvent[] | null>;
   /** How the session ended; meaningful once `nextBatch` resolved null. */
   outcome(): DeliveryOutcome;
+  /**
+   * Close the session — twice is fine, and callers do: a receiver that is stopped from outside
+   * closes on the signal and again when its own loop unwinds. Closing ends the session: what
+   * still arrives is drained once, on the way out.
+   */
   close(): Promise<void>;
 }
 

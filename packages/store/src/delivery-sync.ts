@@ -724,9 +724,11 @@ async function runSession(
 
   const state = loadState(db, name, account.id);
   // An abort closes the session: `nextBatch()` then resolves null and the loop ends normally,
-  // with whatever Baileys (or libsignal) still hands over on the way out written first.
+  // with whatever Baileys (or libsignal) still hands over on the way out written first. That
+  // close is kept so the `finally` below awaits it instead of closing a second time.
+  let closing: Promise<void> | null = null;
   const onAbort = () => {
-    void session.close().catch(() => undefined);
+    closing ??= session.close().catch(() => undefined);
   };
   signal?.addEventListener('abort', onAbort);
   try {
@@ -763,10 +765,15 @@ async function runSession(
     return { caughtUp: false, error: result.error, loggedOut: false };
   } finally {
     signal?.removeEventListener('abort', onAbort);
-    try {
-      await session.close();
-    } catch {
-      // A failed goodbye does not undo what was written.
+    if (closing) {
+      // Already closing because the run was stopped: await that, do not close again.
+      await closing;
+    } else {
+      try {
+        await session.close();
+      } catch {
+        // A failed goodbye does not undo what was written.
+      }
     }
   }
 }

@@ -11,6 +11,7 @@ import { type ContactDTO, isChatBackend, isDeliveryBackend, isMailBackend } from
 import type {
   ChatSyncResult,
   DeliverySyncResult,
+  IndexDatabase,
   IndexSearchCriteria,
   IndexedMessage,
   RebuildResult,
@@ -115,6 +116,22 @@ async function addressBook(): Promise<ContactDTO[] | null> {
 }
 
 /**
+ * Rebuild the conversations from the stored mail rows, with the address book.
+ *
+ * Shared, because the classifier's address book is a full read of EDS and a second copy of this
+ * step would be a second set of bugs: `postbote sync` calls it after its writes, and the
+ * receiving daemon calls it debounced after its batches (ADR 0002 §5).
+ */
+export async function rebuildWithAddressBook(
+  db: IndexDatabase,
+): Promise<RebuildResult & { contacts: number | null }> {
+  const contacts = await addressBook();
+  // Sync and rebuild write in multi-row batches: gjsify's sqlite has a per-process budget of
+  // executions (gjsify gap, unfixed, gjsify#1838 — see `insertMany`).
+  return { ...rebuildConversations(db, { contacts: contacts ?? [] }), contacts: contacts?.length ?? null };
+}
+
+/**
  * Build or update the local index from every ENABLED backend, then rebuild the conversations.
  * The only operation that writes to the index.
  */
@@ -154,6 +171,8 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
       } else if (isDeliveryBackend(backend)) {
         if (params.folder) continue;
         // `--full-scan` has nothing to re-take here: a delivery-only network keeps no history.
+        // An account a running daemon holds comes back with `heldBy` instead of an error: those
+        // messages are arriving, so this run stands down for it (ADR 0002 §4).
         deliveries.push({
           backend: name,
           ...(await receiveDeliveries(db, backend, { accountId: params.accountId, mode: 'catch-up' })),
@@ -164,10 +183,7 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
         );
       }
     }
-    const contacts = await addressBook();
-    // Sync and rebuild write in multi-row batches: gjsify's sqlite has a per-process budget of
-    // executions (gjsify gap, unfixed, gjsify#1838 — see `insertMany`).
-    const conversations = rebuildConversations(db, { contacts: contacts ?? [] });
+    const conversations = await rebuildWithAddressBook(db);
     const folders = results.flatMap((r) => r.folders);
     const chatAccounts = chats.flatMap((c) => c.accounts);
     const deliveryAccounts = deliveries.flatMap((d) => d.accounts);
@@ -193,7 +209,7 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
       backends: plugins.map((p) => p.manifest.name),
       chats,
       deliveries,
-      conversations: { ...conversations, contacts: contacts?.length ?? null },
+      conversations,
     };
   } finally {
     db.close();

@@ -8,6 +8,7 @@ export * from './calendar.ts';
 export * from './check.ts';
 export * from './contacts.ts';
 export * from './conversations.ts';
+export * from './daemon.ts';
 export * from './deliveries.ts';
 export * from './index-sync.ts';
 export * from './mail.ts';

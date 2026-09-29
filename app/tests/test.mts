@@ -41,6 +41,7 @@ import date from './unit/core/date.test.ts';
 import limits from './unit/core/limits.test.ts';
 import registry from './unit/core/registry.test.ts';
 import capabilities from './unit/core/capabilities.test.ts';
+import daemon from './unit/core/daemon.test.ts';
 import deliveries from './unit/core/deliveries.test.ts';
 
 import mcpGate from './unit/mcp/gate.test.ts';
@@ -80,6 +81,7 @@ run({
   date,
   limits,
   registry,
+  daemon,
   deliveries,
   capabilities,
   mcpGate,
