@@ -470,9 +470,16 @@ say "terms notice — read it yourself before you accept it."
 step "Current state:"
 try "backends list" pb backends list
 for _be in signal whatsapp; do
-  # A listing, not a linking run: it prints account ids, and /dev/null keeps
-  # them off the screen. Never do this to `accounts add` — that is the QR.
-  if pb accounts list --backend "$_be" >/dev/null 2>&1; then
+  # Ask, do not infer. `accounts list --backend <name>` exits 0 with an empty
+  # list for a backend that was never linked — asking about an unlinked account
+  # changes nothing on disk — so an exit code cannot say whether the phone
+  # accepted the QR. Only the person holding it knows that. The listing is
+  # printed, not silenced: account ids are not secret, and seeing them is how
+  # the answer becomes obvious. Never do this to `accounts add` — that is the
+  # QR, and it stays on this terminal.
+  step "Accounts $_be knows about:"
+  try "accounts list" pb accounts list --backend "$_be"
+  if confirm "Is $_be linked — did you scan its QR code with the phone?"; then
     step "Showing the terms for $_be (no --accept-terms):"
     try "terms $_be" pb backends enable "$_be"
     if confirm "Read the terms for $_be and accept them?"; then
@@ -480,6 +487,8 @@ for _be in signal whatsapp; do
     else
       note "$_be stays disabled"
     fi
+  else
+    note "$_be not linked — leaving it disabled. Link it in stage 2 or 3 first."
   fi
 done
 try "backends list" pb backends list
