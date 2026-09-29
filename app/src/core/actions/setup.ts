@@ -566,13 +566,17 @@ function finishStep(): SetupStep {
     async run(ctx) {
       const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
       const status = await setupStatus(ctx);
+      // The status was read BEFORE this stage recorded itself, so it would otherwise report its
+      // own line as outstanding — the one line it is about to finish.
+      const mine = SETUP_STEPS[7].command;
       await say('What runs now:');
       for (const step of status.steps) {
-        await say(`  ${step.state === 'done' ? '✓' : '·'} ${step.title} — ${step.state}`);
+        const state = step.command === mine ? 'done' : step.state;
+        await say(`  ${state === 'done' ? '✓' : '·'} ${step.title} — ${state}`);
       }
       await say('Keep going on your own:');
       for (const followUp of SETUP_FOLLOW_UPS) await say(`  • ${followUp}`);
-      const outstanding = status.remaining.filter((command) => command !== SETUP_STEPS[7].command);
+      const outstanding = status.remaining.filter((command) => command !== mine);
       if (outstanding.length > 0) {
         await say('Still to run:');
         for (const command of outstanding) await say(`  ${command}`);
