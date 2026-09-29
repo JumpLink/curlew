@@ -4,6 +4,7 @@ import { hideBin } from 'yargs/helpers';
 
 import {
   accountsCommand,
+  addonCanaryCommand,
   backendsCommand,
   calendarCommand,
   checkCommand,
@@ -45,6 +46,7 @@ const parseArgs = () =>
     .command(calendarCommand)
     .command(mcpCommand)
     .command(checkCommand)
+    .command(addonCanaryCommand)
     .demandCommand(1, 'Please provide a command — `postbote --help` lists them all.')
     // Reject unknown commands instead of silently resolving — on GJS an unmatched command
     // would otherwise leave the main loop running forever (hang); on Node it would exit 0.

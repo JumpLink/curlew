@@ -3,6 +3,7 @@
  */
 
 export * from './accounts.ts';
+export * from './addon-canary.ts';
 export * from './backends.ts';
 export * from './calendar.ts';
 export * from './check.ts';

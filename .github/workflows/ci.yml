@@ -68,6 +68,18 @@ jobs:
       - name: Build the CLI bundle
         run: gjsify workspace postbote-cli build
 
+      # Copies the bundle just built out of the tree and asks it to load libsignal from there.
+      # It proves whether a built postbote is RELOCATABLE — right now it is not: `--app gjs`
+      # bakes the ABSOLUTE prebuild path of the native addon into the bundle, so a build can only
+      # ever be used on the machine and path that produced it. Since libsignal loads on first use,
+      # that failure is late (the bundle starts, the first Signal command dies), and every other
+      # check here runs the bundle from inside the tree, where the baked path is correct by
+      # accident. Today this step reports a KNOWN GAP and exits 0; it becomes a real assertion
+      # when gjsify stops baking the path in, and goes red if an absolute addon path ever
+      # reappears in the bundle. It contacts no server and reads no account.
+      - name: Bundle relocation probe (native addon, out of tree)
+        run: gjsify workspace postbote-cli test:relocation
+
       # Runs on gjs AND node. There is no session D-Bus here, so GOA/EDS are unreachable —
       # that is expected and is what the three-state availability probe is for. The tests
       # assert the backend reports itself unavailable cleanly; they never assert a live call

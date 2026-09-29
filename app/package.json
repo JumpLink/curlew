@@ -21,6 +21,7 @@
     "dev": "gjsify run build:gjs && gjsify run start",
     "test": "POSTBOTE_CLI_PREBUILD=$PWD/../node_modules/@signalapp/libsignal-client gjsify test",
     "test:mcp": "node tests/integration/mcp-gjs-smoke.mjs",
+    "test:relocation": "node tests/integration/bundle-relocation.mjs",
     "test:telegram-network": "gjsify build tests/integration/telegram-handshake.ts --app gjs --outfile dist/telegram-handshake.gjs.mjs && gjsify run dist/telegram-handshake.gjs.mjs",
     "test:signal-network": "gjsify build tests/integration/signal-provisioning.ts --app gjs --outfile dist/signal-provisioning.gjs.mjs && gjsify run dist/signal-provisioning.gjs.mjs",
     "test:whatsapp-network": "gjsify build tests/integration/whatsapp-qr.ts --app gjs --external jimp,sharp --outfile dist/whatsapp-qr.gjs.mjs && gjsify run dist/whatsapp-qr.gjs.mjs",

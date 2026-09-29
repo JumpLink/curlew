@@ -73,6 +73,11 @@ gjsify workspace postbote-cli build
 gjsify run app/dist/postbote.gjs.mjs accounts
 ```
 
+The bundle resolves its native addon (libsignal, for the Signal backend) by the
+absolute path it was built at, so do not move or copy a built tree — the copy
+fails at the first Signal command. `postbote-cli test:relocation` measures this
+and says so out loud; the fix is tracked in gjsify.
+
 ## Use it
 
 ```bash
