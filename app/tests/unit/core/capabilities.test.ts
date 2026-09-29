@@ -47,6 +47,15 @@ const DELIVERED_CAPABILITIES: ReadonlyArray<{
 
 export default async () => {
   await describe('Backend capabilities — delivered vs. declared', async () => {
+    // A backend added without a row here would promise whatever its manifest says, unchecked.
+    await it('covers every built-in backend', async () => {
+      const listed = DELIVERED_CAPABILITIES.map((row) => row.backend).sort();
+      expect(listed.join(',')).toBe(
+        BUILTIN_PLUGINS.map((p) => p.manifest.name)
+          .sort()
+          .join(','),
+      );
+    });
     for (const { backend, manifest, trueFlags } of DELIVERED_CAPABILITIES) {
       await it(`${backend}: only ${trueFlags || '(none)'} are true`, async () => {
         const delivered = CAPABILITY_NAMES.filter((n) => manifest.capabilities[n]).join(',');
