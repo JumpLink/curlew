@@ -60,14 +60,27 @@ export interface SetupPrompter extends AccountPrompter {
  * install needs neither. */
 export type SetupMode = 'checkout' | 'published';
 
-/** What a step did, so the next stage and the final report can use it without re-asking. */
+/**
+ * What a step did, so the next stage and the final report can use it without re-asking.
+ *
+ * `warning` is the reason this is not three bare literals. A step whose CHECKS RAN but found
+ * something wrong — the readiness stage reaching a machine with no session bus at all — completes,
+ * so `status: 'done'` is the truth, and `done` alone is a lie the status surface repeats. Measured
+ * on this file before `warning` existed: `postbote setup --status` with `DBUS_SESSION_BUS_ADDRESS`
+ * pointing at nothing printed `done` for readiness and nothing else, because the stage said
+ * "GNOME Online Accounts: unavailable" through `prompter.notify` — a word only the interactive
+ * stream ever saw. Without GOA the whole product is inert, and it is inert QUIETLY, so the fact
+ * has to travel in the value every surface reads rather than in a line a person might not be there
+ * to see. The same reasoning as `humanOnly` living on the step: the core carries the fact, each
+ * frontend renders it, and the two cannot drift.
+ */
 export type SetupOutcome =
   /** The stage did its work. */
-  | { status: 'done'; detail?: string }
+  | { status: 'done'; detail?: string; warning?: string }
   /** The person declined, or the thing was already in place. Never an error. */
-  | { status: 'skipped'; reason: string }
+  | { status: 'skipped'; reason: string; warning?: string }
   /** The stage could not finish. Carries the reason, never a payload or a backend's output. */
-  | { status: 'failed'; reason: string };
+  | { status: 'failed'; reason: string; warning?: string };
 
 /** What the run tells a step about the machine. Everything a step may touch is in here, so a
  * test drives the whole run with a fake host and a fake prompter. */
@@ -95,6 +108,14 @@ export interface SetupContext {
    * stand on it. Defaults to the real listing.
    */
   countAccounts?(backend: string): Promise<number>;
+  /**
+   * Probe GNOME Online Accounts — `{ ok, message }`, never a throw. A seam for the same reason
+   * `link` and `countAccounts` are ones: the readiness stage's warning is only a testable fact if
+   * a test can put "no session bus at all" on a machine that HAS accounts, and it must stay that
+   * way on the Node run too (where the probe reports unavailable by definition). Defaults to the
+   * real `accountsCheck`.
+   */
+  checkAccounts?(): Promise<{ ok: boolean; message: string }>;
   /** Set by a step, read by later ones. */
   readonly done: Map<string, SetupOutcome>;
 }
@@ -160,8 +181,19 @@ export interface SetupStep {
    * done-ness is observable from the outside; a step without one reports what this run
    * recorded, or `remaining`. A probe that throws reports `remaining` — a status read must
    * never be the thing that fails.
+   *
+   * It reports a `warning` alongside the `state` for the same reason `SetupOutcome` has one: a
+   * check that RAN and found the machine inert has still completed, so the state is `done` and
+   * the finding rides next to it. Returning a bare state is still valid — a step with nothing to
+   * report says only that.
    */
-  probe?(ctx: SetupContext): Promise<SetupStepState>;
+  probe?(ctx: SetupContext): Promise<SetupStepState | SetupProbe>;
+}
+
+/** A probe's answer: the state, plus anything the read learned that the state cannot express. */
+export interface SetupProbe {
+  readonly state: SetupStepState;
+  readonly warning?: string;
 }
 
 /**
@@ -192,6 +224,28 @@ const SECRET_NOTE =
 
 // ── 1. readiness ─────────────────────────────────────────────────────────────
 
+/**
+ * The live GOA/EDS check, and what a machine without it means.
+ *
+ * One function for both paths, because the defect this replaced was a split brain: `run` asked
+ * the question and answered it out loud, `probe` never asked it, and `setup --status` — which
+ * only probes — reported a machine that cannot read a single account as `done` with nothing else
+ * said about it. The word is `unavailable`, not `not ready`: the check DID run and DID complete,
+ * which is why `state` stays `done` and only the warning carries the finding. Anything softer
+ * ("not ready") would make the assertion below pass while the fact stopped being legible.
+ */
+const GOA_WARNING = 'GNOME Online Accounts: unavailable';
+
+async function goaWarning(ctx: SetupContext): Promise<string | undefined> {
+  try {
+    const result = await (ctx.checkAccounts ?? accountsCheck)();
+    if (result.ok) return undefined;
+    return `${GOA_WARNING} — ${result.message}`;
+  } catch (err: unknown) {
+    return `${GOA_WARNING} — ${err instanceof Error ? err.message : String(err)}`;
+  }
+}
+
 function readinessStep(): SetupStep {
   return {
     name: 'readiness',
@@ -199,9 +253,16 @@ function readinessStep(): SetupStep {
     command: 'postbote setup --only readiness',
     async probe(ctx) {
       const readiness = setupReadiness(ctx);
-      if (readiness.mode === 'published') return 'done';
-      if (readiness.bundle === null || !ctx.host.exists(readiness.bundle)) return 'remaining';
-      return readiness.gjsify === null ? 'remaining' : 'done';
+      // The warning rides along with the state, so `--status` and an agent's `setup_status` see
+      // the same finding a person would be told at the keyboard.
+      if (readiness.mode === 'published') return { state: 'done', warning: await goaWarning(ctx) };
+      if (readiness.bundle === null || !ctx.host.exists(readiness.bundle)) {
+        return { state: 'remaining', warning: await goaWarning(ctx) };
+      }
+      if (readiness.gjsify === null) {
+        return { state: 'remaining', warning: await goaWarning(ctx) };
+      }
+      return { state: 'done', warning: await goaWarning(ctx) };
     },
     async run(ctx) {
       const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
@@ -250,17 +311,10 @@ function readinessStep(): SetupStep {
       // check, never a thrown stage: readiness says what is missing, it does not stop the walk.
       const runtime = runtimeName();
       await say(`  runtime: ${runtime}${runtime === 'gjs' ? '' : ' — the GNOME backends need GJS'}`);
-      try {
-        const result = await accountsCheck();
-        await say(
-          `  GNOME Online Accounts: ${result.ok ? 'reachable' : 'not reachable'} — ${result.message}`,
-        );
-      } catch (err: unknown) {
-        await say(
-          `  GNOME Online Accounts: unavailable — ${err instanceof Error ? err.message : String(err)}`,
-        );
-      }
-      return { status: 'done', detail: 'readiness' };
+      // No `say()` for the verdict: the finding travels in the outcome, so the driver prints it
+      // once for every surface and a read-only one (`--status`, an agent's `setup_status`) is not
+      // left with a `done` that means nothing.
+      return { status: 'done', detail: 'readiness', warning: await goaWarning(ctx) };
     },
   };
 }
@@ -576,6 +630,7 @@ function finishStep(): SetupStep {
       for (const step of status.steps) {
         const state = step.command === mine ? 'done' : step.state;
         await say(`  ${state === 'done' ? '✓' : '·'} ${step.title} — ${state}`);
+        if (step.command !== mine && step.warning !== undefined) await say(`      ⚠ ${step.warning}`);
       }
       await say('Keep going on your own:');
       for (const followUp of SETUP_FOLLOW_UPS) await say(`  • ${followUp}`);
@@ -657,8 +712,13 @@ export interface SetupStatus {
     state: SetupStepState;
     /** Why it reads that way — 'probe', 'this run', or 'no probe'. */
     source: 'probe' | 'run' | 'unknown';
+    /** What the step learned that `state` cannot say. Absent when there is nothing to report. */
+    warning?: string;
   }[];
   readonly done: number;
+  /** How many steps carry a warning. Counted, not just listed: a warning you only see when you
+   * already went looking is not a warning. */
+  readonly warnings: number;
   /** The `command` of every stage that is not done, in order — what is left, as invocations. */
   readonly remaining: string[];
 }
@@ -692,32 +752,44 @@ export async function setupStatus(
   for (const step of steps) {
     let state: SetupStepState = 'remaining';
     let source: SetupStatus['steps'][number]['source'] = 'unknown';
+    let warning: string | undefined;
     const recorded = ctx.done.get(step.name);
     if (recorded !== undefined) {
       state = recorded.status === 'done' ? 'done' : recorded.status === 'skipped' ? 'skipped' : 'remaining';
       source = 'run';
+      warning = recorded.warning;
     } else if (step.probe !== undefined) {
       try {
-        state = await step.probe(ctx);
+        const probe = await step.probe(ctx);
+        // A bare state is a valid answer; an object carries the finding next to it. Normalised
+        // HERE so every step, old or new, writes one shape.
+        state = typeof probe === 'string' ? probe : probe.state;
+        warning = typeof probe === 'string' ? undefined : probe.warning;
         source = 'probe';
       } catch {
         state = 'remaining';
         source = 'probe';
       }
     }
-    rows.push({
+    const row: SetupStatus['steps'][number] = {
       name: step.name,
       title: step.title,
       command: step.command,
       humanOnly: step.humanOnly === true,
       state,
       source,
-    });
+    };
+    // Absent rather than `undefined` when there is nothing to report, so a consumer can test for
+    // the warning's PRESENCE — and a surface that forgets to pass it on shows no warning at all,
+    // which is the failure this whole mechanism exists to make visible.
+    if (warning !== undefined) row.warning = warning;
+    rows.push(row);
   }
   return {
     readiness: setupReadiness(ctx),
     steps: rows,
     done: rows.filter((s) => s.state === 'done').length,
+    warnings: rows.filter((s) => s.warning !== undefined).length,
     remaining: rows.filter((s) => s.state !== 'done').map((s) => s.command),
   };
 }
@@ -789,6 +861,11 @@ export async function runSetup(ctx: SetupContext, options: SetupRunOptions = {})
     }
     ctx.done.set(step.name, outcome);
     steps.push({ name: step.name, title: step.title, outcome });
+    // The ONE renderer of a warning, for every surface: a step no longer prints its own findings
+    // through the prompter, because a word that only reaches the interactive stream is a fact the
+    // status surfaces lose — which is exactly how a machine with no session bus came to be
+    // reported as `done` and saying nothing else.
+    if (outcome.warning !== undefined) await ctx.prompter.notify(`  ⚠ ${outcome.warning}`);
     if (outcome.status === 'done') continue;
     if (outcome.status === 'failed') {
       ok = false;

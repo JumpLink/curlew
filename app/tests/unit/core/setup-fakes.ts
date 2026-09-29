@@ -128,6 +128,12 @@ export interface FakeContextOptions {
   link?: (backend: string, prompter: SetupPrompter) => Promise<void>;
   /** What the account counter answers. Default: nothing linked, on every backend. */
   countAccounts?: (backend: string) => Promise<number>;
+  /**
+   * What the live GOA/EDS probe answers. Default: a healthy session bus, so a test that is not
+   * about GOA does not trip over the machine it runs on. A test that IS about it arms this —
+   * the seam exists because the alternative is a test that passes only on a headless box.
+   */
+  checkAccounts?: () => Promise<{ ok: boolean; message: string }>;
   /** Backends the fake config has enabled, by name. */
   enabled?: string[];
   env?: Record<string, string>;
@@ -151,6 +157,7 @@ export function fakeContext(options: FakeContextOptions = {}): FakeContext {
     configPath: options.configPath ?? join(SANDBOX, 'postbote', 'config.json'),
     indexPath: options.indexPath ?? join(SANDBOX, 'postbote', 'index.db'),
     countAccounts: options.countAccounts ?? (async () => 0),
+    checkAccounts: options.checkAccounts ?? (async () => ({ ok: true, message: 'OK (2 account(s): mail)' })),
     link:
       options.link ??
       (async (backend, p) => {

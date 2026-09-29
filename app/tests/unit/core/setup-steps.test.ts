@@ -34,7 +34,8 @@ function transcript(ctx: { prompter: { notified: string[] } }): string {
 async function probeStage(name: string, ctx: SetupContext): Promise<SetupStepState> {
   const step = stage(name);
   if (step.probe === undefined) throw new Error(`${name} has no probe`);
-  return step.probe(ctx);
+  const probe = await step.probe(ctx);
+  return typeof probe === 'string' ? probe : probe.state;
 }
 
 function stage(name: string): (typeof SETUP_STEPS)[number] {
@@ -96,6 +97,68 @@ export default async function setupSteps(): Promise<void> {
       const outcome = await stage('readiness').run(ctx);
       expect(outcome.status).toBe('done');
       expect(transcript(ctx).includes('No checkout needed')).toBe(true);
+    });
+
+    // The defect this pins, measured on the previous shape: with no session bus at all,
+    // `postbote setup --status` printed `done` for readiness and nothing else. The stage's own
+    // verdict went through `prompter.notify`, so it reached a person at a keyboard and no other
+    // surface — and a machine that cannot read a single account reported itself ready, silently,
+    // while the whole product is inert. The warning now travels in the VALUE, on the probe path
+    // (`--status` never runs a stage) as well as the run path.
+    //
+    // Pinned on the exact words. "unavailable" is the one that carries the meaning: `state` stays
+    // `done` because the check DID run, so a refactor that softens this to "not ready" — which
+    // would read as a stage that failed rather than a finding about the machine — must fail here
+    // on purpose.
+    it('carries a dead session bus as a warning, not as a silent done', async () => {
+      // A machine that is otherwise READY — bundle and gjsify both there — so the only finding
+      // under test is the session bus. Otherwise the stage reads `remaining` and proves nothing
+      // about a warning that rides on a `done`.
+      const host = fakeHost();
+      host.commands.set('gjsify', { path: '/usr/bin/gjsify', code: 0, output: '' });
+      host.files.set('/home/tester/app/dist/postbote.gjs.mjs', 'bundle');
+      const dead = fakeContext({
+        host,
+        checkAccounts: async () => {
+          throw new Error('Could not connect to the session bus');
+        },
+      });
+      const status = await setupStatus(dead);
+      const readiness = status.steps.find((s) => s.name === 'readiness');
+      expect(readiness?.state).toBe('done');
+      expect(readiness?.warning).toContain('GNOME Online Accounts');
+      expect(readiness?.warning).toContain('unavailable');
+      // Counted, not only listed: a warning you only see when you go looking is not a warning.
+      expect(status.warnings).toBe(1);
+    });
+
+    it('reports a reachable session bus as done with NO warning', async () => {
+      const host = fakeHost();
+      host.commands.set('gjsify', { path: '/usr/bin/gjsify', code: 0, output: '' });
+      host.files.set('/home/tester/app/dist/postbote.gjs.mjs', 'bundle');
+      const alive = fakeContext({ host });
+      const status = await setupStatus(alive);
+      expect(status.steps.find((s) => s.name === 'readiness')?.state).toBe('done');
+      expect(status.steps.find((s) => s.name === 'readiness')?.warning).toBe(undefined);
+      expect(status.warnings).toBe(0);
+    });
+
+    it('takes the warning from a run through to the status, and prints it once', async () => {
+      const host = fakeHost();
+      host.commands.set('gjsify', { path: '/usr/bin/gjsify', code: 0, output: '' });
+      host.files.set('/home/tester/app/dist/postbote.gjs.mjs', 'bundle');
+      const ctx = fakeContext({ host, checkAccounts: async () => ({ ok: false, message: 'no bus' }) });
+      const outcome = await stage('readiness').run(ctx);
+      expect(outcome.status).toBe('done');
+      expect(outcome.status === 'done' && outcome.warning).toContain('unavailable');
+      // The step no longer prints its own verdict — the driver renders the outcome's warning, so
+      // the interactive and the read-only surfaces cannot drift.
+      expect(transcript(ctx).includes('unavailable')).toBe(false);
+      await runSetup(ctx, { only: ['readiness'] });
+      expect(transcript(ctx).includes('⚠ GNOME Online Accounts: unavailable')).toBe(true);
+      const status = await setupStatus(ctx);
+      expect(status.steps.find((s) => s.name === 'readiness')?.warning).toContain('unavailable');
+      expect(status.warnings).toBe(1);
     });
   });
 

@@ -126,9 +126,16 @@ function printStatus(ctx: SetupContext, status: Awaited<ReturnType<typeof setupS
     const human = step.humanOnly ? ' (you only)' : '';
     console.log(`  ${mark} ${step.title}${human}`);
     console.log(`      ${step.state} — ${step.command}`);
+    // Under its own step, never in a separate section: a finding with no line under the stage it
+    // belongs to is a finding nobody connects to the stage they have to fix.
+    if (step.warning !== undefined) console.log(`      ⚠ ${step.warning}`);
   }
   console.log('');
-  console.log(`  ${status.done} of ${status.steps.length} stages done`);
+  // Counted in the summary, not only listed. `2 of 8 stages done` is a passing sentence on a
+  // machine that cannot read a single account.
+  const warnings =
+    status.warnings === 0 ? '' : `, ${status.warnings} warning${status.warnings === 1 ? '' : 's'}`;
+  console.log(`  ${status.done} of ${status.steps.length} stages done${warnings}`);
   if (status.remaining.length > 0) {
     console.log('');
     console.log('  Still to run:');
