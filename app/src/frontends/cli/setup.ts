@@ -19,7 +19,7 @@ import type { CommandModule } from 'yargs';
 
 import type { SetupContext } from '../../core/actions/setup.ts';
 import { SETUP_STEPS, defaultLink, detectSetup, runSetup, setupStatus } from '../../core/actions/setup.ts';
-import { nodeHost } from '../../core/actions/setup-host.ts';
+import { nodeHost, setupConfigPath, setupIndexPath } from '../../core/actions/setup-host.ts';
 import { terminalSetupPrompter } from './prompt.ts';
 import { pickArgv } from './output.ts';
 
@@ -55,8 +55,8 @@ export const setupCommand: CommandModule = {
       ...where,
       prompter,
       host,
-      configPath: process.env.POSTBOTE_CONFIG ?? defaultConfigPath(host),
-      indexPath: defaultIndexPath(host),
+      configPath: process.env.POSTBOTE_CONFIG ?? setupConfigPath(host),
+      indexPath: setupIndexPath(host),
       link: defaultLink,
       done: new Map(),
     };
@@ -134,18 +134,4 @@ function printStatus(ctx: SetupContext, status: Awaited<ReturnType<typeof setupS
     console.log('  Still to run:');
     for (const command of status.remaining) console.log(`    ${command}`);
   }
-}
-
-/** `$XDG_CONFIG_HOME/postbote/config.json`, XDG-correct — the same rule as `@postbote/store`. */
-function defaultConfigPath(host: ReturnType<typeof nodeHost>): string {
-  const xdg = host.env('XDG_CONFIG_HOME');
-  const base = xdg !== undefined && xdg !== '' ? xdg : `${host.home()}/.config`;
-  return `${base}/postbote/config.json`;
-}
-
-/** `$XDG_DATA_HOME/postbote/index.db`, for the same reason. */
-function defaultIndexPath(host: ReturnType<typeof nodeHost>): string {
-  const xdg = host.env('XDG_DATA_HOME');
-  const base = xdg !== undefined && xdg !== '' ? xdg : `${host.home()}/.local/share`;
-  return `${base}/postbote/index.db`;
 }

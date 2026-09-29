@@ -144,15 +144,29 @@ export function nodeHost(env: NodeJS.ProcessEnv = process.env): CommandRunner {
 
 /** `$XDG_CONFIG_HOME/systemd/user`, XDG-correct — never a hardcoded `~/.config`. */
 export function systemdUserUnitDir(host: CommandRunner): string {
-  const xdg = host.env('XDG_CONFIG_HOME');
-  const base = xdg !== undefined && xdg !== '' ? xdg : join(host.home(), '.config');
-  return join(base, 'systemd', 'user');
+  return join(xdgConfigHome(host), 'systemd', 'user');
 }
 
-/** `$XDG_DATA_HOME/postbote`'s config sibling — the same rule as `@postbote/store`'s paths. */
+/** `$XDG_CONFIG_HOME`, or `$HOME/.config` when it is unset or empty. */
 export function xdgConfigHome(host: CommandRunner): string {
   const xdg = host.env('XDG_CONFIG_HOME');
   return xdg !== undefined && xdg !== '' ? xdg : join(host.home(), '.config');
+}
+
+/** `$XDG_DATA_HOME`, or `$HOME/.local/share`. */
+export function xdgDataHome(host: CommandRunner): string {
+  const xdg = host.env('XDG_DATA_HOME');
+  return xdg !== undefined && xdg !== '' ? xdg : join(host.home(), '.local', 'share');
+}
+
+/** `$XDG_CONFIG_HOME/postbote/config.json` — the file a run reads and writes. */
+export function setupConfigPath(host: CommandRunner): string {
+  return join(xdgConfigHome(host), 'postbote', 'config.json');
+}
+
+/** `$XDG_DATA_HOME/postbote/index.db` — the index a run reports on, never the user's in a test. */
+export function setupIndexPath(host: CommandRunner): string {
+  return join(xdgDataHome(host), 'postbote', 'index.db');
 }
 
 /** Create the parent directory of a file, then write it. */

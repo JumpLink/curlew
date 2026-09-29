@@ -169,6 +169,9 @@ export interface SetupStep {
  * wording decisions: terms are displayed before they are accepted, `sync` is named as the only
  * writer of the index, and the phone is driven instead of a browser.
  */
+/** The report stage, by id: a stage must be able to name itself without counting its own index. */
+export const FINISH_STAGE = 'finish';
+
 export const SETUP_STEPS: readonly SetupStep[] = [
   readinessStep(),
   linkStep('signal', 'Link Signal', 'Signal → Settings → Linked devices → Link new device.'),
@@ -560,15 +563,15 @@ function unitStep(): SetupStep {
 
 function finishStep(): SetupStep {
   return {
-    name: 'finish',
+    name: FINISH_STAGE,
     title: 'Finish: what runs now, what is left',
-    command: 'postbote setup --only finish',
+    command: `postbote setup --only ${FINISH_STAGE}`,
     async run(ctx) {
       const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
       const status = await setupStatus(ctx);
       // The status was read BEFORE this stage recorded itself, so it would otherwise report its
       // own line as outstanding — the one line it is about to finish.
-      const mine = SETUP_STEPS[7].command;
+      const mine = `postbote setup --only ${FINISH_STAGE}`;
       await say('What runs now:');
       for (const step of status.steps) {
         const state = step.command === mine ? 'done' : step.state;
