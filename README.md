@@ -202,10 +202,13 @@ its part of the index is irreplaceable, not a cache. Consequences:
 - **Run `postbote sync` right after linking.** The phone hands the recent
   history (roughly the last months) to a new device once. `sync` connects,
   receives that history and everything queued while no device of postbote was
-  connected, writes it, and disconnects once WhatsApp has nothing more to
-  hand over (it gives up waiting after ten minutes and says so). Set
-  `backends.whatsapp.settings.fullHistory: true` in the config **before**
-  linking to ask for the full history instead — larger, slower.
+  connected, writes it, and disconnects once WhatsApp has nothing more to hand
+  over. If that does not happen within ten minutes, the run stops there and that
+  is **not an error**: everything received is written and the run counts as a
+  success. The only sign in the output is that account's `caughtUp: false`
+  (`error` stays `null`), and whatever WhatsApp still had queued arrives in the
+  next `sync`. Set `backends.whatsapp.settings.fullHistory: true` in the config
+  **before** linking to ask for the full history instead — larger, slower.
 - **Sync at least every two weeks.** WhatsApp unlinks a device that has not
   connected for about 14 days; after that, `sync` reports the logout and you link
   again (the conversations stay, under the same account id). A receiving daemon
