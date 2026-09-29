@@ -142,6 +142,56 @@ async function rejection(fn: () => Promise<unknown>): Promise<string> {
   return '';
 }
 
+/**
+ * A clock that only moves when told to, and whose timers can also be woken before they are due.
+ * The receive run's time cap is crossed by moving this clock instead of waiting: 200ms of wall
+ * clock make the test depend on how long the tests before it happened to run.
+ */
+class ManualClock {
+  private at = 0;
+  private next = 1;
+  private readonly timers = new Map<number, { at: number; fn: () => void }>();
+
+  readonly now = (): number => this.at;
+
+  readonly set = (fn: () => void, ms: number): unknown => {
+    const id = this.next++;
+    this.timers.set(id, { at: this.at + ms, fn });
+    return id;
+  };
+
+  readonly clear = (handle: unknown): void => {
+    this.timers.delete(handle as number);
+  };
+
+  pending(): number {
+    return this.timers.size;
+  }
+
+  /** Move forward, firing every timer that falls due, in order. */
+  advance(ms: number): void {
+    const until = this.at + ms;
+    for (;;) {
+      const due = [...this.timers].filter(([, t]) => t.at <= until).sort((a, b) => a[1].at - b[1].at)[0];
+      if (!due) break;
+      this.timers.delete(due[0]);
+      this.at = due[1].at;
+      due[1].fn();
+    }
+    this.at = until;
+  }
+
+  /** Fire every pending timer now, whatever the clock says — a wake-up that came early. */
+  wake(): void {
+    const pending = [...this.timers].sort((a, b) => a[1].at - b[1].at);
+    this.timers.clear();
+    for (const [, timer] of pending) timer.fn();
+  }
+}
+
+/** One macrotask: whatever was queued with setTimeout has run by then. */
+const tick = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+
 /** Link postbote's device through the scripted phone. */
 async function link(dir: string, phone = new Phone()): Promise<Phone> {
   await new SignalBackend(context(dir), { lib: LIB, linkNetwork: () => phone.network() }).addAccount(
@@ -1264,10 +1314,21 @@ export default async () => {
         const server = new FakeServer();
         server.sendQueueEmpty = false;
         server.push(await directEnvelope(alice, { dataMessage: { body: 'eins', timestamp: 6000 } }, 6000));
-        const result = await receiveDeliveries(
+        const clock = new ManualClock();
+        const running = receiveDeliveries(
           db,
-          backendFor(dir, server, trust, { receiver: { maxMs: 200 } }),
+          backendFor(dir, server, trust, {
+            receiver: { maxMs: 200, now: clock.now, setTimer: clock.set, clearTimer: clock.clear },
+          }),
         );
+        // A wake-up before the cap only looks at the clock: it arms the next one and keeps going.
+        while (clock.pending() === 0) await tick();
+        clock.wake();
+        expect(clock.pending()).toBe(1);
+        // The envelope is journaled, flushed and acknowledged before the cap is crossed.
+        while (server.acked.length === 0) await tick();
+        clock.advance(200);
+        const result = await running;
         expect(result.accounts[0].caughtUp).toBe(false);
         expect(result.accounts[0].error).toBe(null);
         expect(result.accounts[0].added).toBe(1);
