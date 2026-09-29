@@ -330,7 +330,10 @@ export interface SetAsideRecord {
 export interface SetAsideLedger {
   /** What is still kept, oldest first. */
   entries: SetAsideRecord[];
-  /** How many the backend's own bound pushed out — data that really is gone. */
+  /**
+   * What the listing leaves out besides `entries`: the backend's own bound pushed them out, or it
+   * cannot say who sent them and when — either way there is nothing here to find on the phone.
+   */
   dropped: number;
 }
 

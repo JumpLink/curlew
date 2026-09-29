@@ -29,7 +29,8 @@ export interface SetAsideAccount {
   accountId: string;
   /** Entries below — the same number, so a caller need not walk the array to count. */
   count: number;
-  /** Plaintexts the backend's own bound pushed out: data that really is gone. */
+  /** What this listing leaves out besides `entries`: the backend's own bound pushed them out, or
+   * it has no sender and time to show for them — either way this command prints nothing for them. */
   dropped: number;
   entries: SetAsideRecord[];
 }
