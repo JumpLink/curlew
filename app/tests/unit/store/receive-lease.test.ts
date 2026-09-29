@@ -120,7 +120,8 @@ export default async () => {
         // Two processes, two takes. A deferred BEGIN reads first and upgrades at the write, and
         // SQLite does NOT run the busy handler for that upgrade (SQLITE_BUSY_SNAPSHOT): both
         // would read "free" and one would then fail instead of waiting its turn. BEGIN
-        // IMMEDIATE plus a busy timeout is what turns that into a queue.
+        // IMMEDIATE plus a busy timeout is what turns that into a queue. The lock itself was
+        // MEASURED cross-process on both runtimes — see the note on `withLeaseTransaction`.
         const statements: string[] = [];
         const exec = db.exec.bind(db);
         (db as { exec: typeof db.exec }).exec = ((sql: string) => {
@@ -148,35 +149,6 @@ export default async () => {
         ).toThrow(/nope/);
         expect(statements[statements.length - 1]).toBe('ROLLBACK');
         expect(busyTimeoutMs(db)).toBe(LEASE_BUSY_TIMEOUT_MS);
-      } finally {
-        db.close();
-      }
-    });
-
-    await it('loses the race to a competitor that wrote between the read and the write', async () => {
-      const db = freshDb();
-      try {
-        // The window BEGIN IMMEDIATE closes — and cannot close on GJS, where an explicit
-        // transaction holds no write lock (see receive-lease.ts). A competitor's claim lands
-        // between this take's read and its write: the conditional write must not clobber it, and
-        // the read-back must report the loser.
-        const prepare = db.prepare.bind(db);
-        let clobbered = false;
-        (db as { prepare: typeof db.prepare }).prepare = ((sql: string) => {
-          if (
-            sql.includes('INTO receive_leases (backend, account_id, holder, heartbeat_at)') &&
-            sql.startsWith('INSERT') &&
-            !clobbered
-          ) {
-            clobbered = true;
-            prepare(sql).run(BACKEND, ACCOUNT, 'pid-other', T0.toISOString());
-          }
-          return prepare(sql);
-        }) as typeof db.prepare;
-        const take = takeReceiveLease(db, BACKEND, ACCOUNT, 'pid-1', T0);
-        expect(take.acquired).toBe(false);
-        expect(take.acquired === false && take.holder).toBe('pid-other');
-        expect(leaseHolder(db, ACCOUNT)).toBe('pid-other');
       } finally {
         db.close();
       }

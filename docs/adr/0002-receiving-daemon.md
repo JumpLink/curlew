@@ -89,11 +89,17 @@ wall clock.
 
 ### 4. The lock is a lease in the index database (schema v6, additive)
 
-One row per `(backend, account)`: the holder's pid and a heartbeat timestamp. The daemon takes
-the lease **before** connecting an account, refreshes it every 30 s, drops it on stop. A lease
-whose heartbeat is older than three intervals is stale — the holder crashed — and is taken
-over. Take and refresh are one statement each inside one transaction, so two daemons starting
-at once cannot both win.
+One row per `(backend, account)`: the holder's pid and a heartbeat timestamp. **Both** the
+daemon and `postbote sync` take the lease before they connect an account, refresh it while they
+receive, and drop it when they stop — a one-sided lock is no lock: a `sync` in the middle of a
+WhatsApp catch-up (up to ten minutes) would still let a daemon join it. A lease whose heartbeat
+is older than three intervals is stale — the holder crashed — and is taken over.
+
+Take, refresh and release are read-decide-write inside `BEGIN IMMEDIATE` with a busy timeout, so
+two runs starting at once cannot both win: a deferred transaction would read "free" and both
+would try to write, and SQLite does not run the busy handler for that upgrade. The lock was
+measured cross-process on both runtimes, and a contender that runs out of patience is reported as
+"not acquired" — a `sync` stands down, a daemon waits and takes the account when it is free.
 
 `postbote sync` skips a delivery account with a fresh lease and reports it as *received by the
 running daemon*. Not an error and not counted in `errors`/`failed`: nothing failed, the
