@@ -44,6 +44,8 @@ import deliveries from './unit/core/deliveries.test.ts';
 import mcpGate from './unit/mcp/gate.test.ts';
 import mcpTools from './unit/mcp/tools.test.ts';
 
+import bundlePaths from './unit/integration/bundle-paths.test.ts';
+
 run({
   runtime,
   backends,
@@ -80,4 +82,5 @@ run({
   capabilities,
   mcpGate,
   mcpTools,
+  bundlePaths,
 });
