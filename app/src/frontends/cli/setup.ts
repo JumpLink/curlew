@@ -21,6 +21,7 @@ import type { SetupContext } from '../../core/actions/setup.ts';
 import { SETUP_STEPS, defaultLink, detectSetup, runSetup, setupStatus } from '../../core/actions/setup.ts';
 import { nodeHost, setupConfigPath, setupIndexPath } from '../../core/actions/setup-host.ts';
 import { terminalSetupPrompter } from './prompt.ts';
+import { bold, dim, stateWord, yellow } from './colour.ts';
 import { pickArgv } from './output.ts';
 
 export const setupCommand: CommandModule = {
@@ -118,27 +119,30 @@ function printStatus(ctx: SetupContext, status: Awaited<ReturnType<typeof setupS
   ];
   // stdout for the report: a `--status` is the one thing here that is read, not asked, and a
   // person may well pipe it.
-  console.log('postbote setup — what is done and what is left\n');
-  for (const [key, value] of rows) console.log(`  ${key.padEnd(18)}${value}`);
+  const OUT = 1;
+  console.log(`${bold('postbote setup — what is done and what is left', OUT)}\n`);
+  for (const [key, value] of rows) console.log(`  ${dim(key.padEnd(18), OUT)}${value}`);
   console.log('');
   for (const step of status.steps) {
     const mark = step.state === 'done' ? '✓' : step.state === 'skipped' ? '-' : '·';
-    const human = step.humanOnly ? ' (you only)' : '';
-    console.log(`  ${mark} ${step.title}${human}`);
-    console.log(`      ${step.state} — ${step.command}`);
+    const human = step.humanOnly ? ` ${yellow('(you only)', OUT)}` : '';
+    console.log(`  ${mark} ${bold(step.title, OUT)}${human}`);
+    console.log(`      ${stateWord(step.state, OUT)} ${dim('—', OUT)} ${dim(step.command, OUT)}`);
     // Under its own step, never in a separate section: a finding with no line under the stage it
     // belongs to is a finding nobody connects to the stage they have to fix.
-    if (step.warning !== undefined) console.log(`      ⚠ ${step.warning}`);
+    if (step.warning !== undefined) console.log(`      ${yellow('⚠', OUT)} ${yellow(step.warning, OUT)}`);
   }
   console.log('');
   // Counted in the summary, not only listed. `2 of 8 stages done` is a passing sentence on a
   // machine that cannot read a single account.
   const warnings =
-    status.warnings === 0 ? '' : `, ${status.warnings} warning${status.warnings === 1 ? '' : 's'}`;
-  console.log(`  ${status.done} of ${status.steps.length} stages done${warnings}`);
+    status.warnings === 0
+      ? ''
+      : `, ${yellow(`${status.warnings} warning${status.warnings === 1 ? '' : 's'}`, OUT)}`;
+  console.log(`  ${dim(`${status.done} of ${status.steps.length} stages done`, OUT)}${warnings}`);
   if (status.remaining.length > 0) {
     console.log('');
-    console.log('  Still to run:');
-    for (const command of status.remaining) console.log(`    ${command}`);
+    console.log(`  ${bold('Still to run:', OUT)}`);
+    for (const command of status.remaining) console.log(`    ${dim(command, OUT)}`);
   }
 }
