@@ -11,9 +11,12 @@
  * left by a crash replays it into the store before anything new.
  *
  * Format: one JSON-serialized `DeliveryEvent` per line. A torn last line (the crash hit the
- * write) is skipped — its event never finished reaching the disk, so nothing that WAS written
- * is lost with it. Replaying an event the store already has is harmless: every write is keyed
- * (a message row by chat and id), so recovery yields each message exactly once.
+ * write) is not just skipped but CUT: the bytes are removed before anything is appended, because
+ * an append would otherwise splice the next event onto them and lose that one instead — and that
+ * one was already acknowledged to WhatsApp, so it exists nowhere else. Its own write never
+ * returned, hence was never acknowledged either: WhatsApp delivers it again. Replaying an event the
+ * store already has is harmless: every write is keyed (a message row by chat and id), so recovery
+ * yields each message exactly once.
  *
  * Where: `<account id>.journal` next to the account's session file, in the backend's secrets
  * directory (0700; the file 0600). It holds message content, so it needs at least the index's
@@ -44,7 +47,7 @@ export interface EventJournal {
   readonly recovered: readonly DeliveryEvent[];
   /** Append durably: returns only once the events are on disk. */
   append(events: readonly DeliveryEvent[]): void;
-  /** Bytes written so far — the mark a handed-out batch ends at. */
+  /** Bytes written so far — the mark a handed-out batch ends at, an offset into the file itself. */
   size(): number;
   /** Drop everything before `mark`: that batch is committed to the index. */
   release(mark: number): void;
@@ -61,30 +64,43 @@ export class FileJournal implements EventJournal {
     this.path = path;
     this.recovered = recovered;
     this.bytes = bytes;
-    this.fd = FileJournal.openAppend(path);
+    this.fd = FileJournal.openAppend(path, bytes);
   }
 
-  private static openAppend(path: string): number {
+  private static openAppend(path: string, size: number): number {
     const fd = openSync(path, 'a', 0o600);
     // Again after open: a file restored from elsewhere may carry another mode.
     chmodSync(path, 0o600);
+    // The file is cut to what this journal decided is on disk, so `size()` — which a handed-out
+    // batch is released against — is an offset into exactly these bytes. After a crash that also
+    // discards the torn tail, and an empty file stays an empty file.
+    ftruncateSync(fd, size);
+    fsyncSync(fd);
     return fd;
   }
 
   static open(path: string): FileJournal {
     ensurePrivateDir(dirname(path));
     if (!existsSync(path)) return new FileJournal(path, [], 0);
-    const text = readFileSync(path, 'utf8');
+    const raw = readFileSync(path);
+    // A crash can stop in the middle of a line's write. Those bytes are not merely unread — they
+    // are a trap: `append` opens with 'a' and would splice the next event onto them, and then that
+    // event is unreadable too. It was acknowledged to WhatsApp before this run started, so the
+    // server will never deliver it again: the next append would lose a message for good. Cut the
+    // file back to the end of the last complete line instead. The discarded event's write never
+    // returned, hence was never acknowledged, so WhatsApp delivers it again.
+    const end = raw.lastIndexOf(0x0a) + 1;
     const recovered: DeliveryEvent[] = [];
-    for (const line of text.split('\n')) {
+    for (const line of raw.toString('utf8', 0, end).split('\n')) {
       if (!line) continue;
       try {
         recovered.push(JSON.parse(line) as DeliveryEvent);
       } catch {
-        // The torn tail of a write the crash interrupted: that event never fully reached the disk.
+        // A line that ends in '\n' but never fully reached the disk. Skipped on every open; it
+        // cannot swallow a following event, because that one is a line of its own.
       }
     }
-    return new FileJournal(path, recovered, Buffer.byteLength(text));
+    return new FileJournal(path, recovered, end);
   }
 
   append(events: readonly DeliveryEvent[]): void {
@@ -120,7 +136,7 @@ export class FileJournal implements EventJournal {
     chmodSync(tmp, 0o600);
     closeSync(this.fd);
     renameSync(tmp, this.path);
-    this.fd = FileJournal.openAppend(this.path);
+    this.fd = FileJournal.openAppend(this.path, rest.length);
     this.bytes = rest.length;
   }
 

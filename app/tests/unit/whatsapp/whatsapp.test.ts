@@ -11,7 +11,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 import type { AccountPrompter, BackendContext, DeliveryEvent } from '@postbote/protocol';
 import { isDeliveryBackend, validateManifest } from '@postbote/protocol';
@@ -729,6 +729,108 @@ export default async () => {
   });
 
   await describe('WhatsApp receive journal', async () => {
+    const event = (id: string, body: string): DeliveryEvent => ({
+      type: 'message',
+      chatRemoteId: ANNA_LID,
+      chatKind: 'direct',
+      seen: false,
+      message: {
+        remoteId: id,
+        seq: Number(id.replace(/\D/g, '')),
+        sentAt: new Date(1_700_000_000_000).toISOString(),
+        editedAt: null,
+        sender: { remoteId: ANNA_LID, displayName: 'Anna', addresses: [], bot: false },
+        fromSelf: false,
+        text: body,
+        hasAttachments: false,
+        replyToRemoteId: null,
+        threadRemoteId: null,
+      },
+    });
+    const texts = (events: readonly DeliveryEvent[]): string =>
+      events
+        .map((e) => (e.type === 'message' ? e.message.text : ''))
+        .filter((t) => t !== '')
+        .join('|');
+
+    await it('drops the torn tail of a crashed write so the next event is not swallowed with it', async () => {
+      const dir = tempDir();
+      const path = join(dir, 'secrets', `${ACCOUNT}.journal`);
+      mkdirSync(dirname(path), { recursive: true });
+      try {
+        // What a crash in the middle of the second line's write leaves behind: A, then half of B.
+        writeFileSync(path, `${JSON.stringify(event('m1', 'eins'))}\n{"type":"mess`, { mode: 0o600 });
+        const journal = FileJournal.open(path);
+        expect(texts(journal.recovered)).toBe('eins');
+        // The bytes of the torn line are GONE, not just unread: appending after them would make
+        // B one unparseable line with them, and Baileys had already acknowledged B to WhatsApp.
+        expect(statSync(path).size).toBe(journal.size());
+        journal.append([event('m2', 'zwei')]);
+        expect(texts(journal.recovered)).toBe('eins');
+        journal.close();
+
+        const again = FileJournal.open(path);
+        expect(texts(again.recovered)).toBe('eins|zwei');
+        again.close();
+        expect((statSync(path).mode & 0o777).toString(8)).toBe('600');
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('a journal that is nothing but a torn line recovers nothing and writes from an empty file', async () => {
+      const dir = tempDir();
+      const path = join(dir, 'secrets', `${ACCOUNT}.journal`);
+      mkdirSync(dirname(path), { recursive: true });
+      try {
+        writeFileSync(path, '{"type":"mess', { mode: 0o600 });
+        const journal = FileJournal.open(path);
+        expect(journal.recovered.length).toBe(0);
+        expect(journal.size()).toBe(0);
+        expect(statSync(path).size).toBe(0);
+        journal.append([event('m1', 'eins')]);
+        journal.close();
+
+        const again = FileJournal.open(path);
+        expect(texts(again.recovered)).toBe('eins');
+        again.close();
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('leaves an intact journal alone and still releases a committed batch by its mark', async () => {
+      const dir = tempDir();
+      const path = join(dir, 'secrets', `${ACCOUNT}.journal`);
+      mkdirSync(dirname(path), { recursive: true });
+      try {
+        const first = FileJournal.open(path);
+        first.append([event('m1', 'eins')]);
+        const mark = first.size();
+        first.append([event('m2', 'zwei')]);
+        expect(statSync(path).size).toBe(first.size());
+        first.close();
+
+        // No torn tail: the bytes and the recovered events are exactly what was appended.
+        const second = FileJournal.open(path);
+        expect(texts(second.recovered)).toBe('eins|zwei');
+        expect(second.size()).toBe(statSync(path).size);
+        // m1 is in the index, so it leaves the journal; m2 was not handed out yet and stays.
+        second.release(mark);
+        expect(second.size()).toBe(statSync(path).size);
+        second.close();
+
+        const third = FileJournal.open(path);
+        expect(texts(third.recovered)).toBe('zwei');
+        third.release(third.size());
+        third.close();
+        expect(readFileSync(path, 'utf8')).toBe('');
+        expect((statSync(path).mode & 0o777).toString(8)).toBe('600');
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
     await it('is durable before the handler returns, skips a torn tail, and keeps what came after a release', async () => {
       const dir = tempDir();
       const path = join(dir, 'secrets', 'a.journal');
