@@ -146,8 +146,6 @@ export interface ReceiverOptions {
   commitEvery?: number;
   /** The longest a `catch-up` run waits for the queue. */
   maxMs?: number;
-  /** Clock the time cap is measured against — injected so a test can cross it without waiting. */
-  now?: () => number;
   /** The most undecrypted envelopes held in memory; past it the session stops taking more. */
   maxQueued?: number;
   maxReconnects?: number;
@@ -171,7 +169,6 @@ export class SignalReceiver implements DeliverySession {
   private readonly download: AttachmentDownloader | null;
   private readonly commitEvery: number;
   private readonly maxMs: number;
-  private readonly now: () => number;
   private readonly maxQueued: number;
   private readonly maxReconnects: number;
   private readonly isDelinked: (err: unknown) => boolean;
@@ -221,7 +218,6 @@ export class SignalReceiver implements DeliverySession {
     this.download = options.download ?? null;
     this.commitEvery = options.commitEvery ?? 50;
     this.maxMs = options.maxMs ?? 10 * 60_000;
-    this.now = options.now ?? Date.now;
     this.maxQueued = options.maxQueued ?? 5_000;
     this.maxReconnects = options.maxReconnects ?? 3;
     this.isDelinked = options.isDelinked ?? (() => false);
@@ -232,23 +228,10 @@ export class SignalReceiver implements DeliverySession {
   /** Replay what a crashed run left, then connect. Resolves once the first connection is open. */
   async start(): Promise<void> {
     if (this.journal.recovered.length > 0) this.queue.push(...this.journal.recovered);
-    if (this.mode === 'catch-up') this.armCap(this.now() + this.maxMs);
+    if (this.mode === 'catch-up') {
+      this.maxTimer = this.setTimer(() => void this.stop({ caughtUp: false, error: null }), this.maxMs);
+    }
     await this.open();
-  }
-
-  /**
-   * Wait out the time cap. The clock decides the cap, the timer only wakes us up to look at it:
-   * a wake-up that comes early (the wall clock stepped back) arms the next one instead of ending
-   * the run — and a test crosses the cap by moving the clock, not by waiting for real time.
-   */
-  private armCap(deadline: number): void {
-    this.maxTimer = this.setTimer(
-      () => {
-        if (this.now() < deadline) this.armCap(deadline);
-        else void this.stop({ caughtUp: false, error: null });
-      },
-      Math.max(0, deadline - this.now()),
-    );
   }
 
   private async open(): Promise<void> {
