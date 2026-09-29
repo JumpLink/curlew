@@ -160,8 +160,12 @@ export interface Participant {
   contactUid: string | null;
 }
 
-/** How a message wants to be shown: a chat bubble, or a document card (mail, invoice, newsletter). */
-export type PresentationKind = 'bubble' | 'document';
+/**
+ * How a message wants to be shown: a chat bubble, a document card (mail, invoice, newsletter), or
+ * a notice — something the network reported about the conversation that nobody wrote (a contact's
+ * safety number changed). A notice is never unread.
+ */
+export type PresentationKind = 'bubble' | 'document' | 'notice';
 
 /**
  * Whether a conversation is between people or sent by a machine (ADR 0001 §1).
@@ -256,6 +260,8 @@ export interface ConversationMessage {
   replyToRemoteId?: string | null;
   threadRemoteId?: string | null;
   readByPeer?: boolean;
+  /** A notice's text (presentation `notice`) — always present for a notice, bodies or not. */
+  notice?: string | null;
   /** Plain-text body — present only when explicitly requested. */
   bodyText?: string | null;
   bodyTruncated?: boolean;

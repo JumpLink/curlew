@@ -202,6 +202,12 @@ export interface ChatMessage {
   replyToRemoteId: string | null;
   /** The thread or forum topic, when the network has them. */
   threadRemoteId: string | null;
+  /**
+   * A notice rather than a message: something the network reported about the chat that nobody
+   * wrote (a contact's safety number changed). Stored with presentation `notice`, never unread;
+   * `text` is what it says. Absent (or false) for everything people wrote.
+   */
+  notice?: boolean;
 }
 
 /** One page of history. */
@@ -376,6 +382,14 @@ export interface DeliveryOutcome {
   caughtUp: boolean;
   /** A reason the session ended early (the network logged the device out, the connection dropped). */
   error: string | null;
+  /**
+   * Deliveries the session received but could not turn into events, kept raw in the backend's
+   * secret state so a later version can map them (a new message type, a parser bug) — received,
+   * not lost. Absent: none, or a backend that does not keep them.
+   */
+  setAside?: number;
+  /** Deliveries that could not be decrypted — gone; only their metadata was kept for diagnosis. */
+  undecryptable?: number;
 }
 
 /** One connected delivery-only account. */

@@ -306,15 +306,13 @@ export default async () => {
       expect(info.lastSeq).toBe(S(0));
       expect(info.readInboxSeq).toBe(S(-10));
       const group = toChatInfo({
-        ...{
-          roomId: '!g:example.org',
-          name: 'Orga',
-          direct: false,
-          members: [{ userId: BEN, displayName: null }],
-          lastEventTs: null,
-          readUpToTs: null,
-          peerReadUpToTs: null,
-        },
+        roomId: '!g:example.org',
+        name: 'Orga',
+        direct: false,
+        members: [{ userId: BEN, displayName: null }],
+        lastEventTs: null,
+        readUpToTs: null,
+        peerReadUpToTs: null,
       });
       expect(group.kind).toBe('group');
       expect(group.members.length).toBe(0);
