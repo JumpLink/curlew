@@ -93,6 +93,8 @@ export type DeliveryProgress =
   | { backend: string; accountId: string; type: 'logged-out'; error: string | null }
   /** A bounded run left the account to the holder and will not receive it. */
   | { backend: string; accountId: string; type: 'lease-held'; holder: string }
+  /** The index was busy, so no lease could be taken and no holder is known. */
+  | { backend: string; accountId: string; type: 'lease-busy' }
   /** A follow run is waiting its turn for the account; `holder` is null when nobody is known. */
   | { backend: string; accountId: string; type: 'lease-waiting'; holder: string | null }
   | { backend: string; accountId: string; type: 'lease-lost' }
@@ -129,10 +131,16 @@ export interface DeliveryAccountSyncResult {
   loggedOut?: boolean;
   /**
    * The account is being received by another holder (a running daemon, on `sync`): this run left
-   * it alone, and that is a success — nothing failed, the messages are arriving. Absent: this run
-   * received it, or nothing holds it.
+   * it alone, and that is a success — nothing failed, the messages are arriving. A real holder
+   * only: "the index is busy" is `indexBusy` below, never a made-up name.
    */
   heldBy?: string;
+  /**
+   * The lease could not be taken because the index was busy (another writer mid-transaction). The
+   * account was NOT received, and nobody is known to be receiving it either — its own state, not
+   * a holder.
+   */
+  indexBusy?: true;
   /** Received but not mapped; kept raw by the backend for a later version (`DeliveryOutcome.setAside`). */
   setAside?: number;
   /** Received but not decryptable (`DeliveryOutcome.undecryptable`). */
@@ -906,13 +914,20 @@ async function receiveAccount(
         // A bounded run does not wait: it reports the holder and leaves the account to it. Not an
         // error — those messages ARE arriving, and a run that red-flagged a working daemon would
         // teach the user to ignore red flags.
-        result.heldBy = take.holder ?? 'another process';
-        onProgress?.({
-          backend: name,
-          accountId: account.id,
-          type: 'lease-held',
-          holder: result.heldBy,
-        });
+        if (take.holder === null) {
+          // The index was busy, not held: "received by the running daemon" would be a lie about
+          // a process that does not exist.
+          result.indexBusy = true;
+          onProgress?.({ backend: name, accountId: account.id, type: 'lease-busy' });
+        } else {
+          result.heldBy = take.holder;
+          onProgress?.({
+            backend: name,
+            accountId: account.id,
+            type: 'lease-held',
+            holder: take.holder,
+          });
+        }
         options.signal?.removeEventListener('abort', onRunAbort);
         return result;
       }

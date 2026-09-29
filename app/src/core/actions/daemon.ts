@@ -70,6 +70,8 @@ export interface DaemonAccountResult {
   error: string | null;
   /** Set when ANOTHER holder has the account (a second daemon): this run left it alone. */
   heldBy: string | null;
+  /** Set when no lease could be taken because the index was busy — no holder is known. */
+  indexBusy: boolean;
   loggedOut: boolean;
 }
 
@@ -134,6 +136,10 @@ function line(event: DeliveryProgress, log: (line: string) => void): void {
       );
     case 'lease-held':
       return log(`postbote-daemon: ${who} is held by ${event.holder} — not receiving it here`);
+    case 'lease-busy':
+      return log(
+        `postbote-daemon: ${who} could not take its receive lease (the index is busy) — not receiving it here`,
+      );
     case 'lease-waiting':
       return log(
         `postbote-daemon: ${who} is held by ${event.holder ?? 'another process'} — waiting for the lease`,
@@ -260,6 +266,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
         removed: a.removed,
         error: a.error,
         heldBy: a.heldBy ?? null,
+        indexBusy: a.indexBusy === true,
         loggedOut: a.loggedOut === true,
       })),
     );

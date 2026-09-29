@@ -155,6 +155,19 @@ class FollowBackend implements DeliveryBackend {
   }
 }
 
+/** Make statements whose SQL contains `needle` throw, `count` times — a busy index, say. */
+function failStatements(db: IndexDatabase, needle: string, count: number): void {
+  const prepare = db.prepare.bind(db);
+  let seen = 0;
+  (db as { prepare: typeof db.prepare }).prepare = ((sql: string) => {
+    if (sql.includes(needle) && seen < count) {
+      seen++;
+      throw new Error('database is locked');
+    }
+    return prepare(sql);
+  }) as typeof db.prepare;
+}
+
 /** The lease row's holder, read straight from the table. */
 function leaseHolder(db: IndexDatabase, accountId: string): string | null {
   const row = db
@@ -352,25 +365,12 @@ export default async () => {
   });
 
   await describe('a write that fails', async () => {
-    /** Make statements whose SQL contains `needle` throw, `count` times. */
-    function failing(db: IndexDatabase, needle: string, count: number): void {
-      const prepare = db.prepare.bind(db);
-      let seen = 0;
-      (db as { prepare: typeof db.prepare }).prepare = ((sql: string) => {
-        if (sql.includes(needle) && seen < count) {
-          seen++;
-          throw new Error('database is locked');
-        }
-        return prepare(sql);
-      }) as typeof db.prepare;
-    }
-
     await it('a lease that cannot be dropped does not reject the run', async () => {
       const db = freshDb();
       const controller = new AbortController();
       try {
         const backend = new FollowBackend(['a-1', 'a-2']);
-        failing(db, 'DELETE FROM receive_leases', 2);
+        failStatements(db, 'DELETE FROM receive_leases', 2);
         const received = receiveDeliveries(db, backend, {
           mode: 'follow',
           signal: controller.signal,
@@ -400,7 +400,7 @@ export default async () => {
       const db = freshDb();
       try {
         const backend = new FollowBackend(['a-1', 'a-2']);
-        failing(db, 'INSERT INTO accounts', 1);
+        failStatements(db, 'INSERT INTO accounts', 1);
         const received = receiveDeliveries(db, backend, { holder: 'pid-sync' });
         await settle();
         // The other account is unaffected: a busy index on one row is not the end of the run.
@@ -418,26 +418,13 @@ export default async () => {
   });
 
   await describe('the lease heartbeat', async () => {
-    /** Make the next `count` lease refreshes throw, as a busy index would. */
-    function busyRefreshes(db: IndexDatabase, count: number): void {
-      const prepare = db.prepare.bind(db);
-      let seen = 0;
-      (db as { prepare: typeof db.prepare }).prepare = ((sql: string) => {
-        if (sql.includes('UPDATE receive_leases') && seen < count) {
-          seen++;
-          throw new Error('database is locked');
-        }
-        return prepare(sql);
-      }) as typeof db.prepare;
-    }
-
     await it('a busy index on one tick is not a lost lease — the next tick retries', async () => {
       const db = freshDb();
       const controller = new AbortController();
       const progress: DeliveryProgress[] = [];
       try {
         const backend = new FollowBackend(['a-1']);
-        busyRefreshes(db, 1);
+        failStatements(db, 'UPDATE receive_leases', 1);
         const received = receiveDeliveries(db, backend, {
           mode: 'follow',
           signal: controller.signal,
@@ -471,7 +458,7 @@ export default async () => {
       const progress: DeliveryProgress[] = [];
       try {
         const backend = new FollowBackend(['a-1']);
-        busyRefreshes(db, 2);
+        failStatements(db, 'UPDATE receive_leases', 2);
         const received = receiveDeliveries(db, backend, {
           mode: 'follow',
           signal: controller.signal,
@@ -710,6 +697,30 @@ export default async () => {
       } finally {
         sync.abort();
         daemon.abort();
+        db.close();
+      }
+    });
+
+    await it('a sync that cannot take the lease because the index is busy says exactly that', async () => {
+      const db = freshDb();
+      const progress: DeliveryProgress[] = [];
+      try {
+        const backend = new FollowBackend(['a-1']);
+        failStatements(db, 'INSERT OR REPLACE INTO receive_leases', 1);
+        const result = await receiveDeliveries(db, backend, {
+          holder: 'pid-sync',
+          onProgress: (event) => progress.push(event),
+        });
+        const account = result.accounts[0];
+        // Not "received by the running daemon": nobody holds anything, the index was busy.
+        expect(account.indexBusy).toBe(true);
+        expect(account.heldBy).toBeUndefined();
+        expect(backend.connects.length).toBe(0);
+        expect(result.errors).toBe(0);
+        expect(result.failed).toBe(false);
+        expect(progress.filter((p) => p.type === 'lease-busy').length).toBe(1);
+        expect(progress.filter((p) => p.type === 'lease-held').length).toBe(0);
+      } finally {
         db.close();
       }
     });
