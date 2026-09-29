@@ -850,6 +850,32 @@ export default async () => {
       }
     });
 
+    await it('a release or a second close after close is a no-op, not EBADF', async () => {
+      const dir = tempDir();
+      const path = join(dir, 'secrets', `${ACCOUNT}.journal`);
+      mkdirSync(dirname(path), { recursive: true });
+      try {
+        const journal = FileJournal.open(path);
+        journal.append([event('m1', 'eins')]);
+        const mark = journal.size();
+        journal.append([event('m2', 'zwei')]);
+        journal.close();
+        // An abort inside the coalesce window closes the journal while the engine still has a
+        // handed-out mark: the next `nextBatch()` releases it, and that release is a truncate on
+        // a closed descriptor. A clean stop must not report EBADF as its error.
+        expect(() => journal.release(mark)).not.toThrow();
+        expect(() => journal.release(0)).not.toThrow();
+        expect(() => journal.close()).not.toThrow();
+        // The journal is left exactly as it was: both events are still there for the next run.
+        expect(readFileSync(path, 'utf8').includes('"m2"')).toBe(true);
+        const again = FileJournal.open(path);
+        expect(texts(again.recovered)).toBe('eins|zwei');
+        again.close();
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
     await it('is durable before the handler returns, skips a torn tail, and keeps what came after a release', async () => {
       const dir = tempDir();
       const path = join(dir, 'secrets', 'a.journal');

@@ -964,6 +964,32 @@ export default async () => {
       }
     });
 
+    await it('a release or a second close after close is a no-op, not EBADF', async () => {
+      const dir = tempDir();
+      const path = join(dir, 'secrets', `${ACCOUNT}.journal`);
+      mkdirSync(dirname(path), { recursive: true });
+      try {
+        const journal = FileJournal.open(path);
+        journal.append([event('m1', 'eins')]);
+        const mark = journal.size();
+        journal.append([event('m2', 'zwei')]);
+        journal.close();
+        // A stop while a batch is still in flight closes the journal before the engine releases
+        // the mark it was handed; releasing then is a truncate on a closed descriptor, and it
+        // would land in the session's error on an otherwise clean stop.
+        expect(() => journal.release(mark)).not.toThrow();
+        expect(() => journal.release(0)).not.toThrow();
+        expect(() => journal.close()).not.toThrow();
+        // Left as it was: both envelopes are still journalled for the next run.
+        expect(readFileSync(path, 'utf8').includes('"m2"')).toBe(true);
+        const again = FileJournal.open(path);
+        expect(texts(again.recovered)).toBe('eins|zwei');
+        again.close();
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
     await it('a journal that is nothing but a torn line recovers nothing and writes from an empty file', async () => {
       const dir = tempDir();
       const path = join(dir, 'secrets', `${ACCOUNT}.journal`);
