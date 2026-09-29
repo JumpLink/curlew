@@ -36,6 +36,7 @@
 import type { AccountPrompter } from '@postbote/protocol';
 import type { CommandRunner } from './setup-host.ts';
 import { accountsAdd } from './accounts.ts';
+import { backendsList } from './backends.ts';
 
 /**
  * How a setup run talks to a person. `AccountPrompter` is the shape a backend login takes; the
@@ -85,12 +86,49 @@ export interface SetupContext {
   readonly done: Map<string, SetupOutcome>;
 }
 
+/**
+ * Where a step stands, as a read-only surface may report it.
+ *
+ * `done` is not "the wizard said so" — it is the machine's own state wherever that is
+ * observable. `skipped` is a person having declined, which is a real answer and not a failure.
+ */
+export type SetupStepState = 'done' | 'remaining' | 'skipped';
+
 export interface SetupStep {
   /** Stable id, kebab-case — the `--only` filter and the report key it. */
   readonly name: string;
   /** One line, shown as the stage heading. */
   readonly title: string;
+  /**
+   * The exact invocation that performs THIS ONE step for a person.
+   *
+   * It is not decoration: a step that cannot be run on its own cannot be handed to someone
+   * ("run this and tell me what it says") and cannot be refused by a surface that must not do
+   * it. So the id, this command and `--only <name>` are three names for one thing, and a
+   * surface quotes this string rather than composing its own advice.
+   */
+  readonly command: string;
+  /**
+   * A human act on EVERY surface, not an agent's — set on the steps that must never be
+   * automated:
+   *
+   *   - the two linking steps, because the provisioning payload is the secret that binds a
+   *     person's account to this machine and must never enter an agent's context: a human
+   *     holds the phone, an agent must never see the code that unlocks it;
+   *   - `terms`, because accepting a third party's terms is an act that carries the person's
+   *     name on it. It is not the agent's to accept.
+   *
+   * Undefined means false: a step with no `humanOnly` may be driven by any surface.
+   */
+  readonly humanOnly?: boolean;
   run(ctx: SetupContext): Promise<SetupOutcome>;
+  /**
+   * Read what the machine looks like RIGHT NOW, without changing it. Only for a step whose
+   * done-ness is observable from the outside; a step without one reports what this run
+   * recorded, or `remaining`. A probe that throws reports `remaining` — a status read must
+   * never be the thing that fails.
+   */
+  probe?(ctx: SetupContext): Promise<SetupStepState>;
 }
 
 /**
@@ -99,14 +137,52 @@ export interface SetupStep {
  * writer of the index, and the phone is driven instead of a browser.
  */
 export const SETUP_STEPS: readonly SetupStep[] = [
-  { name: 'readiness', title: 'Readiness: bundle, tools, live check', run: todo('readiness') },
-  { name: 'link-signal', title: 'Link Signal', run: todo('link-signal') },
-  { name: 'link-whatsapp', title: 'Link WhatsApp (optional)', run: todo('link-whatsapp') },
-  { name: 'terms', title: 'Enable backends — read the terms first', run: todo('terms') },
-  { name: 'index', title: 'Build the index', run: todo('index') },
-  { name: 'daemon', title: 'The receiving daemon', run: todo('daemon') },
-  { name: 'unit', title: 'Install the systemd user unit', run: todo('unit') },
-  { name: 'finish', title: 'Finish: what runs now, what is left', run: todo('finish') },
+  {
+    name: 'readiness',
+    title: 'Readiness: bundle, tools, live check',
+    command: 'postbote setup --only readiness',
+    run: todo('readiness'),
+  },
+  {
+    name: 'link-signal',
+    title: 'Link Signal',
+    command: 'postbote setup --only link-signal',
+    humanOnly: true,
+    run: todo('link-signal'),
+  },
+  {
+    name: 'link-whatsapp',
+    title: 'Link WhatsApp (optional)',
+    command: 'postbote setup --only link-whatsapp',
+    humanOnly: true,
+    run: todo('link-whatsapp'),
+  },
+  {
+    name: 'terms',
+    title: 'Enable backends — read the terms first',
+    command: 'postbote setup --only terms',
+    humanOnly: true,
+    run: todo('terms'),
+  },
+  { name: 'index', title: 'Build the index', command: 'postbote setup --only index', run: todo('index') },
+  {
+    name: 'daemon',
+    title: 'The receiving daemon',
+    command: 'postbote setup --only daemon',
+    run: todo('daemon'),
+  },
+  {
+    name: 'unit',
+    title: 'Install the systemd user unit',
+    command: 'postbote setup --only unit',
+    run: todo('unit'),
+  },
+  {
+    name: 'finish',
+    title: 'Finish: what runs now, what is left',
+    command: 'postbote setup --only finish',
+    run: todo('finish'),
+  },
 ];
 
 function todo(name: string): (ctx: SetupContext) => Promise<SetupOutcome> {
@@ -114,6 +190,16 @@ function todo(name: string): (ctx: SetupContext) => Promise<SetupOutcome> {
     await ctx.prompter.notify(`  ${SETUP_STEPS.find((s) => s.name === name)?.title ?? name}`);
     return { status: 'todo', reason: 'not implemented yet' };
   };
+}
+
+/** A step that cannot be driven by the surface asking for it. Throws a message that names the
+ * command a person would run instead, so a refusal is actionable. */
+export function humanOnlyRefusal(step: SetupStep): Error {
+  return new Error(
+    `\`${step.name}\` is a step only you can take: the provisioning payload is the secret that ` +
+      `binds your account to this machine, and accepting a third party's terms is an act with ` +
+      `your name on it. Run \`${step.command}\` yourself.`,
+  );
 }
 
 export interface SetupRunOptions {
@@ -133,6 +219,115 @@ export interface SetupRunResult {
   readonly ok: boolean;
   /** The follow-ups that are this machine's to do, in the order the finish stage lists them. */
   readonly followUps: readonly string[];
+  /** What is still outstanding after this run, by name. */
+  readonly remaining: readonly string[];
+  /** The stages that ran but failed, by name. */
+  readonly failed: readonly string[];
+}
+
+/** The facts a readiness check establishes, kept apart from a stage's outcome so a read-only
+ * surface can report them without running anything. */
+export interface SetupReadiness {
+  mode: SetupMode;
+  /** Absolute path of the checkout, or null for a published install. */
+  checkout: string | null;
+  /** Absolute path of the bundle this process came out of, or null. */
+  bundle: string | null;
+  /** Absolute path of `gjsify`, or null. Only a checkout needs it. */
+  gjsify: string | null;
+  /** The config file this run would work on. */
+  configPath: string;
+  /** Whether the config file is there yet. */
+  configExists: boolean;
+  /** Backends whose terms are accepted and which are enabled. */
+  enabled: string[];
+}
+
+export interface SetupStatus {
+  readonly readiness: SetupReadiness;
+  readonly steps: {
+    name: string;
+    title: string;
+    command: string;
+    humanOnly: boolean;
+    state: SetupStepState;
+    /** Why it reads that way — 'probe', 'this run', or 'no probe'. */
+    source: 'probe' | 'run' | 'unknown';
+  }[];
+  readonly done: number;
+  /** The `command` of every stage that is not done, in order — what is left, as invocations. */
+  readonly remaining: string[];
+}
+
+export function setupReadiness(ctx: SetupContext): SetupReadiness {
+  return {
+    mode: ctx.mode,
+    checkout: ctx.checkout,
+    bundle: ctx.host.bundlePath(),
+    gjsify: ctx.mode === 'checkout' ? ctx.host.which('gjsify') : null,
+    configPath: ctx.configPath,
+    configExists: ctx.host.exists(ctx.configPath),
+    enabled: enabledBackends(ctx.configPath),
+  };
+}
+
+/**
+ * What is left to do, without doing anything.
+ *
+ * This is the one question a read-only surface can afford to answer, so it gets a real
+ * implementation here rather than being derived from a run that has not happened: each step's
+ * `probe` reads the machine, and only a step without a probe falls back to what this run
+ * recorded. Nothing here mutates, and nothing here can fail: a probe that throws reads as
+ * `remaining`, because "I could not tell" must not be reported as "broken".
+ */
+export async function setupStatus(
+  ctx: SetupContext,
+  steps: readonly SetupStep[] = SETUP_STEPS,
+): Promise<SetupStatus> {
+  const rows: SetupStatus['steps'] = [];
+  for (const step of steps) {
+    let state: SetupStepState = 'remaining';
+    let source: SetupStatus['steps'][number]['source'] = 'unknown';
+    const recorded = ctx.done.get(step.name);
+    if (recorded !== undefined) {
+      state = recorded.status === 'done' ? 'done' : recorded.status === 'skipped' ? 'skipped' : 'remaining';
+      source = 'run';
+    } else if (step.probe !== undefined) {
+      try {
+        state = await step.probe(ctx);
+        source = 'probe';
+      } catch {
+        state = 'remaining';
+        source = 'probe';
+      }
+    }
+    rows.push({
+      name: step.name,
+      title: step.title,
+      command: step.command,
+      humanOnly: step.humanOnly === true,
+      state,
+      source,
+    });
+  }
+  return {
+    readiness: setupReadiness(ctx),
+    steps: rows,
+    done: rows.filter((s) => s.state === 'done').length,
+    remaining: rows.filter((s) => s.state !== 'done').map((s) => s.command),
+  };
+}
+
+/** Names of the backends the config has enabled with their terms accepted. Manifest-level, so
+ * this is a config-file read: no backend is constructed and no gi:// is touched. */
+function enabledBackends(path: string): string[] {
+  try {
+    return backendsList(path)
+      .backends.filter((b) => b.enabled)
+      .map((b) => b.name);
+  } catch {
+    return [];
+  }
 }
 
 /** The follow-ups, whatever the machine. Named here so a frontend cannot lose or reorder them. */
@@ -162,7 +357,18 @@ export const SETUP_FOLLOW_UPS: readonly string[] = [
  */
 export async function runSetup(ctx: SetupContext, options: SetupRunOptions = {}): Promise<SetupRunResult> {
   const wanted = options.only === undefined ? null : new Set(options.only);
+  if (wanted !== null) {
+    const unknown = [...wanted].filter((name) => !SETUP_STEPS.some((step) => step.name === name));
+    if (unknown.length > 0) {
+      throw new Error(
+        `unknown setup stage${unknown.length > 1 ? 's' : ''}: ${unknown.join(', ')} — ` +
+          `one of ${SETUP_STEPS.map((s) => s.name).join(', ')}`,
+      );
+    }
+  }
   const steps: SetupRunResult['steps'][number][] = [];
+  const failed: string[] = [];
+  const remaining: string[] = [];
   let ok = true;
   for (const step of SETUP_STEPS) {
     if (wanted !== null && !wanted.has(step.name)) continue;
@@ -179,12 +385,17 @@ export async function runSetup(ctx: SetupContext, options: SetupRunOptions = {})
     }
     ctx.done.set(step.name, outcome);
     steps.push({ name: step.name, title: step.title, outcome });
+    if (outcome.status === 'done') continue;
     if (outcome.status === 'failed') {
       ok = false;
-      if (options.bail) break;
+      failed.push(step.name);
     }
+    // A stage that did not finish — declined, not run, or not implemented yet — is outstanding.
+    // `remaining` carries the invocation, because that is what a person needs next.
+    remaining.push(SETUP_STEPS.find((s) => s.name === step.name)?.command ?? step.name);
+    if (outcome.status === 'failed' && options.bail) break;
   }
-  return { steps, ok, followUps: SETUP_FOLLOW_UPS };
+  return { steps, ok, followUps: SETUP_FOLLOW_UPS, remaining, failed };
 }
 
 /** The default linker: the existing action, with the SHARED prompter. This is the whole reason

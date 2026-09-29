@@ -9,8 +9,9 @@
 
 import { describe, expect, it } from '@gjsify/unit';
 
-import { SETUP_FOLLOW_UPS, SETUP_STEPS, runSetup } from '../../../src/core/actions/setup.ts';
-import { fakeContext, fakePrompter } from './setup-fakes.ts';
+import { SETUP_FOLLOW_UPS, SETUP_STEPS, humanOnlyRefusal, runSetup, setupStatus } from '../../../src/core/actions/setup.ts';
+import type { SetupStep, SetupStepState } from '../../../src/core/actions/setup.ts';
+import { fakeContext, fakeHost, fakePrompter } from './setup-fakes.ts';
 
 export default async function setup(): Promise<void> {
   describe('postbote setup', () => {
@@ -70,6 +71,98 @@ export default async function setup(): Promise<void> {
       const ctx = fakeContext({ prompter });
       const stop = await runSetup(ctx, { bail: true, only: ['readiness', 'index'] });
       expect(stop.steps.length <= 2).toBe(true);
+    });
+
+    it('gives every stage the invocation that performs it on its own', () => {
+      for (const step of SETUP_STEPS) {
+        expect(step.command).toBe(`postbote setup --only ${step.name}`);
+      }
+    });
+
+    it('refuses to name an unknown stage rather than quietly doing nothing', async () => {
+      const ctx = fakeContext();
+      let message = '';
+      try {
+        await runSetup(ctx, { only: ['nope'] });
+      } catch (err: unknown) {
+        message = err instanceof Error ? err.message : String(err);
+      }
+      expect(message.includes('nope')).toBe(true);
+    });
+
+    it('reports the invocation of every stage that did not finish', async () => {
+      const ctx = fakeContext();
+      const result = await runSetup(ctx);
+      expect(result.remaining).toStrictEqual(SETUP_STEPS.map((s) => s.command));
+    });
+  });
+
+  describe('the stages a person must take themselves', () => {
+    it('are the two linking stages and the terms', () => {
+      expect(SETUP_STEPS.filter((s) => s.humanOnly === true).map((s) => s.name)).toStrictEqual([
+        'link-signal',
+        'link-whatsapp',
+        'terms',
+      ]);
+    });
+
+    it('refuse by naming the command the person would run', () => {
+      const step = SETUP_STEPS.find((s) => s.name === 'link-signal');
+      expect(step).toBeDefined();
+      const message = humanOnlyRefusal(step!).message;
+      expect(message.includes('postbote setup --only link-signal')).toBe(true);
+      // The reason names both reasons, so a reader of the refusal learns why.
+      expect(message.includes('secret')).toBe(true);
+      expect(message.includes('terms')).toBe(true);
+    });
+  });
+
+  describe('setupStatus — what is left, without touching anything', () => {
+    it('answers before anything has run, from the machine and not from a run', async () => {
+      const host = fakeHost({ XDG_CONFIG_HOME: '/home/tester/.config' });
+      host.files.set('/home/tester/.config/systemd/user/postbote-daemon.service', '[Service]\n');
+      const ctx = fakeContext({ host });
+      const status = await setupStatus(ctx);
+
+      expect(status.steps).toHaveLength(8);
+      expect(ctx.host.calls.length).toBe(0);
+      expect(status.readiness.mode).toBe('checkout');
+      expect(status.readiness.gjsify).toBe(null);
+      expect(status.readiness.configExists).toBe(false);
+    });
+
+    it('says `done` only where a step can see it, and says why', async () => {
+      const host = fakeHost();
+      // A probe that cannot answer must read as `remaining`, never as `done` and never as a throw.
+      const blind: SetupStep = {
+        name: 'blind',
+        title: 'A stage whose probe cannot answer',
+        command: 'postbote setup --only blind',
+        async run() {
+          return { status: 'done' };
+        },
+        async probe(): Promise<SetupStepState> {
+          throw new Error('no session bus');
+        },
+      };
+      const status = await setupStatus(fakeContext({ host }), [blind]);
+      expect(status.steps[0].state).toBe('remaining');
+      expect(status.steps[0].source).toBe('probe');
+    });
+
+    it('prefers what a run recorded over a probe', async () => {
+      const ctx = fakeContext();
+      await runSetup(ctx, { only: ['readiness'] });
+      const status = await setupStatus(ctx);
+      const ran = status.steps.find((s) => s.name === 'readiness');
+      expect(ran?.source).toBe('run');
+    });
+
+    it('lists the invocation of everything not done', async () => {
+      const ctx = fakeContext();
+      const status = await setupStatus(ctx);
+      expect(status.remaining).toStrictEqual(SETUP_STEPS.map((s) => s.command));
+      expect(status.done).toBe(0);
     });
   });
 }
