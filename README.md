@@ -211,10 +211,12 @@ its part of the index is irreplaceable, not a cache. Consequences:
   (`error` stays `null`), and whatever WhatsApp still had queued arrives in the
   next `sync`. Set `backends.whatsapp.settings.fullHistory: true` in the config
   **before** linking to ask for the full history instead — larger, slower.
-- **Sync at least every two weeks.** WhatsApp unlinks a device that has not
-  connected for about 14 days; after that, `sync` reports the logout and you link
-  again (the conversations stay, under the same account id). A receiving daemon
-  that stays connected is planned; until then, `sync` from a timer.
+- **Stay connected — the [receiving daemon](#receiving-daemon).** WhatsApp unlinks
+  a device that has not connected for about 14 days; after that, `sync` reports
+  the logout and you link again (the conversations stay, under the same account
+  id). `postbote daemon` holds the connection, so that clock never runs out; a
+  `sync` from a timer is the fallback for a machine where the daemon does not
+  run.
 - **Back up the index** (`$XDG_DATA_HOME/postbote/index.db`) like the config:
   with WhatsApp enabled it holds messages that exist nowhere else.
 
@@ -275,14 +277,16 @@ of the index is irreplaceable, not a cache. Consequences:
 
 - **Postbote gets no history.** A linked device receives what arrives after it
   was linked; the phone's older messages stay on the phone.
-- **Sync regularly.** `sync` connects, receives what was queued, writes it and
-  disconnects once Signal reports the queue empty. If the queue does not go
+- **Stay connected — the [receiving daemon](#receiving-daemon).** `sync`
+  connects, receives what was queued, writes it and disconnects once Signal
+  reports the queue empty. If the queue does not go
   empty within ten minutes, the run stops there and that is **not an error**:
   everything received is written and the run counts as a success. The only sign
   in the output is that account's `caughtUp: false` (`error` stays `null`), and
   whatever is still queued arrives in the next `sync`. Signal unlinks a device
   that stays offline too long; after that, `sync` reports it and you link again
-  (the conversations stay, under the same account id).
+  (the conversations stay, under the same account id), and `postbote daemon`
+  holds the connection so it does not come to that.
 - **Back up the index** (`$XDG_DATA_HOME/postbote/index.db`) like the config.
 
 What arrives: direct and group messages (sealed sender included), your own
