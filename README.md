@@ -90,6 +90,8 @@ postbote sync                               # build the local index
 postbote index status                       # what it holds, and how fresh
 postbote index search "wärmepumpe"          # offline, no server contact
 
+postbote daemon                             # receive Signal/WhatsApp until stopped
+
 postbote conversations list --people-only   # threads with a person in them, newest first
 postbote conversations show <id>            # its messages; bodies only with --bodies
 postbote conversations classify <address> automated   # correct one sender (auto = undo)
@@ -401,6 +403,62 @@ key it received): back it up like a password. Losing it means a new login, a new
 device, and no key for anything sent before it. To end the session, sign the
 `postbote` device out in another client and delete the file.
 
+## Receiving daemon
+
+Signal and WhatsApp have no server archive: a message is gone from the network
+once this device acknowledged it, so whatever postbote stores is the **only**
+copy. `postbote sync` from a timer narrows the window in which nothing is
+received; `postbote daemon` closes it.
+
+```bash
+postbote daemon                   # receive until stopped (SIGTERM/SIGINT)
+```
+
+It connects to every **delivery-only** backend you enabled — Signal and
+WhatsApp — for every account, all at once, and keeps receiving. Mail and chat
+backends (IMAP, Telegram, Matrix, XMPP) stay on `postbote sync`: they are
+pull models with a cursor, and a daemon buys them nothing. A dropped connection
+is retried with growing pauses (5 s to 5 min); a device the network **logged out
+or unlinked** is not retried — the daemon stops that account and says so, because
+the credentials are gone and every retry would fail the same way while messages
+queue up on the network.
+
+Run it as a user service (the unit ships in
+[`contrib/systemd/postbote-daemon.service`](contrib/systemd/postbote-daemon.service)):
+
+```bash
+mkdir -p ~/.config/systemd/user
+cp contrib/systemd/postbote-daemon.service ~/.config/systemd/user/
+# point WorkingDirectory/ExecStart at your checkout if it is not ~/postbote
+systemctl --user daemon-reload
+systemctl --user enable --now postbote-daemon
+journalctl --user -u postbote-daemon -f
+```
+
+The daemon writes **one line per state change** to stderr, which journald
+collects — connected, a batch with its counts, a reconnect in N seconds, a
+logout, a stop. Never message text, chat titles, peer names or phone numbers:
+a log line is a file that gets copied and pasted around, and the same privacy
+rule that guards the index guards it.
+
+**And `sync` at the same time?** Yes. They take a **lease** on each delivery
+account, stored in the index itself: the daemon takes it, refreshes it every 30
+seconds and drops it on stop, and a `sync` that finds a live lease reports that
+account as received by the running daemon and moves on — not an error, because
+nothing failed. Two connected devices on one Signal account would each
+acknowledge half the messages, so this is what keeps the copy whole. A daemon
+that was killed leaves a lease behind, which expires by itself after 90 seconds.
+
+Stopping is a normal end: SIGTERM (or `systemctl stop`) closes every session,
+writes what was in flight, rebuilds the conversations once and exits 0. It is
+never a kill — an unacknowledged message is still on the network, and a written
+one must never be lost.
+
+What the daemon does **not** do: send anything, mark anything read, or touch a
+server-archive backend. It is the same read-only postbote, connected all the
+time. See [ADR 0002](docs/adr/0002-receiving-daemon.md) for why each piece is
+the way it is.
+
 ## As an MCP server
 
 `postbote mcp` speaks MCP over stdio. Registered in an MCP client it exposes
@@ -419,7 +477,8 @@ See [`.mcp.json`](.mcp.json) for a working registration.
 
 The local index contains message headers **and** plain-text bodies. It lives at
 `$XDG_DATA_HOME/postbote/index.db` (mode `0600`), never inside this repository,
-and only `postbote sync` ever writes to it — a search never does. Attachments
+and only `postbote sync` and `postbote daemon` ever write to it — a search never
+does. Attachments
 are saved to your download directory. Both locations are overridable via
 `POSTBOTE_DATA_DIR`, `POSTBOTE_DB_PATH` and `POSTBOTE_ATTACHMENTS_DIR`.
 

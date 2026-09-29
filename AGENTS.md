@@ -137,10 +137,12 @@ the MCP server via `run_in_background` when driving it.
   `ChatHistoryPage.retracted`); the delivery engine as events (revoke, delete-for-me,
   clear/delete chat), applied in the batch they arrive in. Keep that pass working —
   a deleted message that stays MCP-readable is a privacy defect, not a staleness one.
-- Only `postbote sync` writes to the index. A search never does — one mental model, and no
-  surprise disk growth from a read. User decisions (enabled backends, accepted terms,
-  per-sender classification) go to `$XDG_CONFIG_HOME/postbote/config.json`, never the index,
-  and overrides apply at read time.
+- Only `postbote sync` and `postbote daemon` write to the index. A search never does — one
+  mental model, and no surprise disk growth from a read. They are kept off the same delivery
+  account by a **lease** (a row in the index, ADR 0002 §4): the daemon takes it, refreshes it,
+  drops it on stop; a `sync` reports the holder and stands down. User decisions (enabled
+  backends, accepted terms, per-sender classification) go to
+  `$XDG_CONFIG_HOME/postbote/config.json`, never the index, and overrides apply at read time.
 - **Backends load only through the registry** (`app/src/core/backends/`), and only when the
   config enables them; a backend with a terms notice needs `--accept-terms` first. Built-in
   mail goes through it too — do not construct a backend anywhere else.

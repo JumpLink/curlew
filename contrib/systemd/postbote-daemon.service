@@ -1,0 +1,39 @@
+[Unit]
+# postbote — the receiving daemon (ADR 0002).
+#
+# It receives Signal and WhatsApp into the local index and keeps doing so while you do
+# nothing: those networks keep no archive, so what the daemon writes is the only copy
+# (see the WhatsApp and Signal sections of the README).
+#
+# Install as a USER unit — postbote reads $XDG_DATA_HOME and reaches GNOME Online
+# Accounts over the user session's D-Bus, so it has to run as you anyway:
+#
+#   mkdir -p ~/.config/systemd/user
+#   cp contrib/systemd/postbote-daemon.service ~/.config/systemd/user/
+#   # point the two paths below at your checkout if it is not ~/postbote
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now postbote-daemon
+#   journalctl --user -u postbote-daemon -f
+Description=postbote — receive Signal and WhatsApp into the local index
+Documentation=https://github.com/jumplink/postbote/blob/main/docs/adr/0002-receiving-daemon.md
+# GOA and Evolution Data Server live in the graphical session; without them a linked
+# device cannot be reached.
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/postbote
+ExecStart=gjsify run %h/postbote/app/dist/postbote.gjs.mjs daemon
+# A dropped socket is retried by the daemon itself (with backoff). A restart here is for
+# what it cannot retry: a device the network logged out, an index that cannot be opened.
+Restart=on-failure
+RestartSec=30
+# A restart storm (say a config that no longer names a backend) should not fill the disk.
+StartLimitIntervalSec=300
+StartLimitBurst=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target

@@ -113,8 +113,12 @@ bodies**, and this repo is public, so a stray index file would be a permanent le
 `.gitignore` is the second line of defence. Not writing there is the first, and it lives in
 `paths.ts` — whose tests take the environment as a parameter precisely so this is checkable.
 
-**Only `postbote sync` writes to the index.** A search never does. One mental model, and no
-surprise disk growth from a read.
+**Only `postbote sync` and `postbote daemon` write to the index.** A search never does. One
+mental model, and no surprise disk growth from a read. The daemon (ADR 0002) reaches the same
+`receiveDeliveries` in `follow` mode, and the **receive lease** (`receive-lease.ts`, one row per
+backend+account) is what keeps it off an account a `sync` is receiving: the holder refreshes it,
+a `sync` stands down, and a lease three heartbeats old is a crashed holder and is taken over.
+Nothing else may connect a delivery account around the lease.
 
 ## Attachment writing
 
