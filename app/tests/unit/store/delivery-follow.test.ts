@@ -333,6 +333,46 @@ export default async () => {
       }
     });
 
+    await it('a failed connect says why in the reconnect, in a form that cannot leak a peer', async () => {
+      const db = freshDb();
+      const controller = new AbortController();
+      const progress: DeliveryProgress[] = [];
+      try {
+        // A Baileys/libsignal error can carry a JID or a number in its MESSAGE. Only the name and
+        // the code are structural, so only they are logged.
+        const leaking = Object.assign(new Error('socket closed by 491510000001@lid'), {
+          code: 'ECONNRESET',
+        });
+        let attempts = 0;
+        const backend: DeliveryBackend = {
+          manifest: new FollowBackend([]).manifest,
+          kind: 'delivery',
+          listAccounts: async () => [{ id: 'a-1', identity: 'a-1', provider: 'Fake' }],
+          connect: async () => {
+            attempts++;
+            if (attempts === 1) throw leaking;
+            return new ControllableSession();
+          },
+        };
+        const received = receiveDeliveries(db, backend, {
+          mode: 'follow',
+          signal: controller.signal,
+          sleep: () => Promise.resolve(),
+          onProgress: (event) => progress.push(event),
+        });
+        await settle();
+        const reconnects = progress.filter((p) => p.type === 'reconnect');
+        expect(reconnects.length).toBe(1);
+        expect(reconnects[0]?.type === 'reconnect' ? reconnects[0].reason : null).toBe('Error/ECONNRESET');
+        expect(JSON.stringify(progress).includes('491510000001')).toBe(false);
+        controller.abort();
+        await received;
+      } finally {
+        controller.abort();
+        db.close();
+      }
+    });
+
     await it('does not retry a device the network no longer knows', async () => {
       const db = freshDb();
       const controller = new AbortController();

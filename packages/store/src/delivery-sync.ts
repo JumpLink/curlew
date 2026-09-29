@@ -89,7 +89,19 @@ export type DeliveryProgress =
       edited: number;
       removed: number;
     }
-  | { backend: string; accountId: string; type: 'reconnect'; delayMs: number; attempt: number }
+  /**
+   * A session ended and will be retried. `reason` is the failure's name and code — never its
+   * message, which a network library may have filled with a JID or a number — or null when the
+   * session ended without one.
+   */
+  | {
+      backend: string;
+      accountId: string;
+      type: 'reconnect';
+      delayMs: number;
+      attempt: number;
+      reason: string | null;
+    }
   | { backend: string; accountId: string; type: 'logged-out'; error: string | null }
   /** A bounded run left the account to the holder and will not receive it. */
   | { backend: string; accountId: string; type: 'lease-held'; holder: string }
@@ -719,6 +731,24 @@ function abortableSleep(ms: number, signal: AbortSignal | undefined): Promise<vo
 const ABORTED = Symbol('aborted');
 
 /**
+ * A failure in a form that can be logged: the error's NAME and CODE, never its message.
+ *
+ * Chosen deliberately. Baileys and libsignal put network detail in the message, and a network
+ * error can name what it was talking to — a JID, a phone number, a display name — and the log
+ * line is a file that gets copied and pasted around (ADR 0002 §6). The name and the code are
+ * structural: `Error`, `SqliteError`, `ECONNRESET`, HTTP 401.
+ */
+function shortReason(err: unknown): string {
+  if (!(err instanceof Error)) return 'Error';
+  const code = (err as { code?: unknown }).code;
+  const status = (err as { output?: { statusCode?: unknown } }).output?.statusCode;
+  const parts = [err.name];
+  if (typeof code === 'number' || typeof code === 'string') parts.push(String(code));
+  if (typeof status === 'number') parts.push(String(status));
+  return parts.join('/');
+}
+
+/**
  * `work`, or `ABORTED` the moment the run is stopped.
  *
  * Needed wherever a promise can be pending while the run is asked to end — the listener is
@@ -754,6 +784,8 @@ async function runSession(
   signal: AbortSignal | undefined,
   onProgress: ((event: DeliveryProgress) => void) | undefined,
   result: DeliveryAccountSyncResult,
+  /** Why the last session ended, in a form that can be logged. Read after the call. */
+  note: { reason: string | null },
 ): Promise<DeliveryOutcome> {
   const name = backend.manifest.name;
   // The connect is the one step that can be pending for a LONG time — a network that is down
@@ -770,6 +802,9 @@ async function runSession(
     session = raced;
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
+    // A connect that failed has no session and no progress event of its own, so the reason is
+    // remembered for the reconnect line: "reconnect in 5000 ms" on its own says nothing.
+    note.reason = shortReason(err);
     result.error = error;
     return { caughtUp: false, error, loggedOut: false };
   }
@@ -976,11 +1011,22 @@ async function receiveAccount(
     }, interval);
 
     let retake = false;
+    const note: { reason: string | null } = { reason: null };
     try {
       for (;;) {
         const openedAt = now().getTime();
         attempt++;
-        const outcome = await runSession(db, backend, account, mode, now, stop.signal, onProgress, result);
+        const outcome = await runSession(
+          db,
+          backend,
+          account,
+          mode,
+          now,
+          stop.signal,
+          onProgress,
+          result,
+          note,
+        );
         if (mode !== 'follow') return result;
         if (stop.signal.aborted) {
           // Stopped by the heartbeat over a lease it could not refresh: go round again, unless the
@@ -1002,7 +1048,14 @@ async function receiveAccount(
         // A session that outlived the cap is a healthy network: the next drop starts at the
         // beginning again instead of inheriting a backoff from a bad hour.
         if (now().getTime() - openedAt >= RECONNECT_CAP_MS) wait = RECONNECT_FIRST_MS;
-        onProgress?.({ backend: name, accountId: account.id, type: 'reconnect', delayMs: wait, attempt });
+        onProgress?.({
+          backend: name,
+          accountId: account.id,
+          type: 'reconnect',
+          delayMs: wait,
+          attempt,
+          reason: note.reason,
+        });
         // The wait is interruptible by default: a daemon that is asked to stop does not sit out a
         // backoff first. An injected `sleep` is the test's own, and answers at once.
         const sleep = options.sleep ?? ((ms: number) => abortableSleep(ms, stop.signal));

@@ -129,7 +129,10 @@ function line(event: DeliveryProgress, log: (line: string) => void): void {
           `(added ${event.added}, edited ${event.edited}, removed ${event.removed})`,
       );
     case 'reconnect':
-      return log(`postbote-daemon: ${who} reconnect in ${event.delayMs} ms (attempt ${event.attempt})`);
+      return log(
+        `postbote-daemon: ${who} reconnect in ${event.delayMs} ms (attempt ${event.attempt}` +
+          `${event.reason ? `, ${event.reason}` : ''})`,
+      );
     case 'logged-out':
       return log(
         `postbote-daemon: ${who} logged out — link the device again${event.error ? ` (${event.error})` : ''}`,
