@@ -14,9 +14,14 @@
  *   - it is a statement, so it behaves the same on Node and on GJS, where `flock` and `fcntl`
  *     locking are not something to assume.
  *
- * `heartbeat_at` is TEXT on purpose: a declared INTEGER is read back as a 32-bit int on gjsify's
- * libgda, and one millisecond timestamp above 2^31 makes the whole query read as empty
- * (`packages/store/AGENTS.md`, (f)). ISO-8601 UTC sorts and compares as text anyway.
+ * `heartbeat_at` and `expires_at` are TEXT on purpose: a declared INTEGER is read back as a
+ * 32-bit int on gjsify's libgda, and one millisecond timestamp above 2^31 makes the whole query
+ * read as empty (`packages/store/AGENTS.md`, (f)). ISO-8601 UTC sorts and compares as text anyway.
+ *
+ * The HOLDER writes both, and `expires_at` is its own answer to "how long is this lease good":
+ * its heartbeat plus `LEASE_STALE_HEARTBEATS` times ITS refresh interval. A taker only compares a
+ * time, so nobody can shorten somebody else's lease by refreshing more often than they do — which
+ * is exactly what a window derived from the taker's interval allowed.
  */
 
 import type { IndexDatabase } from './db.ts';
@@ -74,13 +79,20 @@ function withLeaseTransaction<T>(db: IndexDatabase, fn: () => T): T {
 }
 
 /** The heartbeat older than which a lease is nobody's. */
+/** The heartbeat older than which a lease is nobody's. */
 function millis(iso: unknown): number {
   const parsed = Date.parse(String(iso ?? ''));
   return Number.isNaN(parsed) ? Number.NEGATIVE_INFINITY : parsed;
 }
 
-function isFresh(heartbeatAt: unknown, now: Date, intervalMs: number): boolean {
-  return now.getTime() - millis(heartbeatAt) < LEASE_STALE_HEARTBEATS * intervalMs;
+/** When a lease taken (or refreshed) at `now` by a holder refreshing every `intervalMs` runs out. */
+function expiresAt(now: Date, intervalMs: number): string {
+  return new Date(now.getTime() + LEASE_STALE_HEARTBEATS * intervalMs).toISOString();
+}
+
+/** Fresh iff the holder's own expiry has not passed. The taker needs no interval of its own. */
+function isFresh(expiresAt: unknown, now: Date): boolean {
+  return now.getTime() < millis(expiresAt);
 }
 
 export type LeaseTake =
@@ -98,9 +110,9 @@ export type LeaseTake =
  * Read, decide, write — all three inside `withLeaseTransaction`, whose `BEGIN IMMEDIATE` holds
  * the write lock from the first statement. That lock is the whole correctness argument: two runs
  * cannot both read "free", so the write needs no guard of its own and the result needs no
- * read-back. A live foreign lease is reported, never stolen; a lease whose heartbeat is older
- * than three intervals is stale and is taken over, which is the crash case and needs no cleanup
- * to have run first.
+ * read-back. A live foreign lease is reported, never stolen; an expired one is taken over, which
+ * is the crash case and needs no cleanup to have run first. `intervalMs` is the interval THIS run
+ * refreshes at: it decides the expiry it writes, and says nothing about anybody else's lease.
  *
  * The shapes are plain `INSERT`/`SELECT` on purpose:
  * gjsify gap (unfixed, fix in progress): libgda cannot parse an EXISTS subquery —
@@ -118,29 +130,28 @@ export function takeReceiveLease(
 ): LeaseTake {
   return withLeaseTransaction(db, (): LeaseTake => {
     const row = db
-      .prepare('SELECT holder, heartbeat_at FROM receive_leases WHERE backend = ? AND account_id = ?')
-      .get(backend, accountId) as { holder?: unknown; heartbeat_at?: unknown } | undefined;
+      .prepare(
+        'SELECT holder, heartbeat_at, expires_at FROM receive_leases WHERE backend = ? AND account_id = ?',
+      )
+      .get(backend, accountId) as
+      | { holder?: unknown; heartbeat_at?: unknown; expires_at?: unknown }
+      | undefined;
     const incumbent = row ? String(row.holder) : null;
     const heartbeatAt = row ? String(row.heartbeat_at) : null;
-    if (
-      incumbent !== null &&
-      incumbent !== holder &&
-      heartbeatAt !== null &&
-      isFresh(heartbeatAt, now, intervalMs)
-    ) {
+    if (incumbent !== null && incumbent !== holder && isFresh(row?.expires_at, now)) {
       return { acquired: false, holder: incumbent, heartbeatAt };
     }
     db.prepare(
-      `INSERT OR REPLACE INTO receive_leases (backend, account_id, holder, heartbeat_at)
-         VALUES (?, ?, ?, ?)`,
-    ).run(backend, accountId, holder, now.toISOString());
+      `INSERT OR REPLACE INTO receive_leases (backend, account_id, holder, heartbeat_at, expires_at)
+         VALUES (?, ?, ?, ?, ?)`,
+    ).run(backend, accountId, holder, now.toISOString(), expiresAt(now, intervalMs));
     return { acquired: true };
   });
 }
 
 /**
- * Move the lease's heartbeat forward. Only the holder may: a process that lost the lease (or
- * never had it) must not keep it alive.
+ * Move the lease's heartbeat — and with it its expiry — forward. Only the holder may: a process
+ * that lost the lease (or never had it) must not keep it alive, and must not extend it either.
  */
 export function refreshReceiveLease(
   db: IndexDatabase,
@@ -148,6 +159,7 @@ export function refreshReceiveLease(
   accountId: string,
   holder: string,
   now: Date,
+  intervalMs: number = LEASE_HEARTBEAT_MS,
 ): boolean {
   return withLeaseTransaction(db, (): boolean => {
     const row = db
@@ -155,8 +167,9 @@ export function refreshReceiveLease(
       .get(backend, accountId) as { holder?: unknown } | undefined;
     if (!row || String(row.holder) !== holder) return false;
     db.prepare(
-      `UPDATE receive_leases SET heartbeat_at = ? WHERE backend = ? AND account_id = ? AND holder = ?`,
-    ).run(now.toISOString(), backend, accountId, holder);
+      `UPDATE receive_leases SET heartbeat_at = ?, expires_at = ?
+         WHERE backend = ? AND account_id = ? AND holder = ?`,
+    ).run(now.toISOString(), expiresAt(now, intervalMs), backend, accountId, holder);
     return true;
   });
 }

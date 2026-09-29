@@ -741,6 +741,57 @@ export default async () => {
       }
     });
 
+    await it('the holder says when its lease expires, not the taker', async () => {
+      const db = freshDb();
+      const controller = new AbortController();
+      const T0 = new Date('2026-09-29T10:00:00.000Z');
+      const at = (seconds: number) => () => new Date(T0.getTime() + seconds * 1_000);
+      try {
+        // pid-1 refreshes every 60 s, so its lease is good for 3 × 60 s. Its clock is frozen: the
+        // 60 s heartbeat never fires in a test and the row keeps its first stamps.
+        const daemon = new FollowBackend(['a-1']);
+        const running = receiveDeliveries(db, daemon, {
+          mode: 'follow',
+          signal: controller.signal,
+          holder: 'pid-1',
+          leaseIntervalMs: 60_000,
+          now: () => T0,
+        });
+        await settle();
+        // A taker that refreshes every 10 s — it judges freshness with a 30 s window, so at +70 s
+        // it would declare a lease that is good for 180 s dead. It does not get to decide: the
+        // holder wrote when its own lease expires, and the taker only compares a time.
+        const early = new FollowBackend(['a-1']);
+        const earlyRun = receiveDeliveries(db, early, {
+          holder: 'pid-2',
+          leaseIntervalMs: 10_000,
+          now: at(70),
+        });
+        await settle();
+        // Ended either way, so a takeover shows up as a failed assertion and not as a hang.
+        early.sessionOf('a-1')?.end({ caughtUp: true, error: null });
+        await earlyRun;
+        expect(early.connects.length).toBe(0);
+        expect(leaseHolder(db, 'a-1')).toBe('pid-1');
+        // After the holder's OWN expiry (+180 s) it is a crashed holder and is taken over.
+        const late = new FollowBackend(['a-1']);
+        const lateRun = receiveDeliveries(db, late, {
+          holder: 'pid-3',
+          leaseIntervalMs: 10_000,
+          now: at(181),
+        });
+        await settle();
+        expect(late.connects.join(',')).toBe('a-1');
+        expect(leaseHolder(db, 'a-1')).toBe('pid-3');
+        late.sessionOf('a-1')?.end({ caughtUp: true, error: null });
+        controller.abort();
+        await Promise.all([running, lateRun]);
+      } finally {
+        controller.abort();
+        db.close();
+      }
+    });
+
     await it('measures the stale window from the refresh interval, not a fixed 90 s', async () => {
       const db = freshDb();
       const controller = new AbortController();

@@ -995,7 +995,7 @@ async function receiveAccount(
     const heartbeat = setInterval(() => {
       let refreshed: boolean;
       try {
-        refreshed = refreshReceiveLease(db, name, account.id, holder, now());
+        refreshed = refreshReceiveLease(db, name, account.id, holder, now(), interval);
       } catch {
         busyTicks++;
         if (busyTicks < 2) return;

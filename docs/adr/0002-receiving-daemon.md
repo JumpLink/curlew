@@ -89,11 +89,15 @@ wall clock.
 
 ### 4. The lock is a lease in the index database (schema v6, additive)
 
-One row per `(backend, account)`: the holder's pid and a heartbeat timestamp. **Both** the
-daemon and `postbote sync` take the lease before they connect an account, refresh it while they
-receive, and drop it when they stop — a one-sided lock is no lock: a `sync` in the middle of a
-WhatsApp catch-up (up to ten minutes) would still let a daemon join it. A lease whose heartbeat
-is older than three intervals is stale — the holder crashed — and is taken over.
+One row per `(backend, account)`: the holder's pid, when it was last heard from, and **when the
+lease expires**. **Both** the daemon and `postbote sync` take the lease before they connect an
+account, refresh it while they receive, and drop it when they stop — a one-sided lock is no lock:
+a `sync` in the middle of a WhatsApp catch-up (up to ten minutes) would still let a daemon join it.
+
+The expiry is written by the **holder**: its heartbeat plus three of *its own* refresh intervals.
+A taker only compares a time, so it cannot shorten somebody else's lease by refreshing more often
+than the holder does — which is exactly what a window derived from the taker's own interval
+allowed, and the reason a holder on a 100 s interval could be declared dead mid-interval.
 
 Take, refresh and release are read-decide-write inside `BEGIN IMMEDIATE` with a busy timeout, so
 two runs starting at once cannot both win: a deferred transaction would read "free" and both
@@ -101,12 +105,10 @@ would try to write, and SQLite does not run the busy handler for that upgrade. T
 measured cross-process on both runtimes, and a contender that runs out of patience is reported as
 "not acquired" — a `sync` stands down, a daemon waits and takes the account when it is free.
 
-Two caveats the mechanism cannot remove, both stated because the next reader will hit them:
-the heartbeat is a **wall clock** on both sides, so a step backwards (an NTP correction, a
-suspend/resume) can make a live lease look stale for up to one interval — mitigated by the
-account stopping itself after two refreshes it could not perform, rather than waiting for a
-third party to notice; and a holder whose refresh interval exceeds the window would be declared
-stale mid-interval, so the window is derived from the interval, not fixed at 3 × 30 s.
+One caveat the mechanism cannot remove: the heartbeat and the comparison are a **wall clock** on
+both sides, so a step backwards (an NTP correction, a suspend/resume) can make a live lease look
+expired for up to one interval. It is mitigated by the holder stopping itself after two refreshes
+it could not perform, rather than waiting for a third party to notice.
 
 `postbote sync` skips a delivery account with a fresh lease and reports it as *received by the
 running daemon*. Not an error and not counted in `errors`/`failed`: nothing failed, the

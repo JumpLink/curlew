@@ -169,6 +169,14 @@ export default async () => {
           value: string;
         };
         expect(version.value).toBe('6');
+        // v6 has never shipped, so it carries the expiry column from the start: a lease that a
+        // taker cannot judge without knowing the holder's interval was never a design.
+        const columns = (
+          db.prepare('PRAGMA table_info(receive_leases)').all() as Array<{
+            name: string;
+          }>
+        ).map((c) => c.name);
+        expect(columns).toContain('expires_at');
         const kept = db.prepare('SELECT body FROM conversation_messages WHERE id = ?').get('m-1') as {
           body: string;
         };

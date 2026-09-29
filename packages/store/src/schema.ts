@@ -270,15 +270,17 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
     `CREATE INDEX IF NOT EXISTS conversation_messages_remote ON conversation_messages (backend, account_id, remote_id)`,
   ],
   // v6: the receive lease (ADR 0002 §4) — one row per (backend, account) a running daemon is
-  // receiving, with the holder's pid and a heartbeat, so a `sync` leaves that account alone. A new
-  // table and nothing else: the index is irreplaceable for a delivery-only account, and no
-  // upgrade here rewrites a stored row.
+  // receiving: the holder's pid, when it was last heard from, and WHEN IT EXPIRES. The expiry is
+  // the holder's own (its heartbeat + 3 × its own refresh interval), so a taker never has to know
+  // how often somebody else refreshes to judge that lease alive. A new table and nothing else: the
+  // index is irreplaceable for a delivery-only account, and no upgrade here rewrites a stored row.
   6: [
     `CREATE TABLE IF NOT EXISTS receive_leases (
        backend TEXT NOT NULL,
        account_id TEXT NOT NULL,
        holder TEXT NOT NULL,
        heartbeat_at TEXT NOT NULL,
+       expires_at TEXT NOT NULL,
        PRIMARY KEY (backend, account_id))`,
   ],
 };
