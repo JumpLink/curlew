@@ -16,18 +16,33 @@ export interface RecordedTool {
   annotations?: { readOnlyHint?: boolean; openWorldHint?: boolean };
 }
 
+/** A registered tool's handler, as loosely as a test that only calls it needs. */
+export type RecordedHandler = (params: unknown) => Promise<unknown>;
+
 export interface Recorder {
   server: McpServer;
   tools: RecordedTool[];
   names(): string[];
   find(name: string): RecordedTool | undefined;
+  /**
+   * Every registered handler, by name.
+   *
+   * Additive, and added for one reason: a tool that REFUSES something has to be called to be
+   * tested. Asserting that a refusal exists by reading its source proves nothing, and the
+   * security claims on the setup tools are all about what a handler does when invoked.
+   */
+  handlers: Map<string, RecordedHandler>;
+  /** The handler for a tool, or a thrown error naming what is missing. */
+  handler(name: string): RecordedHandler;
 }
 
 export function createRecorder(): Recorder {
   const tools: RecordedTool[] = [];
+  const handlers = new Map<string, RecordedHandler>();
   const server = {
-    registerTool: (name: string, config: Omit<RecordedTool, 'name'>) => {
+    registerTool: (name: string, config: Omit<RecordedTool, 'name'>, handler: RecordedHandler) => {
       tools.push({ name, ...config });
+      handlers.set(name, handler);
       return undefined;
     },
   } as unknown as McpServer;
@@ -36,5 +51,12 @@ export function createRecorder(): Recorder {
     tools,
     names: () => tools.map((t) => t.name),
     find: (name) => tools.find((t) => t.name === name),
+    handlers,
+    handler: (name) => {
+      const found = handlers.get(name);
+      if (found === undefined)
+        throw new Error(`no tool registered as ${name}: ${tools.map((t) => t.name).join(', ')}`);
+      return found;
+    },
   };
 }

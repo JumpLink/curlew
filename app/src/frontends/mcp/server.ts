@@ -16,6 +16,7 @@ import { registerConversationTools } from './tools/conversations.ts';
 import { registerGateCanary } from './tools/gate-canary.ts';
 import { registerIndexTools } from './tools/index-sync.ts';
 import { registerMailTools } from './tools/mail.ts';
+import { registerSetupTools } from './tools/setup.ts';
 import { applyReadOnlyGate, serveStdio } from './runtime.ts';
 
 const SERVER_NAME = 'postbote';
@@ -29,6 +30,10 @@ const REGISTRARS: Array<(server: McpServer) => void> = [
   registerContactsTools,
   registerCalendarTools,
   registerAccountsTools,
+  // The only registrar with a mutating tool in it: `setup_status` is read-only and always
+  // served, `setup_run` is dropped unless POSTBOTE_MCP_ALLOW_WRITE=1. Both identify themselves by
+  // their own annotation, which is the only thing the gate reads.
+  registerSetupTools,
   // Last, and normally a no-op: a deliberately MUTATING tool that the gate must drop. It is the
   // only thing in this list that can tell a working gate from an absent one — see gate-canary.ts.
   registerGateCanary,
