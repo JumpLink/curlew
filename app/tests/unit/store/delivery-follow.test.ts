@@ -351,6 +351,72 @@ export default async () => {
     });
   });
 
+  await describe('a write that fails', async () => {
+    /** Make statements whose SQL contains `needle` throw, `count` times. */
+    function failing(db: IndexDatabase, needle: string, count: number): void {
+      const prepare = db.prepare.bind(db);
+      let seen = 0;
+      (db as { prepare: typeof db.prepare }).prepare = ((sql: string) => {
+        if (sql.includes(needle) && seen < count) {
+          seen++;
+          throw new Error('database is locked');
+        }
+        return prepare(sql);
+      }) as typeof db.prepare;
+    }
+
+    await it('a lease that cannot be dropped does not reject the run', async () => {
+      const db = freshDb();
+      const controller = new AbortController();
+      try {
+        const backend = new FollowBackend(['a-1', 'a-2']);
+        failing(db, 'DELETE FROM receive_leases', 2);
+        const received = receiveDeliveries(db, backend, {
+          mode: 'follow',
+          signal: controller.signal,
+          holder: 'pid-daemon',
+        });
+        await settle();
+        controller.abort();
+        // Nothing in a `finally` may reject: the other loops are still writing when one account
+        // drops its lease, and a rejection here would close the index under them.
+        const result = await received;
+        expect(result.accounts.length).toBe(2);
+        expect(
+          result.accounts
+            .map((a) => a.accountId)
+            .sort()
+            .join(','),
+        ).toBe('a-1,a-2');
+        // An undroppable lease expires by itself, so this is a "left behind", not a failure.
+        expect(result.errors).toBe(0);
+      } finally {
+        controller.abort();
+        db.close();
+      }
+    });
+
+    await it('an account whose bookkeeping write fails is reported, not thrown', async () => {
+      const db = freshDb();
+      try {
+        const backend = new FollowBackend(['a-1', 'a-2']);
+        failing(db, 'INSERT INTO accounts', 1);
+        const received = receiveDeliveries(db, backend, { holder: 'pid-sync' });
+        await settle();
+        // The other account is unaffected: a busy index on one row is not the end of the run.
+        expect(backend.connects.join(',')).toBe('a-2');
+        backend.sessionOf('a-2')?.end({ caughtUp: true, error: null });
+        const result = await received;
+        const failed = result.accounts.find((a) => a.accountId === 'a-1');
+        expect((failed?.error ?? '').includes('database is locked')).toBe(true);
+        expect(result.accounts.filter((a) => a.error === null).length).toBe(1);
+        expect(result.failed).toBe(false);
+      } finally {
+        db.close();
+      }
+    });
+  });
+
   await describe('the lease heartbeat', async () => {
     /** Make the next `count` lease refreshes throw, as a busy index would. */
     function busyRefreshes(db: IndexDatabase, count: number): void {

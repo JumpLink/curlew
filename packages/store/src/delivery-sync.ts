@@ -856,7 +856,13 @@ async function receiveAccount(
   // Stopped before this account even started: no lease, no connect, no write. (A listener added
   // to an already aborted signal never fires, so the state has to be read.)
   if (options.signal?.aborted) return result;
-  upsertAccount(db, account);
+  try {
+    upsertAccount(db, account);
+  } catch (err) {
+    // Bookkeeping, not delivery: this account is reported and skipped, and the run carries on.
+    result.error = err instanceof Error ? err.message : String(err);
+    return result;
+  }
 
   // This account's own stop signal: the run's abort, plus a lost lease and a wait that is over.
   // Per account, so one stolen lease stops one account and not the daemon. Re-made for each
@@ -991,7 +997,16 @@ async function receiveAccount(
       }
     } finally {
       clearInterval(heartbeat);
-      if (leaseHeld) releaseReceiveLease(db, name, account.id, holder);
+      if (leaseHeld) {
+        // Nothing in a `finally` may reject: the other accounts' loops are still writing, and a
+        // rejection here would take the whole run down under them. A lease we cannot drop expires
+        // by itself, so leaving it is a "left behind", not a failure.
+        try {
+          releaseReceiveLease(db, name, account.id, holder);
+        } catch {
+          // Swallowed on purpose — see above.
+        }
+      }
     }
     if (!retake) {
       options.signal?.removeEventListener('abort', onRunAbort);
