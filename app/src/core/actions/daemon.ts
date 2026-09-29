@@ -93,6 +93,28 @@ export function deliveryBackends(config: ReturnType<typeof loadConfig>): Message
     .filter((backend) => isDeliveryBackend(backend));
 }
 
+/**
+ * The process exit code of a finished run.
+ *
+ * `2` when the run ended with nothing left to receive AND at least one account ended `loggedOut`:
+ * the network dropped this device (WhatsApp's ~14-day unlink), a restart cannot relink it, and
+ * `Restart=on-failure` would only hammer the network — so systemd is told NOT to restart
+ * (`RestartPreventExitStatus=2`) and the unit shows as **failed**, which is the only signal that
+ * says "nothing is being received and you have to link the device again".
+ *
+ * Everything else is `0`, including a normal SIGTERM stop, a run that is still receiving on
+ * another account, and a machine with no linked account at all: a daemon that was asked to stop
+ * did its job, and a non-zero code on a clean stop would restart-loop.
+ */
+export function daemonExitCode(run: Pick<DaemonResult, 'accounts'>): 0 | 2 {
+  const dead = (account: DaemonAccountResult): boolean =>
+    account.loggedOut || account.heldBy !== null || account.error !== null;
+  if (run.accounts.length > 0 && run.accounts.every(dead) && run.accounts.some((a) => a.loggedOut)) {
+    return 2;
+  }
+  return 0;
+}
+
 /** One log line. Names, counts and timings only — never anything a peer wrote. */
 function line(event: DeliveryProgress, log: (line: string) => void): void {
   const who = `${event.backend}/${event.accountId}`;

@@ -37,8 +37,13 @@ WorkingDirectory=%h/postbote
 Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
 ExecStart=/usr/bin/env gjsify run %h/postbote/app/dist/postbote.gjs.mjs daemon
 # A dropped socket is retried by the daemon itself (with backoff). A restart here is for
-# what it cannot retry: a device the network logged out, an index that cannot be opened.
+# what it cannot retry: an index that cannot be opened, a backend that will not load.
 Restart=on-failure
+# Exit 2 is "every account is logged out and nothing is receiving" (see daemonExitCode). A
+# restart cannot relink a device — it would only hammer the network — so the unit is left
+# FAILED and visible instead: `systemctl --user status postbote-daemon`, then
+# `postbote accounts add whatsapp|signal`.
+RestartPreventExitStatus=2
 RestartSec=30
 NoNewPrivileges=true
 PrivateTmp=true

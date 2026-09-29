@@ -1,11 +1,12 @@
 /**
  * `postbote daemon` — receive from every enabled delivery-only backend until stopped.
  *
- * Long-lived by design, so NOT wired through `runAndExit`: the promise settles when the run is
- * over, not when the handler returns. The signals are installed here, in the frontend, because
- * they are the platform's: `process.on('SIGTERM')`/`'SIGINT'` deliver under gjsify through
- * `GLibUnix.signal_add` (measured on GJS 1.88.1, gjsify 0.49.0), and the handler runs on the JS
- * thread while the CLI's main loop pumps the context.
+ * Long-lived by design, and not routed through `runAndExit` for one reason: the exit code is
+ * this command's own policy (`daemonExitCode`) rather than "printed, then 0". The signals are
+ * installed here, in the frontend, because they are the platform's:
+ * `process.on('SIGTERM')`/`'SIGINT'` deliver under gjsify through `GLibUnix.signal_add`
+ * (measured on GJS 1.88.1, gjsify 0.49.0), and the handler runs on the JS thread while the CLI's
+ * main loop pumps the context.
  *
  * What SIGTERM must NOT do is kill the process: a batch in flight was already acknowledged to the
  * network, so it has to be written first. The signal therefore only aborts — every session is
@@ -14,7 +15,7 @@
 
 import type { CommandModule } from 'yargs';
 
-import { REBUILD_DEBOUNCE_MS, runDeliveryDaemon } from '../../core/actions/daemon.ts';
+import { daemonExitCode, REBUILD_DEBOUNCE_MS, runDeliveryDaemon } from '../../core/actions/daemon.ts';
 import { pickArgv, printJson } from './output.ts';
 
 export const daemonCommand: CommandModule = {
@@ -49,7 +50,9 @@ export const daemonCommand: CommandModule = {
     })
       .then((result) => {
         printJson(result);
-        process.exit(0);
+        // 2, not 0, when the run ended with nothing left receiving because the network logged the
+        // device out — the unit's `RestartPreventExitStatus=2` then leaves it visibly failed.
+        process.exit(daemonExitCode(result));
       })
       .catch((err: unknown) => {
         console.error(err instanceof Error ? err.message : err);

@@ -468,6 +468,19 @@ writes what was in flight, rebuilds the conversations once and exits 0. It is
 never a kill — an unacknowledged message is still on the network, and a written
 one must never be lost.
 
+**When the unit fails.** If every account was logged out — WhatsApp unlinked the
+device after ~14 days, or Signal did the same — the daemon exits **2**, the unit
+is not restarted (a restart cannot relink anything) and shows as failed:
+
+```bash
+systemctl --user status postbote-daemon   # "code=exited, status=2"
+journalctl --user -u postbote-daemon -n 20
+postbote accounts add whatsapp            # or: postbote accounts add signal
+systemctl --user restart postbote-daemon
+```
+
+Anything else exits 0, including a plain `systemctl stop`.
+
 What the daemon does **not** do: send anything, mark anything read, or touch a
 server-archive backend. It is the same read-only postbote, connected all the
 time. See [ADR 0002](docs/adr/0002-receiving-daemon.md) for why each piece is

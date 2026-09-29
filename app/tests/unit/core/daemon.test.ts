@@ -16,7 +16,11 @@ import { PLUGIN_API_VERSION } from '@postbote/protocol';
 import type { RebuildResult } from '@postbote/store';
 import { takeReceiveLease } from '@postbote/store';
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
-import { runDeliveryDaemon } from '../../../src/core/actions/daemon.ts';
+import {
+  daemonExitCode,
+  type DaemonAccountResult,
+  runDeliveryDaemon,
+} from '../../../src/core/actions/daemon.ts';
 
 /**
  * The daemon action without a network and without a real address book: a scripted delivery
@@ -156,6 +160,48 @@ const REBUILD: RebuildResult & { contacts: number | null } = {
 };
 
 export default async () => {
+  await describe('daemonExitCode', async () => {
+    // Pure, so the one thing systemd reads out of the process is decided without a process.
+    const account = (over: Partial<DaemonAccountResult> = {}): DaemonAccountResult => ({
+      backend: 'fakedaemon',
+      accountId: 'a-1',
+      batches: 3,
+      added: 7,
+      removed: 0,
+      error: null,
+      heldBy: null,
+      loggedOut: false,
+      ...over,
+    });
+
+    await it('is 2 when no account is left receiving and one was logged out', async () => {
+      // The WhatsApp 14-day unlink: green and dead unless the exit says otherwise.
+      expect(daemonExitCode({ accounts: [account({ loggedOut: true, error: 'logged out' })] })).toBe(2);
+      expect(
+        daemonExitCode({
+          accounts: [
+            account({ loggedOut: true, error: 'logged out' }),
+            account({ accountId: 'a-2', error: 'the connection closed' }),
+          ],
+        }),
+      ).toBe(2);
+    });
+
+    await it('is 0 for a normal stop, and when something still receives', async () => {
+      expect(daemonExitCode({ accounts: [account()] })).toBe(0);
+      // One account logged out, another still receiving: the daemon is doing its job.
+      expect(
+        daemonExitCode({
+          accounts: [account({ loggedOut: true, error: 'logged out' }), account({ accountId: 'a-2' })],
+        }),
+      ).toBe(0);
+      // Every account dead, but for a reason a restart could get past.
+      expect(daemonExitCode({ accounts: [account({ error: 'the connection closed' })] })).toBe(0);
+      // No accounts at all is a machine with nothing linked yet, not a logout.
+      expect(daemonExitCode({ accounts: [] })).toBe(0);
+    });
+  });
+
   await describe('runDeliveryDaemon', async () => {
     await it('receives every account, rebuilds once for a burst and once on stop', async () => {
       const controller = new AbortController();
