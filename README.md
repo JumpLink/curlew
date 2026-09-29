@@ -302,7 +302,10 @@ Two things postbote reports instead of swallowing:
   Signal added, or a bug in the decoder) is **not** thrown away: the raw
   plaintext goes into the session file, and `sync` reports how many. Nothing is
   lost on Signal's side either — postbote only acknowledges an envelope once
-  that plaintext is on disk.
+  that plaintext is on disk. `postbote deliveries set-aside` lists them: who
+  sent it, when, why postbote could not map it and how big the plaintext was —
+  enough to look the message up on the phone or to report a decoder bug. The
+  plaintext itself is never printed, and no flag prints it.
 
 What postbote sends: at link time, two requests — it registers the device with
 the one-time code the phone sent, and publishes one batch of pre-keys so
