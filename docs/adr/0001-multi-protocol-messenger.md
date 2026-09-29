@@ -49,8 +49,9 @@ native backends (presage, matrix-sdk) are `secret`, separate from the message st
 ### 3. Capabilities, not a lowest common denominator
 
 Each backend declares what it can do — edits, reactions, threads, read receipts, groups, E2EE,
-subject, folders — and a **presentation kind** per message (`bubble` | `document`). CLI, MCP and
-GUI hide what a backend cannot do, instead of branching on the network.
+subject, folders — and a **presentation kind** per message (`bubble` | `document` | `notice`: a
+bubble, a document card, or something the network reported about the conversation that nobody
+wrote). CLI, MCP and GUI hide what a backend cannot do, instead of branching on the network.
 
 ### 4. Identity: one participant, many typed addresses
 

@@ -271,10 +271,13 @@ of the index is irreplaceable, not a cache. Consequences:
 - **Postbote gets no history.** A linked device receives what arrives after it
   was linked; the phone's older messages stay on the phone.
 - **Sync regularly.** `sync` connects, receives what was queued, writes it and
-  disconnects once Signal reports the queue empty (it stops after ten minutes and
-  says so). Signal unlinks a device that stays offline too long; after that,
-  `sync` reports it and you link again (the conversations stay, under the same
-  account id).
+  disconnects once Signal reports the queue empty. If the queue does not go
+  empty within ten minutes, the run stops there and that is **not an error**:
+  everything received is written and the run counts as a success. The only sign
+  in the output is that account's `caughtUp: false` (`error` stays `null`), and
+  whatever is still queued arrives in the next `sync`. Signal unlinks a device
+  that stays offline too long; after that, `sync` reports it and you link again
+  (the conversations stay, under the same account id).
 - **Back up the index** (`$XDG_DATA_HOME/postbote/index.db`) like the config.
 
 What arrives: direct and group messages (sealed sender included), your own
