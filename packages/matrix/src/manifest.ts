@@ -15,8 +15,8 @@ export const MATRIX_MANIFEST: BackendManifest = {
   capabilities: {
     // `m.replace` relations.
     edits: true,
-    // `m.annotation` relations.
-    reactions: true,
+    // `m.annotation` relations; map.ts drops them in toChatMessage.
+    reactions: false,
     // `m.thread` relations (and reply chains everywhere).
     threads: true,
     // `m.read` receipts, for both sides.
@@ -27,7 +27,8 @@ export const MATRIX_MANIFEST: BackendManifest = {
     e2ee: true,
     subject: false,
     folders: false,
-    attachments: true,
+    // hasAttachments metadata only; no attachment download in session.ts.
+    attachments: false,
   },
   // The homeserver keeps the room history: the index is rebuildable (`derived`). The crypto
   // store (the device's Olm account and the room keys it received) is not — it is `secret`,

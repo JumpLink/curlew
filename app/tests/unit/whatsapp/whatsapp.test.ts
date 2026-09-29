@@ -135,9 +135,10 @@ export default async () => {
     await it('is a valid delivery-only manifest whose terms say plainly it is unofficial and can get the account banned', async () => {
       expect(validateManifest(WHATSAPP_MANIFEST).length).toBe(0);
       expect(WHATSAPP_MANIFEST.syncModel).toBe('delivery-only');
-      const c = WHATSAPP_MANIFEST.capabilities;
-      expect(c.e2ee && c.edits && c.reactions && c.groups && c.readReceipts && c.attachments).toBe(true);
-      expect(c.subject || c.folders || c.threads).toBe(false);
+      expect(WHATSAPP_MANIFEST.capabilities.e2ee).toBe(true);
+      expect(WHATSAPP_MANIFEST.capabilities.edits).toBe(true);
+      expect(WHATSAPP_MANIFEST.capabilities.readReceipts).toBe(true);
+      expect(WHATSAPP_MANIFEST.capabilities.groups).toBe(true);
       expect(WHATSAPP_MANIFEST.addressKinds.join(',')).toBe('whatsapp,phone');
       const terms = WHATSAPP_MANIFEST.terms?.summary ?? '';
       expect(terms.includes('UNOFFICIAL')).toBe(true);

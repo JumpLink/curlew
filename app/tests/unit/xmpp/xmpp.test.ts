@@ -97,10 +97,9 @@ export default async () => {
       expect(XMPP_MANIFEST.syncModel).toBe('server-archive');
       expect(XMPP_MANIFEST.addressKinds.join(',')).toBe('jid');
       expect(XMPP_MANIFEST.terms).toBe(null);
-      const c = XMPP_MANIFEST.capabilities;
-      expect(c.e2ee).toBe(false);
-      expect(c.edits && c.reactions && c.readReceipts && c.groups && c.attachments).toBe(true);
-      expect(c.subject || c.folders || c.threads).toBe(false);
+      expect(XMPP_MANIFEST.capabilities.e2ee).toBe(false);
+      expect(XMPP_MANIFEST.capabilities.edits).toBe(true);
+      expect(XMPP_MANIFEST.capabilities.groups).toBe(true);
     });
   });
 

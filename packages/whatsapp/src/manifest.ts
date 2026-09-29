@@ -16,7 +16,8 @@ export const WHATSAPP_MANIFEST: BackendManifest = {
   // reads, so none of this is a promise that postbote can SEND it.
   capabilities: {
     edits: true,
-    reactions: true,
+    // The network has reactions; map.ts drops them in extractContent/message.
+    reactions: false,
     // Replies, but no threads or topics.
     threads: false,
     // Delivered/read/played receipts, per message.
@@ -26,7 +27,8 @@ export const WHATSAPP_MANIFEST: BackendManifest = {
     e2ee: true,
     subject: false,
     folders: false,
-    attachments: true,
+    // hasAttachments metadata only; no attachment download in receiver.ts.
+    attachments: false,
   },
   // No server archive: a message is gone from WhatsApp's servers once a device acknowledged it.
   // What postbote stores is the only copy (`state`); the auth state is `secret`.

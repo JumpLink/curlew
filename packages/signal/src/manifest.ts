@@ -14,7 +14,8 @@ export const SIGNAL_MANIFEST: BackendManifest = {
   // What the NETWORK can do; postbote only reads.
   capabilities: {
     edits: true,
-    reactions: true,
+    // The network has reactions; map.ts drops them in mapDataMessage.
+    reactions: false,
     // Quoted replies, no threads.
     threads: false,
     readReceipts: true,
@@ -23,7 +24,8 @@ export const SIGNAL_MANIFEST: BackendManifest = {
     e2ee: true,
     subject: false,
     folders: false,
-    attachments: true,
+    // hasAttachments metadata only; no attachment download in receiver.ts.
+    attachments: false,
   },
   // Signal keeps no server archive: the queue is emptied once a device acknowledged a message,
   // so what postbote stores is the only copy (`state`); the protocol stores are `secret`.
