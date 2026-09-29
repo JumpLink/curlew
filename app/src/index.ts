@@ -19,6 +19,7 @@ import {
   partsCommand,
   saveCommand,
   searchCommand,
+  setupCommand,
   syncCommand,
 } from './frontends/cli/index.ts';
 
@@ -48,6 +49,7 @@ const parseArgs = () =>
     .command(calendarCommand)
     .command(mcpCommand)
     .command(checkCommand)
+    .command(setupCommand)
     .command(addonCanaryCommand)
     .demandCommand(1, 'Please provide a command — `postbote --help` lists them all.')
     // Reject unknown commands instead of silently resolving — on GJS an unmatched command

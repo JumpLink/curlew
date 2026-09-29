@@ -32,6 +32,10 @@ const env = { ...process.env };
 delete env.LD_LIBRARY_PATH;
 delete env.GI_TYPELIB_PATH;
 
+// Sorted, because the comparison below is a sorted deepEqual — the ordering is the assertion.
+// `setup_run` is deliberately ABSENT: it declares `readOnlyHint: false`, so the gate must drop it
+// on this default connection. It appears only in the ungated run further down, and its presence
+// there is what makes its absence here mean something.
 const EXPECTED_TOOLS = [
   'accounts_list',
   'calendar_list_events',
@@ -45,6 +49,7 @@ const EXPECTED_TOOLS = [
   'mail_search',
   'mail_search_local',
   'mail_sync_status',
+  'setup_status',
 ];
 
 // ── 1. handshake, catalogue, and one real call ──────────────────────────────
@@ -168,11 +173,17 @@ const gated = await listToolNames({ POSTBOTE_MCP_GATE_CANARY: '1' });
 for (const canary of CANARIES) {
   assert(!gated.includes(canary), `READ-ONLY GATE IS OPEN: ${canary} was served — ${gated.join(', ')}`);
 }
+// A REAL mutating tool, not just the canaries. The canaries exist to prove the gate is wired at
+// all; this proves it judges an ordinary tool the same way it judges the probe. Without this, a
+// gate that dropped the canaries and served everything else would pass section 3.
+assert(!gated.includes('setup_run'), `READ-ONLY GATE IS OPEN: setup_run was served — ${gated.join(', ')}`);
+assert(gated.includes('setup_status'), 'setup_status must be served: it declares itself read-only');
 assert.deepEqual(gated, EXPECTED_TOOLS, 'gated catalogue drifted');
-console.log(`OK: gate DROPS both canaries (${gated.length} tools served, neither canary present)`);
+console.log(`OK: gate DROPS both canaries and setup_run (${gated.length} tools served, setup_status kept)`);
 
 // The discriminator. If this fails, the canary is not reaching the server at all and the
-// assertion above proved nothing.
+// assertion above proved nothing. `setup_run` joins it: a mutating tool that appears ONLY when
+// writes are allowed is the same evidence on a tool that actually does something.
 const ungated = await listToolNames({
   POSTBOTE_MCP_GATE_CANARY: '1',
   POSTBOTE_MCP_ALLOW_WRITE: '1',
@@ -183,6 +194,12 @@ for (const canary of CANARIES) {
     `${canary} never registered — the drop above was a FALSE NEGATIVE, not a working gate (${ungated.join(', ')})`,
   );
 }
-console.log(`OK: discriminator — with writes allowed both canaries ARE served (${ungated.length} tools)`);
+assert(
+  ungated.includes('setup_run'),
+  `setup_run never registered — its absence above was a FALSE NEGATIVE (${ungated.join(', ')})`,
+);
+console.log(
+  `OK: discriminator — with writes allowed both canaries AND setup_run ARE served (${ungated.length} tools)`,
+);
 
 process.exit(0);

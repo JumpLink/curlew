@@ -16,6 +16,7 @@ import { registerContactsTools } from '../../../src/frontends/mcp/tools/contacts
 import { registerConversationTools } from '../../../src/frontends/mcp/tools/conversations.ts';
 import { registerIndexTools } from '../../../src/frontends/mcp/tools/index-sync.ts';
 import { registerMailTools } from '../../../src/frontends/mcp/tools/mail.ts';
+import { registerSetupTools } from '../../../src/frontends/mcp/tools/setup.ts';
 import { createRecorder, type Recorder } from './recorder.ts';
 
 function registerAll(): Recorder {
@@ -26,6 +27,13 @@ function registerAll(): Recorder {
   registerContactsTools(rec.server);
   registerCalendarTools(rec.server);
   registerAccountsTools(rec.server);
+  return rec;
+}
+
+/** Every registrar, gate included — what an UNGATED server actually offers. */
+function registerAllUngated(): Recorder {
+  const rec = registerAll();
+  registerSetupTools(rec.server);
   return rec;
 }
 
@@ -113,5 +121,50 @@ export default async () => {
       expect(schema?.uid.safeParse(undefined).success).toBe(false);
       expect(schema?.folder.safeParse(undefined).success).toBe(true);
     });
+  });
+
+  // Deliberately a separate block, and NOT added to `registerAll`: the loop in the catalogue
+  // describe asserts every registered tool declares itself read-only, and `setup_run` is the one
+  // tool in this server that does not. Folding it in would mean dropping that assertion for
+  // everyone, which is how a mutating tool reaches a read-only catalogue unnoticed.
+  await describe('MCP setup tools', async () => {
+    const rec = registerAllUngated();
+
+    await it('adds setup_status and setup_run to the read-only catalogue', async () => {
+      expect([...rec.names()].sort()).toEqualArray([
+        'accounts_list',
+        'calendar_list_events',
+        'contacts_search',
+        'conversations_get',
+        'conversations_list',
+        'mail_get_message',
+        'mail_list_folders',
+        'mail_list_parts',
+        'mail_save_attachment',
+        'mail_search',
+        'mail_search_local',
+        'mail_sync_status',
+        'setup_run',
+        'setup_status',
+      ]);
+    });
+
+    await it('setup_status is read-only and takes no arguments', async () => {
+      const tool = rec.find('setup_status');
+      expect(tool?.annotations?.readOnlyHint).toBe(true);
+      // No inputSchema: there is nothing to ask. A status read takes no options, and a schema
+      // here would only invite a caller to think it can narrow or filter the machine.
+      expect(tool?.inputSchema).toBe(undefined);
+    });
+
+    await it('setup_run declares itself mutating, so the gate drops it', async () => {
+      expect(rec.find('setup_run')?.annotations?.readOnlyHint).toBe(false);
+    });
+
+    for (const name of ['setup_status', 'setup_run']) {
+      await it(`${name} carries a real description`, async () => {
+        expect((rec.find(name)?.description ?? '').length).toBeGreaterThan(40);
+      });
+    }
   });
 };

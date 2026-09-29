@@ -43,8 +43,12 @@ import registry from './unit/core/registry.test.ts';
 import capabilities from './unit/core/capabilities.test.ts';
 import daemon from './unit/core/daemon.test.ts';
 import deliveries from './unit/core/deliveries.test.ts';
+import setup from './unit/core/setup.test.ts';
+import setupSteps from './unit/core/setup-steps.test.ts';
+import setupUnit from './unit/core/setup-unit.test.ts';
 
 import mcpGate from './unit/mcp/gate.test.ts';
+import mcpSetupTools from './unit/mcp/setup-tools.test.ts';
 import mcpTools from './unit/mcp/tools.test.ts';
 
 import bundlePaths from './unit/integration/bundle-paths.test.ts';
@@ -85,8 +89,12 @@ run({
   registry,
   daemon,
   deliveries,
+  setup,
+  setupSteps,
+  setupUnit,
   capabilities,
   mcpGate,
+  mcpSetupTools,
   mcpTools,
   bundlePaths,
 });

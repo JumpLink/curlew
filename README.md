@@ -78,22 +78,28 @@ absolute path it was built at, so do not move or copy a built tree — the copy
 fails at the first Signal command. `postbote-cli test:relocation` measures this
 and says so out loud; the fix is tracked in gjsify.
 
-### Setup wizard
+### Setup
 
-`contrib/setup/postbote-setup-wizard.sh` walks you through the whole thing —
-linking Signal and WhatsApp, building the index, running the receiving daemon
-and installing its systemd user unit — one confirmed step at a time:
+`postbote setup` walks you through the whole thing — linking Signal and WhatsApp,
+accepting their terms, building the index, running the receiving daemon and
+installing its systemd user unit — one confirmed stage at a time:
 
 ```bash
-contrib/setup/postbote-setup-wizard.sh
+postbote setup
 ```
 
-It finds the checkout it ships in (override with `POSTBOTE_REPO`, and it asks
-if it guessed wrong), and falls back to a published `postbote` on `PATH` when
-there is no tree. `POSTBOTE_WIZARD_LIST=1` prints the stages and exits, so you
-can read what it will do before running it. The QR code and every pairing code
-it prints stay in that terminal: nothing asks for them, copies them or stores
-them.
+It finds the checkout it is run from, and falls back to a published `postbote` on
+`PATH` when there is no tree. `postbote setup --status` reports what is done and
+what is left without changing anything, and `postbote setup --only <stage>` runs
+one stage on its own — `--status` prints the name of every stage.
+
+Re-run it whenever: a stage that is already done says so instead of failing.
+
+The QR code and every pairing code it prints stay in that terminal. postbote
+calls the same account-adding command you would call by hand, with the same
+prompter, and neither copies, captures, logs nor stores a pairing payload. The
+terms are displayed before you are asked to accept them, and nothing accepts them
+for you.
 
 ## Use it
 
