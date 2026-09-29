@@ -80,6 +80,7 @@ import {
 import * as Signal from '@signalapp/libsignal-client';
 
 import { builtinRegistry } from '../../../src/core/backends/builtin.ts';
+import { ManualClock, tick } from '../clock.ts';
 import { freshDb } from '../store/fixtures.ts';
 import { Party } from './stores.ts';
 import {
@@ -141,56 +142,6 @@ async function rejection(fn: () => Promise<unknown>): Promise<string> {
   }
   return '';
 }
-
-/**
- * A clock that only moves when told to, and whose timers can also be woken before they are due.
- * The receive run's time cap is crossed by moving this clock instead of waiting: 200ms of wall
- * clock make the test depend on how long the tests before it happened to run.
- */
-class ManualClock {
-  private at = 0;
-  private next = 1;
-  private readonly timers = new Map<number, { at: number; fn: () => void }>();
-
-  readonly now = (): number => this.at;
-
-  readonly set = (fn: () => void, ms: number): unknown => {
-    const id = this.next++;
-    this.timers.set(id, { at: this.at + ms, fn });
-    return id;
-  };
-
-  readonly clear = (handle: unknown): void => {
-    this.timers.delete(handle as number);
-  };
-
-  pending(): number {
-    return this.timers.size;
-  }
-
-  /** Move forward, firing every timer that falls due, in order. */
-  advance(ms: number): void {
-    const until = this.at + ms;
-    for (;;) {
-      const due = [...this.timers].filter(([, t]) => t.at <= until).sort((a, b) => a[1].at - b[1].at)[0];
-      if (!due) break;
-      this.timers.delete(due[0]);
-      this.at = due[1].at;
-      due[1].fn();
-    }
-    this.at = until;
-  }
-
-  /** Fire every pending timer now, whatever the clock says — a wake-up that came early. */
-  wake(): void {
-    const pending = [...this.timers].sort((a, b) => a[1].at - b[1].at);
-    this.timers.clear();
-    for (const [, timer] of pending) timer.fn();
-  }
-}
-
-/** One macrotask: whatever was queued with setTimeout has run by then. */
-const tick = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 
 /** Link postbote's device through the scripted phone. */
 async function link(dir: string, phone = new Phone()): Promise<Phone> {

@@ -9,9 +9,10 @@ import type {
 } from '@postbote/whatsapp';
 
 /**
- * A scriptable stand-in for Baileys' socket, and a manual clock. The receive path, the login and
+ * A scriptable stand-in for Baileys' socket. The receive path, the login and
  * a whole sync run against these exactly as against WhatsApp — with no network, no phone and no
- * account. Every id, number and name here is synthetic.
+ * account. Every id, number and name here is synthetic. The manual clock that drives the receive
+ * timers lives beside the other fakes, in `../clock.ts`, because Signal's receive suite needs it too.
  */
 
 type Listener = (data: unknown) => void;
@@ -91,42 +92,6 @@ export function fakeFactory(onCreate: (socket: FakeSocket, index: number) => voi
     },
   };
 }
-
-/** A clock that only moves when told to. */
-export class ManualClock {
-  private now = 0;
-  private next = 1;
-  private readonly timers = new Map<number, { at: number; fn: () => void }>();
-
-  readonly set = (fn: () => void, ms: number): unknown => {
-    const id = this.next++;
-    this.timers.set(id, { at: this.now + ms, fn });
-    return id;
-  };
-
-  readonly clear = (handle: unknown): void => {
-    this.timers.delete(handle as number);
-  };
-
-  pending(): number {
-    return this.timers.size;
-  }
-
-  /** Move forward, firing every timer that falls due, in order. */
-  advance(ms: number): void {
-    const until = this.now + ms;
-    for (;;) {
-      const due = [...this.timers].filter(([, t]) => t.at <= until).sort((a, b) => a[1].at - b[1].at)[0];
-      if (!due) break;
-      this.timers.delete(due[0]);
-      this.now = due[1].at;
-      due[1].fn();
-    }
-    this.now = until;
-  }
-}
-
-export const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 // ── synthetic identities ──────────────────────────────────────────────
 
