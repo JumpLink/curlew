@@ -15,6 +15,8 @@ import type {
 import { PLUGIN_API_VERSION } from '@postbote/protocol';
 import type { RebuildResult } from '@postbote/store';
 import { takeReceiveLease } from '@postbote/store';
+import { accountIdFor } from '@postbote/signal';
+import { accountIdFromCreds } from '@postbote/whatsapp';
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
 import {
   daemonExitCode,
@@ -213,6 +215,28 @@ export default async () => {
       } finally {
         open();
         controller.abort();
+      }
+    });
+  });
+
+  await describe('the ids a log line may carry', async () => {
+    // ADR 0002 §6 allows the account id in a log line and nothing else identifying. That rests on
+    // one invariant of the id derivation: a WhatsApp id is the LID or the registration id, a
+    // Signal id is the ACI — never a phone number, never a name. If that ever changes, every log
+    // line of the daemon leaks, so it is pinned here with realistic id shapes.
+    await it('derives backend ids from opaque network ids, never from a number or a name', async () => {
+      expect(accountIdFromCreds({ me: { lid: '123456789012345@lid' }, registrationId: 7 })).toBe(
+        'whatsapp-123456789012345',
+      );
+      // A linked device that has no LID yet falls back to the registration id, not the phone.
+      expect(accountIdFromCreds({ registrationId: 3141592653 })).toBe('whatsapp-3141592653');
+      const aci = '9d0652a3-dcc3-4d11-975f-74d61598733f';
+      expect(accountIdFor(aci)).toBe(`signal-${aci}`);
+      // The shapes the daemon actually writes: no '+', no 7-plus-digit run that could be a number.
+      for (const id of [accountIdFromCreds({ me: { lid: '123456789012345@lid' } }), accountIdFor(aci)]) {
+        expect(id).not.toContain('+');
+        expect(id.includes('49151')).toBe(false);
+        expect(id.includes('491510000001')).toBe(false);
       }
     });
   });

@@ -50,8 +50,6 @@ export const LEASE_BUSY_TIMEOUT_MS = 500;
 
 const armed = new WeakSet<IndexDatabase>();
 
-/** The heartbeat older than which a lease is nobody's. */
-
 /**
  * The lease's own transaction: the write lock from the first statement, and a busy timeout so a
  * competing process QUEUES instead of failing.
@@ -105,10 +103,10 @@ export type LeaseTake =
  * to have run first.
  *
  * The shapes are plain `INSERT`/`SELECT` on purpose:
- * gjsify gap: libgda cannot parse an EXISTS subquery — `INSERT … SELECT … WHERE NOT EXISTS (…)`
- * fails with `near "(": syntax error` (being fixed in gjsify core) — so the guard a conditional
- * claim would need cannot be written in SQL here. Revisit at the next bump; the lock makes it
- * optional, not necessary.
+ * gjsify gap (unfixed, fix in progress): libgda cannot parse an EXISTS subquery —
+ * `INSERT … SELECT … WHERE NOT EXISTS (…)` fails with `near "(": syntax error` — so a conditional
+ * claim cannot be written in SQL here. Revisit at the next bump; the lock makes it optional, not
+ * necessary.
  */
 export function takeReceiveLease(
   db: IndexDatabase,

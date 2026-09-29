@@ -101,6 +101,13 @@ would try to write, and SQLite does not run the busy handler for that upgrade. T
 measured cross-process on both runtimes, and a contender that runs out of patience is reported as
 "not acquired" — a `sync` stands down, a daemon waits and takes the account when it is free.
 
+Two caveats the mechanism cannot remove, both stated because the next reader will hit them:
+the heartbeat is a **wall clock** on both sides, so a step backwards (an NTP correction, a
+suspend/resume) can make a live lease look stale for up to one interval — mitigated by the
+account stopping itself after two refreshes it could not perform, rather than waiting for a
+third party to notice; and a holder whose refresh interval exceeds the window would be declared
+stale mid-interval, so the window is derived from the interval, not fixed at 3 × 30 s.
+
 `postbote sync` skips a delivery account with a fresh lease and reports it as *received by the
 running daemon*. Not an error and not counted in `errors`/`failed`: nothing failed, the
 messages are being received, and a `sync` that red-flags a working daemon trains the user to
@@ -126,6 +133,18 @@ stop — go to stderr as single lines, where journald collects them. Counts, the
 and the account id only: never message text, chat titles, peer names or phone numbers. The
 index holds other people's words; a log line is a file that gets copied, indexed and pasted
 into a bug report, and the same rule as the index itself applies to it.
+
+What makes the account id safe to log is an invariant of how it is derived, and it is the one
+thing a future backend could break: a WhatsApp account id is the **LID** or the device's
+registration id (`whatsapp-<LID|registrationId>`, `packages/whatsapp/src/login.ts`) and a
+Signal account id is the **ACI** (`signal-<ACI>`, `packages/signal/src/accounts.ts`) — opaque
+network ids, never a phone number and never a display name. A test pins the derivation with
+realistic shapes (`app/tests/unit/core/daemon.test.ts`), because if it ever changed, every log
+line this daemon writes would carry a phone number.
+
+For the same reason a failure is logged by its **name and code** (`Error/ECONNRESET`,
+`Error/401`) and never by its message: a Baileys or libsignal error can name what it was
+talking to. The full message still reaches `error` in the final JSON, where a user asked for it.
 
 ### 7. systemd user unit, shipped in the repo
 
