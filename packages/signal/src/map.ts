@@ -9,7 +9,8 @@
  * deletes, quotes and receipts all point at that pair — so a message's remote id is
  * `<author ACI>:<sent timestamp>`, and an edit or delete from X can only ever reach X's messages.
  * A direct chat is the other person's ACI; a group is `group:<base64 group id>`, the id derived
- * from the master key every group message carries.
+ * from the master key every group message carries. A read receipt is the one thing that carries
+ * no chat at all, so it is mapped without one and resolved by the message.
  *
  * What is kept: what people wrote (text, a caption, a file name, a poll's question, a shared
  * contact's name), that a file came with it, the message it quotes, edits, deletes for everyone,
@@ -137,9 +138,14 @@ export class SignalMapper {
       (content.receipt.type === ReceiptType.READ || content.receipt.type === ReceiptType.VIEWED)
     ) {
       if (content.receipt.timestamps.length > 0) {
+        // No chat: a `ReceiptMessage` carries a type and sent timestamps and names no
+        // conversation (`refs/signal-desktop/protos/SignalService.proto:451`), so the message —
+        // identified the way Signal itself identifies it, by author and sent timestamp — is the
+        // only thing a receipt can be resolved against. That is what Signal-Desktop does too: its
+        // read events carry the source service id and the timestamp, and nothing else.
         out.events.push({
           type: 'peer-read',
-          chatRemoteId: context.senderAci,
+          chatRemoteId: null,
           remoteIds: content.receipt.timestamps.map((t) => messageRemoteId(this.ownAci, t)),
         });
       }

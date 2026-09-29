@@ -1255,6 +1255,89 @@ export default async () => {
         rmSync(dir, { recursive: true, force: true });
       }
     });
+
+    /**
+     * A `ReceiptMessage` carries a type and a list of sent timestamps and nothing else — Signal
+     * never names the conversation (`refs/signal-desktop/protos/SignalService.proto:451`). The
+     * only thing that identifies the message is the identity Signal itself uses: its author and
+     * its sent timestamp, which is exactly what a Signal message's remote id is. So a receipt has
+     * to be resolved by the message, in whatever chat the message ended up — a group included.
+     */
+    await it('marks a group message read on a receipt that names no chat', async () => {
+      const dir = tempDir();
+      const db = freshDb();
+      try {
+        const phone = await link(dir);
+        const trust = new TrustRoot();
+        const alice = new Party(ALICE_ACI, 1, 11);
+        await introduceAll(dir, alice, phone.device);
+        const group = new GroupSender(new Uint8Array(32).fill(5));
+        const groupChat = `group:${btoa(String.fromCharCode(...groupIdOf(group.masterKey)))}`;
+        const server = new FakeServer();
+        // The user sends into the group from the phone, and a member answers there; a direct-chat
+        // message of the user's goes out alongside it.
+        server.push(
+          await sealedEnvelope(
+            alice,
+            trust,
+            { senderKeyDistribution: await group.distribution(alice) },
+            1500,
+          ),
+          await directEnvelope(
+            phone.device,
+            {
+              sent: {
+                destinationServiceId: ALICE_ACI,
+                timestamp: 1501,
+                message: { body: 'In die Gruppe', timestamp: 1501, groupMasterKey: group.masterKey },
+              },
+            },
+            1501,
+          ),
+          await group.envelope(
+            alice,
+            trust,
+            { dataMessage: { body: 'Gelesen', timestamp: 1502, groupMasterKey: group.masterKey } },
+            1502,
+          ),
+          await directEnvelope(
+            phone.device,
+            {
+              sent: {
+                destinationServiceId: ALICE_ACI,
+                timestamp: 1503,
+                message: { body: 'Direkt', timestamp: 1503 },
+              },
+            },
+            1503,
+          ),
+        );
+        await receiveDeliveries(db, backendFor(dir, server, trust));
+        // Only now do the read receipts arrive, in a later batch than the messages they name.
+        server.push(
+          await sealedEnvelope(alice, trust, { receipt: { type: 1, timestamps: [1501] } }, 1504),
+          await sealedEnvelope(alice, trust, { receipt: { type: 1, timestamps: [1503] } }, 1505),
+        );
+        await receiveDeliveries(db, backendFor(dir, server, trust));
+
+        rebuildConversations(db);
+        expect(bodies(db, groupChat)).toBe('In die Gruppe|Gelesen');
+        const groupConv = getConversation(db, chatConversationId('signal', ACCOUNT, groupChat), {
+          includeBodies: true,
+        });
+        expect(groupConv?.messages[0].fromSelf).toBe(true);
+        expect(groupConv?.messages[0].readByPeer).toBe(true);
+        // The member's own message is untouched: a receipt is about what the user sent.
+        expect(groupConv?.messages[1].readByPeer ?? false).toBe(false);
+        const direct = getConversation(db, chatConversationId('signal', ACCOUNT, ALICE_ACI), {
+          includeBodies: true,
+        });
+        expect(direct?.messages[0].bodyText).toBe('Direkt');
+        expect(direct?.messages[0].readByPeer).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
   });
 
   await describe('Signal link URL', async () => {
