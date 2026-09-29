@@ -29,6 +29,7 @@ import type {
   DeliveryChat,
   DeliveryEvent,
   DeliveryMode,
+  DeliveryOutcome,
   DeliverySession,
   ParticipantAddress,
 } from '@postbote/protocol';
@@ -36,6 +37,13 @@ import { chatConversationId, classifyChatMessage } from './chat-sync.ts';
 import type { IndexDatabase } from './db.ts';
 import { insertMany, placeholders, type SqlValue, withTransaction } from './db.ts';
 import { upsertAccount } from './index-store.ts';
+import {
+  LEASE_HEARTBEAT_MS,
+  type LeaseTake,
+  refreshReceiveLease,
+  releaseReceiveLease,
+  takeReceiveLease,
+} from './receive-lease.ts';
 import { stableId } from './threads.ts';
 
 export interface DeliverySyncOptions {
@@ -43,9 +51,75 @@ export interface DeliverySyncOptions {
   accountId?: string;
   /** `catch-up` (the default) stops once the backlog is in; `follow` runs until the session closes. */
   mode?: DeliveryMode;
+  /**
+   * Stop the run. Each account's session is closed, so `nextBatch()` resolves `null` and its loop
+   * ends **normally** — what was written stays written, and a stopped daemon is not an error.
+   */
+  signal?: AbortSignal;
+  /**
+   * Who holds the receive lease in `follow` mode (ADR 0002 §4) — the pid by default. Two delivery
+   * devices on one account each acknowledge half the messages, so this is the lock between a
+   * daemon and a `sync`; it is a lease, so a crashed holder expires without a cleanup.
+   */
+  holder?: string;
+  /** How often the lease is refreshed. Short only in tests. */
+  leaseIntervalMs?: number;
   /** Clock, injected so tests are deterministic. */
   now?: () => Date;
+  /** How long to wait before a reconnect, injected so a backoff costs no wall clock in a test. */
+  sleep?: (ms: number) => Promise<void>;
+  /** Every state change, for a log line. Never carries content — only names, counts and timings. */
+  onProgress?: (event: DeliveryProgress) => void;
 }
+
+/**
+ * One state change of a follow-mode account, for a caller that logs. Never message text, chat
+ * titles, peer names or numbers: the index holds other people's words and a log line is a file
+ * that gets copied around (ADR 0002 §6).
+ */
+export type DeliveryProgress =
+  | { backend: string; accountId: string; type: 'connected' }
+  | {
+      backend: string;
+      accountId: string;
+      type: 'batch';
+      /** Batches written so far, and what the last one changed. */
+      batches: number;
+      added: number;
+      edited: number;
+      removed: number;
+    }
+  /**
+   * A session ended and will be retried. `reason` is the failure's name and code — never its
+   * message, which a network library may have filled with a JID or a number — or null when the
+   * session ended without one.
+   */
+  | {
+      backend: string;
+      accountId: string;
+      type: 'reconnect';
+      delayMs: number;
+      attempt: number;
+      reason: string | null;
+    }
+  | { backend: string; accountId: string; type: 'logged-out'; error: string | null }
+  /** A bounded run left the account to the holder and will not receive it. */
+  | { backend: string; accountId: string; type: 'lease-held'; holder: string }
+  /** The index was busy, so no lease could be taken and no holder is known. */
+  | { backend: string; accountId: string; type: 'lease-busy' }
+  /** A follow run is waiting its turn for the account; `holder` is null when nobody is known. */
+  | { backend: string; accountId: string; type: 'lease-waiting'; holder: string | null }
+  | { backend: string; accountId: string; type: 'lease-lost' }
+  /**
+   * The lease could not be refreshed twice in a row (the index was busy), so the account stopped
+   * before its lease could look stale — and takes it again through the wait-for-lease path.
+   */
+  | { backend: string; accountId: string; type: 'lease-unrefreshable' }
+  | { backend: string; accountId: string; type: 'stopped'; reason: 'aborted' | 'logged-out' };
+
+/** The first wait after a dropped session, and its ceiling. Both are the daemon's, not the port's. */
+export const RECONNECT_FIRST_MS = 5_000;
+export const RECONNECT_CAP_MS = 5 * 60_000;
 
 export interface DeliveryAccountSyncResult {
   backend: string;
@@ -62,6 +136,23 @@ export interface DeliveryAccountSyncResult {
   caughtUp: boolean;
   /** An error that stopped the account (connect, a dropped session, a failed write). */
   error: string | null;
+  /**
+   * The network no longer knows this device (logged out, unlinked) — terminal, so a follow-mode
+   * caller stops the account rather than reconnecting (`DeliveryOutcome.loggedOut`).
+   */
+  loggedOut?: boolean;
+  /**
+   * The account is being received by another holder (a running daemon, on `sync`): this run left
+   * it alone, and that is a success — nothing failed, the messages are arriving. A real holder
+   * only: "the index is busy" is `indexBusy` below, never a made-up name.
+   */
+  heldBy?: string;
+  /**
+   * The lease could not be taken because the index was busy (another writer mid-transaction). The
+   * account was NOT received, and nobody is known to be receiving it either — its own state, not
+   * a holder.
+   */
+  indexBusy?: true;
   /** Received but not mapped; kept raw by the backend for a later version (`DeliveryOutcome.setAside`). */
   setAside?: number;
   /** Received but not decryptable (`DeliveryOutcome.undecryptable`). */
@@ -324,8 +415,7 @@ class DeliveryBatch {
           }
           if (!pendingAny) this.peerReadByRemoteId.add(remoteId);
         }
-        if (chatRemoteId !== null && this.state.chats.has(chatRemoteId))
-          this.touchedChats.add(chatRemoteId);
+        if (chatRemoteId !== null && this.state.chats.has(chatRemoteId)) this.touchedChats.add(chatRemoteId);
         return;
       }
       case 'chat-read': {
@@ -623,35 +713,118 @@ function writeEvents(
   return totals;
 }
 
-async function receiveAccount(
+/** The default wait, interruptible: a daemon that is asked to stop does not sit out its backoff. */
+function abortableSleep(ms: number, signal: AbortSignal | undefined): Promise<void> {
+  if (signal?.aborted) return Promise.resolve();
+  return new Promise<void>((resolve) => {
+    const done = () => {
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', done);
+      resolve();
+    };
+    const timer = setTimeout(done, ms);
+    signal?.addEventListener('abort', done);
+  });
+}
+
+/** What `raceAbort` resolves with when the run was stopped before the work finished. */
+const ABORTED = Symbol('aborted');
+
+/**
+ * A failure in a form that can be logged: the error's NAME and CODE, never its message.
+ *
+ * Chosen deliberately. Baileys and libsignal put network detail in the message, and a network
+ * error can name what it was talking to — a JID, a phone number, a display name — and the log
+ * line is a file that gets copied and pasted around (ADR 0002 §6). The name and the code are
+ * structural: `Error`, `SqliteError`, `ECONNRESET`, HTTP 401.
+ */
+function shortReason(err: unknown): string {
+  if (!(err instanceof Error)) return 'Error';
+  const code = (err as { code?: unknown }).code;
+  const status = (err as { output?: { statusCode?: unknown } }).output?.statusCode;
+  const parts = [err.name];
+  if (typeof code === 'number' || typeof code === 'string') parts.push(String(code));
+  if (typeof status === 'number') parts.push(String(status));
+  return parts.join('/');
+}
+
+/**
+ * `work`, or `ABORTED` the moment the run is stopped.
+ *
+ * Needed wherever a promise can be pending while the run is asked to end — the listener is
+ * attached once, and an `addEventListener` on an ALREADY aborted signal never fires, so a plain
+ * `await work` behind a later `addEventListener` is a hang waiting for a network timeout.
+ */
+function raceAbort<T>(work: Promise<T>, signal: AbortSignal | undefined): Promise<T | typeof ABORTED> {
+  if (signal === undefined) return work;
+  if (signal.aborted) return Promise.resolve(ABORTED);
+  return new Promise<T | typeof ABORTED>((resolve, reject) => {
+    const onAbort = () => resolve(ABORTED);
+    signal.addEventListener('abort', onAbort, { once: true });
+    work.then(
+      (value) => {
+        signal.removeEventListener('abort', onAbort);
+        resolve(value);
+      },
+      (err: unknown) => {
+        signal.removeEventListener('abort', onAbort);
+        reject(err);
+      },
+    );
+  });
+}
+
+/** One session of one account, from connect to close. Reports into `result` as it goes. */
+async function runSession(
   db: IndexDatabase,
   backend: DeliveryBackend,
   account: { id: string; identity: string; provider: string },
   mode: DeliveryMode,
   now: () => Date,
-): Promise<DeliveryAccountSyncResult> {
+  signal: AbortSignal | undefined,
+  onProgress: ((event: DeliveryProgress) => void) | undefined,
+  result: DeliveryAccountSyncResult,
+  /** Why the last session ended, in a form that can be logged. Read after the call. */
+  note: { reason: string | null },
+): Promise<DeliveryOutcome> {
   const name = backend.manifest.name;
-  const result: DeliveryAccountSyncResult = {
-    backend: name,
-    accountId: account.id,
-    batches: 0,
-    added: 0,
-    edited: 0,
-    removed: 0,
-    caughtUp: false,
-    error: null,
-  };
-  upsertAccount(db, account);
-
+  // The connect is the one step that can be pending for a LONG time — a network that is down
+  // waits out its own timeouts — so it is raced against the stop, and a session that arrives
+  // afterwards is closed at once: nobody is left to read it, and an open session acknowledges.
+  const connecting = backend.connect(account.id, { mode });
   let session: DeliverySession;
   try {
-    session = await backend.connect(account.id, { mode });
+    const raced = await raceAbort(connecting, signal);
+    if (raced === ABORTED) {
+      void connecting.then((late) => late.close()).catch(() => undefined);
+      return { caughtUp: false, error: null, loggedOut: false };
+    }
+    session = raced;
   } catch (err) {
-    result.error = err instanceof Error ? err.message : String(err);
-    return result;
+    const error = err instanceof Error ? err.message : String(err);
+    // A connect that failed has no session and no progress event of its own, so the reason is
+    // remembered for the reconnect line: "reconnect in 5000 ms" on its own says nothing.
+    note.reason = shortReason(err);
+    result.error = error;
+    return { caughtUp: false, error, loggedOut: false };
   }
+  // The abort can land in the same tick the connect resolved; a listener added now would never
+  // fire, so the state is checked instead of only subscribed to.
+  if (signal?.aborted) {
+    await session.close().catch(() => undefined);
+    return { caughtUp: false, error: null, loggedOut: false };
+  }
+  onProgress?.({ backend: name, accountId: account.id, type: 'connected' });
 
   const state = loadState(db, name, account.id);
+  // An abort closes the session: `nextBatch()` then resolves null and the loop ends normally,
+  // with whatever Baileys (or libsignal) still hands over on the way out written first. That
+  // close is kept so the `finally` below awaits it instead of closing a second time.
+  let closing: Promise<void> | null = null;
+  const onAbort = () => {
+    closing ??= session.close().catch(() => undefined);
+  };
+  signal?.addEventListener('abort', onAbort);
   try {
     for (;;) {
       const events = await session.nextBatch();
@@ -664,37 +837,295 @@ async function receiveAccount(
       result.added += written.added;
       result.edited += written.edited;
       result.removed += written.removed;
+      onProgress?.({
+        backend: name,
+        accountId: account.id,
+        type: 'batch',
+        batches: result.batches,
+        added: written.added,
+        edited: written.edited,
+        removed: written.removed,
+      });
     }
     const outcome = session.outcome();
     result.caughtUp = outcome.caughtUp;
     result.error = outcome.error;
+    if (outcome.loggedOut) result.loggedOut = true;
     if (outcome.setAside) result.setAside = outcome.setAside;
     if (outcome.undecryptable) result.undecryptable = outcome.undecryptable;
+    return outcome;
   } catch (err) {
     result.error = err instanceof Error ? err.message : String(err);
+    return { caughtUp: false, error: result.error, loggedOut: false };
   } finally {
-    try {
-      await session.close();
-    } catch {
-      // A failed goodbye does not undo what was written.
+    signal?.removeEventListener('abort', onAbort);
+    if (closing) {
+      // Already closing because the run was stopped: await that, do not close again.
+      await closing;
+    } else {
+      try {
+        await session.close();
+      } catch {
+        // A failed goodbye does not undo what was written.
+      }
     }
   }
-  return result;
 }
 
-/** Receive what every account of one delivery backend has queued, and write it to the index. */
+/**
+ * Receive for one account until the run is over: a `catch-up` session ends on its own, a
+ * `follow` one reconnects (with backoff) until the signal says stop or the device is gone.
+ */
+async function receiveAccount(
+  db: IndexDatabase,
+  backend: DeliveryBackend,
+  account: { id: string; identity: string; provider: string },
+  options: DeliverySyncOptions,
+): Promise<DeliveryAccountSyncResult> {
+  const mode = options.mode ?? 'catch-up';
+  const now = options.now ?? (() => new Date());
+  const onProgress = options.onProgress;
+  const name = backend.manifest.name;
+  const result: DeliveryAccountSyncResult = {
+    backend: name,
+    accountId: account.id,
+    batches: 0,
+    added: 0,
+    edited: 0,
+    removed: 0,
+    caughtUp: false,
+    error: null,
+  };
+  // Stopped before this account even started: no lease, no connect, no write. (A listener added
+  // to an already aborted signal never fires, so the state has to be read.)
+  if (options.signal?.aborted) return result;
+  try {
+    upsertAccount(db, account);
+  } catch (err) {
+    // Bookkeeping, not delivery: this account is reported and skipped, and the run carries on.
+    result.error = err instanceof Error ? err.message : String(err);
+    return result;
+  }
+
+  // This account's own stop signal: the run's abort, plus a lost lease and a wait that is over.
+  // Per account, so one stolen lease stops one account and not the daemon. Re-made for each
+  // cycle, because a cycle that ends on a lease problem goes round again.
+  let stop = new AbortController();
+  const onRunAbort = () => stop.abort();
+  options.signal?.addEventListener('abort', onRunAbort);
+
+  // The lease (ADR 0002 §4), and BOTH modes take it before their first connect. One side taking
+  // it is not a lock: a `sync` in the middle of a WhatsApp catch-up (up to ten minutes) would
+  // still let a daemon connect to the same account, and two devices on one account each
+  // acknowledge half the copy.
+  const holder = options.holder ?? String(process.pid);
+  const interval = options.leaseIntervalMs ?? LEASE_HEARTBEAT_MS;
+  let wait = RECONNECT_FIRST_MS;
+  let attempt = 0;
+  const stopped = (reason: 'aborted' | 'logged-out') => {
+    onProgress?.({ backend: name, accountId: account.id, type: 'stopped', reason });
+    return result;
+  };
+
+  // One lease-and-sessions cycle. Several of them, because a cycle that has to give its lease up
+  // goes back to the top and takes it again rather than leaving the account unreceived.
+  for (;;) {
+    let waitingFor: string | null = null;
+    let leaseHeld = false;
+    for (;;) {
+      let take: LeaseTake;
+      try {
+        take = takeReceiveLease(db, name, account.id, holder, now(), interval);
+      } catch {
+        // The index was busy — another writer was mid-transaction. Not knowing who holds the
+        // account is the same as not holding it, so wait rather than connect blind.
+        take = { acquired: false, holder: null, heartbeatAt: null };
+      }
+      if (take.acquired) {
+        leaseHeld = true;
+        break;
+      }
+      if (mode !== 'follow') {
+        // A bounded run does not wait: it reports the holder and leaves the account to it. Not an
+        // error — those messages ARE arriving, and a run that red-flagged a working daemon would
+        // teach the user to ignore red flags.
+        if (take.holder === null) {
+          // The index was busy, not held: "received by the running daemon" would be a lie about
+          // a process that does not exist.
+          result.indexBusy = true;
+          onProgress?.({ backend: name, accountId: account.id, type: 'lease-busy' });
+        } else {
+          result.heldBy = take.holder;
+          onProgress?.({
+            backend: name,
+            accountId: account.id,
+            type: 'lease-held',
+            holder: take.holder,
+          });
+        }
+        options.signal?.removeEventListener('abort', onRunAbort);
+        return result;
+      }
+      // A daemon waits for the lease and keeps taking it until it gets it: giving the account up
+      // for good would mean never receiving it again. Logged once per holder, not once per try.
+      if (take.holder !== waitingFor) {
+        waitingFor = take.holder;
+        onProgress?.({
+          backend: name,
+          accountId: account.id,
+          type: 'lease-waiting',
+          holder: take.holder,
+        });
+      }
+      await abortableSleep(interval, stop.signal);
+      if (stop.signal.aborted) {
+        options.signal?.removeEventListener('abort', onRunAbort);
+        return stopped('aborted');
+      }
+    }
+
+    // Refreshed while receiving: a run that stops refreshing is a crashed run, and a `sync` or a
+    // second daemon may take the account over. A `false` says somebody else is on this account
+    // NOW — two receivers split the copy, so this one stops. A THROW says the index was busy,
+    // which is not the same thing: nobody necessarily holds the lease, so the next tick tries
+    // again. Two busy ticks in a row are not a hiccup either — the account stops before its lease
+    // can look stale (three intervals), and the cycle below takes it back.
+    let leaseLost = false;
+    let busyTicks = 0;
+    const heartbeat = setInterval(() => {
+      let refreshed: boolean;
+      try {
+        refreshed = refreshReceiveLease(db, name, account.id, holder, now(), interval);
+      } catch {
+        busyTicks++;
+        if (busyTicks < 2) return;
+        onProgress?.({ backend: name, accountId: account.id, type: 'lease-unrefreshable' });
+        stop.abort();
+        return;
+      }
+      busyTicks = 0;
+      if (refreshed) return;
+      leaseLost = true;
+      onProgress?.({ backend: name, accountId: account.id, type: 'lease-lost' });
+      stop.abort();
+    }, interval);
+
+    let retake = false;
+    const note: { reason: string | null } = { reason: null };
+    try {
+      for (;;) {
+        const openedAt = now().getTime();
+        attempt++;
+        const outcome = await runSession(
+          db,
+          backend,
+          account,
+          mode,
+          now,
+          stop.signal,
+          onProgress,
+          result,
+          note,
+        );
+        if (mode !== 'follow') return result;
+        if (stop.signal.aborted) {
+          // Stopped by the heartbeat over a lease it could not refresh: go round again, unless the
+          // RUN was stopped, which no retry can undo.
+          retake = busyTicks >= 2 && !options.signal?.aborted;
+          break;
+        }
+        // The network dropped the device (logged out, unlinked): the credentials are gone, and
+        // every reconnect would fail the same way — the run says so and stops this account.
+        if (outcome.loggedOut) {
+          onProgress?.({
+            backend: name,
+            accountId: account.id,
+            type: 'logged-out',
+            error: outcome.error,
+          });
+          return stopped('logged-out');
+        }
+        // A session that outlived the cap is a healthy network: the next drop starts at the
+        // beginning again instead of inheriting a backoff from a bad hour.
+        if (now().getTime() - openedAt >= RECONNECT_CAP_MS) wait = RECONNECT_FIRST_MS;
+        onProgress?.({
+          backend: name,
+          accountId: account.id,
+          type: 'reconnect',
+          delayMs: wait,
+          attempt,
+          reason: note.reason,
+        });
+        // The wait is interruptible by default: a daemon that is asked to stop does not sit out a
+        // backoff first. An injected `sleep` is the test's own, and answers at once.
+        const sleep = options.sleep ?? ((ms: number) => abortableSleep(ms, stop.signal));
+        await sleep(wait);
+        if (stop.signal.aborted) break;
+        wait = Math.min(wait * 2, RECONNECT_CAP_MS);
+      }
+    } finally {
+      clearInterval(heartbeat);
+      if (leaseHeld) {
+        // Nothing in a `finally` may reject: the other accounts' loops are still writing, and a
+        // rejection here would take the whole run down under them. A lease we cannot drop expires
+        // by itself, so leaving it is a "left behind", not a failure.
+        try {
+          releaseReceiveLease(db, name, account.id, holder);
+        } catch {
+          // Swallowed on purpose — see above.
+        }
+      }
+    }
+    if (!retake) {
+      options.signal?.removeEventListener('abort', onRunAbort);
+      if (leaseLost) {
+        result.error = 'the receive lease was taken by another process — this account stopped receiving';
+      }
+      return stopped('aborted');
+    }
+    // A fresh stop signal for the next cycle, still bound to the run's own abort.
+    stop = new AbortController();
+    options.signal?.removeEventListener('abort', onRunAbort);
+    options.signal?.addEventListener('abort', onRunAbort);
+    attempt = 0;
+  }
+}
+
+/**
+ * Receive what every account of one delivery backend has queued, and write it to the index.
+ *
+ * `catch-up` walks the accounts one after another: a bounded run reports per account, and one
+ * slow account must not eat the whole budget. `follow` runs them all at once — a follow session
+ * ends only when it is closed, so a queue would starve every account behind the first.
+ */
 export async function receiveDeliveries(
   db: IndexDatabase,
   backend: DeliveryBackend,
   options: DeliverySyncOptions = {},
 ): Promise<DeliverySyncResult> {
   const mode = options.mode ?? 'catch-up';
-  const now = options.now ?? (() => new Date());
   const accounts = (await backend.listAccounts()).filter(
     (a) => !options.accountId || a.id === options.accountId,
   );
-  const results: DeliveryAccountSyncResult[] = [];
-  for (const account of accounts) results.push(await receiveAccount(db, backend, account, mode, now));
+  // The lease is taken inside `receiveAccount`, by both modes — that is the only place that
+  // connects an account, so it is the only place that has to hold it.
+  const settled = new Map<string, DeliveryAccountSyncResult>();
+  if (mode === 'follow') {
+    // Every account at once: a follow session ends only when it is closed, so a queue would
+    // starve every account behind the first.
+    await Promise.all(
+      accounts.map(async (account) => {
+        settled.set(account.id, await receiveAccount(db, backend, account, options));
+      }),
+    );
+  } else {
+    // `catch-up` stays sequential: a bounded run reports per account, and one slow account must
+    // not eat the whole budget.
+    for (const account of accounts) {
+      settled.set(account.id, await receiveAccount(db, backend, account, options));
+    }
+  }
+  const results = accounts.map((account) => settled.get(account.id) as DeliveryAccountSyncResult);
   const errors = results.filter((r) => r.error !== null).length;
   return {
     accounts: results,

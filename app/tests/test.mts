@@ -28,6 +28,8 @@ import storeThreads from './unit/store/threads.test.ts';
 import storeConversations from './unit/store/conversations.test.ts';
 import storeChatSync from './unit/store/chat-sync.test.ts';
 import storeDeliverySync from './unit/store/delivery-sync.test.ts';
+import storeDeliveryFollow from './unit/store/delivery-follow.test.ts';
+import storeReceiveLease from './unit/store/receive-lease.test.ts';
 
 import telegram from './unit/telegram/telegram.test.ts';
 import signal from './unit/signal/signal.test.ts';
@@ -39,6 +41,7 @@ import date from './unit/core/date.test.ts';
 import limits from './unit/core/limits.test.ts';
 import registry from './unit/core/registry.test.ts';
 import capabilities from './unit/core/capabilities.test.ts';
+import daemon from './unit/core/daemon.test.ts';
 import deliveries from './unit/core/deliveries.test.ts';
 
 import mcpGate from './unit/mcp/gate.test.ts';
@@ -70,6 +73,8 @@ run({
   storeConversations,
   storeChatSync,
   storeDeliverySync,
+  storeDeliveryFollow,
+  storeReceiveLease,
   telegram,
   signal,
   whatsapp,
@@ -78,6 +83,7 @@ run({
   date,
   limits,
   registry,
+  daemon,
   deliveries,
   capabilities,
   mcpGate,

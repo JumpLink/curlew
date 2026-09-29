@@ -72,7 +72,8 @@ export class EnvelopeDecryptor {
     this.store.takeIdentityChanges();
     try {
       const result = await this.decryptInner(envelope);
-      if (result.kind === 'content') result.identityChanged = this.store.takeIdentityChanges().map((c) => c.aci);
+      if (result.kind === 'content')
+        result.identityChanged = this.store.takeIdentityChanges().map((c) => c.aci);
       return result;
     } catch (err) {
       if (
@@ -207,6 +208,15 @@ export class EnvelopeDecryptor {
         this.store.senderKeys,
       );
     }
-    return { kind: 'content', senderAci, senderDevice, plaintext, content, parseError, groupId, identityChanged: [] };
+    return {
+      kind: 'content',
+      senderAci,
+      senderDevice,
+      plaintext,
+      content,
+      parseError,
+      groupId,
+      identityChanged: [],
+    };
   }
 }

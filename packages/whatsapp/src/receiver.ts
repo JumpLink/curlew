@@ -15,7 +15,9 @@
  * (reported as not caught up; what arrived is written either way).
  *
  * A dropped connection is reconnected (a fresh socket on the same auth state) up to
- * `maxReconnects` times; a logout is final. Nothing here sends anything.
+ * `maxReconnects` times; a logout is final and is reported as `loggedOut`, so a follow-mode
+ * caller (the daemon) does not reconnect a device WhatsApp no longer knows. Nothing here sends
+ * anything.
  */
 
 import type { DeliveryEvent, DeliveryMode, DeliveryOutcome, DeliverySession } from '@postbote/protocol';
@@ -95,6 +97,8 @@ export class WhatsAppReceiver implements DeliverySession {
   private readonly maxQueued: number;
   /** The journal size when the last batch was handed out: released on the next `nextBatch()`. */
   private handedMark: number | null = null;
+  /** `close()` is idempotent — the store closes on abort and again in its finally. */
+  private closeCalled = false;
 
   constructor(connect: () => WaSocketHandle, mapper: WhatsAppMapper, options: ReceiverOptions) {
     this.connect = connect;
@@ -220,6 +224,8 @@ export class WhatsAppReceiver implements DeliverySession {
       this.finish({
         caughtUp: false,
         error: `WhatsApp logged this device out (${disconnectReason(update)}) — ${RELINK_HINT}`,
+        // Terminal: the credentials are gone, so a reconnect would fail the same way forever.
+        loggedOut: true,
       });
       return;
     }
@@ -349,6 +355,10 @@ export class WhatsAppReceiver implements DeliverySession {
   }
 
   async close(): Promise<void> {
+    // Idempotent: a caller that closes on abort and closes again in a finally (the store's
+    // receive path does) must not close the journal's descriptor twice.
+    if (this.closeCalled) return;
+    this.closeCalled = true;
     // Closed before the backlog was in: it is not "caught up". Events that still arrive while
     // the socket closes are dropped here — the caller stopped reading; a normal run ends through
     // `nextBatch()` returning null, which only happens after the drain.

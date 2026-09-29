@@ -57,6 +57,8 @@ export class FileJournal implements EventJournal {
   readonly recovered: DeliveryEvent[];
   private fd: number;
   private bytes: number;
+  /** Set by `close()`: a release or a second close after it is a no-op, not EBADF. */
+  private closed = false;
 
   private constructor(path: string, recovered: DeliveryEvent[], bytes: number) {
     this.path = path;
@@ -114,6 +116,10 @@ export class FileJournal implements EventJournal {
   }
 
   release(mark: number): void {
+    // After a close, a release is a no-op. The engine closes the journal on a stop and may still
+    // hold a handed-out mark, which the next `nextBatch()` releases — a truncate on a closed
+    // descriptor is EBADF, and that would be reported as the error of an otherwise clean stop.
+    if (this.closed) return;
     if (mark <= 0) return;
     if (mark >= this.bytes) {
       ftruncateSync(this.fd, 0);
@@ -139,6 +145,9 @@ export class FileJournal implements EventJournal {
   }
 
   close(): void {
+    // Twice is fine: a receiver closes on a stop and the caller closes again in its own unwind.
+    if (this.closed) return;
+    this.closed = true;
     closeSync(this.fd);
   }
 }

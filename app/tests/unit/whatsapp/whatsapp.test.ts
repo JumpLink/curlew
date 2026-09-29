@@ -520,6 +520,25 @@ export default async () => {
       expect(factory.sockets.length).toBe(2);
       expect(await r.nextBatch()).toBe(null);
       expect(r.outcome().error ?? '').toMatch(/logged this device out.*accounts add whatsapp/);
+      // Terminal: the daemon must stop the account instead of reconnecting forever.
+      expect(r.outcome().loggedOut).toBe(true);
+      await r.close();
+    });
+
+    await it('a dropped connection is not a logout, whatever it ends with', async () => {
+      const clock = new ManualClock();
+      const drop = { error: Object.assign(new Error('lost'), { output: { statusCode: 408 } }) };
+      const { r, factory } = receiver(
+        (s, i) => s.emit('connection.update', { connection: 'close', lastDisconnect: i === 0 ? drop : drop }),
+        clock,
+        { mode: 'follow', maxReconnects: 1 },
+      );
+      r.start();
+      await tick();
+      await tick();
+      expect(factory.sockets.length).toBe(2);
+      expect(await r.nextBatch()).toBe(null);
+      expect(r.outcome().loggedOut ?? false).toBe(false);
       await r.close();
     });
 
@@ -826,6 +845,32 @@ export default async () => {
         third.close();
         expect(readFileSync(path, 'utf8')).toBe('');
         expect((statSync(path).mode & 0o777).toString(8)).toBe('600');
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('a release or a second close after close is a no-op, not EBADF', async () => {
+      const dir = tempDir();
+      const path = join(dir, 'secrets', `${ACCOUNT}.journal`);
+      mkdirSync(dirname(path), { recursive: true });
+      try {
+        const journal = FileJournal.open(path);
+        journal.append([event('m1', 'eins')]);
+        const mark = journal.size();
+        journal.append([event('m2', 'zwei')]);
+        journal.close();
+        // An abort inside the coalesce window closes the journal while the engine still has a
+        // handed-out mark: the next `nextBatch()` releases it, and that release is a truncate on
+        // a closed descriptor. A clean stop must not report EBADF as its error.
+        expect(() => journal.release(mark)).not.toThrow();
+        expect(() => journal.release(0)).not.toThrow();
+        expect(() => journal.close()).not.toThrow();
+        // The journal is left exactly as it was: both events are still there for the next run.
+        expect(readFileSync(path, 'utf8').includes('"m2"')).toBe(true);
+        const again = FileJournal.open(path);
+        expect(texts(again.recovered)).toBe('eins|zwei');
+        again.close();
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
