@@ -702,6 +702,35 @@ function abortableSleep(ms: number, signal: AbortSignal | undefined): Promise<vo
   });
 }
 
+/** What `raceAbort` resolves with when the run was stopped before the work finished. */
+const ABORTED = Symbol('aborted');
+
+/**
+ * `work`, or `ABORTED` the moment the run is stopped.
+ *
+ * Needed wherever a promise can be pending while the run is asked to end — the listener is
+ * attached once, and an `addEventListener` on an ALREADY aborted signal never fires, so a plain
+ * `await work` behind a later `addEventListener` is a hang waiting for a network timeout.
+ */
+function raceAbort<T>(work: Promise<T>, signal: AbortSignal | undefined): Promise<T | typeof ABORTED> {
+  if (signal === undefined) return work;
+  if (signal.aborted) return Promise.resolve(ABORTED);
+  return new Promise<T | typeof ABORTED>((resolve, reject) => {
+    const onAbort = () => resolve(ABORTED);
+    signal.addEventListener('abort', onAbort, { once: true });
+    work.then(
+      (value) => {
+        signal.removeEventListener('abort', onAbort);
+        resolve(value);
+      },
+      (err: unknown) => {
+        signal.removeEventListener('abort', onAbort);
+        reject(err);
+      },
+    );
+  });
+}
+
 /** One session of one account, from connect to close. Reports into `result` as it goes. */
 async function runSession(
   db: IndexDatabase,
@@ -714,13 +743,28 @@ async function runSession(
   result: DeliveryAccountSyncResult,
 ): Promise<DeliveryOutcome> {
   const name = backend.manifest.name;
+  // The connect is the one step that can be pending for a LONG time — a network that is down
+  // waits out its own timeouts — so it is raced against the stop, and a session that arrives
+  // afterwards is closed at once: nobody is left to read it, and an open session acknowledges.
+  const connecting = backend.connect(account.id, { mode });
   let session: DeliverySession;
   try {
-    session = await backend.connect(account.id, { mode });
+    const raced = await raceAbort(connecting, signal);
+    if (raced === ABORTED) {
+      void connecting.then((late) => late.close()).catch(() => undefined);
+      return { caughtUp: false, error: null, loggedOut: false };
+    }
+    session = raced;
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
     result.error = error;
     return { caughtUp: false, error, loggedOut: false };
+  }
+  // The abort can land in the same tick the connect resolved; a listener added now would never
+  // fire, so the state is checked instead of only subscribed to.
+  if (signal?.aborted) {
+    await session.close().catch(() => undefined);
+    return { caughtUp: false, error: null, loggedOut: false };
   }
   onProgress?.({ backend: name, accountId: account.id, type: 'connected' });
 
@@ -804,6 +848,9 @@ async function receiveAccount(
     caughtUp: false,
     error: null,
   };
+  // Stopped before this account even started: no lease, no connect, no write. (A listener added
+  // to an already aborted signal never fires, so the state has to be read.)
+  if (options.signal?.aborted) return result;
   upsertAccount(db, account);
 
   // This account's own stop signal: the run's abort, plus a lost lease and a wait that is over.

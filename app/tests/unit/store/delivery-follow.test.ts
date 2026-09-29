@@ -351,6 +351,95 @@ export default async () => {
     });
   });
 
+  await describe('stopping from outside', async () => {
+    /** A backend whose connect never answers until the test says so. */
+    function pendingConnect(connect: () => Promise<DeliverySession>): DeliveryBackend {
+      return {
+        manifest: new FollowBackend([]).manifest,
+        kind: 'delivery',
+        listAccounts: async () => [{ id: 'a-1', identity: 'a-1', provider: 'Fake' }],
+        connect,
+      };
+    }
+
+    await it('stops waiting for a connect that never answers, and closes the late session', async () => {
+      const db = freshDb();
+      const controller = new AbortController();
+      const late = new ControllableSession();
+      let arrive: () => void = () => {};
+      const connecting = new Promise<DeliverySession>((resolve) => {
+        arrive = () => resolve(late);
+      });
+      try {
+        const backend = pendingConnect(() => connecting);
+        const received = receiveDeliveries(db, backend, {
+          mode: 'follow',
+          signal: controller.signal,
+        });
+        await settle();
+        // SIGTERM while the socket is still being opened — the case that hangs today, because the
+        // abort listener is attached only after `connect` resolves.
+        controller.abort();
+        const result = await received;
+        expect(result.accounts[0].batches).toBe(0);
+        expect(result.errors).toBe(0);
+        // A session that arrives after the run ended must not stay open on the network.
+        arrive();
+        await settle();
+        expect(late.closeCalls).toBe(1);
+      } finally {
+        controller.abort();
+        db.close();
+      }
+    });
+
+    await it('a session that arrives just after the abort is closed at once', async () => {
+      const db = freshDb();
+      const controller = new AbortController();
+      const late = new ControllableSession();
+      let arrive: () => void = () => {};
+      const connecting = new Promise<DeliverySession>((resolve) => {
+        arrive = () => resolve(late);
+      });
+      try {
+        const backend = pendingConnect(() => connecting);
+        const received = receiveDeliveries(db, backend, {
+          mode: 'follow',
+          signal: controller.signal,
+        });
+        await settle();
+        arrive();
+        controller.abort();
+        const result = await received;
+        expect(result.accounts[0].batches).toBe(0);
+        await settle();
+        expect(late.closeCalls).toBe(1);
+      } finally {
+        controller.abort();
+        db.close();
+      }
+    });
+
+    await it('takes no lease at all when the run was already stopped', async () => {
+      const db = freshDb();
+      const controller = new AbortController();
+      controller.abort();
+      try {
+        const backend = new FollowBackend(['a-1']);
+        const result = await receiveDeliveries(db, backend, {
+          mode: 'follow',
+          signal: controller.signal,
+          holder: 'pid-daemon',
+        });
+        expect(backend.connects.length).toBe(0);
+        expect(leaseHolder(db, 'a-1')).toBe(null);
+        expect(result.errors).toBe(0);
+      } finally {
+        db.close();
+      }
+    });
+  });
+
   await describe('the lease between a daemon and a sync', async () => {
     await it('a follow run holds the lease, heartbeats it, and drops it on stop', async () => {
       const db = freshDb();
