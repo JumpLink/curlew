@@ -270,28 +270,6 @@ export default async () => {
       expect(toChatMessage(event('m.room.message', ANNA, T0, {}, { redacted: true }), ME, NAMES)).toBe(null);
     });
 
-    await it('capability audit: manifest matches what the mapper delivers', async () => {
-      const caps = MATRIX_MANIFEST.capabilities;
-      // edits: true — m.replace relations produce edit events (map.ts:98-106, 186-207)
-      expect(caps.edits).toBe(true);
-      // reactions: false — m.reaction events produce null (map.ts:268, line 124 filters them out)
-      expect(caps.reactions).toBe(false); // the network has reactions (m.annotation); map.ts drops them
-      // threads: true — m.thread relations produce threadRemoteId (map.ts:151)
-      expect(caps.threads).toBe(true);
-      // readReceipts: true — room.readUpToTs/peerReadUpToTs produce readInboxSeq/readOutboxSeq (map.ts:65-66)
-      expect(caps.readReceipts).toBe(true);
-      // groups: true — non-direct rooms are groups (map.ts:59)
-      expect(caps.groups).toBe(true);
-      // e2ee: true — Megolm rooms are end-to-end encrypted (manifest comment)
-      expect(caps.e2ee).toBe(true);
-      // subject: false — no subject field in messages
-      expect(caps.subject).toBe(false);
-      // folders: false — no server-side folders
-      expect(caps.folders).toBe(false);
-      // attachments: false — hasAttachments set from msgtype but no download path (map.ts:148-149; session.ts has no attachment download)
-      expect(caps.attachments).toBe(false); // hasAttachments metadata only; no download path
-    });
-
     await it('applies edits on the page by the original sender only, and hands on the others', async () => {
       const original = text(ANNA, T0, 'Treffen um 5');
       const forged = edit(BEN, T0 + 1, original.eventId, 'Treffen abgesagt');

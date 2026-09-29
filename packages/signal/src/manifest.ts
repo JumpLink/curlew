@@ -14,7 +14,7 @@ export const SIGNAL_MANIFEST: BackendManifest = {
   // What the NETWORK can do; postbote only reads.
   capabilities: {
     edits: true,
-    // The network has reactions; map.ts drops them (map.ts:252).
+    // The network has reactions; map.ts drops them in mapDataMessage.
     reactions: false,
     // Quoted replies, no threads.
     threads: false,

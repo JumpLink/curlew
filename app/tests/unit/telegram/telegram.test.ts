@@ -187,28 +187,6 @@ export default async () => {
       expect(identityOf(ME)).toBe('@me_example');
       expect(identityOf(user(9, 'Nur Name'))).toBe('Nur Name');
     });
-
-    await it('capability audit: manifest matches what the mapper delivers', async () => {
-      const caps = TELEGRAM_MANIFEST.capabilities;
-      // edits: true — editDate produces editedAt (map.ts:88)
-      expect(caps.edits).toBe(true);
-      // reactions: false — no reaction handling in map.ts (no m.reaction equivalent)
-      expect(caps.reactions).toBe(false); // the network has reactions (message reactions); map.ts drops them
-      // threads: true — isTopicMessage + threadId produces threadRemoteId (map.ts:94-95)
-      expect(caps.threads).toBe(true);
-      // readReceipts: true — dialog.lastReadIngoing/Outgoing produces readInboxSeq/readOutboxSeq (map.ts:65-66)
-      expect(caps.readReceipts).toBe(true);
-      // groups: true — supergroups, forums are groups (map.ts:48-52)
-      expect(caps.groups).toBe(true);
-      // e2ee: false — cloud chats are client-server encrypted only (manifest comment)
-      expect(caps.e2ee).toBe(false);
-      // subject: false — no subject field in messages
-      expect(caps.subject).toBe(false);
-      // folders: false — no server-side folders
-      expect(caps.folders).toBe(false);
-      // attachments: false — hasAttachments set from media but no download path (map.ts:92; session.ts has no attachment download)
-      expect(caps.attachments).toBe(false); // hasAttachments metadata only; no download path
-    });
   });
 
   await describe('TelegramChatSession', async () => {

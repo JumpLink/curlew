@@ -16,7 +16,7 @@ export const WHATSAPP_MANIFEST: BackendManifest = {
   // reads, so none of this is a promise that postbote can SEND it.
   capabilities: {
     edits: true,
-    // The network has reactions; map.ts drops them (map.ts:175,248).
+    // The network has reactions; map.ts drops them in extractContent/message.
     reactions: false,
     // Replies, but no threads or topics.
     threads: false,

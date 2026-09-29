@@ -15,7 +15,7 @@ export const XMPP_MANIFEST: BackendManifest = {
   capabilities: {
     // Last message correction (XEP-0308): applied to the stored message.
     edits: true,
-    // Message reactions (XEP-0444) exist on the network; map.ts drops them (map.ts:239).
+    // Message reactions (XEP-0444) exist on the network; map.ts drops them in buildPage.
     reactions: false,
     // XMPP has `<thread/>`, but no client shows threads; claiming them would promise a view
     // nobody fills.
