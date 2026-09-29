@@ -35,6 +35,7 @@ import {
   ReceiptType,
   type SyncMessage,
 } from './schema.ts';
+import { toBase64 } from './protocol-store.ts';
 
 export const GROUP_PREFIX = 'group:';
 
@@ -64,12 +65,6 @@ export interface MapContext {
   timestamp: number;
   /** The group of a sealed sender-key message, when the envelope named one. */
   groupId: Uint8Array | null;
-}
-
-function toBase64(bytes: Uint8Array): string {
-  let binary = '';
-  for (const b of bytes) binary += String.fromCharCode(b);
-  return btoa(binary);
 }
 
 export class SignalMapper {
