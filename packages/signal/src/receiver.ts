@@ -210,6 +210,8 @@ export class SignalReceiver implements DeliverySession {
   private contactsProblem: string | null = null;
   private maxTimer: unknown = null;
   private finishRequested: DeliveryOutcome | null = null;
+  /** `close()` is idempotent — the store closes on abort and again in its finally. */
+  private closed = false;
   private handedMark: number | null = null;
 
   constructor(
@@ -499,6 +501,10 @@ export class SignalReceiver implements DeliverySession {
   }
 
   async close(): Promise<void> {
+    // Idempotent: a caller that closes on abort and closes again in a finally (the store's
+    // receive path does) must not close the journal's descriptor twice.
+    if (this.closed) return;
+    this.closed = true;
     await this.stop({ caughtUp: this.result.caughtUp, error: this.result.error });
     if (!this.ended) await new Promise<void>((resolve) => this.endWaiters.push(resolve));
     // Not released here: without a further `nextBatch()` the last batch may not be written.

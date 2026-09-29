@@ -29,6 +29,7 @@ import type {
   DeliveryChat,
   DeliveryEvent,
   DeliveryMode,
+  DeliveryOutcome,
   DeliverySession,
   ParticipantAddress,
 } from '@postbote/protocol';
@@ -43,9 +44,43 @@ export interface DeliverySyncOptions {
   accountId?: string;
   /** `catch-up` (the default) stops once the backlog is in; `follow` runs until the session closes. */
   mode?: DeliveryMode;
+  /**
+   * Stop the run. Each account's session is closed, so `nextBatch()` resolves `null` and its loop
+   * ends **normally** — what was written stays written, and a stopped daemon is not an error.
+   */
+  signal?: AbortSignal;
   /** Clock, injected so tests are deterministic. */
   now?: () => Date;
+  /** How long to wait before a reconnect, injected so a backoff costs no wall clock in a test. */
+  sleep?: (ms: number) => Promise<void>;
+  /** Every state change, for a log line. Never carries content — only names, counts and timings. */
+  onProgress?: (event: DeliveryProgress) => void;
 }
+
+/**
+ * One state change of a follow-mode account, for a caller that logs. Never message text, chat
+ * titles, peer names or numbers: the index holds other people's words and a log line is a file
+ * that gets copied around (ADR 0002 §6).
+ */
+export type DeliveryProgress =
+  | { backend: string; accountId: string; type: 'connected' }
+  | {
+      backend: string;
+      accountId: string;
+      type: 'batch';
+      /** Batches written so far, and what the last one changed. */
+      batches: number;
+      added: number;
+      edited: number;
+      removed: number;
+    }
+  | { backend: string; accountId: string; type: 'reconnect'; delayMs: number; attempt: number }
+  | { backend: string; accountId: string; type: 'logged-out'; error: string | null }
+  | { backend: string; accountId: string; type: 'stopped'; reason: 'aborted' | 'logged-out' };
+
+/** The first wait after a dropped session, and its ceiling. Both are the daemon's, not the port's. */
+export const RECONNECT_FIRST_MS = 5_000;
+export const RECONNECT_CAP_MS = 5 * 60_000;
 
 export interface DeliveryAccountSyncResult {
   backend: string;
@@ -627,13 +662,104 @@ function writeEvents(
   return totals;
 }
 
-async function receiveAccount(
+/** The default wait, interruptible: a daemon that is asked to stop does not sit out its backoff. */
+function abortableSleep(ms: number, signal: AbortSignal | undefined): Promise<void> {
+  if (signal?.aborted) return Promise.resolve();
+  return new Promise<void>((resolve) => {
+    const done = () => {
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', done);
+      resolve();
+    };
+    const timer = setTimeout(done, ms);
+    signal?.addEventListener('abort', done);
+  });
+}
+
+/** One session of one account, from connect to close. Reports into `result` as it goes. */
+async function runSession(
   db: IndexDatabase,
   backend: DeliveryBackend,
   account: { id: string; identity: string; provider: string },
   mode: DeliveryMode,
   now: () => Date,
+  signal: AbortSignal | undefined,
+  onProgress: ((event: DeliveryProgress) => void) | undefined,
+  result: DeliveryAccountSyncResult,
+): Promise<DeliveryOutcome> {
+  const name = backend.manifest.name;
+  let session: DeliverySession;
+  try {
+    session = await backend.connect(account.id, { mode });
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    result.error = error;
+    return { caughtUp: false, error, loggedOut: false };
+  }
+  onProgress?.({ backend: name, accountId: account.id, type: 'connected' });
+
+  const state = loadState(db, name, account.id);
+  // An abort closes the session: `nextBatch()` then resolves null and the loop ends normally,
+  // with whatever Baileys (or libsignal) still hands over on the way out written first.
+  const onAbort = () => {
+    void session.close().catch(() => undefined);
+  };
+  signal?.addEventListener('abort', onAbort);
+  try {
+    for (;;) {
+      const events = await session.nextBatch();
+      if (events === null) break;
+      if (events.length === 0) continue;
+      // A failed write stops the account: asking for more would acknowledge messages that
+      // then exist nowhere (and the session keeps the batch in its journal for the next run).
+      const written = writeEvents(db, name, account.id, state, events, now().toISOString());
+      result.batches++;
+      result.added += written.added;
+      result.edited += written.edited;
+      result.removed += written.removed;
+      onProgress?.({
+        backend: name,
+        accountId: account.id,
+        type: 'batch',
+        batches: result.batches,
+        added: written.added,
+        edited: written.edited,
+        removed: written.removed,
+      });
+    }
+    const outcome = session.outcome();
+    result.caughtUp = outcome.caughtUp;
+    result.error = outcome.error;
+    if (outcome.loggedOut) result.loggedOut = true;
+    if (outcome.setAside) result.setAside = outcome.setAside;
+    if (outcome.undecryptable) result.undecryptable = outcome.undecryptable;
+    return outcome;
+  } catch (err) {
+    result.error = err instanceof Error ? err.message : String(err);
+    return { caughtUp: false, error: result.error, loggedOut: false };
+  } finally {
+    signal?.removeEventListener('abort', onAbort);
+    try {
+      await session.close();
+    } catch {
+      // A failed goodbye does not undo what was written.
+    }
+  }
+}
+
+/**
+ * Receive for one account until the run is over: a `catch-up` session ends on its own, a
+ * `follow` one reconnects (with backoff) until the signal says stop or the device is gone.
+ */
+async function receiveAccount(
+  db: IndexDatabase,
+  backend: DeliveryBackend,
+  account: { id: string; identity: string; provider: string },
+  options: DeliverySyncOptions,
 ): Promise<DeliveryAccountSyncResult> {
+  const mode = options.mode ?? 'catch-up';
+  const now = options.now ?? (() => new Date());
+  const onProgress = options.onProgress;
   const name = backend.manifest.name;
   const result: DeliveryAccountSyncResult = {
     backend: name,
@@ -647,59 +773,63 @@ async function receiveAccount(
   };
   upsertAccount(db, account);
 
-  let session: DeliverySession;
-  try {
-    session = await backend.connect(account.id, { mode });
-  } catch (err) {
-    result.error = err instanceof Error ? err.message : String(err);
-    return result;
-  }
-
-  const state = loadState(db, name, account.id);
-  try {
-    for (;;) {
-      const events = await session.nextBatch();
-      if (events === null) break;
-      if (events.length === 0) continue;
-      // A failed write stops the account: asking for more would acknowledge messages that
-      // then exist nowhere (and the session keeps the batch in its journal for the next run).
-      const written = writeEvents(db, name, account.id, state, events, now().toISOString());
-      result.batches++;
-      result.added += written.added;
-      result.edited += written.edited;
-      result.removed += written.removed;
+  let wait = RECONNECT_FIRST_MS;
+  let attempt = 0;
+  for (;;) {
+    const openedAt = now().getTime();
+    attempt++;
+    const outcome = await runSession(db, backend, account, mode, now, options.signal, onProgress, result);
+    if (mode !== 'follow') return result;
+    if (options.signal?.aborted) {
+      onProgress?.({ backend: name, accountId: account.id, type: 'stopped', reason: 'aborted' });
+      return result;
     }
-    const outcome = session.outcome();
-    result.caughtUp = outcome.caughtUp;
-    result.error = outcome.error;
-    if (outcome.loggedOut) result.loggedOut = true;
-    if (outcome.setAside) result.setAside = outcome.setAside;
-    if (outcome.undecryptable) result.undecryptable = outcome.undecryptable;
-  } catch (err) {
-    result.error = err instanceof Error ? err.message : String(err);
-  } finally {
-    try {
-      await session.close();
-    } catch {
-      // A failed goodbye does not undo what was written.
+    // The network dropped the device (logged out, unlinked): the credentials are gone, and
+    // every reconnect would fail the same way — the run says so and stops this account.
+    if (outcome.loggedOut) {
+      onProgress?.({ backend: name, accountId: account.id, type: 'logged-out', error: outcome.error });
+      onProgress?.({ backend: name, accountId: account.id, type: 'stopped', reason: 'logged-out' });
+      return result;
     }
+    // A session that outlived the cap is a healthy network: the next drop starts at the
+    // beginning again instead of inheriting a backoff from a bad hour.
+    if (now().getTime() - openedAt >= RECONNECT_CAP_MS) wait = RECONNECT_FIRST_MS;
+    onProgress?.({ backend: name, accountId: account.id, type: 'reconnect', delayMs: wait, attempt });
+    // The wait is interruptible by default: a daemon that is asked to stop does not sit out a
+    // backoff first. An injected `sleep` is the test's own, and answers at once.
+    const sleep = options.sleep ?? ((ms: number) => abortableSleep(ms, options.signal));
+    await sleep(wait);
+    if (options.signal?.aborted) {
+      onProgress?.({ backend: name, accountId: account.id, type: 'stopped', reason: 'aborted' });
+      return result;
+    }
+    wait = Math.min(wait * 2, RECONNECT_CAP_MS);
   }
-  return result;
 }
 
-/** Receive what every account of one delivery backend has queued, and write it to the index. */
+/**
+ * Receive what every account of one delivery backend has queued, and write it to the index.
+ *
+ * `catch-up` walks the accounts one after another: a bounded run reports per account, and one
+ * slow account must not eat the whole budget. `follow` runs them all at once — a follow session
+ * ends only when it is closed, so a queue would starve every account behind the first.
+ */
 export async function receiveDeliveries(
   db: IndexDatabase,
   backend: DeliveryBackend,
   options: DeliverySyncOptions = {},
 ): Promise<DeliverySyncResult> {
-  const mode = options.mode ?? 'catch-up';
-  const now = options.now ?? (() => new Date());
   const accounts = (await backend.listAccounts()).filter(
     (a) => !options.accountId || a.id === options.accountId,
   );
-  const results: DeliveryAccountSyncResult[] = [];
-  for (const account of accounts) results.push(await receiveAccount(db, backend, account, mode, now));
+  const receive = (account: (typeof accounts)[number]) => receiveAccount(db, backend, account, options);
+  const results =
+    (options.mode ?? 'catch-up') === 'follow'
+      ? await Promise.all(accounts.map(receive))
+      : await accounts.reduce<Promise<DeliveryAccountSyncResult[]>>(
+          (chain, account) => chain.then((done) => receive(account).then((r) => [...done, r])),
+          Promise.resolve([]),
+        );
   const errors = results.filter((r) => r.error !== null).length;
   return {
     accounts: results,
