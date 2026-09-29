@@ -78,6 +78,23 @@ absolute path it was built at, so do not move or copy a built tree — the copy
 fails at the first Signal command. `postbote-cli test:relocation` measures this
 and says so out loud; the fix is tracked in gjsify.
 
+### Setup wizard
+
+`contrib/setup/postbote-setup-wizard.sh` walks you through the whole thing —
+linking Signal and WhatsApp, building the index, running the receiving daemon
+and installing its systemd user unit — one confirmed step at a time:
+
+```bash
+contrib/setup/postbote-setup-wizard.sh
+```
+
+It finds the checkout it ships in (override with `POSTBOTE_REPO`, and it asks
+if it guessed wrong), and falls back to a published `postbote` on `PATH` when
+there is no tree. `POSTBOTE_WIZARD_LIST=1` prints the stages and exits, so you
+can read what it will do before running it. The QR code and every pairing code
+it prints stay in that terminal: nothing asks for them, copies them or stores
+them.
+
 ## Use it
 
 ```bash
