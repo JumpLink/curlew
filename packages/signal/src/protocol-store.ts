@@ -45,8 +45,11 @@ export const ACCOUNT_NAMESPACE = 'postbote.account';
 /** The ledger of plaintexts this build could not map, in the account file. One key, a JSON array. */
 export const SET_ASIDE_NAMESPACE = 'signal.setaside';
 
-/** The one key of that namespace — the ledger itself, oldest entry first. */
-const LEDGER_KEY = 'entries';
+/**
+ * The one key of that namespace — the ledger itself, oldest entry first. Exported so a test can
+ * write a ledger exactly as a damaged one would stand in the file.
+ */
+export const LEDGER_KEY = 'entries';
 /** And the count of plaintexts the limit pushed out of it. */
 const DROPPED_KEY = 'dropped';
 

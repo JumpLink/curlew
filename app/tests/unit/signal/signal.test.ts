@@ -13,7 +13,7 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import type { AccountPrompter, DeliveryEvent } from '@postbote/protocol';
+import type { AccountPrompter, DeliveryEvent, SetAsideRecord } from '@postbote/protocol';
 import { isDeliveryBackend, validateManifest } from '@postbote/protocol';
 import {
   chatConversationId,
@@ -51,6 +51,7 @@ import {
   FileJournal,
   fromBase64,
   journalPath,
+  LEDGER_KEY,
   linkDeviceUrl,
   NS,
   padPlaintext,
@@ -65,6 +66,7 @@ import {
   SAFETY_NUMBER_CHANGED,
   type SetAsideEntry,
   SET_ASIDE_LIMIT,
+  SET_ASIDE_NAMESPACE,
   serviceIdFromBinary,
   sessionPath,
   SIGNAL_MANIFEST,
@@ -740,6 +742,128 @@ export default async () => {
         entries: [],
         dropped: 0,
       });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  await it('answers a damaged set-aside ledger with empty, and an unusable entry with a count', async () => {
+    const dir = tempDir();
+    try {
+      const sentAt = new Date(7).toISOString();
+      const good = {
+        senderAci: ALICE_ACI,
+        sentAt,
+        reason: 'content field(s) 9 this postbote does not know',
+        plaintext: toBase64(new Uint8Array([9, 9])),
+      };
+      const cases: Array<{ name: string; ledger: string; entries: SetAsideRecord[]; dropped: number }> = [
+        { name: 'damaged JSON', ledger: '{"entries": [', entries: [], dropped: 0 },
+        { name: 'a ledger that is not an array', ledger: '{"entries": []}', entries: [], dropped: 0 },
+        {
+          name: 'a plaintext that does not decode',
+          ledger: JSON.stringify([{ ...good, plaintext: '@@@@' }]),
+          entries: [{ sender: ALICE_ACI, sentAt, reason: good.reason, bytes: 0 }],
+          dropped: 0,
+        },
+        {
+          name: 'entries without a sender, a time or a reason',
+          ledger: JSON.stringify([
+            good,
+            { sentAt, reason: 'no sender here', plaintext: 'AAAA' },
+            { senderAci: ALICE_ACI, reason: 'no time here', plaintext: 'AAAA' },
+            null,
+            { senderAci: ALICE_ACI, sentAt, plaintext: 'AAAA' },
+          ]),
+          entries: [
+            { sender: ALICE_ACI, sentAt, reason: good.reason, bytes: 2 },
+            { sender: ALICE_ACI, sentAt, reason: 'unrecorded', bytes: 3 },
+          ],
+          // Three entries no listing can point at on the phone, `null` among them: none of them
+          // is shown as `undefined`, and the one that names a sender and a time still is.
+          dropped: 3,
+        },
+      ];
+      for (const c of cases) {
+        // Written straight into the account file, exactly as a damaged ledger would stand there.
+        const file = SecretStore.open(sessionPath(context(dir).secretsDir, ACCOUNT));
+        try {
+          file.apply([{ namespace: SET_ASIDE_NAMESPACE, key: LEDGER_KEY, value: c.ledger }]);
+        } finally {
+          file.close();
+        }
+        const ledger = await new SignalBackend(context(dir)).setAsideLedger(ACCOUNT);
+        // The case's name travels with the numbers: a failure says which ledger was being read.
+        expect({ case: c.name, ...ledger }).toStrictEqual({
+          case: c.name,
+          entries: c.entries,
+          dropped: c.dropped,
+        });
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  await it('keeps an entry it cannot show when it appends to the ledger', async () => {
+    const dir = tempDir();
+    try {
+      const unlistable = new Date(5).toISOString();
+      const shown = new Date(6).toISOString();
+      const { file, store } = openStore(dir);
+      try {
+        // An entry without a sender, as a damaged file could hold it: its plaintext is still the
+        // only copy of that message anywhere.
+        store.set(
+          SET_ASIDE_NAMESPACE,
+          LEDGER_KEY,
+          JSON.stringify([{ sentAt: unlistable, plaintext: 'AAAA' }]),
+        );
+        store.setAside({
+          senderAci: ALICE_ACI,
+          sentAt: shown,
+          reason: 'content field(s) 6 this postbote does not know',
+          plaintext: 'AAAA',
+        });
+        store.flush();
+        // The append rewrote the whole ledger, so the entry a listing cannot show must have
+        // survived it — the only copy of a plaintext is not deleted as a side effect of a new one.
+        expect((JSON.parse(store.get(SET_ASIDE_NAMESPACE, LEDGER_KEY) ?? '[]') as unknown[]).length).toBe(2);
+        // And the receiver counts nothing as gone: it pushed out nothing.
+        expect(store.setAsideDropped()).toBe(0);
+        expect(store.setAsideEntries().length).toBe(1);
+      } finally {
+        file.close();
+      }
+      // What a listing makes of that state: the entry it can point at, the other one counted.
+      expect(await new SignalBackend(context(dir)).setAsideLedger(ACCOUNT)).toStrictEqual({
+        entries: [
+          {
+            sender: ALICE_ACI,
+            sentAt: shown,
+            reason: 'content field(s) 6 this postbote does not know',
+            bytes: 3,
+          },
+        ],
+        dropped: 1,
+      });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  await it('creates no session file while listing an account that was never linked', async () => {
+    const dir = tempDir();
+    try {
+      const secrets = context(dir).secretsDir;
+      mkdirSync(secrets, { recursive: true });
+      expect(await new SignalBackend(context(dir)).setAsideLedger(accountIdFor(CAROL_ACI))).toStrictEqual({
+        entries: [],
+        dropped: 0,
+      });
+      // The listing opens a session file, it never creates one: asking about an account that does
+      // not exist leaves the secrets directory exactly as it was.
+      expect(readdirSync(secrets)).toStrictEqual([]);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
