@@ -29,9 +29,18 @@ export function openIndexDb(path: string): DatabaseSync {
   return db;
 }
 
-/** Run `fn` inside a BEGIN/COMMIT, rolling back on throw. */
-export function withTransaction<T>(db: DatabaseSync, fn: () => T): T {
-  db.exec('BEGIN');
+/**
+ * Run `fn` inside a transaction, rolling back on throw.
+ *
+ * `immediate` opens it with `BEGIN IMMEDIATE`, taking the write lock up front. That matters only
+ * where two PROCESSES read-then-write the same row: a deferred `BEGIN` takes a read lock, and
+ * SQLite does **not** run the busy handler when such a transaction later upgrades to a write
+ * (SQLITE_BUSY_SNAPSHOT) — it fails at once, however long `busy_timeout` is. The receive lease is
+ * exactly that read-then-write (`receive-lease.ts`); everything else in this package is
+ * single-process, and stays deferred.
+ */
+export function withTransaction<T>(db: DatabaseSync, fn: () => T, options: { immediate?: boolean } = {}): T {
+  db.exec(options.immediate ? 'BEGIN IMMEDIATE' : 'BEGIN');
   try {
     const result = fn();
     db.exec('COMMIT');

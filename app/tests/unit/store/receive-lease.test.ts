@@ -1,12 +1,14 @@
 import { describe, expect, it } from '@gjsify/unit';
 
 import {
+  LEASE_BUSY_TIMEOUT_MS,
   LEASE_HEARTBEAT_MS,
   type IndexDatabase,
   migrate,
   refreshReceiveLease,
   releaseReceiveLease,
   takeReceiveLease,
+  withTransaction,
 } from '@postbote/store';
 import { freshDb } from './fixtures.ts';
 
@@ -35,6 +37,12 @@ function leaseHolder(db: IndexDatabase, accountId: string): string | null {
 function leaseRows(db: IndexDatabase): number {
   const row = db.prepare('SELECT COUNT(*) AS n FROM receive_leases').get() as { n: number };
   return Number(row.n);
+}
+
+/** What the connection will wait for a write lock, in ms. Zero means "fail at once". */
+function busyTimeoutMs(db: IndexDatabase): number {
+  const row = db.prepare('PRAGMA busy_timeout').get() as Record<string, unknown> | undefined;
+  return Number(row?.timeout ?? 0);
 }
 
 export default async () => {
@@ -101,6 +109,74 @@ export default async () => {
         expect(leaseRows(db)).toBe(0);
         // Releasing what is not there is not an error, just nothing to do.
         expect(releaseReceiveLease(db, BACKEND, ACCOUNT, 'pid-1')).toBe(false);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('takes the write lock up front, and waits instead of failing', async () => {
+      const db = freshDb();
+      try {
+        // Two processes, two takes. A deferred BEGIN reads first and upgrades at the write, and
+        // SQLite does NOT run the busy handler for that upgrade (SQLITE_BUSY_SNAPSHOT): both
+        // would read "free" and one would then fail instead of waiting its turn. BEGIN
+        // IMMEDIATE plus a busy timeout is what turns that into a queue.
+        const statements: string[] = [];
+        const exec = db.exec.bind(db);
+        (db as { exec: typeof db.exec }).exec = ((sql: string) => {
+          statements.push(sql.trim());
+          return exec(sql);
+        }) as typeof db.exec;
+        takeReceiveLease(db, BACKEND, ACCOUNT, 'pid-1', T0);
+        // Once per connection: the pragma, then the transaction that needs it.
+        expect(statements[0]).toBe(`PRAGMA busy_timeout = ${LEASE_BUSY_TIMEOUT_MS}`);
+        expect(statements[1]).toBe('BEGIN IMMEDIATE');
+        expect(statements[statements.length - 1]).toBe('COMMIT');
+        // A second lease statement does not spend an execution on the pragma again.
+        const after = statements.length;
+        takeReceiveLease(db, BACKEND, ACCOUNT, 'pid-1', at(1_000));
+        expect(statements.slice(after).some((s) => s.startsWith('PRAGMA'))).toBe(false);
+        // A rolled-back take rolls back with it, and one connection, one pragma.
+        expect(() =>
+          withTransaction(
+            db,
+            () => {
+              throw new Error('nope');
+            },
+            { immediate: true },
+          ),
+        ).toThrow(/nope/);
+        expect(statements[statements.length - 1]).toBe('ROLLBACK');
+        expect(busyTimeoutMs(db)).toBe(LEASE_BUSY_TIMEOUT_MS);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('loses the race to a competitor that wrote between the read and the write', async () => {
+      const db = freshDb();
+      try {
+        // The window BEGIN IMMEDIATE closes — and cannot close on GJS, where an explicit
+        // transaction holds no write lock (see receive-lease.ts). A competitor's claim lands
+        // between this take's read and its write: the conditional write must not clobber it, and
+        // the read-back must report the loser.
+        const prepare = db.prepare.bind(db);
+        let clobbered = false;
+        (db as { prepare: typeof db.prepare }).prepare = ((sql: string) => {
+          if (
+            sql.includes('INTO receive_leases (backend, account_id, holder, heartbeat_at)') &&
+            sql.startsWith('INSERT') &&
+            !clobbered
+          ) {
+            clobbered = true;
+            prepare(sql).run(BACKEND, ACCOUNT, 'pid-other', T0.toISOString());
+          }
+          return prepare(sql);
+        }) as typeof db.prepare;
+        const take = takeReceiveLease(db, BACKEND, ACCOUNT, 'pid-1', T0);
+        expect(take.acquired).toBe(false);
+        expect(take.acquired === false && take.holder).toBe('pid-other');
+        expect(leaseHolder(db, ACCOUNT)).toBe('pid-other');
       } finally {
         db.close();
       }
