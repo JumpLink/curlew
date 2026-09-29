@@ -18,14 +18,7 @@
 import type { CommandModule } from 'yargs';
 
 import type { SetupContext } from '../../core/actions/setup.ts';
-import {
-  SETUP_STEPS,
-  defaultLink,
-  detectSetup,
-  humanOnlyRefusal,
-  runSetup,
-  setupStatus,
-} from '../../core/actions/setup.ts';
+import { SETUP_STEPS, defaultLink, detectSetup, runSetup, setupStatus } from '../../core/actions/setup.ts';
 import { nodeHost } from '../../core/actions/setup-host.ts';
 import { terminalSetupPrompter } from './prompt.ts';
 import { pickArgv } from './output.ts';
@@ -96,15 +89,10 @@ async function run(ctx: SetupContext, options: RunOptions): Promise<number> {
     printStatus(ctx, status);
     return 0;
   }
-  if (options.only !== undefined) {
-    // A single stage is a whole run, and the report says what is still left afterwards — the
-    // person who ran one stage needs to know what the other seven would have done.
-    const only = options.only;
-    const refused = only
-      .map((name) => SETUP_STEPS.find((step) => step.name === name))
-      .filter((step): step is (typeof SETUP_STEPS)[number] => step?.humanOnly === true);
-    if (refused.length > 0) throw humanOnlyRefusal(refused[0]);
-  }
+  // Note there is no `humanOnly` gate here, and there must not be one: a person typing
+  // `--only terms` in their own terminal IS the person the flag exists for. `humanOnly` is about
+  // the OTHER surfaces — an agent must not be able to run the three stages that are a human act
+  // (see `humanOnlyRefusal`), and the flag every such surface quotes is this command.
   const result = await runSetup(ctx, { only: options.only, bail: options.bail });
   await reportRemaining(ctx, result.remaining);
   return result.ok ? 0 : 1;

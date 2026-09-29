@@ -582,13 +582,20 @@ function finishStep(): SetupStep {
   };
 }
 
-/** A step that cannot be driven by the surface asking for it. Throws a message that names the
- * command a person would run instead, so a refusal is actionable. */
+/**
+ * The refusal a NON-person surface gets for a `humanOnly` step. It names the stage, the reason
+ * and the command — so the reader learns why and knows what to do — and it is an Error because
+ * every surface's contract is that it reports a refusal rather than quietly doing nothing.
+ *
+ * A person in their own terminal never sees this: `postbote setup --only terms` is the human
+ * doing the human act, which is exactly what the flag is for. The refusal is for a surface that
+ * is not them.
+ */
 export function humanOnlyRefusal(step: SetupStep): Error {
   return new Error(
-    `\`${step.name}\` is a step only you can take: the provisioning payload is the secret that ` +
-      `binds your account to this machine, and accepting a third party's terms is an act with ` +
-      `your name on it. Run \`${step.command}\` yourself.`,
+    `\`${step.name}\` is a step only the account holder can take: the provisioning payload is the ` +
+      `secret that binds their account to this machine, and accepting a third party's terms is an ` +
+      `act in their name. It has to be run by them, in a terminal: \`${step.command}\``,
   );
 }
 

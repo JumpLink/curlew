@@ -134,10 +134,15 @@ export default async function setup(): Promise<void> {
       const step = SETUP_STEPS.find((s) => s.name === 'link-signal');
       expect(step).toBeDefined();
       const message = humanOnlyRefusal(step!).message;
+      // Actionable: the command is quoted verbatim, so a surface that cannot run it can hand the
+      // person the exact line to type.
       expect(message.includes('postbote setup --only link-signal')).toBe(true);
       // The reason names both reasons, so a reader of the refusal learns why.
       expect(message.includes('secret')).toBe(true);
       expect(message.includes('terms')).toBe(true);
+      // And it is aimed at a surface that is not the account holder — a person in their own
+      // terminal runs `--only terms` directly, so this message would be nonsense to them.
+      expect(message.includes('terminal')).toBe(true);
     });
   });
 
