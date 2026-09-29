@@ -2,8 +2,8 @@ import { describe, expect, it } from '@gjsify/unit';
 
 import {
   LEASE_HEARTBEAT_MS,
+  type IndexDatabase,
   migrate,
-  receiveLeases,
   refreshReceiveLease,
   releaseReceiveLease,
   takeReceiveLease,
@@ -23,6 +23,19 @@ const ACCOUNT = 'wa-1';
 const T0 = new Date('2026-09-29T10:00:00.000Z');
 
 const at = (ms: number) => new Date(T0.getTime() + ms);
+
+/** The lease row's holder, read straight from the table — the module has no "list" on purpose. */
+function leaseHolder(db: IndexDatabase, accountId: string): string | null {
+  const row = db
+    .prepare('SELECT holder FROM receive_leases WHERE backend = ? AND account_id = ?')
+    .get(BACKEND, accountId) as { holder?: unknown } | undefined;
+  return row ? String(row.holder) : null;
+}
+
+function leaseRows(db: IndexDatabase): number {
+  const row = db.prepare('SELECT COUNT(*) AS n FROM receive_leases').get() as { n: number };
+  return Number(row.n);
+}
 
 export default async () => {
   await describe('the receive lease', async () => {
@@ -47,14 +60,12 @@ export default async () => {
       try {
         takeReceiveLease(db, BACKEND, ACCOUNT, 'pid-1', T0);
         // One interval later it is still fresh: the holder is presumed alive.
-        const fresh = takeReceiveLease(db, BACKEND, ACCOUNT, 'pid-2', at(LEASE_HEARTBEAT_MS));
-        expect(fresh.acquired).toBe(false);
+        expect(takeReceiveLease(db, BACKEND, ACCOUNT, 'pid-2', at(LEASE_HEARTBEAT_MS)).acquired).toBe(false);
         // Three intervals later it is not, and the takeover succeeds.
         expect(takeReceiveLease(db, BACKEND, ACCOUNT, 'pid-2', at(3 * LEASE_HEARTBEAT_MS)).acquired).toBe(
           true,
         );
-        const leases = receiveLeases(db, at(3 * LEASE_HEARTBEAT_MS));
-        expect(leases.get(`${BACKEND}/${ACCOUNT}`)).toBe('pid-2');
+        expect(leaseHolder(db, ACCOUNT)).toBe('pid-2');
       } finally {
         db.close();
       }
@@ -66,26 +77,15 @@ export default async () => {
         takeReceiveLease(db, BACKEND, ACCOUNT, 'pid-1', T0);
         // A stranger cannot keep a lease alive it does not hold.
         expect(refreshReceiveLease(db, BACKEND, ACCOUNT, 'pid-2', at(LEASE_HEARTBEAT_MS))).toBe(false);
-        expect(receiveLeases(db, at(LEASE_HEARTBEAT_MS)).size).toBe(1);
+        expect(leaseRows(db)).toBe(1);
         expect(refreshReceiveLease(db, BACKEND, ACCOUNT, 'pid-1', at(LEASE_HEARTBEAT_MS))).toBe(true);
         // Refreshed at 30 s, it is fresh again well past where it would have expired.
         expect(takeReceiveLease(db, BACKEND, ACCOUNT, 'pid-2', at(3 * LEASE_HEARTBEAT_MS)).acquired).toBe(
           false,
         );
-        expect(receiveLeases(db, at(3 * LEASE_HEARTBEAT_MS)).get(`${BACKEND}/${ACCOUNT}`)).toBe('pid-1');
-        // Never taken: an account nobody holds is not in the map.
-        expect(receiveLeases(db, at(3 * LEASE_HEARTBEAT_MS)).get(`${BACKEND}/wa-9`)).toBeUndefined();
-      } finally {
-        db.close();
-      }
-    });
-
-    await it('stops listing a lease once it went stale, so a sync receives that account', async () => {
-      const db = freshDb();
-      try {
-        takeReceiveLease(db, BACKEND, ACCOUNT, 'pid-1', T0);
-        expect(receiveLeases(db, at(LEASE_HEARTBEAT_MS)).size).toBe(1);
-        expect(receiveLeases(db, at(4 * LEASE_HEARTBEAT_MS)).size).toBe(0);
+        expect(leaseHolder(db, ACCOUNT)).toBe('pid-1');
+        // An account nobody holds is not a row at all.
+        expect(leaseHolder(db, 'wa-9')).toBe(null);
       } finally {
         db.close();
       }
@@ -96,9 +96,9 @@ export default async () => {
       try {
         takeReceiveLease(db, BACKEND, ACCOUNT, 'pid-1', T0);
         expect(releaseReceiveLease(db, BACKEND, ACCOUNT, 'pid-2')).toBe(false);
-        expect(receiveLeases(db, at(1_000)).size).toBe(1);
+        expect(leaseRows(db)).toBe(1);
         expect(releaseReceiveLease(db, BACKEND, ACCOUNT, 'pid-1')).toBe(true);
-        expect(receiveLeases(db, at(1_000)).size).toBe(0);
+        expect(leaseRows(db)).toBe(0);
         // Releasing what is not there is not an error, just nothing to do.
         expect(releaseReceiveLease(db, BACKEND, ACCOUNT, 'pid-1')).toBe(false);
       } finally {

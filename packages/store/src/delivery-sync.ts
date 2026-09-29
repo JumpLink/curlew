@@ -38,9 +38,8 @@ import type { IndexDatabase } from './db.ts';
 import { insertMany, placeholders, type SqlValue, withTransaction } from './db.ts';
 import { upsertAccount } from './index-store.ts';
 import {
-  leaseKey,
   LEASE_HEARTBEAT_MS,
-  receiveLeases,
+  type LeaseTake,
   refreshReceiveLease,
   releaseReceiveLease,
   takeReceiveLease,
@@ -92,7 +91,10 @@ export type DeliveryProgress =
     }
   | { backend: string; accountId: string; type: 'reconnect'; delayMs: number; attempt: number }
   | { backend: string; accountId: string; type: 'logged-out'; error: string | null }
+  /** A bounded run left the account to the holder and will not receive it. */
   | { backend: string; accountId: string; type: 'lease-held'; holder: string }
+  /** A follow run is waiting its turn for the account; `holder` is null when nobody is known. */
+  | { backend: string; accountId: string; type: 'lease-waiting'; holder: string | null }
   | { backend: string; accountId: string; type: 'lease-lost' }
   | { backend: string; accountId: string; type: 'stopped'; reason: 'aborted' | 'logged-out' };
 
@@ -804,33 +806,76 @@ async function receiveAccount(
   };
   upsertAccount(db, account);
 
-  // The lease (ADR 0002 §4): taken before the first connect, refreshed while it runs, dropped
-  // when it ends — so a `postbote sync` on the same account stands down. A lease somebody else
-  // holds is not an error: those messages ARE arriving, and a run that red-flagged a working
-  // daemon would teach the user to ignore red flags.
-  const holder = options.holder ?? String(process.pid);
-  const lease = mode === 'follow' ? takeReceiveLease(db, name, account.id, holder, now()) : null;
-  if (lease && !lease.acquired) {
-    result.heldBy = lease.holder;
-    onProgress?.({ backend: name, accountId: account.id, type: 'lease-held', holder: lease.holder });
-    return result;
-  }
-  // This account's own stop signal: the run's abort, plus a lost lease. Per account, so one
-  // stolen lease stops one account and not the daemon.
+  // This account's own stop signal: the run's abort, plus a lost lease and a wait that is over.
+  // Per account, so one stolen lease stops one account and not the daemon.
   const stop = new AbortController();
   const onRunAbort = () => stop.abort();
   options.signal?.addEventListener('abort', onRunAbort);
-  // A lease that cannot be refreshed means another receiver is on this account now: two of them
-  // split the copy, so this one stops instead of writing into the race.
+
+  // The lease (ADR 0002 §4), and BOTH modes take it before their first connect. One side taking
+  // it is not a lock: a `sync` in the middle of a WhatsApp catch-up (up to ten minutes) would
+  // still let a daemon connect to the same account, and two devices on one account each
+  // acknowledge half the copy.
+  const holder = options.holder ?? String(process.pid);
+  const interval = options.leaseIntervalMs ?? LEASE_HEARTBEAT_MS;
+  let leaseHeld = false;
+  let waitingFor: string | null = null;
+  for (;;) {
+    let take: LeaseTake;
+    try {
+      take = takeReceiveLease(db, name, account.id, holder, now());
+    } catch {
+      // The index was busy — another writer was mid-transaction. Not knowing who holds the
+      // account is the same as not holding it, so wait rather than connect blind.
+      take = { acquired: false, holder: null, heartbeatAt: null };
+    }
+    if (take.acquired) {
+      leaseHeld = true;
+      break;
+    }
+    if (mode !== 'follow') {
+      // A bounded run does not wait: it reports the holder and leaves the account to it. Not an
+      // error — those messages ARE arriving, and a run that red-flagged a working daemon would
+      // teach the user to ignore red flags.
+      result.heldBy = take.holder ?? 'another process';
+      onProgress?.({
+        backend: name,
+        accountId: account.id,
+        type: 'lease-held',
+        holder: result.heldBy,
+      });
+      options.signal?.removeEventListener('abort', onRunAbort);
+      return result;
+    }
+    // A daemon waits for the lease and keeps taking it until it gets it: giving the account up
+    // for good would mean never receiving it again. Logged once per holder, not once per try.
+    if (take.holder !== waitingFor) {
+      waitingFor = take.holder;
+      onProgress?.({
+        backend: name,
+        accountId: account.id,
+        type: 'lease-waiting',
+        holder: take.holder,
+      });
+    }
+    await abortableSleep(interval, stop.signal);
+    if (stop.signal.aborted) {
+      onProgress?.({ backend: name, accountId: account.id, type: 'stopped', reason: 'aborted' });
+      options.signal?.removeEventListener('abort', onRunAbort);
+      return result;
+    }
+  }
+
+  // Refreshed while receiving: a run that stops refreshing is a crashed run, and a `sync` or a
+  // second daemon may take the account over. One that cannot be refreshed any more means
+  // somebody else is on this account NOW — two receivers split the copy, so this one stops.
   let leaseLost = false;
-  const heartbeat = lease
-    ? setInterval(() => {
-        if (refreshReceiveLease(db, name, account.id, holder, now())) return;
-        leaseLost = true;
-        onProgress?.({ backend: name, accountId: account.id, type: 'lease-lost' });
-        stop.abort();
-      }, options.leaseIntervalMs ?? LEASE_HEARTBEAT_MS)
-    : null;
+  const heartbeat = setInterval(() => {
+    if (refreshReceiveLease(db, name, account.id, holder, now())) return;
+    leaseLost = true;
+    onProgress?.({ backend: name, accountId: account.id, type: 'lease-lost' });
+    stop.abort();
+  }, interval);
 
   let wait = RECONNECT_FIRST_MS;
   let attempt = 0;
@@ -869,8 +914,8 @@ async function receiveAccount(
     }
   } finally {
     options.signal?.removeEventListener('abort', onRunAbort);
-    if (heartbeat) clearInterval(heartbeat);
-    if (lease) releaseReceiveLease(db, name, account.id, holder);
+    clearInterval(heartbeat);
+    if (leaseHeld) releaseReceiveLease(db, name, account.id, holder);
     if (leaseLost) {
       result.error = 'the receive lease was taken by another process — this account stopped receiving';
     }
@@ -890,30 +935,11 @@ export async function receiveDeliveries(
   options: DeliverySyncOptions = {},
 ): Promise<DeliverySyncResult> {
   const mode = options.mode ?? 'catch-up';
-  const now = options.now ?? (() => new Date());
-  const name = backend.manifest.name;
   const accounts = (await backend.listAccounts()).filter(
     (a) => !options.accountId || a.id === options.accountId,
   );
-  // A `sync` stands down for every account a running daemon holds (ADR 0002 §4), and reports the
-  // holder instead of failing: nothing failed, and those messages are on their way in.
-  const holder = options.holder ?? String(process.pid);
-  const leases = mode === 'follow' ? null : receiveLeases(db, now());
-  const heldBy = (accountId: string): string | null => {
-    const held = leases?.get(leaseKey(name, accountId)) ?? null;
-    return held === null || held === holder ? null : held;
-  };
-  const standingDown = (accountId: string, held: string): DeliveryAccountSyncResult => ({
-    backend: name,
-    accountId,
-    batches: 0,
-    added: 0,
-    edited: 0,
-    removed: 0,
-    caughtUp: false,
-    error: null,
-    heldBy: held,
-  });
+  // The lease is taken inside `receiveAccount`, by both modes — that is the only place that
+  // connects an account, so it is the only place that has to hold it.
   const settled = new Map<string, DeliveryAccountSyncResult>();
   if (mode === 'follow') {
     // Every account at once: a follow session ends only when it is closed, so a queue would
@@ -927,11 +953,6 @@ export async function receiveDeliveries(
     // `catch-up` stays sequential: a bounded run reports per account, and one slow account must
     // not eat the whole budget.
     for (const account of accounts) {
-      const held = heldBy(account.id);
-      if (held !== null) {
-        settled.set(account.id, standingDown(account.id, held));
-        continue;
-      }
       settled.set(account.id, await receiveAccount(db, backend, account, options));
     }
   }

@@ -139,8 +139,9 @@ the MCP server via `run_in_background` when driving it.
   a deleted message that stays MCP-readable is a privacy defect, not a staleness one.
 - Only `postbote sync` and `postbote daemon` write to the index. A search never does — one
   mental model, and no surprise disk growth from a read. They are kept off the same delivery
-  account by a **lease** (a row in the index, ADR 0002 §4): the daemon takes it, refreshes it,
-  drops it on stop; a `sync` reports the holder and stands down. User decisions (enabled
+  account by a **lease** (a row in the index, ADR 0002 §4) that BOTH take before connecting:
+  the holder refreshes it and drops it on stop, a `sync` reports the holder and stands down, a
+  daemon waits for it. User decisions (enabled
   backends, accepted terms, per-sender classification) go to
   `$XDG_CONFIG_HOME/postbote/config.json`, never the index, and overrides apply at read time.
 - **Backends load only through the registry** (`app/src/core/backends/`), and only when the

@@ -112,6 +112,10 @@ function line(event: DeliveryProgress, log: (line: string) => void): void {
       );
     case 'lease-held':
       return log(`postbote-daemon: ${who} is held by ${event.holder} — not receiving it here`);
+    case 'lease-waiting':
+      return log(
+        `postbote-daemon: ${who} is held by ${event.holder ?? 'another process'} — waiting for the lease`,
+      );
     case 'lease-lost':
       return log(`postbote-daemon: ${who} lost the receive lease — stopping that account`);
     case 'stopped':

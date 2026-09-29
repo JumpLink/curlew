@@ -28,11 +28,6 @@ export const LEASE_HEARTBEAT_MS = 30_000;
 /** How many heartbeats a lease stays fresh for — the holder is presumed alive that long. */
 export const LEASE_STALE_HEARTBEATS = 3;
 
-/** The row key of one (backend, account) lease, as the maps below key it. */
-export function leaseKey(backend: string, accountId: string): string {
-  return `${backend}/${accountId}`;
-}
-
 function millis(iso: unknown): number {
   const parsed = Date.parse(String(iso ?? ''));
   return Number.isNaN(parsed) ? Number.NEGATIVE_INFINITY : parsed;
@@ -44,8 +39,12 @@ function isFresh(heartbeatAt: unknown, now: Date): boolean {
 
 export type LeaseTake =
   | { acquired: true }
-  /** Somebody else holds a live lease: who, and when it was last heard from. */
-  | { acquired: false; holder: string; heartbeatAt: string };
+  /**
+   * Somebody else holds a live lease: who, and when it was last heard from. A `null` holder
+   * means the index was busy and nobody could be determined — which for the caller is the same
+   * as "not mine": wait or stand down, never connect blind.
+   */
+  | { acquired: false; holder: string | null; heartbeatAt: string | null };
 
 /**
  * Take the lease for one account, or report the holder that has it.
@@ -120,21 +119,4 @@ export function releaseReceiveLease(
     );
     return true;
   });
-}
-
-/**
- * Every lease that is still fresh, keyed `backend/accountId` with the holder as the value. A
- * `sync` reads this to leave the daemon's accounts alone — and gets nothing for a lease a dead
- * daemon left behind.
- */
-export function receiveLeases(db: IndexDatabase, now: Date): Map<string, string> {
-  const rows = db
-    .prepare('SELECT backend, account_id, holder, heartbeat_at FROM receive_leases')
-    .all() as Array<Record<string, unknown>>;
-  const fresh = new Map<string, string>();
-  for (const row of rows) {
-    if (!isFresh(row.heartbeat_at, now)) continue;
-    fresh.set(leaseKey(String(row.backend), String(row.account_id)), String(row.holder));
-  }
-  return fresh;
 }

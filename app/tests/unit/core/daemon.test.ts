@@ -247,7 +247,7 @@ export default async () => {
       }
     });
 
-    await it('leaves an account another holder has, and says who holds it', async () => {
+    await it('waits for an account another holder has, and says who holds it', async () => {
       const controller = new AbortController();
       const logs: string[] = [];
       const backend = new ScriptedBackend(['a-1']);
@@ -262,15 +262,19 @@ export default async () => {
           dbPath,
           backends: [backend],
           signal: controller.signal,
+          rebuildDebounceMs: 5,
           log: (line) => logs.push(line),
           rebuild: async () => REBUILD,
         });
-        const result = await running;
-        // Nothing was connected: that account is the other daemon's, and the lease is left alone.
+        await settle();
+        // Nothing was connected: that account is the other daemon's. A daemon does NOT give it
+        // up for good — it waits, and says whom it waits for.
         expect(backend.sessions.size).toBe(0);
-        expect(result.accounts[0].heldBy).toBe('pid-other-daemon');
+        expect(logs.some((l) => l.includes('held by pid-other-daemon — waiting for the lease'))).toBe(true);
+        controller.abort();
+        const result = await running;
+        expect(result.accounts[0].heldBy).toBe(null);
         expect(result.errors).toBe(0);
-        expect(logs.some((l) => l.includes('held by pid-other-daemon'))).toBe(true);
       } finally {
         controller.abort();
         rmSync(dir, { recursive: true, force: true });

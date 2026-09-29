@@ -441,13 +441,16 @@ logout, a stop. Never message text, chat titles, peer names or phone numbers:
 a log line is a file that gets copied and pasted around, and the same privacy
 rule that guards the index guards it.
 
-**And `sync` at the same time?** Yes. They take a **lease** on each delivery
-account, stored in the index itself: the daemon takes it, refreshes it every 30
-seconds and drops it on stop, and a `sync` that finds a live lease reports that
-account as received by the running daemon and moves on — not an error, because
-nothing failed. Two connected devices on one Signal account would each
-acknowledge half the messages, so this is what keeps the copy whole. A daemon
-that was killed leaves a lease behind, which expires by itself after 90 seconds.
+**And `sync` at the same time?** Yes — and that is what the **lease** is for.
+Both take a lease on each delivery account, stored in the index itself: whoever
+holds it refreshes it every 30 seconds and drops it when it stops. A `sync` that
+finds a live lease reports that account as received by the other run and moves
+on — not an error, because nothing failed. A daemon that finds one **waits** for
+it and takes the account as soon as it is free, rather than never receiving it:
+that includes a `sync` in the middle of a WhatsApp catch-up, which can run for
+ten minutes. Two connected devices on one Signal account would each acknowledge
+half the messages, so this is what keeps the copy whole. A run that was killed
+leaves a lease behind, which expires by itself after 90 seconds.
 
 Stopping is a normal end: SIGTERM (or `systemctl stop`) closes every session,
 writes what was in flight, rebuilds the conversations once and exits 0. It is

@@ -12,13 +12,8 @@ import type {
 } from '@postbote/protocol';
 import { PLUGIN_API_VERSION } from '@postbote/protocol';
 import type { DeliveryProgress } from '@postbote/store';
-import {
-  chatConversationId,
-  getConversation,
-  receiveDeliveries,
-  receiveLeases,
-  takeReceiveLease,
-} from '@postbote/store';
+import type { IndexDatabase } from '@postbote/store';
+import { chatConversationId, getConversation, receiveDeliveries, takeReceiveLease } from '@postbote/store';
 import { freshDb } from './fixtures.ts';
 
 /**
@@ -158,6 +153,23 @@ class FollowBackend implements DeliveryBackend {
     }
     return null;
   }
+}
+
+/** The lease row's holder, read straight from the table. */
+function leaseHolder(db: IndexDatabase, accountId: string): string | null {
+  const row = db
+    .prepare('SELECT holder FROM receive_leases WHERE backend = ? AND account_id = ?')
+    .get(BACKEND, accountId) as { holder?: unknown } | undefined;
+  return row ? String(row.holder) : null;
+}
+
+/** Poll until `done` — the lease retry runs on a timer, not on a promise the test holds. */
+async function until(done: () => boolean, what: string): Promise<void> {
+  for (let i = 0; i < 500; i++) {
+    if (done()) return;
+    await new Promise<void>((resolve) => setTimeout(resolve, 4));
+  }
+  throw new Error(`timed out waiting for ${what}`);
 }
 
 const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 1));
@@ -352,8 +364,7 @@ export default async () => {
           leaseIntervalMs: 5,
         });
         await settle();
-        const key = `${BACKEND}/a-1`;
-        expect(receiveLeases(db, new Date()).get(key)).toBe('pid-daemon');
+        expect(leaseHolder(db, 'a-1')).toBe('pid-daemon');
         const first = db
           .prepare('SELECT heartbeat_at FROM receive_leases WHERE backend = ? AND account_id = ?')
           .get(BACKEND, 'a-1') as { heartbeat_at: string };
@@ -366,14 +377,14 @@ export default async () => {
         controller.abort();
         await received;
         // Stopped: nothing is held any more, so the next `sync` receives this account.
-        expect(receiveLeases(db, new Date()).size).toBe(0);
+        expect(leaseHolder(db, 'a-1')).toBe(null);
       } finally {
         controller.abort();
         db.close();
       }
     });
 
-    await it('a second daemon leaves the account to the first', async () => {
+    await it('a daemon waits for a lease another daemon holds, then receives it', async () => {
       const db = freshDb();
       const first = new AbortController();
       const second = new AbortController();
@@ -386,22 +397,79 @@ export default async () => {
           holder: 'pid-1',
         });
         await settle();
-        const other = await receiveDeliveries(db, backend, {
+        const other = receiveDeliveries(db, backend, {
           mode: 'follow',
           signal: second.signal,
           holder: 'pid-2',
+          leaseIntervalMs: 5,
           onProgress: (event) => progress.push(event),
         });
-        expect(other.accounts[0].heldBy).toBe('pid-1');
-        expect(other.errors).toBe(0);
-        expect(progress.filter((p) => p.type === 'lease-held').length).toBe(1);
-        // Only the first daemon ever connected the account.
+        await settle();
+        // The second daemon must NOT give the account up: it waits, and says who it waits for.
+        expect(progress.filter((p) => p.type === 'lease-waiting').length).toBe(1);
         expect(backend.connects.length).toBe(1);
+        // When the first one stops, the second takes the lease and connects.
         first.abort();
         await running;
+        await until(() => backend.connects.length === 2, 'the waiting daemon to take the lease');
+        expect(backend.connects.join(',')).toBe('a-1,a-1');
+        backend.sessionOf('a-1')?.push(incoming('d-anna', msg('a2/1', 1, 'zwei')));
+        await settle();
+        second.abort();
+        const waited = await other;
+        expect(waited.added).toBe(1);
+        expect(waited.accounts[0].heldBy).toBeUndefined();
+        expect(waited.errors).toBe(0);
       } finally {
         first.abort();
         second.abort();
+        db.close();
+      }
+    });
+
+    await it('a sync that holds the lease keeps a starting daemon off the account', async () => {
+      const db = freshDb();
+      const sync = new AbortController();
+      const daemon = new AbortController();
+      const progress: DeliveryProgress[] = [];
+      try {
+        // A catch-up run that is mid-account: it holds the lease, and a daemon may not join it.
+        const syncBackend = new FollowBackend(['a-1']);
+        const syncing = receiveDeliveries(db, syncBackend, {
+          holder: 'pid-sync',
+          signal: sync.signal,
+          leaseIntervalMs: 5,
+        });
+        await settle();
+        expect(leaseHolder(db, 'a-1')).toBe('pid-sync');
+        const daemonBackend = new FollowBackend(['a-1']);
+        const following = receiveDeliveries(db, daemonBackend, {
+          mode: 'follow',
+          signal: daemon.signal,
+          holder: 'pid-daemon',
+          leaseIntervalMs: 5,
+          onProgress: (event) => progress.push(event),
+        });
+        await settle();
+        expect(daemonBackend.connects.length).toBe(0);
+        expect(progress.filter((p) => p.type === 'lease-waiting').length).toBe(1);
+        // The sync finishes and drops the lease — the daemon then takes over and receives.
+        syncBackend.sessionOf('a-1')?.push(incoming('d-anna', msg('s1/1', 1, 'eins')));
+        await settle();
+        syncBackend.sessionOf('a-1')?.end({ caughtUp: true, error: null });
+        const synced = await syncing;
+        expect(synced.added).toBe(1);
+        await until(() => daemonBackend.connects.length === 1, 'the daemon to take the lease');
+        expect(daemonBackend.connects.join(',')).toBe('a-1');
+        daemonBackend.sessionOf('a-1')?.push(incoming('d-anna', msg('d1/1', 1, 'zwei')));
+        await settle();
+        daemon.abort();
+        const followed = await following;
+        expect(followed.added).toBe(1);
+        expect(followed.errors).toBe(0);
+      } finally {
+        sync.abort();
+        daemon.abort();
         db.close();
       }
     });
@@ -426,7 +494,7 @@ export default async () => {
         expect(result.errors).toBe(0);
         expect(result.failed).toBe(false);
         // The lease is left exactly as it was found.
-        expect(receiveLeases(db, new Date()).get(`${BACKEND}/a-1`)).toBe('pid-daemon');
+        expect(leaseHolder(db, 'a-1')).toBe('pid-daemon');
       } finally {
         db.close();
       }
@@ -436,7 +504,6 @@ export default async () => {
       const db = freshDb();
       try {
         takeReceiveLease(db, BACKEND, 'a-1', 'pid-dead', new Date(Date.now() - 10 * 60_000));
-        expect(receiveLeases(db, new Date()).size).toBe(0);
         const backend = new FollowBackend(['a-1']);
         const received = receiveDeliveries(db, backend);
         await settle();
