@@ -741,6 +741,42 @@ export default async () => {
       }
     });
 
+    await it('measures the stale window from the refresh interval, not a fixed 90 s', async () => {
+      const db = freshDb();
+      const controller = new AbortController();
+      const T0 = new Date('2026-09-29T10:00:00.000Z');
+      try {
+        // A holder that refreshes every 100 s — SLOWER than a fixed 3 × 30 s window. At 95 s its
+        // row looks stale to anyone with the hard-coded window, while the holder has not missed a
+        // single refresh: the account would be taken from a live receiver.
+        const daemon = new FollowBackend(['a-1']);
+        const running = receiveDeliveries(db, daemon, {
+          mode: 'follow',
+          signal: controller.signal,
+          holder: 'pid-1',
+          leaseIntervalMs: 100_000,
+          // Frozen: the 100 s heartbeat never fires in a test, so the row keeps its first stamp.
+          now: () => T0,
+        });
+        await settle();
+        const sync = new FollowBackend(['a-1']);
+        const received = receiveDeliveries(db, sync, {
+          holder: 'pid-2',
+          leaseIntervalMs: 100_000,
+          now: () => new Date(T0.getTime() + 95_000),
+        });
+        await settle();
+        expect(sync.connects.length).toBe(0);
+        expect(leaseHolder(db, 'a-1')).toBe('pid-1');
+        controller.abort();
+        await running;
+        await received;
+      } finally {
+        controller.abort();
+        db.close();
+      }
+    });
+
     await it('a sync that cannot take the lease because the index is busy says exactly that', async () => {
       const db = freshDb();
       const progress: DeliveryProgress[] = [];

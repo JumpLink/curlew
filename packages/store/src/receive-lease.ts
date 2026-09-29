@@ -25,7 +25,12 @@ import { withTransaction } from './db.ts';
 /** How often a holder refreshes its lease. */
 export const LEASE_HEARTBEAT_MS = 30_000;
 
-/** How many heartbeats a lease stays fresh for — the holder is presumed alive that long. */
+/**
+ * How many missed heartbeats make a lease stale — the holder is presumed alive until then.
+ *
+ * Three, against the interval the holder refreshes at, NOT a fixed 30 s: a holder that refreshes
+ * every 100 s must not be declared dead halfway through its own interval.
+ */
 export const LEASE_STALE_HEARTBEATS = 3;
 
 /**
@@ -76,8 +81,8 @@ function millis(iso: unknown): number {
   return Number.isNaN(parsed) ? Number.NEGATIVE_INFINITY : parsed;
 }
 
-function isFresh(heartbeatAt: unknown, now: Date): boolean {
-  return now.getTime() - millis(heartbeatAt) < LEASE_STALE_HEARTBEATS * LEASE_HEARTBEAT_MS;
+function isFresh(heartbeatAt: unknown, now: Date, intervalMs: number): boolean {
+  return now.getTime() - millis(heartbeatAt) < LEASE_STALE_HEARTBEATS * intervalMs;
 }
 
 export type LeaseTake =
@@ -111,6 +116,7 @@ export function takeReceiveLease(
   accountId: string,
   holder: string,
   now: Date,
+  intervalMs: number = LEASE_HEARTBEAT_MS,
 ): LeaseTake {
   return withLeaseTransaction(db, (): LeaseTake => {
     const row = db
@@ -118,7 +124,12 @@ export function takeReceiveLease(
       .get(backend, accountId) as { holder?: unknown; heartbeat_at?: unknown } | undefined;
     const incumbent = row ? String(row.holder) : null;
     const heartbeatAt = row ? String(row.heartbeat_at) : null;
-    if (incumbent !== null && incumbent !== holder && heartbeatAt !== null && isFresh(heartbeatAt, now)) {
+    if (
+      incumbent !== null &&
+      incumbent !== holder &&
+      heartbeatAt !== null &&
+      isFresh(heartbeatAt, now, intervalMs)
+    ) {
       return { acquired: false, holder: incumbent, heartbeatAt };
     }
     db.prepare(

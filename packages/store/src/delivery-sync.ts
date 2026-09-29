@@ -935,7 +935,7 @@ async function receiveAccount(
     for (;;) {
       let take: LeaseTake;
       try {
-        take = takeReceiveLease(db, name, account.id, holder, now());
+        take = takeReceiveLease(db, name, account.id, holder, now(), interval);
       } catch {
         // The index was busy — another writer was mid-transaction. Not knowing who holds the
         // account is the same as not holding it, so wait rather than connect blind.
