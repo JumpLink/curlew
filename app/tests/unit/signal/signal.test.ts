@@ -59,6 +59,7 @@ import {
   PENDING_STALE_MS,
   ProtoWriter,
   readContactsSync,
+  readDelimited,
   ReadOnlyViolation,
   RELINK_HINT,
   SAFETY_NUMBER_CHANGED,
@@ -297,6 +298,19 @@ export default async () => {
         message = (err as Error).message;
       }
       expect(message.includes('padding')).toBe(true);
+    });
+
+    // The length prefix is a varint, so its width changes at 128 and 16384: those are the
+    // frames where a writer that gets the encoding wrong still produces something readable.
+    await it('frames a blob with its varint length, the inverse of readDelimited', async () => {
+      for (const length of [0, 1, 127, 128, 300, 16_384]) {
+        const frame = Uint8Array.from({ length }, (_, i) => i & 0xff);
+        const framed = delimited(frame);
+        const read = readDelimited(framed, 0);
+        expect(read?.next).toBe(framed.length);
+        expect(read?.frame.length).toBe(length);
+        expect(read?.frame.every((b, i) => b === frame[i])).toBe(true);
+      }
     });
   });
 
