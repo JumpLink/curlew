@@ -69,15 +69,69 @@ export interface SetAsideEntry {
   plaintext: string;
 }
 
-/** The stored ledger, oldest first. A damaged one reads as empty, never as a throw. */
-function parseLedger(stored: string | null): SetAsideEntry[] {
-  if (!stored) return [];
+/** The stored ledger, oldest first: what a listing can show, and everything it is kept in. */
+interface ParsedLedger {
+  /** The entries that name a sender and a time — the ones a listing can point at on the phone. */
+  entries: SetAsideEntry[];
+  /**
+   * Every stored entry, readable or not, exactly as it stands. `setAside` appends by rewriting
+   * the WHOLE ledger, so it must be handed this rather than `entries`: a filtered list would
+   * delete the only copy of a plaintext the next time another one arrived.
+   */
+  stored: unknown[];
+}
+
+/**
+ * The stored ledger, oldest first. A damaged one reads as empty, never as a throw.
+ *
+ * An entry is shown only when it names a sender and a time: without both there is no way to find
+ * the message on the phone, so `readSetAside` counts it as lost instead of listing `undefined`
+ * for it. What is not shown is still kept in `stored`.
+ */
+function parseLedger(stored: string | null): ParsedLedger {
+  if (!stored) return { entries: [], stored: [] };
   try {
-    const parsed = JSON.parse(stored) as unknown;
-    return Array.isArray(parsed) ? (parsed as SetAsideEntry[]) : [];
+    const parsed: unknown = JSON.parse(stored);
+    if (!Array.isArray(parsed)) return { entries: [], stored: [] };
+    const rows = parsed as unknown[];
+    const entries: SetAsideEntry[] = [];
+    for (const raw of rows) {
+      const entry = showable(raw);
+      if (entry) entries.push(entry);
+    }
+    return { entries, stored: rows };
   } catch {
-    return [];
+    return { entries: [], stored: [] };
   }
+}
+
+/** What a listing shows for an entry that never recorded why it was kept. */
+const UNRECORDED_REASON = 'unrecorded';
+
+/**
+ * One stored entry as a listing shows it, or null when it names neither a sender nor a time.
+ *
+ * A non-object entry reads as null instead of throwing, and a missing `reason` is a hole in the
+ * record, not a reason to hide a message whose sender and time are still there: it shows this
+ * fixed placeholder rather than `undefined`.
+ */
+function showable(raw: unknown): SetAsideEntry | null {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const entry = raw as {
+    senderAci?: unknown;
+    sentAt?: unknown;
+    reason?: unknown;
+    plaintext?: unknown;
+  };
+  if (typeof entry.senderAci !== 'string' || entry.senderAci === '') return null;
+  if (typeof entry.sentAt !== 'string' || entry.sentAt === '') return null;
+  return {
+    senderAci: entry.senderAci,
+    sentAt: entry.sentAt,
+    reason: typeof entry.reason === 'string' && entry.reason !== '' ? entry.reason : UNRECORDED_REASON,
+    // Not a string reads as no plaintext at all: the message can still be found, its size is 0.
+    plaintext: typeof entry.plaintext === 'string' ? entry.plaintext : '',
+  };
 }
 
 /** The stored dropped count; anything unreadable is zero, not a failure. */
@@ -88,7 +142,9 @@ function parseDropped(stored: string | null): number {
 /**
  * The ledger of one account as the delivery port reports it: who sent what this build could not
  * map, when, why, and how big the plaintext was — and never the plaintext itself, which stays in
- * the account file. An account that keeps none reads as an empty ledger, never as a throw.
+ * the account file. An account that keeps none reads as an empty ledger, never as a throw. An
+ * entry with no sender or no time is not listed — there is nothing on a phone to find it by — but
+ * it is counted in `dropped`, so a message nobody can see here never goes unnoticed.
  *
  * Reads the file rather than a `SignalProtocolStore` on purpose: the ledger is postbote's own
  * JSON, and reading a diagnosis is exactly what someone needs on a machine where libsignal does
@@ -97,9 +153,12 @@ function parseDropped(stored: string | null): number {
 export function readSetAside(file: SecretStore): SetAsideLedger {
   const namespace = file.load(SET_ASIDE_NAMESPACE);
   const dropped = parseDropped(namespace.get(DROPPED_KEY) ?? null);
+  const ledger = parseLedger(namespace.get(LEDGER_KEY) ?? null);
   return {
-    dropped,
-    entries: parseLedger(namespace.get(LEDGER_KEY) ?? null).map((entry) => ({
+    // Entries no listing can point at on the phone count as dropped along with the ones the bound
+    // pushed out: for this answer both mean a message this command will never show.
+    dropped: dropped + (ledger.stored.length - ledger.entries.length),
+    entries: ledger.entries.map((entry) => ({
       sender: entry.senderAci,
       sentAt: entry.sentAt,
       reason: entry.reason,
@@ -239,7 +298,9 @@ export class SignalProtocolStore {
    * an acknowledged envelope: without this the plaintext would exist nowhere at all.
    */
   setAside(entry: SetAsideEntry): number {
-    const ledger = this.setAsideEntries();
+    // The ledger as stored, not the entries a listing shows: this rewrites every plaintext the
+    // account keeps, and one without a sender or a time is still the only copy of a message.
+    const ledger = parseLedger(this.get(SET_ASIDE_NAMESPACE, LEDGER_KEY)).stored;
     ledger.push(entry);
     let dropped = 0;
     while (ledger.length > SET_ASIDE_LIMIT) {
@@ -251,9 +312,9 @@ export class SignalProtocolStore {
     return dropped;
   }
 
-  /** The kept plaintexts, oldest first. A damaged ledger reads as empty, never as a throw. */
+  /** The kept plaintexts a listing can show, oldest first. A damaged ledger reads as empty, never as a throw. */
   setAsideEntries(): SetAsideEntry[] {
-    return parseLedger(this.get(SET_ASIDE_NAMESPACE, LEDGER_KEY));
+    return parseLedger(this.get(SET_ASIDE_NAMESPACE, LEDGER_KEY)).entries;
   }
 
   /** How many plaintexts the limit pushed out of the ledger — data that really is gone. */
