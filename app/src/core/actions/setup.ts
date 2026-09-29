@@ -83,10 +83,10 @@ export interface SetupContext {
   /** The index to report on and to sync. Injected so a test never reads the user's. */
   readonly indexPath: string;
   /**
-   * Link a device on a backend. Defaults to the real `accountsAdd`; a test substitutes a stub so
-   * the QR never has to be real. It takes the SHARED prompter and returns nothing about the
-   * payload — that is the whole security property, so the seam is explicit rather than a hidden
-   * import.
+   * Link a device on a backend. The frontend supplies the real `accountsAdd`; a test substitutes
+   * a stub so the QR never has to be real. It takes the SHARED prompter and returns nothing
+   * about the payload — that is the whole security property, so the seam is explicit rather than
+   * a hidden import, and a step cannot reach past it.
    */
   link(backend: string, prompter: SetupPrompter): Promise<void>;
   /**
@@ -95,7 +95,7 @@ export interface SetupContext {
    * security claim about a path only a linked account can reach, so a test has to be able to
    * stand on it. Defaults to the real listing.
    */
-  countAccounts(backend: string): Promise<number>;
+  countAccounts?(backend: string): Promise<number>;
   /** Set by a step, read by later ones. */
   readonly done: Map<string, SetupOutcome>;
 }
@@ -270,11 +270,11 @@ function linkStep(backend: string, title: string, phoneSteps: string): SetupStep
     command: `postbote setup --only link-${backend}`,
     humanOnly: true,
     async probe(ctx) {
-      return (await ctx.countAccounts(backend)) > 0 ? 'done' : 'remaining';
+      return (await linkedCount(ctx, backend)) > 0 ? 'done' : 'remaining';
     },
     async run(ctx) {
       const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
-      if ((await ctx.countAccounts(backend)) > 0) {
+      if ((await linkedCount(ctx, backend)) > 0) {
         await say(`${display} is already linked on this machine — nothing to do.`);
         return { status: 'done', detail: 'already linked' };
       }
@@ -293,7 +293,7 @@ function linkStep(backend: string, title: string, phoneSteps: string): SetupStep
       // whole reason this is TypeScript and not a shell script that shelled out to a subprocess
       // and hoped its output stayed on the terminal.
       await ctx.link(backend, ctx.prompter);
-      const count = await ctx.countAccounts(backend);
+      const count = await linkedCount(ctx, backend);
       if (count === 0) {
         // Not a failure: a pairing can be declined on the phone, and the person holding it is
         // the only one who knows. The terms stage asks again rather than inferring.
@@ -355,7 +355,7 @@ function termsStep(): SetupStep {
         // Ask, do not infer: a finished account listing cannot say whether the phone accepted the
         // QR, and only the person holding the phone knows that. So the question is asked — and it
         // is asked here, a stage that is `humanOnly` on every surface.
-        if ((await ctx.countAccounts(backend)) === 0) {
+        if ((await linkedCount(ctx, backend)) === 0) {
           await say(`${backend}: no linked account — leaving it disabled. Link it first.`);
           continue;
         }
@@ -785,16 +785,36 @@ export async function runSetup(ctx: SetupContext, options: SetupRunOptions = {})
   return { steps, ok, followUps: SETUP_FOLLOW_UPS, remaining, failed };
 }
 
+/**
+ * Which postbote this run sets up, and where it lives.
+ *
+ * A checkout runs the built bundle out of its own tree, because the native addon's absolute
+ * prebuild path is baked in at build time and a copied tree starts and then dies at the first
+ * Signal command (AGENTS.md). A published install has no tree and just runs the command. The
+ * walk starts at the working directory and stops at the first checkout above it.
+ */
+export function detectSetup(host: CommandRunner): { mode: SetupMode; checkout: string | null } {
+  let dir = host.cwd();
+  for (let i = 0; i < 8; i++) {
+    if (host.isCheckout(dir)) return { mode: 'checkout', checkout: dir };
+    const up = dir.slice(0, dir.lastIndexOf('/'));
+    if (up === '' || up === dir) break;
+    dir = up;
+  }
+  if (host.which('postbote') !== null) return { mode: 'published', checkout: null };
+  throw new Error(
+    'neither a postbote checkout above this directory nor a `postbote` command on PATH. ' +
+      'Clone the repo and run `gjsify install`, or install the published command, then run this again.',
+  );
+}
+
 /** The default linker: the existing action, with the SHARED prompter. This is the whole reason
  * `setup` never has to know what a QR looks like. */
 export const defaultLink = async (backend: string, prompter: SetupPrompter): Promise<void> => {
   await accountsAdd(backend, prompter);
 };
 
-/** Fill in the two seams a run needs from the machine it is driving. */
-export function withDefaults(ctx: SetupContext): SetupContext {
-  return {
-    ...ctx,
-    countAccounts: ctx.countAccounts ?? ((backend) => defaultCountAccounts(ctx, backend)),
-  };
+/** The account count for a backend, through the seam when a caller supplied one. */
+export function linkedCount(ctx: SetupContext, backend: string): Promise<number> {
+  return ctx.countAccounts === undefined ? defaultCountAccounts(ctx, backend) : ctx.countAccounts(backend);
 }

@@ -16,7 +16,13 @@
 import { describe, expect, it } from '@gjsify/unit';
 import { existsSync } from 'node:fs';
 
-import { SETUP_LINK_BACKENDS, SETUP_STEPS, runSetup, setupStatus } from '../../../src/core/actions/setup.ts';
+import {
+  SETUP_LINK_BACKENDS,
+  SETUP_STEPS,
+  detectSetup,
+  runSetup,
+  setupStatus,
+} from '../../../src/core/actions/setup.ts';
 import type { SetupContext, SetupStep, SetupStepState } from '../../../src/core/actions/setup.ts';
 import { FAKE_PAIRING_PAYLOAD, fakeContext, fakeHost, fakePrompter } from './setup-fakes.ts';
 
@@ -38,6 +44,32 @@ function stage(name: string): (typeof SETUP_STEPS)[number] {
 }
 
 export default async function setupSteps(): Promise<void> {
+  describe('which postbote is being set up', () => {
+    it('finds the checkout above the working directory', () => {
+      const host = fakeHost({ PWD: '/src/postbote/app/src' });
+      host.files.set('/src/postbote/package.json', '{}');
+      host.files.set('/src/postbote/app/package.json', '{}');
+      expect(detectSetup(host)).toStrictEqual({ mode: 'checkout', checkout: '/src/postbote' });
+    });
+
+    it('falls back to a published install on PATH', () => {
+      const host = fakeHost({ PWD: '/home/tester' });
+      host.commands.set('postbote', { path: '/usr/local/bin/postbote', code: 0, output: '' });
+      expect(detectSetup(host)).toStrictEqual({ mode: 'published', checkout: null });
+    });
+
+    it('refuses to guess when there is neither, and says how to fix it', () => {
+      const host = fakeHost({ PWD: '/home/tester' });
+      let message = '';
+      try {
+        detectSetup(host);
+      } catch (err: unknown) {
+        message = err instanceof Error ? err.message : String(err);
+      }
+      expect(message.includes('gjsify install')).toBe(true);
+    });
+  });
+
   describe('the readiness stage', () => {
     it('fails with the command to run when gjsify is missing, and never builds', async () => {
       const ctx = fakeContext();

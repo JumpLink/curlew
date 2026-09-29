@@ -69,7 +69,9 @@ export function fakeHost(overrides: Partial<Record<string, string>> = {}): FakeH
     mkdirp: () => {},
     exists: (path) => files.has(path),
     home: () => env.HOME ?? '/home/tester',
+    cwd: () => env.PWD ?? '/home/tester/postbote',
     env: (name) => env[name],
+    isCheckout: (dir) => host.files.has(`${dir}/package.json`) && host.files.has(`${dir}/app/package.json`),
     transcript: () => '',
   };
   return host;

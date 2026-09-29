@@ -45,7 +45,11 @@ export interface CommandRunner {
   mkdirp(path: string): void;
   exists(path: string): boolean;
   home(): string;
+  cwd(): string;
   env(name: string): string | undefined;
+  /** Whether a directory is a postbote checkout: the CLI workspace and the root that owns it.
+   * A published install has neither. */
+  isCheckout(dir: string): boolean;
 }
 
 /**
@@ -127,8 +131,14 @@ export function nodeHost(env: NodeJS.ProcessEnv = process.env): CommandRunner {
     home() {
       return env.HOME ?? homedir();
     },
+    cwd() {
+      return process.cwd();
+    },
     env(name) {
       return env[name];
+    },
+    isCheckout(dir) {
+      return existsSync(join(dir, 'app', 'package.json')) && existsSync(join(dir, 'package.json'));
     },
   };
 }
