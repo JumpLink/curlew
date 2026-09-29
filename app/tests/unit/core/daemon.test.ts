@@ -227,6 +227,7 @@ export default async () => {
       removed: 0,
       error: null,
       heldBy: null,
+      indexBusy: false,
       loggedOut: false,
       ...over,
     });
