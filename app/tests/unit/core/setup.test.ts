@@ -41,8 +41,25 @@ export default async function setup(): Promise<void> {
       for (const step of SETUP_STEPS) {
         expect(ctx.prompter.notified.some((line) => line.includes(step.title))).toBe(true);
       }
-      expect(ctx.host.calls.length).toBe(0);
-      expect(result.ok).toBe(true);
+      // The unit stage verifies its own file with `systemd-analyze --user verify` and that is the
+      // ONE captured call in a whole run (a file check, not a session). Everything else leaves its
+      // output attached, and no word of the run bypassed the prompter.
+      const captured = ctx.host.calls.filter((call) => call.captured);
+      expect(captured.length).toBe(1);
+      expect(captured[0].argv[0]).toBe('systemd-analyze');
+      expect(captured[0].argv[1]).toBe('--user');
+      // This machine has no gjsify on PATH and a `systemd-analyze` that fails, so readiness and
+      // the unit stage genuinely fail and `ok` is false. The run still completed all eight stages
+      // and still reported: a failed stage is not a dead run, and each one named its own reason.
+      const failed = result.steps.filter((s) => s.outcome.status === 'failed').map((s) => s.name);
+      expect(failed).toStrictEqual(['readiness', 'unit']);
+      expect(result.ok).toBe(false);
+      expect(result.steps).toHaveLength(8);
+      for (const step of result.steps) {
+        if (step.outcome.status === 'failed') {
+          expect(step.outcome.reason.length > 0).toBe(true);
+        }
+      }
     });
 
     it('carries the follow-ups as a list, not as prose', () => {
@@ -93,7 +110,8 @@ export default async function setup(): Promise<void> {
     it('reports the invocation of every stage that did not finish', async () => {
       const ctx = fakeContext();
       const result = await runSetup(ctx);
-      expect(result.remaining).toStrictEqual(SETUP_STEPS.map((s) => s.command));
+      // `finish` did finish — it is the stage that prints the rest — so it is not outstanding.
+      expect(result.remaining).toStrictEqual(SETUP_STEPS.slice(0, 7).map((s) => s.command));
     });
   });
 
@@ -120,15 +138,19 @@ export default async function setup(): Promise<void> {
   describe('setupStatus — what is left, without touching anything', () => {
     it('answers before anything has run, from the machine and not from a run', async () => {
       const host = fakeHost({ XDG_CONFIG_HOME: '/home/tester/.config' });
-      host.files.set('/home/tester/.config/systemd/user/postbote-daemon.service', '[Service]\n');
       const ctx = fakeContext({ host });
       const status = await setupStatus(ctx);
 
       expect(status.steps).toHaveLength(8);
-      expect(ctx.host.calls.length).toBe(0);
+      // A status read asks `systemctl` whether the unit is enabled — that is a question, and its
+      // output is never captured. Nothing was written, and nothing was read back.
+      for (const call of ctx.host.calls) expect(call.captured).toBe(false);
       expect(status.readiness.mode).toBe('checkout');
       expect(status.readiness.gjsify).toBe(null);
       expect(status.readiness.configExists).toBe(false);
+      // Nothing is set up on this machine, so every stage reads `remaining` — a status read must
+      // not report work that was never done.
+      expect(status.steps.every((s) => s.state === 'remaining')).toBe(true);
     });
 
     it('says `done` only where a step can see it, and says why', async () => {

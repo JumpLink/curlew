@@ -44,6 +44,8 @@ import capabilities from './unit/core/capabilities.test.ts';
 import daemon from './unit/core/daemon.test.ts';
 import deliveries from './unit/core/deliveries.test.ts';
 import setup from './unit/core/setup.test.ts';
+import setupSteps from './unit/core/setup-steps.test.ts';
+import setupUnit from './unit/core/setup-unit.test.ts';
 
 import mcpGate from './unit/mcp/gate.test.ts';
 import mcpTools from './unit/mcp/tools.test.ts';
@@ -87,6 +89,8 @@ run({
   daemon,
   deliveries,
   setup,
+  setupSteps,
+  setupUnit,
   capabilities,
   mcpGate,
   mcpTools,

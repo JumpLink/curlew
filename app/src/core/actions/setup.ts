@@ -34,9 +34,15 @@
  */
 
 import type { AccountPrompter } from '@postbote/protocol';
+import { accountsAdd, accountsCheck, backendAccountsList } from './accounts.ts';
+import { backendsEnable, backendsList } from './backends.ts';
+import { runDeliveryDaemon } from './daemon.ts';
+import { indexStatus, indexSync } from './index-sync.ts';
+import { runtimeName } from '../runtime.ts';
 import type { CommandRunner } from './setup-host.ts';
-import { accountsAdd } from './accounts.ts';
-import { backendsList } from './backends.ts';
+import { systemdUserUnitDir, writeFileEnsured } from './setup-host.ts';
+import type { UnitPaths } from './setup-unit.ts';
+import { UNIT_NAME, renderUnit, unitFilePath, unitPathsFor } from './setup-unit.ts';
 
 /**
  * How a setup run talks to a person. `AccountPrompter` is the shape a backend login takes; the
@@ -61,9 +67,8 @@ export type SetupOutcome =
   /** The person declined, or the thing was already in place. Never an error. */
   | { status: 'skipped'; reason: string }
   /** The stage could not finish. Carries the reason, never a payload or a backend's output. */
-  | { status: 'failed'; reason: string }
-  /** Not implemented yet — announced so the stage list is inspectable while the body lands. */
-  | { status: 'todo'; reason: string };
+  | { status: 'failed'; reason: string };
+
 
 /** What the run tells a step about the machine. Everything a step may touch is in here, so a
  * test drives the whole run with a fake host and a fake prompter. */
@@ -75,6 +80,8 @@ export interface SetupContext {
   readonly host: CommandRunner;
   /** The config file to work on. The default is the user's; a test points it at a throwaway. */
   readonly configPath: string;
+  /** The index to report on and to sync. Injected so a test never reads the user's. */
+  readonly indexPath: string;
   /**
    * Link a device on a backend. Defaults to the real `accountsAdd`; a test substitutes a stub so
    * the QR never has to be real. It takes the SHARED prompter and returns nothing about the
@@ -82,8 +89,35 @@ export interface SetupContext {
    * import.
    */
   link(backend: string, prompter: SetupPrompter): Promise<void>;
+  /**
+   * How many accounts a backend knows — a COUNT, never an id and never a session file. A seam for
+   * the same reason `link` is one: the terms stage's promise (display, then ask, then accept) is a
+   * security claim about a path only a linked account can reach, so a test has to be able to
+   * stand on it. Defaults to the real listing.
+   */
+  countAccounts(backend: string): Promise<number>;
   /** Set by a step, read by later ones. */
   readonly done: Map<string, SetupOutcome>;
+}
+
+/** Where the unit for this run goes, and the paths it names. Derived from the run rather than
+ * passed in twice: readiness, the unit stage and the status probe must agree on all three. */
+export function unitDir(ctx: SetupContext): string {
+  return systemdUserUnitDir(ctx.host);
+}
+
+export function unitFilePathFor(ctx: SetupContext): string {
+  return unitFilePath(unitDir(ctx));
+}
+
+export function unitPaths(ctx: SetupContext): UnitPaths {
+  return unitPathsFor({
+    mode: ctx.mode,
+    home: ctx.host.home(),
+    checkout: ctx.checkout,
+    gjsify: ctx.host.which('gjsify'),
+    bundle: ctx.host.bundlePath(),
+  });
 }
 
 /**
@@ -137,60 +171,413 @@ export interface SetupStep {
  * writer of the index, and the phone is driven instead of a browser.
  */
 export const SETUP_STEPS: readonly SetupStep[] = [
-  {
+  readinessStep(),
+  linkStep('signal', 'Link Signal', 'Signal → Settings → Linked devices → Link new device.'),
+  linkStep('whatsapp', 'Link WhatsApp (optional)', 'WhatsApp → Linked devices → Link a device.'),
+  termsStep(),
+  indexStep(),
+  daemonStep(),
+  unitStep(),
+  finishStep(),
+];
+
+/** The backends a setup run offers to enable, in the order the stages run. */
+export const SETUP_LINK_BACKENDS = ['signal', 'whatsapp'] as const;
+
+const SECRET_NOTE =
+  'The pairing code is a secret: it binds your account to this machine. Do not copy, paste or ' +
+  'send it — it is shown here, it is scanned from here, and it goes nowhere else.';
+
+// ── 1. readiness ─────────────────────────────────────────────────────────────
+
+function readinessStep(): SetupStep {
+  return {
     name: 'readiness',
     title: 'Readiness: bundle, tools, live check',
     command: 'postbote setup --only readiness',
-    run: todo('readiness'),
-  },
-  {
-    name: 'link-signal',
-    title: 'Link Signal',
-    command: 'postbote setup --only link-signal',
+    async probe(ctx) {
+      const readiness = setupReadiness(ctx);
+      if (readiness.mode === 'published') return 'done';
+      if (readiness.bundle === null || !ctx.host.exists(readiness.bundle)) return 'remaining';
+      return readiness.gjsify === null ? 'remaining' : 'done';
+    },
+    async run(ctx) {
+      const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
+      await say(
+        'This walkthrough links your devices, builds the index and starts the receiving daemon ' +
+          'as a systemd user unit. Stop at any time and re-run it — a second run says what is ' +
+          'already done.',
+      );
+      const readiness = setupReadiness(ctx);
+      if (readiness.mode === 'checkout') {
+        await say(`Checkout: ${readiness.checkout}`);
+        if (readiness.gjsify === null) {
+          // Never build from in here: a command cannot build itself, and the fix is one the
+          // person runs in another process. Say exactly that, and name the command.
+          return {
+            status: 'failed',
+            reason:
+              'gjsify is not on PATH, and both the bundle and the unit need it. Install it with ' +
+              '`npm install -g @gjsify/cli`, then run this again.',
+          };
+        }
+        await say(`gjsify: ${readiness.gjsify}`);
+        if (readiness.bundle === null) {
+          return {
+            status: 'failed',
+            reason:
+              'this process cannot name the bundle it is running from, and the unit needs that ' +
+              'path. Run `postbote setup` from a built checkout, or from the installed command.',
+          };
+        }
+        if (!ctx.host.exists(readiness.bundle)) {
+          return {
+            status: 'failed',
+            reason:
+              `no bundle at ${readiness.bundle}. Build it with \`gjsify workspace postbote-cli ` +
+              'build\`, then run this again — a command does not build itself.',
+          };
+        }
+        await say(`Bundle: ${readiness.bundle}`);
+      } else {
+        await say('Published install: the installed command is used as it is. No checkout needed.');
+      }
+      await say('Live check (reads your online accounts, writes nothing):');
+      // A probe can fail — no session bus, no typelib — and one failed probe is a REPORTED
+      // check, never a thrown stage: readiness says what is missing, it does not stop the walk.
+      const runtime = runtimeName();
+      await say(`  runtime: ${runtime}${runtime === 'gjs' ? '' : ' — the GNOME backends need GJS'}`);
+      try {
+        const result = await accountsCheck();
+        await say(`  GNOME Online Accounts: ${result.ok ? 'reachable' : 'not reachable'} — ${result.message}`);
+      } catch (err: unknown) {
+        await say(
+          `  GNOME Online Accounts: unavailable — ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+      return { status: 'done', detail: 'readiness' };
+    },
+  };
+}
+
+// ── 2 + 3. link a device ─────────────────────────────────────────────────────
+
+function linkStep(backend: string, title: string, phoneSteps: string): SetupStep {
+  const display = backend === 'signal' ? 'Signal' : 'WhatsApp';
+  return {
+    name: `link-${backend}`,
+    title,
+    command: `postbote setup --only link-${backend}`,
     humanOnly: true,
-    run: todo('link-signal'),
-  },
-  {
-    name: 'link-whatsapp',
-    title: 'Link WhatsApp (optional)',
-    command: 'postbote setup --only link-whatsapp',
-    humanOnly: true,
-    run: todo('link-whatsapp'),
-  },
-  {
+    async probe(ctx) {
+      return (await ctx.countAccounts(backend)) > 0 ? 'done' : 'remaining';
+    },
+    async run(ctx) {
+      const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
+      if ((await ctx.countAccounts(backend)) > 0) {
+        await say(`${display} is already linked on this machine — nothing to do.`);
+        return { status: 'done', detail: 'already linked' };
+      }
+      await say(
+        'postbote registers itself with your phone as a linked device. The QR code appears ' +
+          'below, in this terminal.',
+      );
+      await say(`On the phone: ${phoneSteps}`);
+      await say(SECRET_NOTE);
+      if (!(await ctx.prompter.confirm(`Link ${display} now?`))) {
+        return { status: 'skipped', reason: `not linking ${display} now` };
+      }
+      // The ONE call in this module that produces a pairing payload. It is the existing action,
+      // in-process, with the SHARED prompter: the backend renders the QR and hands it to
+      // `prompter.notify`, and nothing here ever sees, captures, logs or stores it. That is the
+      // whole reason this is TypeScript and not a shell script that shelled out to a subprocess
+      // and hoped its output stayed on the terminal.
+      await ctx.link(backend, ctx.prompter);
+      const count = await ctx.countAccounts(backend);
+      if (count === 0) {
+        // Not a failure: a pairing can be declined on the phone, and the person holding it is
+        // the only one who knows. The terms stage asks again rather than inferring.
+        return { status: 'skipped', reason: `${display} reports no linked account yet` };
+      }
+      return { status: 'done', detail: `${count} ${display} account(s)` };
+    },
+  };
+}
+
+/** The default counter: the real listing, and only its length. Constructing a backend can fail
+ * (no addon for this platform, no session file yet) and that is "none linked", not an error — a
+ * stage that cannot count must not claim the machine is broken. */
+const defaultCountAccounts = async (ctx: SetupContext, backend: string): Promise<number> => {
+  try {
+    const { accounts } = await backendAccountsList(backend, ctx.configPath);
+    return accounts.length;
+  } catch {
+    return 0;
+  }
+};
+
+// ── 4. terms ─────────────────────────────────────────────────────────────────
+
+function termsStep(): SetupStep {
+  return {
     name: 'terms',
     title: 'Enable backends — read the terms first',
     command: 'postbote setup --only terms',
     humanOnly: true,
-    run: todo('terms'),
-  },
-  { name: 'index', title: 'Build the index', command: 'postbote setup --only index', run: todo('index') },
-  {
+    async probe(ctx) {
+      const enabled = enabledBackends(ctx.configPath);
+      return SETUP_LINK_BACKENDS.every((name) => enabled.includes(name)) ? 'done' : 'remaining';
+    },
+    async run(ctx) {
+      const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
+      await say(
+        'The daemon only receives what is enabled here. A first enable shows the terms the ' +
+          'backend asks you to accept — read them yourself before you accept them.',
+      );
+      let enabledAny = false;
+      for (const backend of SETUP_LINK_BACKENDS) {
+        // The first enable is the one WITHOUT the acceptance. It changes nothing: the registry
+        // returns the notice together with the config unchanged. So the terms are on screen
+        // before the question, and no code path here accepts on the person's behalf.
+        const first = backendsEnable(backend, { path: ctx.configPath });
+        if (first.outcome === 'already-enabled') {
+          await say(`${backend}: already enabled, terms accepted.`);
+          enabledAny = true;
+          continue;
+        }
+        // The notice goes on screen before anything else is decided, whether or not a device is
+        // linked: a person who declines here has still read what the terms are.
+        if (first.terms !== null) {
+          await say(`${backend} asks you to accept these terms:`);
+          await say(`  ${first.terms.summary}`);
+          if (first.terms.url !== undefined) await say(`  ${first.terms.url}`);
+        }
+        // Ask, do not infer: a finished account listing cannot say whether the phone accepted the
+        // QR, and only the person holding the phone knows that. So the question is asked — and it
+        // is asked here, a stage that is `humanOnly` on every surface.
+        if ((await ctx.countAccounts(backend)) === 0) {
+          await say(`${backend}: no linked account — leaving it disabled. Link it first.`);
+          continue;
+        }
+        if (!(await ctx.prompter.confirm(`Read the terms for ${backend} and accept them?`))) {
+          await say(`${backend} stays disabled.`);
+          continue;
+        }
+        const accepted = backendsEnable(backend, { path: ctx.configPath, acceptTerms: true });
+        if (accepted.outcome === 'enabled' || accepted.outcome === 'already-enabled') {
+          await say(`${backend}: enabled.`);
+          enabledAny = true;
+        } else {
+          await say(`${backend}: could not be enabled (${accepted.outcome}).`);
+        }
+      }
+      if (!enabledAny) {
+        return { status: 'skipped', reason: 'no delivery backend is enabled — nothing to receive' };
+      }
+      return { status: 'done', detail: 'backends enabled' };
+    },
+  };
+}
+
+// ── 5. the index ─────────────────────────────────────────────────────────────
+
+function indexStep(): SetupStep {
+  return {
+    name: 'index',
+    title: 'Build the index',
+    command: 'postbote setup --only index',
+    async probe(ctx) {
+      // Built-ness is observable: the index exists and holds mail. No file, or an empty one, is
+      // `remaining` — never a guess that the walkthrough did it.
+      return indexedMessages(ctx) > 0 ? 'done' : 'remaining';
+    },
+    async run(ctx) {
+      const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
+      await say(
+        'postbote searches the local index, not the network, and `postbote sync` is the only ' +
+          'thing that writes it — this stage IS that one call, not a second writer.',
+      );
+      await say('It reads the headers of your mail accounts, never a body.');
+      const existing = indexedMessages(ctx);
+      if (existing > 0) {
+        await say(`The index already holds ${existing} message(s); syncing again only updates it.`);
+      }
+      await say('With many accounts this takes a few minutes.');
+      if (!(await ctx.prompter.confirm('Build the index now?'))) {
+        return { status: 'skipped', reason: 'the index stays as it is' };
+      }
+      const result = await indexSync({ configPath: ctx.configPath, dbPath: ctx.indexPath });
+      return {
+        status: 'done',
+        detail:
+          `${indexedMessages(ctx)} message(s), ${result.conversations.conversations} conversation(s), ` +
+          `from ${result.backends.join(', ') || 'no enabled backend'}`,
+      };
+    },
+  };
+}
+
+/** How many messages the index holds, or 0 when it cannot be opened. Never a throw: the index
+ * not existing yet is the normal state before the index stage. */
+function indexedMessages(ctx: SetupContext): number {
+  try {
+    return indexStatus(ctx.indexPath).messages;
+  } catch {
+    return 0;
+  }
+}
+
+// ── 6. the daemon ────────────────────────────────────────────────────────────
+
+/** How long the smoke run receives before it asks itself to stop. */
+export const SETUP_DAEMON_SMOKE_SECONDS = 30;
+
+function daemonStep(): SetupStep {
+  return {
     name: 'daemon',
     title: 'The receiving daemon',
     command: 'postbote setup --only daemon',
-    run: todo('daemon'),
-  },
-  {
+    async probe(ctx) {
+      // A daemon is "set up" when the unit that runs it is enabled — that is what makes it
+      // receive while nobody is watching, which is the entire point of it.
+      return ctx.host.run(['systemctl', '--user', 'is-enabled', UNIT_NAME]).code === 0
+        ? 'done'
+        : 'remaining';
+    },
+    async run(ctx) {
+      const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
+      const receiving = enabledBackends(ctx.configPath).filter(
+        (name) => name === 'signal' || name === 'whatsapp',
+      );
+      if (receiving.length === 0) {
+        return {
+          status: 'skipped',
+          reason: 'no delivery backend is enabled — the daemon refuses to start without one',
+        };
+      }
+      await say('The daemon receives in the background without walking the index, and keeps going while you do nothing.');
+      await say(
+        `Receiving from ${receiving.join(', ')} for ${SETUP_DAEMON_SMOKE_SECONDS} seconds, then it ` +
+          'stops itself.',
+      );
+      await say('Expect one line per account as it connects — account ids, never phone numbers or message text.');
+      if (!(await ctx.prompter.confirm('Run the daemon briefly now?'))) {
+        return { status: 'skipped', reason: 'not started — the systemd unit is the real receiver' };
+      }
+      // In-process, bounded, and through the daemon's OWN stop: an AbortSignal is exactly what
+      // SIGTERM delivers in `postbote daemon`, so this reuses that path rather than implementing
+      // "stop after N seconds" a second time around a child process. What the shell wizard did —
+      // leave the foreground run to a human's Ctrl-C — is the one thing a command cannot do, and
+      // skipping the run entirely would leave unverified the only thing the unit cannot show:
+      // that the backends load and connect at all.
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), SETUP_DAEMON_SMOKE_SECONDS * 1000);
+      try {
+        const result = await runDeliveryDaemon({
+          configPath: ctx.configPath,
+          dbPath: ctx.indexPath,
+          signal: controller.signal,
+          rebuildDebounceMs: 0,
+          // Through the prompter, like every other word this run says. The daemon's own log
+          // contract is counts, ids and states only, so nothing a peer wrote can get in here.
+          log: (line: string) => void ctx.prompter.notify(`  ${line}`),
+        });
+        const dead = result.accounts.filter((a) => a.loggedOut || a.error !== null);
+        if (dead.length > 0) {
+          return {
+            status: 'failed',
+            reason:
+              `${dead.length} account(s) received nothing — relink the device, then run ` +
+              `\`postbote setup --only daemon\` again`,
+          };
+        }
+        return {
+          status: 'done',
+          detail: `${result.added} message(s) received, every loop closed, index closed cleanly`,
+        };
+      } catch (err: unknown) {
+        return { status: 'failed', reason: err instanceof Error ? err.message : String(err) };
+      } finally {
+        clearTimeout(timer);
+      }
+    },
+  };
+}
+
+// ── 7. the systemd unit ─────────────────────────────────────────────────────
+
+function unitStep(): SetupStep {
+  return {
     name: 'unit',
     title: 'Install the systemd user unit',
     command: 'postbote setup --only unit',
-    run: todo('unit'),
-  },
-  {
+    async probe(ctx) {
+      return ctx.host.exists(unitFilePathFor(ctx)) ? 'done' : 'remaining';
+    },
+    async run(ctx) {
+      const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
+      await say('This runs the daemon without a terminal, and starts it with your session.');
+      const target = unitFilePathFor(ctx);
+      writeFileEnsured(ctx.host, target, renderUnit(unitPaths(ctx)));
+      await say(`Written: ${target}`);
+      // The ONE place a command's output is ever captured, and what it captures is a FILE
+      // CHECK: a unit file is systemd configuration, no linking session is in it and none can be.
+      const verified = ctx.host.run(['systemd-analyze', '--user', 'verify', target], { capture: true });
+      if (verified.output.trim() !== '') await ctx.prompter.notify(verified.output.trimEnd());
+      // systemd-analyze's OWN exit code decides the stage. Piped through a `head`, a shell loses
+      // it, and a unit that does not verify must never be offered for enable.
+      if (verified.code !== 0) {
+        return { status: 'failed', reason: `systemd-analyze --user verify exited ${verified.code}` };
+      }
+      await say('systemd-analyze --user verify: exit 0, nothing to report.');
+      if (ctx.host.run(['systemctl', '--user', 'is-enabled', UNIT_NAME]).code === 0) {
+        await say(`${UNIT_NAME} is already enabled — leaving it as it is.`);
+        return { status: 'done', detail: 'unit written, already enabled' };
+      }
+      if (!(await ctx.prompter.confirm('Enable and start the unit now?'))) {
+        return { status: 'skipped', reason: 'the unit is written but not enabled' };
+      }
+      ctx.host.run(['systemctl', '--user', 'daemon-reload']);
+      const enable = ctx.host.run(['systemctl', '--user', 'enable', '--now', UNIT_NAME]);
+      if (enable.code !== 0) {
+        return { status: 'failed', reason: `systemctl --user enable --now exited ${enable.code}` };
+      }
+      await say(`${UNIT_NAME} is enabled and running.`);
+      await say('When in doubt: journalctl --user -u postbote-daemon -f');
+      await say(
+        `Without a session it still needs: loginctl enable-linger "${ctx.host.env('USER') ?? '$USER'}"`,
+      );
+      return { status: 'done', detail: 'unit installed, enabled and started' };
+    },
+  };
+}
+
+// ── 8. the report ───────────────────────────────────────────────────────────
+
+function finishStep(): SetupStep {
+  return {
     name: 'finish',
     title: 'Finish: what runs now, what is left',
     command: 'postbote setup --only finish',
-    run: todo('finish'),
-  },
-];
-
-function todo(name: string): (ctx: SetupContext) => Promise<SetupOutcome> {
-  return async (ctx) => {
-    await ctx.prompter.notify(`  ${SETUP_STEPS.find((s) => s.name === name)?.title ?? name}`);
-    return { status: 'todo', reason: 'not implemented yet' };
+    async run(ctx) {
+      const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
+      const status = await setupStatus(ctx);
+      await say('What runs now:');
+      for (const step of status.steps) {
+        await say(`  ${step.state === 'done' ? '✓' : '·'} ${step.title} — ${step.state}`);
+      }
+      await say('Keep going on your own:');
+      for (const followUp of SETUP_FOLLOW_UPS) await say(`  • ${followUp}`);
+      const outstanding = status.remaining.filter((command) => command !== SETUP_STEPS[7].command);
+      if (outstanding.length > 0) {
+        await say('Still to run:');
+        for (const command of outstanding) await say(`  ${command}`);
+      }
+      return { status: 'done', detail: `${status.done} of ${status.steps.length} stages done` };
+    },
   };
 }
+
 
 /** A step that cannot be driven by the surface asking for it. Throws a message that names the
  * command a person would run instead, so a refusal is actionable. */
@@ -403,3 +790,11 @@ export async function runSetup(ctx: SetupContext, options: SetupRunOptions = {})
 export const defaultLink = async (backend: string, prompter: SetupPrompter): Promise<void> => {
   await accountsAdd(backend, prompter);
 };
+
+/** Fill in the two seams a run needs from the machine it is driving. */
+export function withDefaults(ctx: SetupContext): SetupContext {
+  return {
+    ...ctx,
+    countAccounts: ctx.countAccounts ?? ((backend) => defaultCountAccounts(ctx, backend)),
+  };
+}
