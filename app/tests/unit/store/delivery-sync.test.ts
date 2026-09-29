@@ -265,6 +265,37 @@ export default async () => {
       }
     });
 
+    await it('applies a read receipt that names no chat, by the message alone', async () => {
+      const db = freshDb();
+      try {
+        // A receipt that carries only the remote ids: the same own message in a direct chat and
+        // in a group, plus somebody else's message that happens to carry the same remote id.
+        await receiveDeliveries(
+          db,
+          fakeBackend([
+            [
+              incoming('d-anna', msg('own/1', 1, 'direkt', { fromSelf: true, sender: null })),
+              incoming('g-1', msg('own/1', 1, 'in der Gruppe', { fromSelf: true, sender: null })),
+              incoming('g-1', msg('own/2', 2, 'von anna', { fromSelf: false })),
+            ],
+          ]),
+        );
+        await receiveDeliveries(
+          db,
+          fakeBackend([[{ type: 'peer-read', chatRemoteId: null, remoteIds: ['own/1', 'own/9'] }]]),
+        );
+        const direct = getConversation(db, conv('d-anna'));
+        const group = getConversation(db, conv('g-1'));
+        expect(direct?.messages[0].readByPeer).toBe(true);
+        expect(group?.messages[0].readByPeer).toBe(true);
+        // A remote id no message carries is dropped, and a peer's message is never marked read.
+        expect(group?.messages[1].readByPeer ?? false).toBe(false);
+        expect(listConversations(db).length).toBe(2);
+      } finally {
+        db.close();
+      }
+    });
+
     await it('clears a chat, and deletes one with everything in it', async () => {
       const db = freshDb();
       try {

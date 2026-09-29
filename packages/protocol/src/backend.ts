@@ -359,8 +359,16 @@ export type DeliveryEvent =
   | { type: 'edit'; chatRemoteId: string; remoteId: string; text: string | null; editedAt: string | null }
   /** A message was deleted (revoked for everyone, or deleted for the user on another device). */
   | { type: 'delete'; chatRemoteId: string; remoteId: string }
-  /** The other side read these messages of the user. */
-  | { type: 'peer-read'; chatRemoteId: string; remoteIds: string[] };
+  /**
+   * The other side read these messages of the user.
+   *
+   * `chatRemoteId` is null when the network does not say which chat it is about: a Signal
+   * `ReceiptMessage` names a type and a list of sent timestamps and nothing else
+   * (`refs/signal-desktop/protos/SignalService.proto`), so only the remote ids locate the
+   * messages, and they are looked up across the account's own messages. A remote id that no
+   * stored message carries is dropped.
+   */
+  | { type: 'peer-read'; chatRemoteId: string | null; remoteIds: string[] };
 
 /**
  * How long a delivery session runs.

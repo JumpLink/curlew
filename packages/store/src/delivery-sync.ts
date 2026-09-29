@@ -179,6 +179,12 @@ class DeliveryBatch {
     { text: string | null; editedAt: string | null; conversationId: string }
   >();
   readonly peerRead = new Set<string>();
+  /**
+   * Messages read that no chat was named for — a Signal receipt carries sent timestamps only
+   * (`refs/signal-desktop/protos/SignalService.proto:451`), so the remote ids are what locate
+   * them. Kept apart from `peerRead` because their row ids are not known until the write.
+   */
+  readonly peerReadByRemoteId = new Set<string>();
   readonly chatRead = new Map<string, number>();
   readonly touchedChats = new Set<string>();
   readonly touchedPeers = new Set<string>();
@@ -299,13 +305,27 @@ class DeliveryBatch {
         return;
       }
       case 'peer-read': {
+        const chatRemoteId = event.chatRemoteId;
         for (const remoteId of event.remoteIds) {
-          const id = this.rowId(event.chatRemoteId, remoteId);
-          const pending = this.messages.get(id);
-          if (pending) pending.peerRead = true;
-          else this.peerRead.add(id);
+          if (chatRemoteId !== null) {
+            const id = this.rowId(chatRemoteId, remoteId);
+            const pending = this.messages.get(id);
+            if (pending) pending.peerRead = true;
+            else this.peerRead.add(id);
+            continue;
+          }
+          // No chat named: the remote id is the whole identity, so every pending message that
+          // carries it is the message the other side read, in whatever chat it ended up.
+          let pendingAny = false;
+          for (const pending of this.messages.values()) {
+            if (pending.message.remoteId !== remoteId) continue;
+            pending.peerRead = true;
+            pendingAny = true;
+          }
+          if (!pendingAny) this.peerReadByRemoteId.add(remoteId);
         }
-        if (this.state.chats.has(event.chatRemoteId)) this.touchedChats.add(event.chatRemoteId);
+        if (chatRemoteId !== null && this.state.chats.has(chatRemoteId))
+          this.touchedChats.add(chatRemoteId);
         return;
       }
       case 'chat-read': {
@@ -498,6 +518,16 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
     runIn(db, (p) => `UPDATE conversation_messages SET peer_read = 1 WHERE from_self = 1 AND id IN (${p})`, [
       ...batch.peerRead,
     ]);
+    // A receipt that named no chat: its remote ids find the rows, wherever they are stored. Only
+    // the user's own messages qualify — a receipt is about what the user sent.
+    runIn(
+      db,
+      (p) => `UPDATE conversation_messages SET peer_read = 1
+                WHERE from_self = 1 AND backend = ? AND account_id = ? AND remote_id IN (${p})`,
+      [...batch.peerReadByRemoteId],
+      backend,
+      accountId,
+    );
     // Read on another device: everything but the newest `unread` incoming messages is read.
     for (const [chatRemoteId, unread] of batch.chatRead) {
       const id = conv(chatRemoteId);

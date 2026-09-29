@@ -7,6 +7,8 @@
  * type byte included — and `capabilities` a comma-separated list. Pure: no libsignal import.
  */
 
+import { toBase64 } from './protocol-store.ts';
+
 export interface LinkDeviceUrlInput {
   /** Opaque provisioning address from the server; never interpreted. */
   address: string;
@@ -23,14 +25,8 @@ export function linkDeviceUrl(input: LinkDeviceUrlInput): string {
   }
   const params = new URLSearchParams({
     uuid: input.address,
-    pub_key: bytesToBase64(input.publicKey),
+    pub_key: toBase64(input.publicKey),
     capabilities: (input.capabilities ?? ['nopni']).join(','),
   });
   return `sgnl://linkdevice?${params.toString()}`;
-}
-
-function bytesToBase64(bytes: Uint8Array): string {
-  let binary = '';
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary);
 }
