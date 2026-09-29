@@ -420,6 +420,15 @@ export interface DeliveryOutcome {
   /** A reason the session ended early (the network logged the device out, the connection dropped). */
   error: string | null;
   /**
+   * True when the session ended because the network no longer knows this device: it was logged
+   * out (Baileys' `DisconnectReason.loggedOut`) or unlinked (libsignal's `DeviceDelinked`).
+   *
+   * This is the one ending that is NOT worth retrying — the credentials are gone, and every
+   * reconnect fails the same way, so a follow-mode caller stops the account on it. A dropped
+   * connection is the opposite and leaves this absent: a reconnect may well work.
+   */
+  loggedOut?: boolean;
+  /**
    * Deliveries the session received but could not turn into events, kept raw in the backend's
    * secret state so a later version can map them (a new message type, a parser bug) — received,
    * not lost. Absent: none, or a backend that does not keep them.

@@ -15,7 +15,9 @@
  * (reported as not caught up; what arrived is written either way).
  *
  * A dropped connection is reconnected (a fresh socket on the same auth state) up to
- * `maxReconnects` times; a logout is final. Nothing here sends anything.
+ * `maxReconnects` times; a logout is final and is reported as `loggedOut`, so a follow-mode
+ * caller (the daemon) does not reconnect a device WhatsApp no longer knows. Nothing here sends
+ * anything.
  */
 
 import type { DeliveryEvent, DeliveryMode, DeliveryOutcome, DeliverySession } from '@postbote/protocol';
@@ -220,6 +222,8 @@ export class WhatsAppReceiver implements DeliverySession {
       this.finish({
         caughtUp: false,
         error: `WhatsApp logged this device out (${disconnectReason(update)}) — ${RELINK_HINT}`,
+        // Terminal: the credentials are gone, so a reconnect would fail the same way forever.
+        loggedOut: true,
       });
       return;
     }

@@ -1444,6 +1444,33 @@ export default async () => {
       }
     });
 
+    await it('marks a session the server delinked as terminal, and a drop as not', async () => {
+      const dir = tempDir();
+      const db = freshDb();
+      try {
+        await link(dir);
+        const gone = new FakeServer();
+        gone.connectError = new Error('device delinked');
+        const lost = await receiveDeliveries(
+          db,
+          backendFor(dir, gone, new TrustRoot(), {
+            receiver: { maxMs: 1000, isDelinked: (e) => String(e).includes('delinked') },
+          }),
+        );
+        expect(lost.accounts[0].loggedOut).toBe(true);
+        // A connection that drops is not a verdict about the device: a reconnect may work.
+        const flaky = new FakeServer();
+        flaky.connectError = new Error('connection reset');
+        const dropped = await receiveDeliveries(
+          db,
+          backendFor(dir, flaky, new TrustRoot(), { receiver: { maxMs: 1000, maxReconnects: 0 } }),
+        );
+        expect(dropped.accounts[0].loggedOut ?? false).toBe(false);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
     await it('refuses a session file that was never linked, and a missing one', async () => {
       const dir = tempDir();
       try {

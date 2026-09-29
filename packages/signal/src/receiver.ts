@@ -20,7 +20,9 @@
  * `catch-up` ends when the server says the queue that existed at connect time was delivered
  * (`onQueueEmpty`) and everything before that signal is committed; `follow` keeps going. A
  * dropped connection is reconnected up to `maxReconnects` times; the server redelivers what was
- * not acknowledged. A device the server no longer knows (unlinked on the phone) ends the session.
+ * not acknowledged. A device the server no longer knows (unlinked on the phone) ends the session
+ * with `loggedOut`, so a follow-mode caller (the daemon) stops the account instead of
+ * reconnecting credentials the server has dropped.
  *
  * Envelopes that cannot be decrypted are acknowledged and counted — they would never decrypt on
  * a later run either, and postbote sends no retry request (`guard.ts`) — and the count is reported
@@ -189,6 +191,14 @@ export class SignalReceiver implements DeliverySession {
   private ended = false;
   private readonly endWaiters: Array<() => void> = [];
   private result: DeliveryOutcome = { caughtUp: false, error: null };
+  /**
+   * Set where the server says this device is gone (unlinked on the phone, or refused). The
+   * error text alone would not do: `RequestUnauthorized` also covers a temporary refusal, and a
+   * retried-but-dead account is a silent data-loss machine. Tracked here because the reason can
+   * surface on two paths (a refused connect, an interrupted connection) and one `outcome()` call
+   * has to report it.
+   */
+  private loggedOut = false;
   private caughtUp = false;
   private undecryptable = 0;
   /** The first decryption error of the run — reported with the count, never message content. */
@@ -260,6 +270,7 @@ export class SignalReceiver implements DeliverySession {
     try {
       this.handle = await this.connector(listener);
     } catch (err) {
+      if (this.isDelinked(err)) this.loggedOut = true;
       await this.stop({ caughtUp: false, error: this.describe(err, 'the Signal connection failed') });
     }
   }
@@ -267,6 +278,7 @@ export class SignalReceiver implements DeliverySession {
   private async interrupted(cause: Error | null): Promise<void> {
     // What arrived on the dead connection cannot be acknowledged: it will come again.
     this.inbox = [];
+    if (this.isDelinked(cause)) this.loggedOut = true;
     if (this.isDelinked(cause) || this.reconnects >= this.maxReconnects) {
       await this.stop({ caughtUp: false, error: this.describe(cause, 'the Signal connection closed') });
       return;
@@ -331,7 +343,11 @@ export class SignalReceiver implements DeliverySession {
     if (result.kind !== 'content') return;
     const at = envelope.clientTimestamp ?? envelope.serverTimestamp ?? Date.now();
     const mapped = result.content
-      ? this.mapper.map(result.content, { senderAci: result.senderAci, timestamp: at, groupId: result.groupId })
+      ? this.mapper.map(result.content, {
+          senderAci: result.senderAci,
+          timestamp: at,
+          groupId: result.groupId,
+        })
       : { events: [] as DeliveryEvent[], contactsBlob: null };
     this.pendingEvents.push(...mapped.events);
     // A changed safety number is news about the contact, not about the message: it belongs in
@@ -476,6 +492,7 @@ export class SignalReceiver implements DeliverySession {
     return {
       caughtUp: this.result.caughtUp || (this.mode === 'follow' && this.caughtUp),
       error,
+      ...(this.loggedOut ? { loggedOut: true } : {}),
       ...(this.setAside > 0 ? { setAside: this.setAside } : {}),
       ...(this.undecryptable > 0 ? { undecryptable: this.undecryptable } : {}),
     };

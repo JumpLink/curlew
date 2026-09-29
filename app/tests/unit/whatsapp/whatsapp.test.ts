@@ -520,6 +520,25 @@ export default async () => {
       expect(factory.sockets.length).toBe(2);
       expect(await r.nextBatch()).toBe(null);
       expect(r.outcome().error ?? '').toMatch(/logged this device out.*accounts add whatsapp/);
+      // Terminal: the daemon must stop the account instead of reconnecting forever.
+      expect(r.outcome().loggedOut).toBe(true);
+      await r.close();
+    });
+
+    await it('a dropped connection is not a logout, whatever it ends with', async () => {
+      const clock = new ManualClock();
+      const drop = { error: Object.assign(new Error('lost'), { output: { statusCode: 408 } }) };
+      const { r, factory } = receiver(
+        (s, i) => s.emit('connection.update', { connection: 'close', lastDisconnect: i === 0 ? drop : drop }),
+        clock,
+        { mode: 'follow', maxReconnects: 1 },
+      );
+      r.start();
+      await tick();
+      await tick();
+      expect(factory.sockets.length).toBe(2);
+      expect(await r.nextBatch()).toBe(null);
+      expect(r.outcome().loggedOut ?? false).toBe(false);
       await r.close();
     });
 

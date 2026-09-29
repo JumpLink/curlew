@@ -62,6 +62,11 @@ export interface DeliveryAccountSyncResult {
   caughtUp: boolean;
   /** An error that stopped the account (connect, a dropped session, a failed write). */
   error: string | null;
+  /**
+   * The network no longer knows this device (logged out, unlinked) — terminal, so a follow-mode
+   * caller stops the account rather than reconnecting (`DeliveryOutcome.loggedOut`).
+   */
+  loggedOut?: boolean;
   /** Received but not mapped; kept raw by the backend for a later version (`DeliveryOutcome.setAside`). */
   setAside?: number;
   /** Received but not decryptable (`DeliveryOutcome.undecryptable`). */
@@ -324,8 +329,7 @@ class DeliveryBatch {
           }
           if (!pendingAny) this.peerReadByRemoteId.add(remoteId);
         }
-        if (chatRemoteId !== null && this.state.chats.has(chatRemoteId))
-          this.touchedChats.add(chatRemoteId);
+        if (chatRemoteId !== null && this.state.chats.has(chatRemoteId)) this.touchedChats.add(chatRemoteId);
         return;
       }
       case 'chat-read': {
@@ -668,6 +672,7 @@ async function receiveAccount(
     const outcome = session.outcome();
     result.caughtUp = outcome.caughtUp;
     result.error = outcome.error;
+    if (outcome.loggedOut) result.loggedOut = true;
     if (outcome.setAside) result.setAside = outcome.setAside;
     if (outcome.undecryptable) result.undecryptable = outcome.undecryptable;
   } catch (err) {
