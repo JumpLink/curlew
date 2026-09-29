@@ -144,17 +144,22 @@ export function readDelimited(bytes: Uint8Array, offset: number): { frame: Uint8
 
 // ── writer ──────────────────────────────────────────────────────────────
 
+/** Append `value` as a varint to `parts` — the inverse of `readVarint`. */
+function pushVarint(parts: number[], value: bigint): void {
+  let v = BigInt.asUintN(64, value);
+  while (v >= 0x80n) {
+    parts.push(Number(v & 0x7fn) | 0x80);
+    v >>= 7n;
+  }
+  parts.push(Number(v));
+}
+
 /** Builds one message. Fields are written in the order they are added. */
 export class ProtoWriter {
   private readonly parts: number[] = [];
 
   private varint(value: bigint): void {
-    let v = BigInt.asUintN(64, value);
-    while (v >= 0x80n) {
-      this.parts.push(Number(v & 0x7fn) | 0x80);
-      v >>= 7n;
-    }
-    this.parts.push(Number(v));
+    pushVarint(this.parts, value);
   }
 
   private key(field: number, wire: number): void {
@@ -209,8 +214,10 @@ export class ProtoWriter {
 
 /** Prefix a frame with its varint length (the inverse of `readDelimited`). */
 export function delimited(frame: Uint8Array): Uint8Array<ArrayBuffer> {
-  const w = new ProtoWriter();
-  // Reuse the writer's varint through a bytes field, then drop the one-byte key.
-  const withKey = w.bytes(1, frame).finish();
-  return withKey.slice(1);
+  const prefix: number[] = [];
+  pushVarint(prefix, BigInt(frame.length));
+  const out = new Uint8Array(prefix.length + frame.length);
+  out.set(prefix);
+  out.set(frame, prefix.length);
+  return out;
 }

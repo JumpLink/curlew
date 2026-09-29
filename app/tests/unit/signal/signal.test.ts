@@ -59,6 +59,7 @@ import {
   PENDING_STALE_MS,
   ProtoWriter,
   readContactsSync,
+  readDelimited,
   ReadOnlyViolation,
   RELINK_HINT,
   SAFETY_NUMBER_CHANGED,
@@ -79,6 +80,7 @@ import {
 import * as Signal from '@signalapp/libsignal-client';
 
 import { builtinRegistry } from '../../../src/core/backends/builtin.ts';
+import { ManualClock, tick } from '../clock.ts';
 import { freshDb } from '../store/fixtures.ts';
 import { Party } from './stores.ts';
 import {
@@ -139,6 +141,18 @@ async function rejection(fn: () => Promise<unknown>): Promise<string> {
     return err instanceof Error ? err.message : String(err);
   }
   return '';
+}
+
+/**
+ * Wait for `ready`, one macrotask at a time, and name the condition that never held if it does not.
+ * A bare `while (!ready) await tick()` would instead spin until the suite's own timeout fired, and
+ * report "test timed out" — which says nothing about the step that hung. A tick is a macrotask, not
+ * a sleep, so the bound is a count of hops the receive path can make rather than a duration, and
+ * giving up costs milliseconds — long before any timeout could hide the cause.
+ */
+async function until(what: string, ready: () => boolean, ticks = 2_000): Promise<void> {
+  for (let i = 0; i < ticks && !ready(); i++) await tick();
+  if (!ready()) throw new Error(`gave up after ${ticks} macrotasks waiting for ${what}`);
 }
 
 /** Link postbote's device through the scripted phone. */
@@ -297,6 +311,20 @@ export default async () => {
         message = (err as Error).message;
       }
       expect(message.includes('padding')).toBe(true);
+    });
+
+    // The length prefix is a varint, so its width changes at 128 and 16384: those are the
+    // frames where a writer that gets the encoding wrong still produces something readable.
+    // Both sides of each boundary are in, so a width that is one byte too narrow is caught too.
+    await it('frames a blob with its varint length, the inverse of readDelimited', async () => {
+      for (const length of [0, 1, 127, 128, 300, 16_383, 16_384]) {
+        const frame = Uint8Array.from({ length }, (_, i) => i & 0xff);
+        const framed = delimited(frame);
+        const read = readDelimited(framed, 0);
+        expect(read?.next).toBe(framed.length);
+        expect(read?.frame.length).toBe(length);
+        expect(read?.frame.every((b, i) => b === frame[i])).toBe(true);
+      }
     });
   });
 
@@ -1250,10 +1278,20 @@ export default async () => {
         const server = new FakeServer();
         server.sendQueueEmpty = false;
         server.push(await directEnvelope(alice, { dataMessage: { body: 'eins', timestamp: 6000 } }, 6000));
-        const result = await receiveDeliveries(
+        const clock = new ManualClock();
+        // The cap is the receiver's own timer, so handing it the fake clock is the whole trick: the
+        // deadline needs no wall clock, and the receiver keeps measuring the wait with Date.now.
+        const running = receiveDeliveries(
           db,
-          backendFor(dir, server, trust, { receiver: { maxMs: 200 } }),
+          backendFor(dir, server, trust, {
+            receiver: { maxMs: 200, setTimer: clock.set, clearTimer: clock.clear },
+          }),
         );
+        await until('the cap timer to be armed', () => clock.pending() === 1);
+        // The envelope is journaled, flushed and acknowledged before the cap is crossed.
+        await until('the envelope to be acknowledged', () => server.acked.length > 0);
+        clock.advance(200);
+        const result = await running;
         expect(result.accounts[0].caughtUp).toBe(false);
         expect(result.accounts[0].error).toBe(null);
         expect(result.accounts[0].added).toBe(1);

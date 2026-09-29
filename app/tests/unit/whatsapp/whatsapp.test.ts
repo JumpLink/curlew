@@ -44,6 +44,7 @@ import {
 } from '@postbote/whatsapp';
 import type { WaMessage } from '@postbote/whatsapp';
 import { Curve } from 'baileys';
+import { ManualClock, tick } from '../clock.ts';
 import { freshDb } from '../store/fixtures.ts';
 import {
   ANNA_LID,
@@ -52,9 +53,7 @@ import {
   fakeFactory,
   type FakeSocket,
   GROUP,
-  ManualClock,
   text,
-  tick,
   waMessage,
 } from './fake-socket.ts';
 
