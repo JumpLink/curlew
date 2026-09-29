@@ -96,6 +96,11 @@ export type DeliveryProgress =
   /** A follow run is waiting its turn for the account; `holder` is null when nobody is known. */
   | { backend: string; accountId: string; type: 'lease-waiting'; holder: string | null }
   | { backend: string; accountId: string; type: 'lease-lost' }
+  /**
+   * The lease could not be refreshed twice in a row (the index was busy), so the account stopped
+   * before its lease could look stale — and takes it again through the wait-for-lease path.
+   */
+  | { backend: string; accountId: string; type: 'lease-unrefreshable' }
   | { backend: string; accountId: string; type: 'stopped'; reason: 'aborted' | 'logged-out' };
 
 /** The first wait after a dropped session, and its ceiling. Both are the daemon's, not the port's. */
@@ -854,8 +859,9 @@ async function receiveAccount(
   upsertAccount(db, account);
 
   // This account's own stop signal: the run's abort, plus a lost lease and a wait that is over.
-  // Per account, so one stolen lease stops one account and not the daemon.
-  const stop = new AbortController();
+  // Per account, so one stolen lease stops one account and not the daemon. Re-made for each
+  // cycle, because a cycle that ends on a lease problem goes round again.
+  let stop = new AbortController();
   const onRunAbort = () => stop.abort();
   options.signal?.addEventListener('abort', onRunAbort);
 
@@ -865,107 +871,140 @@ async function receiveAccount(
   // acknowledge half the copy.
   const holder = options.holder ?? String(process.pid);
   const interval = options.leaseIntervalMs ?? LEASE_HEARTBEAT_MS;
-  let leaseHeld = false;
-  let waitingFor: string | null = null;
-  for (;;) {
-    let take: LeaseTake;
-    try {
-      take = takeReceiveLease(db, name, account.id, holder, now());
-    } catch {
-      // The index was busy — another writer was mid-transaction. Not knowing who holds the
-      // account is the same as not holding it, so wait rather than connect blind.
-      take = { acquired: false, holder: null, heartbeatAt: null };
-    }
-    if (take.acquired) {
-      leaseHeld = true;
-      break;
-    }
-    if (mode !== 'follow') {
-      // A bounded run does not wait: it reports the holder and leaves the account to it. Not an
-      // error — those messages ARE arriving, and a run that red-flagged a working daemon would
-      // teach the user to ignore red flags.
-      result.heldBy = take.holder ?? 'another process';
-      onProgress?.({
-        backend: name,
-        accountId: account.id,
-        type: 'lease-held',
-        holder: result.heldBy,
-      });
-      options.signal?.removeEventListener('abort', onRunAbort);
-      return result;
-    }
-    // A daemon waits for the lease and keeps taking it until it gets it: giving the account up
-    // for good would mean never receiving it again. Logged once per holder, not once per try.
-    if (take.holder !== waitingFor) {
-      waitingFor = take.holder;
-      onProgress?.({
-        backend: name,
-        accountId: account.id,
-        type: 'lease-waiting',
-        holder: take.holder,
-      });
-    }
-    await abortableSleep(interval, stop.signal);
-    if (stop.signal.aborted) {
-      onProgress?.({ backend: name, accountId: account.id, type: 'stopped', reason: 'aborted' });
-      options.signal?.removeEventListener('abort', onRunAbort);
-      return result;
-    }
-  }
-
-  // Refreshed while receiving: a run that stops refreshing is a crashed run, and a `sync` or a
-  // second daemon may take the account over. One that cannot be refreshed any more means
-  // somebody else is on this account NOW — two receivers split the copy, so this one stops.
-  let leaseLost = false;
-  const heartbeat = setInterval(() => {
-    if (refreshReceiveLease(db, name, account.id, holder, now())) return;
-    leaseLost = true;
-    onProgress?.({ backend: name, accountId: account.id, type: 'lease-lost' });
-    stop.abort();
-  }, interval);
-
   let wait = RECONNECT_FIRST_MS;
   let attempt = 0;
   const stopped = (reason: 'aborted' | 'logged-out') => {
     onProgress?.({ backend: name, accountId: account.id, type: 'stopped', reason });
     return result;
   };
-  try {
+
+  // One lease-and-sessions cycle. Several of them, because a cycle that has to give its lease up
+  // goes back to the top and takes it again rather than leaving the account unreceived.
+  for (;;) {
+    let waitingFor: string | null = null;
+    let leaseHeld = false;
     for (;;) {
-      const openedAt = now().getTime();
-      attempt++;
-      const outcome = await runSession(db, backend, account, mode, now, stop.signal, onProgress, result);
-      if (mode !== 'follow') return result;
-      if (stop.signal.aborted) return stopped('aborted');
-      // The network dropped the device (logged out, unlinked): the credentials are gone, and
-      // every reconnect would fail the same way — the run says so and stops this account.
-      if (outcome.loggedOut) {
+      let take: LeaseTake;
+      try {
+        take = takeReceiveLease(db, name, account.id, holder, now());
+      } catch {
+        // The index was busy — another writer was mid-transaction. Not knowing who holds the
+        // account is the same as not holding it, so wait rather than connect blind.
+        take = { acquired: false, holder: null, heartbeatAt: null };
+      }
+      if (take.acquired) {
+        leaseHeld = true;
+        break;
+      }
+      if (mode !== 'follow') {
+        // A bounded run does not wait: it reports the holder and leaves the account to it. Not an
+        // error — those messages ARE arriving, and a run that red-flagged a working daemon would
+        // teach the user to ignore red flags.
+        result.heldBy = take.holder ?? 'another process';
         onProgress?.({
           backend: name,
           accountId: account.id,
-          type: 'logged-out',
-          error: outcome.error,
+          type: 'lease-held',
+          holder: result.heldBy,
         });
-        return stopped('logged-out');
+        options.signal?.removeEventListener('abort', onRunAbort);
+        return result;
       }
-      // A session that outlived the cap is a healthy network: the next drop starts at the
-      // beginning again instead of inheriting a backoff from a bad hour.
-      if (now().getTime() - openedAt >= RECONNECT_CAP_MS) wait = RECONNECT_FIRST_MS;
-      onProgress?.({ backend: name, accountId: account.id, type: 'reconnect', delayMs: wait, attempt });
-      // The wait is interruptible by default: a daemon that is asked to stop does not sit out a
-      // backoff first. An injected `sleep` is the test's own, and answers at once.
-      const sleep = options.sleep ?? ((ms: number) => abortableSleep(ms, stop.signal));
-      await sleep(wait);
-      if (stop.signal.aborted) return stopped('aborted');
-      wait = Math.min(wait * 2, RECONNECT_CAP_MS);
+      // A daemon waits for the lease and keeps taking it until it gets it: giving the account up
+      // for good would mean never receiving it again. Logged once per holder, not once per try.
+      if (take.holder !== waitingFor) {
+        waitingFor = take.holder;
+        onProgress?.({
+          backend: name,
+          accountId: account.id,
+          type: 'lease-waiting',
+          holder: take.holder,
+        });
+      }
+      await abortableSleep(interval, stop.signal);
+      if (stop.signal.aborted) {
+        options.signal?.removeEventListener('abort', onRunAbort);
+        return stopped('aborted');
+      }
     }
-  } finally {
+
+    // Refreshed while receiving: a run that stops refreshing is a crashed run, and a `sync` or a
+    // second daemon may take the account over. A `false` says somebody else is on this account
+    // NOW — two receivers split the copy, so this one stops. A THROW says the index was busy,
+    // which is not the same thing: nobody necessarily holds the lease, so the next tick tries
+    // again. Two busy ticks in a row are not a hiccup either — the account stops before its lease
+    // can look stale (three intervals), and the cycle below takes it back.
+    let leaseLost = false;
+    let busyTicks = 0;
+    const heartbeat = setInterval(() => {
+      let refreshed: boolean;
+      try {
+        refreshed = refreshReceiveLease(db, name, account.id, holder, now());
+      } catch {
+        busyTicks++;
+        if (busyTicks < 2) return;
+        onProgress?.({ backend: name, accountId: account.id, type: 'lease-unrefreshable' });
+        stop.abort();
+        return;
+      }
+      busyTicks = 0;
+      if (refreshed) return;
+      leaseLost = true;
+      onProgress?.({ backend: name, accountId: account.id, type: 'lease-lost' });
+      stop.abort();
+    }, interval);
+
+    let retake = false;
+    try {
+      for (;;) {
+        const openedAt = now().getTime();
+        attempt++;
+        const outcome = await runSession(db, backend, account, mode, now, stop.signal, onProgress, result);
+        if (mode !== 'follow') return result;
+        if (stop.signal.aborted) {
+          // Stopped by the heartbeat over a lease it could not refresh: go round again, unless the
+          // RUN was stopped, which no retry can undo.
+          retake = busyTicks >= 2 && !options.signal?.aborted;
+          break;
+        }
+        // The network dropped the device (logged out, unlinked): the credentials are gone, and
+        // every reconnect would fail the same way — the run says so and stops this account.
+        if (outcome.loggedOut) {
+          onProgress?.({
+            backend: name,
+            accountId: account.id,
+            type: 'logged-out',
+            error: outcome.error,
+          });
+          return stopped('logged-out');
+        }
+        // A session that outlived the cap is a healthy network: the next drop starts at the
+        // beginning again instead of inheriting a backoff from a bad hour.
+        if (now().getTime() - openedAt >= RECONNECT_CAP_MS) wait = RECONNECT_FIRST_MS;
+        onProgress?.({ backend: name, accountId: account.id, type: 'reconnect', delayMs: wait, attempt });
+        // The wait is interruptible by default: a daemon that is asked to stop does not sit out a
+        // backoff first. An injected `sleep` is the test's own, and answers at once.
+        const sleep = options.sleep ?? ((ms: number) => abortableSleep(ms, stop.signal));
+        await sleep(wait);
+        if (stop.signal.aborted) break;
+        wait = Math.min(wait * 2, RECONNECT_CAP_MS);
+      }
+    } finally {
+      clearInterval(heartbeat);
+      if (leaseHeld) releaseReceiveLease(db, name, account.id, holder);
+    }
+    if (!retake) {
+      options.signal?.removeEventListener('abort', onRunAbort);
+      if (leaseLost) {
+        result.error = 'the receive lease was taken by another process — this account stopped receiving';
+      }
+      return stopped('aborted');
+    }
+    // A fresh stop signal for the next cycle, still bound to the run's own abort.
+    stop = new AbortController();
     options.signal?.removeEventListener('abort', onRunAbort);
-    clearInterval(heartbeat);
-    if (leaseHeld) releaseReceiveLease(db, name, account.id, holder);
-    if (leaseLost) {
-      result.error = 'the receive lease was taken by another process — this account stopped receiving';
-    }
+    options.signal?.addEventListener('abort', onRunAbort);
+    attempt = 0;
   }
 }
 

@@ -140,6 +140,10 @@ function line(event: DeliveryProgress, log: (line: string) => void): void {
       );
     case 'lease-lost':
       return log(`postbote-daemon: ${who} lost the receive lease — stopping that account`);
+    case 'lease-unrefreshable':
+      return log(
+        `postbote-daemon: ${who} could not refresh its receive lease (the index is busy) — stopping that account and taking it back`,
+      );
     case 'stopped':
       return log(`postbote-daemon: ${who} stopped (${event.reason})`);
   }

@@ -351,6 +351,91 @@ export default async () => {
     });
   });
 
+  await describe('the lease heartbeat', async () => {
+    /** Make the next `count` lease refreshes throw, as a busy index would. */
+    function busyRefreshes(db: IndexDatabase, count: number): void {
+      const prepare = db.prepare.bind(db);
+      let seen = 0;
+      (db as { prepare: typeof db.prepare }).prepare = ((sql: string) => {
+        if (sql.includes('UPDATE receive_leases') && seen < count) {
+          seen++;
+          throw new Error('database is locked');
+        }
+        return prepare(sql);
+      }) as typeof db.prepare;
+    }
+
+    await it('a busy index on one tick is not a lost lease — the next tick retries', async () => {
+      const db = freshDb();
+      const controller = new AbortController();
+      const progress: DeliveryProgress[] = [];
+      try {
+        const backend = new FollowBackend(['a-1']);
+        busyRefreshes(db, 1);
+        const received = receiveDeliveries(db, backend, {
+          mode: 'follow',
+          signal: controller.signal,
+          holder: 'pid-daemon',
+          leaseIntervalMs: 5,
+          onProgress: (event) => progress.push(event),
+        });
+        await settle();
+        backend.sessionOf('a-1')?.push(incoming('d-anna', msg('a1/1', 1, 'eins')));
+        await settle();
+        await new Promise<void>((resolve) => setTimeout(resolve, 25));
+        // The throwing tick is not a loss: nobody necessarily holds the lease, the account keeps
+        // receiving, and no error is reported.
+        expect(progress.filter((p) => p.type === 'lease-unrefreshable').length).toBe(0);
+        backend.sessionOf('a-1')?.push(incoming('d-anna', msg('a1/2', 2, 'zwei')));
+        await settle();
+        controller.abort();
+        const result = await received;
+        expect(result.added).toBe(2);
+        expect(result.errors).toBe(0);
+        expect(backend.connects.length).toBe(1);
+      } finally {
+        controller.abort();
+        db.close();
+      }
+    });
+
+    await it('two busy ticks stop the account before the lease can go stale, and it takes it back', async () => {
+      const db = freshDb();
+      const controller = new AbortController();
+      const progress: DeliveryProgress[] = [];
+      try {
+        const backend = new FollowBackend(['a-1']);
+        busyRefreshes(db, 2);
+        const received = receiveDeliveries(db, backend, {
+          mode: 'follow',
+          signal: controller.signal,
+          holder: 'pid-daemon',
+          leaseIntervalMs: 5,
+          onProgress: (event) => progress.push(event),
+        });
+        await settle();
+        // A write transaction that outlasts two heartbeats is not a hiccup: this account stops
+        // before its lease can look stale and a `sync` could take it under a live socket.
+        await until(
+          () => progress.some((p) => p.type === 'lease-unrefreshable'),
+          'the account to give up its lease',
+        );
+        // …and takes the account back as soon as it can: the wait-for-lease path is the same one.
+        await until(() => backend.connects.length === 2, 'the account to reconnect');
+        backend.sessionOf('a-1')?.push(incoming('d-anna', msg('a1/1', 1, 'eins')));
+        await settle();
+        controller.abort();
+        const result = await received;
+        expect(result.added).toBe(1);
+        expect(result.errors).toBe(0);
+        expect(leaseHolder(db, 'a-1')).toBe(null);
+      } finally {
+        controller.abort();
+        db.close();
+      }
+    });
+  });
+
   await describe('stopping from outside', async () => {
     /** A backend whose connect never answers until the test says so. */
     function pendingConnect(connect: () => Promise<DeliverySession>): DeliveryBackend {
