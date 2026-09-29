@@ -112,7 +112,7 @@ function parseLedger(stored: string | null): ParsedLedger {
 const UNRECORDED_REASON = 'unrecorded';
 
 /**
- * One stored entry as a listing shows it, or null when it names neither a sender nor a time.
+ * One stored entry as a listing shows it, or null when it lacks a sender or a time.
  *
  * A non-object entry reads as null instead of throwing, and a missing `reason` is a hole in the
  * record, not a reason to hide a message whose sender and time are still there: it shows this
