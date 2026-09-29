@@ -184,7 +184,14 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   let dirty = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let conversations: (RebuildResult & { contacts: number | null }) | null = null;
-  const rebuildNow = async (): Promise<void> => {
+  /**
+   * The rebuild in flight, if any. Two are never allowed to overlap: they write the same derived
+   * tables, and the second one to finish would be the one whose counts are reported. A rebuild
+   * asked for while one is running therefore QUEUES behind it, and the run's stop waits for the
+   * queue — a `db.close()` under a running `rebuildConversations` is a use-after-close.
+   */
+  let inFlight: Promise<void> | null = null;
+  const runRebuild = async (): Promise<void> => {
     if (timer !== null) {
       clearTimeout(timer);
       timer = null;
@@ -195,6 +202,14 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
       `postbote-daemon: conversations rebuilt (${conversations.conversations} conversations, ` +
         `${conversations.participants} participants)`,
     );
+  };
+  const rebuildNow = (): Promise<void> => {
+    const previous = inFlight;
+    const next = (previous ?? Promise.resolve()).then(runRebuild, runRebuild);
+    inFlight = next;
+    return next.finally(() => {
+      if (inFlight === next) inFlight = null;
+    });
   };
   const schedule = (): void => {
     dirty = true;
@@ -227,12 +242,15 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
           }),
       ),
     );
-    // On stop: the last writes are in, and the derived tables are rebuilt before the DB closes.
-    if (dirty) await rebuildNow();
-    else if (timer !== null) {
+    // The writes are in: no more debounced rebuilds are scheduled, and whatever is already running
+    // or queued is awaited — `rebuildNow` chains behind it, so this covers a rebuild that started
+    // before the last batch was written (then `dirty` is still set and one more pass is due).
+    if (timer !== null) {
       clearTimeout(timer);
       timer = null;
     }
+    while (inFlight !== null) await inFlight;
+    if (dirty) await rebuildNow();
     const accounts: DaemonAccountResult[] = results.flatMap((r) =>
       r.accounts.map((a) => ({
         backend: a.backend,

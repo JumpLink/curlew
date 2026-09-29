@@ -160,6 +160,63 @@ const REBUILD: RebuildResult & { contacts: number | null } = {
 };
 
 export default async () => {
+  await describe('rebuilds', async () => {
+    await it('serialises them and waits for the one in flight before the index closes', async () => {
+      const controller = new AbortController();
+      const logs: string[] = [];
+      let calls = 0;
+      let running = 0;
+      let peak = 0;
+      let open: () => void = () => {};
+      const gate = new Promise<void>((resolve) => {
+        open = resolve;
+      });
+      const backend = new ScriptedBackend(['a-1']);
+      const rebuild = async (): Promise<RebuildResult & { contacts: number | null }> => {
+        calls++;
+        running++;
+        peak = Math.max(peak, running);
+        await gate;
+        running--;
+        return REBUILD;
+      };
+      try {
+        const received = runDeliveryDaemon({
+          dbPath: ':memory:',
+          backends: [backend],
+          signal: controller.signal,
+          rebuildDebounceMs: 5,
+          log: (line) => logs.push(line),
+          rebuild,
+        });
+        await settle();
+        backend.sessions.get('a-1')?.push(incoming(message('a1/1', 1, ANNA_TEXT)));
+        for (let i = 0; i < 100 && calls < 1; i++) await new Promise((r) => setTimeout(r, 5));
+        expect(calls).toBe(1);
+        // A second batch lands while the first rebuild is still running: `dirty` again.
+        backend.sessions.get('a-1')?.push(incoming(message('a1/2', 2, 'zwei')));
+        await settle();
+        controller.abort();
+        let settledRun = false;
+        void received.then(() => {
+          settledRun = true;
+        });
+        await new Promise((r) => setTimeout(r, 20));
+        // The stop must not finish — and must not close the index — under a running rebuild.
+        expect(settledRun).toBe(false);
+        open();
+        const result = await received;
+        // Two rebuilds (the debounced one and the one the stop asked for), never overlapping.
+        expect(calls).toBe(2);
+        expect(peak).toBe(1);
+        expect(result.conversations?.contacts).toBe(41);
+      } finally {
+        open();
+        controller.abort();
+      }
+    });
+  });
+
   await describe('daemonExitCode', async () => {
     // Pure, so the one thing systemd reads out of the process is decided without a process.
     const account = (over: Partial<DaemonAccountResult> = {}): DaemonAccountResult => ({
