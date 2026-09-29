@@ -430,10 +430,17 @@ Run it as a user service (the unit ships in
 mkdir -p ~/.config/systemd/user
 cp contrib/systemd/postbote-daemon.service ~/.config/systemd/user/
 # point WorkingDirectory/ExecStart at your checkout if it is not ~/postbote
+systemd-analyze --user verify ~/.config/systemd/user/postbote-daemon.service
 systemctl --user daemon-reload
 systemctl --user enable --now postbote-daemon
+loginctl enable-linger "$USER"     # so it also runs while you are logged out
 journalctl --user -u postbote-daemon -f
 ```
+
+The unit deliberately does **not** stop when you log out — staying connected is its whole
+point, and the one thing it uses from your session (the address book, for the participant
+link) is optional: without it it still receives, and the link appears on the next rebuild.
+`loginctl enable-linger` is what lets a user unit run at all while you are not logged in.
 
 The daemon writes **one line per state change** to stderr, which journald
 collects — connected, a batch with its counts, a reconnect in N seconds, a
