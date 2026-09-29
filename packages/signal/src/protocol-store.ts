@@ -22,6 +22,7 @@
  * shape, not by class), so this module needs libsignal only at run time, through `SignalLib`.
  */
 
+import type { SetAsideLedger } from '@postbote/protocol';
 import type { SecretChange, SecretStore } from '@postbote/store';
 import type * as Core from '@signalapp/libsignal-client';
 import type { SignalLib } from './lib.ts';
@@ -66,6 +67,56 @@ export interface SetAsideEntry {
   reason: string;
   /** The decrypted plaintext, base64 (padded, when unpadding itself failed). */
   plaintext: string;
+}
+
+/** The stored ledger, oldest first. A damaged one reads as empty, never as a throw. */
+function parseLedger(stored: string | null): SetAsideEntry[] {
+  if (!stored) return [];
+  try {
+    const parsed = JSON.parse(stored) as unknown;
+    return Array.isArray(parsed) ? (parsed as SetAsideEntry[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** The stored dropped count; anything unreadable is zero, not a failure. */
+function parseDropped(stored: string | null): number {
+  return Number(stored ?? 0) || 0;
+}
+
+/**
+ * The ledger of one account as the delivery port reports it: who sent what this build could not
+ * map, when, why, and how big the plaintext was — and never the plaintext itself, which stays in
+ * the account file. An account that keeps none reads as an empty ledger, never as a throw.
+ *
+ * Reads the file rather than a `SignalProtocolStore` on purpose: the ledger is postbote's own
+ * JSON, and reading a diagnosis is exactly what someone needs on a machine where libsignal does
+ * not load at all.
+ */
+export function readSetAside(file: SecretStore): SetAsideLedger {
+  const namespace = file.load(SET_ASIDE_NAMESPACE);
+  const dropped = parseDropped(namespace.get(DROPPED_KEY) ?? null);
+  return {
+    dropped,
+    entries: parseLedger(namespace.get(LEDGER_KEY) ?? null).map((entry) => ({
+      sender: entry.senderAci,
+      sentAt: entry.sentAt,
+      reason: entry.reason,
+      // Decoded rather than measured from the base64 length: the length lies wherever an entry
+      // holds padding, and one damaged entry reports 0 bytes instead of failing the whole listing.
+      bytes: plaintextSize(entry.plaintext),
+    })),
+  };
+}
+
+/** How many bytes a stored base64 plaintext holds, 0 when it does not decode. */
+function plaintextSize(base64: string): number {
+  try {
+    return fromBase64(base64).byteLength;
+  } catch {
+    return 0;
+  }
 }
 
 export function toBase64(bytes: Uint8Array): string {
@@ -202,19 +253,12 @@ export class SignalProtocolStore {
 
   /** The kept plaintexts, oldest first. A damaged ledger reads as empty, never as a throw. */
   setAsideEntries(): SetAsideEntry[] {
-    const stored = this.get(SET_ASIDE_NAMESPACE, LEDGER_KEY);
-    if (!stored) return [];
-    try {
-      const parsed = JSON.parse(stored) as unknown;
-      return Array.isArray(parsed) ? (parsed as SetAsideEntry[]) : [];
-    } catch {
-      return [];
-    }
+    return parseLedger(this.get(SET_ASIDE_NAMESPACE, LEDGER_KEY));
   }
 
   /** How many plaintexts the limit pushed out of the ledger — data that really is gone. */
   setAsideDropped(): number {
-    return Number(this.get(SET_ASIDE_NAMESPACE, DROPPED_KEY) ?? 0) || 0;
+    return parseDropped(this.get(SET_ASIDE_NAMESPACE, DROPPED_KEY));
   }
 
   /** Drop unwritten changes (a link that failed before the phone confirmed it). */

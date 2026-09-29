@@ -13,6 +13,7 @@ import type {
   DeliveryBackend,
   DeliveryConnectOptions,
   DeliverySession,
+  SetAsideLedger,
 } from '@postbote/protocol';
 import { SecretStore } from '@postbote/store';
 import { existsSync } from 'node:fs';
@@ -26,7 +27,7 @@ import { type LinkNetwork, linkSignal } from './link.ts';
 import { SIGNAL_MANIFEST } from './manifest.ts';
 import { SignalMapper } from './map.ts';
 import { createNet, isDelinked, linkChannel, liveConnector } from './net.ts';
-import { fromBase64, type DeviceAccount, SignalProtocolStore } from './protocol-store.ts';
+import { fromBase64, type DeviceAccount, readSetAside, SignalProtocolStore } from './protocol-store.ts';
 import { openProvisioning } from './provisioning.ts';
 import { type ChatConnector, type ReceiverOptions, RELINK_HINT, SignalReceiver } from './receiver.ts';
 
@@ -81,6 +82,26 @@ export class SignalBackend implements DeliveryBackend {
 
   async listAccounts(): Promise<BackendAccount[]> {
     return listSessionAccounts(this.context.secretsDir);
+  }
+
+  /**
+   * The plaintexts this build could not map, read back from the account file: sender, time, why
+   * and size, never the message. That is what finds them on the phone and what a decoder bug
+   * report needs.
+   *
+   * A missing or empty session file is an empty ledger, not a failure — the file is opened, never
+   * created, so asking about an account that was never linked changes nothing on disk. And no
+   * libsignal: this must answer where the native addon does not load.
+   */
+  async setAsideLedger(accountId: string): Promise<SetAsideLedger> {
+    const path = sessionPath(this.context.secretsDir, accountId);
+    if (!existsSync(path)) return { entries: [], dropped: 0 };
+    const file = SecretStore.open(path);
+    try {
+      return readSetAside(file);
+    } finally {
+      file.close();
+    }
   }
 
   /** Link postbote as a device: a QR code to scan with the phone. */
