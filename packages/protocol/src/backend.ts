@@ -309,6 +309,32 @@ export function isChatBackend(backend: MessageBackend): backend is ChatBackend {
 // ── the delivery driver ─────────────────────────────────────────────────
 
 /**
+ * One delivery a backend received but could not turn into an event, as the backend kept it.
+ *
+ * WHO sent it and WHEN is what finds the message on the phone, WHY says what this build could not
+ * map, and `bytes` is how big the plaintext was. The content itself is deliberately not here: it
+ * stays in the backend's secret file, and a listing is a way to identify a message, not to read it.
+ */
+export interface SetAsideRecord {
+  /** The network's id for the sender, as far as the plaintext named one (a Signal ACI). */
+  sender: string;
+  /** When they sent it, ISO-8601. */
+  sentAt: string;
+  /** Why nothing was mapped: a parse error, or fields a newer version of the network added. */
+  reason: string;
+  /** The size of the kept plaintext in bytes. Its content is never part of this. */
+  bytes: number;
+}
+
+/** The set-aside ledger of one account, as its backend holds it. */
+export interface SetAsideLedger {
+  /** What is still kept, oldest first. */
+  entries: SetAsideRecord[];
+  /** How many the backend's own bound pushed out — data that really is gone. */
+  dropped: number;
+}
+
+/**
  * One chat as a delivery-only network describes it. There is no sequence to walk: what the
  * network reports is the chat's identity, and — when it knows them — its members.
  */
@@ -425,6 +451,15 @@ export interface DeliverySession {
 export interface DeliveryBackend extends MessageBackend {
   readonly kind: 'delivery';
   connect(accountId: string, options: DeliveryConnectOptions): Promise<DeliverySession>;
+  /**
+   * Read back the plaintexts this backend kept because it could not map them — what
+   * `DeliveryOutcome.setAside` only ever counts, per run. So the user can look those messages up
+   * on the phone (sender and time) or report a decoder bug (reason and size).
+   *
+   * Optional: a backend that keeps no such ledger has no such method, and a caller reads an empty
+   * ledger rather than an error. An implementation must not answer with the plaintext itself.
+   */
+  setAsideLedger?(accountId: string): Promise<SetAsideLedger>;
 }
 
 /** Narrow a registry entry to the delivery driver. */

@@ -9,6 +9,7 @@ import {
   checkCommand,
   contactsCommand,
   conversationsCommand,
+  deliveriesCommand,
   foldersCommand,
   indexCommand,
   mcpCommand,
@@ -37,6 +38,7 @@ const parseArgs = () =>
     .command(syncCommand)
     .command(indexCommand)
     .command(conversationsCommand)
+    .command(deliveriesCommand)
     .command(accountsCommand)
     .command(backendsCommand)
     .command(contactsCommand)

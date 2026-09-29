@@ -38,6 +38,7 @@ import matrix from './unit/matrix/matrix.test.ts';
 import date from './unit/core/date.test.ts';
 import limits from './unit/core/limits.test.ts';
 import registry from './unit/core/registry.test.ts';
+import deliveries from './unit/core/deliveries.test.ts';
 
 import mcpGate from './unit/mcp/gate.test.ts';
 import mcpTools from './unit/mcp/tools.test.ts';
@@ -74,6 +75,7 @@ run({
   date,
   limits,
   registry,
+  deliveries,
   mcpGate,
   mcpTools,
 });

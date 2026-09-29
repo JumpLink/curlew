@@ -72,6 +72,7 @@ import {
   SignalMapper,
   SignalProtocolStore,
   SignalReceiver,
+  toBase64,
   unpadPlaintext,
   uuidToBytes,
 } from '@postbote/signal';
@@ -671,6 +672,46 @@ export default async () => {
       } finally {
         reopened.file.close();
       }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  await it('reads the set-aside ledger back: sender, time, reason, size — never the plaintext', async () => {
+    const dir = tempDir();
+    try {
+      await link(dir);
+      const plaintext = toBase64(new Uint8Array([1, 2, 3, 4]));
+      const { file, store } = openStore(dir);
+      try {
+        store.setAside({
+          senderAci: ALICE_ACI,
+          sentAt: new Date(3).toISOString(),
+          reason: 'content field(s) 99 this postbote does not know',
+          plaintext,
+        });
+        store.flush();
+      } finally {
+        file.close();
+      }
+      // The ledger is postbote's own JSON, so reading it needs no libsignal: a diagnosis is
+      // exactly what someone wants where the native addon does not load.
+      const backend = new SignalBackend(context(dir));
+      const ledger = await backend.setAsideLedger(ACCOUNT);
+      expect(ledger.entries.length).toBe(1);
+      expect(ledger.entries[0].sender).toBe(ALICE_ACI);
+      expect(ledger.entries[0].sentAt).toBe(new Date(3).toISOString());
+      expect(ledger.entries[0].reason).toBe('content field(s) 99 this postbote does not know');
+      expect(ledger.entries[0].bytes).toBe(4);
+      expect(ledger.dropped).toBe(0);
+      // The message itself is not in the answer, and cannot be: the ACI and the time are what
+      // find it on the phone.
+      expect(JSON.stringify(ledger).includes(plaintext)).toBe(false);
+      // An account that never had one is an empty ledger, not a failure.
+      expect(await backend.setAsideLedger(accountIdFor(CAROL_ACI))).toStrictEqual({
+        entries: [],
+        dropped: 0,
+      });
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
