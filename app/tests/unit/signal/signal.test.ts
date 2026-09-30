@@ -1417,6 +1417,7 @@ export default async () => {
         while ((await receiver.nextBatch()) !== null) {
           // Nothing is handed out: the commit failed before anything was queued.
         }
+
         expect(receiver.outcome().error ?? '').toMatch(/nothing was acknowledged/);
         await receiver.close();
         store.discard();
@@ -1430,6 +1431,123 @@ export default async () => {
         rebuildConversations(db);
         expect(bodies(db, ALICE_ACI)).toBe('eins');
         expect(server.queue.length).toBe(0);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    // An envelope this device cannot read is ACKNOWLEDGED unread: the ack is pushed in `drain()`
+    // whatever `process()` did, so the server is told "I have it" and never redelivers. That makes
+    // every skip a silent loss, and `postbote sync` reporting `added: 0, error: null` could not
+    // tell "nothing arrived" from "it arrived and was dropped". The skip reason was computed at
+    // five places in `decrypt.ts` and read nowhere. These tests pin that it is now counted, and
+    // that a loss is said out loud while protocol noise is not (ADR 0003: loudness follows
+    // whether a consequence occurred).
+    await it('counts an envelope it acknowledged unread, and says so', async () => {
+      const dir = tempDir();
+      try {
+        await link(dir);
+        const trust = new TrustRoot();
+        const alice = new Party(ALICE_ACI, 1, 11);
+        await introduceAll(dir, alice);
+        const server = new FakeServer();
+        // Addressed to the phone-number identity: a linked device has no key for it.
+        const body = await directEnvelopeBytes(
+          alice,
+          padPlaintext(encodeContent({ dataMessage: { body: 'weg', timestamp: 7000 } })),
+          7000,
+          OWN_PNI,
+        );
+        server.push(body);
+        const { file, store } = openStore(dir);
+        const journal = FileJournal.open(journalPath(sessionPath(context(dir).secretsDir, ACCOUNT)));
+        const receiver = new SignalReceiver(
+          server.connector(),
+          new EnvelopeDecryptor(LIB, store, { trustRoots: trust.publicKeys }),
+          new SignalMapper(OWN_ACI, groupIdOf),
+          { setAside: () => 0, flush: () => {} },
+          { mode: 'catch-up', journal, maxMs: 5000 },
+        );
+        await receiver.start();
+        while ((await receiver.nextBatch()) !== null) {
+          // No batch may come out of an envelope nobody on this device can read.
+        }
+        const outcome = receiver.outcome();
+        await receiver.close();
+        store.discard();
+        file.close();
+
+        expect(outcome.skipped?.['phone-number-identity']).toBe(1);
+        // And this is the loss, written down: it was acknowledged, so nobody will send it again.
+        expect(server.acked.length).toBe(1);
+        expect(outcome.error ?? '').toMatch(/phone-number identity/);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+    // One test per quiet reason would be three near-identical blocks. What needs pinning is the
+    // rule: a reason nobody loses a message to stays out of the report. A receipt alone would not
+    // catch someone later deciding our own echo is worth reporting — and then every healthy run
+    // says something alarming, which is how a reader learns to ignore the line that means trouble
+    // (ADR 0003).
+    await it('counts every reason that loses nothing, and reports none of them', async () => {
+      const quiet: Array<{ key: string; envelope: Uint8Array }> = [
+        {
+          key: 'server-receipt',
+          envelope: encodeEnvelope({
+            type: EnvelopeType.SERVER_DELIVERY_RECEIPT,
+            sourceServiceId: ALICE_ACI,
+            sourceDevice: 1,
+            destinationServiceId: OWN_ACI,
+            clientTimestamp: 7100,
+            serverTimestamp: Date.now(),
+            serverGuid: 'guid-receipt',
+          }),
+        },
+        {
+          key: 'retry-request',
+          envelope: encodeEnvelope({
+            type: EnvelopeType.PLAINTEXT_CONTENT,
+            sourceServiceId: ALICE_ACI,
+            sourceDevice: 1,
+            destinationServiceId: OWN_ACI,
+            clientTimestamp: 7150,
+            serverTimestamp: Date.now(),
+            serverGuid: 'guid-retry',
+            content: padPlaintext(encodeContent({ dataMessage: { body: 'x', timestamp: 7150 } })),
+          }),
+        },
+      ];
+      const dir = tempDir();
+      try {
+        await link(dir);
+        const trust = new TrustRoot();
+        const server = new FakeServer();
+        for (const item of quiet) server.push(item.envelope);
+        const { file, store } = openStore(dir);
+        const journal = FileJournal.open(journalPath(sessionPath(context(dir).secretsDir, ACCOUNT)));
+        const receiver = new SignalReceiver(
+          server.connector(),
+          new EnvelopeDecryptor(LIB, store, { trustRoots: trust.publicKeys }),
+          new SignalMapper(OWN_ACI, groupIdOf),
+          { setAside: () => 0, flush: () => {} },
+          { mode: 'catch-up', journal, maxMs: 5000 },
+        );
+        await receiver.start();
+        while ((await receiver.nextBatch()) !== null) {
+          // Nothing to hand out, and nothing wrong either.
+        }
+        const outcome = receiver.outcome();
+        await receiver.close();
+        store.discard();
+        file.close();
+
+        for (const item of quiet) {
+          expect(outcome.skipped?.[item.key]).toBe(1);
+        }
+        // No third reason crept in, and none of them reached the report.
+        expect(Object.keys(outcome.skipped ?? {}).length).toBe(quiet.length);
+        expect(outcome.error).toBe(null);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }

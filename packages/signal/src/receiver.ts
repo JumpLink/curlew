@@ -28,6 +28,14 @@
  * a later run either, and postbote sends no retry request (`guard.ts`) — and the count is reported
  * as the session's error, so a sync that lost messages says so.
  *
+ * A third way exists, and it used to be invisible. An envelope the decryptor declines on purpose
+ * — addressed to the phone-number identity, a story this build cannot show — is acknowledged by
+ * `drain()` exactly like a stored one, so it is gone from the network too. Those are counted in
+ * `outcome().skipped`, by reason, and the two that can swallow a real message are reported; the
+ * reasons that are just protocol traffic (a receipt, a retry request, our own echo) are counted
+ * and stay quiet, because a report that cries wolf on a healthy run teaches the reader to ignore
+ * the line that means trouble.
+ *
  * Envelopes that DO decrypt are never dropped, even when nothing of them is understood: once the
  * ratchet has moved, the server's copy is one acknowledgement away from gone. So a plaintext this
  * build cannot parse, or content it does not know, goes into the account file's ledger
@@ -39,7 +47,7 @@
 import type { DeliveryEvent, DeliveryMode, DeliveryOutcome, DeliverySession } from '@postbote/protocol';
 import type { AttachmentDownloader } from './contacts.ts';
 import { readContactsSync } from './contacts.ts';
-import type { DecryptResult } from './decrypt.ts';
+import type { DecryptResult, SkipReason } from './decrypt.ts';
 import type { EventJournal } from './journal.ts';
 import { type SignalMapper, peerOf } from './map.ts';
 import { SET_ASIDE_LIMIT, type SetAsideEntry, toBase64 } from './protocol-store.ts';
@@ -207,6 +215,18 @@ export class SignalReceiver implements DeliverySession {
   private setAside = 0;
   /** And how many of those the ledger's limit pushed out — data that is really gone. */
   private setAsideDropped = 0;
+  /**
+   * Envelopes this run acknowledged without turning into events, by reason.
+   *
+   * `drain()` pushes the ack whatever `process()` did, so a skip is not a harmless shrug: the
+   * network is told "I have this" and never sends it again. Before this counter existed, a run
+   * that dropped three envelopes and a run that received none looked identical — `added: 0,
+   * error: null` — which makes every receiving bug unfindable after the fact.
+   */
+  // The decryptor's reasons plus this receiver's own one (`story`). A `duplicate` is deliberately
+  // absent: that envelope IS already in the index, so counting it would report a loss that never
+  // happened.
+  private readonly skipped: Partial<Record<SkipReason | 'story', number>> = {};
   private contactsProblem: string | null = null;
   private maxTimer: unknown = null;
   private finishRequested: DeliveryOutcome | null = null;
@@ -334,7 +354,12 @@ export class SignalReceiver implements DeliverySession {
       this.failed(err);
       return;
     }
-    if (envelope.story) return;
+    // A story is a message this build cannot show, and it is acknowledged below like any other
+    // envelope — so it is counted, not shrugged.
+    if (envelope.story) {
+      this.countSkip('story');
+      return;
+    }
     let result: DecryptResult;
     try {
       result = await this.decryptor.decrypt(envelope);
@@ -342,7 +367,15 @@ export class SignalReceiver implements DeliverySession {
       this.failed(err);
       return;
     }
-    if (result.kind !== 'content') return;
+    if (result.kind === 'duplicate') {
+      // Already decrypted in an earlier, unacknowledged run: the message IS in the index, and
+      // counting it as skipped would report a loss that did not happen.
+      return;
+    }
+    if (result.kind !== 'content') {
+      this.countSkip(result.reason);
+      return;
+    }
     const at = envelope.clientTimestamp ?? envelope.serverTimestamp ?? Date.now();
     const mapped = result.content
       ? this.mapper.map(result.content, {
@@ -368,6 +401,11 @@ export class SignalReceiver implements DeliverySession {
         }
       }
     }
+  }
+
+  /** Count one acknowledged-but-unwritten envelope, by reason. */
+  private countSkip(reason: SkipReason | 'story'): void {
+    this.skipped[reason] = (this.skipped[reason] ?? 0) + 1;
   }
 
   private failed(err: unknown): void {
@@ -489,6 +527,23 @@ export class SignalReceiver implements DeliverySession {
         `${this.setAsideDropped} plaintext(s) postbote could not read were pushed out of the session file's ledger (it keeps the newest ${SET_ASIDE_LIMIT}) — those are gone`,
       );
     }
+    // Loudness follows the consequence, not the count (ADR 0003). A server receipt, a retry
+    // request and our own echo are the protocol doing its job: counted, never reported, because
+    // a report that cries wolf on healthy traffic teaches the reader to skip the line that does
+    // mean trouble. Two reasons are different — the envelope was acknowledged, so nothing will
+    // send it again, and nobody can afterwards say whether a readable message was inside.
+    const unread = this.skipped['phone-number-identity'] ?? 0;
+    if (unread > 0) {
+      problems.push(
+        `${unread} envelope(s) were addressed to the phone-number identity, which this device holds no key for, and were acknowledged unread — the server will not send them again, and whether a readable message was among them is unknown`,
+      );
+    }
+    const stories = this.skipped['story'] ?? 0;
+    if (stories > 0) {
+      problems.push(
+        `${stories} story message(s) postbote cannot show were acknowledged and dropped (a known gap: it stores text, not media)`,
+      );
+    }
     if (this.contactsProblem) problems.push(this.contactsProblem);
     const error = problems.filter(Boolean).join('; ') || null;
     return {
@@ -497,6 +552,7 @@ export class SignalReceiver implements DeliverySession {
       ...(this.loggedOut ? { loggedOut: true } : {}),
       ...(this.setAside > 0 ? { setAside: this.setAside } : {}),
       ...(this.undecryptable > 0 ? { undecryptable: this.undecryptable } : {}),
+      ...(Object.keys(this.skipped).length > 0 ? { skipped: { ...this.skipped } } : {}),
     };
   }
 

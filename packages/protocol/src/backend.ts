@@ -436,6 +436,17 @@ export interface DeliveryOutcome {
   setAside?: number;
   /** Deliveries that could not be decrypted — gone; only their metadata was kept for diagnosis. */
   undecryptable?: number;
+  /**
+   * Envelopes the session received, acknowledged, and did not turn into events, by reason.
+   *
+   * On these networks an acknowledgement is the last moment a delivery can be taken back, and a
+   * session acknowledges every envelope it processed — including the ones it could not read. So a
+   * run that dropped three envelopes and a run that received none are the same report:
+   * `added: 0`, no error. This map is what tells them apart, and without it every receiving bug
+   * is unfindable after the fact. The keys are the backend's own reason names — a caller counts
+   * and shows them, it does not match on them.
+   */
+  skipped?: Record<string, number>;
 }
 
 /** One connected delivery-only account. */

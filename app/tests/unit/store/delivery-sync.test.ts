@@ -143,6 +143,42 @@ export default async () => {
       }
     });
 
+    // The point of counting a skip is that someone can read the count, and the only place anyone
+    // reads it is the sync result this function returns. A backend that counts perfectly well and
+    // a store that drops the count on the floor look identical from the terminal.
+    await it("carries a backend's acknowledged-skip count into the result", async () => {
+      const db = freshDb();
+      try {
+        const backend = fakeBackend([], {
+          caughtUp: true,
+          error: null,
+          skipped: { 'phone-number-identity': 2, 'server-receipt': 7 },
+        });
+        const result = await receiveDeliveries(db, backend);
+        const account = result.accounts[0];
+        expect(account.skipped?.['phone-number-identity']).toBe(2);
+        expect(account.skipped?.['server-receipt']).toBe(7);
+        // Nothing was delivered, so this run looks like an empty inbox unless the count is there.
+        expect(account.added).toBe(0);
+        expect(account.batches).toBe(0);
+      } finally {
+        db.close();
+      }
+    });
+
+    // A clean run must stay clean: an absent map, not an empty one, is what says "nothing was
+    // dropped". An always-present `skipped: {}` would make every healthy account look like it
+    // had something to hide.
+    await it('leaves the count out entirely when the backend dropped nothing', async () => {
+      const db = freshDb();
+      try {
+        const result = await receiveDeliveries(db, fakeBackend([]));
+        expect(result.accounts[0].skipped).toBe(undefined);
+      } finally {
+        db.close();
+      }
+    });
+
     await it('keeps a known title when a later report has none, and merges peer addresses', async () => {
       const db = freshDb();
       try {

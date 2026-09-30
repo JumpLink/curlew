@@ -213,10 +213,16 @@ export async function directEnvelope(
  * A plain (not sealed) envelope carrying exactly these plaintext bytes — for content this build
  * cannot parse or does not know, which `encodeContent` would never produce.
  */
+/**
+ * An envelope from `party`. `destination` defaults to our own ACI — pass the PNI to build the
+ * envelope a linked device has no key for, which the receiver skips (and, measured in
+ * `signal.test.ts`, acknowledges unread).
+ */
 export async function directEnvelopeBytes(
   party: Party,
   padded: Uint8Array<ArrayBuffer>,
   timestamp: number,
+  destination: string = OWN_ACI,
 ): Promise<Uint8Array> {
   const cipher = await Signal.signalEncrypt(
     padded,
@@ -232,7 +238,7 @@ export async function directEnvelopeBytes(
         : EnvelopeType.DOUBLE_RATCHET,
     sourceServiceId: party.address.name(),
     sourceDevice: party.address.deviceId(),
-    destinationServiceId: OWN_ACI,
+    destinationServiceId: destination,
     clientTimestamp: timestamp,
     serverTimestamp: Date.now(),
     serverGuid: `guid-${++guid}`,
