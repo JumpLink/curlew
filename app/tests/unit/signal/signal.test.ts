@@ -710,6 +710,70 @@ export default async () => {
     // attaches its credentials to the INITIAL connect request, so a Basic header on a later
     // request cannot stand in for it (ChatHeaders::iter_headers, rust/net/src/chat.rs). Asserting
     // only "the upload happened" would pass for the same unauthenticated connection that got 401.
+    // The provisioning message carries the phone-number identity's SERVICE ID (field 18) next to
+    // its key (field 12). postbote kept the key and dropped the id, so nothing in the account file
+    // says which PNI is ours. Measured consequence, not a theory: a self-note whose
+    // `sentMessage.destinationServiceId` names the PNI is read as an ACI (`isAci` only rejects the
+    // `PNI:` tag, and the legacy string field 7 carries a bare uuid), so the user's OWN number is
+    // filed as a contact and the self-chat splits in two.
+    //
+    // Two halves, and both are needed: storing the id is useless while nothing consults it, and
+    // consulting it is impossible while nothing stores it.
+    await it('keeps the phone number identity it was provisioned with', async () => {
+      const dir = tempDir();
+      try {
+        // Without a number the phone provisions no PNI at all, so there would be nothing to keep.
+        const phone = new Phone();
+        phone.number = '+4915112345678';
+        await link(dir, phone);
+        const { file, store } = openStore(dir);
+        const pni = store.pni();
+        store.discard();
+        file.close();
+        // The fake phone provisions OWN_PNI; a real one provisions the user's number.
+        expect(pni).toBe(`PNI:${OWN_PNI}`);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    // A self-note addressed to our own phone number IS the self-chat. Filing it under a contact
+    // entry for our own number splits the conversation and, worse, writes our own identity into
+    // the peer directory as somebody to write to.
+    await it('files a self-note addressed to our own number as the self-chat', async () => {
+      const dir = tempDir();
+      try {
+        // A number on the phone is what puts the PNI in the account file, and the PNI in the
+        // account file is the only thing that can recognise our own number on the wire.
+        const phone = new Phone();
+        phone.number = '+4915112345678';
+        await link(dir, phone);
+        const { file, store } = openStore(dir);
+        const mapper = new SignalMapper(OWN_ACI, groupIdOf, store.pni());
+        const content = decodeContent(
+          encodeContent({
+            // A bare uuid, exactly what the legacy string field 7 carries.
+            sent: {
+              destinationServiceId: OWN_PNI,
+              timestamp: 9000,
+              message: { body: 'an mich', timestamp: 9000 },
+            },
+          }),
+        );
+        const mapped = mapper.map(content, { senderAci: OWN_ACI, timestamp: 9000, groupId: null });
+        store.discard();
+        file.close();
+
+        // One message, in the self-chat — and NO chat event, because our own number is not a peer.
+        const messages = mapped.events.filter((e) => e.type === 'message');
+        expect(messages.length).toBe(1);
+        const chatEvents = mapped.events.filter((e) => e.type === 'chat');
+        expect(chatEvents.length).toBe(0);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
     await it('uploads the one-time keys over a connection authenticated as the linked device', async () => {
       const dir = tempDir();
       try {

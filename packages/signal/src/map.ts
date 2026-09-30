@@ -69,12 +69,40 @@ export interface MapContext {
 
 export class SignalMapper {
   private readonly ownAci: string;
+  private readonly ownPni: string | null;
   private readonly groupIdOf: (masterKey: Uint8Array) => Uint8Array;
 
   /** `groupIdOf` derives a group's public id from its master key (libsignal zkgroup). */
-  constructor(ownAci: string, groupIdOf: (masterKey: Uint8Array) => Uint8Array) {
+  /**
+   * @param ownPni This account's phone number identity, when it was provisioned with one. Null on
+   *   a session linked before it was kept, which is exactly why the fallback has to be honest:
+   *   without it our own number cannot be told from a contact's.
+   */
+  constructor(
+    ownAci: string,
+    groupIdOf: (masterKey: Uint8Array) => Uint8Array,
+    ownPni: string | null = null,
+  ) {
     this.ownAci = ownAci;
+    this.ownPni = ownPni;
     this.groupIdOf = groupIdOf;
+  }
+
+  /**
+   * Whether `id` names this account rather than somebody else.
+   *
+   * `isAci` cannot answer it: the legacy string field carries a bare uuid with no `PNI:` tag, so a
+   * self-note addressed to our own number arrives looking exactly like a contact's address. Left
+   * unchecked, our own number is written into the peer directory as a person to write to, and the
+   * self-chat splits across two conversations.
+   */
+  private isOwnServiceId(id: string | null): id is string {
+    if (!id) return false;
+    if (id === this.ownAci) return true;
+    if (!this.ownPni) return false;
+    // The stored form is `PNI:<uuid>`; the wire may carry the bare uuid in either case.
+    const bare = this.ownPni.startsWith('PNI:') ? this.ownPni.slice(4) : this.ownPni;
+    return id.toLowerCase() === bare.toLowerCase() || id.toLowerCase() === `pni:${bare.toLowerCase()}`;
   }
 
   groupChatId(groupId: Uint8Array): string {
@@ -152,9 +180,13 @@ export class SignalMapper {
     const sent = sync.sent;
     if (sent && !sent.story) {
       const data = sent.message ?? sent.editMessage?.dataMessage ?? null;
-      const direct = isAci(sent.destinationServiceId) ? sent.destinationServiceId : this.ownAci;
+      const destination = sent.destinationServiceId;
+      // Ours, whichever of our identities it names — not a peer to announce. A transcript with
+      // no destination at all was ours too: only the user's own devices send one.
+      const isOurs = destination === null || this.isOwnServiceId(destination);
+      const direct = isOurs ? this.ownAci : destination;
       const chat = this.chatOfData(data, null, direct);
-      if (chat.kind === 'direct' && direct !== this.ownAci) {
+      if (chat.kind === 'direct' && !isOurs) {
         out.events.push({
           type: 'chat',
           chat: { remoteId: direct, kind: 'direct', title: null, members: [peerOf(direct)] },
