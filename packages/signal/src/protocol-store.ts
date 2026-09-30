@@ -362,6 +362,20 @@ export class SignalProtocolStore {
     return this.lib.core.PrivateKey.deserialize(fromBase64(stored));
   }
 
+  /**
+   * The phone number identity, kept beside the ACI one. Signal holds the PNI keys it was given at
+   * link time; this key is what a client needs to sign for its own number later, so dropping it
+   * would leave a session that cannot be re-linked.
+   */
+  setPniIdentityKey(privateKey: Core.PrivateKey): void {
+    this.set(NS.account, 'pniIdentityPrivate', toBase64(privateKey.serialize()));
+  }
+
+  pniIdentityKey(): Core.PrivateKey | null {
+    const stored = this.get(NS.account, 'pniIdentityPrivate');
+    return stored === null ? null : this.lib.core.PrivateKey.deserialize(fromBase64(stored));
+  }
+
   setRegistrationId(id: number): void {
     this.set(NS.account, 'registrationId', String(id));
   }

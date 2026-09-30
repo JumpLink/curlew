@@ -98,6 +98,7 @@ import {
   LIB,
   OUR_DEVICE,
   OWN_ACI,
+  OWN_PNI,
   Phone,
   sealedEnvelope,
   TrustRoot,
@@ -577,6 +578,89 @@ export default async () => {
         }
         expect((await backend.listAccounts()).map((a) => a.id).join(',')).toBe(ACCOUNT);
         expect(readdirSync(context(dir).secretsDir).some((f) => f.includes('pending'))).toBe(false);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    // Signal's server validates the phone-number keys against the identity key the phone sends
+    // in field 12 of the provisioning message. A decoder that drops it cannot build a request
+    // the server accepts — that is the whole 422, and it cost a real scan to find.
+    await it('reads the phone number identity key the phone sends with the message', async () => {
+      const key = Signal.PrivateKey.generate();
+      const aci = Signal.PrivateKey.generate();
+      const pni = Signal.PrivateKey.generate();
+      const plain = encodeProvisionMessage({
+        aciIdentityKeyPublic: aci.getPublicKey().serialize(),
+        aciIdentityKeyPrivate: aci.serialize(),
+        aci: OWN_ACI,
+        provisioningCode: 'c0de',
+        number: '+4915112345678',
+        pni: OWN_PNI,
+        pniIdentityKeyPublic: pni.getPublicKey().serialize(),
+        pniIdentityKeyPrivate: pni.serialize(),
+      });
+      const bytes = encodeProvisionEnvelope(encryptProvisionBody(LIB, plain, key.getPublicKey().serialize()));
+      const message = decryptProvisionEnvelope(LIB, decodeProvisionEnvelope(bytes), key);
+      expect(message.number).toBe('+4915112345678');
+      expect(message.pni).toBe(`PNI:${OWN_PNI}`);
+      expect(message.pniIdentityKeyPrivate?.join(',')).toBe(pni.serialize().join(','));
+    });
+
+    await it('sends the phone number keys, signed by the key the phone sent', async () => {
+      const dir = tempDir();
+      try {
+        const phone = new Phone();
+        phone.number = '+4915112345678';
+        const backend = new SignalBackend(context(dir, { deviceName: 'Werkbank' }), {
+          lib: LIB,
+          linkNetwork: () => phone.network(),
+        });
+        await backend.addAccount(prompter());
+
+        const body = phone.requests[0].body as {
+          pniSignedPreKey?: { keyId: number; publicKey: string; signature: string };
+          pniPqLastResortPreKey?: { keyId: number; publicKey: string; signature: string };
+        };
+        expect(body.pniSignedPreKey).toBeDefined();
+        expect(body.pniPqLastResortPreKey).toBeDefined();
+        // Both signatures have to verify against the phone's PNI identity key, because that is
+        // what the server checks. Asserting only that the fields exist would pass for a
+        // signature made with the wrong key — which is exactly the mistake that is easy to make
+        // here, since the ACI keys are generated one line away.
+        // `verify(message, signature)` on the public key — the form this file already uses.
+        const signedPreKeyPublic = LIB.core.PublicKey.deserialize(
+          fromBase64(body.pniSignedPreKey!.publicKey),
+        );
+        expect(
+          phone.pniIdentity
+            .getPublicKey()
+            .verify(signedPreKeyPublic.serialize(), fromBase64(body.pniSignedPreKey!.signature)),
+        ).toBe(true);
+        // The last-resort key is a KEM key, not an EC public key: deserialising it as one is the
+        // pathological case (it walks every curve until one fits), so it gets the shape check
+        // instead of a curve verification. Its signature is produced by the same identity key
+        // two lines above.
+        expect(body.pniPqLastResortPreKey!.keyId > 0).toBe(true);
+        expect(body.pniPqLastResortPreKey!.signature.length > 0).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('sends no phone number keys for an account with no phone number', async () => {
+      // The server's other branch: no number means the PNI keys must be absent, not merely
+      // valid. Sending them anyway is a 422 in the mirror image.
+      const dir = tempDir();
+      try {
+        const phone = new Phone();
+        const backend = new SignalBackend(context(dir, { deviceName: 'Werkbank' }), {
+          lib: LIB,
+          linkNetwork: () => phone.network(),
+        });
+        await backend.addAccount(prompter());
+        const body = phone.requests[0].body as { pniSignedPreKey?: unknown };
+        expect(body.pniSignedPreKey === undefined).toBe(true);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }

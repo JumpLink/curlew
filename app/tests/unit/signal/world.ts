@@ -40,6 +40,7 @@ import { Party } from './stores.ts';
 export const LIB: SignalLib = { core: Signal, zk: Zk };
 
 export const OWN_ACI = '5b5a4c62-2f39-4e59-9d0e-1f4d7c3a0b11';
+export const OWN_PNI = '00000000-0000-4000-8000-000000000001';
 export const ALICE_ACI = '9d0652a3-dcc3-4d11-975f-74d61598733f';
 export const CAROL_ACI = '796abedb-ca4e-4f18-8803-1fde5b921f9f';
 export const OUR_DEVICE = 2;
@@ -75,6 +76,10 @@ export class TrustRoot {
 export class Phone {
   readonly identity = Signal.PrivateKey.generate();
   readonly profileKey = new Uint8Array(32).fill(3);
+  /** Set to give this phone a number, which is what makes the PNI half of the link necessary. */
+  number: string | null = null;
+  /** The phone number identity Signal sends alongside, when there is a number. */
+  readonly pniIdentity = Signal.PrivateKey.generate();
   /** Requests the fake chat channel received, after the gate. */
   readonly requests: Array<{ verb: string; path: string; body: unknown }> = [];
   linkStatus = 200;
@@ -96,6 +101,14 @@ export class Phone {
             aci: OWN_ACI,
             provisioningCode: 'code-123456',
             profileKey: this.profileKey,
+            ...(this.number === null
+              ? {}
+              : {
+                  number: this.number,
+                  pni: OWN_PNI,
+                  pniIdentityKeyPublic: this.pniIdentity.getPublicKey().serialize(),
+                  pniIdentityKeyPrivate: this.pniIdentity.serialize(),
+                }),
           });
           listener.onEnvelope(
             encodeProvisionEnvelope(encryptProvisionBody(LIB, message, key.getPublicKey().serialize())),
