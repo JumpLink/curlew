@@ -160,6 +160,11 @@ export async function linkSignal(
     }
     if (pniIdentity !== null) store.setPniIdentityKey(pniIdentity);
     const pniKeys = pniIdentity === null ? null : generatePniLinkKeys(lib, pniIdentity);
+    // The phone number needs a registration id of its own, and it travels with the phone number
+    // keys: Signal reads it into a primitive int when it builds the device, so leaving it out is
+    // a 500 from an unboxed null rather than a validation error anybody could act on. It is
+    // generated apart from the ACI id on purpose — one id for two identities would collide.
+    const pniRegistrationId = pniKeys === null ? null : generateRegistrationId();
 
     const deviceName = toBase64(
       encodeDeviceName(
@@ -178,6 +183,7 @@ export async function linkSignal(
           fetchesMessages: true,
           name: deviceName,
           registrationId,
+          ...(pniRegistrationId === null ? {} : { pniRegistrationId }),
           capabilities: {
             attachmentBackfill: false,
             spqr: true,
