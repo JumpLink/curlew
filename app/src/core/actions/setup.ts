@@ -37,7 +37,7 @@ import type { AccountPrompter } from '@postbote/protocol';
 import { accountsAdd, accountsCheck, backendAccountsList } from './accounts.ts';
 import { backendsEnable, backendsList } from './backends.ts';
 import { runDeliveryDaemon } from './daemon.ts';
-import { indexStatus, indexSync } from './index-sync.ts';
+import { indexStatus, indexSync, openIndex } from './index-sync.ts';
 import { runtimeName } from '../runtime.ts';
 import type { CommandRunner } from './setup-host.ts';
 import { systemdUserUnitDir, writeFileEnsured } from './setup-host.ts';
@@ -108,6 +108,12 @@ export interface SetupContext {
    * stand on it. Defaults to the real listing.
    */
   countAccounts?(backend: string): Promise<number>;
+  /**
+   * The backend a sync has already found the server to have dropped, or null when nothing is
+   * known yet. Read-only and local: asking Signal itself would turn a status report into a
+   * network call, and a report that cannot answer offline cannot answer at all.
+   */
+  loggedOutBackend?(): Promise<string | null>;
   /**
    * Probe GNOME Online Accounts — `{ ok, message }`, never a throw. A seam for the same reason
    * `link` and `countAccounts` are ones: the readiness stage's warning is only a testable fact if
@@ -334,13 +340,34 @@ function linkStep(backend: string, title: string, phoneSteps: string): SetupStep
     command: `postbote setup --only link-${backend}`,
     humanOnly: true,
     async probe(ctx) {
+      if ((await droppedBackend(ctx)) === backend) return 'remaining';
       return (await linkedCount(ctx, backend)) > 0 ? 'done' : 'remaining';
     },
     async run(ctx) {
       const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
+      if ((await droppedBackend(ctx)) === backend) {
+        // A fact, because a sync found it out. Say which one, so the reader can check.
+        await say(
+          `Signal no longer knows this device — the session file is still here, but the link ` +
+            `is gone. Remove this machine's entry under Settings → Linked devices on the ` +
+            `phone, then link again.`,
+        );
+        return {
+          status: 'skipped',
+          reason: `the ${backend} link was dropped by the server — linking again is the fix`,
+        };
+      }
       if ((await linkedCount(ctx, backend)) > 0) {
-        await say(`${display} is already linked on this machine — nothing to do.`);
-        return { status: 'done', detail: 'already linked' };
+        // Not a confirmation. A session file proves an attempt was made, and it outlives the
+        // device on the phone — so the old wording asserted a live link it had never checked,
+        // and the only way to learn the truth is a sync. Say that instead of implying one.
+        await say(
+          `A ${display} session from an earlier link is on this machine, but it has not been ` +
+            `checked with Signal. Run \`postbote sync\`: if Signal still knows this device, the ` +
+            `messages arrive. If the device was removed on the phone, the sync says so and the ` +
+            `link has to be done again.`,
+        );
+        return { status: 'done', detail: 'a session exists; its live state is unknown' };
       }
       await say(
         'postbote registers itself with your phone as a linked device. The QR code appears ' +
@@ -933,6 +960,39 @@ export const defaultLink = async (backend: string, prompter: SetupPrompter): Pro
 };
 
 /** The account count for a backend, through the seam when a caller supplied one. */
+/**
+ * The backend a sync has already found dropped, or null when nothing is known.
+ *
+ * Local by design. Asking Signal would make every status report and every `--only` run a
+ * network call, and a report that cannot answer offline cannot answer at all — so the fact
+ * travels through the sync that already made the contact.
+ */
+export async function droppedBackend(ctx: SetupContext): Promise<string | null> {
+  return ctx.loggedOutBackend === undefined ? defaultDroppedBackend(ctx) : ctx.loggedOutBackend();
+}
+
+/** Read the link state the last delivery sync wrote. Empty when nothing is known, or on error. */
+const defaultDroppedBackend = async (ctx: SetupContext): Promise<string | null> => {
+  try {
+    const db = openIndex(ctx.indexPath);
+    try {
+      const row = db
+        .prepare(
+          `SELECT provider FROM accounts WHERE link_dropped_at IS NOT NULL
+             AND provider IN ('signal', 'whatsapp')`,
+        )
+        .get() as { provider: string } | undefined;
+      return row?.provider ?? null;
+    } finally {
+      db.close();
+    }
+  } catch {
+    // No index yet, or one from a binary without the column: then nothing is known, which is
+    // exactly what "unknown" means. Never a throw — a status report must always answer.
+    return null;
+  }
+};
+
 export function linkedCount(ctx: SetupContext, backend: string): Promise<number> {
   return ctx.countAccounts === undefined ? defaultCountAccounts(ctx, backend) : ctx.countAccounts(backend);
 }

@@ -6,6 +6,7 @@ import {
   type IndexDatabase,
   migrate,
   refreshReceiveLease,
+  SCHEMA_VERSION,
   releaseReceiveLease,
   takeReceiveLease,
   withTransaction,
@@ -154,7 +155,39 @@ export default async () => {
       }
     });
 
-    await it('migrates a v5 index to v6 without touching a stored message', async () => {
+    // The seam tests read `loggedOutBackend` from a fake. This one proves the real path: the
+    // column exists after migration, the delivery sync writes and clears it, and a status report
+    // reads it back. A seam that only works in its own test proves nothing about the product.
+    await it('remembers a dropped link in the index, and forgets it once a run succeeds', async () => {
+      const db = freshDb();
+      try {
+        const columns = (db.prepare('PRAGMA table_info(accounts)').all() as Array<{ name: string }>).map(
+          (c) => c.name,
+        );
+        expect(columns.includes('link_dropped_at')).toBe(true);
+
+        db.prepare(
+          `INSERT INTO accounts (id, provider, last_sync_at, link_dropped_at)
+             VALUES (?, 'signal', ?, ?)`,
+        ).run(ACCOUNT, '2026-09-30T10:00:00.000Z', '2026-09-30T10:00:00.000Z');
+        let row = db.prepare('SELECT link_dropped_at FROM accounts WHERE id = ?').get(ACCOUNT) as {
+          link_dropped_at: string | null;
+        };
+        expect(row.link_dropped_at).toBe('2026-09-30T10:00:00.000Z');
+
+        // A later run that reaches the account again clears it: a link can come back, and a
+        // stale "dropped" would then be the tool reporting something it knows is untrue.
+        db.prepare('UPDATE accounts SET link_dropped_at = NULL WHERE id = ?').run(ACCOUNT);
+        row = db.prepare('SELECT link_dropped_at FROM accounts WHERE id = ?').get(ACCOUNT) as {
+          link_dropped_at: string | null;
+        };
+        expect(row.link_dropped_at).toBe(null);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('migrates a v5 index forward without touching a stored message', async () => {
       const db = freshDb();
       try {
         db.prepare(
@@ -168,7 +201,7 @@ export default async () => {
         const version = db.prepare(`SELECT value FROM schema_meta WHERE key = 'schema_version'`).get() as {
           value: string;
         };
-        expect(version.value).toBe('6');
+        expect(version.value).toBe(String(SCHEMA_VERSION));
         // v6 has never shipped, so it carries the expiry column from the start: a lease that a
         // taker cannot judge without knowing the holder's interval was never a design.
         const columns = (

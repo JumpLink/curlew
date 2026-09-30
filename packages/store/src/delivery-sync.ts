@@ -556,6 +556,35 @@ function mergeChat(db: IndexDatabase, batch: DeliveryBatch, from: string, into: 
 }
 
 /** Write one batch's rows. Runs inside the caller's transaction. */
+/**
+ * Write what the server last said about a linked device.
+ *
+ * The delivery-only accounts have no folder to sync into, so `accounts` is the one table they
+ * share with the mail side and the only place a state can live that a status report reads.
+ */
+function recordLinkState(
+  db: IndexDatabase,
+  backend: string,
+  accountId: string,
+  dropped: boolean,
+  now: Date,
+): void {
+  const row = db
+    .prepare('SELECT id FROM accounts WHERE id = ?')
+    .get(accountId) as { id: string } | undefined;
+  if (row === undefined) {
+    db.prepare(
+      'INSERT INTO accounts (id, provider, last_sync_at, link_dropped_at) VALUES (?, ?, ?, ?)',
+    ).run(accountId, backend, now.toISOString(), dropped ? now.toISOString() : null);
+    return;
+  }
+  db.prepare('UPDATE accounts SET link_dropped_at = ?, last_sync_at = ? WHERE id = ?').run(
+    dropped ? now.toISOString() : null,
+    now.toISOString(),
+    accountId,
+  );
+}
+
 function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: string): void {
   const { backend, accountId, state } = batch;
   const conv = (chatRemoteId: string) => chatConversationId(backend, accountId, chatRemoteId);
@@ -850,6 +879,10 @@ async function runSession(
     const outcome = session.outcome();
     result.caughtUp = outcome.caughtUp;
     result.error = outcome.error;
+    // Persist what the server said about this device, so a later status report can state it
+    // instead of guessing from a file. Cleared on every run that reaches the account, because a
+    // link can come back and an old "dropped" would then be a lie.
+    recordLinkState(db, name, account.id, outcome.loggedOut === true, now());
     if (outcome.loggedOut) result.loggedOut = true;
     if (outcome.setAside) result.setAside = outcome.setAside;
     if (outcome.undecryptable) result.undecryptable = outcome.undecryptable;
