@@ -395,6 +395,31 @@ export default async () => {
       }
     });
 
+    await it('keeps an authorized session whose login rejects AFTER the auth key was written', async () => {
+      // The case a flag around the login promise gets wrong: mtcute writes the key the moment the
+      // server confirms the sign-in, and its `_onAuthorization` → `notifyLoggedIn` runs AFTER
+      // that. A throw there rejects `login()` with a perfectly good session on disk — deciding on
+      // "did login() resolve?" would delete it and cost the user another phone code.
+      const dir = tempDir();
+      const secrets = context(dir).secretsDir;
+      try {
+        const backend = new TelegramBackend(
+          context(dir),
+          fakeFactory({ failAfterKey: 'notifyLoggedIn failed' }).create,
+        );
+        await expect(
+          backend.addAccount(prompter(['+49 170 0000000', '12345', 'correct horse'])),
+        ).rejects.toThrow(/Telegram HAD authorized this session/);
+        const left = readdirSync(secrets).filter((f) => f.endsWith('.pending.db'));
+        expect(left.length).toBe(1);
+        const store = SecretStore.open(join(secrets, left[0]));
+        expect(store.load('mtcute.auth_keys').get('2')).toBe('AQIDBPr7');
+        store.close();
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
     await it('keeps the authorized session when only the rename fails — the key is the only copy', async () => {
       // The rename can fail on a full disk, a read-only mount, or a path of the wrong kind left
       // behind by an earlier crash — always AFTER Telegram authorized us. The pending file then
@@ -413,8 +438,9 @@ export default async () => {
         mkdirSync(join(secrets, 'telegram-42.db'));
         await expect(
           backend.addAccount(prompter(['+49 170 0000000', '12345', 'correct horse'])),
-        ).rejects.toThrow(/the session is kept at/);
-        // Still there, still holding the key, and NOT listed as an account (it has no id yet).
+        ).rejects.toThrow(/Telegram HAD authorized this session/);
+        // Still there, still holding the key. Its name is not an account id, so it is not listed
+        // as an account either (the sweep test above covers that).
         const left = readdirSync(secrets).filter((f) => f.endsWith('.pending.db'));
         expect(left.length).toBe(1);
         const store = SecretStore.open(join(secrets, left[0]));
@@ -551,10 +577,15 @@ export default async () => {
             [NEWS.id, [tgMessage(NEWS, 500, NEWS, 'Neue Ausgabe')]],
           ]),
         };
-        const backend: ChatBackend = new TelegramBackend(context(dir), fakeFactory(script).create);
+        const factory = fakeFactory(script);
+        const backend: ChatBackend = new TelegramBackend(context(dir), factory.create);
         expect(isChatBackend(backend)).toBe(true);
         const result = await syncChats(db, backend);
         expect(result.added).toBe(7);
+        // Asserted HERE and not only in the session unit test: this is the path that goes through
+        // `withStoreClose`, and a forwarder that dropped the argument would leave the unit test
+        // green while production silently stopped asking for the archive folder.
+        expect(factory.clients.at(-1)?.dialogsParams[0]?.archived).toBe('keep');
         rebuildConversations(db, {
           contacts: [{ uid: 'c-anna', name: 'Anna E.', org: null, emails: [], phones: ['+49 151 0000000'] }],
         });

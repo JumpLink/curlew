@@ -77,6 +77,12 @@ export interface FakeScript {
   loginAs?: TgUser;
   /** Thrown by `connect`/`getMe` to simulate a revoked session. */
   unauthorized?: boolean;
+  /**
+   * Reject the login AFTER the auth key has been written — what mtcute really does when the
+   * sign-in succeeds but the bookkeeping after it (`_onAuthorization` → `notifyLoggedIn`) throws.
+   * The session is authorized at that point and must not be thrown away.
+   */
+  failAfterKey?: string;
 }
 
 export class FakeClient implements TelegramClientHandle {
@@ -140,6 +146,8 @@ export class FakeClient implements TelegramClientHandle {
     // What a real login leaves behind: an auth key for the home DC and the session's own state.
     await this.storage.authKeys.set(2, new Uint8Array([1, 2, 3, 4, 250, 251]));
     await this.storage.kv.set('dc', new Uint8Array([2]));
+    // The key is on disk from here on: the session is authorized, whatever happens next.
+    if (this.script.failAfterKey) throw new Error(this.script.failAfterKey);
     return this.script.loginAs ?? ME;
   }
 

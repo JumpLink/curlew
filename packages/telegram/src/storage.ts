@@ -45,6 +45,27 @@ const NS = {
 /** postbote's own namespace in the same file: which account this is, for `accounts list`. */
 export const ACCOUNT_NAMESPACE = 'postbote.account';
 
+/**
+ * True when the file already holds an auth key — i.e. Telegram has authorized this session and
+ * the file is the only copy of it.
+ *
+ * This is a FACT about the file, and it is what `loginTelegram` decides on: mtcute writes the key
+ * the moment the server confirms the sign-in (its own contract requires that write immediately,
+ * and `ImmediateAuthKeysRepository` does it), while everything AFTER it — `_onAuthorization`, the
+ * update manager, postbote's own record writes, the final rename — can still throw. A flag set
+ * around the login promise would therefore still discard a session that is genuinely authorized.
+ *
+ * Fails SAFE: a file that cannot be read (already closed, unreadable) counts as holding a key,
+ * because the caller's alternative is deleting a session.
+ */
+export function holdsAuthKey(store: SecretStore): boolean {
+  try {
+    return store.load(NS.authKeys).size > 0;
+  } catch {
+    return true;
+  }
+}
+
 const b64 = (bytes: Uint8Array): string => Buffer.from(bytes).toString('base64');
 const unb64 = (text: string): Uint8Array => new Uint8Array(Buffer.from(text, 'base64'));
 
