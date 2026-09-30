@@ -162,10 +162,6 @@ export function registerSetupTools(server: McpServer): void {
         if (step === undefined) {
           return mcpError(`unknown setup stage \`${params.step}\` — one of ${SETUP_STEP_IDS.join(', ')}`);
         }
-        // The refusal, from the core, with the core's command. A person reading this learns why
-        // and knows what to do; an agent retrying learns nothing it is allowed to act on.
-        if (step.humanOnly === true) return mcpErrorFrom(humanOnlyRefusal(step));
-
         const ctx = mcpSetupContext();
         if (params.dry_run === true) {
           // A dry run here means "do not run it", not "run it with the writes off". There is no
@@ -177,6 +173,11 @@ export function registerSetupTools(server: McpServer): void {
           const status = await setupStatus(ctx, [step]);
           return mcpSuccess({ dryRun: true, changed: false, step: status.steps[0] });
         }
+
+        // The refusal, from the core, with the core's command — AFTER the dry run, because a dry
+        // run touches nothing and refusing it refuses a read. A person reading this learns why
+        // and knows what to do; an agent retrying learns nothing it is allowed to act on.
+        if (step.humanOnly === true) return mcpErrorFrom(humanOnlyRefusal(step));
         const result = await runSetup(ctx, { only: [step.name] });
         const outcome = result.steps[0]?.outcome;
         return mcpSuccess({

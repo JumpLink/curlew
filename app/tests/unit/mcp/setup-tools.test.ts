@@ -55,6 +55,19 @@ export default async function setupTools(): Promise<void> {
       });
     }
 
+    await it('answers a dry run for a human-only stage instead of refusing it', async () => {
+      // A dry run writes nothing, so refusing it as "a human act" refuses a READ. The agent was
+      // sent back to a terminal to learn the state it could have been told — and the tool's own
+      // description promises "the stage and its current state without touching anything".
+      for (const step of humanOnly) {
+        const result = await callTool('setup_run', { step: step.name, dry_run: true });
+        expect(result.isError === true).toBe(false);
+        const data = payload(result) as { dryRun?: boolean; step?: { name: string } };
+        expect(data.dryRun).toBe(true);
+        expect(data.step?.name).toBe(step.name);
+      }
+    });
+
     await it('refuses on the flag, not on a name list: every humanOnly step is covered', async () => {
       // If a stage is marked humanOnly and this tool does not refuse it, the flag is decoration.
       // Spelled by asking the OTHER question: a step NOT marked humanOnly must not be refused for

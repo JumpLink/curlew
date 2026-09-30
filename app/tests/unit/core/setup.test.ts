@@ -24,9 +24,9 @@ export default async function setup(): Promise<void> {
     it('runs the eight stages the shell wizard ran, in that order', () => {
       expect(SETUP_STEPS.map((step) => step.name)).toStrictEqual([
         'readiness',
+        'terms',
         'link-signal',
         'link-whatsapp',
-        'terms',
         'index',
         'daemon',
         'unit',
@@ -123,10 +123,11 @@ export default async function setup(): Promise<void> {
 
   describe('the stages a person must take themselves', () => {
     it('are the two linking stages and the terms', () => {
+      // The same three stages as before — the set never changed — in the order they now run.
       expect(SETUP_STEPS.filter((s) => s.humanOnly === true).map((s) => s.name)).toStrictEqual([
+        'terms',
         'link-signal',
         'link-whatsapp',
-        'terms',
       ]);
     });
 
