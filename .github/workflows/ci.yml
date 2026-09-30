@@ -83,8 +83,10 @@ jobs:
       # Runs on gjs AND node. There is no session D-Bus here, so GOA/EDS are unreachable —
       # that is expected and is what the three-state availability probe is for. The tests
       # assert the backend reports itself unavailable cleanly; they never assert a live call
-      # succeeded.
+      # succeeded. The limit is for a HANG: a blocked GI call under node-gi once left this step
+      # running until GitHub's 6-hour cancel. The suite takes ~2 minutes.
       - name: Tests (gjs + node)
+        timeout-minutes: 15
         run: gjsify workspace postbote-cli test
 
       # The read-only gate, asserted END-TO-END rather than against a stub. The unit suite tests
