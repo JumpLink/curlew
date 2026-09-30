@@ -131,8 +131,3 @@ holder. Nothing else may connect a delivery account around the lease.
 the target directory. Never overwrite — an existing name gains ` (2)`. Write to `.part` and
 rename only on success, so a failed transfer leaves NO file; a half-written PDF that opens and
 shows the first three pages is worse than none.
-
-Three `// fixed upstream in gjsify:` shims live in `FileSink`, all fixed and tested in the
-gjsify submodule but not yet in a published release. Remove each once the version bumps:
-`writeSync` kept no write cursor, `'wx'` did not fail on an existing file, and `openSync`
-ignores its mode argument (which made attachments world-readable).
