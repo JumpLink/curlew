@@ -372,6 +372,97 @@ export default async () => {
       expect(applied).toBe(1);
       store.close();
     });
+
+    // mtcute's `asyncResettable` leaves `finished` FALSE when the wrapped promise rejects and
+    // resets `_prepare` on every `disconnect()`, so a session is loaded again after a failed
+    // connect. A `load()` that consumed its own "already loaded" flag before it read anything
+    // would turn that retry into a silent no-op: the repositories stay EMPTY, mtcute reads the
+    // empty DC set as a first run, negotiates a fresh auth key and overwrites the stored one —
+    // a working session replaced by a new one, with no error anywhere.
+    await it('a failed load does not consume the loaded state', async () => {
+      const dir = tempDir();
+      const path = join(dir, 's', 'telegram-1.db');
+      try {
+        const store = SecretStore.open(path);
+        const storage = new SecretStoreStorage(store);
+        const loadAll = store.loadAll.bind(store);
+        let reads = 0;
+        let failNext = true;
+        store.loadAll = () => {
+          reads++;
+          if (failNext) {
+            failNext = false;
+            throw new Error('the session file is momentarily unreadable');
+          }
+          return loadAll();
+        };
+        store.apply([{ namespace: 'mtcute.kv', key: 'self', value: 'Bw==' }]);
+
+        let threw = false;
+        try {
+          await storage.driver.load();
+        } catch {
+          threw = true;
+        }
+        expect(threw).toBe(true);
+        expect(reads).toBe(1);
+
+        // mtcute retries, and the retry must actually READ THE FILE again. A second call that
+        // returned early would report success on empty repositories — mtcute reads the empty DC
+        // set as a first run, negotiates a fresh auth key and overwrites the stored one.
+        await storage.driver.load();
+        expect(reads).toBe(2);
+        expect([...((await storage.kv.get('self')) ?? [])]).toEqualArray([7]);
+        store.close();
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    // A row that cannot be decoded is skipped, not thrown on: one damaged peer row must not
+    // make the whole account unusable, and re-authorizing is the honest outcome — the access
+    // hash is gone, so that chat cannot be addressed any more, but the auth key survives and the
+    // session still works. This mirrors how an undecodable temp auth key is already read as
+    // "expired" (see `load()` above) rather than failing the connect.
+    await it('skips a row it cannot decode instead of failing the whole session', async () => {
+      const dir = tempDir();
+      const path = join(dir, 's', 'telegram-1.db');
+      try {
+        const store = SecretStore.open(path);
+        const goodPeer = JSON.stringify({
+          accessHash: '123456789',
+          isMin: false,
+          usernames: ['anna_example'],
+          updated: 1,
+          complete: Buffer.from([9, 8, 7]).toString('base64'),
+        });
+        store.apply([
+          { namespace: 'mtcute.peers', key: '1001', value: goodPeer },
+          { namespace: 'mtcute.peers', key: '1002', value: '{not json' },
+          { namespace: 'mtcute.ref_messages', key: '1001', value: 'also not json' },
+          { namespace: 'mtcute.kv', key: 'self', value: 'Bw==' },
+        ]);
+        const storage = new SecretStoreStorage(store);
+
+        await storage.driver.load();
+        // The intact row is there, the damaged one is skipped, and the namespaces around them load.
+        expect((await storage.peers.getByUsername('anna_example'))?.accessHash).toBe('123456789');
+        expect(await storage.peers.getByUsername('nobody')).toBeNull();
+        expect(await storage.refMessages.getByPeer(1001)).toBeNull();
+        expect([...((await storage.kv.get('self')) ?? [])]).toEqualArray([7]);
+
+        // And a save must not resurrect the skipped rows, nor delete the intact one.
+        await storage.driver.save();
+        const after = SecretStore.open(path);
+        const peers = after.load('mtcute.peers');
+        expect(peers.get('1001')).toBe(goodPeer);
+        expect(peers.get('1002')).toBe('{not json');
+        after.close();
+        store.close();
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
   });
 
   await describe('Telegram in the frontends', async () => {
