@@ -60,10 +60,26 @@ export interface TgDialog {
   readonly lastReadOutgoing: number;
 }
 
+/**
+ * How to walk the dialog list. Mirrors the slice of mtcute's `iterDialogs` params postbote uses.
+ *
+ * `archived` is the one that matters: mtcute's own default is `'exclude'`, which asks Telegram
+ * for the MAIN folder only, so an archived chat is not merely unlisted — it never reaches postbote
+ * at all. postbote is a read-only index of everything the account can see, so it asks for `'keep'`
+ * (mtcute then leaves `folder_id` unset, which is what makes Telegram return BOTH folders).
+ */
+export interface TgDialogsParams {
+  /**
+   * `'keep'` for both the main and the archive folder, `'exclude'` for the main folder only
+   * (mtcute's default), `'only'` for the archive.
+   */
+  archived?: 'keep' | 'exclude' | 'only';
+}
+
 export interface TelegramApi {
   getMe(): Promise<TgUser>;
   /** Every dialog, most recently active first. */
-  iterDialogs(): AsyncIterable<TgDialog>;
+  iterDialogs(params?: TgDialogsParams): AsyncIterable<TgDialog>;
   /**
    * mtcute's `getHistory`: newest first by default; with `reverse` oldest first, starting AT
    * `offset.id` (inclusive).

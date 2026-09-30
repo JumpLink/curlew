@@ -15,7 +15,8 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
   // a feature; postbote v1 only reads, so none of this is a promise that postbote can SEND it.
   capabilities: {
     edits: true,
-    // The network has reactions; map.ts drops them in toChatMessage.
+    // The network has reactions (`messages.getMessagesReactions`), but postbote does not read them:
+    // there is no reaction field in `ChatMessage` to put them in. False is the honest answer.
     reactions: false,
     // Forum topics in supergroups, and reply chains everywhere.
     threads: true,

@@ -15,7 +15,7 @@ import { existsSync } from 'node:fs';
 import type { LoginPrompts, TelegramApi, TelegramClientHandle } from './api.ts';
 import { listSessionAccounts, sessionPath } from './accounts.ts';
 import { type ClientFactory, createMtcuteClient } from './client.ts';
-import { resolveCredentials, type TelegramCredentials } from './credentials.ts';
+import { resolveCredentials } from './credentials.ts';
 import { loginTelegram } from './login.ts';
 import { TELEGRAM_MANIFEST } from './manifest.ts';
 import { TelegramChatSession } from './session.ts';
@@ -27,7 +27,7 @@ export const RELOGIN_HINT = 'log in again with `postbote accounts add telegram`'
 function withStoreClose(client: TelegramClientHandle, store: SecretStore): TelegramApi {
   return {
     getMe: () => client.getMe(),
-    iterDialogs: () => client.iterDialogs(),
+    iterDialogs: (params) => client.iterDialogs(params),
     getHistory: (chatId, params) => client.getHistory(chatId, params),
     destroy: async () => {
       try {
@@ -75,15 +75,20 @@ export class TelegramBackend implements ChatBackend {
     const path = sessionPath(this.context.secretsDir, accountId);
     if (!existsSync(path)) throw new Error(`no Telegram session for ${accountId} — ${RELOGIN_HINT}`);
     const store = SecretStore.open(path);
-    let credentials: TelegramCredentials;
+    let client: TelegramClientHandle;
+    let api: TelegramApi;
     try {
-      credentials = resolveCredentials(this.context, store);
+      client = this.createClient({
+        credentials: resolveCredentials(this.context, store),
+        storage: new SecretStoreStorage(store),
+      });
+      // The store belongs to the client from here on: `withStoreClose` closes it with the client,
+      // so every path out of the try below goes through `api.destroy()` and not through here.
+      api = withStoreClose(client, store);
     } catch (err) {
       store.close();
       throw err;
     }
-    const client = this.createClient({ credentials, storage: new SecretStoreStorage(store) });
-    const api = withStoreClose(client, store);
     try {
       await client.connect();
       // Proves the session is still authorized before any chat is touched: a session revoked

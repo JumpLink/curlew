@@ -4,6 +4,7 @@ import type {
   TelegramClientHandle,
   TgChat,
   TgDialog,
+  TgDialogsParams,
   TgMessage,
   TgPeer,
   TgUser,
@@ -76,6 +77,12 @@ export interface FakeScript {
   loginAs?: TgUser;
   /** Thrown by `connect`/`getMe` to simulate a revoked session. */
   unauthorized?: boolean;
+  /**
+   * Reject the login AFTER the auth key has been written — what mtcute really does when the
+   * sign-in succeeds but the bookkeeping after it (`_onAuthorization` → `notifyLoggedIn`) throws.
+   * The session is authorized at that point and must not be thrown away.
+   */
+  failAfterKey?: string;
 }
 
 export class FakeClient implements TelegramClientHandle {
@@ -83,6 +90,8 @@ export class FakeClient implements TelegramClientHandle {
   readonly credentials: ClientOptions['credentials'];
   readonly script: FakeScript;
   readonly calls: string[] = [];
+  /** Every `iterDialogs` argument the session passed, in order. */
+  readonly dialogsParams: Array<TgDialogsParams | undefined> = [];
   destroyed = 0;
 
   constructor(options: ClientOptions, script: FakeScript) {
@@ -102,8 +111,12 @@ export class FakeClient implements TelegramClientHandle {
     return ME;
   }
 
-  async *iterDialogs(): AsyncIterable<TgDialog> {
-    this.calls.push('iterDialogs');
+  async *iterDialogs(params?: TgDialogsParams): AsyncIterable<TgDialog> {
+    // The archived handling is recorded, because it is a REAL behaviour of mtcute: the default
+    // ('exclude') never returns an archived chat, and a test that does not look here cannot tell
+    // a session that asked for both folders from one that forgot to ask.
+    this.calls.push(`iterDialogs:${params?.archived ?? 'default'}`);
+    this.dialogsParams.push(params);
     for (const dialog of this.script.dialogs ?? []) yield dialog;
   }
 
@@ -133,6 +146,8 @@ export class FakeClient implements TelegramClientHandle {
     // What a real login leaves behind: an auth key for the home DC and the session's own state.
     await this.storage.authKeys.set(2, new Uint8Array([1, 2, 3, 4, 250, 251]));
     await this.storage.kv.set('dc', new Uint8Array([2]));
+    // The key is on disk from here on: the session is authorized, whatever happens next.
+    if (this.script.failAfterKey) throw new Error(this.script.failAfterKey);
     return this.script.loginAs ?? ME;
   }
 

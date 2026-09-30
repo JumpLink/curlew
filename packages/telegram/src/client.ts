@@ -69,7 +69,7 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage }) => {
   const api: TelegramApi = client;
   return {
     getMe: () => api.getMe(),
-    iterDialogs: () => api.iterDialogs(),
+    iterDialogs: (params) => api.iterDialogs(params),
     getHistory: (chatId, params) => api.getHistory(chatId, params),
     destroy: () => client.destroy(),
     connect: () => client.connect(),
