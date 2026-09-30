@@ -13,6 +13,7 @@
  * not top it up — refilling is a write it keeps to the minimum (see `guard.ts`).
  */
 
+import type * as Core from '@signalapp/libsignal-client';
 import { random } from './crypto.ts';
 import type { SignalLib } from './lib.ts';
 import { type SignalProtocolStore, toBase64 } from './protocol-store.ts';
@@ -53,45 +54,77 @@ export interface LinkKeys {
   pqLastResortPreKey: SignedKeyJson;
 }
 
-/** Generate and store the signed pre-key and the last-resort Kyber key; return their JSON. */
-export function generateLinkKeys(lib: SignalLib, store: SignalProtocolStore): LinkKeys {
-  const identity = store.identityKey();
+/**
+ * The two keys a link request carries, plus the records they came from.
+ *
+ * Built for an explicit identity rather than for the store, because a phone-number identity
+ * signs with its own key: generating through the store would put one service id's keys under the
+ * other one's names, where they would be found for the wrong id.
+ */
+interface BuiltLinkKeys {
+  keys: LinkKeys;
+  signedId: number;
+  kyberId: number;
+  signedRecord: Core.SignedPreKeyRecord;
+  kyberRecord: Core.KyberPreKeyRecord;
+}
+
+function buildLinkKeys(lib: SignalLib, identity: Core.PrivateKey): BuiltLinkKeys {
   const now = Date.now();
 
   const signedId = keyIdStart();
   const signedKey = lib.core.PrivateKey.generate();
   const signedSig = identity.sign(signedKey.getPublicKey().serialize());
-  store.set(
-    'signal.signedprekey',
-    String(signedId),
-    toBase64(
-      lib.core.SignedPreKeyRecord.new(
-        signedId,
-        now,
-        signedKey.getPublicKey(),
-        signedKey,
-        signedSig,
-      ).serialize(),
-    ),
-  );
 
   const kyberId = keyIdStart();
   const kyber = lib.core.KEMKeyPair.generate();
   const kyberSig = identity.sign(kyber.getPublicKey().serialize());
-  store.saveKyberPreKey(kyberId, lib.core.KyberPreKeyRecord.new(kyberId, now, kyber, kyberSig), true);
 
   return {
-    signedPreKey: {
-      keyId: signedId,
-      publicKey: toBase64(signedKey.getPublicKey().serialize()),
-      signature: toBase64(signedSig),
-    },
-    pqLastResortPreKey: {
-      keyId: kyberId,
-      publicKey: toBase64(kyber.getPublicKey().serialize()),
-      signature: toBase64(kyberSig),
+    signedId,
+    kyberId,
+    signedRecord: lib.core.SignedPreKeyRecord.new(
+      signedId,
+      now,
+      signedKey.getPublicKey(),
+      signedKey,
+      signedSig,
+    ),
+    kyberRecord: lib.core.KyberPreKeyRecord.new(kyberId, now, kyber, kyberSig),
+    keys: {
+      signedPreKey: {
+        keyId: signedId,
+        publicKey: toBase64(signedKey.getPublicKey().serialize()),
+        signature: toBase64(signedSig),
+      },
+      pqLastResortPreKey: {
+        keyId: kyberId,
+        publicKey: toBase64(kyber.getPublicKey().serialize()),
+        signature: toBase64(kyberSig),
+      },
     },
   };
+}
+
+/** Generate and store the signed pre-key and the last-resort Kyber key; return their JSON. */
+export function generateLinkKeys(lib: SignalLib, store: SignalProtocolStore): LinkKeys {
+  const built = buildLinkKeys(lib, store.identityKey());
+  store.set(
+    'signal.signedprekey',
+    String(built.signedId),
+    toBase64(built.signedRecord.serialize()),
+  );
+  store.saveKyberPreKey(built.kyberId, built.kyberRecord, true);
+  return built.keys;
+}
+
+/**
+ * The same two keys for a phone-number identity. Not stored: they exist to satisfy the server's
+ * validation at link time, and Signal holds them from then on. The identity key itself is stored
+ * by the caller, because a client that cannot sign for its own number later cannot re-link.
+ */
+export function generatePniLinkKeys(lib: SignalLib, pniIdentity: Core.PrivateKey): LinkKeys {
+  return buildLinkKeys(lib, pniIdentity).keys;
 }
 
 export interface OneTimeKeys {

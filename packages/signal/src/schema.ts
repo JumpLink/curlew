@@ -533,6 +533,12 @@ export interface ProvisionMessage {
   provisioningCode: string | null;
   profileKey: Uint8Array | null;
   pni: string | null;
+  /**
+   * Field 12 — the phone number identity key, sent when the account has a number. Signal's
+   * server validates the PNI pre-keys against it, so a client that drops it cannot send a
+   * request the server accepts: it answers 422 for any account with a phone number.
+   */
+  pniIdentityKeyPrivate: Uint8Array | null;
 }
 
 export function decodeProvisionMessage(bytes: Uint8Array): ProvisionMessage {
@@ -546,6 +552,7 @@ export function decodeProvisionMessage(bytes: Uint8Array): ProvisionMessage {
     provisioningCode: stringField(f, 4),
     profileKey: bytesField(f, 6),
     pni: pniBinary?.length === 16 ? `PNI:${uuidFromBytes(pniBinary)}` : null,
+    pniIdentityKeyPrivate: bytesField(f, 12),
   };
 }
 
@@ -555,16 +562,25 @@ export function encodeProvisionMessage(m: {
   aci: string;
   provisioningCode: string;
   profileKey?: Uint8Array;
+  /** Present when the account has a phone number: Signal sends both halves of the PNI identity. */
+  number?: string;
+  pni?: string;
+  pniIdentityKeyPublic?: Uint8Array;
+  pniIdentityKeyPrivate?: Uint8Array;
 }): Uint8Array<ArrayBuffer> {
-  return new ProtoWriter()
+  const w = new ProtoWriter()
     .bytes(1, m.aciIdentityKeyPublic)
     .bytes(2, m.aciIdentityKeyPrivate)
     .string(4, m.provisioningCode)
     .bytes(6, m.profileKey)
     .string(8, m.aci)
     .uint(9, 1)
-    .bytes(17, uuidToBytes(m.aci))
-    .finish();
+    .bytes(17, uuidToBytes(m.aci));
+  if (m.number !== undefined) w.string(3, m.number);
+  if (m.pniIdentityKeyPublic !== undefined) w.bytes(11, m.pniIdentityKeyPublic);
+  if (m.pniIdentityKeyPrivate !== undefined) w.bytes(12, m.pniIdentityKeyPrivate);
+  if (m.pni !== undefined) w.bytes(18, uuidToBytes(m.pni));
+  return w.finish();
 }
 
 export function encodeDeviceName(d: {

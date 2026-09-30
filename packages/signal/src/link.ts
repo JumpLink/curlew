@@ -31,7 +31,7 @@ import {
 } from './accounts.ts';
 import { decryptProvisionEnvelope, encryptDeviceName } from './crypto.ts';
 import type { ChatFetch } from './guard.ts';
-import { generateLinkKeys, generateOneTimeKeys, generatePassword, generateRegistrationId } from './keys.ts';
+import { generateLinkKeys, generateOneTimeKeys, generatePassword, generatePniLinkKeys, generateRegistrationId } from './keys.ts';
 import type { SignalLib } from './lib.ts';
 import type { ProvisioningListener } from './provisioning.ts';
 import { SignalProtocolStore, toBase64 } from './protocol-store.ts';
@@ -136,6 +136,36 @@ export async function linkSignal(
     store.setIdentityKey(identity);
     store.setRegistrationId(registrationId);
     const linkKeys = generateLinkKeys(lib, store);
+
+    // The phone number half. Signal's server checks these two keys against the identity key the
+    // phone sent in the provisioning message, and it does so only for accounts that HAVE a
+    // number — for one without, it requires them to be absent. Sending the wrong half is the
+    // same 422 either way, so both cases are refused here with a sentence instead of a status
+    // code the person cannot act on. (signal-cli draws the same line.)
+    const pniIdentity =
+      message.pniIdentityKeyPrivate === null
+        ? null
+        : lib.core.PrivateKey.deserialize(
+            message.pniIdentityKeyPrivate as Uint8Array<ArrayBuffer>,
+          );
+    if (message.number !== null && pniIdentity === null) {
+      throw new Error(
+        'the phone sent a number but no phone number identity key — nothing was saved',
+      );
+    }
+    if (message.number === null && pniIdentity !== null) {
+      throw new Error(
+        'the phone sent a phone number identity key but no number — nothing was saved',
+      );
+    }
+    if (pniIdentity !== null) store.setPniIdentityKey(pniIdentity);
+    const pniKeys = pniIdentity === null ? null : generatePniLinkKeys(lib, pniIdentity);
+    // The phone number needs a registration id of its own, and it travels with the phone number
+    // keys: Signal reads it into a primitive int when it builds the device, so leaving it out is
+    // a 500 from an unboxed null rather than a validation error anybody could act on. It is
+    // generated apart from the ACI id on purpose — one id for two identities would collide.
+    const pniRegistrationId = pniKeys === null ? null : generateRegistrationId();
+
     const deviceName = toBase64(
       encodeDeviceName(
         encryptDeviceName(lib, options.deviceName?.trim() || 'postbote', identity.getPublicKey()),
@@ -153,6 +183,7 @@ export async function linkSignal(
           fetchesMessages: true,
           name: deviceName,
           registrationId,
+          ...(pniRegistrationId === null ? {} : { pniRegistrationId }),
           capabilities: {
             attachmentBackfill: false,
             spqr: true,
@@ -162,6 +193,12 @@ export async function linkSignal(
         },
         aciSignedPreKey: linkKeys.signedPreKey,
         aciPqLastResortPreKey: linkKeys.pqLastResortPreKey,
+        ...(pniKeys === null
+          ? {}
+          : {
+              pniSignedPreKey: pniKeys.signedPreKey,
+              pniPqLastResortPreKey: pniKeys.pqLastResortPreKey,
+            }),
       }),
     });
     if (linked.status < 200 || linked.status >= 300) {
