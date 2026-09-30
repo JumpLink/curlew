@@ -9,6 +9,10 @@ import type { ChatHistoryPage, ChatInfo, ChatSession } from '@postbote/protocol'
 import type { TelegramApi, TgMessage } from './api.ts';
 import { toChatInfo, toChatMessage } from './map.ts';
 
+// Telegram returns at most 100 messages per `getHistory`, whatever the `limit` asked for
+// (core.telegram.org/api/offsets). The sync engine's window is 200, so one call never fills it.
+const SERVER_HISTORY_CAP = 100;
+
 function page(
   raw: ReadonlyArray<TgMessage>,
   afterSeq: number | null,
@@ -50,18 +54,41 @@ export class TelegramChatSession implements ChatSession {
     const chatId = Number(chatRemoteId);
     if (!Number.isSafeInteger(chatId)) throw new Error(`not a Telegram chat id: ${chatRemoteId}`);
     if (afterSeq === null) {
-      // The newest `limit` messages. Nothing is newer than the newest, so the chat is caught up;
-      // a short page means nothing older exists either.
-      const raw = await this.api.getHistory(chatId, { limit });
-      return page(raw, null, true, raw.length < limit);
+      // The newest `limit` messages, so the chat is caught up once they are in. Telegram caps one
+      // call at SERVER_HISTORY_CAP, which the engine's window exceeds, so page backwards: newest
+      // first with an `offset` id returns messages strictly BELOW it, and the lowest id collected
+      // is the next page's offset. A short chunk is NOT proof that nothing older exists — only an
+      // EMPTY one is — and it must not be treated as one: `reachedStart` makes the full scan treat
+      // everything below the window as deleted on the server, which drops messages that exist. A
+      // false positive destroys index data; a false negative costs one request.
+      const collected: TgMessage[] = [];
+      let lowestId: number | null = null;
+      let reachedStart = false;
+      while (collected.length < limit) {
+        const params: { limit: number; offset?: { id: number; date: number } } = {
+          limit: Math.min(SERVER_HISTORY_CAP, limit - collected.length),
+        };
+        if (lowestId !== null) params.offset = { id: lowestId, date: 0 };
+        const chunk = await this.api.getHistory(chatId, params);
+        if (chunk.length === 0) {
+          reachedStart = true;
+          break;
+        }
+        collected.push(...chunk);
+        lowestId = Math.min(lowestId ?? Infinity, ...chunk.map((m) => m.id));
+      }
+      return page(collected, null, true, reachedStart);
     }
     // Oldest first, starting AT the offset id — hence the +1, so `afterSeq` itself is excluded.
+    // Asking for more than the cap would make a capped answer look like "nothing left", so `ask`
+    // bounds the request and the comparison that decides `exhausted`.
+    const ask = Math.min(limit, SERVER_HISTORY_CAP);
     const raw = await this.api.getHistory(chatId, {
-      limit,
+      limit: ask,
       offset: { id: afterSeq + 1, date: 0 },
       reverse: true,
     });
-    return page(raw, afterSeq, raw.length < limit, false);
+    return page(raw, afterSeq, raw.length < ask, false);
   }
 
   async close(): Promise<void> {

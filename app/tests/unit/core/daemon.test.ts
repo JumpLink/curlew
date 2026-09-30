@@ -135,7 +135,11 @@ class ScriptedBackend implements DeliveryBackend {
   readonly kind = 'delivery' as const;
   readonly sessions = new Map<string, OpenSession>();
 
-  constructor(private readonly accountIds: string[]) {}
+  private readonly accountIds: string[];
+
+  constructor(accountIds: string[]) {
+    this.accountIds = accountIds;
+  }
 
   async listAccounts(): Promise<BackendAccount[]> {
     return this.accountIds.map((id) => ({ id, identity: id, provider: 'Fake' }));

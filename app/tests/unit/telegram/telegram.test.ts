@@ -22,6 +22,7 @@ import {
   SecretStore,
   syncChats,
 } from '@postbote/store';
+import type { TgMessage } from '@postbote/telegram';
 import {
   API_HASH_ENV,
   API_ID_ENV,
@@ -215,6 +216,51 @@ export default async () => {
       expect(page.exhausted).toBe(true);
     });
 
+    const longChat = (count: number): Map<number, TgMessage[]> =>
+      new Map([
+        [ANNA.id, Array.from({ length: count }, (_, i) => tgMessage(ANNA, i + 1, ANNA, `m${i + 1}`))],
+      ]);
+
+    await it('takes a window larger than what Telegram returns per call, and does not claim the start', async () => {
+      // Regression: Telegram returns at most 100 per `getHistory`, the default window is 200. The
+      // short answer read as "nothing older exists", and `deletedBy` on a full scan then treated
+      // everything below the newest 100 as deleted on the server — dropping messages that exist.
+      const { create } = fakeFactory({ history: longChat(250) });
+      const client = create({
+        credentials: { apiId: 1, apiHash: HASH },
+        storage: new SecretStoreStorage(SecretStore.open(':memory:')),
+      });
+      const page = await new TelegramChatSession(client).fetchHistory(String(ANNA.id), null, 200);
+      expect(page.messages.length).toBe(200);
+      expect(page.lowestSeq).toBe(51);
+      expect(page.highestSeq).toBe(250);
+      expect(page.reachedStart).toBe(false);
+      expect(page.exhausted).toBe(true);
+    });
+
+    await it('claims the start of a chat only once Telegram has nothing older', async () => {
+      const { create } = fakeFactory({ history: longChat(150) });
+      const client = create({
+        credentials: { apiId: 1, apiHash: HASH },
+        storage: new SecretStoreStorage(SecretStore.open(':memory:')),
+      });
+      const page = await new TelegramChatSession(client).fetchHistory(String(ANNA.id), null, 200);
+      expect(page.messages.length).toBe(150);
+      expect(page.lowestSeq).toBe(1);
+      expect(page.reachedStart).toBe(true);
+    });
+
+    await it('never reports a capped forward page as caught up', async () => {
+      const { create } = fakeFactory({ history: longChat(250) });
+      const client = create({
+        credentials: { apiId: 1, apiHash: HASH },
+        storage: new SecretStoreStorage(SecretStore.open(':memory:')),
+      });
+      const page = await new TelegramChatSession(client).fetchHistory(String(ANNA.id), 10, 150);
+      expect(page.lowestSeq).toBe(11);
+      expect(page.exhausted).toBe(false);
+    });
+
     await it('asks for BOTH dialog folders, because mtcute leaves archived chats out by default', async () => {
       // Regression: `iterDialogs()` with no argument is mtcute's `archived: 'exclude'`, which asks
       // Telegram for the MAIN folder alone. An archived chat would then not be de-prioritised but
@@ -395,17 +441,17 @@ export default async () => {
       }
     });
 
-    await it('keeps an authorized session whose login rejects AFTER the auth key was written', async () => {
-      // The case a flag around the login promise gets wrong: mtcute writes the key the moment the
-      // server confirms the sign-in, and its `_onAuthorization` → `notifyLoggedIn` runs AFTER
-      // that. A throw there rejects `login()` with a perfectly good session on disk — deciding on
-      // "did login() resolve?" would delete it and cost the user another phone code.
+    await it('keeps an authorized session whose login rejects AFTER the sign-in', async () => {
+      // The case a flag around the login promise gets wrong: mtcute records the user the moment
+      // the server accepts the sign-in, and more runs after that. A throw there rejects `login()`
+      // with a perfectly good session on disk — deciding on "did login() resolve?" would delete it
+      // and cost the user another phone code.
       const dir = tempDir();
       const secrets = context(dir).secretsDir;
       try {
         const backend = new TelegramBackend(
           context(dir),
-          fakeFactory({ failAfterKey: 'notifyLoggedIn failed' }).create,
+          fakeFactory({ failAfterSignIn: 'update manager failed' }).create,
         );
         await expect(
           backend.addAccount(prompter(['+49 170 0000000', '12345', 'correct horse'])),

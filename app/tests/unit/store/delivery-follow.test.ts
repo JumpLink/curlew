@@ -133,7 +133,11 @@ class FollowBackend implements DeliveryBackend {
   readonly sessions: ControllableSession[] = [];
   readonly connects: string[] = [];
 
-  constructor(private readonly accountIds: string[]) {}
+  private readonly accountIds: string[];
+
+  constructor(accountIds: string[]) {
+    this.accountIds = accountIds;
+  }
 
   async listAccounts(): Promise<BackendAccount[]> {
     return this.accountIds.map((id) => ({ id, identity: id, provider: 'Fake' }));

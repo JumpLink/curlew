@@ -81,8 +81,9 @@ export interface TelegramApi {
   /** Every dialog, most recently active first. */
   iterDialogs(params?: TgDialogsParams): AsyncIterable<TgDialog>;
   /**
-   * mtcute's `getHistory`: newest first by default; with `reverse` oldest first, starting AT
-   * `offset.id` (inclusive).
+   * mtcute's `getHistory`: newest first by default; without `reverse` it is newest first and, with
+   * an offset, strictly below `offset.id`. With `reverse` oldest first, starting AT `offset.id`
+   * (inclusive). A single call returns at most 100.
    */
   getHistory(
     chatId: number,

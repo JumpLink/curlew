@@ -35,7 +35,7 @@ import {
   type TelegramCredentials,
   writeStoredCredentials,
 } from './credentials.ts';
-import { holdsAuthKey, SecretStoreStorage } from './storage.ts';
+import { holdsSignIn, SecretStoreStorage } from './storage.ts';
 
 /** The public name an account is listed under — never the phone number. */
 export function identityOf(user: Pick<TgUser, 'username' | 'displayName' | 'id'>): string {
@@ -59,15 +59,19 @@ async function loginCredentials(
 /**
  * What to do with a login that did not complete, and what to tell the user.
  *
- * The decision is made on a FACT about the file, not on where the control flow happened to be:
- * an auth key lands in the file the moment Telegram confirms the sign-in, and every step after it
- * can still throw — mtcute's `_onAuthorization`/`notifyLoggedIn`, the update manager, postbote's
- * own record writes, the final rename. Deciding on a flag around the login promise would still
- * throw away a session that is genuinely authorized, and the user would pay for another phone code.
+ * The decision is made on a FACT about the file, not on where the control flow happened to be: the
+ * sign-in marker (`current_user`) lands in the file the moment mtcute's `notifyLoggedIn` stores the
+ * user, and every step after it can still throw — the update manager, postbote's own record
+ * writes, the final rename. Deciding on a flag around the login promise would therefore still
+ * throw away a session that is genuinely signed in, and the user would pay for another phone code.
  *
- * A file with no key is a login that got nowhere and is removed; the message is then the original
- * error, unembellished. A file WITH a key is the only copy of a working session, so it stays and
- * the error says where it is and how long it will survive (`sweepPendingSessions` cannot tell it
+ * It is deliberately NOT the auth key: mtcute creates that in the DH handshake on connect, before
+ * any phone number, so every failed login has one — and a file that never was signed in is not the
+ * only copy of anything.
+ *
+ * A file with no sign-in marker is a login that got nowhere and is removed; the message is then the
+ * original error, unembellished. A file WITH one is the only copy of a working session, so it stays
+ * and the error says where it is and how long it will survive (`sweepPendingSessions` cannot tell it
  * from an abandoned login and removes it once stale).
  */
 async function recoverFailedLogin(
@@ -78,8 +82,9 @@ async function recoverFailedLogin(
   store: SecretStore,
   client: TelegramClientHandle,
 ): Promise<Error> {
-  // Read BEFORE closing — this is the only moment the file can still be asked.
-  const keep = holdsAuthKey(store);
+  // Read BEFORE closing — this is the only moment the file can still be asked. An account Telegram
+  // already NAMED is the same evidence, and it survives a `current_user` that was never written.
+  const keep = accountId !== null || holdsSignIn(store);
   await client.destroy().catch(() => {});
   try {
     store.close();
