@@ -157,6 +157,14 @@ export interface DeliveryAccountSyncResult {
   setAside?: number;
   /** Received but not decryptable (`DeliveryOutcome.undecryptable`). */
   undecryptable?: number;
+  /**
+   * Received, acknowledged, and not written — by reason (`DeliveryOutcome.skipped`).
+   *
+   * The one number that separates "nothing arrived" from "it arrived and was dropped": a sync
+   * that shows `added: 0` and an empty map never received anything, and one with entries in it
+   * lost messages the network will not resend.
+   */
+  skipped?: Record<string, number>;
 }
 
 export interface DeliverySyncResult {
@@ -886,6 +894,9 @@ async function runSession(
     if (outcome.loggedOut) result.loggedOut = true;
     if (outcome.setAside) result.setAside = outcome.setAside;
     if (outcome.undecryptable) result.undecryptable = outcome.undecryptable;
+    if (outcome.skipped && Object.keys(outcome.skipped).length > 0) {
+      result.skipped = { ...outcome.skipped };
+    }
     return outcome;
   } catch (err) {
     result.error = err instanceof Error ? err.message : String(err);
