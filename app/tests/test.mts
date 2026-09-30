@@ -47,6 +47,7 @@ import setup from './unit/core/setup.test.ts';
 import setupSteps from './unit/core/setup-steps.test.ts';
 import setupUnit from './unit/core/setup-unit.test.ts';
 
+import promptTty from './unit/cli/prompt-tty.test.ts';
 import mcpGate from './unit/mcp/gate.test.ts';
 import mcpSetupTools from './unit/mcp/setup-tools.test.ts';
 import mcpTools from './unit/mcp/tools.test.ts';
@@ -93,6 +94,7 @@ run({
   setupSteps,
   setupUnit,
   capabilities,
+  promptTty,
   mcpGate,
   mcpSetupTools,
   mcpTools,

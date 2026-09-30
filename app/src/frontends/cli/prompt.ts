@@ -11,6 +11,8 @@ import type { AccountPrompter } from '@postbote/protocol';
 
 import type { SetupPrompter } from '../../core/actions/setup.ts';
 import { createInterface } from 'node:readline';
+import { isatty } from 'node:tty';
+import { bold, dim } from './colour.ts';
 import { Writable } from 'node:stream';
 
 export function terminalPrompter(): AccountPrompter & { close(): void } {
@@ -31,8 +33,36 @@ export function terminalSetupPrompter(): SetupPrompter & { close(): void } {
   return readPrompter();
 }
 
-function readPrompter(): SetupPrompter & { close(): void } {
-  const tty = Boolean((process.stdin as { isTTY?: boolean }).isTTY);
+/**
+ * Is the stream on the far end a terminal? `isatty`, NOT `process.stdin.isTTY`.
+ *
+ * Under GJS that property is not implemented — gjsify's own spec says "should have
+ * isTTY property **if available**" and only checks its type when it is not undefined —
+ * so `Boolean(undefined)` is false on a GNOME Terminal, and readline never built itself
+ * in terminal mode: no keypress handling, no raw mode, no line editing. gjsify's `isatty`
+ * asks GLib (`log_writer_supports_color`, or the real POSIX call when
+ * `@gjsify/terminal-native` is installed) and answers correctly under both runtimes.
+ *
+ * This is the precondition, not the whole repair. Measured on a real pty: with terminal mode
+ * reached, @gjsify/readline still puts the tty in raw mode without writing the typed character
+ * back, and Ctrl-C never becomes a SIGINT. That is a defect in the dependency and is being
+ * fixed there; a consumer must not paper over it, because the next prompt would hit the wall
+ * again and the workaround would ossify.
+ *
+ * Injectable, because a bug that only shows up on a real terminal is a bug whose test would
+ * otherwise need a real terminal.
+ */
+export function stdinIsTTY(): boolean {
+  return isatty(0);
+}
+
+export function readPrompter(
+  isTTY: () => boolean = stdinIsTTY,
+  input: NodeJS.ReadableStream = process.stdin,
+): SetupPrompter & { close(): void } {
+  // Every question here goes to stderr, so that is the descriptor the styling is gated on.
+  const ERR = 2;
+  const tty = isTTY();
   let muted = false;
   const output = new Writable({
     write(chunk, _encoding, done) {
@@ -40,7 +70,7 @@ function readPrompter(): SetupPrompter & { close(): void } {
       done();
     },
   });
-  const rl = createInterface({ input: process.stdin, output, terminal: tty });
+  const rl = createInterface({ input, output, terminal: tty });
   const lines: string[] = [];
   const waiting: Array<(line: string | null) => void> = [];
   let closed = false;
@@ -64,7 +94,7 @@ function readPrompter(): SetupPrompter & { close(): void } {
 
   return {
     async ask(label, options = {}) {
-      process.stderr.write(`${label}: `);
+      process.stderr.write(`${bold(`${label}:`, ERR)} `);
       muted = Boolean(options.secret) && tty;
       const line = await next();
       if (muted) process.stderr.write('\n');
@@ -74,7 +104,7 @@ function readPrompter(): SetupPrompter & { close(): void } {
     },
     async confirm(question) {
       // `[y/N]`, on stderr like every other question here, so a piped stdout stays machine-readable.
-      process.stderr.write(`${question} [y/N] `);
+      process.stderr.write(`${bold(question, ERR)} ${dim('[y/N]', ERR)} `);
       const line = await next();
       // Only an explicit y/Y counts. No line at all (EOF) is a NO, never a consent.
       return line !== null && /^[Yy]$/.test(line.trim());
