@@ -46,7 +46,7 @@ export type DecryptResult =
    * were dropped" by counting, and every reason here used to be an English phrase that nothing in
    * the codebase read — so a run could not tell "nothing arrived" from "it arrived unread".
    */
-  | { kind: 'skip'; reason: SkipReason; detail: string };
+  | { kind: 'skip'; reason: SkipReason };
 
 /**
  * Why an envelope was deliberately not turned into a message.
@@ -122,20 +122,16 @@ export class EnvelopeDecryptor {
   private async decryptInner(envelope: Envelope): Promise<DecryptResult> {
     const S = this.lib.core;
     if (envelope.type === EnvelopeType.SERVER_DELIVERY_RECEIPT)
-      return { kind: 'skip', reason: 'server-receipt', detail: 'server receipt' };
+      return { kind: 'skip', reason: 'server-receipt' };
     if (envelope.destinationServiceId && envelope.destinationServiceId !== this.aci) {
-      return {
-          kind: 'skip',
-          reason: 'phone-number-identity',
-          detail: 'addressed to the phone number identity (PNI)',
-        };
+      return { kind: 'skip', reason: 'phone-number-identity' };
     }
     const ciphertext = envelope.content as Uint8Array<ArrayBuffer> | null;
-    if (!ciphertext) return { kind: 'skip', reason: 'no-content', detail: 'no content' };
+    if (!ciphertext) return { kind: 'skip', reason: 'no-content' };
     const st = this.store;
 
     if (envelope.type === EnvelopeType.PLAINTEXT_CONTENT) {
-      return { kind: 'skip', reason: 'retry-request', detail: 'plaintext resend request' };
+      return { kind: 'skip', reason: 'retry-request' };
     }
 
     if (envelope.type === EnvelopeType.UNIDENTIFIED_SENDER) {
@@ -144,7 +140,7 @@ export class EnvelopeDecryptor {
       const senderAci = certificate.senderUuid().toLowerCase();
       const senderDevice = certificate.senderDeviceId();
       if (senderAci === this.aci && senderDevice === this.deviceId) {
-        return { kind: 'skip', reason: 'own-echo', detail: 'sent by this device' };
+        return { kind: 'skip', reason: 'own-echo' };
       }
       const serverTimestamp = envelope.serverTimestamp ?? 0;
       if (serverTimestamp <= 0) throw new Error('sealed-sender envelope without a server timestamp');
@@ -156,7 +152,7 @@ export class EnvelopeDecryptor {
       let padded: Uint8Array;
       switch (usmc.msgType()) {
         case S.CiphertextMessageType.Plaintext:
-          return { kind: 'skip', reason: 'retry-request', detail: 'retry request' };
+          return { kind: 'skip', reason: 'retry-request' };
         case S.CiphertextMessageType.SenderKey:
           padded = await S.groupDecrypt(sender, st.senderKeys, contents);
           break;

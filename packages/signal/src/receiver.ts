@@ -74,15 +74,6 @@ export interface ChatListenerLike {
 }
 
 /**
- * Why this run acknowledged an envelope without turning it into a message.
- *
- * The decryptor's reasons, plus the receiver's own: a story is a message this build cannot show.
- * A `duplicate` is deliberately absent — that one IS already in the index, so counting it as a
- * skip would report a loss that never happened.
- */
-export type SkippedReason = SkipReason | 'story';
-
-/**
  * One open chat connection. No `fetch`: the sync holds no way to send a request (`guard.ts`).
  */
 export interface ChatHandle {
@@ -232,7 +223,10 @@ export class SignalReceiver implements DeliverySession {
    * that dropped three envelopes and a run that received none looked identical — `added: 0,
    * error: null` — which makes every receiving bug unfindable after the fact.
    */
-  private readonly skipped: Partial<Record<SkippedReason, number>> = {};
+  // The decryptor's reasons plus this receiver's own one (`story`). A `duplicate` is deliberately
+  // absent: that envelope IS already in the index, so counting it would report a loss that never
+  // happened.
+  private readonly skipped: Partial<Record<SkipReason | 'story', number>> = {};
   private contactsProblem: string | null = null;
   private maxTimer: unknown = null;
   private finishRequested: DeliveryOutcome | null = null;
@@ -410,7 +404,7 @@ export class SignalReceiver implements DeliverySession {
   }
 
   /** Count one acknowledged-but-unwritten envelope, by reason. */
-  private countSkip(reason: SkippedReason): void {
+  private countSkip(reason: SkipReason | 'story'): void {
     this.skipped[reason] = (this.skipped[reason] ?? 0) + 1;
   }
 
