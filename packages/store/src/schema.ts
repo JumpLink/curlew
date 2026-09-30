@@ -21,7 +21,7 @@
 
 import { type IndexDatabase, withTransaction } from './db.ts';
 
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -274,6 +274,10 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
   // the holder's own (its heartbeat + 3 × its own refresh interval), so a taker never has to know
   // how often somebody else refreshes to judge that lease alive. A new table and nothing else: the
   // index is irreplaceable for a delivery-only account, and no upgrade here rewrites a stored row.
+  // v7: what the delivery-only sync learned about a linked device. `link_dropped_at` is set when
+  // the server stopped knowing the device and CLEARED when a later run reaches it again, so an
+  // empty value means "not known to be dropped" rather than "never checked".
+  7: [{ table: 'accounts', column: 'link_dropped_at', type: 'TEXT' }],
   6: [
     `CREATE TABLE IF NOT EXISTS receive_leases (
        backend TEXT NOT NULL,

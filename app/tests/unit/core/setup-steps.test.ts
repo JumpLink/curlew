@@ -202,6 +202,42 @@ export default async function setupSteps(): Promise<void> {
       });
     }
 
+    // Removing the device on the phone leaves the local session file behind, so "a session
+    // exists" said "already linked — nothing to do". Signal was never asked. That is the one
+    // state the tool must not claim to know: a local file is evidence of an attempt, not of a
+    // live link.
+    it('does not claim a live link it never asked Signal about', async () => {
+      const ctx = fakeContext({ countAccounts: async () => 1, prompter: fakePrompter([]) });
+      const outcome = await stage('link-signal').run(ctx);
+      const text = transcript(ctx);
+      expect(outcome.status).toBe('done');
+      expect(text.includes('nothing to do')).toBe(false);
+      expect(text.includes('not been checked with Signal')).toBe(true);
+      expect(text.includes('postbote sync')).toBe(true);
+    });
+
+    // Once a sync HAS found out, that is a fact and may be stated. Same shape, different source.
+    it('states the link as gone once a sync has seen Signal drop it', async () => {
+      const ctx = fakeContext({
+        countAccounts: async () => 1,
+        loggedOutBackend: async () => 'signal',
+        prompter: fakePrompter([]),
+      });
+      await stage('link-signal').run(ctx);
+      const text = transcript(ctx);
+      expect(text.includes('Signal no longer knows this device')).toBe(true);
+      expect(text.includes('not been checked with Signal')).toBe(false);
+    });
+
+    it('treats a dropped link as remaining work, not as done', async () => {
+      const ctx = fakeContext({
+        countAccounts: async () => 1,
+        loggedOutBackend: async () => 'signal',
+        prompter: fakePrompter([]),
+      });
+      expect(await probeStage('link-signal', ctx)).toBe('remaining');
+    });
+
     it('warns that the pairing code is a secret before showing anything', async () => {
       const ctx = fakeContext({ prompter: fakePrompter([true]) });
       await stage('link-signal').run(ctx);
