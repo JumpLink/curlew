@@ -21,7 +21,6 @@ import { join } from 'node:path';
 import type { LoginPrompts, TelegramClientHandle, TgUser } from './api.ts';
 import {
   accountIdFor,
-  PENDING_STALE_MS,
   pendingSessionPath,
   sessionPath,
   sweepPendingSessions,
@@ -71,8 +70,8 @@ async function loginCredentials(
  *
  * A file with no sign-in marker is a login that got nowhere and is removed; the message is then the
  * original error, unembellished. A file WITH one is the only copy of a working session, so it stays
- * and the error says where it is and how long it will survive (`sweepPendingSessions` cannot tell it
- * from an abandoned login and removes it once stale).
+ * and the error says where it is and where it belongs (`sweepPendingSessions` asks the same marker
+ * and leaves it alone, however old it gets).
  */
 async function recoverFailedLogin(
   err: unknown,
@@ -99,9 +98,7 @@ async function recoverFailedLogin(
   const target = accountId ? sessionPath(secretsDir, accountId) : join(secretsDir, '<account id>.db');
   return new Error(
     `${original.message} — Telegram HAD authorized this session, so its file is kept at ${pending} and ` +
-      `NOT deleted. Move it to ${target} within ${Math.round(PENDING_STALE_MS / 60000)} minutes (a later ` +
-      `\`postbote accounts\` call sweeps a stale pending login and cannot tell this one from an abandoned ` +
-      `one), or log in again.`,
+      `NOT deleted. Move it to ${target}, or delete it and log in again.`,
   );
 }
 

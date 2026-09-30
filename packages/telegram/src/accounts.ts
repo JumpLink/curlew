@@ -9,7 +9,7 @@ import type { BackendAccount } from '@postbote/protocol';
 import { SecretStore } from '@postbote/store';
 import { existsSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { ACCOUNT_NAMESPACE } from './storage.ts';
+import { ACCOUNT_NAMESPACE, holdsSignIn } from './storage.ts';
 
 const ACCOUNT_ID = /^telegram-\d+$/;
 
@@ -43,22 +43,44 @@ export function pendingSessionPath(secretsDir: string, now = Date.now()): string
 }
 
 /**
- * Remove what a hard-killed login left behind. A pending file may already hold a live auth key
- * (the login got past the code), so it must not linger — but one younger than
- * `PENDING_STALE_MS` may belong to a login running right now in another terminal, and stays.
- * Pending files are never listed as accounts either way.
+ * Remove what a hard-killed login left behind. One younger than `PENDING_STALE_MS` may belong to
+ * a login running right now in another terminal, and stays. An older one is removed — unless it
+ * is SIGNED IN (`holdsSignIn`): then it is the only copy of a working session that a failed login
+ * told the user to move into place, and deleting it would cost them another phone code. Such a
+ * file stays until they move or delete it. Pending files are never listed as accounts either way.
  */
 export function sweepPendingSessions(secretsDir: string, now = Date.now()): number {
   if (!existsSync(secretsDir)) return 0;
+  const files = readdirSync(secretsDir).filter((file) => PENDING.test(file));
   let removed = 0;
-  for (const file of readdirSync(secretsDir)) {
-    if (!PENDING.test(file)) continue;
+  for (const file of files) {
+    // A journal follows its database: kept with it, removed with it, removed alone once stale.
+    if (file.endsWith('-journal') && files.includes(file.slice(0, -'-journal'.length))) continue;
     const path = join(secretsDir, file);
     if (now - statSync(path).mtimeMs < PENDING_STALE_MS) continue;
-    rmSync(path, { force: true });
-    removed++;
+    if (!file.endsWith('-journal') && signedIn(path)) continue;
+    for (const doomed of [path, `${path}-journal`]) {
+      if (!existsSync(doomed)) continue;
+      rmSync(doomed, { force: true });
+      removed++;
+    }
   }
   return removed;
+}
+
+/** Fails SAFE like `holdsSignIn`: a file that cannot even be opened is not deleted on a guess. */
+function signedIn(path: string): boolean {
+  let store: SecretStore;
+  try {
+    store = SecretStore.open(path);
+  } catch {
+    return true;
+  }
+  try {
+    return holdsSignIn(store);
+  } finally {
+    store.close();
+  }
 }
 
 /** Every account with a session file, in id order. Sweeps stale pending logins on the way. */
