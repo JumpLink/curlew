@@ -58,3 +58,7 @@
 	path = refs/hylki
 	url = https://github.com/hyprlab/hylki.git
 	shallow = true
+[submodule "refs/libsignal-service-rs"]
+	path = refs/libsignal-service-rs
+	url = https://github.com/whisperfish/libsignal-service-rs.git
+	branch = main
