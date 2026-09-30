@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { searchIndex, syncIndex, syncStatus } from '@postbote/store';
+import { searchIndex, type SyncProgress, syncIndex, syncStatus } from '@postbote/store';
 import { AT, FakeBackend, folder, freshDb, message } from './fixtures.ts';
 
 /**
@@ -23,6 +23,60 @@ export default async () => {
       } finally {
         db.close();
       }
+    });
+
+    // `postbote sync` printed nothing for minutes while it worked, and a CLI that shows nothing
+    // for minutes cannot be told from one that has hung. The facts already exist at three
+    // moments; this pins that they are reported, and that nothing else is: a progress line is a
+    // log line, so it carries counts and never another person's words (ADR 0002 §6).
+    await it('reports progress while it works, with counts and nothing else', async () => {
+      const db = freshDb();
+      const backend = new FakeBackend();
+      backend.put('INBOX', [message(1, 'Energieberatung'), message(2, 'Angebot Wärmepumpe')]);
+      const seen: SyncProgress[] = [];
+      try {
+        await syncIndex(db, backend, {
+          now: AT('2026-08-06T12:00:00Z'),
+          onProgress: (event) => seen.push(event),
+        });
+      } finally {
+        db.close();
+      }
+
+      expect(seen.length > 0).toBe(true);
+      expect(seen.some((e) => e.type === 'account-start')).toBe(true);
+      expect(seen.some((e) => e.type === 'folder-done')).toBe(true);
+      // The last mail event must carry the running total, so a single line can show progress
+      // without keeping a counter of its own.
+      const last = seen[seen.length - 1];
+      expect(last.added).toBe(2);
+      // Nothing about the messages themselves may travel in a progress event.
+      const text = JSON.stringify(seen);
+      expect(text.includes('Wärmepumpe')).toBe(false);
+      expect(text.includes('Energieberatung')).toBe(false);
+    });
+
+    await it('says a folder is done even when it added nothing', async () => {
+      const db = freshDb();
+      const backend = new FakeBackend();
+      backend.put('INBOX', [message(1, 'One')]);
+      const seen: SyncProgress[] = [];
+      try {
+        await syncIndex(db, backend, {
+          now: AT('2026-08-06T12:00:00Z'),
+          onProgress: (event) => seen.push(event),
+        });
+        // A second run has nothing new in every folder. If only non-empty folders reported, this
+        // run would look like a hang from the outside.
+        seen.length = 0;
+        await syncIndex(db, backend, {
+          now: AT('2026-08-06T12:05:00Z'),
+          onProgress: (event) => seen.push(event),
+        });
+      } finally {
+        db.close();
+      }
+      expect(seen.some((e) => e.type === 'folder-done')).toBe(true);
     });
 
     await it('records the cursor so a second run adds only what is new', async () => {

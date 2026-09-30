@@ -37,7 +37,34 @@ export interface SyncOptions {
   batchSize?: number;
   /** Clock, injected so tests are deterministic. */
   now?: () => Date;
+  /**
+   * Told what the run is doing while it does it. A sync takes minutes; a caller that shows
+   * nothing for minutes cannot be told apart from one that has hung.
+   *
+   * Every event carries the running `added` total, so a renderer needs no state of its own.
+   * Never message text, subjects, senders or addresses — this is a log line (ADR 0002 §6).
+   */
+  onProgress?: (event: SyncProgress) => void;
 }
+
+/**
+ * One step of a mail sync, for a caller that shows progress.
+ *
+ * A folder reports when it is DONE, not when it starts: a start-only stream says nothing for the
+ * length of the slowest folder, which is the very thing worth showing. A folder that added
+ * nothing reports too, or a no-op run would look like a hang.
+ */
+export type SyncProgress =
+  | { type: 'account-start'; accountId: string; accounts: number; folders: number; added: number }
+  | {
+      type: 'folder-done';
+      accountId: string;
+      folderName: string;
+      done: number;
+      folders: number;
+      added: number;
+    }
+  | { type: 'mail-done'; accounts: number; folders: number; added: number; errors: number };
 
 export interface FolderSyncResult {
   accountId: string;
@@ -218,6 +245,7 @@ export async function syncIndex(
   const batchSize = options.batchSize ?? DEFAULT_BATCH;
   const fullScanIntervalHours = options.fullScanIntervalHours ?? DEFAULT_FULL_SCAN_HOURS;
   const folders: FolderSyncResult[] = [];
+  const onProgress = options.onProgress;
 
   const accounts = (await backend.listAccounts()).filter(
     (a) => !options.accountId || a.id === options.accountId,
@@ -258,15 +286,32 @@ export async function syncIndex(
         ? listed.filter((f) => f.path === options.folderPath || f.name === options.folderPath)
         : searchableFolders(listed);
 
+      onProgress?.({
+        type: 'account-start',
+        accountId: account.id,
+        accounts: accounts.length,
+        folders: wanted.length,
+        added: folders.reduce((n, f) => n + f.added, 0),
+      });
+
+      let done = 0;
       for (const folder of wanted) {
-        folders.push(
-          await syncFolder(db, session, account.id, folder, {
-            batchSize,
-            fullScanIntervalHours,
-            fullScan: options.fullScan ?? false,
-            now: now(),
-          }),
-        );
+        const outcome = await syncFolder(db, session, account.id, folder, {
+          batchSize,
+          fullScanIntervalHours,
+          fullScan: options.fullScan ?? false,
+          now: now(),
+        });
+        folders.push(outcome);
+        done += 1;
+        onProgress?.({
+          type: 'folder-done',
+          accountId: account.id,
+          folderName: folder.name,
+          done,
+          folders: wanted.length,
+          added: folders.reduce((n, f) => n + f.added, 0),
+        });
       }
     } catch (err) {
       folders.push({
@@ -286,9 +331,17 @@ export async function syncIndex(
   }
 
   const errors = folders.filter((f) => f.error !== null).length;
+  const added = folders.reduce((n, f) => n + f.added, 0);
+  onProgress?.({
+    type: 'mail-done',
+    accounts: accounts.length,
+    folders: folders.length,
+    added,
+    errors,
+  });
   return {
     folders,
-    added: folders.reduce((n, f) => n + f.added, 0),
+    added,
     updated: folders.reduce((n, f) => n + f.updated, 0),
     removed: folders.reduce((n, f) => n + f.removed, 0),
     errors,
