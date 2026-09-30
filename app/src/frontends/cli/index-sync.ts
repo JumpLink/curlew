@@ -7,9 +7,28 @@
 
 import type { CommandModule } from 'yargs';
 
+import type { SyncProgress } from '@postbote/store';
 import { indexSearch, indexStatus, indexSync } from '../../core/actions/index.ts';
 import { MAIL_LIMIT, capLimit } from '../../core/actions/index.ts';
 import { pickArgv, runAndExit } from './output.ts';
+
+/**
+ * One rewriting line on stderr: what is happening, how far, and what it has found so far.
+ *
+ * Counts and mailbox names only. The index holds other people's words and a progress line is a
+ * log line that gets copied around (ADR 0002 §6), so nothing read out of a message goes here.
+ */
+function reportProgress(event: SyncProgress): void {
+  const line =
+    event.type === 'folder-done'
+      ? `  mail ${event.done}/${event.folders} ${event.folderName} · ${event.added} new`
+      : event.type === 'account-start'
+        ? `  mail: ${event.accounts} account(s), this one has ${event.folders} mailbox(es)`
+        : `  mail done: ${event.folders} mailbox(es), ${event.added} new, ${event.errors} error(s)`;
+  // \r plus an erase: overwrite in place, and never leave the longer line's tail behind.
+  process.stderr.write(`\r\u001b[2K${line}`);
+  if (event.type !== 'folder-done') process.stderr.write('\n');
+}
 
 export const syncCommand: CommandModule = {
   command: 'sync',
@@ -36,6 +55,10 @@ export const syncCommand: CommandModule = {
         accountId: pickArgv<string>(raw, 'account'),
         folder: pickArgv<string>(raw, 'folder'),
         fullScan: pickArgv<boolean>(raw, 'full-scan', 'fullScan'),
+        // On stderr, so the result on stdout stays a JSON document a script can read. A sync of
+        // several accounts and dozens of mailboxes takes minutes; showing nothing for minutes is
+        // indistinguishable from a hang. One rewriting line, so the output does not scroll away.
+        onProgress: reportProgress,
       }),
     );
   },

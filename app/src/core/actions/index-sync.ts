@@ -30,6 +30,7 @@ import {
   searchIndex,
   syncChats,
   syncIndex,
+  type SyncProgress,
   syncStatus,
 } from '@postbote/store';
 import { builtinRegistry } from '../backends/builtin.ts';
@@ -81,6 +82,11 @@ export interface SyncParams {
   fullScan?: boolean;
   dbPath?: string;
   configPath?: string;
+  /**
+   * Told what the run is doing while it does it. The store already reports; this is the way out
+   * to a renderer, so a frontend never has to guess when the next thing will appear.
+   */
+  onProgress?: (event: SyncProgress) => void;
 }
 
 export interface IndexSyncResult extends SyncResult {
@@ -159,6 +165,7 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
             accountId: params.accountId,
             folderPath: params.folder,
             fullScan: params.fullScan,
+            onProgress: params.onProgress,
           }),
         );
       } else if (isChatBackend(backend)) {
