@@ -705,6 +705,60 @@ export default async () => {
       }
     });
 
+    // A real scan came back 401 on PUT /v2/keys while the link itself had succeeded. The one
+    // difference between the two requests is that the upload needs session auth: libsignal
+    // attaches its credentials to the INITIAL connect request, so a Basic header on a later
+    // request cannot stand in for it (ChatHeaders::iter_headers, rust/net/src/chat.rs). Asserting
+    // only "the upload happened" would pass for the same unauthenticated connection that got 401.
+    await it('uploads the one-time keys over a connection authenticated as the linked device', async () => {
+      const dir = tempDir();
+      try {
+        const phone = new Phone();
+        phone.number = '+4915112345678';
+        const backend = new SignalBackend(context(dir, { deviceName: 'Werkbank' }), {
+          lib: LIB,
+          linkNetwork: () => phone.network(),
+        });
+        await backend.addAccount(prompter());
+
+        expect(phone.uploadAuth.length).toBe(1);
+        // The credentials are the ones the link returned, in Signal's own username form.
+        expect(phone.uploadAuth[0].username).toBe(`${OWN_ACI}.${OUR_DEVICE}`);
+        expect(phone.uploadAuth[0].password.length > 0).toBe(true);
+
+        // And the keys really travel on that channel, with the ACI identity asked for.
+        const upload = phone.requests.find((r) => r.path.startsWith('/v2/keys'));
+        expect(upload?.path).toBe('/v2/keys?identity=aci');
+        const body = upload?.body as { preKeys: unknown[]; pqPreKeys: unknown[] };
+        expect(body.preKeys.length > 0).toBe(true);
+        expect(body.pqPreKeys.length > 0).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('does not report a linked device when the authenticated upload fails', async () => {
+      // The 401 arrived AFTER a successful link, so "Linked." was true and the failure was a
+      // side note. The link still stands — but the device has no one-time keys, so the report
+      // has to say so rather than bury it.
+      const dir = tempDir();
+      try {
+        const phone = new Phone();
+        phone.uploadStatus = 401;
+        const p = prompter();
+        const backend = new SignalBackend(context(dir, { deviceName: 'Werkbank' }), {
+          lib: LIB,
+          linkNetwork: () => phone.network(),
+        });
+        await backend.addAccount(p);
+        const said = p.notes.join(' ');
+        expect(said.includes('Linked.')).toBe(true);
+        expect(said.includes('one-time keys were not published')).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
     await it('saves nothing when Signal refuses the link', async () => {
       const dir = tempDir();
       try {

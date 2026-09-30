@@ -26,7 +26,7 @@ import { type SignalLib, loadSignalLib } from './lib.ts';
 import { type LinkNetwork, linkSignal } from './link.ts';
 import { SIGNAL_MANIFEST } from './manifest.ts';
 import { SignalMapper } from './map.ts';
-import { createNet, isDelinked, linkChannel, liveConnector } from './net.ts';
+import { authenticatedChannel, createNet, isDelinked, linkChannel, liveConnector } from './net.ts';
 import { fromBase64, type DeviceAccount, readSetAside, SignalProtocolStore } from './protocol-store.ts';
 import { openProvisioning } from './provisioning.ts';
 import { type ChatConnector, type ReceiverOptions, RELINK_HINT, SignalReceiver } from './receiver.ts';
@@ -115,6 +115,8 @@ export class SignalBackend implements DeliveryBackend {
         return {
           provisioning: (key, listener) => openProvisioning(lib, net, key, listener),
           channel: () => linkChannel(net),
+          authenticatedChannel: (username: string, password: string) =>
+            authenticatedChannel(net, username, password),
         } satisfies LinkNetwork;
       })();
     return linkSignal(lib, this.context, prompter, network, { deviceName: settings.deviceName });

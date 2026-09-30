@@ -90,8 +90,27 @@ export class Phone {
     this.device = new Party(OWN_ACI, 1, 21, this.identity);
   }
 
+  /** Credentials the client used for the one-time key upload, so a test can assert them. */
+  readonly uploadAuth: Array<{ username: string; password: string }> = [];
+  /** What the fake server answers to an authenticated key upload. */
+  uploadStatus = 200;
+
   network(): LinkNetwork {
     return {
+      authenticatedChannel: async (username, password) => {
+        this.uploadAuth.push({ username, password });
+        return {
+          fetch: async (request) => {
+            // Recorded the same way the link channel records: decoded, so a test can read the
+            // fields. Whether the client authenticated is what uploadAuth is for, not the body.
+            const body = request.body ? JSON.parse(new TextDecoder().decode(request.body)) : null;
+            this.requests.push({ verb: request.verb, path: request.path, body });
+            return { status: this.uploadStatus, message: '', body: new Uint8Array() };
+          },
+          close: async () => undefined,
+        };
+      },
+
       provisioning: async (key, listener) => {
         setTimeout(() => {
           listener.onUrl('sgnl://linkdevice?uuid=synthetic&pub_key=synthetic');
