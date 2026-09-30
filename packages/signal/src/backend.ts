@@ -144,13 +144,18 @@ export class SignalBackend implements DeliveryBackend {
     const decryptor = new EnvelopeDecryptor(lib, store, {
       trustRoots: this.options.trustRoots ?? SIGNAL_TRUST_ROOTS_BASE64.map(fromBase64),
     });
-    const mapper = new SignalMapper(account.aci, (masterKey) =>
-      lib.zk.GroupSecretParams.deriveFromMasterKey(
+    const mapper = new SignalMapper(
+      account.aci,
+      (masterKey) =>
+        lib.zk.GroupSecretParams.deriveFromMasterKey(
         new lib.zk.GroupMasterKey(masterKey as Uint8Array<ArrayBuffer>),
       )
         .getPublicParams()
         .getGroupIdentifier()
         .serialize(),
+      // Null on a session linked before the number was kept; the mapper then cannot recognise
+      // our own number in a sent transcript, which is why it is stored at link time.
+      store.pni(),
     );
     const connector = this.options.connector?.(account) ?? liveConnector(createNet(lib), account);
     const receiver = new SignalReceiver(connector, decryptor, mapper, store, {

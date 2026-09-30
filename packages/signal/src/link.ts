@@ -167,6 +167,9 @@ export async function linkSignal(
       );
     }
     if (pniIdentity !== null) store.setPniIdentityKey(pniIdentity);
+    // The service id beside the key: without it, our own number is indistinguishable from a
+    // contact's when one arrives as a bare uuid in a sent transcript.
+    if (message.pni !== null) store.setPni(message.pni);
     const pniKeys = pniIdentity === null ? null : generatePniLinkKeys(lib, pniIdentity);
     // The phone number needs a registration id of its own, and it travels with the phone number
     // keys: Signal reads it into a primitive int when it builds the device, so leaving it out is

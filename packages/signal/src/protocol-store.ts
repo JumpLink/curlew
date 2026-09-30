@@ -376,6 +376,23 @@ export class SignalProtocolStore {
     return stored === null ? null : this.lib.core.PrivateKey.deserialize(fromBase64(stored));
   }
 
+  /**
+   * This account's phone number identity, as a service id (`PNI:<uuid>`).
+   *
+   * The key above says WHICH number we can sign for; this says what the number is. The
+   * provisioning message carries both (field 12 and field 18) and postbote kept only the key,
+   * so nothing on disk could recognise our own number arriving in a message. That matters:
+   * a self-note addressed to the PNI carries a bare uuid in the legacy string field, which
+   * `isAci` cannot tell from a contact's, so the user's own number lands in the peer directory.
+   */
+  setPni(pni: string): void {
+    this.set(NS.account, 'pni', pni);
+  }
+
+  pni(): string | null {
+    return this.get(NS.account, 'pni');
+  }
+
   setRegistrationId(id: number): void {
     this.set(NS.account, 'registrationId', String(id));
   }
