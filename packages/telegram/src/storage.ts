@@ -75,6 +75,15 @@ export function holdsSignIn(store: SecretStore): boolean {
 const b64 = (bytes: Uint8Array): string => Buffer.from(bytes).toString('base64');
 const unb64 = (text: string): Uint8Array => new Uint8Array(Buffer.from(text, 'base64'));
 
+/** A stored row, or `null` when it is not decodable — the caller skips it rather than failing. */
+function decode<T>(json: string): T | null {
+  try {
+    return JSON.parse(json) as T;
+  } catch {
+    return null;
+  }
+}
+
 interface PeerRecord {
   accessHash: string;
   isMin: boolean;
@@ -152,7 +161,6 @@ class SecretStoreDriver extends MemoryStorageDriver implements IStorageDriver {
 
   load(): void {
     if (this.loaded) return;
-    this.loaded = true;
     const all = this.store.loadAll();
     const ns = (name: string) => all.get(name) ?? new Map<string, string>();
 
@@ -179,17 +187,34 @@ class SecretStoreDriver extends MemoryStorageDriver implements IStorageDriver {
       phoneIndex: new Map<string, number>(),
     }));
     for (const [id, json] of ns(NS.peers)) {
-      const r = JSON.parse(json) as PeerRecord;
+      // A row that cannot be decoded is SKIPPED, not thrown on — the same reasoning as the temp
+      // auth key above, for the same reason. mtcute loads the session again after a failed
+      // connect, and this driver is the only thing standing between one damaged row and an
+      // account the user cannot open at all. A skipped peer is an ordinary loss: its access hash
+      // is gone, so that chat cannot be addressed until Telegram sends it again; the auth key,
+      // the identity and every other chat are untouched. Failing the whole load instead would
+      // throw the user out of a working session to protect one chat.
+      const r = decode<PeerRecord>(json);
+      if (r === null) continue;
       const peerId = Number(id);
       peers.entities.set(peerId, { id: peerId, ...r, complete: unb64(r.complete) });
       for (const username of r.usernames) peers.usernameIndex.set(username, peerId);
       if (r.phone) peers.phoneIndex.set(r.phone, peerId);
     }
     const refs = this.getState('refMessages', () => ({ refs: new Map<number, Set<string>>() }));
-    for (const [peer, json] of ns(NS.refMessages))
-      refs.refs.set(Number(peer), new Set(JSON.parse(json) as string[]));
+    for (const [peer, json] of ns(NS.refMessages)) {
+      const ids = decode<string[]>(json);
+      if (ids === null) continue;
+      refs.refs.set(Number(peer), new Set(ids));
+    }
 
     this.persisted = this.snapshot();
+    // LAST, and only on the way out: mtcute's `asyncResettable` does not mark a rejected load as
+    // finished and resets `_prepare` on every `disconnect()`, so a failed load is followed by a
+    // real retry. Consuming the flag before the work would turn that retry into a silent no-op —
+    // empty repositories read as "first run", a fresh auth key negotiated, and the stored one
+    // overwritten by the next save. A working session replaced by a new one, with no error.
+    this.loaded = true;
   }
 
   /** Write every key that differs from what the file holds. `only` limits it to some namespaces. */
