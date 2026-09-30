@@ -49,6 +49,36 @@ export function liveConnector(net: Core.Net.Net, account: DeviceAccount): ChatCo
   };
 }
 
+/**
+ * A connection authenticated as the linked device, behind the same read-only gate.
+ *
+ * libsignal attaches its credentials to the INITIAL connect request; a Basic header set on a
+ * later request cannot replace that (ChatHeaders::iter_headers, rust/net/src/chat.rs). So the
+ * one-time key upload needs a connection that was authenticated from the start — which also means
+ * it cannot be built before the link response, because that is where the password comes from.
+ */
+export async function authenticatedChannel(
+  net: Core.Net.Net,
+  username: string,
+  password: string,
+): Promise<{ fetch: ChatFetch; close(): Promise<void> }> {
+  const connection = await net.connectAuthenticatedChat(username, password, false, {
+    onIncomingMessage: () => undefined,
+    onQueueEmpty: () => undefined,
+    onConnectionInterrupted: () => undefined,
+  });
+  const fetch = guardedFetch('link', async (request) => {
+    const response = await connection.fetch({
+      verb: request.verb,
+      path: request.path,
+      headers: request.headers,
+      body: request.body as Uint8Array<ArrayBuffer> | undefined,
+    });
+    return { status: response.status, message: response.message, body: response.body };
+  });
+  return { fetch, close: () => connection.disconnect() };
+}
+
 /** An unauthenticated connection for the two link requests, behind the read-only gate. */
 export async function linkChannel(net: Core.Net.Net): Promise<{ fetch: ChatFetch; close(): Promise<void> }> {
   const connection = await net.connectUnauthenticatedChat({ onConnectionInterrupted: () => undefined });

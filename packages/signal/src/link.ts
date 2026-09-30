@@ -45,6 +45,14 @@ export interface LinkNetwork {
   provisioning(key: Core.PrivateKey, listener: ProvisioningListener): Promise<{ close(): Promise<void> }>;
   /** A channel for the link requests; its `fetch` is behind the `link` gate. */
   channel(): Promise<{ fetch: ChatFetch; close(): Promise<void> }>;
+  /**
+   * A channel authenticated as the linked device, for the one-time key upload. Takes the
+   * credentials because they only exist once the link has answered.
+   */
+  authenticatedChannel(
+    username: string,
+    password: string,
+  ): Promise<{ fetch: ChatFetch; close(): Promise<void> }>;
 }
 
 export interface LinkOptions {
@@ -219,7 +227,8 @@ export async function linkSignal(
     // the last-resort Kyber key), so a failure here is reported, not fatal.
     const oneTime = generateOneTimeKeys(lib, store);
     try {
-      const keys = await channel.fetch({
+      const authed = await network.authenticatedChannel(`${message.aci}.${answer.deviceId}`, password);
+      const keys = await authed.fetch({
         verb: 'PUT',
         path: '/v2/keys?identity=aci',
         headers: [basicAuth(`${message.aci}.${answer.deviceId}`, password), JSON_TYPE],
