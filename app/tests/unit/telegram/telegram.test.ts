@@ -33,6 +33,7 @@ import {
   PENDING_STALE_MS,
   refuseConfigCredentials,
   SecretStoreStorage,
+  sweepPendingSessions,
   TELEGRAM_MANIFEST,
   TelegramBackend,
   TelegramChatSession,
@@ -554,6 +555,39 @@ export default async () => {
         expect((await backend.listAccounts()).length).toBe(0);
         expect(existsSync(stale)).toBe(false);
         expect(existsSync(fresh)).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('keeps a stale pending login that is SIGNED IN, drops the unsigned one and an orphan journal', async () => {
+      const dir = tempDir();
+      try {
+        const secrets = context(dir).secretsDir;
+        mkdirSync(secrets, { recursive: true });
+        // (a) signed in: the only copy of a working session, however old it gets.
+        const signedIn = join(secrets, 'login-1000-1.pending.db');
+        const signInStore = SecretStore.open(signedIn);
+        signInStore.apply([{ namespace: 'mtcute.kv', key: 'current_user', value: 'AQIDBPr7' }]);
+        signInStore.close();
+        // (b) NOT signed in: an auth key alone is proof of nothing (it exists from the connect).
+        const unsigned = join(secrets, 'login-2000-2.pending.db');
+        const unsignedStore = SecretStore.open(unsigned);
+        unsignedStore.apply([{ namespace: 'mtcute.auth_keys', key: '2', value: 'AQIDBPr7' }]);
+        unsignedStore.close();
+        // (c) a journal whose database is already gone.
+        const orphan = join(secrets, 'login-3000-3.pending.db-journal');
+        writeFileSync(orphan, '');
+        const old = (Date.now() - PENDING_STALE_MS - 60_000) / 1000;
+        for (const path of [signedIn, unsigned, orphan]) utimesSync(path, old, old);
+
+        sweepPendingSessions(secrets);
+        expect(existsSync(signedIn)).toBe(true);
+        expect(existsSync(unsigned)).toBe(false);
+        expect(existsSync(orphan)).toBe(false);
+        expect((await new TelegramBackend(context(dir), fakeFactory({}).create).listAccounts()).length).toBe(
+          0,
+        );
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
