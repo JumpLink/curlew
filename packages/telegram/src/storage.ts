@@ -46,21 +46,27 @@ const NS = {
 export const ACCOUNT_NAMESPACE = 'postbote.account';
 
 /**
- * True when the file already holds an auth key — i.e. Telegram has authorized this session and
- * the file is the only copy of it.
+ * True when the file already holds a SIGNED-IN session — Telegram authorized it AND the sign-in
+ * itself completed, so the file is the only copy of a working account.
  *
- * This is a FACT about the file, and it is what `loginTelegram` decides on: mtcute writes the key
- * the moment the server confirms the sign-in (its own contract requires that write immediately,
- * and `ImmediateAuthKeysRepository` does it), while everything AFTER it — `_onAuthorization`, the
- * update manager, postbote's own record writes, the final rename — can still throw. A flag set
- * around the login promise would therefore still discard a session that is genuinely authorized.
+ * The marker is mtcute's `notifyLoggedIn` → `CurrentUserService.store`, which writes the
+ * `current_user` kv key (non-empty bytes; logged out = empty bytes) and calls `driver.save()` at
+ * once. It is NOT the auth key: mtcute creates that in the MTProto DH handshake on CONNECT
+ * (`SessionConnection.onConnected` → `_authorize` → `onKeyChange` → `authKeys.set`), before any
+ * phone number is asked for — so every failed login has an auth key, and treating one as proof of a
+ * sign-in kept a session that was never authorized and told the user it had been.
  *
- * Fails SAFE: a file that cannot be read (already closed, unreadable) counts as holding a key,
+ * This is a FACT about the file, and it is what `loginTelegram` decides on, because everything
+ * AFTER the sign-in — the update manager, postbote's record writes, the final rename — can still
+ * throw. A flag around the login promise would throw away a session that really is signed in.
+ *
+ * Fails SAFE: a file that cannot be read (already closed, unreadable) counts as signed in,
  * because the caller's alternative is deleting a session.
  */
-export function holdsAuthKey(store: SecretStore): boolean {
+export function holdsSignIn(store: SecretStore): boolean {
   try {
-    return store.load(NS.authKeys).size > 0;
+    // The stored values are base64, so a logged-out (empty byte) user is the empty string.
+    return (store.load(NS.kv).get('current_user') ?? '') !== '';
   } catch {
     return true;
   }

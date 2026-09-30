@@ -78,12 +78,18 @@ export interface FakeScript {
   /** Thrown by `connect`/`getMe` to simulate a revoked session. */
   unauthorized?: boolean;
   /**
-   * Reject the login AFTER the auth key has been written — what mtcute really does when the
-   * sign-in succeeds but the bookkeeping after it (`_onAuthorization` → `notifyLoggedIn`) throws.
-   * The session is authorized at that point and must not be thrown away.
+   * Reject the login AFTER Telegram accepted the sign-in and mtcute recorded the user — what
+   * happens when the bookkeeping after `notifyLoggedIn` (the update manager, `start`'s own
+   * follow-up calls) throws. The session is authorized at that point and must not be thrown away.
    */
-  failAfterKey?: string;
+  failAfterSignIn?: string;
 }
+
+/**
+ * Telegram's own cap on one `messages.getHistory`: it returns at most this many, whatever the
+ * `limit` asked for (core.telegram.org/api/offsets; mtcute's `iterHistory` chunks by it).
+ */
+export const SERVER_HISTORY_CAP = 100;
 
 export class FakeClient implements TelegramClientHandle {
   readonly storage: ClientOptions['storage'];
@@ -128,27 +134,39 @@ export class FakeClient implements TelegramClientHandle {
       `getHistory:${chatId}:${params.reverse ? `rev@${params.offset?.id}` : 'newest'}:${params.limit}`,
     );
     const all = [...(this.script.history?.get(chatId) ?? [])].sort((a, b) => a.id - b.id);
+    const limit = Math.min(params.limit, SERVER_HISTORY_CAP);
     if (params.reverse) {
       const from = params.offset?.id ?? 1;
-      return all.filter((m) => m.id >= from).slice(0, params.limit);
+      return all.filter((m) => m.id >= from).slice(0, limit);
     }
-    return all.reverse().slice(0, params.limit);
+    // Newest first, strictly below `offset.id` when one is given (how mtcute pages backwards).
+    const below = params.offset?.id;
+    return all
+      .filter((m) => below === undefined || m.id < below)
+      .reverse()
+      .slice(0, limit);
   }
 
   async login(prompts: LoginPrompts): Promise<TgUser> {
     this.calls.push('login');
     await this.storage.driver.load?.();
+    // The auth key is the TRANSPORT key: mtcute creates it in the DH handshake on connect, before
+    // anyone typed a phone number (`SessionConnection.onConnected` → `_authorize`). A login that
+    // then fails still leaves it in the file — it says nothing about a sign-in.
+    await this.storage.authKeys.set(2, new Uint8Array([1, 2, 3, 4, 250, 251]));
     const phone = await prompts.phone();
     const code = await prompts.code();
     if (!phone || !code) throw new Error('PHONE_CODE_EMPTY');
     const password = await prompts.password();
     if (password !== 'correct horse') throw new Error('PASSWORD_HASH_INVALID');
-    // What a real login leaves behind: an auth key for the home DC and the session's own state.
-    await this.storage.authKeys.set(2, new Uint8Array([1, 2, 3, 4, 250, 251]));
+    // What the sign-in itself leaves: `notifyLoggedIn` → `CurrentUserService.store` writes the
+    // user and saves the driver at once.
+    const me = this.script.loginAs ?? ME;
+    await this.storage.kv.set('current_user', new Uint8Array([1, 0, 0, 0, me.id]));
     await this.storage.kv.set('dc', new Uint8Array([2]));
-    // The key is on disk from here on: the session is authorized, whatever happens next.
-    if (this.script.failAfterKey) throw new Error(this.script.failAfterKey);
-    return this.script.loginAs ?? ME;
+    await this.storage.driver.save?.();
+    if (this.script.failAfterSignIn) throw new Error(this.script.failAfterSignIn);
+    return me;
   }
 
   async destroy(): Promise<void> {
