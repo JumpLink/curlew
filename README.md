@@ -90,8 +90,10 @@ postbote setup
 
 It finds the checkout it is run from, and falls back to a published `postbote` on
 `PATH` when there is no tree. `postbote setup --status` reports what is done and
-what is left without changing anything, and `postbote setup --only <stage>` runs
-one stage on its own — `--status` prints the name of every stage.
+what is left without changing anything, and `postbote setup --only <stage>`
+runs the named stages and nothing else — `--status` prints the name of every
+stage. `--only` may be repeated (`--only terms --only link-signal`) to pick more
+than one.
 
 Re-run it whenever: a stage that is already done says so instead of failing.
 

@@ -14,9 +14,11 @@
  */
 
 import { describe, expect, it } from '@gjsify/unit';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import {
+  FINISH_STAGE,
   SETUP_LINK_BACKENDS,
   SETUP_STEPS,
   detectSetup,
@@ -24,7 +26,7 @@ import {
   setupStatus,
 } from '../../../src/core/actions/setup.ts';
 import type { SetupContext, SetupStepState } from '../../../src/core/actions/setup.ts';
-import { FAKE_PAIRING_PAYLOAD, fakeContext, fakeHost, fakePrompter } from './setup-fakes.ts';
+import { FAKE_PAIRING_PAYLOAD, SANDBOX, fakeContext, fakeHost, fakePrompter } from './setup-fakes.ts';
 
 /** Every word the run said, joined — the whole surface a person or a log could have seen. */
 function transcript(ctx: { prompter: { notified: string[] } }): string {
@@ -236,12 +238,106 @@ export default async function setupSteps(): Promise<void> {
       expect(existsSync(ctx.configPath)).toBe(false);
     });
 
-    it('leaves a backend alone that has no linked device, and says so', async () => {
-      const ctx = fakeContext({ prompter: fakePrompter([true]) });
+    // This test used to assert the opposite, and its name said it was deliberate: "leaves a
+    // backend alone that has no linked device". That guard could not be satisfied from inside
+    // setup. Adding an account needs an enabled backend (registry.ts, `backend X is not enabled`);
+    // enabling needed a linked account (right here). Each waited for the other, so the QR step
+    // failed in a millisecond, said nothing, and the person was told at the end that they had no
+    // linked account — as if they had declined. The registry never required an account to enable
+    // anything: `enable` gates on the terms, and the daemon reports `loggedOut` for an enabled
+    // backend with no session. So the consent question is asked first and the device second.
+    it('asks for the terms with nothing linked yet, and enables on acceptance', async () => {
+      // Its own config path: these tests WRITE one, and the sandbox default is shared — an
+      // earlier version of this test enabled a backend at the default path and broke the
+      // security test below, which asserts that no config file exists after a declined run.
+      const ctx = fakeContext({
+        prompter: fakePrompter([true, true]),
+        configPath: join(SANDBOX, 'postbote', 'config-accept.json'),
+      });
       const outcome = await stage('terms').run(ctx);
-      expect(outcome.status).toBe('skipped');
-      expect(transcript(ctx).includes('leaving it disabled')).toBe(true);
-      expect(ctx.prompter.asked.length).toBe(0);
+      expect(ctx.prompter.asked.length).toBeGreaterThan(0);
+      expect(transcript(ctx).includes('leaving it disabled')).toBe(false);
+      expect(transcript(ctx).includes('enabled')).toBe(true);
+      expect(outcome.status).toBe('done');
+    });
+
+    it('puts the terms before the linking stages, so the order can actually complete', () => {
+      expect(SETUP_STEPS.map((step) => step.name)).toStrictEqual([
+        'readiness',
+        'terms',
+        'link-signal',
+        'link-whatsapp',
+        'index',
+        'daemon',
+        'unit',
+        FINISH_STAGE,
+      ]);
+    });
+
+    it('links without ever hitting the backend-not-enabled error', async () => {
+      // The cycle, end to end. The fake reads the same config file the registry reads, so the
+      // guard fires for the same reason it fired for the person — the earlier version of this
+      // test passed before AND after the fix, because a fake `link` can never raise the
+      // registry's error, and a test that cannot fail proves nothing.
+      //
+      // It reads the file rather than calling `accountsAdd`: that would open a real socket to
+      // Signal in a unit test. The copy of the predicate is deliberate and two lines long; the
+      // alternative is a test that passes for the wrong reason.
+      const ctx = fakeContext({
+        prompter: fakePrompter([true, true]),
+        configPath: join(SANDBOX, 'postbote', 'config-cycle.json'),
+        countAccounts: async () => 0,
+      });
+      ctx.link = async () => {
+        const stored = existsSync(ctx.configPath)
+          ? (JSON.parse(readFileSync(ctx.configPath, 'utf8')) as {
+              backends?: { name: string; enabled: boolean }[];
+            })
+          : { backends: [] };
+        const enabled = (stored.backends ?? []).filter((b) => b.enabled).map((b) => b.name);
+        if (!enabled.includes('signal')) {
+          throw new Error('backend signal is not enabled — `postbote backends enable signal` turns it on');
+        }
+      };
+      const result = await runSetup(ctx, { only: ['terms', 'link-signal'] });
+      const reasons = result.steps
+        .map((s) => `${s.name}: ${s.outcome.status === 'done' ? '' : s.outcome.reason}`)
+        .join('\n');
+      expect(reasons.includes('not enabled')).toBe(false);
+      expect(reasons.includes('leaving it disabled')).toBe(false);
+    });
+
+    it('stops at the first stage that did not finish, when --bail is set', async () => {
+      // The flag's own words are "stop after the first stage that does not finish". It stopped
+      // only after a FAILURE, so a declined stage — the most common way a person says no — did
+      // not stop it, and the next question arrived anyway.
+      const ctx = fakeContext({
+        prompter: fakePrompter([]),
+        configPath: join(SANDBOX, 'postbote', 'config-bail.json'),
+      });
+      await runSetup(ctx, { only: ['link-signal', 'link-whatsapp'], bail: true });
+      const said = transcript(ctx);
+      expect(said.includes('Link Signal now?')).toBe(true);
+      expect(said.includes('Link WhatsApp now?')).toBe(false);
+    });
+
+    it('says why a stage failed, where the stage ran', async () => {
+      const ctx = fakeContext({
+        // The literal boolean, not the string "y": the fake decides on `value === true`, and a
+        // string declines the question — so the linker below never runs and the test passes for
+        // the wrong reason, which is a mistake I made in the first version of it.
+        prompter: fakePrompter([true]),
+        configPath: join(SANDBOX, 'postbote', 'config-failure.json'),
+        link: async () => {
+          throw new Error('the provisioning connection failed — nothing was saved');
+        },
+      });
+      const result = await runSetup(ctx, { only: ['link-signal'] });
+      const failed = result.steps.find((s) => s.name === 'link-signal');
+      expect(failed?.outcome.status).toBe('failed');
+      // `warning` was already announced here; `reason` was not, so a stage that died said nothing
+      // at all until the closing report.
+      expect(transcript(ctx).includes('provisioning connection failed')).toBe(true);
     });
 
     it('is a human act on every surface, with a reason that names both reasons', () => {

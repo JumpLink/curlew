@@ -206,9 +206,14 @@ export const FINISH_STAGE = 'finish';
 
 export const SETUP_STEPS: readonly SetupStep[] = [
   readinessStep(),
+  // The terms come before the QR, not after. Adding an account needs an enabled backend, so a
+  // link attempted first could only ever fail — and the person was told at the end that they had
+  // no linked account, which reads as declining rather than as a stage that never ran. Consent
+  // first is also the honest order for the terms themselves: they say what the daemon may read
+  // from this backend, and reading them before handing over the account is the point of them.
+  termsStep(),
   linkStep('signal', 'Link Signal', 'Signal → Settings → Linked devices → Link new device.'),
   linkStep('whatsapp', 'Link WhatsApp (optional)', 'WhatsApp → Linked devices → Link a device.'),
-  termsStep(),
   indexStep(),
   daemonStep(),
   unitStep(),
@@ -414,10 +419,12 @@ function termsStep(): SetupStep {
         // Ask, do not infer: a finished account listing cannot say whether the phone accepted the
         // QR, and only the person holding the phone knows that. So the question is asked — and it
         // is asked here, a stage that is `humanOnly` on every surface.
-        if ((await linkedCount(ctx, backend)) === 0) {
-          await say(`${backend}: no linked account — leaving it disabled. Link it first.`);
-          continue;
-        }
+        //
+        // Deliberately NOT gated on a linked account. It used to be, and that made the whole
+        // procedure unreachable: this stage waited for the link, and the link needed the backend
+        // this stage enables. `registry.enable` asks only for the terms — an enabled backend with
+        // no session is what the daemon calls `loggedOut` — so asking here costs nothing and
+        // closes nothing.
         if (!(await ctx.prompter.confirm(`Read the terms for ${backend} and accept them?`))) {
           await say(`${backend} stays disabled.`);
           continue;
@@ -872,6 +879,14 @@ export async function runSetup(ctx: SetupContext, options: SetupRunOptions = {})
     // status surfaces lose — which is exactly how a machine with no session bus came to be
     // reported as `done` and saying nothing else.
     if (outcome.warning !== undefined) await ctx.prompter.notify(`  ⚠ ${outcome.warning}`);
+    // The reason belongs here for the warning's reason and no weaker: a stage that died without
+    // saying why is indistinguishable from a stage the person declined, and that difference is
+    // exactly what they need. In the value either way — `setup_status` still reports it — but a
+    // value nobody is shown has not reached the person.
+    // Narrowing, not casting: `done` carries no reason, so the union says so itself.
+    if (outcome.status !== 'done') {
+      await ctx.prompter.notify(`  ${outcome.status === 'failed' ? '✗' : '·'} ${outcome.reason}`);
+    }
     if (outcome.status === 'done') continue;
     if (outcome.status === 'failed') {
       ok = false;
@@ -880,7 +895,10 @@ export async function runSetup(ctx: SetupContext, options: SetupRunOptions = {})
     // A stage that did not finish — declined, not run, or not implemented yet — is outstanding.
     // `remaining` carries the invocation, because that is what a person needs next.
     remaining.push(SETUP_STEPS.find((s) => s.name === step.name)?.command ?? step.name);
-    if (outcome.status === 'failed' && options.bail) break;
+    // `bail` means "stop at the first stage that did not finish". The `done` case continued above,
+    // so this stage did not finish — `skipped` being the ordinary way to decline. Breaking only on
+    // `failed` asked the next question anyway, which is what the flag says it does not do.
+    if (options.bail) break;
   }
   return { steps, ok, followUps: SETUP_FOLLOW_UPS, remaining, failed };
 }
