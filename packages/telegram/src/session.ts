@@ -37,7 +37,12 @@ export class TelegramChatSession implements ChatSession {
     const chats: ChatInfo[] = [];
     // Resolving a chat later needs its access hash, which mtcute stores from this very listing —
     // so the sync engine always lists before it fetches.
-    for await (const dialog of this.api.iterDialogs()) chats.push(toChatInfo(dialog));
+    //
+    // `archived: 'keep'` is load-bearing: mtcute defaults to `'exclude'`, which asks Telegram for
+    // the main folder alone. Without it an archived chat is not de-prioritised, it is INVISIBLE —
+    // archiving a group in Telegram would silently drop it from postbote's index and the
+    // conversation list, with nothing to say so.
+    for await (const dialog of this.api.iterDialogs({ archived: 'keep' })) chats.push(toChatInfo(dialog));
     return chats;
   }
 

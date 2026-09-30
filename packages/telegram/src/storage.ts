@@ -133,9 +133,15 @@ class SecretStoreDriver extends MemoryStorageDriver implements IStorageDriver {
     const auth = this.authState();
     for (const [dc, key] of ns(NS.authKeys)) auth.authKeys.set(Number(dc), unb64(key));
     for (const [k, value] of ns(NS.authKeysTemp)) {
+      // `<expiry>:<base64>`. A row without the colon cannot be a temp key this code wrote, and
+      // decoding it anyway would yield a key that is silently wrong and already expired — read as
+      // "expired", so Telegram just re-authorizes instead of failing loudly on a corrupt file.
       const colon = value.indexOf(':');
+      if (colon < 1) continue;
+      const expires = Number(value.slice(0, colon));
+      if (!Number.isFinite(expires)) continue;
       auth.authKeysTemp.set(k, unb64(value.slice(colon + 1)));
-      auth.authKeysTempExpiry.set(k, Number(value.slice(0, colon)));
+      auth.authKeysTempExpiry.set(k, expires);
     }
     const kv = this.getState('kv', () => new Map<string, Uint8Array>());
     for (const [k, v] of ns(NS.kv)) kv.set(k, unb64(v));

@@ -4,6 +4,7 @@ import type {
   TelegramClientHandle,
   TgChat,
   TgDialog,
+  TgDialogsParams,
   TgMessage,
   TgPeer,
   TgUser,
@@ -83,6 +84,8 @@ export class FakeClient implements TelegramClientHandle {
   readonly credentials: ClientOptions['credentials'];
   readonly script: FakeScript;
   readonly calls: string[] = [];
+  /** Every `iterDialogs` argument the session passed, in order. */
+  readonly dialogsParams: Array<TgDialogsParams | undefined> = [];
   destroyed = 0;
 
   constructor(options: ClientOptions, script: FakeScript) {
@@ -102,8 +105,12 @@ export class FakeClient implements TelegramClientHandle {
     return ME;
   }
 
-  async *iterDialogs(): AsyncIterable<TgDialog> {
-    this.calls.push('iterDialogs');
+  async *iterDialogs(params?: TgDialogsParams): AsyncIterable<TgDialog> {
+    // The archived handling is recorded, because it is a REAL behaviour of mtcute: the default
+    // ('exclude') never returns an archived chat, and a test that does not look here cannot tell
+    // a session that asked for both folders from one that forgot to ask.
+    this.calls.push(`iterDialogs:${params?.archived ?? 'default'}`);
+    this.dialogsParams.push(params);
     for (const dialog of this.script.dialogs ?? []) yield dialog;
   }
 

@@ -215,6 +215,27 @@ export default async () => {
       expect(page.exhausted).toBe(true);
     });
 
+    await it('asks for BOTH dialog folders, because mtcute leaves archived chats out by default', async () => {
+      // Regression: `iterDialogs()` with no argument is mtcute's `archived: 'exclude'`, which asks
+      // Telegram for the MAIN folder alone. An archived chat would then not be de-prioritised but
+      // INVISIBLE — archiving a group would silently drop it from the index, with nothing to say
+      // so. The fake serves the same list either way, so the assertion is on what was ASKED FOR.
+      const { create } = fakeFactory({
+        dialogs: [
+          { peer: ANNA, lastMessage: null, lastReadIngoing: 0, lastReadOutgoing: 0 },
+          { peer: ORGA, lastMessage: null, lastReadIngoing: 0, lastReadOutgoing: 0 },
+        ],
+      });
+      const client = create({
+        credentials: { apiId: 1, apiHash: HASH },
+        storage: new SecretStoreStorage(SecretStore.open(':memory:')),
+      });
+      const chats = await new TelegramChatSession(client).listChats();
+      expect(chats.map((c) => c.remoteId)).toEqualArray(['1001', '-1004001']);
+      expect(client.dialogsParams[0]?.archived).toBe('keep');
+      expect(client.calls.includes('iterDialogs:keep')).toBe(true);
+    });
+
     await it('walks forward strictly after the cursor, asking mtcute for the offset + 1', async () => {
       const { create } = fakeFactory({ history });
       const client = create({
@@ -369,6 +390,36 @@ export default async () => {
         );
         expect(readdirSync(context(dir).secretsDir).length).toBe(0);
         expect((await backend.listAccounts()).length).toBe(0);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('keeps the authorized session when only the rename fails — the key is the only copy', async () => {
+      // The rename can fail on a full disk, a read-only mount, or a path of the wrong kind left
+      // behind by an earlier crash — always AFTER Telegram authorized us. The pending file then
+      // holds the one and only auth key, so deleting it would throw away a login the user just
+      // completed, and redoing it costs a phone code. It survives, and the error names it.
+      //
+      // A DIRECTORY at the target path is the one failure reproducible without a seam: rename(2)
+      // onto a directory is EISDIR, so the move fails while everything before it succeeded.
+      const dir = tempDir();
+      const secrets = context(dir).secretsDir;
+      try {
+        const backend = new TelegramBackend(context(dir), fakeFactory({ loginAs: ME }).create);
+        await backend.addAccount(prompter(['+49 170 0000000', '12345', 'correct horse']));
+        // Now redo it with the target blocked; `ME.id` is 42, so this is where the rename lands.
+        rmSync(join(secrets, 'telegram-42.db'), { force: true });
+        mkdirSync(join(secrets, 'telegram-42.db'));
+        await expect(
+          backend.addAccount(prompter(['+49 170 0000000', '12345', 'correct horse'])),
+        ).rejects.toThrow(/the session is kept at/);
+        // Still there, still holding the key, and NOT listed as an account (it has no id yet).
+        const left = readdirSync(secrets).filter((f) => f.endsWith('.pending.db'));
+        expect(left.length).toBe(1);
+        const store = SecretStore.open(join(secrets, left[0]));
+        expect(store.load('mtcute.auth_keys').get('2')).toBe('AQIDBPr7');
+        store.close();
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }

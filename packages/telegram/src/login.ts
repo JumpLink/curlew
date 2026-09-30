@@ -17,7 +17,7 @@
 import type { BackendAccount, BackendContext } from '@postbote/protocol';
 import { ensurePrivateDir, SecretStore } from '@postbote/store';
 import { existsSync, renameSync, rmSync } from 'node:fs';
-import type { LoginPrompts, TgUser } from './api.ts';
+import type { LoginPrompts, TelegramClientHandle, TgUser } from './api.ts';
 import {
   accountIdFor,
   pendingSessionPath,
@@ -65,10 +65,20 @@ export async function loginTelegram(
   sweepPendingSessions(context.secretsDir);
   const pending = pendingSessionPath(context.secretsDir);
   const store = SecretStore.open(pending);
-  const client = createClient({ credentials, storage: new SecretStoreStorage(store) });
+  let client: TelegramClientHandle;
+  try {
+    client = createClient({ credentials, storage: new SecretStoreStorage(store) });
+  } catch (err) {
+    store.close();
+    throw err;
+  }
+  // Set the moment Telegram has authorized us, i.e. the pending file now holds a LIVE auth key.
+  // From there on it is the only copy of the session and must survive every later failure.
+  let authorized = false;
   let moved = false;
   try {
     const me = await client.login(prompts);
+    authorized = true;
     const account: BackendAccount = {
       id: accountIdFor(me.id),
       identity: identityOf(me),
@@ -80,7 +90,19 @@ export async function loginTelegram(
     writeStoredCredentials(store, credentials);
     await client.destroy();
     store.close();
-    renameSync(pending, sessionPath(context.secretsDir, account.id));
+    const target = sessionPath(context.secretsDir, account.id);
+    try {
+      renameSync(pending, target);
+    } catch (err) {
+      // The login WORKED; only the rename failed (a full disk, a read-only mount). Deleting the
+      // pending file here would throw away the only copy of a session the user just authorized,
+      // so it stays and the path is named — the next `accounts add` sweeps it once it is stale,
+      // and until then it can be moved into place by hand.
+      throw new Error(
+        `logged in, but the session file could not be moved to ${target} (${err instanceof Error ? err.message : String(err)}) — ` +
+          `the session is kept at ${pending}; move it there by hand, or log in again`,
+      );
+    }
     moved = true;
     return account;
   } finally {
@@ -91,7 +113,12 @@ export async function loginTelegram(
       } catch {
         // Already closed after a successful destroy that failed later at the rename.
       }
-      for (const path of [pending, `${pending}-journal`]) if (existsSync(path)) rmSync(path, { force: true });
+      // Only a login that never got authorized leaves rubbish behind. A pending file that DOES
+      // hold a live auth key is kept whatever went wrong afterwards — see the catch above.
+      if (!authorized) {
+        for (const path of [pending, `${pending}-journal`])
+          if (existsSync(path)) rmSync(path, { force: true });
+      }
     }
   }
 }
