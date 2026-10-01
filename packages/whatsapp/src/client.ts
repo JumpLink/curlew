@@ -29,9 +29,7 @@
  * and nothing of that may reach a terminal scrollback or an MCP transcript.
  */
 
-import { DEFAULT_ORIGIN, makeWASocket } from 'baileys';
-import { WebSocketClient } from 'baileys/lib/Socket/Client/websocket.js';
-import WebSocket from 'ws';
+import { makeWASocket } from 'baileys';
 import type { WaSocketHandle } from './api.ts';
 import type { SecretStoreAuthState } from './auth-state.ts';
 
@@ -39,61 +37,25 @@ export interface SocketOptions {
   auth: SecretStoreAuthState;
   /**
    * Ask the phone for the FULL history on linking, instead of the recent months. Only takes
-   * effect when a device is linked. Off by default: every message costs executions of a
-   * per-process budget (gjsify#1838), and a full history can be a six-digit message count.
+   * effect when a device is linked. Off by default: a full history can be a six-digit message
+   * count, and each one costs a write.
    */
   fullHistory?: boolean;
 }
 
 export type SocketFactory = (options: SocketOptions) => WaSocketHandle;
 
-// fixed upstream in gjsify: #1809 (@gjsify/ws took `new WebSocket(url, options)` for
-// `(url, protocols)`, so Baileys' origin and headers were lost and the handshake failed) —
-// remove at the next gjsify bump. The three-argument form is what `ws` documents and is exactly
-// what Baileys' own `connect()` does otherwise, so this is correct on Node as well.
-let shimmed = false;
-function shimWebSocketOptions(): void {
-  if (shimmed) return;
-  shimmed = true;
-  const proto = WebSocketClient.prototype as unknown as {
-    connect(this: ShimmedClient): void;
-  };
-  proto.connect = function connect(this: ShimmedClient): void {
-    if (this.socket) return;
-    const socket = new WebSocket(this.url, undefined, {
-      origin: DEFAULT_ORIGIN,
-      headers: this.config.options?.headers as Record<string, string> | undefined,
-      handshakeTimeout: this.config.connectTimeoutMs,
-      timeout: this.config.connectTimeoutMs,
-      agent: this.config.agent,
-    } as WebSocket.ClientOptions);
-    socket.setMaxListeners(0);
-    this.socket = socket;
-    for (const event of [
-      'close',
-      'error',
-      'upgrade',
-      'message',
-      'open',
-      'ping',
-      'pong',
-      'unexpected-response',
-    ]) {
-      socket.on(event, (...args: unknown[]) => this.emit(event, ...args));
-    }
-  };
-}
-
-interface ShimmedClient {
-  socket: WebSocket | null;
-  url: URL;
-  config: {
-    options?: { headers?: unknown };
-    connectTimeoutMs?: number;
-    agent?: unknown;
-  };
-  emit(event: string, ...args: unknown[]): boolean;
-}
+/**
+ * Baileys builds its own WebSocket, and for a long time it could not do so on GJS: `@gjsify/ws`
+ * read a plain object in the second positional argument as `protocols` (gjsify#1809), so
+ * Baileys' `origin` and headers were dropped and the handshake failed. This file used to
+ * override `WebSocketClient.prototype.connect` to work around it.
+ *
+ * That override is gone: `@gjsify/ws` 0.53.0 normalises the arguments the way `ws` documents
+ * them, measured on GJS against a real server — `new WebSocket(url, { origin, headers })`
+ * reaches the wire with both, and Baileys' own `connect()` now suffices. Nothing here
+ * monkey-patches a library again; a third occurrence would mean measuring, not patching.
+ */
 
 /** A logger that says nothing — see the file comment. */
 function silentLogger(): Parameters<typeof makeWASocket>[0]['logger'] {
@@ -113,7 +75,6 @@ function silentLogger(): Parameters<typeof makeWASocket>[0]['logger'] {
 
 /** The one place Baileys' socket is constructed. */
 export const createBaileysSocket: SocketFactory = ({ auth, fullHistory = false }) => {
-  shimWebSocketOptions();
   const sock = makeWASocket({
     auth: auth.state,
     logger: silentLogger(),
