@@ -42,8 +42,6 @@ import {
   type Endpoint,
   chooseMechanism,
   parseService,
-  TLS_SOCKET_GAP,
-  usableEndpoints,
 } from './transport.ts';
 import {
   type ArchivedEntry,
@@ -84,11 +82,6 @@ const NS_TLS = 'urn:ietf:params:xml:ns:xmpp-tls';
 const CONNECT_TIMEOUT_MS = 20_000;
 const QUERY_TIMEOUT_MS = 60_000;
 const CLOSE_TIMEOUT_MS = 2_000;
-
-/** GJS exposes the legacy `imports` object; Node does not (the probe `app` uses as well). */
-function onGjs(): boolean {
-  return typeof (globalThis as { imports?: unknown }).imports !== 'undefined';
-}
 
 function withTimeout<T>(promise: Promise<T>, ms: number, what: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -229,8 +222,10 @@ class XmppConnection implements XmppApi {
  * graceful XMPP close, and a socket left half-open past it holds the fd. An `end()` that a peer
  * never answers would wait out `CLOSE_TIMEOUT_MS` for nothing. The original reason for the
  * destroy — that on 0.49.0 a TLS socket sent no `close_notify` and emitted no `'close'`, so
- * xmpp.js's `stop()` hung on a direct-TLS connection (gjsify#1837) — is gone; the destroy is
- * what closes this path on both runtimes now, and it costs nothing.
+ * xmpp.js's `stop()` hung on a direct-TLS connection (gjsify#1837) — is gone, and the direct-TLS
+ * stall that outlived it (gjsify#1958) never reached this point at all: it hung in `start()`,
+ * long before a stream was ever opened to be closed. What is left is not a workaround; the destroy
+ * is what closes this path on both runtimes, and it costs nothing.
  */
 function destroySocket(entity: Client): void {
   const socket = entity.socket;
@@ -273,12 +268,9 @@ async function connectEndpoint(
   // Registration order is priority order: STARTTLS before SASL.
   features.use('starttls', NS_TLS, async ({ entity: e }, next) => {
     if (e.isSecure()) return next();
-    // The upgrade itself is no longer the problem — gjsify#1837 wired `tls.connect({ socket })`
-    // and it is pinned on both runtimes by `app/tests/unit/xmpp/tls.spec.ts`. This stays as the
-    // backstop for the path `usableEndpoints()` cannot rule out in advance: a server that offers
-    // STARTTLS to a client that arrived over a WebSocket, or a re-negotiation after a restart.
-    // `TLS_SOCKET_GAP` says what is still measured as broken on GJS.
-    if (onGjs()) throw new Error(TLS_SOCKET_GAP);
+    // The upgrade works on both runtimes: gjsify#1837 wired `tls.connect({ socket })`, and
+    // `app/tests/unit/xmpp/tls.spec.ts` pins it. The path as a whole — the peer's first bytes
+    // after the upgrade — additionally needed gjsify#1958; see the measurement in `transport.ts`.
     const answer = await e.sendReceive(xml('starttls', { xmlns: NS_TLS }));
     if (!answer.is('proceed', NS_TLS)) throw new Error('the server refused STARTTLS');
     const upgraded = new TlsSocket();
@@ -327,16 +319,14 @@ export const networkDiscovery: DiscoveryDeps = {
   },
 };
 
-/** Candidate endpoints for a login, filtered by what this runtime can do. */
+/** Candidate endpoints for a login. Every kind works on both runtimes; see `transport.ts`. */
 export async function endpointsFor(
   login: XmppLogin,
   discovery: DiscoveryDeps = networkDiscovery,
-  canUseTlsSockets = !onGjs(),
 ): Promise<Endpoint[]> {
-  const all = login.service
+  return login.service
     ? [parseService(login.service)]
     : await discoverEndpoints(domainOf(login.jid), discovery);
-  return usableEndpoints(all, canUseTlsSockets);
 }
 
 /**

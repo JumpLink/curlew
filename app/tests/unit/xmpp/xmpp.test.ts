@@ -29,7 +29,6 @@ import {
   parseRoster,
   parseService,
   unresolvedReferences,
-  usableEndpoints,
   chooseMechanism,
   decodeCursor,
   encodeCursor,
@@ -476,29 +475,28 @@ export default async () => {
       expect(websocketLinks({ links: 'nope' }).length).toBe(0);
     });
 
-    await it('keeps only WebSocket where TLS sockets do not work, with a clear error when nothing is left', async () => {
-      const all = [
-        parseService('xmpps://a.example.org'),
-        parseService('wss://a.example.org/ws'),
-        parseService('xmpp://a.example.org'),
-      ];
-      expect(
-        usableEndpoints(all, false)
-          .map((e) => e.kind)
-          .join(),
-      ).toBe('websocket');
-      expect(usableEndpoints(all, true).length).toBe(3);
-      const message = await rejects(async () =>
-        usableEndpoints([parseService('xmpps://a.example.org'), parseService('xmpp://a.example.org')], false),
-      );
-      expect(message.includes('gjsify#1837')).toBe(true);
-      expect(message.includes('wss://')).toBe(true);
+    await it('offers every endpoint kind, including direct TLS on GJS', async () => {
+      // Raw TLS used to be dropped on GJS, so a server with no WebSocket got one clear error
+      // instead of a handshake per endpoint. gjsify#1958 closed the gap that filter existed for
+      // (the peer's first bytes arriving unread); the filter and its error are gone with it, and
+      // the configured address is now used exactly as given.
       const configured = await endpointsFor(
-        { jid: ANNA, password: 'x', service: 'wss://example.org/ws' },
+        { jid: ANNA, password: 'x', service: 'xmpps://a.example.org' },
         { resolveSrv: async () => [], fetchJson: async () => null },
-        false,
       );
-      expect(configured[0].uri).toBe('wss://example.org/ws');
+      expect(configured.map((e) => `${e.kind}:${e.uri}`).join()).toBe(
+        'direct-tls:xmpps://a.example.org:5223',
+      );
+      const srvs = await endpointsFor(
+        { jid: ANNA, password: 'x', service: null },
+        {
+          resolveSrv: async () => [
+            { name: '_xmpps-client._tcp.example.org', port: 5223, weight: 1, priority: 1 },
+          ],
+          fetchJson: async () => null,
+        },
+      );
+      expect(srvs.map((e) => e.kind).join()).toContain('direct-tls');
     });
   });
 

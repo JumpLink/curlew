@@ -15,11 +15,13 @@ import { join } from 'node:path';
  * WebSocket. gjsify#1837 fixed the handshake, wired `options.socket`, and made `end()` send
  * `close_notify`, and all three are pinned here on BOTH runtimes.
  *
- * What is NOT claimed: that a whole XMPP login over direct TLS works on GJS. It does not, and
- * that is a separate defect — the handshake completes and the stream header goes out, then the
- * server's answer never arrives (`usableEndpoints()` still filters, see `transport.ts`). The
- * distinction matters because these four cases pass while that one does not: the primitives are
- * fixed, the composition is not, and only measuring the whole path tells them apart.
+ * A whole XMPP login over direct TLS stayed broken on GJS after all of that, for a reason none of
+ * these four cases could see: gjsify's `Readable` made `on()` enter flowing mode on a `'data'`
+ * listener but left `addListener` as a different function, and `@xmpp/tls` subscribes `'data'`
+ * through `addListener`. The handshake completed and the peer's bytes arrived, unread. gjsify#1958
+ * made the two names the same function; the last case below now pins THAT — the byte flow these
+ * primitives exist for, subscribed the way xmpp.js subscribes it — because it is the difference
+ * between a handshake and a login.
  *
  * The certificate is generated per run with the system `openssl` and lives only in a temp dir.
  * It is self-signed for `localhost`, and it is what the `ca` option pins — which is also why the
@@ -61,13 +63,22 @@ function makeCert(dir: string): { key: string; ca: string } {
   return { key: readFileSync(key, 'utf8'), ca: readFileSync(cert, 'utf8') };
 }
 
-/** A quiet TLS server on the loopback: the handshake is the subject, not the protocol. */
-async function withTlsServer(run: (port: number, ca: string) => Promise<void>): Promise<void> {
+/**
+ * A quiet TLS server on the loopback: the handshake is the subject, not the protocol.
+ *
+ * `reply`, when given, is written once per connection — the byte flow the last case needs, which
+ * the handshake cases deliberately have nothing to do with.
+ */
+async function withTlsServer(
+  run: (port: number, ca: string) => Promise<void>,
+  reply?: string,
+): Promise<void> {
   const tls = await import('node:tls');
   const dir = mkdtempSync(join(tmpdir(), 'postbote-tls-'));
   try {
     const { key, ca } = makeCert(dir);
     const server = tls.createServer({ key, cert: ca }, (socket) => {
+      if (reply !== undefined) socket.write(reply);
       socket.on('data', () => {});
     });
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -85,14 +96,15 @@ async function withTlsServer(run: (port: number, ca: string) => Promise<void>): 
  * A promise's outcome as a value, under a deadline.
  *
  * `'|true'` is the success a case below asserts: an empty error and `ok`. A hang becomes
- * `'timeout|false'` rather than never returning.
+ * `'timeout|false'` rather than never returning. What the promise RESOLVED with is kept in
+ * `value`, for the one case that asserts on the bytes rather than on the completion.
  */
-function settle(promise: Promise<unknown>): Promise<{ ok: boolean; error: string }> {
+function settle<T>(promise: Promise<T>): Promise<{ ok: boolean; error: string; value?: T }> {
   const deadline = new Promise<'timeout'>((resolve) =>
     setTimeout(() => resolve('timeout'), HANDSHAKE_TIMEOUT_MS),
   );
   const outcome = promise.then(
-    () => ({ ok: true, error: '' }),
+    (value: T) => ({ ok: true, error: '', value }),
     (err: unknown) => ({ ok: false, error: err instanceof Error ? err.message : String(err) }),
   );
   return Promise.race([outcome, deadline]).then((r) => (typeof r === 'string' ? { ok: false, error: r } : r));
@@ -205,6 +217,40 @@ export default async () => {
         );
         expect(`${result.error}|${result.ok}`).toBe('|true');
       });
+    });
+
+    await it("delivers the peer's bytes to an addListener subscriber, the way xmpp.js asks", async () => {
+      const tls = await import('node:tls');
+      const payload = `<?xml version='1.0'?><stream:stream from='localhost'>`;
+      await withTlsServer(async (port, ca) => {
+        // The whole XMPP stall, without an XMPP server. @xmpp/events' `onoff()` resolves
+        // `addEventListener ?? addListener`, so @xmpp/tls subscribes 'data' through
+        // `addListener` — and gjsify's Readable used to treat that as an ordinary event while
+        // `on()` alone switched the stream to flowing mode. The server's answer then sat unread in
+        // the readable buffer and `entity.status` stayed 'opening' until the login timed out.
+        // gjsify#1958 made the two names the same function; that is what the alias assertion pins,
+        // and the bytes are what the composition actually needed.
+        const result = await settle(
+          new Promise<{ alias: boolean; bytes: number; flowing: unknown }>((resolve, reject) => {
+            const socket = tls.connect({ host: '127.0.0.1', port, servername: 'localhost', ca }, () => {
+              let bytes = 0;
+              socket.addListener('data', (chunk: string | Uint8Array) => {
+                bytes += typeof chunk === 'string' ? chunk.length : chunk.byteLength;
+                resolve({
+                  alias: (socket.addListener as unknown) === (socket.on as unknown),
+                  bytes,
+                  flowing: (socket as unknown as { readableFlowing?: unknown }).readableFlowing,
+                });
+                socket.destroy();
+              });
+            });
+            socket.on('error', reject);
+          }),
+        );
+        expect(`${result.error}|${result.ok}`).toBe('|true');
+        const out = result.value ?? { alias: false, bytes: -1, flowing: 'unset' };
+        expect(`${out.alias}|${out.bytes}|${out.flowing}`).toBe(`true|${payload.length}|true`);
+      }, payload);
     });
   });
 };

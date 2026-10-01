@@ -6,7 +6,15 @@
  *   2. WebSocket (RFC 7395) over TLS, found through `/.well-known/host-meta.json` (XEP-0156).
  *   3. STARTTLS: SRV `_xmpp-client._tcp.<domain>`, else `<domain>:5222`.
  *
- * On GJS only (2) works — see `TLS_SOCKET_GAP` for the measurement behind that.
+ * All three work on both runtimes. The raw-TLS paths were blocked here until gjsify#1958 aliased
+ * `Readable.prototype.addListener` to `on`: `@xmpp/tls` subscribes `'data'` through `addListener`
+ * (via `@xmpp/events`' `addEventListener ?? addListener`), so where the two names were not the same
+ * function the peer's answer ARRIVED and sat unread in the readable buffer — it never went
+ * missing — and the login sat at `opening` until it timed out. Measured over direct TLS against a
+ * local Prosody 13: 10 of 12 GJS runs stalled at `opening` in ~2.1 s before the alias, 19 of 20
+ * reached `online` in 577–679 ms after it, with nothing patched in this file. The intermittent
+ * `Gio.TlsError` certificate rejection counted separately — 2 of those 12 before, 1 of the 20 after
+ * — is a different defect: it also takes runs that would otherwise go online.
  *
  * The certificate is always checked against the XMPP DOMAIN (sent as SNI), not against the host
  * an SRV record points to: that is what XEP-0368 and RFC 6120 §13.7.2 require, and it is what
@@ -159,39 +167,4 @@ export function chooseMechanism(
   throw new Error(
     `the server offers no login mechanism postbote uses on this connection (offered: ${offered.join(', ') || 'none'})`,
   );
-}
-
-/**
- * Why raw-TLS endpoints are still dropped on GJS, measured against a local Prosody 13.
- *
- * The gap this was written for is FIXED: gjsify#1837 made `tls.connect()` complete a handshake,
- * wired `tls.connect({ socket })` so a STARTTLS upgrade works, and made `end()` send
- * `close_notify`. All three are pinned on both runtimes by `app/tests/unit/xmpp/tls.spec.ts`.
- *
- * A whole login over direct TLS on GJS does NOT work anyway, and that is what this filter is now
- * for. Measured on gjsify main (32b52b44e8): the TLS handshake completes and is authorised
- * against a pinned `ca`, the XMPP stream header goes out — and the server's answer never arrives,
- * so `entity.start()` times out after 20 s. Six of six runs. Node logs in over the same endpoint
- * in ~600 ms, and a hand-composed xmpp.js client that differs from this one only in its plugin
- * wiring completes on GJS six times out of six, so the failure is in this composition rather than
- * in the TLS primitives. Not yet attributed; do not remove this filter on the strength of the
- * tls.spec.ts cases alone — they pin the primitives, not the path.
- */
-export const TLS_SOCKET_GAP =
-  'direct TLS and STARTTLS need a gjsify release with working TLS sockets (gjsify#1837, after 0.52.0)';
-
-/**
- * Drop what the runtime cannot do: on GJS every raw-TLS endpoint, see `TLS_SOCKET_GAP`. A
- * server that offers nothing else gets one clear error instead of a failed handshake per
- * endpoint.
- */
-export function usableEndpoints(endpoints: readonly Endpoint[], canUseTlsSockets: boolean): Endpoint[] {
-  const usable = canUseTlsSockets ? [...endpoints] : endpoints.filter((e) => e.kind === 'websocket');
-  if (usable.length === 0 && endpoints.length > 0) {
-    throw new Error(
-      `the server offers no WebSocket endpoint (found ${endpoints.map((e) => e.uri).join(', ')}), and ${TLS_SOCKET_GAP} — ` +
-        'give its WebSocket address (wss://…) with `postbote accounts add xmpp` if it has one',
-    );
-  }
-  return usable;
 }
