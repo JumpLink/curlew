@@ -31,7 +31,6 @@
   "gjsify": {
     "excludeGlobals": [
       "document",
-      "navigator",
       "HTMLElement",
       "location",
       "Image",
