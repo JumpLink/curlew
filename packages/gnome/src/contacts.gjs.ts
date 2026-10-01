@@ -6,12 +6,12 @@
  * vCard attributes — never EContact/GObject instances.
  */
 
-import Gio from 'gi://Gio?version=2.0';
-import EBook from 'gi://EBook?version=1.2';
-import EBookContacts from 'gi://EBookContacts?version=1.2';
-import EDataServer from 'gi://EDataServer?version=1.2';
+import type EBook from 'gi://EBook?version=1.2';
+import type EBookContacts from 'gi://EBookContacts?version=1.2';
+import type EDataServer from 'gi://EDataServer?version=1.2';
 
 import { extractList, getRegistry, sourceGoaAccountId } from './eds.gjs.ts';
+import { book, eds } from './libs.gjs.ts';
 import { errorMessage, GnomeError } from '@postbote/protocol';
 import type { ContactDTO, SearchContactsOptions } from '@postbote/protocol';
 
@@ -19,15 +19,12 @@ const DEFAULT_LIMIT = 50;
 /** Seconds BookClient.connect waits for the backend to be connected. */
 const CONNECT_WAIT_SECONDS = 15;
 
-// get_contacts has a Promise overload in the types; make the runtime match.
-Gio._promisify(EBook.BookClient.prototype, 'get_contacts', 'get_contacts_finish');
-
 /** Promise wrapper around the static async BookClient.connect (callback-only in @girs). */
-function connectBook(source: EDataServer.Source): Promise<EBook.BookClient> {
+function connectBook(lib: typeof EBook, source: EDataServer.Source): Promise<EBook.BookClient> {
   return new Promise((resolve, reject) => {
-    EBook.BookClient.connect(source, CONNECT_WAIT_SECONDS, null, (_src, res) => {
+    lib.BookClient.connect(source, CONNECT_WAIT_SECONDS, null, (_src, res) => {
       try {
-        resolve(EBook.BookClient.connect_finish(res));
+        resolve(lib.BookClient.connect_finish(res));
       } catch (err) {
         reject(err);
       }
@@ -92,19 +89,21 @@ function mapContact(contact: EBookContacts.Contact): ContactDTO {
  */
 export async function searchContacts(options: SearchContactsOptions): Promise<ContactDTO[]> {
   const { query, limit = DEFAULT_LIMIT, accountId } = options;
-  const reg = getRegistry();
+  const { EBook: ebook, EBookContacts: contactsLib } = await book.get();
+  const EDS = await eds.get();
+  const reg = await getRegistry();
 
   let sources: EDataServer.Source[];
   try {
-    sources = reg.list_enabled(EDataServer.SOURCE_EXTENSION_ADDRESS_BOOK);
+    sources = reg.list_enabled(EDS.SOURCE_EXTENSION_ADDRESS_BOOK);
   } catch (err) {
     throw new GnomeError(`list address books: ${errorMessage(err)}`);
   }
   if (accountId) {
-    sources = sources.filter((s) => sourceGoaAccountId(reg, s) === accountId);
+    sources = sources.filter((s) => sourceGoaAccountId(EDS, reg, s) === accountId);
   }
 
-  const sexp = EBookContacts.BookQuery.any_field_contains(query ?? '').to_string();
+  const sexp = contactsLib.BookQuery.any_field_contains(query ?? '').to_string();
   const results: ContactDTO[] = [];
   let opened = 0;
   let lastError: unknown = null;
@@ -113,7 +112,7 @@ export async function searchContacts(options: SearchContactsOptions): Promise<Co
     if (results.length >= limit) break;
     let client: EBook.BookClient;
     try {
-      client = await connectBook(source);
+      client = await connectBook(ebook, source);
       opened++;
     } catch (err) {
       lastError = err;

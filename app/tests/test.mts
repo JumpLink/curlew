@@ -4,6 +4,7 @@
 import { run } from '@gjsify/unit';
 
 import runtime from './unit/runtime.test.ts';
+import gnomeOptional from './unit/gnome/optional.test.ts';
 import backends from './unit/backends.test.ts';
 
 import imapParse from './unit/protocol/imap-parse.test.ts';
@@ -56,6 +57,7 @@ import bundlePaths from './unit/integration/bundle-paths.test.ts';
 
 run({
   runtime,
+  gnomeOptional,
   backends,
   imapParse,
   mimeParse,
