@@ -102,8 +102,10 @@ Measured, not assumed:
   store calls go from Rust back into JavaScript through thread-safe functions, so the async half
   of the host carries real traffic, not only synchronous calls.
 - **The network has to be libsignal's.** `chat.signal.org` and the attachment CDNs chain to
-  Signal's own root CA. A W3C WebSocket cannot pin a root, and gjsify's `node:https` ignores
-  `ca` (gjsify gap, unfixed). libsignal-net pins the root itself and carries TLS, the WebSocket
+  Signal's own root CA. A W3C WebSocket cannot pin a root, so the chat socket has to be
+  libsignal's. (gjsify's `node:https` ignored `ca` when this was written; gjsify#1843 fixed that,
+  which is what lets `httpsDownloader` fetch the contact blob over a pinned root on GJS.) That
+  libsignal-net pins the root itself and carries TLS, the WebSocket
   and the framing inside the addon: its provisioning socket reached production and returned a
   link address in ~0.4 s on GJS. Signal-Desktop takes the same path
   (`SocketManager.getProvisioningConnection` → `connectProvisioning`).

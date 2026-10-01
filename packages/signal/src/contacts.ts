@@ -10,9 +10,11 @@
  * never asks for it — asking is a message to the user's devices, and postbote sends nothing.
  *
  * The download is a GET from Signal's CDN, which chains to Signal's private CA
- * (`constants.ts`). On GJS this does not work yet: gjsify's `node:https` ignores the `ca` option
- * (gjsify gap, unfixed — see `httpsDownloader`), so the sync reports the contact list as not read
- * and carries on; the messages themselves are unaffected.
+ * (`constants.ts`). `ca` is what makes that work: gjsify#1843 hands the request's TLS options to
+ * libsoup and verifies the peer against the pinned root, so the CDN's certificate is accepted on
+ * GJS as it is on Node (pinned by a test in this repo). Before that fix the option was dropped,
+ * the certificate was refused with "Inakzeptables TLS-Zertifikat", and the sync reported the
+ * contact list as not read while carrying on — messages unaffected.
  */
 
 import { type DeliveryEvent, normalizeAddress } from '@postbote/protocol';
@@ -75,10 +77,13 @@ export async function readContactsSync(
 }
 
 /**
- * Download over `node:https`, pinned to Signal's root. gjsify gap (unfixed): on GJS,
- * `@gjsify/https` builds its `Soup.Session` without a TLS database, so `ca` is ignored and the
- * CDN's certificate is refused ("Inakzeptables TLS-Zertifikat") — contact sync works on Node only
- * until gjsify honours `ca`.
+ * Download over `node:https`, pinned to Signal's root.
+ *
+ * `ca` is load-bearing, not decoration: the CDN chains to a private root, so an unverified
+ * request is refused. gjsify#1843 is what makes this work on GJS — it dropped Soup's database,
+ * so the option used to be ignored and every contact sync failed there while working on Node.
+ * The other client TLS options it started honouring (servername, checkServerIdentity,
+ * rejectUnauthorized) come along with the same code path.
  */
 export function httpsDownloader(maxBytes = 64 * 1024 * 1024): AttachmentDownloader {
   return async (url) => {

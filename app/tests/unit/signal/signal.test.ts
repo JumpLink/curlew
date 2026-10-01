@@ -70,6 +70,7 @@ import {
   serviceIdFromBinary,
   sessionPath,
   SIGNAL_MANIFEST,
+  SIGNAL_ROOT_CA_PEM,
   SignalBackend,
   type SignalBackendOptions,
   SignalMapper,
@@ -464,6 +465,117 @@ export default async () => {
       });
       expect(urls.length).toBe(1);
       expect((events[0] as Extract<DeliveryEvent, { type: 'peer' }>).peer.displayName).toBe('Anna');
+    });
+
+    // The CDN chains to Signal's private root, so `ca` is the only thing that makes the request
+    // work at all — and gjsify#1843 is what made it reach libsoup on GJS. Before that fix the
+    // option was dropped, every contact sync failed there with "Inakzeptables TLS-Zertifikat",
+    // and the sync reported the contact list as not read and carried on. A test that injected a
+    // downloader could not have caught it: the downloader stands in for the whole HTTPS path.
+    await it('verifies the CDN against the pinned root, and refuses it unpinned', async () => {
+      const https = await import('node:https');
+      const { execFileSync } = await import('node:child_process');
+      const { mkdtempSync, readFileSync, rmSync } = await import('node:fs');
+      const { tmpdir } = await import('node:os');
+      const { join } = await import('node:path');
+      const dir = mkdtempSync(join(tmpdir(), 'postbote-signal-ca-'));
+      // Every accepted socket is tracked and destroyed by hand: `server.close()` stops the
+      // listener but does not end connections already open, and one of those keeps the whole GJS
+      // run alive at exit — the same class of bug the suite's bus-pinning documents for a live
+      // session connection.
+      const accepted: Array<{ destroy: () => void }> = [];
+      let server: { close: () => void } | null = null;
+      try {
+        // One throwaway self-signed root for localhost, generated per run. 2048-bit, not 1024:
+        // GnuTLS refuses a 1024-bit root with CA_MD_TOO_WEAK, which is a fact about the verifier
+        // and not about `ca`, and would make this test assert the wrong thing. Synthetic; the
+        // temp dir is its only existence.
+        const key = join(dir, 'cdn.key');
+        const cert = join(dir, 'cdn.crt');
+        execFileSync(
+          'openssl',
+          [
+            'req',
+            '-x509',
+            '-newkey',
+            'rsa:2048',
+            '-nodes',
+            '-days',
+            '1',
+            '-subj',
+            '/CN=localhost',
+            '-addext',
+            'subjectAltName=DNS:localhost,IP:127.0.0.1',
+            '-addext',
+            'basicConstraints=critical,CA:TRUE',
+            '-keyout',
+            key,
+            '-out',
+            cert,
+          ],
+          { stdio: 'ignore' },
+        );
+        server = https.createServer(
+          { key: readFileSync(key, 'utf8'), cert: readFileSync(cert, 'utf8') },
+          (_req, res) => {
+            res.writeHead(200, { 'content-type': 'application/octet-stream', connection: 'close' });
+            res.end(Buffer.from('contact blob bytes'));
+          },
+        );
+        server.on('connection', (socket) => {
+          accepted.push(socket);
+          socket.on('close', () => {
+            const at = accepted.indexOf(socket);
+            if (at >= 0) accepted.splice(at, 1);
+          });
+        });
+        await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+        const port = (server.address() as { port: number }).port;
+
+        const get = (caPem: string | undefined): Promise<string> =>
+          new Promise((resolve) => {
+            const req = https.get(
+              {
+                host: '127.0.0.1',
+                port,
+                path: '/attachments/x',
+                servername: 'localhost',
+                ...(caPem ? { ca: caPem } : {}),
+                timeout: 20_000,
+              },
+              (res) => {
+                const chunks: Buffer[] = [];
+                res.on('data', (c: Buffer) => chunks.push(c));
+                res.on('end', () => resolve(`ok:${res.statusCode}:${Buffer.concat(chunks).toString()}`));
+              },
+            );
+            req.on('error', (err: Error) =>
+              resolve(`error:${(err as { code?: string }).code ?? err.message}`),
+            );
+            setTimeout(() => {
+              req.destroy();
+              resolve('error:timeout');
+            }, 20_000);
+          });
+
+        const pinned = readFileSync(cert, 'utf8');
+        // The pinned root is accepted — this is the case that failed on GJS before #1843, where
+        // `ca` was dropped and the CDN's certificate was refused. The full string is the
+        // assertion, so a failure here names the response that came back instead.
+        const acceptedResponse = await get(pinned);
+        expect(acceptedResponse).toBe('ok:200:contact blob bytes');
+        // The same request with NO root is refused, so the first case is a real check against
+        // this certificate and not a session that accepted whatever it was offered.
+        const refusedResponse = await get(undefined);
+        expect(refusedResponse).toContain('error:');
+        // And the constant the downloader actually pins is a real certificate, not an empty
+        // string that would have made the CDN fetch fall back to the system roots.
+        expect(SIGNAL_ROOT_CA_PEM).toContain('BEGIN CERTIFICATE');
+      } finally {
+        for (const socket of accepted) socket.destroy();
+        server?.close();
+        rmSync(dir, { recursive: true, force: true });
+      }
     });
   });
 
