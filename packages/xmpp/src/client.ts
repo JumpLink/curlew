@@ -223,11 +223,14 @@ class XmppConnection implements XmppApi {
 }
 
 /**
- * Tear the socket down without a graceful TLS close.
+ * Tear the socket down once the stream is closed.
  *
- * gjsify gap (unfixed, gjsify#1837): on 0.52.0 a TLS socket's `end()` never sends close_notify
- * and never emits 'close', so xmpp.js's `stop()` would wait forever on a direct-TLS connection.
- * The stream is closed above; destroying the socket afterwards loses nothing.
+ * Destroying rather than ending it is deliberate and not a workaround: the stream above is the
+ * graceful XMPP close, and a socket left half-open past it holds the fd. An `end()` that a peer
+ * never answers would wait out `CLOSE_TIMEOUT_MS` for nothing. The original reason for the
+ * destroy — that on 0.49.0 a TLS socket sent no `close_notify` and emitted no `'close'`, so
+ * xmpp.js's `stop()` hung on a direct-TLS connection (gjsify#1837) — is gone; the destroy is
+ * what closes this path on both runtimes now, and it costs nothing.
  */
 function destroySocket(entity: Client): void {
   const socket = entity.socket;
@@ -270,8 +273,11 @@ async function connectEndpoint(
   // Registration order is priority order: STARTTLS before SASL.
   features.use('starttls', NS_TLS, async ({ entity: e }, next) => {
     if (e.isSecure()) return next();
-    // gjsify gap (unfixed, gjsify#1837): no tls.connect({ socket }) on 0.52.0. STARTTLS
-    // endpoints are filtered out on GJS before connecting; this is the backstop.
+    // The upgrade itself is no longer the problem — gjsify#1837 wired `tls.connect({ socket })`
+    // and it is pinned on both runtimes by `app/tests/unit/xmpp/tls.spec.ts`. This stays as the
+    // backstop for the path `usableEndpoints()` cannot rule out in advance: a server that offers
+    // STARTTLS to a client that arrived over a WebSocket, or a re-negotiation after a restart.
+    // `TLS_SOCKET_GAP` says what is still measured as broken on GJS.
     if (onGjs()) throw new Error(TLS_SOCKET_GAP);
     const answer = await e.sendReceive(xml('starttls', { xmlns: NS_TLS }));
     if (!answer.is('proceed', NS_TLS)) throw new Error('the server refused STARTTLS');

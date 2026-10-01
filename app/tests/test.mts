@@ -37,6 +37,7 @@ import telegram from './unit/telegram/telegram.test.ts';
 import signal from './unit/signal/signal.test.ts';
 import whatsapp from './unit/whatsapp/whatsapp.test.ts';
 import xmpp from './unit/xmpp/xmpp.test.ts';
+import xmppTls from './unit/xmpp/tls.spec.ts';
 import matrix from './unit/matrix/matrix.test.ts';
 
 import date from './unit/core/date.test.ts';
@@ -88,6 +89,7 @@ run({
   signal,
   whatsapp,
   xmpp,
+  xmppTls,
   matrix,
   date,
   limits,

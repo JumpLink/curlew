@@ -6,7 +6,7 @@
  *   2. WebSocket (RFC 7395) over TLS, found through `/.well-known/host-meta.json` (XEP-0156).
  *   3. STARTTLS: SRV `_xmpp-client._tcp.<domain>`, else `<domain>:5222`.
  *
- * On GJS with gjsify 0.52.0 only (2) works — see `TLS_SOCKET_GAP`.
+ * On GJS only (2) works — see `TLS_SOCKET_GAP` for the measurement behind that.
  *
  * The certificate is always checked against the XMPP DOMAIN (sent as SNI), not against the host
  * an SRV record points to: that is what XEP-0368 and RFC 6120 §13.7.2 require, and it is what
@@ -162,17 +162,26 @@ export function chooseMechanism(
 }
 
 /**
- * gjsify gap (unfixed, gjsify#1837): on 0.52.0 no raw TLS socket works — `tls.connect()` fails
- * its handshake with G_IO_ERROR_PENDING (the plain socket's own read is still in flight on the
- * stream TLS wants), measured against a local Prosody and a public HTTPS host alike, and
- * `tls.connect({ socket })` ignores the socket, so STARTTLS cannot work either. WebSocket
- * (Soup) is unaffected.
+ * Why raw-TLS endpoints are still dropped on GJS, measured against a local Prosody 13.
+ *
+ * The gap this was written for is FIXED: gjsify#1837 made `tls.connect()` complete a handshake,
+ * wired `tls.connect({ socket })` so a STARTTLS upgrade works, and made `end()` send
+ * `close_notify`. All three are pinned on both runtimes by `app/tests/unit/xmpp/tls.spec.ts`.
+ *
+ * A whole login over direct TLS on GJS does NOT work anyway, and that is what this filter is now
+ * for. Measured on gjsify main (32b52b44e8): the TLS handshake completes and is authorised
+ * against a pinned `ca`, the XMPP stream header goes out — and the server's answer never arrives,
+ * so `entity.start()` times out after 20 s. Six of six runs. Node logs in over the same endpoint
+ * in ~600 ms, and a hand-composed xmpp.js client that differs from this one only in its plugin
+ * wiring completes on GJS six times out of six, so the failure is in this composition rather than
+ * in the TLS primitives. Not yet attributed; do not remove this filter on the strength of the
+ * tls.spec.ts cases alone — they pin the primitives, not the path.
  */
 export const TLS_SOCKET_GAP =
   'direct TLS and STARTTLS need a gjsify release with working TLS sockets (gjsify#1837, after 0.52.0)';
 
 /**
- * Drop what the runtime cannot do: on GJS every raw-TLS endpoint until gjsify ships #1837. A
+ * Drop what the runtime cannot do: on GJS every raw-TLS endpoint, see `TLS_SOCKET_GAP`. A
  * server that offers nothing else gets one clear error instead of a failed handshake per
  * endpoint.
  */
