@@ -23,6 +23,7 @@ import mailHeaders from './unit/protocol/mail-headers.test.ts';
 import storePaths from './unit/store/paths.test.ts';
 import storeDownload from './unit/store/download.test.ts';
 import storeFts from './unit/store/fts.test.ts';
+import storeDb from './unit/store/db.test.ts';
 import storeSync from './unit/store/sync.test.ts';
 import storeClassify from './unit/store/classify.test.ts';
 import storeThreads from './unit/store/threads.test.ts';
@@ -74,6 +75,7 @@ run({
   storePaths,
   storeDownload,
   storeFts,
+  storeDb,
   storeSync,
   storeClassify,
   storeThreads,

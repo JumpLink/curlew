@@ -15,8 +15,8 @@
  * Writes are WRITE-BEHIND: the state lives in memory, and every change marks its key dirty; a
  * flush a moment later (`flushDelayMs`) writes all dirty keys in ONE `SecretStore.apply`, and
  * `close()` flushes whatever is left. Baileys updates Signal sessions on every decrypted
- * message; one transaction per message would spend the per-process execution budget this file
- * shares with the index (gjsify gap, unfixed, gjsify#1838). The window a crash can lose is the
+ * message, so a transaction per message would mean a transaction per message on disk. The
+ * window a crash can lose is the
  * delay — and a lost ratchet step is what Signal's retry receipts exist to repair.
  */
 

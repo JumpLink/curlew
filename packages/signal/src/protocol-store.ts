@@ -15,8 +15,8 @@
  * commit points — after the journal holds the decrypted messages and before it acknowledges the
  * envelopes — so an acknowledged message never leaves a ratchet step only in memory. That order
  * matters more here than for WhatsApp: postbote sends no retry requests, so a lost ratchet step
- * would leave a contact's later messages undecryptable. (One apply per commit also keeps within
- * the per-process execution budget: gjsify gap, unfixed, gjsify#1838.)
+ * would leave a contact's later messages undecryptable. One apply per commit is also a few
+ * statements rather than one per key, which is what makes a large flush cheap.
  *
  * The stores implement libsignal's abstract store classes structurally (libsignal bridges them by
  * shape, not by class), so this module needs libsignal only at run time, through `SignalLib`.

@@ -14,9 +14,9 @@
  *   - it is a statement, so it behaves the same on Node and on GJS, where `flock` and `fcntl`
  *     locking are not something to assume.
  *
- * `heartbeat_at` and `expires_at` are TEXT on purpose: a declared INTEGER is read back as a
- * 32-bit int on gjsify's libgda, and one millisecond timestamp above 2^31 makes the whole query
- * read as empty (`packages/store/AGENTS.md`, (f)). ISO-8601 UTC sorts and compares as text anyway.
+ * `heartbeat_at` and `expires_at` are TEXT because ISO-8601 UTC sorts and compares as text
+ * anyway, which is all the lease needs of them — not because an INTEGER would not survive the
+ * round trip (gjsify#1841 reads one exactly; `packages/store/AGENTS.md`, (f)).
  *
  * The HOLDER writes both, and `expires_at` is its own answer to "how long is this lease good":
  * its heartbeat plus `LEASE_STALE_HEARTBEATS` times ITS refresh interval. A taker only compares a

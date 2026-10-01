@@ -16,10 +16,9 @@
  * is the newest message's sequence; the read markers stay null — read state arrives as events.
  *
  * Every batch is written in ONE transaction before the next one is asked for: the server has
- * already forgotten those messages. Executions are a per-process budget (gjsify gap, unfixed,
- * gjsify#1838 — see `insertMany`), so a batch costs a fixed handful of statements plus its
- * multi-row inserts, never one statement per message. Edits of stored messages are the one
- * per-item statement: they are rare.
+ * already forgotten those messages. A batch costs a fixed handful of statements plus its
+ * multi-row inserts, never one statement per message — for speed (see `insertMany` in `db.ts`).
+ * Edits of stored messages are the one per-item statement: they are rare.
  */
 
 import type {
@@ -577,13 +576,14 @@ function recordLinkState(
   dropped: boolean,
   now: Date,
 ): void {
-  const row = db
-    .prepare('SELECT id FROM accounts WHERE id = ?')
-    .get(accountId) as { id: string } | undefined;
+  const row = db.prepare('SELECT id FROM accounts WHERE id = ?').get(accountId) as { id: string } | undefined;
   if (row === undefined) {
-    db.prepare(
-      'INSERT INTO accounts (id, provider, last_sync_at, link_dropped_at) VALUES (?, ?, ?, ?)',
-    ).run(accountId, backend, now.toISOString(), dropped ? now.toISOString() : null);
+    db.prepare('INSERT INTO accounts (id, provider, last_sync_at, link_dropped_at) VALUES (?, ?, ?, ?)').run(
+      accountId,
+      backend,
+      now.toISOString(),
+      dropped ? now.toISOString() : null,
+    );
     return;
   }
   db.prepare('UPDATE accounts SET link_dropped_at = ?, last_sync_at = ? WHERE id = ?').run(

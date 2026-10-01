@@ -14,8 +14,8 @@
  *   - `refMessages` — where a "min" peer was seen, to resolve it later.
  *
  * Everything is TEXT: bytes as base64, peers as JSON. A save diffs against what was loaded and
- * writes only the changed keys, in multi-row statements — executions are a per-process budget
- * shared with the index (gjsify gap, unfixed, gjsify#1838).
+ * writes only the changed keys, in multi-row statements — a wide parse per few keys rather than
+ * a statement each (see `insertMany` in `@postbote/store`).
  *
  * The file is SECRET: whoever holds it can read the account. It never enters a log, a DTO or
  * MCP output; `SecretStore` keeps it 0600 in a 0700 directory outside the repository.

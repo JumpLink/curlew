@@ -18,8 +18,7 @@ import type { MxEvent, MxRoom } from './api.ts';
 
 /**
  * The chat sequence of an event: its `origin_server_ts` in milliseconds, like the other chat
- * backends. The store reads sequence columns as text (`seqColumn`, gjsify#1839), so values above
- * 2^31 are safe.
+ * backends. The store reads sequence columns exactly, so values above 2^31 are safe.
  */
 export function seqOf(ts: number): number {
   return ts;

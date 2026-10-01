@@ -106,12 +106,15 @@ export const PARAM_BUDGET = 120;
  * `head VALUES (?, …), (?, …), …` in chunks of `budget` bound values. Every row must have the
  * same width. Call inside a transaction.
  *
- * Bulk writes go through here rather than one `run()` per row because of a gjsify gap
- * (unfixed, gjsify#1838): libgda caches every executed statement per connection, each holding
- * a GWeakRef on the SQLite provider, and that provider is shared by the whole PROCESS (GLib
- * caps it at 65 535). A `run()` costs ~4 refs, so past ~16 000 of them in one process every
- * SELECT — on any connection, a fresh one included — returns []. Executions are the budget
- * this package has to spend, and a multi-row statement spends one.
+ * Bulk writes go through here rather than one `run()` per row for SPEED, which is what
+ * `PARAM_BUDGET` was measured for. The hard reason is gone: libgda used to cache every executed
+ * statement per connection, each holding a GWeakRef on the SQLite provider that the whole PROCESS
+ * shares (GLib caps those at 65 535), so past ~16 000 one-row `run()`s every SELECT — on any
+ * connection, a fresh one included — came back empty. gjsify#1838 releases that state per
+ * execution, and reads after 20 000 writes are pinned by a test in this repo.
+ *
+ * So this is now an optimisation, not a workaround, and it stays on its own merits: re-parsing
+ * one statement with 120 bound values costs less than parsing 120 statements.
  */
 export function insertMany(
   db: DatabaseSync,
@@ -129,10 +132,12 @@ export function insertMany(
 }
 
 /**
- * A sequence column as a SELECT expression that survives any size.
+ * A sequence column as a SELECT expression, under a short name.
  *
- * gjsify gap (unfixed, gjsify#1839): libgda types a declared INTEGER column as a 32-bit int, and
- * one value above 2^31-1 — any millisecond timestamp, which is what XMPP's archive order is —
- * makes the WHOLE result come back empty. As text it reads fine; `num()` converts it back.
+ * Not a size workaround any more: gjsify#1841 reads an INTEGER column exactly, so a millisecond
+ * timestamp — XMPP's archive order — comes back as the Number it is instead of emptying the
+ * result. The alias stays because a value read as `col` out of a row joins two tables in the same
+ * statement, and because the queries that sort by one qualify the column in `ORDER BY` (an
+ * unqualified `ORDER BY` would pick up the alias, which for a bare column is the same thing).
  */
-export const seqColumn = (column: string): string => `${column} || '' AS ${column.replace(/^.*\./, '')}`;
+export const seqColumn = (column: string): string => `${column} AS ${column.replace(/^.*\./, '')}`;

@@ -11,8 +11,8 @@
  * escaped SQL literals, not bound, so a BLOB would not survive the round trip.
  *
  * Writes are batched: `apply` takes every change since the last save and spends a handful of
- * executions on them, because executions are a per-process budget (gjsify gap, unfixed,
- * gjsify#1838 — see `insertMany`), and this file shares that budget with the index.
+ * executions on them. That is speed, not survival — see `insertMany` in `db.ts` for why the
+ * multi-row form is worth keeping now that the per-process budget is gone (gjsify#1838).
  */
 
 import { DatabaseSync } from 'node:sqlite';
