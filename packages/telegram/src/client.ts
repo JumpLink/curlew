@@ -22,6 +22,15 @@ export type ClientFactory = (options: ClientOptions) => TelegramClientHandle;
 const LOG_WARN = 2;
 
 /**
+ * Whether this runtime exposes an online/offline signal at all. GJS has a `navigator` global
+ * since gjsify 0.53.0, but it carries no `onLine` — the property is absent, not false — so the
+ * global's existence says nothing about the signal. Read the property, not the object.
+ */
+function hasOnlineSignal(): boolean {
+  return typeof navigator !== 'undefined' && 'onLine' in navigator;
+}
+
+/**
  * mtcute's web platform, adjusted for a GJS command line.
  *
  * The device model is what Telegram shows in the user's list of active sessions, so it says
@@ -40,18 +49,21 @@ class PostbotePlatform extends WebPlatform {
     (_fn: () => void): (() => void) =>
     () => {};
 
-  // gjsify gap (unfixed, gjsify#1835): no `navigator` global on GJS, and mtcute reads
-  // `'onLine' in navigator` unguarded. Without a navigator there is no online/offline signal to
-  // watch, and the connection's own errors are what tell postbote it is offline.
+  // gjsify gap (unfixed, gjsify#1835 — half fixed): 0.53.0 added a `navigator` global, but on
+  // GJS it is an EMPTY object — `'onLine' in navigator` is false, measured — so there is still
+  // no online/offline signal here. Gated on the SIGNAL, not on the global: gating on
+  // `typeof navigator` was correct while the global was missing and silently stopped protecting
+  // once it arrived empty. The connection's own errors are what tell postbote it is offline.
   override onNetworkChanged(fn: (online: boolean) => void): () => void {
-    if (typeof navigator === 'undefined') return () => {};
+    if (!hasOnlineSignal()) return () => {};
     return super.onNetworkChanged(fn);
   }
 
-  // gjsify gap (unfixed, gjsify#1835): mtcute's `navigator.onLine ?? false` throws without a
-  // navigator; assume online and let the connection attempt decide.
+  // Same gap, and the reason this one is load-bearing: `super.isOnline()` reads
+  // `navigator.onLine ?? false`, which on GJS is `false` — a GJS postbote would report itself
+  // permanently offline. Assume online and let the connection attempt decide.
   override isOnline(): boolean {
-    if (typeof navigator === 'undefined') return true;
+    if (!hasOnlineSignal()) return true;
     return super.isOnline();
   }
 }
