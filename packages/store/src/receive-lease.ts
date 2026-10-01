@@ -114,11 +114,11 @@ export type LeaseTake =
  * is the crash case and needs no cleanup to have run first. `intervalMs` is the interval THIS run
  * refreshes at: it decides the expiry it writes, and says nothing about anybody else's lease.
  *
- * The shapes are plain `INSERT`/`SELECT` on purpose:
- * gjsify gap (unfixed, fix in progress): libgda cannot parse an EXISTS subquery —
- * `INSERT … SELECT … WHERE NOT EXISTS (…)` fails with `near "(": syntax error` — so a conditional
- * claim cannot be written in SQL here. Revisit at the next bump; the lock makes it optional, not
- * necessary.
+ * The shapes are plain `INSERT`/`SELECT` on purpose: read, decide in JS, write. A conditional
+ * claim in SQL (`INSERT … SELECT … WHERE NOT EXISTS (…)`) would be one round trip instead of two,
+ * and libgda could not parse it until gjsify 0.53.0 (it rendered as a doubled parenthesis —
+ * gjsify#1893, measured fixed). It stays two statements anyway: the `BEGIN IMMEDIATE` lock is
+ * what makes the claim correct, and a single statement would only hide that.
  */
 export function takeReceiveLease(
   db: IndexDatabase,

@@ -106,12 +106,13 @@ export const PARAM_BUDGET = 120;
  * `head VALUES (?, …), (?, …), …` in chunks of `budget` bound values. Every row must have the
  * same width. Call inside a transaction.
  *
- * Bulk writes go through here rather than one `run()` per row because of a gjsify gap
- * (unfixed, gjsify#1838): libgda caches every executed statement per connection, each holding
- * a GWeakRef on the SQLite provider, and that provider is shared by the whole PROCESS (GLib
- * caps it at 65 535). A `run()` costs ~4 refs, so past ~16 000 of them in one process every
- * SELECT — on any connection, a fresh one included — returns []. Executions are the budget
- * this package has to spend, and a multi-row statement spends one.
+ * Bulk writes go through here rather than one `run()` per row. That was forced by a gjsify gap:
+ * libgda cached every executed statement per connection, each holding a GWeakRef on the SQLite
+ * provider, and that provider is shared by the whole PROCESS (GLib caps it at 65 535). A `run()`
+ * cost ~4 refs, so past ~16 000 of them in one process every SELECT — on any connection, a fresh
+ * one included — returned []. gjsify#1838 fixed it in 0.53.0 (measured: 40 000 `run()`s stay
+ * intact), and the batching is kept because a multi-row statement is one transaction and one
+ * parse rather than N of each — the `sync.test.ts` resync case still fails on per-row writes.
  */
 export function insertMany(
   db: DatabaseSync,
@@ -131,8 +132,14 @@ export function insertMany(
 /**
  * A sequence column as a SELECT expression that survives any size.
  *
- * gjsify gap (unfixed, gjsify#1839): libgda types a declared INTEGER column as a 32-bit int, and
- * one value above 2^31-1 — any millisecond timestamp, which is what XMPP's archive order is —
- * makes the WHOLE result come back empty. As text it reads fine; `num()` converts it back.
+ * libgda used to type a declared INTEGER column as a 32-bit int, so one value above 2^31-1 —
+ * any millisecond timestamp, which is what XMPP's archive order is — made the WHOLE result come
+ * back empty (gjsify#1839). That is fixed in 0.53.0 and measured: a 64-bit INTEGER reads back
+ * exact on GJS.
+ *
+ * Kept anyway, deliberately, and this is the one measured gap whose shim survives its fix: the
+ * text round-trip is still correct, and dropping it touches three call sites whose readers
+ * convert with `num()`. It is a known-redundant helper, not a load-bearing one — delete it with
+ * its three call sites in a change of its own rather than inside a version bump.
  */
 export const seqColumn = (column: string): string => `${column} || '' AS ${column.replace(/^.*\./, '')}`;

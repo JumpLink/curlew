@@ -11,8 +11,10 @@
  * escaped SQL literals, not bound, so a BLOB would not survive the round trip.
  *
  * Writes are batched: `apply` takes every change since the last save and spends a handful of
- * executions on them, because executions are a per-process budget (gjsify gap, unfixed,
- * gjsify#1838 — see `insertMany`), and this file shares that budget with the index.
+ * executions on them rather than one per change. That was once a hard ceiling — libgda leaked a
+ * GWeakRef per executed statement, so every SELECT went empty after ~16 000 (gjsify#1838, fixed
+ * in 0.53.0 and measured: 40 000 `run()`s stay intact) — and it stays the right shape anyway: a
+ * transaction per change is a round trip per change, and this file shares the index's connection.
  */
 
 import { DatabaseSync } from 'node:sqlite';
