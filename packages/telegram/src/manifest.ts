@@ -23,7 +23,8 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
     // The network has reactions (`messages.getMessagesReactions`), but postbote does not read them:
     // there is no reaction field in `ChatMessage` to put them in. False is the honest answer.
     reactions: false,
-    // Forum topics in supergroups, and reply chains everywhere.
+    // Forum topics in supergroups only (map.ts sets `threadRemoteId` for topic messages). A plain
+    // reply chain is `replyToRemoteId`, not a thread.
     threads: true,
     // Telegram reports how far each side has read (read_inbox / read_outbox markers).
     readReceipts: true,
