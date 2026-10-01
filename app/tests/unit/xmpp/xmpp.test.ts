@@ -476,27 +476,25 @@ export default async () => {
       expect(websocketLinks({ links: 'nope' }).length).toBe(0);
     });
 
-    await it('keeps only WebSocket where TLS sockets do not work, with a clear error when nothing is left', async () => {
+    await it('keeps every endpoint, in order, and names the fix when a server offers none', async () => {
+      // Nothing is filtered any more: gjsify 0.53.0 fixed the raw TLS socket (gjsify#1837), so
+      // direct TLS and STARTTLS work on GJS and an endpoint is dropped for no reason.
       const all = [
         parseService('xmpps://a.example.org'),
         parseService('wss://a.example.org/ws'),
         parseService('xmpp://a.example.org'),
       ];
       expect(
-        usableEndpoints(all, false)
+        usableEndpoints(all)
           .map((e) => e.kind)
           .join(),
-      ).toBe('websocket');
-      expect(usableEndpoints(all, true).length).toBe(3);
-      const message = await rejects(async () =>
-        usableEndpoints([parseService('xmpps://a.example.org'), parseService('xmpp://a.example.org')], false),
-      );
-      expect(message.includes('gjsify#1837')).toBe(true);
+      ).toBe('direct-tls,websocket,starttls');
+      // An empty list is the only refusal, and it has to be actionable.
+      const message = await rejects(async () => usableEndpoints([]));
       expect(message.includes('wss://')).toBe(true);
       const configured = await endpointsFor(
         { jid: ANNA, password: 'x', service: 'wss://example.org/ws' },
         { resolveSrv: async () => [], fetchJson: async () => null },
-        false,
       );
       expect(configured[0].uri).toBe('wss://example.org/ws');
     });

@@ -42,7 +42,6 @@ import {
   type Endpoint,
   chooseMechanism,
   parseService,
-  TLS_SOCKET_GAP,
   usableEndpoints,
 } from './transport.ts';
 import {
@@ -84,11 +83,6 @@ const NS_TLS = 'urn:ietf:params:xml:ns:xmpp-tls';
 const CONNECT_TIMEOUT_MS = 20_000;
 const QUERY_TIMEOUT_MS = 60_000;
 const CLOSE_TIMEOUT_MS = 2_000;
-
-/** GJS exposes the legacy `imports` object; Node does not (the probe `app` uses as well). */
-function onGjs(): boolean {
-  return typeof (globalThis as { imports?: unknown }).imports !== 'undefined';
-}
 
 function withTimeout<T>(promise: Promise<T>, ms: number, what: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -225,9 +219,9 @@ class XmppConnection implements XmppApi {
 /**
  * Tear the socket down without a graceful TLS close.
  *
- * gjsify gap (unfixed, gjsify#1837): on 0.52.0 a TLS socket's `end()` never sends close_notify
- * and never emits 'close', so xmpp.js's `stop()` would wait forever on a direct-TLS connection.
- * The stream is closed above; destroying the socket afterwards loses nothing.
+ * Not a gjsify workaround: xmpp.js's own `stop()` waits for the socket's `'close'`, which a
+ * direct-TLS stream does not deliver promptly once the peer is already gone. The stream is
+ * closed above; destroying the socket afterwards loses nothing.
  */
 function destroySocket(entity: Client): void {
   const socket = entity.socket;
@@ -270,9 +264,6 @@ async function connectEndpoint(
   // Registration order is priority order: STARTTLS before SASL.
   features.use('starttls', NS_TLS, async ({ entity: e }, next) => {
     if (e.isSecure()) return next();
-    // gjsify gap (unfixed, gjsify#1837): no tls.connect({ socket }) on 0.52.0. STARTTLS
-    // endpoints are filtered out on GJS before connecting; this is the backstop.
-    if (onGjs()) throw new Error(TLS_SOCKET_GAP);
     const answer = await e.sendReceive(xml('starttls', { xmlns: NS_TLS }));
     if (!answer.is('proceed', NS_TLS)) throw new Error('the server refused STARTTLS');
     const upgraded = new TlsSocket();
@@ -321,21 +312,29 @@ export const networkDiscovery: DiscoveryDeps = {
   },
 };
 
-/** Candidate endpoints for a login, filtered by what this runtime can do. */
+/** Candidate endpoints for a login, in the order they are tried. */
 export async function endpointsFor(
   login: XmppLogin,
   discovery: DiscoveryDeps = networkDiscovery,
-  canUseTlsSockets = !onGjs(),
 ): Promise<Endpoint[]> {
   const all = login.service
     ? [parseService(login.service)]
     : await discoverEndpoints(domainOf(login.jid), discovery);
-  return usableEndpoints(all, canUseTlsSockets);
+  return usableEndpoints(all);
 }
 
 /**
  * Try each endpoint until one connects. A login refusal stops at once: the password is the
  * same on every endpoint, and retrying it elsewhere only multiplies failed-login counters.
+ *
+ * `ca` is applied on GJS, but UNRELIABLY, and that is an upstream defect rather than a reason to
+ * refuse the setting: gjsify decides a custom anchor in a JS `accept-certificate` callback that
+ * GIO emits on its handshake thread, which GJS blocks, so the certificate is sometimes refused
+ * with `Gio.TlsError: Unacceptable TLS certificate` even though the PEM contains it — measured
+ * 2 failures in 6 consecutive handshakes against one server, on 0.53.0. A publicly-trusted
+ * certificate never goes through that path and is unaffected. Until it is fixed, a custom-CA
+ * login on GJS may need a second run; the alternative, refusing `caFile` outright, would break
+ * a feature that works two times in three.
  */
 export const createXmppClient: ClientFactory = async (options) => {
   const ca = options.caFile ? readFileSync(options.caFile, 'utf8') : undefined;

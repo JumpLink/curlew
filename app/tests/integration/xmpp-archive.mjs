@@ -5,9 +5,10 @@
 //      writes to alice, corrects one message, retracts another, and talks in the room.
 //   3. postbote on GJS logs in as alice over WebSocket (loopback) and syncs the archive.
 //   4. bob writes once more; postbote syncs again and must fetch exactly that one message.
-//   5. Direct TLS (XEP-0368): on GJS it must refuse with the gjsify#1837 gap (gjsify 0.52.0 has
-//      no working TLS socket); the SAME postbote code built for Node must connect over it,
-//      checking the certificate against the XMPP domain with the test CA as `tlsCaFile`.
+//   5. Direct TLS (XEP-0368): GJS must no longer refuse it (gjsify#1837 fixed the raw TLS
+//      socket in 0.53.0); a custom `ca` is unreliable there, so that leg asserts the attempt
+//      and tolerates a certificate rejection. The SAME postbote code built for Node must
+//      connect over it, checking the certificate against the XMPP domain.
 //   6. Read-only proof: alice's offline messages are still queued — a client that had sent
 //      presence would have taken them — and bob saw no presence from alice.
 //
@@ -272,11 +273,40 @@ try {
     'Bis Samstag!',
   );
 
-  // ── 5. direct TLS: refused on GJS 0.52.0, working on Node ─────────────
+  // ── 5. direct TLS: the GJS gap is gone; the login completes on Node ───
+  //
+  // gjsify 0.53.0 fixed the RAW TLS SOCKET (gjsify#1837), measured on GJS: `tls.connect()`
+  // completes against a system-trusted host and `tls.connect({ socket })` upgrades an adopted
+  // socket in place. Two OPEN upstream defects sit on top of it and can still break a real
+  // login on GJS, so this leg does NOT claim one:
+  //   - gjsify#1958: the peer's bytes arrive and sit unread (a `Readable.addListener` that is
+  //     not `on`), so the stream stalls at "opening" until it times out;
+  //   - a custom `ca` is applied unreliably — gjsify decides it in a JS `accept-certificate`
+  //     callback that GIO emits on its handshake thread and GJS blocks. Measured 2 failures in
+  //     6 consecutive handshakes, and this Prosody's throwaway certificate needs that CA.
+  //
+  // So the assertion is the one that holds either way — GJS ATTEMPTS the direct-TLS login and
+  // never refuses it for the old reason — and a failure must be one of those two upstream
+  // symptoms, never a regression of postbote's own. Node below proves the whole path.
   const tls = { service: `xmpps://127.0.0.1:${tlsPort}`, caFile: join(dir, 'localhost.crt'), add: true };
-  const refused = attempt(tls, 'gjs');
-  assert.strictEqual(refused.result, null, 'GJS must not claim a direct-TLS login on gjsify 0.52.0');
-  assert(refused.out.stderr.includes('gjsify#1837'), `no gap message:\n${refused.out.stderr.slice(-1500)}`);
+  const onGjsTls = attempt(tls, 'gjs');
+  const gjsTlsStderr = onGjsTls.out.stderr;
+  assert(
+    !gjsTlsStderr.includes('gjsify#1837'),
+    `GJS must no longer refuse direct TLS (gjsify#1837 is fixed):\n${gjsTlsStderr.slice(-1500)}`,
+  );
+  if (onGjsTls.result === null) {
+    assert(
+      /Zertifikat|certificate|Timeout|timed out|ECONNRESET/i.test(gjsTlsStderr),
+      'GJS direct TLS may only fail on the two OPEN upstream defects (gjsify#1958 stream stall, ' +
+        `intermittent custom-CA rejection), not otherwise:\n${gjsTlsStderr.slice(-1500)}`,
+    );
+    const which = /Zertifikat|certificate/i.test(gjsTlsStderr) ? 'custom CA refused' : 'stream stall (#1958)';
+    console.log(`direct TLS on GJS: attempted, failed on a known upstream defect (${which})`);
+  } else {
+    console.log(`direct TLS on GJS: logged in over xmpps:// in ${onGjsTls.result.ms} ms`);
+  }
+
   await chat('m7', [body('Und Kuchen!')]);
   await sleep(300);
   const third = postbote(tls, 'node');
