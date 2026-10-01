@@ -19,7 +19,7 @@
     "build:gjs": "gjsify build src/index.ts --app gjs --external jimp,sharp --outfile dist/postbote.gjs.mjs",
     "start": "gjsify run dist/postbote.gjs.mjs",
     "dev": "gjsify run build:gjs && gjsify run start",
-    "test": "DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent XDG_RUNTIME_DIR=/nonexistent POSTBOTE_CLI_PREBUILD=$PWD/../node_modules/@signalapp/libsignal-client gjsify test",
+    "test": "DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent XDG_RUNTIME_DIR=/nonexistent gjsify test",
     "test:mcp": "node tests/integration/mcp-gjs-smoke.mjs",
     "test:relocation": "node tests/integration/bundle-relocation.mjs",
     "test:telegram-network": "gjsify build tests/integration/telegram-handshake.ts --app gjs --outfile dist/telegram-handshake.gjs.mjs && gjsify run dist/telegram-handshake.gjs.mjs",

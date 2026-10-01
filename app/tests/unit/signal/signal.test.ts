@@ -116,10 +116,12 @@ import {
  *
  */
 
-// gjsify gap (unfixed, gjsify#1842): the Node run needs `POSTBOTE_CLI_PREBUILD`, set by the app's
-// `test` script. gjsify's `--app node` target bundles libsignal, whose `node-gyp-build` call then
-// searches the bundle's directory for the addon; node-gyp-build honours `<PACKAGE>_PREBUILD` for
-// that directory. Drop the variable from the script once gjsify keeps native addons external.
+// The Node run loads libsignal's prebuilt addon from `node_modules`, with no `POSTBOTE_CLI_PREBUILD`
+// to point it anywhere. It used to need one: gjsify's `--app node` target bundled the addon
+// package, so `node-gyp-build` searched the BUNDLE's directory for it and honoured
+// `<PACKAGE>_PREBUILD` for that directory (gjsify#1842 keeps native addons external now). The
+// cost of the fix is that an `--app node` bundle needs `node_modules` beside it at runtime —
+// which is what the test run is, and which `test:relocation` checks for the `--app gjs` bundle.
 
 const ACCOUNT = accountIdFor(OWN_ACI);
 const encode = (text: string): Uint8Array<ArrayBuffer> => new TextEncoder().encode(text);
