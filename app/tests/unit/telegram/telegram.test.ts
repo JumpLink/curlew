@@ -774,5 +774,82 @@ export default async () => {
         rmSync(dir, { recursive: true, force: true });
       }
     });
+
+    /**
+     * `capabilities.edits` is a promise a frontend may act on, so it is asserted HERE, against the
+     * path that has to make it true — not as a bare field check next to the other manifest
+     * assertions. Nothing reads `capabilities` today, which is exactly why a wrong value would
+     * go unnoticed: the manifest is the only place that states it, and this is the only place
+     * that can catch it being a lie.
+     *
+     * Telegram has no `ChatHistoryPage.edits` and no `revisions()`: mtcute's `getHistory` returns
+     * each message's CURRENT text, so an edit only reaches the index when the window is re-read.
+     * That makes the claim conditional on `--full-scan` — asserted here, so nobody "simplifies"
+     * the full-scan rewrite and leaves a manifest that promises edits it no longer delivers.
+     */
+    await it('delivers an edited message — the promise `capabilities.edits` makes', async () => {
+      const dir = tempDir();
+      const db = freshDb();
+      try {
+        await new TelegramBackend(context(dir), fakeFactory({}).create).addAccount(
+          prompter(['+49 170 0000000', '12345', 'correct horse']),
+        );
+        const history = new Map([
+          [
+            ANNA.id,
+            [
+              tgMessage(ANNA, 1, ANNA, 'Kommst du am Samstag?'),
+              tgMessage(ANNA, 2, 'me', 'Ja, gerne'),
+              tgMessage(ANNA, 3, ANNA, 'Super', { media: { type: 'photo' } }),
+            ],
+          ],
+        ]);
+        const dialogs = [
+          {
+            peer: ANNA,
+            lastMessage: tgMessage(ANNA, 3, ANNA, 'Super'),
+            lastReadIngoing: 2,
+            lastReadOutgoing: 2,
+          },
+        ];
+        const factory = fakeFactory({ dialogs, history });
+        const backend: ChatBackend = new TelegramBackend(context(dir), factory.create);
+        const direct = chatConversationId('telegram', 'telegram-42', '1001');
+
+        await syncChats(db, backend);
+        expect(getConversation(db, direct, { includeBodies: true })?.messages[0]?.bodyText).toBe(
+          'Kommst du am Samstag?',
+        );
+
+        // Anna edits her first message. The id and the date are unchanged — only the text and
+        // `editDate` — so a forward walk (which asks for `seq > afterSeq`) can never see it.
+        const edited = history.get(ANNA.id);
+        if (!edited) throw new Error('fixture history missing');
+        edited[0] = {
+          ...edited[0],
+          text: 'Kommst du am Sonntag?',
+          editDate: new Date(Date.UTC(2026, 7, 1, 11, 0, 0)),
+        };
+
+        // Without a full scan the stored text stays: the message is not new, so nothing re-reads it.
+        await syncChats(db, backend);
+        expect(getConversation(db, direct, { includeBodies: true })?.messages[0]?.bodyText).toBe(
+          'Kommst du am Samstag?',
+        );
+
+        await syncChats(db, backend, { fullScan: true });
+        const first = getConversation(db, direct, { includeBodies: true })?.messages[0];
+        expect(first?.bodyText).toBe('Kommst du am Sonntag?');
+        expect(first?.editedAt).toBe('2026-08-01T11:00:00.000Z');
+        // The edit replaces the row, it does not add a second copy of the message.
+        expect(getConversation(db, direct)?.messages.length).toBe(3);
+
+        // And the claim the manifest makes is the one that was just proved.
+        expect(TELEGRAM_MANIFEST.capabilities.edits).toBe(true);
+      } finally {
+        db.close();
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
   });
 };

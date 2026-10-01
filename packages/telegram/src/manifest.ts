@@ -14,6 +14,11 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
   // What the NETWORK can do, as far as cloud chats go. The frontends read these to show or hide
   // a feature; postbote v1 only reads, so none of this is a promise that postbote can SEND it.
   capabilities: {
+    // True, but by a different route than Matrix and XMPP: Telegram has no edit feed, so
+    // `fetchHistory` never reports one. `getHistory` returns each message's CURRENT text, and an
+    // edit changes neither the id nor the date, so it only reaches the index when a full scan
+    // re-reads the window and rewrites the row. Asserted end to end in telegram.test.ts
+    // ("delivers an edited message") so this cannot outlive the mechanism.
     edits: true,
     // The network has reactions (`messages.getMessagesReactions`), but postbote does not read them:
     // there is no reaction field in `ChatMessage` to put them in. False is the honest answer.
