@@ -8,11 +8,12 @@
  */
 
 import type Gio from 'gi://Gio?version=2.0';
-import Goa from 'gi://Goa?version=1.0';
+import type Goa from 'gi://Goa?version=1.0';
 
 import { GNOME_CLIENT_NAME, GOA_UNAVAILABLE_MESSAGE, NO_ACCOUNTS_MESSAGE } from '@postbote/protocol';
-import { errorMessage, GnomeError } from '@postbote/protocol';
+import { errorMessage, GnomeError, GnomeUnavailableError } from '@postbote/protocol';
 import type { GnomeAccount, GnomeCheckResult } from '@postbote/protocol';
+import { goa } from './libs.gjs.ts';
 
 let clientPromise: Promise<Goa.Client> | null = null;
 
@@ -21,7 +22,8 @@ let clientPromise: Promise<Goa.Client> | null = null;
  * expose the callback form for the static `new`, so we bridge it by hand rather
  * than relying on Gio._promisify of a static method.
  */
-function newGoaClient(cancellable: Gio.Cancellable | null): Promise<Goa.Client> {
+async function newGoaClient(cancellable: Gio.Cancellable | null): Promise<Goa.Client> {
+  const Goa = await goa.get();
   return new Promise((resolve, reject) => {
     Goa.Client.new(cancellable, (_source, res) => {
       try {
@@ -75,6 +77,7 @@ export async function listAccounts(): Promise<GnomeAccount[]> {
   try {
     client = await getClient();
   } catch (err) {
+    if (err instanceof GnomeUnavailableError) throw err;
     throw new GnomeError(`Goa.Client.new: ${errorMessage(err)}`);
   }
   const accounts: GnomeAccount[] = [];
@@ -97,7 +100,8 @@ export async function check(): Promise<GnomeCheckResult> {
     const client = await getClient();
     objs = client.get_accounts();
   } catch (err) {
-    return { name: GNOME_CLIENT_NAME, ok: false, message: errorMessage(err) || GOA_UNAVAILABLE_MESSAGE };
+    const message = errorMessage(err) || GOA_UNAVAILABLE_MESSAGE;
+    return { name: GNOME_CLIENT_NAME, ok: false, message };
   }
   if (objs.length === 0) {
     return { name: GNOME_CLIENT_NAME, ok: true, message: NO_ACCOUNTS_MESSAGE };

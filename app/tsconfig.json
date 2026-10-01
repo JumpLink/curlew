@@ -8,7 +8,19 @@
     "skipLibCheck": true,
     "noEmit": true,
     "allowImportingTsExtensions": true,
-    "types": ["node"]
+    "types": [
+      "node",
+      "@girs/gjs",
+      "@girs/glib-2.0",
+      "@girs/gobject-2.0",
+      "@girs/gio-2.0",
+      "@girs/goa-1.0",
+      "@girs/edataserver-1.2",
+      "@girs/ebook-1.2",
+      "@girs/ebookcontacts-1.2",
+      "@girs/ecal-2.0",
+      "@girs/icalglib-3.0"
+    ]
   },
   "include": ["./src/**/*", "./tests/**/*"]
 }

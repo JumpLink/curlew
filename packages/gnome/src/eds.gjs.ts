@@ -3,7 +3,9 @@
  * registry and the GOA-account resolution used by both contacts and calendar.
  */
 
-import EDataServer from 'gi://EDataServer?version=1.2';
+import type EDataServer from 'gi://EDataServer?version=1.2';
+
+import { eds } from './libs.gjs.ts';
 
 let registry: EDataServer.SourceRegistry | null = null;
 
@@ -12,9 +14,9 @@ let registry: EDataServer.SourceRegistry | null = null;
  * acceptable here: it is a one-time setup against the already-running
  * evolution-source-registry D-Bus service, not a per-request call.
  */
-export function getRegistry(): EDataServer.SourceRegistry {
+export async function getRegistry(): Promise<EDataServer.SourceRegistry> {
   if (!registry) {
-    registry = EDataServer.SourceRegistry.new_sync(null);
+    registry = (await eds.get()).SourceRegistry.new_sync(null);
   }
   return registry;
 }
@@ -25,14 +27,15 @@ export function getRegistry(): EDataServer.SourceRegistry {
  * Returns the GOA account id, or null if the source is not GOA-backed.
  */
 export function sourceGoaAccountId(
+  lib: typeof EDataServer,
   reg: EDataServer.SourceRegistry,
   source: EDataServer.Source,
 ): string | null {
   let current: EDataServer.Source | null = source;
   const seen = new Set<string>();
   while (current) {
-    if (current.has_extension(EDataServer.SOURCE_EXTENSION_GOA)) {
-      const ext = current.get_extension(EDataServer.SOURCE_EXTENSION_GOA) as EDataServer.SourceGoa;
+    if (current.has_extension(lib.SOURCE_EXTENSION_GOA)) {
+      const ext = current.get_extension(lib.SOURCE_EXTENSION_GOA) as EDataServer.SourceGoa;
       return ext.get_account_id();
     }
     const parentUid = current.get_parent();
