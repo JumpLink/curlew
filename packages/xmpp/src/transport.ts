@@ -6,7 +6,7 @@
  *   2. WebSocket (RFC 7395) over TLS, found through `/.well-known/host-meta.json` (XEP-0156).
  *   3. STARTTLS: SRV `_xmpp-client._tcp.<domain>`, else `<domain>:5222`.
  *
- * On GJS with gjsify 0.49.0 only (2) works — see `TLS_SOCKET_GAP`.
+ * On GJS with gjsify 0.52.0 only (2) works — see `TLS_SOCKET_GAP`.
  *
  * The certificate is always checked against the XMPP DOMAIN (sent as SNI), not against the host
  * an SRV record points to: that is what XEP-0368 and RFC 6120 §13.7.2 require, and it is what
@@ -162,14 +162,14 @@ export function chooseMechanism(
 }
 
 /**
- * gjsify gap (unfixed, gjsify#1837): on 0.49.0 no raw TLS socket works — `tls.connect()` fails
+ * gjsify gap (unfixed, gjsify#1837): on 0.52.0 no raw TLS socket works — `tls.connect()` fails
  * its handshake with G_IO_ERROR_PENDING (the plain socket's own read is still in flight on the
  * stream TLS wants), measured against a local Prosody and a public HTTPS host alike, and
  * `tls.connect({ socket })` ignores the socket, so STARTTLS cannot work either. WebSocket
  * (Soup) is unaffected.
  */
 export const TLS_SOCKET_GAP =
-  'direct TLS and STARTTLS need a gjsify release with working TLS sockets (gjsify#1837, after 0.49.0)';
+  'direct TLS and STARTTLS need a gjsify release with working TLS sockets (gjsify#1837, after 0.52.0)';
 
 /**
  * Drop what the runtime cannot do: on GJS every raw-TLS endpoint until gjsify ships #1837. A

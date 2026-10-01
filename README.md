@@ -378,7 +378,7 @@ postbote sync
 The server address may stay empty: Postbote then looks up direct TLS
 (`_xmpps-client._tcp` SRV, XEP-0368), then WebSocket (`host-meta`, XEP-0156),
 then STARTTLS. The certificate is checked against your XMPP domain. On the
-gjsify release Postbote currently runs on (0.49.0), TLS sockets do not work
+gjsify release Postbote currently runs on (0.52.0), TLS sockets do not work
 yet ([gjsify#1837](https://github.com/gjsify/gjsify/pull/1837)), so on GJS only
 the **WebSocket** endpoint is usable — give `wss://…` if discovery finds none.
 A server with its own CA: set `backends.xmpp.settings.tlsCaFile` to the PEM file.
