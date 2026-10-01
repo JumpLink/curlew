@@ -21,12 +21,14 @@
  * inert anyway: it loads a module and prints typeofs. Enabling it can grant no capability.
  * Hidden from `--help` (`describe: false`) so it never shows up as a feature.
  *
- * The path this exercises is the one that is currently NOT relocatable: the bundle bakes the
- * absolute prebuild path into itself, so the addon only loads on the machine and at the path
- * that built it.
- * gjsify gap (unfixed, gjsify fix/napi-addon-relocatable): `--app gjs` bakes the absolute
- * addon path into the bundle. The probe next to this one asserts the opposite and reports the
- * gap loudly until the upstream fix lands.
+ * The path this exercises is the one that used to be the reason a build could not be shipped:
+ * `--app gjs` baked the absolute prebuild path into the bundle, so the addon only loaded on the
+ * machine and at the path that built it. gjsify#1899 (ADR 0084) bakes a per-platform table of
+ * the `.node` files the package ships instead, and resolves the package at load time through the
+ * bundle's own URL — so what this now proves is that the bundle carries no path of the machine
+ * that built it. It still needs the addon package INSTALLED where it can see it, which is the
+ * limit that fix carries and the shape postbote ships in;
+ * `app/tests/integration/bundle-relocation.mjs` asserts both halves.
  */
 
 import type { CommandModule } from 'yargs';
