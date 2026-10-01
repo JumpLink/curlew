@@ -486,7 +486,7 @@ export default async () => {
       // run alive at exit — the same class of bug the suite's bus-pinning documents for a live
       // session connection.
       const accepted: Array<{ destroy: () => void }> = [];
-      let server: { close: () => void } | null = null;
+      let server: ReturnType<typeof https.createServer> | null = null;
       try {
         // One throwaway self-signed root for localhost, generated per run. 2048-bit, not 1024:
         // GnuTLS refuses a 1024-bit root with CA_MD_TOO_WEAK, which is a fact about the verifier
@@ -524,15 +524,16 @@ export default async () => {
             res.end(Buffer.from('contact blob bytes'));
           },
         );
-        server.on('connection', (socket) => {
+        server.on('connection', (socket: { destroy: () => void; on: (e: string, f: () => void) => void }) => {
           accepted.push(socket);
           socket.on('close', () => {
             const at = accepted.indexOf(socket);
             if (at >= 0) accepted.splice(at, 1);
           });
         });
-        await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
-        const port = (server.address() as { port: number }).port;
+        const listener = server;
+        await new Promise<void>((resolve) => listener.listen(0, '127.0.0.1', resolve));
+        const port = (listener.address() as { port: number }).port;
 
         const get = (caPem: string | undefined): Promise<string> =>
           new Promise((resolve) => {
