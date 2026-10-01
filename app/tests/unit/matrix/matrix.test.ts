@@ -19,6 +19,7 @@ import {
   encodeValue,
   IndexedDbSnapshot,
   listAccounts,
+  loadMatrixSdk,
   MATRIX_MANIFEST,
   MatrixBackend,
   MatrixChatSession,
@@ -166,6 +167,47 @@ export default async () => {
       expect(MATRIX_MANIFEST.capabilities.e2ee).toBe(true);
       expect(MATRIX_MANIFEST.addressKinds.join()).toBe('matrix');
       expect(MATRIX_MANIFEST.terms).toBe(null);
+    });
+  });
+
+  await describe('loading the SDK', async () => {
+    // The SDK was imported lazily for a second reason besides startup cost: in a `--app node`
+    // bundle it could not be evaluated at all. gjsify#1840 lists only the condition a call site
+    // actually is, so `bs58`'s `import basex from 'base-x'` gets base-x's ESM build and a
+    // callable `default`; before that it got the CJS build and threw `(0, x.default) is not a
+    // function` at module init. Evaluating the real SDK here is what catches a regression — a
+    // stub cannot, because the throw happened inside a transitive dependency's module scope.
+    await it('evaluates matrix-js-sdk, and base-x is callable through it', async () => {
+      const basex = (await import('base-x')).default as unknown;
+      // base-x is the import that used to bind a non-function; assert the shape the SDK needs.
+      expect(typeof basex).toBe('function');
+
+      const sdk = await import('matrix-js-sdk');
+      expect(typeof sdk.createClient).toBe('function');
+      expect(typeof sdk.AutoDiscovery).toBe('function');
+
+      // And a client can be constructed from it, which is the first thing postbote does with it.
+      // No network: nothing is started until a sync is asked for.
+      const client = sdk.createClient({
+        baseUrl: 'https://matrix.invalid',
+        accessToken: 'synthetic',
+        userId: '@probe:invalid',
+        deviceId: 'PROBE',
+      });
+      // A real client, not a namespace object with the right keys. Nothing is torn down: no
+      // sync was ever started, so no timer or connection exists to leak into the run.
+      expect(typeof client.getRoom).toBe('function');
+      expect(typeof client.getRooms).toBe('function');
+    });
+
+    await it('is still loaded through the package, lazily, with the loggers quietened', async () => {
+      // The laziness is the reason the import stays: a mail-only run and every MCP call that
+      // does not touch Matrix must not evaluate the SDK or its crypto WASM.
+      const sdk = await loadMatrixSdk();
+      expect(typeof sdk.createClient).toBe('function');
+      // `quietGlobalLoggers` is part of the contract — matrix-js-sdk logs every request at debug
+      // level, which on the MCP server is the protocol stream — and it only runs on this path.
+      expect(typeof sdk.Room).toBe('function');
     });
   });
 
