@@ -5,7 +5,7 @@
 //      writes to alice, corrects one message, retracts another, and talks in the room.
 //   3. postbote on GJS logs in as alice over WebSocket (loopback) and syncs the archive.
 //   4. bob writes once more; postbote syncs again and must fetch exactly that one message.
-//   5. Direct TLS (XEP-0368): on GJS it must refuse with the gjsify#1837 gap (gjsify 0.49.0 has
+//   5. Direct TLS (XEP-0368): on GJS it must refuse with the gjsify#1837 gap (gjsify 0.52.0 has
 //      no working TLS socket); the SAME postbote code built for Node must connect over it,
 //      checking the certificate against the XMPP domain with the test CA as `tlsCaFile`.
 //   6. Read-only proof: alice's offline messages are still queued — a client that had sent
@@ -272,10 +272,10 @@ try {
     'Bis Samstag!',
   );
 
-  // ── 5. direct TLS: refused on GJS 0.49.0, working on Node ─────────────
+  // ── 5. direct TLS: refused on GJS 0.52.0, working on Node ─────────────
   const tls = { service: `xmpps://127.0.0.1:${tlsPort}`, caFile: join(dir, 'localhost.crt'), add: true };
   const refused = attempt(tls, 'gjs');
-  assert.strictEqual(refused.result, null, 'GJS must not claim a direct-TLS login on gjsify 0.49.0');
+  assert.strictEqual(refused.result, null, 'GJS must not claim a direct-TLS login on gjsify 0.52.0');
   assert(refused.out.stderr.includes('gjsify#1837'), `no gap message:\n${refused.out.stderr.slice(-1500)}`);
   await chat('m7', [body('Und Kuchen!')]);
   await sleep(300);

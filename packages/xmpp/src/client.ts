@@ -7,7 +7,7 @@
  *
  * Composed by hand instead of `@xmpp/client` because three of that bundle's defaults are wrong
  * here: it verifies the direct-TLS certificate against the SRV target instead of the XMPP
- * domain, it would upgrade a plain socket with a STARTTLS gjsify 0.49.0 cannot do, and it adds
+ * domain, it would upgrade a plain socket with a STARTTLS gjsify 0.52.0 cannot do, and it adds
  * SASL2/FAST/stream management whose state postbote would then have to keep.
  *
  * What goes over the wire, and what never does: the stream, SASL, resource binding, and IQ
@@ -225,7 +225,7 @@ class XmppConnection implements XmppApi {
 /**
  * Tear the socket down without a graceful TLS close.
  *
- * gjsify gap (unfixed, gjsify#1837): on 0.49.0 a TLS socket's `end()` never sends close_notify
+ * gjsify gap (unfixed, gjsify#1837): on 0.52.0 a TLS socket's `end()` never sends close_notify
  * and never emits 'close', so xmpp.js's `stop()` would wait forever on a direct-TLS connection.
  * The stream is closed above; destroying the socket afterwards loses nothing.
  */
@@ -270,7 +270,7 @@ async function connectEndpoint(
   // Registration order is priority order: STARTTLS before SASL.
   features.use('starttls', NS_TLS, async ({ entity: e }, next) => {
     if (e.isSecure()) return next();
-    // gjsify gap (unfixed, gjsify#1837): no tls.connect({ socket }) on 0.49.0. STARTTLS
+    // gjsify gap (unfixed, gjsify#1837): no tls.connect({ socket }) on 0.52.0. STARTTLS
     // endpoints are filtered out on GJS before connecting; this is the backstop.
     if (onGjs()) throw new Error(TLS_SOCKET_GAP);
     const answer = await e.sendReceive(xml('starttls', { xmlns: NS_TLS }));

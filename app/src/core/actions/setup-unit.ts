@@ -4,7 +4,7 @@
  * WHY a constant and not the file: a built postbote is a single-file GJS bundle, so at run time
  * it cannot read `contrib/systemd/postbote-daemon.service` off disk, and building on gjsify's
  * static-read inlining is not an option (that is on gjsify `main`, not in the pinned
- * `@gjsify/cli` 0.49.0). The unit therefore lives here, with this machine's real paths filled in
+ * `@gjsify/cli` 0.52.0). The unit therefore lives here, with this machine's real paths filled in
  * — and `setup-unit.test.ts` fails the moment this text and the shipped file disagree, so it
  * cannot quietly become a second copy of the unit.
  *
