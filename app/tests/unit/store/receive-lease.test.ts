@@ -221,4 +221,61 @@ export default async () => {
       }
     });
   });
+
+  await describe('a conditional claim in SQL', async () => {
+    // The lease itself is written as a plain SELECT plus an INSERT OR REPLACE, and its comment
+    // says why: the decision belongs in one place, under the lock. That comment names the
+    // alternative as expressible, and this is what keeps the claim honest — libgda used to
+    // parenthesise an `EXISTS` sub-SELECT twice and reject the result with `near "("`, which is
+    // why the lease had to be two statements (gjsify#1893 fixed it). Both answers must hold on
+    // the runtime, or a future bump has to re-measure before anyone relies on the comment again.
+    await it('evaluates EXISTS (SELECT …) as written, in a position and in a projection', async () => {
+      const db = freshDb();
+      try {
+        db.prepare(
+          `INSERT INTO receive_leases (backend, account_id, holder, heartbeat_at, expires_at)
+             VALUES (?, ?, ?, ?, ?)`,
+        ).run(BACKEND, ACCOUNT, 'pid-1', T0.toISOString(), at(90_000).toISOString());
+
+        // In a WHERE clause, correlated — the form an `INSERT … WHERE NOT EXISTS` would take.
+        const held = db
+          .prepare(
+            `SELECT account_id FROM receive_leases
+              WHERE backend = ? AND account_id = ? AND EXISTS (SELECT 1 FROM receive_leases x WHERE x.holder = ?)`,
+          )
+          .all(BACKEND, ACCOUNT, 'pid-1');
+        expect(held.length).toBe(1);
+
+        // And its negation, which is the whole point of the alternative: a second account has
+        // no row, so the conditional claim would insert rather than replace.
+        const free = db
+          .prepare(
+            `SELECT account_id FROM receive_leases
+              WHERE backend = ? AND account_id = ?
+                AND NOT EXISTS (SELECT 1 FROM receive_leases x WHERE x.account_id = receive_leases.account_id)`,
+          )
+          .all(BACKEND, 'wa-2');
+        expect(free.length).toBe(0);
+
+        // A parameter INSIDE the subquery keeps its position, which is what makes the rewrite
+        // in gjsify safe to rely on rather than merely observed to work.
+        const byParam = db
+          .prepare(
+            `SELECT account_id FROM receive_leases
+              WHERE EXISTS (SELECT 1 FROM receive_leases x WHERE x.holder = ?)`,
+          )
+          .all('pid-1');
+        expect(byParam.length).toBe(1);
+        expect(
+          db
+            .prepare(
+              `SELECT account_id FROM receive_leases WHERE EXISTS (SELECT 1 FROM receive_leases x WHERE x.holder = ?)`,
+            )
+            .all('pid-9').length,
+        ).toBe(0);
+      } finally {
+        db.close();
+      }
+    });
+  });
 };

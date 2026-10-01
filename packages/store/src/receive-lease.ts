@@ -114,11 +114,12 @@ export type LeaseTake =
  * is the crash case and needs no cleanup to have run first. `intervalMs` is the interval THIS run
  * refreshes at: it decides the expiry it writes, and says nothing about anybody else's lease.
  *
- * The shapes are plain `INSERT`/`SELECT` on purpose:
- * gjsify gap (unfixed, fix in progress): libgda cannot parse an EXISTS subquery —
- * `INSERT … SELECT … WHERE NOT EXISTS (…)` fails with `near "(": syntax error` — so a conditional
- * claim cannot be written in SQL here. Revisit at the next bump; the lock makes it optional, not
- * necessary.
+ * The shapes are plain `SELECT` and `INSERT OR REPLACE` on purpose: the decision belongs in one
+ * place, under the lock, where it can be read against the whole argument above. A single
+ * conditional claim (`INSERT … SELECT … WHERE NOT EXISTS (…)`) is expressible here — libgda
+ * renders an `EXISTS` subquery correctly since gjsify#1893, pinned by a test in this repo — but
+ * it would spread one rule across two statements and buy only one execution. If the lock ever
+ * goes, that is the form to reach for.
  */
 export function takeReceiveLease(
   db: IndexDatabase,
