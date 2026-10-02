@@ -1,11 +1,12 @@
 /**
- * Calendar via Evolution Data Server (GJS-only).
+ * Calendar via Evolution Data Server.
  *
  * Reads CalDAV/local calendars EDS exposes (a Nextcloud GOA account yields a
  * CalDAV calendar here). Returns plain CalendarEventDTOs for events occurring in
  * a time window. Recurring events are returned as their series definition (the
  * occur-in-time-range filter selects series with an occurrence in the window);
  * per-occurrence expansion (generate_instances) is a possible future addition.
+ * Runs unchanged on GJS and on Node/Bun via `@gjsify/node-gi` — see `index.ts`.
  */
 
 import type ECal from 'gi://ECal?version=2.0';
@@ -13,8 +14,9 @@ import type EDataServer from 'gi://EDataServer?version=1.2';
 import type ICalGLib from 'gi://ICalGLib?version=3.0';
 
 import { extractList, getRegistry, sourceGoaAccountId } from './eds.gjs.ts';
+import { gnomeError, isGnomeFailure } from './errors.ts';
 import { cal, eds } from './libs.gjs.ts';
-import { errorMessage, GnomeError } from '@postbote/protocol';
+import { GnomeError } from '@postbote/protocol';
 import type { CalendarEventDTO, ListEventsOptions } from '@postbote/protocol';
 
 const DEFAULT_LIMIT = 100;
@@ -90,12 +92,8 @@ function mapComponent(lib: typeof ICalGLib, comp: ECal.Component, calendarUid: s
   };
 }
 
-/**
- * List events occurring in [from, to] across enabled calendars (optionally one
- * calendar or one GOA account). Calendars that fail to open are skipped; if none
- * open, the last error is surfaced. Results are sorted by start ascending.
- */
-export async function listEvents(options: ListEventsOptions): Promise<CalendarEventDTO[]> {
+/** Do the work. Everything here may raise a native error; `listEvents` owns the boundary. */
+async function listEventsImpl(options: ListEventsOptions): Promise<CalendarEventDTO[]> {
   const { from, to, calendarUid, accountId, limit = DEFAULT_LIMIT } = options;
   const { ECal: ecal, ICalGLib: icalLib } = await cal.get();
   const EDS = await eds.get();
@@ -108,7 +106,7 @@ export async function listEvents(options: ListEventsOptions): Promise<CalendarEv
   try {
     sources = reg.list_enabled(EDS.SOURCE_EXTENSION_CALENDAR);
   } catch (err) {
-    throw new GnomeError(`list calendars: ${errorMessage(err)}`);
+    throw gnomeError('list calendars', err);
   }
   if (calendarUid) sources = sources.filter((s) => s.get_uid() === calendarUid);
   if (accountId) sources = sources.filter((s) => sourceGoaAccountId(EDS, reg, s) === accountId);
@@ -135,13 +133,33 @@ export async function listEvents(options: ListEventsOptions): Promise<CalendarEv
         if (events.length >= limit) break;
       }
     } catch (err) {
-      throw new GnomeError(`get_object_list_as_comps(${source.get_display_name()}): ${errorMessage(err)}`);
+      throw gnomeError(`get_object_list_as_comps(${source.get_display_name()})`, err);
     }
   }
 
   if (opened === 0 && sources.length > 0 && lastError) {
-    throw new GnomeError(`connect calendar: ${errorMessage(lastError)}`);
+    throw gnomeError('connect calendar', lastError);
   }
   events.sort((a, b) => a.start.localeCompare(b.start));
   return events;
+}
+
+/**
+ * List events occurring in [from, to] across enabled calendars (optionally one
+ * calendar or one GOA account). Calendars that fail to open are skipped; if none
+ * open, the last error is surfaced. Results are sorted by start ascending.
+ *
+ * The boundary for the whole EDS calendar path, for the same reason as `searchContacts`: the
+ * `ECal` property reads (`isodate_from_time_t`, `getRegistry()`) each raise on their own, and
+ * an unwrapped GLib.Error on GJS is a boxed GObject that JSON-serializes to `{}`. Only an
+ * existing `GnomeError` / `GnomeUnavailableError` passes through, keeping the
+ * `list calendars:` / `connect calendar:` prefixes.
+ */
+export async function listEvents(options: ListEventsOptions): Promise<CalendarEventDTO[]> {
+  try {
+    return await listEventsImpl(options);
+  } catch (err) {
+    if (isGnomeFailure(err)) throw err;
+    throw gnomeError('listEvents', err);
+  }
 }

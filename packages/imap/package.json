@@ -21,7 +21,15 @@
   "dependencies": {
     "@girs/gio-2.0": "^4.1.0",
     "@girs/glib-2.0": "^4.1.0",
+    "@girs/goa-1.0": "^4.1.0",
     "@postbote/gnome": "*",
     "@postbote/protocol": "*"
+  },
+  "devDependencies": {
+    "@girs/edataserver-1.2": "^4.1.0",
+    "@girs/ebook-1.2": "^4.1.0",
+    "@girs/ebookcontacts-1.2": "^4.1.0",
+    "@girs/ecal-2.0": "^4.1.0",
+    "@girs/icalglib-3.0": "^4.1.0"
   }
 }

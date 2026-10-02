@@ -7,6 +7,9 @@
  * up in a transcript.
  */
 
+import { describeUnavailable } from '@postbote/gnome';
+import { GnomeError } from '@postbote/protocol';
+
 export function mcpError(message: string) {
   return {
     content: [{ type: 'text' as const, text: JSON.stringify({ error: message }) }],
@@ -14,8 +17,19 @@ export function mcpError(message: string) {
   };
 }
 
-/** Error response built from a caught value (the common catch handler). */
+/**
+ * Error response built from a caught value (the common catch handler).
+ *
+ * A `GnomeError` is routed through `describeUnavailable` so the answer leads with the same
+ * stable sentence `postbote check` prints, not with the locale string a GLib error carries.
+ * Before this, `contacts_search` on a host with no session bus answered
+ * `{"error":"Goa.Client.new: Verbindungen ist gescheitert: …"}` while `check` on the same host
+ * said `GNOME Online Accounts / Evolution Data Server unavailable (…)`: same condition, two
+ * different answers, one of them unusable. A non-GNOME error is passed through untouched — this
+ * module must not claim to explain backends it knows nothing about.
+ */
 export function mcpErrorFrom(err: unknown) {
+  if (err instanceof GnomeError) return mcpError(describeUnavailable(err));
   return mcpError(err instanceof Error ? err.message : String(err));
 }
 
