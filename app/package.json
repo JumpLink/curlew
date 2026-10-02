@@ -17,6 +17,7 @@
     "lint:fix": "gjsify lint --fix .",
     "build": "gjsify run build:gjs",
     "build:gjs": "gjsify build src/index.ts --app gjs --external jimp,sharp --outfile dist/postbote.gjs.mjs",
+    "build:node": "gjsify build src/index.ts --app node --external jimp,sharp --outfile dist/postbote.node.mjs",
     "start": "gjsify run dist/postbote.gjs.mjs",
     "dev": "gjsify run build:gjs && gjsify run start",
     "test": "DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent XDG_RUNTIME_DIR=/nonexistent gjsify test",
@@ -29,6 +30,34 @@
     "test:matrix-e2ee": "gjsify build tests/integration/matrix-e2ee-gjs.ts --app gjs --outfile dist/matrix-e2ee.gjs.mjs && node tests/integration/matrix-e2ee.mjs"
   },
   "gjsify": {
+    "ship": {
+      "appId": "eu.jumplink.postbote",
+      "binaryName": "postbote",
+      "kind": "cli",
+      "name": "Postbote",
+      "bundle": {
+        "linux": "dist/postbote.gjs.mjs",
+        "darwin": "dist/postbote.node.mjs",
+        "win32": "dist/postbote.node.mjs"
+      },
+      "app": {
+        "darwin": "node",
+        "win32": "node"
+      },
+      "developer": {
+        "id": "eu.jumplink",
+        "name": "Pascal Garber",
+        "email": "pascal@jumplink.eu"
+      },
+      "summary": "Mail, contacts and calendar on the command line and as an MCP server",
+      "license": {
+        "project": "AGPL-3.0-or-later"
+      },
+      "description": "postbote reads the mail (IMAP), contacts (CardDAV) and calendar (CalDAV) of the accounts already configured in GNOME Online Accounts, as a CLI and an MCP server. Read-only: it never sets \\Seen, sends mail, or writes to a server. GNOME Online Accounts and Evolution Data Server are Linux-only, so the macOS and Windows packages ship with every account backend unavailable \u2014 see the Releasing section of README.md.",
+      "homepageUrl": "https://github.com/JumpLink/postbote",
+      "bugtrackerUrl": "https://github.com/JumpLink/postbote/issues",
+      "vcsBrowserUrl": "https://github.com/JumpLink/postbote"
+    },
     "excludeGlobals": [
       "document",
       "HTMLElement",
@@ -56,6 +85,11 @@
         "node"
       ]
     }
+  },
+  "optionalDependencies": {
+    "@gjsify/node-runtime-darwin-arm64": "0.54.0",
+    "@gjsify/node-runtime-darwin-x64": "0.54.0",
+    "@gjsify/node-runtime-win32-x64": "0.54.0"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
