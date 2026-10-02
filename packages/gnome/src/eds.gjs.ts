@@ -1,10 +1,12 @@
 /**
- * Shared Evolution Data Server helpers (GJS-only): the process-wide source
- * registry and the GOA-account resolution used by both contacts and calendar.
+ * Shared Evolution Data Server helpers: the process-wide source registry and
+ * the GOA-account resolution used by both contacts and calendar. Runs unchanged
+ * on GJS and on Node/Bun via `@gjsify/node-gi` — see `index.ts`.
  */
 
 import type EDataServer from 'gi://EDataServer?version=1.2';
 
+import { gnomeError } from './errors.ts';
 import { eds } from './libs.gjs.ts';
 
 let registry: EDataServer.SourceRegistry | null = null;
@@ -13,10 +15,20 @@ let registry: EDataServer.SourceRegistry | null = null;
  * One process-wide EDS source registry, created on first use. `new_sync` is
  * acceptable here: it is a one-time setup against the already-running
  * evolution-source-registry D-Bus service, not a per-request call.
+ *
+ * Second error boundary (the first is `goa.gjs.ts`): a missing typelib leaves `eds.get()` as a
+ * `GnomeUnavailableError`, any other native failure — no session bus — as a `GnomeError`.
+ * `new_sync` throws the raw `GLib.Error` synchronously, and under GJS that is a boxed GObject,
+ * not an `instanceof Error`, so unwrapped it reaches the CLI as an unclassifiable object.
  */
 export async function getRegistry(): Promise<EDataServer.SourceRegistry> {
   if (!registry) {
-    registry = (await eds.get()).SourceRegistry.new_sync(null);
+    const lib = await eds.get();
+    try {
+      registry = lib.SourceRegistry.new_sync(null);
+    } catch (err) {
+      throw gnomeError('EDS source registry', err);
+    }
   }
   return registry;
 }

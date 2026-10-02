@@ -1,15 +1,25 @@
 /**
- * Shared availability messages for the GNOME binding, so the Node stub and the
- * GJS implementation report the three states with identical wording:
- *   (a) Node            → GJS_REQUIRED_MESSAGE
- *   (b) GJS, no GOA/EDS → GOA_UNAVAILABLE_MESSAGE
- *   (c) GJS, 0 accounts → NO_ACCOUNTS_MESSAGE (ok: true)
+ * Shared availability messages for the GNOME-facing backends.
+ *
+ * Two different bindings, two different runtime requirements, each with its own message:
+ *
+ *   @postbote/gnome  — ONE implementation on every runtime (`gi://` under GJS,
+ *                      `@gjsify/node-gi` under Node/Bun). The GOA/EDS typelibs load on first
+ *                      use, so its only conditions are runtime ones, reported by `check()`:
+ *                        typelib or session bus missing → GOA_UNAVAILABLE_MESSAGE (ok: false)
+ *                        0 accounts                     → NO_ACCOUNTS_MESSAGE (ok: true)
+ *                      The data functions raise `GnomeUnavailableError` for a missing typelib
+ *                      and `GnomeError` for a native failure.
+ *
+ *   @postbote/imap   — still split: a real `*.gjs.ts` implementation and a Node stub, because
+ *                      its transport is Gio TLS sockets. That one does need GJS, and says so:
+ *                        Node → GJS_REQUIRED_MESSAGE (GnomeUnavailableError)
  */
 
 export const GNOME_CLIENT_NAME = 'GNOME';
 
 export const GJS_REQUIRED_MESSAGE =
-  'GNOME integration requires the GJS runtime (run the GJS build via `gjsify run` / `npm run start:gjs`, not plain node).';
+  'The IMAP mail backend requires the GJS runtime (it speaks IMAP over Gio TLS sockets) — run the GJS build via `gjsify run`, not plain node. Accounts, contacts and calendar are unaffected: @postbote/gnome runs on Node too.';
 
 export const GOA_UNAVAILABLE_MESSAGE =
   'GNOME Online Accounts / Evolution Data Server unavailable (Goa/EDS typelib or session D-Bus missing).';

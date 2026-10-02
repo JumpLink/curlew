@@ -1,9 +1,12 @@
 /**
  * The "unavailable" implementation of the IMAP surface.
  *
- * The transport is Gio sockets and the credentials come from GOA — both GJS-only. On Node the
- * surface throws so callers surface a clear message instead of an empty result that reads as
- * "no mail found".
+ * The transport is Gio TLS sockets, so the surface is GJS-only. On Node it throws, so callers
+ * surface a clear message instead of an empty result that reads as "no mail found".
+ *
+ * The credentials are not the reason for the split: @postbote/gnome is one implementation on
+ * every runtime, so GOA passwords resolve under Node too. It is the socket that keeps this
+ * package split.
  *
  * Every signature here must match the GJS entry EXACTLY. TypeScript resolves the `node`
  * condition when checking the app, so a loosened parameter or return type here is what the

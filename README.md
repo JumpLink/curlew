@@ -61,6 +61,10 @@ acknowledgement and the two requests at link time).
   index
 - A running user session D-Bus — the GOA and EDS daemons are reached over it, so
   a bare SSH session without one will report the backend as unavailable
+- GNOME accounts, contacts and calendar run on Node/Bun too (`gi://` via `@gjsify/node-gi`);
+  that is groundwork for a macOS/Windows port, not a supported target yet. The IMAP mail
+  transport is GJS-only, since it speaks IMAP over Gio TLS sockets. Without the GOA/EDS
+  typelibs Postbote still starts: only the calls that need them fail, with a clear message.
 - An **Email (IMAP/SMTP)** account in GNOME Settings. Nextcloud/ownCloud accounts
   expose files, calendar and contacts but no mail.
 - Implicit TLS (port 993). STARTTLS on port 143 is not implemented yet.

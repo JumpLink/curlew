@@ -54,6 +54,31 @@ Everything else is pure and must stay runnable on Node. Packages that need both 
 `package.json` `exports` map (`browser` → `index.gjs.ts`, `node`/`default` → a stub that throws
 `GnomeUnavailableError`), so `gi://` never enters a Node bundle.
 
+**The one exception is `@postbote/gnome`, which has no exports map and one `src/index.ts` for
+every runtime.** The Node stub it used to have hid a distinction that mattered: GOA/EDS work on
+Node too, through `@gjsify/node-gi`, which resolves `gi://` with GJS semantics. GJS on
+Linux/GNOME is still the supported runtime; the Node path is groundwork for a macOS/Windows
+port. The `.gjs.ts` infix stays on its files, because they hold `gi://` imports.
+
+- **GOA/EDS typelibs are OPTIONAL and load on first use, on EVERY runtime.** `libs.gjs.ts` wraps
+  each namespace in `optionalNamespace` (`optional.ts`): the `gi://` import is a dynamic
+  `import()` the bundler leaves alone, so a host without `libgoa`/`libedataserver` (macOS, a
+  plain container) still starts, and the first call that needs one rejects with
+  `GnomeUnavailableError`. `check()` reports it instead of throwing. Never add a top-level
+  `gi://Goa|EDataServer|EBook|ECal` value import or a module-scope `Gio._promisify(...)` on those
+  namespaces: either one resolves the typelib at load and takes the whole app down.
+  `app/tests/unit/gnome/optional.test.ts` pins it on both runtimes.
+- **One failure, one type.** A missing typelib is a `GnomeUnavailableError`; every other native
+  failure (no session bus, a connect that never answers) leaves the public entry points as a
+  `GnomeError` naming the call, with the GError domain and code set (`errors.ts`). A raw GJS
+  `GLib.Error` is a boxed GObject, not an `Error`, and JSON-serialises to `{}`.
+- **The Node bundle has a real dependency the source never imports**: `@gjsify/node-gi`. Its
+  `gi://` shim stays an external import in the output, which is why it is a `dependencies` entry
+  of `@postbote/gnome`.
+
+`@postbote/imap` keeps its split: its Gio TLS transport needs GJS. Do not assume the move
+generalizes.
+
 ## Run / build / test
 
 - Deps: **`gjsify install`** — NEVER `npm install`, it prunes gjsify deps. Node 24 to bootstrap
@@ -75,6 +100,12 @@ gjsify run app/dist/postbote.gjs.mjs <command>
 gjsify workspace postbote-cli test:whatsapp-network  # real WhatsApp, no account: up to the QR code
 gjsify workspace postbote-cli test:signal-network    # real Signal, no account: up to the link address
 ```
+
+**Run the suite with no session bus, and pin BOTH variables.** The `test` script sets
+`DBUS_SESSION_BUS_ADDRESS` and `XDG_RUNTIME_DIR` to `/nonexistent`, so the strict "session
+unreachable" assertions in `backends.test.ts` hold on a desktop with a live session too. Pinning
+only `DBUS_SESSION_BUS_ADDRESS` is not enough: the native stack (libgda, EDS) resolves the bus
+from `XDG_RUNTIME_DIR` too.
 
 Tests run on **both** runtimes. That dual run is the entire point of the pure/`*.gjs.ts` split —
 if a change makes the Node run impossible, the change is in the wrong file.
@@ -165,14 +196,15 @@ the MCP server via `run_in_background` when driving it.
   asserted by `test:mcp`): one declares `readOnlyHint: false`, one carries NO annotations.
   The unannotated one is load-bearing — with only the first, the gate was rewritten to the
   fail-open spelling and the whole integration suite stayed GREEN. Never "simplify" them to one.
-- **A built postbote is not relocatable.** `--app gjs` bakes the ABSOLUTE prebuild path of the
-  native addon into the bundle, and libsignal loads on first use, so a copied bundle STARTS and
-  then dies at the first Signal command. Every other check runs the bundle from inside the tree,
-  where the baked path is right by accident. `test:relocation`
-  (`app/tests/integration/bundle-relocation.mjs`) copies it out and reports the gap loudly with
-  exit 0; its canary is `postbote addon-canary` (`POSTBOTE_CLI_ADDON_CANARY=1`), which loads the
-  addon and prints typeofs — no server, no account, nothing of a user's in the output. Do not
-  "fix" this here: it lands in gjsify, and the marker in `addon-canary.ts` names the branch.
+- **A built postbote is relocatable only WITH its addon package.** Since gjsify 0.53 `--app gjs`
+  no longer bakes the addon's absolute path: the bundle finds `@signalapp/libsignal-client` by
+  package identity, in a `node_modules` reachable from the bundle. Libsignal loads on first use,
+  so a bundle copied out WITHOUT one STARTS and dies at the first Signal command. `test:relocation`
+  (`app/tests/integration/bundle-relocation.mjs`) copies the bundle out, stages only that one
+  package beside it, and asserts the addon loads and no build path is in the bundle; its canary
+  is `postbote addon-canary` (`POSTBOTE_CLI_ADDON_CANARY=1`), which prints typeofs — no server,
+  no account, nothing of a user's. gjsify's `<bundle dir>/addons/` layout is not read yet
+  (measured on 0.53.0).
 - Conventional commits (`feat(imap): …`, `fix(store): …`), imperative, subject ≤ 50 chars.
   Run `gjsify foreach -A check` and the tests before committing. No `--no-verify`.
 - This repo is a **submodule of werkstatt**: commit here on `main`, push, *then* bump the

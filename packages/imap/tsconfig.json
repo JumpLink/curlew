@@ -1,4 +1,9 @@
 {
+  // The @girs/* entries in devDependencies exist only for this type-check, not for the build:
+  // @postbote/gnome is one module now (packages/gnome/src/index.ts) and tsc checks its whole
+  // reachable graph — the type-only `gi://` imports of EDataServer, EBook, EBookContacts, ECal
+  // and ICalGLib included — not just the `listMailTargets` symbol this package imports. Remove
+  // them and `gjsify foreach -A check` fails here with TS2307.
   "compilerOptions": {
     "target": "ES2022",
     "module": "NodeNext",
@@ -14,7 +19,12 @@
       "@girs/glib-2.0",
       "@girs/gobject-2.0",
       "@girs/gio-2.0",
-      "@girs/goa-1.0"
+      "@girs/goa-1.0",
+      "@girs/edataserver-1.2",
+      "@girs/ebook-1.2",
+      "@girs/ebookcontacts-1.2",
+      "@girs/ecal-2.0",
+      "@girs/icalglib-3.0"
     ]
   },
   "include": ["./src/**/*"]

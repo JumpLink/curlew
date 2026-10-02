@@ -1,9 +1,10 @@
 /**
- * Contacts via Evolution Data Server (GJS-only).
+ * Contacts via Evolution Data Server.
  *
  * Reads CardDAV/local address books that EDS exposes (a Nextcloud GOA account
  * yields a CardDAV book here). Returns plain ContactDTOs projected from the
- * vCard attributes — never EContact/GObject instances.
+ * vCard attributes — never EContact/GObject instances. Runs unchanged on GJS
+ * and on Node/Bun via `@gjsify/node-gi` — see `index.ts`.
  */
 
 import type EBook from 'gi://EBook?version=1.2';
@@ -11,8 +12,8 @@ import type EBookContacts from 'gi://EBookContacts?version=1.2';
 import type EDataServer from 'gi://EDataServer?version=1.2';
 
 import { extractList, getRegistry, sourceGoaAccountId } from './eds.gjs.ts';
+import { gnomeError, isGnomeFailure } from './errors.ts';
 import { book, eds } from './libs.gjs.ts';
-import { errorMessage, GnomeError } from '@postbote/protocol';
 import type { ContactDTO, SearchContactsOptions } from '@postbote/protocol';
 
 const DEFAULT_LIMIT = 50;
@@ -82,12 +83,8 @@ function mapContact(contact: EBookContacts.Contact): ContactDTO {
   return { uid, name, org, emails, phones, ...(jids.length > 0 ? { jids } : {}) };
 }
 
-/**
- * Search contacts across enabled address books (optionally restricted to one
- * GOA account). Empty query matches all (subject to limit). Address books that
- * fail to open are skipped; if none open, the last error is surfaced.
- */
-export async function searchContacts(options: SearchContactsOptions): Promise<ContactDTO[]> {
+/** Do the work. Everything here may raise a native error; `searchContacts` owns the boundary. */
+async function searchContactsImpl(options: SearchContactsOptions): Promise<ContactDTO[]> {
   const { query, limit = DEFAULT_LIMIT, accountId } = options;
   const { EBook: ebook, EBookContacts: contactsLib } = await book.get();
   const EDS = await eds.get();
@@ -97,7 +94,7 @@ export async function searchContacts(options: SearchContactsOptions): Promise<Co
   try {
     sources = reg.list_enabled(EDS.SOURCE_EXTENSION_ADDRESS_BOOK);
   } catch (err) {
-    throw new GnomeError(`list address books: ${errorMessage(err)}`);
+    throw gnomeError('list address books', err);
   }
   if (accountId) {
     sources = sources.filter((s) => sourceGoaAccountId(EDS, reg, s) === accountId);
@@ -125,12 +122,33 @@ export async function searchContacts(options: SearchContactsOptions): Promise<Co
         if (results.length >= limit) break;
       }
     } catch (err) {
-      throw new GnomeError(`get_contacts(${source.get_display_name()}): ${errorMessage(err)}`);
+      throw gnomeError(`get_contacts(${source.get_display_name()})`, err);
     }
   }
 
   if (opened === 0 && sources.length > 0 && lastError) {
-    throw new GnomeError(`connect address book: ${errorMessage(lastError)}`);
+    throw gnomeError('connect address book', lastError);
   }
   return results;
+}
+
+/**
+ * Search contacts across enabled address books (optionally restricted to one
+ * GOA account). Empty query matches all (subject to limit). Address books that
+ * fail to open are skipped; if none open, the last error is surfaced.
+ *
+ * This is the boundary for the whole EDS contacts path. Every `gi://` property read it
+ * makes — `BookQuery.any_field_contains()`, `getRegistry()`, `source.get_display_name()` —
+ * raises on its own, and on GJS a GLib.Error is a boxed GObject that is not `instanceof Error`
+ * and JSON-serializes to `{}`: unwrapped, `postbote contacts` reports nothing at all. Only a
+ * call that is already a `GnomeError` / `GnomeUnavailableError` passes through unchanged, so
+ * the specific `list address books:` / `connect address book:` prefixes survive.
+ */
+export async function searchContacts(options: SearchContactsOptions): Promise<ContactDTO[]> {
+  try {
+    return await searchContactsImpl(options);
+  } catch (err) {
+    if (isGnomeFailure(err)) throw err;
+    throw gnomeError('searchContacts', err);
+  }
 }
