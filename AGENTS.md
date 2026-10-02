@@ -196,14 +196,15 @@ the MCP server via `run_in_background` when driving it.
   asserted by `test:mcp`): one declares `readOnlyHint: false`, one carries NO annotations.
   The unannotated one is load-bearing — with only the first, the gate was rewritten to the
   fail-open spelling and the whole integration suite stayed GREEN. Never "simplify" them to one.
-- **A built postbote is not relocatable.** `--app gjs` bakes the ABSOLUTE prebuild path of the
-  native addon into the bundle, and libsignal loads on first use, so a copied bundle STARTS and
-  then dies at the first Signal command. Every other check runs the bundle from inside the tree,
-  where the baked path is right by accident. `test:relocation`
-  (`app/tests/integration/bundle-relocation.mjs`) copies it out and reports the gap loudly with
-  exit 0; its canary is `postbote addon-canary` (`POSTBOTE_CLI_ADDON_CANARY=1`), which loads the
-  addon and prints typeofs — no server, no account, nothing of a user's in the output. Do not
-  "fix" this here: it lands in gjsify, and the marker in `addon-canary.ts` names the branch.
+- **A built postbote is relocatable only WITH its addon package.** Since gjsify 0.53 `--app gjs`
+  no longer bakes the addon's absolute path: the bundle finds `@signalapp/libsignal-client` by
+  package identity, in a `node_modules` reachable from the bundle. Libsignal loads on first use,
+  so a bundle copied out WITHOUT one STARTS and dies at the first Signal command. `test:relocation`
+  (`app/tests/integration/bundle-relocation.mjs`) copies the bundle out, stages only that one
+  package beside it, and asserts the addon loads and no build path is in the bundle; its canary
+  is `postbote addon-canary` (`POSTBOTE_CLI_ADDON_CANARY=1`), which prints typeofs — no server,
+  no account, nothing of a user's. gjsify's `<bundle dir>/addons/` layout is not read yet
+  (measured on 0.53.0).
 - Conventional commits (`feat(imap): …`, `fix(store): …`), imperative, subject ≤ 50 chars.
   Run `gjsify foreach -A check` and the tests before committing. No `--no-verify`.
 - This repo is a **submodule of werkstatt**: commit here on `main`, push, *then* bump the

@@ -25,7 +25,7 @@
 // Prerequisite: `gjsify install` + `gjsify workspace postbote-cli build`, and gjs on PATH.
 // Run with: `node app/tests/integration/bundle-relocation.mjs` (or `gjsify workspace postbote-cli test:relocation`).
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, parse } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -100,6 +100,24 @@ if (scratch.startsWith(`${repoRoot}/`))
 
 copyFileSync(bundle, relocated);
 
+// gjsify >= 0.53 no longer bakes the addon path: the bundle finds it by package IDENTITY, in a
+// node_modules reachable from the bundle's own location (the `<bundle dir>/addons/` layout it
+// names in its error is not read yet — measured). A bundle with no node_modules around it cannot
+// load a third-party addon, so the shipped unit is "bundle + the addon package". This stages
+// exactly that beside the copy — the one package, nothing else of the build tree — so the run
+// proves the bundle carries no path into the machine that built it.
+const ADDON_PKG = '@signalapp/libsignal-client';
+const addonSource = join(repoRoot, 'node_modules', ADDON_PKG);
+const addonStaged = join(scratch, 'node_modules', ADDON_PKG);
+const prebuildDir = `prebuilds/${process.platform}-${process.arch}`;
+if (existsSync(join(addonSource, prebuildDir))) {
+  mkdirSync(join(addonStaged, prebuildDir), { recursive: true });
+  copyFileSync(join(addonSource, 'package.json'), join(addonStaged, 'package.json'));
+  for (const file of readdirSync(join(addonSource, prebuildDir))) {
+    copyFileSync(join(addonSource, prebuildDir, file), join(addonStaged, prebuildDir, file));
+  }
+}
+
 // Minimal env, and the differences are part of what this probe reports:
 //   - LD_LIBRARY_PATH / GI_TYPELIB_PATH / NODE_PATH: anything inherited could resolve a native
 //     library from the build machine and hide the gap. `gjsify run` exports what its own prebuilds
@@ -122,7 +140,9 @@ Object.assign(env, {
 });
 
 console.log(`  copy       ${relocated}`);
-console.log(`  reachable  no node_modules above ${scratch}, no .gjsify-link.json`);
+console.log(
+  `  reachable  no node_modules above ${scratch}, no .gjsify-link.json; ${ADDON_PKG} staged beside the copy`,
+);
 console.log('  env        LD_LIBRARY_PATH, GI_TYPELIB_PATH, NODE_PATH, POSTBOTE_CLI_PREBUILD removed;');
 console.log('             XDG_{DATA,CONFIG,CACHE}_HOME and cwd pointed at the copy');
 console.log(`  runner     gjsify ${gjsifyVersion} run <copy> addon-canary`);
