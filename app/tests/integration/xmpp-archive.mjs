@@ -5,9 +5,10 @@
 //      writes to alice, corrects one message, retracts another, and talks in the room.
 //   3. postbote on GJS logs in as alice over WebSocket (loopback) and syncs the archive.
 //   4. bob writes once more; postbote syncs again and must fetch exactly that one message.
-//   5. Direct TLS (XEP-0368): on GJS it must refuse with the gjsify#1837 gap (gjsify 0.52.0 has
-//      no working TLS socket); the SAME postbote code built for Node must connect over it,
-//      checking the certificate against the XMPP domain with the test CA as `tlsCaFile`.
+//   5. Direct TLS (XEP-0368): on GJS it logs in and reads the archive — the raw TLS socket
+//      (gjsify#1837) and the `Readable` `addListener` alias (gjsify#1958) both ship in 0.54.0 —
+//      and the SAME postbote code built for Node must connect over it too, checking the
+//      certificate against the XMPP domain with the test CA as `tlsCaFile`.
 //   6. Read-only proof: alice's offline messages are still queued — a client that had sent
 //      presence would have taken them — and bob saw no presence from alice.
 //
@@ -272,11 +273,40 @@ try {
     'Bis Samstag!',
   );
 
-  // ── 5. direct TLS: refused on GJS 0.52.0, working on Node ─────────────
+  // ── 5. direct TLS: working on GJS and on Node ──────────────────────────
+  //
+  // This section used to assert the opposite — that GJS REFUSES direct TLS and names gjsify#1837.
+  // That gap is closed, so the assertion was measuring a world that no longer exists. Direct TLS
+  // on GJS needs two things the release train now ships: a raw TLS socket (@gjsify/tls, #1837)
+  // and `Readable.prototype.addListener` aliased to `on` (#1958) — @xmpp/tls subscribes 'data'
+  // through `addListener`, and without the alias the peer's bytes arrived unread while
+  // entity.status sat at 'opening'. The handshake completing is not the claim; reading the MAM
+  // history over it is.
+  //
+  // Retried, because one separate defect still fires on its own: an intermittent
+  // `Gio.TlsError: unacceptable TLS certificate` from the GnuTLS verifier takes runs that would
+  // otherwise go online (measured 1 of 20 on 0.54.0, 2 of 12 before). Asserting a single run
+  // would make this section measure that defect rather than the transport, so what is required
+  // is that direct TLS works on GJS at all — not that it works every time.
   const tls = { service: `xmpps://127.0.0.1:${tlsPort}`, caFile: join(dir, 'localhost.crt'), add: true };
-  const refused = attempt(tls, 'gjs');
-  assert.strictEqual(refused.result, null, 'GJS must not claim a direct-TLS login on gjsify 0.52.0');
-  assert(refused.out.stderr.includes('gjsify#1837'), `no gap message:\n${refused.out.stderr.slice(-1500)}`);
+  let overGjs = null;
+  const gjsRuns = [];
+  for (let i = 0; i < 3 && !overGjs; i++) {
+    const tried = attempt(tls, 'gjs');
+    assert(
+      !tried.out.stderr.includes('gjsify#1837'),
+      `the raw-TLS gap is reported again:\n${tried.out.stderr.slice(-1500)}`,
+    );
+    if (tried.result && tried.result.chats.length > 0) overGjs = tried.result;
+    else gjsRuns.push(tried.result ? `${tried.result.errors.join('; ')}` : 'no RESULT line');
+  }
+  assert(
+    overGjs,
+    `GJS must reach a direct-TLS login on @gjsify/stream 0.54.0; ${gjsRuns.length} attempt(s) did not:\n  ${gjsRuns.join('\n  ')}`,
+  );
+  console.log(
+    `direct TLS on GJS: logged in, ${overGjs.chats.length} chat(s) from MAM${gjsRuns.length ? ` (after ${gjsRuns.length} rejected attempt(s): ${gjsRuns.join('; ')})` : ''}`,
+  );
   await chat('m7', [body('Und Kuchen!')]);
   await sleep(300);
   const third = postbote(tls, 'node');
