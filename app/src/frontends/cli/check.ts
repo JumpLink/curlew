@@ -2,8 +2,8 @@
  * `postbote check` — report which backends are reachable.
  *
  * Three-state probe ({ name, ok, message }) so a caller can tell "unavailable here" apart from
- * "broken": on Node the GNOME backends report that GJS is required; on GJS without a session
- * bus they report GOA unreachable; with one they report the account count.
+ * "broken": on Node the IMAP mail backend reports that GJS is required, the GNOME probe reports
+ * whether a GNOME session is reachable, and with one they report the account count.
  */
 
 import type { CommandModule } from 'yargs';
@@ -19,6 +19,8 @@ export interface CheckResult {
 
 export async function runChecks(): Promise<{ checks: CheckResult[] }> {
   const runtime = runtimeName();
+  // Not "is this GJS": the GNOME bindings run on both (gi:// via @gjsify/node-gi), the IMAP
+  // mail transport does not. ok stays false on Node because that backend is still gated.
   const checks: CheckResult[] = [
     {
       name: 'runtime',
@@ -26,7 +28,7 @@ export async function runChecks(): Promise<{ checks: CheckResult[] }> {
       message:
         runtime === 'gjs'
           ? 'running on GJS'
-          : 'running on Node — the GNOME backends need GJS (gi:// typelibs)',
+          : 'running on Node — GNOME accounts, contacts and calendar work here (gi:// via @gjsify/node-gi); the IMAP mail backend needs GJS (Gio TLS sockets)',
     },
   ];
 
