@@ -3,10 +3,11 @@
  */
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { mcpSuccess } from '@gjsify/mcp';
 import { z } from 'zod';
 
 import { calendarListEvents, EVENT_LIMIT, EVENT_WINDOW_DAYS } from '../../../core/actions/index.ts';
-import { mcpErrorFrom, mcpSuccess } from '../types.ts';
+import { mcpErrorFrom } from '../types.ts';
 
 export function registerCalendarTools(server: McpServer): void {
   server.registerTool(

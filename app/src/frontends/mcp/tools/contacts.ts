@@ -3,10 +3,11 @@
  */
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { mcpSuccess } from '@gjsify/mcp';
 import { z } from 'zod';
 
 import { CONTACT_LIMIT, contactsSearch } from '../../../core/actions/index.ts';
-import { mcpErrorFrom, mcpSuccess } from '../types.ts';
+import { mcpErrorFrom } from '../types.ts';
 
 export function registerContactsTools(server: McpServer): void {
   server.registerTool(

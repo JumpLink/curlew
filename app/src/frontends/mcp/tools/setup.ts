@@ -1,9 +1,9 @@
 /**
  * The setup surface for an agent: `setup_status` and `setup_run`.
  *
- * Two tools, and the split is the security property rather than a convenience. The gate in
- * runtime.ts registers a tool only when it declares `readOnlyHint: true`, so `setup_status` is
- * served on every connection and `setup_run` is not served at all unless
+ * Two tools, and the split is the security property rather than a convenience.
+ * `applyReadOnlyGate` registers a tool only when it declares `readOnlyHint: true`, so
+ * `setup_status` is served on every connection and `setup_run` is not served at all unless
  * `POSTBOTE_MCP_ALLOW_WRITE=1`. There is no name list anywhere in this file and none is wanted:
  * the annotation is what the gate reads, and a second list is a second thing to forget to update.
  *
@@ -38,13 +38,14 @@
  */
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { mcpError, mcpSuccess } from '@gjsify/mcp';
 import { z } from 'zod';
 
 import type { SetupContext, SetupPrompter, SetupStep } from '../../../core/actions/setup.ts';
 import { SETUP_STEPS, humanOnlyRefusal, runSetup, setupStatus } from '../../../core/actions/setup.ts';
 import { detectSetup } from '../../../core/actions/setup.ts';
 import { nodeHost, setupConfigPath, setupIndexPath } from '../../../core/actions/setup-host.ts';
-import { mcpError, mcpErrorFrom, mcpSuccess } from '../types.ts';
+import { mcpErrorFrom } from '../types.ts';
 
 export const SETUP_TOOL_NAMES = ['setup_status', 'setup_run'] as const;
 

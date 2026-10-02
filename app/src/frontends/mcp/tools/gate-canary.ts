@@ -1,12 +1,16 @@
 /**
  * Tools that MUST NOT be served — the read-only gate's discriminator.
  *
- * The gate in runtime.ts is the one safety-critical piece of this server, and until this file
- * existed nothing could tell a working gate from an absent one. Every real tool declares
- * `readOnlyHint: true`, so a gate that had silently stopped wrapping `registerTool` — an SDK
- * rename, a registration path that bypasses the wrapper, a bundler transform — would serve the
- * exact same catalogue and every assertion in the suite would stay green. That is a guard whose
- * failure is invisible, which is the same as no guard.
+ * The gate is the one safety-critical piece of this server, and until this file existed nothing
+ * could tell a working gate from an absent one. Every real tool declares `readOnlyHint: true`, so
+ * a gate that had silently stopped wrapping `registerTool` — an SDK rename, a registration path
+ * that bypasses the wrapper, a bundler transform — would serve the exact same catalogue and
+ * every assertion in the suite would stay green. That is a guard whose failure is invisible,
+ * which is the same as no guard.
+ *
+ * The gate is `@gjsify/mcp`'s since 0.54.0 (it was this repo's, in `runtime.ts`, until then).
+ * That raises the bar rather than lowering it: these canaries now have to catch a gate that
+ * drifts UPSTREAM, which is why they stay.
  *
  * So this registers tools that must be dropped. Absent from `tools/list` = the gate closed.
  * Present = the gate is open and everything else the suite claims about read-only-ness is
@@ -20,8 +24,7 @@
  */
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-
-import { mcpError } from '../types.ts';
+import { mcpError } from '@gjsify/mcp';
 
 /**
  * TWO canaries, because one does not cover the failure that actually happens.
