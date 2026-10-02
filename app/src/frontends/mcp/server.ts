@@ -1,13 +1,18 @@
 /**
  * Postbote MCP server — mail, contacts and calendar from GNOME Online Accounts, over stdio.
  *
- * v1 registers read-only tools only, and the gate in runtime.ts enforces that rather than
- * trusting it: every tool must carry `readOnlyHint: true` or it is dropped. IMAP is spoken with
- * BODY.PEEK throughout, so even a read never marks a message as seen.
+ * v1 registers read-only tools only, and `applyReadOnlyGate` ENFORCES that rather than trusting
+ * it: every tool must carry `readOnlyHint: true` or it is dropped. IMAP is spoken with BODY.PEEK
+ * throughout, so even a read never marks a message as seen.
+ *
+ * The gate, the stdio lifecycle and the uniform tool result come from `@gjsify/mcp` — they were
+ * this repo's own `runtime.ts`/`types.ts` until 0.54.0 published them, and troedler carried a
+ * verbatim copy meanwhile. What is left here is only which tools this server registers.
  */
 
 import 'dotenv/config';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { applyReadOnlyGate, serveStdio } from '@gjsify/mcp';
 
 import { registerAccountsTools } from './tools/accounts.ts';
 import { registerCalendarTools } from './tools/calendar.ts';
@@ -17,7 +22,6 @@ import { registerGateCanary } from './tools/gate-canary.ts';
 import { registerIndexTools } from './tools/index-sync.ts';
 import { registerMailTools } from './tools/mail.ts';
 import { registerSetupTools } from './tools/setup.ts';
-import { applyReadOnlyGate, serveStdio } from './runtime.ts';
 
 const SERVER_NAME = 'postbote';
 const SERVER_VERSION = '0.1.0';
@@ -42,7 +46,8 @@ const REGISTRARS: Array<(server: McpServer) => void> = [
 export function createMcpServer(): McpServer {
   const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION });
   // Before any registration — the gate works by wrapping registerTool, so anything registered
-  // earlier would slip past it.
+  // earlier would slip past it. It fails CLOSED: a tool whose author forgot the annotation goes
+  // missing from `tools/list`, which gets noticed, instead of a mutation being quietly reachable.
   applyReadOnlyGate(server, process.env.POSTBOTE_MCP_ALLOW_WRITE === '1');
   for (const register of REGISTRARS) register(server);
   return server;

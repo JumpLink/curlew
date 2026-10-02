@@ -7,6 +7,7 @@
  */
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { mcpSuccess } from '@gjsify/mcp';
 import { z } from 'zod';
 
 import {
@@ -15,7 +16,7 @@ import {
   conversationsList,
   conversationsShow,
 } from '../../../core/actions/index.ts';
-import { mcpErrorFrom, mcpSuccess } from '../types.ts';
+import { mcpErrorFrom } from '../types.ts';
 
 export function registerConversationTools(server: McpServer): void {
   server.registerTool(

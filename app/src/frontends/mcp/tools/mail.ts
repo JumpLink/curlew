@@ -8,6 +8,7 @@
  */
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { mcpSuccess } from '@gjsify/mcp';
 import { z } from 'zod';
 
 import {
@@ -20,7 +21,7 @@ import {
   mailSaveAttachment,
   mailSearch,
 } from '../../../core/actions/index.ts';
-import { mcpErrorFrom, mcpSuccess } from '../types.ts';
+import { mcpErrorFrom } from '../types.ts';
 
 const accountId = z.string().optional().describe('Restrict to a GOA mail account id (from accounts_list)');
 const folder = z

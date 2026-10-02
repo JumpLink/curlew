@@ -83,7 +83,7 @@ generalizes.
 
 - Deps: **`gjsify install`** — NEVER `npm install`, it prunes gjsify deps. Node 24 to bootstrap
   (gjsify's install-backend prebuilds target 24; Fedora's 22 segfaults).
-- All four `@gjsify/*` packages are pinned to the **same exact version**. gjsify ships as one
+- All eight `@gjsify/*` packages are pinned to the **same exact version**. gjsify ships as one
   release train and a CLI ↔ libs skew produces silently broken bundles. Bump them together.
 - `typescript` is pinned `^6.0.3`, **not** 7: `gjsify tsc` does not use this dependency, it
   runs a bundle with TypeScript 6.0.3 baked in. A local 7 would give a different diagnostic set
@@ -189,13 +189,17 @@ the MCP server via `run_in_background` when driving it.
 - **SQLite runs on libgda, not sqlite3** — gjsify's `node:sqlite` is a `Gda` wrapper, and it
   leaks through in five ways that WILL bite you. Read
   [`packages/store/AGENTS.md`](packages/store/AGENTS.md) before writing any SQL.
-- **MCP tools are read-only or they do not register.** `app/src/frontends/mcp/runtime.ts`
-  registers a tool only when `annotations.readOnlyHint === true`; a tool that omits the
+- **MCP tools are read-only or they do not register.** `applyReadOnlyGate` — from
+  **`@gjsify/mcp`**, since 0.54.0; it was `app/src/frontends/mcp/runtime.ts`, which no longer
+  exists — registers a tool only when `annotations.readOnlyHint === true`; a tool that omits the
   annotation is dropped. Do not loosen this to a name list.
   Two canaries prove it still bites (`tools/gate-canary.ts`, `POSTBOTE_MCP_GATE_CANARY=1`,
   asserted by `test:mcp`): one declares `readOnlyHint: false`, one carries NO annotations.
   The unannotated one is load-bearing — with only the first, the gate was rewritten to the
   fail-open spelling and the whole integration suite stayed GREEN. Never "simplify" them to one.
+  **They matter MORE now, not less:** the gate is upstream code, so these are the only thing that
+  would catch an upstream flip — and the failure it guards against (a mutating tool served
+  quietly) is invisible on the wire until it is exploited. `test:mcp` needs no change for this.
 - **A built postbote is relocatable only WITH its addon package.** Since gjsify 0.53 `--app gjs`
   no longer bakes the addon's absolute path: the bundle finds `@signalapp/libsignal-client` by
   package identity, in a `node_modules` reachable from the bundle. Libsignal loads on first use,
@@ -246,5 +250,12 @@ open while the behaviour it described had already changed. A bump re-measures th
 believes the result, not the note — that is a four-line probe, and it is how those three shims
 came out in 0.32.0.
 
-`app/src/frontends/mcp/runtime.ts` is an **extraction candidate** for a future `@gjsify/mcp`:
-keep it free of postbote imports so it can move verbatim.
+**The MCP runtime is upstream and that extraction is DONE.** `runtime.ts` was the extraction
+candidate; at 0.54.0 it **is** `@gjsify/mcp`, and troedler's verbatim second copy is gone with it.
+Nothing was re-implemented on the way in — same bodies, same signatures — so no client surface
+moved: `tools/list`, a read-only `tools/call` and the error path are byte-identical against the
+two bundles. `types.ts` stays for `mcpErrorFrom` alone, which is genuinely postbote's (it routes a
+`GnomeError` through `describeUnavailable`; the package's generic one cannot know that). **The
+tests did NOT move with the code:** `gate.test.ts` and the two canaries import the gate from the
+package and keep pinning the fail-closed direction, because a gate this repo does not own is the
+one case where "it was tested here once" stops being evidence.

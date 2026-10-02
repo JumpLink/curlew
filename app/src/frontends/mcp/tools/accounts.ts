@@ -6,9 +6,10 @@
  */
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { mcpSuccess } from '@gjsify/mcp';
 
 import { accountsList } from '../../../core/actions/index.ts';
-import { mcpErrorFrom, mcpSuccess } from '../types.ts';
+import { mcpErrorFrom } from '../types.ts';
 
 export function registerAccountsTools(server: McpServer): void {
   server.registerTool(
