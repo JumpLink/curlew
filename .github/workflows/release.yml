@@ -1,0 +1,122 @@
+name: Release
+
+# A tag is a release: `git tag v0.1.0 && git push --tags` builds every target, runs the whole of
+# CI, and hangs the installable packages off the tag on GitHub. The build itself is NOT repeated
+# here — the `build` job below calls .github/workflows/ci.yml, so there is exactly one definition
+# of how the toolchain is installed and what "green" means. A release therefore cannot be cut from
+# a commit whose tests, type check or lint did not pass.
+#
+# The CLI's own packages are built there too, not here: ci.yml ships `ship-deb-rpm` (`.deb`,
+# `.rpm`) and `ship-macos-windows` (both `macos-app-zip`s, `windows-dir-zip`, `.msi`) as uploaded
+# artifacts, and the `release` job below only attaches them. Both assemble on the SAME
+# `fedora:44` container: `gjsify ship`'s darwin/windows targets are not host-bound to assemble,
+# only to run, so `gjsify install --os darwin --cpu arm64 --immutable` followed by `gjsify ship
+# darwin --arch arm64 --skip-build --target macos-app-zip` on that same container is the whole
+# difference — no second toolchain.
+#
+# No Flatpak job: GOA talks to the session bus directly, which a Flatpak sandbox would not reach
+# without a portal this project does not use, so a Flatpak build would silently ship with every
+# account backend unavailable rather than failing loudly. See README.md's Releasing section.
+on:
+  push:
+    tags: ['v*']
+  # Re-cut assets for a tag that already exists, without moving the tag.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build from (e.g. v0.2.0). Empty = the selected branch."
+        required: false
+        default: ""
+        type: string
+      publish:
+        description: "Attach the artifacts to the GitHub release (needs a tag)"
+        required: false
+        default: false
+        type: boolean
+
+# Two tags pushed seconds apart would otherwise run twice against one release and upload in
+# whichever order finished last. Queued rather than cancelled: a half-uploaded release is worse
+# than a slow one.
+concurrency:
+  group: release-${{ github.workflow }}-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: build
+    # A dispatch without `publish` builds and stops: the name it would attach to is a branch, not
+    # necessarily a release, so `inputs.publish` alone is not enough on its own.
+    if: ${{ startsWith(github.ref, 'refs/tags/v') || (inputs.publish && inputs.tag != '') }}
+    # Only this job needs the token; the build above needs nothing but the checkout.
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      # THREE artifacts, not one: `.deb` + `.rpm` and the macOS/Windows packages come out of the
+      # same container that already ran the bridge's tests, and merging them into a single upload
+      # would mean a partial job failure losing the other half silently.
+      - name: Fetch the CLI packages CI built
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ship-*
+          merge-multiple: true
+          path: cli
+
+      # Each file named individually, not just a directory check: a cli/ holding SOME files would
+      # pass a non-empty check and still let `gh release create` publish an incomplete release.
+      # Names and versions are the ones ci.yml's own asserts use, derived from the TAG rather than
+      # a checkout — this job never checks the repo out, and `v<version>` is the tag this workflow
+      # is triggered on.
+      - name: Assert every artifact arrived
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          set -eu
+          ls -la cli
+          version="${TAG#v}"
+          missing=0
+          for f in \
+            "cli/postbote_${version}-1_all.deb" \
+            "cli/postbote-${version}-1.noarch.rpm" \
+            "cli/postbote-${version}-1.macos.arm64.zip" \
+            "cli/postbote-${version}-1.macos.x86_64.zip" \
+            "cli/postbote-${version}-1.windows.x64.zip" \
+            "cli/postbote-${version}-1.x64.msi"; do
+            if [ ! -s "$f" ]; then
+              echo "::error::missing or empty artifact: $f"
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ]
+
+      - name: Attach everything to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          set -eu
+          ls -la cli
+          [ -n "$(ls -A cli)" ] || { echo "::error::no CLI packages were downloaded"; exit 1; }
+          # `--generate-notes` is GitHub's own, from the previous tag: no note to keep in step here.
+          gh release create "$TAG" cli/* --title "$TAG" --generate-notes
+          gh release view "$TAG" --json assets --jq '.assets[].name'
+
+      # macOS (arm64 + x64, `macos-app-zip`) and Windows (x64, `windows-dir-zip` + `.msi`) ARE
+      # attached now, from `cli/` above — assembling them does not need a Mac or a Windows runner
+      # (see the header), only naming the target so `gjsify install` does not skip the
+      # `optionalDependencies` runtime it would otherwise stage with no interpreter in it. What this
+      # does NOT do is RUN the Mach-O or PE payload: that is verified on its own OS or not at all, so
+      # a `macos-latest` / `windows-latest` job staying absent is a gap in verification, not in the
+      # release's contents. Those two packages also ship with EVERY account backend unavailable —
+      # GOA and EDS are Linux-only GObject-Introspection libraries the `--app node` bundle cannot
+      # load — see README.md's Releasing section for what that means for a person running them.
+      #
+      # UNSIGNED on both, by design (ADR 0024 § A13 in gjsify) — this is a legitimate deliverable,
+      # not a placeholder. Where signing would attach, on a runner that actually holds the identity:
+      #   macOS   — `gjsify ship darwin --arch <arch> --skip-build --target macos-app-zip --sign
+      #             <identity>` (Developer ID; `--notarize <keychain-profile>` on top of that)
+      #   Windows — same shape, `--sign <certificate thumbprint or PFX path>` reaching `signtool`
+      #             (UNVERIFIED upstream: no run in gjsify has ever invoked it)

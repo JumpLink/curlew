@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # release.yml's `build` job calls this file, so a tag is built and tested by ONE definition of
+  # the toolchain. Without `workflow_call` here the call is INVALID — a reusable workflow must
+  # declare it (docs: "For a workflow to be reusable, the values in `on` must include
+  # `workflow_call`"), and the release run would fail before its first step.
+  workflow_call:
 
 # Node-free gjsify toolchain (mirrors the buchhaltung/bauplaner CI). Everything runs on the
 # gjsify stack pinned in app/package.json: `gjsify install --immutable` (from gjsify-lock.json),
