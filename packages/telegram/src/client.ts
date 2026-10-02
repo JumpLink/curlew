@@ -25,35 +25,19 @@ const LOG_WARN = 2;
  * mtcute's web platform, adjusted for a GJS command line.
  *
  * The device model is what Telegram shows in the user's list of active sessions, so it says
- * which program holds the session. The other three overrides exist only because of gjsify gaps.
+ * which program holds the session. That is the only reason this class exists.
  */
 class PostbotePlatform extends WebPlatform {
   override getDeviceModel(): string {
     return 'postbote';
   }
 
-  // gjsify gap (unfixed, gjsify rolldown-plugin window define (in progress)): the bundler defines
-  // `window` as `globalThis`, so mtcute's `typeof window === 'undefined'` guard passes on GJS and
-  // it calls `window.addEventListener('beforeunload')`, which GJS does not have. There is no page
-  // to unload here anyway: the session is saved when the client is destroyed.
-  override beforeExit =
-    (_fn: () => void): (() => void) =>
-    () => {};
-
-  // gjsify gap (unfixed, gjsify#1835): no `navigator` global on GJS, and mtcute reads
-  // `'onLine' in navigator` unguarded. Without a navigator there is no online/offline signal to
-  // watch, and the connection's own errors are what tell postbote it is offline.
-  override onNetworkChanged(fn: (online: boolean) => void): () => void {
-    if (typeof navigator === 'undefined') return () => {};
-    return super.onNetworkChanged(fn);
-  }
-
-  // gjsify gap (unfixed, gjsify#1835): mtcute's `navigator.onLine ?? false` throws without a
-  // navigator; assume online and let the connection attempt decide.
-  override isOnline(): boolean {
-    if (typeof navigator === 'undefined') return true;
-    return super.isOnline();
-  }
+  // Nothing else is overridden. The three that were are gone with the gaps that needed them:
+  // gjsify#1835 gives GJS Node's DOM-less `navigator`, and gjsify#1836 made `globalThis` an
+  // EventTarget under `--app gjs`, so mtcute's `window.addEventListener('beforeunload')` and its
+  // unguarded `'onLine' in navigator` both work. What mtcute gets from them is the browser's
+  // answer anyway: there is no page to unload, and a command line has no online/offline signal
+  // worth watching — the connection's own errors are what tell postbote it is offline.
 }
 
 /** The one place mtcute's client is constructed. Updates are off: postbote syncs, it does not listen. */

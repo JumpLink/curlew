@@ -23,6 +23,7 @@ import mailHeaders from './unit/protocol/mail-headers.test.ts';
 import storePaths from './unit/store/paths.test.ts';
 import storeDownload from './unit/store/download.test.ts';
 import storeFts from './unit/store/fts.test.ts';
+import storeDb from './unit/store/db.test.ts';
 import storeSync from './unit/store/sync.test.ts';
 import storeClassify from './unit/store/classify.test.ts';
 import storeThreads from './unit/store/threads.test.ts';
@@ -36,6 +37,7 @@ import telegram from './unit/telegram/telegram.test.ts';
 import signal from './unit/signal/signal.test.ts';
 import whatsapp from './unit/whatsapp/whatsapp.test.ts';
 import xmpp from './unit/xmpp/xmpp.test.ts';
+import xmppTls from './unit/xmpp/tls.spec.ts';
 import matrix from './unit/matrix/matrix.test.ts';
 
 import date from './unit/core/date.test.ts';
@@ -74,6 +76,7 @@ run({
   storePaths,
   storeDownload,
   storeFts,
+  storeDb,
   storeSync,
   storeClassify,
   storeThreads,
@@ -86,6 +89,7 @@ run({
   signal,
   whatsapp,
   xmpp,
+  xmppTls,
   matrix,
   date,
   limits,

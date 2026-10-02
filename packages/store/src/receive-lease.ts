@@ -14,9 +14,9 @@
  *   - it is a statement, so it behaves the same on Node and on GJS, where `flock` and `fcntl`
  *     locking are not something to assume.
  *
- * `heartbeat_at` and `expires_at` are TEXT on purpose: a declared INTEGER is read back as a
- * 32-bit int on gjsify's libgda, and one millisecond timestamp above 2^31 makes the whole query
- * read as empty (`packages/store/AGENTS.md`, (f)). ISO-8601 UTC sorts and compares as text anyway.
+ * `heartbeat_at` and `expires_at` are TEXT because ISO-8601 UTC sorts and compares as text
+ * anyway, which is all the lease needs of them — not because an INTEGER would not survive the
+ * round trip (gjsify#1841 reads one exactly; `packages/store/AGENTS.md`, (f)).
  *
  * The HOLDER writes both, and `expires_at` is its own answer to "how long is this lease good":
  * its heartbeat plus `LEASE_STALE_HEARTBEATS` times ITS refresh interval. A taker only compares a
@@ -114,11 +114,12 @@ export type LeaseTake =
  * is the crash case and needs no cleanup to have run first. `intervalMs` is the interval THIS run
  * refreshes at: it decides the expiry it writes, and says nothing about anybody else's lease.
  *
- * The shapes are plain `INSERT`/`SELECT` on purpose:
- * gjsify gap (unfixed, fix in progress): libgda cannot parse an EXISTS subquery —
- * `INSERT … SELECT … WHERE NOT EXISTS (…)` fails with `near "(": syntax error` — so a conditional
- * claim cannot be written in SQL here. Revisit at the next bump; the lock makes it optional, not
- * necessary.
+ * The shapes are plain `SELECT` and `INSERT OR REPLACE` on purpose: the decision belongs in one
+ * place, under the lock, where it can be read against the whole argument above. A single
+ * conditional claim (`INSERT … SELECT … WHERE NOT EXISTS (…)`) is expressible here — libgda
+ * renders an `EXISTS` subquery correctly since gjsify#1893, pinned by a test in this repo — but
+ * it would spread one rule across two statements and buy only one execution. If the lock ever
+ * goes, that is the form to reach for.
  */
 export function takeReceiveLease(
   db: IndexDatabase,

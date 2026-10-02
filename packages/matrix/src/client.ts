@@ -35,14 +35,18 @@ import { IndexedDbSnapshot } from './idb-snapshot.ts';
 export type MatrixSdk = typeof import('matrix-js-sdk');
 
 /**
- * matrix-js-sdk and the crypto's WASM glue, loaded on first use rather than at startup: a mail-
- * only `postbote` run (and the MCP server) never evaluates them. It also keeps gjsify's
- * `--app node` bundle loadable — gjsify gap (unfixed, no upstream issue yet): that target
- * resolves ESM imports with CJS-first conditions (`['require','node','module']`) and then
- * applies Node-mode default interop, so `bs58`'s `import basex from 'base-x'` gets base-x's CJS
- * build and a `default` that is not a function; evaluating the SDK throws at module init.
+ * matrix-js-sdk and the crypto's WASM glue, loaded on first use rather than at startup.
  */
 export async function loadMatrixSdk(): Promise<MatrixSdk> {
+  // The dynamic import is for STARTUP COST, not for loadability. It used to be both: the
+  // `--app node` target resolved ESM imports with CJS-first conditions (`['require','node',
+  // 'module']`) and then applied Node-mode default interop, so `bs58`'s `import basex from
+  // 'base-x'` bound base-x's CJS build and a `default` that was not a function — evaluating the
+  // SDK threw `(0, x.default) is not a function` at module init. gjsify#1840 lists only the
+  // condition the call site actually is, and `loadMatrixSdk()` now succeeds in a `--app node`
+  // bundle (pinned by a test in this repo). Keep the import lazy for the reason above: a
+  // mail-only run, and every MCP call that does not touch Matrix, must not evaluate the SDK or
+  // its crypto WASM.
   const sdk = await import('matrix-js-sdk');
   await quietGlobalLoggers();
   return sdk;

@@ -363,10 +363,12 @@ export default async () => {
       'completes, and every read afterwards is complete',
       async () => {
         // The v2 upgrade resets every cursor, so the next sync re-fetches whole folders. On
-        // gjsify's sqlite each execution leaks a GWeakRef (gjsify gap, unfixed,
-        // gjsify#1838); at ~15 executions a message the old one-row-at-a-time
-        // writes broke the index after ~5 400 messages, and every SELECT then returned [].
-        // 6 000 fetched twice is 12 000 upserts — far past that point — in one process.
+        // gjsify's sqlite each execution used to leak a GWeakRef (gjsify#1838); at ~15 executions
+        // a message the old one-row-at-a-time writes broke the index after ~5 400 messages, and
+        // every SELECT then returned []. 6 000 fetched twice is 12 000 upserts — far past that
+        // point — in one process. It still earns its keep: the batched writes are an
+        // OPTIMISATION now, and a regression to one `run()` per row has to be slow enough to
+        // notice, not fatal.
         const n = 6000;
         const db = freshDb();
         const backend = new FakeBackend();

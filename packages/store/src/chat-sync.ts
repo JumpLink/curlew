@@ -16,9 +16,9 @@
  * the range that window covers but no longer contains, and every chat that left the list —
  * the chat counterpart of the mailbox engine's expunge pass.
  *
- * Budget: every message costs a share of a multi-row INSERT, and executions are a per-process
- * resource on gjsify's libgda-backed sqlite (gjsify gap, unfixed, gjsify#1838 — see
- * `insertMany`). `maxMessages` caps one run; a chat that did not fit keeps its cursor and
+ * Budget: every message costs a share of a multi-row INSERT, which is a wide parse per few
+ * rows rather than a statement each (see `insertMany` in `db.ts`). `maxMessages` caps one run; a
+ * chat that did not fit keeps its cursor and
  * continues on the next run. Resumable by construction: the cursor is written in the same
  * transaction as the messages it covers.
  *

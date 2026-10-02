@@ -6,7 +6,15 @@
  *   2. WebSocket (RFC 7395) over TLS, found through `/.well-known/host-meta.json` (XEP-0156).
  *   3. STARTTLS: SRV `_xmpp-client._tcp.<domain>`, else `<domain>:5222`.
  *
- * On GJS with gjsify 0.52.0 only (2) works — see `TLS_SOCKET_GAP`.
+ * All three work on both runtimes. The raw-TLS paths were blocked here until gjsify#1958 aliased
+ * `Readable.prototype.addListener` to `on`: `@xmpp/tls` subscribes `'data'` through `addListener`
+ * (via `@xmpp/events`' `addEventListener ?? addListener`), so where the two names were not the same
+ * function the peer's answer ARRIVED and sat unread in the readable buffer — it never went
+ * missing — and the login sat at `opening` until it timed out. Measured over direct TLS against a
+ * local Prosody 13: 10 of 12 GJS runs stalled at `opening` in ~2.1 s before the alias, 19 of 20
+ * reached `online` in 577–679 ms after it, with nothing patched in this file. The intermittent
+ * `Gio.TlsError` certificate rejection counted separately — 2 of those 12 before, 1 of the 20 after
+ * — is a different defect: it also takes runs that would otherwise go online.
  *
  * The certificate is always checked against the XMPP DOMAIN (sent as SNI), not against the host
  * an SRV record points to: that is what XEP-0368 and RFC 6120 §13.7.2 require, and it is what
@@ -159,30 +167,4 @@ export function chooseMechanism(
   throw new Error(
     `the server offers no login mechanism postbote uses on this connection (offered: ${offered.join(', ') || 'none'})`,
   );
-}
-
-/**
- * gjsify gap (unfixed, gjsify#1837): on 0.52.0 no raw TLS socket works — `tls.connect()` fails
- * its handshake with G_IO_ERROR_PENDING (the plain socket's own read is still in flight on the
- * stream TLS wants), measured against a local Prosody and a public HTTPS host alike, and
- * `tls.connect({ socket })` ignores the socket, so STARTTLS cannot work either. WebSocket
- * (Soup) is unaffected.
- */
-export const TLS_SOCKET_GAP =
-  'direct TLS and STARTTLS need a gjsify release with working TLS sockets (gjsify#1837, after 0.52.0)';
-
-/**
- * Drop what the runtime cannot do: on GJS every raw-TLS endpoint until gjsify ships #1837. A
- * server that offers nothing else gets one clear error instead of a failed handshake per
- * endpoint.
- */
-export function usableEndpoints(endpoints: readonly Endpoint[], canUseTlsSockets: boolean): Endpoint[] {
-  const usable = canUseTlsSockets ? [...endpoints] : endpoints.filter((e) => e.kind === 'websocket');
-  if (usable.length === 0 && endpoints.length > 0) {
-    throw new Error(
-      `the server offers no WebSocket endpoint (found ${endpoints.map((e) => e.uri).join(', ')}), and ${TLS_SOCKET_GAP} — ` +
-        'give its WebSocket address (wss://…) with `postbote accounts add xmpp` if it has one',
-    );
-  }
-  return usable;
 }

@@ -19,7 +19,7 @@
     "build:gjs": "gjsify build src/index.ts --app gjs --external jimp,sharp --outfile dist/postbote.gjs.mjs",
     "start": "gjsify run dist/postbote.gjs.mjs",
     "dev": "gjsify run build:gjs && gjsify run start",
-    "test": "DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent XDG_RUNTIME_DIR=/nonexistent POSTBOTE_CLI_PREBUILD=$PWD/../node_modules/@signalapp/libsignal-client gjsify test",
+    "test": "DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent XDG_RUNTIME_DIR=/nonexistent gjsify test",
     "test:mcp": "node tests/integration/mcp-gjs-smoke.mjs",
     "test:relocation": "node tests/integration/bundle-relocation.mjs",
     "test:telegram-network": "gjsify build tests/integration/telegram-handshake.ts --app gjs --outfile dist/telegram-handshake.gjs.mjs && gjsify run dist/telegram-handshake.gjs.mjs",
@@ -31,7 +31,6 @@
   "gjsify": {
     "excludeGlobals": [
       "document",
-      "navigator",
       "HTMLElement",
       "location",
       "Image",
@@ -74,13 +73,13 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@gjsify/cli": "0.53.0",
-    "@gjsify/napi": "0.53.0",
-    "@gjsify/node-globals": "0.53.0",
-    "@gjsify/rolldown-native": "0.53.0",
-    "@gjsify/runtime": "0.53.0",
-    "@gjsify/unit": "0.53.0",
-    "@gjsify/ws": "0.53.0",
+    "@gjsify/cli": "0.54.0",
+    "@gjsify/napi": "0.54.0",
+    "@gjsify/node-globals": "0.54.0",
+    "@gjsify/rolldown-native": "0.54.0",
+    "@gjsify/runtime": "0.54.0",
+    "@gjsify/unit": "0.54.0",
+    "@gjsify/ws": "0.54.0",
     "@girs/gjs": "^4.1.0",
     "@girs/glib-2.0": "^4.1.0",
     "@girs/gobject-2.0": "^4.1.0",

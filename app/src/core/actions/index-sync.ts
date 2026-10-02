@@ -132,8 +132,8 @@ export async function rebuildWithAddressBook(
   db: IndexDatabase,
 ): Promise<RebuildResult & { contacts: number | null }> {
   const contacts = await addressBook();
-  // Sync and rebuild write in multi-row batches: gjsify's sqlite has a per-process budget of
-  // executions (gjsify gap, unfixed, gjsify#1838 — see `insertMany`).
+  // Sync and rebuild write in multi-row batches — one wide statement per few rows rather than
+  // one per row (see `insertMany` in `@postbote/store`).
   return { ...rebuildConversations(db, { contacts: contacts ?? [] }), contacts: contacts?.length ?? null };
 }
 

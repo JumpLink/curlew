@@ -12,8 +12,8 @@
  *   - `restore` recreates every database (version, object stores, indexes, records) BEFORE the
  *     crypto opens it — the crypto sees the store it left behind.
  *   - `save` reads every database back and writes only the records that changed since the last
- *     load or save, in one batch — executions are a per-process budget shared with the index
- *     (gjsify gap, unfixed, gjsify#1838 — see `insertMany` in `@postbote/store`).
+ *     load or save, in one batch — one wide statement instead of one per record (see
+ *     `insertMany` in `@postbote/store`).
  *
  * One record per `SecretStore` row: namespace `idb:<database>/<object store>`, key and value
  * as tagged JSON (`encodeValue`), because the store holds TEXT only.
