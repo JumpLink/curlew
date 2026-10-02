@@ -21,12 +21,17 @@ jobs:
       # TOP-LEVEL STATIC `gi://` imports (Goa, EDataServer, EBook, ECal), so the bundle needs
       # those typelibs at MODULE LOAD, not merely when a call is made — without them CI cannot
       # even import what it just built. libgda-sqlite backs `node:sqlite` for the index.
-      - name: Install system prerequisites (gjs + GOA/EDS typelibs + libgda)
+      # openssl is the TLS tests' certificate authority: `tls.spec.ts` and `signal.test.ts` mint a
+      # throwaway self-signed root per run with it, because a certificate that is an INERT stub
+      # would not prove that `ca` is honoured. Without the binary those tests fail on `spawn
+      # openssl ENOENT` — a red run that says nothing about the code.
+      - name: Install system prerequisites (gjs + GOA/EDS typelibs + libgda + openssl)
         run: >
           dnf install -y --setopt=install_weak_deps=False
           git tar xz findutils gjs
           gnome-online-accounts evolution-data-server
           libgda libgda-sqlite
+          openssl
 
       - uses: actions/checkout@v4
 
