@@ -32,6 +32,9 @@
     "oxfmt@^0.56.0",
     "oxlint@^1.71.0",
     "typescript@^6.0.3",
+    "@gjsify/node-runtime-darwin-arm64@0.54.0",
+    "@gjsify/node-runtime-darwin-x64@0.54.0",
+    "@gjsify/node-runtime-win32-x64@0.54.0",
     "@gjsify/node-gi@0.54.0",
     "@matrix-org/matrix-sdk-crypto-wasm@18.9.0",
     "loglevel@1.9.2",
@@ -3854,6 +3857,42 @@
         "@gjsify/worker_threads": "^0.54.0",
         "@gjsify/diagnostics_channel": "^0.54.0"
       }
+    },
+    "node_modules/@gjsify/node-runtime-darwin-arm64": {
+      "version": "0.54.0",
+      "resolved": "https://registry.npmjs.org/@gjsify/node-runtime-darwin-arm64/-/node-runtime-darwin-arm64-0.54.0.tgz",
+      "integrity": "sha512-8gb9zm7u7kMhx+8ob6W+egUKLylEuXyVOfNFmAUaQ36feBGkTycIFnCKJZZ7fk6x99x4GDtPycdYdLxih5ockA==",
+      "os": [
+        "darwin"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "optional": true
+    },
+    "node_modules/@gjsify/node-runtime-darwin-x64": {
+      "version": "0.54.0",
+      "resolved": "https://registry.npmjs.org/@gjsify/node-runtime-darwin-x64/-/node-runtime-darwin-x64-0.54.0.tgz",
+      "integrity": "sha512-qADAjSwc+MAVtwgBQtue4iHTz8E/Y2BnysiWMKfkSONLfLwf2C41Azuno9dGXzN/NONDvzVhOTgY6wiSHlsZwQ==",
+      "os": [
+        "darwin"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "optional": true
+    },
+    "node_modules/@gjsify/node-runtime-win32-x64": {
+      "version": "0.54.0",
+      "resolved": "https://registry.npmjs.org/@gjsify/node-runtime-win32-x64/-/node-runtime-win32-x64-0.54.0.tgz",
+      "integrity": "sha512-yJF8tpA52TkcS8+l8dJqJ/1B2p3bdobPBc5AvEv7W47xQ02UsBWiYB4oA6SvIpR6wlPF3PbRsJjeJebBgW+3CQ==",
+      "os": [
+        "win32"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "optional": true
     },
     "node_modules/@gjsify/npm-registry": {
       "version": "0.54.0",

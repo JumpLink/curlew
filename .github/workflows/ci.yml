@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # release.yml's `build` job calls this file, so a tag is built and tested by ONE definition of
+  # the toolchain. Without `workflow_call` here the call is INVALID — a reusable workflow must
+  # declare it (docs: "For a workflow to be reusable, the values in `on` must include
+  # `workflow_call`"), and the release run would fail before its first step.
+  workflow_call:
 
 # Node-free gjsify toolchain (mirrors the buchhaltung/bauplaner CI). Everything runs on the
 # gjsify stack pinned in app/package.json: `gjsify install --immutable` (from gjsify-lock.json),
@@ -25,13 +30,16 @@ jobs:
       # throwaway self-signed root per run with it, because a certificate that is an INERT stub
       # would not prove that `ca` is honoured. Without the binary those tests fail on `spawn
       # openssl ENOENT` — a red run that says nothing about the code.
-      - name: Install system prerequisites (gjs + GOA/EDS typelibs + libgda + openssl)
+      # msitools adds `wixl`, the Linux-side MSI compiler `gjsify ship windows --target msi`
+      # needs (ADR 0024 § M5 in gjsify): a Fedora package, not a download.
+      - name: Install system prerequisites (gjs + GOA/EDS typelibs + libgda + openssl + msitools)
         run: >
           dnf install -y --setopt=install_weak_deps=False
           git tar xz findutils gjs
           gnome-online-accounts evolution-data-server
           libgda libgda-sqlite
           openssl
+          msitools
 
       - uses: actions/checkout@v4
 
@@ -104,3 +112,104 @@ jobs:
       # that (it asserts a well-formed answer, not a successful one).
       - name: MCP end-to-end + read-only gate (real stdio)
         run: gjsify workspace postbote-cli test:mcp
+
+      # The CLI's own installable artifacts, out of the same bundle the tests above ran against.
+      # `.deb` and `.rpm` only here — gjsify writes both itself and execs nothing for them, so this
+      # step needs no tool this job does not already install. Flatpak is deliberately absent (see
+      # the note in README.md's Releasing section): GOA talks to the session bus directly, which a
+      # Flatpak sandbox would not reach without a portal this project does not have, so a Flatpak
+      # build would silently ship with every account backend unavailable.
+      - name: Package the bridge (.deb + .rpm)
+        working-directory: app
+        run: gjsify ship linux --skip-build --target deb,rpm
+
+      # `ship` exits 0 after writing NOTHING when every target is filtered away, so each file is
+      # asserted by name rather than assumed. `all` and `noarch`, not `x86_64`: `isArchIndependent()`
+      # is true for a `kind: "cli"` tree of a JS bundle and a launcher, and apt/dnf both refuse a
+      # package whose architecture is not the machine's.
+      - name: Assert the two packages arrived
+        working-directory: app/ship/out
+        run: |
+          set -eu
+          ls -la
+          version=$(node -p "require('$GITHUB_WORKSPACE/app/package.json').version")
+          for f in "postbote_${version}-1_all.deb" "postbote-${version}-1.noarch.rpm"; do
+            if [ ! -s "$f" ]; then
+              echo "::error::missing or empty artifact: $f"
+              exit 1
+            fi
+          done
+
+      # The `.deb`/`.rpm` above are built from `build` (`build:gjs`), but `gjsify.ship.bundle.darwin`
+      # and `.win32` point at `dist/postbote.node.mjs` — a bundle NOTHING above builds, and
+      # `--skip-build` tells `ship` not to build it either. Measured on 0.54.0: without this step
+      # every `Ship darwin`/`Ship windows` step exits 1 with "the bundle dist/postbote.node.mjs does
+      # not exist". One extra build of the same sources through `--app node`.
+      - name: Build the node bundle (macOS/Windows payloads)
+        run: gjsify workspace postbote-cli build:node
+
+      # macOS and Windows runtimes are `optionalDependencies` gated by os/cpu, which a plain install
+      # on this Linux host SKIPS — naming the target installs it instead, and `ship` picks up both
+      # that runtime and the matching `@gjsify/node-gi` native addon from node_modules at pack time.
+      # Assembly is not host-bound (ADR 0024 § A1): the Mach-O and PE payloads are only VERIFIED on
+      # their own OS — a Mac or a Windows runner would be for that, not assembled on one. The `node`
+      # bundle they ship has no `gi://`, so GOA/EDS and every account backend are unavailable there
+      # on purpose (see README.md's Releasing section) — the Linux `.deb`/`.rpm` above is the only
+      # package with working accounts.
+      - name: Package macOS (arm64)
+        run: gjsify install --os darwin --cpu arm64 --immutable
+
+      - name: Ship macOS (arm64)
+        working-directory: app
+        run: gjsify ship darwin --arch arm64 --skip-build --target macos-app-zip
+
+      - name: Package macOS (x64)
+        run: gjsify install --os darwin --cpu x64 --immutable
+
+      - name: Ship macOS (x64)
+        working-directory: app
+        run: gjsify ship darwin --arch x64 --skip-build --target macos-app-zip
+
+      # `msi` needs `wixl` (msitools, installed above); `windows-dir-zip` needs nothing `ship` does
+      # not write itself.
+      - name: Package Windows (x64)
+        run: gjsify install --os win32 --cpu x64 --immutable
+
+      - name: Ship Windows (x64)
+        working-directory: app
+        run: gjsify ship windows --arch x64 --skip-build --target windows-dir-zip,msi
+
+      - name: Assert the macOS and Windows artifacts arrived
+        working-directory: app/ship/out
+        run: |
+          set -eu
+          ls -la
+          version=$(node -p "require('$GITHUB_WORKSPACE/app/package.json').version")
+          for f in \
+            "postbote-${version}-1.macos.arm64.zip" \
+            "postbote-${version}-1.macos.x86_64.zip" \
+            "postbote-${version}-1.windows.x64.zip" \
+            "postbote-${version}-1.x64.msi"; do
+            if [ ! -s "$f" ]; then
+              echo "::error::missing or empty artifact: $f"
+              exit 1
+            fi
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ship-deb-rpm
+          path: |
+            app/ship/out/*.deb
+            app/ship/out/*.rpm
+          # Already-compressed packages; the default level 6 would spend minutes re-compressing
+          # them on the way up and again on the way down for no gain.
+          compression-level: 0
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ship-macos-windows
+          path: |
+            app/ship/out/*.zip
+            app/ship/out/*.msi
+          compression-level: 0
