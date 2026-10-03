@@ -7,6 +7,15 @@ dist/
 # gjsify
 .gjsify/
 
+# `gjsify ship`'s output root. It resolves to `ship` under the directory the command
+# runs in unless `gjsify.ship.outDir` says otherwise, and ci.yml runs it from `app/`,
+# so this is `app/ship/`. Everything a release produces lands here — `out/` with the
+# finished .deb/.rpm/.zip/.msi plus the `stage/`, `schemas/`, `overlay/`, `signed/`,
+# `msi/`, `dmg/`, `flatpak/`, `appimage/` and `volume/` work dirs — and all of it is
+# rebuilt by the workflow, so none of it belongs in git. Unanchored like `dist/`
+# above, to cover the root of any workspace that ships.
+ship/
+
 # npm is not the package manager here — `gjsify install` is (see AGENTS.md).
 package-lock.json
 
