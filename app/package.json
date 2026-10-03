@@ -56,7 +56,15 @@
       "description": "postbote reads the mail (IMAP), contacts (CardDAV) and calendar (CalDAV) of the accounts already configured in GNOME Online Accounts, as a CLI and an MCP server. Read-only: it never sets \\Seen, sends mail, or writes to a server. GNOME Online Accounts and Evolution Data Server are Linux-only, so the macOS and Windows packages ship with every account backend unavailable \u2014 see the Releasing section of README.md.",
       "homepageUrl": "https://github.com/JumpLink/postbote",
       "bugtrackerUrl": "https://github.com/JumpLink/postbote/issues",
-      "vcsBrowserUrl": "https://github.com/JumpLink/postbote"
+      "vcsBrowserUrl": "https://github.com/JumpLink/postbote",
+      "typelibPackages": {
+        "EBook-1.2": { "deb": "gir1.2-ebook-1.2", "rpm": "evolution-data-server-libs" },
+        "EBookContacts-1.2": { "deb": "gir1.2-ebookcontacts-1.2", "rpm": "evolution-data-server-libs" },
+        "ECal-2.0": { "deb": "gir1.2-ecal-2.0", "rpm": "evolution-data-server-libs" },
+        "EDataServer-1.2": { "deb": "gir1.2-edataserver-1.2", "rpm": "evolution-data-server-libs" },
+        "Goa-1.0": { "deb": "gir1.2-goa-1.0", "rpm": "gnome-online-accounts-libs" },
+        "ICalGLib-3.0": { "deb": "gir1.2-ical-3.0", "rpm": "libical-glib" }
+      }
     },
     "excludeGlobals": [
       "document",
