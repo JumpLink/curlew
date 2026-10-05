@@ -21,7 +21,7 @@
     "@girs/edataserver-1.2": "^4.1.0",
     "@girs/goa-1.0": "^4.1.0",
     "@girs/icalglib-3.0": "^4.1.0",
-    "@gjsify/node-gi": "0.54.0",
+    "@gjsify/node-gi": "0.55.0",
     "@postbote/protocol": "*"
   }
 }
