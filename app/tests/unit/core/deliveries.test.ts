@@ -3,8 +3,8 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { SecretStore } from '@postbote/store';
-import { accountIdFor, SET_ASIDE_LIMIT, type SetAsideEntry, SignalProtocolStore } from '@postbote/signal';
+import { SecretStore } from '@curlew/store';
+import { accountIdFor, SET_ASIDE_LIMIT, type SetAsideEntry, SignalProtocolStore } from '@curlew/signal';
 
 import { deliveriesSetAside } from '../../../src/core/actions/deliveries.ts';
 import { saveConfig } from '../../../src/core/config.ts';

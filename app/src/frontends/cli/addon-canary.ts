@@ -33,7 +33,7 @@
 
 import type { CommandModule } from 'yargs';
 
-import { loadSignalLib } from '@postbote/signal';
+import { loadSignalLib } from '@curlew/signal';
 
 import { runtimeName } from '../../core/runtime.ts';
 import { runAndExit } from './output.ts';

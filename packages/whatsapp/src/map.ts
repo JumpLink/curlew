@@ -1,5 +1,5 @@
 /**
- * Baileys' events → the network-neutral `DeliveryEvent`s of `@postbote/protocol`.
+ * Baileys' events → the network-neutral `DeliveryEvent`s of `@curlew/protocol`.
  *
  * Pure: it reads the structural shapes in `api.ts` and keeps only a `JidResolver`, so every rule
  * here is tested against synthetic events on both runtimes.
@@ -10,7 +10,7 @@
  * protocol housekeeping, and status updates (`status@broadcast`: other people's stories).
  */
 
-import type { ChatMessage, DeliveryEvent } from '@postbote/protocol';
+import type { ChatMessage, DeliveryEvent } from '@curlew/protocol';
 import type {
   WaChat,
   WaContact,

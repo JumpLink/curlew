@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import type { AutomationHeaders } from '@postbote/protocol';
+import type { AutomationHeaders } from '@curlew/protocol';
 import {
   classifyMail,
   conversationVerdict,
@@ -8,7 +8,7 @@ import {
   isNoReplyAddress,
   type MailClassificationInput,
   type MessageVerdict,
-} from '@postbote/store';
+} from '@curlew/store';
 
 // The classification policy, pinned rule by rule. Synthetic addresses only.
 

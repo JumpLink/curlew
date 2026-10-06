@@ -10,7 +10,7 @@
  * disk growth from a read.
  */
 
-import type { BackendFlagState, BackendMessage } from '@postbote/protocol';
+import type { BackendFlagState, BackendMessage } from '@curlew/protocol';
 import type { IndexDatabase } from './db.ts';
 import { insertMany, placeholders, type SqlValue, withTransaction } from './db.ts';
 import { toFts5Match } from './fts.ts';

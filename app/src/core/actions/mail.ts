@@ -7,16 +7,16 @@
  * time. Every read is BODY.PEEK, so none of this marks mail as seen.
  */
 
-import { fetchPart, getMessage, listFolders, listParts, searchMail } from '@postbote/imap';
+import { fetchPart, getMessage, listFolders, listParts, searchMail } from '@curlew/imap';
 import type {
   FolderDTO,
   MailMessageDTO,
   MailPartDTO,
   MailSummaryDTO,
   SaveAttachmentResult,
-} from '@postbote/protocol';
-import { decodingSink, safeFileName } from '@postbote/protocol';
-import { attachmentsDir, ensurePrivateDir, FileSink, resolveDownloadPath } from '@postbote/store';
+} from '@curlew/protocol';
+import { decodingSink, safeFileName } from '@curlew/protocol';
+import { attachmentsDir, ensurePrivateDir, FileSink, resolveDownloadPath } from '@curlew/store';
 import { ATTACHMENT_BYTES, BODY_CHARS, capLimit, MAIL_LIMIT } from './limits.ts';
 
 /** Mail search params; folder defaults to INBOX, and no account means all of them. */

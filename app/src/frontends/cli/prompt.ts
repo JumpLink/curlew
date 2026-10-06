@@ -7,7 +7,7 @@
  * (readline's echo goes through a muted stream); piped input is not echoed anyway.
  */
 
-import type { AccountPrompter } from '@postbote/protocol';
+import type { AccountPrompter } from '@curlew/protocol';
 
 import type { SetupPrompter } from '../../core/actions/setup.ts';
 import { createInterface } from 'node:readline';

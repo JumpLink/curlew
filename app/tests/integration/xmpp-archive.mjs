@@ -15,7 +15,7 @@
 // Every account, message and certificate is synthetic and lives only in the container, which is
 // removed at the end whatever happens. Skipped (exit 0, reason printed) when podman is missing.
 //
-// Prerequisite: `gjsify install`. Run: `gjsify workspace postbote-cli test:xmpp-server`.
+// Prerequisite: `gjsify install`. Run: `gjsify workspace curlew-cli test:xmpp-server`.
 import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync, chmodSync } from 'node:fs';
 import { tmpdir } from 'node:os';

@@ -3,7 +3,7 @@
  *
  * Declared here, in the pure package, so the IMAP layer can stream an attachment without
  * knowing whether the other end is a file, a buffer or a test double — and so the file-writing
- * implementation can live in `@postbote/store` with `node:fs`, keeping the write path free of
+ * implementation can live in `@curlew/store` with `node:fs`, keeping the write path free of
  * `gi://` and testable on Node.
  */
 

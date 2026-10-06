@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { searchIndex, type SyncProgress, syncIndex, syncStatus } from '@postbote/store';
+import { searchIndex, type SyncProgress, syncIndex, syncStatus } from '@curlew/store';
 import { AT, FakeBackend, folder, freshDb, message } from './fixtures.ts';
 
 /**

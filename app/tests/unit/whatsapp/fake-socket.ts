@@ -6,7 +6,7 @@ import type {
   WaMessage,
   WaMessageContent,
   WaSocketHandle,
-} from '@postbote/whatsapp';
+} from '@curlew/whatsapp';
 
 /**
  * A scriptable stand-in for Baileys' socket. The receive path, the login and

@@ -7,8 +7,8 @@
  * `@` and `:` and a server name of any length — nothing to put in a file name as it is.
  */
 
-import type { BackendAccount } from '@postbote/protocol';
-import { type SecretChange, SecretStore, stableId } from '@postbote/store';
+import type { BackendAccount } from '@curlew/protocol';
+import { type SecretChange, SecretStore, stableId } from '@curlew/store';
 import type { UndecryptableLedger } from './api.ts';
 import { existsSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';

@@ -12,8 +12,8 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { AccountPrompter, BackendContext, ChatBackend } from '@postbote/protocol';
-import { isChatBackend, validateManifest } from '@postbote/protocol';
+import type { AccountPrompter, BackendContext, ChatBackend } from '@curlew/protocol';
+import { isChatBackend, validateManifest } from '@curlew/protocol';
 import {
   chatConversationId,
   getConversation,
@@ -21,8 +21,8 @@ import {
   rebuildConversations,
   SecretStore,
   syncChats,
-} from '@postbote/store';
-import type { TgMessage } from '@postbote/telegram';
+} from '@curlew/store';
+import type { TgMessage } from '@curlew/telegram';
 import {
   API_HASH_ENV,
   API_ID_ENV,
@@ -39,7 +39,7 @@ import {
   TelegramChatSession,
   toChatInfo,
   toChatMessage,
-} from '@postbote/telegram';
+} from '@curlew/telegram';
 import { conversationsList, conversationsShow, openIndex } from '../../../src/core/actions/index.ts';
 import { telegramFixture } from '../store/chat-fixtures.ts';
 import { freshDb } from '../store/fixtures.ts';

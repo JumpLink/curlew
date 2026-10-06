@@ -9,8 +9,8 @@ import type {
   BackendContext,
   ChatBackend,
   ChatSession,
-} from '@postbote/protocol';
-import { SecretStore } from '@postbote/store';
+} from '@curlew/protocol';
+import { SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
 import type { LoginPrompts, TelegramApi, TelegramClientHandle } from './api.ts';
 import { listSessionAccounts, sessionPath } from './accounts.ts';

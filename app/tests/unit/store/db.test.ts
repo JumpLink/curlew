@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { insertMany, openIndexDb, seqColumn, type IndexDatabase } from '@postbote/store';
+import { insertMany, openIndexDb, seqColumn, type IndexDatabase } from '@curlew/store';
 
 /**
  * The libgda-backed `node:sqlite` reads columns, and what it hands back is a contract this

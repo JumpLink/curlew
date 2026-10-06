@@ -20,7 +20,7 @@
  * anything.
  */
 
-import type { DeliveryEvent, DeliveryMode, DeliveryOutcome, DeliverySession } from '@postbote/protocol';
+import type { DeliveryEvent, DeliveryMode, DeliveryOutcome, DeliverySession } from '@curlew/protocol';
 import type { WaEventMap, WaEventName, WaSocketHandle } from './api.ts';
 import { disconnectReason, disconnectStatus, LOGGED_OUT } from './api.ts';
 import type { EventJournal } from './journal.ts';

@@ -18,8 +18,8 @@
  * stored, returned or printed; the token and the crypto store go only into the 0600 file.
  */
 
-import type { BackendAccount, BackendContext } from '@postbote/protocol';
-import { ensurePrivateDir, SecretStore } from '@postbote/store';
+import type { BackendAccount, BackendContext } from '@curlew/protocol';
+import { ensurePrivateDir, SecretStore } from '@curlew/store';
 import { existsSync, renameSync, rmSync } from 'node:fs';
 import type { MatrixLoginPrompts } from './api.ts';
 import {

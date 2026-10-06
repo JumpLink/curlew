@@ -15,7 +15,7 @@
  * homeserver in a local container.
  */
 
-import { MatrixBackend } from '@postbote/matrix';
+import { MatrixBackend } from '@curlew/matrix';
 import {
   getConversation,
   listConversations,
@@ -23,7 +23,7 @@ import {
   openIndexDb,
   rebuildConversations,
   syncChats,
-} from '@postbote/store';
+} from '@curlew/store';
 
 const env = process.env;
 const step = env.MATRIX_E2EE_STEP;

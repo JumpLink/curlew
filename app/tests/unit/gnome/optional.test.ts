@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@gjsify/unit';
-import { GnomeUnavailableError } from '@postbote/protocol';
+import { GnomeUnavailableError } from '@curlew/protocol';
 
 import { optionalNamespace } from '../../../../packages/gnome/src/optional.ts';
 
@@ -57,7 +57,7 @@ export default async () => {
     });
   });
 
-  await describe('@postbote/gnome without the typelibs', async () => {
+  await describe('@curlew/gnome without the typelibs', async () => {
     const available = await goa.get().then(
       () => true,
       () => false,

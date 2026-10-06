@@ -4,7 +4,7 @@
  * The transport is Gio TLS sockets, so the surface is GJS-only. On Node it throws, so callers
  * surface a clear message instead of an empty result that reads as "no mail found".
  *
- * The credentials are not the reason for the split: @postbote/gnome is one implementation on
+ * The credentials are not the reason for the split: @curlew/gnome is one implementation on
  * every runtime, so GOA passwords resolve under Node too. It is the socket that keeps this
  * package split.
  *
@@ -27,7 +27,7 @@ import {
   type MailPartDTO,
   type MailSummaryDTO,
   type SearchMailOptions,
-} from '@postbote/protocol';
+} from '@curlew/protocol';
 import { MAIL_MANIFEST } from './manifest.ts';
 
 export async function searchMail(_options: SearchMailOptions): Promise<MailSummaryDTO[]> {

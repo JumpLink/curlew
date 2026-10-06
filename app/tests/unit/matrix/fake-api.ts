@@ -10,7 +10,7 @@ import type {
   MxEvent,
   MxMessagesPage,
   MxRoom,
-} from '@postbote/matrix';
+} from '@curlew/matrix';
 
 export const ME = '@me:example.org';
 export const ANNA = '@anna:example.org';

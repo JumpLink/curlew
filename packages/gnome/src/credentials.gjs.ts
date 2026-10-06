@@ -11,7 +11,7 @@
 
 import type Goa from 'gi://Goa?version=1.0';
 
-import { GnomeError, type MailTarget } from '@postbote/protocol';
+import { GnomeError, type MailTarget } from '@curlew/protocol';
 import { gnomeError, isGnomeFailure } from './errors.ts';
 import { getClient } from './goa.gjs.ts';
 

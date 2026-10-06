@@ -1,7 +1,7 @@
 /**
  * Small pure date helpers for the action layer.
  *
- * Deliberately NOT in @postbote/protocol: that package is RFC grammar, and a calendar window
+ * Deliberately NOT in @curlew/protocol: that package is RFC grammar, and a calendar window
  * default is application policy. `formatImapDate` lives there because the wire format IS the
  * protocol; this does not.
  */

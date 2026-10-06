@@ -22,8 +22,8 @@
 // export counts: no socket, no Signal server, no account, no config, no index, no secret. No
 // user data can appear in its output, so the transcript is safe to keep.
 //
-// Prerequisite: `gjsify install` + `gjsify workspace postbote-cli build`, and gjs on PATH.
-// Run with: `node app/tests/integration/bundle-relocation.mjs` (or `gjsify workspace postbote-cli test:relocation`).
+// Prerequisite: `gjsify install` + `gjsify workspace curlew-cli build`, and gjs on PATH.
+// Run with: `node app/tests/integration/bundle-relocation.mjs` (or `gjsify workspace curlew-cli test:relocation`).
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';

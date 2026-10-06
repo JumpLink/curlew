@@ -13,7 +13,7 @@
  *     behind the first). Mail and chat backends stay on `postbote sync`: they are pull models
  *     with a cursor, and a daemon buys them nothing;
  *   - takes the receive lease per account, so a `sync` on the same account stands down — two
- *     devices on one account each acknowledge half the copy (`@postbote/store`);
+ *     devices on one account each acknowledge half the copy (`@curlew/store`);
  *   - reconnects a dropped session with backoff, and stops an account the network logged out;
  *   - rebuilds the conversations debounced, and once on stop, with the same address-book step
  *     `indexSync` uses;
@@ -27,13 +27,13 @@
  * was asked to stop did its job.
  */
 
-import { type MessageBackend, isChatBackend, isDeliveryBackend, isMailBackend } from '@postbote/protocol';
-import type { DeliveryProgress, DeliverySyncResult, IndexDatabase, RebuildResult } from '@postbote/store';
-import { receiveDeliveries } from '@postbote/store';
+import { type MessageBackend, isChatBackend, isDeliveryBackend, isMailBackend } from '@curlew/protocol';
+import type { DeliveryProgress, DeliverySyncResult, IndexDatabase, RebuildResult } from '@curlew/store';
+import { receiveDeliveries } from '@curlew/store';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig } from '../config.ts';
-import { configPath } from '@postbote/store';
+import { configPath } from '@curlew/store';
 import { openIndex, rebuildWithAddressBook } from './index-sync.ts';
 
 /** How long the conversations wait for the last written batch before they are rebuilt. */

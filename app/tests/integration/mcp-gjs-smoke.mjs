@@ -7,7 +7,7 @@
 // spawn it with a CLEAN env — no manual LD_LIBRARY_PATH / GI_TYPELIB_PATH. A green run proves
 // no launcher wrapper is needed.
 //
-// Prerequisite: `gjsify install` + `gjsify workspace postbote-cli build`, and gjs on PATH.
+// Prerequisite: `gjsify install` + `gjsify workspace curlew-cli build`, and gjs on PATH.
 // Run with: `node app/tests/integration/mcp-gjs-smoke.mjs`.
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';

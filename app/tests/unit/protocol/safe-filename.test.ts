@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { safeFileName } from '@postbote/protocol';
+import { safeFileName } from '@curlew/protocol';
 
 // A filename out of a message is attacker-controlled. Every case here is a way a hostile name
 // escapes its directory or lies about what it is.

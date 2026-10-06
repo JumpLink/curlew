@@ -17,7 +17,7 @@
  * contact list as not read while carrying on — messages unaffected.
  */
 
-import { type DeliveryEvent, normalizeAddress } from '@postbote/protocol';
+import { type DeliveryEvent, normalizeAddress } from '@curlew/protocol';
 import { SIGNAL_ROOT_CA_PEM } from './constants.ts';
 import { decryptAttachment } from './crypto.ts';
 import { peerOf } from './map.ts';

@@ -2,7 +2,7 @@
  * Minimal IMAP client (GJS-only): connect, login, select, list, search, fetch.
  *
  * Speaks the subset of RFC 3501 this project needs. All response and MIME parsing lives in the
- * pure @postbote/protocol modules — this file is socket plumbing and command sequencing only.
+ * pure @curlew/protocol modules — this file is socket plumbing and command sequencing only.
  *
  * Privacy: the password is pulled from the target's `getPassword()` thunk at login and never
  * logged, stored, or returned. Every body read uses BODY.PEEK, so nothing here can set \Seen.
@@ -26,7 +26,7 @@ import {
   quoteImapString,
   renderSearchPlan,
   type SearchPart,
-} from '@postbote/protocol';
+} from '@curlew/protocol';
 import { ByteReader, openTlsStream } from './transport.gjs.ts';
 
 export interface ImapResponse {

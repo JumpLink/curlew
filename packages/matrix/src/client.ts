@@ -13,7 +13,7 @@
  * crypto store before any history is read. `close` saves it again after the loop has stopped.
  */
 
-import type { SecretStore } from '@postbote/store';
+import type { SecretStore } from '@curlew/store';
 import {
   IDBCursor,
   IDBCursorWithValue,

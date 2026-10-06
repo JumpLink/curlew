@@ -1,5 +1,5 @@
 /**
- * Matrix events → the network-neutral chat driver types of `@postbote/protocol`.
+ * Matrix events → the network-neutral chat driver types of `@curlew/protocol`.
  *
  * Pure: it reads the structural shapes in `api.ts`, so every rule here is tested against
  * synthetic events on both runtimes.
@@ -12,8 +12,8 @@
  * older timestamp than the cursor, which an incremental run skips and the next full scan finds.
  */
 
-import type { ChatInfo, ChatMessage, ChatPeer, ChatEdit } from '@postbote/protocol';
-import { normalizeAddress } from '@postbote/protocol';
+import type { ChatInfo, ChatMessage, ChatPeer, ChatEdit } from '@curlew/protocol';
+import { normalizeAddress } from '@curlew/protocol';
 import type { MxEvent, MxRoom } from './api.ts';
 
 /**

@@ -9,11 +9,11 @@ import type {
   DeliveryEvent,
   DeliveryOutcome,
   DeliverySession,
-} from '@postbote/protocol';
-import { PLUGIN_API_VERSION } from '@postbote/protocol';
-import type { DeliveryProgress } from '@postbote/store';
-import type { IndexDatabase } from '@postbote/store';
-import { chatConversationId, getConversation, receiveDeliveries, takeReceiveLease } from '@postbote/store';
+} from '@curlew/protocol';
+import { PLUGIN_API_VERSION } from '@curlew/protocol';
+import type { DeliveryProgress } from '@curlew/store';
+import type { IndexDatabase } from '@curlew/store';
+import { chatConversationId, getConversation, receiveDeliveries, takeReceiveLease } from '@curlew/store';
 import { freshDb } from './fixtures.ts';
 
 /**

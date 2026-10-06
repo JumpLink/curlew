@@ -15,8 +15,8 @@
  * scrollback or an MCP transcript.
  */
 
-import type { BackendContext } from '@postbote/protocol';
-import type { SecretStore } from '@postbote/store';
+import type { BackendContext } from '@curlew/protocol';
+import type { SecretStore } from '@curlew/store';
 
 export interface TelegramCredentials {
   apiId: number;

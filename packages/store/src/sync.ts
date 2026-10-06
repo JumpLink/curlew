@@ -8,8 +8,8 @@
  * phase commits per message, so an interrupted run continues rather than restarting.
  */
 
-import type { BackendSession, MailBackend, FolderInfo } from '@postbote/protocol';
-import { searchableFolders } from '@postbote/protocol';
+import type { BackendSession, MailBackend, FolderInfo } from '@curlew/protocol';
+import { searchableFolders } from '@curlew/protocol';
 import type { IndexDatabase } from './db.ts';
 import {
   clearFolder,

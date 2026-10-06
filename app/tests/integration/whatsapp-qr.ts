@@ -1,5 +1,5 @@
 /**
- * Real network, no account: open a WhatsApp socket through `@postbote/whatsapp`'s own client
+ * Real network, no account: open a WhatsApp socket through `@curlew/whatsapp`'s own client
  * construction (Baileys + the gjsify WebSocket shim + postbote's silent logger) for a fresh,
  * unlinked device, and wait for the first QR code. Proves the WebSocket, the noise handshake,
  * protobuf, libsignal's key generation and the WASM bridge work on GJS — the whole stack a real
@@ -8,11 +8,11 @@
  * The device keys go to postbote's own session storage in a temporary directory, which checks
  * the auth state's first write (creds as TEXT, file 0600) on the way, and is deleted after.
  *
- * Not part of CI (it needs the network). Run: `gjsify workspace postbote-cli test:whatsapp-network`
+ * Not part of CI (it needs the network). Run: `gjsify workspace curlew-cli test:whatsapp-network`
  */
 
-import { SecretStore } from '@postbote/store';
-import { probeQr, SecretStoreAuthState } from '@postbote/whatsapp';
+import { SecretStore } from '@curlew/store';
+import { probeQr, SecretStoreAuthState } from '@curlew/whatsapp';
 import { mkdtempSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

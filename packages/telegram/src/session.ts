@@ -5,7 +5,7 @@
  * drives it in the unit tests exactly as mtcute does in production.
  */
 
-import type { ChatHistoryPage, ChatInfo, ChatSession } from '@postbote/protocol';
+import type { ChatHistoryPage, ChatInfo, ChatSession } from '@curlew/protocol';
 import type { TelegramApi, TgMessage } from './api.ts';
 import { toChatInfo, toChatMessage } from './map.ts';
 

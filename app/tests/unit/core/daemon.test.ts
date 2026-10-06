@@ -11,12 +11,12 @@ import type {
   DeliveryEvent,
   DeliveryOutcome,
   DeliverySession,
-} from '@postbote/protocol';
-import { PLUGIN_API_VERSION } from '@postbote/protocol';
-import type { RebuildResult } from '@postbote/store';
-import { takeReceiveLease } from '@postbote/store';
-import { accountIdFor } from '@postbote/signal';
-import { accountIdFromCreds } from '@postbote/whatsapp';
+} from '@curlew/protocol';
+import { PLUGIN_API_VERSION } from '@curlew/protocol';
+import type { RebuildResult } from '@curlew/store';
+import { takeReceiveLease } from '@curlew/store';
+import { accountIdFor } from '@curlew/signal';
+import { accountIdFromCreds } from '@curlew/whatsapp';
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
 import {
   daemonExitCode,

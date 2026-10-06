@@ -7,7 +7,7 @@
  */
 
 import type { CommandModule } from 'yargs';
-import { check as checkGnome } from '@postbote/gnome';
+import { check as checkGnome } from '@curlew/gnome';
 import { runtimeName } from '../../core/runtime.ts';
 import { runAndExit } from './output.ts';
 

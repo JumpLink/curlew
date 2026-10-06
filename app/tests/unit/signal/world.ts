@@ -14,7 +14,7 @@
 import * as Signal from '@signalapp/libsignal-client';
 import * as Zk from '@signalapp/libsignal-client/dist/zkgroup/index.js';
 
-import type { BackendContext } from '@postbote/protocol';
+import type { BackendContext } from '@curlew/protocol';
 import {
   type ChatConnector,
   type ChatFetch,
@@ -32,7 +32,7 @@ import {
   padPlaintext,
   type SignalLib,
   type SignalProtocolStore,
-} from '@postbote/signal';
+} from '@curlew/signal';
 import { join } from 'node:path';
 
 import { Party } from './stores.ts';

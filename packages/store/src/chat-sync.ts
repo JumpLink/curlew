@@ -36,7 +36,7 @@ import type {
   ChatSession,
   Classification,
   ClassificationReason,
-} from '@postbote/protocol';
+} from '@curlew/protocol';
 import type { IndexDatabase } from './db.ts';
 import { insertMany, placeholders, seqColumn, type SqlValue, withTransaction } from './db.ts';
 import { upsertAccount } from './index-store.ts';

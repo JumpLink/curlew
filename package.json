@@ -1,5 +1,5 @@
 {
-  "name": "postbote",
+  "name": "curlew",
   "version": "0.1.0",
   "private": true,
   "license": "AGPL-3.0-or-later",
@@ -11,10 +11,10 @@
   ],
   "scripts": {
     "check": "gjsify foreach -A check",
-    "build": "gjsify workspace postbote-cli build",
-    "start": "gjsify workspace postbote-cli start",
-    "test": "gjsify workspace postbote-cli test",
-    "format": "gjsify workspace postbote-cli format",
-    "lint": "gjsify workspace postbote-cli lint"
+    "build": "gjsify workspace curlew-cli build",
+    "start": "gjsify workspace curlew-cli start",
+    "test": "gjsify workspace curlew-cli test",
+    "format": "gjsify workspace curlew-cli format",
+    "lint": "gjsify workspace curlew-cli lint"
   }
 }

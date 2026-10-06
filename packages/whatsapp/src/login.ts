@@ -17,8 +17,8 @@
  * the public name.
  */
 
-import type { AccountPrompter, BackendAccount, BackendContext } from '@postbote/protocol';
-import { ensurePrivateDir, SecretStore } from '@postbote/store';
+import type { AccountPrompter, BackendAccount, BackendContext } from '@curlew/protocol';
+import { ensurePrivateDir, SecretStore } from '@curlew/store';
 import { existsSync, renameSync, rmSync } from 'node:fs';
 import type { WaSocketHandle } from './api.ts';
 import { disconnectReason, disconnectStatus, RESTART_REQUIRED } from './api.ts';

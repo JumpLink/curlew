@@ -3,8 +3,8 @@ import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { type BackendManifest, type MessageBackend } from '@postbote/protocol';
-import { MAIL_MANIFEST } from '@postbote/imap';
+import { type BackendManifest, type MessageBackend } from '@curlew/protocol';
+import { MAIL_MANIFEST } from '@curlew/imap';
 import { BUILTIN_PLUGINS } from '../../../src/core/backends/builtin.ts';
 import { BackendRegistry, type BackendPlugin } from '../../../src/core/backends/registry.ts';
 import { conversationsClassify } from '../../../src/core/actions/conversations.ts';

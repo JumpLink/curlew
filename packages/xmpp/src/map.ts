@@ -1,5 +1,5 @@
 /**
- * Archived XMPP stanzas → the network-neutral chat driver types of `@postbote/protocol`.
+ * Archived XMPP stanzas → the network-neutral chat driver types of `@curlew/protocol`.
  *
  * Pure: every rule here is tested against synthetic entries on both runtimes.
  *
@@ -21,8 +21,8 @@ import type {
   ChatMessage,
   ChatPeer,
   ParticipantAddress,
-} from '@postbote/protocol';
-import { normalizeAddress } from '@postbote/protocol';
+} from '@curlew/protocol';
+import { normalizeAddress } from '@curlew/protocol';
 import { type ArchivedEntry, bareJid, resourceOf } from './stanza.ts';
 
 /**

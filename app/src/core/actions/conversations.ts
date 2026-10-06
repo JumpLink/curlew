@@ -6,9 +6,9 @@
  * immediately and still never writes to the index.
  */
 
-import type { Classification, Conversation, ConversationMessage } from '@postbote/protocol';
-import { normalizeAddress } from '@postbote/protocol';
-import { configPath, getConversation, indexDbPath, listConversations, syncStatus } from '@postbote/store';
+import type { Classification, Conversation, ConversationMessage } from '@curlew/protocol';
+import { normalizeAddress } from '@curlew/protocol';
+import { configPath, getConversation, indexDbPath, listConversations, syncStatus } from '@curlew/store';
 import { loadConfig, saveConfig } from '../config.ts';
 import { MAX_STALENESS_HOURS, openIndex } from './index-sync.ts';
 import { CONVERSATION_BODY_CHARS, CONVERSATION_LIMIT, capLimit } from './limits.ts';

@@ -1,14 +1,14 @@
 /**
- * Real network, no account: open Signal's provisioning socket through `@postbote/signal`
+ * Real network, no account: open Signal's provisioning socket through `@curlew/signal`
  * (libsignal's own TLS + WebSocket, pinned to Signal's root) and wait for the provisioning
  * address a phone would scan. Proves libsignal's networking — its Tokio runtime and the N-API
  * thread-safe callbacks into JS — works on GJS. The link URL is built and discarded, never
  * printed; nothing is linked.
  *
- * Not part of CI (it needs the network). Run: `gjsify workspace postbote-cli test:signal-network`
+ * Not part of CI (it needs the network). Run: `gjsify workspace curlew-cli test:signal-network`
  */
 
-import { createNet, loadSignalLib, probeProvisioning } from '@postbote/signal';
+import { createNet, loadSignalLib, probeProvisioning } from '@curlew/signal';
 
 let ok = false;
 try {

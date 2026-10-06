@@ -19,7 +19,7 @@ import {
   type TermsNotice,
   storeTierFor,
   validateManifest,
-} from '@postbote/protocol';
+} from '@curlew/protocol';
 import type { PostboteConfig } from '../config.ts';
 
 /** A registry entry: the manifest, readable without running the backend, and its factory. */

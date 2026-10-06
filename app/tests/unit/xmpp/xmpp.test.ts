@@ -4,15 +4,15 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import parse from '@xmpp/xml/lib/parse.js';
 
-import type { AccountPrompter, BackendContext } from '@postbote/protocol';
-import { isChatBackend, validateManifest } from '@postbote/protocol';
+import type { AccountPrompter, BackendContext } from '@curlew/protocol';
+import { isChatBackend, validateManifest } from '@curlew/protocol';
 import {
   chatConversationId,
   getConversation,
   listConversations,
   rebuildConversations,
   syncChats,
-} from '@postbote/store';
+} from '@curlew/store';
 import {
   accountIdFor,
   assignSeqs,
@@ -38,7 +38,7 @@ import {
   XMPP_MANIFEST,
   XmppBackend,
   XmppChatSession,
-} from '@postbote/xmpp';
+} from '@curlew/xmpp';
 import { freshDb } from '../store/fixtures.ts';
 import { ANNA, BEN, entry, fakeApi, fakeFactory, fakeServer, ME, resultXml, ROOM } from './fake-api.ts';
 

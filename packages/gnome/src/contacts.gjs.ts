@@ -14,7 +14,7 @@ import type EDataServer from 'gi://EDataServer?version=1.2';
 import { extractList, getRegistry, sourceGoaAccountId } from './eds.gjs.ts';
 import { gnomeError, isGnomeFailure } from './errors.ts';
 import { book, eds } from './libs.gjs.ts';
-import type { ContactDTO, SearchContactsOptions } from '@postbote/protocol';
+import type { ContactDTO, SearchContactsOptions } from '@curlew/protocol';
 
 const DEFAULT_LIMIT = 50;
 /** Seconds BookClient.connect waits for the backend to be connected. */

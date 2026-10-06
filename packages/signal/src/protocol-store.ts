@@ -22,8 +22,8 @@
  * shape, not by class), so this module needs libsignal only at run time, through `SignalLib`.
  */
 
-import type { SetAsideLedger } from '@postbote/protocol';
-import type { SecretChange, SecretStore } from '@postbote/store';
+import type { SetAsideLedger } from '@curlew/protocol';
+import type { SecretChange, SecretStore } from '@curlew/store';
 import type * as Core from '@signalapp/libsignal-client';
 import type { SignalLib } from './lib.ts';
 

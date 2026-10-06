@@ -18,8 +18,8 @@
  * printed apart from the QR code itself.
  */
 
-import type { AccountPrompter, BackendAccount, BackendContext } from '@postbote/protocol';
-import { ensurePrivateDir, SecretStore } from '@postbote/store';
+import type { AccountPrompter, BackendAccount, BackendContext } from '@curlew/protocol';
+import { ensurePrivateDir, SecretStore } from '@curlew/store';
 import type * as Core from '@signalapp/libsignal-client';
 import { existsSync, renameSync, rmSync } from 'node:fs';
 import {

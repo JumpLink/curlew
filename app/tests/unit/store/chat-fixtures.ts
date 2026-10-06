@@ -1,4 +1,4 @@
-import { type BackendManifest, PLUGIN_API_VERSION } from '@postbote/protocol';
+import { type BackendManifest, PLUGIN_API_VERSION } from '@curlew/protocol';
 import type {
   BackendAccount,
   ChatBackend,
@@ -7,7 +7,7 @@ import type {
   ChatMessage,
   ChatPeer,
   ChatSession,
-} from '@postbote/protocol';
+} from '@curlew/protocol';
 
 /**
  * A scriptable fake chat network behind the `ChatBackend` port: accounts, chats, messages with

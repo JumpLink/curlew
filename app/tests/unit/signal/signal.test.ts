@@ -13,8 +13,8 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import type { AccountPrompter, DeliveryEvent, SetAsideRecord } from '@postbote/protocol';
-import { isDeliveryBackend, validateManifest } from '@postbote/protocol';
+import type { AccountPrompter, DeliveryEvent, SetAsideRecord } from '@curlew/protocol';
+import { isDeliveryBackend, validateManifest } from '@curlew/protocol';
 import {
   chatConversationId,
   getConversation,
@@ -22,7 +22,7 @@ import {
   rebuildConversations,
   receiveDeliveries,
   SecretStore,
-} from '@postbote/store';
+} from '@curlew/store';
 import {
   accountIdFor,
   attachmentUrl,
@@ -79,7 +79,7 @@ import {
   toBase64,
   unpadPlaintext,
   uuidToBytes,
-} from '@postbote/signal';
+} from '@curlew/signal';
 import * as Signal from '@signalapp/libsignal-client';
 
 import { builtinRegistry } from '../../../src/core/backends/builtin.ts';

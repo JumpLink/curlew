@@ -21,8 +21,8 @@ import type {
   MailAddress,
   Participant,
   ParticipantAddress,
-} from '@postbote/protocol';
-import { normalizeAddress } from '@postbote/protocol';
+} from '@curlew/protocol';
+import { normalizeAddress } from '@curlew/protocol';
 import { classifyMail, conversationVerdict, type MessageVerdict, type SenderOverrides } from './classify.ts';
 import type { IndexDatabase } from './db.ts';
 import { insertMany, placeholders, seqColumn, type SqlValue, withTransaction } from './db.ts';

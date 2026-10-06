@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { sendMessage, SmtpError, verifyAccount } from '@postbote/smtp';
-import type { OutgoingMessage, SmtpAccount } from '@postbote/smtp';
+import { sendMessage, SmtpError, verifyAccount } from '@curlew/smtp';
+import type { OutgoingMessage, SmtpAccount } from '@curlew/smtp';
 
 import { startDummyServer } from './dummy-server.ts';
 import type { DummyOptions } from './dummy-server.ts';

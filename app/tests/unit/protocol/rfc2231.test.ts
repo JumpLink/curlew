@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { decodeRfc2231Params } from '@postbote/protocol';
+import { decodeRfc2231Params } from '@curlew/protocol';
 
 // Reassembling these is not cosmetic: the segments are useless separately, and a parser that
 // only knows plain `filename=` produces "filename*0*" as the attachment name.

@@ -7,8 +7,8 @@ import {
   PLUGIN_API_VERSION,
   storeTierFor,
   validateManifest,
-} from '@postbote/protocol';
-import { MAIL_MANIFEST } from '@postbote/imap';
+} from '@curlew/protocol';
+import { MAIL_MANIFEST } from '@curlew/imap';
 
 // The network-neutral plugin API: typed addresses, manifests, sync models. All synthetic.
 

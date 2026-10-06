@@ -20,7 +20,7 @@
  * delay — and a lost ratchet step is what Signal's retry receipts exist to repair.
  */
 
-import type { SecretChange, SecretStore } from '@postbote/store';
+import type { SecretChange, SecretStore } from '@curlew/store';
 import { BufferJSON, initAuthCreds, proto } from 'baileys';
 import type { AuthenticationCreds, AuthenticationState, SignalDataSet, SignalDataTypeMap } from 'baileys';
 import type { LidLookup } from './jid.ts';

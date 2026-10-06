@@ -1,8 +1,8 @@
 /**
- * @postbote/gnome entry — one implementation for every runtime.
+ * @curlew/gnome entry — one implementation for every runtime.
  *
  * Native implementation over `gi://Goa`, `gi://EDataServer`, `gi://EBook`, `gi://ECal`, …
- * returning the plain DTOs from @postbote/protocol. It runs unchanged on GJS (native `gi://`)
+ * returning the plain DTOs from @curlew/protocol. It runs unchanged on GJS (native `gi://`)
  * and on Node/Bun, where `gi://` resolves through `@gjsify/node-gi` with GJS semantics. What it
  * needs is a GNOME session with GOA/EDS running, not a particular JS runtime.
  *

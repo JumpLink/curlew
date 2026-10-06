@@ -44,7 +44,7 @@
  * either: each change becomes a notice in the direct chat with that contact.
  */
 
-import type { DeliveryEvent, DeliveryMode, DeliveryOutcome, DeliverySession } from '@postbote/protocol';
+import type { DeliveryEvent, DeliveryMode, DeliveryOutcome, DeliverySession } from '@curlew/protocol';
 import type { AttachmentDownloader } from './contacts.ts';
 import { readContactsSync } from './contacts.ts';
 import type { DecryptResult, SkipReason } from './decrypt.ts';

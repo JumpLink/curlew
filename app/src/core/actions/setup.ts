@@ -33,7 +33,7 @@
  *   it and none can be.
  */
 
-import type { AccountPrompter } from '@postbote/protocol';
+import type { AccountPrompter } from '@curlew/protocol';
 import { accountsAdd, accountsCheck, backendAccountsList } from './accounts.ts';
 import { backendsEnable, backendsList } from './backends.ts';
 import { runDeliveryDaemon } from './daemon.ts';
@@ -309,7 +309,7 @@ function readinessStep(): SetupStep {
             status: 'failed',
             reason:
               `no bundle at ${readiness.bundle}. Build it with ` +
-              '`gjsify workspace postbote-cli build`, then run this again — a command does not ' +
+              '`gjsify workspace curlew-cli build`, then run this again — a command does not ' +
               'build itself.',
           };
         }

@@ -5,8 +5,8 @@
  * `postbote sync` stays the only thing that writes to the index.
  */
 
-import type { TermsNotice } from '@postbote/protocol';
-import { configPath } from '@postbote/store';
+import type { TermsNotice } from '@curlew/protocol';
+import { configPath } from '@curlew/store';
 import { builtinRegistry } from '../backends/builtin.ts';
 import type { BackendStatus, EnableOutcome } from '../backends/registry.ts';
 import { loadConfig, saveConfig } from '../config.ts';

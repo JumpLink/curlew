@@ -2,8 +2,8 @@
  * Calendar actions — Evolution Data Server calendars (CalDAV/local).
  */
 
-import { listEvents } from '@postbote/gnome';
-import type { CalendarEventDTO } from '@postbote/protocol';
+import { listEvents } from '@curlew/gnome';
+import type { CalendarEventDTO } from '@curlew/protocol';
 import { shiftDate, todayUtc } from '../lib/date.ts';
 import { capLimit, EVENT_LIMIT, EVENT_WINDOW_DAYS } from './limits.ts';
 

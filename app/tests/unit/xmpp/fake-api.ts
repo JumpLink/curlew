@@ -8,8 +8,8 @@ import type {
   MamQuery,
   RosterItem,
   XmppApi,
-} from '@postbote/xmpp';
-import { NS, parseMamResult, XmppQueryError } from '@postbote/xmpp';
+} from '@curlew/xmpp';
+import { NS, parseMamResult, XmppQueryError } from '@curlew/xmpp';
 
 /**
  * A scriptable XMPP server behind `XmppApi`: roster, bookmarks, disco features and MAM archives,

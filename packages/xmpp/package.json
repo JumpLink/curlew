@@ -1,5 +1,5 @@
 {
-  "name": "@postbote/xmpp",
+  "name": "@curlew/xmpp",
   "version": "0.1.0",
   "license": "AGPL-3.0-or-later",
   "private": true,
@@ -15,8 +15,8 @@
     "src"
   ],
   "dependencies": {
-    "@postbote/protocol": "*",
-    "@postbote/store": "*",
+    "@curlew/protocol": "*",
+    "@curlew/store": "*",
     "@xmpp/client-core": "0.14.0",
     "@xmpp/iq": "0.14.0",
     "@xmpp/jid": "0.14.0",

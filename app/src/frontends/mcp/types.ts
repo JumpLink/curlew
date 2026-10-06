@@ -13,8 +13,8 @@
  */
 
 import { mcpError } from '@gjsify/mcp';
-import { describeUnavailable } from '@postbote/gnome';
-import { GnomeError } from '@postbote/protocol';
+import { describeUnavailable } from '@curlew/gnome';
+import { GnomeError } from '@curlew/protocol';
 
 /**
  * Error response built from a caught value (the common catch handler).

@@ -7,9 +7,9 @@
  * added once applies to both.
  */
 
-import { check, listAccounts } from '@postbote/gnome';
-import type { AccountPrompter, BackendAccount, GnomeAccount, GnomeCheckResult } from '@postbote/protocol';
-import { configPath } from '@postbote/store';
+import { check, listAccounts } from '@curlew/gnome';
+import type { AccountPrompter, BackendAccount, GnomeAccount, GnomeCheckResult } from '@curlew/protocol';
+import { configPath } from '@curlew/store';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig } from '../config.ts';

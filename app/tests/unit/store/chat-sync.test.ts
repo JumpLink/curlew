@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import type { ContactDTO } from '@postbote/protocol';
+import type { ContactDTO } from '@curlew/protocol';
 import {
   chatConversationId,
   deletedBy,
@@ -10,7 +10,7 @@ import {
   syncChats,
   syncIndex,
   syncStatus,
-} from '@postbote/store';
+} from '@curlew/store';
 import { BEN, chatMessage, FakeChatBackend, telegramFixture } from './chat-fixtures.ts';
 import { AT, FakeBackend, freshDb, message } from './fixtures.ts';
 

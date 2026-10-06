@@ -10,7 +10,7 @@ import {
   releaseReceiveLease,
   takeReceiveLease,
   withTransaction,
-} from '@postbote/store';
+} from '@curlew/store';
 import { freshDb } from './fixtures.ts';
 
 /**

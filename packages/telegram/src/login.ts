@@ -14,8 +14,8 @@
  * not the api_hash, not the session. The result is the account id and the public identity (`@username` or name).
  */
 
-import type { BackendAccount, BackendContext } from '@postbote/protocol';
-import { ensurePrivateDir, SecretStore } from '@postbote/store';
+import type { BackendAccount, BackendContext } from '@curlew/protocol';
+import { ensurePrivateDir, SecretStore } from '@curlew/store';
 import { existsSync, renameSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import type { LoginPrompts, TelegramClientHandle, TgUser } from './api.ts';

@@ -2,7 +2,7 @@
  * Opt-in integration test: postbote's Matrix backend on GJS decrypts an end-to-end encrypted
  * direct chat, across process restarts, against a real homeserver in a local container.
  *
- *   gjsify workspace postbote-cli test:matrix-e2ee
+ *   gjsify workspace curlew-cli test:matrix-e2ee
  *
  * Needs podman (the test is SKIPPED with the reason when it is missing — exit 0, one line) and
  * pulls `forgejo.ellis.link/continuwuation/continuwuity` on first use. Not part of CI.

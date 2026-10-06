@@ -8,8 +8,8 @@
  * chat networks: Telegram, Matrix, XMPP with MAM) and `delivery` (events pushed once by a
  * network with no server archive: WhatsApp, later Signal).
  *
- * The `MailBackend` interface is the load-bearing seam of the project. `@postbote/store` drives the sync
- * engine THROUGH it and never imports `@postbote/imap`, which is the only reason the most
+ * The `MailBackend` interface is the load-bearing seam of the project. `@curlew/store` drives the sync
+ * engine THROUGH it and never imports `@curlew/imap`, which is the only reason the most
  * intricate code here — incremental sync, UIDVALIDITY handling, expunge detection — can be
  * unit-tested on Node against a fake backend and an in-memory database, with no server, no
  * network and no GOA session.
@@ -118,7 +118,7 @@ export interface AccountPrompter {
   notify(message: string): void;
 }
 
-/** The mailbox sync driver: folders, UIDs and flags, driven by `syncIndex` in `@postbote/store`. */
+/** The mailbox sync driver: folders, UIDs and flags, driven by `syncIndex` in `@curlew/store`. */
 export interface MailBackend extends MessageBackend {
   readonly kind: 'mailbox';
   connect(accountId: string): Promise<BackendSession>;
@@ -295,7 +295,7 @@ export interface ChatRevision {
   retracted?: string[];
 }
 
-/** The chat sync driver: dialogs and per-chat sequences, driven by `syncChats` in `@postbote/store`. */
+/** The chat sync driver: dialogs and per-chat sequences, driven by `syncChats` in `@curlew/store`. */
 export interface ChatBackend extends MessageBackend {
   readonly kind: 'chat';
   connect(accountId: string): Promise<ChatSession>;
@@ -474,7 +474,7 @@ export interface DeliverySession {
 
 /**
  * The delivery sync driver: for networks without a server archive (WhatsApp, Signal), driven by
- * `receiveDeliveries` in `@postbote/store`. What it writes is the only copy (`state`).
+ * `receiveDeliveries` in `@curlew/store`. What it writes is the only copy (`state`).
  */
 export interface DeliveryBackend extends MessageBackend {
   readonly kind: 'delivery';

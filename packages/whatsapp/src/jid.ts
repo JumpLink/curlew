@@ -12,8 +12,8 @@
  * Pure: no Baileys import, so every rule is tested with synthetic ids.
  */
 
-import type { ChatInfo, ChatPeer, ParticipantAddress } from '@postbote/protocol';
-import { normalizeAddress } from '@postbote/protocol';
+import type { ChatInfo, ChatPeer, ParticipantAddress } from '@curlew/protocol';
+import { normalizeAddress } from '@curlew/protocol';
 
 export interface Jid {
   user: string;

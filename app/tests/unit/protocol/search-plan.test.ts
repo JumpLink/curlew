@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { buildSearchPlan, planHasLiterals, renderSearchPlan } from '@postbote/protocol';
+import { buildSearchPlan, planHasLiterals, renderSearchPlan } from '@curlew/protocol';
 
 export default async () => {
   await describe('buildSearchPlan', async () => {

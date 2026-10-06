@@ -9,9 +9,9 @@
  * backup — a password there is refused), a log, an error message, a DTO or MCP output.
  */
 
-import type { BackendAccount, BackendContext } from '@postbote/protocol';
-import { normalizeAddress } from '@postbote/protocol';
-import { SecretStore, stableId } from '@postbote/store';
+import type { BackendAccount, BackendContext } from '@curlew/protocol';
+import { normalizeAddress } from '@curlew/protocol';
+import { SecretStore, stableId } from '@curlew/store';
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { XmppLogin } from './client.ts';

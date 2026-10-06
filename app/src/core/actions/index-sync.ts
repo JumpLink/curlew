@@ -2,12 +2,12 @@
  * Index actions — building the local index and reporting on it.
  *
  * This module is where the two halves are joined: the registry provides the enabled backends,
- * `@postbote/store` owns the database and the algorithms, and neither imports the other. The
+ * `@curlew/store` owns the database and the algorithms, and neither imports the other. The
  * injection happens here and nowhere else.
  */
 
-import { searchContacts } from '@postbote/gnome';
-import { type ContactDTO, isChatBackend, isDeliveryBackend, isMailBackend } from '@postbote/protocol';
+import { searchContacts } from '@curlew/gnome';
+import { type ContactDTO, isChatBackend, isDeliveryBackend, isMailBackend } from '@curlew/protocol';
 import type {
   ChatSyncResult,
   DeliverySyncResult,
@@ -17,7 +17,7 @@ import type {
   RebuildResult,
   SyncResult,
   SyncStatus,
-} from '@postbote/store';
+} from '@curlew/store';
 import {
   configPath,
   ensurePrivateDir,
@@ -32,7 +32,7 @@ import {
   syncIndex,
   type SyncProgress,
   syncStatus,
-} from '@postbote/store';
+} from '@curlew/store';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig } from '../config.ts';
@@ -133,7 +133,7 @@ export async function rebuildWithAddressBook(
 ): Promise<RebuildResult & { contacts: number | null }> {
   const contacts = await addressBook();
   // Sync and rebuild write in multi-row batches — one wide statement per few rows rather than
-  // one per row (see `insertMany` in `@postbote/store`).
+  // one per row (see `insertMany` in `@curlew/store`).
   return { ...rebuildConversations(db, { contacts: contacts ?? [] }), contacts: contacts?.length ?? null };
 }
 

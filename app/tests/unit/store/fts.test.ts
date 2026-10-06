@@ -7,7 +7,7 @@ import {
   toFts5ColumnMatch,
   toFts5Match,
   withTransaction,
-} from '@postbote/store';
+} from '@curlew/store';
 
 /**
  * THE gate for the whole index design.

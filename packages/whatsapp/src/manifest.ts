@@ -6,7 +6,7 @@
  * anywhere else in postbote.
  */
 
-import { type BackendManifest, PLUGIN_API_VERSION } from '@postbote/protocol';
+import { type BackendManifest, PLUGIN_API_VERSION } from '@curlew/protocol';
 
 export const WHATSAPP_MANIFEST: BackendManifest = {
   name: 'whatsapp',

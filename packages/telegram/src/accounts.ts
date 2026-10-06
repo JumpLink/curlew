@@ -5,8 +5,8 @@
  * logging the session out from another Telegram client) ends it.
  */
 
-import type { BackendAccount } from '@postbote/protocol';
-import { SecretStore } from '@postbote/store';
+import type { BackendAccount } from '@curlew/protocol';
+import { SecretStore } from '@curlew/store';
 import { existsSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { ACCOUNT_NAMESPACE, holdsSignIn } from './storage.ts';

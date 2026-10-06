@@ -4,7 +4,7 @@
  * Pure data in its own file: the registry reads it BEFORE it constructs the backend.
  */
 
-import { type BackendManifest, PLUGIN_API_VERSION } from '@postbote/protocol';
+import { type BackendManifest, PLUGIN_API_VERSION } from '@curlew/protocol';
 
 export const XMPP_MANIFEST: BackendManifest = {
   name: 'xmpp',

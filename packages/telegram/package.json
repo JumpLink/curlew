@@ -1,5 +1,5 @@
 {
-  "name": "@postbote/telegram",
+  "name": "@curlew/telegram",
   "version": "0.1.0",
   "license": "AGPL-3.0-or-later",
   "private": true,
@@ -17,7 +17,7 @@
   "dependencies": {
     "@mtcute/core": "0.32.3",
     "@mtcute/web": "0.32.3",
-    "@postbote/protocol": "*",
-    "@postbote/store": "*"
+    "@curlew/protocol": "*",
+    "@curlew/store": "*"
   }
 }

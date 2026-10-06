@@ -16,7 +16,7 @@
  * and a cut there would lose the second one for good.
  */
 
-import type { ChatEdit, ChatHistoryPage, ChatInfo, ChatRevision, ChatSession } from '@postbote/protocol';
+import type { ChatEdit, ChatHistoryPage, ChatInfo, ChatRevision, ChatSession } from '@curlew/protocol';
 import type { MatrixApi, MxEvent, UndecryptableLedger } from './api.ts';
 import {
   editOf,

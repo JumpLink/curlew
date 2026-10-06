@@ -11,8 +11,8 @@
  * written again rather than shared: that package is kept self-contained (ADR 0001 §5).
  */
 
-import type { BackendAccount } from '@postbote/protocol';
-import { SecretStore } from '@postbote/store';
+import type { BackendAccount } from '@curlew/protocol';
+import { SecretStore } from '@curlew/store';
 import { existsSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { ACCOUNT_NAMESPACE } from './protocol-store.ts';

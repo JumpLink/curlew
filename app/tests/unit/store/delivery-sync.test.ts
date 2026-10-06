@@ -8,8 +8,8 @@ import type {
   DeliveryEvent,
   DeliveryOutcome,
   DeliverySession,
-} from '@postbote/protocol';
-import { isDeliveryBackend, PLUGIN_API_VERSION } from '@postbote/protocol';
+} from '@curlew/protocol';
+import { isDeliveryBackend, PLUGIN_API_VERSION } from '@curlew/protocol';
 import {
   chatConversationId,
   deliveredMessageId,
@@ -17,7 +17,7 @@ import {
   listConversations,
   rebuildConversations,
   receiveDeliveries,
-} from '@postbote/store';
+} from '@curlew/store';
 import { freshDb } from './fixtures.ts';
 
 /**

@@ -5,7 +5,7 @@
  * terms notice is shown before any Telegram code runs.
  */
 
-import { type BackendManifest, PLUGIN_API_VERSION } from '@postbote/protocol';
+import { type BackendManifest, PLUGIN_API_VERSION } from '@curlew/protocol';
 
 export const TELEGRAM_MANIFEST: BackendManifest = {
   name: 'telegram',

@@ -22,7 +22,7 @@ jobs:
     container:
       image: fedora:44
     steps:
-      # These are load-bearing, unlike in the sibling projects. @postbote/gnome does
+      # These are load-bearing, unlike in the sibling projects. @curlew/gnome does
       # TOP-LEVEL STATIC `gi://` imports (Goa, EDataServer, EBook, ECal), so the bundle needs
       # those typelibs at MODULE LOAD, not merely when a call is made — without them CI cannot
       # even import what it just built. libgda-sqlite backs `node:sqlite` for the index.
@@ -79,7 +79,7 @@ jobs:
         run: gjsify foreach -A check
 
       - name: Build the CLI bundle
-        run: gjsify workspace postbote-cli build
+        run: gjsify workspace curlew-cli build
 
       # Copies the bundle just built out of the tree and asks it to load libsignal from there.
       # It proves whether a built postbote is RELOCATABLE — right now it is not: `--app gjs`
@@ -91,7 +91,7 @@ jobs:
       # when gjsify stops baking the path in, and goes red if an absolute addon path ever
       # reappears in the bundle. It contacts no server and reads no account.
       - name: Bundle relocation probe (native addon, out of tree)
-        run: gjsify workspace postbote-cli test:relocation
+        run: gjsify workspace curlew-cli test:relocation
 
       # Runs on gjs AND node. There is no session D-Bus here, so GOA/EDS are unreachable —
       # that is expected and is what the three-state availability probe is for. The tests
@@ -100,7 +100,7 @@ jobs:
       # running until GitHub's 6-hour cancel. The suite takes ~2 minutes.
       - name: Tests (gjs + node)
         timeout-minutes: 15
-        run: gjsify workspace postbote-cli test
+        run: gjsify workspace curlew-cli test
 
       # The read-only gate, asserted END-TO-END rather than against a stub. The unit suite tests
       # `applyReadOnlyGate` through a fake recorder, which cannot see the failure that matters
@@ -111,7 +111,7 @@ jobs:
       # It needs no session bus: GOA is unreachable in this container and the script tolerates
       # that (it asserts a well-formed answer, not a successful one).
       - name: MCP end-to-end + read-only gate (real stdio)
-        run: gjsify workspace postbote-cli test:mcp
+        run: gjsify workspace curlew-cli test:mcp
 
       # The CLI's own installable artifacts, out of the same bundle the tests above ran against.
       # `.deb` and `.rpm` only here — gjsify writes both itself and execs nothing for them, so this
@@ -146,7 +146,7 @@ jobs:
       # every `Ship darwin`/`Ship windows` step exits 1 with "the bundle dist/postbote.node.mjs does
       # not exist". One extra build of the same sources through `--app node`.
       - name: Build the node bundle (macOS/Windows payloads)
-        run: gjsify workspace postbote-cli build:node
+        run: gjsify workspace curlew-cli build:node
 
       # macOS and Windows runtimes are `optionalDependencies` gated by os/cpu, which a plain install
       # on this Linux host SKIPS — naming the target installs it instead, and `ship` picks up both

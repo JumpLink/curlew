@@ -14,8 +14,8 @@ import type {
   DeliveryConnectOptions,
   DeliverySession,
   SetAsideLedger,
-} from '@postbote/protocol';
-import { SecretStore } from '@postbote/store';
+} from '@curlew/protocol';
+import { SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
 import { listSessionAccounts, sessionPath } from './accounts.ts';
 import { SIGNAL_TRUST_ROOTS_BASE64 } from './constants.ts';

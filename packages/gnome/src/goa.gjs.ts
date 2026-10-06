@@ -11,9 +11,9 @@ import GLib from 'gi://GLib?version=2.0';
 import Gio from 'gi://Gio?version=2.0';
 import type Goa from 'gi://Goa?version=1.0';
 
-import { GNOME_CLIENT_NAME, GOA_UNAVAILABLE_MESSAGE, NO_ACCOUNTS_MESSAGE } from '@postbote/protocol';
-import { errorMessage } from '@postbote/protocol';
-import type { GnomeAccount, GnomeCheckResult } from '@postbote/protocol';
+import { GNOME_CLIENT_NAME, GOA_UNAVAILABLE_MESSAGE, NO_ACCOUNTS_MESSAGE } from '@curlew/protocol';
+import { errorMessage } from '@curlew/protocol';
+import type { GnomeAccount, GnomeCheckResult } from '@curlew/protocol';
 import { getRegistry } from './eds.gjs.ts';
 import { gnomeError, isGnomeFailure } from './errors.ts';
 import { goa } from './libs.gjs.ts';
@@ -171,7 +171,7 @@ function unavailableMessage(detail: string): string {
  * The sentence always leads, for a `GnomeError` too: its message names the CALL that failed
  * ("Goa.Client.new: …"), not the condition, and the locale tail under it is what the reader
  * cannot act on. A missing typelib (`GnomeUnavailableError`) already names itself in
- * postbote's wording and is not routed here by the MCP layer, because @postbote/imap raises the
+ * postbote's wording and is not routed here by the MCP layer, because @curlew/imap raises the
  * same class for "needs GJS", which this sentence would misdescribe. Prepending is what
  * makes the failure kinds distinguishable — typelib or bus missing, whatever the host language.
  */

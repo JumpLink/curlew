@@ -31,7 +31,7 @@ import type {
   DeliveryOutcome,
   DeliverySession,
   ParticipantAddress,
-} from '@postbote/protocol';
+} from '@curlew/protocol';
 import { chatConversationId, classifyChatMessage } from './chat-sync.ts';
 import type { IndexDatabase } from './db.ts';
 import { insertMany, placeholders, type SqlValue, withTransaction } from './db.ts';

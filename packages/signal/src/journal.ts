@@ -23,8 +23,8 @@
  * package is kept self-contained (ADR 0001 §5).
  */
 
-import type { DeliveryEvent } from '@postbote/protocol';
-import { ensurePrivateDir } from '@postbote/store';
+import type { DeliveryEvent } from '@curlew/protocol';
+import { ensurePrivateDir } from '@curlew/store';
 import { Buffer } from 'node:buffer';
 import {
   chmodSync,

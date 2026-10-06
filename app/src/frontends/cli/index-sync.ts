@@ -7,7 +7,7 @@
 
 import type { CommandModule } from 'yargs';
 
-import type { SyncProgress } from '@postbote/store';
+import type { SyncProgress } from '@curlew/store';
 import { indexSearch, indexStatus, indexSync } from '../../core/actions/index.ts';
 import { MAIL_LIMIT, capLimit } from '../../core/actions/index.ts';
 import { pickArgv, runAndExit } from './output.ts';

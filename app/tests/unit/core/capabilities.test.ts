@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@gjsify/unit';
 
 import { BUILTIN_PLUGINS } from '../../../src/core/backends/builtin.ts';
-import { CAPABILITY_NAMES } from '@postbote/protocol';
+import { CAPABILITY_NAMES } from '@curlew/protocol';
 
 /**
  * One table for what each backend actually delivers.

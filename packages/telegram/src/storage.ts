@@ -15,7 +15,7 @@
  *
  * Everything is TEXT: bytes as base64, peers as JSON. A save diffs against what was loaded and
  * writes only the changed keys, in multi-row statements — a wide parse per few keys rather than
- * a statement each (see `insertMany` in `@postbote/store`).
+ * a statement each (see `insertMany` in `@curlew/store`).
  *
  * The file is SECRET: whoever holds it can read the account. It never enters a log, a DTO or
  * MCP output; `SecretStore` keeps it 0600 in a 0700 directory outside the repository.
@@ -29,7 +29,7 @@ import {
   MemoryRefMessagesRepository,
   MemoryStorageDriver,
 } from '@mtcute/core';
-import type { SecretChange, SecretStore } from '@postbote/store';
+import type { SecretChange, SecretStore } from '@curlew/store';
 import { Buffer } from 'node:buffer';
 
 type Snapshot = Map<string, Map<string, string>>;

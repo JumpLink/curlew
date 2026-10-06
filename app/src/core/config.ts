@@ -9,9 +9,9 @@
  * the file is a thin layer on top.
  */
 
-import type { Classification } from '@postbote/protocol';
-import { normalizeAddress } from '@postbote/protocol';
-import { configPath, ensurePrivateDir } from '@postbote/store';
+import type { Classification } from '@curlew/protocol';
+import { normalizeAddress } from '@curlew/protocol';
+import { configPath, ensurePrivateDir } from '@curlew/store';
 import { chmodSync, existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 

@@ -9,7 +9,7 @@ import type {
   BackendContext,
   ChatBackend,
   ChatSession,
-} from '@postbote/protocol';
+} from '@curlew/protocol';
 import { caFileSetting, listAccounts, readLogin, refuseConfigSecrets } from './accounts.ts';
 import type { LoginPrompts } from './api.ts';
 import { requireArchive } from './archive.ts';

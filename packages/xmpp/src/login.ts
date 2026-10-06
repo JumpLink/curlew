@@ -9,7 +9,7 @@
  * Nothing secret is returned or printed: the result is the account id and the JID.
  */
 
-import type { BackendAccount, BackendContext } from '@postbote/protocol';
+import type { BackendAccount, BackendContext } from '@curlew/protocol';
 import { caFileSetting, normalizeJid, refuseConfigSecrets, writeLogin } from './accounts.ts';
 import type { LoginPrompts } from './api.ts';
 import { requireArchive } from './archive.ts';

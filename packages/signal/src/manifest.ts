@@ -5,7 +5,7 @@
  * terms notice is shown before any Signal code — and the native addon — is loaded.
  */
 
-import { type BackendManifest, PLUGIN_API_VERSION } from '@postbote/protocol';
+import { type BackendManifest, PLUGIN_API_VERSION } from '@curlew/protocol';
 
 export const SIGNAL_MANIFEST: BackendManifest = {
   name: 'signal',

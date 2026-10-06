@@ -4,14 +4,14 @@ import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { isChatBackend, validateManifest } from '@postbote/protocol';
+import { isChatBackend, validateManifest } from '@curlew/protocol';
 import {
   chatConversationId,
   getConversation,
   rebuildConversations,
   SecretStore,
   syncChats,
-} from '@postbote/store';
+} from '@curlew/store';
 import {
   accountIdFor,
   accountPath,
@@ -34,7 +34,7 @@ import {
   UNDECRYPTABLE_TEXT,
   writeAccessToken,
   writeAccountRecord,
-} from '@postbote/matrix';
+} from '@curlew/matrix';
 import { freshDb } from '../store/fixtures.ts';
 import {
   ANNA,

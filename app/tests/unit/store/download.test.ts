@@ -3,7 +3,7 @@ import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, statSync, wri
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import { ensurePrivateDir, FileSink, isInside, resolveDownloadPath } from '@postbote/store';
+import { ensurePrivateDir, FileSink, isInside, resolveDownloadPath } from '@curlew/store';
 
 /** A scratch directory under the system temp dir — never inside the repository. */
 function scratch(): string {

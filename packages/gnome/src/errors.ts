@@ -1,6 +1,6 @@
 import GLib from 'gi://GLib?version=2.0';
 
-import { errorMessage, GnomeError, GnomeUnavailableError } from '@postbote/protocol';
+import { errorMessage, GnomeError, GnomeUnavailableError } from '@curlew/protocol';
 
 /**
  * Build a GnomeError from a native failure, keeping the GError metadata.

@@ -8,7 +8,7 @@
  *   POSTBOTE_XMPP_IT = {"dataDir", "jid", "password", "service", "caFile", "add": boolean}
  */
 
-import type { AccountPrompter } from '@postbote/protocol';
+import type { AccountPrompter } from '@curlew/protocol';
 import {
   chatConversationId,
   getConversation,
@@ -17,8 +17,8 @@ import {
   openIndexDb,
   rebuildConversations,
   syncChats,
-} from '@postbote/store';
-import { XmppBackend } from '@postbote/xmpp';
+} from '@curlew/store';
+import { XmppBackend } from '@curlew/xmpp';
 import { join } from 'node:path';
 
 interface Input {
