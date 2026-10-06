@@ -5,7 +5,7 @@ export interface SmtpAccount {
   /** `tls`: TLS from the first byte. `starttls`: upgrade is required. `none`: loopback only. */
   security: 'tls' | 'starttls' | 'none';
   /** Required with either `auth` kind; it is the login name. */
-  username?: string;
+  username: string;
   auth: { kind: 'password'; password: string } | { kind: 'oauth2'; accessToken: string };
   tls?: {
     /** PEM of the certificate authority to trust, e.g. a self-signed server. */
