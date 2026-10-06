@@ -1,5 +1,5 @@
 /**
- * `postbote accounts add xmpp` — the interactive login, as a function the CLI calls with its
+ * `curlew accounts add xmpp` — the interactive login, as a function the CLI calls with its
  * terminal prompts.
  *
  * Asks for the JID, the password and (optionally) the server address, logs in once to prove all

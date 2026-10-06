@@ -321,7 +321,7 @@ export default async () => {
         // One log line per state change, and not a word of what was received.
         const written = logs.filter((l) => l.includes('written'));
         expect(written.length).toBe(3);
-        expect(written.every((l) => l.startsWith(`postbote-daemon: ${BACKEND}/`))).toBe(true);
+        expect(written.every((l) => l.startsWith(`curlew-daemon: ${BACKEND}/`))).toBe(true);
         expect(logs.some((l) => l.includes(ANNA_TEXT))).toBe(false);
         expect(logs.some((l) => l.includes('Anna'))).toBe(false);
         expect(logs.some((l) => l.includes('+49151'))).toBe(false);
@@ -384,7 +384,7 @@ export default async () => {
       const logs: string[] = [];
       const backend = new ScriptedBackend(['a-1']);
       // A file index, so the lease of a daemon in another session can be planted first.
-      const dir = mkdtempSync(join(tmpdir(), 'postbote-daemon-'));
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-daemon-'));
       const dbPath = join(dir, 'index.db');
       const seed = openIndex(dbPath);
       try {

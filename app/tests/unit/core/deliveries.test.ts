@@ -28,7 +28,7 @@ const SECRET = 'Z2VoZWlt';
 const entry = (n: number): SetAsideEntry => ({
   senderAci: ALICE_ACI,
   sentAt: new Date(1_700_000_000_000 + n).toISOString(),
-  reason: `content field(s) ${n} this postbote does not know`,
+  reason: `content field(s) ${n} this curlew does not know`,
   plaintext: SECRET,
 });
 
@@ -37,7 +37,7 @@ function tempWorld(backends: string[] = ['signal', 'whatsapp']): {
   configPath: string;
   secrets: string;
 } {
-  const dir = mkdtempSync(join(tmpdir(), 'postbote-setaside-'));
+  const dir = mkdtempSync(join(tmpdir(), 'curlew-setaside-'));
   const configPath = join(dir, 'config.json');
   saveConfig(
     {
@@ -96,7 +96,7 @@ export default async () => {
         expect(signal?.dropped).toBe(0);
         expect(signal?.entries[0].sender).toBe(ALICE_ACI);
         expect(signal?.entries[0].sentAt).toBe(new Date(1_700_000_000_000).toISOString());
-        expect(signal?.entries[0].reason).toBe('content field(s) 0 this postbote does not know');
+        expect(signal?.entries[0].reason).toBe('content field(s) 0 this curlew does not know');
         // The size of the plaintext, so the user knows which message they are looking for — the
         // content stays in the session file, where the phone's copy is the readable one.
         expect(signal?.entries[0].bytes).toBe(6);

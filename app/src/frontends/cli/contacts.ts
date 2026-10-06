@@ -1,5 +1,5 @@
 /**
- * `postbote contacts` — search Evolution Data Server address books (CardDAV/local).
+ * `curlew contacts` — search Evolution Data Server address books (CardDAV/local).
  */
 
 import type { CommandModule } from 'yargs';

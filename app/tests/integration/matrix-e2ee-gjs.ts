@@ -3,7 +3,7 @@
  * its own. One step per invocation, because the other side (a plain matrix-js-sdk client on
  * Node) has to act between them:
  *
- *   login  — `postbote accounts add matrix` in code: password login, a new device, its keys
+ *   login  — `curlew accounts add matrix` in code: password login, a new device, its keys
  *            uploaded, the crypto store saved into the account's secret file.
  *   crash  — connects, prints a ready line, keeps the SDK's sync loop running for
  *            MATRIX_E2EE_CRASH_AFTER_MS, then exits HARD without closing: whatever reaches the

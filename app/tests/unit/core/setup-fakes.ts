@@ -18,7 +18,7 @@ import type { SetupContext, SetupPrompter } from '../../../src/core/actions/setu
  * — nor read the index that is already there, which would make "is it set up?" depend on whose
  * machine the suite runs on.
  */
-export const SANDBOX = mkdtempSync(join(tmpdir(), 'postbote-setup-'));
+export const SANDBOX = mkdtempSync(join(tmpdir(), 'curlew-setup-'));
 
 /** A pairing payload that looks real enough that its appearance anywhere else is a real finding. */
 export const FAKE_PAIRING_PAYLOAD = 'ts01://AQIDcGFpcmluZy1zZWNyZXQtc3ludGhldGljLW5vLXNlZQ';
@@ -51,7 +51,7 @@ export function fakeHost(overrides: Partial<Record<string, string>> = {}): FakeH
     calls,
     files,
     commands,
-    bundlePath: () => env.POSTBOTE_BUNDLE ?? '/home/tester/app/dist/postbote.gjs.mjs',
+    bundlePath: () => env.POSTBOTE_BUNDLE ?? '/home/tester/app/dist/curlew.gjs.mjs',
     which: (command) => host.commands.get(command)?.path ?? null,
     run(argv, options): RunResult {
       const captured = options?.capture === true;
@@ -69,7 +69,7 @@ export function fakeHost(overrides: Partial<Record<string, string>> = {}): FakeH
     mkdirp: () => {},
     exists: (path) => files.has(path),
     home: () => env.HOME ?? '/home/tester',
-    cwd: () => env.PWD ?? '/home/tester/postbote',
+    cwd: () => env.PWD ?? '/home/tester/curlew',
     env: (name) => env[name],
     isCheckout: (dir) => host.files.has(`${dir}/package.json`) && host.files.has(`${dir}/app/package.json`),
     transcript: () => '',
@@ -158,11 +158,11 @@ export function fakeContext(options: FakeContextOptions = {}): FakeContext {
   const linked: string[] = [];
   return {
     mode: options.mode ?? 'checkout',
-    checkout: options.checkout === undefined ? '/home/tester/postbote' : options.checkout,
+    checkout: options.checkout === undefined ? '/home/tester/curlew' : options.checkout,
     prompter,
     host,
-    configPath: options.configPath ?? join(SANDBOX, 'postbote', 'config.json'),
-    indexPath: options.indexPath ?? join(SANDBOX, 'postbote', 'index.db'),
+    configPath: options.configPath ?? join(SANDBOX, 'curlew', 'config.json'),
+    indexPath: options.indexPath ?? join(SANDBOX, 'curlew', 'index.db'),
     countAccounts: options.countAccounts ?? (async () => 0),
     loggedOutBackend: options.loggedOutBackend ?? (async () => null),
     checkAccounts: options.checkAccounts ?? (async () => ({ ok: true, message: 'OK (2 account(s): mail)' })),

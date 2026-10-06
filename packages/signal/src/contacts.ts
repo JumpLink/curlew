@@ -6,8 +6,8 @@
  * Signal-Desktop `ts/textsecure/ContactsParser.preload.ts` and `downloadAttachment.preload.ts`
  * (Copyright 2020-2026 Signal Messenger, LLC, AGPL-3.0-only). Avatars are skipped.
  *
- * The phone sends contact sync on its own schedule (after a link, when contacts change); postbote
- * never asks for it — asking is a message to the user's devices, and postbote sends nothing.
+ * The phone sends contact sync on its own schedule (after a link, when contacts change); curlew
+ * never asks for it — asking is a message to the user's devices, and curlew sends nothing.
  *
  * The download is a GET from Signal's CDN, which chains to Signal's private CA
  * (`constants.ts`). `ca` is what makes that work: gjsify#1843 hands the request's TLS options to

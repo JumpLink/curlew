@@ -149,7 +149,7 @@ export async function listAccounts(): Promise<GnomeAccount[]> {
 }
 
 /**
- * The unavailable answer leads with postbote's own sentence and appends the cause.
+ * The unavailable answer leads with curlew's own sentence and appends the cause.
  * A raw Gio error ("Verbindung ist gescheitert: …", or whatever the host locale
  * says) is not something a reader can act on, and it is what used to reach the CLI
  * verbatim — but dropping it entirely would make a missing typelib
@@ -166,12 +166,12 @@ function unavailableMessage(detail: string): string {
  * Exported so every entry point routes through it, not just `check()`. The MCP server answers
  * `{"error": <message>}` straight from the thrown value, so a path that skipped this reported
  * `Goa.Client.new: Verbindungen ist gescheitert: Datei oder Verzeichnis nicht gefunden` — a raw
- * locale string — while `postbote check` on the very same host reported the stable sentence.
+ * locale string — while `curlew check` on the very same host reported the stable sentence.
  *
  * The sentence always leads, for a `GnomeError` too: its message names the CALL that failed
  * ("Goa.Client.new: …"), not the condition, and the locale tail under it is what the reader
  * cannot act on. A missing typelib (`GnomeUnavailableError`) already names itself in
- * postbote's wording and is not routed here by the MCP layer, because @curlew/imap raises the
+ * curlew's wording and is not routed here by the MCP layer, because @curlew/imap raises the
  * same class for "needs GJS", which this sentence would misdescribe. Prepending is what
  * makes the failure kinds distinguishable — typelib or bus missing, whatever the host language.
  */
@@ -185,9 +185,9 @@ export function describeUnavailable(err: unknown): string {
  *   - 0 accounts                                  → ok:true (hint to add one)
  *   - N accounts                                  → ok:true (count + provider types only)
  *
- * It probes BOTH bindings, not just GOA: `postbote check` is the one command whose job is to
+ * It probes BOTH bindings, not just GOA: `curlew check` is the one command whose job is to
  * say what works, and a GOA-only probe reports ok:true on a host with GOA but no EDS — then
- * `postbote contacts` and `postbote calendar` fail on the next command, which is the one
+ * `curlew contacts` and `curlew calendar` fail on the next command, which is the one
  * answer a reader cannot act on. So the EDS source registry is resolved too; a failure there
  * downgrades the result, naming EDS in the message. Both daemons are on the same session bus,
  * so this costs one more `new_sync` and no extra failure mode.

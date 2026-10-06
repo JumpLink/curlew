@@ -1,5 +1,5 @@
 /**
- * `postbote calendar` — list Evolution Data Server calendar events (CalDAV/local).
+ * `curlew calendar` — list Evolution Data Server calendar events (CalDAV/local).
  */
 
 import type { CommandModule } from 'yargs';

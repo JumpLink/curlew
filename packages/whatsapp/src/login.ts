@@ -1,5 +1,5 @@
 /**
- * `postbote accounts add whatsapp` — linking postbote as a device of the user's WhatsApp, as a
+ * `curlew accounts add whatsapp` — linking curlew as a device of the user's WhatsApp, as a
  * function the CLI calls with its terminal prompts.
  *
  * Two ways, both done on the phone (WhatsApp → Settings → Linked devices → Link a device):
@@ -10,7 +10,7 @@
  * The session is created under a temporary name and moved to `<account id>.db` only once linked,
  * so a cancelled or failed link never leaves keys that `sync` would try to use. The link closes
  * its connection the moment it opens, before the offline queue is handed over: the first
- * `postbote sync` receives that queue and the history the phone sends once, and writes them.
+ * `curlew sync` receives that queue and the history the phone sends once, and writes them.
  *
  * Nothing secret is returned or printed apart from the QR code / pairing code themselves, which
  * are what the user must see: not the phone number, not a key. The result is the account id and
@@ -153,7 +153,7 @@ export async function linkWhatsApp(
     renameSync(pending, sessionPath(context.secretsDir, account.id));
     moved = true;
     prompter.notify(
-      'Linked. Run `postbote sync` now: WhatsApp hands the recent history and everything queued to the first connection that takes it, once.',
+      'Linked. Run `curlew sync` now: WhatsApp hands the recent history and everything queued to the first connection that takes it, once.',
     );
     return account;
   } finally {

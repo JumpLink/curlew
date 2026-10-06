@@ -19,7 +19,7 @@ export async function accountsList(): Promise<GnomeAccount[]> {
   return listAccounts();
 }
 
-/** Probe GOA/EDS availability (the same three-state shape `postbote check` reports). */
+/** Probe GOA/EDS availability (the same three-state shape `curlew check` reports). */
 export async function accountsCheck(): Promise<GnomeCheckResult> {
   return check();
 }
@@ -47,7 +47,7 @@ export async function accountsAdd(
   const backend = builtinRegistry().create(config, name, backendContext(name, config));
   if (!backend.addAccount) {
     throw new Error(
-      `${name} accounts are not added in postbote — ${
+      `${name} accounts are not added in curlew — ${
         backend.kind === 'mailbox'
           ? 'add them in GNOME Settings → Online Accounts'
           : 'this backend has no login flow'

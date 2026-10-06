@@ -1,5 +1,5 @@
 /**
- * The slice of mtcute's `TelegramClient` postbote uses — and nothing else.
+ * The slice of mtcute's `TelegramClient` curlew uses — and nothing else.
  *
  * Structural on purpose: mtcute's own classes (`User`, `Chat`, `Dialog`, `Message`) satisfy these
  * shapes, and so does a plain object in a test. That is what lets the mapping and the session be
@@ -61,11 +61,11 @@ export interface TgDialog {
 }
 
 /**
- * How to walk the dialog list. Mirrors the slice of mtcute's `iterDialogs` params postbote uses.
+ * How to walk the dialog list. Mirrors the slice of mtcute's `iterDialogs` params curlew uses.
  *
  * `archived` is the one that matters: mtcute's own default is `'exclude'`, which asks Telegram
- * for the MAIN folder only, so an archived chat is not merely unlisted — it never reaches postbote
- * at all. postbote is a read-only index of everything the account can see, so it asks for `'keep'`
+ * for the MAIN folder only, so an archived chat is not merely unlisted — it never reaches curlew
+ * at all. curlew is a read-only index of everything the account can see, so it asks for `'keep'`
  * (mtcute then leaves `folder_id` unset, which is what makes Telegram return BOTH folders).
  */
 export interface TgDialogsParams {

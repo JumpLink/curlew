@@ -83,7 +83,7 @@ export const createBaileysSocket: SocketFactory = ({ auth, fullHistory = false }
     // Keep every history chunk the phone sends: Baileys' default drops the FULL one, and a
     // dropped chunk is gone — the phone does not send it twice.
     shouldSyncHistoryMessage: () => true,
-    // Only used to re-send the user's own messages on a retry request; postbote sends none.
+    // Only used to re-send the user's own messages on a retry request; curlew sends none.
     getMessage: async () => undefined,
   });
   sock.ev.on('creds.update', () => auth.saveCreds());

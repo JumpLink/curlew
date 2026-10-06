@@ -1,5 +1,5 @@
 /**
- * Delivery actions — what the delivery-only backends (WhatsApp, Signal) received and postbote
+ * Delivery actions — what the delivery-only backends (WhatsApp, Signal) received and curlew
  * could not turn into a message.
  *
  * One ledger exists today: Signal's. A plaintext it decrypted but could not map (a field a newer

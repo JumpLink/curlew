@@ -1,5 +1,5 @@
 /**
- * Postbote MCP server — mail, contacts and calendar from GNOME Online Accounts, over stdio.
+ * Curlew MCP server — mail, contacts and calendar from GNOME Online Accounts, over stdio.
  *
  * v1 registers read-only tools only, and `applyReadOnlyGate` ENFORCES that rather than trusting
  * it: every tool must carry `readOnlyHint: true` or it is dropped. IMAP is spoken with BODY.PEEK
@@ -23,7 +23,7 @@ import { registerIndexTools } from './tools/index-sync.ts';
 import { registerMailTools } from './tools/mail.ts';
 import { registerSetupTools } from './tools/setup.ts';
 
-const SERVER_NAME = 'postbote';
+const SERVER_NAME = 'curlew';
 const SERVER_VERSION = '0.1.0';
 
 /** Every registrar, in the order their tools should appear. */

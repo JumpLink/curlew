@@ -59,7 +59,7 @@ import {
 
 /**
  * The WhatsApp backend without WhatsApp: JID identity, mapping of Baileys' shapes, the auth state
- * on postbote's SQLite, the receive path over a fake socket and a manual clock, the link flow and
+ * on curlew's SQLite, the receive path over a fake socket and a manual clock, the link flow and
  * what it leaves on disk, and a whole sync through the backend into the conversation view. All
  * data is synthetic.
  */
@@ -68,7 +68,7 @@ const ME = { id: '4915100000009:3@s.whatsapp.net', lid: '100000000000009:3@lid',
 const ACCOUNT = 'whatsapp-100000000000009';
 
 function tempDir(): string {
-  return mkdtempSync(join(tmpdir(), 'postbote-whatsapp-'));
+  return mkdtempSync(join(tmpdir(), 'curlew-whatsapp-'));
 }
 
 function context(dir: string, settings: BackendContext['settings'] = {}): BackendContext {

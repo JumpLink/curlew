@@ -4,7 +4,7 @@
   "license": "AGPL-3.0-or-later",
   "private": true,
   "type": "module",
-  "description": "Matrix backend: the chat sync driver over matrix-js-sdk with its Rust crypto compiled to WebAssembly, the crypto store on postbote's SecretStore, and the password login. Read-only.",
+  "description": "Matrix backend: the chat sync driver over matrix-js-sdk with its Rust crypto compiled to WebAssembly, the crypto store on curlew's SecretStore, and the password login. Read-only.",
   "exports": {
     ".": "./src/index.ts"
   },

@@ -15,7 +15,7 @@ import { join } from 'node:path';
 
 const ACCOUNT_ID = /^matrix-[0-9a-f]{14}$/;
 
-/** postbote's namespace in the account file: who this is and where. Public data only. */
+/** curlew's namespace in the account file: who this is and where. Public data only. */
 export const ACCOUNT_NAMESPACE = 'postbote.account';
 /** The session: the access token. SECRET. */
 export const SESSION_NAMESPACE = 'postbote.matrix';

@@ -1,5 +1,5 @@
 /**
- * `postbote accounts add matrix` — the password login, as a function the CLI calls with its
+ * `curlew accounts add matrix` — the password login, as a function the CLI calls with its
  * terminal prompts.
  *
  * Homeserver (a URL, or a server name whose `.well-known` names it), user and password are
@@ -70,7 +70,7 @@ export async function loginMatrix(
     identifier: { type: 'm.id.user', user },
     password,
     // What the user sees in their list of sessions, in Element and everywhere else.
-    initial_device_display_name: 'postbote',
+    initial_device_display_name: 'curlew',
   });
 
   ensurePrivateDir(context.secretsDir);

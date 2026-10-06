@@ -10,8 +10,8 @@ export const XMPP_MANIFEST: BackendManifest = {
   name: 'xmpp',
   displayName: 'XMPP / Jabber (server archive via MAM)',
   pluginApi: PLUGIN_API_VERSION,
-  // What the NETWORK can do. The frontends read these to show or hide a feature; postbote only
-  // reads, so none of this is a promise that postbote can SEND it.
+  // What the NETWORK can do. The frontends read these to show or hide a feature; curlew only
+  // reads, so none of this is a promise that curlew can SEND it.
   capabilities: {
     // Last message correction (XEP-0308): applied to the stored message.
     edits: true,
@@ -32,7 +32,7 @@ export const XMPP_MANIFEST: BackendManifest = {
     attachments: false,
   },
   // With MAM (XEP-0313) the server keeps the history: the index is rebuildable (`derived`).
-  // A server WITHOUT MAM leaves nothing to read — postbote says so at connect and does not
+  // A server WITHOUT MAM leaves nothing to read — curlew says so at connect and does not
   // fall back to offline messages, which would take them away from the user's other clients.
   syncModel: 'server-archive',
   native: false,

@@ -25,7 +25,7 @@
  * reconnecting credentials the server has dropped.
  *
  * Envelopes that cannot be decrypted are acknowledged and counted — they would never decrypt on
- * a later run either, and postbote sends no retry request (`guard.ts`) — and the count is reported
+ * a later run either, and curlew sends no retry request (`guard.ts`) — and the count is reported
  * as the session's error, so a sync that lost messages says so.
  *
  * A third way exists, and it used to be invisible. An envelope the decryptor declines on purpose
@@ -59,7 +59,7 @@ export const SAFETY_NUMBER_CHANGED = 'Safety number changed';
 /** The one `DecryptResult` that carries a decrypted plaintext. */
 type Decrypted = Extract<DecryptResult, { kind: 'content' }>;
 
-export const RELINK_HINT = 'link it again with `postbote accounts add signal`';
+export const RELINK_HINT = 'link it again with `curlew accounts add signal`';
 
 /** The acknowledgement handle of one delivered envelope (libsignal's `ChatServerMessageAck`). */
 export interface EnvelopeAck {
@@ -101,7 +101,7 @@ export interface Flushable {
 
 /**
  * Why nothing of a decrypted content could be mapped, or null when it was understood — or when it
- * is content postbote deliberately does not show (typing, a disappearing-messages timer, a
+ * is content curlew deliberately does not show (typing, a disappearing-messages timer, a
  * reaction): those are dropped on purpose, not kept.
  *
  * Only what this build does not UNDERSTAND counts: a field a newer Signal added. A field it knows
@@ -112,10 +112,10 @@ function unmappedReason(result: Decrypted, mappedEvents: number): string | null 
   if (result.content === null) return result.parseError ?? 'the plaintext did not parse';
   if (mappedEvents > 0) return null;
   if (result.content.unknownFields.length > 0)
-    return `content field(s) ${result.content.unknownFields.join(', ')} this postbote does not know`;
+    return `content field(s) ${result.content.unknownFields.join(', ')} this curlew does not know`;
   const data = result.content.dataMessage;
   if (data && data.unknownFields.length > 0)
-    return `data message field(s) ${data.unknownFields.join(', ')} this postbote does not know`;
+    return `data message field(s) ${data.unknownFields.join(', ')} this curlew does not know`;
   return null;
 }
 
@@ -417,7 +417,7 @@ export class SignalReceiver implements DeliverySession {
    * Keep a decrypted plaintext nothing was mapped from, in the account file.
    *
    * This is the one place where losing data is still avoidable: the ratchet has moved, so the
-   * server forgets this envelope as soon as it is acknowledged, and the next postbote may well
+   * server forgets this envelope as soon as it is acknowledged, and the next curlew may well
    * understand the content. `setAside` only marks the entry — `commit()`'s `flush()`, before the
    * acknowledgement, writes it with the ratchet state. A ledger that was already full drops its
    * oldest entry, and the outcome says so rather than pretending nothing was lost.
@@ -524,7 +524,7 @@ export class SignalReceiver implements DeliverySession {
     }
     if (this.setAsideDropped > 0) {
       problems.push(
-        `${this.setAsideDropped} plaintext(s) postbote could not read were pushed out of the session file's ledger (it keeps the newest ${SET_ASIDE_LIMIT}) — those are gone`,
+        `${this.setAsideDropped} plaintext(s) curlew could not read were pushed out of the session file's ledger (it keeps the newest ${SET_ASIDE_LIMIT}) — those are gone`,
       );
     }
     // Loudness follows the consequence, not the count (ADR 0003). A server receipt, a retry
@@ -541,7 +541,7 @@ export class SignalReceiver implements DeliverySession {
     const stories = this.skipped['story'] ?? 0;
     if (stories > 0) {
       problems.push(
-        `${stories} story message(s) postbote cannot show were acknowledged and dropped (a known gap: it stores text, not media)`,
+        `${stories} story message(s) curlew cannot show were acknowledged and dropped (a known gap: it stores text, not media)`,
       );
     }
     if (this.contactsProblem) problems.push(this.contactsProblem);

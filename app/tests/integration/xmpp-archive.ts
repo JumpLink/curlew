@@ -1,5 +1,5 @@
 /**
- * The GJS half of the XMPP integration test: postbote's real XMPP client (xmpp.js on gjsify's
+ * The GJS half of the XMPP integration test: curlew's real XMPP client (xmpp.js on gjsify's
  * WebSocket / TLS) logs in to a local test server, and `syncChats` reads its archive into a
  * temporary index. Prints one `RESULT <json>` line for the Node orchestrator
  * (`xmpp-archive.mjs`), which runs the server and checks what arrived.

@@ -1,7 +1,7 @@
 /**
  * Conversation actions — the per-person view over the local index.
  *
- * Read-only against the index, like `index search`: conversations are built by `postbote sync`.
+ * Read-only against the index, like `index search`: conversations are built by `curlew sync`.
  * Per-sender corrections go to the config file and apply at read time, so a correction shows
  * immediately and still never writes to the index.
  */
@@ -67,7 +67,7 @@ export function conversationsShow(params: ConversationShowParams): {
       maxBodyChars: capLimit(params.maxBodyChars, CONVERSATION_BODY_CHARS),
       overrides: senders,
     });
-    if (!found) throw new Error(`no conversation with id ${params.id} — run \`postbote conversations list\``);
+    if (!found) throw new Error(`no conversation with id ${params.id} — run \`curlew conversations list\``);
     return found;
   } finally {
     db.close();

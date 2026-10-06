@@ -23,7 +23,7 @@ export function terminalPrompter(): AccountPrompter & { close(): void } {
  * The same terminal prompter, with the one method a backend login never needs and a wizard
  * cannot do without: a yes/no question. It is the SAME implementation and the same readline
  * interface, not a second one — two interfaces on one stdin lose each other's buffered lines,
- * and this object has to be shared: `postbote setup` asks its own questions AND hands this very
+ * and this object has to be shared: `curlew setup` asks its own questions AND hands this very
  * object to the linking actions, so a QR code and a yes/no question cannot fight over stdin.
  *
  * An unanswered question is NO. The readline interface closing mid-run (EOF, a closed pipe) must

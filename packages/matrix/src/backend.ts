@@ -25,7 +25,7 @@ import { loginMatrix } from './login.ts';
 import { MATRIX_MANIFEST } from './manifest.ts';
 import { MatrixChatSession } from './session.ts';
 
-export const MATRIX_RELOGIN_HINT = 'log in again with `postbote accounts add matrix`';
+export const MATRIX_RELOGIN_HINT = 'log in again with `curlew accounts add matrix`';
 
 /** The login questions, asked through whatever frontend is running. */
 export function matrixPrompts(prompter: AccountPrompter): MatrixLoginPrompts {

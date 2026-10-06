@@ -56,7 +56,7 @@ const at = (minute: number, second = 0) =>
   `2026-01-10T10:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}Z`;
 
 function tempDir(): string {
-  return mkdtempSync(join(tmpdir(), 'postbote-xmpp-'));
+  return mkdtempSync(join(tmpdir(), 'curlew-xmpp-'));
 }
 
 function context(dir: string, settings: BackendContext['settings'] = {}): BackendContext {

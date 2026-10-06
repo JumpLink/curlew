@@ -1,7 +1,7 @@
 /**
  * Signal accounts are session files: one `signal-<ACI>.db` per linked device in the backend's
  * secrets directory, holding the protocol stores (`protocol-store.ts`). There is no other
- * registry — an account exists exactly as long as its session does. `postbote accounts add signal`
+ * registry — an account exists exactly as long as its session does. `curlew accounts add signal`
  * creates one; unlinking the device on the phone ends it (the next sync reports it).
  *
  * The account id carries the ACI — the account's UUID, not its phone number — so ids in CLI and

@@ -102,7 +102,7 @@ export interface MessageBackend {
   readonly kind: string;
   listAccounts(): Promise<BackendAccount[]>;
   /**
-   * Add an account interactively — for networks whose accounts live in postbote rather than in
+   * Add an account interactively — for networks whose accounts live in curlew rather than in
    * the desktop (mail accounts are GNOME Online Accounts and do not implement this). The
    * backend asks through `prompter` for whatever its login needs, and stores the resulting
    * session itself. Resolves with the new account; nothing secret is in it.
@@ -156,7 +156,7 @@ export interface BackendContext {
 
 /** One person, bot or channel as a chat network reports it. */
 export interface ChatPeer {
-  /** The network's id for this peer, unique within the account. Opaque to postbote. */
+  /** The network's id for this peer, unique within the account. Opaque to curlew. */
   remoteId: string;
   displayName: string | null;
   /** Every address the network knows for this peer, already normalized (`normalizeAddress`). */
@@ -188,7 +188,7 @@ export interface ChatInfo {
 
 /** One message in a chat. */
 export interface ChatMessage {
-  /** The network's message id, opaque to postbote and unique within the account. */
+  /** The network's message id, opaque to curlew and unique within the account. */
   remoteId: string;
   /** Monotonic within its chat: the sync cursor. */
   seq: number;
@@ -402,7 +402,7 @@ export type DeliveryEvent =
 /**
  * How long a delivery session runs.
  *
- * `catch-up` is `postbote sync`: connect, receive what was queued while nobody listened (and, on
+ * `catch-up` is `curlew sync`: connect, receive what was queued while nobody listened (and, on
  * a freshly linked device, the history the network hands over once), and end when that is done.
  * `follow` is a daemon: keep receiving until closed. Both go through the same receive path, so a
  * daemon is `catch-up` that does not stop.

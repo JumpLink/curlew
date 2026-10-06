@@ -7,11 +7,11 @@
 import type { BackendContext } from '@curlew/protocol';
 import { secretsDir } from '@curlew/store';
 import { join } from 'node:path';
-import type { PostboteConfig } from '../config.ts';
+import type { CurlewConfig } from '../config.ts';
 
 export function backendContext(
   name: string,
-  config: PostboteConfig,
+  config: CurlewConfig,
   env: NodeJS.ProcessEnv = process.env,
 ): BackendContext {
   return {

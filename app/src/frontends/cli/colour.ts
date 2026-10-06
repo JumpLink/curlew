@@ -2,7 +2,7 @@
  * ANSI styling for the terminal surfaces, on only where it can be seen.
  *
  * A `NO_COLOR` in the environment switches it off, as it does everywhere. So does a pipe: the
- * gates below ask `isatty`, so `postbote setup --status > out.txt` writes plain text and a
+ * gates below ask `isatty`, so `curlew setup --status > out.txt` writes plain text and a
  * person reading it in a pager gets no escape sequences. That is the whole reason this is a
  * function and not a constant — a `--status` is a thing a person may well pipe, and escape
  * codes in a file are worse than no colour at all.

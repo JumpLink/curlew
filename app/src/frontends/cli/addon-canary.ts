@@ -1,5 +1,5 @@
 /**
- * `postbote addon-canary` — load the native addon and report its SHAPE. Nothing else.
+ * `curlew addon-canary` — load the native addon and report its SHAPE. Nothing else.
  *
  * Exists for one caller: `app/tests/integration/bundle-relocation.mjs`, which copies the built
  * bundle out of the tree and asks it to load libsignal from there. It cannot do that with a
@@ -27,7 +27,7 @@
  * the `.node` files the package ships instead, and resolves the package at load time through the
  * bundle's own URL — so what this now proves is that the bundle carries no path of the machine
  * that built it. It still needs the addon package INSTALLED where it can see it, which is the
- * limit that fix carries and the shape postbote ships in;
+ * limit that fix carries and the shape curlew ships in;
  * `app/tests/integration/bundle-relocation.mjs` asserts both halves.
  */
 

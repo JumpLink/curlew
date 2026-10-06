@@ -1,9 +1,9 @@
 /**
- * A minimal protocol-buffers wire codec — only what the Signal messages postbote reads need:
+ * A minimal protocol-buffers wire codec — only what the Signal messages curlew reads need:
  * varints (up to 64 bit, as `bigint` where it matters), length-delimited fields, fixed64 and
  * fixed32 skipped or read. Pure: no dependency, runs the same on GJS and Node.
  *
- * Why not protobufjs: the schema postbote reads is a few dozen fields of Signal's
+ * Why not protobufjs: the schema curlew reads is a few dozen fields of Signal's
  * `SignalService.proto`, and a decoder table next to the field numbers (`schema.ts`) is easier to
  * audit than a generated module. Unknown fields are skipped, as the wire format intends.
  */

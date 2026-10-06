@@ -1,6 +1,6 @@
 /**
  * Types for the relocation probe's pure helper, a plain `.mjs` (it is imported by a Node script
- * and by this suite, and postbote's unit tests are `.ts`). Declared here rather than turning on
+ * and by this suite, and curlew's unit tests are `.ts`). Declared here rather than turning on
  * `allowJs` in the app tsconfig, which would pull every integration script into the type check
  * for one file's sake.
  */

@@ -82,7 +82,7 @@ jobs:
         run: gjsify workspace curlew-cli build
 
       # Copies the bundle just built out of the tree and asks it to load libsignal from there.
-      # It proves whether a built postbote is RELOCATABLE — right now it is not: `--app gjs`
+      # It proves whether a built curlew is RELOCATABLE — right now it is not: `--app gjs`
       # bakes the ABSOLUTE prebuild path of the native addon into the bundle, so a build can only
       # ever be used on the machine and path that produced it. Since libsignal loads on first use,
       # that failure is late (the bundle starts, the first Signal command dies), and every other
@@ -133,7 +133,7 @@ jobs:
           set -eu
           ls -la
           version=$(node -p "require('$GITHUB_WORKSPACE/app/package.json').version")
-          for f in "postbote_${version}-1_all.deb" "postbote-${version}-1.noarch.rpm"; do
+          for f in "curlew_${version}-1_all.deb" "curlew-${version}-1.noarch.rpm"; do
             if [ ! -s "$f" ]; then
               echo "::error::missing or empty artifact: $f"
               exit 1
@@ -141,9 +141,9 @@ jobs:
           done
 
       # The `.deb`/`.rpm` above are built from `build` (`build:gjs`), but `gjsify.ship.bundle.darwin`
-      # and `.win32` point at `dist/postbote.node.mjs` — a bundle NOTHING above builds, and
+      # and `.win32` point at `dist/curlew.node.mjs` — a bundle NOTHING above builds, and
       # `--skip-build` tells `ship` not to build it either. Measured on 0.54.0: without this step
-      # every `Ship darwin`/`Ship windows` step exits 1 with "the bundle dist/postbote.node.mjs does
+      # every `Ship darwin`/`Ship windows` step exits 1 with "the bundle dist/curlew.node.mjs does
       # not exist". One extra build of the same sources through `--app node`.
       - name: Build the node bundle (macOS/Windows payloads)
         run: gjsify workspace curlew-cli build:node
@@ -186,10 +186,10 @@ jobs:
           ls -la
           version=$(node -p "require('$GITHUB_WORKSPACE/app/package.json').version")
           for f in \
-            "postbote-${version}-1.macos.arm64.zip" \
-            "postbote-${version}-1.macos.x86_64.zip" \
-            "postbote-${version}-1.windows.x64.zip" \
-            "postbote-${version}-1.x64.msi"; do
+            "curlew-${version}-1.macos.arm64.zip" \
+            "curlew-${version}-1.macos.x86_64.zip" \
+            "curlew-${version}-1.windows.x64.zip" \
+            "curlew-${version}-1.x64.msi"; do
             if [ ! -s "$f" ]; then
               echo "::error::missing or empty artifact: $f"
               exit 1

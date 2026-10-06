@@ -1,5 +1,5 @@
 /**
- * The read-only gate: every HTTP request matrix-js-sdk makes for postbote goes through
+ * The read-only gate: every HTTP request matrix-js-sdk makes for curlew goes through
  * `readOnlyFetch`, and anything that would change what other people see is refused before it
  * leaves the process.
  *
@@ -48,12 +48,12 @@ export function refusal(method: string, url: string): string | null {
     return null;
   }
   if (ALLOWED.some((rule) => rule.method === verb && rule.path.test(path))) return null;
-  return `${verb} ${path} is not on postbote's read-only allowlist`;
+  return `${verb} ${path} is not on curlew's read-only allowlist`;
 }
 
 export class ReadOnlyViolation extends Error {
   constructor(reason: string) {
-    super(`postbote is read-only: refused to send ${reason}`);
+    super(`curlew is read-only: refused to send ${reason}`);
     this.name = 'ReadOnlyViolation';
   }
 }

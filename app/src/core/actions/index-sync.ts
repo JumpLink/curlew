@@ -125,7 +125,7 @@ async function addressBook(): Promise<ContactDTO[] | null> {
  * Rebuild the conversations from the stored mail rows, with the address book.
  *
  * Shared, because the classifier's address book is a full read of EDS and a second copy of this
- * step would be a second set of bugs: `postbote sync` calls it after its writes, and the
+ * step would be a second set of bugs: `curlew sync` calls it after its writes, and the
  * receiving daemon calls it debounced after its batches (ADR 0002 §5).
  */
 export async function rebuildWithAddressBook(
@@ -147,7 +147,7 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
   const plugins = registry.enabled(config);
   if (plugins.length === 0) {
     throw new Error(
-      'no backend is enabled — `postbote backends list` shows them, `backends enable <name>` turns one on',
+      'no backend is enabled — `curlew backends list` shows them, `backends enable <name>` turns one on',
     );
   }
   const db = openIndex(params.dbPath ?? indexDbPath());
@@ -185,9 +185,7 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
           ...(await receiveDeliveries(db, backend, { accountId: params.accountId, mode: 'catch-up' })),
         });
       } else {
-        throw new Error(
-          `backend ${name} uses the ${backend.kind} driver, which this postbote cannot sync yet`,
-        );
+        throw new Error(`backend ${name} uses the ${backend.kind} driver, which this curlew cannot sync yet`);
       }
     }
     const conversations = await rebuildWithAddressBook(db);

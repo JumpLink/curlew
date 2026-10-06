@@ -1,5 +1,5 @@
 /**
- * `postbote deliveries` — the delivery-only backends (WhatsApp, Signal): deliveries postbote
+ * `curlew deliveries` — the delivery-only backends (WhatsApp, Signal): deliveries curlew
  * received and could not turn into a message.
  *
  * `set-aside` is the listing, and it is a CLI command only. What it shows is enough to find a
@@ -15,7 +15,7 @@ import { pickArgv, runAndExit } from './output.ts';
 
 export const deliveriesCommand: CommandModule = {
   command: 'deliveries',
-  describe: 'What the delivery-only backends (WhatsApp, Signal) received that postbote could not map',
+  describe: 'What the delivery-only backends (WhatsApp, Signal) received that curlew could not map',
   handler: () => {},
   builder: (yargs) =>
     yargs.demandCommand(1, 'Choose a subcommand: set-aside').command({

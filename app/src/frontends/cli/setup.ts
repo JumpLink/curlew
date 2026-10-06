@@ -1,5 +1,5 @@
 /**
- * `postbote setup` — the terminal side of the eight setup stages.
+ * `curlew setup` — the terminal side of the eight setup stages.
  *
  * This file is yargs and rendering, and nothing else: which stages exist, what they do and what
  * they are allowed to ask a person all live in `core/actions/setup.ts`. What is added here is
@@ -27,7 +27,7 @@ import { pickArgv } from './output.ts';
 export const setupCommand: CommandModule = {
   command: 'setup',
   describe:
-    'Walk through putting postbote to work on this machine — link a device, accept the terms, build the index, install the systemd unit',
+    'Walk through putting curlew to work on this machine — link a device, accept the terms, build the index, install the systemd unit',
   builder: (yargs) =>
     yargs
       .option('only', {
@@ -120,7 +120,7 @@ function printStatus(ctx: SetupContext, status: Awaited<ReturnType<typeof setupS
   // stdout for the report: a `--status` is the one thing here that is read, not asked, and a
   // person may well pipe it.
   const OUT = 1;
-  console.log(`${bold('postbote setup — what is done and what is left', OUT)}\n`);
+  console.log(`${bold('curlew setup — what is done and what is left', OUT)}\n`);
   for (const [key, value] of rows) console.log(`  ${dim(key.padEnd(18), OUT)}${value}`);
   console.log('');
   for (const step of status.steps) {

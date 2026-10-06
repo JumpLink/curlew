@@ -11,7 +11,7 @@ export function isGjs(global: object = globalThis): boolean {
   return typeof (global as { imports?: unknown }).imports !== 'undefined';
 }
 
-/** Human-readable runtime name, for `postbote check` and error messages. */
+/** Human-readable runtime name, for `curlew check` and error messages. */
 export function runtimeName(global: object = globalThis): 'gjs' | 'node' {
   return isGjs(global) ? 'gjs' : 'node';
 }

@@ -1,4 +1,4 @@
-// Smoke test: the postbote MCP stdio server runs natively on GJS and answers a real
+// Smoke test: the curlew MCP stdio server runs natively on GJS and answers a real
 // `initialize` + `tools/list` + `tools/call` handshake driven by the MCP SDK client, EXITS when
 // its client goes away, and DROPS a tool that declares itself mutating.
 //
@@ -20,8 +20,8 @@ import assert from 'node:assert';
 const here = dirname(fileURLToPath(import.meta.url));
 const appRoot = join(here, '..', '..'); // tests/integration -> app
 const repoRoot = join(appRoot, '..'); // app -> repo root
-const bundle = join(appRoot, 'dist', 'postbote.gjs.mjs');
-assert(existsSync(bundle), 'build first — app/dist/postbote.gjs.mjs missing');
+const bundle = join(appRoot, 'dist', 'curlew.gjs.mjs');
+assert(existsSync(bundle), 'build first — app/dist/curlew.gjs.mjs missing');
 
 // The gjsify bin lives in the WORKSPACE ROOT's node_modules, not app/'s.
 const gjsify = join(repoRoot, 'node_modules', '.bin', 'gjsify');
@@ -66,7 +66,7 @@ const client = new Client({ name: 'gjs-smoke', version: '1.0.0' }, { capabilitie
 await client.connect(transport);
 
 const info = client.getServerVersion();
-assert.equal(info?.name, 'postbote', `unexpected server name: ${info?.name}`);
+assert.equal(info?.name, 'curlew', `unexpected server name: ${info?.name}`);
 
 const { tools } = await client.listTools();
 assert.deepEqual(

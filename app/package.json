@@ -4,7 +4,7 @@
   "license": "AGPL-3.0-or-later",
   "private": true,
   "type": "module",
-  "description": "Postbote app: the `postbote` binary \u2014 CLI + MCP frontends over the @curlew/* packages, bundled to a single .gjs.mjs and run on GJS via gjsify.",
+  "description": "Curlew app: the `curlew` binary \u2014 CLI + MCP frontends over the @curlew/* packages, bundled to a single .gjs.mjs and run on GJS via gjsify.",
   "main": "src/index.ts",
   "exports": {
     ".": "./src/index.ts"
@@ -16,9 +16,9 @@
     "lint": "gjsify lint .",
     "lint:fix": "gjsify lint --fix .",
     "build": "gjsify run build:gjs",
-    "build:gjs": "gjsify build src/index.ts --app gjs --external jimp,sharp --outfile dist/postbote.gjs.mjs",
-    "build:node": "gjsify build src/index.ts --app node --external jimp,sharp --outfile dist/postbote.node.mjs",
-    "start": "gjsify run dist/postbote.gjs.mjs",
+    "build:gjs": "gjsify build src/index.ts --app gjs --external jimp,sharp --outfile dist/curlew.gjs.mjs",
+    "build:node": "gjsify build src/index.ts --app node --external jimp,sharp --outfile dist/curlew.node.mjs",
+    "start": "gjsify run dist/curlew.gjs.mjs",
     "dev": "gjsify run build:gjs && gjsify run start",
     "test": "DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent XDG_RUNTIME_DIR=/nonexistent gjsify test",
     "test:mcp": "node tests/integration/mcp-gjs-smoke.mjs",
@@ -31,14 +31,14 @@
   },
   "gjsify": {
     "ship": {
-      "appId": "eu.jumplink.postbote",
-      "binaryName": "postbote",
+      "appId": "eu.jumplink.curlew",
+      "binaryName": "curlew",
       "kind": "cli",
-      "name": "Postbote",
+      "name": "Curlew",
       "bundle": {
-        "linux": "dist/postbote.gjs.mjs",
-        "darwin": "dist/postbote.node.mjs",
-        "win32": "dist/postbote.node.mjs"
+        "linux": "dist/curlew.gjs.mjs",
+        "darwin": "dist/curlew.node.mjs",
+        "win32": "dist/curlew.node.mjs"
       },
       "app": {
         "darwin": "node",
@@ -53,7 +53,7 @@
       "license": {
         "project": "AGPL-3.0-or-later"
       },
-      "description": "postbote reads the mail (IMAP), contacts (CardDAV) and calendar (CalDAV) of the accounts already configured in GNOME Online Accounts, as a CLI and an MCP server. Read-only: it never sets \\Seen, sends mail, or writes to a server. GNOME Online Accounts and Evolution Data Server are Linux-only, so the macOS and Windows packages ship with every account backend unavailable \u2014 see the Releasing section of README.md.",
+      "description": "curlew reads the mail (IMAP), contacts (CardDAV) and calendar (CalDAV) of the accounts already configured in GNOME Online Accounts, as a CLI and an MCP server. Read-only: it never sets \\Seen, sends mail, or writes to a server. GNOME Online Accounts and Evolution Data Server are Linux-only, so the macOS and Windows packages ship with every account backend unavailable \u2014 see the Releasing section of README.md.",
       "homepageUrl": "https://github.com/JumpLink/postbote",
       "bugtrackerUrl": "https://github.com/JumpLink/postbote/issues",
       "vcsBrowserUrl": "https://github.com/JumpLink/postbote",

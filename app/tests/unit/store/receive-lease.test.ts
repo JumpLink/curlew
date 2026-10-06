@@ -14,7 +14,7 @@ import {
 import { freshDb } from './fixtures.ts';
 
 /**
- * The receive lease: how a running daemon and a `postbote sync` stay off the same delivery
+ * The receive lease: how a running daemon and a `curlew sync` stay off the same delivery
  * account. Two delivery devices on one account each acknowledge half the messages, so the lock
  * is not a nicety — it is what makes the stored copy complete (ADR 0002 §4).
  *

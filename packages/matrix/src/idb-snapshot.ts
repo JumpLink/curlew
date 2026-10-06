@@ -1,6 +1,6 @@
 /**
  * An IndexedDB, dumped into a `SecretStore` and loaded back — how the Matrix crypto store
- * survives between two runs of postbote.
+ * survives between two runs of curlew.
  *
  * The Rust crypto (`@matrix-org/matrix-sdk-crypto-wasm`) persists its Olm account, Olm sessions
  * and Megolm room keys only through IndexedDB; without one it keeps them in memory and they are

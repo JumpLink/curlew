@@ -269,7 +269,7 @@ export class SignalMapper {
       return;
     }
     if (data.adminDelete) {
-      // An admin removing someone else's message needs the group's roles to check; postbote has
+      // An admin removing someone else's message needs the group's roles to check; curlew has
       // none, so only a delete of the sender's own message is taken.
       const { authorAci: target, timestamp } = data.adminDelete;
       if (target === authorAci && timestamp !== null) {

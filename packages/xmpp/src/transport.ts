@@ -165,6 +165,6 @@ export function chooseMechanism(
   if (offered.includes('SCRAM-SHA-1')) return 'SCRAM-SHA-1';
   if (connection.encrypted && offered.includes('PLAIN')) return 'PLAIN';
   throw new Error(
-    `the server offers no login mechanism postbote uses on this connection (offered: ${offered.join(', ') || 'none'})`,
+    `the server offers no login mechanism curlew uses on this connection (offered: ${offered.join(', ') || 'none'})`,
   );
 }

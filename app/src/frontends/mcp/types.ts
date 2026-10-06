@@ -1,8 +1,8 @@
 /**
- * The one MCP tool-result helper postbote keeps of its own.
+ * The one MCP tool-result helper curlew keeps of its own.
  *
  * `mcpSuccess` and `mcpError` moved to `@gjsify/mcp` at 0.54.0 — same bodies, same signatures, and
- * the tool files import them from the package. `mcpErrorFrom` stays because it is POSTBOTE's: it
+ * the tool files import them from the package. `mcpErrorFrom` stays because it is CURLEW's: it
  * knows that a `GnomeError` has a better sentence than its message, and that sentence is the
  * whole point of the helper.
  *
@@ -20,7 +20,7 @@ import { GnomeError } from '@curlew/protocol';
  * Error response built from a caught value (the common catch handler).
  *
  * A `GnomeError` is routed through `describeUnavailable` so the answer leads with the same
- * stable sentence `postbote check` prints, not with the locale string a GLib error carries.
+ * stable sentence `curlew check` prints, not with the locale string a GLib error carries.
  * Before this, `contacts_search` on a host with no session bus answered
  * `{"error":"Goa.Client.new: Verbindungen ist gescheitert: …"}` while `check` on the same host
  * said `GNOME Online Accounts / Evolution Data Server unavailable (…)`: same condition, two

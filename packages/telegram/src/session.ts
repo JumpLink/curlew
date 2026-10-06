@@ -44,7 +44,7 @@ export class TelegramChatSession implements ChatSession {
     //
     // `archived: 'keep'` is load-bearing: mtcute defaults to `'exclude'`, which asks Telegram for
     // the main folder alone. Without it an archived chat is not de-prioritised, it is INVISIBLE —
-    // archiving a group in Telegram would silently drop it from postbote's index and the
+    // archiving a group in Telegram would silently drop it from curlew's index and the
     // conversation list, with nothing to say so.
     for await (const dialog of this.api.iterDialogs({ archived: 'keep' })) chats.push(toChatInfo(dialog));
     return chats;

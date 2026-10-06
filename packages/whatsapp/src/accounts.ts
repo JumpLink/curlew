@@ -1,7 +1,7 @@
 /**
  * WhatsApp accounts are session files: one `<account id>.db` per linked device in the backend's
  * secrets directory, holding Baileys' auth state. There is no other registry — an account
- * exists exactly as long as its session does. `postbote accounts add whatsapp` creates one;
+ * exists exactly as long as its session does. `curlew accounts add whatsapp` creates one;
  * unlinking the device on the phone ends it (the next sync reports the logout).
  *
  * The account id is the account's LID — WhatsApp's privacy id, stable across re-linking and

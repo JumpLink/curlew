@@ -1,7 +1,7 @@
 /**
  * Telegram accounts are session files: one `<account id>.db` per logged-in account in the
  * backend's secrets directory. There is no other registry — an account exists exactly as long as
- * its session does, so `postbote accounts add telegram` creates one and deleting the file (or
+ * its session does, so `curlew accounts add telegram` creates one and deleting the file (or
  * logging the session out from another Telegram client) ends it.
  */
 

@@ -1,5 +1,5 @@
 /**
- * `postbote accounts add telegram` — the interactive login, as a function the CLI calls with its
+ * `curlew accounts add telegram` — the interactive login, as a function the CLI calls with its
  * terminal prompts.
  *
  * The session is created under a temporary name and moved to `<account id>.db` only once the
@@ -60,7 +60,7 @@ async function loginCredentials(
  *
  * The decision is made on a FACT about the file, not on where the control flow happened to be: the
  * sign-in marker (`current_user`) lands in the file the moment mtcute's `notifyLoggedIn` stores the
- * user, and every step after it can still throw — the update manager, postbote's own record
+ * user, and every step after it can still throw — the update manager, curlew's own record
  * writes, the final rename. Deciding on a flag around the login promise would therefore still
  * throw away a session that is genuinely signed in, and the user would pay for another phone code.
  *

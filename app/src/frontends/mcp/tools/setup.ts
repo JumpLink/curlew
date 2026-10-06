@@ -14,7 +14,7 @@
  *
  * THE RULE THIS FILE EXISTS TO ENFORVE: a human-only step is refused here, on every call, and
  * the refusal is `humanOnlyRefusal(step)` — the core's own message, quoting the core's own
- * `postbote setup --only <name>`. Not a second refusal written here, and not a list of step names:
+ * `curlew setup --only <name>`. Not a second refusal written here, and not a list of step names:
  * the flag lives on the step (`SetupStep.humanOnly`), so a step the CLI treats as a human act is
  * a step this tool refuses, and the two cannot drift. A person typing `--only terms` in their own
  * terminal is that person, which is exactly what the flag is for.
@@ -89,7 +89,7 @@ function agentPrompter(): SetupPrompter & { transcript: string[] } {
  * Built per CALL, not once at registration: `done` is this run's record and a status read must
  * not see a previous call's stages, and the machine's answers change between calls. `detectSetup`
  * can legitimately fail — a bundle run from somewhere with neither a checkout above it nor
- * `postbote` on PATH — and that is a reported error, not a crash: the caller is told, with the
+ * `curlew` on PATH — and that is a reported error, not a crash: the caller is told, with the
  * command that fixes it, which is what the core's own message already says.
  */
 export function mcpSetupContext(): SetupContext {
@@ -104,7 +104,7 @@ export function mcpSetupContext(): SetupContext {
     link: async () => {
       throw new Error(
         'an agent must never link a device: the provisioning payload binds the account to this ' +
-          'machine and must not enter a tool result. Link it yourself — `postbote setup --only link-signal`.',
+          'machine and must not enter a tool result. Link it yourself — `curlew setup --only link-signal`.',
       );
     },
     done: new Map(),
@@ -123,7 +123,7 @@ export function registerSetupTools(server: McpServer): void {
     {
       title: 'Setup Status',
       description:
-        "Report what `postbote setup` has already done on this machine and what is left, without changing anything: each stage with its state (done, remaining, skipped) and the exact command that performs it, plus the bundle, gjsify, config and enabled backends. Read this before offering to set postbote up, and read it again after a stage — it is how you tell a configured machine from a fresh one. Any `warning` on a stage is a finding about the machine even when the stage itself is done; without GNOME Online Accounts postbote is inert. NEVER returns a pairing code or QR payload: linking is a person's act, and the stages that produce one are marked humanOnly.",
+        "Report what `curlew setup` has already done on this machine and what is left, without changing anything: each stage with its state (done, remaining, skipped) and the exact command that performs it, plus the bundle, gjsify, config and enabled backends. Read this before offering to set curlew up, and read it again after a stage — it is how you tell a configured machine from a fresh one. Any `warning` on a stage is a finding about the machine even when the stage itself is done; without GNOME Online Accounts curlew is inert. NEVER returns a pairing code or QR payload: linking is a person's act, and the stages that produce one are marked humanOnly.",
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async () => {
@@ -143,7 +143,7 @@ export function registerSetupTools(server: McpServer): void {
     {
       title: 'Run One Setup Stage',
       description:
-        "Run exactly ONE stage of `postbote setup` on this machine, by id. Only available on a server started with POSTBOTE_MCP_ALLOW_WRITE=1. Every yes/no question is answered NO on your behalf — a stage that needs the account holder to decide reports itself skipped, and you must not try to work around that. The stages `link-signal`, `link-whatsapp` and `terms` REFUSE: the pairing code is the secret that binds an account to this machine, and accepting a third party's terms is an act in the person's name. Do not retry them; hand the user the exact command the refusal names and let them run it. Pass dry_run to see the stage and its state without touching anything.",
+        "Run exactly ONE stage of `curlew setup` on this machine, by id. Only available on a server started with POSTBOTE_MCP_ALLOW_WRITE=1. Every yes/no question is answered NO on your behalf — a stage that needs the account holder to decide reports itself skipped, and you must not try to work around that. The stages `link-signal`, `link-whatsapp` and `terms` REFUSE: the pairing code is the secret that binds an account to this machine, and accepting a third party's terms is an act in the person's name. Do not retry them; hand the user the exact command the refusal names and let them run it. Pass dry_run to see the stage and its state without touching anything.",
       inputSchema: {
         step: z
           .enum(STEP_IDS)

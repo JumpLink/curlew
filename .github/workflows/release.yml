@@ -79,12 +79,12 @@ jobs:
           version="${TAG#v}"
           missing=0
           for f in \
-            "cli/postbote_${version}-1_all.deb" \
-            "cli/postbote-${version}-1.noarch.rpm" \
-            "cli/postbote-${version}-1.macos.arm64.zip" \
-            "cli/postbote-${version}-1.macos.x86_64.zip" \
-            "cli/postbote-${version}-1.windows.x64.zip" \
-            "cli/postbote-${version}-1.x64.msi"; do
+            "cli/curlew_${version}-1_all.deb" \
+            "cli/curlew-${version}-1.noarch.rpm" \
+            "cli/curlew-${version}-1.macos.arm64.zip" \
+            "cli/curlew-${version}-1.macos.x86_64.zip" \
+            "cli/curlew-${version}-1.windows.x64.zip" \
+            "cli/curlew-${version}-1.x64.msi"; do
             if [ ! -s "$f" ]; then
               echo "::error::missing or empty artifact: $f"
               missing=1

@@ -47,7 +47,7 @@ import { fakeFactory, group, ME, tgMessage, user } from './fake-client.ts';
 
 /**
  * The Telegram backend without Telegram: mapping of mtcute's shapes, the chat session over a fake
- * client, the session storage on postbote's SQLite, the login flow and what it leaves on disk,
+ * client, the session storage on curlew's SQLite, the login flow and what it leaves on disk,
  * and a full sync through the backend into the conversation view. All data is synthetic.
  */
 
@@ -60,7 +60,7 @@ const ORGA = group(-1004001, 'Sommerfest Orga');
 const NEWS = group(-1005000, 'Example News', 'channel', 'example_news');
 
 function tempDir(): string {
-  return mkdtempSync(join(tmpdir(), 'postbote-telegram-'));
+  return mkdtempSync(join(tmpdir(), 'curlew-telegram-'));
 }
 
 /** Credentials from the environment by default; `env: {}` makes the login ask for them. */

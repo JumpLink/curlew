@@ -2,7 +2,7 @@
  * libsignal, loaded on demand.
  *
  * `@signalapp/libsignal-client` is Rust behind N-API: loading it maps a native library into the
- * process. postbote's CLI bundle carries every backend, so a static import would load the addon
+ * process. curlew's CLI bundle carries every backend, so a static import would load the addon
  * on every start — and fail every start on a platform without a prebuild, Signal enabled or not.
  * So nothing in this package imports it at module level: the backend loads it the first time it
  * is used, and hands it to the code that needs it (`SignalLib`). A test passes the module in.

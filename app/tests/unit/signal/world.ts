@@ -1,9 +1,9 @@
 /**
  * A synthetic Signal world for the tests: the user's phone (the primary device of the account),
  * contacts with their own devices, a sealed-sender trust root, and a scripted chat server that
- * delivers envelopes to postbote and records what postbote acknowledged.
+ * delivers envelopes to curlew and records what curlew acknowledged.
  *
- * Every envelope is ENCRYPTED with libsignal by an in-process party, so what postbote decrypts is
+ * Every envelope is ENCRYPTED with libsignal by an in-process party, so what curlew decrypts is
  * real Signal protocol traffic — only the transport is scripted. All identities are synthetic.
  *
  * A `Party` is one ACI on one device, and every `Party` gets its OWN identity key. A contact that
@@ -83,7 +83,7 @@ export class Phone {
   /** Requests the fake chat channel received, after the gate. */
   readonly requests: Array<{ verb: string; path: string; body: unknown }> = [];
   linkStatus = 200;
-  /** The phone's own device, for sync messages to postbote's device. */
+  /** The phone's own device, for sync messages to curlew's device. */
   readonly device: Party;
 
   constructor() {
@@ -155,7 +155,7 @@ export class Phone {
 }
 
 /**
- * A bundle for postbote's device, as the server would hand it out, from its session file. The
+ * A bundle for curlew's device, as the server would hand it out, from its session file. The
  * server hands each one-time pre-key out once: `index` picks which.
  */
 export async function bundleFor(store: SignalProtocolStore, index = 0): Promise<Signal.PreKeyBundle> {
@@ -189,7 +189,7 @@ export const ourAddress = (): Signal.ProtocolAddress => Signal.ProtocolAddress.n
 
 let guid = 0;
 
-/** Start a session from `party` to postbote's device, with the `index`-th one-time pre-key. */
+/** Start a session from `party` to curlew's device, with the `index`-th one-time pre-key. */
 export async function introduce(party: Party, store: SignalProtocolStore, index = 0): Promise<void> {
   await Signal.processPreKeyBundle(
     await bundleFor(store, index),
@@ -326,7 +326,7 @@ export class GroupSender {
 
 /**
  * The chat server's side of the receive connection: a queue of envelopes, delivered in order
- * on connect, then "queue empty". An envelope stays queued until postbote acknowledges it — the
+ * on connect, then "queue empty". An envelope stays queued until curlew acknowledges it — the
  * next connection delivers it again — unless `dropAcks` simulates a crash before the ack arrived.
  */
 export class FakeServer {

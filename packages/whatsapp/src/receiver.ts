@@ -3,7 +3,7 @@
  *
  * It listens to Baileys' events, maps them (`map.ts`) and queues the result; the store engine
  * pulls batches with `nextBatch()` and writes each before asking for the next. The same class
- * serves `postbote sync` (`catch-up`) and a later daemon (`follow`) — they differ only in when
+ * serves `curlew sync` (`catch-up`) and a later daemon (`follow`) — they differ only in when
  * `nextBatch()` stops.
  *
  * When is `catch-up` done? WhatsApp has no "you are up to date" answer to ask for. What Baileys
@@ -26,7 +26,7 @@ import { disconnectReason, disconnectStatus, LOGGED_OUT } from './api.ts';
 import type { EventJournal } from './journal.ts';
 import type { WhatsAppMapper } from './map.ts';
 
-export const RELINK_HINT = 'link it again with `postbote accounts add whatsapp`';
+export const RELINK_HINT = 'link it again with `curlew accounts add whatsapp`';
 
 export interface ReceiverOptions {
   mode: DeliveryMode;

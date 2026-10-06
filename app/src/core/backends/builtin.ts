@@ -1,5 +1,5 @@
 /**
- * The backends that ship with postbote. Each is registered exactly like a third-party plugin
+ * The backends that ship with curlew. Each is registered exactly like a third-party plugin
  * would be: a manifest and a factory. Nothing constructs a backend except through the registry.
  */
 

@@ -1,5 +1,5 @@
 /**
- * mtcute's storage on postbote's own SQLite: the session file of one Telegram account.
+ * mtcute's storage on curlew's own SQLite: the session file of one Telegram account.
  *
  * mtcute ships an IndexedDB storage for the web and better-sqlite3 ones for Node/Bun/Deno.
  * Neither fits: GJS has no IndexedDB, and mtcute's SQLite repositories bind BLOBs, which the
@@ -42,7 +42,7 @@ const NS = {
   refMessages: 'mtcute.ref_messages',
 } as const;
 
-/** postbote's own namespace in the same file: which account this is, for `accounts list`. */
+/** curlew's own namespace in the same file: which account this is, for `accounts list`. */
 export const ACCOUNT_NAMESPACE = 'postbote.account';
 
 /**
@@ -57,7 +57,7 @@ export const ACCOUNT_NAMESPACE = 'postbote.account';
  * sign-in kept a session that was never authorized and told the user it had been.
  *
  * This is a FACT about the file, and it is what `loginTelegram` decides on, because everything
- * AFTER the sign-in — the update manager, postbote's record writes, the final rename — can still
+ * AFTER the sign-in — the update manager, curlew's record writes, the final rename — can still
  * throw. A flag around the login promise would throw away a session that really is signed in.
  *
  * Fails SAFE: a file that cannot be read (already closed, unreadable) counts as signed in,

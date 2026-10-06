@@ -1,10 +1,10 @@
 /**
- * libsignal's protocol stores on postbote's `SecretStore`: the session file of one Signal account.
+ * libsignal's protocol stores on curlew's `SecretStore`: the session file of one Signal account.
  *
  * What it holds is everything this linked device is — the account's identity key pair, the
  * device's password and registration id, its signed, Kyber and one-time pre-keys, a session per
  * contact device, the identity key seen for each contact, and a sender key per group sender. Two
- * of postbote's own namespaces live here too: when a contact's safety number changed, and the
+ * of curlew's own namespaces live here too: when a contact's safety number changed, and the
  * ledger of plaintexts this build could not map (Signal deletes an acknowledged envelope, so a
  * plaintext nobody could read would otherwise exist nowhere).
  * Whoever holds the file can read the account's incoming messages: it is SECRET (0600 in a 0700
@@ -14,7 +14,7 @@
  * writes all dirty keys in ONE `SecretStore.apply`. There is no timer. The receiver flushes at its
  * commit points — after the journal holds the decrypted messages and before it acknowledges the
  * envelopes — so an acknowledged message never leaves a ratchet step only in memory. That order
- * matters more here than for WhatsApp: postbote sends no retry requests, so a lost ratchet step
+ * matters more here than for WhatsApp: curlew sends no retry requests, so a lost ratchet step
  * would leave a contact's later messages undecryptable. One apply per commit is also a few
  * statements rather than one per key, which is what makes a large flush cheap.
  *
@@ -39,7 +39,7 @@ export const NS = {
   senderKey: 'signal.senderkey',
 } as const;
 
-/** postbote's own namespace in the same file: which account this is, for `accounts list`. */
+/** curlew's own namespace in the same file: which account this is, for `accounts list`. */
 export const ACCOUNT_NAMESPACE = 'postbote.account';
 
 /** The ledger of plaintexts this build could not map, in the account file. One key, a JSON array. */
@@ -55,7 +55,7 @@ const DROPPED_KEY = 'dropped';
 
 /**
  * How many plaintexts one account keeps. Signal deletes an envelope once this device acknowledged
- * it, so a plaintext postbote could not read is the only copy left anywhere: the ledger is bounded
+ * it, so a plaintext curlew could not read is the only copy left anywhere: the ledger is bounded
  * so a decoder bug cannot fill the account file, and a run that pushes an entry out says so.
  */
 export const SET_ASIDE_LIMIT = 200;
@@ -149,7 +149,7 @@ function parseDropped(stored: string | null): number {
  * entry with no sender or no time is not listed — there is nothing on a phone to find it by — but
  * it is counted in `dropped`, so a message nobody can see here never goes unnoticed.
  *
- * Reads the file rather than a `SignalProtocolStore` on purpose: the ledger is postbote's own
+ * Reads the file rather than a `SignalProtocolStore` on purpose: the ledger is curlew's own
  * JSON, and reading a diagnosis is exactly what someone needs on a machine where libsignal does
  * not load at all.
  */
@@ -291,7 +291,7 @@ export class SignalProtocolStore {
     return this.get(NS.identityChanged, aci);
   }
 
-  // ── the ledger of plaintexts postbote could not map ──
+  // ── the ledger of plaintexts curlew could not map ──
 
   /**
    * Keep a plaintext this build could not map, base64 as given, oldest first.
@@ -380,7 +380,7 @@ export class SignalProtocolStore {
    * This account's phone number identity, as a service id (`PNI:<uuid>`).
    *
    * The key above says WHICH number we can sign for; this says what the number is. The
-   * provisioning message carries both (field 12 and field 18) and postbote kept only the key,
+   * provisioning message carries both (field 12 and field 18) and curlew kept only the key,
    * so nothing on disk could recognise our own number arriving in a message. That matters:
    * a self-note addressed to the PNI carries a bare uuid in the legacy string field, which
    * `isAci` cannot tell from a contact's, so the user's own number lands in the peer directory.
@@ -426,7 +426,7 @@ export class SignalProtocolStore {
       if (!id) throw new Error('the Signal session has no registration id');
       return Number(id);
     },
-    // Read-only client: every identity is accepted. postbote never sends, so there is no message a
+    // Read-only client: every identity is accepted. curlew never sends, so there is no message a
     // changed key could leak to the wrong person — but a change is not swallowed: `saveIdentity`
     // records it and the conversation shows a "safety number changed" notice.
     isTrustedIdentity: async (): Promise<boolean> => true,

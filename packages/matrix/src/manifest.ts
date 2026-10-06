@@ -10,7 +10,7 @@ export const MATRIX_MANIFEST: BackendManifest = {
   name: 'matrix',
   displayName: 'Matrix (matrix-js-sdk, Rust crypto as WebAssembly)',
   pluginApi: PLUGIN_API_VERSION,
-  // What the NETWORK can do. postbote v1 only reads, so none of this is a promise that postbote
+  // What the NETWORK can do. curlew v1 only reads, so none of this is a promise that curlew
   // can SEND it.
   capabilities: {
     // `m.replace` relations.

@@ -1,5 +1,5 @@
 /**
- * The slice of an XMPP connection postbote uses — and nothing else.
+ * The slice of an XMPP connection curlew uses — and nothing else.
  *
  * The session and the backend work on this interface; `client.ts` implements it on xmpp.js, and
  * a test implements it with synthetic stanzas. Read-only by construction: nothing here sends a
@@ -53,7 +53,7 @@ export interface XmppApi {
   close(): Promise<void>;
 }
 
-/** What `postbote accounts add xmpp` asks for. */
+/** What `curlew accounts add xmpp` asks for. */
 export interface LoginPrompts {
   jid(): Promise<string>;
   password(): Promise<string>;

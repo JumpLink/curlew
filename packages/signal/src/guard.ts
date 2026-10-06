@@ -1,7 +1,7 @@
 /**
  * Read-only through a gate, not through good intentions.
  *
- * Everything postbote could ever SEND to Signal passes through one function: the `fetch` of a
+ * Everything curlew could ever SEND to Signal passes through one function: the `fetch` of a
  * libsignal chat connection (an HTTP-shaped request over Signal's pinned WebSocket). Nothing else
  * in this package holds a chat connection's `fetch`: the link gets `guardedFetch('link', …)`, the
  * sync gets no fetch at all. This allowlist is what the gate lets through, and it is FAIL-CLOSED —
@@ -17,7 +17,7 @@
  *   request — libsignal's `ChatServerMessageAck`; without it the server keeps the message and
  *   redelivers it), and libsignal's own keep-alives.
  *
- * What a linked device does NOT have to send, and postbote therefore never sends: delivery and
+ * What a linked device does NOT have to send, and curlew therefore never sends: delivery and
  * read receipts, typing indicators, sync requests to the phone (contacts, groups, configuration),
  * retry requests for undecryptable messages (`DecryptionErrorMessage`), profile or group fetches,
  * signed pre-key rotation and one-time key refills. Widen this list only with a test naming the
@@ -43,7 +43,7 @@ const ALLOWED: Record<GatePhase, ReadonlyArray<{ verb: string; path: RegExp; why
 
 export class ReadOnlyViolation extends Error {
   constructor(phase: GatePhase, request: ChatRequestLike) {
-    super(`postbote is read-only: refused ${request.verb} ${request.path.split('?')[0]} during ${phase}`);
+    super(`curlew is read-only: refused ${request.verb} ${request.path.split('?')[0]} during ${phase}`);
     this.name = 'ReadOnlyViolation';
   }
 }

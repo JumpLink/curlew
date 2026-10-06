@@ -2,7 +2,7 @@
  * Backend actions — what is installed, what is enabled, and the terms gate on enabling.
  *
  * These write the CONFIG file, never the index: enabling a backend is a user decision, and
- * `postbote sync` stays the only thing that writes to the index.
+ * `curlew sync` stays the only thing that writes to the index.
  */
 
 import type { TermsNotice } from '@curlew/protocol';

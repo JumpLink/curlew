@@ -20,7 +20,7 @@ import type { SetupStep, SetupStepState } from '../../../src/core/actions/setup.
 import { fakeContext, fakeHost, fakePrompter } from './setup-fakes.ts';
 
 export default async function setup(): Promise<void> {
-  describe('postbote setup', () => {
+  describe('curlew setup', () => {
     it('runs the eight stages the shell wizard ran, in that order', () => {
       expect(SETUP_STEPS.map((step) => step.name)).toStrictEqual([
         'readiness',
@@ -98,7 +98,7 @@ export default async function setup(): Promise<void> {
 
     it('gives every stage the invocation that performs it on its own', () => {
       for (const step of SETUP_STEPS) {
-        expect(step.command).toBe(`postbote setup --only ${step.name}`);
+        expect(step.command).toBe(`curlew setup --only ${step.name}`);
       }
     });
 
@@ -137,7 +137,7 @@ export default async function setup(): Promise<void> {
       const message = humanOnlyRefusal(step!).message;
       // Actionable: the command is quoted verbatim, so a surface that cannot run it can hand the
       // person the exact line to type.
-      expect(message.includes('postbote setup --only link-signal')).toBe(true);
+      expect(message.includes('curlew setup --only link-signal')).toBe(true);
       // The reason names both reasons, so a reader of the refusal learns why.
       expect(message.includes('secret')).toBe(true);
       expect(message.includes('terms')).toBe(true);
@@ -171,7 +171,7 @@ export default async function setup(): Promise<void> {
       const blind: SetupStep = {
         name: 'blind',
         title: 'A stage whose probe cannot answer',
-        command: 'postbote setup --only blind',
+        command: 'curlew setup --only blind',
         async run() {
           return { status: 'done' };
         },

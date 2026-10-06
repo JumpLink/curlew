@@ -1,5 +1,5 @@
 /**
- * `postbote check` — report which backends are reachable.
+ * `curlew check` — report which backends are reachable.
  *
  * Three-state probe ({ name, ok, message }) so a caller can tell "unavailable here" apart from
  * "broken": on Node the IMAP mail backend reports that GJS is required, the GNOME probe reports

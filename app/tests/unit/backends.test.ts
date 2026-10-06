@@ -53,7 +53,7 @@ export default async () => {
       if (!pinnedToDeadPath) return; // a workstation may have a live session — nothing to assert
       const result = await check();
       expect(result.ok).toBe(false);
-      // postbote's own sentence leads, so the answer is the same on every runtime and in
+      // curlew's own sentence leads, so the answer is the same on every runtime and in
       // every locale; the native cause follows it. This is what tells "no session bus"
       // apart from "no typelib", which reads as a typelib failure instead.
       expect(result.message).toMatch(/GNOME Online Accounts .* unavailable/i);
@@ -64,7 +64,7 @@ export default async () => {
     await it('check() covers EDS, not just GOA', async () => {
       if (!pinnedToDeadPath) return; // a workstation may have a live session — nothing to assert
       // A GOA-only probe reports ok:true on a host that has GOA but no Evolution Data
-      // Server, and then `postbote contacts` / `postbote calendar` fail on the next
+      // Server, and then `curlew contacts` / `curlew calendar` fail on the next
       // command. Under the dead-path pin both daemons are unreachable, so ok:false here is
       // the answer for EITHER — which is the property: check() cannot say ok while the EDS
       // registry is unavailable.
@@ -93,7 +93,7 @@ export default async () => {
 
     await it('the MCP and CLI answers for one failure read the same', async () => {
       if (!nativeFailure) return;
-      // Same condition, same first words. `postbote check` said the stable sentence while
+      // Same condition, same first words. `curlew check` said the stable sentence while
       // contacts_search answered `{"error":"Goa.Client.new: <locale string>"}`; the reader
       // of the second has no way to tell a missing bus from a missing typelib.
       const result = await check();

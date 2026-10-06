@@ -1,5 +1,5 @@
 /**
- * The receive lease — the lock between a running daemon and a `postbote sync`.
+ * The receive lease — the lock between a running daemon and a `curlew sync`.
  *
  * Two delivery devices on ONE account are not a harmless duplicate: each of them acknowledges
  * what it received, and the network forgets the message for both, so the two runs interleave

@@ -1,24 +1,24 @@
 /**
  * The receiving daemon's systemd USER unit, as text this process carries.
  *
- * WHY a constant and not the file: a built postbote is a single-file GJS bundle, so at run time
- * it cannot read `contrib/systemd/postbote-daemon.service` off disk, and building on gjsify's
+ * WHY a constant and not the file: a built curlew is a single-file GJS bundle, so at run time
+ * it cannot read `contrib/systemd/curlew-daemon.service` off disk, and building on gjsify's
  * static-read inlining is not an option (that is on gjsify `main`, not in the pinned
  * `@gjsify/cli` 0.52.0). The unit therefore lives here, with this machine's real paths filled in
  * — and `setup-unit.test.ts` fails the moment this text and the shipped file disagree, so it
  * cannot quietly become a second copy of the unit.
  *
- * The shipped file keeps its `%h/postbote` placeholders for packagers: fed the same placeholders,
+ * The shipped file keeps its `%h/curlew` placeholders for packagers: fed the same placeholders,
  * this template must reproduce its directives exactly. That is the whole test.
  */
 
 import { dirname, join } from 'node:path';
 
 /** The unit's name — one string, so the file, the `systemctl` calls and the report agree. */
-export const UNIT_NAME = 'postbote-daemon.service';
+export const UNIT_NAME = 'curlew-daemon.service';
 
 /** Where the shipped copy lives, relative to the repo root. Named in the file it writes. */
-export const SHIPPED_UNIT_REL = 'contrib/systemd/postbote-daemon.service';
+export const SHIPPED_UNIT_REL = 'contrib/systemd/curlew-daemon.service';
 
 export interface UnitPaths {
   /** The home directory, or `%h` — systemd expands that itself inside a user unit. */
@@ -49,11 +49,11 @@ export function unitPath(runner: string, home: string): string {
 
 /**
  * The unit text. Comments are the shipped file's own, except the first two lines, which say that
- * `postbote setup` wrote this copy and what to verify — a person reading the installed file has
+ * `curlew setup` wrote this copy and what to verify — a person reading the installed file has
  * to know the paths in it are theirs and that a check exists.
  */
-export const UNIT_TEMPLATE = `# Written by \`postbote setup\`. The paths below are this machine's.
-# ${SHIPPED_UNIT_REL} is the same unit, written for a checkout at ~/postbote.
+export const UNIT_TEMPLATE = `# Written by \`curlew setup\`. The paths below are this machine's.
+# ${SHIPPED_UNIT_REL} is the same unit, written for a checkout at ~/curlew.
 # Verify: systemd-analyze --user verify <this file>
 [Unit]
 # No After=/PartOf=graphical-session.target on purpose: logging out must not stop a receiver
@@ -62,7 +62,7 @@ export const UNIT_TEMPLATE = `# Written by \`postbote setup\`. The paths below a
 # \`loginctl enable-linger\` is what lets a user unit run at all without a session.
 # StartLimit* belong to [Unit], not [Service] (systemd ignores them there) — a restart storm,
 # say a config that no longer names a backend, must not fill the disk.
-Description=postbote — receive Signal and WhatsApp into the local index
+Description=curlew — receive Signal and WhatsApp into the local index
 Documentation=https://github.com/jumplink/postbote/blob/main/docs/adr/0002-receiving-daemon.md
 StartLimitIntervalSec=300
 StartLimitBurst=5
@@ -77,8 +77,8 @@ ExecStart=/usr/bin/env {{RUNNER}} {{ARGS}}
 Restart=on-failure
 # Exit 2 is "every account is logged out and nothing is receiving" (see daemonExitCode). A
 # restart cannot relink a device — it would only hammer the network — so the unit is left
-# FAILED and visible instead: \`systemctl --user status postbote-daemon\`, then
-# \`postbote accounts add whatsapp|signal\`.
+# FAILED and visible instead: \`systemctl --user status curlew-daemon\`, then
+# \`curlew accounts add whatsapp|signal\`.
 RestartPreventExitStatus=2
 RestartSec=30
 NoNewPrivileges=true
@@ -122,7 +122,7 @@ export function unitPathsFor(input: {
   if (input.mode === 'published' || input.gjsify === null || input.bundle === null) {
     // No tree and no baked addon path: run the installed command out of $HOME, where the global
     // bin lives. `gjsify run <bundle>` is the checkout's spelling and does not exist here.
-    return { home: input.home, workdir: input.home, runner: 'postbote', args: 'daemon' };
+    return { home: input.home, workdir: input.home, runner: 'curlew', args: 'daemon' };
   }
   return {
     home: input.home,

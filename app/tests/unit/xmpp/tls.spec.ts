@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 /**
- * What postbote's XMPP backend asks of `node:tls`, against a REAL TLS server on the loopback.
+ * What curlew's XMPP backend asks of `node:tls`, against a REAL TLS server on the loopback.
  *
  * There was a reason none of this could be tested: on GJS no raw TLS socket worked. A plain
  * `tls.connect()` failed its handshake with `G_IO_ERROR_PENDING` (the socket's own read was still
@@ -74,7 +74,7 @@ async function withTlsServer(
   reply?: string,
 ): Promise<void> {
   const tls = await import('node:tls');
-  const dir = mkdtempSync(join(tmpdir(), 'postbote-tls-'));
+  const dir = mkdtempSync(join(tmpdir(), 'curlew-tls-'));
   try {
     const { key, ca } = makeCert(dir);
     const server = tls.createServer({ key, cert: ca }, (socket) => {

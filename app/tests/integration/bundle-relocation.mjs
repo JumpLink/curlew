@@ -1,9 +1,9 @@
-// Probe: is the built postbote bundle RELOCATABLE? Copy it out of the tree, run it from there,
+// Probe: is the built curlew bundle RELOCATABLE? Copy it out of the tree, run it from there,
 // and see whether it still finds its native addon.
 //
 // Why this exists. `--app gjs` bakes the ABSOLUTE prebuild path of every native addon into the
-// bundle, so `app/dist/postbote.gjs.mjs` carries a path into the machine and directory that built
-// it. postbote ships libsignal (Rust behind N-API), so a build made in a CI container or a
+// bundle, so `app/dist/curlew.gjs.mjs` carries a path into the machine and directory that built
+// it. curlew ships libsignal (Rust behind N-API), so a build made in a CI container or a
 // release directory cannot be shipped, copied, packaged or moved: the copy dies at the first
 // Signal command with `gjsify-napi: cannot resolve addon path '…'`. The addon is loaded on first
 // use, so the bundle STARTS fine and fails later — which is why no other check in this repo
@@ -18,7 +18,7 @@
 // addon path again. Then the banner disappears and the run itself becomes the assertion; the
 // check it stands in for is named in the banner.
 //
-// What it runs. `postbote addon-canary`, which calls `loadSignalLib()` and prints typeofs and
+// What it runs. `curlew addon-canary`, which calls `loadSignalLib()` and prints typeofs and
 // export counts: no socket, no Signal server, no account, no config, no index, no secret. No
 // user data can appear in its output, so the transcript is safe to keep.
 //
@@ -35,7 +35,7 @@ import { countOccurrences, findBakedAddonPaths } from './bundle-paths.mjs';
 const here = dirname(fileURLToPath(import.meta.url));
 const appRoot = join(here, '..', '..'); // tests/integration -> app
 const repoRoot = join(appRoot, '..'); // app -> repo root
-const bundle = join(appRoot, 'dist', 'postbote.gjs.mjs');
+const bundle = join(appRoot, 'dist', 'curlew.gjs.mjs');
 
 // The gjsify bin lives in the WORKSPACE ROOT's node_modules, not app/'s — the same reason
 // mcp-gjs-smoke.mjs says it. `gjsify run` is the production entry: it puts the gjsify typelibs and
@@ -48,7 +48,7 @@ const fail = (message) => {
   process.exit(1);
 };
 
-if (!existsSync(bundle)) fail('build first — app/dist/postbote.gjs.mjs missing');
+if (!existsSync(bundle)) fail('build first — app/dist/curlew.gjs.mjs missing');
 if (!existsSync(gjsify)) fail('run `gjsify install` first — @gjsify/cli bin missing');
 const gjsifyVersion = spawnSync(gjsify, ['--version'], { encoding: 'utf8' }).stdout?.trim() ?? '?';
 
@@ -72,15 +72,15 @@ const bundleText = readFileSync(bundle, 'utf8');
 const baked = findBakedAddonPaths(bundleText);
 const rootHits = countOccurrences(bundleText, repoRoot);
 
-console.log('postbote bundle relocation probe');
+console.log('curlew bundle relocation probe');
 console.log(`  bundle     ${bundle} (${(bundleText.length / 1e6).toFixed(1)} MB, built here)`);
 console.log(`  baked      ${baked.length === 0 ? 'no absolute addon path' : baked.join('\n             ')}`);
 console.log(`  build root ${rootHits} occurrence(s) of ${repoRoot} in the bundle text`);
 
 // ── the behavioural half: the same bundle, copied out of the tree ─────────────
 
-const scratch = mkdtempSync(join(tmpdir(), 'postbote-relocation-'));
-const relocated = join(scratch, 'postbote.gjs.mjs');
+const scratch = mkdtempSync(join(tmpdir(), 'curlew-relocation-'));
+const relocated = join(scratch, 'curlew.gjs.mjs');
 
 // Nothing above the copy may hold a `node_modules`, or the relocation test proves nothing: the
 // graph could resolve the addon from there and the baked path would never be exercised. A
@@ -194,11 +194,11 @@ if (baked.length > 0) {
   const line = '='.repeat(78);
   console.log(`
 ${line}
-  KNOWN GAP — a built postbote bundle is not relocatable. Exiting 0 on purpose.
+  KNOWN GAP — a built curlew bundle is not relocatable. Exiting 0 on purpose.
 ${line}
   cause        gjsify build --app gjs bakes the ABSOLUTE prebuild path of the native addon into
                the bundle, so the bundle only loads libsignal on the machine and at the path that
-               built it. postbote cannot be shipped, copied or packaged until that changes, and
+               built it. curlew cannot be shipped, copied or packaged until that changes, and
                the failure is LATE: the bundle starts, then dies at the first Signal command
                with "gjsify-napi: cannot resolve addon path '…'".
 
@@ -259,5 +259,5 @@ console.log(`OK: no absolute addon path in the bundle — none of ${repoRoot} is
 console.log(
   `OK: the relocated copy loaded libsignal — ${report.coreExports} core / ${report.zkExports} zk exports, all four Rust bindings callable`,
 );
-console.log('OK: a built postbote bundle survives being moved. The gap is closed.');
+console.log('OK: a built curlew bundle survives being moved. The gap is closed.');
 process.exit(0);

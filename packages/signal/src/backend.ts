@@ -3,7 +3,7 @@
  * only through the registry, and only after its terms notice was accepted.
  *
  * libsignal is loaded on first use (`lib.ts`): constructing the backend, listing its accounts and
- * reading its manifest touch no native code, so postbote starts on a platform without the addon.
+ * reading its manifest touch no native code, so curlew starts on a platform without the addon.
  */
 
 import type {
@@ -48,7 +48,7 @@ export function parseSettings(settings: BackendContext['settings']): SignalSetti
   if (name !== undefined && (typeof name !== 'string' || !name.trim() || name.length > 50)) {
     throw new Error('backends.signal.settings.deviceName must be a name of 1–50 characters');
   }
-  return { deviceName: typeof name === 'string' ? name.trim() : 'postbote' };
+  return { deviceName: typeof name === 'string' ? name.trim() : 'curlew' };
 }
 
 export interface SignalBackendOptions {
@@ -104,7 +104,7 @@ export class SignalBackend implements DeliveryBackend {
     }
   }
 
-  /** Link postbote as a device: a QR code to scan with the phone. */
+  /** Link curlew as a device: a QR code to scan with the phone. */
   async addAccount(prompter: AccountPrompter): Promise<BackendAccount> {
     const settings = parseSettings(this.context.settings);
     const lib = await this.lib();

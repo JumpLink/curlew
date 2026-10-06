@@ -248,7 +248,7 @@ export function buildPage(
       sender: fromSelf ? null : senderOf(context, entry),
       fromSelf,
       // An encrypted message's body is the sender's "this message is encrypted" fallback, not
-      // what they wrote: postbote cannot decrypt (no OMEMO yet), so it indexes no text.
+      // what they wrote: curlew cannot decrypt (no OMEMO yet), so it indexes no text.
       text: entry.encrypted ? null : entry.body,
       hasAttachments: entry.attachmentUrls.length > 0,
       replyToRemoteId: reply ? reply.archiveId : null,

@@ -1,5 +1,5 @@
 /**
- * `postbote backends` — which message backends exist and which are enabled.
+ * `curlew backends` — which message backends exist and which are enabled.
  *
  * Enabling one with a terms notice is refused until the notice has been seen and accepted with
  * `--accept-terms`: the notice is printed and the command exits non-zero, config unchanged.
@@ -45,7 +45,7 @@ export const backendsCommand: CommandModule = {
                   result.terms.summary,
                   ...(result.terms.url ? ['', result.terms.url] : []),
                   '',
-                  `Nothing was changed. To accept and enable: postbote backends enable ${result.name} --accept-terms`,
+                  `Nothing was changed. To accept and enable: curlew backends enable ${result.name} --accept-terms`,
                 ].join('\n'),
               );
             }

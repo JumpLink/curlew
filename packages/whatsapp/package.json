@@ -4,7 +4,7 @@
   "license": "AGPL-3.0-or-later",
   "private": true,
   "type": "module",
-  "description": "WhatsApp backend: the delivery sync driver over Baileys (unofficial multi-device protocol: WebSocket, WASM, libsignal), its auth state on postbote's SecretStore, and the QR / pairing-code login. Read-only. Self-contained: no other postbote package imports it.",
+  "description": "WhatsApp backend: the delivery sync driver over Baileys (unofficial multi-device protocol: WebSocket, WASM, libsignal), its auth state on curlew's SecretStore, and the QR / pairing-code login. Read-only. Self-contained: no other curlew package imports it.",
   "exports": {
     ".": "./src/index.ts"
   },

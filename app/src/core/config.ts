@@ -1,5 +1,5 @@
 /**
- * The postbote config file — `$XDG_CONFIG_HOME/postbote/config.json`.
+ * The curlew config file — `$XDG_CONFIG_HOME/curlew/config.json`.
  *
  * It holds decisions only the user can make: which backends are enabled, when their terms were
  * accepted, and how a sender is classified when the automatic call was wrong. None of it can be
@@ -27,7 +27,7 @@ export interface BackendConfig {
   settings?: Record<string, string | number | boolean>;
 }
 
-export interface PostboteConfig {
+export interface CurlewConfig {
   backends: Record<string, BackendConfig>;
   /** Per-sender classification overrides, keyed by normalized mail address. */
   senders: Record<string, Classification>;
@@ -38,12 +38,12 @@ export interface PostboteConfig {
  * the registry: the built-in backend goes through the same "enabled in the config" gate as
  * every other, and a user who disables it in the file gets exactly that.
  */
-export function defaultConfig(): PostboteConfig {
+export function defaultConfig(): CurlewConfig {
   return { backends: { mail: { enabled: true } }, senders: {} };
 }
 
 /** Parse and validate the file's text. Throws with the offending key named. */
-export function parseConfig(text: string): PostboteConfig {
+export function parseConfig(text: string): CurlewConfig {
   let raw: unknown;
   try {
     raw = JSON.parse(text);
@@ -102,7 +102,7 @@ export function parseConfig(text: string): PostboteConfig {
 }
 
 /** Read the config, or the default when there is no file yet. */
-export function loadConfig(path = configPath()): PostboteConfig {
+export function loadConfig(path = configPath()): CurlewConfig {
   if (!existsSync(path)) return defaultConfig();
   return parseConfig(readFileSync(path, 'utf8'));
 }
@@ -111,7 +111,7 @@ export function loadConfig(path = configPath()): PostboteConfig {
  * Write the config atomically, mode 0600 in a 0700 directory: the sender overrides are other
  * people's addresses.
  */
-export function saveConfig(config: PostboteConfig, path = configPath()): void {
+export function saveConfig(config: CurlewConfig, path = configPath()): void {
   ensurePrivateDir(dirname(path));
   const part = `${path}.part`;
   writeFileSync(part, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });

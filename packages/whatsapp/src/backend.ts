@@ -2,7 +2,7 @@
  * The WhatsApp backend — a `delivery` driver behind the same port as every other backend,
  * loaded only through the registry, and only after its terms notice was accepted.
  *
- * Self-contained on purpose (ADR 0001 §5): no other postbote package imports this one — only
+ * Self-contained on purpose (ADR 0001 §5): no other curlew package imports this one — only
  * the app's registry lists it — so it can move to its own repository in one step if a takedown
  * or a ban wave makes that necessary.
  */
@@ -70,7 +70,7 @@ export class WhatsAppBackend implements DeliveryBackend {
     return listSessionAccounts(this.context.secretsDir);
   }
 
-  /** Link postbote as a device: a QR code to scan, or a pairing code to type on the phone. */
+  /** Link curlew as a device: a QR code to scan, or a pairing code to type on the phone. */
   addAccount(prompter: AccountPrompter): Promise<BackendAccount> {
     const settings = parseSettings(this.context.settings);
     return linkWhatsApp(this.context, prompter, {

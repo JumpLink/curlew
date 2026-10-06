@@ -6,7 +6,7 @@
  * classify an FTS `SELECT`, so it tries `execute_non_select` first, throws, and retries as a
  * select. Every FTS query therefore runs TWICE, and keeping it thin is what makes that cheap.
  *
- * Only `postbote sync` writes here. A search never does — one mental model, and no surprise
+ * Only `curlew sync` writes here. A search never does — one mental model, and no surprise
  * disk growth from a read.
  */
 
@@ -89,7 +89,7 @@ export function upsertFolder(
  * Mark folders the server no longer lists as not-to-be-synced, KEEPING their messages.
  *
  * A transient LIST failure or a server hiccup must not be able to empty the index. Actually
- * removing them is `postbote index prune`, an explicit decision.
+ * removing them is `curlew index prune`, an explicit decision.
  */
 export function disableMissingFolders(db: IndexDatabase, accountId: string, livePaths: string[]): number {
   const rows = db

@@ -1,13 +1,13 @@
-// Integration test: postbote's XMPP backend on GJS against a REAL XMPP server, run locally.
+// Integration test: curlew's XMPP backend on GJS against a REAL XMPP server, run locally.
 //
 //   1. Start Prosody (podman, mod_mam + mod_muc_mam) with two throwaway accounts on `localhost`.
 //   2. Set the scene from Node with plain xmpp.js: alice's roster and a bookmarked room; bob
 //      writes to alice, corrects one message, retracts another, and talks in the room.
-//   3. postbote on GJS logs in as alice over WebSocket (loopback) and syncs the archive.
-//   4. bob writes once more; postbote syncs again and must fetch exactly that one message.
+//   3. curlew on GJS logs in as alice over WebSocket (loopback) and syncs the archive.
+//   4. bob writes once more; curlew syncs again and must fetch exactly that one message.
 //   5. Direct TLS (XEP-0368): on GJS it logs in and reads the archive — the raw TLS socket
 //      (gjsify#1837) and the `Readable` `addListener` alias (gjsify#1958) both ship in 0.54.0 —
-//      and the SAME postbote code built for Node must connect over it too, checking the
+//      and the SAME curlew code built for Node must connect over it too, checking the
 //      certificate against the XMPP domain with the test CA as `tlsCaFile`.
 //   6. Read-only proof: alice's offline messages are still queued — a client that had sent
 //      presence would have taken them — and bob saw no presence from alice.
@@ -46,8 +46,8 @@ const run = (cmd, args, options = {}) =>
   String(execFileSync(cmd, args, { encoding: 'utf8', ...options }) ?? '').trim();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const dir = mkdtempSync(join(tmpdir(), 'postbote-xmpp-it-'));
-const name = `postbote-xmpp-it-${process.pid}`;
+const dir = mkdtempSync(join(tmpdir(), 'curlew-xmpp-it-'));
+const name = `curlew-xmpp-it-${process.pid}`;
 const PASSWORD_A = `alice-${Math.random().toString(36).slice(2)}`;
 const PASSWORD_B = `bob-${Math.random().toString(36).slice(2)}`;
 const ROOM = 'orga@conference.localhost';
@@ -204,7 +204,7 @@ try {
   await bob.send(xml('message', { to: ROOM, type: 'groupchat', id: 'g2' }, body('Wer macht die Liste?')));
   await sleep(500);
 
-  // ── 3. postbote on GJS, over WebSocket ────────────────────────────────
+  // ── 3. curlew on GJS, over WebSocket ────────────────────────────────
   const entries = {
     gjs: join(appRoot, 'dist', 'xmpp-archive.gjs.mjs'),
     node: join(appRoot, 'dist', 'xmpp-archive.node.mjs'),
@@ -227,15 +227,15 @@ try {
     const line = out.stdout.split('\n').find((l) => l.startsWith('RESULT '));
     return { result: line ? JSON.parse(line.slice(7)) : null, out };
   };
-  const postbote = (input, runtime) => {
+  const curlew = (input, runtime) => {
     const { result, out } = attempt(input, runtime);
     if (!result)
       throw new Error(
-        `postbote (${runtime ?? 'gjs'}) failed (exit ${out.status}):\n${out.stderr.slice(-3000)}`,
+        `curlew (${runtime ?? 'gjs'}) failed (exit ${out.status}):\n${out.stderr.slice(-3000)}`,
       );
     return result;
   };
-  const first = postbote({ service: WS, caFile: null, add: true });
+  const first = curlew({ service: WS, caFile: null, add: true });
   console.log(
     `first sync (WebSocket) in ${first.ms} ms: ${first.added} messages, ${first.fetched} chats fetched`,
   );
@@ -258,7 +258,7 @@ try {
   // ── 4. incremental ────────────────────────────────────────────────────
   await chat('m6', [body('Bis Samstag!')]);
   await sleep(300);
-  const second = postbote({ service: WS, caFile: null, add: false });
+  const second = curlew({ service: WS, caFile: null, add: false });
   console.log(
     `second sync (WebSocket) in ${second.ms} ms: ${second.added} message(s), ${second.fetched} chat(s) fetched`,
   );
@@ -309,7 +309,7 @@ try {
   );
   await chat('m7', [body('Und Kuchen!')]);
   await sleep(300);
-  const third = postbote(tls, 'node');
+  const third = curlew(tls, 'node');
   console.log(`third sync (direct TLS, Node) in ${third.ms} ms: ${third.added} message(s)`);
   assert.deepStrictEqual(third.errors, []);
   assert.strictEqual(third.added, 1);

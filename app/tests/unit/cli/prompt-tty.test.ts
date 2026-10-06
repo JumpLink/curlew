@@ -59,7 +59,7 @@ export default async function promptTty(): Promise<void> {
     });
 
     await it('asks readline for terminal mode when the stream is a terminal', async () => {
-      // What postbote owns is the DECISION, and the only honest way to pin a decision whose
+      // What curlew owns is the DECISION, and the only honest way to pin a decision whose
       // effect lives in a dependency is to check it is passed on. The effect itself — the echo
       // of a typed character, and Ctrl-C — is @gjsify/readline's, verified there with a real pty
       // and re-checked end to end here. A test asserting the echo *in this repo* would pin

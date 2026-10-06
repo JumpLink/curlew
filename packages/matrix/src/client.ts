@@ -133,7 +133,7 @@ export function ensureIndexedDb(): IDBFactory {
 
 /** The IndexedDB name prefix of one account's crypto store. */
 export function cryptoStorePrefix(accountId: string): string {
-  return `postbote-${accountId}`;
+  return `curlew-${accountId}`;
 }
 
 export interface MatrixSession {

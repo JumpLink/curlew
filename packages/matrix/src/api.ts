@@ -1,5 +1,5 @@
 /**
- * The slice of Matrix postbote uses — and nothing else.
+ * The slice of Matrix curlew uses — and nothing else.
  *
  * Structural on purpose: `client.ts` fills these shapes from matrix-js-sdk, and a plain object
  * with synthetic events fills them in a test. That is what lets the mapping and the session be
@@ -57,7 +57,7 @@ export interface MxMessagesPage {
 export interface MatrixApi {
   /** The logged-in user, `@local:server`. */
   readonly userId: string;
-  /** Every room the user has JOINED. Invites are not accepted here: postbote only reads. */
+  /** Every room the user has JOINED. Invites are not accepted here: curlew only reads. */
   listRooms(): Promise<MxRoom[]>;
   /** One page backwards from `from` (null: from the newest event). */
   messages(roomId: string, from: string | null, limit: number): Promise<MxMessagesPage>;
