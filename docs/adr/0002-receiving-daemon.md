@@ -1,16 +1,16 @@
 # ADR 0002 — the receiving daemon, and the lease that keeps two of them apart
 
 - **Status:** Accepted (2026-09-29)
-- **Scope:** `@postbote/protocol` (`DeliveryOutcome`), `@postbote/store` (the receive path,
-  schema v6), `app` (`postbote daemon`, `postbote sync`)
+- **Scope:** `@curlew/protocol` (`DeliveryOutcome`), `@curlew/store` (the receive path,
+  schema v6), `app` (`curlew daemon`, `curlew sync`)
 
 ## Context
 
 ADR 0001 §2 splits the backends by sync model. A **server archive** backend (IMAP, Telegram,
-Matrix, XMPP) can be read whenever: the network still has the history, and `postbote sync`
+Matrix, XMPP) can be read whenever: the network still has the history, and `curlew sync`
 walks a cursor. A **delivery-only** backend (Signal, WhatsApp) cannot. The server holds a
 message for a device only until that device acknowledges it; after that nothing anywhere else
-in postbote's world has it, and what `receiveDeliveries` wrote is the only copy — `state` in
+in curlew's world has it, and what `receiveDeliveries` wrote is the only copy — `state` in
 the backup sense, not `derived`.
 
 That makes "sync every so often" a data-loss window, not a freshness window. WhatsApp unlinks a
@@ -41,7 +41,7 @@ picture, and a reconnect storm on one is a reconnect storm for both.
 
 ### 1. Scope: the enabled delivery-only backends, every account, `follow`, concurrently
 
-`postbote daemon` receives the backends whose manifest declares `syncModel: 'delivery-only'`
+`curlew daemon` receives the backends whose manifest declares `syncModel: 'delivery-only'`
 and that the config enables — today Signal and WhatsApp — for every account each of them
 lists, in `mode: 'follow'`, all accounts **at once**. The choice of driver is still
 `isDeliveryBackend()`, never a backend name; the config decides which are enabled, and the
@@ -51,7 +51,7 @@ terms gate still runs, so enabling the daemon cannot reach a backend the user di
 account, and one slow account must not starve the others of the time budget) and runs them
 concurrently for `follow`, where the loop is the point: it must not be a queue.
 
-Mail and chat backends stay on `postbote sync`. They are pull models with a cursor; a daemon
+Mail and chat backends stay on `curlew sync`. They are pull models with a cursor; a daemon
 buys them nothing and would keep the index's write path busy for hours to no end.
 
 ### 2. Stopping from outside: an `AbortSignal` on the receive path
@@ -90,7 +90,7 @@ wall clock.
 ### 4. The lock is a lease in the index database (schema v6, additive)
 
 One row per `(backend, account)`: the holder's pid, when it was last heard from, and **when the
-lease expires**. **Both** the daemon and `postbote sync` take the lease before they connect an
+lease expires**. **Both** the daemon and `curlew sync` take the lease before they connect an
 account, refresh it while they receive, and drop it when they stop — a one-sided lock is no lock:
 a `sync` in the middle of a WhatsApp catch-up (up to ten minutes) would still let a daemon join it.
 
@@ -110,7 +110,7 @@ both sides, so a step backwards (an NTP correction, a suspend/resume) can make a
 expired for up to one interval. It is mitigated by the holder stopping itself after two refreshes
 it could not perform, rather than waiting for a third party to notice.
 
-`postbote sync` skips a delivery account with a fresh lease and reports it as *received by the
+`curlew sync` skips a delivery account with a fresh lease and reports it as *received by the
 running daemon*. Not an error and not counted in `errors`/`failed`: nothing failed, the
 messages are being received, and a `sync` that red-flags a working daemon trains the user to
 ignore red flags.
@@ -150,9 +150,9 @@ talking to. The full message still reaches `error` in the final JSON, where a us
 
 ### 7. systemd user unit, shipped in the repo
 
-`contrib/systemd/postbote-daemon.service`, `Restart=on-failure`, `ExecStart` matching how the
-README installs postbote (`gjsify run <repo>/app/dist/postbote.gjs.mjs daemon`) so the unit is
-a copy of a command that already works. A user unit, not a system one: postbote reads
+`contrib/systemd/curlew-daemon.service`, `Restart=on-failure`, `ExecStart` matching how the
+README installs curlew (`gjsify run <repo>/app/dist/curlew.gjs.mjs daemon`) so the unit is
+a copy of a command that already works. A user unit, not a system one: curlew reads
 `$XDG_DATA_HOME` and GOA over the user session's D-Bus, so it must run as the user anyway.
 
 ## Consequences
@@ -162,13 +162,13 @@ a copy of a command that already works. A user unit, not a system one: postbote 
 - `DeliveryOutcome` gains an optional `loggedOut`; a backend that does not set it reconnects.
 - The store gains one table (schema v6) and no migration that rewrites a row — the index is
   irreplaceable for a delivery-only account and must not be rebuilt to add a table.
-- `postbote sync` and the daemon are two writers to one index by design, and the lease is the
+- `curlew sync` and the daemon are two writers to one index by design, and the lease is the
   only thing that keeps them apart. Anything else that connects a delivery account (a manual
   `sync` on a machine where the daemon runs, a second daemon in another session) must go
   through the same lease or be a bug.
-- The daemon is the only postbote command that is expected to run for months: the reconnect
+- The daemon is the only curlew command that is expected to run for months: the reconnect
   backoff, the lease heartbeat and the debounced rebuild are the three places where that shows.
-- `postbote sync` stays a complete command on its own. With the daemon running, a `sync` for
+- `curlew sync` stays a complete command on its own. With the daemon running, a `sync` for
   mail, chat backends and the conversations is still exactly what it was; only the delivery
   accounts it skips change.
 
