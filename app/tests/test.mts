@@ -40,6 +40,7 @@ import xmpp from './unit/xmpp/xmpp.test.ts';
 import xmppTls from './unit/xmpp/tls.spec.ts';
 import matrix from './unit/matrix/matrix.test.ts';
 import smtpMessage from './unit/smtp/message.test.ts';
+import smtpSend from './unit/smtp/send.test.ts';
 
 import date from './unit/core/date.test.ts';
 import limits from './unit/core/limits.test.ts';
@@ -93,6 +94,7 @@ run({
   xmppTls,
   matrix,
   smtpMessage,
+  smtpSend,
   date,
   limits,
   registry,
