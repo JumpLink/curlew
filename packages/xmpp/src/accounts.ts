@@ -17,6 +17,7 @@ import { join } from 'node:path';
 import type { XmppLogin } from './client.ts';
 
 const ACCOUNT_ID = /^xmpp-[0-9a-z]+$/;
+// Rename fallback: the key inside existing account files, read back as-is. Do not rebrand.
 const ACCOUNT_NAMESPACE = 'postbote.account';
 const LOGIN_NAMESPACE = 'xmpp.login';
 

@@ -311,7 +311,7 @@ export class IndexTooNewError extends Error {
   constructor(found: number, supported: number) {
     super(
       `the index is schema version ${found}, but this curlew only knows up to ${supported} — ` +
-        'update curlew (or point POSTBOTE_DB_PATH at another index); the index was left untouched',
+        'update curlew (or point CURLEW_DB_PATH at another index); the index was left untouched',
     );
     this.name = 'IndexTooNewError';
     this.found = found;

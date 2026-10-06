@@ -27,6 +27,7 @@ export const API_ID_ENV = 'CURLEW_TELEGRAM_API_ID';
 export const API_HASH_ENV = 'CURLEW_TELEGRAM_API_HASH';
 
 /** The session file's namespace for the credentials the session was created with. */
+// Rename fallback: the key inside existing account files, read back as-is. Do not rebrand.
 export const CREDENTIALS_NAMESPACE = 'postbote.api';
 
 const WHERE = `create them for yourself at https://my.telegram.org ("API development tools")`;

@@ -1,16 +1,16 @@
-# @postbote/smtp
+# @curlew/smtp
 
 Send one message, with attachments, over SMTP. A thin, checked layer on
 [nodemailer](https://nodemailer.com) (pinned exactly): no `gi://`, runs on GJS and on Node.
 
-**This is a library capability, not a tool.** postbote's index and its MCP server stay read-only
+**This is a library capability, not a tool.** curlew's index and its MCP server stay read-only
 and fail-closed; nothing in `app/src/frontends/mcp` sends mail, and nothing here registers one.
 The caller sends, and only with the human's explicit consent for that message.
 
 ## API
 
 ```ts
-import { buildMessage, sendMessage, verifyAccount, SmtpError } from '@postbote/smtp';
+import { buildMessage, sendMessage, verifyAccount, SmtpError } from '@curlew/smtp';
 
 const account: SmtpAccount = {
   host: 'smtp.example.invalid',
