@@ -1,5 +1,5 @@
 /**
- * What `postbote setup` is allowed to touch on the machine.
+ * What `curlew setup` is allowed to touch on the machine.
  *
  * A port, not a pile of `execSync` calls: the setup steps are pure logic over this, so the whole
  * run can be driven by a fake on Node as well as by the real thing on GJS. A future Adwaita
@@ -16,6 +16,8 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { delimiter, dirname, join } from 'node:path';
+
+import { homeSubdir } from '@curlew/store';
 
 export interface RunOptions {
   /**
@@ -47,7 +49,7 @@ export interface CommandRunner {
   home(): string;
   cwd(): string;
   env(name: string): string | undefined;
-  /** Whether a directory is a postbote checkout: the CLI workspace and the root that owns it.
+  /** Whether a directory is a curlew checkout: the CLI workspace and the root that owns it.
    * A published install has neither. */
   isCheckout(dir: string): boolean;
 }
@@ -56,7 +58,7 @@ export interface CommandRunner {
  * The bundle's OWN path, read from the banner gjsify emits for ESM output
  * (`globalThis.__gjsifyBundleUrl ??= import.meta.url`, gjsify's module-resolve shim).
  *
- * This is what the systemd unit's `ExecStart` needs — a built postbote cannot read the unit off
+ * This is what the systemd unit's `ExecStart` needs — a built curlew cannot read the unit off
  * disk, and the addon path is baked in at build time, so the unit has to name the file this very
  * process came out of rather than a guess. Read defensively: the banner is absent under a bundler
  * that predates it or on a runtime that does not take the ESM path, and a missing banner is a
@@ -159,14 +161,20 @@ export function xdgDataHome(host: CommandRunner): string {
   return xdg !== undefined && xdg !== '' ? xdg : join(host.home(), '.local', 'share');
 }
 
-/** `$XDG_CONFIG_HOME/postbote/config.json` — the file a run reads and writes. */
+/** `$XDG_CONFIG_HOME/curlew/config.json` (or the old `postbote` directory, if only that exists) — the file a run reads and writes. */
 export function setupConfigPath(host: CommandRunner): string {
-  return join(xdgConfigHome(host), 'postbote', 'config.json');
+  return join(
+    homeSubdir(xdgConfigHome(host), (path) => host.exists(path)),
+    'config.json',
+  );
 }
 
-/** `$XDG_DATA_HOME/postbote/index.db` — the index a run reports on, never the user's in a test. */
+/** `$XDG_DATA_HOME/curlew/index.db` (same fallback) — the index a run reports on, never the user's in a test. */
 export function setupIndexPath(host: CommandRunner): string {
-  return join(xdgDataHome(host), 'postbote', 'index.db');
+  return join(
+    homeSubdir(xdgDataHome(host), (path) => host.exists(path)),
+    'index.db',
+  );
 }
 
 /** Create the parent directory of a file, then write it. */

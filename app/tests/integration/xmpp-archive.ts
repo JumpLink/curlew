@@ -5,7 +5,7 @@
  * (`xmpp-archive.mjs`), which runs the server and checks what arrived.
  *
  * Input (environment, never real accounts — the orchestrator creates throwaway ones):
- *   POSTBOTE_XMPP_IT = {"dataDir", "jid", "password", "service", "caFile", "add": boolean}
+ *   CURLEW_XMPP_IT = {"dataDir", "jid", "password", "service", "caFile", "add": boolean}
  */
 
 import type { AccountPrompter } from '@curlew/protocol';
@@ -30,7 +30,7 @@ interface Input {
   add: boolean;
 }
 
-const input = JSON.parse(process.env.POSTBOTE_XMPP_IT ?? '{}') as Input;
+const input = JSON.parse(process.env.CURLEW_XMPP_IT ?? '{}') as Input;
 
 let ok = false;
 try {

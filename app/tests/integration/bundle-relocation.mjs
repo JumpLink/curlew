@@ -122,28 +122,28 @@ if (existsSync(join(addonSource, prebuildDir))) {
 //   - LD_LIBRARY_PATH / GI_TYPELIB_PATH / NODE_PATH: anything inherited could resolve a native
 //     library from the build machine and hide the gap. `gjsify run` exports what its own prebuilds
 //     need, so nothing of ours is required.
-//   - POSTBOTE_CLI_PREBUILD: set for the UNIT test run only (app/package.json "test"), and
+//   - CURLEW_CLI_PREBUILD: set for the UNIT test run only (app/package.json "test"), and
 //     irrelevant on GJS, where the addon path comes out of the bundle. Dropping it is the point —
 //     it shows the load needs no hint from the environment.
 //   - XDG_*: the canary touches no account, but pointing these at the scratch dir means that if
 //     that ever changes it writes into a temp dir rather than a real index. cwd is the scratch
 //     dir for the same reason: `import 'dotenv/config'` finds no `.env` to read there.
 const env = { ...process.env };
-for (const name of ['LD_LIBRARY_PATH', 'GI_TYPELIB_PATH', 'NODE_PATH', 'POSTBOTE_CLI_PREBUILD']) {
+for (const name of ['LD_LIBRARY_PATH', 'GI_TYPELIB_PATH', 'NODE_PATH', 'CURLEW_CLI_PREBUILD']) {
   delete env[name];
 }
 Object.assign(env, {
   XDG_DATA_HOME: join(scratch, 'data'),
   XDG_CONFIG_HOME: join(scratch, 'config'),
   XDG_CACHE_HOME: join(scratch, 'cache'),
-  POSTBOTE_CLI_ADDON_CANARY: '1',
+  CURLEW_CLI_ADDON_CANARY: '1',
 });
 
 console.log(`  copy       ${relocated}`);
 console.log(
   `  reachable  no node_modules above ${scratch}, no .gjsify-link.json; ${ADDON_PKG} staged beside the copy`,
 );
-console.log('  env        LD_LIBRARY_PATH, GI_TYPELIB_PATH, NODE_PATH, POSTBOTE_CLI_PREBUILD removed;');
+console.log('  env        LD_LIBRARY_PATH, GI_TYPELIB_PATH, NODE_PATH, CURLEW_CLI_PREBUILD removed;');
 console.log('             XDG_{DATA,CONFIG,CACHE}_HOME and cwd pointed at the copy');
 console.log(`  runner     gjsify ${gjsifyVersion} run <copy> addon-canary`);
 
@@ -223,7 +223,7 @@ ${line}
   the marker   // gjsify gap (unfixed, gjsify fix/napi-addon-relocatable)
                in app/src/frontends/cli/addon-canary.ts — update it to the PR number when there is one
 
-  environment  POSTBOTE_CLI_PREBUILD is NOT set for this run. The unit test suite sets it and
+  environment  CURLEW_CLI_PREBUILD is NOT set for this run. The unit test suite sets it and
                this probe deliberately does not: on GJS the addon path comes out of the bundle,
                so the load above needed no hint from the environment.
 

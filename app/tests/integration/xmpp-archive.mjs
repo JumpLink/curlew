@@ -219,7 +219,7 @@ try {
   const attempt = (input, runtime = 'gjs') => {
     const env = {
       ...process.env,
-      POSTBOTE_XMPP_IT: JSON.stringify({ dataDir, jid: 'alice@localhost', password: PASSWORD_A, ...input }),
+      CURLEW_XMPP_IT: JSON.stringify({ dataDir, jid: 'alice@localhost', password: PASSWORD_A, ...input }),
     };
     const [cmd, args] =
       runtime === 'gjs' ? [gjsify, ['run', entries.gjs]] : [process.execPath, [entries.node]];

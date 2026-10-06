@@ -16,7 +16,7 @@ import { ALICE_ACI, LIB } from '../signal/world.ts';
  * hold is the privacy rule — a listing is for finding a message on the phone, never for reading it
  * here — and the shape rule: a backend without a ledger is an empty list, not an error.
  *
- * The session files are written under `POSTBOTE_SECRETS_DIR`, the override the data layer already
+ * The session files are written under `CURLEW_SECRETS_DIR`, the override the data layer already
  * documents, so the action takes the same path the real command does. All data is synthetic.
  */
 
@@ -70,13 +70,13 @@ function whatsappSession(secrets: string): void {
 
 /** Run `body` with the secrets directory pointed at the test's own. */
 async function withSecrets<T>(secrets: string, body: () => Promise<T>): Promise<T> {
-  const before = process.env.POSTBOTE_SECRETS_DIR;
-  process.env.POSTBOTE_SECRETS_DIR = secrets;
+  const before = process.env.CURLEW_SECRETS_DIR;
+  process.env.CURLEW_SECRETS_DIR = secrets;
   try {
     return await body();
   } finally {
-    if (before === undefined) delete process.env.POSTBOTE_SECRETS_DIR;
-    else process.env.POSTBOTE_SECRETS_DIR = before;
+    if (before === undefined) delete process.env.CURLEW_SECRETS_DIR;
+    else process.env.CURLEW_SECRETS_DIR = before;
   }
 }
 

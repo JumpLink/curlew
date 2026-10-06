@@ -140,7 +140,7 @@ console.log('OK: server exits cleanly on stdin EOF (no orphan)');
 // `registerTool` would serve exactly the same catalogue and section 1 would still pass. It
 // cannot distinguish a working gate from no gate at all.
 //
-// So ask the gate to do the thing it exists for. `POSTBOTE_MCP_GATE_CANARY=1` registers two
+// So ask the gate to do the thing it exists for. `CURLEW_MCP_GATE_CANARY=1` registers two
 // tools that must be dropped, through the same `server.registerTool` the real tools use, after
 // the gate has wrapped it.
 //
@@ -169,7 +169,7 @@ async function listToolNames(extraEnv) {
 // was sabotaged to the fail-open spelling and this whole file still passed.
 const CANARIES = ['gate_canary_write', 'gate_canary_unannotated'];
 
-const gated = await listToolNames({ POSTBOTE_MCP_GATE_CANARY: '1' });
+const gated = await listToolNames({ CURLEW_MCP_GATE_CANARY: '1' });
 for (const canary of CANARIES) {
   assert(!gated.includes(canary), `READ-ONLY GATE IS OPEN: ${canary} was served — ${gated.join(', ')}`);
 }
@@ -185,8 +185,8 @@ console.log(`OK: gate DROPS both canaries and setup_run (${gated.length} tools s
 // assertion above proved nothing. `setup_run` joins it: a mutating tool that appears ONLY when
 // writes are allowed is the same evidence on a tool that actually does something.
 const ungated = await listToolNames({
-  POSTBOTE_MCP_GATE_CANARY: '1',
-  POSTBOTE_MCP_ALLOW_WRITE: '1',
+  CURLEW_MCP_GATE_CANARY: '1',
+  CURLEW_MCP_ALLOW_WRITE: '1',
 });
 for (const canary of CANARIES) {
   assert(

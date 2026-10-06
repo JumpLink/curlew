@@ -51,7 +51,7 @@ export function fakeHost(overrides: Partial<Record<string, string>> = {}): FakeH
     calls,
     files,
     commands,
-    bundlePath: () => env.POSTBOTE_BUNDLE ?? '/home/tester/app/dist/curlew.gjs.mjs',
+    bundlePath: () => env.CURLEW_BUNDLE ?? '/home/tester/app/dist/curlew.gjs.mjs',
     which: (command) => host.commands.get(command)?.path ?? null,
     run(argv, options): RunResult {
       const captured = options?.capture === true;

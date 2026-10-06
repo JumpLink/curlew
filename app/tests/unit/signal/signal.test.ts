@@ -116,7 +116,7 @@ import {
  *
  */
 
-// The Node run loads libsignal's prebuilt addon from `node_modules`, with no `POSTBOTE_CLI_PREBUILD`
+// The Node run loads libsignal's prebuilt addon from `node_modules`, with no `CURLEW_CLI_PREBUILD`
 // to point it anywhere. It used to need one: gjsify's `--app node` target bundled the addon
 // package, so `node-gyp-build` searched the BUNDLE's directory for it and honoured
 // `<PACKAGE>_PREBUILD` for that directory (gjsify#1842 keeps native addons external now). The

@@ -17,6 +17,8 @@
 
 import type { CommandModule } from 'yargs';
 
+import { envValue } from '@curlew/store';
+
 import type { SetupContext } from '../../core/actions/setup.ts';
 import { SETUP_STEPS, defaultLink, detectSetup, runSetup, setupStatus } from '../../core/actions/setup.ts';
 import { nodeHost, setupConfigPath, setupIndexPath } from '../../core/actions/setup-host.ts';
@@ -56,7 +58,7 @@ export const setupCommand: CommandModule = {
       ...where,
       prompter,
       host,
-      configPath: process.env.POSTBOTE_CONFIG ?? setupConfigPath(host),
+      configPath: envValue(process.env, 'CONFIG') ?? setupConfigPath(host),
       indexPath: setupIndexPath(host),
       link: defaultLink,
       done: new Map(),

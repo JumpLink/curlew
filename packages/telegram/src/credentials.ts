@@ -6,7 +6,7 @@
  *
  * Where they live: in the account's SESSION file (`SecretStore`, 0600, backup tier `secret`),
  * asked for once by `curlew accounts add telegram`. The environment
- * (`POSTBOTE_TELEGRAM_API_ID`, `POSTBOTE_TELEGRAM_API_HASH`) overrides them, for a user who keeps
+ * (`CURLEW_TELEGRAM_API_ID`, `CURLEW_TELEGRAM_API_HASH`; the old `POSTBOTE_` names still work) overrides them, for a user who keeps
  * them in a password manager. NOT in the config file: that is `state` in a backup, readable
  * wherever the backup goes, and the api_hash is a credential — so a config that carries one is
  * refused rather than silently used.
@@ -16,15 +16,15 @@
  */
 
 import type { BackendContext } from '@curlew/protocol';
-import type { SecretStore } from '@curlew/store';
+import { envValue, type SecretStore } from '@curlew/store';
 
 export interface TelegramCredentials {
   apiId: number;
   apiHash: string;
 }
 
-export const API_ID_ENV = 'POSTBOTE_TELEGRAM_API_ID';
-export const API_HASH_ENV = 'POSTBOTE_TELEGRAM_API_HASH';
+export const API_ID_ENV = 'CURLEW_TELEGRAM_API_ID';
+export const API_HASH_ENV = 'CURLEW_TELEGRAM_API_HASH';
 
 /** The session file's namespace for the credentials the session was created with. */
 export const CREDENTIALS_NAMESPACE = 'postbote.api';
@@ -57,8 +57,8 @@ export function refuseConfigCredentials(settings: BackendContext['settings']): v
 
 /** The environment's pair, or null when neither variable is set. Half a pair is an error. */
 export function credentialsFromEnv(env: BackendContext['env']): TelegramCredentials | null {
-  const id = env[API_ID_ENV]?.trim();
-  const hash = env[API_HASH_ENV]?.trim();
+  const id = envValue(env, 'TELEGRAM_API_ID');
+  const hash = envValue(env, 'TELEGRAM_API_HASH');
   if (!id && !hash) return null;
   if (!id || !hash) throw new Error(`set both ${API_ID_ENV} and ${API_HASH_ENV}, or neither`);
   return parseCredentials(id, hash);

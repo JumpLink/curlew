@@ -17,7 +17,7 @@
  * ones: if the N-API registration had half-failed, they would be missing while the module object
  * still exists.
  *
- * Off unless `POSTBOTE_CLI_ADDON_CANARY=1`, like the MCP gate canary — and like that one, it is
+ * Off unless `CURLEW_CLI_ADDON_CANARY=1`, like the MCP gate canary — and like that one, it is
  * inert anyway: it loads a module and prints typeofs. Enabling it can grant no capability.
  * Hidden from `--help` (`describe: false`) so it never shows up as a feature.
  *
@@ -77,8 +77,8 @@ export const addonCanaryCommand: CommandModule = {
   // `false` hides it from --help; it is a probe, not a feature.
   describe: false,
   handler: () => {
-    if (process.env.POSTBOTE_CLI_ADDON_CANARY !== '1') {
-      console.error('addon-canary is a test probe — set POSTBOTE_CLI_ADDON_CANARY=1 to run it');
+    if (process.env.CURLEW_CLI_ADDON_CANARY !== '1') {
+      console.error('addon-canary is a test probe — set CURLEW_CLI_ADDON_CANARY=1 to run it');
       process.exit(1);
     }
     // One line: a driver picks it out of a stream of GJS typelib warnings without brace-matching.

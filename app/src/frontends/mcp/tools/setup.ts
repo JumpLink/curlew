@@ -4,7 +4,7 @@
  * Two tools, and the split is the security property rather than a convenience.
  * `applyReadOnlyGate` registers a tool only when it declares `readOnlyHint: true`, so
  * `setup_status` is served on every connection and `setup_run` is not served at all unless
- * `POSTBOTE_MCP_ALLOW_WRITE=1`. There is no name list anywhere in this file and none is wanted:
+ * `CURLEW_MCP_ALLOW_WRITE=1`. There is no name list anywhere in this file and none is wanted:
  * the annotation is what the gate reads, and a second list is a second thing to forget to update.
  *
  * ONE mutating tool, not eight. Eight tools would mean eight more entries for the gate to judge
@@ -39,6 +39,7 @@
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { mcpError, mcpSuccess } from '@gjsify/mcp';
+import { envValue } from '@curlew/store';
 import { z } from 'zod';
 
 import type { SetupContext, SetupPrompter, SetupStep } from '../../../core/actions/setup.ts';
@@ -98,7 +99,7 @@ export function mcpSetupContext(): SetupContext {
     ...detectSetup(host),
     prompter: agentPrompter(),
     host,
-    configPath: process.env.POSTBOTE_CONFIG ?? setupConfigPath(host),
+    configPath: envValue(process.env, 'CONFIG') ?? setupConfigPath(host),
     indexPath: setupIndexPath(host),
     // The one linking call in the whole run, and here it is a hard stop. See the file header.
     link: async () => {
@@ -143,7 +144,7 @@ export function registerSetupTools(server: McpServer): void {
     {
       title: 'Run One Setup Stage',
       description:
-        "Run exactly ONE stage of `curlew setup` on this machine, by id. Only available on a server started with POSTBOTE_MCP_ALLOW_WRITE=1. Every yes/no question is answered NO on your behalf — a stage that needs the account holder to decide reports itself skipped, and you must not try to work around that. The stages `link-signal`, `link-whatsapp` and `terms` REFUSE: the pairing code is the secret that binds an account to this machine, and accepting a third party's terms is an act in the person's name. Do not retry them; hand the user the exact command the refusal names and let them run it. Pass dry_run to see the stage and its state without touching anything.",
+        "Run exactly ONE stage of `curlew setup` on this machine, by id. Only available on a server started with CURLEW_MCP_ALLOW_WRITE=1. Every yes/no question is answered NO on your behalf — a stage that needs the account holder to decide reports itself skipped, and you must not try to work around that. The stages `link-signal`, `link-whatsapp` and `terms` REFUSE: the pairing code is the secret that binds an account to this machine, and accepting a third party's terms is an act in the person's name. Do not retry them; hand the user the exact command the refusal names and let them run it. Pass dry_run to see the stage and its state without touching anything.",
       inputSchema: {
         step: z
           .enum(STEP_IDS)
