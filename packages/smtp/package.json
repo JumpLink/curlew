@@ -1,0 +1,20 @@
+{
+  "name": "@postbote/smtp",
+  "version": "0.1.0",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "type": "module",
+  "description": "Sending one message with attachments over SMTP (nodemailer): message building, account validation, verify and send. A library capability only — no MCP tool, no credentials in logs, errors or DTOs. No gi://.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check": "tsc --noEmit --project tsconfig.json"
+  },
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "nodemailer": "10.0.15"
+  }
+}
