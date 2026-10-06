@@ -18,8 +18,12 @@ carries the gjsify toolchain and picks a frontend at the yargs entrypoint.
 
 The code came out of `buchhaltung/packages/gnome`; the git history there is the deeper record.
 
-**v1 is read-only.** IMAP is spoken with `BODY.PEEK` only, so `\Seen` is never set. There is no
-SMTP, no flag write, no move, no delete.
+**The index and the MCP server are read-only and fail-closed.** IMAP is spoken with `BODY.PEEK`
+only, so `\Seen` is never set; there is no flag write, no move, no delete, and no MCP tool that
+sends. **Sending exists as a library capability only** — `@postbote/smtp` — and the caller uses it
+only with the human's explicit consent for that message. It has no MCP tool and no CLI command.
+Write access for agents needs its own decision, taken when it is wanted; this package does not
+make it.
 
 ## Package layout — and the one rule that holds it together
 
@@ -28,6 +32,7 @@ SMTP, no flag write, no move, no delete.
 | `@postbote/protocol` | **Pure.** RFC grammar (IMAP lexer, ENVELOPE, FETCH, LIST, BODYSTRUCTURE, MIME, RFC 2047/2231, modified UTF-7), DTOs, errors, the plugin API: `MessageBackend` port + manifest, `BackendContext`, the `MailBackend` mailbox driver and the `ChatBackend` chat driver | nothing |
 | `@postbote/gnome` | GOA + EDS: accounts, contacts, calendar, IMAP credentials | `protocol`, `gi://` |
 | `@postbote/imap` | Gio TLS transport, IMAP client, folders, search, fetch, attachments | `protocol`, `gnome`, `gi://` |
+| `@postbote/smtp` | Sending ONE message with attachments over SMTP on nodemailer (pinned exactly): message building, account validation, `verifyAccount`, `sendMessage`, `SmtpError`. A library capability — no MCP tool, no credential in a log, error or DTO; `security: 'none'` for loopback only. TLS tests wait for gjsify#2071 | nodemailer, `node:*` — no `gi://`; imports no other package |
 | `@postbote/store` | SQLite index, sync engines (mailbox + chat), conversations (threading, classification), secret store, XDG paths, file writes | `protocol`, `node:*` |
 | `@postbote/telegram` | Telegram `chat` backend on mtcute (web build: WebSocket, WebCrypto, WASM), its session storage on `SecretStore`, the login | `protocol`, `store`, `@mtcute/*`, `node:*` — no `gi://` |
 | `@postbote/whatsapp` | WhatsApp `delivery` backend on Baileys (unofficial protocol: WebSocket, WASM, libsignal), its auth state on `SecretStore`, the QR / pairing-code link | `protocol`, `store`, `baileys`, `node:*` — no `gi://` |
