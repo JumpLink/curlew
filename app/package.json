@@ -105,6 +105,7 @@
     "@postbote/imap": "*",
     "@postbote/matrix": "*",
     "@postbote/protocol": "*",
+    "@postbote/smtp": "*",
     "@postbote/signal": "*",
     "@postbote/store": "*",
     "@postbote/telegram": "*",
