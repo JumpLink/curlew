@@ -2,12 +2,12 @@
  * Index actions — building the local index and reporting on it.
  *
  * This module is where the two halves are joined: the registry provides the enabled backends,
- * `@postbote/store` owns the database and the algorithms, and neither imports the other. The
+ * `@curlew/store` owns the database and the algorithms, and neither imports the other. The
  * injection happens here and nowhere else.
  */
 
-import { searchContacts } from '@postbote/gnome';
-import { type ContactDTO, isChatBackend, isDeliveryBackend, isMailBackend } from '@postbote/protocol';
+import { searchContacts } from '@curlew/gnome';
+import { type ContactDTO, isChatBackend, isDeliveryBackend, isMailBackend } from '@curlew/protocol';
 import type {
   ChatSyncResult,
   DeliverySyncResult,
@@ -17,7 +17,7 @@ import type {
   RebuildResult,
   SyncResult,
   SyncStatus,
-} from '@postbote/store';
+} from '@curlew/store';
 import {
   configPath,
   ensurePrivateDir,
@@ -32,7 +32,7 @@ import {
   syncIndex,
   type SyncProgress,
   syncStatus,
-} from '@postbote/store';
+} from '@curlew/store';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig } from '../config.ts';
@@ -125,7 +125,7 @@ async function addressBook(): Promise<ContactDTO[] | null> {
  * Rebuild the conversations from the stored mail rows, with the address book.
  *
  * Shared, because the classifier's address book is a full read of EDS and a second copy of this
- * step would be a second set of bugs: `postbote sync` calls it after its writes, and the
+ * step would be a second set of bugs: `curlew sync` calls it after its writes, and the
  * receiving daemon calls it debounced after its batches (ADR 0002 §5).
  */
 export async function rebuildWithAddressBook(
@@ -133,7 +133,7 @@ export async function rebuildWithAddressBook(
 ): Promise<RebuildResult & { contacts: number | null }> {
   const contacts = await addressBook();
   // Sync and rebuild write in multi-row batches — one wide statement per few rows rather than
-  // one per row (see `insertMany` in `@postbote/store`).
+  // one per row (see `insertMany` in `@curlew/store`).
   return { ...rebuildConversations(db, { contacts: contacts ?? [] }), contacts: contacts?.length ?? null };
 }
 
@@ -147,7 +147,7 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
   const plugins = registry.enabled(config);
   if (plugins.length === 0) {
     throw new Error(
-      'no backend is enabled — `postbote backends list` shows them, `backends enable <name>` turns one on',
+      'no backend is enabled — `curlew backends list` shows them, `backends enable <name>` turns one on',
     );
   }
   const db = openIndex(params.dbPath ?? indexDbPath());
@@ -185,9 +185,7 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
           ...(await receiveDeliveries(db, backend, { accountId: params.accountId, mode: 'catch-up' })),
         });
       } else {
-        throw new Error(
-          `backend ${name} uses the ${backend.kind} driver, which this postbote cannot sync yet`,
-        );
+        throw new Error(`backend ${name} uses the ${backend.kind} driver, which this curlew cannot sync yet`);
       }
     }
     const conversations = await rebuildWithAddressBook(db);

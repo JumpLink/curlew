@@ -8,8 +8,8 @@ import type {
   MamQuery,
   RosterItem,
   XmppApi,
-} from '@postbote/xmpp';
-import { NS, parseMamResult, XmppQueryError } from '@postbote/xmpp';
+} from '@curlew/xmpp';
+import { NS, parseMamResult, XmppQueryError } from '@curlew/xmpp';
 
 /**
  * A scriptable XMPP server behind `XmppApi`: roster, bookmarks, disco features and MAM archives,
@@ -49,7 +49,7 @@ export function resultXml(spec: EntrySpec, archive: string, queryId = QUERY): st
     ? `<x xmlns="${NS.mucUser}"><item affiliation="member" jid="${spec.occupantJid}/phone" role="participant"/></x>`
     : '';
   return (
-    `<message xmlns="jabber:client" to="${ME}/postbote" from="${archive}">` +
+    `<message xmlns="jabber:client" to="${ME}/curlew" from="${archive}">` +
     `<result xmlns="${NS.mam}" queryid="${queryId}" id="${spec.id}">` +
     `<forwarded xmlns="${NS.forward}"><delay xmlns="${NS.delay}" stamp="${spec.at}"/>` +
     `<message xmlns="jabber:client" from="${spec.from}" to="${spec.to ?? ME}" type="${type}"` +

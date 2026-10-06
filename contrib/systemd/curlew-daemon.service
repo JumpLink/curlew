@@ -1,23 +1,23 @@
 [Unit]
-# postbote — the receiving daemon (ADR 0002).
+# curlew — the receiving daemon (ADR 0002).
 #
 # It receives Signal and WhatsApp into the local index and keeps doing so while you do
 # nothing: those networks keep no archive, so what the daemon writes is the only copy
 # (see the WhatsApp and Signal sections of the README).
 #
-# Install as a USER unit — postbote reads $XDG_DATA_HOME and reaches GNOME Online
+# Install as a USER unit — curlew reads $XDG_DATA_HOME and reaches GNOME Online
 # Accounts over the user session's D-Bus, so it has to run as you anyway:
 #
 #   mkdir -p ~/.config/systemd/user
-#   cp contrib/systemd/postbote-daemon.service ~/.config/systemd/user/
-#   # point the two paths below at your checkout if it is not ~/postbote
+#   cp contrib/systemd/curlew-daemon.service ~/.config/systemd/user/
+#   # point the two paths below at your checkout if it is not ~/curlew
 #   systemctl --user daemon-reload
-#   systemctl --user enable --now postbote-daemon
+#   systemctl --user enable --now curlew-daemon
 #   loginctl enable-linger "$USER"   # so it also runs while you are logged out
-#   journalctl --user -u postbote-daemon -f
+#   journalctl --user -u curlew-daemon -f
 #
 # Verify: systemd-analyze --user verify <this file>
-Description=postbote — receive Signal and WhatsApp into the local index
+Description=curlew — receive Signal and WhatsApp into the local index
 Documentation=https://github.com/jumplink/postbote/blob/main/docs/adr/0002-receiving-daemon.md
 # No After=/PartOf=graphical-session.target on purpose: logging out must not stop a receiver
 # whose whole point is staying connected, and the address book it uses for the participant
@@ -30,19 +30,19 @@ StartLimitBurst=5
 
 [Service]
 Type=simple
-WorkingDirectory=%h/postbote
+WorkingDirectory=%h/curlew
 # A user unit's PATH has neither `gjsify install`'s ~/.local/bin nor the shell's, so PATH is
 # set explicitly and the command goes through env: systemd would otherwise report
 # "Command gjsify is not executable" and refuse to start.
 Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
-ExecStart=/usr/bin/env gjsify run %h/postbote/app/dist/postbote.gjs.mjs daemon
+ExecStart=/usr/bin/env gjsify run %h/curlew/app/dist/curlew.gjs.mjs daemon
 # A dropped socket is retried by the daemon itself (with backoff). A restart here is for
 # what it cannot retry: an index that cannot be opened, a backend that will not load.
 Restart=on-failure
 # Exit 2 is "every account is logged out and nothing is receiving" (see daemonExitCode). A
 # restart cannot relink a device — it would only hammer the network — so the unit is left
-# FAILED and visible instead: `systemctl --user status postbote-daemon`, then
-# `postbote accounts add whatsapp|signal`.
+# FAILED and visible instead: `systemctl --user status curlew-daemon`, then
+# `curlew accounts add whatsapp|signal`.
 RestartPreventExitStatus=2
 RestartSec=30
 NoNewPrivileges=true

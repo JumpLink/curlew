@@ -8,7 +8,7 @@ import type {
   TgMessage,
   TgPeer,
   TgUser,
-} from '@postbote/telegram';
+} from '@curlew/telegram';
 
 /**
  * A fake mtcute client: recorded, SYNTHETIC dialogs and messages in the exact shapes mtcute's

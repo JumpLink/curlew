@@ -36,8 +36,8 @@ import {
   type SearchMailOptions,
   tokenizeImapList,
   walkBodyStructure,
-} from '@postbote/protocol';
-import { listMailTargets } from '@postbote/gnome';
+} from '@curlew/protocol';
+import { listMailTargets } from '@curlew/gnome';
 import { ImapClient, type ImapResponse } from './client.gjs.ts';
 
 const DEFAULT_LIMIT = 25;
@@ -333,7 +333,7 @@ function findBodyStructure(items: ImapValue[]): ImapValue {
 /**
  * Stream one part into a sink.
  *
- * The sink is supplied by the caller — a file writer from @postbote/store, or a buffer in tests
+ * The sink is supplied by the caller — a file writer from @curlew/store, or a buffer in tests
  * — so this stays free of any filesystem knowledge and the bytes never become a JS string.
  *
  * `describe` runs first so the caller can derive a filename from real metadata rather than

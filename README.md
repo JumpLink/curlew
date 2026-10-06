@@ -1,10 +1,12 @@
-# Postbote
+# Curlew
+
+*Formerly `postbote`.* The GitHub repository is still named `JumpLink/postbote` until it is renamed. An existing `~/.local/share/postbote` / `~/.config/postbote` keeps being used as it is, and the old `POSTBOTE_*` variables still work.
 
 Your GNOME mail, contacts and calendar — on the command line, and as an
 [MCP](https://modelcontextprotocol.io) server so an AI assistant can search your
 mailbox for you.
 
-Postbote reads the accounts you already configured in **GNOME Settings → Online
+Curlew reads the accounts you already configured in **GNOME Settings → Online
 Accounts**. There is nothing to log into and no password to store: credentials
 come from GNOME Online Accounts at runtime and are never written to disk, never
 logged, and never returned by any command.
@@ -44,10 +46,10 @@ is built on, which is where this is headed.
   crypto compiled to WebAssembly. See [Matrix](#matrix).
 
 Everything is **read-only**. Messages are fetched with IMAP `BODY.PEEK`, so
-opening a mail through Postbote never marks it as read. Telegram is read the
+opening a mail through Curlew never marks it as read. Telegram is read the
 same way: nothing is sent, edited, deleted or marked read. WhatsApp too: no
 message, no read receipt, no online presence (see [WhatsApp](#whatsapp) for the
-one acknowledgement every linked device sends). XMPP likewise — Postbote never
+one acknowledgement every linked device sends). XMPP likewise — Curlew never
 sends a presence, so contacts do not see it online and your offline messages
 stay queued for your real clients. Matrix too: no presence, no read
 receipt, no typing notice, no message, and no invitation is accepted. Signal
@@ -64,7 +66,7 @@ acknowledgement and the two requests at link time).
 - GNOME accounts, contacts and calendar run on Node/Bun too (`gi://` via `@gjsify/node-gi`);
   that is groundwork for a macOS/Windows port, not a supported target yet. The IMAP mail
   transport is GJS-only, since it speaks IMAP over Gio TLS sockets. Without the GOA/EDS
-  typelibs Postbote still starts: only the calls that need them fail, with a clear message.
+  typelibs Curlew still starts: only the calls that need them fail, with a clear message.
 - An **Email (IMAP/SMTP)** account in GNOME Settings. Nextcloud/ownCloud accounts
   expose files, calendar and contacts but no mail.
 - Implicit TLS (port 993). STARTTLS on port 143 is not implemented yet.
@@ -73,35 +75,35 @@ acknowledgement and the two requests at link time).
 
 ```bash
 gjsify install
-gjsify workspace postbote-cli build
-gjsify run app/dist/postbote.gjs.mjs accounts
+gjsify workspace curlew-cli build
+gjsify run app/dist/curlew.gjs.mjs accounts
 ```
 
 The bundle resolves its native addon (libsignal, for the Signal backend) by the
 absolute path it was built at, so do not move or copy a built tree — the copy
-fails at the first Signal command. `postbote-cli test:relocation` measures this
+fails at the first Signal command. `curlew-cli test:relocation` measures this
 and says so out loud; the fix is tracked in gjsify.
 
 ### Setup
 
-`postbote setup` walks you through the whole thing — linking Signal and WhatsApp,
+`curlew setup` walks you through the whole thing — linking Signal and WhatsApp,
 accepting their terms, building the index, running the receiving daemon and
 installing its systemd user unit — one confirmed stage at a time:
 
 ```bash
-postbote setup
+curlew setup
 ```
 
-It finds the checkout it is run from, and falls back to a published `postbote` on
-`PATH` when there is no tree. `postbote setup --status` reports what is done and
-what is left without changing anything, and `postbote setup --only <stage>`
+It finds the checkout it is run from, and falls back to a published `curlew` on
+`PATH` when there is no tree. `curlew setup --status` reports what is done and
+what is left without changing anything, and `curlew setup --only <stage>`
 runs the named stages and nothing else — `--status` prints the name of every
 stage. `--only` may be repeated (`--only terms --only link-signal`) to pick more
 than one.
 
 Re-run it whenever: a stage that is already done says so instead of failing.
 
-The QR code and every pairing code it prints stay in that terminal. postbote
+The QR code and every pairing code it prints stay in that terminal. curlew
 calls the same account-adding command you would call by hand, with the same
 prompter, and neither copies, captures, logs nor stores a pairing payload. The
 terms are displayed before you are asked to accept them, and nothing accepts them
@@ -110,30 +112,30 @@ for you.
 ## Use it
 
 ```bash
-postbote check                              # which backends are reachable
-postbote accounts                           # which online accounts are available
-postbote folders                            # mailboxes, with their roles
+curlew check                              # which backends are reachable
+curlew accounts                           # which online accounts are available
+curlew folders                            # mailboxes, with their roles
 
-postbote search "energieberater" --since 2025-01-01
-postbote search --from berater --all-folders --limit 20
-postbote message <uid> --account <id>       # one message: body + attachment list
-postbote parts <uid> --account <id>         # what is attached, and how big
-postbote save <uid> --account <id>          # write the attachment to disk
+curlew search "energieberater" --since 2025-01-01
+curlew search --from berater --all-folders --limit 20
+curlew message <uid> --account <id>       # one message: body + attachment list
+curlew parts <uid> --account <id>         # what is attached, and how big
+curlew save <uid> --account <id>          # write the attachment to disk
 
-postbote sync                               # build the local index
-postbote index status                       # what it holds, and how fresh
-postbote index search "wärmepumpe"          # offline, no server contact
+curlew sync                               # build the local index
+curlew index status                       # what it holds, and how fresh
+curlew index search "wärmepumpe"          # offline, no server contact
 
-postbote daemon                             # receive Signal/WhatsApp until stopped
+curlew daemon                             # receive Signal/WhatsApp until stopped
 
-postbote conversations list --people-only   # threads with a person in them, newest first
-postbote conversations show <id>            # its messages; bodies only with --bodies
-postbote conversations classify <address> automated   # correct one sender (auto = undo)
+curlew conversations list --people-only   # threads with a person in them, newest first
+curlew conversations show <id>            # its messages; bodies only with --bodies
+curlew conversations classify <address> automated   # correct one sender (auto = undo)
 
-postbote backends list                      # message backends, and which are enabled
+curlew backends list                      # message backends, and which are enabled
 
-postbote contacts --query maier
-postbote calendar --from 2026-09-01 --to 2026-09-30
+curlew contacts --query maier
+curlew calendar --from 2026-09-01 --to 2026-09-30
 ```
 
 Every command prints JSON — the same shapes the MCP tools return.
@@ -158,12 +160,12 @@ thread you replied in) or *automated* (`List-Id`, `List-Unsubscribe`,
 is held back until you reply or classify the sender. This is the groundwork for
 chat backends ([ADR 0001](docs/adr/0001-multi-protocol-messenger.md)): each
 backend is enabled explicitly in the config, and one with a terms notice only
-after `postbote backends enable <name> --accept-terms`.
+after `curlew backends enable <name> --accept-terms`.
 
 ## Telegram
 
 Telegram requires every third-party client to use API credentials of its own
-user. Postbote ships none, so the first step is yours:
+user. Curlew ships none, so the first step is yours:
 
 1. Create an app for yourself at <https://my.telegram.org> → *API development
    tools*. You get an `api_id` (a number) and an `api_hash` (32 hex characters).
@@ -172,17 +174,17 @@ user. Postbote ships none, so the first step is yours:
    phone number, the login code and the 2FA password if one is set:
 
    ```bash
-   postbote backends enable telegram --accept-terms
-   postbote accounts add telegram
-   postbote accounts list --backend telegram
-   postbote sync                      # mail and Telegram into one index
-   postbote conversations list --people-only
+   curlew backends enable telegram --accept-terms
+   curlew accounts add telegram
+   curlew accounts list --backend telegram
+   curlew sync                      # mail and Telegram into one index
+   curlew conversations list --people-only
    ```
 
    The `api_id`/`api_hash` are kept in the account's session file, not in the
    config (which is plain text in every backup; a config that carries them is
    refused). To keep them in a password manager instead, set
-   `POSTBOTE_TELEGRAM_API_ID` and `POSTBOTE_TELEGRAM_API_HASH`; the environment
+   `CURLEW_TELEGRAM_API_ID` and `CURLEW_TELEGRAM_API_HASH`; the environment
    wins over the stored pair and the login does not ask.
 
 The first sync takes the newest 200 messages of every chat; later syncs walk
@@ -191,36 +193,36 @@ next). A contact whose phone number is in your address book becomes the same
 person as their mail address. Channels and bots are classified *automated*.
 
 A message deleted on Telegram stays in the index until a full scan:
-`postbote sync --full-scan` re-reads each chat's newest window and removes every
+`curlew sync --full-scan` re-reads each chat's newest window and removes every
 stored message in it that Telegram no longer has, and every chat that left your
 list. (Telegram reports deletions only as live updates, which a sync without a
 daemon does not receive.)
 
 The login leaves a **session file** at
-`$XDG_DATA_HOME/postbote/secrets/telegram/telegram-<user id>.db` (mode `0600`
-in a `0700` directory; override the base with `POSTBOTE_SECRETS_DIR`). Whoever
+`$XDG_DATA_HOME/curlew/secrets/telegram/telegram-<user id>.db` (mode `0600`
+in a `0700` directory; override the base with `CURLEW_SECRETS_DIR`). Whoever
 holds it can read your Telegram account (it also holds your `api_id`/`api_hash`):
 back it up like a password, never share it. A login killed halfway leaves a
 `login-*.pending.db` there; the next `accounts add` or account listing removes it
-once it is 15 minutes old. Telegram lists it under *Settings → Devices* as `postbote`, where you can
+once it is 15 minutes old. Telegram lists it under *Settings → Devices* as `curlew`, where you can
 end it; deleting the file ends it on this machine.
 
 ## WhatsApp
 
-> **Read this first.** WhatsApp has no API for reading your own chats. Postbote
+> **Read this first.** WhatsApp has no API for reading your own chats. Curlew
 > uses [Baileys](https://github.com/WhiskeySockets/Baileys), an **unofficial**
 > reimplementation of the WhatsApp Web protocol. Using it **violates WhatsApp's
 > Terms of Service**, and WhatsApp bans accounts it sees using unofficial
 > clients — temporarily or for good. The ban hits your **phone number**. Enable
 > this only if you accept that risk for that number.
 
-Postbote joins your WhatsApp as a **linked device**, like WhatsApp Web:
+Curlew joins your WhatsApp as a **linked device**, like WhatsApp Web:
 
 ```bash
-postbote backends enable whatsapp --accept-terms   # shows the notice above once
-postbote accounts add whatsapp                     # QR code, or a pairing code
-postbote sync                                      # right away — see below
-postbote conversations list --people-only
+curlew backends enable whatsapp --accept-terms   # shows the notice above once
+curlew accounts add whatsapp                     # QR code, or a pairing code
+curlew sync                                      # right away — see below
+curlew conversations list --people-only
 ```
 
 `accounts add whatsapp` asks for a phone number. Leave it empty and a QR code
@@ -232,12 +234,12 @@ list as a browser session (Baileys' default, *Chrome (Mac OS)*); unlink it there
 to end it.
 
 **WhatsApp keeps no archive.** A message is gone from WhatsApp's servers once a
-device has received it, so what postbote stores is the **only copy** it has —
+device has received it, so what curlew stores is the **only copy** it has —
 its part of the index is irreplaceable, not a cache. Consequences:
 
-- **Run `postbote sync` right after linking.** The phone hands the recent
+- **Run `curlew sync` right after linking.** The phone hands the recent
   history (roughly the last months) to a new device once. `sync` connects,
-  receives that history and everything queued while no device of postbote was
+  receives that history and everything queued while no device of curlew was
   connected, writes it, and disconnects once WhatsApp has nothing more to hand
   over. If that does not happen within ten minutes, the run stops there and that
   is **not an error**: everything received is written and the run counts as a
@@ -248,10 +250,10 @@ its part of the index is irreplaceable, not a cache. Consequences:
 - **Stay connected — the [receiving daemon](#receiving-daemon).** WhatsApp unlinks
   a device that has not connected for about 14 days; after that, `sync` reports
   the logout and you link again (the conversations stay, under the same account
-  id). `postbote daemon` holds the connection, so that clock never runs out; a
+  id). `curlew daemon` holds the connection, so that clock never runs out; a
   `sync` from a timer is the fallback for a machine where the daemon does not
   run.
-- **Back up the index** (`$XDG_DATA_HOME/postbote/index.db`) like the config:
+- **Back up the index** (`$XDG_DATA_HOME/curlew/index.db`) like the config:
   with WhatsApp enabled it holds messages that exist nowhere else.
 
 Deletions and edits are applied as they arrive: a message the sender deleted
@@ -259,7 +261,7 @@ for everyone, or you deleted or cleared on your phone, is removed from the index
 an edited one gets the new text. Contacts are linked by phone number to your
 address book, like Telegram's.
 
-What postbote sends: nothing you could see. It connects with
+What curlew sends: nothing you could see. It connects with
 `markOnlineOnConnect: false`, so it announces itself *unavailable* (never online)
 and your phone keeps its notifications; it never sends a read receipt (the
 blue ticks stay yours). It does acknowledge each delivered message — the grey
@@ -267,7 +269,7 @@ double tick every linked device sends, and the signal for WhatsApp to forget the
 message.
 
 The link leaves a **session file** at
-`$XDG_DATA_HOME/postbote/secrets/whatsapp/whatsapp-<LID>.db` (mode `0600`): the
+`$XDG_DATA_HOME/curlew/secrets/whatsapp/whatsapp-<LID>.db` (mode `0600`): the
 device's Signal keys. Whoever holds it can read your incoming WhatsApp messages —
 back it up like a password, never share it. The account id is your LID,
 WhatsApp's privacy id, never your phone number.
@@ -275,41 +277,41 @@ WhatsApp's privacy id, never your phone number.
 ## Signal
 
 > **Read this first.** Signal offers no API and does not license third-party
-> clients. Postbote is **not an official Signal client** and Signal does not
+> clients. Curlew is **not an official Signal client** and Signal does not
 > support it. It uses libsignal, Signal's own library, and links like Signal
 > Desktop. Independent clients of this kind (signal-cli, Flare, Whisperfish) are
 > used without known account bans, but Signal could block them at any time.
 
-Postbote joins your Signal account as a **linked device**, like Signal Desktop:
+Curlew joins your Signal account as a **linked device**, like Signal Desktop:
 
 ```bash
-postbote backends enable signal --accept-terms   # shows the notice above once
-postbote accounts add signal                     # prints a QR code
-postbote sync                                    # right away — see below
-postbote conversations list --people-only
+curlew backends enable signal --accept-terms   # shows the notice above once
+curlew accounts add signal                     # prints a QR code
+curlew sync                                    # right away — see below
+curlew conversations list --people-only
 ```
 
 Linking, step by step:
 
-1. Run `postbote accounts add signal`. A QR code appears in the terminal.
+1. Run `curlew accounts add signal`. A QR code appears in the terminal.
 2. On the phone: *Signal → Settings → Linked devices → Link new device* (the `+`),
    and scan the code. If the terminal prints a fresh code, scan that one: Signal
    replaces the connection behind a code after a while.
-3. The phone asks you to confirm linking a device named `postbote` (set
+3. The phone asks you to confirm linking a device named `curlew` (set
    `backends.signal.settings.deviceName` in the config to change it). Confirm.
-4. The terminal says *Linked*. The phone now lists `postbote` under *Linked
+4. The terminal says *Linked*. The phone now lists `curlew` under *Linked
    devices*; unlink it there to end it.
-5. Run `postbote sync`.
+5. Run `curlew sync`.
 
 Signal runs on **linux-x64 and macOS arm64** (libsignal is a native addon that
-postbote loads through gjsify's N-API host). On another platform the rest of
-postbote works; `accounts add signal` says libsignal did not load.
+curlew loads through gjsify's N-API host). On another platform the rest of
+curlew works; `accounts add signal` says libsignal did not load.
 
 **Signal keeps no archive.** The server holds a message for a device only until
-that device receives it, so what postbote stores is the **only copy** — its part
+that device receives it, so what curlew stores is the **only copy** — its part
 of the index is irreplaceable, not a cache. Consequences:
 
-- **Postbote gets no history.** A linked device receives what arrives after it
+- **Curlew gets no history.** A linked device receives what arrives after it
   was linked; the phone's older messages stay on the phone.
 - **Stay connected — the [receiving daemon](#receiving-daemon).** `sync`
   connects, receives what was queued, writes it and disconnects once Signal
@@ -319,35 +321,35 @@ of the index is irreplaceable, not a cache. Consequences:
   in the output is that account's `caughtUp: false` (`error` stays `null`), and
   whatever is still queued arrives in the next `sync`. Signal unlinks a device
   that stays offline too long; after that, `sync` reports it and you link again
-  (the conversations stay, under the same account id), and `postbote daemon`
+  (the conversations stay, under the same account id), and `curlew daemon`
   holds the connection so it does not come to that.
-- **Back up the index** (`$XDG_DATA_HOME/postbote/index.db`) like the config.
+- **Back up the index** (`$XDG_DATA_HOME/curlew/index.db`) like the config.
 
 What arrives: direct and group messages (sealed sender included), your own
 messages sent from the phone, edits, deletions (for everyone, and the ones you
 make on the phone), read receipts for your messages, and the contact list when
 the phone sends it (it does after linking and when contacts change; the
 download needs Node for now, see below). Groups appear without their name —
-Signal keeps group names encrypted on its group server, which postbote does not
+Signal keeps group names encrypted on its group server, which curlew does not
 query. Reading a chat on the phone is not mirrored: messages arrive unread.
 Reactions, typing, calls and a disappearing-messages timer are read and dropped
 on purpose; they are settings, not messages.
 
-Two things postbote reports instead of swallowing:
+Two things curlew reports instead of swallowing:
 
 - A **changed safety number** shows up in that contact's conversation as a
   *Safety number changed* notice — already read, never unread. Compare the
   number on the phone before you trust the conversation.
-- A message postbote decrypted but **could not read** (a message type a newer
+- A message curlew decrypted but **could not read** (a message type a newer
   Signal added, or a bug in the decoder) is **not** thrown away: the raw
   plaintext goes into the session file, and `sync` reports how many. Nothing is
-  lost on Signal's side either — postbote only acknowledges an envelope once
-  that plaintext is on disk. `postbote deliveries set-aside` lists them: who
-  sent it, when, why postbote could not map it and how big the plaintext was —
+  lost on Signal's side either — curlew only acknowledges an envelope once
+  that plaintext is on disk. `curlew deliveries set-aside` lists them: who
+  sent it, when, why curlew could not map it and how big the plaintext was —
   enough to look the message up on the phone or to report a decoder bug. The
   plaintext itself is never printed, and no flag prints it.
 
-What postbote sends: at link time, two requests — it registers the device with
+What curlew sends: at link time, two requests — it registers the device with
 the one-time code the phone sent, and publishes one batch of pre-keys so
 contacts can start encrypted sessions with it. During `sync`, only the
 acknowledgement of each received message (without it Signal would deliver it
@@ -356,7 +358,7 @@ or delivery receipt, a typing notice, a request to the phone, or a retry request
 for a message it could not decrypt — `sync` counts those and reports them.
 
 The link leaves a **session file** at
-`$XDG_DATA_HOME/postbote/secrets/signal/signal-<ACI>.db` (mode `0600`): your
+`$XDG_DATA_HOME/curlew/secrets/signal/signal-<ACI>.db` (mode `0600`): your
 account's identity key and this device's keys. Whoever holds it can read your
 incoming Signal messages — back it up like a password, never share it. The
 account id carries your ACI (Signal's account UUID), never your phone number.
@@ -368,21 +370,21 @@ until the next contact sync after that is fixed.
 
 ## XMPP
 
-Postbote reads XMPP history only from the server's **message archive** (MAM,
+Curlew reads XMPP history only from the server's **message archive** (MAM,
 XEP-0313), which Prosody (`mod_mam`, `mod_muc_mam`) and ejabberd offer. A server
 without one is refused with an explanation: the alternative, receiving offline
 messages, would take them away from your other clients.
 
 ```bash
-postbote backends enable xmpp
-postbote accounts add xmpp        # JID, password (no echo), server address
-postbote sync
+curlew backends enable xmpp
+curlew accounts add xmpp        # JID, password (no echo), server address
+curlew sync
 ```
 
-The server address may stay empty: Postbote then looks up direct TLS
+The server address may stay empty: Curlew then looks up direct TLS
 (`_xmpps-client._tcp` SRV, XEP-0368), then WebSocket (`host-meta`, XEP-0156),
 then STARTTLS. The certificate is checked against your XMPP domain. All three
-endpoint kinds work on GJS as of the gjsify release Postbote runs on (0.54.0):
+endpoint kinds work on GJS as of the gjsify release Curlew runs on (0.54.0):
 the raw TLS socket landed in [gjsify#1837](https://github.com/gjsify/gjsify/pull/1837)
 and the last piece, `Readable.prototype.addListener` aliased to `on`, in
 [gjsify#1958](https://github.com/gjsify/gjsify/pull/1958) — without it @xmpp/tls
@@ -397,13 +399,13 @@ custom-CA server may need a second attempt there.
 
 The login uses SCRAM-SHA-1 and sends a password in the clear (PLAIN) only inside
 TLS. The password is kept in
-`$XDG_DATA_HOME/postbote/secrets/xmpp/xmpp-<hash>.db` (`0600`), never in the
+`$XDG_DATA_HOME/curlew/secrets/xmpp/xmpp-<hash>.db` (`0600`), never in the
 config — a config that carries one is refused.
 
 Chats are your roster contacts and the bookmarked rooms you join automatically.
 Corrections (XEP-0308) replace the stored text, retractions (XEP-0424/0425)
 remove the message. OMEMO-encrypted messages are indexed without their text:
-Postbote cannot decrypt them yet.
+Curlew cannot decrypt them yet.
 
 ## Matrix
 
@@ -411,12 +413,12 @@ Matrix is an open protocol, so there are no terms beyond your homeserver's own.
 Log in with your homeserver, user and password:
 
 ```bash
-postbote backends enable matrix
-postbote accounts add matrix       # homeserver URL or server name, user, password
-postbote sync
+curlew backends enable matrix
+curlew accounts add matrix       # homeserver URL or server name, user, password
+curlew sync
 ```
 
-The login creates a **new device** named `postbote` (it appears in your
+The login creates a **new device** named `curlew` (it appears in your
 session list in Element and every other client) and uploads its encryption
 keys. Only password login is supported: a homeserver that offers single
 sign-on alone — matrix.org, since its move to the Matrix Authentication
@@ -427,10 +429,10 @@ every message sent **after** the login: senders encrypt for the new device from
 then on, and its keys arrive with each sync. Messages sent **before** it show as
 `[encrypted message: this device has no key for it]`: reading them needs your
 server-side key backup or a verified session sharing its keys, and neither is
-built yet. Postbote remembers such placeholders and tries them again on every
+built yet. Curlew remembers such placeholders and tries them again on every
 sync, so a key that arrives later still turns them into text.
 
-Postbote never shows you as online (every sync says `set_presence=offline`) and
+Curlew never shows you as online (every sync says `set_presence=offline`) and
 never sends a read receipt, a typing notice or a message: a read-only gate
 refuses every request outside login, the sync filter and the encryption key
 exchange before it leaves the machine. The device's crypto store is saved after
@@ -443,26 +445,26 @@ on the next sync — a message redacted on the server is removed from the index
 without a full scan. Rooms you are only invited to are left alone.
 
 The login leaves an **account file** at
-`$XDG_DATA_HOME/postbote/secrets/matrix/matrix-<hash>.db` (mode `0600`). It holds
+`$XDG_DATA_HOME/curlew/secrets/matrix/matrix-<hash>.db` (mode `0600`). It holds
 the access token and the device's crypto store (its identity keys and every room
 key it received): back it up like a password. Losing it means a new login, a new
 device, and no key for anything sent before it. To end the session, sign the
-`postbote` device out in another client and delete the file.
+`curlew` device out in another client and delete the file.
 
 ## Receiving daemon
 
 Signal and WhatsApp have no server archive: a message is gone from the network
-once this device acknowledged it, so whatever postbote stores is the **only**
-copy. `postbote sync` from a timer narrows the window in which nothing is
-received; `postbote daemon` closes it.
+once this device acknowledged it, so whatever curlew stores is the **only**
+copy. `curlew sync` from a timer narrows the window in which nothing is
+received; `curlew daemon` closes it.
 
 ```bash
-postbote daemon                   # receive until stopped (SIGTERM/SIGINT)
+curlew daemon                   # receive until stopped (SIGTERM/SIGINT)
 ```
 
 It connects to every **delivery-only** backend you enabled — Signal and
 WhatsApp — for every account, all at once, and keeps receiving. Mail and chat
-backends (IMAP, Telegram, Matrix, XMPP) stay on `postbote sync`: they are
+backends (IMAP, Telegram, Matrix, XMPP) stay on `curlew sync`: they are
 pull models with a cursor, and a daemon buys them nothing. A dropped connection
 is retried with growing pauses (5 s to 5 min); a device the network **logged out
 or unlinked** is not retried — the daemon stops that account and says so, because
@@ -470,17 +472,17 @@ the credentials are gone and every retry would fail the same way while messages
 queue up on the network.
 
 Run it as a user service (the unit ships in
-[`contrib/systemd/postbote-daemon.service`](contrib/systemd/postbote-daemon.service)):
+[`contrib/systemd/curlew-daemon.service`](contrib/systemd/curlew-daemon.service)):
 
 ```bash
 mkdir -p ~/.config/systemd/user
-cp contrib/systemd/postbote-daemon.service ~/.config/systemd/user/
-# point WorkingDirectory/ExecStart at your checkout if it is not ~/postbote
-systemd-analyze --user verify ~/.config/systemd/user/postbote-daemon.service
+cp contrib/systemd/curlew-daemon.service ~/.config/systemd/user/
+# point WorkingDirectory/ExecStart at your checkout if it is not ~/curlew
+systemd-analyze --user verify ~/.config/systemd/user/curlew-daemon.service
 systemctl --user daemon-reload
-systemctl --user enable --now postbote-daemon
+systemctl --user enable --now curlew-daemon
 loginctl enable-linger "$USER"     # so it also runs while you are logged out
-journalctl --user -u postbote-daemon -f
+journalctl --user -u curlew-daemon -f
 ```
 
 The unit deliberately does **not** stop when you log out — staying connected is its whole
@@ -515,22 +517,22 @@ device after ~14 days, or Signal did the same — the daemon exits **2**, the un
 is not restarted (a restart cannot relink anything) and shows as failed:
 
 ```bash
-systemctl --user status postbote-daemon   # "code=exited, status=2"
-journalctl --user -u postbote-daemon -n 20
-postbote accounts add whatsapp            # or: postbote accounts add signal
-systemctl --user restart postbote-daemon
+systemctl --user status curlew-daemon   # "code=exited, status=2"
+journalctl --user -u curlew-daemon -n 20
+curlew accounts add whatsapp            # or: curlew accounts add signal
+systemctl --user restart curlew-daemon
 ```
 
 Anything else exits 0, including a plain `systemctl stop`.
 
 What the daemon does **not** do: send anything, mark anything read, or touch a
-server-archive backend. It is the same read-only postbote, connected all the
+server-archive backend. It is the same read-only curlew, connected all the
 time. See [ADR 0002](docs/adr/0002-receiving-daemon.md) for why each piece is
 the way it is.
 
 ## As an MCP server
 
-`postbote mcp` speaks MCP over stdio. Registered in an MCP client it exposes
+`curlew mcp` speaks MCP over stdio. Registered in an MCP client it exposes
 `mail_search`, `mail_get_message`, `mail_list_folders`, `mail_list_parts`,
 `mail_save_attachment`, `mail_search_local`, `mail_sync_status`,
 `conversations_list`, `conversations_get`, `contacts_search`,
@@ -545,25 +547,25 @@ See [`.mcp.json`](.mcp.json) for a working registration.
 ## Your data stays yours
 
 The local index contains message headers **and** plain-text bodies. It lives at
-`$XDG_DATA_HOME/postbote/index.db` (mode `0600`), never inside this repository,
-and only `postbote sync` and `postbote daemon` ever write to it — a search never
+`$XDG_DATA_HOME/curlew/index.db` (mode `0600`), never inside this repository,
+and only `curlew sync` and `curlew daemon` ever write to it — a search never
 does. Attachments
 are saved to your download directory. Both locations are overridable via
-`POSTBOTE_DATA_DIR`, `POSTBOTE_DB_PATH` and `POSTBOTE_ATTACHMENTS_DIR`.
+`CURLEW_DATA_DIR`, `CURLEW_DB_PATH` and `CURLEW_ATTACHMENTS_DIR`.
 
 Your decisions — enabled backends, accepted terms, per-sender classification —
-live in `$XDG_CONFIG_HOME/postbote/config.json` (mode `0600`, override with
-`POSTBOTE_CONFIG`). Unlike the index they cannot be rebuilt from a server, so
+live in `$XDG_CONFIG_HOME/curlew/config.json` (mode `0600`, override with
+`CURLEW_CONFIG`). Unlike the index they cannot be rebuilt from a server, so
 back that file up.
 
 Chat sessions (Telegram, WhatsApp, Matrix — including Matrix's crypto store) and
 chat passwords (XMPP) are **secrets**, kept apart from the index under
-`$XDG_DATA_HOME/postbote/secrets/` — no command or MCP tool ever returns one.
+`$XDG_DATA_HOME/curlew/secrets/` — no command or MCP tool ever returns one.
 The index can be rebuilt from the servers **unless WhatsApp is enabled**:
 WhatsApp keeps no archive, so its messages in the index are the only copy
-(`postbote backends list` shows this as `storeTier: state`).
+(`curlew backends list` shows this as `storeTier: state`).
 
-Nothing is sent anywhere. Postbote talks to your mail server — and to Telegram,
+Nothing is sent anywhere. Curlew talks to your mail server — and to Telegram,
 WhatsApp, your XMPP server or your Matrix homeserver if you enabled them — and
 to nothing else.
 
@@ -577,9 +579,9 @@ Windows (x64)](.github/workflows/ci.yml) packages, via
 artifacts for an existing tag without moving it (`tag` + `publish` inputs).
 
 **GOA and Evolution Data Server are Linux-only.** The macOS and Windows
-packages still build and ship — they carry the same `postbote` CLI and MCP
+packages still build and ship — they carry the same `curlew` CLI and MCP
 server — but every account backend (mail, contacts, calendar; also the
-chat/delivery backends that depend on `@postbote/gnome` for credentials)
+chat/delivery backends that depend on `@curlew/gnome` for credentials)
 reports itself unavailable on those two platforms, because the GObject-
 Introspection libraries GOA/EDS need do not exist there. Today that is the
 honest state of the macOS/Windows artifacts: a working binary with no
@@ -595,7 +597,7 @@ than failing loudly.
 Local verification, mirroring what CI does on `fedora:44`:
 
 ```bash
-gjsify workspace postbote-cli build:node   # darwin/win32 ship `dist/postbote.node.mjs`
+gjsify workspace curlew-cli build:node   # darwin/win32 ship `dist/curlew.node.mjs`
 gjsify install --os darwin --cpu arm64 --immutable
 (cd app && gjsify ship darwin --arch arm64 --skip-build --target macos-app-zip)
 gjsify install --os win32 --cpu x64 --immutable

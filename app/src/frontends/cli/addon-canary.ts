@@ -1,5 +1,5 @@
 /**
- * `postbote addon-canary` — load the native addon and report its SHAPE. Nothing else.
+ * `curlew addon-canary` — load the native addon and report its SHAPE. Nothing else.
  *
  * Exists for one caller: `app/tests/integration/bundle-relocation.mjs`, which copies the built
  * bundle out of the tree and asks it to load libsignal from there. It cannot do that with a
@@ -17,7 +17,7 @@
  * ones: if the N-API registration had half-failed, they would be missing while the module object
  * still exists.
  *
- * Off unless `POSTBOTE_CLI_ADDON_CANARY=1`, like the MCP gate canary — and like that one, it is
+ * Off unless `CURLEW_CLI_ADDON_CANARY=1`, like the MCP gate canary — and like that one, it is
  * inert anyway: it loads a module and prints typeofs. Enabling it can grant no capability.
  * Hidden from `--help` (`describe: false`) so it never shows up as a feature.
  *
@@ -27,13 +27,13 @@
  * the `.node` files the package ships instead, and resolves the package at load time through the
  * bundle's own URL — so what this now proves is that the bundle carries no path of the machine
  * that built it. It still needs the addon package INSTALLED where it can see it, which is the
- * limit that fix carries and the shape postbote ships in;
+ * limit that fix carries and the shape curlew ships in;
  * `app/tests/integration/bundle-relocation.mjs` asserts both halves.
  */
 
 import type { CommandModule } from 'yargs';
 
-import { loadSignalLib } from '@postbote/signal';
+import { loadSignalLib } from '@curlew/signal';
 
 import { runtimeName } from '../../core/runtime.ts';
 import { runAndExit } from './output.ts';
@@ -77,8 +77,8 @@ export const addonCanaryCommand: CommandModule = {
   // `false` hides it from --help; it is a probe, not a feature.
   describe: false,
   handler: () => {
-    if (process.env.POSTBOTE_CLI_ADDON_CANARY !== '1') {
-      console.error('addon-canary is a test probe — set POSTBOTE_CLI_ADDON_CANARY=1 to run it');
+    if (process.env.CURLEW_CLI_ADDON_CANARY !== '1') {
+      console.error('addon-canary is a test probe — set CURLEW_CLI_ADDON_CANARY=1 to run it');
       process.exit(1);
     }
     // One line: a driver picks it out of a stream of GJS typelib warnings without brace-matching.

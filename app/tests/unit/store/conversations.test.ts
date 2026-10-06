@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import type { AutomationHeaders, ContactDTO } from '@postbote/protocol';
+import type { AutomationHeaders, ContactDTO } from '@curlew/protocol';
 import {
   getConversation,
   listConversations,
@@ -9,7 +9,7 @@ import {
   rebuildConversations,
   SCHEMA_VERSION,
   syncIndex,
-} from '@postbote/store';
+} from '@curlew/store';
 import { AT, FakeBackend, freshDb, message } from './fixtures.ts';
 
 /**
@@ -365,7 +365,7 @@ export default async () => {
       }
     });
 
-    await it('refuses an index from a newer postbote and leaves it untouched', async () => {
+    await it('refuses an index from a newer curlew and leaves it untouched', async () => {
       const db = freshDb();
       try {
         db.prepare(`UPDATE schema_meta SET value = ? WHERE key = 'schema_version'`).run(

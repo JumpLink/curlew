@@ -1,10 +1,10 @@
 {
-  "name": "@postbote/telegram",
+  "name": "@curlew/telegram",
   "version": "0.1.0",
   "license": "AGPL-3.0-or-later",
   "private": true,
   "type": "module",
-  "description": "Telegram backend: the chat sync driver over mtcute (pure-TS MTProto on web standards), a session store on postbote's own SQLite, and the interactive login. Read-only.",
+  "description": "Telegram backend: the chat sync driver over mtcute (pure-TS MTProto on web standards), a session store on curlew's own SQLite, and the interactive login. Read-only.",
   "exports": {
     ".": "./src/index.ts"
   },
@@ -17,7 +17,7 @@
   "dependencies": {
     "@mtcute/core": "0.32.3",
     "@mtcute/web": "0.32.3",
-    "@postbote/protocol": "*",
-    "@postbote/store": "*"
+    "@curlew/protocol": "*",
+    "@curlew/store": "*"
   }
 }

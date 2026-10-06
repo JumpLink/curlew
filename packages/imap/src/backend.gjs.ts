@@ -1,7 +1,7 @@
 /**
  * The IMAP implementation of the `MailBackend` port (GJS-only).
  *
- * This is the adapter that lets `@postbote/store` run the sync engine without ever importing
+ * This is the adapter that lets `@curlew/store` run the sync engine without ever importing
  * `gi://`. Everything IMAP-shaped stays on this side of the port; the engine sees only plain
  * data.
  */
@@ -31,8 +31,8 @@ import {
   threadHeaderFetchItem,
   tokenizeImapList,
   walkBodyStructure,
-} from '@postbote/protocol';
-import { listMailTargets } from '@postbote/gnome';
+} from '@curlew/protocol';
+import { listMailTargets } from '@curlew/gnome';
 import { ImapClient, type ImapResponse } from './client.gjs.ts';
 import { MAIL_MANIFEST } from './manifest.ts';
 

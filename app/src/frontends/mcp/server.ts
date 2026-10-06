@@ -1,5 +1,5 @@
 /**
- * Postbote MCP server — mail, contacts and calendar from GNOME Online Accounts, over stdio.
+ * Curlew MCP server — mail, contacts and calendar from GNOME Online Accounts, over stdio.
  *
  * v1 registers read-only tools only, and `applyReadOnlyGate` ENFORCES that rather than trusting
  * it: every tool must carry `readOnlyHint: true` or it is dropped. IMAP is spoken with BODY.PEEK
@@ -13,6 +13,7 @@
 import 'dotenv/config';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { applyReadOnlyGate, serveStdio } from '@gjsify/mcp';
+import { envValue } from '@curlew/store';
 
 import { registerAccountsTools } from './tools/accounts.ts';
 import { registerCalendarTools } from './tools/calendar.ts';
@@ -23,7 +24,7 @@ import { registerIndexTools } from './tools/index-sync.ts';
 import { registerMailTools } from './tools/mail.ts';
 import { registerSetupTools } from './tools/setup.ts';
 
-const SERVER_NAME = 'postbote';
+const SERVER_NAME = 'curlew';
 const SERVER_VERSION = '0.1.0';
 
 /** Every registrar, in the order their tools should appear. */
@@ -35,7 +36,7 @@ const REGISTRARS: Array<(server: McpServer) => void> = [
   registerCalendarTools,
   registerAccountsTools,
   // The only registrar with a mutating tool in it: `setup_status` is read-only and always
-  // served, `setup_run` is dropped unless POSTBOTE_MCP_ALLOW_WRITE=1. Both identify themselves by
+  // served, `setup_run` is dropped unless CURLEW_MCP_ALLOW_WRITE=1. Both identify themselves by
   // their own annotation, which is the only thing the gate reads.
   registerSetupTools,
   // Last, and normally a no-op: a deliberately MUTATING tool that the gate must drop. It is the
@@ -48,7 +49,7 @@ export function createMcpServer(): McpServer {
   // Before any registration — the gate works by wrapping registerTool, so anything registered
   // earlier would slip past it. It fails CLOSED: a tool whose author forgot the annotation goes
   // missing from `tools/list`, which gets noticed, instead of a mutation being quietly reachable.
-  applyReadOnlyGate(server, process.env.POSTBOTE_MCP_ALLOW_WRITE === '1');
+  applyReadOnlyGate(server, envValue(process.env, 'MCP_ALLOW_WRITE') === '1');
   for (const register of REGISTRARS) register(server);
   return server;
 }

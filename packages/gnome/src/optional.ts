@@ -9,7 +9,7 @@
  * `GnomeUnavailableError` the caller already knows how to report.
  */
 
-import { errorMessage, GnomeUnavailableError } from '@postbote/protocol';
+import { errorMessage, GnomeUnavailableError } from '@curlew/protocol';
 
 export interface OptionalNamespace<T> {
   /** The loaded namespace; throws `GnomeUnavailableError` when it cannot be loaded. */

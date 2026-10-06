@@ -1,5 +1,5 @@
 /**
- * WhatsApp addresses (JIDs) and the one identity postbote files a person under.
+ * WhatsApp addresses (JIDs) and the one identity curlew files a person under.
  *
  * A WhatsApp user has two addresses: the phone-number JID (`<digits>@s.whatsapp.net`) and the
  * LID (`<digits>@lid`), a privacy id that hides the number. The server uses either, and newer
@@ -12,8 +12,8 @@
  * Pure: no Baileys import, so every rule is tested with synthetic ids.
  */
 
-import type { ChatInfo, ChatPeer, ParticipantAddress } from '@postbote/protocol';
-import { normalizeAddress } from '@postbote/protocol';
+import type { ChatInfo, ChatPeer, ParticipantAddress } from '@curlew/protocol';
+import { normalizeAddress } from '@curlew/protocol';
 
 export interface Jid {
   user: string;

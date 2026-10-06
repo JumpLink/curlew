@@ -1,8 +1,8 @@
 # ADR 0003 — a linked device in a degraded state is stated, not summarised
 
 - **Status:** Accepted (2026-09-30)
-- **Scope:** `app` (setup walkthrough, status report), `@postbote/store` (index schema),
-  `@postbote/signal`; later the GUI
+- **Scope:** `app` (setup walkthrough, status report), `@curlew/store` (index schema),
+  `@curlew/signal`; later the GUI
 
 ## Context
 

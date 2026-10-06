@@ -1,5 +1,5 @@
 /**
- * The slice of Baileys postbote uses — and nothing else.
+ * The slice of Baileys curlew uses — and nothing else.
  *
  * Structural on purpose: Baileys' own objects (`WAMessage`, `Chat`, `Contact`, the event map)
  * satisfy these shapes, and so does a plain object in a test. That is what lets the mapping and
@@ -134,7 +134,7 @@ export interface WaConnectionUpdate {
   isNewLogin?: boolean;
 }
 
-/** The events postbote listens to — a subset of Baileys' `BaileysEventMap`. */
+/** The events curlew listens to — a subset of Baileys' `BaileysEventMap`. */
 export interface WaEventMap {
   'connection.update': WaConnectionUpdate;
   'creds.update': { accountSyncCounter?: number } & Record<string, unknown>;
@@ -174,7 +174,7 @@ export interface WaEventEmitter {
 
 /**
  * One socket: its events, the pairing-code request, and ending it. What a `SocketFactory`
- * returns. No send method is part of this shape, so nothing in postbote can call one.
+ * returns. No send method is part of this shape, so nothing in curlew can call one.
  */
 export interface WaSocketHandle {
   readonly ev: WaEventEmitter;

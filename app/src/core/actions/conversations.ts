@@ -1,14 +1,14 @@
 /**
  * Conversation actions — the per-person view over the local index.
  *
- * Read-only against the index, like `index search`: conversations are built by `postbote sync`.
+ * Read-only against the index, like `index search`: conversations are built by `curlew sync`.
  * Per-sender corrections go to the config file and apply at read time, so a correction shows
  * immediately and still never writes to the index.
  */
 
-import type { Classification, Conversation, ConversationMessage } from '@postbote/protocol';
-import { normalizeAddress } from '@postbote/protocol';
-import { configPath, getConversation, indexDbPath, listConversations, syncStatus } from '@postbote/store';
+import type { Classification, Conversation, ConversationMessage } from '@curlew/protocol';
+import { normalizeAddress } from '@curlew/protocol';
+import { configPath, getConversation, indexDbPath, listConversations, syncStatus } from '@curlew/store';
 import { loadConfig, saveConfig } from '../config.ts';
 import { MAX_STALENESS_HOURS, openIndex } from './index-sync.ts';
 import { CONVERSATION_BODY_CHARS, CONVERSATION_LIMIT, capLimit } from './limits.ts';
@@ -67,7 +67,7 @@ export function conversationsShow(params: ConversationShowParams): {
       maxBodyChars: capLimit(params.maxBodyChars, CONVERSATION_BODY_CHARS),
       overrides: senders,
     });
-    if (!found) throw new Error(`no conversation with id ${params.id} — run \`postbote conversations list\``);
+    if (!found) throw new Error(`no conversation with id ${params.id} — run \`curlew conversations list\``);
     return found;
   } finally {
     db.close();

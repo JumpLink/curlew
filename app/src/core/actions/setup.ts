@@ -1,5 +1,5 @@
 /**
- * `postbote setup` — walk a person through putting postbote to work on a machine.
+ * `curlew setup` — walk a person through putting curlew to work on a machine.
  *
  * Eight stages, a decision at each, re-runnable: a second run detects what is already done and
  * says so instead of failing. This module holds ALL of the logic and NO yargs and NO terminal:
@@ -33,7 +33,7 @@
  *   it and none can be.
  */
 
-import type { AccountPrompter } from '@postbote/protocol';
+import type { AccountPrompter } from '@curlew/protocol';
 import { accountsAdd, accountsCheck, backendAccountsList } from './accounts.ts';
 import { backendsEnable, backendsList } from './backends.ts';
 import { runDeliveryDaemon } from './daemon.ts';
@@ -56,7 +56,7 @@ export interface SetupPrompter extends AccountPrompter {
   confirm(question: string): Promise<boolean>;
 }
 
-/** Which postbote is being set up. A checkout needs gjsify and a built bundle; a published
+/** Which curlew is being set up. A checkout needs gjsify and a built bundle; a published
  * install needs neither. */
 export type SetupMode = 'checkout' | 'published';
 
@@ -66,7 +66,7 @@ export type SetupMode = 'checkout' | 'published';
  * `warning` is the reason this is not three bare literals. A step whose CHECKS RAN but found
  * something wrong — the readiness stage reaching a machine with no session bus at all — completes,
  * so `status: 'done'` is the truth, and `done` alone is a lie the status surface repeats. Measured
- * on this file before `warning` existed: `postbote setup --status` with `DBUS_SESSION_BUS_ADDRESS`
+ * on this file before `warning` existed: `curlew setup --status` with `DBUS_SESSION_BUS_ADDRESS`
  * pointing at nothing printed `done` for readiness and nothing else, because the stage said
  * "GNOME Online Accounts: unavailable" through `prompter.notify` — a word only the interactive
  * stream ever saw. Without GOA the whole product is inert, and it is inert QUIETLY, so the fact
@@ -261,7 +261,7 @@ function readinessStep(): SetupStep {
   return {
     name: 'readiness',
     title: 'Readiness: bundle, tools, live check',
-    command: 'postbote setup --only readiness',
+    command: 'curlew setup --only readiness',
     async probe(ctx) {
       const readiness = setupReadiness(ctx);
       // The warning rides along with the state, so `--status` and an agent's `setup_status` see
@@ -301,7 +301,7 @@ function readinessStep(): SetupStep {
             status: 'failed',
             reason:
               'this process cannot name the bundle it is running from, and the unit needs that ' +
-              'path. Run `postbote setup` from a built checkout, or from the installed command.',
+              'path. Run `curlew setup` from a built checkout, or from the installed command.',
           };
         }
         if (!ctx.host.exists(readiness.bundle)) {
@@ -309,7 +309,7 @@ function readinessStep(): SetupStep {
             status: 'failed',
             reason:
               `no bundle at ${readiness.bundle}. Build it with ` +
-              '`gjsify workspace postbote-cli build`, then run this again — a command does not ' +
+              '`gjsify workspace curlew-cli build`, then run this again — a command does not ' +
               'build itself.',
           };
         }
@@ -337,7 +337,7 @@ function linkStep(backend: string, title: string, phoneSteps: string): SetupStep
   return {
     name: `link-${backend}`,
     title,
-    command: `postbote setup --only link-${backend}`,
+    command: `curlew setup --only link-${backend}`,
     humanOnly: true,
     async probe(ctx) {
       if ((await droppedBackend(ctx)) === backend) return 'remaining';
@@ -363,14 +363,14 @@ function linkStep(backend: string, title: string, phoneSteps: string): SetupStep
         // and the only way to learn the truth is a sync. Say that instead of implying one.
         await say(
           `A ${display} session from an earlier link is on this machine, but it has not been ` +
-            `checked with Signal. Run \`postbote sync\`: if Signal still knows this device, the ` +
+            `checked with Signal. Run \`curlew sync\`: if Signal still knows this device, the ` +
             `messages arrive. If the device was removed on the phone, the sync says so and the ` +
             `link has to be done again.`,
         );
         return { status: 'done', detail: 'a session exists; its live state is unknown' };
       }
       await say(
-        'postbote registers itself with your phone as a linked device. The QR code appears ' +
+        'curlew registers itself with your phone as a linked device. The QR code appears ' +
           'below, in this terminal.',
       );
       await say(`On the phone: ${phoneSteps}`);
@@ -413,7 +413,7 @@ function termsStep(): SetupStep {
   return {
     name: 'terms',
     title: 'Enable backends — read the terms first',
-    command: 'postbote setup --only terms',
+    command: 'curlew setup --only terms',
     humanOnly: true,
     async probe(ctx) {
       const enabled = enabledBackends(ctx.configPath);
@@ -478,7 +478,7 @@ function indexStep(): SetupStep {
   return {
     name: 'index',
     title: 'Build the index',
-    command: 'postbote setup --only index',
+    command: 'curlew setup --only index',
     async probe(ctx) {
       // Built-ness is observable: the index exists and holds mail. No file, or an empty one, is
       // `remaining` — never a guess that the walkthrough did it.
@@ -487,7 +487,7 @@ function indexStep(): SetupStep {
     async run(ctx) {
       const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
       await say(
-        'postbote searches the local index, not the network, and `postbote sync` is the only ' +
+        'curlew searches the local index, not the network, and `curlew sync` is the only ' +
           'thing that writes it — this stage IS that one call, not a second writer.',
       );
       await say('It reads the headers of your mail accounts, never a body.');
@@ -529,7 +529,7 @@ function daemonStep(): SetupStep {
   return {
     name: 'daemon',
     title: 'The receiving daemon',
-    command: 'postbote setup --only daemon',
+    command: 'curlew setup --only daemon',
     async probe(ctx) {
       // A daemon is "set up" when the unit that runs it is enabled — that is what makes it
       // receive while nobody is watching, which is the entire point of it.
@@ -560,7 +560,7 @@ function daemonStep(): SetupStep {
         return { status: 'skipped', reason: 'not started — the systemd unit is the real receiver' };
       }
       // In-process, bounded, and through the daemon's OWN stop: an AbortSignal is exactly what
-      // SIGTERM delivers in `postbote daemon`, so this reuses that path rather than implementing
+      // SIGTERM delivers in `curlew daemon`, so this reuses that path rather than implementing
       // "stop after N seconds" a second time around a child process. What the shell wizard did —
       // leave the foreground run to a human's Ctrl-C — is the one thing a command cannot do, and
       // skipping the run entirely would leave unverified the only thing the unit cannot show:
@@ -583,7 +583,7 @@ function daemonStep(): SetupStep {
             status: 'failed',
             reason:
               `${dead.length} account(s) received nothing — relink the device, then run ` +
-              `\`postbote setup --only daemon\` again`,
+              `\`curlew setup --only daemon\` again`,
           };
         }
         return {
@@ -605,7 +605,7 @@ function unitStep(): SetupStep {
   return {
     name: 'unit',
     title: 'Install the systemd user unit',
-    command: 'postbote setup --only unit',
+    command: 'curlew setup --only unit',
     async probe(ctx) {
       return ctx.host.exists(unitFilePathFor(ctx)) ? 'done' : 'remaining';
     },
@@ -638,7 +638,7 @@ function unitStep(): SetupStep {
         return { status: 'failed', reason: `systemctl --user enable --now exited ${enable.code}` };
       }
       await say(`${UNIT_NAME} is enabled and running.`);
-      await say('When in doubt: journalctl --user -u postbote-daemon -f');
+      await say('When in doubt: journalctl --user -u curlew-daemon -f');
       await say(
         `Without a session it still needs: loginctl enable-linger "${ctx.host.env('USER') ?? '$USER'}"`,
       );
@@ -653,13 +653,13 @@ function finishStep(): SetupStep {
   return {
     name: FINISH_STAGE,
     title: 'Finish: what runs now, what is left',
-    command: `postbote setup --only ${FINISH_STAGE}`,
+    command: `curlew setup --only ${FINISH_STAGE}`,
     async run(ctx) {
       const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
       const status = await setupStatus(ctx);
       // The status was read BEFORE this stage recorded itself, so it would otherwise report its
       // own line as outstanding — the one line it is about to finish.
-      const mine = `postbote setup --only ${FINISH_STAGE}`;
+      const mine = `curlew setup --only ${FINISH_STAGE}`;
       await say('What runs now:');
       for (const step of status.steps) {
         const state = step.command === mine ? 'done' : step.state;
@@ -683,7 +683,7 @@ function finishStep(): SetupStep {
  * and the command — so the reader learns why and knows what to do — and it is an Error because
  * every surface's contract is that it reports a refusal rather than quietly doing nothing.
  *
- * A person in their own terminal never sees this: `postbote setup --only terms` is the human
+ * A person in their own terminal never sees this: `curlew setup --only terms` is the human
  * doing the human act, which is exactly what the flag is for. The refusal is for a surface that
  * is not them.
  */
@@ -848,14 +848,14 @@ function enabledBackends(path: string): string[] {
 
 /** The follow-ups, whatever the machine. Named here so a frontend cannot lose or reorder them. */
 export const SETUP_FOLLOW_UPS: readonly string[] = [
-  'Back up $XDG_DATA_HOME/postbote: with Signal or WhatsApp enabled the index is irreplaceable ' +
+  'Back up $XDG_DATA_HOME/curlew: with Signal or WhatsApp enabled the index is irreplaceable ' +
     '(those networks keep no archive), and the files under secrets/ are secrets — back them up ' +
     'like a password, never share them.',
   'loginctl enable-linger "$USER" so the daemon also runs while you are logged out; that is ' +
     'what lets a user unit run at all without a session.',
-  'Check the daemon after a few days: `postbote deliveries`, or journalctl --user -u ' +
-    'postbote-daemon. A unit sitting at exit 2 means every account was logged out — relink, ' +
-    'then systemctl --user restart postbote-daemon.',
+  'Check the daemon after a few days: `curlew deliveries`, or journalctl --user -u ' +
+    'curlew-daemon. A unit sitting at exit 2 means every account was logged out — relink, ' +
+    'then systemctl --user restart curlew-daemon.',
   'End a linked device from the phone (Settings → Linked devices). Deleting the session file ' +
     'under secrets/ ends it on this machine.',
   'A sync from a timer is the fallback for a machine where the daemon does not run — but not ' +
@@ -931,7 +931,7 @@ export async function runSetup(ctx: SetupContext, options: SetupRunOptions = {})
 }
 
 /**
- * Which postbote this run sets up, and where it lives.
+ * Which curlew this run sets up, and where it lives.
  *
  * A checkout runs the built bundle out of its own tree, because the native addon's absolute
  * prebuild path is baked in at build time and a copied tree starts and then dies at the first
@@ -946,9 +946,9 @@ export function detectSetup(host: CommandRunner): { mode: SetupMode; checkout: s
     if (up === '' || up === dir) break;
     dir = up;
   }
-  if (host.which('postbote') !== null) return { mode: 'published', checkout: null };
+  if (host.which('curlew') !== null) return { mode: 'published', checkout: null };
   throw new Error(
-    'neither a postbote checkout above this directory nor a `postbote` command on PATH. ' +
+    'neither a curlew checkout above this directory nor a `curlew` command on PATH. ' +
       'Clone the repo and run `gjsify install`, or install the published command, then run this again.',
   );
 }

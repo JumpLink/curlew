@@ -8,13 +8,13 @@
  * Composed by hand instead of `@xmpp/client` because three of that bundle's defaults are wrong
  * here: it verifies the direct-TLS certificate against the SRV target instead of the XMPP
  * domain, it would upgrade a plain socket with a STARTTLS gjsify 0.52.0 cannot do, and it adds
- * SASL2/FAST/stream management whose state postbote would then have to keep.
+ * SASL2/FAST/stream management whose state curlew would then have to keep.
  *
  * What goes over the wire, and what never does: the stream, SASL, resource binding, and IQ
  * queries (roster, bookmarks, disco, MAM). NO presence — so the server treats the session as
  * unavailable: no messages are routed to it, offline messages stay queued for the user's real
  * clients, and contacts see nothing. No chat markers, no receipts, no messages. The only
- * stanzas postbote answers are IQs the server sends it (ping), because RFC 6120 §8.2.3 requires
+ * stanzas curlew answers are IQs the server sends it (ping), because RFC 6120 §8.2.3 requires
  * an answer to every IQ.
  */
 
@@ -295,7 +295,7 @@ async function connectEndpoint(
   });
   resourceBinding(
     { streamFeatures: features, iqCaller: caller },
-    `postbote-${Math.random().toString(36).slice(2, 10)}`,
+    `curlew-${Math.random().toString(36).slice(2, 10)}`,
   );
 
   try {

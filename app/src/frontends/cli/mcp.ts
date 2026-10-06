@@ -1,5 +1,5 @@
 /**
- * `postbote mcp` — serve the read-only tools over stdio for an MCP client.
+ * `curlew mcp` — serve the read-only tools over stdio for an MCP client.
  *
  * Long-lived by design: it parks until the client closes stdin. Not wired through runAndExit,
  * which exits as soon as its promise settles.

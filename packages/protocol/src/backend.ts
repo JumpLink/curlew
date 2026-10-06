@@ -8,8 +8,8 @@
  * chat networks: Telegram, Matrix, XMPP with MAM) and `delivery` (events pushed once by a
  * network with no server archive: WhatsApp, later Signal).
  *
- * The `MailBackend` interface is the load-bearing seam of the project. `@postbote/store` drives the sync
- * engine THROUGH it and never imports `@postbote/imap`, which is the only reason the most
+ * The `MailBackend` interface is the load-bearing seam of the project. `@curlew/store` drives the sync
+ * engine THROUGH it and never imports `@curlew/imap`, which is the only reason the most
  * intricate code here — incremental sync, UIDVALIDITY handling, expunge detection — can be
  * unit-tested on Node against a fake backend and an in-memory database, with no server, no
  * network and no GOA session.
@@ -102,7 +102,7 @@ export interface MessageBackend {
   readonly kind: string;
   listAccounts(): Promise<BackendAccount[]>;
   /**
-   * Add an account interactively — for networks whose accounts live in postbote rather than in
+   * Add an account interactively — for networks whose accounts live in curlew rather than in
    * the desktop (mail accounts are GNOME Online Accounts and do not implement this). The
    * backend asks through `prompter` for whatever its login needs, and stores the resulting
    * session itself. Resolves with the new account; nothing secret is in it.
@@ -118,7 +118,7 @@ export interface AccountPrompter {
   notify(message: string): void;
 }
 
-/** The mailbox sync driver: folders, UIDs and flags, driven by `syncIndex` in `@postbote/store`. */
+/** The mailbox sync driver: folders, UIDs and flags, driven by `syncIndex` in `@curlew/store`. */
 export interface MailBackend extends MessageBackend {
   readonly kind: 'mailbox';
   connect(accountId: string): Promise<BackendSession>;
@@ -156,7 +156,7 @@ export interface BackendContext {
 
 /** One person, bot or channel as a chat network reports it. */
 export interface ChatPeer {
-  /** The network's id for this peer, unique within the account. Opaque to postbote. */
+  /** The network's id for this peer, unique within the account. Opaque to curlew. */
   remoteId: string;
   displayName: string | null;
   /** Every address the network knows for this peer, already normalized (`normalizeAddress`). */
@@ -188,7 +188,7 @@ export interface ChatInfo {
 
 /** One message in a chat. */
 export interface ChatMessage {
-  /** The network's message id, opaque to postbote and unique within the account. */
+  /** The network's message id, opaque to curlew and unique within the account. */
   remoteId: string;
   /** Monotonic within its chat: the sync cursor. */
   seq: number;
@@ -295,7 +295,7 @@ export interface ChatRevision {
   retracted?: string[];
 }
 
-/** The chat sync driver: dialogs and per-chat sequences, driven by `syncChats` in `@postbote/store`. */
+/** The chat sync driver: dialogs and per-chat sequences, driven by `syncChats` in `@curlew/store`. */
 export interface ChatBackend extends MessageBackend {
   readonly kind: 'chat';
   connect(accountId: string): Promise<ChatSession>;
@@ -402,7 +402,7 @@ export type DeliveryEvent =
 /**
  * How long a delivery session runs.
  *
- * `catch-up` is `postbote sync`: connect, receive what was queued while nobody listened (and, on
+ * `catch-up` is `curlew sync`: connect, receive what was queued while nobody listened (and, on
  * a freshly linked device, the history the network hands over once), and end when that is done.
  * `follow` is a daemon: keep receiving until closed. Both go through the same receive path, so a
  * daemon is `catch-up` that does not stop.
@@ -474,7 +474,7 @@ export interface DeliverySession {
 
 /**
  * The delivery sync driver: for networks without a server archive (WhatsApp, Signal), driven by
- * `receiveDeliveries` in `@postbote/store`. What it writes is the only copy (`state`).
+ * `receiveDeliveries` in `@curlew/store`. What it writes is the only copy (`state`).
  */
 export interface DeliveryBackend extends MessageBackend {
   readonly kind: 'delivery';

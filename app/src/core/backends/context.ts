@@ -4,14 +4,14 @@
  * backend picks a path or reads the config file by itself.
  */
 
-import type { BackendContext } from '@postbote/protocol';
-import { secretsDir } from '@postbote/store';
+import type { BackendContext } from '@curlew/protocol';
+import { secretsDir } from '@curlew/store';
 import { join } from 'node:path';
-import type { PostboteConfig } from '../config.ts';
+import type { CurlewConfig } from '../config.ts';
 
 export function backendContext(
   name: string,
-  config: PostboteConfig,
+  config: CurlewConfig,
   env: NodeJS.ProcessEnv = process.env,
 ): BackendContext {
   return {

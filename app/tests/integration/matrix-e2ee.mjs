@@ -1,18 +1,18 @@
 /**
- * Opt-in integration test: postbote's Matrix backend on GJS decrypts an end-to-end encrypted
+ * Opt-in integration test: curlew's Matrix backend on GJS decrypts an end-to-end encrypted
  * direct chat, across process restarts, against a real homeserver in a local container.
  *
- *   gjsify workspace postbote-cli test:matrix-e2ee
+ *   gjsify workspace curlew-cli test:matrix-e2ee
  *
  * Needs podman (the test is SKIPPED with the reason when it is missing — exit 0, one line) and
  * pulls `forgejo.ellis.link/continuwuation/continuwuity` on first use. Not part of CI.
  *
  * What it does, all with throwaway users on a homeserver that federates with nobody:
  *   1. starts continuwuity on a random localhost port, registers `alice` and `bob`;
- *   2. GJS: `bob` logs in through postbote (`accounts add matrix` in code) — a new device;
+ *   2. GJS: `bob` logs in through curlew (`accounts add matrix` in code) — a new device;
  *   3. Node: `alice` (plain matrix-js-sdk, in-memory Rust crypto) creates an encrypted direct
  *      chat, `bob` joins it, `alice` sends two encrypted messages;
- *   4. GJS, a NEW process: postbote restores bob's crypto store from the secret file, syncs,
+ *   4. GJS, a NEW process: curlew restores bob's crypto store from the secret file, syncs,
  *      and must show both messages DECRYPTED;
  *   5. Node: `alice` edits the first, redacts the second, sends a third;
  *   6. GJS again: the edit is applied, the redacted message is gone, the third is there;
@@ -34,7 +34,7 @@ import { fileURLToPath } from 'node:url';
 import * as sdk from 'matrix-js-sdk';
 
 const IMAGE = 'forgejo.ellis.link/continuwuation/continuwuity:latest';
-const TOKEN = 'postbote-e2ee-test';
+const TOKEN = 'curlew-e2ee-test';
 const app = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const bundle = join(app, 'dist', 'matrix-e2ee.gjs.mjs');
 const log = (...a) => console.log('[matrix-e2ee]', ...a);
@@ -60,8 +60,8 @@ const quiet = {
   },
 };
 
-const name = `postbote-matrix-e2ee-${process.pid}`;
-const work = mkdtempSync(join(tmpdir(), 'postbote-matrix-e2ee-'));
+const name = `curlew-matrix-e2ee-${process.pid}`;
+const work = mkdtempSync(join(tmpdir(), 'curlew-matrix-e2ee-'));
 const secrets = join(work, 'secrets');
 const index = join(work, 'index.db');
 let alice = null;
@@ -168,13 +168,13 @@ try {
   await register(hs, 'bob', 'bob-password-1', TOKEN);
   log(`homeserver up on ${hs}, users registered`);
 
-  // 2. bob logs in through postbote, on GJS.
+  // 2. bob logs in through curlew, on GJS.
   const login = gjs('login', {
     MATRIX_E2EE_HS: hs,
     MATRIX_E2EE_USER: 'bob',
     MATRIX_E2EE_PASSWORD: 'bob-password-1',
   });
-  expect(login.account.identity === '@bob:localhost', 'postbote logged in as @bob:localhost');
+  expect(login.account.identity === '@bob:localhost', 'curlew logged in as @bob:localhost');
   const files = readdirSync(secrets);
   expect(
     files.length === 1 && files[0] === `${login.account.id}.db`,
@@ -185,7 +185,7 @@ try {
   expect(!readFileSync(secretFile).includes('bob-password-1'), 'the password is not stored');
 
   // 3. alice creates an encrypted DM; bob joins (a second, key-less device does the join, so the
-  //    postbote device stays read-only); alice sends two encrypted messages.
+  //    curlew device stays read-only); alice sends two encrypted messages.
   const aliceLogin = await sdk.createClient({ baseUrl: hs, logger: quiet }).loginRequest({
     type: 'm.login.password',
     identifier: { type: 'm.id.user', user: 'alice' },

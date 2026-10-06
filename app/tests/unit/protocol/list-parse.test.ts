@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { parseFolderList, parseListLine, searchableFolders } from '@postbote/protocol';
+import { parseFolderList, parseListLine, searchableFolders } from '@curlew/protocol';
 
 // Synthetic responses throughout — the shapes are from RFC 3501/6154 and from what Dovecot,
 // Gmail and Exchange actually send, but no real mailbox name appears here.

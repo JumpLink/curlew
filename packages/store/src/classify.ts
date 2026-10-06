@@ -7,7 +7,7 @@
  * made it and corrected per sender (`conversations classify`).
  */
 
-import type { AutomationHeaders, Classification, ClassificationReason } from '@postbote/protocol';
+import type { AutomationHeaders, Classification, ClassificationReason } from '@curlew/protocol';
 
 export interface MailClassificationInput {
   /** The user wrote this message. */

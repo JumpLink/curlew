@@ -4,9 +4,9 @@ import type {
   BackendSession,
   FolderInfo,
   MailBackend,
-} from '@postbote/protocol';
-import { MAIL_MANIFEST } from '@postbote/imap';
-import { migrate, openIndexDb } from '@postbote/store';
+} from '@curlew/protocol';
+import { MAIL_MANIFEST } from '@curlew/imap';
+import { migrate, openIndexDb } from '@curlew/store';
 
 /**
  * Shared fixtures for the store suites: a scriptable fake mail server behind the `MailBackend`

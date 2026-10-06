@@ -1,14 +1,14 @@
 /**
- * The backends that ship with postbote. Each is registered exactly like a third-party plugin
+ * The backends that ship with curlew. Each is registered exactly like a third-party plugin
  * would be: a manifest and a factory. Nothing constructs a backend except through the registry.
  */
 
-import { ImapBackend, MAIL_MANIFEST } from '@postbote/imap';
-import { MATRIX_MANIFEST, MatrixBackend } from '@postbote/matrix';
-import { SIGNAL_MANIFEST, SignalBackend } from '@postbote/signal';
-import { TELEGRAM_MANIFEST, TelegramBackend } from '@postbote/telegram';
-import { WHATSAPP_MANIFEST, WhatsAppBackend } from '@postbote/whatsapp';
-import { XMPP_MANIFEST, XmppBackend } from '@postbote/xmpp';
+import { ImapBackend, MAIL_MANIFEST } from '@curlew/imap';
+import { MATRIX_MANIFEST, MatrixBackend } from '@curlew/matrix';
+import { SIGNAL_MANIFEST, SignalBackend } from '@curlew/signal';
+import { TELEGRAM_MANIFEST, TelegramBackend } from '@curlew/telegram';
+import { WHATSAPP_MANIFEST, WhatsAppBackend } from '@curlew/whatsapp';
+import { XMPP_MANIFEST, XmppBackend } from '@curlew/xmpp';
 import { BackendRegistry, type BackendPlugin } from './registry.ts';
 
 export const BUILTIN_PLUGINS: readonly BackendPlugin[] = [

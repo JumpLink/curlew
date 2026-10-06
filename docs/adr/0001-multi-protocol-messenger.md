@@ -1,24 +1,24 @@
-# ADR 0001 — postbote becomes a multi-protocol messenger; mail is one backend
+# ADR 0001 — curlew becomes a multi-protocol messenger; mail is one backend
 
 - **Status:** Accepted (2026-09-25)
-- **Scope:** `@postbote/protocol` (ports, DTOs, plugin API), `@postbote/store`, new backend
+- **Scope:** `@curlew/protocol` (ports, DTOs, plugin API), `@curlew/store`, new backend
   packages, `app` (CLI, MCP, a later daemon and GUI)
 
 ## Context
 
-postbote reads mail, contacts and calendars through GNOME Online Accounts, as a CLI and an MCP
+curlew reads mail, contacts and calendars through GNOME Online Accounts, as a CLI and an MCP
 server. The next need is chat: Signal, Telegram, WhatsApp, later Matrix and XMPP. Two shapes
 were on the table:
 
-- **A separate multi-chat app.** It would have to rebuild or import what postbote already
+- **A separate multi-chat app.** It would have to rebuild or import what curlew already
   owns: the contact store (EDS), a sync engine behind a port, the SQLite index, the read-only MCP
   gate. And it adds another MCP server to every agent session, which is paid on every call.
-- **postbote grows.** The name already fits (a Bote carries any message). The value a unified
+- **curlew grows.** The name already fits (a Bote carries any message). The value a unified
   client adds is the per-person view — everything to and from one person, across networks —
-  and that view needs the contacts postbote already has.
+  and that view needs the contacts curlew already has.
 
 Bridges (mautrix and friends, a Matrix homeserver in the middle) were considered and rejected
-for now: each network is handled directly in the app. A stranger installing postbote must not
+for now: each network is handled directly in the app. A stranger installing curlew must not
 need to run a homeserver.
 
 ## Decision
@@ -58,7 +58,7 @@ wrote). CLI, MCP and GUI hide what a backend cannot do, instead of branching on 
 Phone number, Telegram user, Matrix ID, JID and mail address are addresses of one person. A
 participant carries several typed addresses and links to the EDS contact.
 
-### 5. `@postbote/protocol` is the versioned plugin API
+### 5. `@curlew/protocol` is the versioned plugin API
 
 Backends implement the port declared in `protocol` and ship a manifest: name, plugin-API version,
 capabilities, sync model, whether it is native, and a terms notice. Only backends enabled
@@ -89,7 +89,7 @@ GObject Introspection.
 | XMPP | **xmpp.js** (ISC) | no OMEMO anywhere in the tree; Dino ships its OWN OMEMO (`plugins/omemo/`, Vala+C) — the model for ours |
 | WhatsApp | **Baileys** (MIT) | depends on `libsignal` and `whatsapp-rust-bridge`: not pure TypeScript |
 
-Every candidate's license is compatible with postbote's AGPL-3.0-or-later (AGPL, MIT, ISC,
+Every candidate's license is compatible with curlew's AGPL-3.0-or-later (AGPL, MIT, ISC,
 MPL-2.0, LGPL-2.1).
 
 #### Signal: the spike (2026-09)
@@ -116,8 +116,8 @@ Measured, not assumed:
   maintains for linux, darwin and win32 (x64, arm64) and keeps in step with the server.
 
 Consequence: Signal ships as `native: true` where gjsify's N-API host runs — **linux-x64 and
-darwin-arm64 today** (win32 waits on gjs itself). postbote loads the addon only when Signal is
-used, so the rest of postbote starts where it does not. The service layer (linking, envelope
+darwin-arm64 today** (win32 waits on gjs itself). curlew loads the addon only when Signal is
+used, so the rest of curlew starts where it does not. The service layer (linking, envelope
 decryption, sync messages, contact sync) is ported from Signal-Desktop with attribution; both
 are AGPL.
 
@@ -126,7 +126,7 @@ are AGPL.
 gjsify's goal is to make web protocols and standards available on GJS. So a backend prefers the
 library path that runs on **standard web APIs** (WebSocket, WebCrypto, WebAssembly, fetch,
 streams) over a native addon, even where a native path exists. Every gap that path hits is fixed
-**in the gjsify core**, with a test, never shimmed in postbote — the next GJS app needs the same
+**in the gjsify core**, with a test, never shimmed in curlew — the next GJS app needs the same
 API. A native addon (napi-rs/Neon) is the fallback when no standards-based implementation exists,
 not the default.
 
@@ -146,7 +146,7 @@ crate over `matrix-rust-sdk` only if the WASM path cannot carry it.
 
 Port and store schema with both sync models, proven by mail → Telegram → Matrix → daemon +
 Signal → XMPP → WhatsApp. Matrix comes early: official, server-archive, and its E2EE path was
-meant as the first real test of a native addon in postbote; Matrix ended up on WASM, so Signal is
+meant as the first real test of a native addon in curlew; Matrix ended up on WASM, so Signal is
 that test.
 
 ## GUI direction (later, recorded so the data model carries it now)
@@ -162,7 +162,7 @@ One app, `Adw.NavigationSplitView`: a sidebar with **Conversations** and **Mailb
 |---|---|
 | Chat list and timeline | Flare, Paper Plane (the latter inactive since 2024-06) |
 | Mail cards inside a conversation | Convey (a GTK4/libadwaita hard fork of Geary, Vala, uses GOA) |
-| Mailbox, composer, privacy defaults | Hylki (Rust, relm4/libadwaita, IMAP/SMTP, own OAuth + keyring — postbote keeps GOA) |
+| Mailbox, composer, privacy defaults | Hylki (Rust, relm4/libadwaita, IMAP/SMTP, own OAuth + keyring — curlew keeps GOA) |
 
 ## Consequences
 

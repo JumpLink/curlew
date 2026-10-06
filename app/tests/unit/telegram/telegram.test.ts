@@ -12,8 +12,8 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { AccountPrompter, BackendContext, ChatBackend } from '@postbote/protocol';
-import { isChatBackend, validateManifest } from '@postbote/protocol';
+import type { AccountPrompter, BackendContext, ChatBackend } from '@curlew/protocol';
+import { isChatBackend, validateManifest } from '@curlew/protocol';
 import {
   chatConversationId,
   getConversation,
@@ -21,8 +21,8 @@ import {
   rebuildConversations,
   SecretStore,
   syncChats,
-} from '@postbote/store';
-import type { TgMessage } from '@postbote/telegram';
+} from '@curlew/store';
+import type { TgMessage } from '@curlew/telegram';
 import {
   API_HASH_ENV,
   API_ID_ENV,
@@ -39,7 +39,7 @@ import {
   TelegramChatSession,
   toChatInfo,
   toChatMessage,
-} from '@postbote/telegram';
+} from '@curlew/telegram';
 import { conversationsList, conversationsShow, openIndex } from '../../../src/core/actions/index.ts';
 import { telegramFixture } from '../store/chat-fixtures.ts';
 import { freshDb } from '../store/fixtures.ts';
@@ -47,7 +47,7 @@ import { fakeFactory, group, ME, tgMessage, user } from './fake-client.ts';
 
 /**
  * The Telegram backend without Telegram: mapping of mtcute's shapes, the chat session over a fake
- * client, the session storage on postbote's SQLite, the login flow and what it leaves on disk,
+ * client, the session storage on curlew's SQLite, the login flow and what it leaves on disk,
  * and a full sync through the backend into the conversation view. All data is synthetic.
  */
 
@@ -60,7 +60,7 @@ const ORGA = group(-1004001, 'Sommerfest Orga');
 const NEWS = group(-1005000, 'Example News', 'channel', 'example_news');
 
 function tempDir(): string {
-  return mkdtempSync(join(tmpdir(), 'postbote-telegram-'));
+  return mkdtempSync(join(tmpdir(), 'curlew-telegram-'));
 }
 
 /** Credentials from the environment by default; `env: {}` makes the login ask for them. */

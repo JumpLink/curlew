@@ -229,7 +229,7 @@ export interface MessageRef {
   folder?: string;
   /** Mail only: its IMAP UID within `folder`. */
   uid?: number;
-  /** Every non-mail backend: the network's message id, opaque to postbote. */
+  /** Every non-mail backend: the network's message id, opaque to curlew. */
   remoteId?: string;
 }
 
@@ -303,7 +303,7 @@ export function validateManifest(manifest: BackendManifest): string[] {
   }
   if (!manifest.displayName?.trim()) problems.push('displayName is empty');
   if (manifest.pluginApi !== PLUGIN_API_VERSION) {
-    problems.push(`built for plugin API ${manifest.pluginApi}, this postbote speaks ${PLUGIN_API_VERSION}`);
+    problems.push(`built for plugin API ${manifest.pluginApi}, this curlew speaks ${PLUGIN_API_VERSION}`);
   }
   if (!SYNC_MODELS.includes(manifest.syncModel)) {
     problems.push(`unknown sync model ${JSON.stringify(manifest.syncModel)}`);

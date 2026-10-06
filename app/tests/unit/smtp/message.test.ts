@@ -1,8 +1,8 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { decodeRfc2047 } from '@postbote/protocol';
-import { buildMessage, SmtpError, validateAccount, validateMessage } from '@postbote/smtp';
-import type { OutgoingMessage, SmtpAccount } from '@postbote/smtp';
+import { decodeRfc2047 } from '@curlew/protocol';
+import { buildMessage, SmtpError, validateAccount, validateMessage } from '@curlew/smtp';
+import type { OutgoingMessage, SmtpAccount } from '@curlew/smtp';
 
 // Synthetic only: example.invalid never resolves, so nothing here can reach a person.
 const MESSAGE: OutgoingMessage = {

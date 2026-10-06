@@ -1,5 +1,5 @@
 /**
- * mtcute's storage on postbote's own SQLite: the session file of one Telegram account.
+ * mtcute's storage on curlew's own SQLite: the session file of one Telegram account.
  *
  * mtcute ships an IndexedDB storage for the web and better-sqlite3 ones for Node/Bun/Deno.
  * Neither fits: GJS has no IndexedDB, and mtcute's SQLite repositories bind BLOBs, which the
@@ -15,7 +15,7 @@
  *
  * Everything is TEXT: bytes as base64, peers as JSON. A save diffs against what was loaded and
  * writes only the changed keys, in multi-row statements — a wide parse per few keys rather than
- * a statement each (see `insertMany` in `@postbote/store`).
+ * a statement each (see `insertMany` in `@curlew/store`).
  *
  * The file is SECRET: whoever holds it can read the account. It never enters a log, a DTO or
  * MCP output; `SecretStore` keeps it 0600 in a 0700 directory outside the repository.
@@ -29,7 +29,7 @@ import {
   MemoryRefMessagesRepository,
   MemoryStorageDriver,
 } from '@mtcute/core';
-import type { SecretChange, SecretStore } from '@postbote/store';
+import type { SecretChange, SecretStore } from '@curlew/store';
 import { Buffer } from 'node:buffer';
 
 type Snapshot = Map<string, Map<string, string>>;
@@ -42,7 +42,8 @@ const NS = {
   refMessages: 'mtcute.ref_messages',
 } as const;
 
-/** postbote's own namespace in the same file: which account this is, for `accounts list`. */
+/** curlew's own namespace in the same file: which account this is, for `accounts list`. */
+// Rename fallback: the key inside existing account files, read back as-is. Do not rebrand.
 export const ACCOUNT_NAMESPACE = 'postbote.account';
 
 /**
@@ -57,7 +58,7 @@ export const ACCOUNT_NAMESPACE = 'postbote.account';
  * sign-in kept a session that was never authorized and told the user it had been.
  *
  * This is a FACT about the file, and it is what `loginTelegram` decides on, because everything
- * AFTER the sign-in — the update manager, postbote's record writes, the final rename — can still
+ * AFTER the sign-in — the update manager, curlew's record writes, the final rename — can still
  * throw. A flag around the login promise would throw away a session that really is signed in.
  *
  * Fails SAFE: a file that cannot be read (already closed, unreadable) counts as signed in,

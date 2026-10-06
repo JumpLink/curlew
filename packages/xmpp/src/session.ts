@@ -7,7 +7,7 @@
  * drives it in the unit tests exactly as xmpp.js does in production.
  */
 
-import type { ChatHistoryPage, ChatInfo, ChatSession } from '@postbote/protocol';
+import type { ChatHistoryPage, ChatInfo, ChatSession } from '@curlew/protocol';
 import { type MamPage, type MamQuery, type XmppApi, XmppQueryError } from './api.ts';
 import {
   buildPage,

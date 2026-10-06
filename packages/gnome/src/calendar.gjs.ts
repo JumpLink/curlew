@@ -16,8 +16,8 @@ import type ICalGLib from 'gi://ICalGLib?version=3.0';
 import { extractList, getRegistry, sourceGoaAccountId } from './eds.gjs.ts';
 import { gnomeError, isGnomeFailure } from './errors.ts';
 import { cal, eds } from './libs.gjs.ts';
-import { GnomeError } from '@postbote/protocol';
-import type { CalendarEventDTO, ListEventsOptions } from '@postbote/protocol';
+import { GnomeError } from '@curlew/protocol';
+import type { CalendarEventDTO, ListEventsOptions } from '@curlew/protocol';
 
 const DEFAULT_LIMIT = 100;
 const CONNECT_WAIT_SECONDS = 15;

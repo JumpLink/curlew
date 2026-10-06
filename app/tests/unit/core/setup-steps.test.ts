@@ -47,17 +47,17 @@ function stage(name: string): (typeof SETUP_STEPS)[number] {
 }
 
 export default async function setupSteps(): Promise<void> {
-  describe('which postbote is being set up', () => {
+  describe('which curlew is being set up', () => {
     it('finds the checkout above the working directory', () => {
-      const host = fakeHost({ PWD: '/src/postbote/app/src' });
-      host.files.set('/src/postbote/package.json', '{}');
-      host.files.set('/src/postbote/app/package.json', '{}');
-      expect(detectSetup(host)).toStrictEqual({ mode: 'checkout', checkout: '/src/postbote' });
+      const host = fakeHost({ PWD: '/src/curlew/app/src' });
+      host.files.set('/src/curlew/package.json', '{}');
+      host.files.set('/src/curlew/app/package.json', '{}');
+      expect(detectSetup(host)).toStrictEqual({ mode: 'checkout', checkout: '/src/curlew' });
     });
 
     it('falls back to a published install on PATH', () => {
       const host = fakeHost({ PWD: '/home/tester' });
-      host.commands.set('postbote', { path: '/usr/local/bin/postbote', code: 0, output: '' });
+      host.commands.set('curlew', { path: '/usr/local/bin/curlew', code: 0, output: '' });
       expect(detectSetup(host)).toStrictEqual({ mode: 'published', checkout: null });
     });
 
@@ -86,7 +86,7 @@ export default async function setupSteps(): Promise<void> {
     it('reads done once gjsify and the bundle are there', async () => {
       const host = fakeHost();
       host.commands.set('gjsify', { path: '/usr/bin/gjsify', code: 0, output: '' });
-      host.files.set('/home/tester/app/dist/postbote.gjs.mjs', 'bundle');
+      host.files.set('/home/tester/app/dist/curlew.gjs.mjs', 'bundle');
       const ctx = fakeContext({ host });
       expect(await probeStage('readiness', ctx)).toBe('done');
       const outcome = await stage('readiness').run(ctx);
@@ -102,7 +102,7 @@ export default async function setupSteps(): Promise<void> {
     });
 
     // The defect this pins, measured on the previous shape: with no session bus at all,
-    // `postbote setup --status` printed `done` for readiness and nothing else. The stage's own
+    // `curlew setup --status` printed `done` for readiness and nothing else. The stage's own
     // verdict went through `prompter.notify`, so it reached a person at a keyboard and no other
     // surface — and a machine that cannot read a single account reported itself ready, silently,
     // while the whole product is inert. The warning now travels in the VALUE, on the probe path
@@ -118,7 +118,7 @@ export default async function setupSteps(): Promise<void> {
       // about a warning that rides on a `done`.
       const host = fakeHost();
       host.commands.set('gjsify', { path: '/usr/bin/gjsify', code: 0, output: '' });
-      host.files.set('/home/tester/app/dist/postbote.gjs.mjs', 'bundle');
+      host.files.set('/home/tester/app/dist/curlew.gjs.mjs', 'bundle');
       const dead = fakeContext({
         host,
         checkAccounts: async () => {
@@ -137,7 +137,7 @@ export default async function setupSteps(): Promise<void> {
     it('reports a reachable session bus as done with NO warning', async () => {
       const host = fakeHost();
       host.commands.set('gjsify', { path: '/usr/bin/gjsify', code: 0, output: '' });
-      host.files.set('/home/tester/app/dist/postbote.gjs.mjs', 'bundle');
+      host.files.set('/home/tester/app/dist/curlew.gjs.mjs', 'bundle');
       const alive = fakeContext({ host });
       const status = await setupStatus(alive);
       expect(status.steps.find((s) => s.name === 'readiness')?.state).toBe('done');
@@ -148,7 +148,7 @@ export default async function setupSteps(): Promise<void> {
     it('takes the warning from a run through to the status, and prints it once', async () => {
       const host = fakeHost();
       host.commands.set('gjsify', { path: '/usr/bin/gjsify', code: 0, output: '' });
-      host.files.set('/home/tester/app/dist/postbote.gjs.mjs', 'bundle');
+      host.files.set('/home/tester/app/dist/curlew.gjs.mjs', 'bundle');
       const ctx = fakeContext({ host, checkAccounts: async () => ({ ok: false, message: 'no bus' }) });
       const outcome = await stage('readiness').run(ctx);
       expect(outcome.status).toBe('done');
@@ -213,7 +213,7 @@ export default async function setupSteps(): Promise<void> {
       expect(outcome.status).toBe('done');
       expect(text.includes('nothing to do')).toBe(false);
       expect(text.includes('not been checked with Signal')).toBe(true);
-      expect(text.includes('postbote sync')).toBe(true);
+      expect(text.includes('curlew sync')).toBe(true);
     });
 
     // Once a sync HAS found out, that is a fact and may be stated. Same shape, different source.
@@ -288,7 +288,7 @@ export default async function setupSteps(): Promise<void> {
       // security test below, which asserts that no config file exists after a declined run.
       const ctx = fakeContext({
         prompter: fakePrompter([true, true]),
-        configPath: join(SANDBOX, 'postbote', 'config-accept.json'),
+        configPath: join(SANDBOX, 'curlew', 'config-accept.json'),
       });
       const outcome = await stage('terms').run(ctx);
       expect(ctx.prompter.asked.length).toBeGreaterThan(0);
@@ -321,7 +321,7 @@ export default async function setupSteps(): Promise<void> {
       // alternative is a test that passes for the wrong reason.
       const ctx = fakeContext({
         prompter: fakePrompter([true, true]),
-        configPath: join(SANDBOX, 'postbote', 'config-cycle.json'),
+        configPath: join(SANDBOX, 'curlew', 'config-cycle.json'),
         countAccounts: async () => 0,
       });
       ctx.link = async () => {
@@ -332,7 +332,7 @@ export default async function setupSteps(): Promise<void> {
           : { backends: [] };
         const enabled = (stored.backends ?? []).filter((b) => b.enabled).map((b) => b.name);
         if (!enabled.includes('signal')) {
-          throw new Error('backend signal is not enabled — `postbote backends enable signal` turns it on');
+          throw new Error('backend signal is not enabled — `curlew backends enable signal` turns it on');
         }
       };
       const result = await runSetup(ctx, { only: ['terms', 'link-signal'] });
@@ -349,7 +349,7 @@ export default async function setupSteps(): Promise<void> {
       // not stop it, and the next question arrived anyway.
       const ctx = fakeContext({
         prompter: fakePrompter([]),
-        configPath: join(SANDBOX, 'postbote', 'config-bail.json'),
+        configPath: join(SANDBOX, 'curlew', 'config-bail.json'),
       });
       await runSetup(ctx, { only: ['link-signal', 'link-whatsapp'], bail: true });
       const said = transcript(ctx);
@@ -363,7 +363,7 @@ export default async function setupSteps(): Promise<void> {
         // string declines the question — so the linker below never runs and the test passes for
         // the wrong reason, which is a mistake I made in the first version of it.
         prompter: fakePrompter([true]),
-        configPath: join(SANDBOX, 'postbote', 'config-failure.json'),
+        configPath: join(SANDBOX, 'curlew', 'config-failure.json'),
         link: async () => {
           throw new Error('the provisioning connection failed — nothing was saved');
         },
@@ -378,12 +378,12 @@ export default async function setupSteps(): Promise<void> {
 
     it('is a human act on every surface, with a reason that names both reasons', () => {
       expect(stage('terms').humanOnly).toBe(true);
-      expect(stage('terms').command).toBe('postbote setup --only terms');
+      expect(stage('terms').command).toBe('curlew setup --only terms');
     });
   });
 
   describe('the index stage', () => {
-    it('names `postbote sync` as the only writer', async () => {
+    it('names `curlew sync` as the only writer', async () => {
       const ctx = fakeContext();
       await stage('index').run(ctx);
       expect(transcript(ctx).includes('the only thing that writes it')).toBe(true);
@@ -421,7 +421,7 @@ export default async function setupSteps(): Promise<void> {
       const ctx = fakeContext({ host });
       await stage('unit').run(ctx);
       const written = [...host.files.keys()];
-      expect(written.join(' ')).toBe('/xdg/config/systemd/user/postbote-daemon.service');
+      expect(written.join(' ')).toBe('/xdg/config/systemd/user/curlew-daemon.service');
     });
 
     it('falls back to $HOME/.config when XDG_CONFIG_HOME is unset', async () => {
@@ -429,7 +429,7 @@ export default async function setupSteps(): Promise<void> {
       const ctx = fakeContext({ host });
       await stage('unit').run(ctx);
       expect([...host.files.keys()].join(' ')).toBe(
-        '/home/tester/.config/systemd/user/postbote-daemon.service',
+        '/home/tester/.config/systemd/user/curlew-daemon.service',
       );
     });
 
@@ -470,7 +470,7 @@ export default async function setupSteps(): Promise<void> {
 
     it('reads done once the file is there', async () => {
       const host = fakeHost();
-      host.files.set('/home/tester/.config/systemd/user/postbote-daemon.service', '[Service]\n');
+      host.files.set('/home/tester/.config/systemd/user/curlew-daemon.service', '[Service]\n');
       expect(await probeStage('unit', fakeContext({ host }))).toBe('done');
       expect(await probeStage('unit', fakeContext({ host: fakeHost() }))).toBe('remaining');
     });
@@ -482,13 +482,13 @@ export default async function setupSteps(): Promise<void> {
       host.commands.set('gjsify', { path: '/usr/bin/gjsify', code: 0, output: '' });
       host.commands.set('systemd-analyze', { path: '/usr/bin/systemd-analyze', code: 0, output: '' });
       host.commands.set('systemctl', { path: '/usr/bin/systemctl', code: 0, output: 'enabled' });
-      host.files.set('/home/tester/app/dist/postbote.gjs.mjs', 'bundle');
+      host.files.set('/home/tester/app/dist/curlew.gjs.mjs', 'bundle');
       const ctx = fakeContext({ host, prompter: fakePrompter([false, false, false, false]) });
       const first = await runSetup(ctx);
       expect(first.steps.every((s) => s.outcome.status !== 'failed')).toBe(true);
       // The unit stage re-wrote the same file and found it enabled: no failure, and the file is
       // still the unit the template renders.
-      const written = host.files.get('/home/tester/.config/systemd/user/postbote-daemon.service') ?? '';
+      const written = host.files.get('/home/tester/.config/systemd/user/curlew-daemon.service') ?? '';
       expect(written.includes('ExecStart=')).toBe(true);
       expect(written.includes('[Install]')).toBe(true);
     });
@@ -498,7 +498,7 @@ export default async function setupSteps(): Promise<void> {
     it('reports the stages that finished and the ones that did not', async () => {
       const host = fakeHost();
       host.commands.set('gjsify', { path: '/usr/bin/gjsify', code: 0, output: '' });
-      host.files.set('/home/tester/app/dist/postbote.gjs.mjs', 'bundle');
+      host.files.set('/home/tester/app/dist/curlew.gjs.mjs', 'bundle');
       const ctx = fakeContext({ host, prompter: fakePrompter([false, false, false, false]) });
       await runSetup(ctx, { only: ['readiness', 'link-signal'] });
       const status = await setupStatus(ctx);
@@ -507,7 +507,7 @@ export default async function setupSteps(): Promise<void> {
       expect(byName.get('link-signal')?.state).toBe('skipped');
       // Never run, so the probe decides — and the unit is not there yet.
       expect(byName.get('unit')?.state).toBe('remaining');
-      expect(byName.get('unit')?.command).toBe('postbote setup --only unit');
+      expect(byName.get('unit')?.command).toBe('curlew setup --only unit');
     });
   });
 }

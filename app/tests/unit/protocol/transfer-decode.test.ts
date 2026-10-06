@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { BufferSink, decodingSink } from '@postbote/protocol';
+import { BufferSink, decodingSink } from '@curlew/protocol';
 
 /** Feed `data` through a decoding sink in fixed-size chunks and return the decoded bytes. */
 async function decodeInChunks(encoding: string, data: string, chunkSize: number): Promise<Uint8Array> {

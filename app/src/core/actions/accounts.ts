@@ -7,9 +7,9 @@
  * added once applies to both.
  */
 
-import { check, listAccounts } from '@postbote/gnome';
-import type { AccountPrompter, BackendAccount, GnomeAccount, GnomeCheckResult } from '@postbote/protocol';
-import { configPath } from '@postbote/store';
+import { check, listAccounts } from '@curlew/gnome';
+import type { AccountPrompter, BackendAccount, GnomeAccount, GnomeCheckResult } from '@curlew/protocol';
+import { configPath } from '@curlew/store';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig } from '../config.ts';
@@ -19,7 +19,7 @@ export async function accountsList(): Promise<GnomeAccount[]> {
   return listAccounts();
 }
 
-/** Probe GOA/EDS availability (the same three-state shape `postbote check` reports). */
+/** Probe GOA/EDS availability (the same three-state shape `curlew check` reports). */
 export async function accountsCheck(): Promise<GnomeCheckResult> {
   return check();
 }
@@ -47,7 +47,7 @@ export async function accountsAdd(
   const backend = builtinRegistry().create(config, name, backendContext(name, config));
   if (!backend.addAccount) {
     throw new Error(
-      `${name} accounts are not added in postbote — ${
+      `${name} accounts are not added in curlew — ${
         backend.kind === 'mailbox'
           ? 'add them in GNOME Settings → Online Accounts'
           : 'this backend has no login flow'

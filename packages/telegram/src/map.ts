@@ -1,12 +1,12 @@
 /**
- * Telegram's objects → the network-neutral chat driver types of `@postbote/protocol`.
+ * Telegram's objects → the network-neutral chat driver types of `@curlew/protocol`.
  *
  * Pure: it reads the structural shapes in `api.ts`, so every rule here is tested against
  * synthetic objects on both runtimes.
  */
 
-import type { ChatInfo, ChatMessage, ChatPeer, ParticipantAddress } from '@postbote/protocol';
-import { normalizeAddress } from '@postbote/protocol';
+import type { ChatInfo, ChatMessage, ChatPeer, ParticipantAddress } from '@curlew/protocol';
+import { normalizeAddress } from '@curlew/protocol';
 import type { TgDialog, TgMessage, TgPeer } from './api.ts';
 
 /** Media that is a file a person sent. A link preview (`webpage`), a poll or a dice roll is not. */

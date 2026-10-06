@@ -1,4 +1,4 @@
-# AGENTS.md — @postbote/store
+# AGENTS.md — @curlew/store
 
 Local state: XDG paths, attachment writing, the SQLite full-text index and the sync engine.
 The repo-wide rules are in [../../AGENTS.md](../../AGENTS.md); this file is the store-specific
@@ -8,7 +8,7 @@ layer and wins where they differ.
 
 **`store` must never import a backend** (`imap`, `telegram`, `whatsapp`). The sync engines are driven
 through the `MailBackend`, `ChatBackend` and `DeliveryBackend` ports
-declared in `@postbote/protocol` and injected by `app`. That keeps this package free of `gi://`
+declared in `@curlew/protocol` and injected by `app`. That keeps this package free of `gi://`
 even transitively, which is the only reason `sync.ts` — the most intricate code in the project —
 can be unit-tested on Node against a fake backend and `:memory:`. If you want to reach into
 `imap` from here, add a method to the port instead.
@@ -103,17 +103,17 @@ forgets a message once this device acknowledged it, so these rows are `state`. C
 Nothing is ever written inside the repository. The index holds mail headers **and plain-text
 bodies**, and this repo is public, so a stray index file would be a permanent leak.
 
-- `$XDG_DATA_HOME/postbote/index.db`, mode `0600`, re-applied on every open.
-- Attachments to `$XDG_DOWNLOAD_DIR`, else `$XDG_DATA_HOME/postbote/attachments`, dir mode `0700`.
-- Backend secrets (chat sessions) in `SecretStore` files under `$XDG_DATA_HOME/postbote/secrets/`,
+- `$XDG_DATA_HOME/curlew/index.db`, mode `0600`, re-applied on every open.
+- Attachments to `$XDG_DOWNLOAD_DIR`, else `$XDG_DATA_HOME/curlew/attachments`, dir mode `0700`.
+- Backend secrets (chat sessions) in `SecretStore` files under `$XDG_DATA_HOME/curlew/secrets/`,
   0600 in 0700, TEXT only (bytes as base64 — BLOBs do not survive (c)), writes batched.
-- Overridable only through `POSTBOTE_DATA_DIR` / `POSTBOTE_DB_PATH` / `POSTBOTE_ATTACHMENTS_DIR` /
-  `POSTBOTE_SECRETS_DIR`.
+- Overridable only through `CURLEW_DATA_DIR` / `CURLEW_DB_PATH` / `CURLEW_ATTACHMENTS_DIR` /
+  `CURLEW_SECRETS_DIR`.
 
 `.gitignore` is the second line of defence. Not writing there is the first, and it lives in
 `paths.ts` — whose tests take the environment as a parameter precisely so this is checkable.
 
-**Only `postbote sync` and `postbote daemon` write to the index.** A search never does. One
+**Only `curlew sync` and `curlew daemon` write to the index.** A search never does. One
 mental model, and no surprise disk growth from a read. The daemon (ADR 0002) reaches the same
 `receiveDeliveries` in `follow` mode, and the **receive lease** (`receive-lease.ts`, one row per
 backend+account) is what keeps the two off the same account: BOTH modes take it inside

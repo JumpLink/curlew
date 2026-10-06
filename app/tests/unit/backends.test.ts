@@ -1,14 +1,14 @@
 import { describe, expect, it, on } from '@gjsify/unit';
 
-import { GnomeError, GnomeUnavailableError } from '@postbote/protocol';
+import { GnomeError, GnomeUnavailableError } from '@curlew/protocol';
 import { goa } from '../../../packages/gnome/src/libs.gjs.ts';
-import { check, listAccounts, listEvents, listMailTargets, searchContacts } from '@postbote/gnome';
-import { getMessage, searchMail } from '@postbote/imap';
+import { check, listAccounts, listEvents, listMailTargets, searchContacts } from '@curlew/gnome';
+import { getMessage, searchMail } from '@curlew/imap';
 import { runChecks } from '../../src/frontends/cli/check.ts';
 import { runtimeName } from '../../src/core/runtime.ts';
 import { mcpErrorFrom } from '../../src/frontends/mcp/types.ts';
 
-// @postbote/gnome runs the SAME gi:// implementation on every runtime (GJS native,
+// @curlew/gnome runs the SAME gi:// implementation on every runtime (GJS native,
 // Node/Bun via @gjsify/node-gi) — the constraint is a reachable GNOME session, not the JS
 // runtime — so this half of the suite runs on both. Never asserts real account content,
 // only the shape of the answer and the type it fails with.
@@ -24,7 +24,7 @@ import { mcpErrorFrom } from '../../src/frontends/mcp/types.ts';
 // The second failure kind — a MISSING TYPELIB — is asserted in `gnome/optional.test.ts`: the
 // typelibs load on first use, so it surfaces as a `GnomeUnavailableError` on either runtime.
 //
-// @postbote/imap still resolves to its "unavailable" stub on Node (GJS-only, unchanged by
+// @curlew/imap still resolves to its "unavailable" stub on Node (GJS-only, unchanged by
 // this refactor), so its half stays Node-only.
 const DEAD_BUS = 'unix:path=/nonexistent';
 const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env ?? {};
@@ -41,7 +41,7 @@ export default async () => {
   );
   const nativeFailure = pinnedToDeadPath && typelibsLoad;
 
-  await describe('@postbote/gnome', async () => {
+  await describe('@curlew/gnome', async () => {
     await it('check() answers with a name, a boolean and a reason', async () => {
       const result = await check();
       expect(result.name).toBe('GNOME');
@@ -53,7 +53,7 @@ export default async () => {
       if (!pinnedToDeadPath) return; // a workstation may have a live session — nothing to assert
       const result = await check();
       expect(result.ok).toBe(false);
-      // postbote's own sentence leads, so the answer is the same on every runtime and in
+      // curlew's own sentence leads, so the answer is the same on every runtime and in
       // every locale; the native cause follows it. This is what tells "no session bus"
       // apart from "no typelib", which reads as a typelib failure instead.
       expect(result.message).toMatch(/GNOME Online Accounts .* unavailable/i);
@@ -64,7 +64,7 @@ export default async () => {
     await it('check() covers EDS, not just GOA', async () => {
       if (!pinnedToDeadPath) return; // a workstation may have a live session — nothing to assert
       // A GOA-only probe reports ok:true on a host that has GOA but no Evolution Data
-      // Server, and then `postbote contacts` / `postbote calendar` fail on the next
+      // Server, and then `curlew contacts` / `curlew calendar` fail on the next
       // command. Under the dead-path pin both daemons are unreachable, so ok:false here is
       // the answer for EITHER — which is the property: check() cannot say ok while the EDS
       // registry is unavailable.
@@ -93,7 +93,7 @@ export default async () => {
 
     await it('the MCP and CLI answers for one failure read the same', async () => {
       if (!nativeFailure) return;
-      // Same condition, same first words. `postbote check` said the stable sentence while
+      // Same condition, same first words. `curlew check` said the stable sentence while
       // contacts_search answered `{"error":"Goa.Client.new: <locale string>"}`; the reader
       // of the second has no way to tell a missing bus from a missing typelib.
       const result = await check();
@@ -153,7 +153,7 @@ export default async () => {
   });
 
   await on('Node.js', async () => {
-    await describe('@postbote/imap (Node stub)', async () => {
+    await describe('@curlew/imap (Node stub)', async () => {
       await it('mail functions throw instead of returning empty results', async () => {
         await expect(searchMail({})).rejects.toThrow(/GJS runtime/i);
         await expect(getMessage({ accountId: 'x', uid: '1' })).rejects.toThrow(/GJS runtime/i);

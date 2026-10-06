@@ -1,6 +1,6 @@
 /**
  * An IndexedDB, dumped into a `SecretStore` and loaded back — how the Matrix crypto store
- * survives between two runs of postbote.
+ * survives between two runs of curlew.
  *
  * The Rust crypto (`@matrix-org/matrix-sdk-crypto-wasm`) persists its Olm account, Olm sessions
  * and Megolm room keys only through IndexedDB; without one it keeps them in memory and they are
@@ -13,7 +13,7 @@
  *     crypto opens it — the crypto sees the store it left behind.
  *   - `save` reads every database back and writes only the records that changed since the last
  *     load or save, in one batch — one wide statement instead of one per record (see
- *     `insertMany` in `@postbote/store`).
+ *     `insertMany` in `@curlew/store`).
  *
  * One record per `SecretStore` row: namespace `idb:<database>/<object store>`, key and value
  * as tagged JSON (`encodeValue`), because the store holds TEXT only.
@@ -22,7 +22,7 @@
  * factory on both runtimes.
  */
 
-import type { SecretChange, SecretStore } from '@postbote/store';
+import type { SecretChange, SecretStore } from '@curlew/store';
 import { Buffer } from 'node:buffer';
 
 /** Where the database layouts live: one key per database, the value its schema as JSON. */

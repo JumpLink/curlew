@@ -1,4 +1,4 @@
-// Smoke test: the postbote MCP stdio server runs natively on GJS and answers a real
+// Smoke test: the curlew MCP stdio server runs natively on GJS and answers a real
 // `initialize` + `tools/list` + `tools/call` handshake driven by the MCP SDK client, EXITS when
 // its client goes away, and DROPS a tool that declares itself mutating.
 //
@@ -7,7 +7,7 @@
 // spawn it with a CLEAN env — no manual LD_LIBRARY_PATH / GI_TYPELIB_PATH. A green run proves
 // no launcher wrapper is needed.
 //
-// Prerequisite: `gjsify install` + `gjsify workspace postbote-cli build`, and gjs on PATH.
+// Prerequisite: `gjsify install` + `gjsify workspace curlew-cli build`, and gjs on PATH.
 // Run with: `node app/tests/integration/mcp-gjs-smoke.mjs`.
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
@@ -20,8 +20,8 @@ import assert from 'node:assert';
 const here = dirname(fileURLToPath(import.meta.url));
 const appRoot = join(here, '..', '..'); // tests/integration -> app
 const repoRoot = join(appRoot, '..'); // app -> repo root
-const bundle = join(appRoot, 'dist', 'postbote.gjs.mjs');
-assert(existsSync(bundle), 'build first — app/dist/postbote.gjs.mjs missing');
+const bundle = join(appRoot, 'dist', 'curlew.gjs.mjs');
+assert(existsSync(bundle), 'build first — app/dist/curlew.gjs.mjs missing');
 
 // The gjsify bin lives in the WORKSPACE ROOT's node_modules, not app/'s.
 const gjsify = join(repoRoot, 'node_modules', '.bin', 'gjsify');
@@ -66,7 +66,7 @@ const client = new Client({ name: 'gjs-smoke', version: '1.0.0' }, { capabilitie
 await client.connect(transport);
 
 const info = client.getServerVersion();
-assert.equal(info?.name, 'postbote', `unexpected server name: ${info?.name}`);
+assert.equal(info?.name, 'curlew', `unexpected server name: ${info?.name}`);
 
 const { tools } = await client.listTools();
 assert.deepEqual(
@@ -140,7 +140,7 @@ console.log('OK: server exits cleanly on stdin EOF (no orphan)');
 // `registerTool` would serve exactly the same catalogue and section 1 would still pass. It
 // cannot distinguish a working gate from no gate at all.
 //
-// So ask the gate to do the thing it exists for. `POSTBOTE_MCP_GATE_CANARY=1` registers two
+// So ask the gate to do the thing it exists for. `CURLEW_MCP_GATE_CANARY=1` registers two
 // tools that must be dropped, through the same `server.registerTool` the real tools use, after
 // the gate has wrapped it.
 //
@@ -169,7 +169,7 @@ async function listToolNames(extraEnv) {
 // was sabotaged to the fail-open spelling and this whole file still passed.
 const CANARIES = ['gate_canary_write', 'gate_canary_unannotated'];
 
-const gated = await listToolNames({ POSTBOTE_MCP_GATE_CANARY: '1' });
+const gated = await listToolNames({ CURLEW_MCP_GATE_CANARY: '1' });
 for (const canary of CANARIES) {
   assert(!gated.includes(canary), `READ-ONLY GATE IS OPEN: ${canary} was served — ${gated.join(', ')}`);
 }
@@ -185,8 +185,8 @@ console.log(`OK: gate DROPS both canaries and setup_run (${gated.length} tools s
 // assertion above proved nothing. `setup_run` joins it: a mutating tool that appears ONLY when
 // writes are allowed is the same evidence on a tool that actually does something.
 const ungated = await listToolNames({
-  POSTBOTE_MCP_GATE_CANARY: '1',
-  POSTBOTE_MCP_ALLOW_WRITE: '1',
+  CURLEW_MCP_GATE_CANARY: '1',
+  CURLEW_MCP_ALLOW_WRITE: '1',
 });
 for (const canary of CANARIES) {
   assert(

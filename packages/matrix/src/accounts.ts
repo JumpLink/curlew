@@ -7,17 +7,19 @@
  * `@` and `:` and a server name of any length — nothing to put in a file name as it is.
  */
 
-import type { BackendAccount } from '@postbote/protocol';
-import { type SecretChange, SecretStore, stableId } from '@postbote/store';
+import type { BackendAccount } from '@curlew/protocol';
+import { type SecretChange, SecretStore, stableId } from '@curlew/store';
 import type { UndecryptableLedger } from './api.ts';
 import { existsSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ACCOUNT_ID = /^matrix-[0-9a-f]{14}$/;
 
-/** postbote's namespace in the account file: who this is and where. Public data only. */
+/** curlew's namespace in the account file: who this is and where. Public data only. */
+// Rename fallback: the key inside existing account files, read back as-is. Do not rebrand.
 export const ACCOUNT_NAMESPACE = 'postbote.account';
 /** The session: the access token. SECRET. */
+// Rename fallback: key inside existing files, do not rebrand.
 export const SESSION_NAMESPACE = 'postbote.matrix';
 
 export function accountIdFor(userId: string): string {
@@ -104,6 +106,7 @@ export function listAccounts(secretsDir: string): BackendAccount[] {
 }
 
 /** The account file's namespace for `UndecryptableLedger`: room id → JSON array of event ids. */
+// Rename fallback: key inside existing files, do not rebrand.
 export const UNDECRYPTABLE_NAMESPACE = 'postbote.undecryptable';
 
 /** The ledger of undecryptable messages, in the account file. One batched write per save. */

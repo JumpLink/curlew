@@ -17,7 +17,7 @@
  * worthless. Why there are two of them, and why the second is the one that matters, is on
  * `GATE_CANARY_TOOLS` below.
  *
- * Off unless `POSTBOTE_MCP_GATE_CANARY=1`, so it costs the shipped server nothing, and the
+ * Off unless `CURLEW_MCP_GATE_CANARY=1`, so it costs the shipped server nothing, and the
  * handlers are inert in any case: they perform no write, they only report having been
  * reachable. Enabling them can therefore never grant a capability — the worst case is two
  * tools that return an error string.
@@ -42,7 +42,7 @@ import { mcpError } from '@gjsify/mcp';
 export const GATE_CANARY_TOOLS = ['gate_canary_write', 'gate_canary_unannotated'] as const;
 
 export function registerGateCanary(server: McpServer): void {
-  if (process.env.POSTBOTE_MCP_GATE_CANARY !== '1') return;
+  if (process.env.CURLEW_MCP_GATE_CANARY !== '1') return;
 
   // Catches a gate that has stopped intercepting registration altogether.
   server.registerTool(

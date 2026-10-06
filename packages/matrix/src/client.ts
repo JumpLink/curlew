@@ -13,7 +13,7 @@
  * crypto store before any history is read. `close` saves it again after the loop has stopped.
  */
 
-import type { SecretStore } from '@postbote/store';
+import type { SecretStore } from '@curlew/store';
 import {
   IDBCursor,
   IDBCursorWithValue,
@@ -133,6 +133,8 @@ export function ensureIndexedDb(): IDBFactory {
 
 /** The IndexedDB name prefix of one account's crypto store. */
 export function cryptoStorePrefix(accountId: string): string {
+  // Rename fallback: this prefix names the IndexedDB stores inside EXISTING snapshots; changing it
+  // would orphan every account's crypto store. It stays `postbote-` — a format key, not a brand.
   return `postbote-${accountId}`;
 }
 

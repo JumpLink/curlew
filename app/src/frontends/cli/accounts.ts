@@ -1,5 +1,5 @@
 /**
- * `postbote accounts` — the configured GNOME Online Accounts, a backend's own accounts, and the
+ * `curlew accounts` — the configured GNOME Online Accounts, a backend's own accounts, and the
  * interactive login for backends that keep their own (Telegram).
  *
  * The account ids printed here are the join key for every other command: `--account`.

@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { sendMessage, SmtpError, verifyAccount } from '@postbote/smtp';
-import type { OutgoingMessage, SmtpAccount } from '@postbote/smtp';
+import { sendMessage, SmtpError, verifyAccount } from '@curlew/smtp';
+import type { OutgoingMessage, SmtpAccount } from '@curlew/smtp';
 
 import { startDummyServer } from './dummy-server.ts';
 import type { DummyOptions } from './dummy-server.ts';
@@ -191,7 +191,7 @@ export default async () => {
 
   // TLS and STARTTLS against a real TLS server need gjsify#2071 (peer verification after the
   // handshake, and the socket under a TLS connection), which is not released. Nothing here may be
-  // faked in postbote, so the cases wait for the release; see packages/smtp/README.md.
+  // faked in curlew, so the cases wait for the release; see packages/smtp/README.md.
   await describe('TLS (waits for gjsify#2071)', async () => {
     await it.skip('connects with security tls to a server with a self-signed certificate and tls.ca', async () => {});
     await it.skip('upgrades with security starttls, and fails with tls when the upgrade is refused', async () => {});

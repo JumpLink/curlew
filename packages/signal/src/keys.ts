@@ -9,7 +9,7 @@
  * A device needs, per identity: a signed EC pre-key and a signed last-resort Kyber pre-key (sent
  * with the link request), and batches of one-time EC and Kyber pre-keys (sent right after). A
  * sender uses one of each to start a session; when the one-time keys run out, the last-resort
- * Kyber key and no EC one-time key still work. postbote uploads one batch at link time and does
+ * Kyber key and no EC one-time key still work. curlew uploads one batch at link time and does
  * not top it up — refilling is a write it keeps to the minimum (see `guard.ts`).
  */
 

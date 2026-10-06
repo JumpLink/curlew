@@ -7,7 +7,7 @@
  * not `derived` like the rest of the index.
  *
  * Driven entirely through the `DeliveryBackend` port, so it runs on Node against a fake backend
- * and `:memory:`. It never names a network. The same function serves `postbote sync` (mode
+ * and `:memory:`. It never names a network. The same function serves `curlew sync` (mode
  * `catch-up`: receive the backlog, then stop) and a later daemon (mode `follow`: keep going).
  *
  * The rows are the chat tables `syncChats` writes (`conversation_messages`, `chat_peers`,
@@ -31,7 +31,7 @@ import type {
   DeliveryOutcome,
   DeliverySession,
   ParticipantAddress,
-} from '@postbote/protocol';
+} from '@curlew/protocol';
 import { chatConversationId, classifyChatMessage } from './chat-sync.ts';
 import type { IndexDatabase } from './db.ts';
 import { insertMany, placeholders, type SqlValue, withTransaction } from './db.ts';

@@ -1,18 +1,18 @@
 /**
- * The unit text `postbote setup` writes, and the file it must not drift from.
+ * The unit text `curlew setup` writes, and the file it must not drift from.
  *
- * A built postbote cannot read `contrib/systemd/postbote-daemon.service` at run time — it is a
+ * A built curlew cannot read `contrib/systemd/curlew-daemon.service` at run time — it is a
  * single-file bundle — so the unit text is a TypeScript constant with this machine's paths filled
  * in. The cost of that is a second copy, and this test is the tax: fed the shipped file's own
- * `%h/postbote` placeholders, `renderUnit` must reproduce its directives EXACTLY.
+ * `%h/curlew` placeholders, `renderUnit` must reproduce its directives EXACTLY.
  *
  * The allowed substitutions are therefore exactly these, and the test defines them by
  * construction:
  *
- *   WorkingDirectory={{HOME}}            → %h/postbote          (a checkout at ~/postbote)
+ *   WorkingDirectory={{HOME}}            → %h/curlew          (a checkout at ~/curlew)
  *   Environment=PATH={{PATH}}            → %h/.local/bin:/usr/local/bin:/usr/bin:/bin
  *   ExecStart=/usr/bin/env {{RUNNER}} {{ARGS}}
- *                                       → gjsify run %h/postbote/app/dist/postbote.gjs.mjs daemon
+ *                                       → gjsify run %h/curlew/app/dist/curlew.gjs.mjs daemon
  *
  * Everything else — every other directive, every key, the section order, the `[Unit]` /
  * `[Service]` / `[Install]` split — must match character for character.
@@ -61,9 +61,9 @@ export default async function setupUnit(): Promise<void> {
     it('reproduces the shipped unit when fed the shipped placeholders', () => {
       const rendered = renderUnit({
         home: '%h',
-        workdir: '%h/postbote',
+        workdir: '%h/curlew',
         runner: 'gjsify',
-        args: 'run %h/postbote/app/dist/postbote.gjs.mjs daemon',
+        args: 'run %h/curlew/app/dist/curlew.gjs.mjs daemon',
       });
       // A diff here is the whole point: a directive added to one file and not the other.
       expect(unitDirectives(rendered).join('\n')).toBe(unitDirectives(shippedUnit()).join('\n'));
@@ -73,17 +73,17 @@ export default async function setupUnit(): Promise<void> {
       const placeholder = unitDirectives(
         renderUnit({
           home: '%h',
-          workdir: '%h/postbote',
+          workdir: '%h/curlew',
           runner: 'gjsify',
-          args: 'run %h/postbote/app/dist/postbote.gjs.mjs daemon',
+          args: 'run %h/curlew/app/dist/curlew.gjs.mjs daemon',
         }),
       );
       const real = unitDirectives(
         renderUnit({
           home: '/home/anna',
-          workdir: '/srv/postbote',
+          workdir: '/srv/curlew',
           runner: '/opt/bin/gjsify',
-          args: 'run /srv/postbote/app/dist/postbote.gjs.mjs daemon',
+          args: 'run /srv/curlew/app/dist/curlew.gjs.mjs daemon',
         }),
       );
       expect(real.length).toBe(placeholder.length);
@@ -91,9 +91,9 @@ export default async function setupUnit(): Promise<void> {
       expect(changed.length).toBe(3);
       expect(changed.join('\n')).toBe(
         [
-          'WorkingDirectory=/srv/postbote',
+          'WorkingDirectory=/srv/curlew',
           'Environment=PATH=/opt/bin:/usr/local/bin:/usr/bin:/bin',
-          'ExecStart=/usr/bin/env /opt/bin/gjsify run /srv/postbote/app/dist/postbote.gjs.mjs daemon',
+          'ExecStart=/usr/bin/env /opt/bin/gjsify run /srv/curlew/app/dist/curlew.gjs.mjs daemon',
         ].join('\n'),
       );
     });
@@ -101,13 +101,13 @@ export default async function setupUnit(): Promise<void> {
     it('writes the bundle path as an absolute one, not a guess', () => {
       const text = renderUnit({
         home: '/home/anna',
-        workdir: '/home/anna/postbote',
+        workdir: '/home/anna/curlew',
         runner: '/home/anna/.local/bin/gjsify',
-        args: 'run /home/anna/postbote/app/dist/postbote.gjs.mjs daemon',
+        args: 'run /home/anna/curlew/app/dist/curlew.gjs.mjs daemon',
       });
       expect(
         text.includes(
-          'ExecStart=/usr/bin/env /home/anna/.local/bin/gjsify run /home/anna/postbote/app/dist/postbote.gjs.mjs daemon',
+          'ExecStart=/usr/bin/env /home/anna/.local/bin/gjsify run /home/anna/curlew/app/dist/curlew.gjs.mjs daemon',
         ),
       ).toBe(true);
     });
@@ -120,21 +120,21 @@ export default async function setupUnit(): Promise<void> {
         gjsify: null,
         bundle: null,
       });
-      expect(paths.runner).toBe('postbote');
+      expect(paths.runner).toBe('curlew');
       expect(paths.args).toBe('daemon');
-      expect(renderUnit(paths).includes('ExecStart=/usr/bin/env postbote daemon')).toBe(true);
+      expect(renderUnit(paths).includes('ExecStart=/usr/bin/env curlew daemon')).toBe(true);
     });
 
     it('falls back to the plain command when a checkout has no gjsify or no bundle', () => {
       // Readiness fails on that machine; the unit must still be writable and runnable.
       expect(
-        unitPathsFor({ mode: 'checkout', home: '/h', checkout: '/h/postbote', gjsify: null, bundle: '/b' })
+        unitPathsFor({ mode: 'checkout', home: '/h', checkout: '/h/curlew', gjsify: null, bundle: '/b' })
           .runner,
-      ).toBe('postbote');
+      ).toBe('curlew');
       expect(
-        unitPathsFor({ mode: 'checkout', home: '/h', checkout: '/h/postbote', gjsify: '/g', bundle: null })
+        unitPathsFor({ mode: 'checkout', home: '/h', checkout: '/h/curlew', gjsify: '/g', bundle: null })
           .runner,
-      ).toBe('postbote');
+      ).toBe('curlew');
     });
 
     it('gives a user unit a PATH that can find the runner', () => {
@@ -151,9 +151,9 @@ export default async function setupUnit(): Promise<void> {
     });
 
     it('names one unit everywhere', () => {
-      expect(UNIT_NAME).toBe('postbote-daemon.service');
+      expect(UNIT_NAME).toBe('curlew-daemon.service');
       expect(unitFilePath('/home/anna/.config/systemd/user')).toBe(
-        '/home/anna/.config/systemd/user/postbote-daemon.service',
+        '/home/anna/.config/systemd/user/curlew-daemon.service',
       );
     });
   });
@@ -163,9 +163,9 @@ function UNIT_TEMPLATE_LINES(): string[] {
   return unitDirectives(
     renderUnit({
       home: '%h',
-      workdir: '%h/postbote',
+      workdir: '%h/curlew',
       runner: 'gjsify',
-      args: 'run %h/postbote/app/dist/postbote.gjs.mjs daemon',
+      args: 'run %h/curlew/app/dist/curlew.gjs.mjs daemon',
     }),
   );
 }

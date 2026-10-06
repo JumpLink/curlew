@@ -2,7 +2,7 @@
  * Index tools — searching the local index offline, and reporting its freshness.
  *
  * `mail_sync_status` is read-only. Building the index is NOT exposed as a tool: it is a
- * long-running network operation the user should start deliberately (`postbote sync`), and a
+ * long-running network operation the user should start deliberately (`curlew sync`), and a
  * write besides.
  */
 
@@ -19,7 +19,7 @@ export function registerIndexTools(server: McpServer): void {
     {
       title: 'Local Index Status',
       description:
-        'Report what the local full-text index holds (accounts, mailboxes, message count) and how fresh it is, including which mailboxes are stale. Check this before relying on mail_search_local — an empty or stale index means results are incomplete, and the user needs to run `postbote sync`.',
+        'Report what the local full-text index holds (accounts, mailboxes, message count) and how fresh it is, including which mailboxes are stale. Check this before relying on mail_search_local — an empty or stale index means results are incomplete, and the user needs to run `curlew sync`.',
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     async () => {
@@ -36,7 +36,7 @@ export function registerIndexTools(server: McpServer): void {
     {
       title: 'Search the Local Index (offline)',
       description:
-        'Search the local full-text index instead of contacting the mail servers. Much faster than mail_search and works offline, but only covers what `postbote sync` has indexed — always check mail_sync_status first, and fall back to mail_search when the index is empty or stale. Full-text covers subject, sender, recipients AND message bodies; diacritics are folded, so "marz" finds "März".',
+        'Search the local full-text index instead of contacting the mail servers. Much faster than mail_search and works offline, but only covers what `curlew sync` has indexed — always check mail_sync_status first, and fall back to mail_search when the index is empty or stale. Full-text covers subject, sender, recipients AND message bodies; diacritics are folded, so "marz" finds "März".',
       inputSchema: {
         query: z.string().optional().describe('Full text across subject, sender, recipients and body'),
         from: z.string().optional().describe('Sender contains (substring, not full text)'),

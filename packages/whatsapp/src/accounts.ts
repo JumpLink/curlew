@@ -1,7 +1,7 @@
 /**
  * WhatsApp accounts are session files: one `<account id>.db` per linked device in the backend's
  * secrets directory, holding Baileys' auth state. There is no other registry — an account
- * exists exactly as long as its session does. `postbote accounts add whatsapp` creates one;
+ * exists exactly as long as its session does. `curlew accounts add whatsapp` creates one;
  * unlinking the device on the phone ends it (the next sync reports the logout).
  *
  * The account id is the account's LID — WhatsApp's privacy id, stable across re-linking and
@@ -9,8 +9,8 @@
  * re-linked device continues the same conversations.
  */
 
-import type { BackendAccount } from '@postbote/protocol';
-import { SecretStore } from '@postbote/store';
+import type { BackendAccount } from '@curlew/protocol';
+import { SecretStore } from '@curlew/store';
 import { existsSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { ACCOUNT_NAMESPACE } from './auth-state.ts';

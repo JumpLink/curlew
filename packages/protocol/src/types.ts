@@ -76,7 +76,7 @@ export interface CalendarEventDTO {
  *
  * The password is a THUNK, not a value: it is fetched from GOA at connect time and never
  * cached, logged, or carried in a DTO. Keeping it behind a call also keeps `Goa.Object` inside
- * @postbote/gnome — the IMAP layer consumes this interface and never imports the GOA typelib.
+ * @curlew/gnome — the IMAP layer consumes this interface and never imports the GOA typelib.
  */
 export interface MailTarget {
   /** GOA account id — provenance, and the key callers pass back in. */

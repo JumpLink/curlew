@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { decodeMutf7, encodeMutf7 } from '@postbote/protocol';
+import { decodeMutf7, encodeMutf7 } from '@curlew/protocol';
 
 // The two Chinese/Japanese vectors are RFC 3501 §5.1.3's own examples; the German ones are the
 // mailboxes that were actually broken before this existed — `SELECT` got a raw UTF-8 name and

@@ -303,15 +303,15 @@ function applyStep(db: IndexDatabase, step: UpgradeStep): void {
   db.exec(`ALTER TABLE ${step.table} ADD COLUMN ${step.column} ${step.type}`);
 }
 
-/** Thrown when the index was written by a newer postbote than the one opening it. */
+/** Thrown when the index was written by a newer curlew than the one opening it. */
 export class IndexTooNewError extends Error {
   readonly found: number;
   readonly supported: number;
 
   constructor(found: number, supported: number) {
     super(
-      `the index is schema version ${found}, but this postbote only knows up to ${supported} — ` +
-        'update postbote (or point POSTBOTE_DB_PATH at another index); the index was left untouched',
+      `the index is schema version ${found}, but this curlew only knows up to ${supported} — ` +
+        'update curlew (or point CURLEW_DB_PATH at another index); the index was left untouched',
     );
     this.name = 'IndexTooNewError';
     this.found = found;
@@ -335,7 +335,7 @@ function readVersion(db: IndexDatabase): number {
 /**
  * Create or upgrade the schema. Safe to call on every open.
  *
- * Refuses an index from a NEWER postbote and leaves it untouched: writing our own, lower
+ * Refuses an index from a NEWER curlew and leaves it untouched: writing our own, lower
  * version into it would make the newer binary replay its upgrades on the next open.
  */
 export function migrate(db: IndexDatabase): void {

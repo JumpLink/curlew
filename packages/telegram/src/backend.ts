@@ -9,8 +9,8 @@ import type {
   BackendContext,
   ChatBackend,
   ChatSession,
-} from '@postbote/protocol';
-import { SecretStore } from '@postbote/store';
+} from '@curlew/protocol';
+import { SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
 import type { LoginPrompts, TelegramApi, TelegramClientHandle } from './api.ts';
 import { listSessionAccounts, sessionPath } from './accounts.ts';
@@ -21,7 +21,7 @@ import { TELEGRAM_MANIFEST } from './manifest.ts';
 import { TelegramChatSession } from './session.ts';
 import { SecretStoreStorage } from './storage.ts';
 
-export const RELOGIN_HINT = 'log in again with `postbote accounts add telegram`';
+export const RELOGIN_HINT = 'log in again with `curlew accounts add telegram`';
 
 /** The client, plus closing the session file once mtcute has saved into it. */
 function withStoreClose(client: TelegramClientHandle, store: SecretStore): TelegramApi {

@@ -3,8 +3,8 @@ import { mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { type BackendManifest, type MessageBackend } from '@postbote/protocol';
-import { MAIL_MANIFEST } from '@postbote/imap';
+import { type BackendManifest, type MessageBackend } from '@curlew/protocol';
+import { MAIL_MANIFEST } from '@curlew/imap';
 import { BUILTIN_PLUGINS } from '../../../src/core/backends/builtin.ts';
 import { BackendRegistry, type BackendPlugin } from '../../../src/core/backends/registry.ts';
 import { conversationsClassify } from '../../../src/core/actions/conversations.ts';
@@ -31,7 +31,7 @@ function plugin(name: string, manifest: Partial<BackendManifest> = {}): BackendP
 }
 
 function tempConfigPath(): { dir: string; path: string } {
-  const dir = mkdtempSync(join(tmpdir(), 'postbote-config-'));
+  const dir = mkdtempSync(join(tmpdir(), 'curlew-config-'));
   return { dir, path: join(dir, 'nested', 'config.json') };
 }
 
@@ -109,7 +109,7 @@ export default async () => {
 
     await it('cannot be constructed while disabled — the gate holds for create() too', async () => {
       const registry = new BackendRegistry(BUILTIN_PLUGINS);
-      const context = { settings: {}, env: {}, secretsDir: join(tmpdir(), 'postbote-never-created') };
+      const context = { settings: {}, env: {}, secretsDir: join(tmpdir(), 'curlew-never-created') };
       expect(() => registry.create(defaultConfig(), 'telegram', context)).toThrow(/not enabled/);
       const enabled = registry.enable(defaultConfig(), 'telegram', { acceptTerms: true }).config;
       expect(registry.create(enabled, 'telegram', context).kind).toBe('chat');

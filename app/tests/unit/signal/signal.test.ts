@@ -13,8 +13,8 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import type { AccountPrompter, DeliveryEvent, SetAsideRecord } from '@postbote/protocol';
-import { isDeliveryBackend, validateManifest } from '@postbote/protocol';
+import type { AccountPrompter, DeliveryEvent, SetAsideRecord } from '@curlew/protocol';
+import { isDeliveryBackend, validateManifest } from '@curlew/protocol';
 import {
   chatConversationId,
   getConversation,
@@ -22,7 +22,7 @@ import {
   rebuildConversations,
   receiveDeliveries,
   SecretStore,
-} from '@postbote/store';
+} from '@curlew/store';
 import {
   accountIdFor,
   attachmentUrl,
@@ -79,7 +79,7 @@ import {
   toBase64,
   unpadPlaintext,
   uuidToBytes,
-} from '@postbote/signal';
+} from '@curlew/signal';
 import * as Signal from '@signalapp/libsignal-client';
 
 import { builtinRegistry } from '../../../src/core/backends/builtin.ts';
@@ -116,7 +116,7 @@ import {
  *
  */
 
-// The Node run loads libsignal's prebuilt addon from `node_modules`, with no `POSTBOTE_CLI_PREBUILD`
+// The Node run loads libsignal's prebuilt addon from `node_modules`, with no `CURLEW_CLI_PREBUILD`
 // to point it anywhere. It used to need one: gjsify's `--app node` target bundled the addon
 // package, so `node-gyp-build` searched the BUNDLE's directory for it and honoured
 // `<PACKAGE>_PREBUILD` for that directory (gjsify#1842 keeps native addons external now). The
@@ -128,7 +128,7 @@ const encode = (text: string): Uint8Array<ArrayBuffer> => new TextEncoder().enco
 const decode = (bytes: Uint8Array): string => new TextDecoder().decode(bytes);
 
 function tempDir(): string {
-  return mkdtempSync(join(tmpdir(), 'postbote-signal-'));
+  return mkdtempSync(join(tmpdir(), 'curlew-signal-'));
 }
 
 function prompter(): AccountPrompter & { notes: string[] } {
@@ -161,7 +161,7 @@ async function until(what: string, ready: () => boolean, ticks = 2_000): Promise
   if (!ready()) throw new Error(`gave up after ${ticks} macrotasks waiting for ${what}`);
 }
 
-/** Link postbote's device through the scripted phone. */
+/** Link curlew's device through the scripted phone. */
 async function link(dir: string, phone = new Phone()): Promise<Phone> {
   await new SignalBackend(context(dir), { lib: LIB, linkNetwork: () => phone.network() }).addAccount(
     prompter(),
@@ -174,7 +174,7 @@ function openStore(dir: string): { file: SecretStore; store: SignalProtocolStore
   return { file, store: SignalProtocolStore.open(LIB, file) };
 }
 
-/** Start sessions from each party to postbote's device, from the session file, then close it. */
+/** Start sessions from each party to curlew's device, from the session file, then close it. */
 async function introduceAll(dir: string, ...parties: Party[]): Promise<void> {
   const { file, store } = openStore(dir);
   try {
@@ -235,7 +235,7 @@ export default async () => {
     });
 
     await it('reads only a device name from the config', async () => {
-      expect(parseSettings({}).deviceName).toBe('postbote');
+      expect(parseSettings({}).deviceName).toBe('curlew');
       expect(parseSettings({ deviceName: 'Laptop' }).deviceName).toBe('Laptop');
       let message = '';
       try {
@@ -396,7 +396,7 @@ export default async () => {
 
     await it("encrypts the device name so only the account's identity key reads it", async () => {
       const identity = Signal.PrivateKey.generate();
-      const encrypted = encryptDeviceName(LIB, 'postbote', identity.getPublicKey());
+      const encrypted = encryptDeviceName(LIB, 'curlew', identity.getPublicKey());
       const wire = decodeDeviceName(encodeDeviceName(encrypted));
       expect(
         decryptDeviceName(
@@ -408,8 +408,8 @@ export default async () => {
           },
           identity,
         ),
-      ).toBe('postbote');
-      expect(decode(encrypted.ciphertext) === 'postbote').toBe(false);
+      ).toBe('curlew');
+      expect(decode(encrypted.ciphertext) === 'curlew').toBe(false);
     });
 
     await it('decrypts an attachment, checks MAC and digest, and cuts the padding', async () => {
@@ -480,7 +480,7 @@ export default async () => {
       const { mkdtempSync, readFileSync, rmSync } = await import('node:fs');
       const { tmpdir } = await import('node:os');
       const { join } = await import('node:path');
-      const dir = mkdtempSync(join(tmpdir(), 'postbote-signal-ca-'));
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-signal-ca-'));
       // Every accepted socket is tracked and destroyed by hand: `server.close()` stops the
       // listener but does not end connections already open, and one of those keeps the whole GJS
       // run alive at exit — the same class of bug the suite's bus-pinning documents for a live
@@ -826,7 +826,7 @@ export default async () => {
     // request cannot stand in for it (ChatHeaders::iter_headers, rust/net/src/chat.rs). Asserting
     // only "the upload happened" would pass for the same unauthenticated connection that got 401.
     // The provisioning message carries the phone-number identity's SERVICE ID (field 18) next to
-    // its key (field 12). postbote kept the key and dropped the id, so nothing in the account file
+    // its key (field 12). curlew kept the key and dropped the id, so nothing in the account file
     // says which PNI is ours. Measured consequence, not a theory: a self-note whose
     // `sentMessage.destinationServiceId` names the PNI is read as an ACI (`isAci` only rejects the
     // `PNI:` tag, and the legacy string field 7 carries a bare uuid), so the user's OWN number is
@@ -1016,7 +1016,7 @@ export default async () => {
       const entry = (n: number): SetAsideEntry => ({
         senderAci: ALICE_ACI,
         sentAt: new Date(n).toISOString(),
-        reason: `field(s) ${n} this postbote does not know`,
+        reason: `field(s) ${n} this curlew does not know`,
         plaintext: 'AAAA',
       });
       try {
@@ -1073,21 +1073,21 @@ export default async () => {
         store.setAside({
           senderAci: ALICE_ACI,
           sentAt: new Date(3).toISOString(),
-          reason: 'content field(s) 99 this postbote does not know',
+          reason: 'content field(s) 99 this curlew does not know',
           plaintext,
         });
         store.flush();
       } finally {
         file.close();
       }
-      // The ledger is postbote's own JSON, so reading it needs no libsignal: a diagnosis is
+      // The ledger is curlew's own JSON, so reading it needs no libsignal: a diagnosis is
       // exactly what someone wants where the native addon does not load.
       const backend = new SignalBackend(context(dir));
       const ledger = await backend.setAsideLedger(ACCOUNT);
       expect(ledger.entries.length).toBe(1);
       expect(ledger.entries[0].sender).toBe(ALICE_ACI);
       expect(ledger.entries[0].sentAt).toBe(new Date(3).toISOString());
-      expect(ledger.entries[0].reason).toBe('content field(s) 99 this postbote does not know');
+      expect(ledger.entries[0].reason).toBe('content field(s) 99 this curlew does not know');
       expect(ledger.entries[0].bytes).toBe(4);
       expect(ledger.dropped).toBe(0);
       // The message itself is not in the answer, and cannot be: the ACI and the time are what
@@ -1110,7 +1110,7 @@ export default async () => {
       const good = {
         senderAci: ALICE_ACI,
         sentAt,
-        reason: 'content field(s) 9 this postbote does not know',
+        reason: 'content field(s) 9 this curlew does not know',
         plaintext: toBase64(new Uint8Array([9, 9])),
       };
       const cases: Array<{ name: string; ledger: string; entries: SetAsideRecord[]; dropped: number }> = [
@@ -1178,7 +1178,7 @@ export default async () => {
         store.setAside({
           senderAci: ALICE_ACI,
           sentAt: shown,
-          reason: 'content field(s) 6 this postbote does not know',
+          reason: 'content field(s) 6 this curlew does not know',
           plaintext: 'AAAA',
         });
         store.flush();
@@ -1197,7 +1197,7 @@ export default async () => {
           {
             sender: ALICE_ACI,
             sentAt: shown,
-            reason: 'content field(s) 6 this postbote does not know',
+            reason: 'content field(s) 6 this curlew does not know',
             bytes: 3,
           },
         ],
@@ -1617,7 +1617,7 @@ export default async () => {
 
     // An envelope this device cannot read is ACKNOWLEDGED unread: the ack is pushed in `drain()`
     // whatever `process()` did, so the server is told "I have it" and never redelivers. That makes
-    // every skip a silent loss, and `postbote sync` reporting `added: 0, error: null` could not
+    // every skip a silent loss, and `curlew sync` reporting `added: 0, error: null` could not
     // tell "nothing arrived" from "it arrived and was dropped". The skip reason was computed at
     // five places in `decrypt.ts` and read nowhere. These tests pin that it is now counted, and
     // that a loss is said out loud while protocol noise is not (ADR 0003: loudness follows
@@ -1782,7 +1782,7 @@ export default async () => {
         server.push(
           // Not protobuf at all: the plaintext does not even parse.
           await directEnvelopeBytes(alice, padPlaintext(new Uint8Array([0xff, 0xff, 0xff, 0xff])), 7000),
-          // A field a newer Signal added, and nothing this postbote can show.
+          // A field a newer Signal added, and nothing this curlew can show.
           await directEnvelopeBytes(alice, padPlaintext(new ProtoWriter().uint(99, 7).finish()), 7001),
           // The same, one level down, inside the data message.
           await directEnvelopeBytes(

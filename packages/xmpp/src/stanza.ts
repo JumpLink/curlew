@@ -2,7 +2,7 @@
 // oxlint-disable-next-line typescript/triple-slash-reference
 /// <reference path="./xmpp-js.d.ts" />
 /**
- * The XMPP grammar postbote reads — parsers and request builders, pure.
+ * The XMPP grammar curlew reads — parsers and request builders, pure.
  *
  * Parsers take a structural `XmlElement`, which xmpp.js's (ltx) elements satisfy and which a
  * test gets by parsing a synthetic stanza. Builders return xmpp.js elements. No socket code here:

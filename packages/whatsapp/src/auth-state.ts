@@ -1,5 +1,5 @@
 /**
- * Baileys' auth state on postbote's `SecretStore`: the session file of one WhatsApp account.
+ * Baileys' auth state on curlew's `SecretStore`: the session file of one WhatsApp account.
  *
  * What it holds is everything this linked device is: the identity and noise keys, the signed
  * pre-key, the registration id (`creds`), and the Signal protocol state Baileys keeps per
@@ -7,7 +7,7 @@
  * mapping). Whoever holds the file can read the account's incoming messages — it is SECRET:
  * never logged, never in a DTO or MCP output, 0600 in a 0700 directory outside the repository.
  *
- * Baileys ships `useMultiFileAuthState` (one JSON file per key); postbote keeps one SQLite file
+ * Baileys ships `useMultiFileAuthState` (one JSON file per key); curlew keeps one SQLite file
  * per account instead, like the Telegram session. Values are TEXT — Baileys' own `BufferJSON`
  * encoding, which writes bytes as base64 — because the libgda-backed `node:sqlite` cannot carry
  * a BLOB (see packages/store/AGENTS.md).
@@ -20,7 +20,7 @@
  * delay — and a lost ratchet step is what Signal's retry receipts exist to repair.
  */
 
-import type { SecretChange, SecretStore } from '@postbote/store';
+import type { SecretChange, SecretStore } from '@curlew/store';
 import { BufferJSON, initAuthCreds, proto } from 'baileys';
 import type { AuthenticationCreds, AuthenticationState, SignalDataSet, SignalDataTypeMap } from 'baileys';
 import type { LidLookup } from './jid.ts';
@@ -29,7 +29,8 @@ const CREDS_NAMESPACE = 'baileys.creds';
 const CREDS_KEY = 'creds';
 const KEY_NAMESPACE_PREFIX = 'baileys.key.';
 
-/** postbote's own namespace in the same file: which account this is, for `accounts list`. */
+/** curlew's own namespace in the same file: which account this is, for `accounts list`. */
+// Rename fallback: the key inside existing account files, read back as-is. Do not rebrand.
 export const ACCOUNT_NAMESPACE = 'postbote.account';
 
 type KeyType = keyof SignalDataTypeMap;

@@ -1,5 +1,5 @@
 /**
- * `postbote daemon` — the receiving daemon (ADR 0002).
+ * `curlew daemon` — the receiving daemon (ADR 0002).
  *
  * A delivery-only backend (Signal, WhatsApp) has no server archive: the network forgets a message
  * once this device acknowledged it, so what this process writes is the only copy there will ever
@@ -10,10 +10,10 @@
  *
  *   - receives from every ENABLED delivery-only backend, every account, `mode: 'follow'`, all at
  *     once (a follow session ends only when it is closed, so a queue would starve every account
- *     behind the first). Mail and chat backends stay on `postbote sync`: they are pull models
+ *     behind the first). Mail and chat backends stay on `curlew sync`: they are pull models
  *     with a cursor, and a daemon buys them nothing;
  *   - takes the receive lease per account, so a `sync` on the same account stands down — two
- *     devices on one account each acknowledge half the copy (`@postbote/store`);
+ *     devices on one account each acknowledge half the copy (`@curlew/store`);
  *   - reconnects a dropped session with backoff, and stops an account the network logged out;
  *   - rebuilds the conversations debounced, and once on stop, with the same address-book step
  *     `indexSync` uses;
@@ -27,13 +27,13 @@
  * was asked to stop did its job.
  */
 
-import { type MessageBackend, isChatBackend, isDeliveryBackend, isMailBackend } from '@postbote/protocol';
-import type { DeliveryProgress, DeliverySyncResult, IndexDatabase, RebuildResult } from '@postbote/store';
-import { receiveDeliveries } from '@postbote/store';
+import { type MessageBackend, isChatBackend, isDeliveryBackend, isMailBackend } from '@curlew/protocol';
+import type { DeliveryProgress, DeliverySyncResult, IndexDatabase, RebuildResult } from '@curlew/store';
+import { receiveDeliveries } from '@curlew/store';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig } from '../config.ts';
-import { configPath } from '@postbote/store';
+import { configPath } from '@curlew/store';
 import { openIndex, rebuildWithAddressBook } from './index-sync.ts';
 
 /** How long the conversations wait for the last written batch before they are rebuilt. */
@@ -122,39 +122,39 @@ function line(event: DeliveryProgress, log: (line: string) => void): void {
   const who = `${event.backend}/${event.accountId}`;
   switch (event.type) {
     case 'connected':
-      return log(`postbote-daemon: ${who} connected`);
+      return log(`curlew-daemon: ${who} connected`);
     case 'batch':
       return log(
-        `postbote-daemon: ${who} batch ${event.batches} written ` +
+        `curlew-daemon: ${who} batch ${event.batches} written ` +
           `(added ${event.added}, edited ${event.edited}, removed ${event.removed})`,
       );
     case 'reconnect':
       return log(
-        `postbote-daemon: ${who} reconnect in ${event.delayMs} ms (attempt ${event.attempt}` +
+        `curlew-daemon: ${who} reconnect in ${event.delayMs} ms (attempt ${event.attempt}` +
           `${event.reason ? `, ${event.reason}` : ''})`,
       );
     case 'logged-out':
       return log(
-        `postbote-daemon: ${who} logged out — link the device again${event.error ? ` (${event.error})` : ''}`,
+        `curlew-daemon: ${who} logged out — link the device again${event.error ? ` (${event.error})` : ''}`,
       );
     case 'lease-held':
-      return log(`postbote-daemon: ${who} is held by ${event.holder} — not receiving it here`);
+      return log(`curlew-daemon: ${who} is held by ${event.holder} — not receiving it here`);
     case 'lease-busy':
       return log(
-        `postbote-daemon: ${who} could not take its receive lease (the index is busy) — not receiving it here`,
+        `curlew-daemon: ${who} could not take its receive lease (the index is busy) — not receiving it here`,
       );
     case 'lease-waiting':
       return log(
-        `postbote-daemon: ${who} is held by ${event.holder ?? 'another process'} — waiting for the lease`,
+        `curlew-daemon: ${who} is held by ${event.holder ?? 'another process'} — waiting for the lease`,
       );
     case 'lease-lost':
-      return log(`postbote-daemon: ${who} lost the receive lease — stopping that account`);
+      return log(`curlew-daemon: ${who} lost the receive lease — stopping that account`);
     case 'lease-unrefreshable':
       return log(
-        `postbote-daemon: ${who} could not refresh its receive lease (the index is busy) — stopping that account and taking it back`,
+        `curlew-daemon: ${who} could not refresh its receive lease (the index is busy) — stopping that account and taking it back`,
       );
     case 'stopped':
-      return log(`postbote-daemon: ${who} stopped (${event.reason})`);
+      return log(`curlew-daemon: ${who} stopped (${event.reason})`);
   }
 }
 
@@ -170,10 +170,10 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   const backends = (params.backends ?? deliveryBackends(config)).filter((backend) => {
     if (isDeliveryBackend(backend)) return true;
     // A mail or chat backend here would be a mistake in the caller, not a runtime condition to
-    // discover after it connected: those models belong on `postbote sync`.
+    // discover after it connected: those models belong on `curlew sync`.
     if (isMailBackend(backend) || isChatBackend(backend)) {
       log(
-        `postbote-daemon: skipping ${backend.manifest.name} — a ${backend.manifest.syncModel} backend is served by \`postbote sync\``,
+        `curlew-daemon: skipping ${backend.manifest.name} — a ${backend.manifest.syncModel} backend is served by \`curlew sync\``,
       );
       return false;
     }
@@ -181,7 +181,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   });
   if (backends.length === 0) {
     throw new Error(
-      'no delivery-only backend is enabled — `postbote backends list` shows them; the daemon receives Signal and WhatsApp, `postbote sync` stays for mail and chat',
+      'no delivery-only backend is enabled — `curlew backends list` shows them; the daemon receives Signal and WhatsApp, `curlew sync` stays for mail and chat',
     );
   }
 
@@ -208,7 +208,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     dirty = false;
     conversations = await rebuild(db);
     log(
-      `postbote-daemon: conversations rebuilt (${conversations.conversations} conversations, ` +
+      `curlew-daemon: conversations rebuilt (${conversations.conversations} conversations, ` +
         `${conversations.participants} participants)`,
     );
   };
@@ -226,7 +226,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     timer = setTimeout(() => {
       timer = null;
       void rebuildNow().catch((err: unknown) =>
-        log(`postbote-daemon: the conversations could not be rebuilt: ${errText(err)}`),
+        log(`curlew-daemon: the conversations could not be rebuilt: ${errText(err)}`),
       );
     }, debounce);
   };
@@ -234,7 +234,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   const signal = params.signal ?? new AbortController().signal;
   try {
     log(
-      `postbote-daemon: receiving from ${backends.map((b) => b.manifest.name).join(', ')} ` +
+      `curlew-daemon: receiving from ${backends.map((b) => b.manifest.name).join(', ')} ` +
         `(${params.accountId ?? 'every account'}) — stop with SIGTERM`,
     );
     const results = await Promise.all(
@@ -275,7 +275,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     );
     const errors = accounts.filter((a) => a.error !== null).length;
     log(
-      `postbote-daemon: stopped — ${accounts.length} account(s), ${accounts.reduce((n, a) => n + a.added, 0)} message(s) received, ${errors} error(s)`,
+      `curlew-daemon: stopped — ${accounts.length} account(s), ${accounts.reduce((n, a) => n + a.added, 0)} message(s) received, ${errors} error(s)`,
     );
     return {
       backends: backends.map((b) => b.manifest.name),

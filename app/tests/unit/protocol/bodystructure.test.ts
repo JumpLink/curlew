@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { attachmentParts, pickBodyPart, tokenizeImapList, walkBodyStructure } from '@postbote/protocol';
+import { attachmentParts, pickBodyPart, tokenizeImapList, walkBodyStructure } from '@curlew/protocol';
 
 /** Tokenize a bare BODYSTRUCTURE literal into the nested list the walker consumes. */
 function parse(structure: string) {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { searchIndex, type SyncProgress, syncIndex, syncStatus } from '@postbote/store';
+import { searchIndex, type SyncProgress, syncIndex, syncStatus } from '@curlew/store';
 import { AT, FakeBackend, folder, freshDb, message } from './fixtures.ts';
 
 /**
@@ -25,7 +25,7 @@ export default async () => {
       }
     });
 
-    // `postbote sync` printed nothing for minutes while it worked, and a CLI that shows nothing
+    // `curlew sync` printed nothing for minutes while it worked, and a CLI that shows nothing
     // for minutes cannot be told from one that has hung. The facts already exist at three
     // moments; this pins that they are reported, and that nothing else is: a progress line is a
     // log line, so it carries counts and never another person's words (ADR 0002 §6).

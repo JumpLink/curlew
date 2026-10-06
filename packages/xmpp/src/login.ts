@@ -1,5 +1,5 @@
 /**
- * `postbote accounts add xmpp` — the interactive login, as a function the CLI calls with its
+ * `curlew accounts add xmpp` — the interactive login, as a function the CLI calls with its
  * terminal prompts.
  *
  * Asks for the JID, the password and (optionally) the server address, logs in once to prove all
@@ -9,7 +9,7 @@
  * Nothing secret is returned or printed: the result is the account id and the JID.
  */
 
-import type { BackendAccount, BackendContext } from '@postbote/protocol';
+import type { BackendAccount, BackendContext } from '@curlew/protocol';
 import { caFileSetting, normalizeJid, refuseConfigSecrets, writeLogin } from './accounts.ts';
 import type { LoginPrompts } from './api.ts';
 import { requireArchive } from './archive.ts';

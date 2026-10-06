@@ -4,19 +4,20 @@
  * and the server address the user gave. An account exists exactly as long as its file does.
  *
  * The password is kept because a reader that syncs without a daemon logs in on every run and
- * XMPP has no session token postbote could keep instead (FAST, XEP-0484, would be one; few
+ * XMPP has no session token curlew could keep instead (FAST, XEP-0484, would be one; few
  * servers offer it). It never leaves this file: not into the config (plain `state` in every
  * backup — a password there is refused), a log, an error message, a DTO or MCP output.
  */
 
-import type { BackendAccount, BackendContext } from '@postbote/protocol';
-import { normalizeAddress } from '@postbote/protocol';
-import { SecretStore, stableId } from '@postbote/store';
+import type { BackendAccount, BackendContext } from '@curlew/protocol';
+import { normalizeAddress } from '@curlew/protocol';
+import { SecretStore, stableId } from '@curlew/store';
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { XmppLogin } from './client.ts';
 
 const ACCOUNT_ID = /^xmpp-[0-9a-z]+$/;
+// Rename fallback: the key inside existing account files, read back as-is. Do not rebrand.
 const ACCOUNT_NAMESPACE = 'postbote.account';
 const LOGIN_NAMESPACE = 'xmpp.login';
 
@@ -57,14 +58,14 @@ export function writeLogin(secretsDir: string, login: XmppLogin): BackendAccount
 export function readLogin(secretsDir: string, accountId: string): XmppLogin {
   const path = accountPath(secretsDir, accountId);
   if (!existsSync(path))
-    throw new Error(`no XMPP account ${accountId} — add it with \`postbote accounts add xmpp\``);
+    throw new Error(`no XMPP account ${accountId} — add it with \`curlew accounts add xmpp\``);
   const store = SecretStore.open(path);
   try {
     const jid = store.get(LOGIN_NAMESPACE, 'jid');
     const password = store.get(LOGIN_NAMESPACE, 'password');
     if (!jid || password === null) {
       throw new Error(
-        `the XMPP account ${accountId} is incomplete — add it again with \`postbote accounts add xmpp\``,
+        `the XMPP account ${accountId} is incomplete — add it again with \`curlew accounts add xmpp\``,
       );
     }
     return { jid, password, service: store.get(LOGIN_NAMESPACE, 'service') };
@@ -94,7 +95,7 @@ export function refuseConfigSecrets(settings: BackendContext['settings']): void 
   if ('password' in settings) {
     throw new Error(
       'an XMPP password does not belong in the config file (it is backed up in the clear) — remove ' +
-        'backends.xmpp.settings.password; `postbote accounts add xmpp` keeps it in a 0600 file',
+        'backends.xmpp.settings.password; `curlew accounts add xmpp` keeps it in a 0600 file',
     );
   }
 }

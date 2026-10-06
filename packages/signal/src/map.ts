@@ -1,5 +1,5 @@
 /**
- * Decrypted Signal content → the network-neutral `DeliveryEvent`s of `@postbote/protocol`.
+ * Decrypted Signal content → the network-neutral `DeliveryEvent`s of `@curlew/protocol`.
  *
  * Pure: it reads the decoded messages (`schema.ts`) and a group-id function, so every rule here is
  * tested against synthetic content on both runtimes. The rules follow Signal-Desktop's
@@ -24,7 +24,7 @@
  * the index counts unread per chat, and a wrong guess would mark unseen messages read.
  */
 
-import type { ChatMessage, ChatPeer, DeliveryEvent } from '@postbote/protocol';
+import type { ChatMessage, ChatPeer, DeliveryEvent } from '@curlew/protocol';
 import {
   type AttachmentPointer,
   type Content,
@@ -269,7 +269,7 @@ export class SignalMapper {
       return;
     }
     if (data.adminDelete) {
-      // An admin removing someone else's message needs the group's roles to check; postbote has
+      // An admin removing someone else's message needs the group's roles to check; curlew has
       // none, so only a delete of the sender's own message is taken.
       const { authorAci: target, timestamp } = data.adminDelete;
       if (target === authorAci && timestamp !== null) {

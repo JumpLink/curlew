@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { buildThreads, normalizeSubject, stableId, type ThreadMember } from '@postbote/store';
+import { buildThreads, normalizeSubject, stableId, type ThreadMember } from '@curlew/store';
 
 // Threading without a database. Synthetic Message-IDs only.
 

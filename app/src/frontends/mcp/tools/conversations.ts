@@ -24,7 +24,7 @@ export function registerConversationTools(server: McpServer): void {
     {
       title: 'List Conversations (offline)',
       description:
-        'List conversations from the local index, newest first, across every enabled backend: mail threads grouped by Message-ID/References and chats (e.g. Telegram direct chats, groups, channels). Each has its backend, participants (typed addresses — email, phone, telegram, … — and the linked address-book contact), message and unread counts, and a classification — conversational (a person) or automated (lists, notifications, no-reply, broadcast channels, bots). Set people_only to hide automated ones. No message bodies. Built by `postbote sync`; check mail_sync_status when the list looks incomplete.',
+        'List conversations from the local index, newest first, across every enabled backend: mail threads grouped by Message-ID/References and chats (e.g. Telegram direct chats, groups, channels). Each has its backend, participants (typed addresses — email, phone, telegram, … — and the linked address-book contact), message and unread counts, and a classification — conversational (a person) or automated (lists, notifications, no-reply, broadcast channels, bots). Set people_only to hide automated ones. No message bodies. Built by `curlew sync`; check mail_sync_status when the list looks incomplete.',
       inputSchema: {
         people_only: z.boolean().optional().describe('Only conversations with a person in them'),
         account_id: z.string().optional().describe('Restrict to one account id'),

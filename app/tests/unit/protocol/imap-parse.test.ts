@@ -10,7 +10,7 @@ import {
   parseSearchUids,
   quoteImapString,
   tokenizeImapList,
-} from '@postbote/protocol';
+} from '@curlew/protocol';
 
 // Pure IMAP-grammar tests — no network, no GJS, no PII (all synthetic data).
 

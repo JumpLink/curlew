@@ -31,7 +31,7 @@ export default async () => {
     //
     // Note what is NOT asserted: that `navigator.onLine` exists. It does not, on either runtime
     // (Node's navigator is DOM-less, and so is gjsify's), so mtcute's own guard takes the
-    // browser branch off and postbote's connection errors are what report an outage.
+    // browser branch off and curlew's connection errors are what report an outage.
     await it('has a navigator object, without an onLine to read', async () => {
       expect(typeof navigator).toBe('object');
       expect(navigator).not.toBeNull();

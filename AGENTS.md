@@ -1,13 +1,26 @@
-# AGENTS.md — postbote
+# AGENTS.md — curlew
 
-Operating guide for AI agents in the **postbote** repo. Follows the
+Operating guide for AI agents in the **curlew** repo. Follows the
 [agents.md](https://agents.md/) convention; the human overview is [README.md](README.md).
 This repo is a submodule of **werkstatt**, whose [AGENTS.md](../../AGENTS.md) carries the
-broader workspace rules — this file is the postbote-specific layer and wins where they differ.
+broader workspace rules — this file is the curlew-specific layer and wins where they differ.
 
-> **The directory is `projects/mail`, the repo is `postbote`. That is deliberate — do not
-> "fix" it.** Git keys submodules by *path*, not by repo name, and werkstatt already carries
-> three such pairs (`projects/das-frittier-werk`, `projects/jumplink`, `projects/riba`).
+> **Curlew was `postbote` — "formerly postbote".** Identifiers, packages, binary and MCP server
+> are `curlew`. Two things still say `postbote` on purpose: the **GitHub repo** (`JumpLink/postbote`,
+> in the remote and the URLs of `app/package.json`, the systemd unit and ADR links) until the human
+> renames it, and the **directory `projects/mail`**, which stays — git keys submodules by *path*, not
+> by repo name (werkstatt carries three such pairs: `projects/das-frittier-werk`, `projects/jumplink`,
+> `projects/riba`). Do not "fix" either.
+>
+> **The rename fallback is load-bearing — do not "simplify" it away.** `dataDir()`/`configPath()`
+> use `$XDG_{DATA,CONFIG}_HOME/curlew/`, but when ONLY the old `postbote/` directory exists it is
+> read and written in place (`homeSubdir` in `packages/store/src/paths.ts`): never moved, never a
+> second directory beside it, ONE notice line on stderr. Delivery-only messages there are the only
+> copy. The old `POSTBOTE_*` variables are still read (`envValue`; `CURLEW_*` wins). The on-disk
+> namespaces inside account and secret files (`postbote.account`, `postbote.matrix`,
+> `postbote.undecryptable`, `postbote.api`) and the Matrix IndexedDB name `postbote-<account>` are
+> FORMAT keys of existing files and stay. There is no libsecret/keyring use in this repo. Pinned by
+> `app/tests/unit/store/paths.test.ts` — the old-install case, not only a fresh one.
 
 ## What this is
 
@@ -20,7 +33,7 @@ The code came out of `buchhaltung/packages/gnome`; the git history there is the 
 
 **The index and the MCP server are read-only and fail-closed.** IMAP is spoken with `BODY.PEEK`
 only, so `\Seen` is never set; there is no flag write, no move, no delete, and no MCP tool that
-sends. **Sending exists as a library capability only** — `@postbote/smtp` — and the caller uses it
+sends. **Sending exists as a library capability only** — `@curlew/smtp` — and the caller uses it
 only with the human's explicit consent for that message. It has no MCP tool and no CLI command.
 Write access for agents needs its own decision, taken when it is wanted; this package does not
 make it.
@@ -29,17 +42,17 @@ make it.
 
 | Package | Contains | May import |
 |---|---|---|
-| `@postbote/protocol` | **Pure.** RFC grammar (IMAP lexer, ENVELOPE, FETCH, LIST, BODYSTRUCTURE, MIME, RFC 2047/2231, modified UTF-7), DTOs, errors, the plugin API: `MessageBackend` port + manifest, `BackendContext`, the `MailBackend` mailbox driver and the `ChatBackend` chat driver | nothing |
-| `@postbote/gnome` | GOA + EDS: accounts, contacts, calendar, IMAP credentials | `protocol`, `gi://` |
-| `@postbote/imap` | Gio TLS transport, IMAP client, folders, search, fetch, attachments | `protocol`, `gnome`, `gi://` |
-| `@postbote/smtp` | Sending ONE message with attachments over SMTP on nodemailer (pinned exactly): message building, account validation, `verifyAccount`, `sendMessage`, `SmtpError`. A library capability — no MCP tool, no credential in a log, error or DTO; `security: 'none'` for loopback only. TLS tests wait for gjsify#2071 | nodemailer, `node:*` — no `gi://`; imports no other package |
-| `@postbote/store` | SQLite index, sync engines (mailbox + chat), conversations (threading, classification), secret store, XDG paths, file writes | `protocol`, `node:*` |
-| `@postbote/telegram` | Telegram `chat` backend on mtcute (web build: WebSocket, WebCrypto, WASM), its session storage on `SecretStore`, the login | `protocol`, `store`, `@mtcute/*`, `node:*` — no `gi://` |
-| `@postbote/whatsapp` | WhatsApp `delivery` backend on Baileys (unofficial protocol: WebSocket, WASM, libsignal), its auth state on `SecretStore`, the QR / pairing-code link | `protocol`, `store`, `baileys`, `node:*` — no `gi://` |
-| `@postbote/signal` | Signal `delivery` backend on `@signalapp/libsignal-client` (Rust behind N-API; on GJS through `@gjsify/napi`, loaded on first use), its protocol stores on `SecretStore`, the QR link as a linked device, the fail-closed request gate | `protocol`, `store`, `@signalapp/libsignal-client`, `qrcode-generator`, `node:*` — no `gi://` |
-| `@postbote/xmpp` | XMPP `chat` backend on xmpp.js (composed by hand: domain-checked direct TLS, WebSocket, SCRAM), history from MAM only, the account file on `SecretStore`, the login. NEVER sends presence, markers or messages | `protocol`, `store`, `@xmpp/*`, `node:*` — no `gi://` |
-| `@postbote/matrix` | Matrix `chat` backend on matrix-js-sdk + the Rust crypto as WASM (`@matrix-org/matrix-sdk-crypto-wasm`), its crypto store as an in-memory IndexedDB snapshotted into `SecretStore`, the password login | `protocol`, `store`, `matrix-js-sdk`, `@matrix-org/*`, `fake-indexeddb`, `node:*` — no `gi://` |
-| `postbote-cli` (`app/`) | yargs CLI + MCP server, config file, backend registry | all of the above |
+| `@curlew/protocol` | **Pure.** RFC grammar (IMAP lexer, ENVELOPE, FETCH, LIST, BODYSTRUCTURE, MIME, RFC 2047/2231, modified UTF-7), DTOs, errors, the plugin API: `MessageBackend` port + manifest, `BackendContext`, the `MailBackend` mailbox driver and the `ChatBackend` chat driver | nothing |
+| `@curlew/gnome` | GOA + EDS: accounts, contacts, calendar, IMAP credentials | `protocol`, `gi://` |
+| `@curlew/imap` | Gio TLS transport, IMAP client, folders, search, fetch, attachments | `protocol`, `gnome`, `gi://` |
+| `@curlew/smtp` | Sending ONE message with attachments over SMTP on nodemailer (pinned exactly): message building, account validation, `verifyAccount`, `sendMessage`, `SmtpError`. A library capability — no MCP tool, no credential in a log, error or DTO; `security: 'none'` for loopback only. TLS tests wait for gjsify#2071 | nodemailer, `node:*` — no `gi://`; imports no other package |
+| `@curlew/store` | SQLite index, sync engines (mailbox + chat), conversations (threading, classification), secret store, XDG paths, file writes | `protocol`, `node:*` |
+| `@curlew/telegram` | Telegram `chat` backend on mtcute (web build: WebSocket, WebCrypto, WASM), its session storage on `SecretStore`, the login | `protocol`, `store`, `@mtcute/*`, `node:*` — no `gi://` |
+| `@curlew/whatsapp` | WhatsApp `delivery` backend on Baileys (unofficial protocol: WebSocket, WASM, libsignal), its auth state on `SecretStore`, the QR / pairing-code link | `protocol`, `store`, `baileys`, `node:*` — no `gi://` |
+| `@curlew/signal` | Signal `delivery` backend on `@signalapp/libsignal-client` (Rust behind N-API; on GJS through `@gjsify/napi`, loaded on first use), its protocol stores on `SecretStore`, the QR link as a linked device, the fail-closed request gate | `protocol`, `store`, `@signalapp/libsignal-client`, `qrcode-generator`, `node:*` — no `gi://` |
+| `@curlew/xmpp` | XMPP `chat` backend on xmpp.js (composed by hand: domain-checked direct TLS, WebSocket, SCRAM), history from MAM only, the account file on `SecretStore`, the login. NEVER sends presence, markers or messages | `protocol`, `store`, `@xmpp/*`, `node:*` — no `gi://` |
+| `@curlew/matrix` | Matrix `chat` backend on matrix-js-sdk + the Rust crypto as WASM (`@matrix-org/matrix-sdk-crypto-wasm`), its crypto store as an in-memory IndexedDB snapshotted into `SecretStore`, the password login | `protocol`, `store`, `matrix-js-sdk`, `@matrix-org/*`, `fake-indexeddb`, `node:*` — no `gi://` |
+| `curlew-cli` (`app/`) | yargs CLI + MCP server, config file, backend registry | all of the above |
 
 **`store` must never import a backend** (`imap`, `telegram`, `xmpp`, `matrix`, `signal`, …). The sync engines are driven
 through the driver ports declared in `protocol` (`MailBackend`, `ChatBackend`) and injected by
@@ -48,7 +61,7 @@ is the only reason the sync algorithms — the most intricate part of this proje
 unit-tested on Node against a fake backend and `:memory:`. If you find yourself wanting to
 import a backend from `store`, add a method to the port instead.
 
-**`@postbote/whatsapp` is imported by nothing but the app's registry** (`builtin.ts`) — no
+**`@curlew/whatsapp` is imported by nothing but the app's registry** (`builtin.ts`) — no
 other package, no shared helper pulled out of it into `store` or `protocol`. WhatsApp is an
 unofficial protocol against WhatsApp's terms (ADR 0001 §5): if a takedown or ban wave makes it
 necessary, the package must move to its own repository in one step. Anything it needs from the
@@ -59,7 +72,7 @@ Everything else is pure and must stay runnable on Node. Packages that need both 
 `package.json` `exports` map (`browser` → `index.gjs.ts`, `node`/`default` → a stub that throws
 `GnomeUnavailableError`), so `gi://` never enters a Node bundle.
 
-**The one exception is `@postbote/gnome`, which has no exports map and one `src/index.ts` for
+**The one exception is `@curlew/gnome`, which has no exports map and one `src/index.ts` for
 every runtime.** The Node stub it used to have hid a distinction that mattered: GOA/EDS work on
 Node too, through `@gjsify/node-gi`, which resolves `gi://` with GJS semantics. GJS on
 Linux/GNOME is still the supported runtime; the Node path is groundwork for a macOS/Windows
@@ -79,9 +92,9 @@ port. The `.gjs.ts` infix stays on its files, because they hold `gi://` imports.
   `GLib.Error` is a boxed GObject, not an `Error`, and JSON-serialises to `{}`.
 - **The Node bundle has a real dependency the source never imports**: `@gjsify/node-gi`. Its
   `gi://` shim stays an external import in the output, which is why it is a `dependencies` entry
-  of `@postbote/gnome`.
+  of `@curlew/gnome`.
 
-`@postbote/imap` keeps its split: its Gio TLS transport needs GJS. Do not assume the move
+`@curlew/imap` keeps its split: its Gio TLS transport needs GJS. Do not assume the move
 generalizes.
 
 ## Run / build / test
@@ -99,11 +112,11 @@ generalizes.
 
 ```bash
 gjsify foreach -A check                        # type-check everything
-gjsify workspace postbote-cli build            # → app/dist/postbote.gjs.mjs
-gjsify workspace postbote-cli test             # @gjsify/unit, on gjs AND node
-gjsify run app/dist/postbote.gjs.mjs <command>
-gjsify workspace postbote-cli test:whatsapp-network  # real WhatsApp, no account: up to the QR code
-gjsify workspace postbote-cli test:signal-network    # real Signal, no account: up to the link address
+gjsify workspace curlew-cli build            # → app/dist/curlew.gjs.mjs
+gjsify workspace curlew-cli test             # @gjsify/unit, on gjs AND node
+gjsify run app/dist/curlew.gjs.mjs <command>
+gjsify workspace curlew-cli test:whatsapp-network  # real WhatsApp, no account: up to the QR code
+gjsify workspace curlew-cli test:signal-network    # real Signal, no account: up to the link address
 ```
 
 **Run the suite with no session bus, and pin BOTH variables.** The `test` script sets
@@ -121,14 +134,14 @@ the MCP server via `run_in_background` when driving it.
 ## Privacy — this repo is PUBLIC
 
 - The local index holds mail headers **and plain-text bodies**. It lives at
-  `$XDG_DATA_HOME/postbote/index.db` (mode `0600`), **never** inside the repo. Same for
+  `$XDG_DATA_HOME/curlew/index.db` (or `postbote/`, see the fallback) (mode `0600`), **never** inside the repo. Same for
   attachments. `.gitignore` is the second line of defence; not writing there is the first.
 - Test fixtures are **synthetic only**. Never commit a real message, address, or mailbox name.
 - Credentials come from GOA per connection: never logged, never stored, never in a DTO.
 - Chat sessions (Telegram's auth key and the api_id/api_hash it was created with; WhatsApp's
   Signal keys and device credentials; Matrix's access token and the device's crypto store — Olm
-  account and every room key it received) and XMPP passwords are the secrets postbote stores:
-  one file per account under `$XDG_DATA_HOME/postbote/secrets/<backend>/`
+  account and every room key it received) and XMPP passwords are the secrets curlew stores:
+  one file per account under `$XDG_DATA_HOME/curlew/secrets/<backend>/`
   (created 0600 in 0700), through `SecretStore` — never in the index, never logged, never in a
   DTO or MCP output. Its backup tier is `secret`; the index stays `derived`.
 - **Delivery-only messages are `state`, not cache.** WhatsApp keeps no server archive: a
@@ -150,7 +163,7 @@ the MCP server via `run_in_background` when driving it.
   first (Signal deletes acknowledged envelopes), and never flush the protocol store on `close`
   (`store.discard()`): a saved ratchet step for an unacknowledged envelope turns its redelivery
   into a "duplicate" and loses the message. libsignal is never imported at module level — it is
-  loaded on first use (`lib.ts`) so postbote starts where the addon does not. A plaintext that
+  loaded on first use (`lib.ts`) so curlew starts where the addon does not. A plaintext that
   decrypts but that this build cannot map (a field a newer Signal added, a parser bug) joins that
   same flush in the account file's `signal.setaside` ledger — received, not lost, and counted in
   `DeliveryOutcome.setAside`; the ledger is bounded (`SET_ASIDE_LIMIT`) and a run that pushes an
@@ -173,13 +186,13 @@ the MCP server via `run_in_background` when driving it.
   `ChatHistoryPage.retracted`); the delivery engine as events (revoke, delete-for-me,
   clear/delete chat), applied in the batch they arrive in. Keep that pass working —
   a deleted message that stays MCP-readable is a privacy defect, not a staleness one.
-- Only `postbote sync` and `postbote daemon` write to the index. A search never does — one
+- Only `curlew sync` and `curlew daemon` write to the index. A search never does — one
   mental model, and no surprise disk growth from a read. They are kept off the same delivery
   account by a **lease** (a row in the index, ADR 0002 §4) that BOTH take before connecting:
   the holder refreshes it and drops it on stop, a `sync` reports the holder and stands down, a
   daemon waits for it. User decisions (enabled
   backends, accepted terms, per-sender classification) go to
-  `$XDG_CONFIG_HOME/postbote/config.json`, never the index, and overrides apply at read time.
+  `$XDG_CONFIG_HOME/curlew/config.json`, never the index, and overrides apply at read time.
 - **Backends load only through the registry** (`app/src/core/backends/`), and only when the
   config enables them; a backend with a terms notice needs `--accept-terms` first. Built-in
   mail goes through it too — do not construct a backend anywhere else.
@@ -198,20 +211,20 @@ the MCP server via `run_in_background` when driving it.
   **`@gjsify/mcp`**, since 0.54.0; it was `app/src/frontends/mcp/runtime.ts`, which no longer
   exists — registers a tool only when `annotations.readOnlyHint === true`; a tool that omits the
   annotation is dropped. Do not loosen this to a name list.
-  Two canaries prove it still bites (`tools/gate-canary.ts`, `POSTBOTE_MCP_GATE_CANARY=1`,
+  Two canaries prove it still bites (`tools/gate-canary.ts`, `CURLEW_MCP_GATE_CANARY=1`,
   asserted by `test:mcp`): one declares `readOnlyHint: false`, one carries NO annotations.
   The unannotated one is load-bearing — with only the first, the gate was rewritten to the
   fail-open spelling and the whole integration suite stayed GREEN. Never "simplify" them to one.
   **They matter MORE now, not less:** the gate is upstream code, so these are the only thing that
   would catch an upstream flip — and the failure it guards against (a mutating tool served
   quietly) is invisible on the wire until it is exploited. `test:mcp` needs no change for this.
-- **A built postbote is relocatable only WITH its addon package.** Since gjsify 0.53 `--app gjs`
+- **A built curlew is relocatable only WITH its addon package.** Since gjsify 0.53 `--app gjs`
   no longer bakes the addon's absolute path: the bundle finds `@signalapp/libsignal-client` by
   package identity, in a `node_modules` reachable from the bundle. Libsignal loads on first use,
   so a bundle copied out WITHOUT one STARTS and dies at the first Signal command. `test:relocation`
   (`app/tests/integration/bundle-relocation.mjs`) copies the bundle out, stages only that one
   package beside it, and asserts the addon loads and no build path is in the bundle; its canary
-  is `postbote addon-canary` (`POSTBOTE_CLI_ADDON_CANARY=1`), which prints typeofs — no server,
+  is `curlew addon-canary` (`CURLEW_CLI_ADDON_CANARY=1`), which prints typeofs — no server,
   no account, nothing of a user's. gjsify's `<bundle dir>/addons/` layout is not read yet
   (measured on 0.53.0).
 - Conventional commits (`feat(imap): …`, `fix(store): …`), imperative, subject ≤ 50 chars.
@@ -239,7 +252,7 @@ Read the code before claiming how a network or library behaves.
 ## Fix gjsify gaps at the core
 
 gjsify is a first-party dependency, not vendored third-party code. If a capability is missing
-or broken there, fix it in the `gjsify/gjsify` submodule with a test and let postbote pick it
+or broken there, fix it in the `gjsify/gjsify` submodule with a test and let curlew pick it
 up via a version bump — do not paper over it here.
 
 A shim that is unavoidable meanwhile carries **one of two markers, and they mean opposite
@@ -259,7 +272,7 @@ came out in 0.32.0.
 candidate; at 0.54.0 it **is** `@gjsify/mcp`, and troedler's verbatim second copy is gone with it.
 Nothing was re-implemented on the way in — same bodies, same signatures — so no client surface
 moved: `tools/list`, a read-only `tools/call` and the error path are byte-identical against the
-two bundles. `types.ts` stays for `mcpErrorFrom` alone, which is genuinely postbote's (it routes a
+two bundles. `types.ts` stays for `mcpErrorFrom` alone, which is genuinely curlew's (it routes a
 `GnomeError` through `describeUnavailable`; the package's generic one cannot know that). **The
 tests did NOT move with the code:** `gate.test.ts` and the two canaries import the gate from the
 package and keep pinning the fail-closed direction, because a gate this repo does not own is the

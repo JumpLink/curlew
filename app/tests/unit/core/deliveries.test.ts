@@ -3,8 +3,8 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { SecretStore } from '@postbote/store';
-import { accountIdFor, SET_ASIDE_LIMIT, type SetAsideEntry, SignalProtocolStore } from '@postbote/signal';
+import { SecretStore } from '@curlew/store';
+import { accountIdFor, SET_ASIDE_LIMIT, type SetAsideEntry, SignalProtocolStore } from '@curlew/signal';
 
 import { deliveriesSetAside } from '../../../src/core/actions/deliveries.ts';
 import { saveConfig } from '../../../src/core/config.ts';
@@ -16,7 +16,7 @@ import { ALICE_ACI, LIB } from '../signal/world.ts';
  * hold is the privacy rule — a listing is for finding a message on the phone, never for reading it
  * here — and the shape rule: a backend without a ledger is an empty list, not an error.
  *
- * The session files are written under `POSTBOTE_SECRETS_DIR`, the override the data layer already
+ * The session files are written under `CURLEW_SECRETS_DIR`, the override the data layer already
  * documents, so the action takes the same path the real command does. All data is synthetic.
  */
 
@@ -28,7 +28,7 @@ const SECRET = 'Z2VoZWlt';
 const entry = (n: number): SetAsideEntry => ({
   senderAci: ALICE_ACI,
   sentAt: new Date(1_700_000_000_000 + n).toISOString(),
-  reason: `content field(s) ${n} this postbote does not know`,
+  reason: `content field(s) ${n} this curlew does not know`,
   plaintext: SECRET,
 });
 
@@ -37,7 +37,7 @@ function tempWorld(backends: string[] = ['signal', 'whatsapp']): {
   configPath: string;
   secrets: string;
 } {
-  const dir = mkdtempSync(join(tmpdir(), 'postbote-setaside-'));
+  const dir = mkdtempSync(join(tmpdir(), 'curlew-setaside-'));
   const configPath = join(dir, 'config.json');
   saveConfig(
     {
@@ -70,13 +70,13 @@ function whatsappSession(secrets: string): void {
 
 /** Run `body` with the secrets directory pointed at the test's own. */
 async function withSecrets<T>(secrets: string, body: () => Promise<T>): Promise<T> {
-  const before = process.env.POSTBOTE_SECRETS_DIR;
-  process.env.POSTBOTE_SECRETS_DIR = secrets;
+  const before = process.env.CURLEW_SECRETS_DIR;
+  process.env.CURLEW_SECRETS_DIR = secrets;
   try {
     return await body();
   } finally {
-    if (before === undefined) delete process.env.POSTBOTE_SECRETS_DIR;
-    else process.env.POSTBOTE_SECRETS_DIR = before;
+    if (before === undefined) delete process.env.CURLEW_SECRETS_DIR;
+    else process.env.CURLEW_SECRETS_DIR = before;
   }
 }
 
@@ -96,7 +96,7 @@ export default async () => {
         expect(signal?.dropped).toBe(0);
         expect(signal?.entries[0].sender).toBe(ALICE_ACI);
         expect(signal?.entries[0].sentAt).toBe(new Date(1_700_000_000_000).toISOString());
-        expect(signal?.entries[0].reason).toBe('content field(s) 0 this postbote does not know');
+        expect(signal?.entries[0].reason).toBe('content field(s) 0 this curlew does not know');
         // The size of the plaintext, so the user knows which message they are looking for — the
         // content stays in the session file, where the phone's copy is the readable one.
         expect(signal?.entries[0].bytes).toBe(6);

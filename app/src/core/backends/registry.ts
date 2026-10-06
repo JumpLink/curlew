@@ -19,8 +19,8 @@ import {
   type TermsNotice,
   storeTierFor,
   validateManifest,
-} from '@postbote/protocol';
-import type { PostboteConfig } from '../config.ts';
+} from '@curlew/protocol';
+import type { CurlewConfig } from '../config.ts';
 
 /** A registry entry: the manifest, readable without running the backend, and its factory. */
 export interface BackendPlugin<B extends MessageBackend = MessageBackend> {
@@ -42,9 +42,9 @@ export interface BackendStatus {
 }
 
 export type EnableOutcome =
-  | { outcome: 'enabled' | 'already-enabled'; config: PostboteConfig; terms: TermsNotice | null }
+  | { outcome: 'enabled' | 'already-enabled'; config: CurlewConfig; terms: TermsNotice | null }
   /** The backend has terms the user has not accepted: nothing was changed. */
-  | { outcome: 'terms-required'; config: PostboteConfig; terms: TermsNotice };
+  | { outcome: 'terms-required'; config: CurlewConfig; terms: TermsNotice };
 
 export class BackendRegistry {
   private readonly plugins = new Map<string, BackendPlugin>();
@@ -75,12 +75,12 @@ export class BackendRegistry {
     return plugin;
   }
 
-  private static termsAccepted(manifest: BackendManifest, config: PostboteConfig): boolean {
+  private static termsAccepted(manifest: BackendManifest, config: CurlewConfig): boolean {
     return manifest.terms === null || typeof config.backends[manifest.name]?.termsAcceptedAt === 'string';
   }
 
   /** Every known backend with its state under `config`. */
-  status(config: PostboteConfig): BackendStatus[] {
+  status(config: CurlewConfig): BackendStatus[] {
     return [...this.plugins.values()].map(({ manifest }) => {
       const accepted = BackendRegistry.termsAccepted(manifest, config);
       return {
@@ -103,19 +103,19 @@ export class BackendRegistry {
    * Construct one ENABLED backend. Refuses a disabled one or one whose terms are not accepted,
    * so no code path can reach a backend around the gate.
    */
-  create(config: PostboteConfig, name: string, context: BackendContext): MessageBackend {
+  create(config: CurlewConfig, name: string, context: BackendContext): MessageBackend {
     const plugin = this.enabled(config).find((p) => p.manifest.name === name);
     if (!plugin) {
       this.require(name);
       throw new Error(
-        `backend ${name} is not enabled — \`postbote backends enable ${name}\` turns it on (and shows its terms)`,
+        `backend ${name} is not enabled — \`curlew backends enable ${name}\` turns it on (and shows its terms)`,
       );
     }
     return plugin.create(context);
   }
 
   /** The plugins `config` enables — the only ones any code path may construct. */
-  enabled(config: PostboteConfig): BackendPlugin[] {
+  enabled(config: CurlewConfig): BackendPlugin[] {
     const on = new Set(
       this.status(config)
         .filter((s) => s.enabled)
@@ -129,7 +129,7 @@ export class BackendRegistry {
    * it the config is returned unchanged together with the notice to show.
    */
   enable(
-    config: PostboteConfig,
+    config: CurlewConfig,
     name: string,
     options: { acceptTerms?: boolean; now?: Date } = {},
   ): EnableOutcome {
@@ -153,7 +153,7 @@ export class BackendRegistry {
   }
 
   /** Disable a backend. Keeps the recorded acceptance: re-enabling does not re-ask. */
-  disable(config: PostboteConfig, name: string): PostboteConfig {
+  disable(config: CurlewConfig, name: string): CurlewConfig {
     this.require(name);
     const current = config.backends[name];
     return { ...config, backends: { ...config.backends, [name]: { ...current, enabled: false } } };

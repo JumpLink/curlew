@@ -1,23 +1,23 @@
 /**
- * Real network, no credentials: connect to Telegram through `@postbote/telegram`'s own client
- * construction (mtcute web build + postbote's platform), run the MTProto auth-key exchange, and
+ * Real network, no credentials: connect to Telegram through `@curlew/telegram`'s own client
+ * construction (mtcute web build + curlew's platform), run the MTProto auth-key exchange, and
  * make one unauthenticated call. Proves WebSocket, WebCrypto, the WASM crypto and the TL layer
  * work on GJS — the whole stack a real login stands on — without an account or an api_id.
  *
- * Twice, against postbote's own session storage in a temporary directory: the first run must
+ * Twice, against curlew's own session storage in a temporary directory: the first run must
  * persist the auth key it negotiated (through libgda-backed SQLite, as TEXT), the second must
  * load and reuse that key instead of negotiating a new one.
  *
- * Not part of CI (it needs the network). Run: `gjsify workspace postbote-cli test:telegram-network`
+ * Not part of CI (it needs the network). Run: `gjsify workspace curlew-cli test:telegram-network`
  */
 
-import { SecretStore } from '@postbote/store';
-import { SecretStoreStorage, probeHandshake } from '@postbote/telegram';
+import { SecretStore } from '@curlew/store';
+import { SecretStoreStorage, probeHandshake } from '@curlew/telegram';
 import { mkdtempSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const dir = mkdtempSync(join(tmpdir(), 'postbote-tg-probe-'));
+const dir = mkdtempSync(join(tmpdir(), 'curlew-tg-probe-'));
 const path = join(dir, 'probe.db');
 
 async function once(label: string): Promise<Map<string, string>> {

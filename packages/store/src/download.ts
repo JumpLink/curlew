@@ -1,7 +1,7 @@
 /**
  * Writing an attachment to disk, safely.
  *
- * `safeFileName` in @postbote/protocol has already reduced a hostile MIME name to one path
+ * `safeFileName` in @curlew/protocol has already reduced a hostile MIME name to one path
  * segment. This is DEFENCE IN DEPTH on top of that, not a substitute: the resolved path is
  * checked to still be inside the target directory, so a bug or a future change in the sanitizer
  * cannot turn into a write outside it.
@@ -19,7 +19,7 @@ import {
 } from 'node:fs';
 import { isAbsolute, join, resolve, sep } from 'node:path';
 
-import { type LiteralSink, safeFileName } from '@postbote/protocol';
+import { type LiteralSink, safeFileName } from '@curlew/protocol';
 
 /** True when `target` is `dir` itself or below it, after both are fully resolved. */
 export function isInside(dir: string, target: string): boolean {

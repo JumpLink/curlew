@@ -9,7 +9,7 @@ import {
   parseThreadHeaders,
   threadHeaderFetchItem,
   tokenizeImapList,
-} from '@postbote/protocol';
+} from '@curlew/protocol';
 
 // Threading and classification headers. Synthetic data only.
 

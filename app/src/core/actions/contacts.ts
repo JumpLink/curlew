@@ -2,8 +2,8 @@
  * Contact actions — Evolution Data Server address books (CardDAV/local).
  */
 
-import { searchContacts } from '@postbote/gnome';
-import type { ContactDTO, SearchContactsOptions } from '@postbote/protocol';
+import { searchContacts } from '@curlew/gnome';
+import type { ContactDTO, SearchContactsOptions } from '@curlew/protocol';
 import { capLimit, CONTACT_LIMIT } from './limits.ts';
 
 /** Search contacts; caps the result count so a caller can't dump a whole address book. */

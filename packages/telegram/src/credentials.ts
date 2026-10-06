@@ -2,11 +2,11 @@
  * The Telegram API credentials — the user's OWN `api_id` and `api_hash`.
  *
  * Telegram requires every third-party client to use credentials registered to its user at
- * my.telegram.org; postbote ships none and never falls back to someone else's.
+ * my.telegram.org; curlew ships none and never falls back to someone else's.
  *
  * Where they live: in the account's SESSION file (`SecretStore`, 0600, backup tier `secret`),
- * asked for once by `postbote accounts add telegram`. The environment
- * (`POSTBOTE_TELEGRAM_API_ID`, `POSTBOTE_TELEGRAM_API_HASH`) overrides them, for a user who keeps
+ * asked for once by `curlew accounts add telegram`. The environment
+ * (`CURLEW_TELEGRAM_API_ID`, `CURLEW_TELEGRAM_API_HASH`; the old `POSTBOTE_` names still work) overrides them, for a user who keeps
  * them in a password manager. NOT in the config file: that is `state` in a backup, readable
  * wherever the backup goes, and the api_hash is a credential — so a config that carries one is
  * refused rather than silently used.
@@ -15,18 +15,19 @@
  * scrollback or an MCP transcript.
  */
 
-import type { BackendContext } from '@postbote/protocol';
-import type { SecretStore } from '@postbote/store';
+import type { BackendContext } from '@curlew/protocol';
+import { envValue, type SecretStore } from '@curlew/store';
 
 export interface TelegramCredentials {
   apiId: number;
   apiHash: string;
 }
 
-export const API_ID_ENV = 'POSTBOTE_TELEGRAM_API_ID';
-export const API_HASH_ENV = 'POSTBOTE_TELEGRAM_API_HASH';
+export const API_ID_ENV = 'CURLEW_TELEGRAM_API_ID';
+export const API_HASH_ENV = 'CURLEW_TELEGRAM_API_HASH';
 
 /** The session file's namespace for the credentials the session was created with. */
+// Rename fallback: the key inside existing account files, read back as-is. Do not rebrand.
 export const CREDENTIALS_NAMESPACE = 'postbote.api';
 
 const WHERE = `create them for yourself at https://my.telegram.org ("API development tools")`;
@@ -49,7 +50,7 @@ export function refuseConfigCredentials(settings: BackendContext['settings']): v
   if ('apiHash' in settings || 'apiId' in settings) {
     throw new Error(
       'the Telegram api_id/api_hash do not belong in the config file (it is backed up in the clear) — ' +
-        'remove backends.telegram.settings.apiId/apiHash; `postbote accounts add telegram` keeps them in ' +
+        'remove backends.telegram.settings.apiId/apiHash; `curlew accounts add telegram` keeps them in ' +
         `the account's 0600 session file, or set ${API_ID_ENV} and ${API_HASH_ENV}`,
     );
   }
@@ -57,8 +58,8 @@ export function refuseConfigCredentials(settings: BackendContext['settings']): v
 
 /** The environment's pair, or null when neither variable is set. Half a pair is an error. */
 export function credentialsFromEnv(env: BackendContext['env']): TelegramCredentials | null {
-  const id = env[API_ID_ENV]?.trim();
-  const hash = env[API_HASH_ENV]?.trim();
+  const id = envValue(env, 'TELEGRAM_API_ID');
+  const hash = envValue(env, 'TELEGRAM_API_HASH');
   if (!id && !hash) return null;
   if (!id || !hash) throw new Error(`set both ${API_ID_ENV} and ${API_HASH_ENV}, or neither`);
   return parseCredentials(id, hash);
@@ -83,7 +84,7 @@ export function resolveCredentials(context: BackendContext, store: SecretStore):
   const credentials = credentialsFromEnv(context.env) ?? readStoredCredentials(store);
   if (!credentials) {
     throw new Error(
-      `this Telegram session has no api_id/api_hash stored — log in again with \`postbote accounts add telegram\`, or set ${API_ID_ENV} and ${API_HASH_ENV}`,
+      `this Telegram session has no api_id/api_hash stored — log in again with \`curlew accounts add telegram\`, or set ${API_ID_ENV} and ${API_HASH_ENV}`,
     );
   }
   return credentials;

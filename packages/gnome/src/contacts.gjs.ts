@@ -14,7 +14,7 @@ import type EDataServer from 'gi://EDataServer?version=1.2';
 import { extractList, getRegistry, sourceGoaAccountId } from './eds.gjs.ts';
 import { gnomeError, isGnomeFailure } from './errors.ts';
 import { book, eds } from './libs.gjs.ts';
-import type { ContactDTO, SearchContactsOptions } from '@postbote/protocol';
+import type { ContactDTO, SearchContactsOptions } from '@curlew/protocol';
 
 const DEFAULT_LIMIT = 50;
 /** Seconds BookClient.connect waits for the backend to be connected. */
@@ -140,7 +140,7 @@ async function searchContactsImpl(options: SearchContactsOptions): Promise<Conta
  * This is the boundary for the whole EDS contacts path. Every `gi://` property read it
  * makes — `BookQuery.any_field_contains()`, `getRegistry()`, `source.get_display_name()` —
  * raises on its own, and on GJS a GLib.Error is a boxed GObject that is not `instanceof Error`
- * and JSON-serializes to `{}`: unwrapped, `postbote contacts` reports nothing at all. Only a
+ * and JSON-serializes to `{}`: unwrapped, `curlew contacts` reports nothing at all. Only a
  * call that is already a `GnomeError` / `GnomeUnavailableError` passes through unchanged, so
  * the specific `list address books:` / `connect address book:` prefixes survive.
  */

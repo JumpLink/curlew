@@ -1,5 +1,5 @@
 /**
- * Delivery actions — what the delivery-only backends (WhatsApp, Signal) received and postbote
+ * Delivery actions — what the delivery-only backends (WhatsApp, Signal) received and curlew
  * could not turn into a message.
  *
  * One ledger exists today: Signal's. A plaintext it decrypted but could not map (a field a newer
@@ -17,8 +17,8 @@
  * agent's context buys nothing that a sender and a timestamp do not.
  */
 
-import { isDeliveryBackend, type SetAsideRecord } from '@postbote/protocol';
-import { configPath } from '@postbote/store';
+import { isDeliveryBackend, type SetAsideRecord } from '@curlew/protocol';
+import { configPath } from '@curlew/store';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig } from '../config.ts';

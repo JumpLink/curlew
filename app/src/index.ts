@@ -51,12 +51,12 @@ const parseArgs = () =>
     .command(checkCommand)
     .command(setupCommand)
     .command(addonCanaryCommand)
-    .demandCommand(1, 'Please provide a command — `postbote --help` lists them all.')
+    .demandCommand(1, 'Please provide a command — `curlew --help` lists them all.')
     // Reject unknown commands instead of silently resolving — on GJS an unmatched command
     // would otherwise leave the main loop running forever (hang); on Node it would exit 0.
     // With this, both reject → reportError → exit 1.
     .strictCommands()
-    .scriptName('postbote')
+    .scriptName('curlew')
     // Pin the locale: yargs otherwise translates its own chrome ("Commands:", "Options:") from
     // $LANG while every describe string here stays English, so a German shell got a half-German
     // help screen. It also keeps --help byte-stable across machines and CI.

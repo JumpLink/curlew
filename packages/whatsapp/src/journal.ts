@@ -25,8 +25,8 @@
  * store's business. The file is empty whenever no sync is running or the last one ended well.
  */
 
-import type { DeliveryEvent } from '@postbote/protocol';
-import { ensurePrivateDir } from '@postbote/store';
+import type { DeliveryEvent } from '@curlew/protocol';
+import { ensurePrivateDir } from '@curlew/store';
 import { Buffer } from 'node:buffer';
 import {
   chmodSync,

@@ -1,7 +1,7 @@
 /**
  * The linking QR code as terminal text.
  *
- * A copy of `@postbote/whatsapp`'s renderer, on purpose: WhatsApp's package is kept
+ * A copy of `@curlew/whatsapp`'s renderer, on purpose: WhatsApp's package is kept
  * self-contained so it can leave the repository in one step (ADR 0001 §5), so nothing is shared
  * out of it. Two modules per character cell (upper and lower half blocks), white on black with
  * the four-module quiet zone, so it scans the same on a dark and a light terminal theme.

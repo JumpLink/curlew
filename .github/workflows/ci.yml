@@ -22,7 +22,7 @@ jobs:
     container:
       image: fedora:44
     steps:
-      # These are load-bearing, unlike in the sibling projects. @postbote/gnome does
+      # These are load-bearing, unlike in the sibling projects. @curlew/gnome does
       # TOP-LEVEL STATIC `gi://` imports (Goa, EDataServer, EBook, ECal), so the bundle needs
       # those typelibs at MODULE LOAD, not merely when a call is made — without them CI cannot
       # even import what it just built. libgda-sqlite backs `node:sqlite` for the index.
@@ -79,10 +79,10 @@ jobs:
         run: gjsify foreach -A check
 
       - name: Build the CLI bundle
-        run: gjsify workspace postbote-cli build
+        run: gjsify workspace curlew-cli build
 
       # Copies the bundle just built out of the tree and asks it to load libsignal from there.
-      # It proves whether a built postbote is RELOCATABLE — right now it is not: `--app gjs`
+      # It proves whether a built curlew is RELOCATABLE — right now it is not: `--app gjs`
       # bakes the ABSOLUTE prebuild path of the native addon into the bundle, so a build can only
       # ever be used on the machine and path that produced it. Since libsignal loads on first use,
       # that failure is late (the bundle starts, the first Signal command dies), and every other
@@ -91,7 +91,7 @@ jobs:
       # when gjsify stops baking the path in, and goes red if an absolute addon path ever
       # reappears in the bundle. It contacts no server and reads no account.
       - name: Bundle relocation probe (native addon, out of tree)
-        run: gjsify workspace postbote-cli test:relocation
+        run: gjsify workspace curlew-cli test:relocation
 
       # Runs on gjs AND node. There is no session D-Bus here, so GOA/EDS are unreachable —
       # that is expected and is what the three-state availability probe is for. The tests
@@ -100,7 +100,7 @@ jobs:
       # running until GitHub's 6-hour cancel. The suite takes ~2 minutes.
       - name: Tests (gjs + node)
         timeout-minutes: 15
-        run: gjsify workspace postbote-cli test
+        run: gjsify workspace curlew-cli test
 
       # The read-only gate, asserted END-TO-END rather than against a stub. The unit suite tests
       # `applyReadOnlyGate` through a fake recorder, which cannot see the failure that matters
@@ -111,7 +111,7 @@ jobs:
       # It needs no session bus: GOA is unreachable in this container and the script tolerates
       # that (it asserts a well-formed answer, not a successful one).
       - name: MCP end-to-end + read-only gate (real stdio)
-        run: gjsify workspace postbote-cli test:mcp
+        run: gjsify workspace curlew-cli test:mcp
 
       # The CLI's own installable artifacts, out of the same bundle the tests above ran against.
       # `.deb` and `.rpm` only here — gjsify writes both itself and execs nothing for them, so this
@@ -133,7 +133,7 @@ jobs:
           set -eu
           ls -la
           version=$(node -p "require('$GITHUB_WORKSPACE/app/package.json').version")
-          for f in "postbote_${version}-1_all.deb" "postbote-${version}-1.noarch.rpm"; do
+          for f in "curlew_${version}-1_all.deb" "curlew-${version}-1.noarch.rpm"; do
             if [ ! -s "$f" ]; then
               echo "::error::missing or empty artifact: $f"
               exit 1
@@ -141,12 +141,12 @@ jobs:
           done
 
       # The `.deb`/`.rpm` above are built from `build` (`build:gjs`), but `gjsify.ship.bundle.darwin`
-      # and `.win32` point at `dist/postbote.node.mjs` — a bundle NOTHING above builds, and
+      # and `.win32` point at `dist/curlew.node.mjs` — a bundle NOTHING above builds, and
       # `--skip-build` tells `ship` not to build it either. Measured on 0.54.0: without this step
-      # every `Ship darwin`/`Ship windows` step exits 1 with "the bundle dist/postbote.node.mjs does
+      # every `Ship darwin`/`Ship windows` step exits 1 with "the bundle dist/curlew.node.mjs does
       # not exist". One extra build of the same sources through `--app node`.
       - name: Build the node bundle (macOS/Windows payloads)
-        run: gjsify workspace postbote-cli build:node
+        run: gjsify workspace curlew-cli build:node
 
       # macOS and Windows runtimes are `optionalDependencies` gated by os/cpu, which a plain install
       # on this Linux host SKIPS — naming the target installs it instead, and `ship` picks up both
@@ -186,10 +186,10 @@ jobs:
           ls -la
           version=$(node -p "require('$GITHUB_WORKSPACE/app/package.json').version")
           for f in \
-            "postbote-${version}-1.macos.arm64.zip" \
-            "postbote-${version}-1.macos.x86_64.zip" \
-            "postbote-${version}-1.windows.x64.zip" \
-            "postbote-${version}-1.x64.msi"; do
+            "curlew-${version}-1.macos.arm64.zip" \
+            "curlew-${version}-1.macos.x86_64.zip" \
+            "curlew-${version}-1.windows.x64.zip" \
+            "curlew-${version}-1.x64.msi"; do
             if [ ! -s "$f" ]; then
               echo "::error::missing or empty artifact: $f"
               exit 1

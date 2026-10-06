@@ -1,5 +1,5 @@
 /**
- * `postbote accounts add signal` — linking postbote as a device of the user's Signal account, as a
+ * `curlew accounts add signal` — linking curlew as a device of the user's Signal account, as a
  * function the CLI calls with its terminal prompts.
  *
  * Ported from Signal-Desktop's linked-device flow: `ts/textsecure/Provisioner.preload.ts` (the
@@ -9,17 +9,17 @@
  *
  * On the phone: Signal → Settings → Linked devices → Link new device, and scan the QR code printed
  * in the terminal. The phone then sends the account's identity key and a one-time provisioning
- * code through the provisioning socket; postbote registers itself with the code
+ * code through the provisioning socket; curlew registers itself with the code
  * (`PUT /v1/devices/link`), then publishes one-time pre-keys (`PUT /v2/keys`). Those two requests
- * are the only ones postbote ever sends to Signal (`guard.ts`).
+ * are the only ones curlew ever sends to Signal (`guard.ts`).
  *
  * The session is created under a temporary name and moved to `signal-<ACI>.db` only once linked,
  * so a cancelled or failed link never leaves keys that `sync` would try to use. Nothing secret is
  * printed apart from the QR code itself.
  */
 
-import type { AccountPrompter, BackendAccount, BackendContext } from '@postbote/protocol';
-import { ensurePrivateDir, SecretStore } from '@postbote/store';
+import type { AccountPrompter, BackendAccount, BackendContext } from '@curlew/protocol';
+import { ensurePrivateDir, SecretStore } from '@curlew/store';
 import type * as Core from '@signalapp/libsignal-client';
 import { existsSync, renameSync, rmSync } from 'node:fs';
 import {
@@ -179,7 +179,7 @@ export async function linkSignal(
 
     const deviceName = toBase64(
       encodeDeviceName(
-        encryptDeviceName(lib, options.deviceName?.trim() || 'postbote', identity.getPublicKey()),
+        encryptDeviceName(lib, options.deviceName?.trim() || 'curlew', identity.getPublicKey()),
       ),
     );
 
@@ -256,7 +256,7 @@ export async function linkSignal(
     renameSync(pending, sessionPath(context.secretsDir, accountId));
     moved = true;
     prompter.notify(
-      'Linked. Run `postbote sync` now: Signal keeps what arrived for this device only until it is received, and the phone sends the contact list on its own.',
+      'Linked. Run `curlew sync` now: Signal keeps what arrived for this device only until it is received, and the phone sends the contact list on its own.',
     );
     return account;
   } finally {

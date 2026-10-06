@@ -1,5 +1,5 @@
 /**
- * Archived XMPP stanzas → the network-neutral chat driver types of `@postbote/protocol`.
+ * Archived XMPP stanzas → the network-neutral chat driver types of `@curlew/protocol`.
  *
  * Pure: every rule here is tested against synthetic entries on both runtimes.
  *
@@ -21,8 +21,8 @@ import type {
   ChatMessage,
   ChatPeer,
   ParticipantAddress,
-} from '@postbote/protocol';
-import { normalizeAddress } from '@postbote/protocol';
+} from '@curlew/protocol';
+import { normalizeAddress } from '@curlew/protocol';
 import { type ArchivedEntry, bareJid, resourceOf } from './stanza.ts';
 
 /**
@@ -248,7 +248,7 @@ export function buildPage(
       sender: fromSelf ? null : senderOf(context, entry),
       fromSelf,
       // An encrypted message's body is the sender's "this message is encrypted" fallback, not
-      // what they wrote: postbote cannot decrypt (no OMEMO yet), so it indexes no text.
+      // what they wrote: curlew cannot decrypt (no OMEMO yet), so it indexes no text.
       text: entry.encrypted ? null : entry.body,
       hasAttachments: entry.attachmentUrls.length > 0,
       replyToRemoteId: reply ? reply.archiveId : null,

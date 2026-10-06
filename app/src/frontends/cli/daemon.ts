@@ -1,5 +1,5 @@
 /**
- * `postbote daemon` — receive from every enabled delivery-only backend until stopped.
+ * `curlew daemon` — receive from every enabled delivery-only backend until stopped.
  *
  * Long-lived by design, and not routed through `runAndExit` for one reason: the exit code is
  * this command's own policy (`daemonExitCode`) rather than "printed, then 0". The signals are
@@ -39,7 +39,7 @@ export const daemonCommand: CommandModule = {
       process.on(signal, () => {
         if (controller.signal.aborted) return;
         // A second signal (or a third) does not change the plan: the run is already stopping.
-        console.error(`postbote-daemon: ${signal} — stopping after the last batch is written`);
+        console.error(`curlew-daemon: ${signal} — stopping after the last batch is written`);
         controller.abort();
       });
     }

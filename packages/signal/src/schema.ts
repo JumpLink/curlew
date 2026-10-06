@@ -1,5 +1,5 @@
 /**
- * The Signal messages postbote reads, decoded from the wire into plain objects — and encoded back,
+ * The Signal messages curlew reads, decoded from the wire into plain objects — and encoded back,
  * for the linking request (`DeviceName`) and for tests that build synthetic envelopes.
  *
  * Field numbers are Signal's, from Signal-Desktop `protos/SignalService.proto`,
@@ -172,7 +172,7 @@ export interface DataMessage {
   profileKey: Uint8Array | null;
   /** A disappearing-messages timer is set (fields 5, 23): a setting, not a message. */
   expireTimer: boolean;
-  /** Field numbers this decoder does not know — a message type newer than this postbote. */
+  /** Field numbers this decoder does not know — a message type newer than this curlew. */
   unknownFields: number[];
 }
 
@@ -344,7 +344,7 @@ export interface Content {
   senderKeyDistribution: Uint8Array | null;
   /** Typing, calls, stories, null messages, decryption-error requests: nothing to store. */
   other: boolean;
-  /** Top-level field numbers this decoder does not know — content newer than this postbote. */
+  /** Top-level field numbers this decoder does not know — content newer than this curlew. */
   unknownFields: number[];
 }
 

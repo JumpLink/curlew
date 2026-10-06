@@ -1,7 +1,7 @@
 /**
  * Signal accounts are session files: one `signal-<ACI>.db` per linked device in the backend's
  * secrets directory, holding the protocol stores (`protocol-store.ts`). There is no other
- * registry — an account exists exactly as long as its session does. `postbote accounts add signal`
+ * registry — an account exists exactly as long as its session does. `curlew accounts add signal`
  * creates one; unlinking the device on the phone ends it (the next sync reports it).
  *
  * The account id carries the ACI — the account's UUID, not its phone number — so ids in CLI and
@@ -11,8 +11,8 @@
  * written again rather than shared: that package is kept self-contained (ADR 0001 §5).
  */
 
-import type { BackendAccount } from '@postbote/protocol';
-import { SecretStore } from '@postbote/store';
+import type { BackendAccount } from '@curlew/protocol';
+import { SecretStore } from '@curlew/store';
 import { existsSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { ACCOUNT_NAMESPACE } from './protocol-store.ts';

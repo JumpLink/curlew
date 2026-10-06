@@ -9,7 +9,7 @@
  * incremental version would have to redo exactly that, with more ways to drift.
  *
  * The reads apply the user's per-sender overrides at query time. They come from the config, not
- * the index, so correcting a sender never writes here — only `postbote sync` does.
+ * the index, so correcting a sender never writes here — only `curlew sync` does.
  */
 
 import type {
@@ -21,8 +21,8 @@ import type {
   MailAddress,
   Participant,
   ParticipantAddress,
-} from '@postbote/protocol';
-import { normalizeAddress } from '@postbote/protocol';
+} from '@curlew/protocol';
+import { normalizeAddress } from '@curlew/protocol';
 import { classifyMail, conversationVerdict, type MessageVerdict, type SenderOverrides } from './classify.ts';
 import type { IndexDatabase } from './db.ts';
 import { insertMany, placeholders, seqColumn, type SqlValue, withTransaction } from './db.ts';

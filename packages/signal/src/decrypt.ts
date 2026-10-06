@@ -60,7 +60,7 @@ export type SkipReason =
   | 'server-receipt'
   /**
    * Addressed to the phone-number identity. A linked device is registered under the account
-   * identity and holds no key for the phone-number one, so postbote cannot read these at all.
+   * identity and holds no key for the phone-number one, so curlew cannot read these at all.
    * Whether the server means to deliver them here is unknown; that it acknowledged them is not.
    */
   | 'phone-number-identity'

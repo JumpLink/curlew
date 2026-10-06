@@ -3,11 +3,11 @@ import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, statSync, wri
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import { ensurePrivateDir, FileSink, isInside, resolveDownloadPath } from '@postbote/store';
+import { ensurePrivateDir, FileSink, isInside, resolveDownloadPath } from '@curlew/store';
 
 /** A scratch directory under the system temp dir — never inside the repository. */
 function scratch(): string {
-  return ensurePrivateDir(mkdtempSync(join(tmpdir(), 'postbote-test-')));
+  return ensurePrivateDir(mkdtempSync(join(tmpdir(), 'curlew-test-')));
 }
 
 export default async () => {
@@ -70,7 +70,7 @@ export default async () => {
       // which SQLite creates 0644 and which holds recently written message bodies. gjsify's
       // mkdirSync dropped its `mode` option until 0.32.0 (gjsify#1039), so this assertion is
       // what re-measures the guarantee at every version bump rather than trusting a comment.
-      const base = mkdtempSync(join(tmpdir(), 'postbote-mode-'));
+      const base = mkdtempSync(join(tmpdir(), 'curlew-mode-'));
       try {
         const dir = join(base, 'nested', 'private');
         ensurePrivateDir(dir);

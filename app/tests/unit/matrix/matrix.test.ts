@@ -4,14 +4,14 @@ import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { isChatBackend, validateManifest } from '@postbote/protocol';
+import { isChatBackend, validateManifest } from '@curlew/protocol';
 import {
   chatConversationId,
   getConversation,
   rebuildConversations,
   SecretStore,
   syncChats,
-} from '@postbote/store';
+} from '@curlew/store';
 import {
   accountIdFor,
   accountPath,
@@ -34,7 +34,7 @@ import {
   UNDECRYPTABLE_TEXT,
   writeAccessToken,
   writeAccountRecord,
-} from '@postbote/matrix';
+} from '@curlew/matrix';
 import { freshDb } from '../store/fixtures.ts';
 import {
   ANNA,
@@ -63,7 +63,7 @@ const at = (seconds: number): number => T0 + seconds * 1000;
 const S = (seconds: number): number => seqOf(at(seconds));
 
 function tempDir(): string {
-  return mkdtempSync(join(tmpdir(), 'postbote-matrix-'));
+  return mkdtempSync(join(tmpdir(), 'curlew-matrix-'));
 }
 
 function idbRequest<T>(request: IDBRequest<T>): Promise<T> {
@@ -186,7 +186,7 @@ export default async () => {
       expect(typeof sdk.createClient).toBe('function');
       expect(typeof sdk.AutoDiscovery).toBe('function');
 
-      // And a client can be constructed from it, which is the first thing postbote does with it.
+      // And a client can be constructed from it, which is the first thing curlew does with it.
       // No network: nothing is started until a sync is asked for.
       const client = sdk.createClient({
         baseUrl: 'https://matrix.invalid',
@@ -440,7 +440,7 @@ export default async () => {
       const store = SecretStore.open(':memory:');
       try {
         const before = new IDBFactory();
-        const db = await openDb(before, 'postbote-a::crypto', 3, (fresh) => {
+        const db = await openDb(before, 'curlew-a::crypto', 3, (fresh) => {
           const inline = fresh.createObjectStore('sessions', { keyPath: ['room', 'id'] });
           inline.createIndex('by_room', 'room', { unique: false });
           fresh.createObjectStore('kv');
@@ -453,16 +453,16 @@ export default async () => {
         // Another prefix is not this account's business.
         (await openDb(before, 'other-db', 1, (fresh) => fresh.createObjectStore('x'))).close();
 
-        const saving = new IndexedDbSnapshot(before, store, 'postbote-a');
+        const saving = new IndexedDbSnapshot(before, store, 'curlew-a');
         expect((await saving.save()) > 0).toBe(true);
         expect(await saving.save()).toBe(0);
 
         const after = new IDBFactory();
-        const restoring = new IndexedDbSnapshot(after, store, 'postbote-a');
+        const restoring = new IndexedDbSnapshot(after, store, 'curlew-a');
         expect(await restoring.restore()).toBe(1);
         const names = (await after.databases()).map((d) => d.name);
-        expect(names.join()).toBe('postbote-a::crypto');
-        const copy = await openDb(after, 'postbote-a::crypto');
+        expect(names.join()).toBe('curlew-a::crypto');
+        const copy = await openDb(after, 'curlew-a::crypto');
         expect(copy.version).toBe(3);
         const tx = copy.transaction(['sessions', 'kv'], 'readonly');
         const session = (await idbRequest(tx.objectStore('sessions').index('by_room').get('!r'))) as {
@@ -474,7 +474,7 @@ export default async () => {
         copy.close();
         expect(await restoring.save()).toBe(0);
 
-        const again = await openDb(after, 'postbote-a::crypto');
+        const again = await openDb(after, 'curlew-a::crypto');
         await withTx(again, ['kv'], (t) => {
           t.objectStore('kv').put(new Uint8Array([43]), 'account');
         });
@@ -491,7 +491,7 @@ export default async () => {
       const store = SecretStore.open(':memory:');
       try {
         const factory = new IDBFactory();
-        const db = await openDb(factory, 'postbote-b::crypto', 1, (fresh) => {
+        const db = await openDb(factory, 'curlew-b::crypto', 1, (fresh) => {
           fresh.createObjectStore('keep');
           fresh.createObjectStore('drop');
         });
@@ -501,8 +501,8 @@ export default async () => {
           tx.objectStore('drop').put('c', 'k3');
         });
         db.close();
-        (await openDb(factory, 'postbote-b::other', 1, (fresh) => fresh.createObjectStore('x'))).close();
-        const snapshot = new IndexedDbSnapshot(factory, store, 'postbote-b');
+        (await openDb(factory, 'curlew-b::other', 1, (fresh) => fresh.createObjectStore('x'))).close();
+        const snapshot = new IndexedDbSnapshot(factory, store, 'curlew-b');
         await snapshot.save();
         const keys = () =>
           [...store.loadAll()]
@@ -510,10 +510,10 @@ export default async () => {
             .flatMap(([ns, map]) => [...map.keys()].map((k) => `${ns}|${k}`))
             .sort()
             .join(' ');
-        expect(keys().includes('idb:postbote-b::other/x')).toBe(false);
+        expect(keys().includes('idb:curlew-b::other/x')).toBe(false);
 
         // A removed record.
-        const again = await openDb(factory, 'postbote-b::crypto');
+        const again = await openDb(factory, 'curlew-b::crypto');
         await withTx(again, ['keep'], (tx) => {
           tx.objectStore('keep').delete('k2');
         });
@@ -523,25 +523,25 @@ export default async () => {
         expect(keys().includes('"k1"')).toBe(true);
 
         // A dropped object store: its records and its place in the schema go.
-        (await openDb(factory, 'postbote-b::crypto', 2, (up) => up.deleteObjectStore('drop'))).close();
+        (await openDb(factory, 'curlew-b::crypto', 2, (up) => up.deleteObjectStore('drop'))).close();
         expect((await snapshot.save()) >= 2).toBe(true);
-        expect(keys().includes('idb:postbote-b::crypto/drop')).toBe(false);
+        expect(keys().includes('idb:curlew-b::crypto/drop')).toBe(false);
 
         // A deleted database: everything of it goes, the other stays.
-        (await openDb(factory, 'postbote-b::other')).close();
+        (await openDb(factory, 'curlew-b::other')).close();
         await new Promise<void>((resolve, reject) => {
-          const request = factory.deleteDatabase('postbote-b::crypto');
+          const request = factory.deleteDatabase('curlew-b::crypto');
           request.onsuccess = () => resolve();
           request.onerror = () => reject(request.error);
         });
         await snapshot.save();
-        expect(keys().includes('postbote-b::crypto')).toBe(false);
-        expect(keys().includes('idb.schema|postbote-b::other')).toBe(true);
+        expect(keys().includes('curlew-b::crypto')).toBe(false);
+        expect(keys().includes('idb.schema|curlew-b::other')).toBe(true);
 
         // And a restore into a fresh factory brings back exactly what is left.
         const fresh = new IDBFactory();
-        expect(await new IndexedDbSnapshot(fresh, store, 'postbote-b').restore()).toBe(1);
-        expect((await fresh.databases()).map((d) => d.name).join()).toBe('postbote-b::other');
+        expect(await new IndexedDbSnapshot(fresh, store, 'curlew-b').restore()).toBe(1);
+        expect((await fresh.databases()).map((d) => d.name).join()).toBe('curlew-b::other');
       } finally {
         store.close();
       }
@@ -576,7 +576,7 @@ export default async () => {
         } catch (err) {
           message = (err as Error).message;
         }
-        expect(message.includes('postbote accounts add matrix')).toBe(true);
+        expect(message.includes('curlew accounts add matrix')).toBe(true);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }

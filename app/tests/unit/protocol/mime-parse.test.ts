@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { parseMimeMessage } from '@postbote/protocol';
+import { parseMimeMessage } from '@curlew/protocol';
 
 // Pure MIME parsing — synthetic messages, no network/PII. Bodies use CRLF (as
 // IMAP delivers) in some cases and LF in others to exercise both separators.

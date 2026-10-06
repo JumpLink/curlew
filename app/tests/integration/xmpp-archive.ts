@@ -1,14 +1,14 @@
 /**
- * The GJS half of the XMPP integration test: postbote's real XMPP client (xmpp.js on gjsify's
+ * The GJS half of the XMPP integration test: curlew's real XMPP client (xmpp.js on gjsify's
  * WebSocket / TLS) logs in to a local test server, and `syncChats` reads its archive into a
  * temporary index. Prints one `RESULT <json>` line for the Node orchestrator
  * (`xmpp-archive.mjs`), which runs the server and checks what arrived.
  *
  * Input (environment, never real accounts — the orchestrator creates throwaway ones):
- *   POSTBOTE_XMPP_IT = {"dataDir", "jid", "password", "service", "caFile", "add": boolean}
+ *   CURLEW_XMPP_IT = {"dataDir", "jid", "password", "service", "caFile", "add": boolean}
  */
 
-import type { AccountPrompter } from '@postbote/protocol';
+import type { AccountPrompter } from '@curlew/protocol';
 import {
   chatConversationId,
   getConversation,
@@ -17,8 +17,8 @@ import {
   openIndexDb,
   rebuildConversations,
   syncChats,
-} from '@postbote/store';
-import { XmppBackend } from '@postbote/xmpp';
+} from '@curlew/store';
+import { XmppBackend } from '@curlew/xmpp';
 import { join } from 'node:path';
 
 interface Input {
@@ -30,7 +30,7 @@ interface Input {
   add: boolean;
 }
 
-const input = JSON.parse(process.env.POSTBOTE_XMPP_IT ?? '{}') as Input;
+const input = JSON.parse(process.env.CURLEW_XMPP_IT ?? '{}') as Input;
 
 let ok = false;
 try {

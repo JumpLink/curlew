@@ -27,9 +27,9 @@ const LOG_WARN = 2;
  * The device model is what Telegram shows in the user's list of active sessions, so it says
  * which program holds the session. That is the only reason this class exists.
  */
-class PostbotePlatform extends WebPlatform {
+class CurlewPlatform extends WebPlatform {
   override getDeviceModel(): string {
-    return 'postbote';
+    return 'curlew';
   }
 
   // Nothing else is overridden. The three that were are gone with the gaps that needed them:
@@ -37,16 +37,16 @@ class PostbotePlatform extends WebPlatform {
   // EventTarget under `--app gjs`, so mtcute's `window.addEventListener('beforeunload')` and its
   // unguarded `'onLine' in navigator` both work. What mtcute gets from them is the browser's
   // answer anyway: there is no page to unload, and a command line has no online/offline signal
-  // worth watching — the connection's own errors are what tell postbote it is offline.
+  // worth watching — the connection's own errors are what tell curlew it is offline.
 }
 
-/** The one place mtcute's client is constructed. Updates are off: postbote syncs, it does not listen. */
+/** The one place mtcute's client is constructed. Updates are off: curlew syncs, it does not listen. */
 export const createMtcuteClient: ClientFactory = ({ credentials, storage }) => {
   const client = new TelegramClient({
     apiId: credentials.apiId,
     apiHash: credentials.apiHash,
     storage,
-    platform: new PostbotePlatform(),
+    platform: new CurlewPlatform(),
     disableUpdates: true,
     logLevel: LOG_WARN,
   });
@@ -93,7 +93,7 @@ export async function probeHandshake(
     apiId: 1,
     apiHash: '00000000000000000000000000000000',
     storage,
-    platform: new PostbotePlatform(),
+    platform: new CurlewPlatform(),
     disableUpdates: true,
     logLevel: LOG_WARN,
   });

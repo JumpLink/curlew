@@ -124,7 +124,7 @@ export default async function setupTools(): Promise<void> {
           // is the one where the stage is still outstanding. Neither state may carry a payload.
           expect(step.state).toBe(linked > 0 ? 'done' : 'remaining');
           // What it does carry instead: the invocation, which is the point of a human-only step.
-          expect(step.command).toBe(`postbote setup --only ${step.name}`);
+          expect(step.command).toBe(`curlew setup --only ${step.name}`);
           expect(step.humanOnly).toBe(true);
         }
       });

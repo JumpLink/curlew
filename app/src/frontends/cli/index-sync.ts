@@ -1,5 +1,5 @@
 /**
- * `postbote sync` and `postbote index` — building and inspecting the local index.
+ * `curlew sync` and `curlew index` — building and inspecting the local index.
  *
  * Kept apart from `search` on purpose: only `sync` ever writes to the index, so a search can
  * never surprise anyone with disk growth. One mental model, stated in one place.
@@ -7,7 +7,7 @@
 
 import type { CommandModule } from 'yargs';
 
-import type { SyncProgress } from '@postbote/store';
+import type { SyncProgress } from '@curlew/store';
 import { indexSearch, indexStatus, indexSync } from '../../core/actions/index.ts';
 import { MAIL_LIMIT, capLimit } from '../../core/actions/index.ts';
 import { pickArgv, runAndExit } from './output.ts';

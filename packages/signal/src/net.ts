@@ -16,7 +16,7 @@ import type { SignalLib } from './lib.ts';
 import type { DeviceAccount } from './protocol-store.ts';
 import type { ChatConnector } from './receiver.ts';
 
-export const USER_AGENT = 'postbote';
+export const USER_AGENT = 'curlew';
 
 export function createNet(lib: SignalLib): Core.Net.Net {
   return new lib.core.Net.Net({ env: lib.core.Net.Environment.Production, userAgent: USER_AGENT });
