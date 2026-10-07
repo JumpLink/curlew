@@ -2,7 +2,6 @@
   "name": "@curlew/smtp",
   "version": "0.1.0",
   "license": "LGPL-3.0-or-later",
-  "private": true,
   "type": "module",
   "description": "Sending one message with attachments over SMTP (nodemailer): message building, account validation, verify and send. A library capability only — no MCP tool, no credentials in logs, errors or DTOs. No gi://.",
   "exports": {
@@ -16,5 +15,13 @@
   ],
   "dependencies": {
     "nodemailer": "10.0.15"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JumpLink/curlew.git",
+    "directory": "packages/smtp"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

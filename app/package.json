@@ -54,9 +54,9 @@
         "project": "AGPL-3.0-or-later"
       },
       "description": "curlew reads the mail (IMAP), contacts (CardDAV) and calendar (CalDAV) of the accounts already configured in GNOME Online Accounts, as a CLI and an MCP server. Read-only: it never sets \\Seen, sends mail, or writes to a server. GNOME Online Accounts and Evolution Data Server are Linux-only, so the macOS and Windows packages ship with every account backend unavailable \u2014 see the Releasing section of README.md.",
-      "homepageUrl": "https://github.com/JumpLink/postbote",
-      "bugtrackerUrl": "https://github.com/JumpLink/postbote/issues",
-      "vcsBrowserUrl": "https://github.com/JumpLink/postbote",
+      "homepageUrl": "https://github.com/JumpLink/curlew",
+      "bugtrackerUrl": "https://github.com/JumpLink/curlew/issues",
+      "vcsBrowserUrl": "https://github.com/JumpLink/curlew",
       "typelibPackages": {
         "EBook-1.2": { "deb": "gir1.2-ebook-1.2", "rpm": "evolution-data-server-libs" },
         "EBookContacts-1.2": { "deb": "gir1.2-ebookcontacts-1.2", "rpm": "evolution-data-server-libs" },

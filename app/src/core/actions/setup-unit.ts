@@ -63,7 +63,7 @@ export const UNIT_TEMPLATE = `# Written by \`curlew setup\`. The paths below are
 # StartLimit* belong to [Unit], not [Service] (systemd ignores them there) — a restart storm,
 # say a config that no longer names a backend, must not fill the disk.
 Description=curlew — receive Signal and WhatsApp into the local index
-Documentation=https://github.com/jumplink/postbote/blob/main/docs/adr/0002-receiving-daemon.md
+Documentation=https://github.com/jumplink/curlew/blob/main/docs/adr/0002-receiving-daemon.md
 StartLimitIntervalSec=300
 StartLimitBurst=5
 
