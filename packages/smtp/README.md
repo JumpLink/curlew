@@ -42,6 +42,8 @@ generated on the domain of `from`.
 Every failure is an `SmtpError` with a `code`: `auth`, `tls`, `connect`, `rejected` or `config`
 (nothing was sent), and the numeric `responseCode` of a server refusal. The message is fixed text
 plus the server's reply with the account's secrets cut out, and the library error is not kept.
+`detail` adds its code and text (`ESOCKET: connect ECONNREFUSED …`, `ESOCKET: self-signed certificate`),
+scrubbed and cut to 200 characters, so a dialog can say what to fix.
 
 ## What it does not do
 
@@ -57,7 +59,9 @@ secrets, and a plaintext dummy server on 127.0.0.1 (no TLS) that records what th
 `AUTH PLAIN` / `XOAUTH2` arrived, the attachments are the MIME parts, `verifyAccount` sent no
 `MAIL FROM`.
 
-**TLS and STARTTLS are not tested, and have not been run against a real server here.** On GJS they
-need gjsify#2071 (peer verification after the handshake, the socket under a TLS connection),
-which is not released at 0.55.0. Three cases in `send.test.ts` are marked skipped with that
-reference; enable them with the release that carries it. Nothing in this package works around it.
+TLS is tested too: the dummy server speaks implicit TLS and STARTTLS with a self-signed certificate
+generated per run with `openssl` (never committed). Covered: `security: 'tls'` with `tls.ca`, the
+STARTTLS upgrade, a refused upgrade, and a certificate the `tls.ca` does not cover (`tls`, not
+`connect`). The server side of the STARTTLS upgrade needs `node:tls` to wrap an accepted socket,
+which gjsify does for clients only, so that one case runs on Node only; the client upgrade is the
+part an app uses.

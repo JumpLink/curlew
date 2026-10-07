@@ -27,6 +27,12 @@ const BY_LIBRARY_CODE: Record<string, SmtpErrorCode> = {
   ECONFIG: 'config',
 };
 
+/**
+ * nodemailer reports a failed handshake as `ESOCKET` (or `ECONNECTION`) and overwrites the
+ * underlying code, so a refused certificate would read as "no connection". The text is what is left.
+ */
+const TLS_FAILURE = /certificate|self[- ]signed|handshake|\bTLS\b|\bSSL\b|altnames|CERT_|ERR_TLS/i;
+
 const SUMMARY: Record<SmtpErrorCode, string> = {
   auth: 'SMTP login failed',
   tls: 'SMTP TLS handshake failed',
@@ -54,10 +60,13 @@ function scrub(text: string, secrets: string[]): string {
  */
 function toSmtpError(err: unknown, account: SmtpAccount): SmtpError {
   const failure = (err ?? {}) as NodemailerError;
-  const code = BY_LIBRARY_CODE[failure.code ?? ''] ?? (failure.responseCode === 535 ? 'auth' : 'connect');
+  const fromText = TLS_FAILURE.test(String(failure.message ?? '')) ? 'tls' : 'connect';
+  const code = BY_LIBRARY_CODE[failure.code ?? ''] ?? (failure.responseCode === 535 ? 'auth' : fromText);
   const reply = typeof failure.response === 'string' ? scrub(failure.response, secretsOf(account)) : '';
   const message = reply ? `${SUMMARY[code]}: ${reply}` : SUMMARY[code];
-  return new SmtpError(code, message, failure.responseCode);
+  const text = typeof failure.message === 'string' ? scrub(failure.message, secretsOf(account)) : '';
+  const detail = [failure.code, text].filter(Boolean).join(': ') || undefined;
+  return new SmtpError(code, message, failure.responseCode, detail);
 }
 
 function transportFor(account: SmtpAccount) {

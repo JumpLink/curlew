@@ -5,6 +5,7 @@ import type { OutgoingMessage, SmtpAccount } from '@curlew/smtp';
 
 import { startDummyServer } from './dummy-server.ts';
 import type { DummyOptions } from './dummy-server.ts';
+import { tlsCredentials } from './tls-fixture.ts';
 
 // Synthetic only: a server on 127.0.0.1 that is created and closed inside each case, a recipient
 // on example.invalid, and secrets that are conspicuous so a leak is found by `includes`.
@@ -94,6 +95,7 @@ export default async () => {
       const port = await withServer({}, async (server) => server.port);
       const err = await failure(() => verifyAccount(accountFor(port)));
       expect(err.code).toBe('connect');
+      expect(err.detail?.includes('ECONNREFUSED')).toBe(true);
       expect(surface(err).includes(PASSWORD)).toBe(false);
     });
   });
@@ -189,12 +191,51 @@ export default async () => {
     });
   });
 
-  // TLS and STARTTLS against a real TLS server need gjsify#2071 (peer verification after the
-  // handshake, and the socket under a TLS connection), which is not released. Nothing here may be
-  // faked in curlew, so the cases wait for the release; see packages/smtp/README.md.
-  await describe('TLS (waits for gjsify#2071)', async () => {
-    await it.skip('connects with security tls to a server with a self-signed certificate and tls.ca', async () => {});
-    await it.skip('upgrades with security starttls, and fails with tls when the upgrade is refused', async () => {});
-    await it.skip('fails with tls for a certificate the tls.ca does not cover', async () => {});
+  await describe('TLS against a local dummy server with a self-signed certificate', async () => {
+    const tlsAccount = (port: number, security: 'tls' | 'starttls', ca: string = tlsCredentials().cert) =>
+      ({ ...accountFor(port), host: '127.0.0.1', security, tls: { ca } }) as SmtpAccount;
+
+    await it('connects with security tls and tls.ca, and sends nothing on verify', async () => {
+      await withServer({ tls: 'implicit' }, async (server) => {
+        await verifyAccount(tlsAccount(server.port, 'tls'));
+        expect(server.dialogue.commands.some((line) => line.startsWith('AUTH PLAIN '))).toBe(true);
+        expect(server.dialogue.messages.length).toBe(0);
+      });
+    });
+
+    // gjsify gap (unfixed, no PR): node:tls on GJS upgrades a plain socket as a CLIENT only, so the
+    // dummy server cannot play the server side of STARTTLS there. The client upgrade is what the
+    // app uses, and it is covered on Node.
+    const serverUpgrade = typeof (globalThis as { imports?: unknown }).imports === 'undefined' ? it : it.skip;
+    await serverUpgrade('upgrades with security starttls', async () => {
+      await withServer({ tls: 'starttls' }, async (server) => {
+        await verifyAccount(tlsAccount(server.port, 'starttls'));
+        const { commands } = server.dialogue;
+        expect(commands.includes('STARTTLS')).toBe(true);
+        // The login only travels after the upgrade.
+        expect(commands.indexOf('STARTTLS') < commands.findIndex((l) => l.startsWith('AUTH'))).toBe(true);
+      });
+    });
+
+    await it('fails with tls when the upgrade is refused, without a login', async () => {
+      await withServer({ tls: 'starttls', refuseStarttls: true }, async (server) => {
+        const err = await failure(() => verifyAccount(tlsAccount(server.port, 'starttls')));
+        expect(err.code).toBe('tls');
+        expect(server.dialogue.commands.some((line) => line.startsWith('AUTH'))).toBe(false);
+        expect(surface(err).includes(PASSWORD)).toBe(false);
+      });
+    });
+
+    await it('fails with tls for a certificate the tls.ca does not cover', async () => {
+      await withServer({ tls: 'implicit' }, async (server) => {
+        const err = await failure(() =>
+          verifyAccount(tlsAccount(server.port, 'tls', tlsCredentials().otherCert)),
+        );
+        expect(err.code).toBe('tls');
+        expect(err.detail !== undefined && err.detail.length > 0).toBe(true);
+        expect(server.dialogue.commands.some((line) => line.startsWith('AUTH'))).toBe(false);
+        expect(surface(err).includes(PASSWORD)).toBe(false);
+      });
+    });
   });
 };

@@ -26,10 +26,17 @@ export class SmtpError extends Error {
   readonly code: SmtpErrorCode;
   /** Numeric SMTP reply code of a server refusal, when there was one. */
   readonly responseCode?: number;
+  /**
+   * The underlying cause for a human who has to fix it ("ECONNREFUSED …", "self-signed
+   * certificate"): the library's code and message, scrubbed of the account's secrets and bounded.
+   * Absent for errors that are fixed text anyway.
+   */
+  readonly detail?: string;
 
-  constructor(code: SmtpErrorCode, message: string, responseCode?: number) {
+  constructor(code: SmtpErrorCode, message: string, responseCode?: number, detail?: string) {
     super(message);
     this.code = code;
     this.responseCode = responseCode;
+    this.detail = detail;
   }
 }
