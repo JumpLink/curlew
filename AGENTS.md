@@ -277,3 +277,10 @@ two bundles. `types.ts` stays for `mcpErrorFrom` alone, which is genuinely curle
 tests did NOT move with the code:** `gate.test.ts` and the two canaries import the gate from the
 package and keep pinning the fail-closed direction, because a gate this repo does not own is the
 one case where "it was tested here once" stops being evidence.
+
+## Licences
+
+Apps (`app/`) are AGPL-3.0-or-later; the reusable packages are LGPL-3.0-or-later (own `LICENSE` +
+`COPYING`). **`@curlew/signal` stays AGPL-3.0-or-later**: libsignal-client is AGPL-3.0-only and
+parts are ported from Signal Desktop. So no LGPL package may depend on `@curlew/signal` — only
+`app/` does. Decided in werkstatt's ADR on the licence split.

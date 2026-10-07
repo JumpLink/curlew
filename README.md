@@ -621,6 +621,11 @@ See [AGENTS.md](AGENTS.md).
 
 [AGPL-3.0-or-later](LICENSE) © Pascal Garber.
 
+The apps (`app/`) are AGPL-3.0-or-later. The reusable packages under `packages/` are
+[LGPL-3.0-or-later](packages/protocol/LICENSE), each with its own `LICENSE` and `COPYING`, so
+other programs can link them. The exception is `@curlew/signal`, which stays AGPL-3.0-or-later:
+it builds on libsignal-client (AGPL-3.0-only) and contains code ported from Signal Desktop.
+
 Free to use, modify and share. The AGPL adds one condition to the GPL: anyone who
 runs this program **as a network service** must offer that service's users the
 source of their version. Running it locally for yourself adds no obligation.
