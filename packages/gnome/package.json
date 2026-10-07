@@ -1,7 +1,7 @@
 {
   "name": "@curlew/gnome",
   "version": "0.1.0",
-  "license": "AGPL-3.0-or-later",
+  "license": "LGPL-3.0-or-later",
   "private": true,
   "type": "module",
   "description": "GNOME Online Accounts (GOA) + Evolution Data Server binding: accounts, contacts, calendar, and the IMAP credentials the mail layer connects with. One implementation for every runtime (GJS native gi://, Node/Bun via @gjsify/node-gi); the GOA/EDS typelibs load on first use, and a host without them answers with GnomeUnavailableError. Needs a GNOME session with GOA/EDS running — nothing is bundled or published.",

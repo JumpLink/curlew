@@ -1,7 +1,7 @@
 {
   "name": "@curlew/xmpp",
   "version": "0.1.0",
-  "license": "AGPL-3.0-or-later",
+  "license": "LGPL-3.0-or-later",
   "private": true,
   "type": "module",
   "description": "XMPP backend: the chat sync driver over xmpp.js — roster, bookmarked MUCs and their history through the server archive (MAM, XEP-0313), the password stored in curlew's SecretStore, and the interactive login. Read-only.",
