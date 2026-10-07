@@ -1,6 +1,6 @@
 # Curlew
 
-*Formerly `postbote`.* The GitHub repository is still named `JumpLink/postbote` until it is renamed. An existing `~/.local/share/postbote` / `~/.config/postbote` keeps being used as it is, and the old `POSTBOTE_*` variables still work.
+*Formerly `postbote`.* The GitHub repository is `JumpLink/curlew` (old URLs redirect). An existing `~/.local/share/postbote` / `~/.config/postbote` keeps being used as it is, and the old `POSTBOTE_*` variables still work.
 
 Your GNOME mail, contacts and calendar — on the command line, and as an
 [MCP](https://modelcontextprotocol.io) server so an AI assistant can search your

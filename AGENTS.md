@@ -6,11 +6,9 @@ This repo is a submodule of **werkstatt**, whose [AGENTS.md](../../AGENTS.md) ca
 broader workspace rules — this file is the curlew-specific layer and wins where they differ.
 
 > **Curlew was `postbote` — "formerly postbote".** Identifiers, packages, binary and MCP server
-> are `curlew`. Two things still say `postbote` on purpose: the **GitHub repo** (`JumpLink/postbote`,
-> in the remote and the URLs of `app/package.json`, the systemd unit and ADR links) until the human
-> renames it, and the **directory `projects/mail`**, which stays — git keys submodules by *path*, not
+> are `curlew`. One thing still says `postbote` on purpose: the **directory `projects/mail`**, which stays — git keys submodules by *path*, not
 > by repo name (werkstatt carries three such pairs: `projects/das-frittier-werk`, `projects/jumplink`,
-> `projects/riba`). Do not "fix" either.
+> `projects/riba`). Do not "fix" it.
 >
 > **The rename fallback is load-bearing — do not "simplify" it away.** `dataDir()`/`configPath()`
 > use `$XDG_{DATA,CONFIG}_HOME/curlew/`, but when ONLY the old `postbote/` directory exists it is
