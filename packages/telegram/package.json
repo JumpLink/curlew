@@ -1,7 +1,7 @@
 {
   "name": "@curlew/telegram",
   "version": "0.1.0",
-  "license": "AGPL-3.0-or-later",
+  "license": "LGPL-3.0-or-later",
   "private": true,
   "type": "module",
   "description": "Telegram backend: the chat sync driver over mtcute (pure-TS MTProto on web standards), a session store on curlew's own SQLite, and the interactive login. Read-only.",
