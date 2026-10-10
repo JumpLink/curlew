@@ -12,7 +12,7 @@ request that would send, and the MCP server registers a tool only when it declar
 capability, `@curlew/smtp`, with no MCP tool and no CLI command. `AGENTS.md` says write access
 for agents needs its own decision. werkstatt ADR 0001 §5 says the same for mail.
 
-This is that decision. kurier's assistant (kurier ADR 0002) needs three things Curlew cannot do
+This is that decision. lotse's assistant (lotse ADR 0002) needs three things Curlew cannot do
 today:
 
 - **send** messages from the assistant's own XMPP account to its person,
@@ -76,7 +76,7 @@ matched the grant set, so a tool cannot be registered with the check left out. A
 is the one failure that looks exactly like a working gate.
 
 The registration check is generic and goes into `@gjsify/mcp`. gjsify gets a gate that takes
-the app's grant set; it holds no capability names (no central registry, kurier `AGENTS.md`).
+the app's grant set; it holds no capability names (no central registry, lotse `AGENTS.md`).
 Capability names and the call check stay in Curlew.
 
 The canaries grow from two to four: the existing two (a tool with `readOnlyHint: false`, a tool
@@ -160,13 +160,13 @@ has to hear. No log failure is swallowed.
 2. Curlew: config pass-through of unknown keys first, then `grants` in the config, validation, the call check, four canaries in `test:mcp`.
 3. `@curlew/xmpp`: guarded send handle; `curlew send` and the MCP tool.
 4. `curlew daemon`: follow mode for granted XMPP accounts.
-5. `CalendarBackend` port, EDS driver with source keys, `calendar.create` (for kurier's school
+5. `CalendarBackend` port, EDS driver with source keys, `calendar.create` (for lotse's school
    dates task).
 
 ## References
 
 - werkstatt ADR 0001 §5 (sending is a library capability), werkstatt ADR 0004 (GNOME is optional)
-- kurier ADR 0002 (the assistant in continuous operation)
+- lotse ADR 0002 (the assistant in continuous operation)
 - ADR 0002 (the receiving daemon and its lease)
 
 ## Amendment (2026-10-10)
