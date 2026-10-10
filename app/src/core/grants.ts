@@ -37,7 +37,8 @@ const WILDCARD = /[*?]/;
 
 /** `xmpp.send` names the account AND the address: from where, and to whom. */
 function targetProblem(capability: Capability, target: string): string | undefined {
-  if (target.length === 0 || target.trim() !== target) return 'must be a non-empty string without surrounding whitespace';
+  if (target.length === 0 || target.trim() !== target)
+    return 'must be a non-empty string without surrounding whitespace';
   if (WILDCARD.test(target)) return 'must name exactly one target, wildcards are not allowed';
   if (capability === 'xmpp.send') {
     const slash = target.indexOf('/');
@@ -64,7 +65,9 @@ export function parseGrants(raw: unknown, options: ParseGrantsOptions = {}): Gra
     }
     const { capability, target } = fields;
     if (typeof capability !== 'string' || !known.includes(capability)) {
-      throw new Error(`${where}.capability ${JSON.stringify(capability)} is not a known capability (${known.join(', ')})`);
+      throw new Error(
+        `${where}.capability ${JSON.stringify(capability)} is not a known capability (${known.join(', ')})`,
+      );
     }
     if (typeof target !== 'string') throw new Error(`${where}.target must be a string`);
     const problem = targetProblem(capability as Capability, target);
@@ -74,7 +77,11 @@ export function parseGrants(raw: unknown, options: ParseGrantsOptions = {}): Gra
 }
 
 /** Does a grant for exactly this capability and exactly this target exist? Missing = deny. */
-export function isGranted(grants: readonly Grant[] | undefined, capability: Capability, target: string): boolean {
+export function isGranted(
+  grants: readonly Grant[] | undefined,
+  capability: Capability,
+  target: string,
+): boolean {
   return (grants ?? []).some((grant) => grant.capability === capability && grant.target === target);
 }
 

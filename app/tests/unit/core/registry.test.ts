@@ -166,7 +166,9 @@ export default async () => {
         expect(JSON.stringify(config.unknown.futureKey)).toBe('{"nested":[1,2,{"a":"b"}]}');
         saveConfig(config, path);
         const saved = JSON.parse(readFileSync(path, 'utf8'));
-        expect(JSON.stringify(saved.grants)).toBe('[{"capability":"xmpp.send","target":"bot/person@example.org"}]');
+        expect(JSON.stringify(saved.grants)).toBe(
+          '[{"capability":"xmpp.send","target":"bot/person@example.org"}]',
+        );
         expect(JSON.stringify(saved.futureKey)).toBe('{"nested":[1,2,{"a":"b"}]}');
         // A later edit through the actions (spread of the loaded config) keeps both.
         saveConfig({ ...loadConfig(path), senders: {} }, path);
