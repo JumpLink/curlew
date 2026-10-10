@@ -704,7 +704,7 @@ export function humanOnlyRefusal(step: SetupStep): Error {
  * does, by not running the stage at all.
  */
 export interface SetupRunOptions {
-  /** Run only these stages, by name; the default is all of them, in order. */
+  /** Run only these stages, by name (an element may itself be comma-separated); the default is all of them, in order. */
   only?: readonly string[];
   /** Stop after the first stage that did not finish. The default is false: one failure must not
    * hide the rest of the report. */
@@ -872,7 +872,11 @@ export const SETUP_FOLLOW_UPS: readonly string[] = [
  * frontend can render the same list as a wizard window, a checklist or a `--only` filter.
  */
 export async function runSetup(ctx: SetupContext, options: SetupRunOptions = {}): Promise<SetupRunResult> {
-  const wanted = options.only === undefined ? null : new Set(options.only);
+  // `--only terms,finish` and `--only terms finish` both mean two stages.
+  const wanted =
+    options.only === undefined
+      ? null
+      : new Set(options.only.flatMap((value) => value.split(',')).map((name) => name.trim()).filter(Boolean));
   if (wanted !== null) {
     const unknown = [...wanted].filter((name) => !SETUP_STEPS.some((step) => step.name === name));
     if (unknown.length > 0) {

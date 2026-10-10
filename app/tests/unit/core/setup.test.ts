@@ -80,6 +80,11 @@ export default async function setup(): Promise<void> {
       expect(result.steps.map((s) => s.name)).toStrictEqual(['terms', 'finish']);
     });
 
+    it('accepts comma-separated stages as well as separate ones', async () => {
+      const result = await runSetup(fakeContext(), { only: ['terms,finish', ' index , ', ''] });
+      expect(result.steps.map((s) => s.name)).toStrictEqual(['terms', 'index', 'finish']);
+    });
+
     it('treats a stage that throws as a failed STAGE, not a dead run', async () => {
       // `daemon` is the first stage that touches the machine, and on a machine with no enabled
       // delivery backend it is the one that can fail — the run must still reach the report.
