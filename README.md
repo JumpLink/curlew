@@ -488,6 +488,15 @@ loginctl enable-linger "$USER"     # so it also runs while you are logged out
 journalctl --user -u curlew-daemon -f
 ```
 
+Mail and the pull-model chats need a timer instead: `contrib/systemd/curlew-sync.service`
+plus `curlew-sync.timer` run `curlew sync` 15 minutes after the previous run ended.
+
+```bash
+cp contrib/systemd/curlew-sync.{service,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now curlew-sync.timer
+```
+
 The unit deliberately does **not** stop when you log out — staying connected is its whole
 point, and the one thing it uses from your session (the address book, for the participant
 link) is optional: without it it still receives, and the link appears on the next rebuild.
