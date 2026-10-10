@@ -45,6 +45,7 @@ import smtpSend from './unit/smtp/send.test.ts';
 import date from './unit/core/date.test.ts';
 import limits from './unit/core/limits.test.ts';
 import registry from './unit/core/registry.test.ts';
+import grants from './unit/core/grants.test.ts';
 import capabilities from './unit/core/capabilities.test.ts';
 import daemon from './unit/core/daemon.test.ts';
 import deliveries from './unit/core/deliveries.test.ts';
@@ -98,6 +99,7 @@ run({
   date,
   limits,
   registry,
+  grants,
   daemon,
   deliveries,
   setup,

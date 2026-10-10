@@ -45,6 +45,8 @@ function tempWorld(backends: string[] = ['signal', 'whatsapp']): {
         backends.map((name) => [name, { enabled: true, termsAcceptedAt: '2026-09-01T00:00:00.000Z' }]),
       ),
       senders: {},
+      grants: [],
+      unknown: {},
     },
     configPath,
   );
