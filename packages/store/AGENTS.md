@@ -66,6 +66,16 @@ scan re-takes each chat's newest window and removes the stored messages inside t
 window covers (`deletedBy`) plus every chat gone from the list — the chat counterpart of the
 expunge pass, and the only one. Do not narrow it.
 
+Below that window a full scan can still reach a deletion, if the backend implements the optional
+`ChatSession.probeRetracted`: the engine picks the stored ids (it owns the index), the backend
+asks the network about them, and only an id the network positively denies is removed — a failing
+or short answer removes nothing and counts as a chat error. Bounded to `CHAT_PROBE_DEPTH` ids per
+chat per run and rotated with `chat_cursors.probe_seq` (oldest first, reset and restart at the
+bottom when a sweep runs out), so the cost per run does not grow with the index while the whole
+stored history still gets verified over successive scans (ADR 0004). `probe_seq` has to travel
+with every cursor write — the row goes in with `INSERT OR REPLACE`, so forgetting it resets the
+sweep on every sync.
+
 A network that reports deletions and edits IN its history (XMPP retractions and corrections,
 Matrix redactions and `m.replace`) hands them over on the page: `ChatHistoryPage.retracted`
 removes stored messages on every run, not only a full scan, and `ChatHistoryPage.edits` rewrites

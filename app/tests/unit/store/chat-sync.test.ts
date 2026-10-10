@@ -433,6 +433,109 @@ export default async () => {
       }
     });
 
+    await it('a full scan probes below the window, bounded, and the sweep rotates', async () => {
+      const backend = new FakeChatBackend();
+      backend.canProbe = true;
+      backend.addChat({ remoteId: '1002', kind: 'direct', title: 'Ben', members: [BEN] });
+      for (let seq = 1; seq <= 30; seq++) backend.post('1002', chatMessage('1002', seq, BEN, `m${seq}`));
+      const db = freshDb();
+      const id = chatConversationId('telegram', ACCOUNT, '1002');
+      // Exact ids, not a joined string: `1002/20` contains `1002/2` as a substring.
+      const ids = () => (getConversation(db, id)?.messages ?? []).map((m) => m.ref.remoteId);
+      try {
+        await syncChats(db, backend, { historyDepth: 30 });
+        expect(getConversation(db, id)?.messages.length).toBe(30);
+        const chat = backend.chats.get('1002');
+        if (!chat) throw new Error('fixture chat missing');
+        // #2 is near the chat's bottom, #25 inside the window a full scan re-reads.
+        chat.messages = chat.messages.filter((m) => m.seq !== 2 && m.seq !== 25);
+
+        // The window of 10 covers #21 and up, so `deletedBy` proves #25 gone. #2 is far below
+        // it: only the probe can reach it, and the first sweep starts at the OLDEST stored id.
+        backend.probeCalls.length = 0;
+        const first = await syncChats(db, backend, { historyDepth: 10, fullScan: true, probeDepth: 5 });
+        expect(first.removed).toBe(2);
+        expect(backend.probeCalls).toEqualArray(['1002:1002/1,1002/2,1002/3,1002/4,1002/5']);
+        expect(ids().includes('1002/2')).toBe(false);
+        expect(ids().includes('1002/25')).toBe(false);
+        expect(ids().length).toBe(28);
+
+        // The next full scan asks the NEXT slice, not the same one again.
+        backend.probeCalls.length = 0;
+        const second = await syncChats(db, backend, { historyDepth: 10, fullScan: true, probeDepth: 5 });
+        expect(second.removed).toBe(0);
+        expect(backend.probeCalls).toEqualArray(['1002:1002/6,1002/7,1002/8,1002/9,1002/10']);
+
+        // Walked to the end of the candidates (#11–#20 is the last slice below the window),
+        // the sweep resets and starts again at the bottom.
+        await syncChats(db, backend, { historyDepth: 10, fullScan: true, probeDepth: 5 });
+        await syncChats(db, backend, { historyDepth: 10, fullScan: true, probeDepth: 5 });
+        backend.probeCalls.length = 0;
+        await syncChats(db, backend, { historyDepth: 10, fullScan: true, probeDepth: 5 });
+        expect(backend.probeCalls).toEqualArray(['1002:1002/1,1002/3,1002/4,1002/5,1002/6']);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('an incremental run never probes, and a failing probe removes nothing', async () => {
+      const backend = new FakeChatBackend();
+      backend.canProbe = true;
+      backend.addChat({ remoteId: '1002', kind: 'direct', title: 'Ben', members: [BEN] });
+      for (let seq = 1; seq <= 20; seq++) backend.post('1002', chatMessage('1002', seq, BEN, `m${seq}`));
+      const db = freshDb();
+      const id = chatConversationId('telegram', ACCOUNT, '1002');
+      try {
+        await syncChats(db, backend, { historyDepth: 20 });
+        const chat = backend.chats.get('1002');
+        if (!chat) throw new Error('fixture chat missing');
+        chat.messages = chat.messages.filter((m) => m.seq !== 2);
+
+        // An incremental run costs nothing new: it cannot tell a deleted message from one that
+        // was never fetched, so it does not ask.
+        await syncChats(db, backend);
+        expect(backend.probeCalls.length).toBe(0);
+        expect(getConversation(db, id)?.messages.length).toBe(20);
+
+        // A probe that fails says nothing about the ids it was asked: no message is removed,
+        // and the cursor stays put, so the next run asks the same slice again.
+        backend.probeFailing.add('1002');
+        const failed = await syncChats(db, backend, { historyDepth: 5, fullScan: true, probeDepth: 4 });
+        expect(failed.removed).toBe(0);
+        expect(getConversation(db, id)?.messages.length).toBe(20);
+        expect(backend.probeCalls).toEqualArray(['1002:1002/1,1002/2,1002/3,1002/4']);
+
+        backend.probeFailing.delete('1002');
+        backend.probeCalls.length = 0;
+        const ok = await syncChats(db, backend, { historyDepth: 5, fullScan: true, probeDepth: 4 });
+        expect(backend.probeCalls).toEqualArray(['1002:1002/1,1002/2,1002/3,1002/4']);
+        expect(ok.removed).toBe(1);
+        expect(getConversation(db, id)?.messages.length).toBe(19);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('a network that cannot be asked by id keeps the window-only behaviour', async () => {
+      const backend = new FakeChatBackend();
+      backend.addChat({ remoteId: '1002', kind: 'direct', title: 'Ben', members: [BEN] });
+      for (let seq = 1; seq <= 20; seq++) backend.post('1002', chatMessage('1002', seq, BEN, `m${seq}`));
+      const db = freshDb();
+      const id = chatConversationId('telegram', ACCOUNT, '1002');
+      try {
+        await syncChats(db, backend, { historyDepth: 20 });
+        const chat = backend.chats.get('1002');
+        if (!chat) throw new Error('fixture chat missing');
+        chat.messages = chat.messages.filter((m) => m.seq !== 2);
+        const scan = await syncChats(db, backend, { historyDepth: 5, fullScan: true });
+        expect(backend.probeCalls.length).toBe(0);
+        expect(scan.removed).toBe(0);
+        expect(getConversation(db, id)?.messages.length).toBe(20);
+      } finally {
+        db.close();
+      }
+    });
+
     await it('a full scan removes a chat that left the list, with its messages', async () => {
       const backend = telegramFixture();
       const db = freshDb();

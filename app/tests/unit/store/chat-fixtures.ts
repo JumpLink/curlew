@@ -113,8 +113,18 @@ export class FakeChatBackend implements ChatBackend {
   readonly chats = new Map<string, FakeChat>();
   /** Every fetchHistory call, as `chat:afterSeq:limit`. */
   readonly calls: string[] = [];
+  /** Every probeRetracted call, as `chat:id,id,…` — in the order the engine asked. */
+  readonly probeCalls: string[] = [];
   /** Chats whose fetch throws. */
   readonly failing = new Set<string>();
+  /** Chats whose probe throws. */
+  readonly probeFailing = new Set<string>();
+  /**
+   * Set true for a network that can be asked about a message BY ID (`probeRetracted`, ADR 0004).
+   * Off by default, so the window-only path — every network that cannot be asked — stays the
+   * one a test gets unless it says otherwise.
+   */
+  canProbe = false;
   connectError: Error | null = null;
   closed = 0;
 
@@ -145,7 +155,7 @@ export class FakeChatBackend implements ChatBackend {
 
   async connect(_accountId: string): Promise<ChatSession> {
     if (this.connectError) throw this.connectError;
-    return {
+    const session: ChatSession = {
       listChats: async (): Promise<ChatInfo[]> => {
         return [...this.chats.values()]
           .map((c) => ({ ...c.info, lastSeq: c.messages.at(-1)?.seq ?? null }))
@@ -175,6 +185,17 @@ export class FakeChatBackend implements ChatBackend {
         this.closed++;
       },
     };
+    // A network that can be asked about a message by id answers only for the ids the engine
+    // named — like `messages.getMessages`, which reports an empty slot per asked id.
+    if (this.canProbe) {
+      session.probeRetracted = async (chatId: string, remoteIds: readonly string[]) => {
+        this.probeCalls.push(`${chatId}:${remoteIds.join(',')}`);
+        if (this.probeFailing.has(chatId)) throw new Error('synthetic probe failure');
+        const live = new Set((this.chats.get(chatId)?.messages ?? []).map((m) => m.remoteId));
+        return remoteIds.filter((id) => !live.has(id));
+      };
+    }
+    return session;
   }
 }
 

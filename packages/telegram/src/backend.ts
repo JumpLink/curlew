@@ -29,6 +29,7 @@ function withStoreClose(client: TelegramClientHandle, store: SecretStore): Teleg
     getMe: () => client.getMe(),
     iterDialogs: (params) => client.iterDialogs(params),
     getHistory: (chatId, params) => client.getHistory(chatId, params),
+    getMessages: (chatId, messageIds) => client.getMessages(chatId, messageIds),
     destroy: async () => {
       try {
         await client.destroy();

@@ -91,6 +91,45 @@ export class TelegramChatSession implements ChatSession {
     return page(raw, afterSeq, raw.length < ask, false);
   }
 
+  /**
+   * Which of these stored messages Telegram no longer has (ADR 0004).
+   *
+   * `messages.getMessages` answers with one slot per asked id and an EMPTY message where there is
+   * none — which for an id this account once saw is positive proof it was deleted; mtcute reports
+   * that slot as `null`. The two official web clients resolve single messages the same way
+   * (Telegram K `appMessagesManager.ts`, `needSingleMessages`; Telegram A `messages.ts`,
+   * `fetchMessage` → `MessageEmpty` = deleted).
+   *
+   * Only ids of THIS chat are asked, in chunks of the server's 100: Telegram's message ids are
+   * per-chat for channels and supergroups, so an id from another chat would resolve to a
+   * different message — or to nothing, which would read as "deleted". A chunk that throws
+   * (FLOOD_WAIT that outlasted mtcute's waiter, a chat that no longer resolves) ends the probe
+   * right there and the ids it did not get an answer for are left out.
+   */
+  async probeRetracted(chatRemoteId: string, remoteIds: readonly string[]): Promise<string[]> {
+    const chatId = Number(chatRemoteId);
+    if (!Number.isSafeInteger(chatId)) throw new Error(`not a Telegram chat id: ${chatRemoteId}`);
+    // `remoteMessageId` is `<chatId>/<messageId>`; an id from elsewhere is not ours to judge.
+    const prefix = `${chatId}/`;
+    const asked = remoteIds
+      .filter((remoteId) => remoteId.startsWith(prefix))
+      .map((remoteId) => ({ remoteId, id: Number(remoteId.slice(prefix.length)) }))
+      .filter((m) => Number.isSafeInteger(m.id) && m.id > 0);
+    const gone: string[] = [];
+    for (let i = 0; i < asked.length; i += SERVER_HISTORY_CAP) {
+      const chunk = asked.slice(i, i + SERVER_HISTORY_CAP);
+      const found = await this.api.getMessages(
+        chatId,
+        chunk.map((m) => m.id),
+      );
+      // A short answer says nothing about the ids past its end: those stay in the index.
+      for (let j = 0; j < chunk.length && j < found.length; j++) {
+        if (found[j] === null) gone.push(chunk[j].remoteId);
+      }
+    }
+    return gone;
+  }
+
   async close(): Promise<void> {
     await this.api.destroy();
   }

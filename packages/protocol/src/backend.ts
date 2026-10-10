@@ -284,6 +284,19 @@ export interface ChatSession {
    * after every chat was fetched, so it also reaches chats with nothing new.
    */
   revisions?(): Promise<ChatRevision[]>;
+  /**
+   * Which of these stored messages the network no longer has, by remote id (ADR 0004).
+   *
+   * The engine asks — it owns the index and so picks the ids — and the backend decides how to
+   * ask the network. Only for networks that can be asked about a message BY ID; one that cannot
+   * has no such method, and the engine then relies on the re-read window alone.
+   *
+   * Answer with an id only for one the server POSITIVELY reported gone. An answer that failed,
+   * was cut short, or came back shorter than asked says nothing about the ids it left out: those
+   * must not be in the result. A false "deleted" destroys index data; a false negative costs one
+   * request on the next run.
+   */
+  probeRetracted?(chatRemoteId: string, remoteIds: readonly string[]): Promise<string[]>;
   close(): Promise<void>;
 }
 
