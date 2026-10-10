@@ -774,6 +774,12 @@ const ABORTED = Symbol('aborted');
  * error can name what it was talking to — a JID, a phone number, a display name — and the log
  * line is a file that gets copied and pasted around (ADR 0002 §6). The name and the code are
  * structural: `Error`, `SqliteError`, `ECONNRESET`, HTTP 401.
+ *
+ * ONE message is let through: `<name> is not a function`. That is not the network talking, it is
+ * a method the runtime does not have — our own bug, and the property name is the only thing that
+ * says which. The shape is matched, not the type, so nothing else rides along: a WhatsApp
+ * reconnect that logged a bare `TypeError` cost an afternoon before the message was recovered by
+ * hand, and it read `writeUint8 is not a function` — a missing Buffer alias in gjsify.
  */
 function shortReason(err: unknown): string {
   if (!(err instanceof Error)) return 'Error';
@@ -782,8 +788,17 @@ function shortReason(err: unknown): string {
   const parts = [err.name];
   if (typeof code === 'number' || typeof code === 'string') parts.push(String(code));
   if (typeof status === 'number') parts.push(String(status));
+  const missingMethod = MISSING_METHOD.exec(err.message);
+  if (missingMethod) return `${parts.join('/')}: ${missingMethod[0]}`;
   return parts.join('/');
 }
+
+/**
+ * `foo.bar is not a function`, as every engine spells it — and nothing else. A JID, a phone
+ * number or a display name cannot match: the whole message must be a dotted identifier followed
+ * by exactly that phrase.
+ */
+const MISSING_METHOD = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)* is not a function$/;
 
 /**
  * `work`, or `ABORTED` the moment the run is stopped.

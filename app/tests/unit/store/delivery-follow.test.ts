@@ -377,6 +377,85 @@ export default async () => {
       }
     });
 
+    await it('says WHAT is not a function when a connect dies on a missing method', async () => {
+      const db = freshDb();
+      const controller = new AbortController();
+      const progress: DeliveryProgress[] = [];
+      try {
+        // A TypeError from a connect is OUR bug, not the network's: a method the runtime does
+        // not have. Its message names a property, never a peer — and without it the log line
+        // reads "reconnect in 5000 ms (attempt 1, TypeError)", which says nothing at all. This
+        // one cost an afternoon: the missing method was Buffer.prototype.writeUint8.
+        const missing = new TypeError('z.writeUint8 is not a function');
+        let attempts = 0;
+        const backend: DeliveryBackend = {
+          manifest: new FollowBackend([]).manifest,
+          kind: 'delivery',
+          listAccounts: async () => [{ id: 'a-1', identity: 'a-1', provider: 'Fake' }],
+          connect: async () => {
+            attempts++;
+            if (attempts === 1) throw missing;
+            return new ControllableSession();
+          },
+        };
+        const received = receiveDeliveries(db, backend, {
+          mode: 'follow',
+          signal: controller.signal,
+          sleep: () => Promise.resolve(),
+          onProgress: (event) => progress.push(event),
+        });
+        await settle();
+        const reconnects = progress.filter((p) => p.type === 'reconnect');
+        expect(reconnects.length).toBe(1);
+        expect(reconnects[0]?.type === 'reconnect' ? reconnects[0].reason : null).toBe(
+          'TypeError: z.writeUint8 is not a function',
+        );
+        controller.abort();
+        await received;
+      } finally {
+        controller.abort();
+        db.close();
+      }
+    });
+
+    await it('keeps a peer out of the reason even when the runtime error type carries one', async () => {
+      const db = freshDb();
+      const controller = new AbortController();
+      const progress: DeliveryProgress[] = [];
+      try {
+        // The same TypeError, but with a JID where the property name would be. A message that is
+        // not shaped like "<something> is not a function" is not a missing-method report, so it
+        // is not a message this may log.
+        const leaking = new TypeError('cannot read sender of 491510000001@lid');
+        let attempts = 0;
+        const backend: DeliveryBackend = {
+          manifest: new FollowBackend([]).manifest,
+          kind: 'delivery',
+          listAccounts: async () => [{ id: 'a-1', identity: 'a-1', provider: 'Fake' }],
+          connect: async () => {
+            attempts++;
+            if (attempts === 1) throw leaking;
+            return new ControllableSession();
+          },
+        };
+        const received = receiveDeliveries(db, backend, {
+          mode: 'follow',
+          signal: controller.signal,
+          sleep: () => Promise.resolve(),
+          onProgress: (event) => progress.push(event),
+        });
+        await settle();
+        const reconnects = progress.filter((p) => p.type === 'reconnect');
+        expect(reconnects[0]?.type === 'reconnect' ? reconnects[0].reason : null).toBe('TypeError');
+        expect(JSON.stringify(progress).includes('491510000001')).toBe(false);
+        controller.abort();
+        await received;
+      } finally {
+        controller.abort();
+        db.close();
+      }
+    });
+
     await it('does not retry a device the network no longer knows', async () => {
       const db = freshDb();
       const controller = new AbortController();
