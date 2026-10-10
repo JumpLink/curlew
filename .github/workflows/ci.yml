@@ -78,6 +78,14 @@ jobs:
       - name: Type check (app + every package)
         run: gjsify foreach -A check
 
+      # Neither runs anywhere else: unformatted files once reached main because only the type
+      # check was here. Both exit non-zero on a finding.
+      - name: Format check
+        run: gjsify workspace curlew-cli format:check
+
+      - name: Lint
+        run: gjsify workspace curlew-cli lint
+
       - name: Build the CLI bundle
         run: gjsify workspace curlew-cli build
 
