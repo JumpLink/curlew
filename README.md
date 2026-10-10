@@ -569,8 +569,7 @@ unknown capability is an error when the file loads.
 ```json
 {
   "grants": [
-    { "capability": "xmpp.send", "target": "<account>/<address>" },
-    { "capability": "calendar.create", "target": "<calendar>" }
+    { "capability": "xmpp.send", "target": "<account>/<address>" }
   ]
 }
 ```

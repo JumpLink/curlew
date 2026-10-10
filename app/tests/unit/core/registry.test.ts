@@ -159,14 +159,14 @@ export default async () => {
         const text = JSON.stringify({
           backends: { mail: { enabled: true } },
           senders: {},
-          grants: [{ capability: 'calendar.create', target: 'calendar-1' }],
+          grants: [{ capability: 'xmpp.send', target: 'bot/person@example.org' }],
           futureKey: { nested: [1, 2, { a: 'b' }] },
         });
         const config = parseConfig(text);
         expect(JSON.stringify(config.unknown.futureKey)).toBe('{"nested":[1,2,{"a":"b"}]}');
         saveConfig(config, path);
         const saved = JSON.parse(readFileSync(path, 'utf8'));
-        expect(JSON.stringify(saved.grants)).toBe('[{"capability":"calendar.create","target":"calendar-1"}]');
+        expect(JSON.stringify(saved.grants)).toBe('[{"capability":"xmpp.send","target":"bot/person@example.org"}]');
         expect(JSON.stringify(saved.futureKey)).toBe('{"nested":[1,2,{"a":"b"}]}');
         // A later edit through the actions (spread of the loaded config) keeps both.
         saveConfig({ ...loadConfig(path), senders: {} }, path);
