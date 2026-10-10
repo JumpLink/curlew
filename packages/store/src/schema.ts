@@ -21,7 +21,7 @@
 
 import { type IndexDatabase, withTransaction } from './db.ts';
 
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -287,6 +287,12 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
        expires_at TEXT NOT NULL,
        PRIMARY KEY (backend, account_id))`,
   ],
+  // v8: how far the rotating deletion probe got in this chat (ADR 0004). A full scan asks the
+  // network about the stored messages BELOW the window it re-read, a bounded slice at a time,
+  // oldest first, and leaves the highest sequence it asked about here. NULL means "start at the
+  // chat's oldest stored message again" — which is also what a finished sweep writes back, so
+  // the probe keeps circling instead of stopping at the top.
+  8: [{ table: 'chat_cursors', column: 'probe_seq', type: 'INTEGER' }],
 };
 
 function columnsOf(db: IndexDatabase, table: string): Set<string> {

@@ -196,7 +196,10 @@ A message deleted on Telegram stays in the index until a full scan:
 `curlew sync --full-scan` re-reads each chat's newest window and removes every
 stored message in it that Telegram no longer has, and every chat that left your
 list. (Telegram reports deletions only as live updates, which a sync without a
-daemon does not receive.)
+daemon does not receive.) Below that window each full scan additionally asks
+Telegram about 200 stored messages per chat, oldest first, and continues where
+the last scan stopped — so a deletion deep in a long chat is found within a few
+full scans rather than never.
 
 The login leaves a **session file** at
 `$XDG_DATA_HOME/curlew/secrets/telegram/telegram-<user id>.db` (mode `0600`

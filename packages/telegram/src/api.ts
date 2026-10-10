@@ -89,6 +89,15 @@ export interface TelegramApi {
     chatId: number,
     params: { limit: number; offset?: { id: number; date: number }; reverse?: boolean },
   ): Promise<ReadonlyArray<TgMessage>>;
+  /**
+   * mtcute's `getMessages`: the messages at those ids, **one slot per asked id, in order**, with
+   * `null` where Telegram has no message — which for an id this account once saw is positive
+   * proof it was deleted. At most 100 ids per call.
+   *
+   * The id array is mutable on purpose: mtcute's own signature takes `number | number[]`, and
+   * mtcute's client satisfies this interface structurally (see `client.ts`).
+   */
+  getMessages(chatId: number, messageIds: number[]): Promise<ReadonlyArray<TgMessage | null>>;
   destroy(): Promise<void>;
 }
 

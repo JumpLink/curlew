@@ -851,5 +851,65 @@ export default async () => {
         rmSync(dir, { recursive: true, force: true });
       }
     });
+
+    /**
+     * The deletion counterpart of the edits test above, and for the same reason: the mechanism is
+     * only real if it is proved through the backend, against mtcute's actual semantics.
+     *
+     * `deletedBy` can only judge the window a full scan re-read. Below it the session asks
+     * Telegram about the stored ids themselves (`getMessages`, ADR 0004), which answers with one
+     * slot per asked id and `null` where the message is gone — the one answer that is positive
+     * proof rather than an absence.
+     */
+    await it('removes a message deleted BELOW the re-read window', async () => {
+      const dir = tempDir();
+      const db = freshDb();
+      try {
+        await new TelegramBackend(context(dir), fakeFactory({}).create).addAccount(
+          prompter(['+49 170 0000000', '12345', 'correct horse']),
+        );
+        const messages = Array.from({ length: 15 }, (_, i) =>
+          tgMessage(ANNA, i + 1, i % 2 === 0 ? ANNA : 'me', `m${i + 1}`),
+        );
+        const history = new Map([[ANNA.id, messages]]);
+        const dialogs = [
+          { peer: ANNA, lastMessage: messages[14], lastReadIngoing: 15, lastReadOutgoing: 15 },
+        ];
+        const factory = fakeFactory({ dialogs, history });
+        const backend: ChatBackend = new TelegramBackend(context(dir), factory.create);
+        const direct = chatConversationId('telegram', 'telegram-42', '1001');
+
+        await syncChats(db, backend, { historyDepth: 15 });
+        expect(getConversation(db, direct)?.messages.length).toBe(15);
+
+        // Deleted on the phone: #2, far below the newest five a scan re-reads.
+        history.set(
+          ANNA.id,
+          messages.filter((m) => m.id !== 2),
+        );
+
+        // The window alone cannot see it — it covers #11 and up, and `deletedBy` says nothing
+        // about anything below its lowest id.
+        await syncChats(db, backend, { historyDepth: 5, fullScan: true, probeDepth: 0 });
+        expect(getConversation(db, direct)?.messages.length).toBe(15);
+
+        // With the probe it goes: Telegram reports an empty slot at #2 and nothing else.
+        const scan = await syncChats(db, backend, { historyDepth: 5, fullScan: true, probeDepth: 10 });
+        expect(scan.removed).toBe(1);
+        const left = getConversation(db, direct)?.messages ?? [];
+        expect(left.length).toBe(14);
+        expect(left.some((m) => m.ref.remoteId === '1001/2')).toBe(false);
+
+        // One `getMessages` for the whole slice, with this chat's ids only — Telegram's message
+        // ids are per-chat, so an id from elsewhere would resolve to a different message.
+        const asked = factory.clients.flatMap((c) =>
+          c.calls.filter((call) => call.startsWith('getMessages')),
+        );
+        expect(asked).toEqualArray(['getMessages:1001:1,2,3,4,5,6,7,8,9,10']);
+      } finally {
+        db.close();
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
   });
 };

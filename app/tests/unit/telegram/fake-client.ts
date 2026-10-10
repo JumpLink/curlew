@@ -147,6 +147,14 @@ export class FakeClient implements TelegramClientHandle {
       .slice(0, limit);
   }
 
+  async getMessages(chatId: number, messageIds: readonly number[]): Promise<ReadonlyArray<TgMessage | null>> {
+    this.calls.push(`getMessages:${chatId}:${messageIds.join(',')}`);
+    // mtcute's contract: one slot per asked id, IN ORDER, `null` where Telegram has no message.
+    const all = this.script.history?.get(chatId) ?? [];
+    const byId = new Map(all.map((m) => [m.id, m]));
+    return messageIds.slice(0, SERVER_HISTORY_CAP).map((id) => byId.get(id) ?? null);
+  }
+
   async login(prompts: LoginPrompts): Promise<TgUser> {
     this.calls.push('login');
     await this.storage.driver.load?.();

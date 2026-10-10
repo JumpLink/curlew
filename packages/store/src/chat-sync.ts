@@ -14,7 +14,10 @@
  * `getChannelDifference`), which a sync without a daemon does not receive. A FULL SCAN
  * (`sync --full-scan`) re-takes each chat's newest window and removes every stored message in
  * the range that window covers but no longer contains, and every chat that left the list —
- * the chat counterpart of the mailbox engine's expunge pass.
+ * the chat counterpart of the mailbox engine's expunge pass. The window has a bottom, and the
+ * index grows past it: below it the full scan asks the network about the stored ids themselves,
+ * one bounded slice per run on a rotating sweep (`ChatSession.probeRetracted`, ADR 0004), for a
+ * network that can be asked about a message BY ID.
  *
  * Budget: every message costs a share of a multi-row INSERT, which is a wide parse per few
  * rows rather than a statement each (see `insertMany` in `db.ts`). `maxMessages` caps one run; a
@@ -53,6 +56,8 @@ export interface ChatSyncOptions {
   pageSize?: number;
   /** Re-fetch the newest window of every chat, picking up edits made since. */
   fullScan?: boolean;
+  /** Stored ids one full scan asks about below the window, per chat (ADR 0004). */
+  probeDepth?: number;
   /** Clock, injected so tests are deterministic. */
   now?: () => Date;
 }
@@ -87,6 +92,12 @@ export interface ChatSyncResult {
 
 export const CHAT_HISTORY_DEPTH = 200;
 export const CHAT_MAX_MESSAGES = 5_000;
+/**
+ * Stored messages one full scan asks a network about by id, per chat — two `getMessages` calls
+ * for Telegram, which takes 100 ids each. The bound is what keeps the cost of a scan independent
+ * of how large the index has grown; `probe_seq` is what still carries it to the oldest message.
+ */
+export const CHAT_PROBE_DEPTH = 200;
 const DEFAULT_PAGE = 100;
 
 interface Cursor {
@@ -95,6 +106,11 @@ interface Cursor {
   lastCursor: string | null;
   readInboxSeq: number | null;
   readOutboxSeq: number | null;
+  /**
+   * How far the deletion sweep below the window got: the highest sequence it has already asked
+   * about. NULL starts again at the chat's oldest stored message (ADR 0004).
+   */
+  probeSeq: number | null;
 }
 
 function num(value: unknown): number | null {
@@ -104,7 +120,8 @@ function num(value: unknown): number | null {
 function loadCursors(db: IndexDatabase, backend: string, accountId: string): Map<string, Cursor> {
   const rows = db
     .prepare(
-      `SELECT chat_id, ${seqColumn('last_seq')}, last_cursor, ${seqColumn('read_inbox_seq')}, ${seqColumn('read_outbox_seq')}
+      `SELECT chat_id, ${seqColumn('last_seq')}, last_cursor, ${seqColumn('read_inbox_seq')}, ${seqColumn('read_outbox_seq')},
+              ${seqColumn('probe_seq')}
          FROM chat_cursors WHERE backend = ? AND account_id = ?`,
     )
     .all(backend, accountId) as Array<Record<string, unknown>>;
@@ -116,6 +133,7 @@ function loadCursors(db: IndexDatabase, backend: string, accountId: string): Map
         lastCursor: r.last_cursor === null || r.last_cursor === undefined ? null : String(r.last_cursor),
         readInboxSeq: num(r.read_inbox_seq),
         readOutboxSeq: num(r.read_outbox_seq),
+        probeSeq: num(r.probe_seq),
       },
     ]),
   );
@@ -211,6 +229,16 @@ function deleteIn(db: IndexDatabase, sql: (placeholders: string) => string, ids:
 }
 
 /**
+ * A message already in the index: its row id, the network's sequence, and the network's own id —
+ * the last because a probe asks the network in ITS terms, not the index's.
+ */
+interface StoredMessage {
+  id: string;
+  seq: number;
+  remoteId: string;
+}
+
+/**
  * The stored messages of one account, by conversation — only loaded for a full scan, which is
  * the one run that can tell a deleted message from one that was never fetched.
  */
@@ -218,20 +246,39 @@ function loadStoredSeqs(
   db: IndexDatabase,
   backend: string,
   accountId: string,
-): Map<string, Array<{ id: string; seq: number }>> {
+): Map<string, StoredMessage[]> {
   const rows = db
     .prepare(
-      `SELECT id, conversation_id, ${seqColumn('remote_seq')} FROM conversation_messages
+      `SELECT id, conversation_id, remote_id, ${seqColumn('remote_seq')} FROM conversation_messages
          WHERE backend = ? AND account_id = ? AND remote_seq IS NOT NULL`,
     )
     .all(backend, accountId) as Array<Record<string, unknown>>;
-  const result = new Map<string, Array<{ id: string; seq: number }>>();
+  const result = new Map<string, StoredMessage[]>();
   for (const r of rows) {
     const list = result.get(String(r.conversation_id)) ?? [];
-    list.push({ id: String(r.id), seq: Number(r.remote_seq) });
+    list.push({ id: String(r.id), seq: Number(r.remote_seq), remoteId: String(r.remote_id) });
     result.set(String(r.conversation_id), list);
   }
   return result;
+}
+
+/**
+ * The next slice of a chat's deletion sweep: the oldest `depth` stored messages BELOW the window
+ * the run re-read and above where the last sweep got (ADR 0004). A sweep that ran out of
+ * candidates starts again at the chat's oldest message, in this very run — otherwise a run would
+ * be spent on nothing but the reset.
+ */
+function probeSlice(
+  stored: readonly StoredMessage[],
+  below: number,
+  after: number | null,
+  depth: number,
+): { slice: StoredMessage[]; from: number | null } {
+  const candidates = [...stored].filter((m) => m.seq < below).sort((a, b) => a.seq - b.seq);
+  const take = (from: number | null): StoredMessage[] =>
+    candidates.filter((m) => from === null || m.seq > from).slice(0, depth);
+  const slice = take(after);
+  return slice.length > 0 || after === null ? { slice, from: after } : { slice: take(null), from: null };
 }
 
 /**
@@ -296,7 +343,7 @@ function writeBatch(db: IndexDatabase, batch: ChatBatch): void {
       db,
       `INSERT OR REPLACE INTO chat_cursors
          (conversation_id, backend, account_id, chat_id, kind, last_seq, read_inbox_seq, read_outbox_seq, last_sync_at,
-          last_cursor)`,
+          last_cursor, probe_seq)`,
       batch.cursors,
     );
     // After the inserts, so a correction or retraction of a message written in this very batch
@@ -444,6 +491,10 @@ async function syncAccount(
 
       const fetched: ChatMessage[] = [];
       let failed = false;
+      // The window's bottom: below it `deletedBy` proves nothing, so that is where the probe
+      // starts. Null means there is nothing to probe — no window was re-read this run, or it
+      // reached the chat's start and covered everything stored.
+      let probeBelow: number | null = null;
       if ((!caughtUp || options.fullScan) && (!windowed || windowFits)) {
         try {
           if (windowed) {
@@ -460,6 +511,7 @@ async function syncAccount(
                 const gone = deletedBy(page, stored.get(conversationId) ?? []);
                 batch.deletedMessages.push(...gone);
                 result.removed += gone.length;
+                if (!page.reachedStart && page.lowestSeq !== null) probeBelow = page.lowestSeq;
               }
             }
           } else {
@@ -491,6 +543,33 @@ async function syncAccount(
       // A first fetch that failed outright leaves no trace, so the next run starts it fresh.
       if (failed && !cursor && fetched.length === 0) continue;
 
+      // Below the window `deletedBy` proves nothing, so a full scan asks the network about the
+      // stored ids themselves — one bounded slice per run, advancing `probe_seq` so successive
+      // scans walk the whole stored history (ADR 0004). Only for a network that can be asked.
+      let probeSeq = cursor?.probeSeq ?? null;
+      if (stored && cursor && probeBelow !== null && session.probeRetracted && options.probeDepth > 0) {
+        const candidates = stored.get(conversationId) ?? [];
+        const { slice, from } = probeSlice(candidates, probeBelow, probeSeq, options.probeDepth);
+        if (slice.length === 0) probeSeq = from;
+        else {
+          try {
+            const asked = slice.map((m) => m.remoteId);
+            const gone = new Set(await session.probeRetracted(chat.remoteId, asked));
+            for (const m of slice) {
+              if (!gone.has(m.remoteId)) continue;
+              batch.deletedMessages.push(m.id);
+              result.removed++;
+            }
+            probeSeq = slice[slice.length - 1].seq;
+          } catch {
+            // A probe that failed says nothing about the ids it was asked: nothing is removed and
+            // the sweep stays where it was, so the next run asks this same slice again. The
+            // network's message is not recorded: it may quote the chat.
+            result.chatErrors++;
+          }
+        }
+      }
+
       const summary = chatSummary(chat);
       batch.conversations.push([
         conversationId,
@@ -518,6 +597,7 @@ async function syncAccount(
         chat.readOutboxSeq,
         syncedAt,
         lastCursor,
+        probeSeq,
       ]);
     }
     result.removed += batch.deletedConversations.length;
@@ -562,6 +642,7 @@ export async function syncChats(
     maxMessages: options.maxMessages ?? CHAT_MAX_MESSAGES,
     pageSize: options.pageSize ?? DEFAULT_PAGE,
     fullScan: options.fullScan ?? false,
+    probeDepth: options.probeDepth ?? CHAT_PROBE_DEPTH,
     now: options.now ?? (() => new Date()),
   };
   const budget = { total: resolved.maxMessages, remaining: resolved.maxMessages, exhausted: false };
