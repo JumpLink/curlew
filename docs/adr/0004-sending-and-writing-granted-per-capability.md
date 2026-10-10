@@ -1,6 +1,6 @@
 # ADR 0004 — sending and writing, granted per capability
 
-- **Status:** Accepted (2026-10-10)
+- **Status:** Accepted (2026-10-10); amended 2026-10-10, see [Amendment](#amendment-2026-10-10)
 - **Scope:** `@gjsify/mcp` (the gate), `app` (config, MCP server, `curlew send`, `curlew daemon`),
   `@curlew/xmpp`, `@curlew/protocol` (calendar port), `@curlew/gnome` (EDS calendar driver)
 
@@ -168,3 +168,15 @@ has to hear. No log failure is swallowed.
 - werkstatt ADR 0001 §5 (sending is a library capability), werkstatt ADR 0004 (GNOME is optional)
 - kurier ADR 0002 (the assistant in continuous operation)
 - ADR 0002 (the receiving daemon and its lease)
+
+## Amendment (2026-10-10)
+
+The decision above stands. One part of its scope moved out of curlew:
+
+- **`calendar.create` and the `CalendarBackend` write path (§6, step 5 of the order of work) now
+  belong to the separate app [reminder](https://github.com/JumpLink/reminder).** Curlew is a
+  messenger: it keeps contacts and messaging writes (`xmpp.send` and the later `*.send`
+  capabilities) and no longer writes calendar events. The capability is removed from the
+  grants table and from `CAPABILITIES`; a config that still lists it is rejected as an unknown
+  capability.
+- The read-only `curlew calendar` command is slated to move to reminder as well.
