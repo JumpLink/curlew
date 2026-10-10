@@ -1,0 +1,19 @@
+[Unit]
+# curlew — one pass of `curlew sync`: mail and the pull-model chats (IMAP, Telegram, Matrix,
+# XMPP) into the local index. Started by curlew-sync.timer; the receiving daemon
+# (curlew-daemon.service) covers Signal and WhatsApp.
+#
+# Verify: systemd-analyze --user verify <this file>
+Description=curlew — sync mail and chats into the local index
+Documentation=https://github.com/jumplink/curlew/blob/main/README.md
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/curlew
+# PATH is set explicitly for the same reason as in curlew-daemon.service.
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/env gjsify run %h/curlew/app/dist/curlew.gjs.mjs sync
+# A hung network call must not pile up behind the next tick.
+TimeoutStartSec=10min
+NoNewPrivileges=true
+PrivateTmp=true
