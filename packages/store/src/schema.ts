@@ -343,17 +343,31 @@ function readVersion(db: IndexDatabase): number {
  *
  * Refuses an index from a NEWER curlew and leaves it untouched: writing our own, lower
  * version into it would make the newer binary replay its upgrades on the next open.
+ *
+ * An index that is already current is NOT written to. Every command and the MCP server open the
+ * index through here, so a write on each open would make a reader queue behind (or, before the
+ * busy timeout, fail against) the daemon's batch. A real upgrade takes the write lock up front
+ * and re-reads the version under it, because another process may have migrated while this one
+ * waited.
  */
 export function migrate(db: IndexDatabase): void {
-  const from = readVersion(db);
-  if (from > SCHEMA_VERSION) throw new IndexTooNewError(from, SCHEMA_VERSION);
-  withTransaction(db, () => {
-    for (const statement of STATEMENTS) db.exec(statement);
-    for (let v = from + 1; v <= SCHEMA_VERSION; v++) {
-      for (const step of UPGRADES[v] ?? []) applyStep(db, step);
-    }
-    db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('schema_version', ?)`).run(
-      String(SCHEMA_VERSION),
-    );
-  });
+  const seen = readVersion(db);
+  if (seen > SCHEMA_VERSION) throw new IndexTooNewError(seen, SCHEMA_VERSION);
+  if (seen === SCHEMA_VERSION) return;
+  withTransaction(
+    db,
+    () => {
+      const from = readVersion(db);
+      if (from > SCHEMA_VERSION) throw new IndexTooNewError(from, SCHEMA_VERSION);
+      if (from === SCHEMA_VERSION) return;
+      for (const statement of STATEMENTS) db.exec(statement);
+      for (let v = from + 1; v <= SCHEMA_VERSION; v++) {
+        for (const step of UPGRADES[v] ?? []) applyStep(db, step);
+      }
+      db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('schema_version', ?)`).run(
+        String(SCHEMA_VERSION),
+      );
+    },
+    { immediate: true },
+  );
 }

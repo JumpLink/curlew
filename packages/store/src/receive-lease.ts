@@ -39,25 +39,14 @@ export const LEASE_HEARTBEAT_MS = 30_000;
 export const LEASE_STALE_HEARTBEATS = 3;
 
 /**
- * How long a lease statement waits for another process's write lock before giving up.
- *
- * Set here, per connection, rather than left to the runtime's default, which is not the same on
- * both: a fresh gjsify connection REPORTS `PRAGMA busy_timeout` as 500, while the wait a GJS
- * contender actually made with no pragma of its own was ~6 s (measured cross-process, GJS
- * 1.88.1 / gjsify 0.49.0) — so that reported number does not describe the wait, and the value
- * below is ours on purpose. It is armed once per connection: a heartbeat every 30 s must not
- * spend an execution on it.
+ * The lease's own transaction: the write lock from the first statement, and — from the
+ * connection's busy timeout (`INDEX_BUSY_TIMEOUT_MS`, set in `openIndexDb`) — a wait, so a
+ * competing process QUEUES instead of failing.
  *
  * A taker that runs out of patience gets SQLITE_BUSY, and the caller treats that as "not
  * acquired": a `sync` stands down, a daemon waits. Waiting is the point; failing the run is not.
- */
-export const LEASE_BUSY_TIMEOUT_MS = 500;
-
-const armed = new WeakSet<IndexDatabase>();
-
-/**
- * The lease's own transaction: the write lock from the first statement, and a busy timeout so a
- * competing process QUEUES instead of failing.
+ * (The lease used to arm its own, shorter timeout here; that clamped the whole connection's wait
+ * after the first heartbeat, so it is gone.)
  *
  * Without `BEGIN IMMEDIATE` two processes both read "free" and the loser gets SQLITE_BUSY — and
  * not from a timeout: SQLite skips the busy handler for a deferred transaction that upgrades from
@@ -71,10 +60,6 @@ const armed = new WeakSet<IndexDatabase>();
  * compensate for its absence.
  */
 function withLeaseTransaction<T>(db: IndexDatabase, fn: () => T): T {
-  if (!armed.has(db)) {
-    db.exec(`PRAGMA busy_timeout = ${LEASE_BUSY_TIMEOUT_MS}`);
-    armed.add(db);
-  }
   return withTransaction(db, fn, { immediate: true });
 }
 

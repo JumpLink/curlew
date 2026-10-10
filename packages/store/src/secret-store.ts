@@ -18,7 +18,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { chmodSync, closeSync, existsSync, openSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { insertMany, placeholders, withTransaction } from './db.ts';
+import { INDEX_BUSY_TIMEOUT_MS, insertMany, placeholders, withTransaction } from './db.ts';
 import { ensurePrivateDir } from './download.ts';
 
 /** One change: a value to write, or null to delete the key. */
@@ -62,7 +62,8 @@ export class SecretStore {
         }
       }
     }
-    const db = new DatabaseSync(path);
+    // The old daemon may still hold the file while its replacement starts: wait, do not abort.
+    const db = new DatabaseSync(path, { timeout: INDEX_BUSY_TIMEOUT_MS });
     db.exec(
       'CREATE TABLE IF NOT EXISTS secrets (namespace TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, PRIMARY KEY (namespace, key))',
     );

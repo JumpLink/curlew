@@ -41,6 +41,25 @@ Because of (b) the FTS table is maintained by application code, in the same tran
 `messages` write. That is better than a trigger anyway: an `AFTER UPDATE` trigger would fire on
 every `\Seen` change and rewrite the whole FTS row, body included.
 
+## Several processes, one index
+
+The daemon writes while `curlew sync`, the MCP server and a restarted daemon open the same file.
+`database is locked` came from two things, both fixed and pinned by `concurrency.test.ts`:
+
+- **No busy timeout.** `openIndexDb` (and `SecretStore`) pass `INDEX_BUSY_TIMEOUT_MS` as the
+  `timeout` option on every connection; Node's default is no wait at all. Do not arm a shorter
+  one on a live connection (the lease did, and clamped everything after it). GJS multiplies the
+  value by ~12 — measured, libgda's doing.
+- **Writes on open.** `migrate` and `probeFts5` ran on every open and wrote (the scratch FTS
+  table, `schema_meta`), so a reader queued behind — or, deferred, failed against — the daemon's
+  batch. Now an index at `SCHEMA_VERSION` is not written to (an upgrade is `BEGIN IMMEDIATE` and
+  re-reads the version under the lock), the probe lives in `temp`, and `journal_mode = WAL` is
+  only switched on when it is not already. Keep the open path write-free: WAL readers never wait
+  for the writer.
+
+The conversation rebuild stays ONE transaction on purpose: splitting it would show a reader
+empty derived tables. It costs other writers a wait, not readers a failure.
+
 ## Conversations are derived
 
 `conversations`, `conversation_messages`, `participants` and their link tables are rewritten
