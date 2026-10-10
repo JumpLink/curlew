@@ -876,7 +876,12 @@ export async function runSetup(ctx: SetupContext, options: SetupRunOptions = {})
   const wanted =
     options.only === undefined
       ? null
-      : new Set(options.only.flatMap((value) => value.split(',')).map((name) => name.trim()).filter(Boolean));
+      : new Set(
+          options.only
+            .flatMap((value) => value.split(','))
+            .map((name) => name.trim())
+            .filter(Boolean),
+        );
   if (wanted !== null) {
     const unknown = [...wanted].filter((name) => !SETUP_STEPS.some((step) => step.name === name));
     if (unknown.length > 0) {

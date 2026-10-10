@@ -63,11 +63,17 @@ export default async () => {
       rejects([XMPP, { capability: 'xmpp.send' }], /grants\[1\]\.target must be a string/);
       rejects([{ capability: 'xmpp.send', target: 7 }], /target must be a string/);
       rejects([{ target: 'bot/person@example.org' }], /capability undefined is not a known capability/);
-      rejects([{ capability: 'xmpp.send', target: 'bot/x', targets: ['y'] }], /grants\[0\]\.targets is not a grant field/);
+      rejects(
+        [{ capability: 'xmpp.send', target: 'bot/x', targets: ['y'] }],
+        /grants\[0\]\.targets is not a grant field/,
+      );
     });
 
     await it('rejects an unknown capability', async () => {
-      rejects([{ capability: 'calendar.create', target: 'acct' }], /"calendar\.create" is not a known capability/);
+      rejects(
+        [{ capability: 'calendar.create', target: 'acct' }],
+        /"calendar\.create" is not a known capability/,
+      );
       rejects([{ capability: 'mail.send', target: 'acct' }], /"mail\.send" is not a known capability/);
       rejects([{ capability: '*', target: 'acct' }], /not a known capability/);
     });
@@ -88,7 +94,9 @@ export default async () => {
     await it('canary.write is accepted only while the canary env is on', async () => {
       rejects([CANARY], /"canary\.write" is not a known capability/, false);
       expect(parseGrants([CANARY], { canary: true }).length).toBe(1);
-      expect(() => parseConfig(JSON.stringify({ grants: [CANARY] }), { canary: false })).toThrow(/canary\.write/);
+      expect(() => parseConfig(JSON.stringify({ grants: [CANARY] }), { canary: false })).toThrow(
+        /canary\.write/,
+      );
     });
   });
 };

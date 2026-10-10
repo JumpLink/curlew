@@ -161,7 +161,10 @@ export default async function setupUnit(): Promise<void> {
     });
 
     it('resolves gjsify past a shim dir at the front of PATH', () => {
-      const host = nodeHost({ PATH: '/nonexistent/gjsify-shim-x:/usr/bin', GJSIFY_SHIM_DIR: '/nonexistent/gjsify-shim-x' });
+      const host = nodeHost({
+        PATH: '/nonexistent/gjsify-shim-x:/usr/bin',
+        GJSIFY_SHIM_DIR: '/nonexistent/gjsify-shim-x',
+      });
       const found = host.which('env');
       expect(found).toBe('/usr/bin/env');
       expect(nodeHost({ PATH: '/tmp/gjsify-shim-x' }).which('gjsify')).toBe(null);
