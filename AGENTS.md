@@ -29,10 +29,11 @@ The code came out of `buchhaltung/packages/gnome`; the git history there is the 
 
 **The index and the MCP server are read-only and fail-closed.** IMAP is spoken with `BODY.PEEK`
 only, so `\Seen` is never set; there is no flag write, no move, no delete, and no MCP tool that
-sends. **Sending exists as a library capability only** — `@curlew/smtp` — and the caller uses it
-only with the human's explicit consent for that message. It has no MCP tool and no CLI command.
-Write access for agents needs its own decision, taken when it is wanted; this package does not
-make it.
+writes without a grant. **Sending exists as a library capability only** — `@curlew/smtp` — until
+a grant says otherwise, and the caller uses it only with the human's explicit consent for that
+message. Writing and sending are granted per capability and target in the config, off by default
+([ADR 0004](docs/adr/0004-sending-and-writing-granted-per-capability.md)); every frontend, CLI
+included, asks the same grant.
 
 ## Package layout — and the one rule that holds it together
 
@@ -46,7 +47,7 @@ make it.
 | `@curlew/telegram` | Telegram `chat` backend on mtcute (web build: WebSocket, WebCrypto, WASM), its session storage on `SecretStore`, the login | `protocol`, `store`, `@mtcute/*`, `node:*` — no `gi://` |
 | `@curlew/whatsapp` | WhatsApp `delivery` backend on Baileys (unofficial protocol: WebSocket, WASM, libsignal), its auth state on `SecretStore`, the QR / pairing-code link | `protocol`, `store`, `baileys`, `node:*` — no `gi://` |
 | `@curlew/signal` | Signal `delivery` backend on `@signalapp/libsignal-client` (Rust behind N-API; on GJS through `@gjsify/napi`, loaded on first use), its protocol stores on `SecretStore`, the QR link as a linked device, the fail-closed request gate | `protocol`, `store`, `@signalapp/libsignal-client`, `qrcode-generator`, `node:*` — no `gi://` |
-| `@curlew/xmpp` | XMPP `chat` backend on xmpp.js (composed by hand: domain-checked direct TLS, WebSocket, SCRAM), history from MAM only, the account file on `SecretStore`, the login. NEVER sends presence, markers or messages | `protocol`, `store`, `@xmpp/*`, `node:*` — no `gi://` |
+| `@curlew/xmpp` | XMPP `chat` backend on xmpp.js (composed by hand: domain-checked direct TLS, WebSocket, SCRAM), history from MAM only, the account file on `SecretStore`, the login. Never sends presence, markers or messages without a grant | `protocol`, `store`, `@xmpp/*`, `node:*` — no `gi://` |
 | `@curlew/matrix` | Matrix `chat` backend on matrix-js-sdk + the Rust crypto as WASM (`@matrix-org/matrix-sdk-crypto-wasm`), its crypto store as an in-memory IndexedDB snapshotted into `SecretStore`, the password login | `protocol`, `store`, `matrix-js-sdk`, `@matrix-org/*`, `fake-indexeddb`, `node:*` — no `gi://` |
 | `curlew-cli` (`app/`) | yargs CLI + MCP server, config file, backend registry | all of the above |
 
@@ -211,10 +212,15 @@ the MCP server via `run_in_background` when driving it.
   **`@gjsify/mcp`**, since 0.54.0; it was `app/src/frontends/mcp/runtime.ts`, which no longer
   exists — registers a tool only when `annotations.readOnlyHint === true`; a tool that omits the
   annotation is dropped. Do not loosen this to a name list.
-  Two canaries prove it still bites (`tools/gate-canary.ts`, `CURLEW_MCP_GATE_CANARY=1`,
-  asserted by `test:mcp`): one declares `readOnlyHint: false`, one carries NO annotations.
+  Four canaries prove it still bites (`tools/gate-canary.ts`, `CURLEW_MCP_GATE_CANARY=1`,
+  asserted by `test:mcp`, [ADR 0004](docs/adr/0004-sending-and-writing-granted-per-capability.md)):
+  a tool with `readOnlyHint: false`; a tool with NO annotations; a write tool whose capability
+  is NOT granted, which must be absent; and a write tool whose capability IS granted
+  (`canary.write`, accepted only under `CURLEW_MCP_GATE_CANARY=1`), which must be present.
   The unannotated one is load-bearing — with only the first, the gate was rewritten to the
-  fail-open spelling and the whole integration suite stayed GREEN. Never "simplify" them to one.
+  fail-open spelling and the whole integration suite stayed GREEN. The granted one is the
+  positive control: without it a gate that drops everything passes the other three. Never
+  "simplify" them.
   **They matter MORE now, not less:** the gate is upstream code, so these are the only thing that
   would catch an upstream flip — and the failure it guards against (a mutating tool served
   quietly) is invisible on the wire until it is exploited. `test:mcp` needs no change for this.
