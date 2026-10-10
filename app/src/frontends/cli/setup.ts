@@ -35,7 +35,7 @@ export const setupCommand: CommandModule = {
       .option('only', {
         type: 'array',
         string: true,
-        describe: `Run only these stages, by name: ${SETUP_STEPS.map((s) => s.name).join(', ')}`,
+        describe: `Run only these stages, by name (space- or comma-separated): ${SETUP_STEPS.map((s) => s.name).join(', ')}`,
       })
       .option('status', {
         type: 'boolean',
