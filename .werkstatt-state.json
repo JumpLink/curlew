@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "name": "curlew",
+  "description": "Lokale Zustandsdateien von curlew, die nicht im Repo stehen.",
+
+  "entries": [
+    {
+      "path": ".gjsify-link.json",
+      "class": "derived",
+      "recreate": "`gjsify link <gjsify-checkout>` (ADR 0065), danach `gjsify install`; werkstatt-Konvention: Checkout ~/Projekte/.worktrees/gjsify-dev. Per .git/info/exclude ignoriert, nie committet."
+    }
+  ]
+}
