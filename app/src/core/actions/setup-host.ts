@@ -19,6 +19,8 @@ import { delimiter, dirname, join } from 'node:path';
 
 import { homeSubdir } from '@curlew/store';
 
+import { isGjsifyShimDir } from './setup-unit.ts';
+
 export interface RunOptions {
   /**
    * Take the child's output instead of leaving it attached. ONLY for output that is
@@ -87,6 +89,8 @@ export function nodeHost(env: NodeJS.ProcessEnv = process.env): CommandRunner {
     which(command) {
       const dirs = (env.PATH ?? '').split(delimiter).filter(Boolean);
       for (const dir of dirs) {
+        // `gjsify run` fronts PATH with a temp shim dir; a runner found there dies with the run.
+        if (isGjsifyShimDir(dir, env.GJSIFY_SHIM_DIR)) continue;
         const candidate = join(dir, command);
         try {
           if (existsSync(candidate)) return candidate;

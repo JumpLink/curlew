@@ -22,12 +22,15 @@ import { describe, expect, it } from '@gjsify/unit';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
+import { nodeHost } from '../../../src/core/actions/setup-host.ts';
+
 import {
   SHIPPED_UNIT_REL,
   UNIT_NAME,
   renderUnit,
   unitDirectives,
   unitFilePath,
+  isGjsifyShimDir,
   unitPath,
   unitPathsFor,
 } from '../../../src/core/actions/setup-unit.ts';
@@ -142,6 +145,26 @@ export default async function setupUnit(): Promise<void> {
       // inherit from the shell; an absolute one brings its own.
       expect(unitPath('gjsify', '%h')).toBe('%h/.local/bin:/usr/local/bin:/usr/bin:/bin');
       expect(unitPath('/opt/bin/gjsify', '/home/anna')).toBe('/opt/bin:/usr/local/bin:/usr/bin:/bin');
+    });
+
+    it('never takes the runner from the temporary shim dir of `gjsify run`', () => {
+      expect(isGjsifyShimDir('/tmp/gjsify-shim-AbC123')).toBe(true);
+      expect(isGjsifyShimDir('/usr/bin')).toBe(false);
+      const paths = unitPathsFor({
+        mode: 'checkout',
+        home: '/h',
+        checkout: '/h/curlew',
+        gjsify: '/tmp/gjsify-shim-AbC123/gjsify',
+        bundle: '/b',
+      });
+      expect(renderUnit(paths).includes('gjsify-shim-')).toBe(false);
+    });
+
+    it('resolves gjsify past a shim dir at the front of PATH', () => {
+      const host = nodeHost({ PATH: '/nonexistent/gjsify-shim-x:/usr/bin', GJSIFY_SHIM_DIR: '/nonexistent/gjsify-shim-x' });
+      const found = host.which('env');
+      expect(found).toBe('/usr/bin/env');
+      expect(nodeHost({ PATH: '/tmp/gjsify-shim-x' }).which('gjsify')).toBe(null);
     });
 
     it("keeps the restart policy the daemon's exit code depends on", () => {
