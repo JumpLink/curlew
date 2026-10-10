@@ -2,7 +2,8 @@
  * The curlew config file — `$XDG_CONFIG_HOME/curlew/config.json`.
  *
  * It holds decisions only the user can make: which backends are enabled, when their terms were
- * accepted, and how a sender is classified when the automatic call was wrong. None of it can be
+ * accepted, how a sender is classified when the automatic call was wrong, and which writes are
+ * granted (off unless listed). None of it can be
  * rebuilt from a server, so it is kept apart from the index, which can.
  *
  * Parsing is pure (`parseConfig`) so the shape is tested on both runtimes; reading and writing
@@ -12,6 +13,7 @@
 import type { Classification } from '@curlew/protocol';
 import { normalizeAddress } from '@curlew/protocol';
 import { configPath, ensurePrivateDir } from '@curlew/store';
+import { type Grant, type ParseGrantsOptions, parseGrants } from './grants.ts';
 import { chmodSync, existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
@@ -31,7 +33,16 @@ export interface CurlewConfig {
   backends: Record<string, BackendConfig>;
   /** Per-sender classification overrides, keyed by normalized mail address. */
   senders: Record<string, Classification>;
+  /** Write grants (ADR 0004). Absent or empty denies every write. */
+  grants: Grant[];
+  /**
+   * Top-level keys this build does not know, carried through unchanged so a build that does not
+   * know a key cannot drop it on save (ADR 0004).
+   */
+  unknown: Record<string, unknown>;
 }
+
+const KNOWN_KEYS = ['backends', 'senders', 'grants'];
 
 /**
  * What an absent config file means. Mail is enabled by THIS default, not by a special case in
@@ -39,11 +50,11 @@ export interface CurlewConfig {
  * every other, and a user who disables it in the file gets exactly that.
  */
 export function defaultConfig(): CurlewConfig {
-  return { backends: { mail: { enabled: true } }, senders: {} };
+  return { backends: { mail: { enabled: true } }, senders: {}, grants: [], unknown: {} };
 }
 
 /** Parse and validate the file's text. Throws with the offending key named. */
-export function parseConfig(text: string): CurlewConfig {
+export function parseConfig(text: string, options: ParseGrantsOptions = {}): CurlewConfig {
   let raw: unknown;
   try {
     raw = JSON.parse(text);
@@ -98,7 +109,14 @@ export function parseConfig(text: string): CurlewConfig {
     senders[key] = value;
   }
 
-  return { backends, senders };
+  const grants = parseGrants(obj.grants, options);
+
+  const unknown: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (!KNOWN_KEYS.includes(key)) unknown[key] = value;
+  }
+
+  return { backends, senders, grants, unknown };
 }
 
 /** Read the config, or the default when there is no file yet. */
@@ -114,7 +132,10 @@ export function loadConfig(path = configPath()): CurlewConfig {
 export function saveConfig(config: CurlewConfig, path = configPath()): void {
   ensurePrivateDir(dirname(path));
   const part = `${path}.part`;
-  writeFileSync(part, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
+  const { unknown, grants, ...known } = config;
+  const carried = Object.fromEntries(Object.entries(unknown).filter(([key]) => !KNOWN_KEYS.includes(key)));
+  const out = { ...carried, ...known, ...(grants.length > 0 ? { grants } : {}) };
+  writeFileSync(part, `${JSON.stringify(out, null, 2)}\n`, { mode: 0o600 });
   chmodSync(part, 0o600);
   renameSync(part, path);
 }

@@ -559,7 +559,23 @@ are saved to your download directory. Both locations are overridable via
 Your decisions — enabled backends, accepted terms, per-sender classification —
 live in `$XDG_CONFIG_HOME/curlew/config.json` (mode `0600`, override with
 `CURLEW_CONFIG`). Unlike the index they cannot be rebuilt from a server, so
-back that file up.
+back that file up. Keys this build does not know are kept when it saves the file.
+
+**Writes are off unless granted** ([ADR 0004](docs/adr/0004-sending-and-writing-granted-per-capability.md)).
+`grants` lists capabilities, each bound to exactly one target; no wildcards, and a
+missing or empty list denies everything. A malformed entry, an empty target or an
+unknown capability is an error when the file loads.
+
+```json
+{
+  "grants": [
+    { "capability": "xmpp.send", "target": "<account>/<address>" },
+    { "capability": "calendar.create", "target": "<calendar>" }
+  ]
+}
+```
+
+This only reads and validates the grants; no tool or command writes yet.
 
 Chat sessions (Telegram, WhatsApp, Matrix — including Matrix's crypto store) and
 chat passwords (XMPP) are **secrets**, kept apart from the index under

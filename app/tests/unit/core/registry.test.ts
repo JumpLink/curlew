@@ -48,8 +48,9 @@ export default async () => {
 
     await it('loads nothing the config does not enable — mail included', async () => {
       const registry = new BackendRegistry(BUILTIN_PLUGINS);
-      expect(registry.enabled({ backends: {}, senders: {} }).length).toBe(0);
-      expect(registry.enabled({ backends: { mail: { enabled: false } }, senders: {} }).length).toBe(0);
+      expect(registry.enabled({ backends: {}, senders: {}, grants: [], unknown: {} }).length).toBe(0);
+      const off = { backends: { mail: { enabled: false } }, senders: {}, grants: [], unknown: {} };
+      expect(registry.enabled(off).length).toBe(0);
     });
 
     await it('refuses the first enable of a backend with terms, and changes nothing', async () => {
@@ -75,7 +76,7 @@ export default async () => {
 
     await it('does not honour a hand-edited `enabled: true` without accepted terms', async () => {
       const registry = new BackendRegistry([plugin('chat', { terms: TERMS })]);
-      const config = { backends: { chat: { enabled: true } }, senders: {} };
+      const config = { backends: { chat: { enabled: true } }, senders: {}, grants: [], unknown: {} };
       expect(registry.enabled(config).length).toBe(0);
       expect(registry.status(config)[0].termsAccepted).toBe(false);
     });
@@ -144,9 +145,47 @@ export default async () => {
     await it('round-trips through the file, mode 0600', async () => {
       const { dir, path } = tempConfigPath();
       try {
-        saveConfig({ backends: { mail: { enabled: false } }, senders: {} }, path);
+        saveConfig({ backends: { mail: { enabled: false } }, senders: {}, grants: [], unknown: {} }, path);
         expect(loadConfig(path).backends.mail.enabled).toBe(false);
         expect(statSync(path).mode & 0o777).toBe(0o600);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('carries unknown top-level keys and grants through load and save', async () => {
+      const { dir, path } = tempConfigPath();
+      try {
+        const text = JSON.stringify({
+          backends: { mail: { enabled: true } },
+          senders: {},
+          grants: [{ capability: 'calendar.create', target: 'calendar-1' }],
+          futureKey: { nested: [1, 2, { a: 'b' }] },
+        });
+        const config = parseConfig(text);
+        expect(JSON.stringify(config.unknown.futureKey)).toBe('{"nested":[1,2,{"a":"b"}]}');
+        saveConfig(config, path);
+        const saved = JSON.parse(readFileSync(path, 'utf8'));
+        expect(JSON.stringify(saved.grants)).toBe('[{"capability":"calendar.create","target":"calendar-1"}]');
+        expect(JSON.stringify(saved.futureKey)).toBe('{"nested":[1,2,{"a":"b"}]}');
+        // A later edit through the actions (spread of the loaded config) keeps both.
+        saveConfig({ ...loadConfig(path), senders: {} }, path);
+        const again = JSON.parse(readFileSync(path, 'utf8'));
+        expect(again.grants.length).toBe(1);
+        expect(again.futureKey.nested.length).toBe(3);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('an unknown key can never shadow a known one on save', async () => {
+      const { dir, path } = tempConfigPath();
+      try {
+        const config = { ...defaultConfig(), unknown: { backends: 'evil', grants: 'evil' } };
+        saveConfig(config, path);
+        const saved = JSON.parse(readFileSync(path, 'utf8'));
+        expect(saved.backends.mail.enabled).toBe(true);
+        expect(saved.grants).toBe(undefined);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
