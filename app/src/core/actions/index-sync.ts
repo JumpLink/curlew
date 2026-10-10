@@ -14,6 +14,7 @@ import type {
   IndexDatabase,
   IndexSearchCriteria,
   IndexedMessage,
+  OpenIndexOptions,
   RebuildResult,
   SyncResult,
   SyncStatus,
@@ -52,7 +53,7 @@ export const MAX_STALENESS_HOURS = 24;
  * The file is chmod'ed 0600 on every open, not just at creation: it holds mail headers AND
  * plain-text bodies, and a mode that drifted once would otherwise stay wrong forever.
  */
-export function openIndex(path = indexDbPath()) {
+export function openIndex(path = indexDbPath(), options: OpenIndexOptions = {}) {
   if (path !== ':memory:') {
     // Create the directory 0700 BEFORE opening. Two reasons, and the second is the important
     // one: without it a fresh install has nowhere to put the database, and SQLite's `-wal` /
@@ -60,7 +61,7 @@ export function openIndex(path = indexDbPath()) {
     // message bodies. The file mode below cannot cover them; the directory mode can.
     ensurePrivateDir(dirname(path));
   }
-  const db = openIndexDb(path);
+  const db = openIndexDb(path, options);
   migrate(db);
   // Loud, immediate failure beats an index that silently answers "no results" to everything —
   // which is what a missing FTS5 module would produce, because the wrapper swallows errors.

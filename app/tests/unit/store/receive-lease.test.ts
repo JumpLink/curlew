@@ -1,7 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
 import {
-  LEASE_BUSY_TIMEOUT_MS,
   LEASE_HEARTBEAT_MS,
   type IndexDatabase,
   migrate,
@@ -38,12 +37,6 @@ function leaseHolder(db: IndexDatabase, accountId: string): string | null {
 function leaseRows(db: IndexDatabase): number {
   const row = db.prepare('SELECT COUNT(*) AS n FROM receive_leases').get() as { n: number };
   return Number(row.n);
-}
-
-/** What the connection will wait for a write lock, in ms. Zero means "fail at once". */
-function busyTimeoutMs(db: IndexDatabase): number {
-  const row = db.prepare('PRAGMA busy_timeout').get() as Record<string, unknown> | undefined;
-  return Number(row?.timeout ?? 0);
 }
 
 export default async () => {
@@ -130,15 +123,14 @@ export default async () => {
           return exec(sql);
         }) as typeof db.exec;
         takeReceiveLease(db, BACKEND, ACCOUNT, 'pid-1', T0);
-        // Once per connection: the pragma, then the transaction that needs it.
-        expect(statements[0]).toBe(`PRAGMA busy_timeout = ${LEASE_BUSY_TIMEOUT_MS}`);
-        expect(statements[1]).toBe('BEGIN IMMEDIATE');
+        // The wait comes from the connection (`openIndexDb`); the lease adds no pragma of its
+        // own, which would clamp every later statement of the daemon's connection.
+        expect(statements[0]).toBe('BEGIN IMMEDIATE');
         expect(statements[statements.length - 1]).toBe('COMMIT');
-        // A second lease statement does not spend an execution on the pragma again.
         const after = statements.length;
         takeReceiveLease(db, BACKEND, ACCOUNT, 'pid-1', at(1_000));
         expect(statements.slice(after).some((s) => s.startsWith('PRAGMA'))).toBe(false);
-        // A rolled-back take rolls back with it, and one connection, one pragma.
+        // A rolled-back take rolls back with it.
         expect(() =>
           withTransaction(
             db,
@@ -149,7 +141,6 @@ export default async () => {
           ),
         ).toThrow(/nope/);
         expect(statements[statements.length - 1]).toBe('ROLLBACK');
-        expect(busyTimeoutMs(db)).toBe(LEASE_BUSY_TIMEOUT_MS);
       } finally {
         db.close();
       }

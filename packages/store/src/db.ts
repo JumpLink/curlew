@@ -12,21 +12,48 @@ import { DatabaseSync } from 'node:sqlite';
 export type IndexDatabase = DatabaseSync;
 
 /**
+ * How long a statement waits for another process's write lock before it fails with
+ * `database is locked`.
+ *
+ * Set on EVERY connection because the default is no wait at all on Node and an unrelated one on
+ * GJS (libgda). The index has one long-lived writer (the daemon) and several short-lived
+ * processes (`curlew sync`, the MCP server, a restarted daemon); a batch is milliseconds and the
+ * conversation rebuild a few seconds, so this is generous. On GJS the effective wait is about 12
+ * times the value (measured on GJS 1.88.1 / gjsify 0.59.1: 300 -> 3.6 s, 1000 -> 12 s), so a
+ * stuck holder still fails in well under a minute.
+ */
+export const INDEX_BUSY_TIMEOUT_MS = 3_000;
+
+export interface OpenIndexOptions {
+  /** Overrides `INDEX_BUSY_TIMEOUT_MS`; tests use a short one. */
+  busyTimeoutMs?: number;
+}
+
+/**
  * Open (and create) the index database.
  *
  * The path must end in `.db` — libgda appends the suffix itself, so `index.sqlite` becomes
  * `index.sqlite.db` on disk. `indexDbPath()` enforces that; this is the second line.
  */
-export function openIndexDb(path: string): DatabaseSync {
+export function openIndexDb(path: string, options: OpenIndexOptions = {}): DatabaseSync {
   if (path !== ':memory:' && !path.endsWith('.db')) {
     throw new Error(`index path must end in .db (libgda appends it): ${path}`);
   }
-  const db = new DatabaseSync(path);
+  const db = new DatabaseSync(path, { timeout: options.busyTimeoutMs ?? INDEX_BUSY_TIMEOUT_MS });
   // One statement per exec(): gjsify's wrapper splits multi-statement strings itself and its
   // splitter is not a SQL parser. WAL is a no-op for in-memory databases.
-  db.exec('PRAGMA journal_mode = WAL');
+  if (path !== ':memory:' && !isWal(db)) db.exec('PRAGMA journal_mode = WAL');
   db.exec('PRAGMA foreign_keys = ON');
   return db;
+}
+
+/**
+ * WAL is stored in the file, so it only has to be switched on once. Asking first keeps every
+ * later open — a reader's included — from issuing the mode change, which takes a lock.
+ */
+function isWal(db: DatabaseSync): boolean {
+  const row = db.prepare('PRAGMA journal_mode').get() as Record<string, unknown> | undefined;
+  return String(row?.journal_mode ?? '').toLowerCase() === 'wal';
 }
 
 /**
@@ -59,12 +86,14 @@ export function withTransaction<T>(db: DatabaseSync, fn: () => T, options: { imm
  * malformed MATCH therefore does not raise — the index simply answers "no results" to
  * everything, forever, and looks like an empty mailbox rather than a broken build.
  *
- * Called once at open time so that failure is LOUD and immediate.
+ * Called once at open time so that failure is LOUD and immediate. The scratch table lives in the
+ * connection's TEMP schema: this runs on every open, readers' included, and a table in the main
+ * file would take the write lock each time.
  */
 export function probeFts5(db: DatabaseSync): void {
-  db.exec('DROP TABLE IF EXISTS fts_probe');
+  db.exec('DROP TABLE IF EXISTS temp.fts_probe');
   try {
-    db.exec(`CREATE VIRTUAL TABLE fts_probe USING fts5(body, tokenize="unicode61 remove_diacritics 2")`);
+    db.exec(`CREATE VIRTUAL TABLE temp.fts_probe USING fts5(body, tokenize="unicode61 remove_diacritics 2")`);
   } catch (err) {
     throw new Error(
       `SQLite has no working FTS5 module, so the index cannot be searched: ${
@@ -73,15 +102,15 @@ export function probeFts5(db: DatabaseSync): void {
     );
   }
   try {
-    db.prepare('INSERT INTO fts_probe(rowid, body) VALUES (?, ?)').run(1, 'Energieberatung März');
-    const hit = db.prepare('SELECT rowid FROM fts_probe WHERE fts_probe MATCH ?').all('"Energieberatung"');
+    db.prepare('INSERT INTO temp.fts_probe(rowid, body) VALUES (?, ?)').run(1, 'Energieberatung März');
+    const hit = db.prepare('SELECT rowid FROM temp.fts_probe WHERE fts_probe MATCH ?').all('"Energieberatung"');
     if (hit.length !== 1) throw new Error('a known row did not match its own text');
     // Diacritic folding is what makes "marz" find "März"; without it the tokenizer silently
     // gives a worse index rather than an error.
-    const folded = db.prepare('SELECT rowid FROM fts_probe WHERE fts_probe MATCH ?').all('"marz"');
+    const folded = db.prepare('SELECT rowid FROM temp.fts_probe WHERE fts_probe MATCH ?').all('"marz"');
     if (folded.length !== 1) throw new Error('the unicode61 remove_diacritics tokenizer is not active');
   } finally {
-    db.exec('DROP TABLE IF EXISTS fts_probe');
+    db.exec('DROP TABLE IF EXISTS temp.fts_probe');
   }
 }
 
