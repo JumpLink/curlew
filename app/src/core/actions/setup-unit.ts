@@ -12,7 +12,7 @@
  * this template must reproduce its directives exactly. That is the whole test.
  */
 
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 
 /** The unit's name — one string, so the file, the `systemctl` calls and the report agree. */
 export const UNIT_NAME = 'curlew-daemon.service';
@@ -37,6 +37,16 @@ export interface UnitPaths {
   runner: string;
   /** The arguments for the runner: `run <bundle> daemon` in a checkout, `daemon` published. */
   args: string;
+}
+
+/**
+ * Is this directory one of `gjsify run`'s throwaway shim dirs (`<tmpdir>/gjsify-shim-XXXX`)?
+ * `gjsify run` puts one in front of PATH for its children and exports it as `GJSIFY_SHIM_DIR`; it
+ * vanishes with the run, and a user unit's `PrivateTmp=true` could not see it anyway.
+ */
+export function isGjsifyShimDir(dir: string, shimDir?: string): boolean {
+  if (shimDir !== undefined && shimDir !== '' && dir === shimDir) return true;
+  return basename(dir).startsWith('gjsify-shim-');
 }
 
 /** The PATH a user unit gets. systemd reports "Command gjsify is not executable" without it. */
@@ -119,7 +129,12 @@ export function unitPathsFor(input: {
   /** Absolute path of the bundle this process is running from, or null. */
   bundle: string | null;
 }): UnitPaths {
-  if (input.mode === 'published' || input.gjsify === null || input.bundle === null) {
+  if (
+    input.mode === 'published' ||
+    input.gjsify === null ||
+    input.bundle === null ||
+    isGjsifyShimDir(dirname(input.gjsify))
+  ) {
     // No tree and no baked addon path: run the installed command out of $HOME, where the global
     // bin lives. `gjsify run <bundle>` is the checkout's spelling and does not exist here.
     return { home: input.home, workdir: input.home, runner: 'curlew', args: 'daemon' };
