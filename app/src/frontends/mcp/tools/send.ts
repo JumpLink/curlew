@@ -21,7 +21,7 @@ export function registerSendTools(server: McpServer): void {
       {
         title: 'Send a Chat Message',
         description:
-          'Send one plain-text chat message from a granted XMPP account to one address. Only available when the config grants xmpp.send, and only to the exact account/address pair granted. Not end-to-end encrypted (OMEMO is not supported). Returns conversationId and sentAt: to wait for the reply, poll conversations_get with id=conversationId, since=sentAt, incoming_only=true, include_bodies=true while `curlew daemon` runs.',
+          'Send one plain-text chat message from a granted XMPP account to one address. Only available when the config grants xmpp.send, and only to the exact account/address pair granted. Not end-to-end encrypted (OMEMO is not supported). Returns conversationId, sentAt and originId (the stanza id and XEP-0359 origin-id, which a reply references in `replyToId` of xmpp_wait_reply): to wait for the reply, poll conversations_get with id=conversationId, since=sentAt, incoming_only=true, include_bodies=true while `curlew daemon` runs.',
         inputSchema: {
           account: z.string().min(1).describe('XMPP account id from accounts_list'),
           to: z.string().min(1).describe('Bare address, spelled exactly as in the grant'),

@@ -426,7 +426,7 @@ curlew send --account xmpp-abc123 --to owner@example.org "Build is green"
 
 The MCP server offers the same as `send_message` (`account`, `to`, `text`) —
 only when a matching grant exists; without one the tool is not even listed and
-the server stays read-only. The answer carries `conversationId` and `sentAt`.
+the server stays read-only. The answer carries `conversationId`, `sentAt` and `originId`.
 The message goes out as `type=chat` with an origin-id (XEP-0359), a receipt
 request (XEP-0184) and `markable`; it is stored in the index as your own
 message, and the archive's copy replaces that local echo on the next sync.
@@ -440,6 +440,10 @@ seconds. Then call the read-only MCP tool
 `xmpp_wait_reply {account, peer, after, timeout_s}` with the `sentAt` of the
 send as `after`: it returns `{status: "reply", messages, cursor}` or
 `{status: "timeout", cursor}`; pass `cursor` as `after` of the next call.
+Each reply message has `replyToId`, the id its XEP-0461 `<reply>` names (null
+when it is not a reply). `send_message` returns `originId` — the message's
+stanza `id`, identical to its origin-id (XEP-0359) — so compare the two to see
+which sent message was answered.
 `conversations_get {id, since, incoming_only}` is the non-blocking form. The
 cursor compares the sender's timestamp with the one you stored, so a badly
 skewed clock can hide or repeat a message.

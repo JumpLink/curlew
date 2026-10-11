@@ -10,6 +10,7 @@ import type { XmppLink } from '@curlew/xmpp';
 import xml from '@xmpp/xml';
 
 import { permitFor, recordDelivered, requireSendGrant } from '../../../src/core/actions/send.ts';
+import { openIndex } from '../../../src/core/actions/index-sync.ts';
 import { waitReply } from '../../../src/core/actions/wait-reply.ts';
 import { appendWriteLog } from '../../../src/core/write-log.ts';
 import { freshDb } from '../store/fixtures.ts';
@@ -136,6 +137,55 @@ export default async () => {
         });
         expect(out.status).toBe('timeout');
         expect(out.cursor).toBe('2026-01-01T10:00:00.000Z');
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+  });
+
+  await describe('reply references', async () => {
+    await it('returns the id a reply references, and waitReply carries it', async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-reply-'));
+      try {
+        const dbPath = join(dir, 'index.db');
+        const sent: Array<[string, string, string]> = [];
+        const session = new GrantedXmppSession(fakeLink(sent), permitFor(GRANTS, ACCOUNT), () => 'oid-1');
+        const out = await session.send(OWNER, 'question');
+        // The stanza id and the origin-id are one value, so either spelling in <reply id> matches.
+        expect(sent[0][1]).toBe(out.originId);
+        expect(chatMessage({ to: OWNER, id: out.originId, body: 'x' }).getChild('origin-id')?.attrs.id).toBe(
+          out.originId,
+        );
+
+        const rec = recordDelivered(dbPath, ACCOUNT_INFO, { ...out, text: 'question' });
+        const db = openIndex(dbPath);
+        try {
+          const insert = (remote: string, at: string, replyTo: string | null) =>
+            db
+              .prepare(
+                `INSERT INTO conversation_messages (id, conversation_id, backend, account_id, presentation,
+                   from_self, sent_at, seen, has_attachments, classification, classification_reason,
+                   remote_id, body, remote_seq, reply_to_client_id)
+                 VALUES (?, ?, 'xmpp', ?, 'bubble', 0, ?, 0, 0, 'conversational', 'chat-member', ?, 'answer', ?, ?)`,
+              )
+              .run(`m-${remote}`, rec.conversationId, ACCOUNT, at, remote, Date.parse(at), replyTo);
+          insert('a1', '2026-01-01T10:00:01.000Z', 'oid-1');
+          insert('a2', '2026-01-01T10:00:02.000Z', null);
+        } finally {
+          db.close();
+        }
+        const waited = await waitReply({
+          accountId: ACCOUNT,
+          peer: OWNER,
+          after: '2026-01-01T10:00:00.000Z',
+          timeoutS: 0,
+          dbPath,
+          configPath: join(dir, 'none.json'),
+        });
+        expect(waited.status).toBe('reply');
+        expect(waited.messages.map((m) => m.replyToId).join()).toBe('oid-1,');
+        expect(waited.messages[1].replyToId).toBe(null);
+        expect('replyToClientId' in waited.messages[0]).toBe(false);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }

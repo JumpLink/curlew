@@ -21,7 +21,7 @@
 
 import { type IndexDatabase, withTransaction } from './db.ts';
 
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -293,6 +293,9 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
   // chat's oldest stored message again" — which is also what a finished sweep writes back, so
   // the probe keeps circling instead of stopping at the top.
   8: [{ table: 'chat_cursors', column: 'probe_seq', type: 'INTEGER' }],
+  // v9: the id a reply POINTS AT, as the sender wrote it (XEP-0461 `<reply id>`). `reply_to_remote_id`
+  // holds the resolved archive id; this one is what a caller's own sent id (`originId`) matches.
+  9: [{ table: 'conversation_messages', column: 'reply_to_client_id', type: 'TEXT' }],
 };
 
 function columnsOf(db: IndexDatabase, table: string): Set<string> {

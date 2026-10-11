@@ -357,7 +357,7 @@ function writeBatch(db: IndexDatabase, batch: ChatBatch): void {
       `INSERT OR REPLACE INTO conversation_messages
          (id, conversation_id, backend, account_id, presentation, sender_name, sender_kind,
           sender_address, from_self, sent_at, has_attachments, classification, classification_reason,
-          remote_id, body, remote_seq, sender_peer_id, edited_at, reply_to_remote_id, thread_remote_id)`,
+          remote_id, body, remote_seq, sender_peer_id, edited_at, reply_to_remote_id, thread_remote_id, reply_to_client_id)`,
       batch.messages,
     );
     insertMany(
@@ -448,6 +448,7 @@ function messageRow(
     m.editedAt,
     m.replyToRemoteId,
     m.threadRemoteId,
+    m.replyToClientId ?? null,
   ];
 }
 

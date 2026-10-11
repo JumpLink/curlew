@@ -258,6 +258,8 @@ export interface ConversationMessage {
    */
   editedAt?: string | null;
   replyToRemoteId?: string | null;
+  /** The reply's target as its sender wrote it — matches the id a message was sent with. */
+  replyToClientId?: string | null;
   threadRemoteId?: string | null;
   readByPeer?: boolean;
   /** A notice's text (presentation `notice`) — always present for a notice, bodies or not. */
