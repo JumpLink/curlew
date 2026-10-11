@@ -312,6 +312,8 @@ export default async () => {
       expect(mine.sender).toBe(null);
       expect(upload.hasAttachments).toBe(true);
       expect(upload.replyToRemoteId).toBe('a2');
+      expect(upload.replyToClientId).toBe('s2');
+      expect(first.replyToClientId).toBe(null);
       expect(secret.text).toBe(null);
       // The marker is an archive entry, not a message — but the page covers it.
       expect(page.highestSeq).toBe(Date.parse(at(5)));
