@@ -610,6 +610,58 @@ export default async () => {
         db.close();
       }
     });
+
+    await it('takes the lease back even when aborted by lease-unrefreshable during reconnect sleep', async () => {
+      const db = freshDb();
+      const controller = new AbortController();
+      const progress: DeliveryProgress[] = [];
+      let releaseSleep: (() => void) | undefined;
+      try {
+        const backend = new FollowBackend(['a-1']);
+        const received = receiveDeliveries(db, backend, {
+          mode: 'follow',
+          signal: controller.signal,
+          holder: 'pid-daemon',
+          leaseIntervalMs: 5,
+          sleep: () =>
+            new Promise<void>((resolve) => {
+              releaseSleep = resolve;
+            }),
+          onProgress: (event) => progress.push(event),
+        });
+        await settle();
+        // End the first session to enter reconnect backoff sleep
+        backend.sessionOf('a-1')?.end({ caughtUp: false, error: 'connection dropped' });
+        await until(
+          () => progress.some((p) => p.type === 'reconnect'),
+          'the account to enter reconnect backoff',
+        );
+
+        // Fail 2 heartbeats while sleeping in reconnect backoff
+        failStatements(db, 'UPDATE receive_leases', 2);
+        await until(
+          () => progress.some((p) => p.type === 'lease-unrefreshable'),
+          'the heartbeat to trigger lease-unrefreshable during backoff',
+        );
+
+        // Wake up from sleep (or if sleep was already resolved/aborted)
+        releaseSleep?.();
+
+        // The account should retake the lease and connect again
+        await until(() => backend.connects.length === 2, 'the account to retake lease and reconnect');
+        backend.sessionOf('a-1')?.push(incoming('d-anna', msg('a1/1', 1, 'eins')));
+        await settle();
+        controller.abort();
+        const result = await received;
+        expect(result.added).toBe(1);
+        expect(result.errors).toBe(0);
+        expect(leaseHolder(db, 'a-1')).toBe(null);
+      } finally {
+        controller.abort();
+        releaseSleep?.();
+        db.close();
+      }
+    });
   });
 
   await describe('stopping from outside', async () => {

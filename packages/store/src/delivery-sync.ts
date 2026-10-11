@@ -1119,7 +1119,12 @@ async function receiveAccount(
         // backoff first. An injected `sleep` is the test's own, and answers at once.
         const sleep = options.sleep ?? ((ms: number) => abortableSleep(ms, stop.signal));
         await sleep(wait);
-        if (stop.signal.aborted) break;
+        if (stop.signal.aborted) {
+          // Stopped by the heartbeat over a lease it could not refresh: go round again, unless the
+          // RUN was stopped, which no retry can undo.
+          retake = busyTicks >= 2 && !options.signal?.aborted;
+          break;
+        }
         wait = Math.min(wait * 2, RECONNECT_CAP_MS);
       }
     } finally {
