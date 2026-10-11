@@ -50,6 +50,7 @@ import grants from './unit/core/grants.test.ts';
 import capabilities from './unit/core/capabilities.test.ts';
 import send from './unit/core/send.test.ts';
 import daemon from './unit/core/daemon.test.ts';
+import follow from './unit/core/follow.test.ts';
 import deliveries from './unit/core/deliveries.test.ts';
 import setup from './unit/core/setup.test.ts';
 import setupSteps from './unit/core/setup-steps.test.ts';
@@ -105,6 +106,7 @@ run({
   grants,
   send,
   daemon,
+  follow,
   deliveries,
   setup,
   setupSteps,
