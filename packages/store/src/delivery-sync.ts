@@ -507,10 +507,13 @@ function messageRow(batch: DeliveryBatch, id: string, pending: PendingMessage): 
   ];
 }
 
-/** The message columns, in `messageRow` order — also what a chat merge reads back. */
+/**
+ * What a chat merge reads back and re-inserts: the `messageRow` columns, then `reply_to_client_id`
+ * (a delivery network sets none, but a chat the merge moves may carry one).
+ */
 const MESSAGE_COLUMNS = `id, conversation_id, backend, account_id, presentation, sender_name, sender_kind,
   sender_address, from_self, sent_at, seen, has_attachments, classification, classification_reason,
-  remote_id, body, remote_seq, sender_peer_id, edited_at, reply_to_remote_id, thread_remote_id, peer_read`;
+  remote_id, body, remote_seq, sender_peer_id, edited_at, reply_to_remote_id, thread_remote_id, peer_read, reply_to_client_id`;
 
 /**
  * Move a chat stored under `from` into `into` — one chat the network addressed two ways (a
