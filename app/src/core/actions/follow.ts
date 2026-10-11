@@ -53,8 +53,6 @@ export interface FollowResult {
   accountId: string;
   catchUps: number;
   added: number;
-  /** Set when following ended for another reason than the stop signal. */
-  error: string | null;
   heldBy: string | null;
 }
 
@@ -84,7 +82,7 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
   const interval = deps.leaseIntervalMs ?? LEASE_HEARTBEAT_MS;
   const sleep = deps.sleep ?? ((ms: number) => abortableSleep(ms, signal));
   const minGap = deps.minGapMs ?? FOLLOW_MIN_GAP_MS;
-  const result: FollowResult = { accountId, catchUps: 0, added: 0, error: null, heldBy: null };
+  const result: FollowResult = { accountId, catchUps: 0, added: 0, heldBy: null };
 
   // The lease first: a `sync` on the same account stands down while a daemon holds it.
   const acquire = async (): Promise<boolean> => {
@@ -112,18 +110,30 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
   // Holds one lease: ends when the signal aborts or the lease is lost. Returns whether it was lost.
   const followHeld = async (): Promise<boolean> => {
     let leaseLost = false;
+    let busyTicks = 0;
     const stopAccount = new AbortController();
+    // A `false` says somebody else holds the account NOW. A throw says the index was busy, which
+    // is not the same: one busy tick is retried, two in a row stop the account before the lease
+    // can look stale (same tolerance as `receiveDeliveries`).
     const heartbeat = setInterval(() => {
+      let refreshed: boolean;
       try {
-        if (!refreshReceiveLease(db, 'xmpp', accountId, deps.holder, now(), interval)) leaseLost = true;
+        refreshed = refreshReceiveLease(db, 'xmpp', accountId, deps.holder, now(), interval);
       } catch {
+        busyTicks += 1;
+        if (busyTicks < 2) return;
         leaseLost = true;
-      }
-      if (leaseLost) {
         clearInterval(heartbeat);
-        log(`curlew-daemon: ${who} lost the receive lease — waiting to take it again`);
+        log(`curlew-daemon: ${who} could not refresh the receive lease (index busy) — taking it again`);
         stopAccount.abort();
+        return;
       }
+      busyTicks = 0;
+      if (refreshed) return;
+      leaseLost = true;
+      clearInterval(heartbeat);
+      log(`curlew-daemon: ${who} lost the receive lease — waiting to take it again`);
+      stopAccount.abort();
     }, interval);
     const stop = (): void => stopAccount.abort();
     signal.addEventListener('abort', stop, { once: true });
@@ -132,6 +142,9 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
     // The catch-up runs over the open link, not a new connection.
     let wait = RECONNECT_FIRST_MS;
     let attempt = 0;
+    // The catch-up an arrival started: awaited before the session's lease use ends, so it never
+    // overlaps the next round's catch-up on the same account.
+    let pending: Promise<void> = Promise.resolve();
     try {
       while (!live.aborted) {
         let session: GrantedXmppSession | null = null;
@@ -182,9 +195,10 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
             live.addEventListener('abort', () => resolve('stopped'), { once: true });
           });
           const unsubscribe = session.onArrival(() => {
-            void catchUp().catch((err: unknown) =>
+            const started = catchUp().catch((err: unknown) =>
               log(`curlew-daemon: ${who} catch-up failed: ${errText(err)}`),
             );
+            pending = Promise.all([pending, started]).then(() => {});
           });
 
           await session.goAvailable();
@@ -213,9 +227,11 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
           wait = Math.min(wait * 2, RECONNECT_CAP_MS);
         } finally {
           if (session) await session.close().catch(() => {});
+          await pending;
         }
       }
     } finally {
+      await pending;
       clearInterval(heartbeat);
       signal.removeEventListener('abort', stop);
       try {
