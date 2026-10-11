@@ -6,8 +6,8 @@
  * that constructs mtcute, so the tests never need the network.
  */
 
-import type { ITelegramStorageProvider } from '@mtcute/core';
-import { MemoryStorage, TelegramClient, WebPlatform } from '@mtcute/web';
+import type { ITelegramStorageProvider, RpcCallMiddleware } from '@mtcute/core';
+import { MemoryStorage, networkMiddlewares, TelegramClient, WebPlatform } from '@mtcute/web';
 import type { LoginPrompts, TelegramApi, TelegramClientHandle, TgUser } from './api.ts';
 import type { TelegramCredentials } from './credentials.ts';
 
@@ -20,6 +20,36 @@ export type ClientFactory = (options: ClientOptions) => TelegramClientHandle;
 
 /** mtcute's log levels: 0 off, 1 error, 2 warn, 3 info, 4 debug, 5 verbose. */
 const LOG_WARN = 2;
+
+/**
+ * How long mtcute may sleep a FLOOD_WAIT away before it gives up and throws.
+ *
+ * mtcute's default is 10 s, so a longer wait becomes an `RpcError` that stops the run (#72). But
+ * Telegram's normal case is SHORT: it asks for about 26 s after ~29 `getHistory` calls, so the
+ * default made every run stop after ~29 chats. Sleeping a short wait out is far cheaper than
+ * aborting the run; a wait beyond this still stops it, through `asChatRateLimited`.
+ *
+ * The interactive login uses the same value on purpose. A wait there is just as short and
+ * bounded, and aborting costs the user the phone code plus a re-typed login — waiting it out is
+ * the better outcome, and mtcute logs the wait while it sleeps, so the pause is not silent.
+ */
+export const FLOOD_SLEEP_THRESHOLD_MS = 60_000;
+
+/**
+ * mtcute's default middlewares, with the flood waiter's threshold raised.
+ *
+ * `floodSleepThreshold` is not a client option in mtcute 0.32: it is set by building the default
+ * stack (`basic`) with `floodWaiter.maxWait`. Passing `middlewares` REPLACES the defaults, so
+ * they are built through `basic` rather than hand-rolled — that keeps the media throttle and the
+ * internal-error handler in place. `basic` is injectable only so a unit test can assert the
+ * value this function hands mtcute without a network.
+ */
+export function telegramMiddlewares(
+  thresholdMs: number = FLOOD_SLEEP_THRESHOLD_MS,
+  basic: typeof networkMiddlewares.basic = networkMiddlewares.basic,
+): RpcCallMiddleware[] {
+  return basic({ floodWaiter: { maxWait: thresholdMs } });
+}
 
 /**
  * mtcute's web platform, adjusted for a GJS command line.
@@ -49,6 +79,7 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage }) => {
     platform: new CurlewPlatform(),
     disableUpdates: true,
     logLevel: LOG_WARN,
+    network: { middlewares: telegramMiddlewares() },
   });
   const api: TelegramApi = client;
   return {
@@ -97,6 +128,7 @@ export async function probeHandshake(
     platform: new CurlewPlatform(),
     disableUpdates: true,
     logLevel: LOG_WARN,
+    network: { middlewares: telegramMiddlewares() },
   });
   try {
     await client.connect();
