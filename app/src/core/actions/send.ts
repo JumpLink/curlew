@@ -6,11 +6,15 @@
  * handed to the XMPP session lists only the addresses granted for this account, and the session
  * checks it again on send.
  *
- * Order matters: send, then index the outgoing message, then the write log. The log line carries
- * the id the send returned, so it goes last; a failing log is a failed call.
+ * Order matters: send, then the write log, then index the outgoing message. Once the server has
+ * the message it is sent, whatever happens next: the log line records that, and a failing log is
+ * a failed call. Indexing is best effort — a busy or broken index must not report a delivered
+ * message as failed, or a caller that retries sends it twice. The daemon's catch-up (carbons,
+ * MAM) stores the message later anyway.
  */
 
-import { configPath, indexDbPath, recordSentChatMessage } from '@curlew/store';
+import { chatConversationId, configPath, indexDbPath, recordSentChatMessage } from '@curlew/store';
+import type { SentChatRecord } from '@curlew/store';
 import { XmppBackend } from '@curlew/xmpp';
 import type { SendPermit } from '@curlew/xmpp';
 import { builtinRegistry } from '../backends/builtin.ts';
@@ -39,7 +43,10 @@ export interface SendParams {
 export interface SendResult {
   /** The conversation to watch for a reply: `conversations_get { id, since: sentAt, incoming_only }`. */
   conversationId: string;
-  messageId: string;
+  /** The indexed row, or null when the message went out but could not be indexed (see `indexError`). */
+  messageId: string | null;
+  /** Why indexing failed; the message was delivered regardless. */
+  indexError?: string;
   chatJid: string;
   originId: string;
   /** Local clock, ISO 8601: pass it as `since` when waiting for the reply. */
@@ -93,20 +100,6 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
     await session.close().catch(() => {});
   }
 
-  const db = openIndex(params.dbPath ?? indexDbPath());
-  let recorded;
-  try {
-    recorded = recordSentChatMessage(db, {
-      backend: 'xmpp',
-      account,
-      chatRemoteId: sent.chatJid,
-      clientId: sent.originId,
-      text: params.text,
-      sentAt: sent.sentAt,
-    });
-  } finally {
-    db.close();
-  }
   appendWriteLog(
     {
       capability: SEND_CAPABILITY,
@@ -116,5 +109,40 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
     },
     { path: params.writeLogPath },
   );
+  const recorded = recordDelivered(params.dbPath ?? indexDbPath(), account, {
+    chatJid: sent.chatJid,
+    originId: sent.originId,
+    text: params.text,
+    sentAt: sent.sentAt,
+  });
   return { ...recorded, chatJid: sent.chatJid, originId: sent.originId, sentAt: sent.sentAt };
+}
+
+/** Index a delivered message. Never throws: the message is out, so a failure here is only reported. */
+export function recordDelivered(
+  dbPath: string,
+  account: SentChatRecord['account'],
+  sent: { chatJid: string; originId: string; text: string; sentAt: string },
+): { conversationId: string; messageId: string | null; indexError?: string } {
+  try {
+    const db = openIndex(dbPath);
+    try {
+      return recordSentChatMessage(db, {
+        backend: 'xmpp',
+        account,
+        chatRemoteId: sent.chatJid,
+        clientId: sent.originId,
+        text: sent.text,
+        sentAt: sent.sentAt,
+      });
+    } finally {
+      db.close();
+    }
+  } catch (error) {
+    return {
+      conversationId: chatConversationId('xmpp', account.id, sent.chatJid),
+      messageId: null,
+      indexError: error instanceof Error ? error.message : String(error),
+    };
+  }
 }

@@ -36,6 +36,12 @@ export interface RebuildOptions {
   contacts?: readonly ContactDTO[];
   /** The user's own addresses, beyond the account identities the index already knows. */
   selfAddresses?: readonly string[];
+  /**
+   * Called after every committed write chunk, with no transaction open. The rebuild holds the
+   * write lock only inside a chunk; this is where a test (or a caller that wants to yield) can
+   * act as another writer.
+   */
+  onChunk?: () => void;
 }
 
 export interface RebuildResult {
@@ -260,6 +266,115 @@ function loadChatPeers(db: IndexDatabase): ChatPeerRow[] {
   });
 }
 
+/** A derived table the rebuild keeps equal to computed rows, writing only the difference. */
+interface SyncedTable {
+  table: string;
+  columns: readonly string[];
+  /** Indexes into `columns` of the primary key. */
+  key: readonly number[];
+}
+
+const PARTICIPANTS: SyncedTable = { table: 'participants', columns: ['id', 'display_name', 'contact_uid'], key: [0] };
+const PARTICIPANT_ADDRESSES: SyncedTable = {
+  table: 'participant_addresses',
+  columns: ['participant_id', 'kind', 'value'],
+  key: [1, 2],
+};
+const CHAT_PEER_LINKS: SyncedTable = {
+  table: 'chat_peer_links',
+  columns: ['backend', 'account_id', 'peer_id', 'participant_id'],
+  key: [0, 1, 2],
+};
+const CONVERSATIONS: SyncedTable = {
+  table: 'conversations',
+  columns: [
+    'id', 'backend', 'account_id', 'kind', 'title', 'classification', 'classification_reason',
+    'first_message_at', 'last_message_at', 'message_count', 'unread_count', 'has_attachments',
+  ],
+  key: [0],
+};
+const CONVERSATION_PARTICIPANTS: SyncedTable = {
+  table: 'conversation_participants',
+  columns: ['conversation_id', 'participant_id'],
+  key: [0, 1],
+};
+const MAIL_MESSAGES: SyncedTable = {
+  table: 'conversation_messages',
+  columns: [
+    'id', 'conversation_id', 'backend', 'account_id', 'presentation', 'sender_participant_id',
+    'sender_name', 'sender_kind', 'sender_address', 'from_self', 'sent_at', 'subject', 'seen',
+    'has_attachments', 'classification', 'classification_reason', 'folder_path', 'uid',
+  ],
+  key: [0],
+};
+
+type Sync = (table: SyncedTable, rows: SqlValue[][], scope?: string, params?: SqlValue[]) => void;
+
+/** Rows per write transaction: a few milliseconds of lock, however large the table. */
+const WRITE_CHUNK = 500;
+
+const cell = (v: unknown): string => (v === null || v === undefined ? '\u0000' : String(v));
+const tuple = (row: readonly unknown[], at?: readonly number[]): string =>
+  (at ? at.map((i) => cell(row[i])) : row.map(cell)).join('\u0001');
+
+/**
+ * Make the rows of `table` inside `scope` equal `wanted`: delete what is gone, replace what is
+ * new or changed, leave the rest. Each chunk is its own transaction, so no writer waits longer
+ * than a chunk; the reads need no lock at all (WAL). An unchanged table opens no transaction.
+ */
+function syncTable(
+  db: IndexDatabase,
+  def: SyncedTable,
+  wanted: readonly SqlValue[][],
+  scope = '1',
+  params: SqlValue[] = [],
+  onChunk?: () => void,
+): void {
+  const want = new Map<string, SqlValue[]>();
+  for (const row of wanted) {
+    const key = tuple(row, def.key);
+    if (!want.has(key)) want.set(key, row);
+  }
+  const have = new Map<string, string>();
+  const gone: SqlValue[][] = [];
+  const stored = db
+    .prepare(`SELECT ${def.columns.join(', ')} FROM ${def.table} WHERE ${scope}`)
+    .all(...params) as Array<Record<string, unknown>>;
+  for (const r of stored) {
+    const row = def.columns.map((c) => r[c]);
+    const key = tuple(row, def.key);
+    have.set(key, tuple(row));
+    if (!want.has(key)) gone.push(def.key.map((i) => row[i] as SqlValue));
+  }
+  const changed: SqlValue[][] = [];
+  for (const [key, row] of want) if (have.get(key) !== tuple(row)) changed.push(row);
+
+  const where = def.key.map((i) => `${def.columns[i]} = ?`).join(' AND ');
+  for (let i = 0; i < gone.length; i += WRITE_CHUNK) {
+    withTransaction(db, () => {
+      const del = db.prepare(`DELETE FROM ${def.table} WHERE ${where}`);
+      for (const key of gone.slice(i, i + WRITE_CHUNK)) del.run(...key);
+    });
+    onChunk?.();
+  }
+  for (let i = 0; i < changed.length; i += WRITE_CHUNK) {
+    withTransaction(db, () =>
+      insertMany(
+        db,
+        `INSERT OR REPLACE INTO ${def.table} (${def.columns.join(', ')})`,
+        changed.slice(i, i + WRITE_CHUNK),
+      ),
+    );
+    onChunk?.();
+  }
+}
+
+/** `UPDATE conversation_messages SET <set> WHERE <where>`, only if a row matches (no lock otherwise). */
+function updateIfAny(db: IndexDatabase, where: string, set: string): void {
+  if (!db.prepare(`SELECT 1 AS hit FROM conversation_messages WHERE ${where} LIMIT 1`).get()) return;
+  withTransaction(db, () => db.exec(`UPDATE conversation_messages SET ${set} WHERE ${where}`));
+}
+
 /**
  * Rewrite the mail conversations, their messages and the participant directory from the index,
  * and re-link the chat conversations to that directory.
@@ -402,73 +517,54 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
     (directory.addresses.get(p.id) ?? []).map((a): SqlValue[] => [p.id, a.kind, a.value]),
   );
 
-  withTransaction(db, () => {
-    db.prepare('DELETE FROM conversation_messages WHERE backend = ?').run(MAIL_BACKEND);
-    db.prepare(
-      'DELETE FROM conversation_participants WHERE conversation_id IN (SELECT id FROM conversations WHERE backend = ?)',
-    ).run(MAIL_BACKEND);
-    db.prepare('DELETE FROM conversations WHERE backend = ?').run(MAIL_BACKEND);
-    // The directory is rebuilt whole, from every source at once: the address book, the mail
-    // rows and the chat peers above.
-    db.exec('DELETE FROM participant_addresses');
-    db.exec('DELETE FROM participants');
-    db.exec('DELETE FROM chat_peer_links');
+  // Only rows that differ from what is stored are written, in short transactions of their own.
+  // The old form deleted and re-inserted every mail row in ONE transaction: with ~90 000
+  // conversations that held the write lock for minutes, and a `curlew send` (or any other
+  // writer) timed out against the daemon. A steady-state rebuild now changes nothing.
+  // Readers never see an empty table; they may see the directory a step ahead of the messages.
+  const sync: Sync = (table, rows, scope, params) => syncTable(db, table, rows, scope, params, options.onChunk);
+  sync(PARTICIPANTS, participantRows);
+  sync(PARTICIPANT_ADDRESSES, addressRows);
+  sync(CHAT_PEER_LINKS, peerLinkRows);
+  // Members before conversations: a vanished conversation is still in the scope subquery then.
+  sync(
+    CONVERSATION_PARTICIPANTS,
+    memberRows,
+    'conversation_id IN (SELECT id FROM conversations WHERE backend = ?)',
+    [MAIL_BACKEND],
+  );
+  sync(CONVERSATIONS, conversationRows, 'backend = ?', [MAIL_BACKEND]);
+  sync(MAIL_MESSAGES, messageRows, 'backend = ?', [MAIL_BACKEND]);
 
-    insertMany(
-      db,
-      `INSERT OR REPLACE INTO conversation_messages
-         (id, conversation_id, backend, account_id, presentation, sender_participant_id, sender_name,
-          sender_kind, sender_address, from_self, sent_at, subject, seen, has_attachments,
-          classification, classification_reason, folder_path, uid)`,
-      messageRows,
-    );
-    insertMany(
-      db,
-      `INSERT OR REPLACE INTO conversations
-         (id, backend, account_id, kind, title, classification, classification_reason,
-          first_message_at, last_message_at, message_count, unread_count, has_attachments)`,
-      conversationRows,
-    );
-    insertMany(
-      db,
-      'INSERT OR IGNORE INTO conversation_participants (conversation_id, participant_id)',
-      memberRows,
-    );
-    insertMany(db, 'INSERT INTO participants (id, display_name, contact_uid)', participantRows);
-    insertMany(db, 'INSERT OR IGNORE INTO participant_addresses (participant_id, kind, value)', addressRows);
-    insertMany(
-      db,
-      'INSERT INTO chat_peer_links (backend, account_id, peer_id, participant_id)',
-      peerLinkRows,
-    );
-
-    // Chats: point every message and membership at the rebuilt directory. A chat conversation
-    // is one with a cursor — the store tells chat from mail by driver data, not by name.
-    // Skipped without chat peers: nothing to link.
-    if (peerLinkRows.length === 0) return;
-    db.exec(
-      `UPDATE conversation_messages SET sender_participant_id = (SELECT l.participant_id FROM chat_peer_links l
+  // Chats: point every message and membership at the rebuilt directory. A chat conversation
+  // is one with a cursor — the store tells chat from mail by driver data, not by name.
+  // Skipped without chat peers: nothing to link. Each UPDATE names only rows whose value
+  // would change, so an unchanged directory writes nothing.
+  if (peerLinkRows.length > 0) {
+    const linked = `(SELECT l.participant_id FROM chat_peer_links l
          WHERE l.backend = conversation_messages.backend AND l.account_id = conversation_messages.account_id
-           AND l.peer_id = conversation_messages.sender_peer_id)
-       WHERE sender_peer_id IS NOT NULL`,
+           AND l.peer_id = conversation_messages.sender_peer_id)`;
+    updateIfAny(
+      db,
+      `sender_peer_id IS NOT NULL AND COALESCE(sender_participant_id, '') != COALESCE(${linked}, '')`,
+      `sender_participant_id = ${linked}`,
     );
     // A chat message from a contact is `known-contact`, from anyone else in the chat
     // `chat-member`. Automated verdicts (broadcast, bot) are the network's own and stay.
-    db.exec(
-      `UPDATE conversation_messages SET classification_reason = CASE
+    const reason = `CASE
          WHEN sender_participant_id IN (SELECT id FROM participants WHERE contact_uid IS NOT NULL) THEN 'known-contact'
-         ELSE 'chat-member' END
-       WHERE sender_peer_id IS NOT NULL AND from_self = 0 AND classification = 'conversational'`,
-    );
-    db.exec(
-      'DELETE FROM conversation_participants WHERE conversation_id IN (SELECT conversation_id FROM chat_cursors)',
-    );
-    insertMany(
+         ELSE 'chat-member' END`;
+    updateIfAny(
       db,
-      'INSERT OR REPLACE INTO conversation_participants (conversation_id, participant_id)',
-      chatMemberRows,
+      `sender_peer_id IS NOT NULL AND from_self = 0 AND classification = 'conversational' AND classification_reason != ${reason}`,
+      `classification_reason = ${reason}`,
     );
-  });
+    sync(
+      CONVERSATION_PARTICIPANTS,
+      chatMemberRows,
+      'conversation_id IN (SELECT conversation_id FROM chat_cursors)',
+    );
+  }
 
   return { conversations: threads.length, messages: messageRows.length, participants: participants.length };
 }
