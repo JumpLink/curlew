@@ -8,6 +8,7 @@
 import type { CommandModule } from 'yargs';
 
 import type { SyncProgress } from '@curlew/store';
+import type { IndexSyncResult } from '../../core/actions/index.ts';
 import { indexSearch, indexStatus, indexSync } from '../../core/actions/index.ts';
 import { MAIL_LIMIT, capLimit } from '../../core/actions/index.ts';
 import { pickArgv, runAndExit } from './output.ts';
@@ -30,6 +31,22 @@ function reportProgress(event: SyncProgress): void {
   if (event.type !== 'folder-done') process.stderr.write('\n');
 }
 
+/**
+ * One line per account a network told us to wait for — `telegram: rate limited, retry in 42s`.
+ *
+ * On stderr, so the JSON document on stdout stays parseable by a script. A backend name and a
+ * wait only, never the network's own text: that can quote a chat.
+ */
+function reportRateLimits(result: IndexSyncResult): void {
+  for (const chat of result.chats) {
+    for (const account of chat.accounts) {
+      if (!account.rateLimited) continue;
+      const seconds = Math.ceil(account.rateLimited.retryAfterMs / 1000);
+      process.stderr.write(`  ${chat.backend}: rate limited, retry in ${seconds}s\n`);
+    }
+  }
+}
+
 export const syncCommand: CommandModule = {
   command: 'sync',
   describe: 'Build or update the local full-text index (the only command that writes to it)',
@@ -50,8 +67,8 @@ export const syncCommand: CommandModule = {
       }),
   handler: (argv) => {
     const raw = argv as Record<string, unknown>;
-    runAndExit(() =>
-      indexSync({
+    runAndExit(async () => {
+      const result = await indexSync({
         accountId: pickArgv<string>(raw, 'account'),
         folder: pickArgv<string>(raw, 'folder'),
         fullScan: pickArgv<boolean>(raw, 'full-scan', 'fullScan'),
@@ -59,8 +76,10 @@ export const syncCommand: CommandModule = {
         // several accounts and dozens of mailboxes takes minutes; showing nothing for minutes is
         // indistinguishable from a hang. One rewriting line, so the output does not scroll away.
         onProgress: reportProgress,
-      }),
-    );
+      });
+      reportRateLimits(result);
+      return result;
+    });
   },
 };
 

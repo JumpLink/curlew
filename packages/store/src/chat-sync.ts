@@ -29,6 +29,7 @@
  * participant directory (address book first), set-based.
  */
 
+import { isChatRateLimitedError } from '@curlew/protocol';
 import type {
   ChatBackend,
   ChatEdit,
@@ -75,6 +76,17 @@ export interface ChatAccountSyncResult {
   removed: number;
   /** Chats whose fetch failed; their cursor stays where it was. */
   chatErrors: number;
+  /**
+   * What those chat errors were, by fixed category — never the network's own text, which can
+   * quote a chat. `rate-limited` is a `ChatRateLimitedError`, `other` is everything else.
+   */
+  chatErrorKinds: { 'rate-limited': number; other: number };
+  /**
+   * Set when the network asked THIS account to wait (Telegram's FLOOD_WAIT_X): the run stopped
+   * asking it — as with an exhausted budget — and `retryAfterMs` is when it may be asked again.
+   * Every other account still ran. Null when the account was never throttled.
+   */
+  rateLimited: { retryAfterMs: number } | null;
   /** An error that stopped the whole account (connect, listing the chats). */
   error: string | null;
 }
@@ -439,6 +451,20 @@ function messageRow(
   ];
 }
 
+/**
+ * Count one failed chat fetch, by category and never by text. A `ChatRateLimitedError` also
+ * stamps the account's `rateLimited`, which is what stops the run for THIS account.
+ */
+function recordChatError(result: ChatAccountSyncResult, err: unknown): void {
+  result.chatErrors++;
+  if (isChatRateLimitedError(err)) {
+    result.chatErrorKinds['rate-limited']++;
+    result.rateLimited = { retryAfterMs: err.retryAfterMs };
+  } else {
+    result.chatErrorKinds.other++;
+  }
+}
+
 async function syncAccount(
   db: IndexDatabase,
   backend: ChatBackend,
@@ -455,6 +481,8 @@ async function syncAccount(
     added: 0,
     removed: 0,
     chatErrors: 0,
+    chatErrorKinds: { 'rate-limited': 0, other: 0 },
+    rateLimited: null,
     error: null,
   };
   upsertAccount(db, account);
@@ -470,7 +498,18 @@ async function syncAccount(
   const batch = new ChatBatch(name, account.id);
   const syncedAt = options.now().toISOString();
   try {
-    const chats = await session.listChats();
+    let chats: ChatInfo[];
+    try {
+      chats = await session.listChats();
+    } catch (err) {
+      // A rate limit while listing is the account being throttled before a single chat: report
+      // it and leave — no error, so the account is not counted as failed.
+      if (isChatRateLimitedError(err)) {
+        result.rateLimited = { retryAfterMs: err.retryAfterMs };
+        return result;
+      }
+      throw err;
+    }
     result.chats = chats.length;
     const cursors = loadCursors(db, name, account.id);
     const stored = options.fullScan ? loadStoredSeqs(db, name, account.id) : null;
@@ -515,6 +554,7 @@ async function syncAccount(
 
       const fetched: ChatMessage[] = [];
       let failed = false;
+      let rateLimited = false;
       // The window's bottom: below it `deletedBy` proves nothing, so that is where the probe
       // starts. Null means there is nothing to probe — no window was re-read this run, or it
       // reached the chat's start and covered everything stored.
@@ -555,23 +595,36 @@ async function syncAccount(
               if (page.exhausted) break;
             }
           }
-        } catch {
+        } catch (err) {
           // Keep what arrived and the cursor that covers it; the rest is retried next run. The
           // network's message is not recorded: it may quote the chat.
-          result.chatErrors++;
+          recordChatError(result, err);
           failed = true;
+          rateLimited = isChatRateLimitedError(err);
         }
         budget.remaining -= fetched.length;
         result.chatsFetched++;
       }
       // A first fetch that failed outright leaves no trace, so the next run starts it fresh.
-      if (failed && !cursor && fetched.length === 0) continue;
+      // A rate limit is the exception: there is no point trying the NEXT chat of this account.
+      if (failed && !cursor && fetched.length === 0) {
+        if (rateLimited) break;
+        continue;
+      }
 
       // Below the window `deletedBy` proves nothing, so a full scan asks the network about the
       // stored ids themselves — one bounded slice per run, advancing `probe_seq` so successive
-      // scans walk the whole stored history (ADR 0004). Only for a network that can be asked.
+      // scans walk the whole stored history (ADR 0004). Only for a network that can be asked, and
+      // never after a rate limit: that is the one answer that says "stop asking".
       let probeSeq = cursor?.probeSeq ?? null;
-      if (stored && cursor && probeBelow !== null && session.probeRetracted && options.probeDepth > 0) {
+      if (
+        !rateLimited &&
+        stored &&
+        cursor &&
+        probeBelow !== null &&
+        session.probeRetracted &&
+        options.probeDepth > 0
+      ) {
         const candidates = stored.get(conversationId) ?? [];
         const { slice, from } = probeSlice(candidates, probeBelow, probeSeq, options.probeDepth);
         if (slice.length === 0) probeSeq = from;
@@ -585,11 +638,12 @@ async function syncAccount(
               result.removed++;
             }
             probeSeq = slice[slice.length - 1].seq;
-          } catch {
+          } catch (err) {
             // A probe that failed says nothing about the ids it was asked: nothing is removed and
             // the sweep stays where it was, so the next run asks this same slice again. The
             // network's message is not recorded: it may quote the chat.
-            result.chatErrors++;
+            recordChatError(result, err);
+            if (isChatRateLimitedError(err)) rateLimited = true;
           }
         }
       }
@@ -624,20 +678,27 @@ async function syncAccount(
         lastCursor,
         probeSeq,
       ]);
+      // The network asked this account to wait. What this chat already delivered is in the batch
+      // and is committed by the `finally` below; the cursor covers exactly it, so a later run
+      // carries on from here. No further chat of THIS account is asked — other accounts still run.
+      if (rateLimited) break;
     }
     result.removed += batch.deletedConversations.length;
 
     // Late news about messages stored earlier (a decryption key that arrived only now), for
-    // every chat — also the ones that had nothing new and were not fetched.
-    for (const revision of (await session.revisions?.()) ?? []) {
-      const conversationId = chatConversationId(name, account.id, revision.chatRemoteId);
-      if (!cursors.has(revision.chatRemoteId) && !chats.some((c) => c.remoteId === revision.chatRemoteId))
-        continue;
-      for (const remoteId of revision.retracted ?? []) {
-        batch.retracted.push(stableId('m-', conversationId, remoteId));
+    // every chat — also the ones that had nothing new and were not fetched. Skipped after a rate
+    // limit: `revisions()` is another question to the same network that just said "wait".
+    if (result.rateLimited === null) {
+      for (const revision of (await session.revisions?.()) ?? []) {
+        const conversationId = chatConversationId(name, account.id, revision.chatRemoteId);
+        if (!cursors.has(revision.chatRemoteId) && !chats.some((c) => c.remoteId === revision.chatRemoteId))
+          continue;
+        for (const remoteId of revision.retracted ?? []) {
+          batch.retracted.push(stableId('m-', conversationId, remoteId));
+        }
+        result.removed += revision.retracted?.length ?? 0;
+        for (const edit of revision.edits ?? []) batch.edit(conversationId, edit);
       }
-      result.removed += revision.retracted?.length ?? 0;
-      for (const edit of revision.edits ?? []) batch.edit(conversationId, edit);
     }
   } catch (err) {
     result.error = err instanceof Error ? err.message : String(err);
