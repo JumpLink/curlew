@@ -60,7 +60,7 @@ export const LEASE_STALE_HEARTBEATS = 3;
  * compensate for its absence.
  */
 function withLeaseTransaction<T>(db: IndexDatabase, fn: () => T): T {
-  return withTransaction(db, fn, { immediate: true });
+  return withTransaction(db, fn);
 }
 
 /** The heartbeat older than which a lease is nobody's. */

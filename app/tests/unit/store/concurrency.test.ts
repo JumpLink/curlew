@@ -4,8 +4,8 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from '@gjsify/unit';
 
-import { type IndexDatabase } from '@curlew/store';
-import { openIndex } from '../../../src/core/actions/index-sync.ts';
+import { type IndexDatabase, withTransaction } from '@curlew/store';
+import { inPhase, openIndex } from '../../../src/core/actions/index-sync.ts';
 
 /**
  * The index is shared by the daemon (a long-lived writer), `curlew sync` (a timer), and the MCP
@@ -84,6 +84,82 @@ export default async () => {
           contender.close();
         }
       });
+    });
+
+    await it('fails at once, busy handler or not, when a deferred read-then-write is overtaken', async () => {
+      // The cause of "database is locked" in `curlew sync` while the daemon writes: the reader
+      // upgrades after another connection committed, SQLITE_BUSY_SNAPSHOT, no wait at all.
+      withIndexFile((path) => {
+        const daemon = openIndex(path);
+        const sync = openIndex(path, { busyTimeoutMs: 2_000 });
+        put(daemon, 'before');
+        sync.exec('BEGIN');
+        try {
+          expect(probe(sync)).toBe('before');
+          put(daemon, 'delivery-batch');
+          const started = Date.now();
+          let failure: unknown;
+          try {
+            put(sync, 'sync-batch');
+          } catch (err) {
+            failure = err;
+          }
+          expect(failure === undefined).toBe(false);
+          expect(Date.now() - started < 500).toBe(true);
+        } finally {
+          sync.exec('ROLLBACK');
+          daemon.close();
+          sync.close();
+        }
+      });
+    });
+
+    await it('takes the write lock when a transaction begins, before its first statement', async () => {
+      withIndexFile((path) => {
+        const daemon = openIndex(path, { busyTimeoutMs: 50 });
+        const sync = openIndex(path);
+        put(daemon, 'before');
+        try {
+          withTransaction(sync, () => {
+            // Only a lock held since BEGIN keeps the daemon out while this one has merely read.
+            expect(probe(sync)).toBe('before');
+            let blocked = false;
+            try {
+              put(daemon, 'delivery-batch');
+            } catch {
+              blocked = true;
+            }
+            expect(blocked).toBe(true);
+            put(sync, 'sync-batch');
+          });
+          expect(probe(daemon)).toBe('sync-batch');
+        } finally {
+          daemon.close();
+          sync.close();
+        }
+      });
+    });
+
+    await it('names the phase when the index stays locked, and leaves other errors alone', async () => {
+      let locked: unknown;
+      try {
+        await inPhase('delivery', () => {
+          throw new Error('database is locked');
+        });
+      } catch (err) {
+        locked = err;
+      }
+      expect(String((locked as Error).message)).toContain('delivery phase');
+      expect(String((locked as Error).message)).toContain('database is locked');
+      let other: unknown;
+      try {
+        await inPhase('mail', () => {
+          throw new Error('no such table');
+        });
+      } catch (err) {
+        other = err;
+      }
+      expect((other as Error).message).toBe('no such table');
     });
 
     await it('lets the waiting writer through once the lock is released', async () => {
