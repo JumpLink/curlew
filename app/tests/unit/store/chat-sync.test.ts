@@ -401,6 +401,21 @@ export default async () => {
       }
     });
 
+    await it('stores the reply id a network gives and reads it back', async () => {
+      const db = freshDb();
+      try {
+        const backend = telegramFixture();
+        backend.post('1001', chatMessage('1001', 4, BEN, 'Antwort', { replyToClientId: 'origin-2' }));
+        await syncChats(db, backend);
+        rebuildConversations(db, { contacts: CONTACTS });
+        const messages = getConversation(db, DIRECT)?.messages ?? [];
+        expect(messages.find((m) => m.ref.remoteId === '1001/4')?.replyToClientId).toBe('origin-2');
+        expect(messages.find((m) => m.ref.remoteId === '1001/1')?.replyToClientId ?? null).toBe(null);
+      } finally {
+        db.close();
+      }
+    });
+
     await it('mail and chat meet at the address book: one participant for Anna', async () => {
       const db = freshDb();
       try {

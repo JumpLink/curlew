@@ -443,6 +443,9 @@ export default async () => {
             ],
           ]),
         );
+        db.prepare(
+          "UPDATE conversation_messages SET reply_to_client_id = 'origin-1' WHERE remote_id = 'M1'",
+        ).run();
         await receiveDeliveries(
           db,
           fakeBackend([
@@ -461,6 +464,7 @@ export default async () => {
         const merged = getConversation(db, conv('lid-anna'), { includeBodies: true });
         expect(merged?.conversation.title).toBe('Anna');
         expect(merged?.messages.map((m) => m.bodyText).join('|')).toBe('eins|drei|vier');
+        expect(merged?.messages[0].replyToClientId).toBe('origin-1');
         const cursors = db.prepare('SELECT chat_id, last_seq FROM chat_cursors').all() as Array<
           Record<string, unknown>
         >;
