@@ -4,7 +4,8 @@
  * The session and the backend work on this interface; `client.ts` implements it on xmpp.js, and
  * a test implements it with synthetic stanzas. Read-only by construction: nothing here sends a
  * message, a presence, a marker or a receipt. Every method is an IQ query the server answers
- * for the user's own account or a room's public archive.
+ * for the user's own account or a room's public archive. What can send lives in `XmppLink`,
+ * which only a handle opened with a grant (`GrantedXmppSession`) ever holds.
  */
 
 import type { ArchivedEntry, Bookmark, RosterItem } from './stanza.ts';
@@ -51,6 +52,21 @@ export interface XmppApi {
   features(jid: string): Promise<Set<string>>;
   mam(query: MamQuery): Promise<MamPage>;
   close(): Promise<void>;
+}
+
+/**
+ * A live connection: everything `XmppApi` does, plus the writes ADR 0004 puts behind
+ * `xmpp.send`. Reached only through `XmppBackend.openGranted`; the sync path is typed `XmppApi`.
+ */
+export interface XmppLink extends XmppApi {
+  /** Send a stanza built by `chatMessage`. Resolves when it is written to the stream. */
+  sendChat(to: string, id: string, body: string): Promise<void>;
+  /** Enable carbons, then send the follow presence. Throws when the server refuses carbons. */
+  goAvailable(): Promise<void>;
+  /** Called for every arrival hint (`isArrivalHint`). Returns the unsubscribe. */
+  onArrival(listener: () => void): () => void;
+  /** Called once when the connection is gone, with a reason that quotes no stanza. */
+  onClosed(listener: (reason: string) => void): void;
 }
 
 /** What `curlew accounts add xmpp` asks for. */

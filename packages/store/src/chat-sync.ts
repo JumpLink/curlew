@@ -176,6 +176,8 @@ class ChatBatch {
   readonly edits: SqlValue[][] = [];
   /** Messages stored by an earlier run that the network reports retracted: row ids. */
   readonly retracted: string[] = [];
+  /** Sender-given ids of the messages in this batch: they replace curlew's own local echoes. */
+  readonly clientIds: string[] = [];
 
   readonly backend: string;
   readonly accountId: string;
@@ -298,8 +300,25 @@ export function deletedBy(
   return stored.filter((m) => m.seq >= low && m.seq <= high && !live.has(m.seq)).map((m) => m.id);
 }
 
+/** The remote id of a message curlew sent and has not yet met in the network's own history. */
+export const LOCAL_ECHO_PREFIX = 'local:';
+
 function writeBatch(db: IndexDatabase, batch: ChatBatch): void {
   withTransaction(db, () => {
+    // The network's copy of a message curlew sent replaces the local echo written at send time.
+    if (batch.clientIds.length > 0) {
+      const echoes = db
+        .prepare(
+          `SELECT id, remote_id FROM conversation_messages
+             WHERE backend = ? AND account_id = ? AND remote_id LIKE '${LOCAL_ECHO_PREFIX}%'`,
+        )
+        .all(batch.backend, batch.accountId) as Array<Record<string, unknown>>;
+      if (echoes.length > 0) {
+        const met = new Set(batch.clientIds.map((id) => `${LOCAL_ECHO_PREFIX}${id}`));
+        const gone = echoes.filter((r) => met.has(String(r.remote_id))).map((r) => String(r.id));
+        deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, gone);
+      }
+    }
     // Deletions first: other people's words the server no longer has must not outlive it here.
     deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, batch.deletedMessages);
     for (const table of [
@@ -386,7 +405,12 @@ function writeBatch(db: IndexDatabase, batch: ChatBatch): void {
   });
 }
 
-function messageRow(batch: ChatBatch, conversationId: string, chat: ChatInfo, m: ChatMessage): SqlValue[] {
+function messageRow(
+  batch: ChatBatch,
+  conversationId: string,
+  chat: Pick<ChatInfo, 'kind'>,
+  m: ChatMessage,
+): SqlValue[] {
   const verdict = classifyChatMessage(chat, m);
   const sender = m.fromSelf ? null : m.sender;
   const address = sender?.addresses[0] ?? null;
@@ -584,6 +608,7 @@ async function syncAccount(
       for (const m of fetched) {
         if (!m.fromSelf && m.sender) batch.member(conversationId, m.sender);
         batch.messages.push(messageRow(batch, conversationId, chat, m));
+        if (m.clientId) batch.clientIds.push(m.clientId);
       }
       result.added += fetched.length;
       batch.cursors.push([
@@ -662,4 +687,81 @@ export async function syncChats(
     failed: results.length > 0 && errors === results.length,
     budgetExhausted: budget.exhausted,
   };
+}
+
+export interface SentChatRecord {
+  backend: string;
+  account: { id: string; identity: string; provider: string };
+  /** The chat's remote id — for a direct XMPP chat, the peer's bare JID. */
+  chatRemoteId: string;
+  /** The id the message was sent with (XMPP origin-id): the network's own copy replaces this row. */
+  clientId: string;
+  text: string;
+  /** ISO 8601, local clock. */
+  sentAt: string;
+}
+
+/**
+ * Store a message curlew itself just sent as the account's own message of a direct chat (ADR 0004
+ * §5). Creates the conversation when the chat is new to the index. The row carries a local remote
+ * id; the next sync that meets the network's copy (by `clientId`) deletes it, so nothing is
+ * stored twice. Returns the conversation id and the row's id.
+ */
+export function recordSentChatMessage(
+  db: IndexDatabase,
+  record: SentChatRecord,
+): { conversationId: string; messageId: string } {
+  const { backend, account, chatRemoteId } = record;
+  upsertAccount(db, account);
+  const conversationId = chatConversationId(backend, account.id, chatRemoteId);
+  const batch = new ChatBatch(backend, account.id);
+  if (!db.prepare('SELECT 1 FROM conversations WHERE id = ?').get(conversationId)) {
+    const summary = chatSummary({ kind: 'direct' } as ChatInfo);
+    batch.conversations.push([
+      conversationId,
+      backend,
+      account.id,
+      'direct',
+      chatRemoteId,
+      summary.classification,
+      summary.reason,
+    ]);
+    batch.member(conversationId, {
+      remoteId: chatRemoteId,
+      displayName: null,
+      addresses: [{ kind: 'jid', value: chatRemoteId }],
+      bot: false,
+    });
+  }
+  if (!db.prepare('SELECT 1 FROM chat_cursors WHERE conversation_id = ?').get(conversationId)) {
+    // No history cursor: the next sync takes this chat's window, like any chat never synced.
+    batch.cursors.push([
+      conversationId,
+      backend,
+      account.id,
+      chatRemoteId,
+      'direct',
+      null,
+      null,
+      null,
+      record.sentAt,
+      null,
+      null,
+    ]);
+  }
+  const row = messageRow(batch, conversationId, { kind: 'direct' }, {
+    remoteId: `${LOCAL_ECHO_PREFIX}${record.clientId}`,
+    seq: Date.parse(record.sentAt),
+    sentAt: record.sentAt,
+    editedAt: null,
+    sender: null,
+    fromSelf: true,
+    text: record.text,
+    hasAttachments: false,
+    replyToRemoteId: null,
+    threadRemoteId: null,
+  });
+  batch.messages.push(row);
+  writeBatch(db, batch);
+  return { conversationId, messageId: String(row[0]) };
 }

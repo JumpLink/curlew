@@ -17,13 +17,16 @@ import {
   unresolvedReferences,
   windowEntries,
 } from './map.ts';
-import type { ArchivedEntry } from './stanza.ts';
+import { type ArchivedEntry, bareJid } from './stanza.ts';
 
 /** Older entries fetched to resolve a correction or retraction of a message outside the page. */
 export const LOOKBACK = 100;
 
 /** How far before the stored stamp a resume by time starts. */
 export const RESUME_MARGIN_MS = 2_000;
+
+/** Newest archive entries read to find chats with people who are not on the roster. */
+const DISCOVERY_ENTRIES = 100;
 
 /** Archive queries in flight at once while listing (one per chat, for its newest entry). */
 const PROBE_CONCURRENCY = 8;
@@ -104,6 +107,23 @@ export class XmppChatSession implements ChatSession {
       });
     }
 
+    // People the user chats with who are not on the roster: a first message to a new address
+    // (or from one) leaves only an archive entry. One bounded read of the newest entries; a
+    // server that refuses it simply lists the roster.
+    const rooms = new Set(bookmarks.map((room) => room.jid));
+    for (const jid of await this.discover(self)) {
+      if (seen.has(jid) || rooms.has(jid)) continue;
+      seen.add(jid);
+      states.push({
+        kind: 'direct',
+        chatJid: jid,
+        selfJid: self,
+        selfNick: null,
+        name: null,
+        archived: true,
+      });
+    }
+
     const newest = await pool(states, PROBE_CONCURRENCY, async (chat): Promise<ArchivedEntry | null> => {
       try {
         const page = await this.query(chat, { before: '', max: 1 });
@@ -126,6 +146,21 @@ export class XmppChatSession implements ChatSession {
       .map((chat, i) => ({ info: toChatInfo(chat, newest[i]), at: newest[i]?.stampMs ?? -1 }))
       .sort((a, b) => b.at - a.at)
       .map((c) => c.info);
+  }
+
+  private async discover(self: string): Promise<string[]> {
+    try {
+      const page = await this.api.mam({ archive: null, before: '', max: DISCOVERY_ENTRIES });
+      const peers = new Set<string>();
+      for (const e of page.entries) {
+        if (e.type !== 'chat' || !e.from || !e.to) continue;
+        const peer = bareJid(e.from) === self ? bareJid(e.to) : bareJid(e.from);
+        if (peer !== self && peer.includes('@')) peers.add(peer);
+      }
+      return [...peers];
+    } catch {
+      return [];
+    }
   }
 
   async fetchHistory(

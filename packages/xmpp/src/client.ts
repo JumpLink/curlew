@@ -10,12 +10,17 @@
  * domain, it would upgrade a plain socket with a STARTTLS gjsify 0.52.0 cannot do, and it adds
  * SASL2/FAST/stream management whose state curlew would then have to keep.
  *
- * What goes over the wire, and what never does: the stream, SASL, resource binding, and IQ
- * queries (roster, bookmarks, disco, MAM). NO presence — so the server treats the session as
- * unavailable: no messages are routed to it, offline messages stay queued for the user's real
- * clients, and contacts see nothing. No chat markers, no receipts, no messages. The only
- * stanzas curlew answers are IQs the server sends it (ping), because RFC 6120 §8.2.3 requires
- * an answer to every IQ.
+ * What goes over the wire, and what never does, for the sync handle (`createXmppClient`): the
+ * stream, SASL, resource binding, and IQ queries (roster, bookmarks, disco, MAM). NO presence —
+ * so the server treats the session as unavailable: no messages are routed to it, offline
+ * messages stay queued for the user's real clients, and contacts see nothing. No chat markers,
+ * no receipts, no messages. The only stanzas curlew answers are IQs the server sends it (ping),
+ * because RFC 6120 §8.2.3 requires an answer to every IQ.
+ *
+ * The write handle (`createXmppLink`) is the same connection with three more methods — send a
+ * chat message, enable carbons, send the follow presence — and is typed apart: nothing that
+ * holds an `XmppApi` can reach them (ADR 0004 §5). No stream management (XEP-0198): a message
+ * written just as the connection drops is not retransmitted; the archive tells whether it landed.
  */
 
 import { Client, jid as makeJid } from '@xmpp/client-core';
@@ -35,7 +40,7 @@ import xml, { type Element } from '@xmpp/xml';
 import SASLFactory from 'saslmechanisms';
 import { readFileSync } from 'node:fs';
 import tls from 'node:tls';
-import { type MamPage, type MamQuery, type XmppApi, XmppQueryError } from './api.ts';
+import { type MamPage, type MamQuery, type XmppApi, type XmppLink, XmppQueryError } from './api.ts';
 import {
   type DiscoveryDeps,
   discoverEndpoints,
@@ -47,8 +52,12 @@ import {
   type ArchivedEntry,
   bareJid,
   bookmarksQuery,
+  carbonsEnable,
+  chatMessage,
   discoInfoQuery,
   domainOf,
+  followPresence,
+  isArrivalHint,
   legacyBookmarksQuery,
   mamQuery,
   NS,
@@ -75,8 +84,11 @@ export interface ClientOptions {
   caFile: string | null;
 }
 
-/** Connect, authenticate and bind — resolves with a ready connection or rejects. */
+/** Connect, authenticate and bind — resolves with a ready read-only connection or rejects. */
 export type ClientFactory = (options: ClientOptions) => Promise<XmppApi>;
+
+/** The same, for the handle that may write. Only a grant-opened session calls this. */
+export type LinkFactory = (options: ClientOptions) => Promise<XmppLink>;
 
 const NS_TLS = 'urn:ietf:params:xml:ns:xmpp-tls';
 const CONNECT_TIMEOUT_MS = 20_000;
@@ -129,16 +141,56 @@ function loginError(err: unknown, jid: string): Error {
 let queryCounter = 0;
 const nextId = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${(queryCounter++).toString(36)}`;
 
-class XmppConnection implements XmppApi {
+class XmppConnection implements XmppLink {
   readonly jid: string;
   private readonly entity: Client;
   private readonly iq: ReturnType<typeof iqCaller>;
   private closed = false;
+  private readonly arrivals = new Set<() => void>();
 
   constructor(jid: string, entity: Client, iq: ReturnType<typeof iqCaller>) {
     this.jid = jid;
     this.entity = entity;
     this.iq = iq;
+    entity.on('stanza', (stanza: Element) => {
+      if (this.arrivals.size === 0 || !isArrivalHint(stanza)) return;
+      for (const listener of [...this.arrivals]) listener();
+    });
+  }
+
+  async sendChat(to: string, id: string, body: string) {
+    await this.entity.send(chatMessage({ to, id, body }));
+  }
+
+  async goAvailable() {
+    try {
+      await this.iq.set(carbonsEnable(), undefined, QUERY_TIMEOUT_MS);
+    } catch (err) {
+      // Without carbons a negative-priority session receives nothing live; following would be a lie.
+      throw queryError(err);
+    }
+    await this.entity.send(followPresence());
+  }
+
+  onArrival(listener: () => void) {
+    this.arrivals.add(listener);
+    return () => {
+      this.arrivals.delete(listener);
+    };
+  }
+
+  onClosed(listener: (reason: string) => void) {
+    let told = false;
+    const once = (reason: string) => {
+      if (told || this.closed) return;
+      told = true;
+      listener(reason);
+    };
+    this.entity.on('offline', () => once('the connection was closed'));
+    this.entity.on('error', (err: unknown) => {
+      const condition = (err as { condition?: unknown })?.condition;
+      once(typeof condition === 'string' ? condition : 'the connection failed');
+    });
   }
 
   async roster() {
@@ -244,7 +296,7 @@ async function connectEndpoint(
   endpoint: Endpoint,
   options: ClientOptions,
   ca: string | undefined,
-): Promise<XmppApi> {
+): Promise<XmppLink> {
   const bare = bareJid(options.login.jid);
   const domain = domainOf(bare);
   const local = bare.slice(0, bare.indexOf('@'));
@@ -333,7 +385,7 @@ export async function endpointsFor(
  * Try each endpoint until one connects. A login refusal stops at once: the password is the
  * same on every endpoint, and retrying it elsewhere only multiplies failed-login counters.
  */
-export const createXmppClient: ClientFactory = async (options) => {
+export const createXmppLink: LinkFactory = async (options) => {
   const ca = options.caFile ? readFileSync(options.caFile, 'utf8') : undefined;
   const endpoints = await endpointsFor(options.login);
   let failure: Error | null = null;
@@ -347,3 +399,18 @@ export const createXmppClient: ClientFactory = async (options) => {
   }
   throw failure ?? new Error(`no way to reach the server of ${options.login.jid}`);
 };
+
+/** The read-only face of a link: a new object, so a cast of it cannot reach the write methods. */
+export function readOnly(link: XmppApi): XmppApi {
+  return {
+    jid: link.jid,
+    roster: () => link.roster(),
+    bookmarks: () => link.bookmarks(),
+    features: (jid) => link.features(jid),
+    mam: (query) => link.mam(query),
+    close: () => link.close(),
+  };
+}
+
+/** The sync handle: connects like `createXmppLink` and hands back only the reading half. */
+export const createXmppClient: ClientFactory = async (options) => readOnly(await createXmppLink(options));

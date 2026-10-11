@@ -203,6 +203,12 @@ export interface ChatMessage {
   /** The thread or forum topic, when the network has them. */
   threadRemoteId: string | null;
   /**
+   * The id the SENDER gave the message (XMPP's origin-id), when the network exposes it. The
+   * engine uses it to recognise the archive's copy of a message curlew itself sent and to drop
+   * the local one written at send time.
+   */
+  clientId?: string | null;
+  /**
    * A notice rather than a message: something the network reported about the chat that nobody
    * wrote (a contact's safety number changed). Stored with presentation `notice`, never unread;
    * `text` is what it says. Absent (or false) for everything people wrote.

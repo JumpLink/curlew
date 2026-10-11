@@ -253,6 +253,7 @@ export function buildPage(
       hasAttachments: entry.attachmentUrls.length > 0,
       replyToRemoteId: reply ? reply.archiveId : null,
       threadRemoteId: null,
+      clientId: entry.originId,
     });
   });
 
