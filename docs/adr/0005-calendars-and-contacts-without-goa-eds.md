@@ -1,7 +1,7 @@
 # ADR 0005 — calendars and contacts without GOA/EDS: a shared live DAV client and a credential broker
 
-- **Status:** Proposed (2026-10-10)
-- **Scope:** issue #40; `@curlew/gnome` (stays the Linux driver), a new shared DAV package,
+- **Status:** Accepted (2026-10-11) — architecture; OAuth registrations and the first npm publish are still open (see below)
+- **Scope:** issue #40; `@curlew/gnome` (stays the Linux driver), `@gjsify/dav` (shared DAV package),
   `@gjsify/system-accounts` (gjsify ADR 0095), reminder's planned CalDAV backend
 
 ## Context
@@ -37,14 +37,16 @@ A CalDAV client written twice is a second truth that drifts. Neither app may imp
   It moves iCalendar / vCard **text** and etags, like reminder's port. It parses neither.
 - **Auth is injected** as `() => Promise<Authorization>` (Basic or Bearer), fetched per request,
   never stored by the package.
-- **Home: gjsify**, as a platform package next to `@gjsify/system-accounts`, not in curlew or
-  reminder. Reason ("Own need first" / "Core deps"): the capability serves two products and any
-  third gjsify app; a gjsify app should not need a messenger to get a DAV client. Fallback if
-  gjsify tiering (ADR 0003 there) rejects it: a new small repo `dav`, same shape. The maintainer decides;
-  it is the one placement call in this ADR.
+- **Home: gjsify, package `@gjsify/dav` (decided)**, next to `@gjsify/system-accounts`, not in
+  curlew or reminder. Implemented in gjsify PR #2161: pure TS over `fetch` + `@gjsify/domparser`
+  with XML namespaces; discovery, collections, query/multiget, `sync-collection`, `PUT`/`DELETE`
+  with `If-Match`, auth as an injectable header provider. Reason ("Own need first" / "Core deps"):
+  the capability serves two products and any third gjsify app. Rejected: a separate `dav` repo
+  (only a fallback should gjsify tiering refuse it), hosting in curlew or reminder (they may not
+  import each other).
 - **Consumers adapt, not fork:** reminder writes `@reminder/caldav` implementing `CalendarBackend`
   over it (text in, text out). curlew gets a `ContactBackend`/`CalendarBackend` port in
-  `@curlew/protocol`, with `@curlew/gnome` as one driver and `@curlew/dav` (vCard/iCal to DTO) as the
+  `@curlew/protocol`, with `@curlew/gnome` as one driver and `@curlew/dav` (vCard/iCal to DTO, over `@gjsify/dav`) as the
   other. reminder's `core/src/ical.ts` parser is pure; whether curlew reuses it or ical.js is
   decided at build time (a parser in `protocol`, per curlew's "parsing is pure" rule).
 
@@ -118,7 +120,7 @@ Writes stay granted per capability and target (ADR 0004) on every backend; the r
 
 1. Google: create a Cloud project, enable the CalDAV API and the People/CardDAV scope, configure the consent screen (privacy policy URL, app name), create an OAuth client of type *Desktop app*, decide on verification (public use) vs. test users.
 2. Microsoft (only when the Graph driver is wanted): Entra app registration as public client with the `http://localhost` redirect; decide on publisher verification.
-3. Decide the package home (gjsify vs. new repo) and the maintainer of the publish/Trusted Publisher bootstrap for a new `@gjsify/*` name.
+3. First npm publication of `@gjsify/dav` (Trusted Publisher bootstrap for a new `@gjsify/*` name).
 4. Provide a throw-away Nextcloud user/app password for a live check (kept outside the repo).
 5. Apple needs nothing registered: the user creates an app-specific password.
 
@@ -132,7 +134,6 @@ Writes stay granted per capability and target (ADR 0004) on every backend; the r
 
 ## Open
 
-- Package home (§1) and name.
 - Whether curlew's DTO parsing uses ical.js or reminder's pure parser.
 - `domparser` / `fetch` fitness (§2, phase 0).
 - Google verification burden (§3).
