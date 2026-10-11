@@ -1,6 +1,6 @@
 # ADR 0006 — OMEMO end-to-end encryption for XMPP
 
-- **Status:** Proposed (2026-10-11)
+- **Status:** Accepted (2026-10-11)
 - **Scope:** new `@curlew/omemo`, `@curlew/xmpp`, `@curlew/store` (`SecretStore`), `app` (`curlew send`,
   `curlew sync`, `curlew daemon`, CLI + MCP), gjsify (`@gjsify/webcrypto` / `@gjsify/crypto`)
 
@@ -65,7 +65,7 @@ modes in `cipher.ts`. Missing for OMEMO:
 
 Everything else — raw X25519 private keys go in as a `pkcs8` wrapper, protobuf is a handful of
 fields — needs no platform work. Items 1 and 2 are not WebCrypto algorithms, so they cannot hide
-behind `crypto.subtle`; where they live in gjsify is the owner's call (open question 5).
+behind `crypto.subtle`; they go into a small new gjsify package of their own (see Owner decisions).
 
 ## Decision
 
@@ -319,15 +319,16 @@ OpenPGP (XEP-0027/0373); restoring an old secret file — it breaks sessions by 
   the dual-stack question this ADR deferred.
 - gjsify gains XEdDSA, the curve map and full AES-GCM — reusable by any GJS app.
 
-## Open questions for the owner
+## Owner decisions (2026-10-11)
 
-1. A separate `xmpp.omemo` capability (§5), or does `xmpp.send` for an account imply it?
-2. May the person's own accounts (not only the assistant's) become OMEMO devices? Each one is a
-   device every contact's client encrypts for.
-3. Plaintext to a peer without OMEMO (§7) by default, or `required` by default?
-4. Accept the index's change to `state` for OMEMO chats (§8)?
-5. Where XEdDSA and the curve map live in gjsify: `@gjsify/crypto`'s `curve25519.ts` behind an
-   explicit export, or a small new package — neither is WebCrypto.
+1. `xmpp.omemo` is a capability of its own (§5). `xmpp.send` does not imply it.
+2. The person's own accounts may become OMEMO devices, but only where `xmpp.omemo` is granted
+   for that account. Nothing becomes a device by default.
+3. Plaintext to a peer that has no OMEMO is the default (§7); an account can set `required`.
+4. The index becomes `state` for OMEMO chats (§8); the deployment's backup must cover it.
+5. XEdDSA and the Curve25519⇄Ed25519 map go into a small new gjsify package, not into
+   `@gjsify/webcrypto` or `@gjsify/crypto`: neither is WebCrypto or `node:crypto`. The AES-GCM
+   IV fix stays in `@gjsify/webcrypto`, where it is a conformance bug.
 
 ## References
 
