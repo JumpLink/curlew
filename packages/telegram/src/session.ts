@@ -5,6 +5,7 @@
  * drives it in the unit tests exactly as mtcute does in production.
  */
 
+import { ChatRateLimitedError } from '@curlew/protocol';
 import type { ChatHistoryPage, ChatInfo, ChatSession } from '@curlew/protocol';
 import type { TelegramApi, TgMessage } from './api.ts';
 import { toChatInfo, toChatMessage } from './map.ts';
@@ -12,6 +13,25 @@ import { toChatInfo, toChatMessage } from './map.ts';
 // Telegram returns at most 100 messages per `getHistory`, whatever the `limit` asked for
 // (core.telegram.org/api/offsets). The sync engine's window is 200, so one call never fills it.
 const SERVER_HISTORY_CAP = 100;
+
+/**
+ * mtcute's FLOOD_WAIT as the port's own error, or null when this is not one.
+ *
+ * mtcute sleeps a wait below `floodSleepThreshold` (10 s by default) itself and THROWS above it:
+ * an `RpcError` whose `text` is the normalized `'FLOOD_WAIT_%d'` and whose `seconds` is the wait.
+ * Read structurally, not with `instanceof`: `RpcError` is not exported from @mtcute/core's root,
+ * and a fake client in a test throws a plain object. A raw, unnormalized `FLOOD_WAIT_<n>` is
+ * matched too. Anything else is not a rate limit and passes through untouched.
+ */
+export function asChatRateLimited(err: unknown): ChatRateLimitedError | null {
+  if (!err || typeof err !== 'object') return null;
+  const text = (err as { text?: unknown }).text;
+  const seconds = (err as { seconds?: unknown }).seconds;
+  if (typeof text === 'string' && /^FLOOD_WAIT_(?:\d+|%d)$/.test(text) && typeof seconds === 'number') {
+    return new ChatRateLimitedError(Math.max(0, Math.round(seconds * 1000)));
+  }
+  return null;
+}
 
 function page(
   raw: ReadonlyArray<TgMessage>,
@@ -37,6 +57,18 @@ export class TelegramChatSession implements ChatSession {
     this.api = api;
   }
 
+  /**
+   * Run one network call and translate a FLOOD_WAIT at the session boundary. EVERY call that can
+   * be throttled goes through here, so the sync engine sees one error type whatever mtcute threw.
+   */
+  private async call<T>(operation: () => Promise<T>): Promise<T> {
+    try {
+      return await operation();
+    } catch (err) {
+      throw asChatRateLimited(err) ?? err;
+    }
+  }
+
   async listChats(): Promise<ChatInfo[]> {
     const chats: ChatInfo[] = [];
     // Resolving a chat later needs its access hash, which mtcute stores from this very listing —
@@ -46,7 +78,11 @@ export class TelegramChatSession implements ChatSession {
     // the main folder alone. Without it an archived chat is not de-prioritised, it is INVISIBLE —
     // archiving a group in Telegram would silently drop it from curlew's index and the
     // conversation list, with nothing to say so.
-    for await (const dialog of this.api.iterDialogs({ archived: 'keep' })) chats.push(toChatInfo(dialog));
+    try {
+      for await (const dialog of this.api.iterDialogs({ archived: 'keep' })) chats.push(toChatInfo(dialog));
+    } catch (err) {
+      throw asChatRateLimited(err) ?? err;
+    }
     return chats;
   }
 
@@ -69,7 +105,7 @@ export class TelegramChatSession implements ChatSession {
           limit: Math.min(SERVER_HISTORY_CAP, limit - collected.length),
         };
         if (lowestId !== null) params.offset = { id: lowestId, date: 0 };
-        const chunk = await this.api.getHistory(chatId, params);
+        const chunk = await this.call(() => this.api.getHistory(chatId, params));
         if (chunk.length === 0) {
           reachedStart = true;
           break;
@@ -83,11 +119,13 @@ export class TelegramChatSession implements ChatSession {
     // Asking for more than the cap would make a capped answer look like "nothing left", so `ask`
     // bounds the request and the comparison that decides `exhausted`.
     const ask = Math.min(limit, SERVER_HISTORY_CAP);
-    const raw = await this.api.getHistory(chatId, {
-      limit: ask,
-      offset: { id: afterSeq + 1, date: 0 },
-      reverse: true,
-    });
+    const raw = await this.call(() =>
+      this.api.getHistory(chatId, {
+        limit: ask,
+        offset: { id: afterSeq + 1, date: 0 },
+        reverse: true,
+      }),
+    );
     return page(raw, afterSeq, raw.length < ask, false);
   }
 
@@ -118,9 +156,11 @@ export class TelegramChatSession implements ChatSession {
     const gone: string[] = [];
     for (let i = 0; i < asked.length; i += SERVER_HISTORY_CAP) {
       const chunk = asked.slice(i, i + SERVER_HISTORY_CAP);
-      const found = await this.api.getMessages(
-        chatId,
-        chunk.map((m) => m.id),
+      const found = await this.call(() =>
+        this.api.getMessages(
+          chatId,
+          chunk.map((m) => m.id),
+        ),
       );
       // A short answer says nothing about the ids past its end: those stay in the index.
       for (let j = 0; j < chunk.length && j < found.length; j++) {

@@ -12,8 +12,8 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { AccountPrompter, BackendContext, ChatBackend } from '@curlew/protocol';
-import { isChatBackend, validateManifest } from '@curlew/protocol';
+import type { AccountPrompter, BackendContext, ChatBackend, ChatRateLimitedError } from '@curlew/protocol';
+import { isChatBackend, isChatRateLimitedError, validateManifest } from '@curlew/protocol';
 import {
   chatConversationId,
   getConversation,
@@ -26,6 +26,7 @@ import type { TgMessage } from '@curlew/telegram';
 import {
   API_HASH_ENV,
   API_ID_ENV,
+  asChatRateLimited,
   identityOf,
   peerAddresses,
   credentialsFromEnv,
@@ -43,7 +44,7 @@ import {
 import { conversationsList, conversationsShow, openIndex } from '../../../src/core/actions/index.ts';
 import { telegramFixture } from '../store/chat-fixtures.ts';
 import { freshDb } from '../store/fixtures.ts';
-import { fakeFactory, group, ME, tgMessage, user } from './fake-client.ts';
+import { fakeFactory, floodWaitError, group, ME, tgMessage, user } from './fake-client.ts';
 
 /**
  * The Telegram backend without Telegram: mapping of mtcute's shapes, the chat session over a fake
@@ -299,6 +300,50 @@ export default async () => {
       const rest = await session.fetchHistory('-1004001', 3, 2);
       expect(rest.messages.map((m) => m.seq)).toEqualArray([4]);
       expect(rest.exhausted).toBe(true);
+    });
+
+    await it('turns mtcute FLOOD_WAIT into ChatRateLimitedError for history, dialogs and probes', async () => {
+      const creds = { apiId: 1, apiHash: HASH };
+      const session = (script: Parameters<typeof fakeFactory>[0]) =>
+        new TelegramChatSession(
+          fakeFactory(script).create({
+            credentials: creds,
+            storage: new SecretStoreStorage(SecretStore.open(':memory:')),
+          }),
+        );
+      const limit = async (run: () => Promise<unknown>): Promise<ChatRateLimitedError> => {
+        try {
+          await run();
+        } catch (err) {
+          expect(isChatRateLimitedError(err)).toBe(true);
+          return err as ChatRateLimitedError;
+        }
+        throw new Error('expected a ChatRateLimitedError');
+      };
+
+      expect(
+        (
+          await limit(() =>
+            session({ floodWait: { seconds: 7, on: 'history' } }).fetchHistory('1001', null, 5),
+          )
+        ).retryAfterMs,
+      ).toBe(7_000);
+      expect(
+        (await limit(() => session({ floodWait: { seconds: 8, on: 'dialogs' } }).listChats())).retryAfterMs,
+      ).toBe(8_000);
+      expect(
+        (
+          await limit(() =>
+            session({ floodWait: { seconds: 9, on: 'messages' } }).probeRetracted('1001', ['1001/1']),
+          )
+        ).retryAfterMs,
+      ).toBe(9_000);
+
+      // The object mtcute's `RpcError.fromTl` produces, a raw unnormalized text, and the negative:
+      // anything that is not a FLOOD_WAIT is left alone.
+      expect(asChatRateLimited(floodWaitError(30))?.retryAfterMs).toBe(30_000);
+      expect(asChatRateLimited({ text: 'FLOOD_WAIT_45', seconds: 45 })?.retryAfterMs).toBe(45_000);
+      expect(asChatRateLimited(new Error('AUTH_KEY_UNREGISTERED'))).toBe(null);
     });
   });
 

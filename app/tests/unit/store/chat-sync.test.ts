@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@gjsify/unit';
 
 import type { ContactDTO } from '@curlew/protocol';
+import { ChatRateLimitedError } from '@curlew/protocol';
 import {
   chatConversationId,
   deletedBy,
@@ -187,6 +188,9 @@ export default async () => {
       try {
         const result = await syncChats(db, backend);
         expect(result.accounts[0].chatErrors).toBe(1);
+        expect(result.accounts[0].chatErrorKinds.other).toBe(1);
+        expect(result.accounts[0].chatErrorKinds['rate-limited']).toBe(0);
+        expect(result.accounts[0].rateLimited).toBe(null);
         expect(result.accounts[0].error).toBe(null);
         expect(result.added).toBe(4);
         expect(listConversations(db).some((c) => c.id === GROUP)).toBe(false);
@@ -194,6 +198,58 @@ export default async () => {
         const retry = await syncChats(db, backend);
         expect(retry.added).toBe(3);
         expect(listConversations(db).some((c) => c.id === GROUP)).toBe(true);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('stops asking an account the network rate-limited, and writes what already arrived', async () => {
+      const backend = new FakeChatBackend();
+      for (let n = 1; n <= 5; n++) {
+        const id = String(500 + n);
+        backend.addChat({ remoteId: id, kind: 'direct', title: `Chat ${n}`, members: [BEN] });
+        for (let seq = 1; seq <= 3; seq++) backend.post(id, chatMessage(id, seq, BEN, `m${seq}`));
+      }
+      // All five chats end at seq 3, so the listing order is the insertion order: two go through,
+      // the third is where Telegram says wait.
+      backend.rateLimitAtCall = 3;
+      backend.rateLimitRetryAfterMs = 42_000;
+      const db = freshDb();
+      try {
+        const result = await syncChats(db, backend);
+        // No fetchHistory beyond the one that failed — not for chat 4 or 5 either. The failed
+        // call is still recorded, so the count says exactly how far the run got.
+        expect(backend.calls.length).toBe(3);
+        expect(result.accounts[0].rateLimited?.retryAfterMs).toBe(42_000);
+        expect(result.accounts[0].chatErrorKinds['rate-limited']).toBe(1);
+        expect(result.accounts[0].chatErrorKinds.other).toBe(0);
+        expect(result.accounts[0].error).toBe(null);
+        expect(result.failed).toBe(false);
+        // What arrived before the wait is written; the rest waits for the next run.
+        expect(result.added).toBe(6);
+        expect(listConversations(db).length).toBe(2);
+        // The written chats keep a valid cursor, so the next run carries on instead of restarting.
+        backend.rateLimitAtCall = 0;
+        const next = await syncChats(db, backend);
+        expect(next.added).toBe(9);
+        expect(next.accounts[0].rateLimited).toBe(null);
+        expect(listConversations(db).length).toBe(5);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('reports a rate limit while listing chats without failing the account', async () => {
+      const backend = telegramFixture();
+      backend.listChatsError = new ChatRateLimitedError(15_000);
+      const db = freshDb();
+      try {
+        const result = await syncChats(db, backend);
+        expect(result.accounts[0].rateLimited?.retryAfterMs).toBe(15_000);
+        expect(result.accounts[0].error).toBe(null);
+        expect(result.failed).toBe(false);
+        expect(result.added).toBe(0);
+        expect(listConversations(db).length).toBe(0);
       } finally {
         db.close();
       }

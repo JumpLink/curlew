@@ -78,11 +78,29 @@ export interface FakeScript {
   /** Thrown by `connect`/`getMe` to simulate a revoked session. */
   unauthorized?: boolean;
   /**
+   * Throw mtcute's `FLOOD_WAIT` from the named call — the exact object shape mtcute's `RpcError`
+   * has after `RpcError.fromTl`: `text` normalized to `'FLOOD_WAIT_%d'`, `seconds` the wait.
+   */
+  floodWait?: { seconds: number; on: 'history' | 'dialogs' | 'messages' };
+  /**
    * Reject the login AFTER Telegram accepted the sign-in and mtcute recorded the user — what
    * happens when the bookkeeping after `notifyLoggedIn` (the update manager, `start`'s own
    * follow-up calls) throws. The session is authorized at that point and must not be thrown away.
    */
   failAfterSignIn?: string;
+}
+
+/**
+ * mtcute's `RpcError` for a FLOOD_WAIT, as `RpcError.fromTl` normalizes it — the shape the
+ * session boundary has to recognise. Not a real `RpcError` instance: that class is not exported
+ * from @mtcute/core's root, and nothing in curlew should reach into its internals.
+ */
+export function floodWaitError(seconds: number): Error & { text: string; seconds: number } {
+  return Object.assign(new Error(`Telegram API error 420: FLOOD_WAIT_${seconds}`), {
+    code: 420,
+    text: 'FLOOD_WAIT_%d',
+    seconds,
+  });
 }
 
 /**
@@ -123,6 +141,7 @@ export class FakeClient implements TelegramClientHandle {
     // a session that asked for both folders from one that forgot to ask.
     this.calls.push(`iterDialogs:${params?.archived ?? 'default'}`);
     this.dialogsParams.push(params);
+    if (this.script.floodWait?.on === 'dialogs') throw floodWaitError(this.script.floodWait.seconds);
     for (const dialog of this.script.dialogs ?? []) yield dialog;
   }
 
@@ -133,6 +152,7 @@ export class FakeClient implements TelegramClientHandle {
     this.calls.push(
       `getHistory:${chatId}:${params.reverse ? `rev@${params.offset?.id}` : 'newest'}:${params.limit}`,
     );
+    if (this.script.floodWait?.on === 'history') throw floodWaitError(this.script.floodWait.seconds);
     const all = [...(this.script.history?.get(chatId) ?? [])].sort((a, b) => a.id - b.id);
     const limit = Math.min(params.limit, SERVER_HISTORY_CAP);
     if (params.reverse) {
@@ -149,6 +169,7 @@ export class FakeClient implements TelegramClientHandle {
 
   async getMessages(chatId: number, messageIds: readonly number[]): Promise<ReadonlyArray<TgMessage | null>> {
     this.calls.push(`getMessages:${chatId}:${messageIds.join(',')}`);
+    if (this.script.floodWait?.on === 'messages') throw floodWaitError(this.script.floodWait.seconds);
     // mtcute's contract: one slot per asked id, IN ORDER, `null` where Telegram has no message.
     const all = this.script.history?.get(chatId) ?? [];
     const byId = new Map(all.map((m) => [m.id, m]));

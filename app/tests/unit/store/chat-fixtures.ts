@@ -1,4 +1,4 @@
-import { type BackendManifest, PLUGIN_API_VERSION } from '@curlew/protocol';
+import { type BackendManifest, ChatRateLimitedError, PLUGIN_API_VERSION } from '@curlew/protocol';
 import type {
   BackendAccount,
   ChatBackend,
@@ -126,7 +126,16 @@ export class FakeChatBackend implements ChatBackend {
    */
   canProbe = false;
   connectError: Error | null = null;
+  /** Thrown by `listChats` — a rate limit while listing, or a network that answers nothing. */
+  listChatsError: Error | null = null;
   closed = 0;
+  /**
+   * Throw a `ChatRateLimitedError` from the Nth `fetchHistory` call (1-based) — as Telegram's
+   * FLOOD_WAIT surfaces at the session boundary. 0 means never. The call is still recorded, so a
+   * test can see exactly how far the engine got before it stopped.
+   */
+  rateLimitAtCall = 0;
+  rateLimitRetryAfterMs = 30_000;
 
   addChat(info: Omit<ChatInfo, 'lastSeq' | 'readInboxSeq' | 'readOutboxSeq'> & Partial<ChatInfo>): void {
     this.chats.set(info.remoteId, {
@@ -157,6 +166,7 @@ export class FakeChatBackend implements ChatBackend {
     if (this.connectError) throw this.connectError;
     const session: ChatSession = {
       listChats: async (): Promise<ChatInfo[]> => {
+        if (this.listChatsError) throw this.listChatsError;
         return [...this.chats.values()]
           .map((c) => ({ ...c.info, lastSeq: c.messages.at(-1)?.seq ?? null }))
           .sort((a, b) => (b.lastSeq ?? 0) - (a.lastSeq ?? 0));
@@ -167,6 +177,9 @@ export class FakeChatBackend implements ChatBackend {
         limit: number,
       ): Promise<ChatHistoryPage> => {
         this.calls.push(`${chatId}:${afterSeq}:${limit}`);
+        if (this.rateLimitAtCall > 0 && this.calls.length >= this.rateLimitAtCall) {
+          throw new ChatRateLimitedError(this.rateLimitRetryAfterMs);
+        }
         if (this.failing.has(chatId)) throw new Error('synthetic network failure');
         const all = this.chats.get(chatId)?.messages ?? [];
         const slice =
