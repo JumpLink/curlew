@@ -354,20 +354,16 @@ export function migrate(db: IndexDatabase): void {
   const seen = readVersion(db);
   if (seen > SCHEMA_VERSION) throw new IndexTooNewError(seen, SCHEMA_VERSION);
   if (seen === SCHEMA_VERSION) return;
-  withTransaction(
-    db,
-    () => {
-      const from = readVersion(db);
-      if (from > SCHEMA_VERSION) throw new IndexTooNewError(from, SCHEMA_VERSION);
-      if (from === SCHEMA_VERSION) return;
-      for (const statement of STATEMENTS) db.exec(statement);
-      for (let v = from + 1; v <= SCHEMA_VERSION; v++) {
-        for (const step of UPGRADES[v] ?? []) applyStep(db, step);
-      }
-      db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('schema_version', ?)`).run(
-        String(SCHEMA_VERSION),
-      );
-    },
-    { immediate: true },
-  );
+  withTransaction(db, () => {
+    const from = readVersion(db);
+    if (from > SCHEMA_VERSION) throw new IndexTooNewError(from, SCHEMA_VERSION);
+    if (from === SCHEMA_VERSION) return;
+    for (const statement of STATEMENTS) db.exec(statement);
+    for (let v = from + 1; v <= SCHEMA_VERSION; v++) {
+      for (const step of UPGRADES[v] ?? []) applyStep(db, step);
+    }
+    db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('schema_version', ?)`).run(
+      String(SCHEMA_VERSION),
+    );
+  });
 }

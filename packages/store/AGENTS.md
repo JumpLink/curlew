@@ -57,6 +57,13 @@ The daemon writes while `curlew sync`, the MCP server and a restarted daemon ope
   only switched on when it is not already. Keep the open path write-free: WAL readers never wait
   for the writer.
 
+- **Deferred transactions.** `withTransaction` always opens `BEGIN IMMEDIATE` (there is no
+  option). A deferred `BEGIN` that reads and then writes, after the daemon committed in between,
+  fails at once with SQLITE_BUSY_SNAPSHOT: the busy handler never runs, whatever the timeout
+  (issue #73; reproduced on GJS in 35 ms against a 2 s timeout). Every caller writes, so nothing
+  is lost; reads use no transaction and WAL readers never wait. Do not add a deferred form back.
+  If a lock still outlasts the timeout, `indexSync` rethrows it naming the phase (`inPhase`).
+
 The conversation rebuild stays ONE transaction on purpose: splitting it would show a reader
 empty derived tables. It costs other writers a wait, not readers a failure.
 

@@ -59,15 +59,16 @@ function isWal(db: DatabaseSync): boolean {
 /**
  * Run `fn` inside a transaction, rolling back on throw.
  *
- * `immediate` opens it with `BEGIN IMMEDIATE`, taking the write lock up front. That matters only
- * where two PROCESSES read-then-write the same row: a deferred `BEGIN` takes a read lock, and
- * SQLite does **not** run the busy handler when such a transaction later upgrades to a write
- * (SQLITE_BUSY_SNAPSHOT) — it fails at once, however long `busy_timeout` is. The receive lease is
- * exactly that read-then-write (`receive-lease.ts`); everything else in this package is
- * single-process, and stays deferred.
+ * Always `BEGIN IMMEDIATE`: the write lock is taken up front, where the busy timeout can queue it.
+ * A deferred `BEGIN` takes a read snapshot first, and SQLite does **not** run the busy handler
+ * when such a transaction later upgrades to a write after another process committed
+ * (SQLITE_BUSY_SNAPSHOT) — it fails at once, however long the timeout is. The index has several
+ * processes writing (the daemon's delivery batches, `curlew sync`, the receive lease), so every
+ * write transaction here is that case. Every caller writes; a read needs no transaction, and in
+ * WAL mode a reader never waits for this lock.
  */
-export function withTransaction<T>(db: DatabaseSync, fn: () => T, options: { immediate?: boolean } = {}): T {
-  db.exec(options.immediate ? 'BEGIN IMMEDIATE' : 'BEGIN');
+export function withTransaction<T>(db: DatabaseSync, fn: () => T): T {
+  db.exec('BEGIN IMMEDIATE');
   try {
     const result = fn();
     db.exec('COMMIT');

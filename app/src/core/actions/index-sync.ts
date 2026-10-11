@@ -138,6 +138,26 @@ export async function rebuildWithAddressBook(
   return { ...rebuildConversations(db, { contacts: contacts ?? [] }), contacts: contacts?.length ?? null };
 }
 
+export type SyncPhase = 'mail' | 'chat' | 'delivery' | 'rebuild';
+
+const LOCKED = /database is locked|SQLITE_BUSY|database table is locked/i;
+
+/**
+ * Name the phase when the index stays locked past its busy timeout. A bare `database is locked`
+ * left a timer run with nothing to go on; the phase is a fixed word, never a path, account or row.
+ */
+export async function inPhase<T>(phase: SyncPhase, run: () => Promise<T> | T): Promise<T> {
+  try {
+    return await run();
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (!LOCKED.test(message)) throw err;
+    throw new Error(`the index stayed locked by another process during the ${phase} phase (${message})`, {
+      cause: err,
+    });
+  }
+}
+
 /**
  * Build or update the local index from every ENABLED backend, then rebuild the conversations.
  * The only operation that writes to the index.
@@ -162,19 +182,23 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
       // The engine is chosen by the driver the backend implements, never by its name.
       if (isMailBackend(backend)) {
         results.push(
-          await syncIndex(db, backend, {
-            accountId: params.accountId,
-            folderPath: params.folder,
-            fullScan: params.fullScan,
-            onProgress: params.onProgress,
-          }),
+          await inPhase('mail', () =>
+            syncIndex(db, backend, {
+              accountId: params.accountId,
+              folderPath: params.folder,
+              fullScan: params.fullScan,
+              onProgress: params.onProgress,
+            }),
+          ),
         );
       } else if (isChatBackend(backend)) {
         // `--folder` names a mailbox; a chat backend has none, so a folder-scoped run skips it.
         if (params.folder) continue;
         chats.push({
           backend: name,
-          ...(await syncChats(db, backend, { accountId: params.accountId, fullScan: params.fullScan })),
+          ...(await inPhase('chat', () =>
+            syncChats(db, backend, { accountId: params.accountId, fullScan: params.fullScan }),
+          )),
         });
       } else if (isDeliveryBackend(backend)) {
         if (params.folder) continue;
@@ -183,13 +207,15 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
         // messages are arriving, so this run stands down for it (ADR 0002 §4).
         deliveries.push({
           backend: name,
-          ...(await receiveDeliveries(db, backend, { accountId: params.accountId, mode: 'catch-up' })),
+          ...(await inPhase('delivery', () =>
+            receiveDeliveries(db, backend, { accountId: params.accountId, mode: 'catch-up' }),
+          )),
         });
       } else {
         throw new Error(`backend ${name} uses the ${backend.kind} driver, which this curlew cannot sync yet`);
       }
     }
-    const conversations = await rebuildWithAddressBook(db);
+    const conversations = await inPhase('rebuild', () => rebuildWithAddressBook(db));
     const folders = results.flatMap((r) => r.folders);
     const chatAccounts = chats.flatMap((c) => c.accounts);
     const deliveryAccounts = deliveries.flatMap((d) => d.accounts);

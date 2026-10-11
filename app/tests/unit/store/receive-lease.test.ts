@@ -132,13 +132,9 @@ export default async () => {
         expect(statements.slice(after).some((s) => s.startsWith('PRAGMA'))).toBe(false);
         // A rolled-back take rolls back with it.
         expect(() =>
-          withTransaction(
-            db,
-            () => {
-              throw new Error('nope');
-            },
-            { immediate: true },
-          ),
+          withTransaction(db, () => {
+            throw new Error('nope');
+          }),
         ).toThrow(/nope/);
         expect(statements[statements.length - 1]).toBe('ROLLBACK');
       } finally {
