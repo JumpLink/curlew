@@ -21,7 +21,7 @@ import { pickArgv, printJson } from './output.ts';
 export const daemonCommand: CommandModule = {
   command: 'daemon',
   describe:
-    'Receive from every enabled delivery-only backend (Signal, WhatsApp) until stopped — the systemd unit in contrib/ runs this',
+    'Receive from every enabled delivery-only backend (Signal, WhatsApp) and every granted XMPP account until stopped — the systemd unit in contrib/ runs this',
   builder: (yargs) =>
     yargs
       .option('account', {

@@ -48,6 +48,7 @@ import limits from './unit/core/limits.test.ts';
 import registry from './unit/core/registry.test.ts';
 import grants from './unit/core/grants.test.ts';
 import capabilities from './unit/core/capabilities.test.ts';
+import send from './unit/core/send.test.ts';
 import daemon from './unit/core/daemon.test.ts';
 import deliveries from './unit/core/deliveries.test.ts';
 import setup from './unit/core/setup.test.ts';
@@ -102,6 +103,7 @@ run({
   limits,
   registry,
   grants,
+  send,
   daemon,
   deliveries,
   setup,

@@ -550,7 +550,8 @@ export default async () => {
       const closed = await session.fetchHistory('closed@rooms.example.org', null, 50);
       expect(closed.messages.length).toBe(0);
       // Only archive queries went out — no presence, no markers (there is no API for them).
-      expect(server.queries.every((q) => q.max === 1 && q.before === '')).toBe(true);
+      // The one wider read is the bounded discovery of chats outside the roster (100 entries).
+      expect(server.queries.every((q) => q.before === '' && (q.max === 1 || q.max === 100))).toBe(true);
     });
 
     await it('takes a window, walks forward by archive id, and resumes by time when the id expired', async () => {

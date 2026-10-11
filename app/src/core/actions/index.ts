@@ -12,3 +12,5 @@ export * from './daemon.ts';
 export * from './backends.ts';
 export * from './conversations.ts';
 export * from './deliveries.ts';
+export * from './send.ts';
+export * from './wait-reply.ts';

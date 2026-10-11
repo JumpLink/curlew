@@ -19,6 +19,7 @@ import {
   partsCommand,
   saveCommand,
   searchCommand,
+  sendCommand,
   setupCommand,
   syncCommand,
 } from './frontends/cli/index.ts';
@@ -39,6 +40,7 @@ const parseArgs = () =>
     .command(saveCommand)
     .command(foldersCommand)
     .command(syncCommand)
+    .command(sendCommand)
     .command(daemonCommand)
     .command(indexCommand)
     .command(conversationsCommand)

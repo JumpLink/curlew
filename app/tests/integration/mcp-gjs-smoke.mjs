@@ -12,7 +12,8 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert';
@@ -31,6 +32,9 @@ assert(existsSync(gjsify), 'run `gjsify install` first — @gjsify/cli bin missi
 const env = { ...process.env };
 delete env.LD_LIBRARY_PATH;
 delete env.GI_TYPELIB_PATH;
+// Never the real config: grants in it would change the catalogue. No file = no grants.
+const scratch = mkdtempSync(join(tmpdir(), 'curlew-mcp-'));
+env.CURLEW_CONFIG = join(scratch, 'none.json');
 
 // Sorted, because the comparison below is a sorted deepEqual — the ordering is the assertion.
 // `setup_run` is deliberately ABSENT: it declares `readOnlyHint: false`, so the gate must drop it
@@ -50,6 +54,7 @@ const EXPECTED_TOOLS = [
   'mail_search_local',
   'mail_sync_status',
   'setup_status',
+  'xmpp_wait_reply',
 ];
 
 // ── 1. handshake, catalogue, and one real call ──────────────────────────────
@@ -164,42 +169,66 @@ async function listToolNames(extraEnv) {
   return list.map((x) => x.name).sort();
 }
 
-// Both must be dropped, and they fail for DIFFERENT reasons — see gate-canary.ts. The
-// unannotated one is the load-bearing case: with only the declared-mutating canary, the gate
-// was sabotaged to the fail-open spelling and this whole file still passed.
-const CANARIES = ['gate_canary_write', 'gate_canary_unannotated'];
+// Four canaries (ADR 0004 §3). Three must be dropped, and they fail for DIFFERENT reasons — see
+// gate-canary.ts: declared mutating, unannotated, and a capability nobody granted. The fourth is
+// the positive control: it declares `canary.write`, is served only when that grant exists, and
+// without it a gate that dropped everything would pass the other three.
+const DROPPED = ['gate_canary_write', 'gate_canary_unannotated', 'gate_canary_ungranted'];
+const CONTROL = 'gate_canary_granted';
 
 const gated = await listToolNames({ CURLEW_MCP_GATE_CANARY: '1' });
-for (const canary of CANARIES) {
-  assert(!gated.includes(canary), `READ-ONLY GATE IS OPEN: ${canary} was served — ${gated.join(', ')}`);
+for (const canary of [...DROPPED, CONTROL]) {
+  assert(!gated.includes(canary), `GATE IS OPEN: ${canary} was served without a grant — ${gated.join(', ')}`);
 }
-// A REAL mutating tool, not just the canaries. The canaries exist to prove the gate is wired at
-// all; this proves it judges an ordinary tool the same way it judges the probe. Without this, a
-// gate that dropped the canaries and served everything else would pass section 3.
-assert(!gated.includes('setup_run'), `READ-ONLY GATE IS OPEN: setup_run was served — ${gated.join(', ')}`);
+assert(!gated.includes('setup_run'), `GATE IS OPEN: setup_run was served — ${gated.join(', ')}`);
+assert(
+  !gated.includes('send_message'),
+  `GATE IS OPEN: send_message was served with no xmpp.send grant — ${gated.join(', ')}`,
+);
 assert(gated.includes('setup_status'), 'setup_status must be served: it declares itself read-only');
 assert.deepEqual(gated, EXPECTED_TOOLS, 'gated catalogue drifted');
-console.log(`OK: gate DROPS both canaries and setup_run (${gated.length} tools served, setup_status kept)`);
+console.log(
+  `OK: without a grant the gate DROPS all canaries, setup_run and send_message (${gated.length} tools)`,
+);
 
-// The discriminator. If this fails, the canary is not reaching the server at all and the
-// assertion above proved nothing. `setup_run` joins it: a mutating tool that appears ONLY when
-// writes are allowed is the same evidence on a tool that actually does something.
-const ungated = await listToolNames({
-  CURLEW_MCP_GATE_CANARY: '1',
-  CURLEW_MCP_ALLOW_WRITE: '1',
-});
-for (const canary of CANARIES) {
-  assert(
-    ungated.includes(canary),
-    `${canary} never registered — the drop above was a FALSE NEGATIVE, not a working gate (${ungated.join(', ')})`,
-  );
+// With grants: the positive control and send_message appear, the other three still do not.
+const grantsFile = join(scratch, 'granted.json');
+writeFileSync(
+  grantsFile,
+  JSON.stringify({
+    backends: {},
+    grants: [
+      { capability: 'canary.write', target: 'canary' },
+      { capability: 'xmpp.send', target: 'xmpp-abc123/owner@example.org' },
+    ],
+  }),
+);
+const granted = await listToolNames({ CURLEW_MCP_GATE_CANARY: '1', CURLEW_CONFIG: grantsFile });
+assert(
+  granted.includes(CONTROL),
+  `${CONTROL} never served — the gate drops everything (${granted.join(', ')})`,
+);
+assert(
+  granted.includes('send_message'),
+  `send_message not served with an xmpp.send grant (${granted.join(', ')})`,
+);
+for (const canary of DROPPED) {
+  assert(!granted.includes(canary), `GATE IS OPEN: ${canary} was served — ${granted.join(', ')}`);
 }
+assert(!granted.includes('setup_run'), 'setup_run must stay dropped without MCP_ALLOW_WRITE');
+console.log(
+  `OK: with grants the positive control and send_message are served, the other canaries stay dropped`,
+);
+
+// The env switch still opens setup_run, and only that.
+const ungated = await listToolNames({ CURLEW_MCP_GATE_CANARY: '1', CURLEW_MCP_ALLOW_WRITE: '1' });
 assert(
   ungated.includes('setup_run'),
-  `setup_run never registered — its absence above was a FALSE NEGATIVE (${ungated.join(', ')})`,
+  `setup_run never registered with the switch on (${ungated.join(', ')})`,
 );
-console.log(
-  `OK: discriminator — with writes allowed both canaries AND setup_run ARE served (${ungated.length} tools)`,
-);
+for (const canary of [...DROPPED, CONTROL]) {
+  assert(!ungated.includes(canary), `the write switch must not open ${canary} (${ungated.join(', ')})`);
+}
+console.log(`OK: CURLEW_MCP_ALLOW_WRITE opens setup_run only (${ungated.length} tools)`);
 
 process.exit(0);

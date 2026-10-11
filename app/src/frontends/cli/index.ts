@@ -15,4 +15,5 @@ export * from './index-sync.ts';
 export * from './mail.ts';
 export * from './mcp.ts';
 export * from './output.ts';
+export * from './send.ts';
 export * from './setup.ts';
