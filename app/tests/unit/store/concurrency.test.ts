@@ -4,8 +4,9 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from '@gjsify/unit';
 
-import { type IndexDatabase, withTransaction } from '@curlew/store';
+import { type IndexDatabase, rebuildConversations, syncIndex, withTransaction } from '@curlew/store';
 import { inPhase, openIndex } from '../../../src/core/actions/index-sync.ts';
+import { FakeBackend, message } from './fixtures.ts';
 
 /**
  * The index is shared by the daemon (a long-lived writer), `curlew sync` (a timer), and the MCP
@@ -177,6 +178,46 @@ export default async () => {
           contender.close();
         }
       });
+    });
+
+    await it('lets a sender write between the chunks of a large conversation rebuild', async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-lock-'));
+      const path = join(dir, 'index.db');
+      const follower = openIndex(path);
+      // The sender: a second connection with a short timeout, so a held lock would fail it.
+      const sender = openIndex(path, { busyTimeoutMs: 50 });
+      try {
+        const backend = new FakeBackend();
+        backend.put(
+          'INBOX',
+          Array.from({ length: 1300 }, (_, i) =>
+            message(i + 1, `Thread ${i + 1}`, 'body', { messageId: `<t${i + 1}@example.org>` }),
+          ),
+        );
+        await syncIndex(follower, backend, { now: () => new Date('2026-08-06T12:00:00Z') });
+
+        let chunks = 0;
+        const result = rebuildConversations(follower, {
+          onChunk: () => {
+            chunks++;
+            // What `curlew send` does to the index: it must not meet the follower's lock.
+            put(sender, `sent-${chunks}`);
+          },
+        });
+        expect(result.conversations).toBe(1300);
+        // Rows are written 500 at a time, so a first rebuild is several transactions, not one.
+        expect(chunks > 3).toBe(true);
+        expect(probe(follower)).toBe(`sent-${chunks}`);
+
+        // Nothing changed since: a steady-state rebuild opens no write transaction at all.
+        let again = 0;
+        rebuildConversations(follower, { onChunk: () => again++ });
+        expect(again).toBe(0);
+      } finally {
+        follower.close();
+        sender.close();
+        rmSync(dir, { recursive: true, force: true });
+      }
     });
   });
 };

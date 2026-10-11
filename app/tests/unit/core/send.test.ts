@@ -1,6 +1,6 @@
 import { applyGrantGate, requiresCapability } from '@gjsify/mcp';
 import { describe, expect, it } from '@gjsify/unit';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -9,7 +9,7 @@ import { chatMessage, GrantedXmppSession, isArrivalHint } from '@curlew/xmpp';
 import type { XmppLink } from '@curlew/xmpp';
 import xml from '@xmpp/xml';
 
-import { permitFor, requireSendGrant } from '../../../src/core/actions/send.ts';
+import { permitFor, recordDelivered, requireSendGrant } from '../../../src/core/actions/send.ts';
 import { waitReply } from '../../../src/core/actions/wait-reply.ts';
 import { appendWriteLog } from '../../../src/core/write-log.ts';
 import { freshDb } from '../store/fixtures.ts';
@@ -191,6 +191,27 @@ export default async () => {
       };
       expect(bad.isError).toBe(true);
       expect(await rec.handler('send')({ account: ACCOUNT, to: OWNER })).toBe('reached');
+    });
+  });
+
+  await describe('a delivered message the index cannot take', async () => {
+    await it('is reported, not thrown: a retry would send it twice', async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-send-'));
+      try {
+        // A file where the index directory should be: opening the index fails.
+        writeFileSync(join(dir, 'blocked'), '');
+        const result = recordDelivered(join(dir, 'blocked', 'index.db'), ACCOUNT_INFO, {
+          chatJid: OWNER,
+          originId: 'id-1',
+          text: 'hi',
+          sentAt: '2026-08-06T12:00:00.000Z',
+        });
+        expect(result.messageId).toBe(null);
+        expect(result.conversationId).toBe(chatConversationId('xmpp', ACCOUNT, OWNER));
+        expect(typeof result.indexError).toBe('string');
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
     });
   });
 };
