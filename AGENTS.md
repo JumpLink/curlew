@@ -186,7 +186,8 @@ the MCP server via `run_in_background` when driving it.
   Below the window a full scan re-read, a backend that can ask the network about single ids
   (`ChatSession.probeRetracted`, Telegram's `getMessages`) is asked about a bounded slice of the
   stored ids, rotating over the chat across runs (ADR 0004) — the bound and the cursor are what
-  keep it off FLOOD_WAIT, so do not drop either.
+  keep it off FLOOD_WAIT, so do not drop either. A short FLOOD_WAIT that does arrive is slept out
+  (up to 60 s, `FLOOD_SLEEP_THRESHOLD_MS`); only a longer one stops the run (#72).
 - Only `curlew sync` and `curlew daemon` write to the index. A search never does — one
   mental model, and no surprise disk growth from a read. They are kept off the same delivery
   account by a **lease** (a row in the index, ADR 0002 §4) that BOTH take before connecting:

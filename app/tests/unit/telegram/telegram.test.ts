@@ -27,6 +27,7 @@ import {
   API_HASH_ENV,
   API_ID_ENV,
   asChatRateLimited,
+  FLOOD_SLEEP_THRESHOLD_MS,
   identityOf,
   peerAddresses,
   credentialsFromEnv,
@@ -38,6 +39,7 @@ import {
   TELEGRAM_MANIFEST,
   TelegramBackend,
   TelegramChatSession,
+  telegramMiddlewares,
   toChatInfo,
   toChatMessage,
 } from '@curlew/telegram';
@@ -189,6 +191,22 @@ export default async () => {
     await it('never lists a phone number as the account identity', async () => {
       expect(identityOf(ME)).toBe('@me_example');
       expect(identityOf(user(9, 'Nur Name'))).toBe('Nur Name');
+    });
+  });
+
+  await describe('Telegram mtcute client', async () => {
+    await it('sleeps short FLOOD_WAITs by handing mtcute a 60 s threshold', async () => {
+      // #72 makes a FLOOD_WAIT stop the run. Telegram's usual wait (~26 s after ~29 getHistory
+      // calls) is above mtcute's 10 s default but below 60 s, so it is slept out instead of
+      // ending the run. The assertion is on the value HANDED to mtcute (`floodWaiter.maxWait`) —
+      // a wrong option key would fail here rather than silently leave the 10 s default in place.
+      expect(FLOOD_SLEEP_THRESHOLD_MS).toBe(60_000);
+      let handed: { floodWaiter?: { maxWait?: number } } | undefined;
+      telegramMiddlewares(FLOOD_SLEEP_THRESHOLD_MS, (options) => {
+        handed = options;
+        return [];
+      });
+      expect(handed?.floodWaiter?.maxWait).toBe(60_000);
     });
   });
 
