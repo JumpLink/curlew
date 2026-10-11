@@ -51,6 +51,10 @@ export interface ConversationShowParams {
   id: string;
   includeBodies?: boolean;
   maxBodyChars?: number;
+  /** Only messages sent after this ISO time (or after this message id) — for waiting on a reply. */
+  since?: string;
+  /** Only messages from the other side. */
+  incomingOnly?: boolean;
   dbPath?: string;
   configPath?: string;
 }
@@ -66,6 +70,8 @@ export function conversationsShow(params: ConversationShowParams): {
       includeBodies: params.includeBodies,
       maxBodyChars: capLimit(params.maxBodyChars, CONVERSATION_BODY_CHARS),
       overrides: senders,
+      since: params.since,
+      incomingOnly: params.incomingOnly,
     });
     if (!found) throw new Error(`no conversation with id ${params.id} — run \`curlew conversations list\``);
     return found;

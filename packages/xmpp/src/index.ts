@@ -12,4 +12,6 @@ export * from './archive.ts';
 export * from './accounts.ts';
 export * from './client.ts';
 export * from './login.ts';
+export * from './granted.ts';
+export * from './messages.ts';
 export * from './backend.ts';

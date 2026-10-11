@@ -664,6 +664,10 @@ export interface ConversationDetailOptions {
   /** Per-message body cap when bodies are included. */
   maxBodyChars?: number;
   overrides?: SenderOverrides;
+  /** Only messages sent strictly after this ISO 8601 time — how a consumer waits for a reply. */
+  since?: string;
+  /** Leave out the user's own messages. */
+  incomingOnly?: boolean;
 }
 
 /** One conversation with its messages, oldest first. Null when the id is unknown. */
@@ -685,10 +689,10 @@ export function getConversation(
               sender_kind, sender_address, from_self, sent_at, subject, seen, has_attachments,
               classification, classification_reason, folder_path, uid, remote_id, ${seqColumn('remote_seq')}, body,
               edited_at, reply_to_remote_id, thread_remote_id, peer_read
-         FROM conversation_messages WHERE conversation_id = ?
+         FROM conversation_messages WHERE conversation_id = ?${options.since ? ' AND sent_at > ?' : ''}${options.incomingOnly ? ' AND from_self = 0' : ''}
         ORDER BY sent_at, conversation_messages.remote_seq, id`,
     )
-    .all(id) as Array<Record<string, unknown>>;
+    .all(...(options.since ? [id, options.since] : [id])) as Array<Record<string, unknown>>;
 
   const messages = rows.map((r): ConversationMessage => {
     const senderAddress = str(r.sender_address);

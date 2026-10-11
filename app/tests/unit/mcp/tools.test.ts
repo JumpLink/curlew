@@ -73,6 +73,7 @@ export default async () => {
         'mail_search',
         'mail_search_local',
         'mail_sync_status',
+        'xmpp_wait_reply',
       ]);
     });
 
@@ -146,6 +147,7 @@ export default async () => {
         'mail_sync_status',
         'setup_run',
         'setup_status',
+        'xmpp_wait_reply',
       ]);
     });
 

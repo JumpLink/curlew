@@ -410,6 +410,48 @@ Corrections (XEP-0308) replace the stored text, retractions (XEP-0424/0425)
 remove the message. OMEMO-encrypted messages are indexed without their text:
 Curlew cannot decrypt them yet.
 
+### Sending (grant `xmpp.send`)
+
+An account can send one-to-one chat messages, but only to an address you
+granted, as an exact `<account>/<address>` pair (see
+[Your data stays yours](#your-data-stays-yours)):
+
+```json
+{ "grants": [ { "capability": "xmpp.send", "target": "xmpp-abc123/owner@example.org" } ] }
+```
+
+```bash
+curlew send --account xmpp-abc123 --to owner@example.org "Build is green"
+```
+
+The MCP server offers the same as `send_message` (`account`, `to`, `text`) —
+only when a matching grant exists; without one the tool is not even listed and
+the server stays read-only. The answer carries `conversationId` and `sentAt`.
+The message goes out as `type=chat` with an origin-id (XEP-0359), a receipt
+request (XEP-0184) and `markable`; it is stored in the index as your own
+message, and the archive's copy replaces that local echo on the next sync.
+Every send is logged (time, grant, target, never the text) to
+`$XDG_DATA_HOME/curlew/writes.log`.
+
+**Waiting for a reply.** Run `curlew daemon`: for granted XMPP accounts it
+stays connected, enables carbons (XEP-0280) and catches up from the archive on
+every arrival and after every reconnect, so a reply reaches the index within
+seconds. Then call the read-only MCP tool
+`xmpp_wait_reply {account, peer, after, timeout_s}` with the `sentAt` of the
+send as `after`: it returns `{status: "reply", messages, cursor}` or
+`{status: "timeout", cursor}`; pass `cursor` as `after` of the next call.
+`conversations_get {id, since, incoming_only}` is the non-blocking form. The
+cursor compares the sender's timestamp with the one you stored, so a badly
+skewed clock can hide or repeat a message.
+
+Limits, stated plainly: **sending is plaintext — OMEMO is not implemented**, so
+an encrypted conversation cannot be continued and incoming OMEMO stays
+unreadable. There is no stream management (XEP-0198): a message written as the
+connection drops is not retransmitted (receiving is covered by the archive
+catch-up). Rooms are not joined; they are only read through the archive on
+connect and `curlew sync`. Grants are read when the daemon starts; it stops if
+they are edited, and the new set applies after a restart.
+
 ## Matrix
 
 Matrix is an open protocol, so there are no terms beyond your homeserver's own.
@@ -467,8 +509,9 @@ curlew daemon                   # receive until stopped (SIGTERM/SIGINT)
 
 It connects to every **delivery-only** backend you enabled — Signal and
 WhatsApp — for every account, all at once, and keeps receiving. Mail and chat
-backends (IMAP, Telegram, Matrix, XMPP) stay on `curlew sync`: they are
-pull models with a cursor, and a daemon buys them nothing. A dropped connection
+backends (IMAP, Telegram, Matrix) stay on `curlew sync`: they are
+pull models with a cursor, and a daemon buys them nothing. XMPP accounts with
+an `xmpp.send` grant are followed as well, so replies arrive live. A dropped connection
 is retried with growing pauses (5 s to 5 min); a device the network **logged out
 or unlinked** is not retried — the daemon stops that account and says so, because
 the credentials are gone and every retry would fail the same way while messages
@@ -583,7 +626,7 @@ unknown capability is an error when the file loads.
 }
 ```
 
-This only reads and validates the grants; no tool or command writes yet.
+Today `xmpp.send` is the only capability a command or tool uses (see [Sending](#sending-grant-xmppsend)).
 
 Chat sessions (Telegram, WhatsApp, Matrix — including Matrix's crypto store) and
 chat passwords (XMPP) are **secrets**, kept apart from the index under

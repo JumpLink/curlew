@@ -12,8 +12,10 @@
 
 import 'dotenv/config';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { applyReadOnlyGate, serveStdio } from '@gjsify/mcp';
-import { envValue } from '@curlew/store';
+import { applyGrantGate, serveStdio } from '@gjsify/mcp';
+import { configPath, envValue } from '@curlew/store';
+
+import { loadConfig } from '../../core/config.ts';
 
 import { registerAccountsTools } from './tools/accounts.ts';
 import { registerCalendarTools } from './tools/calendar.ts';
@@ -22,6 +24,7 @@ import { registerConversationTools } from './tools/conversations.ts';
 import { registerGateCanary } from './tools/gate-canary.ts';
 import { registerIndexTools } from './tools/index-sync.ts';
 import { registerMailTools } from './tools/mail.ts';
+import { registerSendTools } from './tools/send.ts';
 import { registerSetupTools } from './tools/setup.ts';
 
 const SERVER_NAME = 'curlew';
@@ -39,6 +42,8 @@ const REGISTRARS: Array<(server: McpServer) => void> = [
   // served, `setup_run` is dropped unless CURLEW_MCP_ALLOW_WRITE=1. Both identify themselves by
   // their own annotation, which is the only thing the gate reads.
   registerSetupTools,
+  // Needs an xmpp.send grant: without one the gate drops it and the server is read-only.
+  registerSendTools,
   // Last, and normally a no-op: a deliberately MUTATING tool that the gate must drop. It is the
   // only thing in this list that can tell a working gate from an absent one — see gate-canary.ts.
   registerGateCanary,
@@ -46,11 +51,19 @@ const REGISTRARS: Array<(server: McpServer) => void> = [
 
 export function createMcpServer(): McpServer {
   const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION });
-  // Before any registration — the gate works by wrapping registerTool, so anything registered
-  // earlier would slip past it. It fails CLOSED: a tool whose author forgot the annotation goes
-  // missing from `tools/list`, which gets noticed, instead of a mutation being quietly reachable.
-  applyReadOnlyGate(server, envValue(process.env, 'MCP_ALLOW_WRITE') === '1');
-  for (const register of REGISTRARS) register(server);
+  const allowWrite = envValue(process.env, 'MCP_ALLOW_WRITE') === '1';
+  // `setup_run` is gated by the env switch, not by a grant, and the two gates do not stack (each
+  // wraps registerTool). With the switch on, the setup tools are registered before the grant
+  // gate exists; the grant gate then judges everything else, so a granted write still needs its
+  // grant and nothing else becomes reachable through the switch.
+  if (allowWrite) registerSetupTools(server);
+  // Before any other registration — the gate works by wrapping registerTool. Fails CLOSED: a tool
+  // without a readOnlyHint or an ungranted capability goes missing from `tools/list`.
+  applyGrantGate(server, loadConfig(configPath()).grants);
+  for (const register of REGISTRARS) {
+    if (allowWrite && register === registerSetupTools) continue;
+    register(server);
+  }
   return server;
 }
 

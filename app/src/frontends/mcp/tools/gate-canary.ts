@@ -24,7 +24,9 @@
  */
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { mcpError } from '@gjsify/mcp';
+import { mcpError, mcpSuccess, requiresCapability } from '@gjsify/mcp';
+
+import { CANARY_CAPABILITY } from '../../../core/grants.ts';
 
 /**
  * TWO canaries, because one does not cover the failure that actually happens.
@@ -39,7 +41,18 @@ import { mcpError } from '@gjsify/mcp';
  *
  * So the second canary carries no `annotations` key at all, and it is the one with teeth.
  */
-export const GATE_CANARY_TOOLS = ['gate_canary_write', 'gate_canary_unannotated'] as const;
+export const GATE_CANARY_TOOLS = [
+  'gate_canary_write',
+  'gate_canary_unannotated',
+  'gate_canary_ungranted',
+] as const;
+
+/**
+ * The positive control (ADR 0004 §3): declares the test-only capability `canary.write`, which the
+ * integration test grants. It MUST be served there; without it a gate that drops everything would
+ * pass the three canaries above. Its handler performs no write.
+ */
+export const GATE_CANARY_GRANTED = 'gate_canary_granted';
 
 export function registerGateCanary(server: McpServer): void {
   if (process.env.CURLEW_MCP_GATE_CANARY !== '1') return;
@@ -67,5 +80,36 @@ export function registerGateCanary(server: McpServer): void {
         'Test-only probe with no readOnlyHint at all. A default-DENY gate drops it; a gate that only drops explicit writes serves it. If you can see this tool, the gate fails OPEN on every tool whose author forgot the annotation.',
     },
     async () => mcpError('gate canary reached — the read-only gate fails OPEN on unannotated tools'),
+  );
+
+  // A write tool whose capability is NOT granted: must be absent. `xmpp.send` is the real
+  // capability, so this also holds when only the canary grant exists.
+  server.registerTool(
+    'gate_canary_ungranted',
+    requiresCapability(
+      {
+        title: 'Gate canary, capability not granted (must never be served)',
+        description:
+          'Test-only probe that declares a capability no grant covers. The grant gate drops it; if you can see this tool, it serves writes nobody granted.',
+        annotations: { readOnlyHint: false, openWorldHint: false },
+      },
+      { capability: 'canary.ungranted', targetOf: () => 'nowhere' },
+    ),
+    async () => mcpError('gate canary reached — the grant gate serves an ungranted capability'),
+  );
+
+  // The positive control: granted through `canary.write`, so it MUST be served.
+  server.registerTool(
+    GATE_CANARY_GRANTED,
+    requiresCapability(
+      {
+        title: 'Gate canary, capability granted (must be served)',
+        description:
+          'Test-only positive control. Served only when a canary.write grant exists; proves the gate opens for a grant. Performs no write.',
+        annotations: { readOnlyHint: false, openWorldHint: false },
+      },
+      { capability: CANARY_CAPABILITY, targetOf: () => 'canary' },
+    ),
+    async () => mcpSuccess({ reached: true }),
   );
 }

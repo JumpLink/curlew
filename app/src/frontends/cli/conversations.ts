@@ -59,6 +59,8 @@ export const conversationsCommand: CommandModule = {
           y
             .positional('id', { type: 'string', demandOption: true, describe: 'Conversation id from `list`' })
             .option('bodies', { type: 'boolean', describe: 'Include each message body from the index' })
+            .option('since', { type: 'string', describe: 'Only messages sent after this ISO 8601 time' })
+            .option('incoming-only', { type: 'boolean', describe: 'Only messages from the other side' })
             .option('max-body-chars', {
               type: 'number',
               describe: `Per-message body cap (default ${CONVERSATION_BODY_CHARS.default}, max ${CONVERSATION_BODY_CHARS.max})`,
@@ -71,6 +73,8 @@ export const conversationsCommand: CommandModule = {
                 id: String(raw.id),
                 includeBodies: pickArgv<boolean>(raw, 'bodies'),
                 maxBodyChars: pickArgv<number>(raw, 'max-body-chars', 'maxBodyChars'),
+                since: pickArgv<string>(raw, 'since'),
+                incomingOnly: pickArgv<boolean>(raw, 'incoming-only', 'incomingOnly'),
               }),
             ),
           );

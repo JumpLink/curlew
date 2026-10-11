@@ -48,6 +48,10 @@ export const NS = {
   omemo: 'urn:xmpp:omemo:2',
   openpgp: 'urn:xmpp:openpgp:0',
   pgpLegacy: 'jabber:x:encrypted',
+  receipts: 'urn:xmpp:receipts',
+  markers: 'urn:xmpp:chat-markers:0',
+  carbons: 'urn:xmpp:carbons:2',
+  hints: 'urn:xmpp:hints',
 } as const;
 
 // ── JIDs ────────────────────────────────────────────────────────────────
@@ -314,4 +318,50 @@ export function parseMamResult(
       message.getChild('x', NS.pgpLegacy) !== undefined,
     occupantJid: occupant ? bareJid(occupant) : null,
   };
+}
+
+// ── sending and following (only a handle opened with a grant uses these) ────────────
+
+export interface ChatMessageSpec {
+  /** The recipient's bare JID. */
+  to: string;
+  /** The stanza id, which is also the origin-id (XEP-0359): what MAM's echo is matched by. */
+  id: string;
+  body: string;
+}
+
+/**
+ * A 1:1 chat message: plain text, `origin-id` so the archive's copy can be matched to it, a
+ * receipt request (XEP-0184), `markable` (XEP-0333) so the peer's client may answer with
+ * markers, and a `store` hint (XEP-0334) so the server archives it. Never encrypted: OMEMO is
+ * not implemented.
+ */
+export function chatMessage(spec: ChatMessageSpec) {
+  return xml(
+    'message',
+    { type: 'chat', to: spec.to, id: spec.id },
+    xml('body', {}, spec.body),
+    xml('origin-id', { xmlns: NS.sid, id: spec.id }),
+    xml('request', { xmlns: NS.receipts }),
+    xml('markable', { xmlns: NS.markers }),
+    xml('store', { xmlns: NS.hints }),
+  );
+}
+
+/** Message Carbons (XEP-0280): copies of the account's other clients' traffic, to this session. */
+export const carbonsEnable = () => xml('enable', { xmlns: NS.carbons });
+
+/** The follow session's presence: available, but with a negative priority and no status text. */
+export const followPresence = () => xml('presence', {}, xml('priority', {}, '-1'));
+
+/**
+ * Does this stanza say "something new may be in the archive"? A message with content, plain or
+ * in a carbon. It is only ever a wake-up: what is stored comes from the archive (MAM), never from
+ * the stanza, so a forged one costs one rate-limited archive query and nothing else.
+ */
+export function isArrivalHint(stanza: XmlElement): boolean {
+  if (stanza.name !== 'message' || stanza.attrs.type === 'error') return false;
+  if (stanza.getChild('result', NS.mam)) return false;
+  if (stanza.getChild('received', NS.carbons) || stanza.getChild('sent', NS.carbons)) return true;
+  return stanza.getChild('body') !== undefined || stanza.getChild('encrypted', NS.omemo) !== undefined;
 }

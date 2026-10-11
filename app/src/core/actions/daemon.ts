@@ -12,6 +12,9 @@
  *     once (a follow session ends only when it is closed, so a queue would starve every account
  *     behind the first). Mail and chat backends stay on `curlew sync`: they are pull models
  *     with a cursor, and a daemon buys them nothing;
+ *   - also follows every XMPP account named by an `xmpp.send` grant (`follow.ts`): carbons live,
+ *     the archive as the truth, so a reply reaches the index within seconds. Grants are read
+ *     once at start; the run stops when they change;
  *   - takes the receive lease per account, so a `sync` on the same account stands down — two
  *     devices on one account each acknowledge half the copy (`@curlew/store`);
  *   - reconnects a dropped session with backoff, and stops an account the network logged out;
@@ -30,11 +33,17 @@
 import { type MessageBackend, isChatBackend, isDeliveryBackend, isMailBackend } from '@curlew/protocol';
 import type { DeliveryProgress, DeliverySyncResult, IndexDatabase, RebuildResult } from '@curlew/store';
 import { receiveDeliveries } from '@curlew/store';
+import type { XmppBackend } from '@curlew/xmpp';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig } from '../config.ts';
 import { configPath } from '@curlew/store';
+import { followAccount, type FollowResult } from './follow.ts';
 import { openIndex, rebuildWithAddressBook } from './index-sync.ts';
+import { createXmppBackend, permitFor, SEND_CAPABILITY } from './send.ts';
+
+/** How often a running daemon looks whether the grants were edited (they apply on restart only). */
+export const GRANT_CHECK_MS = 30_000;
 
 /** How long the conversations wait for the last written batch before they are rebuilt. */
 export const REBUILD_DEBOUNCE_MS = 30_000;
@@ -56,6 +65,12 @@ export interface DaemonParams {
    * chosen by the driver the backend implements — never by its name.
    */
   backends?: readonly MessageBackend[];
+  /** The XMPP backend that follows granted accounts. Injected by tests. */
+  xmpp?: XmppBackend;
+  /** Short only in tests. */
+  grantCheckMs?: number;
+  /** Where the write log goes; injected by tests. */
+  writeLogPath?: string;
   /** Injected by tests; the address-book rebuild `indexSync` also uses. */
   rebuild?: (db: IndexDatabase) => Promise<RebuildResult & { contacts: number | null }>;
 }
@@ -82,6 +97,8 @@ export interface DaemonResult {
   removed: number;
   errors: number;
   conversations: (RebuildResult & { contacts: number | null }) | null;
+  /** The granted XMPP accounts that were followed (ADR 0004 §5). */
+  followed: FollowResult[];
 }
 
 /** The enabled delivery-only backends — what a daemon receives and what a `sync` stands down for. */
@@ -179,9 +196,20 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     }
     return true;
   });
-  if (backends.length === 0) {
+  // Grants are read ONCE, here (ADR 0004 §1): an edit applies on restart, never halfway through
+  // a connection that is already open.
+  const grantsAtStart = JSON.stringify(config.grants);
+  const grantedAccounts = [
+    ...new Set(
+      config.grants
+        .filter((g) => g.capability === SEND_CAPABILITY)
+        .map((g) => g.target.slice(0, g.target.indexOf('/'))),
+    ),
+  ].filter((id) => !params.accountId || id === params.accountId);
+  const xmpp = grantedAccounts.length > 0 ? (params.xmpp ?? createXmppBackend(config)) : null;
+  if (backends.length === 0 && xmpp === null) {
     throw new Error(
-      'no delivery-only backend is enabled — `curlew backends list` shows them; the daemon receives Signal and WhatsApp, `curlew sync` stays for mail and chat',
+      'nothing to receive — no delivery-only backend is enabled (`curlew backends list`; the daemon receives Signal and WhatsApp) and no xmpp.send grant names an account to follow; `curlew sync` stays for mail and chat',
     );
   }
 
@@ -231,26 +259,66 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     }, debounce);
   };
 
-  const signal = params.signal ?? new AbortController().signal;
+  const outer = params.signal ?? new AbortController().signal;
+  const run = new AbortController();
+  const signal = run.signal;
+  const forward = (): void => run.abort();
+  if (outer.aborted) run.abort();
+  else outer.addEventListener('abort', forward, { once: true });
+  const grantWatch =
+    grantedAccounts.length > 0
+      ? setInterval(() => {
+          try {
+            if (JSON.stringify(loadConfig(params.configPath ?? configPath()).grants) === grantsAtStart)
+              return;
+          } catch {
+            // An unreadable config is also a change nobody approved.
+          }
+          log('curlew-daemon: the grants were edited — stopping; the new set applies after a restart');
+          run.abort();
+        }, params.grantCheckMs ?? GRANT_CHECK_MS)
+      : null;
+  let followed: FollowResult[] = [];
   try {
     log(
-      `curlew-daemon: receiving from ${backends.map((b) => b.manifest.name).join(', ')} ` +
+      `curlew-daemon: receiving from ${backends.map((b) => b.manifest.name).join(', ') || 'no delivery backend'}` +
+        `${grantedAccounts.length > 0 ? ` and following ${grantedAccounts.length} xmpp account(s)` : ''} ` +
         `(${params.accountId ?? 'every account'}) — stop with SIGTERM`,
     );
-    const results = await Promise.all(
-      backends.map(
-        async (backend): Promise<DeliverySyncResult> =>
-          receiveDeliveries(db, backend as Parameters<typeof receiveDeliveries>[1], {
-            mode: 'follow',
-            signal,
-            accountId: params.accountId,
-            onProgress: (event) => {
-              if (event.type === 'batch') schedule();
-              line(event, log);
-            },
-          }),
+    const following = Promise.all(
+      (xmpp === null ? [] : grantedAccounts).map((accountId) =>
+        followAccount({
+          db,
+          backend: xmpp as XmppBackend,
+          open: (id, permit) => (xmpp as XmppBackend).openGranted(id, permit),
+          permit: permitFor(config.grants, accountId),
+          signal,
+          log,
+          onWrite: schedule,
+          holder: String(process.pid),
+          writeLogPath: params.writeLogPath,
+        }),
       ),
-    );
+    ).then((done) => {
+      followed = done;
+    });
+    const [results] = await Promise.all([
+      Promise.all(
+        backends.map(
+          async (backend): Promise<DeliverySyncResult> =>
+            receiveDeliveries(db, backend as Parameters<typeof receiveDeliveries>[1], {
+              mode: 'follow',
+              signal,
+              accountId: params.accountId,
+              onProgress: (event) => {
+                if (event.type === 'batch') schedule();
+                line(event, log);
+              },
+            }),
+        ),
+      ),
+      following,
+    ]);
     // The writes are in: no more debounced rebuilds are scheduled, and whatever is already running
     // or queued is awaited — `rebuildNow` chains behind it, so this covers a rebuild that started
     // before the last batch was written (then `dirty` is still set and one more pass is due).
@@ -284,8 +352,11 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
       removed: results.reduce((n, r) => n + r.removed, 0),
       errors,
       conversations,
+      followed,
     };
   } finally {
+    if (grantWatch !== null) clearInterval(grantWatch);
+    outer.removeEventListener('abort', forward);
     db.close();
   }
 }
