@@ -208,7 +208,7 @@ the MCP server via `run_in_background` when driving it.
 - **SQLite runs on libgda, not sqlite3** — gjsify's `node:sqlite` is a `Gda` wrapper, and it
   leaks through in five ways that WILL bite you. Read
   [`packages/store/AGENTS.md`](packages/store/AGENTS.md) before writing any SQL.
-- **MCP tools are read-only or they do not register.** `applyReadOnlyGate` — from
+- **MCP tools are read-only or they do not register — unless a grant names them.** The server uses `applyGrantGate(server, grants)` (`server.ts`); `send_message` needs `xmpp.send` for the exact `<account>/<address>`, and `@curlew/xmpp` never sends without a permit from a grant (`GrantedXmppSession`; `XmppApi` stays read-only). Formerly `applyReadOnlyGate` — from
   **`@gjsify/mcp`**, since 0.54.0; it was `app/src/frontends/mcp/runtime.ts`, which no longer
   exists — registers a tool only when `annotations.readOnlyHint === true`; a tool that omits the
   annotation is dropped. Do not loosen this to a name list.
