@@ -87,141 +87,154 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
   const result: FollowResult = { accountId, catchUps: 0, added: 0, error: null, heldBy: null };
 
   // The lease first: a `sync` on the same account stands down while a daemon holds it.
-  let waitingFor: string | null = null;
-  for (;;) {
-    if (signal.aborted) return result;
-    let acquired = false;
-    let holder: string | null = null;
-    try {
-      const take = takeReceiveLease(db, 'xmpp', accountId, deps.holder, now(), interval);
-      acquired = take.acquired;
-      holder = take.acquired ? null : take.holder;
-    } catch {
-      // The index was busy: not knowing who holds the account is the same as not holding it.
-    }
-    if (acquired) break;
-    if (holder !== waitingFor) {
-      waitingFor = holder;
-      log(`curlew-daemon: ${who} is held by ${holder ?? 'another process'} — waiting for the lease`);
-    }
-    await sleep(interval);
-  }
-
-  let leaseLost = false;
-  const stopAccount = new AbortController();
-  const heartbeat = setInterval(() => {
-    try {
-      if (!refreshReceiveLease(db, 'xmpp', accountId, deps.holder, now(), interval)) leaseLost = true;
-    } catch {
-      leaseLost = true;
-    }
-    if (leaseLost) {
-      clearInterval(heartbeat);
-      log(`curlew-daemon: ${who} lost the receive lease — stopping that account`);
-      stopAccount.abort();
-    }
-  }, interval);
-  const stop = (): void => stopAccount.abort();
-  signal.addEventListener('abort', stop, { once: true });
-  const live = stopAccount.signal;
-
-  // The catch-up runs over the open link, not a new connection.
-  let wait = RECONNECT_FIRST_MS;
-  let attempt = 0;
-  try {
-    while (!live.aborted) {
-      let session: GrantedXmppSession | null = null;
-      const openedAt = now().getTime();
+  const acquire = async (): Promise<boolean> => {
+    let waitingFor: string | null = null;
+    for (;;) {
+      if (signal.aborted) return false;
+      let acquired = false;
+      let holder: string | null = null;
       try {
-        session = await deps.open(accountId, permit);
-        const link = session;
-        const overLink: ChatBackend = {
-          manifest: backend.manifest,
-          kind: 'chat',
-          listAccounts: () => backend.listAccounts(),
-          connect: async () => link.chatSession(),
-        };
-
-        let running = false;
-        let again = false;
-        let lastEnd = 0;
-        const catchUp = async (): Promise<void> => {
-          if (running) {
-            again = true;
-            return;
-          }
-          running = true;
-          try {
-            do {
-              again = false;
-              const gap = lastEnd + minGap - Date.now();
-              if (gap > 0) await sleep(gap);
-              if (live.aborted) return;
-              const done = await syncChats(db, overLink, { accountId });
-              lastEnd = Date.now();
-              result.catchUps += 1;
-              result.added += done.added;
-              if (done.added > 0 || done.removed > 0) {
-                log(`curlew-daemon: ${who} catch-up wrote ${done.added} added, ${done.removed} removed`);
-                deps.onWrite();
-              }
-              const failure = done.accounts.find((a) => a.error !== null)?.error;
-              if (failure) log(`curlew-daemon: ${who} catch-up failed: ${failure}`);
-            } while (again && !live.aborted);
-          } finally {
-            running = false;
-          }
-        };
-
-        const closed = new Promise<string>((resolve) => {
-          session?.onClosed(resolve);
-          live.addEventListener('abort', () => resolve('stopped'), { once: true });
-        });
-        const unsubscribe = session.onArrival(() => {
-          void catchUp().catch((err: unknown) =>
-            log(`curlew-daemon: ${who} catch-up failed: ${errText(err)}`),
-          );
-        });
-
-        await session.goAvailable();
-        appendWriteLog(
-          {
-            capability: SEND_CAPABILITY,
-            target: accountId,
-            frontend: 'daemon',
-            note: 'presence available',
-          },
-          { path: deps.writeLogPath },
-        );
-        log(`curlew-daemon: ${who} connected`);
-        attempt = 0;
-        await catchUp();
-        const reason = await closed;
-        unsubscribe();
-        if (live.aborted) break;
-        throw new Error(reason);
-      } catch (err) {
-        if (live.aborted) break;
-        attempt += 1;
-        if (now().getTime() - openedAt >= RECONNECT_CAP_MS) wait = RECONNECT_FIRST_MS;
-        log(`curlew-daemon: ${who} reconnect in ${wait} ms (attempt ${attempt}, ${errText(err)})`);
-        await abortableSleepOr(sleep, wait, live);
-        wait = Math.min(wait * 2, RECONNECT_CAP_MS);
-      } finally {
-        if (session) await session.close().catch(() => {});
+        const take = takeReceiveLease(db, 'xmpp', accountId, deps.holder, now(), interval);
+        acquired = take.acquired;
+        holder = take.acquired ? null : take.holder;
+      } catch {
+        // The index was busy: not knowing who holds the account is the same as not holding it.
       }
+      if (acquired) return true;
+      if (holder !== waitingFor) {
+        waitingFor = holder;
+        log(`curlew-daemon: ${who} is held by ${holder ?? 'another process'} — waiting for the lease`);
+      }
+      await sleep(interval);
     }
-  } finally {
-    clearInterval(heartbeat);
-    signal.removeEventListener('abort', stop);
+  };
+
+  // Holds one lease: ends when the signal aborts or the lease is lost. Returns whether it was lost.
+  const followHeld = async (): Promise<boolean> => {
+    let leaseLost = false;
+    const stopAccount = new AbortController();
+    const heartbeat = setInterval(() => {
+      try {
+        if (!refreshReceiveLease(db, 'xmpp', accountId, deps.holder, now(), interval)) leaseLost = true;
+      } catch {
+        leaseLost = true;
+      }
+      if (leaseLost) {
+        clearInterval(heartbeat);
+        log(`curlew-daemon: ${who} lost the receive lease — waiting to take it again`);
+        stopAccount.abort();
+      }
+    }, interval);
+    const stop = (): void => stopAccount.abort();
+    signal.addEventListener('abort', stop, { once: true });
+    const live = stopAccount.signal;
+
+    // The catch-up runs over the open link, not a new connection.
+    let wait = RECONNECT_FIRST_MS;
+    let attempt = 0;
     try {
-      releaseReceiveLease(db, 'xmpp', accountId, deps.holder);
-    } catch {
-      // A busy index leaves the lease to expire on its own.
+      while (!live.aborted) {
+        let session: GrantedXmppSession | null = null;
+        const openedAt = now().getTime();
+        try {
+          session = await deps.open(accountId, permit);
+          const link = session;
+          const overLink: ChatBackend = {
+            manifest: backend.manifest,
+            kind: 'chat',
+            listAccounts: () => backend.listAccounts(),
+            connect: async () => link.chatSession(),
+          };
+
+          let running = false;
+          let again = false;
+          let lastEnd = 0;
+          const catchUp = async (): Promise<void> => {
+            if (running) {
+              again = true;
+              return;
+            }
+            running = true;
+            try {
+              do {
+                again = false;
+                const gap = lastEnd + minGap - Date.now();
+                if (gap > 0) await sleep(gap);
+                if (live.aborted) return;
+                const done = await syncChats(db, overLink, { accountId });
+                lastEnd = Date.now();
+                result.catchUps += 1;
+                result.added += done.added;
+                if (done.added > 0 || done.removed > 0) {
+                  log(`curlew-daemon: ${who} catch-up wrote ${done.added} added, ${done.removed} removed`);
+                  deps.onWrite();
+                }
+                const failure = done.accounts.find((a) => a.error !== null)?.error;
+                if (failure) log(`curlew-daemon: ${who} catch-up failed: ${failure}`);
+              } while (again && !live.aborted);
+            } finally {
+              running = false;
+            }
+          };
+
+          const closed = new Promise<string>((resolve) => {
+            session?.onClosed(resolve);
+            live.addEventListener('abort', () => resolve('stopped'), { once: true });
+          });
+          const unsubscribe = session.onArrival(() => {
+            void catchUp().catch((err: unknown) =>
+              log(`curlew-daemon: ${who} catch-up failed: ${errText(err)}`),
+            );
+          });
+
+          await session.goAvailable();
+          appendWriteLog(
+            {
+              capability: SEND_CAPABILITY,
+              target: accountId,
+              frontend: 'daemon',
+              note: 'presence available',
+            },
+            { path: deps.writeLogPath },
+          );
+          log(`curlew-daemon: ${who} connected`);
+          attempt = 0;
+          await catchUp();
+          const reason = await closed;
+          unsubscribe();
+          if (live.aborted) break;
+          throw new Error(reason);
+        } catch (err) {
+          if (live.aborted) break;
+          attempt += 1;
+          if (now().getTime() - openedAt >= RECONNECT_CAP_MS) wait = RECONNECT_FIRST_MS;
+          log(`curlew-daemon: ${who} reconnect in ${wait} ms (attempt ${attempt}, ${errText(err)})`);
+          await abortableSleepOr(sleep, wait, live);
+          wait = Math.min(wait * 2, RECONNECT_CAP_MS);
+        } finally {
+          if (session) await session.close().catch(() => {});
+        }
+      }
+    } finally {
+      clearInterval(heartbeat);
+      signal.removeEventListener('abort', stop);
+      try {
+        releaseReceiveLease(db, 'xmpp', accountId, deps.holder);
+      } catch {
+        // A busy index leaves the lease to expire on its own.
+      }
+      log(
+        `curlew-daemon: ${who} stopped (${signal.aborted ? 'aborted' : leaseLost ? 'lease lost' : 'ended'})`,
+      );
     }
-    log(`curlew-daemon: ${who} stopped (${signal.aborted ? 'aborted' : leaseLost ? 'lease lost' : 'ended'})`);
+    return leaseLost;
+  };
+
+  // A lost lease (an index that was busy too long, a holder that took over) is not the end of the
+  // account: stopping it would leave a daemon that runs but receives nothing, and exits 0.
+  while (await acquire()) {
+    if (!(await followHeld())) break;
   }
-  if (leaseLost) result.error = 'lost the receive lease';
   return result;
 }
 
