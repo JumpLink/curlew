@@ -106,7 +106,7 @@ export function registerConversationTools(server: McpServer): void {
     'xmpp_wait_reply',
     {
       title: 'Wait for a Reply (XMPP)',
-      description: `Block up to timeout_s (default ${WAIT_TIMEOUT_S.default}, max ${WAIT_TIMEOUT_S.max}) for the next incoming message from one peer, newer than the cursor \`after\`. Pass the sentAt that send_message returned; for the next wait pass the cursor of the previous answer. Returns status "reply" with the messages, or "timeout" with an unchanged cursor — then call again or stop. Reads the local index, which \`curlew daemon\` fills within seconds; without a running daemon it always times out. Read-only.`,
+      description: `Block up to timeout_s (default ${WAIT_TIMEOUT_S.default}, max ${WAIT_TIMEOUT_S.max}) for the next incoming message from one peer, newer than the cursor \`after\`. Pass the sentAt that send_message returned; for the next wait pass the cursor of the previous answer. Returns status "reply" with the messages, or "timeout" with an unchanged cursor — then call again or stop. Reads the local index, which \`curlew daemon\` fills within seconds; without a running daemon it always times out. Each message has \`replyToId\`: the id its XEP-0461 reply names (null when it is not a reply). Compare it with the \`originId\` that send_message returned to see which sent message was answered. Read-only.`,
       inputSchema: {
         account: z.string().min(1).describe('XMPP account id'),
         peer: z.string().min(1).describe('The peer bare address, as used in send_message'),

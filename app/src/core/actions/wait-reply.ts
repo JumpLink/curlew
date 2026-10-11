@@ -4,6 +4,8 @@
  * Reads the local index only (no write, no grant): `curlew daemon` is what puts a reply there, so
  * without a running daemon this times out. The cursor is an ISO time — the `sentAt` of the
  * message sent, or the `cursor` of the previous answer — and only messages strictly newer count.
+ * Each message carries `replyToId`: the id its `<reply>` (XEP-0461) names, or null. For a direct chat
+ * that is the `originId` that `send_message` returned, which is how a caller tells what was answered.
  */
 
 import type { ConversationMessage } from '@curlew/protocol';
@@ -29,10 +31,13 @@ export interface WaitReplyParams {
   signal?: AbortSignal;
 }
 
+/** An incoming message, with the id of the message it answers. */
+export type WaitReplyMessage = Omit<ConversationMessage, 'replyToClientId'> & { replyToId: string | null };
+
 export interface WaitReplyResult {
   status: 'reply' | 'timeout';
   conversationId: string;
-  messages: ConversationMessage[];
+  messages: WaitReplyMessage[];
   /** Pass as `after` to the next call. */
   cursor: string;
 }
@@ -53,7 +58,12 @@ export async function waitReply(params: WaitReplyParams): Promise<WaitReplyResul
         since: params.after,
         incomingOnly: true,
       });
-      const messages = found?.messages ?? [];
+      const messages = (found?.messages ?? []).map(
+        ({ replyToClientId, ...rest }): WaitReplyMessage => ({
+          ...rest,
+          replyToId: replyToClientId ?? null,
+        }),
+      );
       if (messages.length > 0) {
         return {
           status: 'reply',

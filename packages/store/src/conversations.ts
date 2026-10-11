@@ -784,7 +784,7 @@ export function getConversation(
       `SELECT id, conversation_id, backend, account_id, presentation, sender_participant_id, sender_name,
               sender_kind, sender_address, from_self, sent_at, subject, seen, has_attachments,
               classification, classification_reason, folder_path, uid, remote_id, ${seqColumn('remote_seq')}, body,
-              edited_at, reply_to_remote_id, thread_remote_id, peer_read
+              edited_at, reply_to_remote_id, thread_remote_id, reply_to_client_id, peer_read
          FROM conversation_messages WHERE conversation_id = ?${options.since ? ' AND sent_at > ?' : ''}${options.incomingOnly ? ' AND from_self = 0' : ''}
         ORDER BY sent_at, conversation_messages.remote_seq, id`,
     )
@@ -826,6 +826,7 @@ export function getConversation(
     if (chat) {
       message.editedAt = str(r.edited_at);
       message.replyToRemoteId = str(r.reply_to_remote_id);
+      message.replyToClientId = str(r.reply_to_client_id);
       message.threadRemoteId = str(r.thread_remote_id);
       if (message.fromSelf) message.readByPeer = Number(r.peer_read) === 1;
     }

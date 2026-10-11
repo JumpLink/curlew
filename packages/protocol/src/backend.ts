@@ -200,6 +200,12 @@ export interface ChatMessage {
   text: string | null;
   hasAttachments: boolean;
   replyToRemoteId: string | null;
+  /**
+   * The id the reply names, exactly as its sender wrote it (XMPP's `<reply id>`), when the
+   * network exposes it. Unlike `replyToRemoteId` it is not resolved to an archive id, so it
+   * matches the id a message was SENT with.
+   */
+  replyToClientId?: string | null;
   /** The thread or forum topic, when the network has them. */
   threadRemoteId: string | null;
   /**

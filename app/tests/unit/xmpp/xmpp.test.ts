@@ -195,6 +195,7 @@ export default async () => {
         extra: `<encrypted xmlns="${NS.omemoLegacy}"><header sid="1"/></encrypted>`,
       });
       expect(omemo.encrypted).toBe(true);
+      expect(omemo.replyToId).toBe(null);
     });
 
     await it('reads the roster, both bookmark forms and the fin', async () => {

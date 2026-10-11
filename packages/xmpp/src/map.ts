@@ -252,6 +252,7 @@ export function buildPage(
       text: entry.encrypted ? null : entry.body,
       hasAttachments: entry.attachmentUrls.length > 0,
       replyToRemoteId: reply ? reply.archiveId : null,
+      replyToClientId: entry.replyToId,
       threadRemoteId: null,
       clientId: entry.originId,
     });
