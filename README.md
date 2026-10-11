@@ -408,7 +408,8 @@ config — a config that carries one is refused.
 Chats are your roster contacts and the bookmarked rooms you join automatically.
 Corrections (XEP-0308) replace the stored text, retractions (XEP-0424/0425)
 remove the message. OMEMO-encrypted messages are indexed without their text:
-Curlew cannot decrypt them yet.
+Curlew cannot decrypt them yet ([ADR 0006](docs/adr/0006-omemo-end-to-end-encryption.md)
+decides how it will).
 
 ### Sending (grant `xmpp.send`)
 
