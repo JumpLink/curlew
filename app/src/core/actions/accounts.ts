@@ -8,7 +8,13 @@
  */
 
 import { check, listAccounts } from '@curlew/gnome';
-import type { AccountPrompter, BackendAccount, GnomeAccount, GnomeCheckResult } from '@curlew/protocol';
+import type {
+  AccountAddOptions,
+  AccountPrompter,
+  BackendAccount,
+  GnomeAccount,
+  GnomeCheckResult,
+} from '@curlew/protocol';
 import { configPath } from '@curlew/store';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
@@ -41,6 +47,7 @@ export async function backendAccountsList(
 export async function accountsAdd(
   name: string,
   prompter: AccountPrompter,
+  options: AccountAddOptions = {},
   path = configPath(),
 ): Promise<{ backend: string; account: BackendAccount }> {
   const config = loadConfig(path);
@@ -54,5 +61,5 @@ export async function accountsAdd(
       }`,
     );
   }
-  return { backend: name, account: await backend.addAccount(prompter) };
+  return { backend: name, account: await backend.addAccount(prompter, options) };
 }

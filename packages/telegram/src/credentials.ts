@@ -1,10 +1,14 @@
 /**
- * The Telegram API credentials — the user's OWN `api_id` and `api_hash`.
+ * The Telegram API credentials — an `api_id` and `api_hash` that identify the APPLICATION.
  *
- * Telegram requires every third-party client to use credentials registered to its user at
- * my.telegram.org; curlew ships none and never falls back to someone else's.
+ * Telegram requires every third-party client to use credentials registered at my.telegram.org.
+ * The repository and CI/dev builds ship none. A packaged build MAY embed one pair, supplied by
+ * its distributor at build time (`app/scripts/build-bundle.mjs`, the Flatpak manifest); a user
+ * can always bring their own instead (`curlew accounts add telegram --own-credentials`).
+ * Precedence: environment > the pair stored in the account's session > the embedded pair >
+ * the interactive prompt. curlew never invents a pair and ships no Telegram test credentials.
  *
- * Where they live: in the account's SESSION file (`SecretStore`, 0600, backup tier `secret`),
+ * Where a user's own live: in the account's SESSION file (`SecretStore`, 0600, backup tier `secret`),
  * asked for once by `curlew accounts add telegram`. The environment
  * (`CURLEW_TELEGRAM_API_ID`, `CURLEW_TELEGRAM_API_HASH`; the old `POSTBOTE_` names still work) overrides them, for a user who keeps
  * them in a password manager. NOT in the config file: that is `state` in a backup, readable
@@ -26,9 +30,21 @@ export interface TelegramCredentials {
 export const API_ID_ENV = 'CURLEW_TELEGRAM_API_ID';
 export const API_HASH_ENV = 'CURLEW_TELEGRAM_API_HASH';
 
+/**
+ * The compile-time constant `"<id>:<hash>"`, defined by `build-bundle.mjs` only when the
+ * distributor supplied a pair. Undeclared at runtime in every other build, hence the `typeof`.
+ */
+declare const __CURLEW_TELEGRAM_EMBEDDED__: string | undefined;
+
+/** Which pair a session was created with. A session without the key predates it: `own`. */
+export type CredentialSource = 'embedded' | 'own';
+
 /** The session file's namespace for the credentials the session was created with. */
 // Rename fallback: the key inside existing account files, read back as-is. Do not rebrand.
 export const CREDENTIALS_NAMESPACE = 'postbote.api';
+
+/** Key, inside `CREDENTIALS_NAMESPACE`, recording the `CredentialSource`. */
+export const SOURCE_KEY = 'source';
 
 const WHERE = `create them for yourself at https://my.telegram.org ("API development tools")`;
 
@@ -65,27 +81,85 @@ export function credentialsFromEnv(env: BackendContext['env']): TelegramCredenti
   return parseCredentials(id, hash);
 }
 
+/** The pair this build embeds, or null. `raw` is injectable for tests. */
+export function embeddedCredentials(
+  raw: string | undefined = typeof __CURLEW_TELEGRAM_EMBEDDED__ === 'undefined'
+    ? undefined
+    : __CURLEW_TELEGRAM_EMBEDDED__,
+): TelegramCredentials | null {
+  if (!raw) return null;
+  const at = raw.indexOf(':');
+  return parseCredentials(raw.slice(0, at), raw.slice(at + 1));
+}
+
+export function sameCredentials(a: TelegramCredentials, b: TelegramCredentials): boolean {
+  return a.apiId === b.apiId && a.apiHash === b.apiHash;
+}
+
+export function readStoredSource(store: SecretStore): CredentialSource {
+  return store.get(CREDENTIALS_NAMESPACE, SOURCE_KEY) === 'embedded' ? 'embedded' : 'own';
+}
+
 export function readStoredCredentials(store: SecretStore): TelegramCredentials | null {
   const id = store.get(CREDENTIALS_NAMESPACE, 'apiId');
   const hash = store.get(CREDENTIALS_NAMESPACE, 'apiHash');
   return id && hash ? parseCredentials(id, hash) : null;
 }
 
-export function writeStoredCredentials(store: SecretStore, credentials: TelegramCredentials): void {
+export function writeStoredCredentials(
+  store: SecretStore,
+  credentials: TelegramCredentials,
+  source: CredentialSource = 'own',
+): void {
   store.apply([
     { namespace: CREDENTIALS_NAMESPACE, key: 'apiId', value: String(credentials.apiId) },
     { namespace: CREDENTIALS_NAMESPACE, key: 'apiHash', value: credentials.apiHash },
+    { namespace: CREDENTIALS_NAMESPACE, key: SOURCE_KEY, value: source },
   ]);
 }
 
-/** For an existing session: the environment wins, else what the session was created with. */
-export function resolveCredentials(context: BackendContext, store: SecretStore): TelegramCredentials {
+/**
+ * For a login: the environment, then this build's embedded pair (unless the user asked for their
+ * own), else null — the caller then asks. `source` is what the session records.
+ */
+export function pickLoginCredentials(
+  env: BackendContext['env'],
+  embedded: TelegramCredentials | null,
+  ownCredentials: boolean,
+): { credentials: TelegramCredentials; source: CredentialSource } | null {
+  const fromEnv = credentialsFromEnv(env);
+  if (fromEnv) return { credentials: fromEnv, source: 'own' };
+  if (embedded && !ownCredentials) return { credentials: embedded, source: 'embedded' };
+  return null;
+}
+
+/**
+ * For an existing session: the environment wins, then the stored pair, then the embedded one.
+ * A session created with the embedded pair is never moved silently to a different one: Telegram
+ * ties a session to its app, so a build embedding another pair (or none) refuses instead.
+ */
+export function resolveCredentials(
+  context: BackendContext,
+  store: SecretStore,
+  embedded: TelegramCredentials | null = embeddedCredentials(),
+): TelegramCredentials {
   refuseConfigCredentials(context.settings);
-  const credentials = credentialsFromEnv(context.env) ?? readStoredCredentials(store);
-  if (!credentials) {
-    throw new Error(
-      `this Telegram session has no api_id/api_hash stored — log in again with \`curlew accounts add telegram\`, or set ${API_ID_ENV} and ${API_HASH_ENV}`,
-    );
+  const fromEnv = credentialsFromEnv(context.env);
+  if (fromEnv) return fromEnv;
+  const stored = readStoredCredentials(store);
+  if (stored) {
+    if (readStoredSource(store) === 'embedded' && (!embedded || !sameCredentials(stored, embedded))) {
+      throw new Error(
+        'this Telegram session was created with the API credentials embedded in the build that made it, ' +
+          `and this build embeds ${embedded ? 'a different pair' : 'none'} (values not shown) — ` +
+          `use that build again, set ${API_ID_ENV} and ${API_HASH_ENV}, or log in again with ` +
+          '`curlew accounts add telegram`',
+      );
+    }
+    return stored;
   }
-  return credentials;
+  if (embedded) return embedded;
+  throw new Error(
+    `this Telegram session has no api_id/api_hash stored — log in again with \`curlew accounts add telegram\`, or set ${API_ID_ENV} and ${API_HASH_ENV}`,
+  );
 }

@@ -44,7 +44,7 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
   addressKinds: ['telegram', 'phone'],
   terms: {
     summary:
-      "curlew talks to Telegram through the official MTProto API as a third-party client (mtcute). Telegram requires every client to use its own API credentials: create an api_id and api_hash for YOURSELF at my.telegram.org; `curlew accounts add telegram` asks for them and keeps them with the session, or they come from the environment — curlew ships none. Use is subject to Telegram's API Terms of Service; an account that misuses the API can be limited or banned by Telegram. curlew only reads: it never sends, edits or deletes, and keeps the session key on this machine only.",
+      "curlew talks to Telegram through the official MTProto API as a third-party client (mtcute). Telegram requires every client to use API credentials (api_id and api_hash). A packaged build MAY embed a pair supplied by its distributor, so the login needs only your phone number and code; curlew itself ships none, and you can always use your own — create them for YOURSELF at my.telegram.org and run `curlew accounts add telegram --own-credentials` (or set them in the environment). They are kept with the session. Use is subject to Telegram's API Terms of Service; an account that misuses the API can be limited or banned by Telegram. curlew only reads: it never sends, edits or deletes, and keeps the session key on this machine only.",
     url: 'https://core.telegram.org/api/terms',
   },
 };

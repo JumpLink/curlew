@@ -33,13 +33,21 @@ export const accountsCommand: CommandModule = {
         command: 'add <backend>',
         describe: 'Log in to a chat backend interactively and keep the session (0600, never in the repo)',
         builder: (y) =>
-          y.positional('backend', { type: 'string', demandOption: true, describe: 'e.g. telegram' }),
+          y
+            .positional('backend', { type: 'string', demandOption: true, describe: 'e.g. telegram' })
+            .option('own-credentials', {
+              type: 'boolean',
+              default: false,
+              describe: 'Telegram: ask for your own api_id/api_hash even if this build embeds a pair',
+            }),
         handler: (argv) => {
           const backend = String((argv as Record<string, unknown>).backend);
+          const ownCredentials =
+            pickArgv<boolean>(argv as Record<string, unknown>, 'ownCredentials', 'own-credentials') === true;
           runAndExit(async () => {
             const prompter = terminalPrompter();
             try {
-              return await accountsAdd(backend, prompter);
+              return await accountsAdd(backend, prompter, { ownCredentials });
             } finally {
               prompter.close();
             }
