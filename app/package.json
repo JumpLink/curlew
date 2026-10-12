@@ -20,7 +20,7 @@
     "build:node": "node scripts/build-bundle.mjs node",
     "start": "gjsify run dist/curlew.gjs.mjs",
     "dev": "gjsify run build:gjs && gjsify run start",
-    "test": "DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent XDG_RUNTIME_DIR=/nonexistent gjsify test",
+    "test": "DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent XDG_RUNTIME_DIR=/nonexistent LC_ALL=C LANGUAGE= gjsify test",
     "test:mcp": "node tests/integration/mcp-gjs-smoke.mjs",
     "test:relocation": "node tests/integration/bundle-relocation.mjs",
     "test:telegram-network": "gjsify build tests/integration/telegram-handshake.ts --app gjs --outfile dist/telegram-handshake.gjs.mjs && gjsify run dist/telegram-handshake.gjs.mjs",
@@ -35,6 +35,7 @@
       "binaryName": "curlew",
       "kind": "cli",
       "name": "Curlew",
+      "localeDir": "dist/locale",
       "bundle": {
         "linux": "dist/curlew.gjs.mjs",
         "darwin": "dist/curlew.node.mjs",
