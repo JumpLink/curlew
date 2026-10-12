@@ -36,6 +36,11 @@ import {
 
 const BACKEND = 'fakedaemon';
 
+// Without this the daemon reads the user's real config: its xmpp.send grants would start a
+// follower, and its backend selection is not the test's. A path that never exists yields the
+// defaults.
+const NO_CONFIG = join(tmpdir(), 'curlew-daemon-test-no-config', 'config.json');
+
 const ANNA_TEXT = 'geheim, aber synthetisch';
 
 function message(id: string, seq: number, text: string): ChatMessage {
@@ -189,6 +194,7 @@ export default async () => {
       try {
         const received = runDeliveryDaemon({
           dbPath: ':memory:',
+          configPath: NO_CONFIG,
           backends: [backend],
           signal: controller.signal,
           rebuildDebounceMs: 5,
@@ -297,6 +303,7 @@ export default async () => {
       try {
         const running = runDeliveryDaemon({
           dbPath: ':memory:',
+          configPath: NO_CONFIG,
           backends: [backend],
           signal: controller.signal,
           rebuildDebounceMs: 10,
@@ -355,6 +362,7 @@ export default async () => {
       try {
         const running = runDeliveryDaemon({
           dbPath: ':memory:',
+          configPath: NO_CONFIG,
           backends: [backend],
           signal: controller.signal,
           rebuildDebounceMs: 5,
@@ -392,6 +400,7 @@ export default async () => {
         seed.close();
         const running = runDeliveryDaemon({
           dbPath,
+          configPath: NO_CONFIG,
           backends: [backend],
           signal: controller.signal,
           rebuildDebounceMs: 5,
@@ -416,7 +425,7 @@ export default async () => {
     await it('refuses to start with nothing to receive', async () => {
       let message: string | null = null;
       try {
-        await runDeliveryDaemon({ dbPath: ':memory:', backends: [], log: () => {} });
+        await runDeliveryDaemon({ dbPath: ':memory:', configPath: NO_CONFIG, backends: [], log: () => {} });
       } catch (err) {
         message = err instanceof Error ? err.message : String(err);
       }
