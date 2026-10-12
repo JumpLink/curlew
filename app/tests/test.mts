@@ -62,6 +62,8 @@ import mcpGate from './unit/mcp/gate.test.ts';
 import mcpSetupTools from './unit/mcp/setup-tools.test.ts';
 import mcpTools from './unit/mcp/tools.test.ts';
 
+import omemo from './unit/omemo/omemo.test.ts';
+
 import bundlePaths from './unit/integration/bundle-paths.test.ts';
 
 run({
@@ -118,5 +120,6 @@ run({
   mcpGate,
   mcpSetupTools,
   mcpTools,
+  omemo,
   bundlePaths,
 });
