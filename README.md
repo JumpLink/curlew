@@ -164,28 +164,38 @@ after `curlew backends enable <name> --accept-terms`.
 
 ## Telegram
 
-Telegram requires every third-party client to use API credentials of its own
-user. Curlew ships none, so the first step is yours:
+Telegram requires every third-party client to use an `api_id` and `api_hash`.
+They identify the *application*, not you. The repository and CI/dev builds ship
+none; a **packaged build may embed one pair** that its distributor supplied at
+build time (see [Packaging](#embedding-a-telegram-api-pair-packagers)), so the
+login asks for phone number and code only. Which pair is used, first match wins:
 
-1. Create an app for yourself at <https://my.telegram.org> → *API development
-   tools*. You get an `api_id` (a number) and an `api_hash` (32 hex characters).
-2. Enable the backend (this shows Telegram's terms once) and log in. The login
-   asks for the `api_id` and `api_hash` first (the hash without echo), then the
-   phone number, the login code and the 2FA password if one is set:
+1. `CURLEW_TELEGRAM_API_ID` / `CURLEW_TELEGRAM_API_HASH` in the environment;
+2. the pair stored in the account's session file (what it was created with);
+3. the pair embedded in this build, if any;
+4. otherwise the login asks for one (steps below).
 
-   ```bash
-   curlew backends enable telegram --accept-terms
-   curlew accounts add telegram
-   curlew accounts list --backend telegram
-   curlew sync                      # mail and Telegram into one index
-   curlew conversations list --people-only
-   ```
+To use credentials of your own even when the build embeds a pair (so you do not
+depend on a package id Telegram might block), create an app for yourself at
+<https://my.telegram.org> → *API development tools* (an `api_id`, a number, and
+an `api_hash`, 32 hex characters) and log in with `--own-credentials`:
 
-   The `api_id`/`api_hash` are kept in the account's session file, not in the
-   config (which is plain text in every backup; a config that carries them is
-   refused). To keep them in a password manager instead, set
-   `CURLEW_TELEGRAM_API_ID` and `CURLEW_TELEGRAM_API_HASH`; the environment
-   wins over the stored pair and the login does not ask.
+```bash
+curlew backends enable telegram --accept-terms   # shows Telegram's terms once
+curlew accounts add telegram                     # phone, code, 2FA password; asks for api_id/api_hash first if the build embeds none
+curlew accounts add telegram --own-credentials   # always asks for your own api_id/api_hash (hash without echo)
+curlew accounts list --backend telegram
+curlew sync                      # mail and Telegram into one index
+curlew conversations list --people-only
+```
+
+The pair is kept in the account's session file, not in the config (which is
+plain text in every backup; a config that carries one is refused), together with
+whether it was the embedded or your own. A session created with the embedded
+pair never switches silently: if a later build embeds a different pair (or none),
+`sync` fails with a message saying so — use the original build, set the
+environment variables, or log in again. Telegram has no public test credentials
+that curlew may use; accounts that use them get banned, so none is a default.
 
 The first sync takes the newest 200 messages of every chat; later syncs walk
 forward from there, at most 5 000 messages per run (the rest follows on the
@@ -668,6 +678,26 @@ No Flatpak: GOA talks to the session bus directly, and a Flatpak sandbox
 cannot reach it without a portal this project does not implement, so a
 Flatpak build would silently ship with every account unavailable rather
 than failing loudly.
+
+### Embedding a Telegram api pair (packagers)
+
+A distributor — for example a Flatpak manifest for a Telegram-only build, where
+GOA is not needed — can embed *its own* `api_id`/`api_hash` (registered at
+my.telegram.org under the distributor's name; per-distributor, never shared and
+never committed to this repository) by setting both variables for the build:
+
+```bash
+CURLEW_TELEGRAM_EMBEDDED_API_ID=<id> CURLEW_TELEGRAM_EMBEDDED_API_HASH=<hash> \
+  gjsify workspace curlew-cli build        # or build:node
+```
+
+`app/scripts/build-bundle.mjs` turns them into the compile-time constant
+`__CURLEW_TELEGRAM_EMBEDDED__`; set only one, or malformed values, and the build
+fails (values never printed). Unset — as in CI and dev builds — embeds nothing.
+In a Flatpak manifest, put them in the `build-options.env` of the curlew module
+(or inject them from the packager's secret store). The pair is readable by
+anyone holding the bundle: Telegram treats it as an application identifier, not
+a secret.
 
 Local verification, mirroring what CI does on `fedora:44`:
 
