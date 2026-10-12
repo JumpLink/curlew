@@ -158,8 +158,8 @@ class XmppConnection implements XmppLink {
     });
   }
 
-  async sendChat(to: string, id: string, body: string) {
-    await this.entity.send(chatMessage({ to, id, body }));
+  async sendChat(to: string, id: string, body: string, oobUrl?: string) {
+    await this.entity.send(chatMessage({ to, id, body, oobUrl }));
   }
 
   async goAvailable() {

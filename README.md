@@ -435,7 +435,16 @@ granted, as an exact `<account>/<address>` pair (see
 curlew send --account xmpp-abc123 --to owner@example.org "Build is green"
 ```
 
-The MCP server offers the same as `send_message` (`account`, `to`, `text`) —
+An image goes with `--image-url https://…` (text optional). The URL is sent as
+its own message after the text: body = the URL plus an out-of-band reference
+(XEP-0066, `<x xmlns='jabber:x:oob'><url>…</url></x>`), the shape Conversations,
+Gajim and Monocles render inline. Text and image are two stanzas, because a
+client shows the file only when the body is exactly the URL. https only, no
+credentials in the URL; curlew neither uploads nor fetches the image, and the
+same `xmpp.send` grant covers it.
+
+The MCP server offers the same as `send_message` (`account`, `to`, `text`,
+`image_url`; at least one of the last two) —
 only when a matching grant exists; without one the tool is not even listed and
 the server stays read-only. The answer carries `conversationId`, `sentAt` and `originId`.
 The message goes out as `type=chat` with an origin-id (XEP-0359), a receipt

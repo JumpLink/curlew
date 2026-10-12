@@ -328,19 +328,24 @@ export interface ChatMessageSpec {
   /** The stanza id, which is also the origin-id (XEP-0359): what MAM's echo is matched by. */
   id: string;
   body: string;
+  /** An https URL to attach as an out-of-band reference (XEP-0066): clients show it inline. */
+  oobUrl?: string;
 }
 
 /**
  * A 1:1 chat message: plain text, `origin-id` so the archive's copy can be matched to it, a
  * receipt request (XEP-0184), `markable` (XEP-0333) so the peer's client may answer with
  * markers, and a `store` hint (XEP-0334) so the server archives it. Never encrypted: OMEMO is
- * not implemented.
+ * not implemented. With `oobUrl` the message also carries `<x xmlns='jabber:x:oob'><url>…</url></x>`;
+ * the caller makes the body that same URL, which is how Conversations, Gajim and Monocles decide
+ * to render the file inline instead of as text.
  */
 export function chatMessage(spec: ChatMessageSpec) {
   return xml(
     'message',
     { type: 'chat', to: spec.to, id: spec.id },
     xml('body', {}, spec.body),
+    ...(spec.oobUrl ? [xml('x', { xmlns: NS.oob }, xml('url', {}, spec.oobUrl))] : []),
     xml('origin-id', { xmlns: NS.sid, id: spec.id }),
     xml('request', { xmlns: NS.receipts }),
     xml('markable', { xmlns: NS.markers }),
