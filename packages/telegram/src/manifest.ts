@@ -5,7 +5,7 @@
  * terms notice is shown before any Telegram code runs.
  */
 
-import { type BackendManifest, PLUGIN_API_VERSION } from '@curlew/protocol';
+import { _, type BackendManifest, PLUGIN_API_VERSION } from '@curlew/protocol';
 
 export const TELEGRAM_MANIFEST: BackendManifest = {
   name: 'telegram',
@@ -43,8 +43,15 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
   native: false,
   addressKinds: ['telegram', 'phone'],
   terms: {
-    summary:
-      "curlew talks to Telegram through the official MTProto API as a third-party client (mtcute). Telegram requires every client to use API credentials (api_id and api_hash). A packaged build MAY embed a pair supplied by its distributor, so the login needs only your phone number and code; curlew itself ships none, and you can always use your own — create them for YOURSELF at my.telegram.org and run `curlew accounts add telegram --own-credentials` (or set them in the environment). They are kept with the session. Use is subject to Telegram's API Terms of Service; an account that misuses the API can be limited or banned by Telegram. curlew only reads: it never sends, edits or deletes, and keeps the session key on this machine only.",
+    // A getter, not a plain property: this module is pure data evaluated the moment anything
+    // imports it, which on some paths is before `initI18n()` has run — a `_()` here would resolve
+    // once, in English, and keep that answer for the whole process. Reading `terms.summary` is
+    // what every frontend already does, so nothing else changes.
+    get summary() {
+      return _(
+        "curlew talks to Telegram through the official MTProto API as a third-party client (mtcute). Telegram requires every client to use API credentials (api_id and api_hash). A packaged build MAY embed a pair supplied by its distributor, so the login needs only your phone number and code; curlew itself ships none, and you can always use your own — create them for YOURSELF at my.telegram.org and run `curlew accounts add telegram --own-credentials` (or set them in the environment). They are kept with the session. Use is subject to Telegram's API Terms of Service; an account that misuses the API can be limited or banned by Telegram. curlew only reads: it never sends, edits or deletes, and keeps the session key on this machine only.",
+      );
+    },
     url: 'https://core.telegram.org/api/terms',
   },
 };

@@ -6,6 +6,7 @@
  * that constructs mtcute, so the tests never need the network.
  */
 
+import { _, fmt } from '@curlew/protocol';
 import type { ITelegramStorageProvider, RpcCallMiddleware } from '@mtcute/core';
 import { MemoryStorage, networkMiddlewares, TelegramClient, WebPlatform } from '@mtcute/web';
 import type { LoginPrompts, TelegramApi, TelegramClientHandle, TgUser } from './api.ts';
@@ -96,13 +97,15 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage }) => {
         password: () => prompts.password(),
         codeSentCallback: (sent) => {
           if (sent.type === 'email_required') {
-            throw new Error('Telegram asks for an email login setup first — finish it in an official app');
+            throw new Error(_('Telegram asks for an email login setup first — finish it in an official app'));
           }
-          prompts.notify(`Telegram sent the login code via ${sent.type}.`);
+          // TRANSLATORS: {channel} is Telegram's own word for the route it used ("sms", "app", …),
+          // and arrives untranslated from the server.
+          prompts.notify(fmt(_('Telegram sent the login code via {channel}.'), { channel: sent.type }));
         },
         invalidCodeCallback: (kind) => {
           prompts.notify(
-            kind === 'code' ? 'That code was not accepted — try again.' : 'Wrong password — try again.',
+            kind === 'code' ? _('That code was not accepted — try again.') : _('Wrong password — try again.'),
           );
         },
       }),

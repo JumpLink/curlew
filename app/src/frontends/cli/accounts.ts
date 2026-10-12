@@ -5,6 +5,7 @@
  * The account ids printed here are the join key for every other command: `--account`.
  */
 
+import { _ } from '@curlew/protocol';
 import type { CommandModule } from 'yargs';
 
 import { accountsAdd, accountsList, backendAccountsList } from '../../core/actions/index.ts';
@@ -13,16 +14,22 @@ import { terminalPrompter } from './prompt.ts';
 
 export const accountsCommand: CommandModule = {
   command: 'accounts',
-  describe: 'List accounts (GNOME Online Accounts by default) or log in to a chat backend',
+  // A getter: this object is built while `src/index.ts` is still importing its module graph, which
+  // is before `initI18n()` runs. yargs reads `describe` when it assembles the parser — by then the
+  // catalogue is installed. The nested ones below are inside `builder`, which runs later still,
+  // so they can call `_()` straight.
+  get describe() {
+    return _('List accounts (GNOME Online Accounts by default) or log in to a chat backend');
+  },
   builder: (yargs) =>
     yargs
       .command({
         command: 'list',
-        describe: 'List GNOME Online Accounts, or with --backend the accounts of one backend',
+        describe: _('List GNOME Online Accounts, or with --backend the accounts of one backend'),
         builder: (y) =>
           y.option('backend', {
             type: 'string',
-            describe: 'A backend that keeps its own accounts, e.g. telegram',
+            describe: _('A backend that keeps its own accounts, e.g. telegram'),
           }),
         handler: (argv) => {
           const backend = pickArgv<string>(argv as Record<string, unknown>, 'backend');
@@ -31,14 +38,14 @@ export const accountsCommand: CommandModule = {
       })
       .command({
         command: 'add <backend>',
-        describe: 'Log in to a chat backend interactively and keep the session (0600, never in the repo)',
+        describe: _('Log in to a chat backend interactively and keep the session (0600, never in the repo)'),
         builder: (y) =>
           y
-            .positional('backend', { type: 'string', demandOption: true, describe: 'e.g. telegram' })
+            .positional('backend', { type: 'string', demandOption: true, describe: _('e.g. telegram') })
             .option('own-credentials', {
               type: 'boolean',
               default: false,
-              describe: 'Telegram: ask for your own api_id/api_hash even if this build embeds a pair',
+              describe: _('Telegram: ask for your own api_id/api_hash even if this build embeds a pair'),
             }),
         handler: (argv) => {
           const backend = String((argv as Record<string, unknown>).backend);

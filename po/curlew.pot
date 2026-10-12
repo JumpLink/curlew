@@ -1,0 +1,185 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the curlew package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: curlew\n"
+"Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
+"POT-Creation-Date: 2026-10-12 19:07+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: app/src/frontends/cli/accounts.ts:22
+msgid ""
+"List accounts (GNOME Online Accounts by default) or log in to a chat backend"
+msgstr ""
+
+#: app/src/frontends/cli/accounts.ts:28
+msgid ""
+"List GNOME Online Accounts, or with --backend the accounts of one backend"
+msgstr ""
+
+#: app/src/frontends/cli/accounts.ts:32
+msgid "A backend that keeps its own accounts, e.g. telegram"
+msgstr ""
+
+#: app/src/frontends/cli/accounts.ts:41
+msgid ""
+"Log in to a chat backend interactively and keep the session (0600, never in "
+"the repo)"
+msgstr ""
+
+#: app/src/frontends/cli/accounts.ts:44
+msgid "e.g. telegram"
+msgstr ""
+
+#: app/src/frontends/cli/accounts.ts:48
+msgid ""
+"Telegram: ask for your own api_id/api_hash even if this build embeds a pair"
+msgstr ""
+
+#: app/src/frontends/cli/prompt.ts:102
+msgid "input ended before the login was complete — nothing was saved"
+msgstr ""
+
+#: packages/telegram/src/backend.ts:33
+msgid "log in again with `curlew accounts add telegram`"
+msgstr ""
+
+#. TRANSLATORS: `api_id` and `api_hash` are Telegram's own field names — do not translate them,
+#. the user has to recognise them on my.telegram.org.
+#: packages/telegram/src/backend.ts:57
+msgid "api_id of your Telegram app (from my.telegram.org)"
+msgstr ""
+
+#: packages/telegram/src/backend.ts:58
+msgid "api_hash of that app"
+msgstr ""
+
+#: packages/telegram/src/backend.ts:59
+msgid "Phone number of the Telegram account (international, e.g. +49…)"
+msgstr ""
+
+#: packages/telegram/src/backend.ts:60
+msgid "Login code Telegram sent you"
+msgstr ""
+
+#: packages/telegram/src/backend.ts:61
+msgid "Two-step verification password"
+msgstr ""
+
+#: packages/telegram/src/backend.ts:97
+msgid "no Telegram session for {account} — {hint}"
+msgstr ""
+
+#: packages/telegram/src/backend.ts:123
+msgid "the Telegram session {account} is not usable ({reason}) — {hint}"
+msgstr ""
+
+#: packages/telegram/src/client.ts:100
+msgid ""
+"Telegram asks for an email login setup first — finish it in an official app"
+msgstr ""
+
+#. TRANSLATORS: {channel} is Telegram's own word for the route it used ("sms", "app", …),
+#. and arrives untranslated from the server.
+#: packages/telegram/src/client.ts:104
+msgid "Telegram sent the login code via {channel}."
+msgstr ""
+
+#: packages/telegram/src/client.ts:108
+msgid "That code was not accepted — try again."
+msgstr ""
+
+#: packages/telegram/src/client.ts:108
+msgid "Wrong password — try again."
+msgstr ""
+
+#. TRANSLATORS: Tail of several credential errors. "API development tools" is the literal name of
+#. that section at my.telegram.org — keep it exactly as Telegram writes it.
+#: packages/telegram/src/credentials.ts:58
+msgid ""
+"create them for yourself at https://my.telegram.org (\"API development "
+"tools\")"
+msgstr ""
+
+#: packages/telegram/src/credentials.ts:64
+msgid "the Telegram api_id must be a positive whole number — {where}"
+msgstr ""
+
+#: packages/telegram/src/credentials.ts:69
+msgid ""
+"the Telegram api_hash must be 32 hexadecimal characters (value not shown) — "
+"{where}"
+msgstr ""
+
+#: packages/telegram/src/credentials.ts:83
+msgid ""
+"the Telegram api_id/api_hash do not belong in the config file (it is backed "
+"up in the clear) — remove backends.telegram.settings.apiId/apiHash; `curlew "
+"accounts add telegram` keeps them in the account's 0600 session file, or set "
+"{idEnv} and {hashEnv}"
+msgstr ""
+
+#: packages/telegram/src/credentials.ts:99
+msgid "set both {idEnv} and {hashEnv}, or neither"
+msgstr ""
+
+#: packages/telegram/src/credentials.ts:175
+msgid ""
+"this Telegram session was created with the API credentials embedded in the "
+"build that made it, and this build embeds {embeds} (values not shown) — use "
+"that build again, set {idEnv} and {hashEnv}, or log in again with `curlew "
+"accounts add telegram`"
+msgstr ""
+
+#. TRANSLATORS: Both fill {embeds} in the message above.
+#: packages/telegram/src/credentials.ts:181
+msgid "a different pair"
+msgstr ""
+
+#: packages/telegram/src/credentials.ts:181
+msgid "none"
+msgstr ""
+
+#: packages/telegram/src/credentials.ts:194
+msgid ""
+"this Telegram session has no api_id/api_hash stored — log in again with "
+"`curlew accounts add telegram`, or set {idEnv} and {hashEnv}"
+msgstr ""
+
+#. TRANSLATORS: Stands in for the name of an account that has neither a @username nor a
+#. display name. {id} is Telegram's numeric user id.
+#: packages/telegram/src/login.ts:47
+msgid "Telegram user {id}"
+msgstr ""
+
+#: packages/telegram/src/login.ts:109
+msgid ""
+"{reason} — Telegram HAD authorized this session, so its file is kept at "
+"{pending} and NOT deleted. Move it to {target}, or delete it and log in "
+"again."
+msgstr ""
+
+#: packages/telegram/src/manifest.ts:52
+msgid ""
+"curlew talks to Telegram through the official MTProto API as a third-party "
+"client (mtcute). Telegram requires every client to use API credentials "
+"(api_id and api_hash). A packaged build MAY embed a pair supplied by its "
+"distributor, so the login needs only your phone number and code; curlew "
+"itself ships none, and you can always use your own — create them for "
+"YOURSELF at my.telegram.org and run `curlew accounts add telegram --own-"
+"credentials` (or set them in the environment). They are kept with the "
+"session. Use is subject to Telegram's API Terms of Service; an account that "
+"misuses the API can be limited or banned by Telegram. curlew only reads: it "
+"never sends, edits or deletes, and keeps the session key on this machine "
+"only."
+msgstr ""

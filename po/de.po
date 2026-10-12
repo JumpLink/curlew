@@ -1,0 +1,223 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: curlew\n"
+"Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
+"POT-Creation-Date: 2026-10-12 19:06+0200\n"
+"PO-Revision-Date: 2026-10-12 19:30+0200\n"
+"Last-Translator: Curlew contributors\n"
+"Language-Team: German\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: app/src/frontends/cli/accounts.ts:22
+msgid ""
+"List accounts (GNOME Online Accounts by default) or log in to a chat backend"
+msgstr ""
+"Konten auflisten (standardmäßig die aus GNOME Online-Konten) oder bei einem "
+"Chat-Backend anmelden"
+
+#: app/src/frontends/cli/accounts.ts:28
+msgid ""
+"List GNOME Online Accounts, or with --backend the accounts of one backend"
+msgstr ""
+"GNOME Online-Konten auflisten, mit --backend die Konten eines Backends"
+
+#: app/src/frontends/cli/accounts.ts:32
+msgid "A backend that keeps its own accounts, e.g. telegram"
+msgstr "Ein Backend mit eigenen Konten, z. B. telegram"
+
+#: app/src/frontends/cli/accounts.ts:41
+msgid ""
+"Log in to a chat backend interactively and keep the session (0600, never in "
+"the repo)"
+msgstr ""
+"Interaktiv bei einem Chat-Backend anmelden und die Sitzung behalten (0600, "
+"niemals im Repository)"
+
+#: app/src/frontends/cli/accounts.ts:44
+msgid "e.g. telegram"
+msgstr "z. B. telegram"
+
+#: app/src/frontends/cli/accounts.ts:48
+msgid ""
+"Telegram: ask for your own api_id/api_hash even if this build embeds a pair"
+msgstr ""
+"Telegram: nach deinen eigenen api_id/api_hash fragen, auch wenn dieser Build "
+"ein Paar mitbringt"
+
+#: app/src/frontends/cli/prompt.ts:102
+msgid "input ended before the login was complete — nothing was saved"
+msgstr ""
+"Die Eingabe endete, bevor die Anmeldung abgeschlossen war — es wurde nichts "
+"gespeichert"
+
+#: packages/telegram/src/backend.ts:33
+msgid "log in again with `curlew accounts add telegram`"
+msgstr "melde dich mit `curlew accounts add telegram` neu an"
+
+#. TRANSLATORS: `api_id` and `api_hash` are Telegram's own field names — do not translate them,
+#. the user has to recognise them on my.telegram.org.
+#: packages/telegram/src/backend.ts:57
+msgid "api_id of your Telegram app (from my.telegram.org)"
+msgstr "api_id deiner Telegram-App (von my.telegram.org)"
+
+#: packages/telegram/src/backend.ts:58
+msgid "api_hash of that app"
+msgstr "api_hash derselben App"
+
+#: packages/telegram/src/backend.ts:59
+msgid "Phone number of the Telegram account (international, e.g. +49…)"
+msgstr "Telefonnummer des Telegram-Kontos (international, z. B. +49…)"
+
+#: packages/telegram/src/backend.ts:60
+msgid "Login code Telegram sent you"
+msgstr "Anmeldecode, den Telegram geschickt hat"
+
+#: packages/telegram/src/backend.ts:61
+msgid "Two-step verification password"
+msgstr "Passwort der zweistufigen Bestätigung"
+
+#: packages/telegram/src/backend.ts:97
+msgid "no Telegram session for {account} — {hint}"
+msgstr "keine Telegram-Sitzung für {account} — {hint}"
+
+#: packages/telegram/src/backend.ts:123
+msgid "the Telegram session {account} is not usable ({reason}) — {hint}"
+msgstr "die Telegram-Sitzung {account} ist nicht nutzbar ({reason}) — {hint}"
+
+#: packages/telegram/src/client.ts:100
+msgid ""
+"Telegram asks for an email login setup first — finish it in an official app"
+msgstr ""
+"Telegram verlangt zuerst die Einrichtung der E-Mail-Anmeldung — schließe sie "
+"in einer offiziellen App ab"
+
+#. TRANSLATORS: {channel} is Telegram's own word for the route it used ("sms", "app", …),
+#. and arrives untranslated from the server.
+#: packages/telegram/src/client.ts:104
+msgid "Telegram sent the login code via {channel}."
+msgstr "Telegram hat den Anmeldecode über {channel} geschickt."
+
+#: packages/telegram/src/client.ts:108
+msgid "That code was not accepted — try again."
+msgstr "Dieser Code wurde nicht akzeptiert — versuche es noch einmal."
+
+#: packages/telegram/src/client.ts:108
+msgid "Wrong password — try again."
+msgstr "Falsches Passwort — versuche es noch einmal."
+
+#. TRANSLATORS: Tail of several credential errors. "API development tools" is the literal name of
+#. that section at my.telegram.org — keep it exactly as Telegram writes it.
+#: packages/telegram/src/credentials.ts:58
+msgid ""
+"create them for yourself at https://my.telegram.org (\"API development "
+"tools\")"
+msgstr ""
+"erstelle dir eigene unter https://my.telegram.org (\"API development "
+"tools\")"
+
+#: packages/telegram/src/credentials.ts:64
+msgid "the Telegram api_id must be a positive whole number — {where}"
+msgstr "die Telegram-api_id muss eine positive ganze Zahl sein — {where}"
+
+#: packages/telegram/src/credentials.ts:69
+msgid ""
+"the Telegram api_hash must be 32 hexadecimal characters (value not shown) — "
+"{where}"
+msgstr ""
+"der Telegram-api_hash muss aus 32 hexadezimalen Zeichen bestehen (Wert wird "
+"nicht angezeigt) — {where}"
+
+#: packages/telegram/src/credentials.ts:83
+msgid ""
+"the Telegram api_id/api_hash do not belong in the config file (it is backed "
+"up in the clear) — remove backends.telegram.settings.apiId/apiHash; `curlew "
+"accounts add telegram` keeps them in the account's 0600 session file, or set "
+"{idEnv} and {hashEnv}"
+msgstr ""
+"api_id/api_hash von Telegram gehören nicht in die Konfigurationsdatei (sie "
+"wird im Klartext gesichert) — entferne "
+"backends.telegram.settings.apiId/apiHash; `curlew accounts add telegram` "
+"legt sie in der 0600-Sitzungsdatei des Kontos ab, oder setze {idEnv} und "
+"{hashEnv}"
+
+#: packages/telegram/src/credentials.ts:99
+msgid "set both {idEnv} and {hashEnv}, or neither"
+msgstr "setze {idEnv} und {hashEnv} gemeinsam oder gar nicht"
+
+#: packages/telegram/src/credentials.ts:175
+msgid ""
+"this Telegram session was created with the API credentials embedded in the "
+"build that made it, and this build embeds {embeds} (values not shown) — use "
+"that build again, set {idEnv} and {hashEnv}, or log in again with `curlew "
+"accounts add telegram`"
+msgstr ""
+"diese Telegram-Sitzung wurde mit den API-Zugangsdaten angelegt, die im "
+"erzeugenden Build eingebettet waren; dieser Build bringt {embeds} mit (Werte "
+"werden nicht angezeigt) — nimm wieder jenen Build, setze {idEnv} und "
+"{hashEnv}, oder melde dich mit `curlew accounts add telegram` neu an"
+
+#. TRANSLATORS: Both fill {embeds} in the message above.
+#: packages/telegram/src/credentials.ts:181
+msgid "a different pair"
+msgstr "ein anderes Paar"
+
+#: packages/telegram/src/credentials.ts:181
+msgid "none"
+msgstr "keines"
+
+#: packages/telegram/src/credentials.ts:194
+msgid ""
+"this Telegram session has no api_id/api_hash stored — log in again with "
+"`curlew accounts add telegram`, or set {idEnv} and {hashEnv}"
+msgstr ""
+"zu dieser Telegram-Sitzung sind keine api_id/api_hash gespeichert — melde "
+"dich mit `curlew accounts add telegram` neu an, oder setze {idEnv} und "
+"{hashEnv}"
+
+#. TRANSLATORS: Stands in for the name of an account that has neither a @username nor a
+#. display name. {id} is Telegram's numeric user id.
+#: packages/telegram/src/login.ts:47
+msgid "Telegram user {id}"
+msgstr "Telegram-Benutzer {id}"
+
+#: packages/telegram/src/login.ts:109
+msgid ""
+"{reason} — Telegram HAD authorized this session, so its file is kept at "
+"{pending} and NOT deleted. Move it to {target}, or delete it and log in "
+"again."
+msgstr ""
+"{reason} — Telegram HATTE diese Sitzung autorisiert, deshalb bleibt ihre "
+"Datei unter {pending} liegen und wird NICHT gelöscht. Verschiebe sie nach "
+"{target}, oder lösche sie und melde dich neu an."
+
+#: packages/telegram/src/manifest.ts:52
+msgid ""
+"curlew talks to Telegram through the official MTProto API as a third-party "
+"client (mtcute). Telegram requires every client to use API credentials "
+"(api_id and api_hash). A packaged build MAY embed a pair supplied by its "
+"distributor, so the login needs only your phone number and code; curlew "
+"itself ships none, and you can always use your own — create them for "
+"YOURSELF at my.telegram.org and run `curlew accounts add telegram --own-"
+"credentials` (or set them in the environment). They are kept with the "
+"session. Use is subject to Telegram's API Terms of Service; an account that "
+"misuses the API can be limited or banned by Telegram. curlew only reads: it "
+"never sends, edits or deletes, and keeps the session key on this machine "
+"only."
+msgstr ""
+"curlew spricht als Drittanbieter-Client (mtcute) über die offizielle "
+"MTProto-API mit Telegram. Telegram verlangt von jedem Client "
+"API-Zugangsdaten (api_id und api_hash). Ein paketierter Build KANN ein Paar "
+"mitbringen, das sein Distributor beigesteuert hat — dann braucht die "
+"Anmeldung nur deine Telefonnummer und den Code; curlew selbst liefert "
+"keines, und du kannst immer eigene verwenden: erstelle sie für DICH SELBST "
+"auf my.telegram.org und starte `curlew accounts add telegram "
+"--own-credentials` (oder setze sie in der Umgebung). Sie werden bei der "
+"Sitzung aufbewahrt. Die Nutzung unterliegt den API-Nutzungsbedingungen von "
+"Telegram; ein Konto, das die API missbraucht, kann von Telegram "
+"eingeschränkt oder gesperrt werden. curlew liest nur: es sendet, bearbeitet "
+"und löscht nie und behält den Sitzungsschlüssel ausschließlich auf diesem "
+"Rechner."
