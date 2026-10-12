@@ -234,6 +234,12 @@ the MCP server via `run_in_background` when driving it.
   is `curlew addon-canary` (`CURLEW_CLI_ADDON_CANARY=1`), which prints typeofs — no server,
   no account, nothing of a user's. gjsify's `<bundle dir>/addons/` layout is not read yet
   (measured on 0.53.0).
+- **User-facing strings go through gettext** — `_`, `_n`, `_p`, `fmt` from `@curlew/protocol`,
+  English msgids, German in `po/de.po`. Two traps: a `_()` at MODULE level resolves before
+  `initI18n()` and freezes English into the module (hence the getters on `TELEGRAM_MANIFEST.terms`
+  and `accountsCommand.describe`), and a plural built from an `n === 1` check at the call site
+  takes the rule away from the language. MCP output stays English on purpose — agents parse it.
+  What is translated, what is not, and why: [`docs/i18n-status.md`](docs/i18n-status.md).
 - Conventional commits (`feat(imap): …`, `fix(store): …`), imperative, subject ≤ 50 chars.
   Run `gjsify foreach -A check` and the tests before committing. No `--no-verify`.
 - This repo is a **submodule of werkstatt**: commit here on `main`, push, *then* bump the

@@ -731,6 +731,9 @@ a runner that holds the identity:
 
 See [AGENTS.md](AGENTS.md).
 
+Translations: English sources, German in [`po/de.po`](po/de.po), status and how to add a string
+in [`docs/i18n-status.md`](docs/i18n-status.md).
+
 ## License
 
 [AGPL-3.0-or-later](LICENSE) © Pascal Garber.
