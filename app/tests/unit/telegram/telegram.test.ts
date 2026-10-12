@@ -31,6 +31,7 @@ import {
   identityOf,
   peerAddresses,
   credentialsFromEnv,
+  embeddedCredentials,
   parseCredentials,
   PENDING_STALE_MS,
   refuseConfigCredentials,
@@ -61,6 +62,8 @@ const BEN = user(1002, 'Ben Example');
 const BOT = user(1003, 'Helper Bot', { username: 'helper_bot', isBot: true });
 const ORGA = group(-1004001, 'Sommerfest Orga');
 const NEWS = group(-1005000, 'Example News', 'channel', 'example_news');
+
+const EMBEDDED_HASH = 'abcdefabcdefabcdefabcdefabcdefab';
 
 function tempDir(): string {
   return mkdtempSync(join(tmpdir(), 'curlew-telegram-'));
@@ -98,6 +101,7 @@ export default async () => {
       expect(TELEGRAM_MANIFEST.capabilities.edits && TELEGRAM_MANIFEST.capabilities.readReceipts).toBe(true);
       expect(TELEGRAM_MANIFEST.addressKinds.join(',')).toBe('telegram,phone');
       expect(TELEGRAM_MANIFEST.terms?.summary.includes('api_id')).toBe(true);
+      expect(TELEGRAM_MANIFEST.terms?.summary.includes('--own-credentials')).toBe(true);
     });
   });
 
@@ -692,6 +696,97 @@ export default async () => {
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
+    });
+
+    await it('an embedded pair needs no api_id question, is recorded as embedded, and loses to the environment', async () => {
+      const dir = tempDir();
+      try {
+        const noEnv = context(dir, {});
+        const embedded = parseCredentials('777', EMBEDDED_HASH);
+        const factory = fakeFactory({ dialogs: [] });
+        const ask = prompter(['+49 170 0000000', '12345', 'correct horse']);
+        await new TelegramBackend(noEnv, factory.create, embedded).addAccount(ask);
+        expect(ask.asked[0]).toMatch(/Phone/);
+        expect(factory.clients[0].credentials.apiId).toBe(777);
+        const store = SecretStore.open(join(noEnv.secretsDir, 'telegram-42.db'));
+        expect(store.get('postbote.api', 'source')).toBe('embedded');
+        expect(store.get('postbote.api', 'apiHash')).toBe(EMBEDDED_HASH);
+        store.close();
+        await (await new TelegramBackend(noEnv, factory.create, embedded).connect('telegram-42')).close();
+        expect(factory.clients[1].credentials.apiId).toBe(777);
+        // env > stored, even for an embedded session.
+        await (
+          await new TelegramBackend(context(dir), factory.create, embedded).connect('telegram-42')
+        ).close();
+        expect(factory.clients[2].credentials.apiId).toBe(12345);
+        // Environment at login time beats the embedded pair and counts as the user's own.
+        const withEnv = prompter(['+49 170 0000000', '12345', 'correct horse']);
+        await new TelegramBackend(context(dir), factory.create, embedded).addAccount(withEnv);
+        expect(factory.clients[3].credentials.apiId).toBe(12345);
+        const again = SecretStore.open(join(noEnv.secretsDir, 'telegram-42.db'));
+        expect(again.get('postbote.api', 'source')).toBe('own');
+        again.close();
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('--own-credentials asks for a pair even when one is embedded', async () => {
+      const dir = tempDir();
+      try {
+        const noEnv = context(dir, {});
+        const factory = fakeFactory({ dialogs: [] });
+        const ask = prompter(['12345', HASH, '+49 170 0000000', '12345', 'correct horse']);
+        const backend = new TelegramBackend(noEnv, factory.create, parseCredentials('777', EMBEDDED_HASH));
+        await backend.addAccount(ask, { ownCredentials: true });
+        expect(ask.asked[0]).toMatch(/api_id/);
+        expect(factory.clients[0].credentials.apiId).toBe(12345);
+        const store = SecretStore.open(join(noEnv.secretsDir, 'telegram-42.db'));
+        expect(store.get('postbote.api', 'source')).toBe('own');
+        store.close();
+        // An own pair stays in use after the build embeds another one.
+        await (
+          await new TelegramBackend(noEnv, factory.create, parseCredentials('888', HASH)).connect(
+            'telegram-42',
+          )
+        ).close();
+        expect(factory.clients[1].credentials.apiId).toBe(12345);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('refuses, without showing a value, to move an embedded session to a different pair', async () => {
+      const dir = tempDir();
+      try {
+        const noEnv = context(dir, {});
+        const factory = fakeFactory({ dialogs: [] });
+        const ask = prompter(['+49 170 0000000', '12345', 'correct horse']);
+        await new TelegramBackend(noEnv, factory.create, parseCredentials('777', EMBEDDED_HASH)).addAccount(
+          ask,
+        );
+        for (const other of [parseCredentials('888', EMBEDDED_HASH), parseCredentials('777', HASH), null]) {
+          let message = '';
+          try {
+            await new TelegramBackend(noEnv, factory.create, other).connect('telegram-42');
+          } catch (err) {
+            message = err instanceof Error ? err.message : String(err);
+          }
+          expect(message).toMatch(/embedded in the build that made it/);
+          expect(message.includes(EMBEDDED_HASH)).toBe(false);
+          expect(message.includes('777')).toBe(false);
+        }
+        expect(factory.clients.length).toBe(1);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('reads the embedded pair from the build constant, none by default', async () => {
+      expect(embeddedCredentials()).toBe(null);
+      expect(embeddedCredentials('')).toBe(null);
+      expect(embeddedCredentials(`777:${EMBEDDED_HASH}`)?.apiId).toBe(777);
+      expect(() => embeddedCredentials('777:nothex')).toThrow(/32 hexadecimal/);
     });
 
     await it('sweeps a stale pending login (it may hold a live key), keeps a fresh one, lists neither', async () => {

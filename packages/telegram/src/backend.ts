@@ -4,6 +4,7 @@
  */
 
 import type {
+  AccountAddOptions,
   AccountPrompter,
   BackendAccount,
   BackendContext,
@@ -15,7 +16,7 @@ import { existsSync } from 'node:fs';
 import type { LoginPrompts, TelegramApi, TelegramClientHandle } from './api.ts';
 import { listSessionAccounts, sessionPath } from './accounts.ts';
 import { type ClientFactory, createMtcuteClient } from './client.ts';
-import { resolveCredentials } from './credentials.ts';
+import { embeddedCredentials, resolveCredentials, type TelegramCredentials } from './credentials.ts';
 import { loginTelegram } from './login.ts';
 import { TELEGRAM_MANIFEST } from './manifest.ts';
 import { TelegramChatSession } from './session.ts';
@@ -43,7 +44,7 @@ function withStoreClose(client: TelegramClientHandle, store: SecretStore): Teleg
 /** Telegram's three login questions, asked through whatever frontend is running. */
 export function telegramPrompts(prompter: AccountPrompter): LoginPrompts {
   return {
-    apiId: () => prompter.ask('api_id of your own Telegram app (from my.telegram.org)'),
+    apiId: () => prompter.ask('api_id of your Telegram app (from my.telegram.org)'),
     apiHash: () => prompter.ask('api_hash of that app', { secret: true }),
     phone: () => prompter.ask('Phone number of the Telegram account (international, e.g. +49…)'),
     code: () => prompter.ask('Login code Telegram sent you'),
@@ -58,9 +59,16 @@ export class TelegramBackend implements ChatBackend {
   private readonly context: BackendContext;
   private readonly createClient: ClientFactory;
 
-  constructor(context: BackendContext, createClient: ClientFactory = createMtcuteClient) {
+  private readonly embedded: TelegramCredentials | null;
+
+  constructor(
+    context: BackendContext,
+    createClient: ClientFactory = createMtcuteClient,
+    embedded: TelegramCredentials | null = embeddedCredentials(),
+  ) {
     this.context = context;
     this.createClient = createClient;
+    this.embedded = embedded;
   }
 
   async listAccounts(): Promise<BackendAccount[]> {
@@ -68,8 +76,8 @@ export class TelegramBackend implements ChatBackend {
   }
 
   /** Log in: phone number, the code Telegram sends, and the 2FA password when one is set. */
-  addAccount(prompter: AccountPrompter): Promise<BackendAccount> {
-    return loginTelegram(this.context, telegramPrompts(prompter), this.createClient);
+  addAccount(prompter: AccountPrompter, options?: AccountAddOptions): Promise<BackendAccount> {
+    return loginTelegram(this.context, telegramPrompts(prompter), this.createClient, options, this.embedded);
   }
 
   async connect(accountId: string): Promise<ChatSession> {
@@ -80,7 +88,7 @@ export class TelegramBackend implements ChatBackend {
     let api: TelegramApi;
     try {
       client = this.createClient({
-        credentials: resolveCredentials(this.context, store),
+        credentials: resolveCredentials(this.context, store, this.embedded),
         storage: new SecretStoreStorage(store),
       });
       // The store belongs to the client from here on: `withStoreClose` closes it with the client,

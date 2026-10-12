@@ -107,7 +107,13 @@ export interface MessageBackend {
    * backend asks through `prompter` for whatever its login needs, and stores the resulting
    * session itself. Resolves with the new account; nothing secret is in it.
    */
-  addAccount?(prompter: AccountPrompter): Promise<BackendAccount>;
+  addAccount?(prompter: AccountPrompter, options?: AccountAddOptions): Promise<BackendAccount>;
+}
+
+/** Flags of `accounts add` that a backend may honour; the others ignore them. */
+export interface AccountAddOptions {
+  /** Ask for the user's own API credentials even when the build embeds a pair (Telegram). */
+  ownCredentials?: boolean;
 }
 
 /** How a backend asks the user for login input, whatever the frontend is. */

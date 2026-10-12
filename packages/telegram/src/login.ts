@@ -6,15 +6,16 @@
  * login succeeded, so a cancelled or failed login never leaves a half-authorized session that
  * `sync` would then try to use. Logging in to an account that already has a session replaces it.
  *
- * The api_id/api_hash come from the environment or are asked for first, and are stored in the
- * session file — never in the config. A login that is killed outright leaves its pending file;
+ * The api_id/api_hash come from the environment, else this build's embedded pair, else are asked
+ * for first (always asked with `--own-credentials`), and are stored in the session file together
+ * with which of those they were — never in the config. A login that is killed outright leaves its pending file;
  * the next `accounts add` or account listing sweeps it once it is stale.
  *
  * Nothing secret is returned or printed: not the phone number, not the code, not the password,
  * not the api_hash, not the session. The result is the account id and the public identity (`@username` or name).
  */
 
-import type { BackendAccount, BackendContext } from '@curlew/protocol';
+import type { AccountAddOptions, BackendAccount, BackendContext } from '@curlew/protocol';
 import { ensurePrivateDir, SecretStore } from '@curlew/store';
 import { existsSync, renameSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
@@ -28,8 +29,10 @@ import {
 } from './accounts.ts';
 import { type ClientFactory, createMtcuteClient } from './client.ts';
 import {
-  credentialsFromEnv,
+  type CredentialSource,
+  embeddedCredentials,
   parseCredentials,
+  pickLoginCredentials,
   refuseConfigCredentials,
   type TelegramCredentials,
   writeStoredCredentials,
@@ -42,17 +45,19 @@ export function identityOf(user: Pick<TgUser, 'username' | 'displayName' | 'id'>
   return user.displayName || `Telegram user ${user.id}`;
 }
 
-/** The environment's pair, else asked for — before anyone types a phone number. */
+/** The environment's pair, else the embedded one, else asked — before anyone types a phone number. */
 async function loginCredentials(
   context: BackendContext,
   prompts: LoginPrompts,
-): Promise<TelegramCredentials> {
+  embedded: TelegramCredentials | null,
+  ownCredentials: boolean,
+): Promise<{ credentials: TelegramCredentials; source: CredentialSource }> {
   refuseConfigCredentials(context.settings);
-  const fromEnv = credentialsFromEnv(context.env);
-  if (fromEnv) return fromEnv;
+  const picked = pickLoginCredentials(context.env, embedded, ownCredentials);
+  if (picked) return picked;
   const apiId = await prompts.apiId();
   const apiHash = await prompts.apiHash();
-  return parseCredentials(apiId, apiHash);
+  return { credentials: parseCredentials(apiId, apiHash), source: 'own' };
 }
 
 /**
@@ -106,8 +111,15 @@ export async function loginTelegram(
   context: BackendContext,
   prompts: LoginPrompts,
   createClient: ClientFactory = createMtcuteClient,
+  options: AccountAddOptions = {},
+  embedded: TelegramCredentials | null = embeddedCredentials(),
 ): Promise<BackendAccount> {
-  const credentials = await loginCredentials(context, prompts);
+  const { credentials, source } = await loginCredentials(
+    context,
+    prompts,
+    embedded,
+    options.ownCredentials === true,
+  );
   ensurePrivateDir(context.secretsDir);
   // What a killed earlier login left behind goes first: it may hold a live auth key.
   sweepPendingSessions(context.secretsDir);
@@ -134,7 +146,7 @@ export async function loginTelegram(
     writeAccountRecord(store, { identity: account.identity });
     // Kept with the session they belong to (Telegram ties a session to its app), in the same
     // 0600 file — so `sync` needs no environment and the config holds no secret.
-    writeStoredCredentials(store, credentials);
+    writeStoredCredentials(store, credentials, source);
     await client.destroy();
     store.close();
     renameSync(pending, sessionPath(context.secretsDir, account.id));
