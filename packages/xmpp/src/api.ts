@@ -60,7 +60,7 @@ export interface XmppApi {
  */
 export interface XmppLink extends XmppApi {
   /** Send a stanza built by `chatMessage`. Resolves when it is written to the stream. */
-  sendChat(to: string, id: string, body: string): Promise<void>;
+  sendChat(to: string, id: string, body: string, oobUrl?: string): Promise<void>;
   /** Enable carbons, then send the follow presence. Throws when the server refuses carbons. */
   goAvailable(): Promise<void>;
   /** Called for every arrival hint (`isArrivalHint`). Returns the unsubscribe. */

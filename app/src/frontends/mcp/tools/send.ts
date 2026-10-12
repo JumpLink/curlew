@@ -21,11 +21,20 @@ export function registerSendTools(server: McpServer): void {
       {
         title: 'Send a Chat Message',
         description:
-          'Send one plain-text chat message from a granted XMPP account to one address. Only available when the config grants xmpp.send, and only to the exact account/address pair granted. Not end-to-end encrypted (OMEMO is not supported). Returns conversationId, sentAt and originId (the stanza id and XEP-0359 origin-id, which a reply references in `replyToId` of xmpp_wait_reply): to wait for the reply, poll conversations_get with id=conversationId, since=sentAt, incoming_only=true, include_bodies=true while `curlew daemon` runs.',
+          'Send a plain-text chat message and/or one image from a granted XMPP account to one address. Only available when the config grants xmpp.send, and only to the exact account/address pair granted. Not end-to-end encrypted (OMEMO is not supported). An image is `image_url` (https only): it goes out as its own message after the text, body = the URL plus an XEP-0066 `jabber:x:oob` reference, so Conversations, Gajim and Monocles show it inline; it is not uploaded or fetched by curlew. Returns conversationId, sentAt, originId (and imageOriginId when text and image were both sent) (the stanza id and XEP-0359 origin-id, which a reply references in `replyToId` of xmpp_wait_reply): to wait for the reply, poll conversations_get with id=conversationId, since=sentAt, incoming_only=true, include_bodies=true while `curlew daemon` runs.',
         inputSchema: {
           account: z.string().min(1).describe('XMPP account id from accounts_list'),
           to: z.string().min(1).describe('Bare address, spelled exactly as in the grant'),
-          text: z.string().min(1).describe('The message, plain text'),
+          text: z
+            .string()
+            .min(1)
+            .optional()
+            .describe('The message, plain text. Required unless image_url is given'),
+          image_url: z
+            .string()
+            .min(1)
+            .optional()
+            .describe('https URL of one image, sent as its own message after the text'),
         },
         annotations: { readOnlyHint: false, openWorldHint: true },
       },
@@ -37,7 +46,13 @@ export function registerSendTools(server: McpServer): void {
     async (params) => {
       try {
         return mcpSuccess(
-          await sendMessage({ accountId: params.account, to: params.to, text: params.text, frontend: 'mcp' }),
+          await sendMessage({
+            accountId: params.account,
+            to: params.to,
+            text: params.text,
+            imageUrl: params.image_url,
+            frontend: 'mcp',
+          }),
         );
       } catch (err) {
         return mcpErrorFrom(err);

@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { chatConversationId, getConversation, recordSentChatMessage } from '@curlew/store';
-import { chatMessage, GrantedXmppSession, isArrivalHint } from '@curlew/xmpp';
+import { chatMessage, GrantedXmppSession, isArrivalHint, validateImageUrl } from '@curlew/xmpp';
 import type { XmppLink } from '@curlew/xmpp';
 import xml from '@xmpp/xml';
 
@@ -21,7 +21,7 @@ const OWNER = 'owner@example.org';
 const ACCOUNT_INFO = { id: ACCOUNT, identity: 'bot@example.org', provider: 'xmpp' };
 const GRANTS = [{ capability: 'xmpp.send' as const, target: `${ACCOUNT}/${OWNER}` }];
 
-function fakeLink(sent: Array<[string, string, string]>): XmppLink {
+function fakeLink(sent: Array<[string, string, string]>, oob: string[] = []): XmppLink {
   return {
     jid: 'bot@example.org',
     roster: async () => [],
@@ -29,8 +29,9 @@ function fakeLink(sent: Array<[string, string, string]>): XmppLink {
     features: async () => new Set(),
     mam: async () => ({ entries: [], complete: true }),
     close: async () => {},
-    sendChat: async (to, id, body) => {
+    sendChat: async (to, id, body, oobUrl) => {
       sent.push([to, id, body]);
+      if (oobUrl !== undefined) oob.push(oobUrl);
     },
     goAvailable: async () => {},
     onArrival: () => () => {},
@@ -48,6 +49,17 @@ export default async () => {
       expect(m.getChild('request') !== undefined).toBe(true);
       expect(m.getChild('markable') !== undefined).toBe(true);
       expect(m.getChild('encrypted') === undefined).toBe(true);
+    });
+
+    await it('adds an XEP-0066 oob reference only when asked', async () => {
+      const url = 'https://example.org/a.jpg';
+      const m = chatMessage({ to: OWNER, id: 'id-2', body: url, oobUrl: url });
+      const x = m.getChild('x', 'jabber:x:oob');
+      expect(x?.getChildText('url')).toBe(url);
+      expect(m.getChildText('body')).toBe(url);
+      expect(
+        chatMessage({ to: OWNER, id: 'id-3', body: 'hi' }).getChild('x', 'jabber:x:oob') === undefined,
+      ).toBe(true);
     });
 
     await it('treats a message with a body as an arrival hint, a bare chat state as none', async () => {
@@ -102,6 +114,50 @@ export default async () => {
       const ok = await session.send(OWNER, 'hello');
       expect(ok.originId).toBe('oid');
       expect(sent.length).toBe(1);
+    });
+  });
+
+  await describe('sending an image', async () => {
+    await it('accepts only plain https URLs', async () => {
+      expect(validateImageUrl('https://example.org/a b'.replace(' ', '%20'))).toBe(
+        'https://example.org/a%20b',
+      );
+      for (const bad of [
+        'http://example.org/a.jpg',
+        'ftp://example.org/a.jpg',
+        'javascript:alert(1)',
+        'https://user:pw@example.org/a.jpg',
+        'https://example.org/a b.jpg',
+        'https://example.org/a\n.jpg',
+        'not a url',
+        `https://example.org/${'a'.repeat(2_000)}`,
+      ]) {
+        let refused = false;
+        try {
+          validateImageUrl(bad);
+        } catch {
+          refused = true;
+        }
+        expect(refused).toBe(true);
+      }
+    });
+
+    await it('sends body = URL with the same URL as oob, and checks the permit first', async () => {
+      const sent: Array<[string, string, string]> = [];
+      const oob: string[] = [];
+      const session = new GrantedXmppSession(fakeLink(sent, oob), permitFor(GRANTS, ACCOUNT), () => 'img-1');
+      let refused = false;
+      try {
+        await session.sendImage('other@example.org', 'https://example.org/a.jpg');
+      } catch {
+        refused = true;
+      }
+      expect(refused).toBe(true);
+      expect(sent.length).toBe(0);
+      const out = await session.sendImage(OWNER, 'https://example.org/a.jpg');
+      expect(out.originId).toBe('img-1');
+      expect(sent[0][2]).toBe('https://example.org/a.jpg');
+      expect(oob.join()).toBe('https://example.org/a.jpg');
     });
   });
 

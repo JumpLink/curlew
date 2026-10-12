@@ -34,6 +34,31 @@ export interface SentChat {
   sentAt: string;
 }
 
+/** The longest image URL one send carries. */
+export const MAX_IMAGE_URL_CHARS = 2_000;
+
+/**
+ * An image URL is sent as the message body and as an OOB reference, so a client fetches it:
+ * https only, no embedded credentials, no whitespace or control characters.
+ */
+export function validateImageUrl(url: string): string {
+  if (url.length > MAX_IMAGE_URL_CHARS) throw new Error(MESSAGES.imageTooLong(MAX_IMAGE_URL_CHARS));
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error(MESSAGES.imageNotHttps);
+  }
+  const unsafe = [...url].some((ch) => {
+    const code = ch.codePointAt(0) ?? 0;
+    return code <= 0x20 || code === 0x7f;
+  });
+  if (parsed.protocol !== 'https:' || !parsed.hostname || parsed.username || parsed.password || unsafe) {
+    throw new Error(MESSAGES.imageNotHttps);
+  }
+  return parsed.href;
+}
+
 export class GrantedXmppSession {
   private readonly link: XmppLink;
   private readonly permit: SendPermit;
@@ -54,6 +79,20 @@ export class GrantedXmppSession {
     if (text.length > MAX_TEXT_CHARS) throw new Error(MESSAGES.tooLong(MAX_TEXT_CHARS));
     const originId = this.newId();
     await this.link.sendChat(chatJid, originId, text);
+    return { chatJid, originId, sentAt: now().toISOString() };
+  }
+
+  /**
+   * Send one image as its own message: body = the URL, plus an XEP-0066 `<x xmlns='jabber:x:oob'>`
+   * carrying the same URL. Same permit check as `send`.
+   */
+  async sendImage(to: string, url: string, now: () => Date = () => new Date()): Promise<SentChat> {
+    if (!this.permit.addresses.includes(to)) throw new Error(MESSAGES.notPermitted(this.permit.account, to));
+    const chatJid = to.includes('/') ? null : normalizeAddress('jid', to);
+    if (!chatJid || !chatJid.includes('@')) throw new Error(MESSAGES.notBare(to));
+    const href = validateImageUrl(url);
+    const originId = this.newId();
+    await this.link.sendChat(chatJid, originId, href, href);
     return { chatJid, originId, sentAt: now().toISOString() };
   }
 
