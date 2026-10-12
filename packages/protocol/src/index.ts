@@ -4,6 +4,7 @@
 
 export * from './types.ts';
 export * from './errors.ts';
+export * from './i18n.ts';
 export * from './availability.ts';
 export * from './encoding.ts';
 export * from './rfc2047.ts';

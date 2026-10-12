@@ -15,6 +15,8 @@
     "start": "gjsify workspace curlew-cli start",
     "test": "gjsify workspace curlew-cli test",
     "format": "gjsify workspace curlew-cli format",
-    "lint": "gjsify workspace curlew-cli lint"
+    "lint": "gjsify workspace curlew-cli lint",
+    "i18n:extract": "./dev/i18n.sh extract",
+    "i18n:compile": "./dev/i18n.sh compile"
   }
 }

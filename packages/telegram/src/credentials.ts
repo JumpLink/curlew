@@ -19,7 +19,7 @@
  * scrollback or an MCP transcript.
  */
 
-import type { BackendContext } from '@curlew/protocol';
+import { _, type BackendContext, fmt } from '@curlew/protocol';
 import { envValue, type SecretStore } from '@curlew/store';
 
 export interface TelegramCredentials {
@@ -46,17 +46,30 @@ export const CREDENTIALS_NAMESPACE = 'postbote.api';
 /** Key, inside `CREDENTIALS_NAMESPACE`, recording the `CredentialSource`. */
 export const SOURCE_KEY = 'source';
 
-const WHERE = `create them for yourself at https://my.telegram.org ("API development tools")`;
+/**
+ * Where a user gets their own pair — a tail several of the errors below share.
+ *
+ * A function, not a `const`: a module-level `_()` resolves while the module graph is still being
+ * built, which is before `initI18n()` has had a chance to run, and would pin English into the
+ * module for the whole process.
+ */
+// TRANSLATORS: Tail of several credential errors. "API development tools" is the literal name of
+// that section at my.telegram.org — keep it exactly as Telegram writes it.
+const where = () => _('create them for yourself at https://my.telegram.org ("API development tools")');
 
 /** Validate one pair. Throws without ever quoting the hash. */
 export function parseCredentials(rawId: unknown, rawHash: unknown): TelegramCredentials {
   const apiId = typeof rawId === 'number' ? rawId : Number(String(rawId ?? '').trim());
   if (!Number.isSafeInteger(apiId) || apiId <= 0) {
-    throw new Error(`the Telegram api_id must be a positive whole number — ${WHERE}`);
+    throw new Error(fmt(_('the Telegram api_id must be a positive whole number — {where}'), { where: where() }));
   }
   const apiHash = String(rawHash ?? '').trim();
   if (!/^[0-9a-f]{32}$/i.test(apiHash)) {
-    throw new Error(`the Telegram api_hash must be 32 hexadecimal characters (value not shown) — ${WHERE}`);
+    throw new Error(
+      fmt(_('the Telegram api_hash must be 32 hexadecimal characters (value not shown) — {where}'), {
+        where: where(),
+      }),
+    );
   }
   return { apiId, apiHash: apiHash.toLowerCase() };
 }
@@ -65,9 +78,14 @@ export function parseCredentials(rawId: unknown, rawHash: unknown): TelegramCred
 export function refuseConfigCredentials(settings: BackendContext['settings']): void {
   if ('apiHash' in settings || 'apiId' in settings) {
     throw new Error(
-      'the Telegram api_id/api_hash do not belong in the config file (it is backed up in the clear) — ' +
-        'remove backends.telegram.settings.apiId/apiHash; `curlew accounts add telegram` keeps them in ' +
-        `the account's 0600 session file, or set ${API_ID_ENV} and ${API_HASH_ENV}`,
+      fmt(
+        _(
+          'the Telegram api_id/api_hash do not belong in the config file (it is backed up in the clear) — ' +
+            'remove backends.telegram.settings.apiId/apiHash; `curlew accounts add telegram` keeps them in ' +
+            "the account's 0600 session file, or set {idEnv} and {hashEnv}",
+        ),
+        { idEnv: API_ID_ENV, hashEnv: API_HASH_ENV },
+      ),
     );
   }
 }
@@ -77,7 +95,9 @@ export function credentialsFromEnv(env: BackendContext['env']): TelegramCredenti
   const id = envValue(env, 'TELEGRAM_API_ID');
   const hash = envValue(env, 'TELEGRAM_API_HASH');
   if (!id && !hash) return null;
-  if (!id || !hash) throw new Error(`set both ${API_ID_ENV} and ${API_HASH_ENV}, or neither`);
+  if (!id || !hash) {
+    throw new Error(fmt(_('set both {idEnv} and {hashEnv}, or neither'), { idEnv: API_ID_ENV, hashEnv: API_HASH_ENV }));
+  }
   return parseCredentials(id, hash);
 }
 
@@ -150,16 +170,31 @@ export function resolveCredentials(
   if (stored) {
     if (readStoredSource(store) === 'embedded' && (!embedded || !sameCredentials(stored, embedded))) {
       throw new Error(
-        'this Telegram session was created with the API credentials embedded in the build that made it, ' +
-          `and this build embeds ${embedded ? 'a different pair' : 'none'} (values not shown) — ` +
-          `use that build again, set ${API_ID_ENV} and ${API_HASH_ENV}, or log in again with ` +
-          '`curlew accounts add telegram`',
+        fmt(
+          _(
+            'this Telegram session was created with the API credentials embedded in the build that made it, ' +
+              'and this build embeds {embeds} (values not shown) — use that build again, set {idEnv} and ' +
+              '{hashEnv}, or log in again with `curlew accounts add telegram`',
+          ),
+          {
+            // TRANSLATORS: Both fill {embeds} in the message above.
+            embeds: embedded ? _('a different pair') : _('none'),
+            idEnv: API_ID_ENV,
+            hashEnv: API_HASH_ENV,
+          },
+        ),
       );
     }
     return stored;
   }
   if (embedded) return embedded;
   throw new Error(
-    `this Telegram session has no api_id/api_hash stored — log in again with \`curlew accounts add telegram\`, or set ${API_ID_ENV} and ${API_HASH_ENV}`,
+    fmt(
+      _(
+        'this Telegram session has no api_id/api_hash stored — log in again with ' +
+          '`curlew accounts add telegram`, or set {idEnv} and {hashEnv}',
+      ),
+      { idEnv: API_ID_ENV, hashEnv: API_HASH_ENV },
+    ),
   );
 }

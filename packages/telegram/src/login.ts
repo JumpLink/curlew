@@ -15,7 +15,7 @@
  * not the api_hash, not the session. The result is the account id and the public identity (`@username` or name).
  */
 
-import type { AccountAddOptions, BackendAccount, BackendContext } from '@curlew/protocol';
+import { _, type AccountAddOptions, type BackendAccount, type BackendContext, fmt } from '@curlew/protocol';
 import { ensurePrivateDir, SecretStore } from '@curlew/store';
 import { existsSync, renameSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
@@ -42,7 +42,9 @@ import { holdsSignIn, SecretStoreStorage } from './storage.ts';
 /** The public name an account is listed under — never the phone number. */
 export function identityOf(user: Pick<TgUser, 'username' | 'displayName' | 'id'>): string {
   if (user.username) return `@${user.username}`;
-  return user.displayName || `Telegram user ${user.id}`;
+  // TRANSLATORS: Stands in for the name of an account that has neither a @username nor a
+  // display name. {id} is Telegram's numeric user id.
+  return user.displayName || fmt(_('Telegram user {id}'), { id: user.id });
 }
 
 /** The environment's pair, else the embedded one, else asked — before anyone types a phone number. */
@@ -102,8 +104,13 @@ async function recoverFailedLogin(
   }
   const target = accountId ? sessionPath(secretsDir, accountId) : join(secretsDir, '<account id>.db');
   return new Error(
-    `${original.message} — Telegram HAD authorized this session, so its file is kept at ${pending} and ` +
-      `NOT deleted. Move it to ${target}, or delete it and log in again.`,
+    fmt(
+      _(
+        '{reason} — Telegram HAD authorized this session, so its file is kept at {pending} and NOT ' +
+          'deleted. Move it to {target}, or delete it and log in again.',
+      ),
+      { reason: original.message, pending, target },
+    ),
   );
 }
 

@@ -2,6 +2,8 @@ import 'dotenv/config';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
+import { initI18n } from './core/lib/i18n.ts';
+
 import {
   accountsCommand,
   addonCanaryCommand,
@@ -23,6 +25,11 @@ import {
   setupCommand,
   syncCommand,
 } from './frontends/cli/index.ts';
+
+// Before anything produces a string. Every `describe` below is evaluated while `parseArgs()`
+// assembles the parser, and a message already formatted keeps the language it was built in — so
+// this cannot move below that call, nor into a lazily imported module.
+initI18n();
 
 function reportError(err: unknown): void {
   // With yargs' `.fail(false)` (below) yargs no longer prints its own usage dump on a

@@ -32,7 +32,10 @@ jobs:
       # openssl ENOENT` — a red run that says nothing about the code.
       # msitools adds `wixl`, the Linux-side MSI compiler `gjsify ship windows --target msi`
       # needs (ADR 0024 § M5 in gjsify): a Fedora package, not a download.
-      - name: Install system prerequisites (gjs + GOA/EDS typelibs + libgda + openssl + msitools)
+      # gettext is `msgfmt`, which `build` runs over `po/` into `dist/locale`. The compile step
+      # only warns when it is missing — but `gjsify ship` then REFUSES a `gjsify.ship.localeDir`
+      # with no `.mo` in it, so without this the packaging steps below fail instead.
+      - name: Install system prerequisites (gjs + GOA/EDS typelibs + libgda + openssl + msitools + gettext)
         run: >
           dnf install -y --setopt=install_weak_deps=False
           git tar xz findutils gjs
@@ -40,6 +43,7 @@ jobs:
           libgda libgda-sqlite
           openssl
           msitools
+          gettext
 
       - uses: actions/checkout@v4
 

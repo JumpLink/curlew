@@ -7,7 +7,7 @@
  * (readline's echo goes through a muted stream); piped input is not echoed anyway.
  */
 
-import type { AccountPrompter } from '@curlew/protocol';
+import { _, type AccountPrompter } from '@curlew/protocol';
 
 import type { SetupPrompter } from '../../core/actions/setup.ts';
 import { createInterface } from 'node:readline';
@@ -99,7 +99,7 @@ export function readPrompter(
       const line = await next();
       if (muted) process.stderr.write('\n');
       muted = false;
-      if (line === null) throw new Error('input ended before the login was complete — nothing was saved');
+      if (line === null) throw new Error(_('input ended before the login was complete — nothing was saved'));
       return line.trim();
     },
     async confirm(question) {
