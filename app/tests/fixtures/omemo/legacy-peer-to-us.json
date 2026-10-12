@@ -1,0 +1,109 @@
+{
+  "$comment": "Recorded from python-oldmemo by app/tests/fixtures/omemo/generate.py. Synthetic keys and JIDs; do not edit by hand.",
+  "namespace": "eu.siacs.conversations.axolotl",
+  "us": {
+    "jid": "bob@example.org",
+    "deviceId": 1337,
+    "identityKey": {
+      "private": "8KZhkOkJcjFgqvHrcCsjWcUKiK2Y5jB7o/TySwqR92g=",
+      "public": "PI6iXqLjiLp3p0rU92YbchEARTLLMnE+eXjCWd3lZ1I="
+    },
+    "signedPreKey": {
+      "id": 7,
+      "private": "2FSa9byyZERqRzA1UTOuTyFU+xU61kTMSvVD19nrh2U=",
+      "public": "+IM+hkNee4IVDMMe/Kv2o97zXv9ODkIRveXUEWCXeEI=",
+      "signature": "J2SSCuMBgorrd5/fq4xUG2Vr5TjOU2An7RdLeDgQdL7ruCcyYTpdZp7d6CBL5998tfrhlFX7VX1iCpxvH0hpCA=="
+    },
+    "preKeys": [
+      {
+        "id": 31,
+        "private": "SHiHWQP9zxt+w0WIgYo9VE+1NAog8lxTFYQEzmJtTVQ=",
+        "public": "Kd3Wgn59k/q4iwGJkmZK6aZzORuhar4izW3B7wyT5R0="
+      },
+      {
+        "id": 32,
+        "private": "MEjfK2rgwEsmznIcwUMZz/jcqN4DSIUhjfk2YZjc2UE=",
+        "public": "crcIgH/t0WOCdQ//SSAV2a3qns7vdbWxNMdu6zlGh2c="
+      },
+      {
+        "id": 33,
+        "private": "WC2eriUS4jd81hnbf2/1BsqPRkZxWKWPhPWd+rXaHE0=",
+        "public": "NB1kGkiH0zBlYVN24nP0kc3Tt7/OGRwIozLasgE8KCE="
+      }
+    ]
+  },
+  "ourRandom": "Nsy7x8hupNCgZXnJmnLFM0wpx3f+C9vBtWK016X+qPHRFuHbdWBUZd4oymZMahrREVWvr92MLRWo8ppQGAQdp+8+vQtPhkMFQT6zl97v1JRrd5c8gbBxyYu8hNiL7foSULpnxwJXym9VZPjJd9oyUnxD5t+uYe+oqPI/oOK5GlHRS1ctJnOCHIq7tDbSo0Z5jotxDPp2G6xBXyASmnCsEXwWGcjdaBCNWjGoUdXaBfOkQJO6eY6W0Hn3zDtPTwy0wSFa/PGSyXMPUoJLbXnopfrk9fKioio5KbMTzUgMzDUwrjjflNI5/K4abJ92cDJqfZ3uvM72oL8/Gq417zjfhXzs4jn8I4VOJrL5JSqMYV+2gz9hKhSJBidhgeKO7p2mYaW7JRW4ByVgDOyxtJXgJKkoWakzNX7iLLHOkxz7xz7E8IOtdgSeciqYMHg/6Syo4vLttSr6W5+SvK7IfRqxQoRn984Y5H6zlFYeAnimWMWtLmPS7SAcr3tpaMvr73U9uR7sJPvpbkrG7zcArp13HtOqs2bPTIasGwN4o7LFnTsxyHqp01NCKaQLkOnLfwg7LRuzA56iP9jYhk1eCgF5dISDZBa2WP2RP8IGb3kCo4R4qF7vVrB/cLsb/V/70OlyT7A4f6qZICZ1bb8fJQneDBfrTimU+ptNgNq/5+TuoXs=",
+  "peer": {
+    "jid": "alice@example.org",
+    "deviceId": 42,
+    "bundle": {
+      "identityKey": "IE7MnGyhLdcYl6Z1QFmD7Pg1gMaX8JX0EEwvUFNrVFg=",
+      "signedPreKeyId": 1,
+      "signedPreKey": "vYPOGzHGM+pedS4w1b/pyEhf4xxuIiwjuWeDruc/aGw=",
+      "signedPreKeySignature": "+Rr9Dk5RbJPMB6NJq9y5cLAPdiSr7G2e10M37Vc0AwJW4gWTpb1gIv7iDf5shu4VL/2iRaHt68FN3fMEii+ciQ==",
+      "preKeys": [
+        {
+          "id": 1,
+          "publicKey": "M0IhGSRXje3FhDP8Q8wox3IxhQl0T5yxZCgCwgxDLng="
+        },
+        {
+          "id": 2,
+          "publicKey": "25u5+b4K3mzsPIc1R8r0bL/cR+J5iM/IcH6iSIjOj2k="
+        },
+        {
+          "id": 3,
+          "publicKey": "85NuSJ4SkSEqt8DIS0J/tMSTC6NRnSZes3P4iwqo+0w="
+        }
+      ]
+    }
+  },
+  "peerToUs": {
+    "keyExchange": {
+      "plaintext": "Hallo aus python-oldmemo.",
+      "ciphertext": "oFFIwRJ1oNutRoJxXgYtNrzBA1SeCVHF0w==",
+      "iv": "3WSKXRwkcEM05G0n",
+      "keyMaterial": "dpptqPRB1HuZDiNfmfAhHNX6INgtjuVW/EIB28D3pZY=",
+      "message": "MwohBbxFod0lejbR6lIjnb5Z2CYvjOKQZzae9PiYz1XHjJdpEAAYACIwgjVOjpZdgd/OPjc+L9ciVrdFnbG/Qwu8wViSgw1lFPqU7Npu0zLHZ1tglRmDiB1FPbZ3t+YFQnk=",
+      "keyExchange": "MwgfEiEFfe+5ACFzsObprRXoZC24MNduYpV4f+Cz27/qo/rwYhIaIQUgTsycbKEt1xiXpnVAWYPs+DWAxpfwlfQQTC9QU2tUWCJiMwohBbxFod0lejbR6lIjnb5Z2CYvjOKQZzae9PiYz1XHjJdpEAAYACIwgjVOjpZdgd/OPjc+L9ciVrdFnbG/Qwu8wViSgw1lFPqU7Npu0zLHZ1tglRmDiB1FPbZ3t+YFQnkwBw=="
+    },
+    "messages": [
+      {
+        "plaintext": "Nachricht 1 von Alice.",
+        "ciphertext": "IqbaVga2TXuJSCcjYTVOyG0SpD5FpQ==",
+        "iv": "xV2p+jJ7aoGnHchy",
+        "keyMaterial": "mzxlQTzNeLET3U+3W3A4X4GQiG6Fj/Owd84ayIYMVOw=",
+        "message": "MwohBbxFod0lejbR6lIjnb5Z2CYvjOKQZzae9PiYz1XHjJdpEAEYACIwz4seukggKQurXJTViSgfae1OGMtYAlDgwrTthi2CzJmyE2z1HyirxU7Y2D0ox3yDif08ysrE57k=",
+        "keyExchange": "MwgfEiEFfe+5ACFzsObprRXoZC24MNduYpV4f+Cz27/qo/rwYhIaIQUgTsycbKEt1xiXpnVAWYPs+DWAxpfwlfQQTC9QU2tUWCJiMwohBbxFod0lejbR6lIjnb5Z2CYvjOKQZzae9PiYz1XHjJdpEAEYACIwz4seukggKQurXJTViSgfae1OGMtYAlDgwrTthi2CzJmyE2z1HyirxU7Y2D0ox3yDif08ysrE57kwBw=="
+      },
+      {
+        "plaintext": "Nachricht 2 von Alice.",
+        "ciphertext": "A57xCpkL20GDQ+Kx2jxcf67NI3mi1g==",
+        "iv": "DmnhC2Y+3HLHbhcz",
+        "keyMaterial": "OlssML4mXrfg42wyxuMD1OEXEnUCTHqRMp3zNBGOmds=",
+        "message": "MwohBbxFod0lejbR6lIjnb5Z2CYvjOKQZzae9PiYz1XHjJdpEAIYACIwdbhvVJIMjPyjwjVIgDqWd6LcdQSAJfFOvEDNKB07+q3BA/NowYRKXktezP4p2E1F++eiDBv1p1k="
+      },
+      {
+        "plaintext": "Nachricht 3 von Alice.",
+        "ciphertext": "6gA6+lliaYrdoQz27NT/DlRCbCtpAw==",
+        "iv": "X5ckQQk08lnp58XE",
+        "keyMaterial": "I9lEos4hKepCOPyR3zdgKozkELPk6lP8Qr/KepESA0g=",
+        "message": "MwohBbxFod0lejbR6lIjnb5Z2CYvjOKQZzae9PiYz1XHjJdpEAMYACIwCXAzEQc1GvmBi0ReIVvz1WLENW1aGl5+xJ88RhKGks6YnctMA6/yRYny59//PxUaKaAJnhmtoQk="
+      },
+      {
+        "plaintext": "Nachricht 4 von Alice.",
+        "ciphertext": "6+9w02TWgXBaBphJfKPCQVhrjeKWdw==",
+        "iv": "fmsosV//ls11Y//G",
+        "keyMaterial": "T8IJ6msFY/fXofQzUcW3oLPW+n0k6lcnPIoSTcqx9/c=",
+        "message": "MwohBbxFod0lejbR6lIjnb5Z2CYvjOKQZzae9PiYz1XHjJdpEAQYACIwrSxA2IIUI9mtgNKKB/C/DtD7I1IynudmRAKRk2LuEITtOeltPVXsUJWzFsT+W/G8b8doe2qwW34="
+      }
+    ],
+    "skipAhead": {
+      "plaintext": "Nachricht 10 von Alice.",
+      "ciphertext": "LKCAiX8KKSqqPuDjB35qvshQrLocv2w=",
+      "iv": "KsP5MpqghXGSDL9O",
+      "keyMaterial": "NkVDDN2OqqX/CKITBOwaOwW1NIglVUV8VmtPs4Y2boY=",
+      "message": "MwohBbxFod0lejbR6lIjnb5Z2CYvjOKQZzae9PiYz1XHjJdpEAoYACIwXaSXSQljZW0iJ2VZ18NMpinCkJqTjT7rA1K2vjiKEhj8sy2wkjprGAr5E5dc8eBMUYDbqpN8eKc=",
+      "index": 10
+    }
+  }
+}
