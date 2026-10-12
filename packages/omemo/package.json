@@ -1,0 +1,20 @@
+{
+  "name": "@curlew/omemo",
+  "version": "0.1.0",
+  "license": "LGPL-3.0-or-later",
+  "private": true,
+  "type": "module",
+  "description": "OMEMO (XEP-0384) core: X3DH, the Double Ratchet, libsignal's legacy wire format and the AES-GCM payload cipher of `eu.siacs.conversations.axolotl`, plus the storage port the sessions live behind. Pure \u2014 no @xmpp/*, no SecretStore, no gi://: it sees crypto.subtle, @gjsify/xeddsa and the port.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check": "tsc --noEmit --project tsconfig.json"
+  },
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "@gjsify/xeddsa": "^0.62.0"
+  }
+}

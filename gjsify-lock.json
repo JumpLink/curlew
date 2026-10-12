@@ -39,6 +39,7 @@
     "@matrix-org/matrix-sdk-crypto-wasm@18.9.0",
     "loglevel@1.9.2",
     "matrix-js-sdk@42.4.0",
+    "@gjsify/xeddsa@^0.62.0",
     "qrcode-generator@2.0.4",
     "nodemailer@10.0.15",
     "@mtcute/core@0.32.3",
@@ -9261,8 +9262,8 @@
       "resolved": "https://registry.npmjs.org/p-queue/-/p-queue-9.3.3.tgz",
       "integrity": "sha512-NXAOdnEe5FsZJfT4oK84lE1Y5cFFdWlRuOo5tww8DyNMxyRXwn39fIkUtNLKppcPC+UYU/bXujNCUGDv01y7CA==",
       "dependencies": {
-        "eventemitter3": "^5.0.4",
-        "p-timeout": "^7.0.0"
+        "p-timeout": "^7.0.0",
+        "eventemitter3": "^5.0.4"
       }
     },
     "node_modules/p-retry": {
