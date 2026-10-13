@@ -1,0 +1,53 @@
+{
+  "$comment": "python-oldmemo's reading of what @curlew/omemo produced, recorded by app/tests/fixtures/omemo/generate.py. Do not edit by hand.",
+  "namespace": "eu.siacs.conversations.axolotl",
+  "usToPeer": {
+    "keyExchange": "MwgDEiEFtwzuAOE849ZdBm0BLcb7d9TPwo3aD0ufu/uBreXZkXsaIQU8jqJeouOIunenStT3ZhtyEQBFMssycT55eMJZ3eVnUiJiMwohBbcQNaKeHlmvemVGbMrNaR036OCrvpJpYA1Nz1ql7ZNtEAAYACIwCo74OqZtdE0gbnykU19FgjKvX74fkyP8dfvByXzTasoYLKwVPjZR8lQLDN5W1BovQqf4fO5F+GQwAQ==",
+    "messages": [
+      "MwohBbcQNaKeHlmvemVGbMrNaR036OCrvpJpYA1Nz1ql7ZNtEAEYACIwEN6EDE1w9CPZkOsLoFEq+OvxjEpNYNGl1yO37kKKrs1Z+G7MO+9sVq4+EJLF6MIqtg879y4J8G0=",
+      "MwohBbcQNaKeHlmvemVGbMrNaR036OCrvpJpYA1Nz1ql7ZNtEAIYACIwIZFsg1LPSk2KD6Gsgogyh6U8zly+UYhhJiHfMXLxEK7rGMYCt8jgz1/V22Qh5M9yKo+/G6UyWkM=",
+      "MwohBbcQNaKeHlmvemVGbMrNaR036OCrvpJpYA1Nz1ql7ZNtEAMYACIwg29g96tbb4Wq+uLZo09Tsh7dGz+YlaibsEY9WQOM/2Q5oQYZYAVNSFMnPORMkW3R+Xam5Jsn+Bo="
+    ],
+    "payloads": [
+      {
+        "ciphertext": "2nKFU0uogO8IElOxf6e1Y2PAjPw=",
+        "iv": "gbBxyYu8hNiL7foS"
+      },
+      {
+        "ciphertext": "GJCB57YQpsu4m878SiBml53/5BI=",
+        "iv": "fEPm365h76io8j+g"
+      },
+      {
+        "ciphertext": "iBHxqBFaWlRb+oHGLhkzIpiiS7s=",
+        "iv": "0qNGeY6LcQz6dhus"
+      },
+      {
+        "ciphertext": "nT0Gps9G2v9frXOOgqWRA0cna3U=",
+        "iv": "WjGoUdXaBfOkQJO6"
+      }
+    ],
+    "decrypted": [
+      "Nachricht 1 von Bob.",
+      "Nachricht 2 von Bob.",
+      "Nachricht 3 von Bob.",
+      "Nachricht 4 von Bob."
+    ]
+  },
+  "signatureAccepted": true,
+  "peerReplies": [
+    {
+      "plaintext": "Antwort 1 von Alice.",
+      "ciphertext": "++EKbUT5MgG9k9IxVWwJRy2KeLw=",
+      "iv": "ZYotSHGWDJi0tquP",
+      "keyMaterial": "3WSKXRwkcEM05G0nzVLtuxWUbn4gtvXLgAGDSJCKOss=",
+      "message": "MwohBQ2hadYSNcYDsOVniq+D5KJPTszBnLCCU8rh5Zlq+mwDEAAYACIwgUkKjVgeSeuxGNFTWVROoWAyjwX6Yrctf+9NoBCYCjY5ITzRdsmUHmODA/rocsp+NQ23Q868GUM="
+    },
+    {
+      "plaintext": "Antwort 2 von Alice.",
+      "ciphertext": "H/iNl90geKi15PSXB2P1oQ26Oj0=",
+      "iv": "mzxlQTzNeLET3U+3",
+      "keyMaterial": "nqZFp9zTAd+Cmg4Ue9rm9l+HSCDHOENXtq2DeK1Kp3A=",
+      "message": "MwohBQ2hadYSNcYDsOVniq+D5KJPTszBnLCCU8rh5Zlq+mwDEAEYACIwRHqWVv2GNVWKye76nYJUEjeK1FZJ6gUwGaG13VlE5wYpQUHICwddSm2NSUDXPp+WQJtQRbbRKmQ="
+    }
+  ]
+}
