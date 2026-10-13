@@ -408,6 +408,42 @@ export default async () => {
       expect(page.retracted?.join()).toBe('a2');
     });
 
+    await it('infers the reply of a bare "> " quote from the own message it quotes', async () => {
+      const opts = { afterSeq: null, exhausted: true, reachedStart: false };
+      const sent = entry({
+        id: 'q1',
+        at: at(1),
+        from: `${ME}/curlew`,
+        to: ANNA,
+        body: 'Code?\nplease',
+        stanzaId: 'o1',
+        extra: `<origin-id xmlns="${NS.sid}" id="o1"/>`,
+      });
+      const quoting = entry({ id: 'q2', at: at(2), from: ANNA, body: '> Code?\n> please\nyes' });
+      const page = buildPage(direct, [sent, quoting], opts);
+      const m = page.messages.find((x) => x.remoteId === 'q2');
+      expect(m?.text).toBe('yes');
+      expect(m?.replyToRemoteId).toBe('q1');
+      expect(m?.replyToClientId).toBe('o1');
+      // The quote may sit in an earlier page: it is found in the lookback.
+      const later = buildPage(direct, [quoting], opts, [sent]);
+      expect(later.messages[0].replyToClientId).toBe('o1');
+      // A quote of something that is not an own message stays as written.
+      const stranger = entry({ id: 'q3', at: at(3), from: ANNA, body: '> else\nyes' });
+      const kept = buildPage(direct, [sent, stranger], opts).messages[1];
+      expect(kept.text).toBe('> else\nyes');
+      expect(kept.replyToClientId).toBe(null);
+      // A real <reply> wins over the inference.
+      const real = entry({
+        id: 'q4',
+        at: at(4),
+        from: ANNA,
+        body: '> Code?\n> please\nyes',
+        extra: `<reply xmlns="${NS.reply}" to="${ME}" id="zz"/>`,
+      });
+      expect(buildPage(direct, [sent, real], opts).messages[1].replyToClientId).toBe('zz');
+    });
+
     await it('maps a room: occupants, self by nick or real JID, moderation, tombstones', async () => {
       const page = buildPage(
         room,
