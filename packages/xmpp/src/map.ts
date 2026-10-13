@@ -23,7 +23,7 @@ import type {
   ParticipantAddress,
 } from '@curlew/protocol';
 import { normalizeAddress } from '@curlew/protocol';
-import { type ArchivedEntry, bareJid, resourceOf } from './stanza.ts';
+import { type ArchivedEntry, bareJid, leadingQuote, resourceOf } from './stanza.ts';
 
 /**
  * The resume cursor handed to the engine: the archive id, plus the entry's REAL archive stamp.
@@ -123,6 +123,34 @@ export function referenceKeys(context: ChatContext, entry: ArchivedEntry): strin
   const keys = [entry.id, entry.originId];
   if (context.kind === 'group') keys.unshift(entry.archiveId);
   return keys.filter((k): k is string => typeof k === 'string' && k.length > 0);
+}
+
+/**
+ * A client that quotes with "> " lines but sends no `<reply>` (XEP-0461): the own message in
+ * `earlier` whose text equals the quote, newest first. The result is an INFERENCE, not what the
+ * sender declared — it is only drawn for an incoming message without a reply element.
+ */
+function inferredQuote(
+  context: ChatContext,
+  entry: ArchivedEntry,
+  earlier: readonly ArchivedEntry[],
+): { target: ArchivedEntry; rest: string } | null {
+  if (entry.replyToId !== null || entry.encrypted || isFromSelf(context, entry)) return null;
+  const quote = leadingQuote(entry.body);
+  if (!quote) return null;
+  const wanted = quote.quoted.trim();
+  for (let i = earlier.length - 1; i >= 0; i--) {
+    const c = earlier[i];
+    if (c.body !== null && !c.encrypted && isFromSelf(context, c) && c.body.trim() === wanted) {
+      return { target: c, rest: quote.rest };
+    }
+  }
+  return null;
+}
+
+/** Does the entry quote without naming a reply — what a lookback may be able to resolve? */
+export function hasUnnamedQuote(context: ChatContext, entry: ArchivedEntry): boolean {
+  return entry.replyToId === null && !isFromSelf(context, entry) && leadingQuote(entry.body) !== null;
 }
 
 /** References an entry makes that the page itself cannot resolve — what a lookback must find. */
@@ -239,7 +267,15 @@ export function buildPage(
     // Markers, receipts, reactions, chat states: entries of the archive, not messages.
     if (!hasContent) return;
     const fromSelf = isFromSelf(context, entry);
-    const reply = target(entry.replyToId, entry);
+    let reply = target(entry.replyToId, entry);
+    let replyClientId = entry.replyToId;
+    let text = entry.encrypted ? null : entry.body;
+    const inferred = inferredQuote(context, entry, [...lookback, ...entries.slice(0, index)]);
+    if (inferred) {
+      reply = inferred.target;
+      replyClientId = inferred.target.originId ?? inferred.target.id;
+      text = inferred.rest;
+    }
     messages.set(entry.archiveId, {
       remoteId: entry.archiveId,
       seq: seqs[index],
@@ -249,10 +285,10 @@ export function buildPage(
       fromSelf,
       // An encrypted message's body is the sender's "this message is encrypted" fallback, not
       // what they wrote: curlew cannot decrypt (no OMEMO yet), so it indexes no text.
-      text: entry.encrypted ? null : entry.body,
+      text,
       hasAttachments: entry.attachmentUrls.length > 0,
       replyToRemoteId: reply ? reply.archiveId : null,
-      replyToClientId: entry.replyToId,
+      replyToClientId: replyClientId,
       threadRemoteId: null,
       clientId: entry.originId,
     });

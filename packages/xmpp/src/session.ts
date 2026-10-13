@@ -14,6 +14,7 @@ import {
   type ChatContext,
   decodeCursor,
   toChatInfo,
+  hasUnnamedQuote,
   unresolvedReferences,
   windowEntries,
 } from './map.ts';
@@ -190,7 +191,10 @@ export class XmppChatSession implements ChatSession {
 
     const context: ChatContext = chat;
     let lookback: ArchivedEntry[] = [];
-    if (entries.length > 0 && unresolvedReferences(context, entries).length > 0) {
+    if (
+      entries.length > 0 &&
+      (unresolvedReferences(context, entries).length > 0 || entries.some((e) => hasUnnamedQuote(context, e)))
+    ) {
       // A correction or retraction of something older than the page: one bounded look back.
       // What is not found there stays as it was stored.
       const older = await this.query(chat, { before: entries[0].archiveId, max: LOOKBACK });

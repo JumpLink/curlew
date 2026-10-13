@@ -264,6 +264,25 @@ export function stripReplyFallback(message: XmlElement, body: string | null): st
   return kept.join('').replace(/^\n/, '');
 }
 
+/**
+ * A leading `> ` quote block (what clients send as reply fallback, with or without the XEP-0461
+ * element): the quoted text without the markers, and the rest of the body. Null when the body
+ * does not start with a quote or nothing follows it.
+ */
+export function leadingQuote(body: string | null): { quoted: string; rest: string } | null {
+  if (body === null || !body.startsWith('>')) return null;
+  const lines = body.split('\n');
+  let n = 0;
+  while (n < lines.length && lines[n].startsWith('>')) n++;
+  const rest = lines.slice(n).join('\n');
+  if (rest.trim() === '') return null;
+  const quoted = lines
+    .slice(0, n)
+    .map((l) => l.replace(/^> ?/, ''))
+    .join('\n');
+  return { quoted, rest };
+}
+
 function retractOf(message: XmlElement): ArchivedEntry['retract'] {
   const retract = message.getChild('retract', NS.retract);
   if (retract?.attrs.id) {
