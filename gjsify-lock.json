@@ -39,7 +39,7 @@
     "@matrix-org/matrix-sdk-crypto-wasm@18.9.0",
     "loglevel@1.9.2",
     "matrix-js-sdk@42.4.0",
-    "@gjsify/xeddsa@^0.62.0",
+    "@gjsify/xeddsa@0.63.0",
     "qrcode-generator@2.0.4",
     "nodemailer@10.0.15",
     "@mtcute/core@0.32.3",
@@ -5861,6 +5861,15 @@
       "dependencies": {
         "@girs/gjs": "^5.4.0",
         "@girs/glib-2.0": "^5.4.0"
+      }
+    },
+    "node_modules/@gjsify/xeddsa": {
+      "version": "0.63.0",
+      "resolved": "https://registry.npmjs.org/@gjsify/xeddsa/-/xeddsa-0.63.0.tgz",
+      "integrity": "sha512-XrXav+rFM1o6iWHabWiibCeftih+9+AQCP+X7EvH3JhYHrGr4E5TarWoP3bSRDKIhQ1iyr5hEkNo8i4ARTV6HQ==",
+      "dependencies": {
+        "@noble/curves": "^2.4.0",
+        "@noble/hashes": "^2.4.0"
       }
     },
     "node_modules/@gjsify/xmlhttprequest": {
