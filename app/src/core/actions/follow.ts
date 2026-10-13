@@ -178,10 +178,8 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
                 lastEnd = Date.now();
                 result.catchUps += 1;
                 result.added += done.added;
-                if (done.added > 0 || done.removed > 0) {
-                  log(`curlew-daemon: ${who} catch-up wrote ${done.added} added, ${done.removed} removed`);
-                  deps.onWrite();
-                }
+                log(`curlew-daemon: ${who} catch-up wrote ${done.added} added, ${done.removed} removed`);
+                if (done.added > 0 || done.removed > 0) deps.onWrite();
                 const failure = done.accounts.find((a) => a.error !== null)?.error;
                 if (failure) log(`curlew-daemon: ${who} catch-up failed: ${failure}`);
               } while (again && !live.aborted);
@@ -195,6 +193,7 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
             live.addEventListener('abort', () => resolve('stopped'), { once: true });
           });
           const unsubscribe = session.onArrival(() => {
+            log(`curlew-daemon: ${who} arrival hint — catching up`);
             const started = catchUp().catch((err: unknown) =>
               log(`curlew-daemon: ${who} catch-up failed: ${errText(err)}`),
             );

@@ -71,6 +71,21 @@ export default async () => {
       ).toBe(false);
       expect(isArrivalHint(xml('presence'))).toBe(false);
     });
+
+    await it('recognises a reply with a fallback quote and legacy OMEMO without a body', async () => {
+      const reply = xml(
+        'message',
+        { type: 'chat' },
+        xml('body', {}, '> quoted\nanswer'),
+        xml('reply', { xmlns: 'urn:xmpp:reply:0', id: 'x', to: 'a@example.org' }),
+        xml('fallback', { xmlns: 'urn:xmpp:fallback:0', for: 'urn:xmpp:reply:0' }),
+      );
+      expect(isArrivalHint(reply)).toBe(true);
+      const legacy = xml('message', { type: 'chat' }, xml('encrypted', { xmlns: 'eu.siacs.conversations.axolotl' }));
+      expect(isArrivalHint(legacy)).toBe(true);
+      const mam = xml('message', {}, xml('result', { xmlns: 'urn:xmpp:mam:2' }, xml('forwarded')));
+      expect(isArrivalHint(mam)).toBe(false);
+    });
   });
 
   await describe('the send grant', async () => {
