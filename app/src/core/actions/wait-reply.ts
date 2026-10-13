@@ -24,6 +24,8 @@ export interface WaitReplyParams {
   after: string;
   timeoutS?: number;
   includeBodies?: boolean;
+  /** Only messages whose XEP-0461 reply names this id (the `originId` send_message returned). */
+  replyTo?: string;
   dbPath?: string;
   configPath?: string;
   /** Injected by tests. */
@@ -58,12 +60,14 @@ export async function waitReply(params: WaitReplyParams): Promise<WaitReplyResul
         since: params.after,
         incomingOnly: true,
       });
-      const messages = (found?.messages ?? []).map(
-        ({ replyToClientId, ...rest }): WaitReplyMessage => ({
-          ...rest,
-          replyToId: replyToClientId ?? null,
-        }),
-      );
+      const messages = (found?.messages ?? [])
+        .map(
+          ({ replyToClientId, ...rest }): WaitReplyMessage => ({
+            ...rest,
+            replyToId: replyToClientId ?? null,
+          }),
+        )
+        .filter((m) => params.replyTo === undefined || m.replyToId === params.replyTo);
       if (messages.length > 0) {
         return {
           status: 'reply',

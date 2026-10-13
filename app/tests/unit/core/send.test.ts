@@ -242,6 +242,27 @@ export default async () => {
         expect(waited.messages.map((m) => m.replyToId).join()).toBe('oid-1,');
         expect(waited.messages[1].replyToId).toBe(null);
         expect('replyToClientId' in waited.messages[0]).toBe(false);
+        const only = await waitReply({
+          accountId: ACCOUNT,
+          peer: OWNER,
+          after: '2026-01-01T10:00:00.000Z',
+          timeoutS: 0,
+          replyTo: 'oid-1',
+          dbPath,
+          configPath: join(dir, 'none.json'),
+        });
+        expect(only.messages.length).toBe(1);
+        expect(only.messages[0].replyToId).toBe('oid-1');
+        const none = await waitReply({
+          accountId: ACCOUNT,
+          peer: OWNER,
+          after: '2026-01-01T10:00:00.000Z',
+          timeoutS: 0,
+          replyTo: 'other',
+          dbPath,
+          configPath: join(dir, 'none.json'),
+        });
+        expect(none.status).toBe('timeout');
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
