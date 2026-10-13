@@ -43,6 +43,7 @@ export const NS = {
   sid: 'urn:xmpp:sid:0',
   oob: 'jabber:x:oob',
   reply: 'urn:xmpp:reply:0',
+  fallback: 'urn:xmpp:fallback:0',
   mucUser: 'http://jabber.org/protocol/muc#user',
   omemoLegacy: 'eu.siacs.conversations.axolotl',
   omemo: 'urn:xmpp:omemo:2',
@@ -243,6 +244,25 @@ export interface ArchivedEntry {
   occupantJid: string | null;
 }
 
+/**
+ * The body without the quote a reply carries as fallback (XEP-0428 for XEP-0461): the range(s)
+ * `<fallback for='urn:xmpp:reply:0'><body start end/></fallback>` marks, in Unicode code points.
+ * Without such an element the body is returned as it came.
+ */
+export function stripReplyFallback(message: XmlElement, body: string | null): string | null {
+  if (body === null) return null;
+  const ranges = message
+    .getChildren('fallback', NS.fallback)
+    .filter((f) => f.attrs.for === NS.reply)
+    .flatMap((f) => f.getChildren('body'))
+    .map((b) => [Number(b.attrs.start), Number(b.attrs.end)] as const)
+    .filter(([start, end]) => Number.isInteger(start) && Number.isInteger(end) && start >= 0 && end > start);
+  if (ranges.length === 0) return body;
+  const chars = Array.from(body);
+  const kept = chars.filter((_, i) => !ranges.some(([start, end]) => i >= start && i < end));
+  return kept.join('').replace(/^\n/, '');
+}
+
 function retractOf(message: XmlElement): ArchivedEntry['retract'] {
   const retract = message.getChild('retract', NS.retract);
   if (retract?.attrs.id) {
@@ -305,7 +325,7 @@ export function parseMamResult(
     type: message.attrs.type ?? null,
     id: message.attrs.id ?? null,
     originId: message.getChild('origin-id', NS.sid)?.attrs.id ?? null,
-    body: message.getChildText('body'),
+    body: stripReplyFallback(message, message.getChildText('body')),
     replaceId: message.getChild('replace', NS.correct)?.attrs.id ?? null,
     retract: retractOf(message),
     tombstone: isTombstone(message),

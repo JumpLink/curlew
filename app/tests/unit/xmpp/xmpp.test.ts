@@ -198,6 +198,30 @@ export default async () => {
       expect(omemo.replyToId).toBe(null);
     });
 
+    await it('strips the XEP-0428 reply fallback from the body, and only that', async () => {
+      const quoted = '> Which one?\nThe second.';
+      const fb = `<fallback xmlns="${NS.fallback}" for="${NS.reply}"><body start="0" end="13"/></fallback>`;
+      const reply = entry({
+        id: 'f1',
+        at: at(9),
+        from: ANNA,
+        body: quoted,
+        extra: `<reply xmlns="${NS.reply}" to="${ANNA}" id="s9"/>${fb}`,
+      });
+      expect(reply.body).toBe('The second.');
+      expect(reply.replyToId).toBe('s9');
+      const noFallback = entry({ id: 'f2', at: at(10), from: ANNA, body: quoted });
+      expect(noFallback.body).toBe(quoted);
+      const other = entry({
+        id: 'f3',
+        at: at(11),
+        from: ANNA,
+        body: quoted,
+        extra: `<fallback xmlns="${NS.fallback}" for="urn:xmpp:other:0"><body start="0" end="13"/></fallback>`,
+      });
+      expect(other.body).toBe(quoted);
+    });
+
     await it('reads the roster, both bookmark forms and the fin', async () => {
       const roster = parseRoster(
         parse(
