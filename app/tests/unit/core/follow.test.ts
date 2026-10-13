@@ -14,7 +14,7 @@ import { freshDb } from '../store/fixtures.ts';
 const ACCOUNT = 'xmpp-lease1';
 const GRANT = { account: ACCOUNT, addresses: ['owner@example.org'] };
 
-function fakeLink(onClose: () => void = () => {}): XmppLink {
+function fakeLink(onClose: () => void = () => {}, onArrival?: (fire: () => void) => void): XmppLink {
   return {
     jid: 'bot@example.org',
     roster: async () => [],
@@ -24,7 +24,10 @@ function fakeLink(onClose: () => void = () => {}): XmppLink {
     close: async () => onClose(),
     sendChat: async () => {},
     goAvailable: async () => {},
-    onArrival: () => () => {},
+    onArrival: (listener) => {
+      onArrival?.(listener);
+      return () => {};
+    },
     onClosed: () => {},
   };
 }
@@ -158,6 +161,46 @@ export default async () => {
         expect(logs.some((l) => l.includes('receive lease'))).toBe(false);
         expect(leaseHolder(db)).toBe('pid-me');
 
+        controller.abort();
+        await running;
+      } finally {
+        controller.abort();
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+  });
+
+  await describe('followAccount live path', async () => {
+    await it('logs every hint and every catch-up, also one that added nothing', async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-follow-'));
+      const controller = new AbortController();
+      const logs: string[] = [];
+      let fire: () => void = () => {};
+      try {
+        const running = followAccount({
+          db: freshDb(),
+          backend,
+          open: async () =>
+            new GrantedXmppSession(
+              fakeLink(undefined, (l) => (fire = l)),
+              GRANT,
+              () => 'oid',
+            ),
+          permit: GRANT,
+          signal: controller.signal,
+          log: (line) => logs.push(line),
+          onWrite: () => {},
+          holder: 'pid-me',
+          leaseIntervalMs: 1000,
+          minGapMs: 0,
+          writeLogPath: join(dir, 'write.log'),
+        });
+        await until(() => logs.some((l) => l.includes('connected')));
+        const before = logs.filter((l) => l.includes('catch-up wrote')).length;
+        fire();
+        await until(() => logs.filter((l) => l.includes('catch-up wrote')).length > before);
+        expect(logs.some((l) => l.includes('arrival hint'))).toBe(true);
+        expect(logs.filter((l) => l.includes('catch-up wrote 0 added')).length).toBeGreaterThan(before);
         controller.abort();
         await running;
       } finally {

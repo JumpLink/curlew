@@ -52,6 +52,7 @@ export const NS = {
   receipts: 'urn:xmpp:receipts',
   markers: 'urn:xmpp:chat-markers:0',
   carbons: 'urn:xmpp:carbons:2',
+  ping: 'urn:xmpp:ping',
   hints: 'urn:xmpp:hints',
 } as const;
 
@@ -388,5 +389,9 @@ export function isArrivalHint(stanza: XmlElement): boolean {
   if (stanza.name !== 'message' || stanza.attrs.type === 'error') return false;
   if (stanza.getChild('result', NS.mam)) return false;
   if (stanza.getChild('received', NS.carbons) || stanza.getChild('sent', NS.carbons)) return true;
-  return stanza.getChild('body') !== undefined || stanza.getChild('encrypted', NS.omemo) !== undefined;
+  return (
+    stanza.getChild('body') !== undefined ||
+    stanza.getChild('encrypted', NS.omemoLegacy) !== undefined ||
+    stanza.getChild('encrypted', NS.omemo) !== undefined
+  );
 }

@@ -94,6 +94,9 @@ const NS_TLS = 'urn:ietf:params:xml:ns:xmpp-tls';
 const CONNECT_TIMEOUT_MS = 20_000;
 const QUERY_TIMEOUT_MS = 60_000;
 const CLOSE_TIMEOUT_MS = 2_000;
+/** A followed link idle this long is probed with a ping; one that does not answer is dead. */
+const PING_IDLE_MS = 30_000;
+const PING_TIMEOUT_MS = 15_000;
 
 function withTimeout<T>(promise: Promise<T>, ms: number, what: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -147,15 +150,43 @@ class XmppConnection implements XmppLink {
   private readonly iq: ReturnType<typeof iqCaller>;
   private closed = false;
   private readonly arrivals = new Set<() => void>();
+  private readonly deadListeners = new Set<(reason: string) => void>();
+  private lastHeard = Date.now();
+  private keepAlive: ReturnType<typeof setInterval> | undefined;
 
   constructor(jid: string, entity: Client, iq: ReturnType<typeof iqCaller>) {
     this.jid = jid;
     this.entity = entity;
     this.iq = iq;
     entity.on('stanza', (stanza: Element) => {
+      this.lastHeard = Date.now();
       if (this.arrivals.size === 0 || !isArrivalHint(stanza)) return;
       for (const listener of [...this.arrivals]) listener();
     });
+  }
+
+  /**
+   * A TCP connection that dies without a FIN (a changed network, a sleeping router) raises no
+   * event, and the follow session would sit silent for hours. So an idle link is pinged
+   * (XEP-0199); a server that answers with an error is alive, one that does not answer is not.
+   */
+  private startKeepAlive() {
+    if (this.keepAlive !== undefined) return;
+    this.keepAlive = setInterval(() => {
+      if (this.closed || Date.now() - this.lastHeard < PING_IDLE_MS) return;
+      this.iq
+        .get(xml('ping', { xmlns: NS.ping }), undefined, PING_TIMEOUT_MS)
+        .then(() => {
+          this.lastHeard = Date.now();
+        })
+        .catch((err: unknown) => {
+          if (typeof (err as { condition?: unknown })?.condition === 'string') {
+            this.lastHeard = Date.now();
+            return;
+          }
+          for (const listener of [...this.deadListeners]) listener('the connection stopped answering');
+        });
+    }, PING_IDLE_MS);
   }
 
   async sendChat(to: string, id: string, body: string, oobUrl?: string) {
@@ -170,6 +201,7 @@ class XmppConnection implements XmppLink {
       throw queryError(err);
     }
     await this.entity.send(followPresence());
+    this.startKeepAlive();
   }
 
   onArrival(listener: () => void) {
@@ -186,6 +218,7 @@ class XmppConnection implements XmppLink {
       told = true;
       listener(reason);
     };
+    this.deadListeners.add(once);
     this.entity.on('offline', () => once('the connection was closed'));
     this.entity.on('error', (err: unknown) => {
       const condition = (err as { condition?: unknown })?.condition;
@@ -253,6 +286,7 @@ class XmppConnection implements XmppLink {
   async close(): Promise<void> {
     if (this.closed) return;
     this.closed = true;
+    clearInterval(this.keepAlive);
     try {
       // Send </stream:stream> and give the server a moment to close its side.
       await withTimeout(
