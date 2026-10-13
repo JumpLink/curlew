@@ -81,7 +81,11 @@ export default async () => {
         xml('fallback', { xmlns: 'urn:xmpp:fallback:0', for: 'urn:xmpp:reply:0' }),
       );
       expect(isArrivalHint(reply)).toBe(true);
-      const legacy = xml('message', { type: 'chat' }, xml('encrypted', { xmlns: 'eu.siacs.conversations.axolotl' }));
+      const legacy = xml(
+        'message',
+        { type: 'chat' },
+        xml('encrypted', { xmlns: 'eu.siacs.conversations.axolotl' }),
+      );
       expect(isArrivalHint(legacy)).toBe(true);
       const mam = xml('message', {}, xml('result', { xmlns: 'urn:xmpp:mam:2' }, xml('forwarded')));
       expect(isArrivalHint(mam)).toBe(false);

@@ -181,7 +181,11 @@ export default async () => {
           db: freshDb(),
           backend,
           open: async () =>
-            new GrantedXmppSession(fakeLink(undefined, (l) => (fire = l)), GRANT, () => 'oid'),
+            new GrantedXmppSession(
+              fakeLink(undefined, (l) => (fire = l)),
+              GRANT,
+              () => 'oid',
+            ),
           permit: GRANT,
           signal: controller.signal,
           log: (line) => logs.push(line),
