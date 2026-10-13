@@ -113,7 +113,11 @@ export function registerConversationTools(server: McpServer): void {
         after: z.string().min(1).describe('ISO 8601 cursor: only messages sent after it'),
         timeout_s: z.number().min(0).max(WAIT_TIMEOUT_S.max).optional().describe('Seconds to wait'),
         include_bodies: z.boolean().optional().describe('Include message text (default true)'),
-        reply_to: z.string().min(1).optional().describe('Only replies to this message: the originId send_message returned'),
+        reply_to: z
+          .string()
+          .min(1)
+          .optional()
+          .describe('Only replies to this message: the originId send_message returned'),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
