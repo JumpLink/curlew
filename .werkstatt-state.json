@@ -11,7 +11,7 @@
     {
       "path": "$XDG_DATA_HOME/curlew/writes.log",
       "class": "state",
-      "recreate": "Nicht rekonstruierbar: Audit-Zeilen (Zeit, Capability, Ziel, Frontend, Id) jedes Schreibvorgangs, nie Nachrichtentext. Nur sichern, nicht wiederherstellbar aus dem Index."
+      "why": "Nicht rekonstruierbar: Audit-Zeilen (Zeit, Capability, Ziel, Frontend, Id) jedes Schreibvorgangs, nie Nachrichtentext. Nur sichern, nicht wiederherstellbar aus dem Index."
     }
   ]
 }
