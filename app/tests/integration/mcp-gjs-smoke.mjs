@@ -53,6 +53,7 @@ const EXPECTED_TOOLS = [
   'mail_search',
   'mail_search_local',
   'mail_sync_status',
+  'messaging_capabilities',
   'setup_status',
   'xmpp_wait_reply',
 ];
