@@ -28,7 +28,7 @@ import { registerSendTools } from './tools/send.ts';
 import { registerSetupTools } from './tools/setup.ts';
 
 const SERVER_NAME = 'curlew';
-const SERVER_VERSION = '0.1.0';
+const SERVER_VERSION = '0.2.0';
 
 /** Every registrar, in the order their tools should appear. */
 const REGISTRARS: Array<(server: McpServer) => void> = [

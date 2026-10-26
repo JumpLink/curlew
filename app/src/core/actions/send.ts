@@ -25,6 +25,7 @@ import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig, type CurlewConfig } from '../config.ts';
 import { type Grant, isGranted } from '../grants.ts';
+import { MAX_CHUNK_CHARS, renderForXmpp, type MessageFormat } from '../markdown.ts';
 import { appendWriteLog, type WriteFrontend } from '../write-log.ts';
 import { openIndex } from './index-sync.ts';
 
@@ -38,6 +39,8 @@ export interface SendParams {
   text?: string;
   /** An https URL sent as its own message (body = URL + XEP-0066 `jabber:x:oob`), shown inline by clients. */
   imageUrl?: string;
+  /** `plain` (default) sends `text` as is; `markdown` renders it as XEP-0393 and splits long texts. */
+  format?: MessageFormat;
   frontend: WriteFrontend;
   dbPath?: string;
   configPath?: string;
@@ -61,6 +64,10 @@ export interface SendResult {
   imageOriginId?: string;
   /** Local clock, ISO 8601: pass it as `since` when waiting for the reply. */
   sentAt: string;
+  /** Markdown only: how many messages went out (text parts and images). */
+  parts?: number;
+  /** Markdown only: every message's origin-id, in order. */
+  originIds?: string[];
 }
 
 /** The grant target of an `xmpp.send` pair. */
@@ -107,12 +114,29 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
   const account = (await backend.listAccounts()).find((a) => a.id === params.accountId);
   if (!account) throw new Error(`no xmpp account ${params.accountId} — \`curlew accounts list\` shows them`);
 
+  const markdown = params.format === 'markdown';
+  const plan: Array<{ kind: 'text' | 'image'; value: string }> = [];
+  if (markdown && text !== undefined) {
+    for (const seg of renderForXmpp(text, undefined, MAX_CHUNK_CHARS))
+      plan.push(seg.kind === 'text' ? { kind: 'text', value: seg.text } : { kind: 'image', value: seg.url });
+  } else if (text !== undefined) {
+    plan.push({ kind: 'text', value: text });
+  }
+  if (imageUrl !== undefined) plan.push({ kind: 'image', value: imageUrl });
+  if (plan.length === 0) throw new Error('nothing to send: the text is empty after rendering');
+  for (const step of plan) if (step.kind === 'image') step.value = validateImageUrl(step.value);
+
   const session = await backend.openGranted(params.accountId, permitFor(config.grants, params.accountId));
   const sends: Array<{ sent: SentChat; body: string }> = [];
   try {
-    if (text !== undefined) sends.push({ sent: await session.send(params.to, text), body: text });
-    if (imageUrl !== undefined)
-      sends.push({ sent: await session.sendImage(params.to, imageUrl), body: imageUrl });
+    for (const step of plan)
+      sends.push({
+        sent:
+          step.kind === 'text'
+            ? await session.send(params.to, step.value)
+            : await session.sendImage(params.to, step.value),
+        body: step.value,
+      });
   } finally {
     await session.close().catch(() => {});
   }
@@ -140,7 +164,8 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
     ...recorded[0],
     chatJid: first.chatJid,
     originId: first.originId,
-    ...(sends.length > 1 ? { imageOriginId: sends[1].sent.originId } : {}),
+    ...(!markdown && sends.length > 1 ? { imageOriginId: sends[1].sent.originId } : {}),
+    ...(markdown ? { parts: sends.length, originIds: sends.map((x) => x.sent.originId) } : {}),
     sentAt: first.sentAt,
   };
 }

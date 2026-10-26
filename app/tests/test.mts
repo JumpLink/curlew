@@ -50,6 +50,7 @@ import registry from './unit/core/registry.test.ts';
 import grants from './unit/core/grants.test.ts';
 import capabilities from './unit/core/capabilities.test.ts';
 import send from './unit/core/send.test.ts';
+import markdown from './unit/core/markdown.test.ts';
 import daemon from './unit/core/daemon.test.ts';
 import follow from './unit/core/follow.test.ts';
 import deliveries from './unit/core/deliveries.test.ts';
@@ -109,6 +110,7 @@ run({
   registry,
   grants,
   send,
+  markdown,
   daemon,
   follow,
   deliveries,

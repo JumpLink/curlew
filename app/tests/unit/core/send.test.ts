@@ -6,10 +6,10 @@ import { join } from 'node:path';
 
 import { chatConversationId, getConversation, recordSentChatMessage } from '@curlew/store';
 import { chatMessage, GrantedXmppSession, isArrivalHint, validateImageUrl } from '@curlew/xmpp';
-import type { XmppLink } from '@curlew/xmpp';
+import type { XmppBackend, XmppLink } from '@curlew/xmpp';
 import xml from '@xmpp/xml';
 
-import { permitFor, recordDelivered, requireSendGrant } from '../../../src/core/actions/send.ts';
+import { permitFor, recordDelivered, requireSendGrant, sendMessage } from '../../../src/core/actions/send.ts';
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
 import { waitReply } from '../../../src/core/actions/wait-reply.ts';
 import { appendWriteLog } from '../../../src/core/write-log.ts';
@@ -358,6 +358,62 @@ export default async () => {
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
+    });
+  });
+  await describe('sendMessage formats', async () => {
+    const run = async (params: { text: string; format?: 'plain' | 'markdown' }) => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-fmt-'));
+      try {
+        const configPath = join(dir, 'config.json');
+        writeFileSync(configPath, JSON.stringify({ grants: GRANTS }));
+        const sent: Array<[string, string, string]> = [];
+        const oob: string[] = [];
+        let n = 0;
+        const backend = {
+          listAccounts: async () => [ACCOUNT_INFO],
+          openGranted: async (_id: string, permit: ReturnType<typeof permitFor>) =>
+            new GrantedXmppSession(fakeLink(sent, oob), permit, () => `id-${++n}`),
+        } as unknown as XmppBackend;
+        const out = await sendMessage({
+          accountId: ACCOUNT,
+          to: OWNER,
+          ...params,
+          frontend: 'cli',
+          dbPath: join(dir, 'index.db'),
+          configPath,
+          writeLogPath: join(dir, 'write.log'),
+          backend,
+        });
+        return { out, sent, oob };
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    };
+
+    await it('sends plain text unchanged by default, without parts', async () => {
+      const { out, sent } = await run({ text: '**not bold**' });
+      expect(sent.length).toBe(1);
+      expect(sent[0][2]).toBe('**not bold**');
+      expect('parts' in out).toBe(false);
+      expect('originIds' in out).toBe(false);
+      expect(out.originId).toBe('id-1');
+    });
+
+    await it('markdown renders, reports parts and the first id as originId', async () => {
+      const { out, sent } = await run({ text: '**bold**', format: 'markdown' });
+      expect(sent.length).toBe(1);
+      expect(sent[0][2]).toBe('*bold*');
+      expect(out.parts).toBe(1);
+      expect(out.originIds?.join()).toBe('id-1');
+    });
+
+    await it('markdown splits an over-long text into several messages', async () => {
+      const line = 'x'.repeat(99);
+      const text = Array.from({ length: 200 }, () => line).join('\n');
+      const { out, sent } = await run({ text, format: 'markdown' });
+      expect(sent.length > 1).toBe(true);
+      expect(out.parts).toBe(sent.length);
+      expect(out.originId).toBe(out.originIds?.[0]);
     });
   });
 };

@@ -8,7 +8,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { mcpSuccess } from '@gjsify/mcp';
 
-import { accountsList } from '../../../core/actions/index.ts';
+import { accountsList, messagingCapabilities } from '../../../core/actions/index.ts';
 import { mcpErrorFrom } from '../types.ts';
 
 export function registerAccountsTools(server: McpServer): void {
@@ -24,6 +24,23 @@ export function registerAccountsTools(server: McpServer): void {
       try {
         const accounts = await accountsList();
         return mcpSuccess({ count: accounts.length, accounts });
+      } catch (err) {
+        return mcpErrorFrom(err);
+      }
+    },
+  );
+
+  server.registerTool(
+    'messaging_capabilities',
+    {
+      title: 'Messaging Capabilities',
+      description:
+        'Per messaging protocol: the account ids granted for sending, the maximum message length, the supported send formats (plain, markdown), how markdown is rendered, whether long texts are split, whether images are supported and the wait timeout of xmpp_wait_reply. Static facts and account ids only; no addresses or messages.',
+      annotations: { readOnlyHint: true, openWorldHint: false },
+    },
+    async () => {
+      try {
+        return mcpSuccess(messagingCapabilities());
       } catch (err) {
         return mcpErrorFrom(err);
       }

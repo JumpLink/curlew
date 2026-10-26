@@ -447,6 +447,14 @@ The MCP server offers the same as `send_message` (`account`, `to`, `text`,
 `image_url`; at least one of the last two) —
 only when a matching grant exists; without one the tool is not even listed and
 the server stays read-only. The answer carries `conversationId`, `sentAt` and `originId`.
+`send_message` also takes `format`: `plain` (default, the text goes out as is) or
+`markdown`. Markdown is rendered as XEP-0393 message styling (other protocols would get
+a plain-text degradation), an image link on its own line becomes an image message, and a
+text over 7000 characters is split at line breaks into several messages instead of being
+refused. A markdown answer adds `parts` (how many messages went out) and `originIds`
+(every id, in order; `originId` is the first). The read-only tool `messaging_capabilities`
+reports per protocol the maximum message length, the formats, image support, the longest
+`timeout_s` and whether long texts are split — no addresses, no account data.
 The message goes out as `type=chat` with an origin-id (XEP-0359), a receipt
 request (XEP-0184) and `markable`; it is stored in the index as your own
 message, and the archive's copy replaces that local echo on the next sync.
@@ -464,6 +472,8 @@ Each reply message has `replyToId`, the id its XEP-0461 `<reply>` names (null
 when it is not a reply). `send_message` returns `originId` — the message's
 stanza `id`, identical to its origin-id (XEP-0359) — so compare the two to see
 which sent message was answered.
+With `strip_quotes: true` the quoted lines (`> …`) a client adds to a reply are removed
+from each message's text; the default is `false`, and a message that is only a quote is kept.
 `conversations_get {id, since, incoming_only}` is the non-blocking form. The
 cursor compares the sender's timestamp with the one you stored, so a badly
 skewed clock can hide or repeat a message.
