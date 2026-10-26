@@ -72,7 +72,7 @@ export const UNIT_TEMPLATE = `# Written by \`curlew setup\`. The paths below are
 # \`loginctl enable-linger\` is what lets a user unit run at all without a session.
 # StartLimit* belong to [Unit], not [Service] (systemd ignores them there) — a restart storm,
 # say a config that no longer names a backend, must not fill the disk.
-Description=curlew — receive Signal and WhatsApp into the local index
+Description=curlew — receive Signal, WhatsApp and XMPP into the local index
 Documentation=https://github.com/jumplink/curlew/blob/main/docs/adr/0002-receiving-daemon.md
 StartLimitIntervalSec=300
 StartLimitBurst=5

@@ -1,7 +1,7 @@
 [Unit]
 # curlew — the receiving daemon (ADR 0002).
 #
-# It receives Signal and WhatsApp into the local index and keeps doing so while you do
+# It receives Signal, WhatsApp and XMPP into the local index and keeps doing so while you do
 # nothing: those networks keep no archive, so what the daemon writes is the only copy
 # (see the WhatsApp and Signal sections of the README).
 #
@@ -17,7 +17,7 @@
 #   journalctl --user -u curlew-daemon -f
 #
 # Verify: systemd-analyze --user verify <this file>
-Description=curlew — receive Signal and WhatsApp into the local index
+Description=curlew — receive Signal, WhatsApp and XMPP into the local index
 Documentation=https://github.com/jumplink/curlew/blob/main/docs/adr/0002-receiving-daemon.md
 # No After=/PartOf=graphical-session.target on purpose: logging out must not stop a receiver
 # whose whole point is staying connected, and the address book it uses for the participant
