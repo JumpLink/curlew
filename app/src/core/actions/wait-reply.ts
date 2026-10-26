@@ -11,6 +11,7 @@
 import type { ConversationMessage } from '@curlew/protocol';
 import { chatConversationId, configPath, getConversation, indexDbPath } from '@curlew/store';
 import { loadConfig } from '../config.ts';
+import { stripQuotes } from '../markdown.ts';
 import { openIndex } from './index-sync.ts';
 
 export const WAIT_TIMEOUT_S = { default: 30, max: 120 } as const;
@@ -26,6 +27,8 @@ export interface WaitReplyParams {
   includeBodies?: boolean;
   /** Only messages whose XEP-0461 reply names this id (the `originId` send_message returned). */
   replyTo?: string;
+  /** Remove quoted lines (`>`, XEP-0393 / a reply's fallback) from the bodies. Default false. */
+  stripQuotes?: boolean;
   dbPath?: string;
   configPath?: string;
   /** Injected by tests. */
@@ -67,7 +70,8 @@ export async function waitReply(params: WaitReplyParams): Promise<WaitReplyResul
             replyToId: replyToClientId ?? null,
           }),
         )
-        .filter((m) => params.replyTo === undefined || m.replyToId === params.replyTo);
+        .filter((m) => params.replyTo === undefined || m.replyToId === params.replyTo)
+        .map((m) => (params.stripQuotes && m.bodyText ? { ...m, bodyText: stripQuotes(m.bodyText) } : m));
       if (messages.length > 0) {
         return {
           status: 'reply',
