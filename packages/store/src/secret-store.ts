@@ -36,6 +36,8 @@ export class SecretStore {
   readonly path: string;
   /** The queue `transaction` serializes on; see there for why one connection needs it. */
   #lock: Promise<unknown> = Promise.resolve();
+  /** Whether `transaction` currently holds the write lock, so `apply` must not open a second. */
+  #inTransaction = false;
 
   private constructor(db: DatabaseSync, path: string) {
     this.db = db;
@@ -120,7 +122,10 @@ export class SecretStore {
       list.push(c.key);
       deletes.set(c.namespace, list);
     }
-    withTransaction(this.db, () => {
+    // Inline when `transaction` already holds the lock: SQLite has no nested transaction, so a
+    // second `BEGIN` on this connection would throw — and an `apply` inside a ratchet step is
+    // the normal case, not an exotic one.
+    const write = () => {
       for (const [namespace, keys] of deletes) {
         for (let i = 0; i < keys.length; i += DELETE_CHUNK) {
           const chunk = keys.slice(i, i + DELETE_CHUNK);
@@ -134,7 +139,9 @@ export class SecretStore {
         'INSERT OR REPLACE INTO secrets (namespace, key, value)',
         puts.map((c) => [c.namespace, c.key, c.value]),
       );
-    });
+    };
+    if (this.#inTransaction) write();
+    else withTransaction(this.db, write);
   }
 
   /**
@@ -171,13 +178,16 @@ export class SecretStore {
 
   async #runTransaction<T>(fn: () => T | Promise<T>): Promise<T> {
     this.db.exec('BEGIN IMMEDIATE');
+    this.#inTransaction = true;
     let result: T;
     try {
       result = await fn();
     } catch (err) {
+      this.#inTransaction = false;
       this.db.exec('ROLLBACK');
       throw err;
     }
+    this.#inTransaction = false;
     this.db.exec('COMMIT');
     return result;
   }

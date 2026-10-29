@@ -15,6 +15,7 @@
     "src"
   ],
   "dependencies": {
+    "@curlew/omemo": "*",
     "@curlew/protocol": "*",
     "@curlew/store": "*",
     "@xmpp/client-core": "0.14.0",
