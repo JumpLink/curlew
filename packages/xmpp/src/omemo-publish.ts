@@ -93,59 +93,79 @@ export async function announceDevice(
 }
 
 /**
+ * The answer to "which devices does this JID have?".
+ *
+ * `failed` is not the same as an empty list, and the send path is why: an empty list means the
+ * peer has no OMEMO and a plaintext message is what they can read, while `failed` means we do
+ * not know — and ADR 0006 §7 refuses to send rather than guess, because guessing wrong sends in
+ * the clear. `stale` marks a list we served from an expired cache after the server would not
+ * answer: good enough to encrypt for, not good enough to conclude the peer dropped a device.
+ */
+export type DeviceListLookup =
+  | { readonly kind: 'list'; readonly deviceIds: DeviceId[]; readonly stale: boolean }
+  | { readonly kind: 'failed' };
+
+/**
  * A JID's device ids, from the cache while it is fresh.
  *
  * A server that answers with an error leaves the cached list in place and returns it: a PEP node
- * that is briefly unavailable should not make a contact look like they left OMEMO behind.
+ * that is briefly unavailable should not make a contact look like they left OMEMO behind. With
+ * no cache to fall back on there is no list at all, and the caller is told so.
  */
 export async function fetchDeviceList(
   pep: PepPort,
   storage: OmemoStorage,
   jid: string,
   options: { now?: () => Date; ttlMs?: number } = {},
-): Promise<DeviceId[]> {
+): Promise<DeviceListLookup> {
   const now = (options.now ?? (() => new Date()))();
   const ttl = options.ttlMs ?? DEVICE_LIST_TTL_MS;
   const cached = await storage.loadDeviceList(jid);
   const age = now.getTime() - Date.parse(cached?.fetchedAt ?? '');
-  if (cached !== undefined && Number.isFinite(age) && age >= 0 && age < ttl) return [...cached.deviceIds];
+  if (cached !== undefined && Number.isFinite(age) && age >= 0 && age < ttl) {
+    return { kind: 'list', deviceIds: [...cached.deviceIds], stale: false };
+  }
 
   let deviceIds: DeviceId[];
   try {
     deviceIds = parseDeviceList(await pep.pepGet(jid, deviceListQuery()));
   } catch {
-    return cached === undefined ? [] : [...cached.deviceIds];
+    if (cached === undefined) return { kind: 'failed' };
+    return { kind: 'list', deviceIds: [...cached.deviceIds], stale: true };
   }
   const record: DeviceListRecord = { deviceIds, fetchedAt: now.toISOString() };
   await storage.saveDeviceList(jid, record);
-  return deviceIds;
+  return { kind: 'list', deviceIds, stale: false };
 }
 
 /**
- * One device's published bundle, or undefined when there is none to use.
+ * The answer to "what did this device publish?".
  *
- * Undefined also covers a bundle whose signed prekey signature does not check out
- * (`assertBundleUsable`): a bundle that fails there is not a bundle this account may build a
- * session on, and the caller's answer is the same as for a device that published nothing.
+ * Same distinction as {@link DeviceListLookup} and for the same reason, with one more case:
+ * `none` is a device that published nothing usable — it announced itself and has not been
+ * online since, or its signed prekey signature does not check out (`assertBundleUsable`), which
+ * is not a bundle this account may build a session on either way.
  */
-export async function fetchBundle(
-  pep: PepPort,
-  jid: string,
-  deviceId: DeviceId,
-): Promise<DeviceBundle | undefined> {
+export type BundleLookup =
+  | { readonly kind: 'bundle'; readonly bundle: DeviceBundle }
+  | { readonly kind: 'none' }
+  | { readonly kind: 'failed' };
+
+/** One device's published bundle. */
+export async function fetchBundle(pep: PepPort, jid: string, deviceId: DeviceId): Promise<BundleLookup> {
   let bundle: DeviceBundle | undefined;
   try {
     bundle = parseBundle(await pep.pepGet(jid, bundleQuery(deviceId)));
   } catch {
-    return undefined;
+    return { kind: 'failed' };
   }
-  if (bundle === undefined) return undefined;
+  if (bundle === undefined) return { kind: 'none' };
   try {
     await assertBundleUsable(bundle);
   } catch {
-    return undefined;
+    return { kind: 'none' };
   }
-  return bundle;
+  return { kind: 'bundle', bundle };
 }
 
 /**

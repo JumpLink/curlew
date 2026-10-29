@@ -17,6 +17,8 @@ import { decryptEntries } from './omemo-archive.ts';
 import type { UndecryptableReason } from './omemo-receive.ts';
 import type { OmemoDeviceOptions, OwnDevice } from './omemo-device.ts';
 import { announceDevice, type Announcement, type PepPort } from './omemo-publish.ts';
+import { omemoEncryptFor } from './omemo-send.ts';
+import type { EncryptedStanza } from './omemo-stanza.ts';
 import { SecretStoreOmemoStorage } from './omemo-storage.ts';
 import type { DecryptEntries } from './session.ts';
 import type { ArchivedEntry } from './stanza.ts';
@@ -34,6 +36,14 @@ export interface OmemoSession {
   readonly announcement: Announcement;
   /** Ready to hand to {@link XmppChatSession}. */
   readonly decrypt: DecryptEntries;
+  /**
+   * Encrypt one outgoing 1:1 message, or answer null when the peer has no OMEMO devices.
+   *
+   * Ready to hand to a `GrantedXmppSession`. Text null is an empty OMEMO message — key material
+   * through every ratchet and no payload. A throw is `OmemoSendRefusedError`: nothing was
+   * encrypted and nothing may go out in the clear (§7).
+   */
+  encrypt(peerJid: string, text: string | null): Promise<EncryptedStanza | null>;
 }
 
 /**
@@ -49,6 +59,11 @@ export async function openOmemo(
   const storage = new SecretStoreOmemoStorage(store);
   const announcement = await announceDevice(pep, storage, selfJid, options);
   const device = announcement.device;
+  const shared = {
+    ...(options.profile === undefined ? {} : { profile: options.profile }),
+    ...(options.now === undefined ? {} : { now: options.now }),
+    ...(options.random === undefined ? {} : { random: options.random }),
+  };
   return {
     storage,
     device,
@@ -56,10 +71,10 @@ export async function openOmemo(
     decrypt: (entries, journalOnly) =>
       decryptEntries(storage, device, selfJid, entries, {
         journalOnly,
-        ...(options.profile === undefined ? {} : { profile: options.profile }),
-        ...(options.now === undefined ? {} : { now: options.now }),
-        ...(options.random === undefined ? {} : { random: options.random }),
+        ...shared,
         ...(options.onUndecryptable === undefined ? {} : { onUndecryptable: options.onUndecryptable }),
       }),
+    encrypt: (peerJid, text) =>
+      omemoEncryptFor(pep, storage, device, selfJid, peerJid, text, shared),
   };
 }

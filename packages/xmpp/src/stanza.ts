@@ -54,6 +54,7 @@ export const NS = {
   carbons: 'urn:xmpp:carbons:2',
   ping: 'urn:xmpp:ping',
   hints: 'urn:xmpp:hints',
+  eme: 'urn:xmpp:eme:0',
 } as const;
 
 // ── JIDs ────────────────────────────────────────────────────────────────
@@ -391,12 +392,30 @@ export interface ChatMessageSpec {
 }
 
 /**
- * A 1:1 chat message: plain text, `origin-id` so the archive's copy can be matched to it, a
- * receipt request (XEP-0184), `markable` (XEP-0333) so the peer's client may answer with
- * markers, and a `store` hint (XEP-0334) so the server archives it. Never encrypted: OMEMO is
- * not implemented. With `oobUrl` the message also carries `<x xmlns='jabber:x:oob'><url>…</url></x>`;
- * the caller makes the body that same URL, which is how Conversations, Gajim and Monocles decide
- * to render the file inline instead of as text.
+ * What every 1:1 chat message carries besides its content: `origin-id` (XEP-0359) so the
+ * archive's copy can be matched to it, a receipt request (XEP-0184), `markable` (XEP-0333) so
+ * the peer's client may answer with markers, and a `store` hint (XEP-0334) so the server
+ * archives it.
+ *
+ * Shared with the OMEMO builder in `omemo-stanza.ts`: an encrypted message is the same message
+ * with the text replaced, and an envelope that drifted between the two would show up as our own
+ * sent messages going missing from the archive on one path only.
+ */
+export function chatEnvelope(id: string) {
+  return [
+    xml('origin-id', { xmlns: NS.sid, id }),
+    xml('request', { xmlns: NS.receipts }),
+    xml('markable', { xmlns: NS.markers }),
+    xml('store', { xmlns: NS.hints }),
+  ];
+}
+
+/**
+ * A 1:1 chat message in plain text, with the envelope above. Not encrypted — the OMEMO one is
+ * `encryptedChatMessage` in `omemo-stanza.ts`, and the policy that decides between them is
+ * `omemo-send.ts`. With `oobUrl` the message also carries
+ * `<x xmlns='jabber:x:oob'><url>…</url></x>`; the caller makes the body that same URL, which is
+ * how Conversations, Gajim and Monocles decide to render the file inline instead of as text.
  */
 export function chatMessage(spec: ChatMessageSpec) {
   return xml(
@@ -404,10 +423,7 @@ export function chatMessage(spec: ChatMessageSpec) {
     { type: 'chat', to: spec.to, id: spec.id },
     xml('body', {}, spec.body),
     ...(spec.oobUrl ? [xml('x', { xmlns: NS.oob }, xml('url', {}, spec.oobUrl))] : []),
-    xml('origin-id', { xmlns: NS.sid, id: spec.id }),
-    xml('request', { xmlns: NS.receipts }),
-    xml('markable', { xmlns: NS.markers }),
-    xml('store', { xmlns: NS.hints }),
+    ...chatEnvelope(spec.id),
   );
 }
 

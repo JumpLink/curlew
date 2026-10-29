@@ -41,6 +41,7 @@ import SASLFactory from 'saslmechanisms';
 import { readFileSync } from 'node:fs';
 import tls from 'node:tls';
 import { type MamPage, type MamQuery, type XmppApi, type XmppLink, XmppQueryError } from './api.ts';
+import { encryptedChatMessage, type EncryptedStanza } from './omemo-stanza.ts';
 import {
   type DiscoveryDeps,
   discoverEndpoints,
@@ -191,6 +192,12 @@ class XmppConnection implements XmppLink {
 
   async sendChat(to: string, id: string, body: string, oobUrl?: string) {
     await this.entity.send(chatMessage({ to, id, body, oobUrl }));
+  }
+
+  async sendEncrypted(to: string, id: string, encrypted: EncryptedStanza, fallback?: string) {
+    await this.entity.send(
+      encryptedChatMessage({ to, id, encrypted, ...(fallback === undefined ? {} : { fallback }) }),
+    );
   }
 
   /**

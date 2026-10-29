@@ -25,7 +25,7 @@ import {
   type DeviceId,
   type PublishedPreKey,
 } from '@curlew/omemo';
-import { NS, type XmlElement } from './stanza.ts';
+import { chatEnvelope, NS, type XmlElement } from './stanza.ts';
 
 /** The PEP node every device of an account publishes its device id into. */
 export const DEVICE_LIST_NODE = `${NS.omemoLegacy}.devicelist`;
@@ -273,6 +273,91 @@ export function parseEncryptedElement(encrypted: XmlElement): EncryptedStanza | 
 
   const payload = decodeBytes(encrypted.getChildText('payload', NS.omemoLegacy));
   return { senderDeviceId, keys, iv, ...(payload === undefined ? {} : { payload }) };
+}
+
+/**
+ * The `<encrypted>` element for a stanza we are sending.
+ *
+ * The inverse of {@link parseEncryptedElement}, and tested against it: what this builds must
+ * parse back to what it was given, or a peer running the same grammar reads nothing.
+ *
+ * `prekey='true'`, not `'1'`: both are accepted in the wild, but Conversations writes `true` and
+ * one old client is known to compare the attribute as a string.
+ */
+export function encryptedElement(stanza: EncryptedStanza) {
+  return xml(
+    'encrypted',
+    { xmlns: NS.omemoLegacy },
+    xml(
+      'header',
+      { sid: String(stanza.senderDeviceId) },
+      ...stanza.keys.map((key) =>
+        xml(
+          'key',
+          { rid: String(key.deviceId), ...(key.keyExchange ? { prekey: 'true' } : {}) },
+          toBase64(key.bytes),
+        ),
+      ),
+      xml('iv', {}, toBase64(stanza.iv)),
+    ),
+    ...(stanza.payload === undefined ? [] : [xml('payload', {}, toBase64(stanza.payload))]),
+  );
+}
+
+/** What an {@link encryptedChatMessage} needs beyond the ciphertext. */
+export interface EncryptedMessageSpec {
+  /** The recipient's bare JID. */
+  to: string;
+  /** The stanza id, which is also the origin-id — what the archive's echo is matched by. */
+  id: string;
+  encrypted: EncryptedStanza;
+  /**
+   * A plaintext `<body>` for clients that cannot read OMEMO at all.
+   *
+   * It says that a message arrived and could not be shown — never any part of the message
+   * itself, which would hand the server exactly what the encryption is for. Omit it for a
+   * message with no content to announce (see {@link omemoHeartbeat}).
+   */
+  fallback?: string;
+}
+
+/**
+ * A 1:1 chat message whose content is the `<encrypted>` element.
+ *
+ * Same envelope as a plaintext `chatMessage` — the archive must store it and the peer must be
+ * able to acknowledge it — plus `<encryption>` (XEP-0380), which is what lets a client that
+ * cannot decrypt say "an OMEMO message" instead of showing the fallback body as if it were what
+ * the sender wrote.
+ */
+export function encryptedChatMessage(spec: EncryptedMessageSpec) {
+  return xml(
+    'message',
+    { type: 'chat', to: spec.to, id: spec.id },
+    ...(spec.fallback === undefined ? [] : [xml('body', {}, spec.fallback)]),
+    encryptedElement(spec.encrypted),
+    xml('encryption', { xmlns: NS.eme, namespace: NS.omemoLegacy, name: 'OMEMO' }),
+    ...chatEnvelope(spec.id),
+  );
+}
+
+/**
+ * An empty OMEMO message: key material for the addressed devices and nothing else.
+ *
+ * XEP-0384 §4.6 — the way a device establishes or repairs a session without saying anything.
+ * It carries no `<payload>`, so there is nothing to show, and therefore no envelope either:
+ * `<no-store>` keeps it out of both archives, and no receipt or marker is requested, so a
+ * peer's client has no reason to surface it. A heartbeat that got archived would reappear on
+ * every sync as a message with no text.
+ */
+export function omemoHeartbeat(to: string, id: string, encrypted: EncryptedStanza) {
+  return xml(
+    'message',
+    { type: 'chat', to, id },
+    encryptedElement(encrypted),
+    xml('encryption', { xmlns: NS.eme, namespace: NS.omemoLegacy, name: 'OMEMO' }),
+    xml('no-store', { xmlns: NS.hints }),
+    xml('no-permanent-store', { xmlns: NS.hints }),
+  );
 }
 
 /** `prekey='true'` and `prekey='1'` both occur in the wild. */
