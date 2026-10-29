@@ -244,7 +244,18 @@ export interface EncryptedStanza {
  */
 export function parseEncrypted(message: XmlElement): EncryptedStanza | undefined {
   const encrypted = message.getChild('encrypted', NS.omemoLegacy);
-  const header = encrypted?.getChild('header', NS.omemoLegacy);
+  return encrypted === undefined ? undefined : parseEncryptedElement(encrypted);
+}
+
+/**
+ * The same, for an `<encrypted>` element already in hand — what `ArchivedEntry.omemo` carries.
+ *
+ * The caller has established the namespace by then (`ArchivedEntry.omemo.version`), so this one
+ * does not check it again; handing it a `urn:xmpp:omemo:2` element yields undefined, because the
+ * children it looks for are not there under the legacy namespace.
+ */
+export function parseEncryptedElement(encrypted: XmlElement): EncryptedStanza | undefined {
+  const header = encrypted.getChild('header', NS.omemoLegacy);
   if (!header) return undefined;
 
   const senderDeviceId = Number(header.attrs.sid);
@@ -260,7 +271,7 @@ export function parseEncrypted(message: XmlElement): EncryptedStanza | undefined
   }
   if (keys.length === 0) return undefined;
 
-  const payload = decodeBytes(encrypted?.getChildText('payload', NS.omemoLegacy));
+  const payload = decodeBytes(encrypted.getChildText('payload', NS.omemoLegacy));
   return { senderDeviceId, keys, iv, ...(payload === undefined ? {} : { payload }) };
 }
 
