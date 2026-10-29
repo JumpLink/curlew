@@ -64,7 +64,7 @@ export function chatMessage(
   chatId: string,
   seq: number,
   sender: ChatPeer | 'me',
-  text: string,
+  text: string | null,
   extra: Partial<ChatMessage> = {},
 ): ChatMessage {
   return {

@@ -196,8 +196,12 @@ class ChatBatch {
   readonly edits: SqlValue[][] = [];
   /** Messages stored by an earlier run that the network reports retracted: row ids. */
   readonly retracted: string[] = [];
-  /** Sender-given ids of the messages in this batch: they replace curlew's own local echoes. */
-  readonly clientIds: string[] = [];
+  /**
+   * The messages in this batch that carry a sender-given id, by that id: they replace curlew's
+   * own local echoes. The row comes along because the echo may hold text the archive copy does
+   * not — see {@link adoptEchoBody}.
+   */
+  readonly clientIds = new Map<string, SqlValue[]>();
 
   readonly backend: string;
   readonly accountId: string;
@@ -326,16 +330,22 @@ export const LOCAL_ECHO_PREFIX = 'local:';
 function writeBatch(db: IndexDatabase, batch: ChatBatch): void {
   withTransaction(db, () => {
     // The network's copy of a message curlew sent replaces the local echo written at send time.
-    if (batch.clientIds.length > 0) {
+    if (batch.clientIds.size > 0) {
       const echoes = db
         .prepare(
-          `SELECT id, remote_id FROM conversation_messages
+          `SELECT id, remote_id, body FROM conversation_messages
              WHERE backend = ? AND account_id = ? AND remote_id LIKE '${LOCAL_ECHO_PREFIX}%'`,
         )
         .all(batch.backend, batch.accountId) as Array<Record<string, unknown>>;
       if (echoes.length > 0) {
-        const met = new Set(batch.clientIds.map((id) => `${LOCAL_ECHO_PREFIX}${id}`));
-        const gone = echoes.filter((r) => met.has(String(r.remote_id))).map((r) => String(r.id));
+        const gone: string[] = [];
+        for (const echo of echoes) {
+          const remoteId = String(echo.remote_id);
+          const row = batch.clientIds.get(remoteId.slice(LOCAL_ECHO_PREFIX.length));
+          if (!remoteId.startsWith(LOCAL_ECHO_PREFIX) || row === undefined) continue;
+          adoptEchoBody(row, echo.body);
+          gone.push(String(echo.id));
+        }
         deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, gone);
       }
     }
@@ -423,6 +433,27 @@ function writeBatch(db: IndexDatabase, batch: ChatBatch): void {
          AND id IN (SELECT conversation_id FROM chat_cursors WHERE backend = ? AND account_id = ?)`,
     ).run(batch.backend, batch.accountId, batch.backend, batch.accountId);
   });
+}
+
+/** Where `body` sits in a {@link messageRow}. The INSERT's column list is the other half. */
+const BODY_COLUMN = 14;
+
+/**
+ * Give the archive's copy of a message the text its local echo already had, when the archive's
+ * copy has none.
+ *
+ * An encrypted message arrives from the archive as ciphertext this device may not be able to
+ * read — a message sent before the current ratchet step is gone for good, and its prekey is
+ * spent. The echo written at send time holds the plaintext (ADR 0006 §8), and it is about to be
+ * deleted in favour of the archive row; without this the user's own words vanish from the index
+ * the moment the server echoes them back.
+ *
+ * Only fills a hole, never overwrites: when the archive copy decrypted, that text is the one the
+ * network actually carried, and an edit made elsewhere is in it.
+ */
+function adoptEchoBody(row: SqlValue[], body: unknown): void {
+  if (row[BODY_COLUMN] !== null && row[BODY_COLUMN] !== undefined) return;
+  if (typeof body === 'string' && body.length > 0) row[BODY_COLUMN] = body;
 }
 
 function messageRow(
@@ -672,8 +703,9 @@ async function syncAccount(
       for (const member of chat.members) batch.member(conversationId, member);
       for (const m of fetched) {
         if (!m.fromSelf && m.sender) batch.member(conversationId, m.sender);
-        batch.messages.push(messageRow(batch, conversationId, chat, m));
-        if (m.clientId) batch.clientIds.push(m.clientId);
+        const row = messageRow(batch, conversationId, chat, m);
+        batch.messages.push(row);
+        if (m.clientId) batch.clientIds.set(m.clientId, row);
       }
       result.added += fetched.length;
       batch.cursors.push([

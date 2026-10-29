@@ -8,6 +8,7 @@ import {
   getConversation,
   listConversations,
   rebuildConversations,
+  recordSentChatMessage,
   syncChats,
   syncIndex,
   syncStatus,
@@ -661,6 +662,49 @@ export default async () => {
         expect(first?.bodyText).toBe('Kommst du am Sonntag?');
         expect(first?.editedAt).toBe('2026-08-01T11:00:00.000Z');
         expect(getConversation(db, DIRECT)?.messages.length).toBe(3);
+      } finally {
+        db.close();
+      }
+    });
+  });
+
+  await describe('the local echo of a sent message', async () => {
+    /** Send a message locally, then let the archive echo it back under the same client id. */
+    async function sendThenSync(archivedText: string | null) {
+      const backend = new FakeChatBackend();
+      backend.addChat({ remoteId: '1002', kind: 'direct', title: 'Ben', members: [BEN] });
+      const db = freshDb();
+      recordSentChatMessage(db, {
+        backend: 'telegram',
+        account: { id: ACCOUNT, identity: '@me_example', provider: 'Telegram' },
+        chatRemoteId: '1002',
+        clientId: 'oid-7',
+        text: 'nur lokal bekannt',
+        sentAt: '2026-08-01T10:00:00.000Z',
+      });
+      backend.post('1002', chatMessage('1002', 1, 'me', archivedText, { clientId: 'oid-7' }));
+      await syncChats(db, backend);
+      return { db, conversationId: chatConversationId('telegram', ACCOUNT, '1002') };
+    }
+
+    await it('keeps its text when the archive copy has none — an encrypted message', async () => {
+      const { db, conversationId } = await sendThenSync(null);
+      try {
+        const messages = getConversation(db, conversationId, { includeBodies: true })?.messages ?? [];
+        expect(messages.length).toBe(1);
+        expect(messages[0].ref.remoteId).toBe('1002/1');
+        expect(messages[0].bodyText).toBe('nur lokal bekannt');
+      } finally {
+        db.close();
+      }
+    });
+
+    await it("yields to the archive's own text when there is one", async () => {
+      const { db, conversationId } = await sendThenSync('wie der Server es kennt');
+      try {
+        const messages = getConversation(db, conversationId, { includeBodies: true })?.messages ?? [];
+        expect(messages.length).toBe(1);
+        expect(messages[0].bodyText).toBe('wie der Server es kennt');
       } finally {
         db.close();
       }
