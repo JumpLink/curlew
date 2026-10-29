@@ -79,6 +79,16 @@ export interface DecryptPassOptions {
    * what a caller uses to count or log them.
    */
   readonly onUndecryptable?: (entry: ArchivedEntry, reason: UndecryptableReason) => void;
+  /**
+   * Answer from the journal only, never from the ratchet — for entries the session has already
+   * moved past.
+   *
+   * A lookback window is the case: those messages are OLDER than the page and were decrypted on
+   * an earlier run, so stepping the ratchet over them again would at best report a duplicate and
+   * at worst be a ratchet running backwards. What the journal still holds is returned; the rest
+   * stays encrypted, which costs a quote inference and nothing else.
+   */
+  readonly journalOnly?: boolean;
 }
 
 /**
@@ -119,6 +129,11 @@ export async function decryptEntries(
     const journalled = await storage.loadPlaintext(entry.archiveId);
     if (journalled !== undefined) {
       out.push(decrypted(entry, journalled.text));
+      continue;
+    }
+
+    if (options.journalOnly === true) {
+      out.push(entry);
       continue;
     }
 
