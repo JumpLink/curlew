@@ -10,13 +10,10 @@
 // notices. `mcp-gjs-smoke.mjs` runs the real bundle from inside the tree, where the baked path
 // happens to be right, and is green for exactly that reason.
 //
-// gjsify gap (unfixed, gjsify fix/napi-addon-relocatable): the bundler must stop baking an
-// absolute addon path and resolve a bundle-relative one at load time. Until it does, this probe
-// reports the gap loudly and exits 0, because CI has to stay green on a repo that cannot be
-// moved yet. It is not a rubber stamp: it exits 1 if the addon fails to load, if the copy can
-// still see a `node_modules`, or if — once the fix lands — the bundle ever carries an absolute
-// addon path again. Then the banner disappears and the run itself becomes the assertion; the
-// check it stands in for is named in the banner.
+// Fixed in gjsify (measured closed on 0.64.11): the bundler no longer bakes an absolute addon
+// path but resolves a bundle-relative one at load time. This probe keeps it that way: it exits
+// 1 if the bundle carries an absolute addon path or the build root again, if the addon fails to
+// load from the copy, or if the copy can still see a `node_modules`.
 //
 // What it runs. `curlew addon-canary`, which calls `loadSignalLib()` and prints typeofs and
 // export counts: no socket, no Signal server, no account, no config, no index, no secret. No
@@ -187,62 +184,13 @@ if (!loaded) {
 }
 rmSync(scratch, { recursive: true, force: true });
 
-// Two worlds, one code path. The static scan says which one this is; below, the run is asserted
-// in both.
 if (baked.length > 0) {
-  const stillThere = existsSync(baked[0]);
-  const line = '='.repeat(78);
-  console.log(`
-${line}
-  KNOWN GAP — a built curlew bundle is not relocatable. Exiting 0 on purpose.
-${line}
-  cause        gjsify build --app gjs bakes the ABSOLUTE prebuild path of the native addon into
-               the bundle, so the bundle only loads libsignal on the machine and at the path that
-               built it. curlew cannot be shipped, copied or packaged until that changes, and
-               the failure is LATE: the bundle starts, then dies at the first Signal command
-               with "gjsify-napi: cannot resolve addon path '…'".
-
-  the assertion this stands in for
-               findBakedAddonPaths(bundle) must return nothing. It returned ${baked.length}:
-                 ${baked.join('\n                 ')}
-               The build root appears ${rootHits} time(s) in the bundle text, all of it inside
-               that path — the build machine's home directory sits in a file meant for release.
-
-  why the run above did not catch it
-               it succeeded, and that is the trap. The baked path
-                 ${baked[0]}
-               ${stillThere ? 'still exists on this machine, so the copy loaded the addon out of' : 'does not exist, so a successful run would mean the gap is already gone —'}
-               ${stillThere ? "the build tree's node_modules, not from anywhere near the copy. A tree" : 'which contradicts the scan above. Report both; never delete the scan.'}
-               ${stillThere ? 'that was moved, or a bundle built in a container, fails exactly here.' : ''}
-
-  the fix      gjsify branch fix/napi-addon-relocatable — the bundle must carry a path relative
-               to itself and resolve the prebuild at load time. When it lands, this banner
-               disappears, the run above becomes the assertion (the addon must load from the
-               copy), and an absolute addon path in the bundle text turns this probe RED.
-
-  the marker   // gjsify gap (unfixed, gjsify fix/napi-addon-relocatable)
-               in app/src/frontends/cli/addon-canary.ts — update it to the PR number when there is one
-
-  environment  CURLEW_CLI_PREBUILD is NOT set for this run. The unit test suite sets it and
-               this probe deliberately does not: on GJS the addon path comes out of the bundle,
-               so the load above needed no hint from the environment.
-
-  if the run FAILED, the gap is no longer latent
-               the tree this bundle was built at is gone or moved, and app/dist is broken right
-               now. That is a real failure, not this banner.`);
-
-  if (!loaded) {
-    fail(
-      'the relocated copy could not load the native addon while the bundle bakes an absolute ' +
-        'path. If the build tree is still on disk, something other than the known gap is broken ' +
-        '— see the output above. If it is not, the gap has been hit for real.',
-    );
-  }
-  console.log('\nKNOWN GAP reported, exit 0. Relocation is NOT fixed.');
-  process.exit(0);
+  fail(
+    `the bundle bakes ${baked.length} absolute addon path(s) again — it loads libsignal only on the ` +
+      `machine and at the path that built it:\n  ${baked.join('\n  ')}`,
+  );
 }
 
-// No absolute addon path: the gap is closed, and from here on this is an ordinary assertion.
 if (rootHits > 0) {
   fail(
     `the bundle carries the build root ${rootHits} time(s) but no absolute addon path — ` +
@@ -259,5 +207,5 @@ console.log(`OK: no absolute addon path in the bundle — none of ${repoRoot} is
 console.log(
   `OK: the relocated copy loaded libsignal — ${report.coreExports} core / ${report.zkExports} zk exports, all four Rust bindings callable`,
 );
-console.log('OK: a built curlew bundle survives being moved. The gap is closed.');
+console.log('OK: a built curlew bundle survives being moved.');
 process.exit(0);
