@@ -13,6 +13,7 @@
  * closed, every loop awaited, the conversations rebuilt once, the index closed, and then exit 0.
  */
 
+import { _, fmt } from '@curlew/protocol';
 import type { CommandModule } from 'yargs';
 
 import { daemonExitCode, REBUILD_DEBOUNCE_MS, runDeliveryDaemon } from '../../core/actions/daemon.ts';
@@ -20,17 +21,22 @@ import { pickArgv, printJson } from './output.ts';
 
 export const daemonCommand: CommandModule = {
   command: 'daemon',
-  describe:
-    'Receive from every enabled delivery-only backend (Signal, WhatsApp) and every granted XMPP account until stopped — the systemd unit in contrib/ runs this',
+  get describe() {
+    return _(
+      'Receive from every enabled delivery-only backend (Signal, WhatsApp) and every granted XMPP account until stopped — the systemd unit in contrib/ runs this',
+    );
+  },
   builder: (yargs) =>
     yargs
       .option('account', {
         type: 'string',
-        describe: 'Restrict to one account id; omit for all',
+        describe: _('Restrict to one account id; omit for all'),
       })
       .option('rebuild-debounce', {
         type: 'number',
-        describe: `Milliseconds of quiet before the conversations are rebuilt (default ${REBUILD_DEBOUNCE_MS})`,
+        describe: fmt(_('Milliseconds of quiet before the conversations are rebuilt (default {ms})'), {
+          ms: REBUILD_DEBOUNCE_MS,
+        }),
       }),
   handler: (argv) => {
     const raw = argv as Record<string, unknown>;
@@ -39,7 +45,9 @@ export const daemonCommand: CommandModule = {
       process.on(signal, () => {
         if (controller.signal.aborted) return;
         // A second signal (or a third) does not change the plan: the run is already stopping.
-        console.error(`curlew-daemon: ${signal} — stopping after the last batch is written`);
+        console.error(
+          fmt(_('curlew-daemon: {signal} — stopping after the last batch is written'), { signal }),
+        );
         controller.abort();
       });
     }

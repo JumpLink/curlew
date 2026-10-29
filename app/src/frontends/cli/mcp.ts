@@ -5,13 +5,16 @@
  * which exits as soon as its promise settles.
  */
 
+import { _ } from '@curlew/protocol';
 import type { CommandModule } from 'yargs';
 
 import { startMcpServer } from '../mcp/server.ts';
 
 export const mcpCommand: CommandModule = {
   command: 'mcp',
-  describe: 'Run the MCP server over stdio (read-only tools; for Claude Code and other clients)',
+  get describe() {
+    return _('Run the MCP server over stdio (read-only tools; for Claude Code and other clients)');
+  },
   handler: () => {
     startMcpServer().catch((err: unknown) => {
       console.error(err instanceof Error ? err.message : String(err));

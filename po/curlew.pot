@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-10-29 14:33+0100\n"
+"POT-Creation-Date: 2026-10-29 21:01+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
 #: app/src/frontends/cli/accounts.ts:22
 msgid ""
@@ -46,6 +47,369 @@ msgid ""
 "Telegram: ask for your own api_id/api_hash even if this build embeds a pair"
 msgstr ""
 
+#: app/src/frontends/cli/backends.ts:17
+msgid ""
+"List, enable or disable message backends (writes the config, never the index)"
+msgstr ""
+
+#: app/src/frontends/cli/backends.ts:22
+msgid "Choose a subcommand: list, enable, disable"
+msgstr ""
+
+#: app/src/frontends/cli/backends.ts:25
+msgid ""
+"Every backend with its sync model, capabilities and whether it is enabled"
+msgstr ""
+
+#: app/src/frontends/cli/backends.ts:32
+msgid "Enable a backend; the first enable shows its terms notice"
+msgstr ""
+
+#: app/src/frontends/cli/backends.ts:36
+msgid "Accept the backend terms notice"
+msgstr ""
+
+#: app/src/frontends/cli/backends.ts:46
+msgid "{name} has terms you have not accepted yet:"
+msgstr ""
+
+#: app/src/frontends/cli/backends.ts:53
+msgid ""
+"Nothing was changed. To accept and enable: curlew backends enable {name} --"
+"accept-terms"
+msgstr ""
+
+#: app/src/frontends/cli/backends.ts:66
+msgid "Disable a backend (its accepted terms stay recorded)"
+msgstr ""
+
+#: app/src/frontends/cli/calendar.ts:14
+msgid "List calendar events in a date range (CalDAV/local)"
+msgstr ""
+
+#: app/src/frontends/cli/calendar.ts:18
+msgid "Window start YYYY-MM-DD (default: today)"
+msgstr ""
+
+#: app/src/frontends/cli/calendar.ts:21
+msgid "Window end YYYY-MM-DD (default: +{days} days)"
+msgstr ""
+
+#: app/src/frontends/cli/calendar.ts:25
+msgid "Max events (default {default}, max {max})"
+msgstr ""
+
+#: app/src/frontends/cli/calendar.ts:30
+msgid "Restrict to a calendar source uid"
+msgstr ""
+
+#: app/src/frontends/cli/calendar.ts:31 app/src/frontends/cli/contacts.ts:30
+msgid "Restrict to a GOA account id (from \"accounts\")"
+msgstr ""
+
+#: app/src/frontends/cli/check.ts:53
+msgid ""
+"Check which backends are reachable (runtime, GNOME Online Accounts, IMAP, "
+"index)"
+msgstr ""
+
+#: app/src/frontends/cli/contacts.ts:14
+msgid "Search contacts across enabled address books (CardDAV/local)"
+msgstr ""
+
+#: app/src/frontends/cli/contacts.ts:21
+msgid "Free-text search (any field contains); omit to list all"
+msgstr ""
+
+#: app/src/frontends/cli/contacts.ts:25
+msgid "Max results (default {default}, max {max})"
+msgstr ""
+
+#: app/src/frontends/cli/conversations.ts:25
+msgid ""
+"Conversations across mail threads and chats, from the local index (built by "
+"`curlew sync`)"
+msgstr ""
+
+#: app/src/frontends/cli/conversations.ts:30
+msgid "Choose a subcommand: list, show, classify"
+msgstr ""
+
+#: app/src/frontends/cli/conversations.ts:33
+msgid "Conversations, newest first"
+msgstr ""
+
+#: app/src/frontends/cli/conversations.ts:38
+msgid ""
+"Only conversations with a person in them — no newsletters or notifications"
+msgstr ""
+
+#: app/src/frontends/cli/conversations.ts:40
+msgid "Restrict to one account id"
+msgstr ""
+
+#: app/src/frontends/cli/conversations.ts:43
+msgid "Max conversations (max {max})"
+msgstr ""
+
+#: app/src/frontends/cli/conversations.ts:60
+msgid "One conversation with its messages (bodies only with --bodies)"
+msgstr ""
+
+#: app/src/frontends/cli/conversations.ts:66
+msgid "Conversation id from `list`"
+msgstr ""
+
+#: app/src/frontends/cli/conversations.ts:68
+msgid "Include each message body from the index"
+msgstr ""
+
+#: app/src/frontends/cli/conversations.ts:69
+msgid "Only messages sent after this ISO 8601 time"
+msgstr ""
+
+#: app/src/frontends/cli/conversations.ts:70
+msgid "Only messages from the other side"
+msgstr ""
+
+#: app/src/frontends/cli/conversations.ts:73
+msgid "Per-message body cap (default {default}, max {max})"
+msgstr ""
+
+#: app/src/frontends/cli/conversations.ts:95
+msgid ""
+"Correct how mail from one sender is classified (auto = back to the rules)"
+msgstr ""
+
+#: app/src/frontends/cli/conversations.ts:98
+msgid "Sender mail address"
+msgstr ""
+
+#: app/src/frontends/cli/daemon.ts:26
+msgid ""
+"Receive from every enabled delivery-only backend (Signal, WhatsApp) and "
+"every granted XMPP account until stopped — the systemd unit in contrib/ runs "
+"this"
+msgstr ""
+
+#: app/src/frontends/cli/daemon.ts:33
+msgid "Restrict to one account id; omit for all"
+msgstr ""
+
+#: app/src/frontends/cli/daemon.ts:37
+msgid ""
+"Milliseconds of quiet before the conversations are rebuilt (default {ms})"
+msgstr ""
+
+#: app/src/frontends/cli/daemon.ts:49
+msgid "curlew-daemon: {signal} — stopping after the last batch is written"
+msgstr ""
+
+#: app/src/frontends/cli/deliveries.ts:20
+msgid ""
+"What the delivery-only backends (WhatsApp, Signal) received that curlew "
+"could not map"
+msgstr ""
+
+#: app/src/frontends/cli/deliveries.ts:24
+msgid "Choose a subcommand: set-aside"
+msgstr ""
+
+#: app/src/frontends/cli/deliveries.ts:26
+msgid ""
+"Plaintexts a backend kept because it could not read them: sender, time, "
+"reason, size"
+msgstr ""
+
+#: app/src/frontends/cli/deliveries.ts:30
+msgid "Restrict to one account id (e.g. signal-…); omit for all"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:54
+msgid ""
+"Build or update the local full-text index (the only command that writes to "
+"it)"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:60
+msgid "Restrict to one account id (GOA, or e.g. telegram-…); omit for all"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:64
+msgid "Restrict to one mailbox (skips chat backends); omit for all"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:69
+msgid ""
+"Mail: force the flag/expunge pass. Chats: re-fetch the newest window, "
+"picking up edits and removing what was deleted"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:93
+msgid "Inspect or query the local index without touching the network"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:98
+msgid "Choose a subcommand: status, search"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:101
+msgid "What the index holds, and which folders are stale"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:108
+msgid "Search the index only — offline, no server contact"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:111
+msgid "Full text across subject, sender and body"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:112 app/src/frontends/cli/mail.ts:36
+msgid "Sender contains"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:113 app/src/frontends/cli/mail.ts:39
+msgid "Subject contains"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:114 app/src/frontends/cli/mail.ts:41
+msgid "Date header on/after YYYY-MM-DD"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:115 app/src/frontends/cli/mail.ts:42
+msgid "Date header before YYYY-MM-DD"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:116 app/src/frontends/cli/mail.ts:48
+msgid "Only unseen messages"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:117 app/src/frontends/cli/mail.ts:49
+msgid "Only flagged messages"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:118
+msgid "Only messages with an attachment"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:119
+msgid "Restrict to a GOA account id"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:120
+msgid "Restrict to one mailbox (wire path)"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:123
+msgid "Max messages (max {max})"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:28
+msgid "Search mail via IMAP (newest first; headers only, never message bodies)"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:34
+msgid ""
+"Free text across headers and body (IMAP TEXT); omit to list the most recent"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:37
+msgid "Recipient contains"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:38
+msgid "Cc contains"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:40
+msgid "Body contains (excludes headers)"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:45
+msgid "ARRIVAL on/after YYYY-MM-DD (unreliable after a mailbox migration)"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:47
+msgid "ARRIVAL before YYYY-MM-DD"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:50
+msgid "Mailbox: name, wire path or role (default INBOX)"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:53
+msgid "Search every mailbox (skips All Mail, Trash and Junk)"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:57
+msgid "Max messages (default {default}, max {max})"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:64
+msgid "Restrict to a GOA account id (from \"accounts\"); omit to search all"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:98
+msgid "Fetch one full message (body + attachment metadata) by IMAP UID"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:102 app/src/frontends/cli/mail.ts:152
+#: app/src/frontends/cli/mail.ts:174
+msgid "IMAP UID (from \"search\")"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:106
+msgid "GOA account id the message belongs to (from \"accounts\")"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:108 app/src/frontends/cli/mail.ts:154
+#: app/src/frontends/cli/mail.ts:176
+msgid "Mailbox the UID belongs to (default INBOX)"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:111
+msgid "Max body characters (default {default}, max {max})"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:132
+msgid "List mailboxes with their resolved roles (inbox, sent, trash, …)"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:137
+msgid "Restrict to a GOA account id (from \"accounts\"); omit for all"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:148
+msgid "List one message's parts and their sections (what can be saved)"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:153 app/src/frontends/cli/mail.ts:175
+msgid "GOA account id"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:170
+msgid "Save an attachment to disk (decoded; never overwrites an existing file)"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:179
+msgid "IMAP section from \"parts\"; omit for the first attachment"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:181
+msgid "Directory to save into (default $XDG_DOWNLOAD_DIR)"
+msgstr ""
+
+#: app/src/frontends/cli/mail.ts:184
+msgid "Refuse a part larger than this (default {default})"
+msgstr ""
+
+#: app/src/frontends/cli/mcp.ts:16
+msgid ""
+"Run the MCP server over stdio (read-only tools; for Claude Code and other "
+"clients)"
+msgstr ""
+
 #: app/src/frontends/cli/omemo.ts:18
 msgid ""
 "Show the OMEMO device keys of an XMPP account (reads only, never connects)"
@@ -69,6 +433,104 @@ msgstr ""
 
 #: app/src/frontends/cli/prompt.ts:102
 msgid "input ended before the login was complete — nothing was saved"
+msgstr ""
+
+#: app/src/frontends/cli/send.ts:17
+msgid ""
+"Send a chat message from a granted XMPP account (needs an xmpp.send grant in "
+"the config)"
+msgstr ""
+
+#: app/src/frontends/cli/send.ts:23
+msgid "The message, plain text (optional with --image-url)"
+msgstr ""
+
+#: app/src/frontends/cli/send.ts:27
+msgid "https URL of one image, sent as its own message after the text"
+msgstr ""
+
+#: app/src/frontends/cli/send.ts:29
+msgid "XMPP account id (xmpp-…)"
+msgstr ""
+
+#: app/src/frontends/cli/send.ts:33
+msgid "Bare address exactly as the grant spells it (name@example.org)"
+msgstr ""
+
+#: app/src/frontends/cli/setup.ts:34
+msgid ""
+"Walk through putting curlew to work on this machine — link a device, accept "
+"the terms, build the index, install the systemd unit"
+msgstr ""
+
+#: app/src/frontends/cli/setup.ts:42
+msgid "Run only these stages, by name (space- or comma-separated): {stages}"
+msgstr ""
+
+#: app/src/frontends/cli/setup.ts:49
+msgid "Report what is done and what is left, without changing anything"
+msgstr ""
+
+#: app/src/frontends/cli/setup.ts:54
+msgid "Stop after the first stage that does not finish"
+msgstr ""
+
+#: app/src/frontends/cli/setup.ts:114 app/src/frontends/cli/setup.ts:155
+msgid "Still to run:"
+msgstr ""
+
+#: app/src/frontends/cli/setup.ts:121
+msgid "mode"
+msgstr ""
+
+#: app/src/frontends/cli/setup.ts:122
+msgid "checkout"
+msgstr ""
+
+#: app/src/frontends/cli/setup.ts:123
+msgid "bundle"
+msgstr ""
+
+#: app/src/frontends/cli/setup.ts:123
+msgid "not found"
+msgstr ""
+
+#: app/src/frontends/cli/setup.ts:124
+msgid "not on PATH"
+msgstr ""
+
+#: app/src/frontends/cli/setup.ts:125
+msgid "config"
+msgstr ""
+
+#: app/src/frontends/cli/setup.ts:125
+msgid "(not written yet)"
+msgstr ""
+
+#: app/src/frontends/cli/setup.ts:126
+msgid "enabled backends"
+msgstr ""
+
+#: app/src/frontends/cli/setup.ts:126 packages/telegram/src/credentials.ts:181
+msgid "none"
+msgstr ""
+
+#: app/src/frontends/cli/setup.ts:131
+msgid "curlew setup — what is done and what is left"
+msgstr ""
+
+#: app/src/frontends/cli/setup.ts:136
+msgid "(you only)"
+msgstr ""
+
+#: app/src/frontends/cli/setup.ts:149
+msgid "{n} warning"
+msgid_plural "{n} warnings"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/frontends/cli/setup.ts:151
+msgid "{done} of {total} stages done"
 msgstr ""
 
 #: packages/telegram/src/backend.ts:33
@@ -167,10 +629,6 @@ msgstr ""
 msgid "a different pair"
 msgstr ""
 
-#: packages/telegram/src/credentials.ts:181
-msgid "none"
-msgstr ""
-
 #: packages/telegram/src/credentials.ts:194
 msgid ""
 "this Telegram session has no api_id/api_hash stored — log in again with "
@@ -203,4 +661,54 @@ msgid ""
 "misuses the API can be limited or banned by Telegram. curlew only reads: it "
 "never sends, edits or deletes, and keeps the session key on this machine "
 "only."
+msgstr ""
+
+#. TRANSLATORS: keep the JSON snippet verbatim — it is config syntax to paste.
+#: packages/xmpp/src/messages.ts:14
+msgid ""
+"sending from {account} to {to} is not granted — add { \"capability\": "
+"\"xmpp.send\", \"target\": \"{account}/{to}\" } to config.grants"
+msgstr ""
+
+#: packages/xmpp/src/messages.ts:19
+msgid "{to} is not a bare XMPP address — expected name@example.org"
+msgstr ""
+
+#: packages/xmpp/src/messages.ts:21
+msgid "there is nothing to send: the text is empty"
+msgstr ""
+
+#: packages/xmpp/src/messages.ts:24
+msgid ""
+"the image URL must be a valid https:// URL without credentials or spaces"
+msgstr ""
+
+#: packages/xmpp/src/messages.ts:26
+msgid "the image URL is longer than {max} characters"
+msgstr ""
+
+#: packages/xmpp/src/messages.ts:27
+msgid "the text is longer than {max} characters"
+msgstr ""
+
+#: packages/xmpp/src/messages.ts:28
+msgid "no XMPP account {id} — `curlew accounts list` shows them"
+msgstr ""
+
+#: packages/xmpp/src/messages.ts:42
+msgid ""
+"nothing was sent: {to} uses OMEMO and their device list could not be read — "
+"try again when the server answers"
+msgstr ""
+
+#: packages/xmpp/src/messages.ts:49
+msgid ""
+"nothing was sent: no device of {to} may be encrypted to — `curlew omemo "
+"devices` shows them, `curlew omemo verify` decides"
+msgstr ""
+
+#: packages/xmpp/src/messages.ts:56
+msgid ""
+"nothing was sent: no device of {to} has published keys to encrypt with — "
+"their client has to come online once"
 msgstr ""
