@@ -114,9 +114,9 @@
     }
   },
   "optionalDependencies": {
-    "@gjsify/node-runtime-darwin-arm64": "0.64.11",
-    "@gjsify/node-runtime-darwin-x64": "0.64.11",
-    "@gjsify/node-runtime-win32-x64": "0.64.11"
+    "@gjsify/node-runtime-darwin-arm64": "0.64.12",
+    "@gjsify/node-runtime-darwin-x64": "0.64.12",
+    "@gjsify/node-runtime-win32-x64": "0.64.12"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
@@ -136,14 +136,14 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@gjsify/cli": "0.64.11",
-    "@gjsify/mcp": "0.64.11",
-    "@gjsify/napi": "0.64.11",
-    "@gjsify/node-globals": "0.64.11",
-    "@gjsify/rolldown-native": "0.64.11",
-    "@gjsify/runtime": "0.64.11",
-    "@gjsify/unit": "0.64.11",
-    "@gjsify/ws": "0.64.11",
+    "@gjsify/cli": "0.64.12",
+    "@gjsify/mcp": "0.64.12",
+    "@gjsify/napi": "0.64.12",
+    "@gjsify/node-globals": "0.64.12",
+    "@gjsify/rolldown-native": "0.64.12",
+    "@gjsify/runtime": "0.64.12",
+    "@gjsify/unit": "0.64.12",
+    "@gjsify/ws": "0.64.12",
     "@girs/gjs": "^4.1.0",
     "@girs/glib-2.0": "^4.1.0",
     "@girs/gobject-2.0": "^4.1.0",
