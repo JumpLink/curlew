@@ -120,7 +120,7 @@ export async function linkWhatsApp(
   const createSocket = options.createSocket ?? createBaileysSocket;
   const phone = parsePairingPhone(
     await prompter.ask(
-      'Phone number for a pairing code (international, e.g. +49…) — leave empty to scan a QR code',
+      _('Phone number for a pairing code (international, e.g. +49…) — leave empty to scan a QR code'),
     ),
   );
   ensurePrivateDir(context.secretsDir);

@@ -14,6 +14,8 @@
  */
 import { isatty } from 'node:tty';
 
+import { _ } from '@curlew/protocol';
+
 /** Whether a given descriptor can show styling. `NO_COLOR` wins over a capable terminal. */
 export function colourOn(fd: number): boolean {
   return process.env.NO_COLOR === undefined || process.env.NO_COLOR === '' ? isatty(fd) : false;
@@ -37,7 +39,7 @@ export const blue = wrap('34', '39');
  * scanning a long list should find the two that need them without reading a word.
  */
 export function stateWord(state: 'done' | 'remaining' | 'skipped', fd: number): string {
-  if (state === 'done') return green(state, fd);
-  if (state === 'skipped') return dim(state, fd);
-  return yellow(state, fd);
+  if (state === 'done') return green(_('done'), fd);
+  if (state === 'skipped') return dim(_('skipped'), fd);
+  return yellow(_('remaining'), fd);
 }

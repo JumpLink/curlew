@@ -31,9 +31,9 @@ export const reloginHint = (): string => _('log in again with `curlew accounts a
 /** The login questions, asked through whatever frontend is running. */
 export function matrixPrompts(prompter: AccountPrompter): MatrixLoginPrompts {
   return {
-    homeserver: () => prompter.ask('Homeserver (URL like https://matrix.example.org, or the server name)'),
-    user: () => prompter.ask('Matrix user (@name:example.org)'),
-    password: () => prompter.ask('Password', { secret: true }),
+    homeserver: () => prompter.ask(_('Homeserver (URL like https://matrix.example.org, or the server name)')),
+    user: () => prompter.ask(_('Matrix user (@name:example.org)')),
+    password: () => prompter.ask(_('Password'), { secret: true }),
     notify: (message) => prompter.notify(message),
   };
 }
