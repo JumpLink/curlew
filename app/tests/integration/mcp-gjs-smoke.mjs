@@ -54,6 +54,7 @@ const EXPECTED_TOOLS = [
   'mail_search_local',
   'mail_sync_status',
   'messaging_capabilities',
+  'omemo_devices',
   'setup_status',
   'xmpp_wait_reply',
 ];
