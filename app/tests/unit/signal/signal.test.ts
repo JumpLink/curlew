@@ -221,7 +221,7 @@ export default async () => {
       const dir = tempDir();
       try {
         const entry = builtinRegistry()
-          .status({ backends: {}, senders: {}, grants: [], unknown: {} })
+          .status({ backends: {}, senders: {}, grants: [], encryption: {}, unknown: {} })
           .find((e) => e.name === 'signal');
         expect(entry?.syncModel).toBe('delivery-only');
         expect(entry?.storeTier).toBe('state');

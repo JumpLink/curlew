@@ -28,7 +28,7 @@ import { type Grant, isGranted } from '../grants.ts';
 import { MAX_CHUNK_CHARS, renderForXmpp, type MessageFormat } from '../markdown.ts';
 import { appendWriteLog, type WriteFrontend } from '../write-log.ts';
 import { openIndex } from './index-sync.ts';
-import { decryptAccounts } from './omemo.ts';
+import { decryptAccounts, encryptionRequired, requireEncryptionFor } from './omemo.ts';
 
 export const SEND_CAPABILITY = 'xmpp.send';
 
@@ -129,10 +129,15 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
 
   // `xmpp.omemo` for this account turns the send path encrypted: the session then asks the peer
   // for their devices and refuses rather than sending a message in the clear that the person
-  // believes is encrypted (ADR 0006 §7). Without the grant nothing changes.
+  // believes is encrypted (ADR 0006 §7). Without the grant nothing changes — unless the config
+  // requires encryption for this peer, which without keys cannot be honoured at all.
   const decrypt = decryptAccounts(config.grants).includes(params.accountId);
-  const session = await backend.openGranted(params.accountId, permitFor(config.grants, params.accountId), {
+  if (!decrypt && encryptionRequired(config, params.accountId, params.to))
+    throw new Error(MESSAGES.omemoRequiredWithoutGrant(params.accountId, params.to));
+  const permit = permitFor(config.grants, params.accountId);
+  const session = await backend.openGranted(params.accountId, permit, {
     decrypt,
+    requireEncryption: requireEncryptionFor(config, params.accountId, permit.addresses),
   });
   const sends: Array<{ sent: SentChat; body: string }> = [];
   try {
