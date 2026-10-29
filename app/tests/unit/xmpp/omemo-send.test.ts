@@ -11,11 +11,11 @@
  */
 
 import { describe, expect, it } from '@gjsify/unit';
-import xml from '@xmpp/xml';
 
 import {
   LEGACY_PROFILE,
   MemoryOmemoStorage,
+  addressKey,
   generateKeyPair,
   selectBundleKeys,
   toBase64,
@@ -26,7 +26,6 @@ import {
 } from '@curlew/omemo';
 import { SecretStore } from '@curlew/store';
 import {
-  announceDevice,
   bundleNode,
   encryptOmemo,
   encryptedChatMessage,
@@ -41,80 +40,32 @@ import {
   receiveOmemo,
   recipientTrust,
   SecretStoreOmemoStorage,
-  XmppQueryError,
+  type IdentityChange,
   type OmemoSendPlan,
-  type OwnDevice,
-  type PepPort,
   type XmlElement,
 } from '@curlew/xmpp';
 
+import { LATER, START, fakeNetwork, join, joinWith, type Participant } from './fake-pep.ts';
+
 const ALICE = 'alice@example.org';
 const BOB = 'bob@example.org';
-const START = new Date('2026-01-01T00:00:00Z');
-/** Past the device-list TTL, so a plan asks the server instead of reading the cache. */
-const LATER = new Date(START.getTime() + 2 * 60 * 60 * 1000);
-
-/** What `xml()` builds — the elements the fake PEP service stores and hands back. */
-type Node = ReturnType<typeof xml>;
-
-interface FakeNetwork {
-  /** The PEP port of one account: it reads every JID's nodes and writes only its own. */
-  port(selfJid: string): PepPort;
-  /** Make a JID's nodes — or one of them — answer with a server error instead of an item. */
-  fail(jid: string, node?: string): void;
-}
 
 /**
- * A PEP service in a Map: node name to published item, shared by every account on it.
+ * A `MemoryOmemoStorage` that also keeps the parked key changes, which the plain one drops.
  *
- * Enough for this file because OMEMO uses PEP for exactly two things, and both are
- * "last item of a node". A failure is an `XmppQueryError`, which is what the real `pepGet`
- * throws for a condition that is not `item-not-found` — the distinction the send policy rests on.
+ * The journal half of `TrustStorage` is optional, so the send path runs either way; a case that
+ * wants to see WHAT was parked needs somewhere for it to land.
  */
-function fakeNetwork(): FakeNetwork {
-  const items = new Map<string, Node>();
-  const failing = new Set<string>();
-  const key = (jid: string, node: string) => `${jid}\u0000${node}`;
-  return {
-    port: (selfJid) => ({
-      pepGet: async (jid, payload) => {
-        const node = payload.getChild('items')?.attrs.node ?? '';
-        if (failing.has(jid) || failing.has(key(jid, node))) {
-          throw new XmppQueryError('internal-server-error');
-        }
-        const item = items.get(key(jid, node));
-        if (item === undefined) return undefined;
-        return xml('pubsub', { xmlns: NS.pubsub }, xml('items', { node }, item));
-      },
-      pepSet: async (payload) => {
-        const publish = payload.getChild('publish');
-        const node = publish?.attrs.node;
-        const item = publish?.getChild('item');
-        if (node === undefined || item === undefined) throw new Error('fake pep: not a publish');
-        // The parsers take the structural `XmlElement`; putting one back into `xml()` needs the
-        // builder's own type, and an element that came out of `xml()` is one.
-        items.set(key(selfJid, node), item as unknown as Node);
-      },
-    }),
-    fail: (jid, node) => {
-      failing.add(node === undefined ? jid : key(jid, node));
-    },
-  };
-}
+class ParkingStorage extends MemoryOmemoStorage {
+  readonly parked = new Map<string, IdentityChange>();
 
-/** One account's device on the fake network, announced like the real thing announces. */
-interface Participant {
-  readonly jid: string;
-  readonly storage: MemoryOmemoStorage;
-  readonly pep: PepPort;
-  readonly device: OwnDevice;
-}
+  async saveIdentityChange(address: DeviceAddress, change: IdentityChange): Promise<void> {
+    this.parked.set(addressKey(address), change);
+  }
 
-async function join(net: FakeNetwork, jid: string): Promise<Participant> {
-  const storage = new MemoryOmemoStorage();
-  const pep = net.port(jid);
-  const { device } = await announceDevice(pep, storage, jid, { now: () => START });
-  return { jid, storage, pep, device };
+  async loadIdentityChange(address: DeviceAddress): Promise<IdentityChange | undefined> {
+    return this.parked.get(addressKey(address));
+  }
 }
 
 /** Encrypt from `from` to `to`'s JID, asking the server rather than the cache. */
@@ -260,17 +211,66 @@ export default async function omemoSend(): Promise<void> {
       expect(refused.skipped).toBe(1);
     });
 
-    await it('skips a device whose published key replaced the one we hold', async () => {
+    await it('parks a published key that replaced the one we hold, and refuses', async () => {
       const net = fakeNetwork();
-      const alice = await join(net, ALICE);
+      const storage = new ParkingStorage();
+      const alice = await joinWith(net, ALICE, storage);
       const bob = await join(net, BOB);
       // A key under a device id we already know is never adopted off a bundle: that decision is
-      // the person's, and until stage 4 shows them the change, the message does not go.
-      await alice.storage.saveIdentity(
+      // the person's, so the key waits in the journal until they compare its fingerprint.
+      const held = toBase64(generateKeyPair().publicKey);
+      await storage.saveIdentity(
         { jid: BOB, deviceId: bob.device.deviceId },
-        { publicKey: toBase64(generateKeyPair().publicKey), trust: 'blind', firstSeen: START.toISOString() },
+        { publicKey: held, trust: 'blind', firstSeen: START.toISOString() },
       );
-      expect((await refusal(() => sendTo(alice, BOB, 'hi'))).reason).toBe('no-trusted-device');
+
+      const refused = await refusal(() => sendTo(alice, BOB, 'hi'));
+      expect(refused.reason).toBe('identity-changed');
+      expect(refused.skipped).toBe(1);
+
+      // The published key is parked, the held one still stands, and the change is dated when it
+      // was seen rather than when it was published.
+      const change = storage.parked.get(addressKey({ jid: BOB, deviceId: bob.device.deviceId }));
+      expect(change?.publicKey).toBe(toBase64(bob.device.identityKey.publicKey));
+      expect(change?.seenAt).toBe(LATER.toISOString());
+      const stored = await storage.loadIdentity({ jid: BOB, deviceId: bob.device.deviceId });
+      expect(stored?.publicKey).toBe(held);
+    });
+
+    await it('refuses a peer without devices when encryption is required there', async () => {
+      const net = fakeNetwork();
+      const alice = await join(net, ALICE);
+
+      // Bob never announced, so there is nothing to encrypt to. Without the setting that is a
+      // plaintext send (null); with it, the message does not go at all.
+      expect(await sendTo(alice, BOB, 'hi')).toBe(null);
+      const refused = await refusal(() =>
+        omemoEncryptFor(alice.pep, alice.storage, alice.device, ALICE, BOB, 'hi', {
+          now: () => LATER,
+          requireEncryption: true,
+        }),
+      );
+      expect(refused.reason).toBe('encryption-required');
+      expect(refused.skipped).toBe(0);
+    });
+
+    await it('plans nothing for a peer without devices unless encryption is required', async () => {
+      const net = fakeNetwork();
+      const alice = await join(net, ALICE);
+
+      expect(
+        await planOmemoSend(alice.pep, alice.storage, alice.device, ALICE, BOB, { now: () => LATER }),
+      ).toBe(null);
+      expect(
+        (
+          await refusal(() =>
+            planOmemoSend(alice.pep, alice.storage, alice.device, ALICE, BOB, {
+              now: () => LATER,
+              requireEncryption: true,
+            }),
+          )
+        ).reason,
+      ).toBe('encryption-required');
     });
   });
 

@@ -253,6 +253,14 @@ export interface ArchivedEntry {
   omemo: { version: 'legacy' | 'v2'; element: XmlElement } | null;
   /** A MUC occupant's real JID, where the room discloses it. */
   occupantJid: string | null;
+  /**
+   * A line curlew put into the stream itself, which no stanza carried — today only the OMEMO
+   * identity-change notice (ADR 0006 §6).
+   *
+   * Optional because every entry that comes off the wire is one that nobody synthesised, and
+   * only `omemo-archive.ts` ever sets it. `buildPage` passes it on as `ChatMessage.notice`.
+   */
+  notice?: boolean;
 }
 
 /**

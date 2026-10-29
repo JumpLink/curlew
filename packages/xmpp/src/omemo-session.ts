@@ -26,6 +26,11 @@ import type { ArchivedEntry } from './stanza.ts';
 export interface OmemoSessionOptions extends OmemoDeviceOptions {
   /** Called for every entry that stayed closed, with why. For counting and logging only. */
   readonly onUndecryptable?: (entry: ArchivedEntry, reason: UndecryptableReason) => void;
+  /**
+   * Bare addresses that `encryption: "required"` covers — passed down from the frontend that
+   * read the config, never looked up here.
+   */
+  readonly requireEncryption?: readonly string[];
 }
 
 /** What an opened account's OMEMO gives its caller. */
@@ -41,7 +46,8 @@ export interface OmemoSession {
    *
    * Ready to hand to a `GrantedXmppSession`. Text null is an empty OMEMO message — key material
    * through every ratchet and no payload. A throw is `OmemoSendRefusedError`: nothing was
-   * encrypted and nothing may go out in the clear (§7).
+   * encrypted and nothing may go out in the clear (§7). A peer under `requireEncryption` is
+   * refused that way instead of answered null.
    */
   encrypt(peerJid: string, text: string | null): Promise<EncryptedStanza | null>;
 }
@@ -57,6 +63,7 @@ export async function openOmemo(
   options: OmemoSessionOptions = {},
 ): Promise<OmemoSession> {
   const storage = new SecretStoreOmemoStorage(store);
+  const required = new Set(options.requireEncryption ?? []);
   const announcement = await announceDevice(pep, storage, selfJid, options);
   const device = announcement.device;
   const shared = {
@@ -75,6 +82,9 @@ export async function openOmemo(
         ...(options.onUndecryptable === undefined ? {} : { onUndecryptable: options.onUndecryptable }),
       }),
     encrypt: (peerJid, text) =>
-      omemoEncryptFor(pep, storage, device, selfJid, peerJid, text, shared),
+      omemoEncryptFor(pep, storage, device, selfJid, peerJid, text, {
+        ...shared,
+        ...(required.has(peerJid) ? { requireEncryption: true } : {}),
+      }),
   };
 }

@@ -293,6 +293,7 @@ export function buildPage(
       replyToClientId: replyClientId,
       threadRemoteId: null,
       clientId: entry.originId,
+      ...(entry.notice === true ? { notice: true } : {}),
     });
   });
 

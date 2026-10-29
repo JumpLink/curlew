@@ -337,6 +337,15 @@ export interface ChatConnectOptions {
    * backend never reads them itself.
    */
   decrypt?: boolean;
+  /**
+   * The addresses this account may never reach in the clear (`encryption: "required"`), bare and
+   * already resolved by the frontend that read the config.
+   *
+   * A peer named here is refused when it has no usable OMEMO device, instead of being answered
+   * in plaintext. Like `decrypt`, the decision belongs to the frontend; a backend never reads
+   * the config itself.
+   */
+  requireEncryption?: readonly string[];
 }
 
 /** The chat sync driver: dialogs and per-chat sequences, driven by `syncChats` in `@curlew/store`. */

@@ -64,9 +64,11 @@ German uses informal "du", matching the sibling projects.
 | CLI prompts ([`prompt.ts`](../app/src/frontends/cli/prompt.ts)) | "input ended before the login was complete" |
 
 | CLI commands (`backends`, `calendar`, `check`, `contacts`, `conversations`, `daemon`, `deliveries`, `sync`/`index`, `mail`, `send`, `mcp`, `setup`) | every command, subcommand and option description, the `demandCommand` hints, the daemon stop notice, the backends terms refusal, the `setup --status` report |
-| XMPP send path ([`messages.ts`](../packages/xmpp/src/messages.ts)) | all refusals, including the three `omemoRefused.*` reasons |
+| XMPP send path ([`messages.ts`](../packages/xmpp/src/messages.ts)) | all refusals, including the five `omemoRefused.*` reasons |
+| CLI `omemo` ([`omemo.ts`](../app/src/frontends/cli/omemo.ts)) | the `devices`, `trust` and `reset` descriptions, their options, the fingerprint retype prompt |
+| OMEMO trust ([`messages.ts`](../packages/xmpp/src/messages.ts)) | the four `omemoTrust.*` sentences for an unparsable, retyped-wrong, unknown or ambiguous fingerprint, and the identity-change notice |
 
-153 msgids. Covered by `app/tests/unit/core/i18n.test.ts`: a German locale yields German, a
+170 msgids. Covered by `app/tests/unit/core/i18n.test.ts`: a German locale yields German, a
 language we do not ship falls back to English, `LC_ALL=C` wins over `LANGUAGE`, and a wired
 Telegram error comes out German once the catalogue is installed.
 

@@ -205,7 +205,9 @@ key**, in which case it stays undecided. The same holds for our own other device
   `curlew omemo reset <account> <jid>` replaces broken sessions (XEP-0384 §6 makes a manual
   reset a MUST). Changing trust needs an interactive terminal and the fingerprint typed back.
   That is a speed bump against an agent with a shell, not a boundary; the boundary is that no
-  grant exists for it.
+  grant exists for it. **As built in stage 4** all three take flags, not positionals —
+  `--account`, `--jid`, `--fingerprint`, `--state` — because `omemo devices` from stage 2
+  already did and one command group should read one way.
 - **MCP:** a read-only `omemo_devices` tool (`readOnlyHint: true`) shows fingerprints and trust.
   **No MCP tool changes trust, resets a session or turns encryption off — with or without a
   grant**, and no capability for it is defined. An agent reads message text written by others;
@@ -235,9 +237,15 @@ tell a peer with devices from one without — and the owner decision "with no gr
 stays exactly as today" outranks refusing. The row describes what a later stage could do once
 an ungranted account is allowed to read a device list.
 
+**Stage 4 narrows that one case:** a peer listed in `config.encryption` is refused before the
+connection when its account has no `xmpp.omemo` grant, naming both ways out (grant it, or drop
+the peer from the setting). Plaintext stays the default everywhere the person did not ask for
+`required`, so "no grant, behaviour as today" still holds for every other peer.
+
 A peer that once had OMEMO and later publishes an empty list gets plaintext again only after a
 notice in that chat. A per-address `encryption: "required"` setting in the config can forbid
-plaintext entirely.
+plaintext entirely: with the grant, an empty device list is refused (`encryption-required`)
+instead of falling back.
 
 ### 8. Indexing: decrypted text is indexed, and becomes `state`
 
@@ -273,8 +281,7 @@ encrypted for us, and stored as outgoing; otherwise `not-for-this-device`.
 
 ## Rollout
 
-Each stage is shippable on its own; the smallest useful one first. Stages 0–3 are **done**;
-stage 4 is open.
+Each stage is shippable on its own; the smallest useful one first. Stages 0–4 are **done**.
 
 0. **gjsify:** XEdDSA, the Curve25519 ⇄ Ed25519 map, AES-GCM with any IV length — each with
    test vectors (RFC 7748, RFC 8032, the XEdDSA spec's construction, NIST GCM vectors with a

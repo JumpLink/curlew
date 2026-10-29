@@ -426,4 +426,87 @@ export default async () => {
       expect(out.originId).toBe(out.originIds?.[0]);
     });
   });
+
+  await describe('sendMessage under config.encryption', async () => {
+    /** Send with a config the case writes, and let it see what the session was opened with. */
+    const run = async (
+      config: unknown,
+      body: (world: {
+        send: () => Promise<unknown>;
+        sent: Array<[string, string, string]>;
+        opened: Array<Record<string, unknown>>;
+      }) => Promise<void>,
+    ) => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-required-'));
+      try {
+        const configPath = join(dir, 'config.json');
+        writeFileSync(configPath, JSON.stringify(config));
+        const sent: Array<[string, string, string]> = [];
+        const opened: Array<Record<string, unknown>> = [];
+        let n = 0;
+        const backend = {
+          listAccounts: async () => [ACCOUNT_INFO],
+          openGranted: async (
+            _id: string,
+            permit: ReturnType<typeof permitFor>,
+            options: Record<string, unknown>,
+          ) => {
+            opened.push(options);
+            return new GrantedXmppSession(fakeLink(sent), permit, () => `id-${++n}`);
+          },
+        } as unknown as XmppBackend;
+        await body({
+          send: () =>
+            sendMessage({
+              accountId: ACCOUNT,
+              to: OWNER,
+              text: 'hi',
+              frontend: 'cli',
+              dbPath: join(dir, 'index.db'),
+              configPath,
+              writeLogPath: join(dir, 'write.log'),
+              backend,
+            }),
+          sent,
+          opened,
+        });
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    };
+
+    await it('refuses to send at all when the account has no xmpp.omemo grant', async () => {
+      // The one case where `required` has to stop the send in the action rather than in the
+      // session: without the grant there are no keys, so nothing downstream would refuse.
+      await run(
+        { grants: GRANTS, encryption: { [`${ACCOUNT}/${OWNER}`]: 'required' } },
+        async ({ send, sent }) => {
+          await expect(send()).rejects.toThrow(/no `xmpp\.omemo` grant/);
+          expect(sent.length).toBe(0);
+        },
+      );
+    });
+
+    await it('hands the covered address to the session when the grant is there', async () => {
+      await run(
+        {
+          grants: [...GRANTS, { capability: 'xmpp.omemo', target: ACCOUNT }],
+          encryption: { [`${ACCOUNT}/${OWNER}`]: 'required' },
+        },
+        async ({ send, opened }) => {
+          await send();
+          expect(opened[0].decrypt).toBe(true);
+          expect((opened[0].requireEncryption as string[]).join(' ')).toBe(OWNER);
+        },
+      );
+    });
+
+    await it('requires nothing of the session when the config requires nothing', async () => {
+      await run({ grants: GRANTS }, async ({ send, opened }) => {
+        await send();
+        expect(opened[0].decrypt).toBe(false);
+        expect((opened[0].requireEncryption as string[]).length).toBe(0);
+      });
+    });
+  });
 };

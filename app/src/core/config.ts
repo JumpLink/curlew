@@ -36,13 +36,24 @@ export interface CurlewConfig {
   /** Write grants (ADR 0004). Absent or empty denies every write. */
   grants: Grant[];
   /**
+   * Peers this account must never be sent plain text, keyed like a grant target (ADR 0006 §7).
+   *
+   * `"<account>/<address>"` for one peer, `"<account>"` for every peer of that account. The only
+   * value is `"required"`: the key exists to be extended (a `"preferred"` would be a different
+   * policy), not to be a boolean that cannot grow.
+   *
+   * It closes the one door §7 leaves open — a peer with NO OMEMO devices, where plain text is
+   * what they can read. Everything else on the send path already refuses.
+   */
+  encryption: Record<string, 'required'>;
+  /**
    * Top-level keys this build does not know, carried through unchanged so a build that does not
    * know a key cannot drop it on save (ADR 0004).
    */
   unknown: Record<string, unknown>;
 }
 
-const KNOWN_KEYS = ['backends', 'senders', 'grants'];
+const KNOWN_KEYS = ['backends', 'senders', 'grants', 'encryption'];
 
 /**
  * What an absent config file means. Mail is enabled by THIS default, not by a special case in
@@ -50,7 +61,7 @@ const KNOWN_KEYS = ['backends', 'senders', 'grants'];
  * every other, and a user who disables it in the file gets exactly that.
  */
 export function defaultConfig(): CurlewConfig {
-  return { backends: { mail: { enabled: true } }, senders: {}, grants: [], unknown: {} };
+  return { backends: { mail: { enabled: true } }, senders: {}, grants: [], encryption: {}, unknown: {} };
 }
 
 /** Parse and validate the file's text. Throws with the offending key named. */
@@ -110,13 +121,33 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   }
 
   const grants = parseGrants(obj.grants, options);
+  const encryption = parseEncryption(obj.encryption);
 
   const unknown: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
     if (!KNOWN_KEYS.includes(key)) unknown[key] = value;
   }
 
-  return { backends, senders, grants, unknown };
+  return { backends, senders, grants, encryption, unknown };
+}
+
+/**
+ * Validate `config.encryption`. Throws with the offending key named — a misspelled target here
+ * would silently mean "plain text is fine for this peer", which is the opposite of what someone
+ * writing the key asked for.
+ */
+function parseEncryption(raw: unknown): Record<string, 'required'> {
+  if (raw === undefined) return {};
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw))
+    throw new Error('config.encryption must be an object of "<account>[/<address>]": "required"');
+  const out: Record<string, 'required'> = {};
+  for (const [target, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (target.length === 0 || target.trim() !== target)
+      throw new Error('config.encryption: a target must not be empty or padded with whitespace');
+    if (value !== 'required') throw new Error(`config.encryption.${target} must be "required"`);
+    out[target] = value;
+  }
+  return out;
 }
 
 /** Read the config, or the default when there is no file yet. */
@@ -132,9 +163,14 @@ export function loadConfig(path = configPath()): CurlewConfig {
 export function saveConfig(config: CurlewConfig, path = configPath()): void {
   ensurePrivateDir(dirname(path));
   const part = `${path}.part`;
-  const { unknown, grants, ...known } = config;
+  const { unknown, grants, encryption, ...known } = config;
   const carried = Object.fromEntries(Object.entries(unknown).filter(([key]) => !KNOWN_KEYS.includes(key)));
-  const out = { ...carried, ...known, ...(grants.length > 0 ? { grants } : {}) };
+  const out = {
+    ...carried,
+    ...known,
+    ...(grants.length > 0 ? { grants } : {}),
+    ...(Object.keys(encryption).length > 0 ? { encryption } : {}),
+  };
   writeFileSync(part, `${JSON.stringify(out, null, 2)}\n`, { mode: 0o600 });
   chmodSync(part, 0o600);
   renameSync(part, path);

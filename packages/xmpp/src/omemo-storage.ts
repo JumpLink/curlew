@@ -34,6 +34,7 @@ import {
 } from '@curlew/omemo';
 import type { SecretChange, SecretStore } from '@curlew/store';
 import type { JournalEntry, PlaintextJournal } from './omemo-archive.ts';
+import type { IdentityChange, OmemoTrustStore } from './omemo-trust.ts';
 
 /** Our own device: identity key, device id, and the two counters that must outlive the keys. */
 const DEVICE_NAMESPACE = 'omemo.device';
@@ -49,6 +50,8 @@ const IDENTITY_NAMESPACE = 'omemo.identity';
 const DEVICE_LIST_NAMESPACE = 'omemo.devices';
 /** Decrypted bodies by archive id, until the index holds them — see `omemo-archive.ts`. */
 const PLAINTEXT_NAMESPACE = 'omemo.plaintext';
+/** A key published under a device id we already hold one for, by `<jid>:<device id>`. */
+const IDENTITY_CHANGE_NAMESPACE = 'omemo.identity-change';
 
 /**
  * The key names inside each namespace, from ADR 0006 §3's table.
@@ -77,6 +80,7 @@ export const OMEMO_NAMESPACES: readonly string[] = [
   IDENTITY_NAMESPACE,
   DEVICE_LIST_NAMESPACE,
   PLAINTEXT_NAMESPACE,
+  IDENTITY_CHANGE_NAMESPACE,
 ];
 
 /**
@@ -85,7 +89,7 @@ export const OMEMO_NAMESPACES: readonly string[] = [
  * The store is borrowed, not owned: the backend opens the account file once and hands it over, so
  * nothing here closes it.
  */
-export class SecretStoreOmemoStorage implements OmemoStorage, PlaintextJournal {
+export class SecretStoreOmemoStorage implements OmemoStorage, PlaintextJournal, OmemoTrustStore {
   readonly #store: SecretStore;
 
   constructor(store: SecretStore) {
@@ -247,6 +251,41 @@ export class SecretStoreOmemoStorage implements OmemoStorage, PlaintextJournal {
 
   async saveDeviceList(jid: string, record: DeviceListRecord): Promise<void> {
     this.#store.apply([put(DEVICE_LIST_NAMESPACE, jid, JSON.stringify(record))]);
+  }
+
+  /**
+   * Forget a JID's cached list, so the next send asks the server instead.
+   *
+   * Beyond the port, for `curlew omemo reset`: expiring the entry would not do, because a fetch
+   * that then fails falls back to the stale copy (`fetchDeviceList`) — which is the list the
+   * person just said is wrong.
+   */
+  async deleteDeviceList(jid: string): Promise<void> {
+    this.#store.apply([drop(DEVICE_LIST_NAMESPACE, jid)]);
+  }
+
+  // -- pending identity changes ---------------------------------------------------------------
+
+  async loadIdentityChange(address: DeviceAddress): Promise<IdentityChange | undefined> {
+    return parse<IdentityChange>(this.#store.get(IDENTITY_CHANGE_NAMESPACE, addressKey(address)));
+  }
+
+  async saveIdentityChange(address: DeviceAddress, entry: IdentityChange): Promise<void> {
+    this.#store.apply([put(IDENTITY_CHANGE_NAMESPACE, addressKey(address), JSON.stringify(entry))]);
+  }
+
+  async deleteIdentityChange(address: DeviceAddress): Promise<void> {
+    this.#store.apply([drop(IDENTITY_CHANGE_NAMESPACE, addressKey(address))]);
+  }
+
+  async listIdentityChanges(jid?: string): Promise<{ address: DeviceAddress; entry: IdentityChange }[]> {
+    const rows = this.#store.load(IDENTITY_CHANGE_NAMESPACE);
+    const out: { address: DeviceAddress; entry: IdentityChange }[] = [];
+    for (const address of addresses(rows.keys(), jid)) {
+      const entry = parse<IdentityChange>(rows.get(addressKey(address)) ?? null);
+      if (entry !== undefined) out.push({ address, entry });
+    }
+    return out;
   }
 
   // -- the plaintext journal ------------------------------------------------------------------
