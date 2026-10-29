@@ -34,6 +34,8 @@ const DELETE_CHUNK = 100;
 export class SecretStore {
   private readonly db: DatabaseSync;
   readonly path: string;
+  /** The queue `transaction` serializes on; see there for why one connection needs it. */
+  #lock: Promise<unknown> = Promise.resolve();
 
   private constructor(db: DatabaseSync, path: string) {
     this.db = db;
@@ -133,6 +135,51 @@ export class SecretStore {
         puts.map((c) => [c.namespace, c.key, c.value]),
       );
     });
+  }
+
+  /**
+   * Run `fn` with the file's write lock held, rolling back on throw.
+   *
+   * `apply` is already atomic on its own, so this exists for the caller that has to READ, decide,
+   * and WRITE without another process slipping in between — an OMEMO ratchet step (ADR 0006 §4)
+   * is exactly that, and two curlew processes sharing one account is the normal case, not the
+   * edge one. Without it `curlew send` and the daemon can both load the same session, step it,
+   * and write back states that each lost the other's messages. `BEGIN IMMEDIATE` (see
+   * `withTransaction`) is what the other process then queues on.
+   *
+   * `fn` may be async, because the step it guards is: deriving a ratchet key is `crypto.subtle`,
+   * which only exists as a promise. The lock is therefore held across an await, which is correct
+   * — the point is to exclude the other PROCESS — but it is also why the body should be the
+   * cryptography and nothing else: no network, no user prompt.
+   *
+   * Calls are serialized in-process as well. SQLite has no nested transaction, so two overlapping
+   * callers on one connection would make the second `BEGIN` throw; queueing them is the same
+   * ordering {@link MemoryOmemoStorage} gives the tests.
+   */
+  async transaction<T>(fn: () => T | Promise<T>): Promise<T> {
+    const run = this.#lock.then(
+      () => this.#runTransaction(fn),
+      () => this.#runTransaction(fn),
+    );
+    // Swallow the rejection on the queue only; `run` still rejects for the caller.
+    this.#lock = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run;
+  }
+
+  async #runTransaction<T>(fn: () => T | Promise<T>): Promise<T> {
+    this.db.exec('BEGIN IMMEDIATE');
+    let result: T;
+    try {
+      result = await fn();
+    } catch (err) {
+      this.db.exec('ROLLBACK');
+      throw err;
+    }
+    this.db.exec('COMMIT');
+    return result;
   }
 
   /** Remove a whole namespace. */
