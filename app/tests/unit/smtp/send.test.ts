@@ -203,11 +203,7 @@ export default async () => {
       });
     });
 
-    // gjsify gap (unfixed, no PR): node:tls on GJS upgrades a plain socket as a CLIENT only, so the
-    // dummy server cannot play the server side of STARTTLS there. The client upgrade is what the
-    // app uses, and it is covered on Node.
-    const serverUpgrade = typeof (globalThis as { imports?: unknown }).imports === 'undefined' ? it : it.skip;
-    await serverUpgrade('upgrades with security starttls', async () => {
+    await it('upgrades with security starttls', async () => {
       await withServer({ tls: 'starttls' }, async (server) => {
         await verifyAccount(tlsAccount(server.port, 'starttls'));
         const { commands } = server.dialogue;
