@@ -48,8 +48,16 @@ export default async () => {
 
     await it('loads nothing the config does not enable — mail included', async () => {
       const registry = new BackendRegistry(BUILTIN_PLUGINS);
-      expect(registry.enabled({ backends: {}, senders: {}, grants: [], encryption: {}, unknown: {} }).length).toBe(0);
-      const off = { backends: { mail: { enabled: false } }, senders: {}, grants: [], encryption: {}, unknown: {} };
+      expect(
+        registry.enabled({ backends: {}, senders: {}, grants: [], encryption: {}, unknown: {} }).length,
+      ).toBe(0);
+      const off = {
+        backends: { mail: { enabled: false } },
+        senders: {},
+        grants: [],
+        encryption: {},
+        unknown: {},
+      };
       expect(registry.enabled(off).length).toBe(0);
     });
 
@@ -76,7 +84,13 @@ export default async () => {
 
     await it('does not honour a hand-edited `enabled: true` without accepted terms', async () => {
       const registry = new BackendRegistry([plugin('chat', { terms: TERMS })]);
-      const config = { backends: { chat: { enabled: true } }, senders: {}, grants: [], encryption: {}, unknown: {} };
+      const config = {
+        backends: { chat: { enabled: true } },
+        senders: {},
+        grants: [],
+        encryption: {},
+        unknown: {},
+      };
       expect(registry.enabled(config).length).toBe(0);
       expect(registry.status(config)[0].termsAccepted).toBe(false);
     });
@@ -145,7 +159,10 @@ export default async () => {
     await it('round-trips through the file, mode 0600', async () => {
       const { dir, path } = tempConfigPath();
       try {
-        saveConfig({ backends: { mail: { enabled: false } }, senders: {}, grants: [], encryption: {}, unknown: {} }, path);
+        saveConfig(
+          { backends: { mail: { enabled: false } }, senders: {}, grants: [], encryption: {}, unknown: {} },
+          path,
+        );
         expect(loadConfig(path).backends.mail.enabled).toBe(false);
         expect(statSync(path).mode & 0o777).toBe(0o600);
       } finally {

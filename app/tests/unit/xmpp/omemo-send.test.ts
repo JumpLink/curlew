@@ -11,7 +11,6 @@
  */
 
 import { describe, expect, it } from '@gjsify/unit';
-import xml from '@xmpp/xml';
 
 import {
   LEGACY_PROFILE,
@@ -27,7 +26,6 @@ import {
 } from '@curlew/omemo';
 import { SecretStore } from '@curlew/store';
 import {
-  announceDevice,
   bundleNode,
   encryptOmemo,
   encryptedChatMessage,
@@ -42,11 +40,8 @@ import {
   receiveOmemo,
   recipientTrust,
   SecretStoreOmemoStorage,
-  XmppQueryError,
   type IdentityChange,
   type OmemoSendPlan,
-  type OwnDevice,
-  type PepPort,
   type XmlElement,
 } from '@curlew/xmpp';
 

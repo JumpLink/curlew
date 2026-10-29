@@ -13,12 +13,7 @@
 import { _ } from '@curlew/protocol';
 import type { CommandModule } from 'yargs';
 
-import {
-  omemoDevices,
-  omemoReset,
-  omemoTrust,
-  requireRetypedFingerprint,
-} from '../../core/actions/index.ts';
+import { omemoDevices, omemoReset, omemoTrust, requireRetypedFingerprint } from '../../core/actions/index.ts';
 import { pickArgv, runAndExit } from './output.ts';
 import { readPrompter, stdinIsTTY } from './prompt.ts';
 

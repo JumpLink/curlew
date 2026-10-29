@@ -40,12 +40,8 @@ export default async function encryption(): Promise<void> {
     await it('fails closed on a value that is not "required", naming the target', async () => {
       expect(() => config({ [ACCOUNT]: 'optional' })).toThrow(/config\.encryption\.xmpp-abc123/);
       expect(() => config({ [ACCOUNT]: 'Required' })).toThrow(/must be "required"/);
-      expect(() => parseConfig(JSON.stringify({ encryption: [ACCOUNT] }))).toThrow(
-        /must be an object/,
-      );
-      expect(() => parseConfig(JSON.stringify({ encryption: 'required' }))).toThrow(
-        /must be an object/,
-      );
+      expect(() => parseConfig(JSON.stringify({ encryption: [ACCOUNT] }))).toThrow(/must be an object/);
+      expect(() => parseConfig(JSON.stringify({ encryption: 'required' }))).toThrow(/must be an object/);
     });
 
     await it('fails closed on a target that is empty or padded', async () => {
@@ -60,9 +56,7 @@ export default async function encryption(): Promise<void> {
       const path = join(dir, 'config.json');
       try {
         saveConfig(config({ [`${ACCOUNT}/${PERSON}`]: 'required' }), path);
-        expect(JSON.parse(readFileSync(path, 'utf8')).encryption[`${ACCOUNT}/${PERSON}`]).toBe(
-          'required',
-        );
+        expect(JSON.parse(readFileSync(path, 'utf8')).encryption[`${ACCOUNT}/${PERSON}`]).toBe('required');
 
         // Like `grants`: an empty section is left out rather than written as `{}`, so a config
         // nobody set this in stays a config without the key.
@@ -93,9 +87,9 @@ export default async function encryption(): Promise<void> {
       const parsed = config({ [`${ACCOUNT}/${PERSON}`]: 'required' });
       expect(requireEncryptionFor(parsed, ACCOUNT, [PERSON, OTHER]).join(' ')).toBe(PERSON);
       expect(requireEncryptionFor(parsed, 'xmpp-other', [PERSON, OTHER]).length).toBe(0);
-      expect(
-        requireEncryptionFor(config({ [ACCOUNT]: 'required' }), ACCOUNT, [PERSON, OTHER]).length,
-      ).toBe(2);
+      expect(requireEncryptionFor(config({ [ACCOUNT]: 'required' }), ACCOUNT, [PERSON, OTHER]).length).toBe(
+        2,
+      );
     });
   });
 }

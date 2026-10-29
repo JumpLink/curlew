@@ -25,15 +25,7 @@ import {
   type XmlElement,
 } from '@curlew/xmpp';
 
-import {
-  LATER,
-  START,
-  fakeNetwork,
-  join,
-  joinWith,
-  type FakeNetwork,
-  type Participant,
-} from './fake-pep.ts';
+import { LATER, START, fakeNetwork, join, joinWith, type FakeNetwork, type Participant } from './fake-pep.ts';
 
 const ALICE = 'alice@example.org';
 const BOB = 'bob@example.org';
