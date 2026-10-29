@@ -11,6 +11,7 @@ export * from './session.ts';
 export * from './archive.ts';
 export * from './accounts.ts';
 export * from './omemo-storage.ts';
+export * from './omemo-stanza.ts';
 export * from './client.ts';
 export * from './login.ts';
 export * from './granted.ts';
