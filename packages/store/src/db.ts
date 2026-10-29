@@ -151,13 +151,14 @@ export function insertMany(
   head: string,
   rows: readonly SqlValue[][],
   budget = PARAM_BUDGET,
+  tail = '',
 ): void {
   if (rows.length === 0) return;
   const perChunk = Math.max(1, Math.floor(budget / rows[0].length));
   for (let i = 0; i < rows.length; i += perChunk) {
     const chunk = rows.slice(i, i + perChunk);
     const tuple = `(${placeholders(chunk[0].length)})`;
-    db.prepare(`${head} VALUES ${chunk.map(() => tuple).join(', ')}`).run(...chunk.flat());
+    db.prepare(`${head} VALUES ${chunk.map(() => tuple).join(', ')}${tail}`).run(...chunk.flat());
   }
 }
 
