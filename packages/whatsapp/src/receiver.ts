@@ -20,13 +20,14 @@
  * anything.
  */
 
+import { _, fmt } from '@curlew/protocol';
 import type { DeliveryEvent, DeliveryMode, DeliveryOutcome, DeliverySession } from '@curlew/protocol';
 import type { WaEventMap, WaEventName, WaSocketHandle } from './api.ts';
 import { disconnectReason, disconnectStatus, LOGGED_OUT } from './api.ts';
 import type { EventJournal } from './journal.ts';
 import type { WhatsAppMapper } from './map.ts';
 
-export const RELINK_HINT = 'link it again with `curlew accounts add whatsapp`';
+export const relinkHint = (): string => _('link it again with `curlew accounts add whatsapp`');
 
 export interface ReceiverOptions {
   mode: DeliveryMode;
@@ -223,7 +224,10 @@ export class WhatsAppReceiver implements DeliverySession {
     if (disconnectStatus(update) === LOGGED_OUT) {
       this.finish({
         caughtUp: false,
-        error: `WhatsApp logged this device out (${disconnectReason(update)}) — ${RELINK_HINT}`,
+        error: fmt(_('WhatsApp logged this device out ({reason}) — {hint}'), {
+          reason: disconnectReason(update),
+          hint: relinkHint(),
+        }),
         // Terminal: the credentials are gone, so a reconnect would fail the same way forever.
         loggedOut: true,
       });

@@ -44,6 +44,7 @@
  * either: each change becomes a notice in the direct chat with that contact.
  */
 
+import { _, fmt } from '@curlew/protocol';
 import type { DeliveryEvent, DeliveryMode, DeliveryOutcome, DeliverySession } from '@curlew/protocol';
 import type { AttachmentDownloader } from './contacts.ts';
 import { readContactsSync } from './contacts.ts';
@@ -59,7 +60,7 @@ export const SAFETY_NUMBER_CHANGED = 'Safety number changed';
 /** The one `DecryptResult` that carries a decrypted plaintext. */
 type Decrypted = Extract<DecryptResult, { kind: 'content' }>;
 
-export const RELINK_HINT = 'link it again with `curlew accounts add signal`';
+export const relinkHint = (): string => _('link it again with `curlew accounts add signal`');
 
 /** The acknowledgement handle of one delivered envelope (libsignal's `ChatServerMessageAck`). */
 export interface EnvelopeAck {
@@ -310,7 +311,7 @@ export class SignalReceiver implements DeliverySession {
   }
 
   private describe(err: unknown, fallback: string): string {
-    if (this.isDelinked(err)) return `Signal no longer knows this device (it was unlinked) — ${RELINK_HINT}`;
+    if (this.isDelinked(err)) return fmt(_('Signal no longer knows this device (it was unlinked) — {hint}'), { hint: relinkHint() });
     const text = err instanceof Error ? err.message : err ? String(err) : '';
     return text ? `${fallback}: ${text}` : fallback;
   }

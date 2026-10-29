@@ -6,6 +6,7 @@
  * reading its manifest touch no native code, so curlew starts on a platform without the addon.
  */
 
+import { _, fmt } from '@curlew/protocol';
 import type {
   AccountPrompter,
   BackendAccount,
@@ -29,7 +30,7 @@ import { SignalMapper } from './map.ts';
 import { authenticatedChannel, createNet, isDelinked, linkChannel, liveConnector } from './net.ts';
 import { fromBase64, type DeviceAccount, readSetAside, SignalProtocolStore } from './protocol-store.ts';
 import { openProvisioning } from './provisioning.ts';
-import { type ChatConnector, type ReceiverOptions, RELINK_HINT, SignalReceiver } from './receiver.ts';
+import { type ChatConnector, type ReceiverOptions, relinkHint, SignalReceiver } from './receiver.ts';
 
 /** The non-secret settings this backend reads from `backends.signal.settings`. */
 export interface SignalSettings {
@@ -125,14 +126,16 @@ export class SignalBackend implements DeliveryBackend {
   async connect(accountId: string, options: DeliveryConnectOptions): Promise<DeliverySession> {
     parseSettings(this.context.settings);
     const path = sessionPath(this.context.secretsDir, accountId);
-    if (!existsSync(path)) throw new Error(`no Signal session for ${accountId} — ${RELINK_HINT}`);
+    if (!existsSync(path)) throw new Error(fmt(_('no Signal session for {account} — {hint}'), { account: accountId, hint: relinkHint() }));
     const lib = await this.lib();
     const file = SecretStore.open(path);
     const store = SignalProtocolStore.open(lib, file);
     const account = store.account();
     if (!account) {
       file.close();
-      throw new Error(`the Signal session ${accountId} was never linked — ${RELINK_HINT}`);
+      throw new Error(
+        fmt(_('the Signal session {account} was never linked — {hint}'), { account: accountId, hint: relinkHint() }),
+      );
     }
     let journal: FileJournal;
     try {

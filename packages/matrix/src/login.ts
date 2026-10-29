@@ -18,6 +18,7 @@
  * stored, returned or printed; the token and the crypto store go only into the 0600 file.
  */
 
+import { _, fmt } from '@curlew/protocol';
 import type { BackendAccount, BackendContext } from '@curlew/protocol';
 import { ensurePrivateDir, SecretStore } from '@curlew/store';
 import { existsSync, renameSync, rmSync } from 'node:fs';
@@ -37,7 +38,7 @@ import { connectMatrixClient, loadMatrixSdk, type MatrixConnector } from './clie
 export async function resolveHomeserver(input: string): Promise<string> {
   const value = input.trim();
   if (/^https?:\/\//i.test(value)) return value.replace(/\/+$/, '');
-  if (!/^[a-z0-9.-]+(:\d+)?$/i.test(value)) throw new Error('the homeserver must be a URL or a server name');
+  if (!/^[a-z0-9.-]+(:\d+)?$/i.test(value)) throw new Error(_('the homeserver must be a URL or a server name'));
   const { AutoDiscovery, AutoDiscoveryAction } = await loadMatrixSdk();
   const found = await AutoDiscovery.findClientConfig(value);
   const hs = found['m.homeserver'];
@@ -58,12 +59,15 @@ export async function loginMatrix(
   const { flows } = await probe.loginFlows();
   if (!flows.some((f) => f.type === 'm.login.password')) {
     throw new Error(
-      `${homeserver} offers no password login (only ${flows.map((f) => f.type).join(', ') || 'nothing'}) — single sign-on is not supported yet`,
+      fmt(
+        _('{homeserver} offers no password login (only {flows}) — single sign-on is not supported yet'),
+        { homeserver, flows: flows.map((f) => f.type).join(', ') || _('nothing') },
+      ),
     );
   }
   // `@anna:example.org` or just `anna`: the server resolves either.
   const user = (await prompts.user()).trim();
-  if (!user) throw new Error('the Matrix user is empty');
+  if (!user) throw new Error(_('the Matrix user is empty'));
   const password = await prompts.password();
   const login = await probe.loginRequest({
     type: 'm.login.password',
@@ -82,7 +86,7 @@ export async function loginMatrix(
   try {
     writeAccountRecord(store, { userId: login.user_id, homeserver, deviceId: login.device_id });
     writeAccessToken(store, login.access_token);
-    prompts.notify('Logged in; setting up this device’s encryption keys…');
+    prompts.notify(_('Logged in; setting up this device’s encryption keys…'));
     const api = await connect({
       homeserver,
       userId: login.user_id,
