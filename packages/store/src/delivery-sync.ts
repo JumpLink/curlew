@@ -692,12 +692,17 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
     ]);
     insertMany(
       db,
-      `INSERT OR REPLACE INTO chat_cursors
+      `INSERT INTO chat_cursors
          (conversation_id, backend, account_id, chat_id, kind, last_seq, read_inbox_seq, read_outbox_seq, last_sync_at)`,
       touched.map((id) => {
         const chat = state.chats.get(id) as KnownChat;
         return [conv(id), backend, accountId, id, chat.kind, chat.lastSeq, null, null, syncedAt];
       }),
+      undefined,
+      // An upsert, not REPLACE: REPLACE deletes the row, which resets `last_cursor`, `probe_seq`
+      // and the read marks this statement does not name.
+      ` ON CONFLICT(conversation_id) DO UPDATE SET kind = excluded.kind, last_seq = excluded.last_seq,
+         last_sync_at = excluded.last_sync_at`,
     );
     runIn(
       db,

@@ -477,5 +477,33 @@ export default async () => {
         db.close();
       }
     });
+
+    // INSERT OR REPLACE deletes the row and inserts a new one, so every column the statement does
+    // not name falls back to its default: a later delivery into the same chat silently reset the
+    // cursor state another path had stored there.
+    await it('keeps the stored cursor columns when a later delivery touches the same chat', async () => {
+      const db = freshDb();
+      try {
+        await receiveDeliveries(db, fakeBackend([[incoming('d-anna', msg('d-anna/1', 1, 'Hallo'))]]));
+        db.prepare(
+          `UPDATE chat_cursors SET probe_seq = 7, last_cursor = 'cur-42', read_inbox_seq = 3, read_outbox_seq = 2
+            WHERE conversation_id = ?`,
+        ).run(conv('d-anna'));
+        await receiveDeliveries(db, fakeBackend([[incoming('d-anna', msg('d-anna/2', 2, 'Nochmal'))]]));
+        const row = db
+          .prepare(
+            `SELECT last_seq, probe_seq, last_cursor, read_inbox_seq, read_outbox_seq
+               FROM chat_cursors WHERE conversation_id = ?`,
+          )
+          .get(conv('d-anna')) as Record<string, unknown>;
+        expect(Number(row.last_seq)).toBe(2);
+        expect(Number(row.probe_seq)).toBe(7);
+        expect(String(row.last_cursor)).toBe('cur-42');
+        expect(Number(row.read_inbox_seq)).toBe(3);
+        expect(Number(row.read_outbox_seq)).toBe(2);
+      } finally {
+        db.close();
+      }
+    });
   });
 };
