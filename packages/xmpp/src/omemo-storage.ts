@@ -47,12 +47,23 @@ const IDENTITY_NAMESPACE = 'omemo.identity';
 /** A JID's cached device list, by bare JID. */
 const DEVICE_LIST_NAMESPACE = 'omemo.devices';
 
-/** Keys inside {@link DEVICE_NAMESPACE}. */
-const DEVICE_ID = 'deviceId';
-const IDENTITY_PRIVATE_KEY = 'identityPrivateKey';
-const REGISTRATION_ID = 'registrationId';
-const CURRENT_SIGNED_PREKEY_ID = 'currentSignedPreKeyId';
-const NEXT_PREKEY_ID = 'nextPreKeyId';
+/**
+ * The key names inside each namespace, from ADR 0006 §3's table.
+ *
+ * Spelled out as constants because they are a FILE FORMAT: an account file written by one
+ * version is read by the next, so renaming one of these silently turns an existing device into
+ * an unregistered one — which republishes a new device id and makes every peer's client
+ * encrypt for a device whose predecessor's sessions are gone.
+ *
+ * The two counters sit in the namespace they count, not beside the device record: `current` is
+ * which signed prekey the bundle advertises, `next-id` is the prekey id to hand out next. Both
+ * are skipped by the id listings, which take only numeric keys.
+ */
+const DEVICE_ID = 'id';
+const IDENTITY_PRIVATE_KEY = 'identity';
+const REGISTRATION_ID = 'registration';
+const CURRENT_SIGNED_PREKEY_ID = 'current';
+const NEXT_PREKEY_ID = 'next-id';
 
 /** Every namespace this adapter owns — what `curlew omemo reset` would clear. */
 export const OMEMO_NAMESPACES: readonly string[] = [
@@ -107,7 +118,7 @@ export class SecretStoreOmemoStorage implements OmemoStorage {
   }
 
   async loadCurrentSignedPreKeyId(): Promise<number | undefined> {
-    const raw = this.#store.get(DEVICE_NAMESPACE, CURRENT_SIGNED_PREKEY_ID);
+    const raw = this.#store.get(SIGNED_PREKEY_NAMESPACE, CURRENT_SIGNED_PREKEY_ID);
     if (raw === null) return undefined;
     const id = Number(raw);
     return Number.isInteger(id) ? id : undefined;
@@ -116,7 +127,7 @@ export class SecretStoreOmemoStorage implements OmemoStorage {
   async saveSignedPreKey(record: StoredSignedPreKey, current: boolean): Promise<void> {
     const { id, ...rest } = record;
     const changes = [put(SIGNED_PREKEY_NAMESPACE, String(id), JSON.stringify(rest))];
-    if (current) changes.push(put(DEVICE_NAMESPACE, CURRENT_SIGNED_PREKEY_ID, String(id)));
+    if (current) changes.push(put(SIGNED_PREKEY_NAMESPACE, CURRENT_SIGNED_PREKEY_ID, String(id)));
     this.#store.apply(changes);
   }
 
@@ -125,7 +136,7 @@ export class SecretStoreOmemoStorage implements OmemoStorage {
     // Clearing the pointer too: a `currentSignedPreKeyId` naming a key that is gone would make
     // the next bundle build fail rather than rotate.
     if ((await this.loadCurrentSignedPreKeyId()) === id) {
-      changes.push(drop(DEVICE_NAMESPACE, CURRENT_SIGNED_PREKEY_ID));
+      changes.push(drop(SIGNED_PREKEY_NAMESPACE, CURRENT_SIGNED_PREKEY_ID));
     }
     this.#store.apply(changes);
   }
@@ -164,14 +175,14 @@ export class SecretStoreOmemoStorage implements OmemoStorage {
   /**
    * Hand out `count` ids and move the counter past them.
    *
-   * The counter lives beside the device record rather than being derived from the stored keys,
-   * because an id must not come round again after its prekey was deleted: a peer that still holds
-   * an old bundle would otherwise be answered with a key exchange for the wrong key.
+   * The counter is stored rather than derived from the stored keys, because an id must not come
+   * round again after its prekey was deleted: a peer that still holds an old bundle would
+   * otherwise be answered with a key exchange for the wrong key.
    */
   async reservePreKeyIds(count: number): Promise<number> {
-    const raw = Number(this.#store.get(DEVICE_NAMESPACE, NEXT_PREKEY_ID));
+    const raw = Number(this.#store.get(PREKEY_NAMESPACE, NEXT_PREKEY_ID));
     const first = Number.isInteger(raw) && raw >= 1 ? raw : 1;
-    this.#store.apply([put(DEVICE_NAMESPACE, NEXT_PREKEY_ID, String(first + count))]);
+    this.#store.apply([put(PREKEY_NAMESPACE, NEXT_PREKEY_ID, String(first + count))]);
     return first;
   }
 
