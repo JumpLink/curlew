@@ -16,6 +16,7 @@ import xml from '@xmpp/xml';
 import {
   LEGACY_PROFILE,
   MemoryOmemoStorage,
+  addressKey,
   generateKeyPair,
   selectBundleKeys,
   toBase64,
@@ -42,6 +43,7 @@ import {
   recipientTrust,
   SecretStoreOmemoStorage,
   XmppQueryError,
+  type IdentityChange,
   type OmemoSendPlan,
   type OwnDevice,
   type PepPort,
@@ -110,8 +112,29 @@ interface Participant {
   readonly device: OwnDevice;
 }
 
-async function join(net: FakeNetwork, jid: string): Promise<Participant> {
-  const storage = new MemoryOmemoStorage();
+/**
+ * A `MemoryOmemoStorage` that also keeps the parked key changes, which the plain one drops.
+ *
+ * The journal half of `TrustStorage` is optional, so the send path runs either way; a case that
+ * wants to see WHAT was parked needs somewhere for it to land.
+ */
+class ParkingStorage extends MemoryOmemoStorage {
+  readonly parked = new Map<string, IdentityChange>();
+
+  async saveIdentityChange(address: DeviceAddress, change: IdentityChange): Promise<void> {
+    this.parked.set(addressKey(address), change);
+  }
+
+  async loadIdentityChange(address: DeviceAddress): Promise<IdentityChange | undefined> {
+    return this.parked.get(addressKey(address));
+  }
+}
+
+async function join(
+  net: FakeNetwork,
+  jid: string,
+  storage: MemoryOmemoStorage = new MemoryOmemoStorage(),
+): Promise<Participant> {
   const pep = net.port(jid);
   const { device } = await announceDevice(pep, storage, jid, { now: () => START });
   return { jid, storage, pep, device };
@@ -260,17 +283,66 @@ export default async function omemoSend(): Promise<void> {
       expect(refused.skipped).toBe(1);
     });
 
-    await it('skips a device whose published key replaced the one we hold', async () => {
+    await it('parks a published key that replaced the one we hold, and refuses', async () => {
       const net = fakeNetwork();
-      const alice = await join(net, ALICE);
+      const storage = new ParkingStorage();
+      const alice = await join(net, ALICE, storage);
       const bob = await join(net, BOB);
       // A key under a device id we already know is never adopted off a bundle: that decision is
-      // the person's, and until stage 4 shows them the change, the message does not go.
-      await alice.storage.saveIdentity(
+      // the person's, so the key waits in the journal until they compare its fingerprint.
+      const held = toBase64(generateKeyPair().publicKey);
+      await storage.saveIdentity(
         { jid: BOB, deviceId: bob.device.deviceId },
-        { publicKey: toBase64(generateKeyPair().publicKey), trust: 'blind', firstSeen: START.toISOString() },
+        { publicKey: held, trust: 'blind', firstSeen: START.toISOString() },
       );
-      expect((await refusal(() => sendTo(alice, BOB, 'hi'))).reason).toBe('no-trusted-device');
+
+      const refused = await refusal(() => sendTo(alice, BOB, 'hi'));
+      expect(refused.reason).toBe('identity-changed');
+      expect(refused.skipped).toBe(1);
+
+      // The published key is parked, the held one still stands, and the change is dated when it
+      // was seen rather than when it was published.
+      const change = storage.parked.get(addressKey({ jid: BOB, deviceId: bob.device.deviceId }));
+      expect(change?.publicKey).toBe(toBase64(bob.device.identityKey.publicKey));
+      expect(change?.seenAt).toBe(LATER.toISOString());
+      const stored = await storage.loadIdentity({ jid: BOB, deviceId: bob.device.deviceId });
+      expect(stored?.publicKey).toBe(held);
+    });
+
+    await it('refuses a peer without devices when encryption is required there', async () => {
+      const net = fakeNetwork();
+      const alice = await join(net, ALICE);
+
+      // Bob never announced, so there is nothing to encrypt to. Without the setting that is a
+      // plaintext send (null); with it, the message does not go at all.
+      expect(await sendTo(alice, BOB, 'hi')).toBe(null);
+      const refused = await refusal(() =>
+        omemoEncryptFor(alice.pep, alice.storage, alice.device, ALICE, BOB, 'hi', {
+          now: () => LATER,
+          requireEncryption: true,
+        }),
+      );
+      expect(refused.reason).toBe('encryption-required');
+      expect(refused.skipped).toBe(0);
+    });
+
+    await it('plans nothing for a peer without devices unless encryption is required', async () => {
+      const net = fakeNetwork();
+      const alice = await join(net, ALICE);
+
+      expect(
+        await planOmemoSend(alice.pep, alice.storage, alice.device, ALICE, BOB, { now: () => LATER }),
+      ).toBe(null);
+      expect(
+        (
+          await refusal(() =>
+            planOmemoSend(alice.pep, alice.storage, alice.device, ALICE, BOB, {
+              now: () => LATER,
+              requireEncryption: true,
+            }),
+          )
+        ).reason,
+      ).toBe('encryption-required');
     });
   });
 
