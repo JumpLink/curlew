@@ -14,6 +14,7 @@ export * from './omemo-storage.ts';
 export * from './omemo-stanza.ts';
 export * from './omemo-device.ts';
 export * from './omemo-trust.ts';
+export * from './omemo-receive.ts';
 export * from './client.ts';
 export * from './login.ts';
 export * from './granted.ts';
