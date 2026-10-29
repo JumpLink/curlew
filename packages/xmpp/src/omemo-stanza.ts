@@ -82,7 +82,7 @@ export function parseDeviceList(pubsub: XmlElement | undefined): DeviceId[] {
  * means reading the current list and writing it back with our id in it. Dropping the others is
  * the classic OMEMO bug — their owners stop receiving anything until they republish.
  */
-export function deviceListPublish(deviceIds: readonly DeviceId[]) {
+export function deviceListPublish(deviceIds: readonly DeviceId[], openAccessModel = true) {
   return xml(
     'pubsub',
     { xmlns: NS.pubsub },
@@ -99,7 +99,7 @@ export function deviceListPublish(deviceIds: readonly DeviceId[]) {
         ),
       ),
     ),
-    openAccess(),
+    ...(openAccessModel ? [openAccess()] : []),
   );
 }
 
@@ -171,7 +171,7 @@ export function parseBundle(pubsub: XmlElement | undefined): DeviceBundle | unde
 }
 
 /** `<publish node='…bundles:<id>'>` with this device's public keys. */
-export function bundlePublish(deviceId: DeviceId, bundle: DeviceBundle) {
+export function bundlePublish(deviceId: DeviceId, bundle: DeviceBundle, openAccessModel = true) {
   return xml(
     'pubsub',
     { xmlns: NS.pubsub },
@@ -201,7 +201,7 @@ export function bundlePublish(deviceId: DeviceId, bundle: DeviceBundle) {
         ),
       ),
     ),
-    openAccess(),
+    ...(openAccessModel ? [openAccess()] : []),
   );
 }
 

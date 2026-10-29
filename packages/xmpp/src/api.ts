@@ -8,7 +8,7 @@
  * which only a handle opened with a grant (`GrantedXmppSession`) ever holds.
  */
 
-import type { ArchivedEntry, Bookmark, RosterItem } from './stanza.ts';
+import type { ArchivedEntry, Bookmark, RosterItem, XmlElement } from './stanza.ts';
 
 export interface MamQuery {
   /** The archive to ask: null for the user's own, else a room's bare JID. */
@@ -61,6 +61,15 @@ export interface XmppApi {
 export interface XmppLink extends XmppApi {
   /** Send a stanza built by `chatMessage`. Resolves when it is written to the stream. */
   sendChat(to: string, id: string, body: string, oobUrl?: string): Promise<void>;
+  /**
+   * `<iq type='get' to='jid'>` with a `<pubsub>` payload: the `<pubsub>` of the answer, or
+   * undefined when the node does not exist. Sits here rather than on `XmppApi` because OMEMO's
+   * reads and its publishes are one capability behind one grant (ADR 0006 §3) — a handle that
+   * may fetch a bundle is a handle that announces this device.
+   */
+  pepGet(jid: string, payload: XmlElement): Promise<XmlElement | undefined>;
+  /** `<iq type='set'>` to the account's own PEP service. Throws `XmppQueryError`. */
+  pepSet(payload: XmlElement): Promise<void>;
   /** Enable carbons, then send the follow presence. Throws when the server refuses carbons. */
   goAvailable(): Promise<void>;
   /** Called for every arrival hint (`isArrivalHint`). Returns the unsubscribe. */
