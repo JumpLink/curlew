@@ -228,6 +228,17 @@ export class SecretStoreOmemoStorage implements OmemoStorage, PlaintextJournal {
     return out;
   }
 
+  /**
+   * Every JID this account has an identity key for, ascending.
+   *
+   * Beyond the port, because `OmemoStorage` only ever asks about a JID it already holds. The
+   * listing is what `curlew omemo devices` needs with no argument: whose keys are in this file.
+   */
+  async listIdentityJids(): Promise<string[]> {
+    const jids = new Set(addresses(this.#store.load(IDENTITY_NAMESPACE).keys(), undefined).map((a) => a.jid));
+    return [...jids].sort((a, b) => a.localeCompare(b));
+  }
+
   // -- device lists ---------------------------------------------------------------------------
 
   async loadDeviceList(jid: string): Promise<DeviceListRecord | undefined> {

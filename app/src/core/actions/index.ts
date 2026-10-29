@@ -15,3 +15,4 @@ export * from './deliveries.ts';
 export * from './send.ts';
 export * from './wait-reply.ts';
 export * from './messaging.ts';
+export * from './omemo.ts';

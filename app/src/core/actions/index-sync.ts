@@ -37,6 +37,7 @@ import {
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig } from '../config.ts';
+import { decryptAccounts } from './omemo.ts';
 import { chmodSync } from 'node:fs';
 import { dirname } from 'node:path';
 
@@ -197,7 +198,11 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
         chats.push({
           backend: name,
           ...(await inPhase('chat', () =>
-            syncChats(db, backend, { accountId: params.accountId, fullScan: params.fullScan }),
+            syncChats(db, backend, {
+              accountId: params.accountId,
+              fullScan: params.fullScan,
+              decryptAccounts: decryptAccounts(config.grants),
+            }),
           )),
         });
       } else if (isDeliveryBackend(backend)) {
