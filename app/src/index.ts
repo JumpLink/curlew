@@ -30,7 +30,9 @@ import {
 // Before anything produces a string. Every `describe` below is evaluated while `parseArgs()`
 // assembles the parser, and a message already formatted keeps the language it was built in — so
 // this cannot move below that call, nor into a lazily imported module.
-initI18n();
+// Not for `curlew mcp`: an agent parses what the tools return, and a German step title or error
+// would change what a model sees from one desktop to the next (docs/i18n-status.md).
+if (hideBin(process.argv)[0] !== 'mcp') initI18n();
 
 function reportError(err: unknown): void {
   // With yargs' `.fail(false)` (below) yargs no longer prints its own usage dump on a

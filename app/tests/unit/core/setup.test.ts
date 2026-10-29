@@ -10,7 +10,7 @@
 import { describe, expect, it } from '@gjsify/unit';
 
 import {
-  SETUP_FOLLOW_UPS,
+  setupFollowUps,
   SETUP_STEPS,
   humanOnlyRefusal,
   runSetup,
@@ -69,9 +69,9 @@ export default async function setup(): Promise<void> {
     });
 
     it('carries the follow-ups as a list, not as prose', () => {
-      expect(SETUP_FOLLOW_UPS.length >= 3).toBe(true);
-      expect(SETUP_FOLLOW_UPS.some((text) => text.includes('0.53'))).toBe(true);
-      expect(SETUP_FOLLOW_UPS.some((text) => text.includes('Adwaita'))).toBe(true);
+      expect(setupFollowUps().length >= 3).toBe(true);
+      expect(setupFollowUps().some((text) => text.includes('0.53'))).toBe(true);
+      expect(setupFollowUps().some((text) => text.includes('Adwaita'))).toBe(true);
     });
 
     it('runs only the stages it was asked for', async () => {

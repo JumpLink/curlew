@@ -34,6 +34,7 @@
  */
 
 import type { AccountPrompter } from '@curlew/protocol';
+import { _, _n, fmt } from '@curlew/protocol';
 import { accountsAdd, accountsCheck, backendAccountsList } from './accounts.ts';
 import { backendsEnable, backendsList } from './backends.ts';
 import { runDeliveryDaemon } from './daemon.ts';
@@ -218,8 +219,16 @@ export const SETUP_STEPS: readonly SetupStep[] = [
   // first is also the honest order for the terms themselves: they say what the daemon may read
   // from this backend, and reading them before handing over the account is the point of them.
   termsStep(),
-  linkStep('signal', 'Link Signal', 'Signal → Settings → Linked devices → Link new device.'),
-  linkStep('whatsapp', 'Link WhatsApp (optional)', 'WhatsApp → Linked devices → Link a device.'),
+  linkStep(
+    'signal',
+    () => _('Link Signal'),
+    () => _('Signal → Settings → Linked devices → Link new device.'),
+  ),
+  linkStep(
+    'whatsapp',
+    () => _('Link WhatsApp (optional)'),
+    () => _('WhatsApp → Linked devices → Link a device.'),
+  ),
   indexStep(),
   daemonStep(),
   unitStep(),
@@ -229,9 +238,11 @@ export const SETUP_STEPS: readonly SetupStep[] = [
 /** The backends a setup run offers to enable, in the order the stages run. */
 export const SETUP_LINK_BACKENDS = ['signal', 'whatsapp'] as const;
 
-const SECRET_NOTE =
-  'The pairing code is a secret: it binds your account to this machine. Do not copy, paste or ' +
-  'send it — it is shown here, it is scanned from here, and it goes nowhere else.';
+const secretNote = (): string =>
+  _(
+    'The pairing code is a secret: it binds your account to this machine. Do not copy, paste or ' +
+      'send it — it is shown here, it is scanned from here, and it goes nowhere else.',
+  );
 
 // ── 1. readiness ─────────────────────────────────────────────────────────────
 
@@ -245,22 +256,24 @@ const SECRET_NOTE =
  * which is why `state` stays `done` and only the warning carries the finding. Anything softer
  * ("not ready") would make the assertion below pass while the fact stopped being legible.
  */
-const GOA_WARNING = 'GNOME Online Accounts: unavailable';
+const goaWarningText = (): string => _('GNOME Online Accounts: unavailable');
 
 async function goaWarning(ctx: SetupContext): Promise<string | undefined> {
   try {
     const result = await (ctx.checkAccounts ?? accountsCheck)();
     if (result.ok) return undefined;
-    return `${GOA_WARNING} — ${result.message}`;
+    return `${goaWarningText()} — ${result.message}`;
   } catch (err: unknown) {
-    return `${GOA_WARNING} — ${err instanceof Error ? err.message : String(err)}`;
+    return `${goaWarningText()} — ${err instanceof Error ? err.message : String(err)}`;
   }
 }
 
 function readinessStep(): SetupStep {
   return {
     name: 'readiness',
-    title: 'Readiness: bundle, tools, live check',
+    get title() {
+      return _('Readiness: bundle, tools, live check');
+    },
     command: 'curlew setup --only readiness',
     async probe(ctx) {
       const readiness = setupReadiness(ctx);
@@ -278,65 +291,78 @@ function readinessStep(): SetupStep {
     async run(ctx) {
       const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
       await say(
-        'This walkthrough links your devices, builds the index and starts the receiving daemon ' +
-          'as a systemd user unit. Stop at any time and re-run it — a second run says what is ' +
-          'already done.',
+        _(
+          'This walkthrough links your devices, builds the index and starts the receiving daemon ' +
+            'as a systemd user unit. Stop at any time and re-run it — a second run says what is ' +
+            'already done.',
+        ),
       );
       const readiness = setupReadiness(ctx);
       if (readiness.mode === 'checkout') {
-        await say(`Checkout: ${readiness.checkout}`);
+        await say(fmt(_('Checkout: {path}'), { path: readiness.checkout ?? '' }));
         if (readiness.gjsify === null) {
           // Never build from in here: a command cannot build itself, and the fix is one the
           // person runs in another process. Say exactly that, and name the command.
           return {
             status: 'failed',
-            reason:
+            reason: _(
               'gjsify is not on PATH, and both the bundle and the unit need it. Install it with ' +
-              '`npm install -g @gjsify/cli`, then run this again.',
+                '`npm install -g @gjsify/cli`, then run this again.',
+            ),
           };
         }
-        await say(`gjsify: ${readiness.gjsify}`);
+        await say(fmt(_('gjsify: {path}'), { path: readiness.gjsify }));
         if (readiness.bundle === null) {
           return {
             status: 'failed',
-            reason:
+            reason: _(
               'this process cannot name the bundle it is running from, and the unit needs that ' +
-              'path. Run `curlew setup` from a built checkout, or from the installed command.',
+                'path. Run `curlew setup` from a built checkout, or from the installed command.',
+            ),
           };
         }
         if (!ctx.host.exists(readiness.bundle)) {
           return {
             status: 'failed',
-            reason:
-              `no bundle at ${readiness.bundle}. Build it with ` +
-              '`gjsify workspace curlew-cli build`, then run this again — a command does not ' +
-              'build itself.',
+            reason: fmt(
+              _(
+                'no bundle at {path}. Build it with `gjsify workspace curlew-cli build`, then run ' +
+                  'this again — a command does not build itself.',
+              ),
+              { path: readiness.bundle },
+            ),
           };
         }
-        await say(`Bundle: ${readiness.bundle}`);
+        await say(fmt(_('Bundle: {path}'), { path: readiness.bundle }));
       } else {
-        await say('Published install: the installed command is used as it is. No checkout needed.');
+        await say(_('Published install: the installed command is used as it is. No checkout needed.'));
       }
-      await say('Live check (reads your online accounts, writes nothing):');
+      await say(_('Live check (reads your online accounts, writes nothing):'));
       // A probe can fail — no session bus, no typelib — and one failed probe is a REPORTED
       // check, never a thrown stage: readiness says what is missing, it does not stop the walk.
       const runtime = runtimeName();
-      await say(`  runtime: ${runtime}${runtime === 'gjs' ? '' : ' — the GNOME backends need GJS'}`);
+      await say(
+        runtime === 'gjs'
+          ? fmt(_('  runtime: {runtime}'), { runtime })
+          : fmt(_('  runtime: {runtime} — the GNOME backends need GJS'), { runtime }),
+      );
       // No `say()` for the verdict: the finding travels in the outcome, so the driver prints it
       // once for every surface and a read-only one (`--status`, an agent's `setup_status`) is not
       // left with a `done` that means nothing.
-      return { status: 'done', detail: 'readiness', warning: await goaWarning(ctx) };
+      return { status: 'done', detail: _('readiness'), warning: await goaWarning(ctx) };
     },
   };
 }
 
 // ── 2 + 3. link a device ─────────────────────────────────────────────────────
 
-function linkStep(backend: string, title: string, phoneSteps: string): SetupStep {
-  const display = backend === 'signal' ? 'Signal' : 'WhatsApp';
+function linkStep(backend: string, title: () => string, phoneSteps: () => string): SetupStep {
+  const display = backend === 'signal' ? 'Signal' : 'WhatsApp'; // product names, not translated
   return {
     name: `link-${backend}`,
-    title,
+    get title() {
+      return title();
+    },
     command: `curlew setup --only link-${backend}`,
     humanOnly: true,
     async probe(ctx) {
@@ -348,13 +374,20 @@ function linkStep(backend: string, title: string, phoneSteps: string): SetupStep
       if ((await droppedBackend(ctx)) === backend) {
         // A fact, because a sync found it out. Say which one, so the reader can check.
         await say(
-          `Signal no longer knows this device — the session file is still here, but the link ` +
-            `is gone. Remove this machine's entry under Settings → Linked devices on the ` +
-            `phone, then link again.`,
+          fmt(
+            _(
+              '{backend} no longer knows this device — the session file is still here, but the ' +
+                "link is gone. Remove this machine's entry under Settings → Linked devices on " +
+                'the phone, then link again.',
+            ),
+            { backend: display },
+          ),
         );
         return {
           status: 'skipped',
-          reason: `the ${backend} link was dropped by the server — linking again is the fix`,
+          reason: fmt(_('the {backend} link was dropped by the server — linking again is the fix'), {
+            backend,
+          }),
         };
       }
       if ((await linkedCount(ctx, backend)) > 0) {
@@ -362,21 +395,28 @@ function linkStep(backend: string, title: string, phoneSteps: string): SetupStep
         // device on the phone — so the old wording asserted a live link it had never checked,
         // and the only way to learn the truth is a sync. Say that instead of implying one.
         await say(
-          `A ${display} session from an earlier link is on this machine, but it has not been ` +
-            `checked with Signal. Run \`curlew sync\`: if Signal still knows this device, the ` +
-            `messages arrive. If the device was removed on the phone, the sync says so and the ` +
-            `link has to be done again.`,
+          fmt(
+            _(
+              'A {backend} session from an earlier link is on this machine, but it has not been ' +
+                'checked with {backend}. Run `curlew sync`: if {backend} still knows this device, ' +
+                'the messages arrive. If the device was removed on the phone, the sync says so ' +
+                'and the link has to be done again.',
+            ),
+            { backend: display },
+          ),
         );
-        return { status: 'done', detail: 'a session exists; its live state is unknown' };
+        return { status: 'done', detail: _('a session exists; its live state is unknown') };
       }
       await say(
-        'curlew registers itself with your phone as a linked device. The QR code appears ' +
-          'below, in this terminal.',
+        _(
+          'curlew registers itself with your phone as a linked device. The QR code appears ' +
+            'below, in this terminal.',
+        ),
       );
-      await say(`On the phone: ${phoneSteps}`);
-      await say(SECRET_NOTE);
-      if (!(await ctx.prompter.confirm(`Link ${display} now?`))) {
-        return { status: 'skipped', reason: `not linking ${display} now` };
+      await say(fmt(_('On the phone: {steps}'), { steps: phoneSteps() }));
+      await say(secretNote());
+      if (!(await ctx.prompter.confirm(fmt(_('Link {backend} now?'), { backend: display })))) {
+        return { status: 'skipped', reason: fmt(_('not linking {backend} now'), { backend: display }) };
       }
       // The ONE call in this module that produces a pairing payload. It is the existing action,
       // in-process, with the SHARED prompter: the backend renders the QR and hands it to
@@ -388,9 +428,18 @@ function linkStep(backend: string, title: string, phoneSteps: string): SetupStep
       if (count === 0) {
         // Not a failure: a pairing can be declined on the phone, and the person holding it is
         // the only one who knows. The terms stage asks again rather than inferring.
-        return { status: 'skipped', reason: `${display} reports no linked account yet` };
+        return {
+          status: 'skipped',
+          reason: fmt(_('{backend} reports no linked account yet'), { backend: display }),
+        };
       }
-      return { status: 'done', detail: `${count} ${display} account(s)` };
+      return {
+        status: 'done',
+        detail: fmt(_n('{count} {backend} account', '{count} {backend} accounts', count), {
+          count,
+          backend: display,
+        }),
+      };
     },
   };
 }
@@ -412,7 +461,9 @@ const defaultCountAccounts = async (ctx: SetupContext, backend: string): Promise
 function termsStep(): SetupStep {
   return {
     name: 'terms',
-    title: 'Enable backends — read the terms first',
+    get title() {
+      return _('Enable backends — read the terms first');
+    },
     command: 'curlew setup --only terms',
     humanOnly: true,
     async probe(ctx) {
@@ -422,8 +473,10 @@ function termsStep(): SetupStep {
     async run(ctx) {
       const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
       await say(
-        'The daemon only receives what is enabled here. A first enable shows the terms the ' +
-          'backend asks you to accept — read them yourself before you accept them.',
+        _(
+          'The daemon only receives what is enabled here. A first enable shows the terms the ' +
+            'backend asks you to accept — read them yourself before you accept them.',
+        ),
       );
       let enabledAny = false;
       for (const backend of SETUP_LINK_BACKENDS) {
@@ -432,14 +485,14 @@ function termsStep(): SetupStep {
         // before the question, and no code path here accepts on the person's behalf.
         const first = backendsEnable(backend, { path: ctx.configPath });
         if (first.outcome === 'already-enabled') {
-          await say(`${backend}: already enabled, terms accepted.`);
+          await say(fmt(_('{backend}: already enabled, terms accepted.'), { backend }));
           enabledAny = true;
           continue;
         }
         // The notice goes on screen before anything else is decided, whether or not a device is
         // linked: a person who declines here has still read what the terms are.
         if (first.terms !== null) {
-          await say(`${backend} asks you to accept these terms:`);
+          await say(fmt(_('{backend} asks you to accept these terms:'), { backend }));
           await say(`  ${first.terms.summary}`);
           if (first.terms.url !== undefined) await say(`  ${first.terms.url}`);
         }
@@ -452,22 +505,26 @@ function termsStep(): SetupStep {
         // this stage enables. `registry.enable` asks only for the terms — an enabled backend with
         // no session is what the daemon calls `loggedOut` — so asking here costs nothing and
         // closes nothing.
-        if (!(await ctx.prompter.confirm(`Read the terms for ${backend} and accept them?`))) {
-          await say(`${backend} stays disabled.`);
+        if (
+          !(await ctx.prompter.confirm(fmt(_('Read the terms for {backend} and accept them?'), { backend })))
+        ) {
+          await say(fmt(_('{backend} stays disabled.'), { backend }));
           continue;
         }
         const accepted = backendsEnable(backend, { path: ctx.configPath, acceptTerms: true });
         if (accepted.outcome === 'enabled' || accepted.outcome === 'already-enabled') {
-          await say(`${backend}: enabled.`);
+          await say(fmt(_('{backend}: enabled.'), { backend }));
           enabledAny = true;
         } else {
-          await say(`${backend}: could not be enabled (${accepted.outcome}).`);
+          await say(
+            fmt(_('{backend}: could not be enabled ({outcome}).'), { backend, outcome: accepted.outcome }),
+          );
         }
       }
       if (!enabledAny) {
-        return { status: 'skipped', reason: 'no delivery backend is enabled — nothing to receive' };
+        return { status: 'skipped', reason: _('no delivery backend is enabled — nothing to receive') };
       }
-      return { status: 'done', detail: 'backends enabled' };
+      return { status: 'done', detail: _('backends enabled') };
     },
   };
 }
@@ -477,7 +534,9 @@ function termsStep(): SetupStep {
 function indexStep(): SetupStep {
   return {
     name: 'index',
-    title: 'Build the index',
+    get title() {
+      return _('Build the index');
+    },
     command: 'curlew setup --only index',
     async probe(ctx) {
       // Built-ness is observable: the index exists and holds mail. No file, or an empty one, is
@@ -487,24 +546,40 @@ function indexStep(): SetupStep {
     async run(ctx) {
       const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
       await say(
-        'curlew searches the local index, not the network, and `curlew sync` is the only ' +
-          'thing that writes it — this stage IS that one call, not a second writer.',
+        _(
+          'curlew searches the local index, not the network, and `curlew sync` is the only ' +
+            'thing that writes it — this stage IS that one call, not a second writer.',
+        ),
       );
-      await say('It reads the headers of your mail accounts, never a body.');
+      await say(_('It reads the headers of your mail accounts, never a body.'));
       const existing = indexedMessages(ctx);
       if (existing > 0) {
-        await say(`The index already holds ${existing} message(s); syncing again only updates it.`);
+        await say(
+          fmt(
+            _n(
+              'The index already holds {count} message; syncing again only updates it.',
+              'The index already holds {count} messages; syncing again only updates it.',
+              existing,
+            ),
+            { count: existing },
+          ),
+        );
       }
-      await say('With many accounts this takes a few minutes.');
-      if (!(await ctx.prompter.confirm('Build the index now?'))) {
-        return { status: 'skipped', reason: 'the index stays as it is' };
+      await say(_('With many accounts this takes a few minutes.'));
+      if (!(await ctx.prompter.confirm(_('Build the index now?')))) {
+        return { status: 'skipped', reason: _('the index stays as it is') };
       }
       const result = await indexSync({ configPath: ctx.configPath, dbPath: ctx.indexPath });
       return {
         status: 'done',
-        detail:
-          `${indexedMessages(ctx)} message(s), ${result.conversations.conversations} conversation(s), ` +
-          `from ${result.backends.join(', ') || 'no enabled backend'}`,
+        detail: fmt(_('{messages}, {conversations}, from {backends}'), {
+          messages: fmt(_n('{n} message', '{n} messages', indexedMessages(ctx)), { n: indexedMessages(ctx) }),
+          conversations: fmt(
+            _n('{n} conversation', '{n} conversations', result.conversations.conversations),
+            { n: result.conversations.conversations },
+          ),
+          backends: result.backends.join(', ') || _('no enabled backend'),
+        }),
       };
     },
   };
@@ -528,7 +603,9 @@ export const SETUP_DAEMON_SMOKE_SECONDS = 30;
 function daemonStep(): SetupStep {
   return {
     name: 'daemon',
-    title: 'The receiving daemon',
+    get title() {
+      return _('The receiving daemon');
+    },
     command: 'curlew setup --only daemon',
     async probe(ctx) {
       // A daemon is "set up" when the unit that runs it is enabled — that is what makes it
@@ -543,21 +620,25 @@ function daemonStep(): SetupStep {
       if (receiving.length === 0) {
         return {
           status: 'skipped',
-          reason: 'no delivery backend is enabled — the daemon refuses to start without one',
+          reason: _('no delivery backend is enabled — the daemon refuses to start without one'),
         };
       }
       await say(
-        'The daemon receives in the background without walking the index, and keeps going while you do nothing.',
+        _(
+          'The daemon receives in the background without walking the index, and keeps going while you do nothing.',
+        ),
       );
       await say(
-        `Receiving from ${receiving.join(', ')} for ${SETUP_DAEMON_SMOKE_SECONDS} seconds, then it ` +
-          'stops itself.',
+        fmt(_('Receiving from {backends} for {seconds} seconds, then it stops itself.'), {
+          backends: receiving.join(', '),
+          seconds: SETUP_DAEMON_SMOKE_SECONDS,
+        }),
       );
       await say(
-        'Expect one line per account as it connects — account ids, never phone numbers or message text.',
+        _('Expect one line per account as it connects — account ids, never phone numbers or message text.'),
       );
-      if (!(await ctx.prompter.confirm('Run the daemon briefly now?'))) {
-        return { status: 'skipped', reason: 'not started — the systemd unit is the real receiver' };
+      if (!(await ctx.prompter.confirm(_('Run the daemon briefly now?')))) {
+        return { status: 'skipped', reason: _('not started — the systemd unit is the real receiver') };
       }
       // In-process, bounded, and through the daemon's OWN stop: an AbortSignal is exactly what
       // SIGTERM delivers in `curlew daemon`, so this reuses that path rather than implementing
@@ -581,14 +662,26 @@ function daemonStep(): SetupStep {
         if (dead.length > 0) {
           return {
             status: 'failed',
-            reason:
-              `${dead.length} account(s) received nothing — relink the device, then run ` +
-              `\`curlew setup --only daemon\` again`,
+            reason: fmt(
+              _n(
+                '{count} account received nothing — relink the device, then run `curlew setup --only daemon` again',
+                '{count} accounts received nothing — relink the device, then run `curlew setup --only daemon` again',
+                dead.length,
+              ),
+              { count: dead.length },
+            ),
           };
         }
         return {
           status: 'done',
-          detail: `${result.added} message(s) received, every loop closed, index closed cleanly`,
+          detail: fmt(
+            _n(
+              '{count} message received, every loop closed, index closed cleanly',
+              '{count} messages received, every loop closed, index closed cleanly',
+              result.added,
+            ),
+            { count: result.added },
+          ),
         };
       } catch (err: unknown) {
         return { status: 'failed', reason: err instanceof Error ? err.message : String(err) };
@@ -604,17 +697,19 @@ function daemonStep(): SetupStep {
 function unitStep(): SetupStep {
   return {
     name: 'unit',
-    title: 'Install the systemd user unit',
+    get title() {
+      return _('Install the systemd user unit');
+    },
     command: 'curlew setup --only unit',
     async probe(ctx) {
       return ctx.host.exists(unitFilePathFor(ctx)) ? 'done' : 'remaining';
     },
     async run(ctx) {
       const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
-      await say('This runs the daemon without a terminal, and starts it with your session.');
+      await say(_('This runs the daemon without a terminal, and starts it with your session.'));
       const target = unitFilePathFor(ctx);
       writeFileEnsured(ctx.host, target, renderUnit(unitPaths(ctx)));
-      await say(`Written: ${target}`);
+      await say(fmt(_('Written: {path}'), { path: target }));
       // The ONE place a command's output is ever captured, and what it captures is a FILE
       // CHECK: a unit file is systemd configuration, no linking session is in it and none can be.
       const verified = ctx.host.run(['systemd-analyze', '--user', 'verify', target], { capture: true });
@@ -622,27 +717,35 @@ function unitStep(): SetupStep {
       // systemd-analyze's OWN exit code decides the stage. Piped through a `head`, a shell loses
       // it, and a unit that does not verify must never be offered for enable.
       if (verified.code !== 0) {
-        return { status: 'failed', reason: `systemd-analyze --user verify exited ${verified.code}` };
+        return {
+          status: 'failed',
+          reason: fmt(_('systemd-analyze --user verify exited {code}'), { code: verified.code }),
+        };
       }
-      await say('systemd-analyze --user verify: exit 0, nothing to report.');
+      await say(_('systemd-analyze --user verify: exit 0, nothing to report.'));
       if (ctx.host.run(['systemctl', '--user', 'is-enabled', UNIT_NAME]).code === 0) {
-        await say(`${UNIT_NAME} is already enabled — leaving it as it is.`);
-        return { status: 'done', detail: 'unit written, already enabled' };
+        await say(fmt(_('{unit} is already enabled — leaving it as it is.'), { unit: UNIT_NAME }));
+        return { status: 'done', detail: _('unit written, already enabled') };
       }
-      if (!(await ctx.prompter.confirm('Enable and start the unit now?'))) {
-        return { status: 'skipped', reason: 'the unit is written but not enabled' };
+      if (!(await ctx.prompter.confirm(_('Enable and start the unit now?')))) {
+        return { status: 'skipped', reason: _('the unit is written but not enabled') };
       }
       ctx.host.run(['systemctl', '--user', 'daemon-reload']);
       const enable = ctx.host.run(['systemctl', '--user', 'enable', '--now', UNIT_NAME]);
       if (enable.code !== 0) {
-        return { status: 'failed', reason: `systemctl --user enable --now exited ${enable.code}` };
+        return {
+          status: 'failed',
+          reason: fmt(_('systemctl --user enable --now exited {code}'), { code: enable.code }),
+        };
       }
-      await say(`${UNIT_NAME} is enabled and running.`);
-      await say('When in doubt: journalctl --user -u curlew-daemon -f');
+      await say(fmt(_('{unit} is enabled and running.'), { unit: UNIT_NAME }));
+      await say(_('When in doubt: journalctl --user -u curlew-daemon -f'));
       await say(
-        `Without a session it still needs: loginctl enable-linger "${ctx.host.env('USER') ?? '$USER'}"`,
+        fmt(_('Without a session it still needs: loginctl enable-linger "{user}"'), {
+          user: ctx.host.env('USER') ?? '$USER',
+        }),
       );
-      return { status: 'done', detail: 'unit installed, enabled and started' };
+      return { status: 'done', detail: _('unit installed, enabled and started') };
     },
   };
 }
@@ -652,7 +755,9 @@ function unitStep(): SetupStep {
 function finishStep(): SetupStep {
   return {
     name: FINISH_STAGE,
-    title: 'Finish: what runs now, what is left',
+    get title() {
+      return _('Finish: what runs now, what is left');
+    },
     command: `curlew setup --only ${FINISH_STAGE}`,
     async run(ctx) {
       const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
@@ -660,20 +765,27 @@ function finishStep(): SetupStep {
       // The status was read BEFORE this stage recorded itself, so it would otherwise report its
       // own line as outstanding — the one line it is about to finish.
       const mine = `curlew setup --only ${FINISH_STAGE}`;
-      await say('What runs now:');
+      await say(_('What runs now:'));
       for (const step of status.steps) {
         const state = step.command === mine ? 'done' : step.state;
-        await say(`  ${state === 'done' ? '✓' : '·'} ${step.title} — ${state}`);
+        await say(
+          `  ${state === 'done' ? '✓' : '·'} ${step.title} — ${
+            state === 'done' ? _('done') : state === 'skipped' ? _('skipped') : _('remaining')
+          }`,
+        );
         if (step.command !== mine && step.warning !== undefined) await say(`      ⚠ ${step.warning}`);
       }
-      await say('Keep going on your own:');
-      for (const followUp of SETUP_FOLLOW_UPS) await say(`  • ${followUp}`);
+      await say(_('Keep going on your own:'));
+      for (const followUp of setupFollowUps()) await say(`  • ${followUp}`);
       const outstanding = status.remaining.filter((command) => command !== mine);
       if (outstanding.length > 0) {
-        await say('Still to run:');
+        await say(_('Still to run:'));
         for (const command of outstanding) await say(`  ${command}`);
       }
-      return { status: 'done', detail: `${status.done} of ${status.steps.length} stages done` };
+      return {
+        status: 'done',
+        detail: fmt(_('{done} of {total} stages done'), { done: status.done, total: status.steps.length }),
+      };
     },
   };
 }
@@ -689,9 +801,14 @@ function finishStep(): SetupStep {
  */
 export function humanOnlyRefusal(step: SetupStep): Error {
   return new Error(
-    `\`${step.name}\` is a step only the account holder can take: the provisioning payload is the ` +
-      `secret that binds their account to this machine, and accepting a third party's terms is an ` +
-      `act in their name. It has to be run by them, in a terminal: \`${step.command}\``,
+    fmt(
+      _(
+        '`{step}` is a step only the account holder can take: the provisioning payload is the ' +
+          "secret that binds their account to this machine, and accepting a third party's terms " +
+          'is an act in their name. It has to be run by them, in a terminal: `{command}`',
+      ),
+      { step: step.name, command: step.command },
+    ),
   );
 }
 
@@ -846,24 +963,39 @@ function enabledBackends(path: string): string[] {
   }
 }
 
-/** The follow-ups, whatever the machine. Named here so a frontend cannot lose or reorder them. */
-export const SETUP_FOLLOW_UPS: readonly string[] = [
-  'Back up $XDG_DATA_HOME/curlew: with Signal or WhatsApp enabled the index is irreplaceable ' +
-    '(those networks keep no archive), and the files under secrets/ are secrets — back them up ' +
-    'like a password, never share them.',
-  'loginctl enable-linger "$USER" so the daemon also runs while you are logged out; that is ' +
-    'what lets a user unit run at all without a session.',
-  'Check the daemon after a few days: `curlew deliveries`, or journalctl --user -u ' +
-    'curlew-daemon. A unit sitting at exit 2 means every account was logged out — relink, ' +
-    'then systemctl --user restart curlew-daemon.',
-  'End a linked device from the phone (Settings → Linked devices). Deleting the session file ' +
-    'under secrets/ ends it on this machine.',
-  'A sync from a timer is the fallback for a machine where the daemon does not run — but not ' +
-    'both at once: they take a lease on the same accounts.',
-  'Bump @gjsify/* to 0.53: it carries the long-lived-connection fix, and the three gjsify shims ' +
-    'in the tree (addon-canary, download, the module-resolve workaround) go away with it.',
-  'An Adwaita UI drives these same setup steps with widgets instead of text — the reason the ' +
-    'steps carry no yargs and no terminal.',
+/** The follow-ups, whatever the machine. Named here so a frontend cannot lose or reorder them.
+ * A function, not a constant: the texts must resolve after `initI18n()`. */
+export const setupFollowUps = (): readonly string[] => [
+  _(
+    'Back up $XDG_DATA_HOME/curlew: with Signal or WhatsApp enabled the index is irreplaceable ' +
+      '(those networks keep no archive), and the files under secrets/ are secrets — back them up ' +
+      'like a password, never share them.',
+  ),
+  _(
+    'loginctl enable-linger "$USER" so the daemon also runs while you are logged out; that is ' +
+      'what lets a user unit run at all without a session.',
+  ),
+  _(
+    'Check the daemon after a few days: `curlew deliveries`, or journalctl --user -u ' +
+      'curlew-daemon. A unit sitting at exit 2 means every account was logged out — relink, ' +
+      'then systemctl --user restart curlew-daemon.',
+  ),
+  _(
+    'End a linked device from the phone (Settings → Linked devices). Deleting the session file ' +
+      'under secrets/ ends it on this machine.',
+  ),
+  _(
+    'A sync from a timer is the fallback for a machine where the daemon does not run — but not ' +
+      'both at once: they take a lease on the same accounts.',
+  ),
+  _(
+    'Bump @gjsify/* to 0.53: it carries the long-lived-connection fix, and the three gjsify shims ' +
+      'in the tree (addon-canary, download, the module-resolve workaround) go away with it.',
+  ),
+  _(
+    'An Adwaita UI drives these same setup steps with widgets instead of text — the reason the ' +
+      'steps carry no yargs and no terminal.',
+  ),
 ];
 
 /**
@@ -886,8 +1018,14 @@ export async function runSetup(ctx: SetupContext, options: SetupRunOptions = {})
     const unknown = [...wanted].filter((name) => !SETUP_STEPS.some((step) => step.name === name));
     if (unknown.length > 0) {
       throw new Error(
-        `unknown setup stage${unknown.length > 1 ? 's' : ''}: ${unknown.join(', ')} — ` +
-          `one of ${SETUP_STEPS.map((s) => s.name).join(', ')}`,
+        fmt(
+          _n(
+            'unknown setup stage: {stages} — one of {known}',
+            'unknown setup stages: {stages} — one of {known}',
+            unknown.length,
+          ),
+          { stages: unknown.join(', '), known: SETUP_STEPS.map((s) => s.name).join(', ') },
+        ),
       );
     }
   }
@@ -936,7 +1074,7 @@ export async function runSetup(ctx: SetupContext, options: SetupRunOptions = {})
     // `failed` asked the next question anyway, which is what the flag says it does not do.
     if (options.bail) break;
   }
-  return { steps, ok, followUps: SETUP_FOLLOW_UPS, remaining, failed };
+  return { steps, ok, followUps: setupFollowUps(), remaining, failed };
 }
 
 /**
@@ -957,8 +1095,10 @@ export function detectSetup(host: CommandRunner): { mode: SetupMode; checkout: s
   }
   if (host.which('curlew') !== null) return { mode: 'published', checkout: null };
   throw new Error(
-    'neither a curlew checkout above this directory nor a `curlew` command on PATH. ' +
-      'Clone the repo and run `gjsify install`, or install the published command, then run this again.',
+    _(
+      'neither a curlew checkout above this directory nor a `curlew` command on PATH. ' +
+        'Clone the repo and run `gjsify install`, or install the published command, then run this again.',
+    ),
   );
 }
 
