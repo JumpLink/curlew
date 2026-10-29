@@ -24,6 +24,7 @@ import { registerConversationTools } from './tools/conversations.ts';
 import { registerGateCanary } from './tools/gate-canary.ts';
 import { registerIndexTools } from './tools/index-sync.ts';
 import { registerMailTools } from './tools/mail.ts';
+import { registerOmemoTools } from './tools/omemo.ts';
 import { registerSendTools } from './tools/send.ts';
 import { registerSetupTools } from './tools/setup.ts';
 
@@ -38,6 +39,7 @@ const REGISTRARS: Array<(server: McpServer) => void> = [
   registerContactsTools,
   registerCalendarTools,
   registerAccountsTools,
+  registerOmemoTools,
   // The only registrar with a mutating tool in it: `setup_status` is read-only and always
   // served, `setup_run` is dropped unless CURLEW_MCP_ALLOW_WRITE=1. Both identify themselves by
   // their own annotation, which is the only thing the gate reads.

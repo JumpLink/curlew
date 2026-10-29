@@ -18,6 +18,7 @@ import {
   indexCommand,
   mcpCommand,
   messageCommand,
+  omemoCommand,
   partsCommand,
   saveCommand,
   searchCommand,
@@ -48,6 +49,7 @@ const parseArgs = () =>
     .command(foldersCommand)
     .command(syncCommand)
     .command(sendCommand)
+    .command(omemoCommand)
     .command(daemonCommand)
     .command(indexCommand)
     .command(conversationsCommand)
