@@ -6,7 +6,7 @@ import { join } from 'node:path';
 
 import { chatConversationId, getConversation, recordSentChatMessage } from '@curlew/store';
 import { chatMessage, GrantedXmppSession, isArrivalHint, validateImageUrl } from '@curlew/xmpp';
-import type { XmppBackend, XmppLink } from '@curlew/xmpp';
+import type { EncryptedStanza, XmppBackend, XmppLink } from '@curlew/xmpp';
 import xml from '@xmpp/xml';
 
 import { permitFor, recordDelivered, requireSendGrant, sendMessage } from '../../../src/core/actions/send.ts';
@@ -21,7 +21,11 @@ const OWNER = 'owner@example.org';
 const ACCOUNT_INFO = { id: ACCOUNT, identity: 'bot@example.org', provider: 'xmpp' };
 const GRANTS = [{ capability: 'xmpp.send' as const, target: `${ACCOUNT}/${OWNER}` }];
 
-function fakeLink(sent: Array<[string, string, string]>, oob: string[] = []): XmppLink {
+function fakeLink(
+  sent: Array<[string, string, string]>,
+  oob: string[] = [],
+  encrypted: EncryptedStanza[] = [],
+): XmppLink {
   return {
     jid: 'bot@example.org',
     roster: async () => [],
@@ -32,6 +36,10 @@ function fakeLink(sent: Array<[string, string, string]>, oob: string[] = []): Xm
     sendChat: async (to, id, body, oobUrl) => {
       sent.push([to, id, body]);
       if (oobUrl !== undefined) oob.push(oobUrl);
+    },
+    sendEncrypted: async (to, id, stanza, fallback) => {
+      sent.push([to, id, fallback ?? '']);
+      encrypted.push(stanza);
     },
     goAvailable: async () => {},
     pepGet: async () => undefined,

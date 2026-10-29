@@ -14,6 +14,7 @@ import { randomUUID } from 'node:crypto';
 import type { XmppApi, XmppLink } from './api.ts';
 import { readOnly } from './client.ts';
 import { MESSAGES } from './messages.ts';
+import type { EncryptedStanza } from './omemo-stanza.ts';
 import { type DecryptEntries, XmppChatSession } from './session.ts';
 
 /** The longest text one send carries. A chat message, not a document. */
@@ -32,6 +33,8 @@ export interface SentChat {
   originId: string;
   /** Local send time, ISO 8601. */
   sentAt: string;
+  /** Whether it went out under OMEMO. False means the peer has none, never a fallback (§7). */
+  encrypted: boolean;
 }
 
 /** The longest image URL one send carries. */
@@ -67,6 +70,15 @@ export function validateImageUrl(url: string): string {
  */
 export interface GrantedOmemo {
   readonly decrypt: DecryptEntries;
+  /**
+   * Encrypt one outgoing message for a peer, or answer null when the peer has no OMEMO devices
+   * and plaintext is what they can read.
+   *
+   * A throw is a refusal (`OmemoSendRefusedError`) and the message is NOT sent in the clear —
+   * that is ADR 0006 §7 and the reason this returns a stanza rather than a boolean. The policy
+   * itself lives in `omemo-send.ts`; what this interface does is keep it out of here.
+   */
+  encrypt(to: string, text: string | null): Promise<EncryptedStanza | null>;
   /** Releases what opening it took — the account's secret file. */
   close(): void;
 }
@@ -89,30 +101,50 @@ export class GrantedXmppSession {
     this.omemo = omemo;
   }
 
-  /** Send one plain-text chat message. Throws, writing nothing, unless the permit names `to`. */
+  /**
+   * Send one chat message — encrypted when the peer has OMEMO devices and this session was
+   * opened with OMEMO, plain text otherwise. Throws, writing nothing, unless the permit names
+   * `to`.
+   *
+   * There is no third outcome. Either the message goes out encrypted, or it goes out to a peer
+   * who has no OMEMO at all, or nothing is sent and the caller hears why (§7).
+   */
   async send(to: string, text: string, now: () => Date = () => new Date()): Promise<SentChat> {
-    if (!this.permit.addresses.includes(to)) throw new Error(MESSAGES.notPermitted(this.permit.account, to));
-    const chatJid = to.includes('/') ? null : normalizeAddress('jid', to);
-    if (!chatJid || !chatJid.includes('@')) throw new Error(MESSAGES.notBare(to));
+    const chatJid = this.recipient(to);
     if (text.trim().length === 0) throw new Error(MESSAGES.emptyText);
     if (text.length > MAX_TEXT_CHARS) throw new Error(MESSAGES.tooLong(MAX_TEXT_CHARS));
     const originId = this.newId();
-    await this.link.sendChat(chatJid, originId, text);
-    return { chatJid, originId, sentAt: now().toISOString() };
+    const encrypted = await this.omemo?.encrypt(chatJid, text);
+    if (encrypted) await this.link.sendEncrypted(chatJid, originId, encrypted, MESSAGES.omemoFallback);
+    else await this.link.sendChat(chatJid, originId, text);
+    return { chatJid, originId, sentAt: now().toISOString(), encrypted: Boolean(encrypted) };
   }
 
   /**
    * Send one image as its own message: body = the URL, plus an XEP-0066 `<x xmlns='jabber:x:oob'>`
-   * carrying the same URL. Same permit check as `send`.
+   * carrying the same URL. Same permit check and same encryption rule as `send`.
+   *
+   * Encrypted, the URL goes INSIDE the payload and there is no `<x>` element: an out-of-band
+   * reference is plaintext, and a plaintext link to the picture is most of what the encryption
+   * was for. The receiving client then shows it as a link rather than inline, which is what
+   * Conversations does for an encrypted URL it was not given a key for.
    */
   async sendImage(to: string, url: string, now: () => Date = () => new Date()): Promise<SentChat> {
+    const chatJid = this.recipient(to);
+    const href = validateImageUrl(url);
+    const originId = this.newId();
+    const encrypted = await this.omemo?.encrypt(chatJid, href);
+    if (encrypted) await this.link.sendEncrypted(chatJid, originId, encrypted, MESSAGES.omemoFallback);
+    else await this.link.sendChat(chatJid, originId, href, href);
+    return { chatJid, originId, sentAt: now().toISOString(), encrypted: Boolean(encrypted) };
+  }
+
+  /** The bare JID to send to, or a throw: the permit is re-checked on every send (ADR 0004 §5). */
+  private recipient(to: string): string {
     if (!this.permit.addresses.includes(to)) throw new Error(MESSAGES.notPermitted(this.permit.account, to));
     const chatJid = to.includes('/') ? null : normalizeAddress('jid', to);
     if (!chatJid || !chatJid.includes('@')) throw new Error(MESSAGES.notBare(to));
-    const href = validateImageUrl(url);
-    const originId = this.newId();
-    await this.link.sendChat(chatJid, originId, href, href);
-    return { chatJid, originId, sentAt: now().toISOString() };
+    return chatJid;
   }
 
   /** Follow mode: carbons on, then the negative-priority presence. */

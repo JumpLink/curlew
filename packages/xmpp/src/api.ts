@@ -8,6 +8,7 @@
  * which only a handle opened with a grant (`GrantedXmppSession`) ever holds.
  */
 
+import type { EncryptedStanza } from './omemo-stanza.ts';
 import type { ArchivedEntry, Bookmark, RosterItem, XmlElement } from './stanza.ts';
 
 export interface MamQuery {
@@ -61,6 +62,15 @@ export interface XmppApi {
 export interface XmppLink extends XmppApi {
   /** Send a stanza built by `chatMessage`. Resolves when it is written to the stream. */
   sendChat(to: string, id: string, body: string, oobUrl?: string): Promise<void>;
+  /**
+   * The same for an OMEMO message (`encryptedChatMessage`). `fallback` is the plaintext body
+   * clients without OMEMO show — a notice that something arrived, never the message.
+   *
+   * A separate method rather than an option on `sendChat`, because the two carry different
+   * things: a caller that has an `EncryptedStanza` has no body to pass, and a caller that has a
+   * body must not be able to send it by accident once encryption was asked for.
+   */
+  sendEncrypted(to: string, id: string, encrypted: EncryptedStanza, fallback?: string): Promise<void>;
   /**
    * `<iq type='get' to='jid'>` with a `<pubsub>` payload: the `<pubsub>` of the answer, or
    * undefined when the node does not exist. Sits here rather than on `XmppApi` because OMEMO's

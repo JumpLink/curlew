@@ -62,6 +62,36 @@ export async function noteIdentity(
   return { record, outcome: existing === undefined ? 'new' : 'replaced' };
 }
 
+/**
+ * The same for a key straight off a fetched bundle, which is what the SEND path has.
+ *
+ * A published key proves only that someone put it on the server, so this one is stricter than
+ * {@link noteIdentity} in exactly one place: a key that REPLACES one we already hold for that
+ * device is not adopted — nothing is written, the stored record comes back unchanged, and the
+ * outcome is `replaced`. The caller does not encrypt for it.
+ *
+ * Conversations would show the person an identity-change notice here and let them decide. Until
+ * that notice exists, refusing the device is the safe half of the same behaviour: a peer who
+ * genuinely reinstalled publishes a NEW device id, which arrives as `new` and is blindly
+ * trusted like any other; a key swapped under an existing id is what an attacker in the
+ * server's position would do.
+ *
+ * Still a transaction's business — call it inside one, so the record it reports is the record
+ * the session is then built against.
+ */
+export async function noteBundleIdentity(
+  storage: OmemoStorage,
+  address: DeviceAddress,
+  publicKey: Uint8Array,
+  now: Date,
+): Promise<NotedIdentity> {
+  const encoded = toBase64(publicKey);
+  const existing = await storage.loadIdentity(address);
+  if (existing?.publicKey === encoded) return { record: existing, outcome: 'known' };
+  if (existing !== undefined) return { record: existing, outcome: 'replaced' };
+  return noteIdentity(storage, address, publicKey, now);
+}
+
 /** Whether any device of this JID carries a key a person has verified. */
 export async function hasVerifiedKey(storage: OmemoStorage, jid: string): Promise<boolean> {
   for (const { record } of await storage.listIdentities(jid)) {

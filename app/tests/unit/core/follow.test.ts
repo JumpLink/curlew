@@ -23,6 +23,7 @@ function fakeLink(onClose: () => void = () => {}, onArrival?: (fire: () => void)
     mam: async () => ({ entries: [], complete: true }),
     close: async () => onClose(),
     sendChat: async () => {},
+    sendEncrypted: async () => {},
     goAvailable: async () => {},
     pepGet: async () => undefined,
     pepSet: async () => {},

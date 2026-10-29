@@ -19,7 +19,7 @@
 
 import { chatConversationId, configPath, indexDbPath, recordSentChatMessage } from '@curlew/store';
 import type { SentChatRecord } from '@curlew/store';
-import { validateImageUrl, XmppBackend } from '@curlew/xmpp';
+import { isOmemoSendRefusedError, MESSAGES, validateImageUrl, XmppBackend } from '@curlew/xmpp';
 import type { SendPermit, SentChat } from '@curlew/xmpp';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
@@ -28,6 +28,7 @@ import { type Grant, isGranted } from '../grants.ts';
 import { MAX_CHUNK_CHARS, renderForXmpp, type MessageFormat } from '../markdown.ts';
 import { appendWriteLog, type WriteFrontend } from '../write-log.ts';
 import { openIndex } from './index-sync.ts';
+import { decryptAccounts } from './omemo.ts';
 
 export const SEND_CAPABILITY = 'xmpp.send';
 
@@ -126,7 +127,13 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
   if (plan.length === 0) throw new Error('nothing to send: the text is empty after rendering');
   for (const step of plan) if (step.kind === 'image') step.value = validateImageUrl(step.value);
 
-  const session = await backend.openGranted(params.accountId, permitFor(config.grants, params.accountId));
+  // `xmpp.omemo` for this account turns the send path encrypted: the session then asks the peer
+  // for their devices and refuses rather than sending a message in the clear that the person
+  // believes is encrypted (ADR 0006 §7). Without the grant nothing changes.
+  const decrypt = decryptAccounts(config.grants).includes(params.accountId);
+  const session = await backend.openGranted(params.accountId, permitFor(config.grants, params.accountId), {
+    decrypt,
+  });
   const sends: Array<{ sent: SentChat; body: string }> = [];
   try {
     for (const step of plan)
@@ -137,6 +144,11 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
             : await session.sendImage(params.to, step.value),
         body: step.value,
       });
+  } catch (error) {
+    // The typed refusal carries a reason, not a sentence. Turned into one here, where the
+    // address is known, so the person reads what to do rather than an enum.
+    if (isOmemoSendRefusedError(error)) throw new Error(MESSAGES.omemoRefused[error.reason](params.to));
+    throw error;
   } finally {
     await session.close().catch(() => {});
   }

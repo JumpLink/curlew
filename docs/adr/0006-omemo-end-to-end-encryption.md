@@ -229,6 +229,12 @@ an unknown device):
 | list fetch failed (timeout, server error) | **refused** — "unknown" never becomes "plaintext" |
 | `xmpp.omemo` not granted for the account | plaintext only to a peer without devices; refused otherwise |
 
+**As built in stage 3, the last row sends plaintext in both cases.** Without the grant curlew
+holds no keys, publishes no device of its own and never looks a peer's list up, so it cannot
+tell a peer with devices from one without — and the owner decision "with no grant, behaviour
+stays exactly as today" outranks refusing. The row describes what a later stage could do once
+an ungranted account is allowed to read a device list.
+
 A peer that once had OMEMO and later publishes an empty list gets plaintext again only after a
 notice in that chat. A per-address `encryption: "required"` setting in the config can forbid
 plaintext entirely.
@@ -267,7 +273,8 @@ encrypted for us, and stored as outgoing; otherwise `not-for-this-device`.
 
 ## Rollout
 
-Each stage is shippable on its own; the smallest useful one first.
+Each stage is shippable on its own; the smallest useful one first. Stages 0–3 are **done**;
+stage 4 is open.
 
 0. **gjsify:** XEdDSA, the Curve25519 ⇄ Ed25519 map, AES-GCM with any IV length — each with
    test vectors (RFC 7748, RFC 8032, the XEdDSA spec's construction, NIST GCM vectors with a
