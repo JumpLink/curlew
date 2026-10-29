@@ -7,7 +7,7 @@
  */
 
 import { searchContacts } from '@curlew/gnome';
-import { type ContactDTO, isChatBackend, isDeliveryBackend, isMailBackend } from '@curlew/protocol';
+import { type ContactDTO, _, fmt, isChatBackend, isDeliveryBackend, isMailBackend } from '@curlew/protocol';
 import type {
   ChatSyncResult,
   DeliverySyncResult,
@@ -153,9 +153,13 @@ export async function inPhase<T>(phase: SyncPhase, run: () => Promise<T> | T): P
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     if (!LOCKED.test(message)) throw err;
-    throw new Error(`the index stayed locked by another process during the ${phase} phase (${message})`, {
-      cause: err,
-    });
+    throw new Error(
+      fmt(_('the index stayed locked by another process during the {phase} phase ({message})'), {
+        phase,
+        message,
+      }),
+      { cause: err },
+    );
   }
 }
 
@@ -169,7 +173,7 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
   const plugins = registry.enabled(config);
   if (plugins.length === 0) {
     throw new Error(
-      'no backend is enabled — `curlew backends list` shows them, `backends enable <name>` turns one on',
+      _('no backend is enabled — `curlew backends list` shows them, `backends enable <name>` turns one on'),
     );
   }
   const db = openIndex(params.dbPath ?? indexDbPath());
@@ -217,7 +221,12 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
           )),
         });
       } else {
-        throw new Error(`backend ${name} uses the ${backend.kind} driver, which this curlew cannot sync yet`);
+        throw new Error(
+          fmt(_('backend {name} uses the {kind} driver, which this curlew cannot sync yet'), {
+            name,
+            kind: backend.kind,
+          }),
+        );
       }
     }
     const conversations = await inPhase('rebuild', () => rebuildWithAddressBook(db));

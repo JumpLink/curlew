@@ -29,6 +29,7 @@ import { MAX_CHUNK_CHARS, renderForXmpp, type MessageFormat } from '../markdown.
 import { appendWriteLog, type WriteFrontend } from '../write-log.ts';
 import { openIndex } from './index-sync.ts';
 import { decryptAccounts, encryptionRequired, requireEncryptionFor } from './omemo.ts';
+import { _, fmt } from '@curlew/protocol';
 
 export const SEND_CAPABILITY = 'xmpp.send';
 
@@ -90,8 +91,13 @@ export function permitFor(grants: readonly Grant[], accountId: string): SendPerm
 /** Throw unless the grants name exactly this pair. */
 export function requireSendGrant(config: Pick<CurlewConfig, 'grants'>, accountId: string, to: string): void {
   if (!isGranted(config.grants, SEND_CAPABILITY, sendTarget(accountId, to))) {
+    const target = sendTarget(accountId, to);
     throw new Error(
-      `${SEND_CAPABILITY} is not granted for ${sendTarget(accountId, to)} — add { "capability": "${SEND_CAPABILITY}", "target": "${sendTarget(accountId, to)}" } to the grants in the config file`,
+      fmt(_('{capability} is not granted for {target} — add {grant} to the grants in the config file'), {
+        capability: SEND_CAPABILITY,
+        target,
+        grant: `{ "capability": "${SEND_CAPABILITY}", "target": "${target}" }`,
+      }),
     );
   }
 }
@@ -99,7 +105,7 @@ export function requireSendGrant(config: Pick<CurlewConfig, 'grants'>, accountId
 /** The registry's xmpp backend, typed for its granted handle. */
 export function createXmppBackend(config: CurlewConfig): XmppBackend {
   const created = builtinRegistry().create(config, 'xmpp', backendContext('xmpp', config));
-  if (!(created instanceof XmppBackend)) throw new Error('the xmpp backend is not available');
+  if (!(created instanceof XmppBackend)) throw new Error(_('the xmpp backend is not available'));
   return created;
 }
 
@@ -108,12 +114,16 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
   requireSendGrant(config, params.accountId, params.to);
   const text = params.text !== undefined && params.text.trim().length > 0 ? params.text : undefined;
   if (text === undefined && params.imageUrl === undefined)
-    throw new Error('nothing to send: give text, an image URL or both');
+    throw new Error(_('nothing to send: give text, an image URL or both'));
   // Validated before anything is sent, so a bad URL cannot leave the text half-delivered.
   const imageUrl = params.imageUrl === undefined ? undefined : validateImageUrl(params.imageUrl);
   const backend = params.backend ?? createXmppBackend(config);
   const account = (await backend.listAccounts()).find((a) => a.id === params.accountId);
-  if (!account) throw new Error(`no xmpp account ${params.accountId} — \`curlew accounts list\` shows them`);
+  if (!account) {
+    throw new Error(
+      fmt(_('no xmpp account {account} — `curlew accounts list` shows them'), { account: params.accountId }),
+    );
+  }
 
   const markdown = params.format === 'markdown';
   const plan: Array<{ kind: 'text' | 'image'; value: string }> = [];
@@ -124,7 +134,7 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
     plan.push({ kind: 'text', value: text });
   }
   if (imageUrl !== undefined) plan.push({ kind: 'image', value: imageUrl });
-  if (plan.length === 0) throw new Error('nothing to send: the text is empty after rendering');
+  if (plan.length === 0) throw new Error(_('nothing to send: the text is empty after rendering'));
   for (const step of plan) if (step.kind === 'image') step.value = validateImageUrl(step.value);
 
   // `xmpp.omemo` for this account turns the send path encrypted: the session then asks the peer

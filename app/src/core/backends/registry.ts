@@ -19,6 +19,8 @@ import {
   type TermsNotice,
   storeTierFor,
   validateManifest,
+  _,
+  fmt,
 } from '@curlew/protocol';
 import type { CurlewConfig } from '../config.ts';
 
@@ -54,11 +56,16 @@ export class BackendRegistry {
       const problems = validateManifest(plugin.manifest);
       if (problems.length > 0) {
         throw new Error(
-          `backend ${JSON.stringify(plugin.manifest.name)} has an invalid manifest: ${problems.join('; ')}`,
+          fmt(_('backend {name} has an invalid manifest: {problems}'), {
+            name: JSON.stringify(plugin.manifest.name),
+            problems: problems.join('; '),
+          }),
         );
       }
       if (this.plugins.has(plugin.manifest.name)) {
-        throw new Error(`two backends are named ${JSON.stringify(plugin.manifest.name)}`);
+        throw new Error(
+          fmt(_('two backends are named {name}'), { name: JSON.stringify(plugin.manifest.name) }),
+        );
       }
       this.plugins.set(plugin.manifest.name, plugin);
     }
@@ -71,7 +78,12 @@ export class BackendRegistry {
   private require(name: string): BackendPlugin {
     const plugin = this.plugins.get(name);
     if (!plugin)
-      throw new Error(`unknown backend ${JSON.stringify(name)} — known: ${this.names().join(', ')}`);
+      throw new Error(
+        fmt(_('unknown backend {name} — known: {known}'), {
+          name: JSON.stringify(name),
+          known: this.names().join(', '),
+        }),
+      );
     return plugin;
   }
 
@@ -108,7 +120,14 @@ export class BackendRegistry {
     if (!plugin) {
       this.require(name);
       throw new Error(
-        `backend ${name} is not enabled — \`curlew backends enable ${name}\` turns it on (and shows its terms)`,
+        fmt(
+          _(
+            'backend {name} is not enabled — `curlew backends enable {name}` turns it on (and shows its terms)',
+          ),
+          {
+            name,
+          },
+        ),
       );
     }
     return plugin.create(context);

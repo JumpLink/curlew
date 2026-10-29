@@ -31,6 +31,7 @@ import { existsSync } from 'node:fs';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig, type CurlewConfig } from '../config.ts';
 import type { Grant } from '../grants.ts';
+import { _, fmt } from '@curlew/protocol';
 
 export const OMEMO_CAPABILITY = 'xmpp.omemo';
 
@@ -74,7 +75,9 @@ async function withStorage<T>(
   const config = loadConfig(params.configPath ?? configPath());
   const path = accountPath(backendContext('xmpp', config).secretsDir, params.accountId);
   if (!existsSync(path)) {
-    throw new Error(`no xmpp account ${params.accountId} — \`curlew accounts list\` shows them`);
+    throw new Error(
+      fmt(_('no xmpp account {account} — `curlew accounts list` shows them'), { account: params.accountId }),
+    );
   }
   const store = SecretStore.open(path);
   try {

@@ -17,6 +17,7 @@
  * the public name.
  */
 
+import { _, fmt } from '@curlew/protocol';
 import type { AccountPrompter, BackendAccount, BackendContext } from '@curlew/protocol';
 import { ensurePrivateDir, SecretStore } from '@curlew/store';
 import { existsSync, renameSync, rmSync } from 'node:fs';
@@ -39,7 +40,7 @@ export function parsePairingPhone(raw: string): string | null {
     .replace(/^00/, '');
   if (!digits) return null;
   if (!/^[1-9]\d{6,14}$/.test(digits)) {
-    throw new Error('the phone number must be international, with country code (e.g. +49 151 …)');
+    throw new Error(_('the phone number must be international, with country code (e.g. +49 151 …)'));
   }
   return digits;
 }
@@ -83,20 +84,29 @@ function runLinkSocket(
             .requestPairingCode(phone)
             .then((code) =>
               prompter.notify(
-                `Pairing code: ${code}\nOn the phone: WhatsApp → Settings → Linked devices → Link a device → "Link with phone number instead", and type it.`,
+                fmt(
+                  _(
+                    'Pairing code: {code}\nOn the phone: WhatsApp → Settings → Linked devices → Link a device → "Link with phone number instead", and type it.',
+                  ),
+                  { code },
+                ),
               ),
             )
             .catch((err: unknown) => reject(err instanceof Error ? err : new Error(String(err))));
         } else {
           prompter.notify(
-            `${renderQr(update.qr)}\nScan this with the phone: WhatsApp → Settings → Linked devices → Link a device. (A new code appears every ~20 s.)`,
+            `${renderQr(update.qr)}\n${_('Scan this with the phone: WhatsApp → Settings → Linked devices → Link a device. (A new code appears every ~20 s.)')}`,
           );
         }
       }
       if (update.connection === 'open' && auth.registered) resolve('linked');
       if (update.connection === 'close') {
         if (disconnectStatus(update) === RESTART_REQUIRED) resolve('restart');
-        else reject(new Error(`linking failed (${disconnectReason(update)}) — nothing was saved`));
+        else {
+          reject(
+            new Error(fmt(_('linking failed ({reason}) — nothing was saved'), { reason: disconnectReason(update) })),
+          );
+        }
       }
     });
   });
@@ -110,7 +120,7 @@ export async function linkWhatsApp(
   const createSocket = options.createSocket ?? createBaileysSocket;
   const phone = parsePairingPhone(
     await prompter.ask(
-      'Phone number for a pairing code (international, e.g. +49…) — leave empty to scan a QR code',
+      _('Phone number for a pairing code (international, e.g. +49…) — leave empty to scan a QR code'),
     ),
   );
   ensurePrivateDir(context.secretsDir);
@@ -124,15 +134,15 @@ export async function linkWhatsApp(
   let sock: WaSocketHandle | null = null;
   let timer: ReturnType<typeof setTimeout> | null = null;
   try {
-    const timeout = new Promise<never>((_, reject) => {
+    const timeout = new Promise<never>((_resolve, reject) => {
       timer = setTimeout(
-        () => reject(new Error('no phone linked this device in time — nothing was saved')),
+        () => reject(new Error(_('no phone linked this device in time — nothing was saved'))),
         options.timeoutMs ?? LINK_TIMEOUT_MS,
       );
     });
     const state = { codeRequested: false };
     for (let attempt = 0; ; attempt++) {
-      if (attempt > 3) throw new Error('WhatsApp kept asking for a reconnect — nothing was saved');
+      if (attempt > 3) throw new Error(_('WhatsApp kept asking for a reconnect — nothing was saved'));
       sock = createSocket({ auth, fullHistory: options.fullHistory === true });
       const outcome = await Promise.race([runLinkSocket(sock, auth, prompter, phone, state), timeout]);
       if (outcome === 'linked') break;
@@ -153,7 +163,9 @@ export async function linkWhatsApp(
     renameSync(pending, sessionPath(context.secretsDir, account.id));
     moved = true;
     prompter.notify(
-      'Linked. Run `curlew sync` now: WhatsApp hands the recent history and everything queued to the first connection that takes it, once.',
+      _(
+        'Linked. Run `curlew sync` now: WhatsApp hands the recent history and everything queued to the first connection that takes it, once.',
+      ),
     );
     return account;
   } finally {

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-10-29 21:53+0100\n"
+"POT-Creation-Date: 2026-10-29 22:43+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,6 +17,507 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: app/src/core/actions/index-sync.ts:157
+msgid ""
+"the index stayed locked by another process during the {phase} phase "
+"({message})"
+msgstr ""
+
+#: app/src/core/actions/index-sync.ts:176
+msgid ""
+"no backend is enabled — `curlew backends list` shows them, `backends enable "
+"<name>` turns one on"
+msgstr ""
+
+#: app/src/core/actions/index-sync.ts:225
+msgid ""
+"backend {name} uses the {kind} driver, which this curlew cannot sync yet"
+msgstr ""
+
+#: app/src/core/actions/omemo.ts:79 app/src/core/actions/send.ts:124
+msgid "no xmpp account {account} — `curlew accounts list` shows them"
+msgstr ""
+
+#: app/src/core/actions/send.ts:96
+msgid ""
+"{capability} is not granted for {target} — add {grant} to the grants in the "
+"config file"
+msgstr ""
+
+#: app/src/core/actions/send.ts:108
+msgid "the xmpp backend is not available"
+msgstr ""
+
+#: app/src/core/actions/send.ts:117
+msgid "nothing to send: give text, an image URL or both"
+msgstr ""
+
+#: app/src/core/actions/send.ts:137
+msgid "nothing to send: the text is empty after rendering"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:224
+msgid "Link Signal"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:225
+msgid "Signal → Settings → Linked devices → Link new device."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:229
+msgid "Link WhatsApp (optional)"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:230
+msgid "WhatsApp → Linked devices → Link a device."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:243
+msgid ""
+"The pairing code is a secret: it binds your account to this machine. Do not "
+"copy, paste or send it — it is shown here, it is scanned from here, and it "
+"goes nowhere else."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:259
+msgid "GNOME Online Accounts: unavailable"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:275
+msgid "Readiness: bundle, tools, live check"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:295
+msgid ""
+"This walkthrough links your devices, builds the index and starts the "
+"receiving daemon as a systemd user unit. Stop at any time and re-run it — a "
+"second run says what is already done."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:302
+msgid "Checkout: {path}"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:309
+msgid ""
+"gjsify is not on PATH, and both the bundle and the unit need it. Install it "
+"with `npm install -g @gjsify/cli`, then run this again."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:314
+msgid "gjsify: {path}"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:319
+msgid ""
+"this process cannot name the bundle it is running from, and the unit needs "
+"that path. Run `curlew setup` from a built checkout, or from the installed "
+"command."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:329
+msgid ""
+"no bundle at {path}. Build it with `gjsify workspace curlew-cli build`, then "
+"run this again — a command does not build itself."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:336
+msgid "Bundle: {path}"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:338
+msgid ""
+"Published install: the installed command is used as it is. No checkout "
+"needed."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:340
+msgid "Live check (reads your online accounts, writes nothing):"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:346
+msgid "  runtime: {runtime}"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:347
+msgid "  runtime: {runtime} — the GNOME backends need GJS"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:352
+msgid "readiness"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:379
+msgid ""
+"{backend} no longer knows this device — the session file is still here, but "
+"the link is gone. Remove this machine's entry under Settings → Linked "
+"devices on the phone, then link again."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:388
+msgid "the {backend} link was dropped by the server — linking again is the fix"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:400
+msgid ""
+"A {backend} session from an earlier link is on this machine, but it has not "
+"been checked with {backend}. Run `curlew sync`: if {backend} still knows "
+"this device, the messages arrive. If the device was removed on the phone, "
+"the sync says so and the link has to be done again."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:408
+msgid "a session exists; its live state is unknown"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:412
+msgid ""
+"curlew registers itself with your phone as a linked device. The QR code "
+"appears below, in this terminal."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:416
+msgid "On the phone: {steps}"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:418
+msgid "Link {backend} now?"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:419
+msgid "not linking {backend} now"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:433
+msgid "{backend} reports no linked account yet"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:438
+msgid "{count} {backend} account"
+msgid_plural "{count} {backend} accounts"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/core/actions/setup.ts:465
+msgid "Enable backends — read the terms first"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:477
+msgid ""
+"The daemon only receives what is enabled here. A first enable shows the "
+"terms the backend asks you to accept — read them yourself before you accept "
+"them."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:488
+msgid "{backend}: already enabled, terms accepted."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:495
+msgid "{backend} asks you to accept these terms:"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:509
+msgid "Read the terms for {backend} and accept them?"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:511
+msgid "{backend} stays disabled."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:516
+msgid "{backend}: enabled."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:520
+msgid "{backend}: could not be enabled ({outcome})."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:525
+msgid "no delivery backend is enabled — nothing to receive"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:527
+msgid "backends enabled"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:538
+msgid "Build the index"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:550
+msgid ""
+"curlew searches the local index, not the network, and `curlew sync` is the "
+"only thing that writes it — this stage IS that one call, not a second writer."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:554
+msgid "It reads the headers of your mail accounts, never a body."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:560
+msgid "The index already holds {count} message; syncing again only updates it."
+msgid_plural ""
+"The index already holds {count} messages; syncing again only updates it."
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/core/actions/setup.ts:568
+msgid "With many accounts this takes a few minutes."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:569
+msgid "Build the index now?"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:570
+msgid "the index stays as it is"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:575
+msgid "{messages}, {conversations}, from {backends}"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:576
+msgid "{n} message"
+msgid_plural "{n} messages"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/core/actions/setup.ts:578
+msgid "{n} conversation"
+msgid_plural "{n} conversations"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/core/actions/setup.ts:581
+msgid "no enabled backend"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:607
+msgid "The receiving daemon"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:623
+msgid ""
+"no delivery backend is enabled — the daemon refuses to start without one"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:628
+msgid ""
+"The daemon receives in the background without walking the index, and keeps "
+"going while you do nothing."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:632
+msgid "Receiving from {backends} for {seconds} seconds, then it stops itself."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:638
+msgid ""
+"Expect one line per account as it connects — account ids, never phone "
+"numbers or message text."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:640
+msgid "Run the daemon briefly now?"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:641
+msgid "not started — the systemd unit is the real receiver"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:667
+msgid ""
+"{count} account received nothing — relink the device, then run `curlew setup "
+"--only daemon` again"
+msgid_plural ""
+"{count} accounts received nothing — relink the device, then run `curlew "
+"setup --only daemon` again"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/core/actions/setup.ts:679
+msgid "{count} message received, every loop closed, index closed cleanly"
+msgid_plural ""
+"{count} messages received, every loop closed, index closed cleanly"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/core/actions/setup.ts:701
+msgid "Install the systemd user unit"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:709
+msgid ""
+"This runs the daemon without a terminal, and starts it with your session."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:712
+msgid "Written: {path}"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:722
+msgid "systemd-analyze --user verify exited {code}"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:725
+msgid "systemd-analyze --user verify: exit 0, nothing to report."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:727
+msgid "{unit} is already enabled — leaving it as it is."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:728
+msgid "unit written, already enabled"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:730
+msgid "Enable and start the unit now?"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:731
+msgid "the unit is written but not enabled"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:738
+msgid "systemctl --user enable --now exited {code}"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:741
+msgid "{unit} is enabled and running."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:742
+msgid "When in doubt: journalctl --user -u curlew-daemon -f"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:744
+msgid "Without a session it still needs: loginctl enable-linger \"{user}\""
+msgstr ""
+
+#: app/src/core/actions/setup.ts:748
+msgid "unit installed, enabled and started"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:759
+msgid "Finish: what runs now, what is left"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:768
+msgid "What runs now:"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:773 app/src/frontends/cli/colour.ts:42
+msgid "done"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:773 app/src/frontends/cli/colour.ts:43
+msgid "skipped"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:773 app/src/frontends/cli/colour.ts:44
+msgid "remaining"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:778
+msgid "Keep going on your own:"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:782 app/src/frontends/cli/setup.ts:114
+#: app/src/frontends/cli/setup.ts:155
+msgid "Still to run:"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:787 app/src/frontends/cli/setup.ts:151
+msgid "{done} of {total} stages done"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:806
+msgid ""
+"`{step}` is a step only the account holder can take: the provisioning "
+"payload is the secret that binds their account to this machine, and "
+"accepting a third party's terms is an act in their name. It has to be run by "
+"them, in a terminal: `{command}`"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:970
+msgid ""
+"Back up $XDG_DATA_HOME/curlew: with Signal or WhatsApp enabled the index is "
+"irreplaceable (those networks keep no archive), and the files under secrets/ "
+"are secrets — back them up like a password, never share them."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:975
+msgid ""
+"loginctl enable-linger \"$USER\" so the daemon also runs while you are "
+"logged out; that is what lets a user unit run at all without a session."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:979
+msgid ""
+"Check the daemon after a few days: `curlew deliveries`, or journalctl --user "
+"-u curlew-daemon. A unit sitting at exit 2 means every account was logged "
+"out — relink, then systemctl --user restart curlew-daemon."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:984
+msgid ""
+"End a linked device from the phone (Settings → Linked devices). Deleting the "
+"session file under secrets/ ends it on this machine."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:988
+msgid ""
+"A sync from a timer is the fallback for a machine where the daemon does not "
+"run — but not both at once: they take a lease on the same accounts."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:992
+msgid ""
+"Bump @gjsify/* to 0.53: it carries the long-lived-connection fix, and the "
+"three gjsify shims in the tree (addon-canary, download, the module-resolve "
+"workaround) go away with it."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:996
+msgid ""
+"An Adwaita UI drives these same setup steps with widgets instead of text — "
+"the reason the steps carry no yargs and no terminal."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:1023
+msgid "unknown setup stage: {stages} — one of {known}"
+msgid_plural "unknown setup stages: {stages} — one of {known}"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/core/actions/setup.ts:1099
+msgid ""
+"neither a curlew checkout above this directory nor a `curlew` command on "
+"PATH. Clone the repo and run `gjsify install`, or install the published "
+"command, then run this again."
+msgstr ""
+
+#: app/src/core/backends/registry.ts:59
+msgid "backend {name} has an invalid manifest: {problems}"
+msgstr ""
+
+#: app/src/core/backends/registry.ts:67
+msgid "two backends are named {name}"
+msgstr ""
+
+#: app/src/core/backends/registry.ts:82
+msgid "unknown backend {name} — known: {known}"
+msgstr ""
+
+#: app/src/core/backends/registry.ts:125
+msgid ""
+"backend {name} is not enabled — `curlew backends enable {name}` turns it on "
+"(and shows its terms)"
+msgstr ""
 
 #: app/src/frontends/cli/accounts.ts:22
 msgid ""
@@ -225,83 +726,118 @@ msgstr ""
 msgid "Restrict to one account id (e.g. signal-…); omit for all"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:54
+#: app/src/frontends/cli/index-sync.ts:26
+msgid "  mail {done}/{folders} {folderName} · {added} new"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:33
+msgid "  mail: {accounts}, this one has {mailboxes}"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:34
+msgid "{n} account"
+msgid_plural "{n} accounts"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/frontends/cli/index-sync.ts:35
+#: app/src/frontends/cli/index-sync.ts:39
+msgid "{n} mailbox"
+msgid_plural "{n} mailboxes"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/frontends/cli/index-sync.ts:38
+msgid "  mail done: {mailboxes}, {added} new, {errors}"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:41
+msgid "{n} error"
+msgid_plural "{n} errors"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/frontends/cli/index-sync.ts:61
+msgid "  {backend}: rate limited, retry in {seconds}s"
+msgstr ""
+
+#: app/src/frontends/cli/index-sync.ts:70
 msgid ""
 "Build or update the local full-text index (the only command that writes to "
 "it)"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:60
+#: app/src/frontends/cli/index-sync.ts:76
 msgid "Restrict to one account id (GOA, or e.g. telegram-…); omit for all"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:64
+#: app/src/frontends/cli/index-sync.ts:80
 msgid "Restrict to one mailbox (skips chat backends); omit for all"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:69
+#: app/src/frontends/cli/index-sync.ts:85
 msgid ""
 "Mail: force the flag/expunge pass. Chats: re-fetch the newest window, "
 "picking up edits and removing what was deleted"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:93
+#: app/src/frontends/cli/index-sync.ts:109
 msgid "Inspect or query the local index without touching the network"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:98
+#: app/src/frontends/cli/index-sync.ts:114
 msgid "Choose a subcommand: status, search"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:101
+#: app/src/frontends/cli/index-sync.ts:117
 msgid "What the index holds, and which folders are stale"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:108
+#: app/src/frontends/cli/index-sync.ts:124
 msgid "Search the index only — offline, no server contact"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:111
+#: app/src/frontends/cli/index-sync.ts:127
 msgid "Full text across subject, sender and body"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:112 app/src/frontends/cli/mail.ts:36
+#: app/src/frontends/cli/index-sync.ts:128 app/src/frontends/cli/mail.ts:36
 msgid "Sender contains"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:113 app/src/frontends/cli/mail.ts:39
+#: app/src/frontends/cli/index-sync.ts:129 app/src/frontends/cli/mail.ts:39
 msgid "Subject contains"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:114 app/src/frontends/cli/mail.ts:41
+#: app/src/frontends/cli/index-sync.ts:130 app/src/frontends/cli/mail.ts:41
 msgid "Date header on/after YYYY-MM-DD"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:115 app/src/frontends/cli/mail.ts:42
+#: app/src/frontends/cli/index-sync.ts:131 app/src/frontends/cli/mail.ts:42
 msgid "Date header before YYYY-MM-DD"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:116 app/src/frontends/cli/mail.ts:48
+#: app/src/frontends/cli/index-sync.ts:132 app/src/frontends/cli/mail.ts:48
 msgid "Only unseen messages"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:117 app/src/frontends/cli/mail.ts:49
+#: app/src/frontends/cli/index-sync.ts:133 app/src/frontends/cli/mail.ts:49
 msgid "Only flagged messages"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:118
+#: app/src/frontends/cli/index-sync.ts:134
 msgid "Only messages with an attachment"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:119
+#: app/src/frontends/cli/index-sync.ts:135
 msgid "Restrict to a GOA account id"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:120
+#: app/src/frontends/cli/index-sync.ts:136
 msgid "Restrict to one mailbox (wire path)"
 msgstr ""
 
-#: app/src/frontends/cli/index-sync.ts:123
+#: app/src/frontends/cli/index-sync.ts:139
 msgid "Max messages (max {max})"
 msgstr ""
 
@@ -410,64 +946,64 @@ msgid ""
 "clients)"
 msgstr ""
 
-#: app/src/frontends/cli/omemo.ts:29
+#: app/src/frontends/cli/omemo.ts:24
 msgid "The xmpp account id, as `curlew accounts list --backend xmpp` shows it"
 msgstr ""
 
-#: app/src/frontends/cli/omemo.ts:37
+#: app/src/frontends/cli/omemo.ts:32
 msgid ""
 "changing a trust decision needs an interactive terminal: run `curlew omemo "
 "trust` yourself"
 msgstr ""
 
-#: app/src/frontends/cli/omemo.ts:42
+#: app/src/frontends/cli/omemo.ts:37
 msgid "Type the fingerprint back"
 msgstr ""
 
-#: app/src/frontends/cli/omemo.ts:52
+#: app/src/frontends/cli/omemo.ts:47
 msgid ""
 "Show and decide the OMEMO device keys of an XMPP account (never connects)"
 msgstr ""
 
-#: app/src/frontends/cli/omemo.ts:56
+#: app/src/frontends/cli/omemo.ts:51
 msgid "Choose a subcommand: devices, trust, reset"
 msgstr ""
 
-#: app/src/frontends/cli/omemo.ts:59
+#: app/src/frontends/cli/omemo.ts:54
 msgid "Every device key this account knows, with its fingerprint and trust"
 msgstr ""
 
-#: app/src/frontends/cli/omemo.ts:63
+#: app/src/frontends/cli/omemo.ts:58
 msgid "Only this contact; every known address when left out"
 msgstr ""
 
-#: app/src/frontends/cli/omemo.ts:75
+#: app/src/frontends/cli/omemo.ts:70
 msgid "Decide one device key after comparing its fingerprint out of band"
 msgstr ""
 
-#: app/src/frontends/cli/omemo.ts:82
+#: app/src/frontends/cli/omemo.ts:77
 msgid "The contact whose device key this is"
 msgstr ""
 
-#: app/src/frontends/cli/omemo.ts:87
+#: app/src/frontends/cli/omemo.ts:82
 msgid "The fingerprint `curlew omemo devices` printed, in any grouping"
 msgstr ""
 
-#: app/src/frontends/cli/omemo.ts:93
+#: app/src/frontends/cli/omemo.ts:88
 msgid ""
 "`verified` after comparing it with them, `distrusted` to never encrypt to it"
 msgstr ""
 
-#: app/src/frontends/cli/omemo.ts:110
+#: app/src/frontends/cli/omemo.ts:105
 msgid ""
 "Throw away the sessions with one contact; their keys and your decisions stay"
 msgstr ""
 
-#: app/src/frontends/cli/omemo.ts:115
+#: app/src/frontends/cli/omemo.ts:110
 msgid "The contact whose sessions are stuck"
 msgstr ""
 
-#: app/src/frontends/cli/omemo.ts:124
+#: app/src/frontends/cli/omemo.ts:119
 msgid ""
 "resetting sessions needs an interactive terminal: run `curlew omemo reset` "
 "yourself"
@@ -515,10 +1051,6 @@ msgstr ""
 
 #: app/src/frontends/cli/setup.ts:54
 msgid "Stop after the first stage that does not finish"
-msgstr ""
-
-#: app/src/frontends/cli/setup.ts:114 app/src/frontends/cli/setup.ts:155
-msgid "Still to run:"
 msgstr ""
 
 #: app/src/frontends/cli/setup.ts:121
@@ -571,8 +1103,122 @@ msgid_plural "{n} warnings"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/frontends/cli/setup.ts:151
-msgid "{done} of {total} stages done"
+#: packages/matrix/src/backend.ts:29
+msgid "log in again with `curlew accounts add matrix`"
+msgstr ""
+
+#: packages/matrix/src/backend.ts:34
+msgid "Homeserver (URL like https://matrix.example.org, or the server name)"
+msgstr ""
+
+#: packages/matrix/src/backend.ts:35
+msgid "Matrix user (@name:example.org)"
+msgstr ""
+
+#: packages/matrix/src/backend.ts:36 packages/xmpp/src/backend.ts:38
+msgid "Password"
+msgstr ""
+
+#: packages/matrix/src/backend.ts:63
+msgid "no Matrix account {account} — {hint}"
+msgstr ""
+
+#: packages/matrix/src/backend.ts:70
+msgid "the Matrix account file {account} is incomplete — {hint}"
+msgstr ""
+
+#: packages/matrix/src/backend.ts:81
+msgid "the Matrix account {account} is not usable ({reason}) — {hint}"
+msgstr ""
+
+#: packages/matrix/src/login.ts:41
+msgid "the homeserver must be a URL or a server name"
+msgstr ""
+
+#: packages/matrix/src/login.ts:63
+msgid ""
+"{homeserver} offers no password login (only {flows}) — single sign-on is not "
+"supported yet"
+msgstr ""
+
+#: packages/matrix/src/login.ts:64
+msgid "nothing"
+msgstr ""
+
+#: packages/matrix/src/login.ts:70
+msgid "the Matrix user is empty"
+msgstr ""
+
+#: packages/matrix/src/login.ts:89
+msgid "Logged in; setting up this device’s encryption keys…"
+msgstr ""
+
+#: packages/signal/src/backend.ts:129
+msgid "no Signal session for {account} — {hint}"
+msgstr ""
+
+#: packages/signal/src/backend.ts:137
+msgid "the Signal session {account} was never linked — {hint}"
+msgstr ""
+
+#: packages/signal/src/link.ts:93
+msgid ""
+"Scan this with the phone: Signal → Settings → Linked devices → Link new "
+"device."
+msgstr ""
+
+#: packages/signal/src/link.ts:106
+msgid "the provisioning connection failed ({reason}) — nothing was saved"
+msgstr ""
+
+#: packages/signal/src/link.ts:111 packages/whatsapp/src/login.ts:139
+msgid "no phone linked this device in time — nothing was saved"
+msgstr ""
+
+#: packages/signal/src/link.ts:138
+msgid "the phone sent an incomplete link message — nothing was saved"
+msgstr ""
+
+#: packages/signal/src/link.ts:140
+msgid "The phone answered. Registering this device…"
+msgstr ""
+
+#: packages/signal/src/link.ts:163
+msgid ""
+"the phone sent a number but no phone number identity key — nothing was saved"
+msgstr ""
+
+#: packages/signal/src/link.ts:166
+msgid ""
+"the phone sent a phone number identity key but no number — nothing was saved"
+msgstr ""
+
+#: packages/signal/src/link.ts:216
+msgid "Signal refused the link (status {status}{detail}) — nothing was saved"
+msgstr ""
+
+#: packages/signal/src/link.ts:227
+msgid "Signal answered the link for a different account — nothing was saved"
+msgstr ""
+
+#: packages/signal/src/link.ts:247
+msgid ""
+"Linked, but the one-time keys were not published ({reason}); new contacts "
+"fall back to the last-resort key."
+msgstr ""
+
+#: packages/signal/src/link.ts:267
+msgid ""
+"Linked. Run `curlew sync` now: Signal keeps what arrived for this device "
+"only until it is received, and the phone sends the contact list on its own."
+msgstr ""
+
+#: packages/signal/src/receiver.ts:63
+msgid "link it again with `curlew accounts add signal`"
+msgstr ""
+
+#: packages/signal/src/receiver.ts:314
+msgid "Signal no longer knows this device (it was unlinked) — {hint}"
 msgstr ""
 
 #: packages/telegram/src/backend.ts:33
@@ -703,6 +1349,103 @@ msgid ""
 "misuses the API can be limited or banned by Telegram. curlew only reads: it "
 "never sends, edits or deletes, and keeps the session key on this machine "
 "only."
+msgstr ""
+
+#: packages/whatsapp/src/backend.ts:86
+msgid "no WhatsApp session for {account} — {hint}"
+msgstr ""
+
+#: packages/whatsapp/src/backend.ts:95
+msgid "the WhatsApp session {account} was never linked — {hint}"
+msgstr ""
+
+#: packages/whatsapp/src/login.ts:43
+msgid ""
+"the phone number must be international, with country code (e.g. +49 151 …)"
+msgstr ""
+
+#: packages/whatsapp/src/login.ts:89
+msgid ""
+"Pairing code: {code}\n"
+"On the phone: WhatsApp → Settings → Linked devices → Link a device → \"Link "
+"with phone number instead\", and type it."
+msgstr ""
+
+#: packages/whatsapp/src/login.ts:98
+msgid ""
+"Scan this with the phone: WhatsApp → Settings → Linked devices → Link a "
+"device. (A new code appears every ~20 s.)"
+msgstr ""
+
+#: packages/whatsapp/src/login.ts:107
+msgid "linking failed ({reason}) — nothing was saved"
+msgstr ""
+
+#: packages/whatsapp/src/login.ts:123
+msgid ""
+"Phone number for a pairing code (international, e.g. +49…) — leave empty to "
+"scan a QR code"
+msgstr ""
+
+#: packages/whatsapp/src/login.ts:145
+msgid "WhatsApp kept asking for a reconnect — nothing was saved"
+msgstr ""
+
+#: packages/whatsapp/src/login.ts:167
+msgid ""
+"Linked. Run `curlew sync` now: WhatsApp hands the recent history and "
+"everything queued to the first connection that takes it, once."
+msgstr ""
+
+#: packages/whatsapp/src/receiver.ts:30
+msgid "link it again with `curlew accounts add whatsapp`"
+msgstr ""
+
+#: packages/whatsapp/src/receiver.ts:227
+msgid "WhatsApp logged this device out ({reason}) — {hint}"
+msgstr ""
+
+#: packages/xmpp/src/accounts.ts:32
+msgid "not an XMPP address — expected name@example.org"
+msgstr ""
+
+#: packages/xmpp/src/accounts.ts:37
+msgid "not an XMPP account id: {account}"
+msgstr ""
+
+#: packages/xmpp/src/accounts.ts:62
+msgid "no XMPP account {account} — add it with `curlew accounts add xmpp`"
+msgstr ""
+
+#: packages/xmpp/src/accounts.ts:70
+msgid ""
+"the XMPP account {account} is incomplete — add it again with `curlew "
+"accounts add xmpp`"
+msgstr ""
+
+#: packages/xmpp/src/accounts.ts:102
+msgid ""
+"an XMPP password does not belong in the config file (it is backed up in the "
+"clear) — remove backends.xmpp.settings.password; `curlew accounts add xmpp` "
+"keeps it in a 0600 file"
+msgstr ""
+
+#: packages/xmpp/src/backend.ts:37
+msgid "XMPP address (name@example.org)"
+msgstr ""
+
+#: packages/xmpp/src/backend.ts:40
+msgid ""
+"Server address — empty to discover it (e.g. xmpps://xmpp.example.org:5223, "
+"wss://…)"
+msgstr ""
+
+#: packages/xmpp/src/login.ts:28
+msgid "an empty password cannot log in"
+msgstr ""
+
+#: packages/xmpp/src/login.ts:38
+msgid "Logged in as {jid}; the server keeps a message archive (MAM)."
 msgstr ""
 
 #. TRANSLATORS: keep the JSON snippet verbatim — it is config syntax to paste.

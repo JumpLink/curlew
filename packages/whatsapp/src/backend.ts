@@ -7,6 +7,7 @@
  * or a ban wave makes that necessary.
  */
 
+import { _, fmt } from '@curlew/protocol';
 import type {
   AccountPrompter,
   BackendAccount,
@@ -25,7 +26,7 @@ import { FileJournal, journalPath } from './journal.ts';
 import { linkWhatsApp } from './login.ts';
 import { WHATSAPP_MANIFEST } from './manifest.ts';
 import { WhatsAppMapper } from './map.ts';
-import { type ReceiverOptions, RELINK_HINT, WhatsAppReceiver } from './receiver.ts';
+import { type ReceiverOptions, relinkHint, WhatsAppReceiver } from './receiver.ts';
 
 /** The non-secret settings this backend reads from `backends.whatsapp.settings`. */
 export interface WhatsAppSettings {
@@ -82,7 +83,7 @@ export class WhatsAppBackend implements DeliveryBackend {
   async connect(accountId: string, options: DeliveryConnectOptions): Promise<DeliverySession> {
     parseSettings(this.context.settings);
     const path = sessionPath(this.context.secretsDir, accountId);
-    if (!existsSync(path)) throw new Error(`no WhatsApp session for ${accountId} — ${RELINK_HINT}`);
+    if (!existsSync(path)) throw new Error(fmt(_('no WhatsApp session for {account} — {hint}'), { account: accountId, hint: relinkHint() }));
     const store = SecretStore.open(path);
     const auth = SecretStoreAuthState.open(store, { flushDelayMs: this.options.flushDelayMs });
     if (!auth.registered) {
@@ -90,7 +91,9 @@ export class WhatsAppBackend implements DeliveryBackend {
       // timer: nothing of it may reach the file, and the timer must not outlive the store.
       auth.discard();
       store.close();
-      throw new Error(`the WhatsApp session ${accountId} was never linked — ${RELINK_HINT}`);
+      throw new Error(
+        fmt(_('the WhatsApp session {account} was never linked — {hint}'), { account: accountId, hint: relinkHint() }),
+      );
     }
     const createSocket = this.options.createSocket ?? createBaileysSocket;
     const mapper = new WhatsAppMapper(new JidResolver(auth.lidLookup()));

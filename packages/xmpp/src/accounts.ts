@@ -10,7 +10,7 @@
  */
 
 import type { BackendAccount, BackendContext } from '@curlew/protocol';
-import { normalizeAddress } from '@curlew/protocol';
+import { normalizeAddress, _, fmt } from '@curlew/protocol';
 import { SecretStore, stableId } from '@curlew/store';
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -29,12 +29,12 @@ export function accountIdFor(jid: string): string {
 /** A bare JID as typed by the user, or an error that says what is wrong with it. */
 export function normalizeJid(raw: string): string {
   const jid = normalizeAddress('jid', raw);
-  if (!jid) throw new Error('not an XMPP address — expected name@example.org');
+  if (!jid) throw new Error(_('not an XMPP address — expected name@example.org'));
   return jid;
 }
 
 export function accountPath(secretsDir: string, accountId: string): string {
-  if (!ACCOUNT_ID.test(accountId)) throw new Error(`not an XMPP account id: ${accountId}`);
+  if (!ACCOUNT_ID.test(accountId)) throw new Error(fmt(_('not an XMPP account id: {account}'), { account: accountId }));
   return join(secretsDir, `${accountId}.db`);
 }
 
@@ -58,14 +58,18 @@ export function writeLogin(secretsDir: string, login: XmppLogin): BackendAccount
 export function readLogin(secretsDir: string, accountId: string): XmppLogin {
   const path = accountPath(secretsDir, accountId);
   if (!existsSync(path))
-    throw new Error(`no XMPP account ${accountId} — add it with \`curlew accounts add xmpp\``);
+    throw new Error(
+      fmt(_('no XMPP account {account} — add it with `curlew accounts add xmpp`'), { account: accountId }),
+    );
   const store = SecretStore.open(path);
   try {
     const jid = store.get(LOGIN_NAMESPACE, 'jid');
     const password = store.get(LOGIN_NAMESPACE, 'password');
     if (!jid || password === null) {
       throw new Error(
-        `the XMPP account ${accountId} is incomplete — add it again with \`curlew accounts add xmpp\``,
+        fmt(_('the XMPP account {account} is incomplete — add it again with `curlew accounts add xmpp`'), {
+          account: accountId,
+        }),
       );
     }
     return { jid, password, service: store.get(LOGIN_NAMESPACE, 'service') };
@@ -94,8 +98,10 @@ export function listAccounts(secretsDir: string): BackendAccount[] {
 export function refuseConfigSecrets(settings: BackendContext['settings']): void {
   if ('password' in settings) {
     throw new Error(
-      'an XMPP password does not belong in the config file (it is backed up in the clear) — remove ' +
-        'backends.xmpp.settings.password; `curlew accounts add xmpp` keeps it in a 0600 file',
+      _(
+        'an XMPP password does not belong in the config file (it is backed up in the clear) — remove ' +
+          'backends.xmpp.settings.password; `curlew accounts add xmpp` keeps it in a 0600 file',
+      ),
     );
   }
 }

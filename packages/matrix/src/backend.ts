@@ -3,6 +3,7 @@
  * only through the registry.
  */
 
+import { _, fmt } from '@curlew/protocol';
 import type {
   AccountPrompter,
   BackendAccount,
@@ -25,14 +26,14 @@ import { loginMatrix } from './login.ts';
 import { MATRIX_MANIFEST } from './manifest.ts';
 import { MatrixChatSession } from './session.ts';
 
-export const MATRIX_RELOGIN_HINT = 'log in again with `curlew accounts add matrix`';
+export const reloginHint = (): string => _('log in again with `curlew accounts add matrix`');
 
 /** The login questions, asked through whatever frontend is running. */
 export function matrixPrompts(prompter: AccountPrompter): MatrixLoginPrompts {
   return {
-    homeserver: () => prompter.ask('Homeserver (URL like https://matrix.example.org, or the server name)'),
-    user: () => prompter.ask('Matrix user (@name:example.org)'),
-    password: () => prompter.ask('Password', { secret: true }),
+    homeserver: () => prompter.ask(_('Homeserver (URL like https://matrix.example.org, or the server name)')),
+    user: () => prompter.ask(_('Matrix user (@name:example.org)')),
+    password: () => prompter.ask(_('Password'), { secret: true }),
     notify: (message) => prompter.notify(message),
   };
 }
@@ -59,13 +60,15 @@ export class MatrixBackend implements ChatBackend {
 
   async connect(accountId: string): Promise<ChatSession> {
     const path = accountPath(this.context.secretsDir, accountId);
-    if (!existsSync(path)) throw new Error(`no Matrix account ${accountId} — ${MATRIX_RELOGIN_HINT}`);
+    if (!existsSync(path)) throw new Error(fmt(_('no Matrix account {account} — {hint}'), { account: accountId, hint: reloginHint() }));
     const store = SecretStore.open(path);
     const record = readAccountRecord(store);
     const accessToken = readAccessToken(store);
     if (!record || !accessToken) {
       store.close();
-      throw new Error(`the Matrix account file ${accountId} is incomplete — ${MATRIX_RELOGIN_HINT}`);
+      throw new Error(
+        fmt(_('the Matrix account file {account} is incomplete — {hint}'), { account: accountId, hint: reloginHint() }),
+      );
     }
     let api;
     try {
@@ -75,7 +78,11 @@ export class MatrixBackend implements ChatBackend {
       // The SDK's error text names the server's errcode (M_UNKNOWN_TOKEN for a device logged out
       // elsewhere); it never carries the token.
       throw new Error(
-        `the Matrix account ${record.userId} is not usable (${err instanceof Error ? err.message : String(err)}) — ${MATRIX_RELOGIN_HINT}`,
+        fmt(_('the Matrix account {account} is not usable ({reason}) — {hint}'), {
+          account: record.userId,
+          reason: err instanceof Error ? err.message : String(err),
+          hint: reloginHint(),
+        }),
       );
     }
     const connected = api;

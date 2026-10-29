@@ -62,7 +62,7 @@ import {
   readContactsSync,
   readDelimited,
   ReadOnlyViolation,
-  RELINK_HINT,
+  relinkHint,
   SAFETY_NUMBER_CHANGED,
   type SetAsideEntry,
   SET_ASIDE_LIMIT,
@@ -1938,7 +1938,7 @@ export default async () => {
           }),
         );
         expect(result.accounts[0].error ?? '').toMatch(/unlinked/);
-        expect((result.accounts[0].error ?? '').includes(RELINK_HINT)).toBe(true);
+        expect((result.accounts[0].error ?? '').includes(relinkHint())).toBe(true);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }

@@ -9,6 +9,7 @@
  * Nothing secret is returned or printed: the result is the account id and the JID.
  */
 
+import { _, fmt } from '@curlew/protocol';
 import type { BackendAccount, BackendContext } from '@curlew/protocol';
 import { caFileSetting, normalizeJid, refuseConfigSecrets, writeLogin } from './accounts.ts';
 import type { LoginPrompts } from './api.ts';
@@ -24,7 +25,7 @@ export async function loginXmpp(
   const caFile = caFileSetting(context.settings);
   const jid = normalizeJid(await prompts.jid());
   const password = await prompts.password();
-  if (!password) throw new Error('an empty password cannot log in');
+  if (!password) throw new Error(_('an empty password cannot log in'));
   const service = (await prompts.service()).trim() || null;
   const login: XmppLogin = { jid, password, service };
 
@@ -34,6 +35,6 @@ export async function loginXmpp(
   } finally {
     await api.close();
   }
-  prompts.notify(`Logged in as ${jid}; the server keeps a message archive (MAM).`);
+  prompts.notify(fmt(_('Logged in as {jid}; the server keeps a message archive (MAM).'), { jid }));
   return writeLogin(context.secretsDir, login);
 }

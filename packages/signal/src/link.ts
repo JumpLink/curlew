@@ -18,6 +18,7 @@
  * printed apart from the QR code itself.
  */
 
+import { _, fmt } from '@curlew/protocol';
 import type { AccountPrompter, BackendAccount, BackendContext } from '@curlew/protocol';
 import { ensurePrivateDir, SecretStore } from '@curlew/store';
 import type * as Core from '@signalapp/libsignal-client';
@@ -89,7 +90,7 @@ async function receiveProvisioning(
       socket = network.provisioning(key, {
         onUrl: (url) =>
           prompter.notify(
-            `${renderQr(url)}\nScan this with the phone: Signal → Settings → Linked devices → Link new device.`,
+            `${renderQr(url)}\n${_('Scan this with the phone: Signal → Settings → Linked devices → Link new device.')}`,
           ),
         onEnvelope: (envelope) => resolve({ envelope }),
         onClosed: () => resolve({ closed: true }),
@@ -101,11 +102,13 @@ async function receiveProvisioning(
     await open?.close().catch(() => undefined);
     if ('envelope' in outcome) return { envelope: outcome.envelope, key };
     if ('error' in outcome)
-      throw new Error(`the provisioning connection failed (${outcome.error.message}) — nothing was saved`);
+      throw new Error(
+        fmt(_('the provisioning connection failed ({reason}) — nothing was saved'), { reason: outcome.error.message }),
+      );
     if ('timeout' in outcome) break;
     // The socket closed before the phone answered (Signal rotates them): show a fresh code.
   }
-  throw new Error('no phone linked this device in time — nothing was saved');
+  throw new Error(_('no phone linked this device in time — nothing was saved'));
 }
 
 export async function linkSignal(
@@ -132,9 +135,9 @@ export async function linkSignal(
     );
     const message = decryptProvisionEnvelope(lib, decodeProvisionEnvelope(envelope), key);
     if (!message.aci || !message.aciIdentityKeyPrivate || !message.provisioningCode) {
-      throw new Error('the phone sent an incomplete link message — nothing was saved');
+      throw new Error(_('the phone sent an incomplete link message — nothing was saved'));
     }
-    prompter.notify('The phone answered. Registering this device…');
+    prompter.notify(_('The phone answered. Registering this device…'));
 
     const identity = lib.core.PrivateKey.deserialize(
       message.aciIdentityKeyPrivate as Uint8Array<ArrayBuffer>,
@@ -157,14 +160,10 @@ export async function linkSignal(
             message.pniIdentityKeyPrivate as Uint8Array<ArrayBuffer>,
           );
     if (message.number !== null && pniIdentity === null) {
-      throw new Error(
-        'the phone sent a number but no phone number identity key — nothing was saved',
-      );
+      throw new Error(_('the phone sent a number but no phone number identity key — nothing was saved'));
     }
     if (message.number === null && pniIdentity !== null) {
-      throw new Error(
-        'the phone sent a phone number identity key but no number — nothing was saved',
-      );
+      throw new Error(_('the phone sent a phone number identity key but no number — nothing was saved'));
     }
     if (pniIdentity !== null) store.setPniIdentityKey(pniIdentity);
     // The service id beside the key: without it, our own number is indistinguishable from a
@@ -214,7 +213,10 @@ export async function linkSignal(
     });
     if (linked.status < 200 || linked.status >= 300) {
       throw new Error(
-        `Signal refused the link (status ${linked.status}${linked.message ? `: ${linked.message}` : ''}) — nothing was saved`,
+        fmt(_('Signal refused the link (status {status}{detail}) — nothing was saved'), {
+          status: linked.status,
+          detail: linked.message ? `: ${linked.message}` : '',
+        }),
       );
     }
     const answer = JSON.parse(new TextDecoder().decode(linked.body ?? new Uint8Array())) as {
@@ -222,7 +224,7 @@ export async function linkSignal(
       deviceId?: number;
     };
     if (answer.uuid?.toLowerCase() !== message.aci || typeof answer.deviceId !== 'number') {
-      throw new Error('Signal answered the link for a different account — nothing was saved');
+      throw new Error(_('Signal answered the link for a different account — nothing was saved'));
     }
     store.setAccount({ aci: message.aci, deviceId: answer.deviceId, password, registrationId });
 
@@ -240,7 +242,12 @@ export async function linkSignal(
       if (keys.status < 200 || keys.status >= 300) throw new Error(`status ${keys.status}`);
     } catch (err) {
       prompter.notify(
-        `Linked, but the one-time keys were not published (${err instanceof Error ? err.message : String(err)}); new contacts fall back to the last-resort key.`,
+        fmt(
+          _(
+            'Linked, but the one-time keys were not published ({reason}); new contacts fall back to the last-resort key.',
+          ),
+          { reason: err instanceof Error ? err.message : String(err) },
+        ),
       );
     }
 
@@ -256,7 +263,9 @@ export async function linkSignal(
     renameSync(pending, sessionPath(context.secretsDir, accountId));
     moved = true;
     prompter.notify(
-      'Linked. Run `curlew sync` now: Signal keeps what arrived for this device only until it is received, and the phone sends the contact list on its own.',
+      _(
+        'Linked. Run `curlew sync` now: Signal keeps what arrived for this device only until it is received, and the phone sends the contact list on its own.',
+      ),
     );
     return account;
   } finally {

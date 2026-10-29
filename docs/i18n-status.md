@@ -68,24 +68,31 @@ German uses informal "du", matching the sibling projects.
 | CLI `omemo` ([`omemo.ts`](../app/src/frontends/cli/omemo.ts)) | the `devices`, `trust` and `reset` descriptions, their options, the fingerprint retype prompt |
 | OMEMO trust ([`messages.ts`](../packages/xmpp/src/messages.ts)) | the four `omemoTrust.*` sentences for an unparsable, retyped-wrong, unknown or ambiguous fingerprint, and the identity-change notice |
 
-170 msgids. Covered by `app/tests/unit/core/i18n.test.ts`: a German locale yields German, a
+| Sync progress ([`index-sync.ts`](../app/src/frontends/cli/index-sync.ts)) | the mail progress and rate-limit lines, composed from `_n` parts |
+| Setup assistant ([`setup.ts`](../app/src/core/actions/setup.ts)) | every step title, prompt, note and the follow-up list; the state words of `stateWord` |
+| Signal, WhatsApp, Matrix, XMPP | login and link flows, prompts, session errors and re-link hints |
+| Backend registry, `send`, `omemo`, `index-sync` actions | the refusals and errors that reach a user |
+
+325 msgids. Covered by `app/tests/unit/core/i18n.test.ts`: a German locale yields German, a
 language we do not ship falls back to English, `LC_ALL=C` wins over `LANGUAGE`, and a wired
 Telegram error comes out German once the catalogue is installed.
 
 ## Not translated yet
 
-Everything else still carries English literals. Roughly, in the order it is worth doing:
-
-- **The other account backends** — Signal, WhatsApp, XMPP, Matrix: their prompts, login notices
-  and manifest terms, i.e. the same surface Telegram now has.
-- **The setup assistant's** step titles and prompts (`app/src/core/actions/setup.ts`); only the `setup` CLI command and its `--status` report are done.
-- **The daemon's** log lines and notifications.
-- **Error messages from `@curlew/store` and `@curlew/protocol`** that reach a user.
+Nothing user-facing. What stays English is listed below, with the reason.
 
 ## Deliberately English
 
 - **`omemoFallback`** (`packages/xmpp/src/messages.ts`). The plaintext `<body>` of an OMEMO message goes over the wire to the recipient's client; it must not depend on the sender's locale.
 - **JSON output** of every command (keys and values), and the hidden `addon-canary` probe.
+- **MCP tool output, including the shared setup steps.** `curlew mcp` skips `initI18n()`
+  (`app/src/index.ts`), so `setup_status` and `setup_run` answer in English.
+- **Daemon log lines** (`curlew-daemon: …`). Operators grep journald and paste them into bug
+  reports (ADR 0002 §6).
+- **Config and grants parse errors** (`config.ts`, `grants.ts`, the `backends.*.settings`
+  checks): developer-facing, they name config keys.
+- **Internals** — crypto, protobuf, IMAP, store and database errors, XMPP transport errors,
+  Signal CDN errors, OMEMO internals.
 - **MCP tool output.** Agents parse those strings; a German `description` or error would change
   what a model sees from one desktop to the next. Same decision as in the sibling
   steuererklaerung project.

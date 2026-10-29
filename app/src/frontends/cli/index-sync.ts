@@ -5,7 +5,7 @@
  * never surprise anyone with disk growth. One mental model, stated in one place.
  */
 
-import { _, fmt } from '@curlew/protocol';
+import { _, _n, fmt } from '@curlew/protocol';
 import type { CommandModule } from 'yargs';
 
 import type { SyncProgress } from '@curlew/store';
@@ -21,12 +21,26 @@ import { pickArgv, runAndExit } from './output.ts';
  * log line that gets copied around (ADR 0002 §6), so nothing read out of a message goes here.
  */
 function reportProgress(event: SyncProgress): void {
-  const line =
-    event.type === 'folder-done'
-      ? `  mail ${event.done}/${event.folders} ${event.folderName} · ${event.added} new`
-      : event.type === 'account-start'
-        ? `  mail: ${event.accounts} account(s), this one has ${event.folders} mailbox(es)`
-        : `  mail done: ${event.folders} mailbox(es), ${event.added} new, ${event.errors} error(s)`;
+  let line: string;
+  if (event.type === 'folder-done') {
+    line = fmt(_('  mail {done}/{folders} {folderName} · {added} new'), {
+      done: event.done,
+      folders: event.folders,
+      folderName: event.folderName,
+      added: event.added,
+    });
+  } else if (event.type === 'account-start') {
+    line = fmt(_('  mail: {accounts}, this one has {mailboxes}'), {
+      accounts: fmt(_n('{n} account', '{n} accounts', event.accounts), { n: event.accounts }),
+      mailboxes: fmt(_n('{n} mailbox', '{n} mailboxes', event.folders), { n: event.folders }),
+    });
+  } else {
+    line = fmt(_('  mail done: {mailboxes}, {added} new, {errors}'), {
+      mailboxes: fmt(_n('{n} mailbox', '{n} mailboxes', event.folders), { n: event.folders }),
+      added: event.added,
+      errors: fmt(_n('{n} error', '{n} errors', event.errors), { n: event.errors }),
+    });
+  }
   // \r plus an erase: overwrite in place, and never leave the longer line's tail behind.
   process.stderr.write(`\r\u001b[2K${line}`);
   if (event.type !== 'folder-done') process.stderr.write('\n');
@@ -43,7 +57,9 @@ function reportRateLimits(result: IndexSyncResult): void {
     for (const account of chat.accounts) {
       if (!account.rateLimited) continue;
       const seconds = Math.ceil(account.rateLimited.retryAfterMs / 1000);
-      process.stderr.write(`  ${chat.backend}: rate limited, retry in ${seconds}s\n`);
+      process.stderr.write(
+        `${fmt(_('  {backend}: rate limited, retry in {seconds}s'), { backend: chat.backend, seconds })}\n`,
+      );
     }
   }
 }

@@ -3,6 +3,7 @@
  * through the registry.
  */
 
+import { _, fmt } from '@curlew/protocol';
 import type {
   AccountPrompter,
   BackendAccount,
@@ -33,10 +34,10 @@ import { XmppChatSession } from './session.ts';
 /** The login questions, asked through whatever frontend is running. */
 export function xmppPrompts(prompter: AccountPrompter): LoginPrompts {
   return {
-    jid: () => prompter.ask('XMPP address (name@example.org)'),
-    password: () => prompter.ask('Password', { secret: true }),
+    jid: () => prompter.ask(_('XMPP address (name@example.org)')),
+    password: () => prompter.ask(_('Password'), { secret: true }),
     service: () =>
-      prompter.ask('Server address — empty to discover it (e.g. xmpps://xmpp.example.org:5223, wss://…)'),
+      prompter.ask(_('Server address — empty to discover it (e.g. xmpps://xmpp.example.org:5223, wss://…)')),
     notify: (message) => prompter.notify(message),
   };
 }
