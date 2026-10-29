@@ -42,6 +42,7 @@ import xmppTls from './unit/xmpp/tls.spec.ts';
 import omemoUpkeep from './unit/xmpp/omemo-upkeep.test.ts';
 import omemoSend from './unit/xmpp/omemo-send.test.ts';
 import omemoTrust from './unit/xmpp/omemo-trust.test.ts';
+import omemoArchive from './unit/xmpp/omemo-archive.test.ts';
 import matrix from './unit/matrix/matrix.test.ts';
 import smtpMessage from './unit/smtp/message.test.ts';
 import smtpSend from './unit/smtp/send.test.ts';
@@ -107,6 +108,7 @@ run({
   omemoUpkeep,
   omemoSend,
   omemoTrust,
+  omemoArchive,
   matrix,
   smtpMessage,
   smtpSend,
