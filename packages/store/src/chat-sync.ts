@@ -408,10 +408,11 @@ function writeBatch(db: IndexDatabase, batch: ChatBatch): void {
     deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, batch.retracted);
     // Read state and the conversation aggregates, set-based: two executions per account however
     // many chats changed. `seen` for the user's own messages is always 1; for the others it is
-    // the network's read marker, which moves without any new message arriving.
+    // the network's read marker, which moves without any new message arriving. A notice is seen
+    // too — nobody sent it, so no read marker will ever reach it and the chat would stay unread.
     db.prepare(
       `UPDATE conversation_messages SET
-         seen = CASE WHEN from_self = 1 THEN 1
+         seen = CASE WHEN from_self = 1 OR presentation = 'notice' THEN 1
                      WHEN remote_seq <= COALESCE((SELECT c.read_inbox_seq FROM chat_cursors c
                             WHERE c.conversation_id = conversation_messages.conversation_id), 0) THEN 1
                      ELSE 0 END,
@@ -470,8 +471,9 @@ function messageRow(
     conversationId,
     batch.backend,
     batch.accountId,
-    // Chat stays chat in presentation (ADR 0001 §1).
-    'bubble',
+    // Chat stays chat in presentation (ADR 0001 §1) — except for what the backend put into the
+    // stream itself rather than received, like an OMEMO identity-change notice (ADR 0006 §6).
+    m.notice ? 'notice' : 'bubble',
     sender?.displayName ?? null,
     address?.kind ?? null,
     address?.value ?? null,

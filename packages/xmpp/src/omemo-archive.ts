@@ -27,12 +27,15 @@
  */
 
 import {
+  formatFingerprint,
+  fromBase64,
   type DeviceId,
   type OmemoProfile,
   type OmemoStorage,
   type RandomSource,
   type TrustState,
 } from '@curlew/omemo';
+import { MESSAGES } from './messages.ts';
 import { deleteConsumedPreKeys, type OwnDevice } from './omemo-device.ts';
 import { parseEncryptedElement } from './omemo-stanza.ts';
 import { receiveOmemo, type UndecryptableReason } from './omemo-receive.ts';
@@ -164,6 +167,10 @@ export async function decryptEntries(
 
     if (outcome.kind === 'decrypted') {
       consumedPreKeys = true;
+      if (outcome.identity === 'replaced') {
+        const notice = await identityNotice(storage, entry, senderJid, outcome.senderDeviceId);
+        if (notice !== undefined) out.push(notice);
+      }
       out.push(decrypted(entry, outcome.text));
     } else {
       options.onUndecryptable?.(entry, outcome.reason);
@@ -186,4 +193,59 @@ export async function decryptEntries(
  */
 function decrypted(entry: ArchivedEntry, text: string | null): ArchivedEntry {
   return { ...entry, body: text, encrypted: false, omemo: null };
+}
+
+/**
+ * The line that goes into the conversation when a device's identity key has CHANGED (§6).
+ *
+ * "Never silent" is the rule, and a log line is silent: the person reads their chats, not
+ * curlew's journal. So the change becomes an entry of the page, just before the message that
+ * proved the new key — a notice rather than a message, which is what `ChatMessage.notice` is for.
+ *
+ * It names the new fingerprint, read back from storage because `noteIdentity` has just written
+ * it there and `DecryptedMessage` carries no key. Undefined when that read finds nothing to
+ * print: a notice that cannot say WHICH key is now in use is not worth a row.
+ *
+ * Written once. A re-fetch of the same archive id is answered from the journal, which has the
+ * body and no identity outcome, so the notice is not repeated — and is lost if the index write
+ * never happened. That is the right trade: a duplicate notice on every catch-up would teach the
+ * person to ignore the one that matters.
+ */
+async function identityNotice(
+  storage: OmemoStorage,
+  entry: ArchivedEntry,
+  senderJid: string,
+  deviceId: DeviceId,
+): Promise<ArchivedEntry | undefined> {
+  const identity = await storage.loadIdentity({ jid: senderJid, deviceId });
+  if (identity === undefined) return undefined;
+  let printed: string;
+  try {
+    printed = formatFingerprint(fromBase64(identity.publicKey));
+  } catch {
+    return undefined;
+  }
+  return {
+    ...entry,
+    // Prefixed, so it cannot be mistaken for an id the archive would answer a query about.
+    archiveId: `identity:${deviceId}:${entry.archiveId}`,
+    // One millisecond EARLIER, which is both true (the key changed before the message proved it)
+    // and what keeps the carrying message's seq where a page without a notice would put it:
+    // `assignSeqs` walks forward from the previous seq, so a notice sharing the stamp would push
+    // the real message to stamp + 1 and move a read marker's target under it.
+    stampMs: entry.stampMs === null ? null : entry.stampMs - 1,
+    body: MESSAGES.omemoIdentityChanged(senderJid, printed),
+    encrypted: false,
+    omemo: null,
+    notice: true,
+    // Nothing of the carrying message's identity: a notice corrects nothing, replies to
+    // nothing, and must not be found as the target of either.
+    id: null,
+    originId: null,
+    replaceId: null,
+    replyToId: null,
+    retract: null,
+    tombstone: false,
+    attachmentUrls: [],
+  };
 }
