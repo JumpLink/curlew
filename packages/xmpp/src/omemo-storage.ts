@@ -33,6 +33,7 @@ import {
   type StoredSignedPreKey,
 } from '@curlew/omemo';
 import type { SecretChange, SecretStore } from '@curlew/store';
+import type { JournalEntry, PlaintextJournal } from './omemo-archive.ts';
 
 /** Our own device: identity key, device id, and the two counters that must outlive the keys. */
 const DEVICE_NAMESPACE = 'omemo.device';
@@ -46,6 +47,8 @@ const SESSION_NAMESPACE = 'omemo.session';
 const IDENTITY_NAMESPACE = 'omemo.identity';
 /** A JID's cached device list, by bare JID. */
 const DEVICE_LIST_NAMESPACE = 'omemo.devices';
+/** Decrypted bodies by archive id, until the index holds them — see `omemo-archive.ts`. */
+const PLAINTEXT_NAMESPACE = 'omemo.plaintext';
 
 /**
  * The key names inside each namespace, from ADR 0006 §3's table.
@@ -73,6 +76,7 @@ export const OMEMO_NAMESPACES: readonly string[] = [
   SESSION_NAMESPACE,
   IDENTITY_NAMESPACE,
   DEVICE_LIST_NAMESPACE,
+  PLAINTEXT_NAMESPACE,
 ];
 
 /**
@@ -81,7 +85,7 @@ export const OMEMO_NAMESPACES: readonly string[] = [
  * The store is borrowed, not owned: the backend opens the account file once and hands it over, so
  * nothing here closes it.
  */
-export class SecretStoreOmemoStorage implements OmemoStorage {
+export class SecretStoreOmemoStorage implements OmemoStorage, PlaintextJournal {
   readonly #store: SecretStore;
 
   constructor(store: SecretStore) {
@@ -232,6 +236,31 @@ export class SecretStoreOmemoStorage implements OmemoStorage {
 
   async saveDeviceList(jid: string, record: DeviceListRecord): Promise<void> {
     this.#store.apply([put(DEVICE_LIST_NAMESPACE, jid, JSON.stringify(record))]);
+  }
+
+  // -- the plaintext journal ------------------------------------------------------------------
+
+  async loadPlaintext(archiveId: string): Promise<JournalEntry | undefined> {
+    return parse<JournalEntry>(this.#store.get(PLAINTEXT_NAMESPACE, archiveId));
+  }
+
+  async savePlaintext(archiveId: string, entry: JournalEntry): Promise<void> {
+    this.#store.apply([put(PLAINTEXT_NAMESPACE, archiveId, JSON.stringify(entry))]);
+  }
+
+  /**
+   * An entry whose `at` does not parse is dropped too: it can never be shown to be recent, and
+   * keeping it would mean a row that outlives every retention window there is.
+   */
+  async prunePlaintext(before: string): Promise<void> {
+    const cutoff = Date.parse(before);
+    if (!Number.isFinite(cutoff)) return;
+    const changes: SecretChange[] = [];
+    for (const [archiveId, raw] of this.#store.load(PLAINTEXT_NAMESPACE)) {
+      const at = Date.parse(parse<JournalEntry>(raw)?.at ?? '');
+      if (!Number.isFinite(at) || at < cutoff) changes.push(drop(PLAINTEXT_NAMESPACE, archiveId));
+    }
+    if (changes.length > 0) this.#store.apply(changes);
   }
 }
 

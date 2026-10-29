@@ -283,8 +283,10 @@ export function buildPage(
       editedAt: null,
       sender: fromSelf ? null : senderOf(context, entry),
       fromSelf,
-      // An encrypted message's body is the sender's "this message is encrypted" fallback, not
-      // what they wrote: curlew cannot decrypt (no OMEMO yet), so it indexes no text.
+      // Still encrypted here means the decrypt pass could not open it (or never ran, without the
+      // `xmpp.omemo` grant). The body is then the sender's "this message is encrypted" fallback
+      // rather than what they wrote, so no text is indexed — `omemo-archive.ts` has already
+      // replaced the body of everything it could read.
       text,
       hasAttachments: entry.attachmentUrls.length > 0,
       replyToRemoteId: reply ? reply.archiveId : null,
