@@ -10,7 +10,7 @@
  * puts it in front of every write handler is the gate's job.
  */
 
-export type Capability = 'xmpp.send' | 'canary.write';
+export type Capability = 'xmpp.send' | 'xmpp.omemo' | 'canary.write';
 
 export interface Grant {
   capability: Capability;
@@ -19,7 +19,7 @@ export interface Grant {
 }
 
 /** Capabilities a real configuration may grant. */
-export const CAPABILITIES = ['xmpp.send'] as const;
+export const CAPABILITIES = ['xmpp.send', 'xmpp.omemo'] as const;
 
 /**
  * The test-only capability behind the gate's positive-control canary. It is accepted only while
@@ -34,8 +34,14 @@ export interface ParseGrantsOptions {
 }
 
 const WILDCARD = /[*?]/;
+/** An account id as `accountIdFor` makes it — kept in step with `ACCOUNT_ID` in `@curlew/xmpp`. */
+const XMPP_ACCOUNT = /^xmpp-[0-9a-z]+$/;
 
-/** `xmpp.send` names the account AND the address: from where, and to whom. */
+/**
+ * `xmpp.send` names the account AND the address: from where, and to whom. `xmpp.omemo` names
+ * only the account, because end-to-end encryption is a property of the account's keys and not
+ * of one conversation — it decrypts whatever that account receives, and publishes its device.
+ */
 function targetProblem(capability: Capability, target: string): string | undefined {
   if (target.length === 0 || target.trim() !== target)
     return 'must be a non-empty string without surrounding whitespace';
@@ -43,6 +49,9 @@ function targetProblem(capability: Capability, target: string): string | undefin
   if (capability === 'xmpp.send') {
     const slash = target.indexOf('/');
     if (slash <= 0 || slash === target.length - 1) return 'must be "<account>/<address>"';
+  }
+  if (capability === 'xmpp.omemo' && !XMPP_ACCOUNT.test(target)) {
+    return 'must be an xmpp account id ("xmpp-…"), not an address';
   }
   return undefined;
 }

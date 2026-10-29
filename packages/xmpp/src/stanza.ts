@@ -241,6 +241,15 @@ export interface ArchivedEntry {
   replyToId: string | null;
   /** OMEMO / OpenPGP payload: the body is only the sender's fallback text. */
   encrypted: boolean;
+  /**
+   * The `<encrypted>` element where the message carries OMEMO, so the decrypt pass can reach it
+   * without parsing the stanza a second time. Null for OpenPGP, which curlew does not read —
+   * which is why {@link ArchivedEntry.encrypted} stays the broader flag of the two.
+   *
+   * Only the namespace is read here. The grammar inside differs per version and belongs to
+   * `omemo-stanza.ts`, which cannot be imported from this module without a cycle.
+   */
+  omemo: { version: 'legacy' | 'v2'; element: XmlElement } | null;
   /** A MUC occupant's real JID, where the room discloses it. */
   occupantJid: string | null;
 }
@@ -337,6 +346,7 @@ export function parseMamResult(
     return url ? [url] : [];
   });
   const occupant = message.getChild('x', NS.mucUser)?.getChild('item')?.attrs.jid;
+  const omemo = omemoOf(message);
   return {
     archiveId: result.attrs.id,
     stampMs: stampOf(forwarded),
@@ -352,12 +362,20 @@ export function parseMamResult(
     attachmentUrls: oob,
     replyToId: message.getChild('reply', NS.reply)?.attrs.id ?? null,
     encrypted:
-      message.getChild('encrypted', NS.omemoLegacy) !== undefined ||
-      message.getChild('encrypted', NS.omemo) !== undefined ||
+      omemo !== null ||
       message.getChild('openpgp', NS.openpgp) !== undefined ||
       message.getChild('x', NS.pgpLegacy) !== undefined,
+    omemo,
     occupantJid: occupant ? bareJid(occupant) : null,
   };
+}
+
+/** The message's `<encrypted>` element and which OMEMO version it is in, or null for neither. */
+function omemoOf(message: XmlElement): ArchivedEntry['omemo'] {
+  const legacy = message.getChild('encrypted', NS.omemoLegacy);
+  if (legacy) return { version: 'legacy', element: legacy };
+  const v2 = message.getChild('encrypted', NS.omemo);
+  return v2 ? { version: 'v2', element: v2 } : null;
 }
 
 // ── sending and following (only a handle opened with a grant uses these) ────────────

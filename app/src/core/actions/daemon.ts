@@ -40,6 +40,7 @@ import { loadConfig } from '../config.ts';
 import { configPath } from '@curlew/store';
 import { followAccount, type FollowResult } from './follow.ts';
 import { openIndex, rebuildWithAddressBook } from './index-sync.ts';
+import { decryptAccounts } from './omemo.ts';
 import { createXmppBackend, permitFor, SEND_CAPABILITY } from './send.ts';
 
 /** How often a running daemon looks whether the grants were edited (they apply on restart only). */
@@ -206,6 +207,9 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
         .map((g) => g.target.slice(0, g.target.indexOf('/'))),
     ),
   ].filter((id) => !params.accountId || id === params.accountId);
+  // Follow mode is where a message is seen FIRST, so it decrypts what the grants allow: a row
+  // the daemon indexed textless stays that way, because the next sync finds nothing new for it.
+  const decrypting = decryptAccounts(config.grants);
   const xmpp = grantedAccounts.length > 0 ? (params.xmpp ?? createXmppBackend(config)) : null;
   if (backends.length === 0 && xmpp === null) {
     throw new Error(
@@ -290,7 +294,8 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
         followAccount({
           db,
           backend: xmpp as XmppBackend,
-          open: (id, permit) => (xmpp as XmppBackend).openGranted(id, permit),
+          open: (id, permit) =>
+            (xmpp as XmppBackend).openGranted(id, permit, { decrypt: decrypting.includes(id) }),
           permit: permitFor(config.grants, accountId),
           signal,
           log,

@@ -61,12 +61,28 @@ const empty = (afterSeq: number | null): ChatHistoryPage => ({
   retracted: [],
 });
 
+/**
+ * Replace each entry's ciphertext with its plaintext before the page is built.
+ *
+ * Injected rather than built here, because decrypting needs the account's secret file and a
+ * grant, and neither belongs to a class whose whole job is turning MAM into pages. Without one
+ * — no grant, or a backend that has no encryption — the session behaves exactly as it always
+ * did. See `omemo-archive.ts`.
+ */
+export type DecryptEntries = (
+  entries: readonly ArchivedEntry[],
+  /** True for entries the ratchet has already passed: answer from the journal or not at all. */
+  journalOnly: boolean,
+) => Promise<ArchivedEntry[]>;
+
 export class XmppChatSession implements ChatSession {
   private readonly api: XmppApi;
+  private readonly decrypt: DecryptEntries | undefined;
   private readonly chats = new Map<string, ChatState>();
 
-  constructor(api: XmppApi) {
+  constructor(api: XmppApi, decrypt?: DecryptEntries) {
     this.api = api;
+    this.decrypt = decrypt;
   }
 
   private query(chat: ChatState, rest: Omit<MamQuery, 'archive' | 'with'>): Promise<MamPage> {
@@ -199,6 +215,12 @@ export class XmppChatSession implements ChatSession {
       // What is not found there stays as it was stored.
       const older = await this.query(chat, { before: entries[0].archiveId, max: LOOKBACK });
       lookback = older.entries;
+    }
+    if (this.decrypt) {
+      // Archive order, and the page before the lookback: a key exchange in the page may be what
+      // lets a later entry of it be read, and the lookback is only there to resolve references.
+      entries = await this.decrypt(entries, false);
+      if (lookback.length > 0) lookback = await this.decrypt(lookback, true);
     }
     return buildPage(context, entries, { afterSeq, exhausted, reachedStart }, lookback);
   }

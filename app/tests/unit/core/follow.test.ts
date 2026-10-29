@@ -24,6 +24,8 @@ function fakeLink(onClose: () => void = () => {}, onArrival?: (fire: () => void)
     close: async () => onClose(),
     sendChat: async () => {},
     goAvailable: async () => {},
+    pepGet: async () => undefined,
+    pepSet: async () => {},
     onArrival: (listener) => {
       onArrival?.(listener);
       return () => {};

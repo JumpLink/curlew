@@ -326,10 +326,23 @@ export interface ChatRevision {
   retracted?: string[];
 }
 
+/** What a connection may do beyond reading the archive — one field per grant that widens it. */
+export interface ChatConnectOptions {
+  /**
+   * The caller holds this account's end-to-end encryption grant (`xmpp.omemo`), so the backend
+   * may decrypt what it syncs and publish whatever keys that takes.
+   *
+   * Absent or false, the connection reads the archive exactly as before and encrypted messages
+   * are indexed without text. The decision belongs to the frontend that checked the grants; a
+   * backend never reads them itself.
+   */
+  decrypt?: boolean;
+}
+
 /** The chat sync driver: dialogs and per-chat sequences, driven by `syncChats` in `@curlew/store`. */
 export interface ChatBackend extends MessageBackend {
   readonly kind: 'chat';
-  connect(accountId: string): Promise<ChatSession>;
+  connect(accountId: string, options?: ChatConnectOptions): Promise<ChatSession>;
 }
 
 /** Narrow a registry entry to the chat driver. */

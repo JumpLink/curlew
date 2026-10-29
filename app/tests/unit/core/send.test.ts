@@ -34,6 +34,8 @@ function fakeLink(sent: Array<[string, string, string]>, oob: string[] = []): Xm
       if (oobUrl !== undefined) oob.push(oobUrl);
     },
     goAvailable: async () => {},
+    pepGet: async () => undefined,
+    pepSet: async () => {},
     onArrival: () => () => {},
     onClosed: () => {},
   };

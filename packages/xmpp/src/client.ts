@@ -193,6 +193,35 @@ class XmppConnection implements XmppLink {
     await this.entity.send(chatMessage({ to, id, body, oobUrl }));
   }
 
+  /**
+   * A PEP read. `item-not-found` and `not-allowed` are answered with undefined rather than an
+   * error: both mean "nothing published here", which is the ordinary state of a contact who does
+   * not use OMEMO, and the caller has nothing different to do for either.
+   */
+  async pepGet(jid: string, payload: Element): Promise<Element | undefined> {
+    try {
+      const result = await this.iq.get(payload, jid === this.jid ? undefined : jid, QUERY_TIMEOUT_MS);
+      return result.getChild('pubsub', NS.pubsub) ?? undefined;
+    } catch (err) {
+      const error = queryError(err);
+      if (
+        error instanceof XmppQueryError &&
+        (error.condition === 'item-not-found' || error.condition === 'not-allowed')
+      ) {
+        return undefined;
+      }
+      throw error;
+    }
+  }
+
+  async pepSet(payload: Element): Promise<void> {
+    try {
+      await this.iq.set(payload, undefined, QUERY_TIMEOUT_MS);
+    } catch (err) {
+      throw queryError(err);
+    }
+  }
+
   async goAvailable() {
     try {
       await this.iq.set(carbonsEnable(), undefined, QUERY_TIMEOUT_MS);

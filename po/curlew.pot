@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-10-12 19:07+0200\n"
+"POT-Creation-Date: 2026-10-29 14:33+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -44,6 +44,27 @@ msgstr ""
 #: app/src/frontends/cli/accounts.ts:48
 msgid ""
 "Telegram: ask for your own api_id/api_hash even if this build embeds a pair"
+msgstr ""
+
+#: app/src/frontends/cli/omemo.ts:18
+msgid ""
+"Show the OMEMO device keys of an XMPP account (reads only, never connects)"
+msgstr ""
+
+#: app/src/frontends/cli/omemo.ts:21
+msgid "Choose a subcommand: devices"
+msgstr ""
+
+#: app/src/frontends/cli/omemo.ts:23
+msgid "Every device key this account knows, with its fingerprint and trust"
+msgstr ""
+
+#: app/src/frontends/cli/omemo.ts:29
+msgid "The xmpp account id, as `curlew accounts list --backend xmpp` shows it"
+msgstr ""
+
+#: app/src/frontends/cli/omemo.ts:33
+msgid "Only this contact; every known address when left out"
 msgstr ""
 
 #: app/src/frontends/cli/prompt.ts:102
