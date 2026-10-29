@@ -17,6 +17,7 @@ export * from './omemo-trust.ts';
 export * from './omemo-receive.ts';
 export * from './omemo-archive.ts';
 export * from './omemo-publish.ts';
+export * from './omemo-session.ts';
 export * from './client.ts';
 export * from './login.ts';
 export * from './granted.ts';

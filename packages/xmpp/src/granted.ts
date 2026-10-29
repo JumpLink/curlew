@@ -14,7 +14,7 @@ import { randomUUID } from 'node:crypto';
 import type { XmppApi, XmppLink } from './api.ts';
 import { readOnly } from './client.ts';
 import { MESSAGES } from './messages.ts';
-import { XmppChatSession } from './session.ts';
+import { type DecryptEntries, XmppChatSession } from './session.ts';
 
 /** The longest text one send carries. A chat message, not a document. */
 export const MAX_TEXT_CHARS = 8_000;
@@ -59,15 +59,34 @@ export function validateImageUrl(url: string): string {
   return parsed.href;
 }
 
+/**
+ * The account's OMEMO, opened by the backend for a caller that also holds `xmpp.omemo`.
+ *
+ * Separate from the send permit because the two grants are separate: following an account may
+ * decrypt without being allowed to send, and sending does not imply decrypting.
+ */
+export interface GrantedOmemo {
+  readonly decrypt: DecryptEntries;
+  /** Releases what opening it took — the account's secret file. */
+  close(): void;
+}
+
 export class GrantedXmppSession {
   private readonly link: XmppLink;
   private readonly permit: SendPermit;
   private readonly newId: () => string;
+  private readonly omemo: GrantedOmemo | undefined;
 
-  constructor(link: XmppLink, permit: SendPermit, newId: () => string = randomUUID) {
+  constructor(
+    link: XmppLink,
+    permit: SendPermit,
+    newId: () => string = randomUUID,
+    omemo?: GrantedOmemo,
+  ) {
     this.link = link;
     this.permit = permit;
     this.newId = newId;
+    this.omemo = omemo;
   }
 
   /** Send one plain-text chat message. Throws, writing nothing, unless the permit names `to`. */
@@ -109,13 +128,20 @@ export class GrantedXmppSession {
     this.link.onClosed(listener);
   }
 
-  /** A chat session over THIS connection, for an archive catch-up. Closing it keeps the link open. */
+  /**
+   * A chat session over THIS connection, for an archive catch-up. Closing it keeps the link open.
+   *
+   * It decrypts whenever the session was opened with OMEMO, so follow mode writes the same rows
+   * `curlew sync` would: the daemon is the process that sees a message FIRST, and a message it
+   * indexed textless would stay that way — the next sync finds nothing new to fetch for it.
+   */
   chatSession(): ChatSession {
     const api: XmppApi = { ...readOnly(this.link), close: async () => {} };
-    return new XmppChatSession(api);
+    return new XmppChatSession(api, this.omemo?.decrypt);
   }
 
-  close(): Promise<void> {
-    return this.link.close();
+  async close(): Promise<void> {
+    this.omemo?.close();
+    await this.link.close();
   }
 }
