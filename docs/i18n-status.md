@@ -63,7 +63,10 @@ German uses informal "du", matching the sibling projects.
 | CLI `accounts` ([`accounts.ts`](../app/src/frontends/cli/accounts.ts)) | command and option descriptions for `accounts`, `accounts list`, `accounts add` |
 | CLI prompts ([`prompt.ts`](../app/src/frontends/cli/prompt.ts)) | "input ended before the login was complete" |
 
-31 msgids. Covered by `app/tests/unit/core/i18n.test.ts`: a German locale yields German, a
+| CLI commands (`backends`, `calendar`, `check`, `contacts`, `conversations`, `daemon`, `deliveries`, `sync`/`index`, `mail`, `send`, `mcp`, `setup`) | every command, subcommand and option description, the `demandCommand` hints, the daemon stop notice, the backends terms refusal, the `setup --status` report |
+| XMPP send path ([`messages.ts`](../packages/xmpp/src/messages.ts)) | all refusals, including the three `omemoRefused.*` reasons |
+
+153 msgids. Covered by `app/tests/unit/core/i18n.test.ts`: a German locale yields German, a
 language we do not ship falls back to English, `LC_ALL=C` wins over `LANGUAGE`, and a wired
 Telegram error comes out German once the catalogue is installed.
 
@@ -73,14 +76,14 @@ Everything else still carries English literals. Roughly, in the order it is wort
 
 - **The other account backends** — Signal, WhatsApp, XMPP, Matrix: their prompts, login notices
   and manifest terms, i.e. the same surface Telegram now has.
-- **The rest of the CLI** — every other command's `describe`/option text and its output:
-  `setup`, `mail`, `chat`, `conversations`, `send`, `daemon`, `grants`, `config`.
-- **The setup assistant** and its step descriptions.
+- **The setup assistant's** step titles and prompts (`app/src/core/actions/setup.ts`); only the `setup` CLI command and its `--status` report are done.
 - **The daemon's** log lines and notifications.
 - **Error messages from `@curlew/store` and `@curlew/protocol`** that reach a user.
 
 ## Deliberately English
 
+- **`omemoFallback`** (`packages/xmpp/src/messages.ts`). The plaintext `<body>` of an OMEMO message goes over the wire to the recipient's client; it must not depend on the sender's locale.
+- **JSON output** of every command (keys and values), and the hidden `addon-canary` probe.
 - **MCP tool output.** Agents parse those strings; a German `description` or error would change
   what a model sees from one desktop to the next. Same decision as in the sibling
   steuererklaerung project.

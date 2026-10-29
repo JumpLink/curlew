@@ -7,6 +7,7 @@
  * its attachment a third.
  */
 
+import { _, fmt } from '@curlew/protocol';
 import type { CommandModule } from 'yargs';
 
 import {
@@ -23,39 +24,44 @@ import { pickArgv, runAndExit } from './output.ts';
 
 export const searchCommand: CommandModule = {
   command: 'search [query]',
-  describe: 'Search mail via IMAP (newest first; headers only, never message bodies)',
+  get describe() {
+    return _('Search mail via IMAP (newest first; headers only, never message bodies)');
+  },
   builder: (yargs) =>
     yargs
       .positional('query', {
         type: 'string',
-        describe: 'Free text across headers and body (IMAP TEXT); omit to list the most recent',
+        describe: _('Free text across headers and body (IMAP TEXT); omit to list the most recent'),
       })
-      .option('from', { type: 'string', describe: 'Sender contains' })
-      .option('to', { type: 'string', describe: 'Recipient contains' })
-      .option('cc', { type: 'string', describe: 'Cc contains' })
-      .option('subject', { type: 'string', describe: 'Subject contains' })
-      .option('body', { type: 'string', describe: 'Body contains (excludes headers)' })
-      .option('since', { type: 'string', describe: 'Date header on/after YYYY-MM-DD' })
-      .option('before', { type: 'string', describe: 'Date header before YYYY-MM-DD' })
+      .option('from', { type: 'string', describe: _('Sender contains') })
+      .option('to', { type: 'string', describe: _('Recipient contains') })
+      .option('cc', { type: 'string', describe: _('Cc contains') })
+      .option('subject', { type: 'string', describe: _('Subject contains') })
+      .option('body', { type: 'string', describe: _('Body contains (excludes headers)') })
+      .option('since', { type: 'string', describe: _('Date header on/after YYYY-MM-DD') })
+      .option('before', { type: 'string', describe: _('Date header before YYYY-MM-DD') })
       .option('received-since', {
         type: 'string',
-        describe: 'ARRIVAL on/after YYYY-MM-DD (unreliable after a mailbox migration)',
+        describe: _('ARRIVAL on/after YYYY-MM-DD (unreliable after a mailbox migration)'),
       })
-      .option('received-before', { type: 'string', describe: 'ARRIVAL before YYYY-MM-DD' })
-      .option('unseen', { type: 'boolean', describe: 'Only unseen messages' })
-      .option('flagged', { type: 'boolean', describe: 'Only flagged messages' })
-      .option('folder', { type: 'string', describe: 'Mailbox: name, wire path or role (default INBOX)' })
+      .option('received-before', { type: 'string', describe: _('ARRIVAL before YYYY-MM-DD') })
+      .option('unseen', { type: 'boolean', describe: _('Only unseen messages') })
+      .option('flagged', { type: 'boolean', describe: _('Only flagged messages') })
+      .option('folder', { type: 'string', describe: _('Mailbox: name, wire path or role (default INBOX)') })
       .option('all-folders', {
         type: 'boolean',
-        describe: 'Search every mailbox (skips All Mail, Trash and Junk)',
+        describe: _('Search every mailbox (skips All Mail, Trash and Junk)'),
       })
       .option('limit', {
         type: 'number',
-        describe: `Max messages (default ${MAIL_LIMIT.default}, max ${MAIL_LIMIT.max})`,
+        describe: fmt(_('Max messages (default {default}, max {max})'), {
+          default: MAIL_LIMIT.default,
+          max: MAIL_LIMIT.max,
+        }),
       })
       .option('account', {
         type: 'string',
-        describe: 'Restrict to a GOA account id (from "accounts"); omit to search all',
+        describe: _('Restrict to a GOA account id (from "accounts"); omit to search all'),
       })
       .example('$0 search energieberater --since 2025-01-01', 'free-text, this year')
       .example('$0 search --from berater --all-folders', 'by sender, every mailbox'),
@@ -88,19 +94,24 @@ export const searchCommand: CommandModule = {
 
 export const messageCommand: CommandModule = {
   command: 'message <uid>',
-  describe: 'Fetch one full message (body + attachment metadata) by IMAP UID',
+  get describe() {
+    return _('Fetch one full message (body + attachment metadata) by IMAP UID');
+  },
   builder: (yargs) =>
     yargs
-      .positional('uid', { type: 'string', describe: 'IMAP UID (from "search")' })
+      .positional('uid', { type: 'string', describe: _('IMAP UID (from "search")') })
       .option('account', {
         type: 'string',
         demandOption: true,
-        describe: 'GOA account id the message belongs to (from "accounts")',
+        describe: _('GOA account id the message belongs to (from "accounts")'),
       })
-      .option('folder', { type: 'string', describe: 'Mailbox the UID belongs to (default INBOX)' })
+      .option('folder', { type: 'string', describe: _('Mailbox the UID belongs to (default INBOX)') })
       .option('max-body', {
         type: 'number',
-        describe: `Max body characters (default ${BODY_CHARS.default}, max ${BODY_CHARS.max})`,
+        describe: fmt(_('Max body characters (default {default}, max {max})'), {
+          default: BODY_CHARS.default,
+          max: BODY_CHARS.max,
+        }),
       }),
   handler: (argv) => {
     const raw = argv as Record<string, unknown>;
@@ -117,11 +128,13 @@ export const messageCommand: CommandModule = {
 
 export const foldersCommand: CommandModule = {
   command: 'folders',
-  describe: 'List mailboxes with their resolved roles (inbox, sent, trash, …)',
+  get describe() {
+    return _('List mailboxes with their resolved roles (inbox, sent, trash, …)');
+  },
   builder: (yargs) =>
     yargs.option('account', {
       type: 'string',
-      describe: 'Restrict to a GOA account id (from "accounts"); omit for all',
+      describe: _('Restrict to a GOA account id (from "accounts"); omit for all'),
     }),
   handler: (argv) => {
     const raw = argv as Record<string, unknown>;
@@ -131,12 +144,14 @@ export const foldersCommand: CommandModule = {
 
 export const partsCommand: CommandModule = {
   command: 'parts <uid>',
-  describe: "List one message's parts and their sections (what can be saved)",
+  get describe() {
+    return _("List one message's parts and their sections (what can be saved)");
+  },
   builder: (yargs) =>
     yargs
-      .positional('uid', { type: 'string', describe: 'IMAP UID (from "search")' })
-      .option('account', { type: 'string', demandOption: true, describe: 'GOA account id' })
-      .option('folder', { type: 'string', describe: 'Mailbox the UID belongs to (default INBOX)' }),
+      .positional('uid', { type: 'string', describe: _('IMAP UID (from "search")') })
+      .option('account', { type: 'string', demandOption: true, describe: _('GOA account id') })
+      .option('folder', { type: 'string', describe: _('Mailbox the UID belongs to (default INBOX)') }),
   handler: (argv) => {
     const raw = argv as Record<string, unknown>;
     runAndExit(() =>
@@ -151,20 +166,24 @@ export const partsCommand: CommandModule = {
 
 export const saveCommand: CommandModule = {
   command: 'save <uid>',
-  describe: 'Save an attachment to disk (decoded; never overwrites an existing file)',
+  get describe() {
+    return _('Save an attachment to disk (decoded; never overwrites an existing file)');
+  },
   builder: (yargs) =>
     yargs
-      .positional('uid', { type: 'string', describe: 'IMAP UID (from "search")' })
-      .option('account', { type: 'string', demandOption: true, describe: 'GOA account id' })
-      .option('folder', { type: 'string', describe: 'Mailbox the UID belongs to (default INBOX)' })
+      .positional('uid', { type: 'string', describe: _('IMAP UID (from "search")') })
+      .option('account', { type: 'string', demandOption: true, describe: _('GOA account id') })
+      .option('folder', { type: 'string', describe: _('Mailbox the UID belongs to (default INBOX)') })
       .option('section', {
         type: 'string',
-        describe: 'IMAP section from "parts"; omit for the first attachment',
+        describe: _('IMAP section from "parts"; omit for the first attachment'),
       })
-      .option('out', { type: 'string', describe: 'Directory to save into (default $XDG_DOWNLOAD_DIR)' })
+      .option('out', { type: 'string', describe: _('Directory to save into (default $XDG_DOWNLOAD_DIR)') })
       .option('max-bytes', {
         type: 'number',
-        describe: `Refuse a part larger than this (default ${ATTACHMENT_BYTES.default})`,
+        describe: fmt(_('Refuse a part larger than this (default {default})'), {
+          default: ATTACHMENT_BYTES.default,
+        }),
       }),
   handler: (argv) => {
     const raw = argv as Record<string, unknown>;

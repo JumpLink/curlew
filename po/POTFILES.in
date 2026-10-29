@@ -205,6 +205,7 @@ packages/xmpp/src/omemo-archive.ts
 packages/xmpp/src/omemo-device.ts
 packages/xmpp/src/omemo-publish.ts
 packages/xmpp/src/omemo-receive.ts
+packages/xmpp/src/omemo-send.ts
 packages/xmpp/src/omemo-session.ts
 packages/xmpp/src/omemo-stanza.ts
 packages/xmpp/src/omemo-storage.ts

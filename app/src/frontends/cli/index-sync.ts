@@ -5,6 +5,7 @@
  * never surprise anyone with disk growth. One mental model, stated in one place.
  */
 
+import { _, fmt } from '@curlew/protocol';
 import type { CommandModule } from 'yargs';
 
 import type { SyncProgress } from '@curlew/store';
@@ -49,21 +50,24 @@ function reportRateLimits(result: IndexSyncResult): void {
 
 export const syncCommand: CommandModule = {
   command: 'sync',
-  describe: 'Build or update the local full-text index (the only command that writes to it)',
+  get describe() {
+    return _('Build or update the local full-text index (the only command that writes to it)');
+  },
   builder: (yargs) =>
     yargs
       .option('account', {
         type: 'string',
-        describe: 'Restrict to one account id (GOA, or e.g. telegram-…); omit for all',
+        describe: _('Restrict to one account id (GOA, or e.g. telegram-…); omit for all'),
       })
       .option('folder', {
         type: 'string',
-        describe: 'Restrict to one mailbox (skips chat backends); omit for all',
+        describe: _('Restrict to one mailbox (skips chat backends); omit for all'),
       })
       .option('full-scan', {
         type: 'boolean',
-        describe:
+        describe: _(
           'Mail: force the flag/expunge pass. Chats: re-fetch the newest window, picking up edits and removing what was deleted',
+        ),
       }),
   handler: (argv) => {
     const raw = argv as Record<string, unknown>;
@@ -85,34 +89,39 @@ export const syncCommand: CommandModule = {
 
 export const indexCommand: CommandModule = {
   command: 'index',
-  describe: 'Inspect or query the local index without touching the network',
+  get describe() {
+    return _('Inspect or query the local index without touching the network');
+  },
   handler: () => {},
   builder: (yargs) =>
     yargs
-      .demandCommand(1, 'Choose a subcommand: status, search')
+      .demandCommand(1, _('Choose a subcommand: status, search'))
       .command({
         command: 'status',
-        describe: 'What the index holds, and which folders are stale',
+        describe: _('What the index holds, and which folders are stale'),
         handler: () => {
           runAndExit(() => Promise.resolve(indexStatus()));
         },
       })
       .command({
         command: 'search [query]',
-        describe: 'Search the index only — offline, no server contact',
+        describe: _('Search the index only — offline, no server contact'),
         builder: (y) =>
           y
-            .positional('query', { type: 'string', describe: 'Full text across subject, sender and body' })
-            .option('from', { type: 'string', describe: 'Sender contains' })
-            .option('subject', { type: 'string', describe: 'Subject contains' })
-            .option('since', { type: 'string', describe: 'Date header on/after YYYY-MM-DD' })
-            .option('before', { type: 'string', describe: 'Date header before YYYY-MM-DD' })
-            .option('unseen', { type: 'boolean', describe: 'Only unseen messages' })
-            .option('flagged', { type: 'boolean', describe: 'Only flagged messages' })
-            .option('attachments', { type: 'boolean', describe: 'Only messages with an attachment' })
-            .option('account', { type: 'string', describe: 'Restrict to a GOA account id' })
-            .option('folder', { type: 'string', describe: 'Restrict to one mailbox (wire path)' })
-            .option('limit', { type: 'number', describe: `Max messages (max ${MAIL_LIMIT.max})` }),
+            .positional('query', { type: 'string', describe: _('Full text across subject, sender and body') })
+            .option('from', { type: 'string', describe: _('Sender contains') })
+            .option('subject', { type: 'string', describe: _('Subject contains') })
+            .option('since', { type: 'string', describe: _('Date header on/after YYYY-MM-DD') })
+            .option('before', { type: 'string', describe: _('Date header before YYYY-MM-DD') })
+            .option('unseen', { type: 'boolean', describe: _('Only unseen messages') })
+            .option('flagged', { type: 'boolean', describe: _('Only flagged messages') })
+            .option('attachments', { type: 'boolean', describe: _('Only messages with an attachment') })
+            .option('account', { type: 'string', describe: _('Restrict to a GOA account id') })
+            .option('folder', { type: 'string', describe: _('Restrict to one mailbox (wire path)') })
+            .option('limit', {
+              type: 'number',
+              describe: fmt(_('Max messages (max {max})'), { max: MAIL_LIMIT.max }),
+            }),
         handler: (argv) => {
           const raw = argv as Record<string, unknown>;
           runAndExit(() =>

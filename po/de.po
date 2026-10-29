@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-10-29 14:33+0100\n"
+"POT-Creation-Date: 2026-10-29 20:56+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -13,15 +13,12 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: app/src/frontends/cli/accounts.ts:22
-msgid ""
-"List accounts (GNOME Online Accounts by default) or log in to a chat backend"
+msgid "List accounts (GNOME Online Accounts by default) or log in to a chat backend"
 msgstr ""
-"Konten auflisten (standardmäßig die aus GNOME Online-Konten) oder bei einem "
-"Chat-Backend anmelden"
+"Konten auflisten (standardmäßig die aus GNOME Online-Konten) oder bei einem Chat-Backend anmelden"
 
 #: app/src/frontends/cli/accounts.ts:28
-msgid ""
-"List GNOME Online Accounts, or with --backend the accounts of one backend"
+msgid "List GNOME Online Accounts, or with --backend the accounts of one backend"
 msgstr "GNOME Online-Konten auflisten, mit --backend die Konten eines Backends"
 
 #: app/src/frontends/cli/accounts.ts:32
@@ -29,30 +26,380 @@ msgid "A backend that keeps its own accounts, e.g. telegram"
 msgstr "Ein Backend mit eigenen Konten, z. B. telegram"
 
 #: app/src/frontends/cli/accounts.ts:41
-msgid ""
-"Log in to a chat backend interactively and keep the session (0600, never in "
-"the repo)"
+msgid "Log in to a chat backend interactively and keep the session (0600, never in the repo)"
 msgstr ""
-"Interaktiv bei einem Chat-Backend anmelden und die Sitzung behalten (0600, "
-"niemals im Repository)"
+"Interaktiv bei einem Chat-Backend anmelden und die Sitzung behalten (0600, niemals im Repository)"
 
 #: app/src/frontends/cli/accounts.ts:44
 msgid "e.g. telegram"
 msgstr "z. B. telegram"
 
 #: app/src/frontends/cli/accounts.ts:48
-msgid ""
-"Telegram: ask for your own api_id/api_hash even if this build embeds a pair"
+msgid "Telegram: ask for your own api_id/api_hash even if this build embeds a pair"
 msgstr ""
-"Telegram: nach deinen eigenen api_id/api_hash fragen, auch wenn dieser Build "
-"ein Paar mitbringt"
+"Telegram: nach deinen eigenen api_id/api_hash fragen, auch wenn dieser Build ein Paar mitbringt"
+
+#: app/src/frontends/cli/backends.ts:17
+msgid "List, enable or disable message backends (writes the config, never the index)"
+msgstr ""
+"Nachrichten-Backends auflisten, aktivieren oder deaktivieren (schreibt die Konfiguration, nie den "
+"Index)"
+
+#: app/src/frontends/cli/backends.ts:22
+msgid "Choose a subcommand: list, enable, disable"
+msgstr "Wähle einen Unterbefehl: list, enable, disable"
+
+#: app/src/frontends/cli/backends.ts:25
+msgid "Every backend with its sync model, capabilities and whether it is enabled"
+msgstr "Jedes Backend mit Sync-Modell, Fähigkeiten und Aktivierungsstatus"
+
+#: app/src/frontends/cli/backends.ts:32
+msgid "Enable a backend; the first enable shows its terms notice"
+msgstr "Ein Backend aktivieren; beim ersten Mal erscheint sein Nutzungshinweis"
+
+#: app/src/frontends/cli/backends.ts:36
+msgid "Accept the backend terms notice"
+msgstr "Den Nutzungshinweis des Backends akzeptieren"
+
+#: app/src/frontends/cli/backends.ts:46
+msgid "{name} has terms you have not accepted yet:"
+msgstr "{name} hat Nutzungsbedingungen, die du noch nicht akzeptiert hast:"
+
+#: app/src/frontends/cli/backends.ts:53
+msgid "Nothing was changed. To accept and enable: curlew backends enable {name} --accept-terms"
+msgstr ""
+"Es wurde nichts geändert. Zum Akzeptieren und Aktivieren: curlew backends enable {name} --accept-"
+"terms"
+
+#: app/src/frontends/cli/backends.ts:66
+msgid "Disable a backend (its accepted terms stay recorded)"
+msgstr "Ein Backend deaktivieren (akzeptierte Bedingungen bleiben gespeichert)"
+
+#: app/src/frontends/cli/calendar.ts:14
+msgid "List calendar events in a date range (CalDAV/local)"
+msgstr "Kalendertermine in einem Zeitraum auflisten (CalDAV/lokal)"
+
+#: app/src/frontends/cli/calendar.ts:18
+msgid "Window start YYYY-MM-DD (default: today)"
+msgstr "Beginn des Zeitraums JJJJ-MM-TT (Standard: heute)"
+
+#: app/src/frontends/cli/calendar.ts:21
+msgid "Window end YYYY-MM-DD (default: +{days} days)"
+msgstr "Ende des Zeitraums JJJJ-MM-TT (Standard: +{days} Tage)"
+
+#: app/src/frontends/cli/calendar.ts:25
+msgid "Max events (default {default}, max {max})"
+msgstr "Höchstzahl an Terminen (Standard {default}, maximal {max})"
+
+#: app/src/frontends/cli/calendar.ts:30
+msgid "Restrict to a calendar source uid"
+msgstr "Auf die UID einer Kalenderquelle beschränken"
+
+#: app/src/frontends/cli/calendar.ts:31 app/src/frontends/cli/contacts.ts:30
+msgid "Restrict to a GOA account id (from \"accounts\")"
+msgstr "Auf eine GOA-Konto-ID beschränken (aus „accounts“)"
+
+#: app/src/frontends/cli/check.ts:53
+msgid "Check which backends are reachable (runtime, GNOME Online Accounts, IMAP, index)"
+msgstr "Prüfen, welche Backends erreichbar sind (Laufzeit, GNOME-Online-Konten, IMAP, Index)"
+
+#: app/src/frontends/cli/contacts.ts:14
+msgid "Search contacts across enabled address books (CardDAV/local)"
+msgstr "Kontakte in allen aktivierten Adressbüchern suchen (CardDAV/lokal)"
+
+#: app/src/frontends/cli/contacts.ts:21
+msgid "Free-text search (any field contains); omit to list all"
+msgstr "Freitextsuche (irgendein Feld enthält); ohne Angabe werden alle aufgelistet"
+
+#: app/src/frontends/cli/contacts.ts:25
+msgid "Max results (default {default}, max {max})"
+msgstr "Höchstzahl an Treffern (Standard {default}, maximal {max})"
+
+#: app/src/frontends/cli/conversations.ts:25
+msgid "Conversations across mail threads and chats, from the local index (built by `curlew sync`)"
+msgstr ""
+"Unterhaltungen aus Mail-Threads und Chats, aus dem lokalen Index (von `curlew sync` aufgebaut)"
+
+#: app/src/frontends/cli/conversations.ts:30
+msgid "Choose a subcommand: list, show, classify"
+msgstr "Wähle einen Unterbefehl: list, show, classify"
+
+#: app/src/frontends/cli/conversations.ts:33
+msgid "Conversations, newest first"
+msgstr "Unterhaltungen, neueste zuerst"
+
+#: app/src/frontends/cli/conversations.ts:38
+msgid "Only conversations with a person in them — no newsletters or notifications"
+msgstr "Nur Unterhaltungen mit einer Person — keine Newsletter oder Benachrichtigungen"
+
+#: app/src/frontends/cli/conversations.ts:40
+msgid "Restrict to one account id"
+msgstr "Auf eine Konto-ID beschränken"
+
+#: app/src/frontends/cli/conversations.ts:43
+msgid "Max conversations (max {max})"
+msgstr "Höchstzahl an Unterhaltungen (maximal {max})"
+
+#: app/src/frontends/cli/conversations.ts:60
+msgid "One conversation with its messages (bodies only with --bodies)"
+msgstr "Eine Unterhaltung mit ihren Nachrichten (Textinhalte nur mit --bodies)"
+
+#: app/src/frontends/cli/conversations.ts:66
+msgid "Conversation id from `list`"
+msgstr "Unterhaltungs-ID aus `list`"
+
+#: app/src/frontends/cli/conversations.ts:68
+msgid "Include each message body from the index"
+msgstr "Den Text jeder Nachricht aus dem Index einbeziehen"
+
+#: app/src/frontends/cli/conversations.ts:69
+msgid "Only messages sent after this ISO 8601 time"
+msgstr "Nur Nachrichten, die nach diesem ISO-8601-Zeitpunkt gesendet wurden"
+
+#: app/src/frontends/cli/conversations.ts:70
+msgid "Only messages from the other side"
+msgstr "Nur Nachrichten der Gegenseite"
+
+#: app/src/frontends/cli/conversations.ts:73
+msgid "Per-message body cap (default {default}, max {max})"
+msgstr "Obergrenze für den Text je Nachricht (Standard {default}, maximal {max})"
+
+#: app/src/frontends/cli/conversations.ts:95
+msgid "Correct how mail from one sender is classified (auto = back to the rules)"
+msgstr "Korrigieren, wie Mails eines Absenders eingeordnet werden (auto = zurück zu den Regeln)"
+
+#: app/src/frontends/cli/conversations.ts:98
+msgid "Sender mail address"
+msgstr "Mailadresse des Absenders"
+
+#: app/src/frontends/cli/daemon.ts:26
+msgid ""
+"Receive from every enabled delivery-only backend (Signal, WhatsApp) and every granted XMPP "
+"account until stopped — the systemd unit in contrib/ runs this"
+msgstr ""
+"Von jedem aktivierten reinen Zustell-Backend (Signal, WhatsApp) und jedem freigegebenen XMPP-"
+"Konto empfangen, bis der Prozess beendet wird — die systemd-Unit in contrib/ führt dies aus"
+
+#: app/src/frontends/cli/daemon.ts:33
+msgid "Restrict to one account id; omit for all"
+msgstr "Auf eine Konto-ID beschränken; ohne Angabe alle"
+
+#: app/src/frontends/cli/daemon.ts:37
+msgid "Milliseconds of quiet before the conversations are rebuilt (default {ms})"
+msgstr "Millisekunden Ruhe, bevor die Unterhaltungen neu aufgebaut werden (Standard {ms})"
+
+#: app/src/frontends/cli/daemon.ts:49
+msgid "curlew-daemon: {signal} — stopping after the last batch is written"
+msgstr "curlew-daemon: {signal} — beende, sobald der letzte Stapel geschrieben ist"
+
+#: app/src/frontends/cli/deliveries.ts:20
+msgid "What the delivery-only backends (WhatsApp, Signal) received that curlew could not map"
+msgstr ""
+"Was die reinen Zustell-Backends (WhatsApp, Signal) empfangen haben und curlew nicht zuordnen "
+"konnte"
+
+#: app/src/frontends/cli/deliveries.ts:24
+msgid "Choose a subcommand: set-aside"
+msgstr "Wähle einen Unterbefehl: set-aside"
+
+#: app/src/frontends/cli/deliveries.ts:26
+msgid "Plaintexts a backend kept because it could not read them: sender, time, reason, size"
+msgstr ""
+"Klartexte, die ein Backend behalten hat, weil es sie nicht lesen konnte: Absender, Zeit, Grund, "
+"Größe"
+
+#: app/src/frontends/cli/deliveries.ts:30
+msgid "Restrict to one account id (e.g. signal-…); omit for all"
+msgstr "Auf eine Konto-ID beschränken (z. B. signal-…); ohne Angabe alle"
+
+#: app/src/frontends/cli/index-sync.ts:54
+msgid "Build or update the local full-text index (the only command that writes to it)"
+msgstr ""
+"Den lokalen Volltextindex aufbauen oder aktualisieren (der einzige Befehl, der ihn beschreibt)"
+
+#: app/src/frontends/cli/index-sync.ts:60
+msgid "Restrict to one account id (GOA, or e.g. telegram-…); omit for all"
+msgstr "Auf eine Konto-ID beschränken (GOA oder z. B. telegram-…); ohne Angabe alle"
+
+#: app/src/frontends/cli/index-sync.ts:64
+msgid "Restrict to one mailbox (skips chat backends); omit for all"
+msgstr "Auf ein Postfach beschränken (überspringt Chat-Backends); ohne Angabe alle"
+
+#: app/src/frontends/cli/index-sync.ts:69
+msgid ""
+"Mail: force the flag/expunge pass. Chats: re-fetch the newest window, picking up edits and "
+"removing what was deleted"
+msgstr ""
+"Mail: den Durchlauf für Flags und gelöschte Nachrichten erzwingen. Chats: das neueste Fenster "
+"erneut abrufen, Bearbeitungen übernehmen und Gelöschtes entfernen"
+
+#: app/src/frontends/cli/index-sync.ts:93
+msgid "Inspect or query the local index without touching the network"
+msgstr "Den lokalen Index ansehen oder abfragen, ohne das Netzwerk zu berühren"
+
+#: app/src/frontends/cli/index-sync.ts:98
+msgid "Choose a subcommand: status, search"
+msgstr "Wähle einen Unterbefehl: status, search"
+
+#: app/src/frontends/cli/index-sync.ts:101
+msgid "What the index holds, and which folders are stale"
+msgstr "Was der Index enthält und welche Ordner veraltet sind"
+
+#: app/src/frontends/cli/index-sync.ts:108
+msgid "Search the index only — offline, no server contact"
+msgstr "Nur den Index durchsuchen — offline, ohne Serverkontakt"
+
+#: app/src/frontends/cli/index-sync.ts:111
+msgid "Full text across subject, sender and body"
+msgstr "Volltext über Betreff, Absender und Text"
+
+#: app/src/frontends/cli/index-sync.ts:112 app/src/frontends/cli/mail.ts:36
+msgid "Sender contains"
+msgstr "Absender enthält"
+
+#: app/src/frontends/cli/index-sync.ts:113 app/src/frontends/cli/mail.ts:39
+msgid "Subject contains"
+msgstr "Betreff enthält"
+
+#: app/src/frontends/cli/index-sync.ts:114 app/src/frontends/cli/mail.ts:41
+msgid "Date header on/after YYYY-MM-DD"
+msgstr "Date-Header am oder nach JJJJ-MM-TT"
+
+#: app/src/frontends/cli/index-sync.ts:115 app/src/frontends/cli/mail.ts:42
+msgid "Date header before YYYY-MM-DD"
+msgstr "Date-Header vor JJJJ-MM-TT"
+
+#: app/src/frontends/cli/index-sync.ts:116 app/src/frontends/cli/mail.ts:48
+msgid "Only unseen messages"
+msgstr "Nur ungelesene Nachrichten"
+
+#: app/src/frontends/cli/index-sync.ts:117 app/src/frontends/cli/mail.ts:49
+msgid "Only flagged messages"
+msgstr "Nur markierte Nachrichten"
+
+#: app/src/frontends/cli/index-sync.ts:118
+msgid "Only messages with an attachment"
+msgstr "Nur Nachrichten mit Anhang"
+
+#: app/src/frontends/cli/index-sync.ts:119
+msgid "Restrict to a GOA account id"
+msgstr "Auf eine GOA-Konto-ID beschränken"
+
+#: app/src/frontends/cli/index-sync.ts:120
+msgid "Restrict to one mailbox (wire path)"
+msgstr "Auf ein Postfach beschränken (Pfad auf dem Server)"
+
+#: app/src/frontends/cli/index-sync.ts:123
+msgid "Max messages (max {max})"
+msgstr "Höchstzahl an Nachrichten (maximal {max})"
+
+#: app/src/frontends/cli/mail.ts:28
+msgid "Search mail via IMAP (newest first; headers only, never message bodies)"
+msgstr "Mails per IMAP suchen (neueste zuerst; nur Header, nie der Nachrichtentext)"
+
+#: app/src/frontends/cli/mail.ts:34
+msgid "Free text across headers and body (IMAP TEXT); omit to list the most recent"
+msgstr "Freitext über Header und Text (IMAP TEXT); ohne Angabe werden die neuesten aufgelistet"
+
+#: app/src/frontends/cli/mail.ts:37
+msgid "Recipient contains"
+msgstr "Empfänger enthält"
+
+#: app/src/frontends/cli/mail.ts:38
+msgid "Cc contains"
+msgstr "Cc enthält"
+
+#: app/src/frontends/cli/mail.ts:40
+msgid "Body contains (excludes headers)"
+msgstr "Text enthält (ohne Header)"
+
+#: app/src/frontends/cli/mail.ts:45
+msgid "ARRIVAL on/after YYYY-MM-DD (unreliable after a mailbox migration)"
+msgstr "Eingang am oder nach JJJJ-MM-TT (nach einem Postfachumzug unzuverlässig)"
+
+#: app/src/frontends/cli/mail.ts:47
+msgid "ARRIVAL before YYYY-MM-DD"
+msgstr "Eingang vor JJJJ-MM-TT"
+
+#: app/src/frontends/cli/mail.ts:50
+msgid "Mailbox: name, wire path or role (default INBOX)"
+msgstr "Postfach: Name, Serverpfad oder Rolle (Standard INBOX)"
+
+#: app/src/frontends/cli/mail.ts:53
+msgid "Search every mailbox (skips All Mail, Trash and Junk)"
+msgstr "Jedes Postfach durchsuchen (überspringt „Alle Nachrichten“, Papierkorb und Spam)"
+
+#: app/src/frontends/cli/mail.ts:57
+msgid "Max messages (default {default}, max {max})"
+msgstr "Höchstzahl an Nachrichten (Standard {default}, maximal {max})"
+
+#: app/src/frontends/cli/mail.ts:64
+msgid "Restrict to a GOA account id (from \"accounts\"); omit to search all"
+msgstr "Auf eine GOA-Konto-ID beschränken (aus „accounts“); ohne Angabe alle durchsuchen"
+
+#: app/src/frontends/cli/mail.ts:98
+msgid "Fetch one full message (body + attachment metadata) by IMAP UID"
+msgstr "Eine vollständige Nachricht (Text + Anhangsdaten) per IMAP-UID abrufen"
+
+#: app/src/frontends/cli/mail.ts:102 app/src/frontends/cli/mail.ts:152
+#: app/src/frontends/cli/mail.ts:174
+msgid "IMAP UID (from \"search\")"
+msgstr "IMAP-UID (aus „search“)"
+
+#: app/src/frontends/cli/mail.ts:106
+msgid "GOA account id the message belongs to (from \"accounts\")"
+msgstr "GOA-Konto-ID, zu der die Nachricht gehört (aus „accounts“)"
+
+#: app/src/frontends/cli/mail.ts:108 app/src/frontends/cli/mail.ts:154
+#: app/src/frontends/cli/mail.ts:176
+msgid "Mailbox the UID belongs to (default INBOX)"
+msgstr "Postfach, zu dem die UID gehört (Standard INBOX)"
+
+#: app/src/frontends/cli/mail.ts:111
+msgid "Max body characters (default {default}, max {max})"
+msgstr "Höchstzahl an Zeichen des Textes (Standard {default}, maximal {max})"
+
+#: app/src/frontends/cli/mail.ts:132
+msgid "List mailboxes with their resolved roles (inbox, sent, trash, …)"
+msgstr "Postfächer mit ihren erkannten Rollen auflisten (Posteingang, Gesendet, Papierkorb, …)"
+
+#: app/src/frontends/cli/mail.ts:137
+msgid "Restrict to a GOA account id (from \"accounts\"); omit for all"
+msgstr "Auf eine GOA-Konto-ID beschränken (aus „accounts“); ohne Angabe alle"
+
+#: app/src/frontends/cli/mail.ts:148
+msgid "List one message's parts and their sections (what can be saved)"
+msgstr "Die Teile einer Nachricht und ihre Abschnitte auflisten (was gespeichert werden kann)"
+
+#: app/src/frontends/cli/mail.ts:153 app/src/frontends/cli/mail.ts:175
+msgid "GOA account id"
+msgstr "GOA-Konto-ID"
+
+#: app/src/frontends/cli/mail.ts:170
+msgid "Save an attachment to disk (decoded; never overwrites an existing file)"
+msgstr ""
+"Einen Anhang auf der Festplatte speichern (dekodiert; überschreibt nie eine vorhandene Datei)"
+
+#: app/src/frontends/cli/mail.ts:179
+msgid "IMAP section from \"parts\"; omit for the first attachment"
+msgstr "IMAP-Abschnitt aus „parts“; ohne Angabe der erste Anhang"
+
+#: app/src/frontends/cli/mail.ts:181
+msgid "Directory to save into (default $XDG_DOWNLOAD_DIR)"
+msgstr "Zielverzeichnis (Standard $XDG_DOWNLOAD_DIR)"
+
+#: app/src/frontends/cli/mail.ts:184
+msgid "Refuse a part larger than this (default {default})"
+msgstr "Teile ablehnen, die größer sind als dieser Wert (Standard {default})"
+
+#: app/src/frontends/cli/mcp.ts:16
+msgid "Run the MCP server over stdio (read-only tools; for Claude Code and other clients)"
+msgstr ""
+"Den MCP-Server über stdio ausführen (nur lesende Werkzeuge; für Claude Code und andere Clients)"
 
 #: app/src/frontends/cli/omemo.ts:18
-msgid ""
-"Show the OMEMO device keys of an XMPP account (reads only, never connects)"
-msgstr ""
-"Die OMEMO-Geräteschlüssel eines XMPP-Kontos anzeigen (liest nur, verbindet "
-"sich nie)"
+msgid "Show the OMEMO device keys of an XMPP account (reads only, never connects)"
+msgstr "Die OMEMO-Geräteschlüssel eines XMPP-Kontos anzeigen (liest nur, verbindet sich nie)"
 
 #: app/src/frontends/cli/omemo.ts:21
 msgid "Choose a subcommand: devices"
@@ -60,14 +407,11 @@ msgstr "Wähle einen Unterbefehl: devices"
 
 #: app/src/frontends/cli/omemo.ts:23
 msgid "Every device key this account knows, with its fingerprint and trust"
-msgstr ""
-"Jeder Geräteschlüssel, den dieses Konto kennt, mit Fingerabdruck und "
-"Vertrauensstatus"
+msgstr "Jeder Geräteschlüssel, den dieses Konto kennt, mit Fingerabdruck und Vertrauensstatus"
 
 #: app/src/frontends/cli/omemo.ts:29
 msgid "The xmpp account id, as `curlew accounts list --backend xmpp` shows it"
-msgstr ""
-"Die xmpp-Konto-ID, so wie `curlew accounts list --backend xmpp` sie anzeigt"
+msgstr "Die xmpp-Konto-ID, so wie `curlew accounts list --backend xmpp` sie anzeigt"
 
 #: app/src/frontends/cli/omemo.ts:33
 msgid "Only this contact; every known address when left out"
@@ -75,9 +419,107 @@ msgstr "Nur dieser Kontakt; weggelassen jede bekannte Adresse"
 
 #: app/src/frontends/cli/prompt.ts:102
 msgid "input ended before the login was complete — nothing was saved"
+msgstr "Die Eingabe endete, bevor die Anmeldung abgeschlossen war — es wurde nichts gespeichert"
+
+#: app/src/frontends/cli/send.ts:17
+msgid "Send a chat message from a granted XMPP account (needs an xmpp.send grant in the config)"
 msgstr ""
-"Die Eingabe endete, bevor die Anmeldung abgeschlossen war — es wurde nichts "
-"gespeichert"
+"Eine Chatnachricht von einem freigegebenen XMPP-Konto senden (braucht eine xmpp.send-Freigabe in "
+"der Konfiguration)"
+
+#: app/src/frontends/cli/send.ts:23
+msgid "The message, plain text (optional with --image-url)"
+msgstr "Die Nachricht als reiner Text (optional mit --image-url)"
+
+#: app/src/frontends/cli/send.ts:27
+msgid "https URL of one image, sent as its own message after the text"
+msgstr "https-URL eines Bildes, das nach dem Text als eigene Nachricht gesendet wird"
+
+#: app/src/frontends/cli/send.ts:29
+msgid "XMPP account id (xmpp-…)"
+msgstr "XMPP-Konto-ID (xmpp-…)"
+
+#: app/src/frontends/cli/send.ts:33
+msgid "Bare address exactly as the grant spells it (name@example.org)"
+msgstr "Reine Adresse genau so, wie die Freigabe sie schreibt (name@example.org)"
+
+#: app/src/frontends/cli/setup.ts:34
+msgid ""
+"Walk through putting curlew to work on this machine — link a device, accept the terms, build the "
+"index, install the systemd unit"
+msgstr ""
+"Schritt für Schritt curlew auf diesem Rechner einrichten — Gerät koppeln, Bedingungen "
+"akzeptieren, Index aufbauen, systemd-Unit installieren"
+
+#: app/src/frontends/cli/setup.ts:42
+msgid "Run only these stages, by name (space- or comma-separated): {stages}"
+msgstr "Nur diese Stufen ausführen, nach Namen (durch Leerzeichen oder Komma getrennt): {stages}"
+
+#: app/src/frontends/cli/setup.ts:49
+msgid "Report what is done and what is left, without changing anything"
+msgstr "Berichten, was erledigt ist und was noch fehlt, ohne etwas zu ändern"
+
+#: app/src/frontends/cli/setup.ts:54
+msgid "Stop after the first stage that does not finish"
+msgstr "Nach der ersten Stufe anhalten, die nicht abgeschlossen wird"
+
+#: app/src/frontends/cli/setup.ts:114 app/src/frontends/cli/setup.ts:155
+msgid "Still to run:"
+msgstr "Noch auszuführen:"
+
+#: app/src/frontends/cli/setup.ts:121
+msgid "mode"
+msgstr "Modus"
+
+#: app/src/frontends/cli/setup.ts:122
+msgid "checkout"
+msgstr "Checkout"
+
+#: app/src/frontends/cli/setup.ts:123
+msgid "bundle"
+msgstr "Bundle"
+
+#: app/src/frontends/cli/setup.ts:123
+msgid "not found"
+msgstr "nicht gefunden"
+
+#: app/src/frontends/cli/setup.ts:124
+msgid "not on PATH"
+msgstr "nicht im PATH"
+
+#: app/src/frontends/cli/setup.ts:125
+msgid "config"
+msgstr "Konfiguration"
+
+#: app/src/frontends/cli/setup.ts:125
+msgid "(not written yet)"
+msgstr "(noch nicht geschrieben)"
+
+#: app/src/frontends/cli/setup.ts:126
+msgid "enabled backends"
+msgstr "aktive Backends"
+
+#: app/src/frontends/cli/setup.ts:126 packages/telegram/src/credentials.ts:181
+msgid "none"
+msgstr "keines"
+
+#: app/src/frontends/cli/setup.ts:131
+msgid "curlew setup — what is done and what is left"
+msgstr "curlew setup — was erledigt ist und was noch fehlt"
+
+#: app/src/frontends/cli/setup.ts:136
+msgid "(you only)"
+msgstr "(nur du)"
+
+#: app/src/frontends/cli/setup.ts:149
+msgid "{n} warning"
+msgid_plural "{n} warnings"
+msgstr[0] "{n} Warnung"
+msgstr[1] "{n} Warnungen"
+
+#: app/src/frontends/cli/setup.ts:151
+msgid "{done} of {total} stages done"
+msgstr "{done} von {total} Stufen erledigt"
 
 #: packages/telegram/src/backend.ts:33
 msgid "log in again with `curlew accounts add telegram`"
@@ -114,11 +556,10 @@ msgid "the Telegram session {account} is not usable ({reason}) — {hint}"
 msgstr "die Telegram-Sitzung {account} ist nicht nutzbar ({reason}) — {hint}"
 
 #: packages/telegram/src/client.ts:100
-msgid ""
-"Telegram asks for an email login setup first — finish it in an official app"
+msgid "Telegram asks for an email login setup first — finish it in an official app"
 msgstr ""
-"Telegram verlangt zuerst die Einrichtung der E-Mail-Anmeldung — schließe sie "
-"in einer offiziellen App ab"
+"Telegram verlangt zuerst die Einrichtung der E-Mail-Anmeldung — schließe sie in einer offiziellen "
+"App ab"
 
 #. TRANSLATORS: {channel} is Telegram's own word for the route it used ("sms", "app", …),
 #. and arrives untranslated from the server.
@@ -137,35 +578,28 @@ msgstr "Falsches Passwort — versuche es noch einmal."
 #. TRANSLATORS: Tail of several credential errors. "API development tools" is the literal name of
 #. that section at my.telegram.org — keep it exactly as Telegram writes it.
 #: packages/telegram/src/credentials.ts:58
-msgid ""
-"create them for yourself at https://my.telegram.org (\"API development "
-"tools\")"
-msgstr ""
-"erstelle dir eigene unter https://my.telegram.org (\"API development tools\")"
+msgid "create them for yourself at https://my.telegram.org (\"API development tools\")"
+msgstr "erstelle dir eigene unter https://my.telegram.org (\"API development tools\")"
 
 #: packages/telegram/src/credentials.ts:64
 msgid "the Telegram api_id must be a positive whole number — {where}"
 msgstr "die Telegram-api_id muss eine positive ganze Zahl sein — {where}"
 
 #: packages/telegram/src/credentials.ts:69
-msgid ""
-"the Telegram api_hash must be 32 hexadecimal characters (value not shown) — "
-"{where}"
+msgid "the Telegram api_hash must be 32 hexadecimal characters (value not shown) — {where}"
 msgstr ""
-"der Telegram-api_hash muss aus 32 hexadezimalen Zeichen bestehen (Wert wird "
-"nicht angezeigt) — {where}"
+"der Telegram-api_hash muss aus 32 hexadezimalen Zeichen bestehen (Wert wird nicht angezeigt) — "
+"{where}"
 
 #: packages/telegram/src/credentials.ts:83
 msgid ""
-"the Telegram api_id/api_hash do not belong in the config file (it is backed "
-"up in the clear) — remove backends.telegram.settings.apiId/apiHash; `curlew "
-"accounts add telegram` keeps them in the account's 0600 session file, or set "
-"{idEnv} and {hashEnv}"
+"the Telegram api_id/api_hash do not belong in the config file (it is backed up in the clear) — "
+"remove backends.telegram.settings.apiId/apiHash; `curlew accounts add telegram` keeps them in the "
+"account's 0600 session file, or set {idEnv} and {hashEnv}"
 msgstr ""
-"api_id/api_hash von Telegram gehören nicht in die Konfigurationsdatei (sie "
-"wird im Klartext gesichert) — entferne backends.telegram.settings.apiId/"
-"apiHash; `curlew accounts add telegram` legt sie in der 0600-Sitzungsdatei "
-"des Kontos ab, oder setze {idEnv} und {hashEnv}"
+"api_id/api_hash von Telegram gehören nicht in die Konfigurationsdatei (sie wird im Klartext "
+"gesichert) — entferne backends.telegram.settings.apiId/apiHash; `curlew accounts add telegram` "
+"legt sie in der 0600-Sitzungsdatei des Kontos ab, oder setze {idEnv} und {hashEnv}"
 
 #: packages/telegram/src/credentials.ts:99
 msgid "set both {idEnv} and {hashEnv}, or neither"
@@ -173,33 +607,27 @@ msgstr "setze {idEnv} und {hashEnv} gemeinsam oder gar nicht"
 
 #: packages/telegram/src/credentials.ts:175
 msgid ""
-"this Telegram session was created with the API credentials embedded in the "
-"build that made it, and this build embeds {embeds} (values not shown) — use "
-"that build again, set {idEnv} and {hashEnv}, or log in again with `curlew "
-"accounts add telegram`"
+"this Telegram session was created with the API credentials embedded in the build that made it, "
+"and this build embeds {embeds} (values not shown) — use that build again, set {idEnv} and "
+"{hashEnv}, or log in again with `curlew accounts add telegram`"
 msgstr ""
-"diese Telegram-Sitzung wurde mit den API-Zugangsdaten angelegt, die im "
-"erzeugenden Build eingebettet waren; dieser Build bringt {embeds} mit (Werte "
-"werden nicht angezeigt) — nimm wieder jenen Build, setze {idEnv} und "
-"{hashEnv}, oder melde dich mit `curlew accounts add telegram` neu an"
+"diese Telegram-Sitzung wurde mit den API-Zugangsdaten angelegt, die im erzeugenden Build "
+"eingebettet waren; dieser Build bringt {embeds} mit (Werte werden nicht angezeigt) — nimm wieder "
+"jenen Build, setze {idEnv} und {hashEnv}, oder melde dich mit `curlew accounts add telegram` neu "
+"an"
 
 #. TRANSLATORS: Both fill {embeds} in the message above.
 #: packages/telegram/src/credentials.ts:181
 msgid "a different pair"
 msgstr "ein anderes Paar"
 
-#: packages/telegram/src/credentials.ts:181
-msgid "none"
-msgstr "keines"
-
 #: packages/telegram/src/credentials.ts:194
 msgid ""
-"this Telegram session has no api_id/api_hash stored — log in again with "
-"`curlew accounts add telegram`, or set {idEnv} and {hashEnv}"
+"this Telegram session has no api_id/api_hash stored — log in again with `curlew accounts add "
+"telegram`, or set {idEnv} and {hashEnv}"
 msgstr ""
-"zu dieser Telegram-Sitzung sind keine api_id/api_hash gespeichert — melde "
-"dich mit `curlew accounts add telegram` neu an, oder setze {idEnv} und "
-"{hashEnv}"
+"zu dieser Telegram-Sitzung sind keine api_id/api_hash gespeichert — melde dich mit `curlew "
+"accounts add telegram` neu an, oder setze {idEnv} und {hashEnv}"
 
 #. TRANSLATORS: Stands in for the name of an account that has neither a @username nor a
 #. display name. {id} is Telegram's numeric user id.
@@ -209,37 +637,88 @@ msgstr "Telegram-Benutzer {id}"
 
 #: packages/telegram/src/login.ts:109
 msgid ""
-"{reason} — Telegram HAD authorized this session, so its file is kept at "
-"{pending} and NOT deleted. Move it to {target}, or delete it and log in "
-"again."
+"{reason} — Telegram HAD authorized this session, so its file is kept at {pending} and NOT "
+"deleted. Move it to {target}, or delete it and log in again."
 msgstr ""
-"{reason} — Telegram HATTE diese Sitzung autorisiert, deshalb bleibt ihre "
-"Datei unter {pending} liegen und wird NICHT gelöscht. Verschiebe sie nach "
-"{target}, oder lösche sie und melde dich neu an."
+"{reason} — Telegram HATTE diese Sitzung autorisiert, deshalb bleibt ihre Datei unter {pending} "
+"liegen und wird NICHT gelöscht. Verschiebe sie nach {target}, oder lösche sie und melde dich neu "
+"an."
 
 #: packages/telegram/src/manifest.ts:52
 msgid ""
-"curlew talks to Telegram through the official MTProto API as a third-party "
-"client (mtcute). Telegram requires every client to use API credentials "
-"(api_id and api_hash). A packaged build MAY embed a pair supplied by its "
-"distributor, so the login needs only your phone number and code; curlew "
-"itself ships none, and you can always use your own — create them for "
-"YOURSELF at my.telegram.org and run `curlew accounts add telegram --own-"
-"credentials` (or set them in the environment). They are kept with the "
-"session. Use is subject to Telegram's API Terms of Service; an account that "
-"misuses the API can be limited or banned by Telegram. curlew only reads: it "
-"never sends, edits or deletes, and keeps the session key on this machine "
-"only."
+"curlew talks to Telegram through the official MTProto API as a third-party client (mtcute). "
+"Telegram requires every client to use API credentials (api_id and api_hash). A packaged build MAY "
+"embed a pair supplied by its distributor, so the login needs only your phone number and code; "
+"curlew itself ships none, and you can always use your own — create them for YOURSELF at "
+"my.telegram.org and run `curlew accounts add telegram --own-credentials` (or set them in the "
+"environment). They are kept with the session. Use is subject to Telegram's API Terms of Service; "
+"an account that misuses the API can be limited or banned by Telegram. curlew only reads: it never "
+"sends, edits or deletes, and keeps the session key on this machine only."
 msgstr ""
-"curlew spricht als Drittanbieter-Client (mtcute) über die offizielle MTProto-"
-"API mit Telegram. Telegram verlangt von jedem Client API-Zugangsdaten "
-"(api_id und api_hash). Ein paketierter Build KANN ein Paar mitbringen, das "
-"sein Distributor beigesteuert hat — dann braucht die Anmeldung nur deine "
-"Telefonnummer und den Code; curlew selbst liefert keines, und du kannst "
-"immer eigene verwenden: erstelle sie für DICH SELBST auf my.telegram.org und "
-"starte `curlew accounts add telegram --own-credentials` (oder setze sie in "
-"der Umgebung). Sie werden bei der Sitzung aufbewahrt. Die Nutzung unterliegt "
-"den API-Nutzungsbedingungen von Telegram; ein Konto, das die API "
-"missbraucht, kann von Telegram eingeschränkt oder gesperrt werden. curlew "
-"liest nur: es sendet, bearbeitet und löscht nie und behält den "
-"Sitzungsschlüssel ausschließlich auf diesem Rechner."
+"curlew spricht als Drittanbieter-Client (mtcute) über die offizielle MTProto-API mit Telegram. "
+"Telegram verlangt von jedem Client API-Zugangsdaten (api_id und api_hash). Ein paketierter Build "
+"KANN ein Paar mitbringen, das sein Distributor beigesteuert hat — dann braucht die Anmeldung nur "
+"deine Telefonnummer und den Code; curlew selbst liefert keines, und du kannst immer eigene "
+"verwenden: erstelle sie für DICH SELBST auf my.telegram.org und starte `curlew accounts add "
+"telegram --own-credentials` (oder setze sie in der Umgebung). Sie werden bei der Sitzung "
+"aufbewahrt. Die Nutzung unterliegt den API-Nutzungsbedingungen von Telegram; ein Konto, das die "
+"API missbraucht, kann von Telegram eingeschränkt oder gesperrt werden. curlew liest nur: es "
+"sendet, bearbeitet und löscht nie und behält den Sitzungsschlüssel ausschließlich auf diesem "
+"Rechner."
+
+#. TRANSLATORS: keep the JSON snippet verbatim — it is config syntax to paste.
+#: packages/xmpp/src/messages.ts:14
+msgid ""
+"sending from {account} to {to} is not granted — add { \"capability\": \"xmpp.send\", \"target\": "
+"\"{account}/{to}\" } to config.grants"
+msgstr ""
+"Senden von {account} an {to} ist nicht freigegeben — füge { \"capability\": \"xmpp.send\", "
+"\"target\": \"{account}/{to}\" } zu config.grants hinzu"
+
+#: packages/xmpp/src/messages.ts:19
+msgid "{to} is not a bare XMPP address — expected name@example.org"
+msgstr "{to} ist keine reine XMPP-Adresse — erwartet wird name@example.org"
+
+#: packages/xmpp/src/messages.ts:21
+msgid "there is nothing to send: the text is empty"
+msgstr "Es gibt nichts zu senden: Der Text ist leer"
+
+#: packages/xmpp/src/messages.ts:24
+msgid "the image URL must be a valid https:// URL without credentials or spaces"
+msgstr "Die Bild-URL muss eine gültige https://-URL ohne Zugangsdaten und Leerzeichen sein"
+
+#: packages/xmpp/src/messages.ts:26
+msgid "the image URL is longer than {max} characters"
+msgstr "Die Bild-URL ist länger als {max} Zeichen"
+
+#: packages/xmpp/src/messages.ts:27
+msgid "the text is longer than {max} characters"
+msgstr "Der Text ist länger als {max} Zeichen"
+
+#: packages/xmpp/src/messages.ts:28
+msgid "no XMPP account {id} — `curlew accounts list` shows them"
+msgstr "Kein XMPP-Konto {id} — `curlew accounts list` zeigt sie an"
+
+#: packages/xmpp/src/messages.ts:42
+msgid ""
+"nothing was sent: {to} uses OMEMO and their device list could not be read — try again when the "
+"server answers"
+msgstr ""
+"Es wurde nichts gesendet: {to} nutzt OMEMO und die Geräteliste konnte nicht gelesen werden — "
+"versuche es erneut, wenn der Server antwortet"
+
+#: packages/xmpp/src/messages.ts:49
+msgid ""
+"nothing was sent: no device of {to} may be encrypted to — `curlew omemo devices` shows them, "
+"`curlew omemo verify` decides"
+msgstr ""
+"Es wurde nichts gesendet: An kein Gerät von {to} darf verschlüsselt werden — `curlew omemo "
+"devices` zeigt sie an, `curlew omemo verify` entscheidet"
+
+#: packages/xmpp/src/messages.ts:56
+msgid ""
+"nothing was sent: no device of {to} has published keys to encrypt with — their client has to come "
+"online once"
+msgstr ""
+"Es wurde nichts gesendet: Kein Gerät von {to} hat Schlüssel zum Verschlüsseln veröffentlicht — "
+"der Client muss einmal online kommen"

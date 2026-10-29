@@ -15,6 +15,7 @@
  * interface has to be closed either way.
  */
 
+import { _, _n, fmt } from '@curlew/protocol';
 import type { CommandModule } from 'yargs';
 
 import { envValue } from '@curlew/store';
@@ -28,24 +29,29 @@ import { pickArgv } from './output.ts';
 
 export const setupCommand: CommandModule = {
   command: 'setup',
-  describe:
-    'Walk through putting curlew to work on this machine — link a device, accept the terms, build the index, install the systemd unit',
+  get describe() {
+    return _(
+      'Walk through putting curlew to work on this machine — link a device, accept the terms, build the index, install the systemd unit',
+    );
+  },
   builder: (yargs) =>
     yargs
       .option('only', {
         type: 'array',
         string: true,
-        describe: `Run only these stages, by name (space- or comma-separated): ${SETUP_STEPS.map((s) => s.name).join(', ')}`,
+        describe: fmt(_('Run only these stages, by name (space- or comma-separated): {stages}'), {
+          stages: SETUP_STEPS.map((s) => s.name).join(', '),
+        }),
       })
       .option('status', {
         type: 'boolean',
         default: false,
-        describe: 'Report what is done and what is left, without changing anything',
+        describe: _('Report what is done and what is left, without changing anything'),
       })
       .option('bail', {
         type: 'boolean',
         default: false,
-        describe: 'Stop after the first stage that does not finish',
+        describe: _('Stop after the first stage that does not finish'),
       }),
   handler: (argv) => {
     const raw = argv as Record<string, unknown>;
@@ -105,29 +111,29 @@ async function run(ctx: SetupContext, options: RunOptions): Promise<number> {
 async function reportRemaining(ctx: SetupContext, remaining: readonly string[]): Promise<void> {
   if (remaining.length === 0) return;
   await ctx.prompter.notify('');
-  await ctx.prompter.notify('  Still to run:');
+  await ctx.prompter.notify(`  ${_('Still to run:')}`);
   for (const command of remaining) await ctx.prompter.notify(`    ${command}`);
 }
 
 function printStatus(ctx: SetupContext, status: Awaited<ReturnType<typeof setupStatus>>): void {
   const { readiness } = status;
   const rows: [string, string][] = [
-    ['mode', readiness.mode],
-    ['checkout', readiness.checkout ?? '—'],
-    ['bundle', readiness.bundle ?? 'not found'],
-    ['gjsify', readiness.gjsify ?? 'not on PATH'],
-    ['config', `${readiness.configPath}${readiness.configExists ? '' : ' (not written yet)'}`],
-    ['enabled backends', readiness.enabled.join(', ') || 'none'],
+    [_('mode'), readiness.mode],
+    [_('checkout'), readiness.checkout ?? '—'],
+    [_('bundle'), readiness.bundle ?? _('not found')],
+    ['gjsify', readiness.gjsify ?? _('not on PATH')],
+    [_('config'), `${readiness.configPath}${readiness.configExists ? '' : ` ${_('(not written yet)')}`}`],
+    [_('enabled backends'), readiness.enabled.join(', ') || _('none')],
   ];
   // stdout for the report: a `--status` is the one thing here that is read, not asked, and a
   // person may well pipe it.
   const OUT = 1;
-  console.log(`${bold('curlew setup — what is done and what is left', OUT)}\n`);
-  for (const [key, value] of rows) console.log(`  ${dim(key.padEnd(18), OUT)}${value}`);
+  console.log(`${bold(_('curlew setup — what is done and what is left'), OUT)}\n`);
+  for (const [key, value] of rows) console.log(`  ${dim(key.padEnd(20), OUT)}${value}`);
   console.log('');
   for (const step of status.steps) {
     const mark = step.state === 'done' ? '✓' : step.state === 'skipped' ? '-' : '·';
-    const human = step.humanOnly ? ` ${yellow('(you only)', OUT)}` : '';
+    const human = step.humanOnly ? ` ${yellow(_('(you only)'), OUT)}` : '';
     console.log(`  ${mark} ${bold(step.title, OUT)}${human}`);
     console.log(`      ${stateWord(step.state, OUT)} ${dim('—', OUT)} ${dim(step.command, OUT)}`);
     // Under its own step, never in a separate section: a finding with no line under the stage it
@@ -140,11 +146,13 @@ function printStatus(ctx: SetupContext, status: Awaited<ReturnType<typeof setupS
   const warnings =
     status.warnings === 0
       ? ''
-      : `, ${yellow(`${status.warnings} warning${status.warnings === 1 ? '' : 's'}`, OUT)}`;
-  console.log(`  ${dim(`${status.done} of ${status.steps.length} stages done`, OUT)}${warnings}`);
+      : `, ${yellow(fmt(_n('{n} warning', '{n} warnings', status.warnings), { n: status.warnings }), OUT)}`;
+  console.log(
+    `  ${dim(fmt(_('{done} of {total} stages done'), { done: status.done, total: status.steps.length }), OUT)}${warnings}`,
+  );
   if (status.remaining.length > 0) {
     console.log('');
-    console.log(`  ${bold('Still to run:', OUT)}`);
+    console.log(`  ${bold(_('Still to run:'), OUT)}`);
     for (const command of status.remaining) console.log(`    ${dim(command, OUT)}`);
   }
 }

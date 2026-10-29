@@ -6,6 +6,7 @@
  * whether a GNOME session is reachable, and with one they report the account count.
  */
 
+import { _ } from '@curlew/protocol';
 import type { CommandModule } from 'yargs';
 import { check as checkGnome } from '@curlew/gnome';
 import { runtimeName } from '../../core/runtime.ts';
@@ -48,7 +49,9 @@ export async function runChecks(): Promise<{ checks: CheckResult[] }> {
 
 export const checkCommand: CommandModule = {
   command: 'check',
-  describe: 'Check which backends are reachable (runtime, GNOME Online Accounts, IMAP, index)',
+  get describe() {
+    return _('Check which backends are reachable (runtime, GNOME Online Accounts, IMAP, index)');
+  },
   handler: () => {
     runAndExit(runChecks);
   },
