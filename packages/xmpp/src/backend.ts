@@ -136,7 +136,11 @@ export class XmppBackend implements ChatBackend {
     const store = SecretStore.open(accountPath(this.context.secretsDir, accountId));
     let omemo: OmemoSession;
     try {
-      omemo = await openOmemo(link, store, link.jid);
+      omemo = await openOmemo(link, store, link.jid, {
+        ...(options?.requireEncryption === undefined
+          ? {}
+          : { requireEncryption: options.requireEncryption }),
+      });
     } catch (err) {
       store.close();
       await link.close().catch(() => {});

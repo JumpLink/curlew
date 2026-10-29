@@ -40,7 +40,7 @@ import {
 import type { OwnDevice } from './omemo-device.ts';
 import { fetchBundle, fetchDeviceList, type PepPort } from './omemo-publish.ts';
 import type { EncryptedKey, EncryptedStanza } from './omemo-stanza.ts';
-import { noteBundleIdentity } from './omemo-trust.ts';
+import { noteBundleIdentity, type TrustStorage } from './omemo-trust.ts';
 
 /**
  * Why a message was not sent.
@@ -55,7 +55,11 @@ export type RefusalReason =
   /** The peer has devices, but none this account may encrypt to (§6). */
   | 'no-trusted-device'
   /** Every device of the peer is unreachable: no bundle published, or none that parsed. */
-  | 'no-usable-bundle';
+  | 'no-usable-bundle'
+  /** A device of the peer published a key that replaced the one we hold — a human decides (§6). */
+  | 'identity-changed'
+  /** The peer has no OMEMO at all, and `encryption: "required"` forbids the clear anyway (§7). */
+  | 'encryption-required';
 
 /** A device left out of a send, with why. */
 export interface SkippedDevice {
@@ -137,6 +141,15 @@ export interface PlanOptions {
   readonly random?: RandomSource;
   readonly now?: () => Date;
   readonly ttlMs?: number;
+  /**
+   * `encryption: "required"` for this peer: a peer with no OMEMO devices is refused instead of
+   * answered with null (§7).
+   *
+   * It changes only that one case. Everything else this module does is already a refusal, so
+   * "required" is not a second policy on top — it closes the single door the ordinary policy
+   * leaves open, for a person who would rather not send at all than send in the clear.
+   */
+  readonly requireEncryption?: boolean;
 }
 
 /**
@@ -152,7 +165,7 @@ export interface PlanOptions {
  */
 export async function planOmemoSend(
   pep: PepPort,
-  storage: OmemoStorage,
+  storage: TrustStorage,
   device: OwnDevice,
   selfJid: string,
   peerJid: string,
@@ -162,7 +175,10 @@ export async function planOmemoSend(
   const now = options.now ?? (() => new Date());
   const peers = await fetchDeviceList(pep, storage, peerJid, { now, ...ttl });
   if (peers.kind === 'failed') throw new OmemoSendRefusedError('device-list-failed');
-  if (peers.deviceIds.length === 0) return null;
+  if (peers.deviceIds.length === 0) {
+    if (options.requireEncryption === true) throw new OmemoSendRefusedError('encryption-required');
+    return null;
+  }
 
   // Our own list is allowed to fail: it costs the person a copy on their other devices, which is
   // a worse message than no message at all only if there is no message at all. The PEER is what
@@ -194,8 +210,10 @@ export async function planOmemoSend(
 /** Which of the peer's skips explains the refusal: the one that says the most about why. */
 function refusalFor(skipped: readonly SkippedDevice[], peerJid: string): RefusalReason {
   const reasons = new Set(skipped.filter((s) => s.address.jid === peerJid).map((s) => s.reason));
-  // A changed key is a trust decision the person has to make, like a distrusted one.
-  if (reasons.has('untrusted') || reasons.has('identity-changed')) return 'no-trusted-device';
+  // A changed key first: it is the one reason that names a fingerprint to go and compare, and
+  // the one the person must not read as "they marked this device distrusted at some point".
+  if (reasons.has('identity-changed')) return 'identity-changed';
+  if (reasons.has('untrusted')) return 'no-trusted-device';
   return 'no-usable-bundle';
 }
 
@@ -209,7 +227,7 @@ type Resolved = { kind: 'recipient'; recipient: Recipient } | { kind: 'skip'; re
  */
 async function resolveRecipient(
   pep: PepPort,
-  storage: OmemoStorage,
+  storage: TrustStorage,
   address: DeviceAddress,
   options: PlanOptions,
 ): Promise<Resolved> {
@@ -263,7 +281,7 @@ export interface EncryptOptions {
  * against the receive path without any XML in between.
  */
 export async function encryptOmemo(
-  storage: OmemoStorage,
+  storage: TrustStorage,
   device: OwnDevice,
   plan: OmemoSendPlan,
   text: string | null,
@@ -321,7 +339,7 @@ export async function encryptOmemo(
  * Undefined means the device has to be dropped after all — it had neither.
  */
 async function loadOrInitiate(
-  storage: OmemoStorage,
+  storage: TrustStorage,
   device: OwnDevice,
   recipient: Recipient,
   options: { profile: OmemoProfile; random?: RandomSource },
@@ -377,7 +395,7 @@ export async function recipientTrust(
  */
 export async function omemoEncryptFor(
   pep: PepPort,
-  storage: OmemoStorage,
+  storage: TrustStorage,
   device: OwnDevice,
   selfJid: string,
   peerJid: string,
