@@ -83,7 +83,8 @@ WorkingDirectory={{HOME}}
 Environment=PATH={{PATH}}
 ExecStart=/usr/bin/env {{RUNNER}} {{ARGS}}
 # A dropped socket is retried by the daemon itself (with backoff). A restart here is for
-# what it cannot retry: an index that cannot be opened, a backend that will not load.
+# what it cannot retry: an index that cannot be opened, a backend that will not load — and
+# exit 3, a stop after a grant edit, so the new grants apply.
 Restart=on-failure
 # Exit 2 is "every account is logged out and nothing is receiving" (see daemonExitCode). A
 # restart cannot relink a device — it would only hammer the network — so the unit is left

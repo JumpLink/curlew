@@ -37,14 +37,26 @@ import type { XmppBackend } from '@curlew/xmpp';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig } from '../config.ts';
+import type { Grant } from '../grants.ts';
 import { configPath } from '@curlew/store';
 import { followAccount, type FollowResult } from './follow.ts';
 import { openIndex, rebuildWithAddressBook } from './index-sync.ts';
-import { decryptAccounts } from './omemo.ts';
+import { decryptAccounts, OMEMO_CAPABILITY } from './omemo.ts';
 import { createXmppBackend, permitFor, SEND_CAPABILITY } from './send.ts';
 
 /** How often a running daemon looks whether the grants were edited (they apply on restart only). */
 export const GRANT_CHECK_MS = 30_000;
+
+/**
+ * The grants a running daemon depends on: who it follows (`xmpp.send`) and what it decrypts
+ * (`xmpp.omemo`). Only an edit to THESE stops it — a send grant for another backend is read by
+ * `curlew send` when it runs, and stopping the daemon for it would leave nothing receiving.
+ */
+export function daemonGrants(grants: readonly Grant[]): string {
+  return JSON.stringify(
+    grants.filter((g) => g.capability === SEND_CAPABILITY || g.capability === OMEMO_CAPABILITY),
+  );
+}
 
 /** How long the conversations wait for the last written batch before they are rebuilt. */
 export const REBUILD_DEBOUNCE_MS = 30_000;
@@ -100,6 +112,8 @@ export interface DaemonResult {
   conversations: (RebuildResult & { contacts: number | null }) | null;
   /** The granted XMPP accounts that were followed (ADR 0004 §5). */
   followed: FollowResult[];
+  /** The run stopped because the grants it follows and decrypts by were edited. */
+  grantsEdited: boolean;
 }
 
 /** The enabled delivery-only backends — what a daemon receives and what a `sync` stands down for. */
@@ -122,11 +136,18 @@ export function deliveryBackends(config: ReturnType<typeof loadConfig>): Message
  * (`RestartPreventExitStatus=2`) and the unit shows as **failed**, which is the only signal that
  * says "nothing is being received and you have to link the device again".
  *
+ * `3` when the run stopped because its grants were edited: they apply on restart only, so the
+ * unit has to come back — `Restart=on-failure` restarts any code but 0 and 2. A `0` here left
+ * nothing receiving until someone noticed.
+ *
  * Everything else is `0`, including a normal SIGTERM stop, a run that is still receiving on
  * another account, and a machine with no linked account at all: a daemon that was asked to stop
  * did its job, and a non-zero code on a clean stop would restart-loop.
  */
-export function daemonExitCode(run: Pick<DaemonResult, 'accounts'>): 0 | 2 {
+export function daemonExitCode(
+  run: Pick<DaemonResult, 'accounts'> & Partial<Pick<DaemonResult, 'grantsEdited'>>,
+): 0 | 2 | 3 {
+  if (run.grantsEdited === true) return 3;
   const dead = (account: DaemonAccountResult): boolean =>
     account.loggedOut || account.heldBy !== null || account.error !== null;
   if (run.accounts.length > 0 && run.accounts.every(dead) && run.accounts.some((a) => a.loggedOut)) {
@@ -199,7 +220,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   });
   // Grants are read ONCE, here (ADR 0004 §1): an edit applies on restart, never halfway through
   // a connection that is already open.
-  const grantsAtStart = JSON.stringify(config.grants);
+  const grantsAtStart = daemonGrants(config.grants);
   const grantedAccounts = [
     ...new Set(
       config.grants
@@ -269,16 +290,18 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   const forward = (): void => run.abort();
   if (outer.aborted) run.abort();
   else outer.addEventListener('abort', forward, { once: true });
+  let grantsEdited = false;
   const grantWatch =
     grantedAccounts.length > 0
       ? setInterval(() => {
           try {
-            if (JSON.stringify(loadConfig(params.configPath ?? configPath()).grants) === grantsAtStart)
+            if (daemonGrants(loadConfig(params.configPath ?? configPath()).grants) === grantsAtStart)
               return;
           } catch {
             // An unreadable config is also a change nobody approved.
           }
           log('curlew-daemon: the grants were edited — stopping; the new set applies after a restart');
+          grantsEdited = true;
           run.abort();
         }, params.grantCheckMs ?? GRANT_CHECK_MS)
       : null;
@@ -358,6 +381,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
       errors,
       conversations,
       followed,
+      grantsEdited,
     };
   } finally {
     if (grantWatch !== null) clearInterval(grantWatch);

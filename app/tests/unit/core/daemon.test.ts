@@ -20,6 +20,7 @@ import { accountIdFromCreds } from '@curlew/whatsapp';
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
 import {
   daemonExitCode,
+  daemonGrants,
   type DaemonAccountResult,
   runDeliveryDaemon,
 } from '../../../src/core/actions/daemon.ts';
@@ -251,6 +252,24 @@ export default async () => {
     });
   });
 
+  await describe('daemonGrants', async () => {
+    await it('changes only with the grants the daemon follows and decrypts by', async () => {
+      const xmpp = [
+        { capability: 'xmpp.send', target: 'xmpp-a/anna@example.org' },
+        { capability: 'xmpp.omemo', target: 'xmpp-a' },
+      ] as const;
+      const before = daemonGrants([...xmpp]);
+      // Another backend's send grant is read by `curlew send`, not by a running daemon.
+      expect(
+        daemonGrants([...xmpp, { capability: 'telegram.send', target: 'telegram-1/1' }]),
+      ).toBe(before);
+      expect(daemonGrants([xmpp[0]])).not.toBe(before);
+      expect(
+        daemonGrants([...xmpp, { capability: 'xmpp.send', target: 'xmpp-a/ben@example.org' }]),
+      ).not.toBe(before);
+    });
+  });
+
   await describe('daemonExitCode', async () => {
     // Pure, so the one thing systemd reads out of the process is decided without a process.
     const account = (over: Partial<DaemonAccountResult> = {}): DaemonAccountResult => ({
@@ -277,6 +296,14 @@ export default async () => {
           ],
         }),
       ).toBe(2);
+    });
+
+    await it('is 3 after a grant edit, so systemd restarts it with the new set', async () => {
+      expect(daemonExitCode({ accounts: [account()], grantsEdited: true })).toBe(3);
+      // Even when every account was logged out: the restart re-reads the grants first.
+      expect(
+        daemonExitCode({ accounts: [account({ loggedOut: true, error: 'logged out' })], grantsEdited: true }),
+      ).toBe(3);
     });
 
     await it('is 0 for a normal stop, and when something still receives', async () => {
