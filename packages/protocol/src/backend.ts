@@ -589,6 +589,12 @@ export interface SentMessage {
   chatRemoteId?: string;
   /** Whether it left end-to-end encrypted. Absent where the network has no such thing. */
   encrypted?: boolean;
+  /**
+   * The message WAS delivered, but something around it was not done — a sender sets this instead
+   * of throwing where a throw would make a retry send the message twice (Signal: the recipient has
+   * it, the user's own other devices were not told). One sentence for the user, never a stack.
+   */
+  warning?: string;
 }
 
 /**
