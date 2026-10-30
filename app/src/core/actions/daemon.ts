@@ -295,8 +295,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     grantedAccounts.length > 0
       ? setInterval(() => {
           try {
-            if (daemonGrants(loadConfig(params.configPath ?? configPath()).grants) === grantsAtStart)
-              return;
+            if (daemonGrants(loadConfig(params.configPath ?? configPath()).grants) === grantsAtStart) return;
           } catch {
             // An unreadable config is also a change nobody approved.
           }

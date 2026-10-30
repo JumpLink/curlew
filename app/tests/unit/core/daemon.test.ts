@@ -260,13 +260,11 @@ export default async () => {
       ] as const;
       const before = daemonGrants([...xmpp]);
       // Another backend's send grant is read by `curlew send`, not by a running daemon.
-      expect(
-        daemonGrants([...xmpp, { capability: 'telegram.send', target: 'telegram-1/1' }]),
-      ).toBe(before);
+      expect(daemonGrants([...xmpp, { capability: 'telegram.send', target: 'telegram-1/1' }])).toBe(before);
       expect(daemonGrants([xmpp[0]])).not.toBe(before);
-      expect(
-        daemonGrants([...xmpp, { capability: 'xmpp.send', target: 'xmpp-a/ben@example.org' }]),
-      ).not.toBe(before);
+      expect(daemonGrants([...xmpp, { capability: 'xmpp.send', target: 'xmpp-a/ben@example.org' }])).not.toBe(
+        before,
+      );
     });
   });
 
