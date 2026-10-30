@@ -111,7 +111,9 @@ export default async function omemoUpkeep(): Promise<void> {
       const keys = [
         bundle?.getChildText('identityKey', NS.omemoLegacy),
         bundle?.getChildText('signedPreKeyPublic', NS.omemoLegacy),
-        ...(bundle?.getChild('prekeys', NS.omemoLegacy)?.getChildren('preKeyPublic') ?? []).map((k) => k.text()),
+        ...(bundle?.getChild('prekeys', NS.omemoLegacy)?.getChildren('preKeyPublic') ?? []).map((k) =>
+          k.text(),
+        ),
       ];
       expect(keys.length).toBe(2 + LEGACY_PROFILE.preKeyCount);
       for (const key of keys) {

@@ -22,7 +22,10 @@ function callerAnswering(answer: (request: Element) => Element) {
     send: async (request: Element) => {
       const reply = answer(request);
       reply.attrs.id = request.attrs.id;
-      route?.({ type: String(reply.attrs.type), name: 'iq', id: String(reply.attrs.id), stanza: reply }, () => {});
+      route?.(
+        { type: String(reply.attrs.type), name: 'iq', id: String(reply.attrs.id), stanza: reply },
+        () => {},
+      );
     },
   };
   return iqCaller({ middleware, entity } as unknown as Parameters<typeof iqCaller>[0]);
