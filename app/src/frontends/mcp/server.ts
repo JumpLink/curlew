@@ -1,9 +1,11 @@
 /**
  * Curlew MCP server — mail, contacts and calendar from GNOME Online Accounts, over stdio.
  *
- * v1 registers read-only tools only, and `applyReadOnlyGate` ENFORCES that rather than trusting
- * it: every tool must carry `readOnlyHint: true` or it is dropped. IMAP is spoken with BODY.PEEK
- * throughout, so even a read never marks a message as seen.
+ * The server is read-only unless a grant names a write, and `applyGrantGate` ENFORCES that rather
+ * than trusting it: a tool must carry `readOnlyHint: true` or declare a capability that is
+ * granted, or it is dropped. IMAP is spoken with BODY.PEEK throughout, so even a read never marks
+ * a message as seen. `send_message` is the one write tool; it is served only when some
+ * `<backend>.send` grant exists, and the action checks the exact backend for the pair.
  *
  * The gate, the stdio lifecycle and the uniform tool result come from `@gjsify/mcp` — they were
  * this repo's own `runtime.ts`/`types.ts` until 0.54.0 published them, and troedler carried a
@@ -25,7 +27,7 @@ import { registerGateCanary } from './tools/gate-canary.ts';
 import { registerIndexTools } from './tools/index-sync.ts';
 import { registerMailTools } from './tools/mail.ts';
 import { registerOmemoTools } from './tools/omemo.ts';
-import { registerSendTools } from './tools/send.ts';
+import { registerSendTools, withSendGateGrants } from './tools/send.ts';
 import { registerSetupTools } from './tools/setup.ts';
 
 const SERVER_NAME = 'curlew';
@@ -44,7 +46,7 @@ const REGISTRARS: Array<(server: McpServer) => void> = [
   // served, `setup_run` is dropped unless CURLEW_MCP_ALLOW_WRITE=1. Both identify themselves by
   // their own annotation, which is the only thing the gate reads.
   registerSetupTools,
-  // Needs an xmpp.send grant: without one the gate drops it and the server is read-only.
+  // Needs a `<backend>.send` grant: without one the gate drops it and the server is read-only.
   registerSendTools,
   // Last, and normally a no-op: a deliberately MUTATING tool that the gate must drop. It is the
   // only thing in this list that can tell a working gate from an absent one — see gate-canary.ts.
@@ -60,8 +62,9 @@ export function createMcpServer(): McpServer {
   // grant and nothing else becomes reachable through the switch.
   if (allowWrite) registerSetupTools(server);
   // Before any other registration — the gate works by wrapping registerTool. Fails CLOSED: a tool
-  // without a readOnlyHint or an ungranted capability goes missing from `tools/list`.
-  applyGrantGate(server, loadConfig(configPath()).grants);
+  // without a readOnlyHint or an ungranted capability goes missing from `tools/list`. The send
+  // tool is gated by the union of the per-backend send grants; see withSendGateGrants.
+  applyGrantGate(server, withSendGateGrants(loadConfig(configPath()).grants));
   for (const register of REGISTRARS) {
     if (allowWrite && register === registerSetupTools) continue;
     register(server);

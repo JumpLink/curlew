@@ -547,3 +547,73 @@ export interface DeliveryBackend extends MessageBackend {
 export function isDeliveryBackend(backend: MessageBackend): backend is DeliveryBackend {
   return backend.kind === 'delivery';
 }
+
+// ── the send port ───────────────────────────────────────────────────────
+
+/**
+ * What the grants allow for ONE account: the exact addresses `<backend>.send` names for it.
+ *
+ * Built by the frontend that checked the grant (ADR 0004) and handed to `openSender`; a backend
+ * never reads the grant set itself, and the handle re-checks every address against this, so a
+ * bug above cannot widen what a grant allowed.
+ */
+export interface SendPermit {
+  account: string;
+  addresses: readonly string[];
+}
+
+/** What one sender may do beyond a plain-text body. A manifest describes the backend; this the handle. */
+export interface SenderFeatures {
+  /** The text is chat Markdown, rendered per protocol and split at the protocol's limit (XMPP's XEP-0393). */
+  markdown: boolean;
+}
+
+/** One message handed to a sender. */
+export interface SendingMessage {
+  to: string;
+  text: string;
+  /** Only when the backend's manifest claims `capabilities.subject` (mail). */
+  subject?: string;
+}
+
+/** What a send returned. `id` is the network's own id and what the write log records (ADR 0004 §7). */
+export interface SentMessage {
+  /** The address it went to, exactly as the permit spelled it. */
+  target: string;
+  id: string;
+  sentAt: string;
+  /**
+   * The chat the message belongs to, for a backend whose archive the index holds (XMPP's bare
+   * JID). Absent for mail, whose sent copy is not indexed here.
+   */
+  chatRemoteId?: string;
+  /** Whether it left end-to-end encrypted. Absent where the network has no such thing. */
+  encrypted?: boolean;
+}
+
+/**
+ * The handle that may write — opened only with a permit from a grant (ADR 0004 §5), in the same
+ * pattern as Signal's `guardedFetch`. The sync handle has no method that sends and no way to
+ * obtain one: `MessageSender` is reachable only through `SendBackend.openSender`.
+ */
+export interface MessageSender {
+  readonly features: SenderFeatures;
+  send(message: SendingMessage): Promise<SentMessage>;
+  /** One image by https URL, as its own message; absent when the backend does not send images. */
+  sendImage?(to: string, url: string): Promise<SentMessage>;
+  close(): Promise<void>;
+}
+
+/**
+ * A backend that can send. The caller has already resolved the account and checked the
+ * `<backend>.send` grant; `options` carries the decisions the frontend read from the config
+ * (decryption, required encryption) so a backend never reads it itself.
+ */
+export interface SendBackend extends MessageBackend {
+  openSender(accountId: string, permit: SendPermit, options?: ChatConnectOptions): Promise<MessageSender>;
+}
+
+/** Narrow a registry entry to the send port. */
+export function isSendBackend(backend: MessageBackend): backend is SendBackend {
+  return typeof (backend as Partial<SendBackend>).openSender === 'function';
+}

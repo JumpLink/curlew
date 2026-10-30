@@ -11,6 +11,8 @@ import type {
   ChatBackend,
   ChatConnectOptions,
   ChatSession,
+  MessageSender,
+  SendBackend,
 } from '@curlew/protocol';
 import { SecretStore } from '@curlew/store';
 import { accountPath, caFileSetting, listAccounts, readLogin, refuseConfigSecrets } from './accounts.ts';
@@ -29,6 +31,7 @@ import { MESSAGES } from './messages.ts';
 import { loginXmpp } from './login.ts';
 import { XMPP_MANIFEST } from './manifest.ts';
 import { openOmemo, type OmemoSession } from './omemo-session.ts';
+import { XmppSender } from './sender.ts';
 import { XmppChatSession } from './session.ts';
 
 /** The login questions, asked through whatever frontend is running. */
@@ -42,7 +45,7 @@ export function xmppPrompts(prompter: AccountPrompter): LoginPrompts {
   };
 }
 
-export class XmppBackend implements ChatBackend {
+export class XmppBackend implements ChatBackend, SendBackend {
   readonly manifest = XMPP_MANIFEST;
   readonly kind = 'chat' as const;
   private readonly context: BackendContext;
@@ -152,5 +155,17 @@ export class XmppBackend implements ChatBackend {
       encrypt: (to, text) => omemo.encrypt(to, text),
       close: () => store.close(),
     });
+  }
+
+  /**
+   * The send port (ADR 0004, amended 2026-10-30): the same granted handle, seen generically.
+   * XMPP's own shape stays on `openGranted`; nothing above this line needs to know it.
+   */
+  async openSender(
+    accountId: string,
+    permit: SendPermit,
+    options?: ChatConnectOptions,
+  ): Promise<MessageSender> {
+    return new XmppSender(await this.openGranted(accountId, permit, options));
   }
 }

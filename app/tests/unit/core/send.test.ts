@@ -5,7 +5,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { chatConversationId, getConversation, recordSentChatMessage } from '@curlew/store';
-import { chatMessage, GrantedXmppSession, isArrivalHint, validateImageUrl } from '@curlew/xmpp';
+import {
+  chatMessage,
+  GrantedXmppSession,
+  isArrivalHint,
+  validateImageUrl,
+  XMPP_MANIFEST,
+  XmppSender,
+} from '@curlew/xmpp';
 import type { EncryptedStanza, XmppBackend, XmppLink } from '@curlew/xmpp';
 import xml from '@xmpp/xml';
 
@@ -380,9 +387,10 @@ export default async () => {
         const oob: string[] = [];
         let n = 0;
         const backend = {
+          manifest: XMPP_MANIFEST,
           listAccounts: async () => [ACCOUNT_INFO],
-          openGranted: async (_id: string, permit: ReturnType<typeof permitFor>) =>
-            new GrantedXmppSession(fakeLink(sent, oob), permit, () => `id-${++n}`),
+          openSender: async (_id: string, permit: ReturnType<typeof permitFor>) =>
+            new XmppSender(new GrantedXmppSession(fakeLink(sent, oob), permit, () => `id-${++n}`)),
         } as unknown as XmppBackend;
         const out = await sendMessage({
           accountId: ACCOUNT,
@@ -445,14 +453,15 @@ export default async () => {
         const opened: Array<Record<string, unknown>> = [];
         let n = 0;
         const backend = {
+          manifest: XMPP_MANIFEST,
           listAccounts: async () => [ACCOUNT_INFO],
-          openGranted: async (
+          openSender: async (
             _id: string,
             permit: ReturnType<typeof permitFor>,
             options: Record<string, unknown>,
           ) => {
             opened.push(options);
-            return new GrantedXmppSession(fakeLink(sent), permit, () => `id-${++n}`);
+            return new XmppSender(new GrantedXmppSession(fakeLink(sent), permit, () => `id-${++n}`));
           },
         } as unknown as XmppBackend;
         await body({
