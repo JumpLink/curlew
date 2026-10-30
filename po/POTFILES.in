@@ -186,6 +186,8 @@ packages/whatsapp/src/api.ts
 packages/whatsapp/src/auth-state.ts
 packages/whatsapp/src/backend.ts
 packages/whatsapp/src/client.ts
+packages/whatsapp/src/events.ts
+packages/whatsapp/src/guard.ts
 packages/whatsapp/src/index.ts
 packages/whatsapp/src/jid.ts
 packages/whatsapp/src/journal.ts
@@ -194,6 +196,7 @@ packages/whatsapp/src/manifest.ts
 packages/whatsapp/src/map.ts
 packages/whatsapp/src/qr.ts
 packages/whatsapp/src/receiver.ts
+packages/whatsapp/src/send.ts
 packages/xmpp/src/accounts.ts
 packages/xmpp/src/api.ts
 packages/xmpp/src/archive.ts
