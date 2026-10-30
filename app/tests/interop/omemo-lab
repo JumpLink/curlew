@@ -77,18 +77,22 @@ refuse_real_state() {
 }
 
 # ── curlew, pointed at the lab ──────────────────────────────────────────────────────────────
+# `gjsify run` echoes its (very long) command line as its first stderr line. Drop that line and
+# pass the rest through as it comes: a line filter such as grep held back every prompt until
+# Enter, because a prompt has no newline yet — and the typed characters echo on stderr too.
+STDERR_FILTER='$|=1; my $h = ""; while (sysread STDIN, my $c, 4096) { if (!defined $h) { print $c; next } $h .= $c; my $i = index $h, "\n"; next if $i < 0; my $first = substr $h, 0, $i + 1; print $first if $first !~ /^\$ /; print substr $h, $i + 1; undef $h } print $h if defined $h'
+
 curlew_lab() {
   [[ -n $gjsify_bin ]] || die "gjsify not found — run gjsify install (or set OMEMO_LAB_GJSIFY)"
   [[ -f $bundle ]] || die "no curlew bundle at $bundle — build it: gjsify workspace curlew-cli build"
   local -a unset_args=()
   local var
   while IFS= read -r var; do unset_args+=(-u "$var"); done < <(compgen -e | grep -E '^(CURLEW|POSTBOTE)_' || true)
-  # `gjsify run` echoes its (very long) command line on stderr; drop that line, keep the rest.
   # No session bus: GNOME Online Accounts would hand curlew the REAL mailboxes (and the unpinned bus
   # made `sync` hang on them). The lab speaks XMPP only.
   env "${unset_args[@]}" LC_ALL=C LANGUAGE= DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent \
     XDG_DATA_HOME="$LAB/data" XDG_CONFIG_HOME="$LAB/config" XDG_DOWNLOAD_DIR="$LAB/download" \
-    "$gjsify_bin" run "$bundle" "$@" 2> >(grep -av '^\$ ' >&2)
+    "$gjsify_bin" run "$bundle" "$@" 2> >(perl -e "$STDERR_FILTER" >&2)
 }
 
 # podman keeps its storage under XDG_DATA_HOME: after `eval "$(omemo-lab env)"` that would be the lab
@@ -234,7 +238,7 @@ cmd_env() {
   printf 'export XDG_CONFIG_HOME=%q\n' "$LAB/config"
   printf 'export XDG_DOWNLOAD_DIR=%q\n' "$LAB/download"
   printf 'export DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent\n'
-  printf 'curlew() { %q run %q "$@" 2> >(grep -av %q >&2); }\n' "$gjsify_bin" "$bundle" '^\$ '
+  printf 'curlew() { %q run %q "$@" 2> >(perl -e %q >&2); }\n' "$gjsify_bin" "$bundle" "$STDERR_FILTER"
 }
 
 case "${1:-}" in
