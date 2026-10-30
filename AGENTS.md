@@ -30,7 +30,8 @@ The code came out of `buchhaltung/packages/gnome`; the git history there is the 
 **The index and the MCP server are read-only and fail-closed.** IMAP is spoken with `BODY.PEEK`
 only, so `\Seen` is never set; there is no flag write, no move, no delete, and no MCP tool that
 writes without a grant. **Sending is a granted capability per backend**, `<backend>.send` with
-an `<account>/<address>` target — `xmpp.send`, `mail.send`, `telegram.send` and `matrix.send` exist today — off by default and
+an `<account>/<address>` target — `xmpp.send`, `mail.send`, `telegram.send`, `matrix.send`,
+`signal.send` and `whatsapp.send` exist today — off by default and
 refused for every pair a grant does not name
 ([ADR 0004](docs/adr/0004-sending-and-writing-granted-per-capability.md), amended 2026-10-30).
 The check lives once, in the app's send action; a backend's send path exists only on a handle
@@ -47,7 +48,7 @@ frontend, CLI included, asks the same grant.
 | `@curlew/smtp` | Sending ONE message with attachments over SMTP on nodemailer (pinned exactly): message building, account validation, `verifyAccount`, `sendMessage`, `SmtpError`. No credential in a log, error or DTO; `security: 'none'` for loopback only. TLS and STARTTLS are tested against a loopback dummy server. The tool that may use it is the mail backend's granted sender, never this package itself | nodemailer, `node:*` — no `gi://`; imports no other package |
 | `@curlew/store` | SQLite index, sync engines (mailbox + chat), conversations (threading, classification), secret store, XDG paths, file writes | `protocol`, `node:*` |
 | `@curlew/telegram` | Telegram `chat` backend on mtcute (web build: WebSocket, WebCrypto, WASM), its session storage on `SecretStore`, the login, the `telegram.send` sender (plain text, ≤ 4096 chars) | `protocol`, `store`, `@mtcute/*`, `node:*` — no `gi://` |
-| `@curlew/whatsapp` | WhatsApp `delivery` backend on Baileys (unofficial protocol: WebSocket, WASM, libsignal), its auth state on `SecretStore`, the QR / pairing-code link | `protocol`, `store`, `baileys`, `node:*` — no `gi://` |
+| `@curlew/whatsapp` | WhatsApp `delivery` backend on Baileys (unofficial protocol: WebSocket, WASM, libsignal), its auth state on `SecretStore`, the QR / pairing-code link, the `whatsapp.send` sender (plain text, ≤ 65536 UTF-8 bytes, 1:1 only) | `protocol`, `store`, `baileys`, `node:*` — no `gi://` |
 | `@curlew/signal` | Signal `delivery` backend on `@signalapp/libsignal-client` (Rust behind N-API; on GJS through `@gjsify/napi`, loaded on first use), its protocol stores on `SecretStore`, the QR link as a linked device, the fail-closed request gate | `protocol`, `store`, `@signalapp/libsignal-client`, `qrcode-generator`, `node:*` — no `gi://` |
 | `@curlew/xmpp` | XMPP `chat` backend on xmpp.js (composed by hand: domain-checked direct TLS, WebSocket, SCRAM), history from MAM only, the account file on `SecretStore`, the login. Never sends presence, markers or messages without a grant | `protocol`, `store`, `@xmpp/*`, `node:*` — no `gi://` |
 | `@curlew/matrix` | Matrix `chat` backend on matrix-js-sdk + the Rust crypto as WASM (`@matrix-org/matrix-sdk-crypto-wasm`), its crypto store as an in-memory IndexedDB snapshotted into `SecretStore`, the password login, the `matrix.send` sender (plain text, ≤ 32000 UTF-8 bytes, refused for an encrypted room) | `protocol`, `store`, `matrix-js-sdk`, `@matrix-org/*`, `fake-indexeddb`, `node:*` — no `gi://` |
@@ -152,6 +153,16 @@ the MCP server via `run_in_background` when driving it.
   Baileys acknowledges a message BEFORE emitting it, so the receiver journals every event
   (fsync'ed, `secrets/whatsapp/<account>.journal`, 0600) before returning to Baileys, and replays
   a left-over journal first — never bypass it.
+- **A WhatsApp send is fenced by the handle, and it takes the receive lease.** There is no HTTP
+  allowlist to draw the line on — it is one multiplexed WebSocket — so the receive handle
+  (`WaSocketHandle`) simply has no send method and is not a supertype of `WaSendSocketHandle`;
+  keep it that way. The chat a sender may address is gated per permit in `packages/whatsapp/src/
+  guard.ts`. WhatsApp allows ONE connection per linked device and Baileys' auth state is a single
+  file with no lock, so `WHATSAPP_MANIFEST.sendSharesReceiveState` makes the app hold the receive
+  lease around a send and refuse while the daemon has it — a refusal, never a second socket: a
+  `connectionReplaced` (440) or a torn auth state ends in a relink, and the history is gone.
+  The send socket receives too, and journals what it gets like the receiver; unlike Signal it
+  FLUSHES the auth state on close, because Baileys' own keys advanced on the wire.
 - **Signal is read-only through a gate too.** The only way to send a request is a libsignal chat
   connection's `fetch`, and it is handed out only behind `guardedFetch` (`packages/signal/src/
   guard.ts`): at link time `PUT /v1/devices/link` and `PUT /v2/keys?identity=aci`, during a sync
