@@ -263,6 +263,27 @@ for (const canary of DROPPED) {
 }
 console.log('OK: a telegram.send grant alone serves send_message and nothing else that writes');
 
+const matrixGrantsFile = join(scratch, 'granted-matrix.json');
+writeFileSync(
+  matrixGrantsFile,
+  JSON.stringify({
+    backends: {},
+    grants: [{ capability: 'matrix.send', target: 'matrix-0123456789abcd/!room:example.org' }],
+  }),
+);
+const matrixGranted = await listToolNames({
+  CURLEW_MCP_GATE_CANARY: '1',
+  CURLEW_CONFIG: matrixGrantsFile,
+});
+assert(
+  matrixGranted.includes('send_message'),
+  `send_message not served with a matrix.send grant (${matrixGranted.join(', ')})`,
+);
+for (const canary of DROPPED) {
+  assert(!matrixGranted.includes(canary), `GATE IS OPEN: ${canary} was served — ${matrixGranted.join(', ')}`);
+}
+console.log('OK: a matrix.send grant alone serves send_message and nothing else that writes');
+
 // The env switch still opens setup_run, and only that.
 const ungated = await listToolNames({ CURLEW_MCP_GATE_CANARY: '1', CURLEW_MCP_ALLOW_WRITE: '1' });
 assert(

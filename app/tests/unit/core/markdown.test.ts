@@ -2,7 +2,12 @@ import { describe, expect, it } from '@gjsify/unit';
 
 import { MAX_CHUNK_CHARS, renderForXmpp, renderPlainText, stripQuotes } from '../../../src/core/markdown.ts';
 import { TELEGRAM_MAX_MESSAGE_CHARS as BACKEND_LIMIT } from '@curlew/telegram';
-import { messagingCapabilities, TELEGRAM_MAX_MESSAGE_CHARS } from '../../../src/core/actions/messaging.ts';
+import { MATRIX_MAX_MESSAGE_BYTES as MATRIX_BACKEND_LIMIT } from '@curlew/matrix';
+import {
+  MATRIX_MAX_MESSAGE_BYTES,
+  messagingCapabilities,
+  TELEGRAM_MAX_MESSAGE_CHARS,
+} from '../../../src/core/actions/messaging.ts';
 import { WAIT_TIMEOUT_S } from '../../../src/core/actions/wait-reply.ts';
 
 const texts = (md: string) => renderForXmpp(md).map((s) => (s.kind === 'text' ? s.text : `[image ${s.url}]`));
@@ -103,7 +108,7 @@ export default async () => {
   await describe('messaging_capabilities', async () => {
     await it('reports the XMPP limits without any address', async () => {
       const caps = messagingCapabilities('/nonexistent/curlew-config.json').protocols;
-      expect(caps.length).toBe(2);
+      expect(caps.length).toBe(3);
       const xmpp = caps[0];
       expect(xmpp.protocol).toBe('xmpp');
       expect(xmpp.maxMessageChars).toBe(8000);
@@ -125,6 +130,20 @@ export default async () => {
       expect(telegram.splitsLongText).toBe(false);
       expect(telegram.images.supported).toBe(false);
       expect(telegram.accounts.length).toBe(0);
+    });
+
+    await it('reports Matrix as plain text, 32000 bytes, no splitting, no image', async () => {
+      const matrix = messagingCapabilities('/nonexistent/curlew-config.json').protocols[2];
+      expect(matrix.protocol).toBe('matrix');
+      expect(matrix.maxMessageBytes).toBe(MATRIX_MAX_MESSAGE_BYTES);
+      expect(MATRIX_MAX_MESSAGE_BYTES).toBe(MATRIX_BACKEND_LIMIT);
+      expect(MATRIX_BACKEND_LIMIT).toBe(32000);
+      // A character is at least one byte, so the byte limit is a safe character ceiling.
+      expect(matrix.maxMessageChars).toBe(MATRIX_MAX_MESSAGE_BYTES);
+      expect(matrix.formats.join()).toBe('plain');
+      expect(matrix.splitsLongText).toBe(false);
+      expect(matrix.images.supported).toBe(false);
+      expect(matrix.accounts.length).toBe(0);
     });
   });
 };

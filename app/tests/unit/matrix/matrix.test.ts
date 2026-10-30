@@ -14,7 +14,6 @@ import {
 } from '@curlew/store';
 import {
   accountIdFor,
-  accountPath,
   decodeValue,
   encodeValue,
   IndexedDbSnapshot,
@@ -32,8 +31,6 @@ import {
   toChatInfo,
   toChatMessage,
   UNDECRYPTABLE_TEXT,
-  writeAccessToken,
-  writeAccountRecord,
 } from '@curlew/matrix';
 import { freshDb } from '../store/fixtures.ts';
 import {
@@ -45,6 +42,7 @@ import {
   fakeConnector,
   ME,
   redaction,
+  seedAccount,
   text,
   undecryptable,
 } from './fake-api.ts';
@@ -89,16 +87,6 @@ async function withTx(db: IDBDatabase, stores: string[], fn: (tx: IDBTransaction
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
-}
-
-/** An account file the backend can connect with (the fake connector ignores the token). */
-function seedAccount(dir: string, userId = ME): string {
-  const id = accountIdFor(userId);
-  const store = SecretStore.open(accountPath(dir, id));
-  writeAccountRecord(store, { userId, homeserver: 'https://matrix.example.org', deviceId: 'DEVICE' });
-  writeAccessToken(store, 'synthetic-token');
-  store.close();
-  return id;
 }
 
 export default async () => {
