@@ -16,6 +16,11 @@
  * Text and image are therefore two stanzas, two origin-ids, two write-log lines and two index
  * rows. A backend without `sendImage` refuses an image rather than sending a bare URL.
  *
+ * A backend whose send writes the same protocol state its receive path writes — Signal's
+ * double-ratchet session, `manifest.sendSharesReceiveState` — is serialised against the daemon
+ * here, through the receive lease (`holdReceiveLease`): a send while another process receives that
+ * account is refused, because a corrupted session is not something a retry fixes.
+ *
  * Order matters: send, then the write log, then index the outgoing message. Once the server has
  * the message it is sent, whatever happens next: the log line records that, and a failing log is
  * a failed call. Indexing is best effort — a busy or broken index must not report a delivered
@@ -23,8 +28,15 @@
  * MAM) stores the message later anyway.
  */
 
-import { chatConversationId, configPath, indexDbPath, recordSentChatMessage } from '@curlew/store';
-import type { SentChatRecord } from '@curlew/store';
+import {
+  chatConversationId,
+  configPath,
+  indexDbPath,
+  recordSentChatMessage,
+  releaseReceiveLease,
+  takeReceiveLease,
+} from '@curlew/store';
+import type { LeaseTake, SentChatRecord } from '@curlew/store';
 import type { MessageBackend, MessageSender, SentMessage, SendPermit } from '@curlew/protocol';
 import { isSendBackend } from '@curlew/protocol';
 import { isOmemoSendRefusedError, MESSAGES, validateImageUrl, XmppBackend } from '@curlew/xmpp';
@@ -85,6 +97,71 @@ export interface SendResult {
   parts?: number;
   /** Markdown only: every message's origin-id, in order. */
   originIds?: string[];
+  /** The message went out, but something around it did not — the backend's one sentence for it. */
+  sendWarning?: string;
+}
+
+/**
+ * The receive lease, held across a send whose backend shares its protocol state with the receive
+ * path (`manifest.sendSharesReceiveState`).
+ *
+ * Signal is that backend: the double-ratchet session lives in one file with no lock, and the
+ * daemon loads it whole. Two writers would leave the session somewhere neither the sender nor the
+ * recipient can decrypt from, and no amount of retrying fixes a broken ratchet — so a send takes
+ * the same lease the receive path takes (ADR 0002 §4), and a send while the daemon holds the
+ * account is REFUSED rather than risked. The user stops the daemon, or sends from the phone.
+ *
+ * It is taken here and not in the backend because the lease lives in the index, which a backend
+ * does not reach: `@curlew/store` must never import a backend, and a backend never opens the index.
+ */
+function holdReceiveLease(dbPath: string, backend: string, accountId: string): { release(): void } {
+  const holder = `send-${process.pid}`;
+  const db = openIndex(dbPath);
+  let take: LeaseTake;
+  try {
+    take = takeReceiveLease(db, backend, accountId, holder, new Date());
+  } catch (error) {
+    db.close();
+    throw new Error(
+      fmt(
+        _(
+          'the message index is busy, so curlew cannot tell whether {account} is in use elsewhere — nothing was sent; try again in a moment',
+        ),
+        { account: accountId },
+      ),
+      { cause: error },
+    );
+  }
+  if (!take.acquired) {
+    db.close();
+    throw new Error(
+      take.holder === null
+        ? fmt(
+            _(
+              'the message index is busy, so curlew cannot tell whether {account} is in use elsewhere — nothing was sent; try again in a moment',
+            ),
+            { account: accountId },
+          )
+        : fmt(
+            _(
+              '{account} is being received by {holder} right now, and {backend} cannot send and receive at the same time — nothing was sent; stop that process (`curlew daemon stop`) and send again, or send from your phone',
+            ),
+            { account: accountId, holder: take.holder, backend },
+          ),
+    );
+  }
+  return {
+    release: () => {
+      try {
+        releaseReceiveLease(db, backend, accountId, holder);
+      } catch {
+        // The message is out: a lease that could not be dropped expires on its own, and failing
+        // the call here would get the message sent twice on a retry.
+      } finally {
+        db.close();
+      }
+    },
+  };
 }
 
 /** The grant target of a `*.send` pair. */
@@ -228,35 +305,50 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
   if (!decrypt && encryptionRequired(config, params.accountId, params.to))
     throw new Error(MESSAGES.omemoRequiredWithoutGrant(params.accountId, params.to));
   const permit = permitFor(config.grants, params.accountId, capability);
-  const sender: MessageSender = await backend.openSender(params.accountId, permit, {
-    decrypt,
-    requireEncryption: requireEncryptionFor(config, params.accountId, permit.addresses),
-  });
+  const dbPath = params.dbPath ?? indexDbPath();
+  // Before the handle exists, so a refusal costs no connection (see `holdReceiveLease`).
+  const lease = backend.manifest.sendSharesReceiveState
+    ? holdReceiveLease(dbPath, backend.manifest.name, params.accountId)
+    : null;
+  let sender: MessageSender;
+  try {
+    sender = await backend.openSender(params.accountId, permit, {
+      decrypt,
+      requireEncryption: requireEncryptionFor(config, params.accountId, permit.addresses),
+    });
+  } catch (error) {
+    lease?.release();
+    throw error;
+  }
 
   // A plain-text transport still gets the text — as written; only a chat sender renders Markdown.
   const markdown = params.format === 'markdown' && sender.features.markdown;
-  const plan: Array<{ kind: 'text' | 'image'; value: string }> = [];
-  if (markdown && text !== undefined) {
-    for (const seg of renderForXmpp(text, undefined, MAX_CHUNK_CHARS))
-      plan.push(seg.kind === 'text' ? { kind: 'text', value: seg.text } : { kind: 'image', value: seg.url });
-  } else if (text !== undefined) {
-    plan.push({ kind: 'text', value: text });
-  }
-  if (imageUrl !== undefined) {
-    if (sender.sendImage === undefined) {
-      throw new Error(
-        fmt(_('{backend} cannot send an image — give text and leave image_url out'), {
-          backend: backend.manifest.name,
-        }),
-      );
-    }
-    plan.push({ kind: 'image', value: imageUrl });
-  }
-  if (plan.length === 0) throw new Error(_('nothing to send: the text is empty after rendering'));
-  for (const step of plan) if (step.kind === 'image') step.value = validateImageUrl(step.value);
-
   const sends: Array<{ sent: SentMessage; body: string }> = [];
+  // Everything the open handle is needed for, so the one `finally` closes it and gives the lease
+  // back — a refusal in the plan below used to leave both to the garbage collector.
   try {
+    const plan: Array<{ kind: 'text' | 'image'; value: string }> = [];
+    if (markdown && text !== undefined) {
+      for (const seg of renderForXmpp(text, undefined, MAX_CHUNK_CHARS))
+        plan.push(
+          seg.kind === 'text' ? { kind: 'text', value: seg.text } : { kind: 'image', value: seg.url },
+        );
+    } else if (text !== undefined) {
+      plan.push({ kind: 'text', value: text });
+    }
+    if (imageUrl !== undefined) {
+      if (sender.sendImage === undefined) {
+        throw new Error(
+          fmt(_('{backend} cannot send an image — give text and leave image_url out'), {
+            backend: backend.manifest.name,
+          }),
+        );
+      }
+      plan.push({ kind: 'image', value: imageUrl });
+    }
+    if (plan.length === 0) throw new Error(_('nothing to send: the text is empty after rendering'));
+    for (const step of plan) if (step.kind === 'image') step.value = validateImageUrl(step.value);
+
     for (const step of plan)
       sends.push({
         sent:
@@ -276,9 +368,9 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
     throw error;
   } finally {
     await sender.close().catch(() => {});
+    lease?.release();
   }
 
-  const dbPath = params.dbPath ?? indexDbPath();
   const recorded = sends.map(({ sent, body }) => {
     appendWriteLog(
       {
@@ -299,6 +391,8 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
         );
   });
   const first = sends[0];
+  // Each part carries its own; the same gap reported twice is one sentence, not two.
+  const warnings = [...new Set(sends.map((x) => x.sent.warning).filter((w) => w !== undefined))];
   return {
     backend: backend.manifest.name,
     target: sendTarget(params.accountId, params.to),
@@ -308,6 +402,7 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
     ...(!markdown && sends.length > 1 ? { imageOriginId: sends[1].sent.id } : {}),
     ...(markdown ? { parts: sends.length, originIds: sends.map((x) => x.sent.id) } : {}),
     sentAt: first.sent.sentAt,
+    ...(warnings.length === 0 ? {} : { sendWarning: warnings.join(' ') }),
   };
 }
 

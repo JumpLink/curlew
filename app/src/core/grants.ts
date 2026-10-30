@@ -15,6 +15,7 @@ export type Capability =
   | 'mail.send'
   | 'telegram.send'
   | 'matrix.send'
+  | 'signal.send'
   | 'xmpp.omemo'
   | 'canary.write';
 
@@ -25,7 +26,14 @@ export interface Grant {
 }
 
 /** Capabilities a real configuration may grant. A new backend's `<backend>.send` gets its row when it is built. */
-export const CAPABILITIES = ['xmpp.send', 'mail.send', 'telegram.send', 'matrix.send', 'xmpp.omemo'] as const;
+export const CAPABILITIES = [
+  'xmpp.send',
+  'mail.send',
+  'telegram.send',
+  'matrix.send',
+  'signal.send',
+  'xmpp.omemo',
+] as const;
 
 /**
  * The test-only capability behind the gate's positive-control canary. It is accepted only while

@@ -2,7 +2,8 @@
  * `messaging_capabilities` — what a caller may rely on when it sends and waits, per protocol.
  *
  * Static facts of this build plus the account ids the grants already name (the same ids
- * `accounts_list` returns): no address, no message, no credential. XMPP, Telegram and Matrix can send chat messages (mail is not a chat protocol).
+ * `accounts_list` returns): no address, no message, no credential. XMPP, Telegram, Matrix and
+ * Signal can send chat messages (mail is not a chat protocol).
  */
 
 import { configPath } from '@curlew/store';
@@ -25,6 +26,12 @@ export const TELEGRAM_MAX_MESSAGE_CHARS = 4_096;
  * reason as Telegram's (the core must not import the backend); a unit test pins the two together.
  */
 export const MATRIX_MAX_MESSAGE_BYTES = 32_000;
+
+/**
+ * Signal's limit, as `SIGNAL_MAX_MESSAGE_BYTES` in `@curlew/signal`. Repeated here for the same
+ * reason as the two above (the core must not import the backend); a unit test pins them together.
+ */
+export const SIGNAL_MAX_MESSAGE_BYTES = 2_048;
 
 export interface MessagingCapabilities {
   protocol: string;
@@ -87,6 +94,18 @@ export function messagingCapabilities(path = configPath()): { protocols: Messagi
         maxMessageChars: MATRIX_MAX_MESSAGE_BYTES,
         maxMessageBytes: MATRIX_MAX_MESSAGE_BYTES,
         splitAtChars: MATRIX_MAX_MESSAGE_BYTES,
+        formats: ['plain'],
+        markdownRendering: 'none: the text goes out exactly as given',
+        splitsLongText: false,
+        images: { supported: false, how: 'not supported' },
+        waitTimeoutS: { ...WAIT_TIMEOUT_S },
+      },
+      {
+        protocol: 'signal',
+        accounts: accountsOf('signal.send'),
+        maxMessageChars: SIGNAL_MAX_MESSAGE_BYTES,
+        maxMessageBytes: SIGNAL_MAX_MESSAGE_BYTES,
+        splitAtChars: SIGNAL_MAX_MESSAGE_BYTES,
         formats: ['plain'],
         markdownRendering: 'none: the text goes out exactly as given',
         splitsLongText: false,
