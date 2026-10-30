@@ -17,6 +17,7 @@ import {
   listConversations,
   rebuildConversations,
   receiveDeliveries,
+  recordSentChatMessage,
 } from '@curlew/store';
 import { freshDb } from './fixtures.ts';
 
@@ -501,6 +502,75 @@ export default async () => {
         expect(String(row.last_cursor)).toBe('cur-42');
         expect(Number(row.read_inbox_seq)).toBe(3);
         expect(Number(row.read_outbox_seq)).toBe(2);
+      } finally {
+        db.close();
+      }
+    });
+
+    // The daemon runs the echo adoption once per batch and never restarts, so a lookup that reads
+    // back every echo the account ever wrote gets slower for as long as the daemon is up. Bounding
+    // it to the batch's own ids must not change WHICH echo is adopted — hence both halves here.
+    await it("adopts the batch's own local echo and reads back no other", async () => {
+      const db = freshDb();
+      try {
+        const account = { id: ACCOUNT, identity: 'Me', provider: 'Fake' };
+        const sent = (clientId: string, text: string) =>
+          recordSentChatMessage(db, {
+            backend: BACKEND,
+            account,
+            chatRemoteId: 'd-anna',
+            clientId,
+            text,
+            sentAt: '2026-01-01T12:00:00.000Z',
+          });
+        const adopted = sent('oid-1', 'Bis gleich');
+        // History: echoes of earlier sends the network's copy never came back for. A full scan
+        // would read all of these on every batch; only `oid-1` is the one this batch names.
+        const survivors = [sent('oid-2', 'Alt 2'), sent('oid-3', 'Alt 3'), sent('oid-4', 'Alt 4')];
+
+        const sql: string[] = [];
+        // A spread copy would drop the prototype's methods, and `receiveDeliveries` records a
+        // per-account failure instead of throwing — so the run would look empty, not broken.
+        const spy = new Proxy(db, {
+          get(target, prop) {
+            if (prop === 'prepare') {
+              return (text: string) => {
+                sql.push(text);
+                return target.prepare(text);
+              };
+            }
+            const value = Reflect.get(target, prop, target) as unknown;
+            return typeof value === 'function' ? value.bind(target) : value;
+          },
+        });
+
+        // The delivered copy carries no body; the echo's text is what must survive the adoption.
+        const result = await receiveDeliveries(
+          spy,
+          fakeBackend([
+            [incoming('d-anna', msg('anna/9', 9, null, { fromSelf: true, sender: null, clientId: 'oid-1' }))],
+          ]),
+        );
+        expect(result.accounts[0].error).toBe(null);
+        expect(result.added).toBe(1);
+
+        const echoRow = (id: string) =>
+          db.prepare('SELECT body FROM conversation_messages WHERE id = ?').get(id) as
+            | Record<string, unknown>
+            | undefined;
+        expect(echoRow(adopted.messageId)).toBe(undefined);
+        expect(survivors.map((s) => String(echoRow(s.messageId)?.body)).join('|')).toBe('Alt 2|Alt 3|Alt 4');
+        // The body came from the echo, since the delivered copy had none.
+        const delivered = db
+          .prepare(
+            'SELECT body FROM conversation_messages WHERE backend = ? AND account_id = ? AND remote_id = ?',
+          )
+          .get(BACKEND, ACCOUNT, 'anna/9') as Record<string, unknown> | undefined;
+        expect(String(delivered?.body)).toBe('Bis gleich');
+
+        // The bound itself: the echo lookup names the batch's ids, so there is no `local:%` scan.
+        expect(sql.some((text) => text.includes('remote_id LIKE'))).toBe(false);
+        expect(sql.some((text) => text.includes('remote_id IN'))).toBe(true);
       } finally {
         db.close();
       }

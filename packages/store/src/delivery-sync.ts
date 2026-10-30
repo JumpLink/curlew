@@ -490,19 +490,31 @@ function runIn(
  * returned and stored the echo under (`local:<id>`). The echo may hold a body the delivered copy
  * does not, so it is adopted into the pending message before its row is built — the row's column
  * order differs from the archive engine's, so the body is taken here and not on the row.
+ *
+ * The echoes are looked up BY ID, in chunks, rather than scanned with `LIKE 'local:%'`: only an
+ * echo this batch names can be adopted at all (the loop below skipped every other row anyway), so
+ * the equality form is the same adoption over an index lookup on `conversation_messages_remote`,
+ * bounded by the batch — instead of reading back every echo the account ever wrote, on every
+ * batch, for the lifetime of the account. The daemon runs this per batch and never restarts.
  */
 function adoptLocalEchoes(db: IndexDatabase, batch: DeliveryBatch): void {
   if (batch.clientIds.size === 0) return;
-  const echoes = db
-    .prepare(
-      `SELECT id, remote_id, body FROM conversation_messages
-         WHERE backend = ? AND account_id = ? AND remote_id LIKE ?`,
-    )
-    .all(batch.backend, batch.accountId, `${LOCAL_ECHO_PREFIX}%`) as Array<Record<string, unknown>>;
+  const wanted = [...batch.clientIds.keys()].map((clientId) => `${LOCAL_ECHO_PREFIX}${clientId}`);
+  const echoes: Array<Record<string, unknown>> = [];
+  for (let i = 0; i < wanted.length; i += IN_CHUNK) {
+    const chunk = wanted.slice(i, i + IN_CHUNK);
+    echoes.push(
+      ...(db
+        .prepare(
+          `SELECT id, remote_id, body FROM conversation_messages
+             WHERE backend = ? AND account_id = ? AND remote_id IN (${placeholders(chunk.length)})`,
+        )
+        .all(batch.backend, batch.accountId, ...chunk) as Array<Record<string, unknown>>),
+    );
+  }
   const gone: string[] = [];
   for (const echo of echoes) {
     const remoteId = String(echo.remote_id);
-    if (!remoteId.startsWith(LOCAL_ECHO_PREFIX)) continue;
     const rowId = batch.clientIds.get(remoteId.slice(LOCAL_ECHO_PREFIX.length));
     const pending = rowId === undefined ? undefined : batch.messages.get(rowId);
     if (pending === undefined) continue;
