@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-10-30 17:30+0100\n"
+"POT-Creation-Date: 2026-10-30 18:40+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1134,7 +1134,8 @@ msgid_plural "{n} warnings"
 msgstr[0] ""
 msgstr[1] ""
 
-#: packages/imap/src/send.ts:52 packages/telegram/src/sender.ts:42
+#: packages/imap/src/send.ts:52 packages/matrix/src/send.ts:162
+#: packages/telegram/src/sender.ts:43
 msgid "sending to {address} is not granted for account {account}"
 msgstr ""
 
@@ -1142,31 +1143,31 @@ msgstr ""
 msgid "no mail account {account} with SMTP — `curlew accounts list` shows them"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:29
+#: packages/matrix/src/backend.ts:35
 msgid "log in again with `curlew accounts add matrix`"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:34
+#: packages/matrix/src/backend.ts:40
 msgid "Homeserver (URL like https://matrix.example.org, or the server name)"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:35
+#: packages/matrix/src/backend.ts:41
 msgid "Matrix user (@name:example.org)"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:36 packages/xmpp/src/backend.ts:41
+#: packages/matrix/src/backend.ts:42 packages/xmpp/src/backend.ts:41
 msgid "Password"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:63
+#: packages/matrix/src/backend.ts:82
 msgid "no Matrix account {account} — {hint}"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:70
+#: packages/matrix/src/backend.ts:89
 msgid "the Matrix account file {account} is incomplete — {hint}"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:81
+#: packages/matrix/src/backend.ts:124
 msgid "the Matrix account {account} is not usable ({reason}) — {hint}"
 msgstr ""
 
@@ -1190,6 +1191,32 @@ msgstr ""
 
 #: packages/matrix/src/login.ts:89
 msgid "Logged in; setting up this device’s encryption keys…"
+msgstr ""
+
+#: packages/matrix/src/send.ts:110
+msgid ""
+"the homeserver did not say whether {room} is encrypted ({reason}) — nothing "
+"was sent"
+msgstr ""
+
+#: packages/matrix/src/send.ts:128
+msgid "the homeserver refused the message to {room} ({reason})"
+msgstr ""
+
+#: packages/matrix/src/send.ts:137
+msgid "the homeserver accepted the message to {room} but returned no event id"
+msgstr ""
+
+#: packages/matrix/src/send.ts:176
+msgid ""
+"a Matrix message holds at most {max} bytes of text, this one has {bytes} — "
+"shorten it"
+msgstr ""
+
+#: packages/matrix/src/send.ts:190
+msgid ""
+"{room} is end-to-end encrypted and curlew cannot send encrypted messages yet "
+"— nothing was sent, send it from a Matrix client"
 msgstr ""
 
 #: packages/signal/src/backend.ts:129
@@ -1375,7 +1402,7 @@ msgid ""
 "again."
 msgstr ""
 
-#: packages/telegram/src/manifest.ts:52
+#: packages/telegram/src/manifest.ts:53
 msgid ""
 "curlew talks to Telegram through the official MTProto API as a third-party "
 "client (mtcute). Telegram requires every client to use API credentials "
@@ -1391,7 +1418,7 @@ msgid ""
 "this machine only."
 msgstr ""
 
-#: packages/telegram/src/sender.ts:55
+#: packages/telegram/src/sender.ts:56
 msgid ""
 "a Telegram message holds at most {max} characters, this one has {length} — "
 "shorten it"

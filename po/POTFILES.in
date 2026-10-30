@@ -87,6 +87,7 @@ packages/matrix/src/index.ts
 packages/matrix/src/login.ts
 packages/matrix/src/manifest.ts
 packages/matrix/src/map.ts
+packages/matrix/src/send.ts
 packages/matrix/src/session.ts
 packages/omemo/src/bundle.ts
 packages/omemo/src/bytes.ts
