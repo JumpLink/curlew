@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-10-30 18:40+0100\n"
+"POT-Creation-Date: 2026-10-30 19:58+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -39,7 +39,27 @@ msgstr ""
 msgid "no xmpp account {account} — `curlew accounts list` shows them"
 msgstr "Kein XMPP-Konto {account} — `curlew accounts list` zeigt sie an"
 
-#: app/src/core/actions/send.ts:120
+#: app/src/core/actions/send.ts:128 app/src/core/actions/send.ts:141
+msgid ""
+"the message index is busy, so curlew cannot tell whether {account} is in use "
+"elsewhere — nothing was sent; try again in a moment"
+msgstr ""
+"Der Nachrichtenindex ist belegt, daher kann curlew nicht feststellen, ob "
+"{account} anderswo in Benutzung ist — es wurde nichts gesendet; versuche es "
+"gleich noch einmal"
+
+#: app/src/core/actions/send.ts:147
+msgid ""
+"{account} is being received by {holder} right now, and {backend} cannot send "
+"and receive at the same time — nothing was sent; stop that process (`curlew "
+"daemon stop`) and send again, or send from your phone"
+msgstr ""
+"{account} wird gerade von {holder} empfangen, und {backend} kann nicht "
+"gleichzeitig senden und empfangen — es wurde nichts gesendet; beende diesen "
+"Prozess (`curlew daemon stop`) und sende erneut, oder sende von deinem "
+"Telefon"
+
+#: app/src/core/actions/send.ts:197
 msgid ""
 "{capability} is not granted for {target} — add {grant} to the grants in the "
 "config file"
@@ -47,7 +67,7 @@ msgstr ""
 "{capability} ist für {target} nicht freigegeben — füge {grant} in der "
 "Konfigurationsdatei zu den Freigaben hinzu"
 
-#: app/src/core/actions/send.ts:153
+#: app/src/core/actions/send.ts:230
 msgid ""
 "sending to {target} is not granted — add a grant like {grant} to the config "
 "file, naming the account and the address"
@@ -55,35 +75,35 @@ msgstr ""
 "Das Senden an {target} ist nicht freigegeben — füge eine Freigabe wie "
 "{grant} in der Konfigurationsdatei hinzu, die Konto und Adresse nennt"
 
-#: app/src/core/actions/send.ts:184
+#: app/src/core/actions/send.ts:261
 msgid "no account {account} — `curlew accounts list` shows them"
 msgstr "Kein Konto {account} — `curlew accounts list` zeigt sie an"
 
-#: app/src/core/actions/send.ts:190
+#: app/src/core/actions/send.ts:267
 msgid "the xmpp backend is not available"
 msgstr "Das XMPP-Backend ist nicht verfügbar"
 
-#: app/src/core/actions/send.ts:202
+#: app/src/core/actions/send.ts:279
 msgid "{backend} cannot send"
 msgstr "{backend} kann nicht senden"
 
-#: app/src/core/actions/send.ts:206
+#: app/src/core/actions/send.ts:283
 msgid "nothing to send: give text, an image URL or both"
 msgstr "Nichts zu senden: Gib Text, eine Bild-URL oder beides an"
 
-#: app/src/core/actions/send.ts:208
+#: app/src/core/actions/send.ts:285
 msgid "{backend} messages carry no subject"
 msgstr "Nachrichten von {backend} haben keinen Betreff"
 
-#: app/src/core/actions/send.ts:216
+#: app/src/core/actions/send.ts:293
 msgid "no {backend} account {account} — `curlew accounts list` shows them"
 msgstr "Kein {backend}-Konto {account} — `curlew accounts list` zeigt sie an"
 
-#: app/src/core/actions/send.ts:248
+#: app/src/core/actions/send.ts:340
 msgid "{backend} cannot send an image — give text and leave image_url out"
 msgstr "{backend} kann kein Bild senden — gib Text an und lass image_url weg"
 
-#: app/src/core/actions/send.ts:255
+#: app/src/core/actions/send.ts:347
 msgid "nothing to send: the text is empty after rendering"
 msgstr "Nichts zu senden: Der Text ist nach dem Rendern leer"
 
@@ -1303,7 +1323,7 @@ msgstr[0] "{n} Warnung"
 msgstr[1] "{n} Warnungen"
 
 #: packages/imap/src/send.ts:52 packages/matrix/src/send.ts:162
-#: packages/telegram/src/sender.ts:43
+#: packages/signal/src/send.ts:260 packages/telegram/src/sender.ts:43
 msgid "sending to {address} is not granted for account {account}"
 msgstr "Das Senden an {address} ist für Konto {account} nicht freigegeben"
 
@@ -1370,8 +1390,8 @@ msgid ""
 "the homeserver did not say whether {room} is encrypted ({reason}) — nothing "
 "was sent"
 msgstr ""
-"Der Homeserver hat nicht mitgeteilt, ob {room} verschlüsselt ist ({reason}) — "
-"es wurde nichts gesendet"
+"Der Homeserver hat nicht mitgeteilt, ob {room} verschlüsselt ist ({reason}) "
+"— es wurde nichts gesendet"
 
 #: packages/matrix/src/send.ts:128
 msgid "the homeserver refused the message to {room} ({reason})"
@@ -1400,15 +1420,15 @@ msgstr ""
 "verschlüsselten Nachrichten senden — es wurde nichts gesendet, sende sie aus "
 "einem Matrix-Client"
 
-#: packages/signal/src/backend.ts:129
+#: packages/signal/src/backend.ts:149
 msgid "no Signal session for {account} — {hint}"
 msgstr "Keine Signal-Sitzung für {account} — {hint}"
 
-#: packages/signal/src/backend.ts:137
+#: packages/signal/src/backend.ts:156
 msgid "the Signal session {account} was never linked — {hint}"
 msgstr "Die Signal-Sitzung {account} wurde nie verknüpft — {hint}"
 
-#: packages/signal/src/link.ts:93
+#: packages/signal/src/link.ts:84
 msgid ""
 "Scan this with the phone: Signal → Settings → Linked devices → Link new "
 "device."
@@ -1416,55 +1436,55 @@ msgstr ""
 "Scanne dies mit dem Telefon: Signal → Einstellungen → Verknüpfte Geräte → "
 "Neues Gerät verknüpfen."
 
-#: packages/signal/src/link.ts:106
+#: packages/signal/src/link.ts:97
 msgid "the provisioning connection failed ({reason}) — nothing was saved"
 msgstr ""
 "Die Kopplungsverbindung ist fehlgeschlagen ({reason}) — es wurde nichts "
 "gespeichert"
 
-#: packages/signal/src/link.ts:111 packages/whatsapp/src/login.ts:139
+#: packages/signal/src/link.ts:102 packages/whatsapp/src/login.ts:139
 msgid "no phone linked this device in time — nothing was saved"
 msgstr ""
 "Kein Telefon hat dieses Gerät rechtzeitig verknüpft — es wurde nichts "
 "gespeichert"
 
-#: packages/signal/src/link.ts:138
+#: packages/signal/src/link.ts:129
 msgid "the phone sent an incomplete link message — nothing was saved"
 msgstr ""
 "Das Telefon hat eine unvollständige Verknüpfungsnachricht gesendet — es "
 "wurde nichts gespeichert"
 
-#: packages/signal/src/link.ts:140
+#: packages/signal/src/link.ts:131
 msgid "The phone answered. Registering this device…"
 msgstr "Das Telefon hat geantwortet. Dieses Gerät wird registriert …"
 
-#: packages/signal/src/link.ts:163
+#: packages/signal/src/link.ts:154
 msgid ""
 "the phone sent a number but no phone number identity key — nothing was saved"
 msgstr ""
 "Das Telefon hat eine Nummer, aber keinen Identitätsschlüssel zur "
 "Telefonnummer gesendet — es wurde nichts gespeichert"
 
-#: packages/signal/src/link.ts:166
+#: packages/signal/src/link.ts:157
 msgid ""
 "the phone sent a phone number identity key but no number — nothing was saved"
 msgstr ""
 "Das Telefon hat einen Identitätsschlüssel zur Telefonnummer, aber keine "
 "Nummer gesendet — es wurde nichts gespeichert"
 
-#: packages/signal/src/link.ts:216
+#: packages/signal/src/link.ts:207
 msgid "Signal refused the link (status {status}{detail}) — nothing was saved"
 msgstr ""
 "Signal hat die Verknüpfung abgelehnt (Status {status}{detail}) — es wurde "
 "nichts gespeichert"
 
-#: packages/signal/src/link.ts:227
+#: packages/signal/src/link.ts:218
 msgid "Signal answered the link for a different account — nothing was saved"
 msgstr ""
 "Signal hat die Verknüpfung für ein anderes Konto beantwortet — es wurde "
 "nichts gespeichert"
 
-#: packages/signal/src/link.ts:247
+#: packages/signal/src/link.ts:238
 msgid ""
 "Linked, but the one-time keys were not published ({reason}); new contacts "
 "fall back to the last-resort key."
@@ -1472,7 +1492,7 @@ msgstr ""
 "Verknüpft, aber die Einmalschlüssel wurden nicht veröffentlicht ({reason}); "
 "neue Kontakte weichen auf den Notfallschlüssel aus."
 
-#: packages/signal/src/link.ts:267
+#: packages/signal/src/link.ts:258
 msgid ""
 "Linked. Run `curlew sync` now: Signal keeps what arrived for this device "
 "only until it is received, and the phone sends the contact list on its own."
@@ -1488,6 +1508,119 @@ msgstr "verknüpfe es mit `curlew accounts add signal` neu"
 #: packages/signal/src/receiver.ts:314
 msgid "Signal no longer knows this device (it was unlinked) — {hint}"
 msgstr "Signal kennt dieses Gerät nicht mehr (es wurde entkoppelt) — {hint}"
+
+#: packages/signal/src/send.ts:136
+msgid "Signal answered {what} with something that is not JSON"
+msgstr "Signal hat {what} mit etwas beantwortet, das kein JSON ist"
+
+#: packages/signal/src/send.ts:167
+msgid ""
+"a Signal message holds at most {max} bytes of text, this one has {bytes} — "
+"shorten it"
+msgstr ""
+"Eine Signal-Nachricht fasst höchstens {max} Byte Text, diese hat {bytes} — "
+"kürze sie"
+
+#: packages/signal/src/send.ts:209
+msgid ""
+"the message was delivered, but this account's other devices were not told "
+"about it ({reason}) — it will not appear on the phone"
+msgstr ""
+"Die Nachricht wurde zugestellt, aber die anderen Geräte dieses Kontos haben "
+"nichts davon erfahren ({reason}) — auf dem Telefon erscheint sie nicht"
+
+#: packages/signal/src/send.ts:217
+msgid ""
+"a note to self is stored on this account's other devices, and this account "
+"has none — nothing was sent"
+msgstr ""
+"Eine Notiz an dich selbst wird auf den anderen Geräten dieses Kontos "
+"gespeichert, und dieses Konto hat keine — es wurde nichts gesendet"
+
+#: packages/signal/src/send.ts:243
+msgid ""
+"curlew cannot send to a Signal group: a group message needs the member list "
+"and credentials from Signal's storage service, which curlew does not sync — "
+"send it from a Signal client"
+msgstr ""
+"curlew kann nicht in eine Signal-Gruppe senden: Eine Gruppennachricht "
+"braucht die Mitgliederliste und Zugangsdaten aus Signals Storage Service, "
+"den curlew nicht synchronisiert — sende sie aus einem Signal-Client"
+
+#: packages/signal/src/send.ts:252
+msgid ""
+"{address} is not a Signal account id — use the id `conversations_list` shows "
+"for the chat, not a phone number"
+msgstr ""
+"{address} ist keine Signal-Konto-ID — nimm die ID, die "
+"`conversations_list` für den Chat anzeigt, keine Telefonnummer"
+
+#: packages/signal/src/send.ts:311
+msgid ""
+"Signal kept disagreeing about the recipient's devices — nothing was sent; "
+"try again, or send it from a Signal client"
+msgstr ""
+"Signal war sich über die Geräte des Empfängers dauerhaft uneinig — es wurde "
+"nichts gesendet; versuche es erneut oder sende aus einem Signal-Client"
+
+#: packages/signal/src/send.ts:320
+msgid ""
+"Signal refused this device (unauthorized) — nothing was sent; the device may "
+"be unlinked"
+msgstr ""
+"Signal hat dieses Gerät abgewiesen (nicht autorisiert) — es wurde nichts "
+"gesendet; das Gerät ist möglicherweise entkoppelt"
+
+#: packages/signal/src/send.ts:324
+msgid "Signal wants a rate-limit challenge answered — nothing was sent"
+msgstr ""
+"Signal verlangt die Antwort auf eine Ratenbegrenzungs-Abfrage — es wurde "
+"nichts gesendet"
+
+#: packages/signal/src/send.ts:327
+msgid "Signal refused the message ({status}) — nothing was sent"
+msgstr ""
+"Signal hat die Nachricht abgelehnt ({status}) — es wurde nichts gesendet"
+
+#: packages/signal/src/send.ts:419
+msgid "Signal has no account {address} — nothing was sent"
+msgstr "Signal kennt kein Konto {address} — es wurde nichts gesendet"
+
+#: packages/signal/src/send.ts:424
+msgid ""
+"Signal did not hand over the keys for {address} ({status}) — nothing was sent"
+msgstr ""
+"Signal hat die Schlüssel für {address} nicht herausgegeben ({status}) — es "
+"wurde nichts gesendet"
+
+#: packages/signal/src/send.ts:442
+msgid "Signal lists no device for {address} — nothing was sent"
+msgstr "Signal führt kein Gerät für {address} — es wurde nichts gesendet"
+
+#: packages/signal/src/send.ts:462
+msgid ""
+"a device of {address} publishes no usable keys, so curlew cannot start a "
+"session with it — nothing was sent"
+msgstr ""
+"Ein Gerät von {address} veröffentlicht keine brauchbaren Schlüssel, also "
+"kann curlew keine Sitzung damit beginnen — es wurde nichts gesendet"
+
+#: packages/signal/src/send.ts:508
+msgid ""
+"the safety number of {address} changed — nothing was sent; check it with "
+"them, then send again to accept the new one"
+msgstr ""
+"Die Sicherheitsnummer von {address} hat sich geändert — es wurde nichts "
+"gesendet; prüfe sie gemeinsam mit der Person und sende dann erneut, um die "
+"neue zu akzeptieren"
+
+#: packages/signal/src/send.ts:534
+msgid ""
+"Signal reported a device mismatch ({status}) without naming a device — "
+"nothing was sent"
+msgstr ""
+"Signal hat eine Geräteabweichung gemeldet ({status}), ohne ein Gerät zu "
+"nennen — es wurde nichts gesendet"
 
 #: packages/telegram/src/backend.ts:37
 msgid "log in again with `curlew accounts add telegram`"
