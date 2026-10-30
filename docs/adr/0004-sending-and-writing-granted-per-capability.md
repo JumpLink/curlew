@@ -2,7 +2,8 @@
 
 - **Status:** Accepted (2026-10-10); amended 2026-10-10 and 2026-10-30, see
   [Amendment](#amendment-2026-10-10) and
-  [Amendment 2026-10-30](#amendment-2026-10-30)
+  [Amendment 2026-10-30](#amendment-2026-10-30) and
+  [Amendment (2026-10-30, telegram)](#amendment-2026-10-30-telegram)
 - **Scope:** `@gjsify/mcp` (the gate), `app` (config, MCP server, `curlew send`, `curlew daemon`),
   `@curlew/xmpp`, `@curlew/protocol` (calendar port), `@curlew/gnome` (EDS calendar driver)
 
@@ -211,3 +212,15 @@ The mail path sends one plain-text message over SMTP, with an optional subject, 
 address. Its credentials come from GNOME Online Accounts' SMTP purpose and appear in no log,
 DTO, error or MCP result. Mail has no chat archive here, so a sent message is logged but not
 indexed as a conversation.
+
+## Amendment (2026-10-30, telegram)
+
+`telegram.send` is built. Its target is `<account>/<chat id>` with the chat's remote id exactly as
+the index and `conversations_list` show it (`String(peer.id)`): the positive user id of a direct
+chat, the negative marked id of a group or channel, for example `telegram-42/1001`. It sends one
+plain-text message of at most 4096 characters; a longer text is refused, never split, and there is
+no image and no Markdown. The sender is opened only through `TelegramBackend.openSender`, which
+keeps the full client handle; `TelegramApi` and the `ChatSession` that sync and the read tools
+hold have no send method, and the sender re-checks its `SendPermit` before it touches the network.
+The sent message is indexed as a local echo, and the next sync replaces it by its Telegram message
+id (`ChatMessage.clientId` of your own messages).

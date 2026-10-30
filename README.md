@@ -430,7 +430,7 @@ See [End-to-end encryption](#end-to-end-encryption-grant-xmppomemo) and
 An account can send one message, but only from an account and to an address you
 granted, as an exact `<account>/<address>` pair (see
 [Your data stays yours](#your-data-stays-yours)). Every backend has its own
-capability — `xmpp.send` and `mail.send` today — and one grant never authorises
+capability — `xmpp.send`, `mail.send` and `telegram.send` today — and one grant never authorises
 another backend:
 
 ```json
@@ -483,6 +483,21 @@ the answer has `sentAt` and the message id, no `conversationId`:
 ```bash
 curlew send --account <goa-account-id> --to owner@example.org \
   --subject "Build is green" "All tests passed."
+```
+
+#### Telegram
+
+`telegram.send` sends one plain-text message to a chat. The address is the chat id
+exactly as `curlew conversations list` shows it: the user id for a direct chat, the
+negative id for a group or channel, so a grant reads
+`{ "capability": "telegram.send", "target": "telegram-42/1001" }`. A text over 4096
+characters is refused rather than split, and there is no Markdown and no image. The
+sent message is stored in the index as your own message and replaced by Telegram's
+copy on the next sync. Telegram only resolves a chat the account has already synced,
+so run `curlew sync` once before the first send to a new chat:
+
+```bash
+curlew send --account telegram-42 --to 1001 "Build is green"
 ```
 
 **Waiting for a reply.** Run `curlew daemon`: for granted XMPP accounts it
@@ -714,12 +729,13 @@ unknown capability is an error when the file loads.
 {
   "grants": [
     { "capability": "xmpp.send", "target": "<account>/<address>" },
-    { "capability": "mail.send", "target": "<account>/<address>" }
+    { "capability": "mail.send", "target": "<account>/<address>" },
+    { "capability": "telegram.send", "target": "<account>/<chat id>" }
   ]
 }
 ```
 
-`xmpp.send` and `mail.send` are the capabilities a command or tool uses today
+`xmpp.send`, `mail.send` and `telegram.send` are the capabilities a command or tool uses today
 (see [Sending](#sending-grants-backendsend)); a later backend gets its own
 `<backend>.send` row when it is built, and an unknown one is a config error.
 

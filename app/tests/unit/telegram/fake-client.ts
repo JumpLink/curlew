@@ -117,6 +117,9 @@ export class FakeClient implements TelegramClientHandle {
   /** Every `iterDialogs` argument the session passed, in order. */
   readonly dialogsParams: Array<TgDialogsParams | undefined> = [];
   destroyed = 0;
+  /** Every `sendText` call, in order. */
+  readonly sent: Array<{ chatId: number; text: string }> = [];
+  private nextSentId = 9000;
 
   constructor(options: ClientOptions, script: FakeScript) {
     this.storage = options.storage;
@@ -174,6 +177,13 @@ export class FakeClient implements TelegramClientHandle {
     const all = this.script.history?.get(chatId) ?? [];
     const byId = new Map(all.map((m) => [m.id, m]));
     return messageIds.slice(0, SERVER_HISTORY_CAP).map((id) => byId.get(id) ?? null);
+  }
+
+  async sendText(chatId: number, text: string): Promise<TgMessage> {
+    this.calls.push(`sendText:${chatId}`);
+    this.sent.push({ chatId, text });
+    const chat = (this.script.dialogs ?? []).find((d) => d.peer.id === chatId)?.peer ?? user(chatId, 'Peer');
+    return tgMessage(chat, this.nextSentId++, 'me', text);
   }
 
   async login(prompts: LoginPrompts): Promise<TgUser> {

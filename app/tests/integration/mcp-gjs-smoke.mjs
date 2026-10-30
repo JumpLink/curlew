@@ -239,6 +239,30 @@ assert(
 );
 console.log('OK: a mail.send grant alone serves send_message');
 
+const telegramGrantsFile = join(scratch, 'granted-telegram.json');
+writeFileSync(
+  telegramGrantsFile,
+  JSON.stringify({
+    backends: {},
+    grants: [{ capability: 'telegram.send', target: 'telegram-42/1001' }],
+  }),
+);
+const telegramGranted = await listToolNames({
+  CURLEW_MCP_GATE_CANARY: '1',
+  CURLEW_CONFIG: telegramGrantsFile,
+});
+assert(
+  telegramGranted.includes('send_message'),
+  `send_message not served with a telegram.send grant (${telegramGranted.join(', ')})`,
+);
+for (const canary of DROPPED) {
+  assert(
+    !telegramGranted.includes(canary),
+    `GATE IS OPEN: ${canary} was served — ${telegramGranted.join(', ')}`,
+  );
+}
+console.log('OK: a telegram.send grant alone serves send_message and nothing else that writes');
+
 // The env switch still opens setup_run, and only that.
 const ungated = await listToolNames({ CURLEW_MCP_GATE_CANARY: '1', CURLEW_MCP_ALLOW_WRITE: '1' });
 assert(

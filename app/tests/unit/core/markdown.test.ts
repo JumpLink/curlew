@@ -1,7 +1,8 @@
 import { describe, expect, it } from '@gjsify/unit';
 
 import { MAX_CHUNK_CHARS, renderForXmpp, renderPlainText, stripQuotes } from '../../../src/core/markdown.ts';
-import { messagingCapabilities } from '../../../src/core/actions/messaging.ts';
+import { TELEGRAM_MAX_MESSAGE_CHARS as BACKEND_LIMIT } from '@curlew/telegram';
+import { messagingCapabilities, TELEGRAM_MAX_MESSAGE_CHARS } from '../../../src/core/actions/messaging.ts';
 import { WAIT_TIMEOUT_S } from '../../../src/core/actions/wait-reply.ts';
 
 const texts = (md: string) => renderForXmpp(md).map((s) => (s.kind === 'text' ? s.text : `[image ${s.url}]`));
@@ -102,7 +103,7 @@ export default async () => {
   await describe('messaging_capabilities', async () => {
     await it('reports the XMPP limits without any address', async () => {
       const caps = messagingCapabilities('/nonexistent/curlew-config.json').protocols;
-      expect(caps.length).toBe(1);
+      expect(caps.length).toBe(2);
       const xmpp = caps[0];
       expect(xmpp.protocol).toBe('xmpp');
       expect(xmpp.maxMessageChars).toBe(8000);
@@ -112,6 +113,18 @@ export default async () => {
       expect(xmpp.waitTimeoutS.max).toBe(WAIT_TIMEOUT_S.max);
       expect(xmpp.waitTimeoutS.max).toBe(120);
       expect(xmpp.accounts.length).toBe(0);
+    });
+
+    await it('reports Telegram as plain text, 4096 characters, no splitting, no image', async () => {
+      const telegram = messagingCapabilities('/nonexistent/curlew-config.json').protocols[1];
+      expect(telegram.protocol).toBe('telegram');
+      expect(telegram.maxMessageChars).toBe(TELEGRAM_MAX_MESSAGE_CHARS);
+      expect(TELEGRAM_MAX_MESSAGE_CHARS).toBe(BACKEND_LIMIT);
+      expect(BACKEND_LIMIT).toBe(4096);
+      expect(telegram.formats.join()).toBe('plain');
+      expect(telegram.splitsLongText).toBe(false);
+      expect(telegram.images.supported).toBe(false);
+      expect(telegram.accounts.length).toBe(0);
     });
   });
 };

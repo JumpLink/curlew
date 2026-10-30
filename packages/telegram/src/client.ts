@@ -88,6 +88,7 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage }) => {
     iterDialogs: (params) => api.iterDialogs(params),
     getHistory: (chatId, params) => api.getHistory(chatId, params),
     getMessages: (chatId, messageIds) => api.getMessages(chatId, [...messageIds]),
+    sendText: (chatId, text) => client.sendText(chatId, text),
     destroy: () => client.destroy(),
     connect: () => client.connect(),
     login: async (prompts: LoginPrompts): Promise<TgUser> =>
