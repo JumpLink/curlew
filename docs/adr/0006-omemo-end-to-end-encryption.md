@@ -311,7 +311,8 @@ Each stage is shippable on its own; the smallest useful one first. Stages 0–4 
   (Prosody or ejabberd with PEP `persistent-items`, publish-options, `open` access), synthetic
   accounts, and Conversations (on an emulator), Dino and Gajim — first contact both ways, BTBV,
   verification, a carbon from the person's other client, a MAM catch-up after downtime. The
-  checklist lives with the tests. Monal is not tested until someone has an iOS device.
+  checklist lives with the tests ([`app/tests/interop/CHECKLIST.md`](../../app/tests/interop/CHECKLIST.md),
+  the lab: `omemo-lab` next to it). Monal is not tested until someone has an iOS device.
 
 ### Out of scope
 
