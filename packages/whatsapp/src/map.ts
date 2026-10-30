@@ -197,6 +197,10 @@ export class WhatsAppMapper {
       hasAttachments: extracted.hasAttachments,
       replyToRemoteId: extracted.replyTo ? remoteMessageId(extracted.replyTo) : null,
       threadRemoteId: null,
+      // For our own messages the id IS the id the sender gave it: Baileys generates it before the
+      // stanza leaves, and `send.ts` returns the same one. The engine recognises the copy that
+      // comes back by it and drops the local echo written at send time, instead of showing two.
+      clientId: fromSelf ? remoteMessageId(key.id) : null,
     };
     const events: DeliveryEvent[] = [
       { type: 'message', chatRemoteId: chatId, chatKind: kind, message, seen: fromSelf || seen },

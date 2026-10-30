@@ -2,8 +2,8 @@
  * `messaging_capabilities` — what a caller may rely on when it sends and waits, per protocol.
  *
  * Static facts of this build plus the account ids the grants already name (the same ids
- * `accounts_list` returns): no address, no message, no credential. XMPP, Telegram, Matrix and
- * Signal can send chat messages (mail is not a chat protocol).
+ * `accounts_list` returns): no address, no message, no credential. XMPP, Telegram, Matrix, Signal
+ * and WhatsApp can send chat messages (mail is not a chat protocol).
  */
 
 import { configPath } from '@curlew/store';
@@ -32,6 +32,13 @@ export const MATRIX_MAX_MESSAGE_BYTES = 32_000;
  * reason as the two above (the core must not import the backend); a unit test pins them together.
  */
 export const SIGNAL_MAX_MESSAGE_BYTES = 2_048;
+
+/**
+ * WhatsApp's limit, as `WHATSAPP_MAX_MESSAGE_BYTES` in `@curlew/whatsapp`. Repeated here for the
+ * same reason as the three above (the core must not import the backend); a unit test pins them
+ * together.
+ */
+export const WHATSAPP_MAX_MESSAGE_BYTES = 65_536;
 
 export interface MessagingCapabilities {
   protocol: string;
@@ -107,6 +114,20 @@ export function messagingCapabilities(path = configPath()): { protocols: Messagi
         maxMessageBytes: SIGNAL_MAX_MESSAGE_BYTES,
         splitAtChars: SIGNAL_MAX_MESSAGE_BYTES,
         formats: ['plain'],
+        markdownRendering: 'none: the text goes out exactly as given',
+        splitsLongText: false,
+        images: { supported: false, how: 'not supported' },
+        waitTimeoutS: { ...WAIT_TIMEOUT_S },
+      },
+      {
+        protocol: 'whatsapp',
+        accounts: accountsOf('whatsapp.send'),
+        maxMessageChars: WHATSAPP_MAX_MESSAGE_BYTES,
+        maxMessageBytes: WHATSAPP_MAX_MESSAGE_BYTES,
+        splitAtChars: WHATSAPP_MAX_MESSAGE_BYTES,
+        formats: ['plain'],
+        // WhatsApp's own clients render `*bold*` and `_italic_`, which is not chat Markdown and
+        // not translated here: whatever is given goes out as the body, verbatim.
         markdownRendering: 'none: the text goes out exactly as given',
         splitsLongText: false,
         images: { supported: false, how: 'not supported' },
