@@ -18,6 +18,7 @@
 import xml from '@xmpp/xml';
 import {
   decodePublicKey,
+  encodePublicKey,
   fromBase64,
   toBase64,
   MAX_DEVICE_ID,
@@ -187,15 +188,15 @@ export function bundlePublish(deviceId: DeviceId, bundle: DeviceBundle, openAcce
           xml(
             'signedPreKeyPublic',
             { signedPreKeyId: String(bundle.signedPreKeyId) },
-            toBase64(bundle.signedPreKey),
+            publishedKey(bundle.signedPreKey),
           ),
           xml('signedPreKeySignature', {}, toBase64(bundle.signedPreKeySignature)),
-          xml('identityKey', {}, toBase64(bundle.identityKey)),
+          xml('identityKey', {}, publishedKey(bundle.identityKey)),
           xml(
             'prekeys',
             {},
             ...bundle.preKeys.map((preKey) =>
-              xml('preKeyPublic', { preKeyId: String(preKey.id) }, toBase64(preKey.publicKey)),
+              xml('preKeyPublic', { preKeyId: String(preKey.id) }, publishedKey(preKey.publicKey)),
             ),
           ),
         ),
@@ -375,6 +376,23 @@ function decodeBytes(text: string | null | undefined): Uint8Array | undefined {
   } catch {
     return undefined;
   }
+}
+
+/**
+ * A public key as legacy OMEMO publishes it: `0x05` prefix, then base64 — 33 bytes, as
+ * Conversations writes them. The bare 32 bytes are the OMEMO 2 form, and a client that reads both
+ * (Dino) takes a 32-byte key for Ed25519 and converts it: the session fails and the fingerprint it
+ * shows is not ours.
+ */
+export const publishedKey = (publicKey: Uint8Array): string => toBase64(encodePublicKey(publicKey));
+
+/**
+ * The identity key text of a published bundle, as the server holds it — to tell whether our own
+ * bundle on the server is the one we would publish now.
+ */
+export function publishedIdentityKey(pubsub: XmlElement | undefined): string | undefined {
+  const item = pubsub?.getChild('items')?.getChildren('item')[0];
+  return item?.getChild('bundle', NS.omemoLegacy)?.getChildText('identityKey', NS.omemoLegacy)?.trim() || undefined;
 }
 
 /** A published public key: base64, then the `0x05` prefix stripped if it carries one. */

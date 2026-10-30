@@ -30,7 +30,10 @@ AES-256-CBC + HMAC-SHA-256 (truncated to 16 bytes) for both payload and ratchet,
 **0.3.0** (2018-07-31), namespace `eu.siacs.conversations.axolotl`: a body-only payload
 encrypted with **AES-128-GCM**, a key element carrying `key ‖ tag` (32 bytes), a Curve25519
 identity key with XEdDSA signatures, libsignal's protobuf wire format, a
-`….devicelist` node and one `….bundles:<device id>` node per device.
+`….devicelist` node and one `….bundles:<device id>` node per device. Every public key in a
+0.3.0 bundle is published as libsignal serializes it, 33 bytes with the `0x05` type byte: Dino
+reads a bare 32-byte key as the OMEMO 2 Ed25519 form and converts it, which breaks the session
+and shows a fingerprint that is not ours (found in the Dino interop run).
 
 | Client | Source checked | Namespace in the code |
 |---|---|---|
