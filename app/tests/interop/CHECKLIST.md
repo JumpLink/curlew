@@ -40,18 +40,18 @@ simply never publishes a device list).
 
 | Peer | How | Version tested |
 |---|---|---|
-| Dino | Flatpak `im.dino.Dino` is installed. `flatpak run im.dino.Dino`, add account `bob@localhost`, advanced: server `127.0.0.1`, port 5222 | |
+| Dino | Flatpak `im.dino.Dino` is installed. `flatpak run im.dino.Dino`, add account `bob@localhost`, advanced: server `127.0.0.1`, port 5222 | 0.5 (Flatpak) |
 | Gajim | `org.gajim.Gajim` is **not** installed: `flatpak install flathub org.gajim.Gajim`. More devices for bob: `flatpak run org.gajim.Gajim --profile bob2`; a profile's data lives in `~/.var/app/org.gajim.Gajim/{data,config,cache}/gajim.<profile>` | 2.6.0 (Flatpak) |
 | Conversations | Android emulator AVD `Tablet_API_36`, start **only** with `./scripts/android_emulator.sh start Tablet_API_36` (werkstatt hub). The host is `10.0.2.2` from inside the emulator. APK from F-Droid. Account `bob@localhost`, set hostname `10.0.2.2`, port 5222 in the account's advanced options | |
 
 Certificate acceptance. **Not verified by the author — UI labels and the exact steps need a
 hand check, correct this section as you go:**
 
-- Dino: a certificate prompt may appear for the self-signed `localhost` certificate; accept it.
-  If the Flatpak refuses, trust the lab certificate system-wide (not run by the lab; the
-  Flatpak may not read this store at all):
-  `sudo cp "$XDG_RUNTIME_DIR/curlew-omemo-lab/certs/localhost.crt" /etc/pki/ca-trust/source/anchors/ && sudo update-ca-trust`
-  (undo: remove the file, run `sudo update-ca-trust` again).
+- Dino 0.5 (Flatpak) shows **no** certificate prompt and reads the system trust store, so trust
+  the lab certificate system-wide (not run by the lab):
+  `sudo cp "$XDG_RUNTIME_DIR/curlew-omemo-lab/certs/localhost.crt" /etc/pki/ca-trust/source/anchors/curlew-omemo-lab.crt && sudo update-ca-trust`
+  Undo after the run: `sudo rm /etc/pki/ca-trust/source/anchors/curlew-omemo-lab.crt && sudo update-ca-trust`.
+  Dino has no profiles: bob lands in your everyday Dino, so remove that account afterwards.
 - Gajim: its certificate dialog for the account lets you accept the certificate once.
 - Conversations: it asks to trust the certificate. Whether it accepts a connection to host
   `10.0.2.2` for the domain `localhost` is **unknown**; if not, note it here and fall back to
@@ -67,17 +67,17 @@ their trust state. `omemo trust` needs a TTY and asks you to type the fingerprin
 
 | # | Check | Dino | Gajim | Conv. |
 |---|---|---|---|---|
-| 1 | First contact, peer → curlew | ☐ | ✓ | ☐ |
-| 2 | First contact, curlew → peer | ☐ | ✓ | ☐ |
-| 3 | BTBV: a new device is trusted without verification | ☐ | ✓ | ☐ |
-| 4 | Verified: an extra unverified device gets nothing | ☐ | ✓ | ☐ |
-| 5 | `distrusted` | ☐ | ✓ | ☐ |
-| 6 | No trusted device: refused, no plaintext | ☐ | ✓ | ☐ |
-| 7 | `encryption: "required"` refused against carol | ☐ | ✓ | ☐ |
-| 8 | Carbon from bob's second device | ☐ | ✓¹ | ☐ |
-| 9 | MAM catch-up after curlew downtime | ☐ | ✓ | ☐ |
-| 10 | Identity change (peer reinstalled) | ☐ | ✓ | ☐ |
-| 11 | `omemo reset` → new session, no hang | ☐ | ✓ | ☐ |
+| 1 | First contact, peer → curlew | ✓ | ✓ | ☐ |
+| 2 | First contact, curlew → peer | ✓ | ✓ | ☐ |
+| 3 | BTBV: a new device is trusted without verification | –² | ✓ | ☐ |
+| 4 | Verified: an extra unverified device gets nothing | ✓ | ✓ | ☐ |
+| 5 | `distrusted` | ✓ | ✓ | ☐ |
+| 6 | No trusted device: refused, no plaintext | ✓ | ✓ | ☐ |
+| 7 | `encryption: "required"` refused against carol | ✓ | ✓ | ☐ |
+| 8 | Carbon from bob's second device | ✓¹ | ✓¹ | ☐ |
+| 9 | MAM catch-up after curlew downtime | ✓ | ✓ | ☐ |
+| 10 | Identity change (peer reinstalled) | ✓ | ✓ | ☐ |
+| 11 | `omemo reset` → new session, no hang | ✓³ | ✓ | ☐ |
 
 ### 1. First contact, peer → curlew
 
@@ -143,7 +143,9 @@ curlew send "must not leave" --account $ID --to bob@localhost
 ```
 
 Expect: `OmemoSendRefusedError`, exit non-zero, and **no plaintext** reaches bob (check the peer,
-and the Prosody archive stays without that message).
+and the Prosody archive stays without that message). `podman logs` does not show stanzas; read
+the archive and its `rid` lists:
+`env -u XDG_DATA_HOME -u XDG_CONFIG_HOME podman exec curlew-omemo-lab cat /var/lib/prosody/localhost/archive/bob.list`.
 
 ### 7. `encryption: "required"` against carol
 
@@ -223,4 +225,19 @@ plaintext before it); the lab's stderr filter no longer holds prompts back (`2f8
 
 ¹ Delivered once and decrypted, but the sender device's trust (here: `distrusted`) does not reach
 the indexed message, so a reader cannot tell it from a verified one — ADR 0006 §6 promises it.
-Follow-up issue.
+Follow-up issue #105.
+
+**Dino, 2026-10-30.** curlew `feat/omemo-lab` (PR #104), Dino 0.5 Flatpak, Prosody 13.0. Items
+4–7 checked by the `rid` list in bob's archive plus what Dino and Gajim displayed. Found and fixed
+on the way: curlew published bundle keys as bare 32 bytes. libsignal-based clients read a 32-byte
+key as Ed25519 and convert it, so Dino showed and pinned a wrong fingerprint and curlew could not
+decrypt Dino's first message. Bundle keys now carry the `0x05` prefix as Conversations does, and
+`announceDevice` republishes a bundle still in the old form (`b0cceb2`).
+
+² Not run: bob already had a verified device, and under that condition curlew must not trust a new
+one blindly (item 4). Gajim covered item 3.
+
+³ The first attempt failed in Dino ("Tried to use a different identity key for a known device
+id"): Dino pins the first key it sees per device id and never replaces it, and it had pinned the
+wrong key from before `b0cceb2`. No real account was affected: none had the `xmpp.omemo` grant
+before the fix. After re-adding bob in Dino (item 10) the reset passed in both directions.
