@@ -1,6 +1,8 @@
 # ADR 0004 — sending and writing, granted per capability
 
-- **Status:** Accepted (2026-10-10); amended 2026-10-10, see [Amendment](#amendment-2026-10-10)
+- **Status:** Accepted (2026-10-10); amended 2026-10-10 and 2026-10-30, see
+  [Amendment](#amendment-2026-10-10) and
+  [Amendment 2026-10-30](#amendment-2026-10-30)
 - **Scope:** `@gjsify/mcp` (the gate), `app` (config, MCP server, `curlew send`, `curlew daemon`),
   `@curlew/xmpp`, `@curlew/protocol` (calendar port), `@curlew/gnome` (EDS calendar driver)
 
@@ -180,3 +182,32 @@ The decision above stands. One part of its scope moved out of curlew:
   grants table and from `CAPABILITIES`; a config that still lists it is rejected as an unknown
   capability.
 - The read-only `curlew calendar` command is slated to move to reminder as well.
+
+## Amendment 2026-10-30
+
+Sending is no longer XMPP-only. Every backend gets a send path under the same rule:
+
+- **One capability per backend: `<backend>.send`**, each with the `<account>/<address>` target
+  §1 already specified. `xmpp.send` is simply the first; `mail.send` is the second. A config
+  grant for one backend never authorises another.
+- **The check lives once, in the app's send action**, not in each frontend and not in each
+  backend. `curlew send` and the MCP `send_message` resolve the account to its backend, require
+  a granted `<backend>.send` for the exact pair, and only then open the sender. The MCP gate
+  still takes one capability per tool, so `send_message` is registered by the union of every
+  `*.send` grant under an internal name that no config can spell; the exact backend check
+  remains the action's.
+- **Sending exists only on a handle opened with a permit** (`SendBackend.openSender` in
+  `@curlew/protocol`), the pattern §5 already required for XMPP's `GrantedXmppSession` and
+  Signal's `guardedFetch`. The permit lists the addresses granted for that account and the
+  handle re-checks every one, so a bug above cannot widen a grant. The sync handle has no send
+  method and no way to obtain one.
+- **§7 is unchanged**: one write-log line per message, capability, target, frontend and the
+  network's id — never the text.
+- **Order of work:** mail, then Telegram, Matrix, Signal and WhatsApp, each getting its row in
+  `CAPABILITIES` when its port is built. Until then an unknown `<backend>.send` is still a
+  configuration error, not silently accepted.
+
+The mail path sends one plain-text message over SMTP, with an optional subject, to the granted
+address. Its credentials come from GNOME Online Accounts' SMTP purpose and appear in no log,
+DTO, error or MCP result. Mail has no chat archive here, so a sent message is logged but not
+indexed as a conversation.
