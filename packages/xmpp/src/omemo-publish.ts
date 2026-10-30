@@ -29,6 +29,8 @@ import {
   deviceListQuery,
   parseBundle,
   parseDeviceList,
+  publishedIdentityKey,
+  publishedKey,
 } from './omemo-stanza.ts';
 import type { XmlElement } from './stanza.ts';
 
@@ -79,8 +81,12 @@ export async function announceDevice(
 
   const state = await ensureBundle(storage, device, options);
   // `changed` is false whenever nothing rotated and no prekey was spent. Republishing anyway
-  // would make every peer refetch a bundle that did not move.
-  const bundlePublished = state.changed || deviceListPublished;
+  // would make every peer refetch a bundle that did not move — unless the server's copy is gone
+  // or was written in an older key format.
+  const bundlePublished =
+    state.changed ||
+    deviceListPublished ||
+    !(await bundleOnServerIsCurrent(pep, selfJid, device.deviceId, state.bundle));
   if (bundlePublished) {
     await publish(pep, (open) => bundlePublish(device.deviceId, state.bundle, open));
   }
@@ -150,6 +156,24 @@ export type BundleLookup =
   | { readonly kind: 'bundle'; readonly bundle: DeviceBundle }
   | { readonly kind: 'none' }
   | { readonly kind: 'failed' };
+
+/**
+ * Whether the server holds our bundle as we would publish it now. Compares the identity key text
+ * only: it is what a format change or a lost node shows in. A failed read counts as current —
+ * the next connect asks again, and a connect should not fail over upkeep.
+ */
+async function bundleOnServerIsCurrent(
+  pep: PepPort,
+  selfJid: string,
+  deviceId: DeviceId,
+  bundle: DeviceBundle,
+): Promise<boolean> {
+  try {
+    return publishedIdentityKey(await pep.pepGet(selfJid, bundleQuery(deviceId))) === publishedKey(bundle.identityKey);
+  } catch {
+    return true;
+  }
+}
 
 /** One device's published bundle. */
 export async function fetchBundle(pep: PepPort, jid: string, deviceId: DeviceId): Promise<BundleLookup> {

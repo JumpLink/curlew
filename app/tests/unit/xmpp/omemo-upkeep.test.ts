@@ -6,14 +6,21 @@
  */
 
 import { describe, expect, it } from '@gjsify/unit';
-import { generateKeyPair, LEGACY_PROFILE, MemoryOmemoStorage, toBase64 } from '@curlew/omemo';
+import xml from '@xmpp/xml';
+import { fromBase64, generateKeyPair, LEGACY_PROFILE, MemoryOmemoStorage, toBase64 } from '@curlew/omemo';
 import {
+  announceDevice,
+  bundleNode,
+  bundleQuery,
   deleteConsumedPreKeys,
   ensureBundle,
   ensureOwnDevice,
   hasVerifiedKey,
   loadOwnDevice,
+  NS,
   noteIdentity,
+  parseBundle,
+  publishedIdentityKey,
   SIGNED_PREKEY_PERIOD_MS,
   summarizeDevices,
 } from '@curlew/xmpp';
@@ -21,6 +28,7 @@ import {
 import { decryptAccounts } from '../../../src/core/actions/omemo.ts';
 import { registerOmemoTools } from '../../../src/frontends/mcp/tools/omemo.ts';
 import { createRecorder } from '../mcp/recorder.ts';
+import { fakeNetwork } from './fake-pep.ts';
 
 const START = new Date('2026-01-01T00:00:00Z');
 const alice = { jid: 'alice@example.org', deviceId: 11 };
@@ -90,6 +98,62 @@ export default async function omemoUpkeep(): Promise<void> {
       const refilled = await ensureBundle(storage, device, { now: () => START });
       expect(refilled.changed).toBe(true);
       expect(refilled.bundle.preKeys.length).toBe(LEGACY_PROFILE.preKeyCount);
+    });
+  });
+
+  await describe('bundle on the server', async () => {
+    await it('publishes every public key with the 0x05 prefix, as Conversations does', async () => {
+      const pep = fakeNetwork().port(alice.jid);
+      const storage = new MemoryOmemoStorage();
+      const { device } = await announceDevice(pep, storage, alice.jid, { now: () => START });
+      const published = await pep.pepGet(alice.jid, bundleQuery(device.deviceId));
+      const bundle = published?.getChild('items')?.getChild('item')?.getChild('bundle', NS.omemoLegacy);
+      const keys = [
+        bundle?.getChildText('identityKey', NS.omemoLegacy),
+        bundle?.getChildText('signedPreKeyPublic', NS.omemoLegacy),
+        ...(bundle?.getChild('prekeys', NS.omemoLegacy)?.getChildren('preKeyPublic') ?? []).map((k) =>
+          k.text(),
+        ),
+      ];
+      expect(keys.length).toBe(2 + LEGACY_PROFILE.preKeyCount);
+      for (const key of keys) {
+        const bytes = fromBase64(key ?? '');
+        expect(bytes.length).toBe(33);
+        expect(bytes[0]).toBe(0x05);
+      }
+      expect(toBase64(parseBundle(published)?.identityKey ?? new Uint8Array())).toBe(
+        toBase64(device.identityKey.publicKey),
+      );
+    });
+
+    await it('republishes a bundle the server holds in the bare 32-byte form, once', async () => {
+      const pep = fakeNetwork().port(alice.jid);
+      const storage = new MemoryOmemoStorage();
+      const { device } = await announceDevice(pep, storage, alice.jid, { now: () => START });
+      await pep.pepSet(
+        xml(
+          'pubsub',
+          { xmlns: NS.pubsub },
+          xml(
+            'publish',
+            { node: bundleNode(device.deviceId) },
+            xml(
+              'item',
+              { id: 'current' },
+              xml(
+                'bundle',
+                { xmlns: NS.omemoLegacy },
+                xml('identityKey', {}, toBase64(device.identityKey.publicKey)),
+              ),
+            ),
+          ),
+        ),
+      );
+      const later = { now: () => new Date(START.getTime() + 1000) };
+      expect((await announceDevice(pep, storage, alice.jid, later)).bundlePublished).toBe(true);
+      const held = publishedIdentityKey(await pep.pepGet(alice.jid, bundleQuery(device.deviceId)));
+      expect(fromBase64(held ?? '').length).toBe(33);
+      expect((await announceDevice(pep, storage, alice.jid, later)).bundlePublished).toBe(false);
     });
   });
 

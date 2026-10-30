@@ -40,6 +40,7 @@ import whatsapp from './unit/whatsapp/whatsapp.test.ts';
 import xmpp from './unit/xmpp/xmpp.test.ts';
 import xmppTls from './unit/xmpp/tls.spec.ts';
 import omemoUpkeep from './unit/xmpp/omemo-upkeep.test.ts';
+import pepRead from './unit/xmpp/pep-read.test.ts';
 import omemoSend from './unit/xmpp/omemo-send.test.ts';
 import omemoTrust from './unit/xmpp/omemo-trust.test.ts';
 import omemoArchive from './unit/xmpp/omemo-archive.test.ts';
@@ -107,6 +108,7 @@ run({
   xmpp,
   xmppTls,
   omemoUpkeep,
+  pepRead,
   omemoSend,
   omemoTrust,
   omemoArchive,

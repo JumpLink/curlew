@@ -30,7 +30,10 @@ AES-256-CBC + HMAC-SHA-256 (truncated to 16 bytes) for both payload and ratchet,
 **0.3.0** (2018-07-31), namespace `eu.siacs.conversations.axolotl`: a body-only payload
 encrypted with **AES-128-GCM**, a key element carrying `key ‖ tag` (32 bytes), a Curve25519
 identity key with XEdDSA signatures, libsignal's protobuf wire format, a
-`….devicelist` node and one `….bundles:<device id>` node per device.
+`….devicelist` node and one `….bundles:<device id>` node per device. Every public key in a
+0.3.0 bundle is published as libsignal serializes it, 33 bytes with the `0x05` type byte: Dino
+reads a bare 32-byte key as the OMEMO 2 Ed25519 form and converts it, which breaks the session
+and shows a fingerprint that is not ours (found in the Dino interop run).
 
 | Client | Source checked | Namespace in the code |
 |---|---|---|
@@ -220,8 +223,10 @@ key**, in which case it stays undecided. The same holds for our own other device
 ### 7. Sending: encrypt when the peer has OMEMO, never fall back silently
 
 For a granted `<account>/<address>` (ADR 0004), `curlew send` fetches the peer's device list
-(cached in `omemo.devices`, refreshed when older than one hour or when a message arrives from
-an unknown device):
+(cached in `omemo.devices`). The peer's list is asked for on every send, so a device they
+added is addressed at once; the cache answers only when the server does not. Our own list is
+refreshed when older than one hour. A message that arrives from a device missing in the cached
+list of its sender drops that cache, so the next send asks the server:
 
 | Peer state | What happens |
 |---|---|
@@ -311,7 +316,8 @@ Each stage is shippable on its own; the smallest useful one first. Stages 0–4 
   (Prosody or ejabberd with PEP `persistent-items`, publish-options, `open` access), synthetic
   accounts, and Conversations (on an emulator), Dino and Gajim — first contact both ways, BTBV,
   verification, a carbon from the person's other client, a MAM catch-up after downtime. The
-  checklist lives with the tests. Monal is not tested until someone has an iOS device.
+  checklist lives with the tests ([`app/tests/interop/CHECKLIST.md`](../../app/tests/interop/CHECKLIST.md),
+  the lab: `omemo-lab` next to it). Monal is not tested until someone has an iOS device.
 
 ### Out of scope
 

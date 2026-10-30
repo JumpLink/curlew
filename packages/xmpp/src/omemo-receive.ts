@@ -38,7 +38,7 @@ import {
 } from '@curlew/omemo';
 import type { EncryptedKey, EncryptedStanza } from './omemo-stanza.ts';
 import type { OwnDevice } from './omemo-device.ts';
-import { noteIdentity, type IdentityOutcome } from './omemo-trust.ts';
+import { noteIdentity, type IdentityOutcome, type TrustStorage } from './omemo-trust.ts';
 
 /**
  * Why a message stayed unreadable.
@@ -257,4 +257,23 @@ function reasonFor(err: unknown): UndecryptableReason {
   // reader has nothing to do differently for either: both say the bytes are not what was sent.
   if (isAuthenticationFailedError(err) || isDecryptionFailedError(err)) return 'bad-mac';
   return 'malformed';
+}
+
+/**
+ * Drop a JID's cached device list when one of its devices speaks that the list does not name.
+ *
+ * A device that sent us a message exists, so a list without it is out of date (ADR 0006 §7): the
+ * next send asks the server and the new device gets a key. A JID with no cached list is left
+ * alone — there is nothing stale to drop. Returns whether the cache was dropped.
+ */
+export async function noteSenderDevice(
+  storage: TrustStorage,
+  jid: string,
+  deviceId: DeviceId,
+): Promise<boolean> {
+  if (storage.deleteDeviceList === undefined) return false;
+  const cached = await storage.loadDeviceList(jid);
+  if (cached === undefined || cached.deviceIds.includes(deviceId)) return false;
+  await storage.deleteDeviceList(jid);
+  return true;
 }

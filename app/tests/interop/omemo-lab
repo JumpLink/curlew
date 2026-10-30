@@ -1,0 +1,252 @@
+#!/usr/bin/env bash
+# omemo-lab — a throwaway local XMPP server (Prosody in podman) plus an isolated curlew profile,
+# for the live OMEMO interop checks of ADR 0006 §Tests. Steps by hand: CHECKLIST.md.
+#
+# Everything is synthetic: accounts alice (curlew), bob (the peer client) and carol (a peer
+# without OMEMO), random passwords, a self-signed certificate for `localhost`. curlew runs with
+# its OWN XDG_DATA_HOME / XDG_CONFIG_HOME under the lab directory, so the real index, secrets
+# and config — and the real curlew-daemon — are never touched.
+# jq filters are single-quoted on purpose: their $variables are jq's, not the shell's.
+# shellcheck disable=SC2016
+set -euo pipefail
+
+IMAGE=docker.io/prosodyim/prosody:13.0
+NAME=curlew-omemo-lab
+DOMAIN=localhost
+USERS=(alice bob carol)
+PORT_STARTTLS="${OMEMO_LAB_PORT_STARTTLS:-5222}"
+PORT_DIRECT="${OMEMO_LAB_PORT_DIRECT:-5223}"
+LAB="${OMEMO_LAB_DIR:-${XDG_RUNTIME_DIR:-/tmp}/curlew-omemo-lab}"
+MARKER=.curlew-omemo-lab
+
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo="$(cd "$here/../../.." && pwd)"
+bundle="${OMEMO_LAB_BUNDLE:-$repo/app/dist/curlew.gjs.mjs}"
+gjsify_bin="${OMEMO_LAB_GJSIFY:-$repo/node_modules/.bin/gjsify}"
+[[ -x $gjsify_bin ]] || gjsify_bin="$(command -v gjsify || true)"
+
+usage() {
+  cat <<USAGE
+Usage: omemo-lab <command>
+
+A local Prosody ($IMAGE) on 127.0.0.1 only, three synthetic accounts
+(alice@$DOMAIN = curlew, bob@$DOMAIN = the peer, carol@$DOMAIN = peer without OMEMO) and a
+separate curlew profile. The real curlew data, config and daemon are never touched.
+
+Commands:
+  up       start the server, create the accounts, log curlew in as alice, write the grants
+  down     remove the container and the whole lab directory
+  status   is the container up, are the accounts there, what curlew holds
+  env      print the export lines that point curlew at the lab (eval "\$(omemo-lab env)")
+
+Environment:
+  OMEMO_LAB_DIR            lab directory (default: \${XDG_RUNTIME_DIR:-/tmp}/curlew-omemo-lab)
+  OMEMO_LAB_PORT_STARTTLS  host port for STARTTLS (default 5222)
+  OMEMO_LAB_PORT_DIRECT    host port for direct TLS (default 5223)
+  OMEMO_LAB_BUNDLE         curlew bundle (default app/dist/curlew.gjs.mjs of this checkout;
+                           build it first: gjsify workspace curlew-cli build)
+USAGE
+}
+
+die() { printf 'omemo-lab: %s\n' "$*" >&2; exit 1; }
+say() { printf '%s\n' "$*" >&2; }
+
+# ── the hard guard: the lab can never resolve onto the real curlew state ──────────────────────
+within() { [[ $1 == "$2" || $1 == "$2"/* ]]; }
+
+refuse_real_state() {
+  local lab real candidate
+  lab="$(realpath -m -- "$LAB")"
+  [[ $lab != / && $lab != "$(realpath -m -- "$HOME")" ]] || die "refusing $lab as the lab directory"
+  local -a reals=()
+  local base
+  for base in "$HOME/.local/share" "$HOME/.config" "${XDG_DATA_HOME:-}" "${XDG_CONFIG_HOME:-}"; do
+    [[ -n $base ]] || continue
+    # Skip what the lab itself exported earlier (`eval "$(omemo-lab env)"`): those are not real.
+    within "$(realpath -m -- "$base")" "$lab" && continue
+    reals+=("$(realpath -m -- "$base")/curlew" "$(realpath -m -- "$base")/postbote")
+  done
+  for real in "${reals[@]}"; do
+    for candidate in "$lab" "$lab/data/curlew" "$lab/data/postbote" "$lab/config/curlew" "$lab/config/postbote"; do
+      candidate="$(realpath -m -- "$candidate")"
+      if within "$candidate" "$real" || within "$real" "$candidate"; then
+        die "refusing: $candidate overlaps the real curlew state $real"
+      fi
+    done
+  done
+}
+
+# ── curlew, pointed at the lab ──────────────────────────────────────────────────────────────
+# `gjsify run` echoes its (very long) command line as its first stderr line. Drop that line and
+# pass the rest through as it comes: a line filter such as grep held back every prompt until
+# Enter, because a prompt has no newline yet — and the typed characters echo on stderr too.
+STDERR_FILTER='$|=1; my $h = ""; while (sysread STDIN, my $c, 4096) { if (!defined $h) { print $c; next } $h .= $c; my $i = index $h, "\n"; next if $i < 0; my $first = substr $h, 0, $i + 1; print $first if $first !~ /^\$ /; print substr $h, $i + 1; undef $h } print $h if defined $h'
+
+curlew_lab() {
+  [[ -n $gjsify_bin ]] || die "gjsify not found — run gjsify install (or set OMEMO_LAB_GJSIFY)"
+  [[ -f $bundle ]] || die "no curlew bundle at $bundle — build it: gjsify workspace curlew-cli build"
+  local -a unset_args=()
+  local var
+  while IFS= read -r var; do unset_args+=(-u "$var"); done < <(compgen -e | grep -E '^(CURLEW|POSTBOTE)_' || true)
+  # No session bus: GNOME Online Accounts would hand curlew the REAL mailboxes (and the unpinned bus
+  # made `sync` hang on them). The lab speaks XMPP only.
+  env "${unset_args[@]}" LC_ALL=C LANGUAGE= DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent \
+    XDG_DATA_HOME="$LAB/data" XDG_CONFIG_HOME="$LAB/config" XDG_DOWNLOAD_DIR="$LAB/download" \
+    "$gjsify_bin" run "$bundle" "$@" 2> >(perl -e "$STDERR_FILTER" >&2)
+}
+
+# podman keeps its storage under XDG_DATA_HOME: after `eval "$(omemo-lab env)"` that would be the lab
+# directory, and the container would "vanish". podman always sees the real environment.
+pm() { env -u XDG_DATA_HOME -u XDG_CONFIG_HOME -u XDG_DOWNLOAD_DIR podman "$@"; }
+in_container() { pm exec "$NAME" "$@"; }
+container_exists() { pm container exists "$NAME"; }
+container_running() { [[ "$(pm inspect -f '{{.State.Running}}' "$NAME" 2>/dev/null || true)" == true ]]; }
+
+wait_for_server() {
+  for _ in $(seq 1 100); do
+    if in_container prosodyctl status >/dev/null 2>&1 \
+      && (: >"/dev/tcp/127.0.0.1/$PORT_STARTTLS") 2>/dev/null; then
+      return 0
+    fi
+    sleep 0.3
+  done
+  pm logs --tail 30 "$NAME" >&2 || true
+  die "prosody did not come up"
+}
+
+# edit_config <jq filter> [jq args…] — rewrite the lab's config.json atomically, 0600.
+edit_config() {
+  local filter="$1" config="$LAB/config/curlew/config.json" tmp
+  shift
+  tmp="$(mktemp "$LAB/config.XXXXXX")"
+  jq "$@" "$filter" "$config" >"$tmp"
+  mv "$tmp" "$config"
+  chmod 0600 "$config"
+}
+
+account_id() {
+  curlew_lab accounts list --backend xmpp --json 2>/dev/null \
+    | jq -r --arg jid "alice@$DOMAIN" '[.. | objects | select(.identity? == $jid) | .id][0] // empty'
+}
+
+cmd_up() {
+  refuse_real_state
+  command -v podman >/dev/null || die "podman is required"
+  command -v openssl >/dev/null || die "openssl is required"
+  command -v jq >/dev/null || die "jq is required"
+  ! container_exists || die "container $NAME exists — run: omemo-lab down"
+  [[ ! -e $LAB ]] || die "$LAB exists — run: omemo-lab down"
+  for port in "$PORT_STARTTLS" "$PORT_DIRECT"; do
+    if (: >"/dev/tcp/127.0.0.1/$port") 2>/dev/null; then die "port $port is already in use"; fi
+  done
+
+  umask 077
+  mkdir -p "$LAB"/{data,config,download,certs,passwords}
+  : >"$LAB/$MARKER"
+  say "lab directory: $LAB"
+
+  # The certificate is for the XMPP domain `localhost`; clients check the domain, not the address.
+  openssl req -x509 -newkey rsa:2048 -nodes -days 30 -subj "/CN=$DOMAIN" \
+    -addext "subjectAltName=DNS:$DOMAIN" -addext "basicConstraints=critical,CA:TRUE" \
+    -keyout "$LAB/certs/$DOMAIN.key" -out "$LAB/certs/$DOMAIN.crt" 2>/dev/null
+  chmod 0644 "$LAB/certs/$DOMAIN.crt"
+  # Readable inside the container by the prosody user — the key of a throwaway localhost server,
+  # in a 0700 directory.
+  chmod 0644 "$LAB/certs/$DOMAIN.key"
+
+  local user
+  for user in "${USERS[@]}"; do
+    openssl rand -hex 12 >"$LAB/passwords/$user"
+    chmod 0600 "$LAB/passwords/$user"
+  done
+
+  pm create --name "$NAME" \
+    -p "127.0.0.1:$PORT_STARTTLS:5222" -p "127.0.0.1:$PORT_DIRECT:5223" "$IMAGE" >/dev/null
+  pm cp "$here/prosody.cfg.lua" "$NAME:/etc/prosody/prosody.cfg.lua"
+  pm cp "$LAB/certs/$DOMAIN.crt" "$NAME:/etc/prosody/certs/$DOMAIN.crt"
+  pm cp "$LAB/certs/$DOMAIN.key" "$NAME:/etc/prosody/certs/$DOMAIN.key"
+  pm start "$NAME" >/dev/null
+  wait_for_server
+
+  for user in "${USERS[@]}"; do
+    in_container prosodyctl register "$user" "$DOMAIN" "$(<"$LAB/passwords/$user")" >/dev/null
+  done
+  say "prosody up: STARTTLS 127.0.0.1:$PORT_STARTTLS, direct TLS 127.0.0.1:$PORT_DIRECT, accounts: ${USERS[*]}"
+
+  # curlew's side: its own profile. The backend goes through the registry like for anybody.
+  curlew_lab backends enable xmpp >/dev/null
+  # The server's CA is a setting of the XMPP backend, so it must be there BEFORE the first login.
+  # curlew still checks the certificate against the XMPP domain; this only adds the lab's own CA.
+  # The default config enables mail (GNOME Online Accounts = the REAL mailboxes): off in the lab.
+  edit_config '.backends.mail.enabled = false | .backends.xmpp.settings.tlsCaFile = $ca' --arg ca "$LAB/certs/$DOMAIN.crt"
+  printf '%s\n%s\n%s\n' "alice@$DOMAIN" "$(<"$LAB/passwords/alice")" "xmpps://127.0.0.1:$PORT_DIRECT" \
+    | curlew_lab accounts add xmpp >/dev/null
+  local id
+  id="$(account_id)"
+  [[ -n $id ]] || die "curlew did not list the account alice@$DOMAIN after the login"
+  [[ -f $LAB/data/curlew/secrets/xmpp/$id.db ]] || die "the account file is not under the lab directory"
+
+  # Grants (ADR 0004): OMEMO for alice's account, sending only alice -> bob and alice -> carol.
+  edit_config '.grants = [
+      {capability: "xmpp.omemo", target: $id},
+      {capability: "xmpp.send", target: ($id + "/bob@" + $d)},
+      {capability: "xmpp.send", target: ($id + "/carol@" + $d)}
+    ]' --arg id "$id" --arg d "$DOMAIN"
+
+  say "curlew account: $id (alice@$DOMAIN), grants: xmpp.omemo, xmpp.send to bob and carol"
+  say "next: eval \"\$($0 env)\"  — then see CHECKLIST.md"
+}
+
+cmd_down() {
+  if container_exists; then
+    pm rm -f "$NAME" >/dev/null
+    say "container $NAME removed"
+  fi
+  if [[ -e $LAB ]]; then
+    [[ -f $LAB/$MARKER ]] || die "$LAB has no $MARKER marker — not removing it"
+    refuse_real_state
+    rm -rf -- "$LAB"
+    say "lab directory removed"
+  fi
+}
+
+cmd_status() {
+  if container_running; then
+    say "container: $NAME running ($IMAGE), 127.0.0.1:$PORT_STARTTLS (STARTTLS), :$PORT_DIRECT (direct TLS)"
+    say "accounts:  $(in_container prosodyctl shell user list "$DOMAIN" 2>/dev/null | grep -c "@$DOMAIN" || true) on $DOMAIN"
+  elif container_exists; then
+    say "container: $NAME exists but is not running"
+  else
+    say "container: none"
+  fi
+  if [[ -d $LAB ]]; then
+    say "lab dir:   $LAB"
+    local n
+    n="$(find "$LAB/data/curlew/secrets/xmpp" -name 'xmpp-*.db' 2>/dev/null | wc -l)"
+    say "curlew:    $n account file(s) in the lab profile"
+  else
+    say "lab dir:   none"
+  fi
+}
+
+cmd_env() {
+  [[ -d $LAB ]] || die "no lab — run: omemo-lab up"
+  refuse_real_state
+  local var
+  while IFS= read -r var; do printf 'unset %s\n' "$var"; done < <(compgen -e | grep -E '^(CURLEW|POSTBOTE)_' || true)
+  printf 'export XDG_DATA_HOME=%q\n' "$LAB/data"
+  printf 'export XDG_CONFIG_HOME=%q\n' "$LAB/config"
+  printf 'export XDG_DOWNLOAD_DIR=%q\n' "$LAB/download"
+  printf 'export DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent\n'
+  printf 'curlew() { %q run %q "$@" 2> >(perl -e %q >&2); }\n' "$gjsify_bin" "$bundle" "$STDERR_FILTER"
+}
+
+case "${1:-}" in
+  up) cmd_up ;;
+  down) cmd_down ;;
+  status) cmd_status ;;
+  env) cmd_env ;;
+  -h | --help | help) usage ;;
+  '') usage >&2; exit 2 ;;
+  *) usage >&2; die "unknown command: $1" ;;
+esac
