@@ -32,7 +32,7 @@ import type {
   DeliverySession,
   ParticipantAddress,
 } from '@curlew/protocol';
-import { chatConversationId, classifyChatMessage } from './chat-sync.ts';
+import { chatConversationId, classifyChatMessage, LOCAL_ECHO_PREFIX } from './chat-sync.ts';
 import type { IndexDatabase } from './db.ts';
 import { insertMany, placeholders, type SqlValue, withTransaction } from './db.ts';
 import { upsertAccount } from './index-store.ts';
@@ -284,6 +284,12 @@ class DeliveryBatch {
    */
   readonly peerReadByRemoteId = new Set<string>();
   readonly chatRead = new Map<string, number>();
+  /**
+   * The messages in this batch that carry a sender-given id, by that id → the row id they will be
+   * written under. They replace curlew's own local echoes; the row id leads back to the pending
+   * message because the echo may hold text the delivered copy does not.
+   */
+  readonly clientIds = new Map<string, string>();
   readonly touchedChats = new Set<string>();
   readonly touchedPeers = new Set<string>();
   readonly members = new Map<string, SqlValue[]>();
@@ -367,6 +373,7 @@ class DeliveryBatch {
         if (!message.fromSelf && message.sender) this.member(chatRemoteId, message.sender);
         const id = this.rowId(chatRemoteId, message.remoteId);
         this.deletedMessages.delete(id);
+        if (message.clientId) this.clientIds.set(message.clientId, id);
         if (!this.messages.has(id)) this.added++;
         this.messages.set(id, {
           chatRemoteId,
@@ -474,6 +481,37 @@ function runIn(
     const chunk = ids.slice(i, i + IN_CHUNK);
     db.prepare(sql(placeholders(chunk.length))).run(...lead, ...chunk);
   }
+}
+
+/**
+ * The delivered copy of a message curlew sent replaces the local echo written at send time.
+ *
+ * Matched on the sender-given id the mapper put on the message, which is the id the send path
+ * returned and stored the echo under (`local:<id>`). The echo may hold a body the delivered copy
+ * does not, so it is adopted into the pending message before its row is built — the row's column
+ * order differs from the archive engine's, so the body is taken here and not on the row.
+ */
+function adoptLocalEchoes(db: IndexDatabase, batch: DeliveryBatch): void {
+  if (batch.clientIds.size === 0) return;
+  const echoes = db
+    .prepare(
+      `SELECT id, remote_id, body FROM conversation_messages
+         WHERE backend = ? AND account_id = ? AND remote_id LIKE ?`,
+    )
+    .all(batch.backend, batch.accountId, `${LOCAL_ECHO_PREFIX}%`) as Array<Record<string, unknown>>;
+  const gone: string[] = [];
+  for (const echo of echoes) {
+    const remoteId = String(echo.remote_id);
+    if (!remoteId.startsWith(LOCAL_ECHO_PREFIX)) continue;
+    const rowId = batch.clientIds.get(remoteId.slice(LOCAL_ECHO_PREFIX.length));
+    const pending = rowId === undefined ? undefined : batch.messages.get(rowId);
+    if (pending === undefined) continue;
+    if (pending.message.text === null && typeof echo.body === 'string' && echo.body.length > 0) {
+      pending.message = { ...pending.message, text: echo.body };
+    }
+    gone.push(String(echo.id));
+  }
+  runIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, gone);
 }
 
 function messageRow(batch: DeliveryBatch, id: string, pending: PendingMessage): SqlValue[] {
@@ -600,6 +638,7 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
   const { backend, accountId, state } = batch;
   const conv = (chatRemoteId: string) => chatConversationId(backend, accountId, chatRemoteId);
   {
+    adoptLocalEchoes(db, batch);
     // Deletions first: words the user or the sender took back must not outlive that here.
     runIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, [...batch.deletedMessages]);
     const cleared = [...batch.clearedChats, ...batch.deletedChats].map(conv);

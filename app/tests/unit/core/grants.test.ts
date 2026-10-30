@@ -74,11 +74,11 @@ export default async () => {
         [{ capability: 'calendar.create', target: 'acct' }],
         /"calendar\.create" is not a known capability/,
       );
-      // A backend whose send port is not built yet stays unknown; mail's, Telegram's and
-      // Matrix's are built.
+      // A backend whose send port is not built yet stays unknown; mail's, Telegram's, Matrix's
+      // and Signal's are built.
       rejects(
-        [{ capability: 'signal.send', target: 'acct/peer' }],
-        /"signal\.send" is not a known capability/,
+        [{ capability: 'whatsapp.send', target: 'acct/peer' }],
+        /"whatsapp\.send" is not a known capability/,
       );
       rejects([{ capability: '*', target: 'acct' }], /not a known capability/);
     });

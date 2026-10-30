@@ -3,9 +3,11 @@ import { describe, expect, it } from '@gjsify/unit';
 import { MAX_CHUNK_CHARS, renderForXmpp, renderPlainText, stripQuotes } from '../../../src/core/markdown.ts';
 import { TELEGRAM_MAX_MESSAGE_CHARS as BACKEND_LIMIT } from '@curlew/telegram';
 import { MATRIX_MAX_MESSAGE_BYTES as MATRIX_BACKEND_LIMIT } from '@curlew/matrix';
+import { SIGNAL_MAX_MESSAGE_BYTES as SIGNAL_BACKEND_LIMIT } from '@curlew/signal';
 import {
   MATRIX_MAX_MESSAGE_BYTES,
   messagingCapabilities,
+  SIGNAL_MAX_MESSAGE_BYTES,
   TELEGRAM_MAX_MESSAGE_CHARS,
 } from '../../../src/core/actions/messaging.ts';
 import { WAIT_TIMEOUT_S } from '../../../src/core/actions/wait-reply.ts';
@@ -108,7 +110,7 @@ export default async () => {
   await describe('messaging_capabilities', async () => {
     await it('reports the XMPP limits without any address', async () => {
       const caps = messagingCapabilities('/nonexistent/curlew-config.json').protocols;
-      expect(caps.length).toBe(3);
+      expect(caps.length).toBe(4);
       const xmpp = caps[0];
       expect(xmpp.protocol).toBe('xmpp');
       expect(xmpp.maxMessageChars).toBe(8000);
@@ -144,6 +146,19 @@ export default async () => {
       expect(matrix.splitsLongText).toBe(false);
       expect(matrix.images.supported).toBe(false);
       expect(matrix.accounts.length).toBe(0);
+    });
+
+    await it('reports Signal as plain text, 2048 bytes, no splitting, no image', async () => {
+      const signal = messagingCapabilities('/nonexistent/curlew-config.json').protocols[3];
+      expect(signal.protocol).toBe('signal');
+      expect(signal.maxMessageBytes).toBe(SIGNAL_MAX_MESSAGE_BYTES);
+      expect(SIGNAL_MAX_MESSAGE_BYTES).toBe(SIGNAL_BACKEND_LIMIT);
+      expect(SIGNAL_BACKEND_LIMIT).toBe(2048);
+      expect(signal.maxMessageChars).toBe(SIGNAL_MAX_MESSAGE_BYTES);
+      expect(signal.formats.join()).toBe('plain');
+      expect(signal.splitsLongText).toBe(false);
+      expect(signal.images.supported).toBe(false);
+      expect(signal.accounts.length).toBe(0);
     });
   });
 };

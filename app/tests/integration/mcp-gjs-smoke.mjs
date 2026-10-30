@@ -284,6 +284,32 @@ for (const canary of DROPPED) {
 }
 console.log('OK: a matrix.send grant alone serves send_message and nothing else that writes');
 
+const signalGrantsFile = join(scratch, 'granted-signal.json');
+writeFileSync(
+  signalGrantsFile,
+  JSON.stringify({
+    backends: {},
+    grants: [
+      {
+        capability: 'signal.send',
+        target: 'signal-9f3a1c2e-7b4d-4e18-8c6a-2f5b1d0e3a47/9f3a1c2e-7b4d-4e18-8c6a-2f5b1d0e3a47',
+      },
+    ],
+  }),
+);
+const signalGranted = await listToolNames({
+  CURLEW_MCP_GATE_CANARY: '1',
+  CURLEW_CONFIG: signalGrantsFile,
+});
+assert(
+  signalGranted.includes('send_message'),
+  `send_message not served with a signal.send grant (${signalGranted.join(', ')})`,
+);
+for (const canary of DROPPED) {
+  assert(!signalGranted.includes(canary), `GATE IS OPEN: ${canary} was served — ${signalGranted.join(', ')}`);
+}
+console.log('OK: a signal.send grant alone serves send_message and nothing else that writes');
+
 // The env switch still opens setup_run, and only that.
 const ungated = await listToolNames({ CURLEW_MCP_GATE_CANARY: '1', CURLEW_MCP_ALLOW_WRITE: '1' });
 assert(

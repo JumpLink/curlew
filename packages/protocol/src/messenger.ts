@@ -292,6 +292,16 @@ export interface BackendManifest {
   addressKinds: AddressKind[];
   /** Shown on first enable. Null when there is nothing beyond the provider's usual terms. */
   terms: TermsNotice | null;
+  /**
+   * Sending writes the same local state the receive loop owns, so the two must never run at once.
+   *
+   * True for a backend whose send advances a cryptographic ratchet kept on disk (Signal): the
+   * receive loop has the store open, and a second process writing it clobbers session state —
+   * which costs the account's sessions, not just one message. The app serialises a send for such
+   * a backend through the same receive lease, and refuses rather than racing. A backend that
+   * sends over a stateless request (mail, Matrix, Telegram) leaves this unset.
+   */
+  sendSharesReceiveState?: boolean;
 }
 
 /**
@@ -323,6 +333,9 @@ export function validateManifest(manifest: BackendManifest): string[] {
   }
   if (manifest.terms !== null && !manifest.terms?.summary?.trim()) {
     problems.push('terms is set but has no summary — pass null when there is nothing to show');
+  }
+  if (manifest.sendSharesReceiveState !== undefined && typeof manifest.sendSharesReceiveState !== 'boolean') {
+    problems.push('sendSharesReceiveState is set but is not a boolean — omit it when sending is stateless');
   }
   return problems;
 }

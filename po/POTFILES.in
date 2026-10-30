@@ -147,6 +147,7 @@ packages/signal/src/provisioning.ts
 packages/signal/src/qr.ts
 packages/signal/src/receiver.ts
 packages/signal/src/schema.ts
+packages/signal/src/send.ts
 packages/smtp/src/errors.ts
 packages/smtp/src/index.ts
 packages/smtp/src/message.ts

@@ -427,9 +427,11 @@ export class SignalProtocolStore {
       if (!id) throw new Error('the Signal session has no registration id');
       return Number(id);
     },
-    // Read-only client: every identity is accepted. curlew never sends, so there is no message a
-    // changed key could leak to the wrong person — but a change is not swallowed: `saveIdentity`
-    // records it and the conversation shows a "safety number changed" notice.
+    // Every identity is accepted HERE, because this answer also governs reading: a message that
+    // was already sent cannot be unsent, and refusing to decrypt it would only hide it. A change
+    // is not swallowed — `saveIdentity` records it, the conversation shows a "safety number
+    // changed" notice, and the send path (`send.ts`) refuses a message to a key that changed as
+    // part of that send, which is the direction where "ask first" still prevents something.
     isTrustedIdentity: async (): Promise<boolean> => true,
     saveIdentity: async (address: Address, key: Core.PublicKey): Promise<Core.IdentityChange> => {
       const previous = this.get(NS.identity, address.name());

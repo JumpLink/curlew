@@ -4,7 +4,8 @@
   [Amendment](#amendment-2026-10-10) and
   [Amendment 2026-10-30](#amendment-2026-10-30) and
   [Amendment (2026-10-30, telegram)](#amendment-2026-10-30-telegram) and
-  [Amendment (2026-10-30, matrix)](#amendment-2026-10-30-matrix)
+  [Amendment (2026-10-30, matrix)](#amendment-2026-10-30-matrix) and
+  [Amendment (2026-10-30, signal)](#amendment-2026-10-30-signal)
 - **Scope:** `@gjsify/mcp` (the gate), `app` (config, MCP server, `curlew send`, `curlew daemon`),
   `@curlew/xmpp`, `@curlew/protocol` (calendar port), `@curlew/gnome` (EDS calendar driver)
 
@@ -240,3 +241,59 @@ room's members cannot read and a leak past the encryption they chose. The read g
 separate `sendFetch` that `MatrixBackend.openSender` wraps around the permit's rooms, so the sync
 and read handles have no way to send. The sent message is indexed as a local echo and the next sync
 replaces it by its event id (`ChatMessage.clientId` of your own events).
+
+## Amendment (2026-10-30, signal)
+
+`signal.send` is built. Its target is `<account>/<ACI>` with the chat's remote id exactly as the
+index and `conversations_list` show it — the peer's ACI, the bare UUID, for example
+`signal-0b1c…/9f3a1c2e-…`. It sends one plain-text `DataMessage` of at most 2048 UTF-8 bytes
+(Signal-Desktop's `MAX_MESSAGE_BODY_BYTE_LENGTH`); a longer body would need a long-message
+attachment, which curlew does not upload, so it is refused rather than split. There is no
+Markdown and no image.
+
+**Groups are refused.** A group message needs the member list and the group's credentials from
+Signal's storage service, which curlew does not sync, so a `group:<base64 id>` target is turned
+away with that sentence rather than half-attempted.
+
+**Sealed sender is not used.** Nothing in `@curlew/signal` fetches or stores a sender certificate,
+so every copy goes out as an ordinary authenticated `PUT /v1/messages/{serviceId}`. The recipient
+sees the sender, which Signal's own clients would hide.
+
+**A send takes the receive lease.** The double-ratchet state lives in one secret file with no
+lock, and the daemon loads it whole; two writers would leave the session somewhere neither side
+can decrypt from, and no retry repairs a broken ratchet. So the app takes the same receive lease
+the daemon takes (ADR 0002 §4) around the whole send, and a send while the daemon holds the
+account is **refused** with the holder named and `curlew daemon stop` as the way out. A refusal
+is the point: with the daemon running, every CLI send is refused, and the user stops it or sends
+from their phone. The lease is taken in `app/src/core/actions/send.ts`, not in the backend — the
+lease lives in the index, which `@curlew/store` must never let a backend reach — and which
+backends need it is a new manifest field, `sendSharesReceiveState`. There is no heartbeat during
+a send: a send is seconds and the lease goes stale after 90 s, so a send that hangs far longer
+than that could in principle be overtaken.
+
+**Two gates, not one.** The receive phase gate in `guard.ts` is unchanged and still knows no send
+endpoint at all. The sender gets a *separate* guarded transport, built per permit, that allows
+exactly `GET /v2/keys/{id}/{device|*}` and `PUT /v1/messages/{id}` and only for the ids the permit
+names plus this account's own ACI — nothing else becomes reachable with a permit in hand, and the
+receive session is handed no send channel.
+
+**The fan-out is the message.** Every device of the recipient gets its own ciphertext, 409
+(mismatched devices) and 410 (stale devices) are corrected by forgetting the affected sessions and
+re-reading the server's device list, up to three times. Ratchet state is flushed only after a 2xx:
+state the server rejected must not survive, or the recipient's next message is undecryptable. A
+`SyncMessage.Sent` transcript then goes to this account's **other** devices so the message appears
+on the phone; curlew excludes itself, as Signal-Desktop does. The transcript is best-effort — if
+it fails the message still counts as sent and the gap is reported as `sendWarning`, because
+failing the call would get the message sent twice on a retry. A note to self is the transcript
+alone, and is refused when the account has no other device.
+
+**A changed safety number is refused.** The receive path still trusts every identity (an arrived
+message cannot be unsent), but sending to a key the user has not confirmed is exactly what a
+safety number is for. The new key is stored before the refusal, so sending again is the
+acknowledgement.
+
+The sent message is indexed as a local echo whose id is `<own ACI>:<sent timestamp>` — what the
+receive path uses as the remote id of your own messages — so a transcript that comes back from a
+linked device replaces the echo (`ChatMessage.clientId`) instead of adding a second copy. Unlike
+Matrix and Telegram this is a safety net rather than the normal path: Signal does not deliver a
+transcript back to the device that sent it.

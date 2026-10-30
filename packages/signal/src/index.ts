@@ -22,5 +22,6 @@ export * from './contacts.ts';
 export * from './receiver.ts';
 export * from './provisioning.ts';
 export * from './net.ts';
+export * from './send.ts';
 export * from './link.ts';
 export * from './backend.ts';
