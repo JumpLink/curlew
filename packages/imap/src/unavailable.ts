@@ -26,7 +26,9 @@ import {
   type MailMessageDTO,
   type MailPartDTO,
   type MailSummaryDTO,
+  type MessageSender,
   type SearchMailOptions,
+  type SendPermit,
 } from '@curlew/protocol';
 import { MAIL_MANIFEST } from './manifest.ts';
 
@@ -66,6 +68,11 @@ export class ImapBackend {
   }
 
   async connect(): Promise<never> {
+    throw new GnomeUnavailableError(GJS_REQUIRED_MESSAGE);
+  }
+
+  /** The send port exists on both entries so the app type-checks; sending needs the GJS socket. */
+  async openSender(_accountId: string, _permit: SendPermit): Promise<MessageSender> {
     throw new GnomeUnavailableError(GJS_REQUIRED_MESSAGE);
   }
 }

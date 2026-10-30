@@ -74,7 +74,11 @@ export default async () => {
         [{ capability: 'calendar.create', target: 'acct' }],
         /"calendar\.create" is not a known capability/,
       );
-      rejects([{ capability: 'mail.send', target: 'acct' }], /"mail\.send" is not a known capability/);
+      // A backend whose send port is not built yet stays unknown, mail's does not.
+      rejects(
+        [{ capability: 'telegram.send', target: 'acct/peer' }],
+        /"telegram\.send" is not a known capability/,
+      );
       rejects([{ capability: '*', target: 'acct' }], /not a known capability/);
     });
 
@@ -85,10 +89,18 @@ export default async () => {
       rejects([{ capability: 'xmpp.send', target: 'bot/*' }], /wildcards are not allowed/);
     });
 
-    await it('xmpp.send needs an <account>/<address> pair', async () => {
-      rejects([{ capability: 'xmpp.send', target: 'bot' }], /"<account>\/<address>"/);
-      rejects([{ capability: 'xmpp.send', target: '/person@example.org' }], /"<account>\/<address>"/);
-      rejects([{ capability: 'xmpp.send', target: 'bot/' }], /"<account>\/<address>"/);
+    await it('every <backend>.send needs an <account>/<address> pair', async () => {
+      for (const capability of ['xmpp.send', 'mail.send']) {
+        rejects([{ capability, target: 'bot' }], /"<account>\/<address>"/);
+        rejects([{ capability, target: '/person@example.org' }], /"<account>\/<address>"/);
+        rejects([{ capability, target: 'bot/' }], /"<account>\/<address>"/);
+      }
+    });
+
+    await it('accepts mail.send with an account and an address', async () => {
+      const grants = parseGrants([{ capability: 'mail.send', target: 'acct/person@example.org' }]);
+      expect(isGranted(grants, 'mail.send', 'acct/person@example.org')).toBe(true);
+      expect(isGranted(grants, 'xmpp.send', 'acct/person@example.org')).toBe(false);
     });
 
     await it('canary.write is accepted only while the canary env is on', async () => {

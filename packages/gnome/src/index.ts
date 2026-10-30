@@ -14,4 +14,4 @@
 export { check, describeUnavailable, listAccounts } from './goa.gjs.ts';
 export { searchContacts } from './contacts.gjs.ts';
 export { listEvents } from './calendar.gjs.ts';
-export { listMailTargets } from './credentials.gjs.ts';
+export { listMailTargets, listSmtpTargets } from './credentials.gjs.ts';

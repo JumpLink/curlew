@@ -89,6 +89,26 @@ export interface MailTarget {
   getPassword(): string;
 }
 
+/**
+ * Where and how to reach a GOA account's SMTP server. Credentials are a thunk, read per use and
+ * never cached or returned in a DTO — the same rule as `MailTarget.getPassword`.
+ */
+export interface SmtpTarget {
+  /** GOA account id — provenance, and the key callers pass back in. */
+  accountId: string;
+  /** The address mail is sent from: the account's own mail address. */
+  from: string;
+  host: string;
+  port: number;
+  user: string;
+  /**
+   * `tls`: TLS from the first byte (465). `starttls`: the upgrade is required (587). `none`:
+   * loopback only, and only for a test's dummy server — `@curlew/smtp` enforces that.
+   */
+  security: 'tls' | 'starttls' | 'none';
+  getPassword(): string;
+}
+
 /** A mail address as parsed from an IMAP ENVELOPE. */
 export interface MailAddress {
   /** Display name (RFC 2047 decoded), or null. */

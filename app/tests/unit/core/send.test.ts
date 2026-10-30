@@ -20,6 +20,7 @@ import { permitFor, recordDelivered, requireSendGrant, sendMessage } from '../..
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
 import { waitReply } from '../../../src/core/actions/wait-reply.ts';
 import { appendWriteLog } from '../../../src/core/write-log.ts';
+import { SEND_GATE_CAPABILITY, withSendGateGrants } from '../../../src/frontends/mcp/tools/send.ts';
 import { freshDb } from '../store/fixtures.ts';
 import { createRecorder } from '../mcp/recorder.ts';
 
@@ -354,6 +355,41 @@ export default async () => {
       };
       expect(bad.isError).toBe(true);
       expect(await rec.handler('send')({ account: ACCOUNT, to: OWNER })).toBe('reached');
+    });
+  });
+
+  await describe('send_message is gated by the union of every <backend>.send grant', async () => {
+    const register = (rec: ReturnType<typeof createRecorder>) =>
+      rec.server.registerTool(
+        'send',
+        requiresCapability(
+          { inputSchema: {}, annotations: { readOnlyHint: false } },
+          {
+            capability: SEND_GATE_CAPABILITY,
+            targetOf: (a: { account: string; to: string }) => `${a.account}/${a.to}`,
+          },
+        ) as never,
+        (async () => 'reached') as never,
+      );
+
+    await it('is dropped with no grant and served by a mail.send grant alone', async () => {
+      const closed = createRecorder();
+      applyGrantGate(closed.server, withSendGateGrants([]));
+      register(closed);
+      expect(closed.names().length).toBe(0);
+
+      const opened = createRecorder();
+      applyGrantGate(
+        opened.server,
+        withSendGateGrants([{ capability: 'mail.send', target: `${ACCOUNT}/${OWNER}` }]),
+      );
+      register(opened);
+      expect(opened.names().join()).toBe('send');
+      expect(await opened.handler('send')({ account: ACCOUNT, to: OWNER })).toBe('reached');
+      const bad = (await opened.handler('send')({ account: ACCOUNT, to: 'x@example.org' })) as {
+        isError?: boolean;
+      };
+      expect(bad.isError).toBe(true);
     });
   });
 

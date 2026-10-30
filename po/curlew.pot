@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-10-29 22:43+0100\n"
+"POT-Creation-Date: 2026-10-30 16:53+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -35,25 +35,51 @@ msgid ""
 "backend {name} uses the {kind} driver, which this curlew cannot sync yet"
 msgstr ""
 
-#: app/src/core/actions/omemo.ts:79 app/src/core/actions/send.ts:124
+#: app/src/core/actions/omemo.ts:79
 msgid "no xmpp account {account} — `curlew accounts list` shows them"
 msgstr ""
 
-#: app/src/core/actions/send.ts:96
+#: app/src/core/actions/send.ts:120
 msgid ""
 "{capability} is not granted for {target} — add {grant} to the grants in the "
 "config file"
 msgstr ""
 
-#: app/src/core/actions/send.ts:108
+#: app/src/core/actions/send.ts:153
+msgid ""
+"sending to {target} is not granted — add a grant like {grant} to the config "
+"file, naming the account and the address"
+msgstr ""
+
+#: app/src/core/actions/send.ts:185
+msgid "no account {account} — `curlew accounts list` shows them"
+msgstr ""
+
+#: app/src/core/actions/send.ts:192
 msgid "the xmpp backend is not available"
 msgstr ""
 
-#: app/src/core/actions/send.ts:117
+#: app/src/core/actions/send.ts:204
+msgid "{backend} cannot send"
+msgstr ""
+
+#: app/src/core/actions/send.ts:208
 msgid "nothing to send: give text, an image URL or both"
 msgstr ""
 
-#: app/src/core/actions/send.ts:137
+#: app/src/core/actions/send.ts:210
+msgid "{backend} messages carry no subject"
+msgstr ""
+
+#: app/src/core/actions/send.ts:218
+msgid "no {backend} account {account} — `curlew accounts list` shows them"
+msgstr ""
+
+#: app/src/core/actions/send.ts:250
+msgid "{backend} cannot send an image — give text and leave image_url out"
+msgstr ""
+
+#: app/src/core/actions/send.ts:257
 msgid "nothing to send: the text is empty after rendering"
 msgstr ""
 
@@ -1015,8 +1041,8 @@ msgstr ""
 
 #: app/src/frontends/cli/send.ts:17
 msgid ""
-"Send a chat message from a granted XMPP account (needs an xmpp.send grant in "
-"the config)"
+"Send a message from a granted account (needs a <backend>.send grant in the "
+"config)"
 msgstr ""
 
 #: app/src/frontends/cli/send.ts:23
@@ -1024,15 +1050,20 @@ msgid "The message, plain text (optional with --image-url)"
 msgstr ""
 
 #: app/src/frontends/cli/send.ts:27
-msgid "https URL of one image, sent as its own message after the text"
+msgid ""
+"XMPP only: https URL of one image, sent as its own message after the text"
 msgstr ""
 
-#: app/src/frontends/cli/send.ts:29
-msgid "XMPP account id (xmpp-…)"
+#: app/src/frontends/cli/send.ts:31
+msgid "Mail only: the subject line"
 msgstr ""
 
 #: app/src/frontends/cli/send.ts:33
-msgid "Bare address exactly as the grant spells it (name@example.org)"
+msgid "Account id from `curlew accounts list`"
+msgstr ""
+
+#: app/src/frontends/cli/send.ts:37
+msgid "Address exactly as the grant spells it (name@example.org)"
 msgstr ""
 
 #: app/src/frontends/cli/setup.ts:34
@@ -1103,6 +1134,14 @@ msgid_plural "{n} warnings"
 msgstr[0] ""
 msgstr[1] ""
 
+#: packages/imap/src/send.ts:52
+msgid "sending to {address} is not granted for account {account}"
+msgstr ""
+
+#: packages/imap/src/send.ts:81
+msgid "no mail account {account} with SMTP — `curlew accounts list` shows them"
+msgstr ""
+
 #: packages/matrix/src/backend.ts:29
 msgid "log in again with `curlew accounts add matrix`"
 msgstr ""
@@ -1115,7 +1154,7 @@ msgstr ""
 msgid "Matrix user (@name:example.org)"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:36 packages/xmpp/src/backend.ts:38
+#: packages/matrix/src/backend.ts:36 packages/xmpp/src/backend.ts:41
 msgid "Password"
 msgstr ""
 
@@ -1430,11 +1469,11 @@ msgid ""
 "keeps it in a 0600 file"
 msgstr ""
 
-#: packages/xmpp/src/backend.ts:37
+#: packages/xmpp/src/backend.ts:40
 msgid "XMPP address (name@example.org)"
 msgstr ""
 
-#: packages/xmpp/src/backend.ts:40
+#: packages/xmpp/src/backend.ts:43
 msgid ""
 "Server address — empty to discover it (e.g. xmpps://xmpp.example.org:5223, "
 "wss://…)"

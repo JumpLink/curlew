@@ -3,9 +3,10 @@
 Send one message, with attachments, over SMTP. A thin, checked layer on
 [nodemailer](https://nodemailer.com) (pinned exactly): no `gi://`, runs on GJS and on Node.
 
-**This is a library capability, not a tool.** curlew's index and its MCP server stay read-only
-and fail-closed; nothing in `app/src/frontends/mcp` sends mail, and nothing here registers one.
-The caller sends, and only with the human's explicit consent for that message.
+**This package is a library; the decision to send is not here.** curlew's mail backend uses it
+behind a saved `mail.send` grant (`SendBackend.openSender` in `@curlew/imap`), and only that
+granted handle reaches `sendMessage`; the index and MCP server stay read-only otherwise. The
+caller sends, and only with the human's explicit consent for that message.
 
 ## API
 
@@ -47,7 +48,9 @@ scrubbed and cut to 200 characters, so a dialog can say what to fix.
 
 ## What it does not do
 
-- No MCP tool, no CLI command: sending is not exposed to an agent.
+- No grant check of its own: `@curlew/imap`'s sender re-checks the permit on every address, and
+  the app checks the exact `<backend>.send` grant before opening it. Nothing here reads the
+  config.
 - No secret in a log, an error text or a result. Credentials are parameters of the call; the
   package reads no file, no environment, no store, and turns the library's loggers off.
 - No `security: 'none'` beyond the loopback, because that sends the password in the clear.

@@ -14,7 +14,10 @@
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
     "noEmit": true,
+    // `node` comes with the @curlew/smtp dependency: tsc checks nodemailer's declarations through
+    // it (Buffer, Error.message). The IMAP transport itself still uses gi:// sockets only.
     "types": [
+      "node",
       "@girs/gjs",
       "@girs/glib-2.0",
       "@girs/gobject-2.0",

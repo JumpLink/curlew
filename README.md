@@ -45,16 +45,19 @@ is built on, which is where this is headed.
   [matrix-js-sdk](https://github.com/matrix-org/matrix-js-sdk) and its Rust
   crypto compiled to WebAssembly. See [Matrix](#matrix).
 
-Everything is **read-only**. Messages are fetched with IMAP `BODY.PEEK`, so
-opening a mail through Curlew never marks it as read. Telegram is read the
-same way: nothing is sent, edited, deleted or marked read. WhatsApp too: no
-message, no read receipt, no online presence (see [WhatsApp](#whatsapp) for the
-one acknowledgement every linked device sends). XMPP likewise — Curlew never
-sends a presence, so contacts do not see it online and your offline messages
-stay queued for your real clients. Matrix too: no presence, no read
-receipt, no typing notice, no message, and no invitation is accepted. Signal
-too: no message, no receipt, no typing notice (see [Signal](#signal) for the
-acknowledgement and the two requests at link time).
+Everything is **read-only unless a grant names it**. Messages are fetched with
+IMAP `BODY.PEEK`, so opening a mail through Curlew never marks it as read.
+Telegram is read the same way: without a grant nothing is sent, edited, deleted
+or marked read. WhatsApp too: no message, no read receipt, no online presence
+(see [WhatsApp](#whatsapp) for the one acknowledgement every linked device
+sends). XMPP likewise — without an `xmpp.send` grant Curlew never sends a
+presence, so contacts do not see it online and your offline messages stay queued
+for your real clients. Matrix too: no presence, no read receipt, no typing
+notice, no message, and no invitation is accepted. Signal too: no message, no
+receipt, no typing notice (see [Signal](#signal) for the acknowledgement and the
+two requests at link time). The only writes are a granted send — one message,
+from one account, to one address, off by default
+(see [Sending](#sending-grants-backendsend)).
 
 ## Requirements
 
@@ -422,11 +425,13 @@ you granted `xmpp.omemo`; without that grant they are indexed without their text
 See [End-to-end encryption](#end-to-end-encryption-grant-xmppomemo) and
 [ADR 0006](docs/adr/0006-omemo-end-to-end-encryption.md).
 
-### Sending (grant `xmpp.send`)
+### Sending (grants `<backend>.send`)
 
-An account can send one-to-one chat messages, but only to an address you
+An account can send one message, but only from an account and to an address you
 granted, as an exact `<account>/<address>` pair (see
-[Your data stays yours](#your-data-stays-yours)):
+[Your data stays yours](#your-data-stays-yours)). Every backend has its own
+capability — `xmpp.send` and `mail.send` today — and one grant never authorises
+another backend:
 
 ```json
 { "grants": [ { "capability": "xmpp.send", "target": "xmpp-abc123/owner@example.org" } ] }
@@ -435,6 +440,8 @@ granted, as an exact `<account>/<address>` pair (see
 ```bash
 curlew send --account xmpp-abc123 --to owner@example.org "Build is green"
 ```
+
+#### XMPP
 
 An image goes with `--image-url https://…` (text optional). The URL is sent as
 its own message after the text: body = the URL plus an out-of-band reference
@@ -446,8 +453,10 @@ same `xmpp.send` grant covers it.
 
 The MCP server offers the same as `send_message` (`account`, `to`, `text`,
 `image_url`; at least one of the last two) —
-only when a matching grant exists; without one the tool is not even listed and
-the server stays read-only. The answer carries `conversationId`, `sentAt` and `originId`.
+only when some `<backend>.send` grant exists; without one the tool is not even
+listed and the server stays read-only. The action then checks the exact backend
+named by the account, so a `mail.send` grant does not let an agent write over
+XMPP. For XMPP the answer carries `conversationId`, `sentAt` and `originId`.
 `send_message` also takes `format`: `plain` (default, the text goes out as is) or
 `markdown`. Markdown is rendered as XEP-0393 message styling (other protocols would get
 a plain-text degradation), an image link on its own line becomes an image message, and a
@@ -461,6 +470,20 @@ request (XEP-0184) and `markable`; it is stored in the index as your own
 message, and the archive's copy replaces that local echo on the next sync.
 Every send is logged (time, grant, target, never the text) to
 `$XDG_DATA_HOME/curlew/writes.log`.
+
+#### Mail
+
+`mail.send` sends one plain-text mail with an optional `--subject` (or
+`subject` in `send_message`). The recipient is the granted address and the
+sender is the account's own address from GNOME Online Accounts; the SMTP
+credentials come from GOA too and appear in no output, log or error. There is
+no HTML and no attachment, and a sent mail is not indexed as a conversation —
+the answer has `sentAt` and the message id, no `conversationId`:
+
+```bash
+curlew send --account <goa-account-id> --to owner@example.org \
+  --subject "Build is green" "All tests passed."
+```
 
 **Waiting for a reply.** Run `curlew daemon`: for granted XMPP accounts it
 stays connected, enables carbons (XEP-0280) and catches up from the archive on
@@ -646,8 +669,8 @@ systemctl --user restart curlew-daemon
 
 Anything else exits 0, including a plain `systemctl stop`.
 
-What the daemon does **not** do: send anything, mark anything read, or touch a
-server-archive backend. It is the same read-only curlew, connected all the
+What the daemon does **not** do: send a message, mark anything read, or touch a
+server-archive backend. It is the same fail-closed curlew, connected all the
 time. See [ADR 0002](docs/adr/0002-receiving-daemon.md) for why each piece is
 the way it is.
 
@@ -657,11 +680,14 @@ the way it is.
 `mail_search`, `mail_get_message`, `mail_list_folders`, `mail_list_parts`,
 `mail_save_attachment`, `mail_search_local`, `mail_sync_status`,
 `conversations_list`, `conversations_get`, `contacts_search`,
-`calendar_list_events` and `accounts_list`.
+`calendar_list_events` and `accounts_list` — plus `send_message` when some
+`<backend>.send` grant exists.
 
 The server is read-only by default and **fails closed**: a tool is registered
-only if it declares itself read-only, so a future tool that forgets the
-annotation is silently withheld rather than silently exposed.
+only if it declares itself read-only or a grant names its capability, so a
+future write tool that forgets its annotation is withheld rather than silently
+exposed. `send_message` appears only when some `<backend>.send` grant exists,
+and every call is checked against the exact `<account>/<address>` pair.
 
 See [`.mcp.json`](.mcp.json) for a working registration.
 
@@ -687,12 +713,15 @@ unknown capability is an error when the file loads.
 ```json
 {
   "grants": [
-    { "capability": "xmpp.send", "target": "<account>/<address>" }
+    { "capability": "xmpp.send", "target": "<account>/<address>" },
+    { "capability": "mail.send", "target": "<account>/<address>" }
   ]
 }
 ```
 
-Today `xmpp.send` is the only capability a command or tool uses (see [Sending](#sending-grant-xmppsend)).
+`xmpp.send` and `mail.send` are the capabilities a command or tool uses today
+(see [Sending](#sending-grants-backendsend)); a later backend gets its own
+`<backend>.send` row when it is built, and an unknown one is a config error.
 
 Chat sessions (Telegram, WhatsApp, Matrix — including Matrix's crypto store) and
 chat passwords (XMPP) are **secrets**, kept apart from the index under

@@ -74,6 +74,7 @@ packages/imap/src/index.gjs.ts
 packages/imap/src/index.node.ts
 packages/imap/src/manifest.ts
 packages/imap/src/messages.gjs.ts
+packages/imap/src/send.ts
 packages/imap/src/transport.gjs.ts
 packages/imap/src/unavailable.ts
 packages/matrix/src/accounts.ts
@@ -210,6 +211,7 @@ packages/xmpp/src/omemo-session.ts
 packages/xmpp/src/omemo-stanza.ts
 packages/xmpp/src/omemo-storage.ts
 packages/xmpp/src/omemo-trust.ts
+packages/xmpp/src/sender.ts
 packages/xmpp/src/session.ts
 packages/xmpp/src/stanza.ts
 packages/xmpp/src/transport.ts

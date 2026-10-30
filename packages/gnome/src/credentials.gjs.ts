@@ -11,15 +11,20 @@
 
 import type Goa from 'gi://Goa?version=1.0';
 
-import { GnomeError, type MailTarget } from '@curlew/protocol';
+import { GnomeError, type MailTarget, type SmtpTarget } from '@curlew/protocol';
 import { gnomeError, isGnomeFailure } from './errors.ts';
 import { getClient } from './goa.gjs.ts';
 
-/** Read the IMAP password from GOA. Tries the standard id, then compat fallbacks. */
-function getPassword(obj: Goa.Object): string {
+/**
+ * Read one GOA password. Tries the purpose's standard id, then the generic one, then no id.
+ *
+ * GOA stores one entry per purpose (`imap-password`, `smtp-password`); an account with a single
+ * password for both answers the generic id.
+ */
+function getPassword(obj: Goa.Object, purpose: 'imap' | 'smtp'): string {
   const pb = obj.get_password_based();
   if (!pb) throw new GnomeError('account has no password-based credentials');
-  for (const id of ['imap-password', 'password', '']) {
+  for (const id of [`${purpose}-password`, 'password', '']) {
     try {
       const [ok, password] = pb.call_get_password_sync(id, null);
       if (ok && password) return password;
@@ -27,7 +32,7 @@ function getPassword(obj: Goa.Object): string {
       // try the next id
     }
   }
-  throw new GnomeError('could not retrieve IMAP password from GOA');
+  throw new GnomeError(`could not retrieve ${purpose} password from GOA`);
 }
 
 /** Do the work. Everything here may raise a native error; `listMailTargets` owns the boundary. */
@@ -57,7 +62,7 @@ async function listMailTargetsImpl(accountId?: string): Promise<MailTarget[]> {
       port,
       user: mail.imap_user_name ?? '',
       implicitTls: mail.imap_use_ssl || (!mail.imap_use_tls && port === 993),
-      getPassword: () => getPassword(obj),
+      getPassword: () => getPassword(obj, 'imap'),
     });
   }
   return targets;
@@ -76,5 +81,54 @@ export async function listMailTargets(accountId?: string): Promise<MailTarget[]>
   } catch (err) {
     if (isGnomeFailure(err)) throw err;
     throw gnomeError('listMailTargets', err);
+  }
+}
+
+/** `host` or `host:port`; GOA writes either. */
+function hostAndPort(raw: string, fallbackPort: number): { host: string; port: number } {
+  if (!raw.includes(':')) return { host: raw, port: fallbackPort };
+  const [host, port] = raw.split(':');
+  return { host, port: Number.parseInt(port, 10) };
+}
+
+/** Do the work. Everything here may raise a native error; `listSmtpTargets` owns the boundary. */
+async function listSmtpTargetsImpl(accountId?: string): Promise<SmtpTarget[]> {
+  const client = await getClient();
+  const targets: SmtpTarget[] = [];
+  for (const obj of client.get_accounts()) {
+    const mail = obj.get_mail();
+    if (!mail || !mail.smtp_host) continue;
+    const account = obj.get_account();
+    if (accountId && account?.id !== accountId) continue;
+    // STARTTLS is the safe default when GOA reports neither: `tls` is chosen only for SMTPS.
+    const security = mail.smtp_use_ssl ? 'tls' : 'starttls';
+    const { host, port } = hostAndPort(mail.smtp_host, security === 'tls' ? 465 : 587);
+    const user = mail.smtp_user_name ?? '';
+    const from = mail.email_address ?? (user.includes('@') ? user : '');
+    if (!user || !from) continue;
+    targets.push({
+      accountId: account?.id ?? '',
+      from,
+      host,
+      port,
+      user,
+      security,
+      getPassword: () => getPassword(obj, 'smtp'),
+    });
+  }
+  return targets;
+}
+
+/**
+ * Resolve GOA mail accounts (optionally one) into connectable SMTP targets. Same boundary as
+ * `listMailTargets`: the native reads are the only way this raises. Nothing here reads a
+ * password — the target hands out a thunk.
+ */
+export async function listSmtpTargets(accountId?: string): Promise<SmtpTarget[]> {
+  try {
+    return await listSmtpTargetsImpl(accountId);
+  } catch (err) {
+    if (isGnomeFailure(err)) throw err;
+    throw gnomeError('listSmtpTargets', err);
   }
 }

@@ -29,20 +29,22 @@ The code came out of `buchhaltung/packages/gnome`; the git history there is the 
 
 **The index and the MCP server are read-only and fail-closed.** IMAP is spoken with `BODY.PEEK`
 only, so `\Seen` is never set; there is no flag write, no move, no delete, and no MCP tool that
-writes without a grant. **Sending exists as a library capability only** — `@curlew/smtp` — until
-a grant says otherwise, and the caller uses it only with the human's explicit consent for that
-message. Writing and sending are granted per capability and target in the config, off by default
-([ADR 0004](docs/adr/0004-sending-and-writing-granted-per-capability.md)); every frontend, CLI
-included, asks the same grant.
+writes without a grant. **Sending is a granted capability per backend**, `<backend>.send` with
+an `<account>/<address>` target — `xmpp.send` and `mail.send` exist today — off by default and
+refused for every pair a grant does not name
+([ADR 0004](docs/adr/0004-sending-and-writing-granted-per-capability.md), amended 2026-10-30).
+The check lives once, in the app's send action; a backend's send path exists only on a handle
+opened with a permit (`SendBackend.openSender`), and the sync handle cannot send. Every
+frontend, CLI included, asks the same grant.
 
 ## Package layout — and the one rule that holds it together
 
 | Package | Contains | May import |
 |---|---|---|
-| `@curlew/protocol` | **Pure.** RFC grammar (IMAP lexer, ENVELOPE, FETCH, LIST, BODYSTRUCTURE, MIME, RFC 2047/2231, modified UTF-7), DTOs, errors, the plugin API: `MessageBackend` port + manifest, `BackendContext`, the `MailBackend` mailbox driver and the `ChatBackend` chat driver | nothing |
+| `@curlew/protocol` | **Pure.** RFC grammar (IMAP lexer, ENVELOPE, FETCH, LIST, BODYSTRUCTURE, MIME, RFC 2047/2231, modified UTF-7), DTOs, errors, the plugin API: `MessageBackend` port + manifest, `BackendContext`, the `MailBackend` mailbox driver, the `ChatBackend` chat driver and the `SendBackend` send port (`SendPermit`, `MessageSender`) | nothing |
 | `@curlew/gnome` | GOA + EDS: accounts, contacts, calendar, IMAP credentials | `protocol`, `gi://` |
-| `@curlew/imap` | Gio TLS transport, IMAP client, folders, search, fetch, attachments | `protocol`, `gnome`, `gi://` |
-| `@curlew/smtp` | Sending ONE message with attachments over SMTP on nodemailer (pinned exactly): message building, account validation, `verifyAccount`, `sendMessage`, `SmtpError`. A library capability — no MCP tool, no credential in a log, error or DTO; `security: 'none'` for loopback only. TLS and STARTTLS are tested against a loopback dummy server | nodemailer, `node:*` — no `gi://`; imports no other package |
+| `@curlew/imap` | Gio TLS transport, IMAP client, folders, search, fetch, attachments, the mail `SendBackend` (SMTP through `@curlew/smtp`) | `protocol`, `gnome`, `smtp`, `gi://` |
+| `@curlew/smtp` | Sending ONE message with attachments over SMTP on nodemailer (pinned exactly): message building, account validation, `verifyAccount`, `sendMessage`, `SmtpError`. No credential in a log, error or DTO; `security: 'none'` for loopback only. TLS and STARTTLS are tested against a loopback dummy server. The tool that may use it is the mail backend's granted sender, never this package itself | nodemailer, `node:*` — no `gi://`; imports no other package |
 | `@curlew/store` | SQLite index, sync engines (mailbox + chat), conversations (threading, classification), secret store, XDG paths, file writes | `protocol`, `node:*` |
 | `@curlew/telegram` | Telegram `chat` backend on mtcute (web build: WebSocket, WebCrypto, WASM), its session storage on `SecretStore`, the login | `protocol`, `store`, `@mtcute/*`, `node:*` — no `gi://` |
 | `@curlew/whatsapp` | WhatsApp `delivery` backend on Baileys (unofficial protocol: WebSocket, WASM, libsignal), its auth state on `SecretStore`, the QR / pairing-code link | `protocol`, `store`, `baileys`, `node:*` — no `gi://` |
@@ -209,7 +211,7 @@ the MCP server via `run_in_background` when driving it.
 - **SQLite runs on libgda, not sqlite3** — gjsify's `node:sqlite` is a `Gda` wrapper, and it
   leaks through in five ways that WILL bite you. Read
   [`packages/store/AGENTS.md`](packages/store/AGENTS.md) before writing any SQL.
-- **MCP tools are read-only or they do not register — unless a grant names them.** The server uses `applyGrantGate(server, grants)` (`server.ts`); `send_message` needs `xmpp.send` for the exact `<account>/<address>`, and `@curlew/xmpp` never sends without a permit from a grant (`GrantedXmppSession`; `XmppApi` stays read-only). Formerly `applyReadOnlyGate` — from
+- **MCP tools are read-only or they do not register — unless a grant names them.** The server uses `applyGrantGate(server, grants)` (`server.ts`); `send_message` registers when ANY `<backend>.send` grant exists (the gate takes one capability per tool, so the app passes the union under an internal name no config can spell), and the app's send action then requires the exact `<backend>.send` for the `<account>/<address>`. A backend never sends without a permit from a grant (`SendBackend.openSender`; XMPP's `GrantedXmppSession`, `XmppApi` stays read-only). Formerly `applyReadOnlyGate` — from
   **`@gjsify/mcp`**, since 0.54.0; it was `app/src/frontends/mcp/runtime.ts`, which no longer
   exists — registers a tool only when `annotations.readOnlyHint === true`; a tool that omits the
   annotation is dropped. Do not loosen this to a name list.
