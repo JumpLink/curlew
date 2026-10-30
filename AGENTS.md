@@ -30,11 +30,11 @@ The code came out of `buchhaltung/packages/gnome`; the git history there is the 
 **The index and the MCP server are read-only and fail-closed.** IMAP is spoken with `BODY.PEEK`
 only, so `\Seen` is never set; there is no flag write, no move, no delete, and no MCP tool that
 writes without a grant. **Sending is a granted capability per backend**, `<backend>.send` with
-an `<account>/<address>` target — `xmpp.send`, `mail.send` and `telegram.send` exist today — off by default and
+an `<account>/<address>` target — `xmpp.send`, `mail.send`, `telegram.send` and `matrix.send` exist today — off by default and
 refused for every pair a grant does not name
 ([ADR 0004](docs/adr/0004-sending-and-writing-granted-per-capability.md), amended 2026-10-30).
 The check lives once, in the app's send action; a backend's send path exists only on a handle
-opened with a permit (`SendBackend.openSender`), and the sync handle cannot send (Telegram: `sendText` is on the full client handle only, never on `TelegramApi`/`ChatSession`). Every
+opened with a permit (`SendBackend.openSender`), and the sync handle cannot send (Telegram: `sendText` is on the full client handle only, never on `TelegramApi`/`ChatSession`; Matrix: the permit opens a second `fetch` that passes exactly one endpoint, `PUT …/rooms/{roomId}/send/m.room.message/{txnId}`, while the sync handle's `readOnlyFetch` refuses every write). Every
 frontend, CLI included, asks the same grant.
 
 ## Package layout — and the one rule that holds it together
@@ -50,7 +50,7 @@ frontend, CLI included, asks the same grant.
 | `@curlew/whatsapp` | WhatsApp `delivery` backend on Baileys (unofficial protocol: WebSocket, WASM, libsignal), its auth state on `SecretStore`, the QR / pairing-code link | `protocol`, `store`, `baileys`, `node:*` — no `gi://` |
 | `@curlew/signal` | Signal `delivery` backend on `@signalapp/libsignal-client` (Rust behind N-API; on GJS through `@gjsify/napi`, loaded on first use), its protocol stores on `SecretStore`, the QR link as a linked device, the fail-closed request gate | `protocol`, `store`, `@signalapp/libsignal-client`, `qrcode-generator`, `node:*` — no `gi://` |
 | `@curlew/xmpp` | XMPP `chat` backend on xmpp.js (composed by hand: domain-checked direct TLS, WebSocket, SCRAM), history from MAM only, the account file on `SecretStore`, the login. Never sends presence, markers or messages without a grant | `protocol`, `store`, `@xmpp/*`, `node:*` — no `gi://` |
-| `@curlew/matrix` | Matrix `chat` backend on matrix-js-sdk + the Rust crypto as WASM (`@matrix-org/matrix-sdk-crypto-wasm`), its crypto store as an in-memory IndexedDB snapshotted into `SecretStore`, the password login | `protocol`, `store`, `matrix-js-sdk`, `@matrix-org/*`, `fake-indexeddb`, `node:*` — no `gi://` |
+| `@curlew/matrix` | Matrix `chat` backend on matrix-js-sdk + the Rust crypto as WASM (`@matrix-org/matrix-sdk-crypto-wasm`), its crypto store as an in-memory IndexedDB snapshotted into `SecretStore`, the password login, the `matrix.send` sender (plain text, ≤ 32000 UTF-8 bytes, refused for an encrypted room) | `protocol`, `store`, `matrix-js-sdk`, `@matrix-org/*`, `fake-indexeddb`, `node:*` — no `gi://` |
 | `curlew-cli` (`app/`) | yargs CLI + MCP server, config file, backend registry | all of the above |
 
 **`store` must never import a backend** (`imap`, `telegram`, `xmpp`, `matrix`, `signal`, …). The sync engines are driven
@@ -173,6 +173,18 @@ the MCP server via `run_in_background` when driving it.
   the sync filter and the E2EE key protocol pass; a `/sync` without `set_presence=offline`
   (an omitted value means ONLINE) and everything else — receipts, typing, sends, joins — is
   refused and fails the sync. Widen the allowlist only with a test naming the request.
+  **A granted `matrix.send` does not widen it.** `MatrixBackend.openSender` wraps a second,
+  separate `fetch` (`sendFetch`, same file) around the permit's rooms, and it passes exactly one
+  request: `PUT …/rooms/{roomId}/send/m.room.message/{txnId}` for a room the permit names. The
+  allowlist spells `m.room.message` literally, so an `m.room.encrypted` PUT is refused there too.
+  `sendFetch` keeps its refusals out of the global `refusals` ledger on purpose — a refused send
+  must not fail a sync that is running beside it.
+- **Curlew never sends cleartext into an encrypted room.** Before every send the sender asks
+  `GET …/rooms/{roomId}/state/m.room.encryption`: `M_NOT_FOUND` means unencrypted and the send
+  goes ahead, a `200` means the room is encrypted and the send is **refused**. Any other answer
+  throws — an unanswerable state read is never read as "unencrypted". There is no Megolm sending
+  path here, and a cleartext `m.room.message` in a Megolm room would both be unreadable to the
+  room and defeat the encryption its members chose. Do not "fall back" to sending.
 - **Matrix crypto state is saved before it is acknowledged.** The SDK's store checkpoints the
   crypto snapshot in `setSyncData`, which the sync loop awaits before the next `/sync` — the
   request that tells the server the to-device keys arrived. A save failure stops the run and
@@ -211,7 +223,7 @@ the MCP server via `run_in_background` when driving it.
 - **SQLite runs on libgda, not sqlite3** — gjsify's `node:sqlite` is a `Gda` wrapper, and it
   leaks through in five ways that WILL bite you. Read
   [`packages/store/AGENTS.md`](packages/store/AGENTS.md) before writing any SQL.
-- **MCP tools are read-only or they do not register — unless a grant names them.** The server uses `applyGrantGate(server, grants)` (`server.ts`); `send_message` registers when ANY `<backend>.send` grant exists (the gate takes one capability per tool, so the app passes the union under an internal name no config can spell), and the app's send action then requires the exact `<backend>.send` for the `<account>/<address>`. A backend never sends without a permit from a grant (`SendBackend.openSender`; XMPP's `GrantedXmppSession`, `XmppApi` stays read-only; Telegram's `TelegramSender`, `TelegramApi` stays read-only). Formerly `applyReadOnlyGate` — from
+- **MCP tools are read-only or they do not register — unless a grant names them.** The server uses `applyGrantGate(server, grants)` (`server.ts`); `send_message` registers when ANY `<backend>.send` grant exists (the gate takes one capability per tool, so the app passes the union under an internal name no config can spell), and the app's send action then requires the exact `<backend>.send` for the `<account>/<address>`. A backend never sends without a permit from a grant (`SendBackend.openSender`; XMPP's `GrantedXmppSession`, `XmppApi` stays read-only; Telegram's `TelegramSender`, `TelegramApi` stays read-only; Matrix's `MatrixSender` on its own `sendFetch`, the sync client's `readOnlyFetch` stays read-only). Formerly `applyReadOnlyGate` — from
   **`@gjsify/mcp`**, since 0.54.0; it was `app/src/frontends/mcp/runtime.ts`, which no longer
   exists — registers a tool only when `annotations.readOnlyHint === true`; a tool that omits the
   annotation is dropped. Do not loosen this to a name list.

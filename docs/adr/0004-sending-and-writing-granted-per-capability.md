@@ -3,7 +3,8 @@
 - **Status:** Accepted (2026-10-10); amended 2026-10-10 and 2026-10-30, see
   [Amendment](#amendment-2026-10-10) and
   [Amendment 2026-10-30](#amendment-2026-10-30) and
-  [Amendment (2026-10-30, telegram)](#amendment-2026-10-30-telegram)
+  [Amendment (2026-10-30, telegram)](#amendment-2026-10-30-telegram) and
+  [Amendment (2026-10-30, matrix)](#amendment-2026-10-30-matrix)
 - **Scope:** `@gjsify/mcp` (the gate), `app` (config, MCP server, `curlew send`, `curlew daemon`),
   `@curlew/xmpp`, `@curlew/protocol` (calendar port), `@curlew/gnome` (EDS calendar driver)
 
@@ -224,3 +225,18 @@ keeps the full client handle; `TelegramApi` and the `ChatSession` that sync and 
 hold have no send method, and the sender re-checks its `SendPermit` before it touches the network.
 The sent message is indexed as a local echo, and the next sync replaces it by its Telegram message
 id (`ChatMessage.clientId` of your own messages).
+
+## Amendment (2026-10-30, matrix)
+
+`matrix.send` is built. Its target is `<account>/<room id>` with the room's remote id exactly as the
+index and `conversations_list` show it, so the full `!room:example.org` including the colon, for
+example `matrix-0123456789abcd/!room:example.org`. It sends one plain-text `m.room.message`
+(`msgtype: m.text`) as a single `PUT …/rooms/{roomId}/send/m.room.message/{txnId}` with a fresh
+transaction id per send; there is no Markdown and no image, and a body over 32000 UTF-8 bytes is
+refused rather than split. **A room that carries `m.room.encryption` state is refused**: curlew
+holds no Megolm sending path, and a cleartext event in an encrypted room would be a message the
+room's members cannot read and a leak past the encryption they chose. The read guard stays closed —
+`readOnlyFetch` still refuses every `PUT`, and the send endpoint is reachable only through the
+separate `sendFetch` that `MatrixBackend.openSender` wraps around the permit's rooms, so the sync
+and read handles have no way to send. The sent message is indexed as a local echo and the next sync
+replaces it by its event id (`ChatMessage.clientId` of your own events).
