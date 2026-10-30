@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-10-30 16:53+0100\n"
+"POT-Creation-Date: 2026-10-30 17:30+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -51,35 +51,35 @@ msgid ""
 "file, naming the account and the address"
 msgstr ""
 
-#: app/src/core/actions/send.ts:185
+#: app/src/core/actions/send.ts:184
 msgid "no account {account} — `curlew accounts list` shows them"
 msgstr ""
 
-#: app/src/core/actions/send.ts:192
+#: app/src/core/actions/send.ts:190
 msgid "the xmpp backend is not available"
 msgstr ""
 
-#: app/src/core/actions/send.ts:204
+#: app/src/core/actions/send.ts:202
 msgid "{backend} cannot send"
 msgstr ""
 
-#: app/src/core/actions/send.ts:208
+#: app/src/core/actions/send.ts:206
 msgid "nothing to send: give text, an image URL or both"
 msgstr ""
 
-#: app/src/core/actions/send.ts:210
+#: app/src/core/actions/send.ts:208
 msgid "{backend} messages carry no subject"
 msgstr ""
 
-#: app/src/core/actions/send.ts:218
+#: app/src/core/actions/send.ts:216
 msgid "no {backend} account {account} — `curlew accounts list` shows them"
 msgstr ""
 
-#: app/src/core/actions/send.ts:250
+#: app/src/core/actions/send.ts:248
 msgid "{backend} cannot send an image — give text and leave image_url out"
 msgstr ""
 
-#: app/src/core/actions/send.ts:257
+#: app/src/core/actions/send.ts:255
 msgid "nothing to send: the text is empty after rendering"
 msgstr ""
 
@@ -1058,11 +1058,11 @@ msgstr ""
 msgid "Mail only: the subject line"
 msgstr ""
 
-#: app/src/frontends/cli/send.ts:33
+#: app/src/frontends/cli/send.ts:36
 msgid "Account id from `curlew accounts list`"
 msgstr ""
 
-#: app/src/frontends/cli/send.ts:37
+#: app/src/frontends/cli/send.ts:41
 msgid "Address exactly as the grant spells it (name@example.org)"
 msgstr ""
 
@@ -1134,7 +1134,7 @@ msgid_plural "{n} warnings"
 msgstr[0] ""
 msgstr[1] ""
 
-#: packages/imap/src/send.ts:52
+#: packages/imap/src/send.ts:52 packages/telegram/src/sender.ts:42
 msgid "sending to {address} is not granted for account {account}"
 msgstr ""
 
@@ -1260,56 +1260,56 @@ msgstr ""
 msgid "Signal no longer knows this device (it was unlinked) — {hint}"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:33
+#: packages/telegram/src/backend.ts:37
 msgid "log in again with `curlew accounts add telegram`"
 msgstr ""
 
 #. TRANSLATORS: `api_id` and `api_hash` are Telegram's own field names — do not translate them,
 #. the user has to recognise them on my.telegram.org.
-#: packages/telegram/src/backend.ts:57
+#: packages/telegram/src/backend.ts:61
 msgid "api_id of your Telegram app (from my.telegram.org)"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:58
+#: packages/telegram/src/backend.ts:62
 msgid "api_hash of that app"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:59
+#: packages/telegram/src/backend.ts:63
 msgid "Phone number of the Telegram account (international, e.g. +49…)"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:60
+#: packages/telegram/src/backend.ts:64
 msgid "Login code Telegram sent you"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:61
+#: packages/telegram/src/backend.ts:65
 msgid "Two-step verification password"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:97
+#: packages/telegram/src/backend.ts:115
 msgid "no Telegram session for {account} — {hint}"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:123
+#: packages/telegram/src/backend.ts:141
 msgid "the Telegram session {account} is not usable ({reason}) — {hint}"
 msgstr ""
 
-#: packages/telegram/src/client.ts:100
+#: packages/telegram/src/client.ts:101
 msgid ""
 "Telegram asks for an email login setup first — finish it in an official app"
 msgstr ""
 
 #. TRANSLATORS: {channel} is Telegram's own word for the route it used ("sms", "app", …),
 #. and arrives untranslated from the server.
-#: packages/telegram/src/client.ts:104
+#: packages/telegram/src/client.ts:105
 msgid "Telegram sent the login code via {channel}."
 msgstr ""
 
-#: packages/telegram/src/client.ts:108
+#: packages/telegram/src/client.ts:109
 msgid "That code was not accepted — try again."
 msgstr ""
 
-#: packages/telegram/src/client.ts:108
+#: packages/telegram/src/client.ts:109
 msgid "Wrong password — try again."
 msgstr ""
 
@@ -1385,9 +1385,16 @@ msgid ""
 "YOURSELF at my.telegram.org and run `curlew accounts add telegram --own-"
 "credentials` (or set them in the environment). They are kept with the "
 "session. Use is subject to Telegram's API Terms of Service; an account that "
-"misuses the API can be limited or banned by Telegram. curlew only reads: it "
-"never sends, edits or deletes, and keeps the session key on this machine "
-"only."
+"misuses the API can be limited or banned by Telegram. curlew reads by "
+"default; it sends a plain-text message only to a chat you granted with "
+"`telegram.send`, and never edits or deletes. It keeps the session key on "
+"this machine only."
+msgstr ""
+
+#: packages/telegram/src/sender.ts:55
+msgid ""
+"a Telegram message holds at most {max} characters, this one has {length} — "
+"shorten it"
 msgstr ""
 
 #: packages/whatsapp/src/backend.ts:86

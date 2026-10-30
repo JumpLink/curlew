@@ -12,6 +12,9 @@ import {
   type ChatBackend,
   type ChatSession,
   fmt,
+  type MessageSender,
+  type SendBackend,
+  type SendPermit,
 } from '@curlew/protocol';
 import { SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
@@ -21,6 +24,7 @@ import { type ClientFactory, createMtcuteClient } from './client.ts';
 import { embeddedCredentials, resolveCredentials, type TelegramCredentials } from './credentials.ts';
 import { loginTelegram } from './login.ts';
 import { TELEGRAM_MANIFEST } from './manifest.ts';
+import { TelegramSender } from './sender.ts';
 import { TelegramChatSession } from './session.ts';
 import { SecretStoreStorage } from './storage.ts';
 
@@ -63,7 +67,7 @@ export function telegramPrompts(prompter: AccountPrompter): LoginPrompts {
   };
 }
 
-export class TelegramBackend implements ChatBackend {
+export class TelegramBackend implements ChatBackend, SendBackend {
   readonly manifest = TELEGRAM_MANIFEST;
   readonly kind = 'chat' as const;
   private readonly context: BackendContext;
@@ -91,6 +95,20 @@ export class TelegramBackend implements ChatBackend {
   }
 
   async connect(accountId: string): Promise<ChatSession> {
+    const { api } = await this.open(accountId);
+    // `api` is the read-only wrapper; the full handle (with `sendText`) is never given to a session,
+    // so sync and the read tools cannot send.
+    return new TelegramChatSession(api);
+  }
+
+  /** The only way to get `sendText`: the full handle, behind a permit. */
+  async openSender(accountId: string, permit: SendPermit): Promise<MessageSender> {
+    const { client, api } = await this.open(accountId);
+    return new TelegramSender(client, permit, () => api.destroy());
+  }
+
+  /** Open the session file, connect and prove the session is still authorized. */
+  private async open(accountId: string): Promise<{ client: TelegramClientHandle; api: TelegramApi }> {
     const path = sessionPath(this.context.secretsDir, accountId);
     if (!existsSync(path)) {
       throw new Error(
@@ -127,6 +145,6 @@ export class TelegramBackend implements ChatBackend {
         }),
       );
     }
-    return new TelegramChatSession(api);
+    return { client, api };
   }
 }

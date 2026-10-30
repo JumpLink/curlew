@@ -74,12 +74,22 @@ export default async () => {
         [{ capability: 'calendar.create', target: 'acct' }],
         /"calendar\.create" is not a known capability/,
       );
-      // A backend whose send port is not built yet stays unknown, mail's does not.
+      // A backend whose send port is not built yet stays unknown; mail's and Telegram's are built.
       rejects(
-        [{ capability: 'telegram.send', target: 'acct/peer' }],
-        /"telegram\.send" is not a known capability/,
+        [{ capability: 'matrix.send', target: 'acct/peer' }],
+        /"matrix\.send" is not a known capability/,
       );
       rejects([{ capability: '*', target: 'acct' }], /not a known capability/);
+    });
+
+    await it('accepts telegram.send for a user id and a negative group id', async () => {
+      const grants = parseGrants([
+        { capability: 'telegram.send', target: 'telegram-42/1001' },
+        { capability: 'telegram.send', target: 'telegram-42/-1004001' },
+      ]);
+      expect(isGranted(grants, 'telegram.send', 'telegram-42/-1004001')).toBe(true);
+      expect(isGranted(grants, 'telegram.send', 'telegram-42/1002')).toBe(false);
+      expect(isGranted(grants, 'xmpp.send', 'telegram-42/1001')).toBe(false);
     });
 
     await it('rejects an empty, padded or wildcard target', async () => {

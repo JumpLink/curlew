@@ -10,7 +10,7 @@
  * puts it in front of every write handler is the gate's job.
  */
 
-export type Capability = 'xmpp.send' | 'mail.send' | 'xmpp.omemo' | 'canary.write';
+export type Capability = 'xmpp.send' | 'mail.send' | 'telegram.send' | 'xmpp.omemo' | 'canary.write';
 
 export interface Grant {
   capability: Capability;
@@ -19,7 +19,7 @@ export interface Grant {
 }
 
 /** Capabilities a real configuration may grant. A new backend's `<backend>.send` gets its row when it is built. */
-export const CAPABILITIES = ['xmpp.send', 'mail.send', 'xmpp.omemo'] as const;
+export const CAPABILITIES = ['xmpp.send', 'mail.send', 'telegram.send', 'xmpp.omemo'] as const;
 
 /**
  * The test-only capability behind the gate's positive-control canary. It is accepted only while

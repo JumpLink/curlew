@@ -88,6 +88,8 @@ export function toChatMessage(message: TgMessage): ChatMessage | null {
     editedAt: message.editDate ? message.editDate.toISOString() : null,
     sender: message.isOutgoing || !sender ? null : toChatPeer(sender),
     fromSelf: message.isOutgoing,
+    // What `TelegramSender` returns as the sent id, so the next sync replaces curlew's local echo.
+    clientId: message.isOutgoing ? String(message.id) : null,
     text: message.text || null,
     hasAttachments: message.media !== null && FILE_MEDIA.has(message.media.type),
     replyToRemoteId: reply?.id ? remoteMessageId(chatId, reply.id) : null,

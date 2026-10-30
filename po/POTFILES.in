@@ -176,6 +176,7 @@ packages/telegram/src/index.ts
 packages/telegram/src/login.ts
 packages/telegram/src/manifest.ts
 packages/telegram/src/map.ts
+packages/telegram/src/sender.ts
 packages/telegram/src/session.ts
 packages/telegram/src/storage.ts
 packages/whatsapp/src/accounts.ts

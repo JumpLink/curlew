@@ -5,7 +5,8 @@
  * shapes, and so does a plain object in a test. That is what lets the mapping and the session be
  * unit-tested on Node and GJS against recorded, synthetic data, with no network and no account.
  *
- * Read-only by construction: no method here can send, edit, delete or mark anything read.
+ * `TelegramApi` is read-only by construction: no method here can send, edit, delete or mark anything
+ * read. Sending exists only on `TelegramClientHandle`, which the sync path never receives (see there).
  */
 
 export interface TgUser {
@@ -114,8 +115,18 @@ export interface LoginPrompts {
   notify(message: string): void;
 }
 
-/** A full client: the read API plus connecting and logging in. What a `ClientFactory` returns. */
+/**
+ * A full client: the read API plus connecting, logging in and — the one write — `sendText`. What a
+ * `ClientFactory` returns.
+ *
+ * `sendText` lives here and NOT on `TelegramApi` on purpose: `TelegramBackend.connect()` wraps the
+ * client in `withStoreClose`, which copies only the named read methods, so the `ChatSession` that
+ * sync and the read tools hold has no way to send. Only `TelegramBackend.openSender()` keeps the
+ * full handle, and only behind a `SendPermit` (ADR 0004).
+ */
 export interface TelegramClientHandle extends TelegramApi {
+  /** Send ONE plain-text message to the chat (a marked id, as in `TgPeer.id`); returns it as sent. */
+  sendText(chatId: number, text: string): Promise<TgMessage>;
   connect(): Promise<void>;
   /** Log in (phone → code → optional 2FA password) and return the logged-in user. */
   login(prompts: LoginPrompts): Promise<TgUser>;
