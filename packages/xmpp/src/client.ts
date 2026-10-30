@@ -142,6 +142,35 @@ function loginError(err: unknown, jid: string): Error {
   return err instanceof Error ? err : new Error(String(err));
 }
 
+/**
+ * The PEP read behind `XmppLink.pepGet`, on its own so a test can drive it through the real
+ * `@xmpp/iq` caller.
+ *
+ * `iq.get` already resolves to the child it asked for — the `<pubsub>` of the result, not the
+ * `<iq>`. Looking for a `<pubsub>` inside it again found nothing, so every device list read as
+ * empty: the send path took every OMEMO peer for one without OMEMO and sent in the clear, and
+ * the own-device upkeep republished the account's list with only this device in it.
+ */
+export async function pepRead(
+  iq: Pick<ReturnType<typeof iqCaller>, 'get'>,
+  to: string | undefined,
+  payload: Element,
+): Promise<Element | undefined> {
+  try {
+    const pubsub: Element | undefined = await iq.get(payload, to, QUERY_TIMEOUT_MS);
+    return pubsub?.is('pubsub', NS.pubsub) ? pubsub : undefined;
+  } catch (err) {
+    const error = queryError(err);
+    if (
+      error instanceof XmppQueryError &&
+      (error.condition === 'item-not-found' || error.condition === 'not-allowed')
+    ) {
+      return undefined;
+    }
+    throw error;
+  }
+}
+
 let queryCounter = 0;
 const nextId = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${(queryCounter++).toString(36)}`;
 
@@ -206,19 +235,7 @@ class XmppConnection implements XmppLink {
    * not use OMEMO, and the caller has nothing different to do for either.
    */
   async pepGet(jid: string, payload: Element): Promise<Element | undefined> {
-    try {
-      const result = await this.iq.get(payload, jid === this.jid ? undefined : jid, QUERY_TIMEOUT_MS);
-      return result.getChild('pubsub', NS.pubsub) ?? undefined;
-    } catch (err) {
-      const error = queryError(err);
-      if (
-        error instanceof XmppQueryError &&
-        (error.condition === 'item-not-found' || error.condition === 'not-allowed')
-      ) {
-        return undefined;
-      }
-      throw error;
-    }
+    return pepRead(this.iq, jid === this.jid ? undefined : jid, payload);
   }
 
   async pepSet(payload: Element): Promise<void> {
