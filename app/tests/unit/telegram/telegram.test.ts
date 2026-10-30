@@ -171,6 +171,11 @@ export default async () => {
       expect(mine?.fromSelf).toBe(true);
       expect(mine?.sender).toBe(null);
       expect(mine?.remoteId).toBe('1001/3');
+      // Saved Messages: Telegram does not mark them outgoing, but you are the sender.
+      const saved = toChatMessage(tgMessage(ME, 7, 'me', 'note', { isOutgoing: false }));
+      expect(saved?.fromSelf).toBe(true);
+      expect(saved?.sender).toBe(null);
+      expect(saved?.clientId).toBe('42/7');
       const photo = toChatMessage(tgMessage(ANNA, 4, ANNA, '', { media: { type: 'photo' } }));
       expect(photo?.hasAttachments).toBe(true);
       expect(photo?.text).toBe(null);
