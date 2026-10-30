@@ -42,7 +42,7 @@ simply never publishes a device list).
 |---|---|---|
 | Dino | Flatpak `im.dino.Dino` is installed. `flatpak run im.dino.Dino`, add account `bob@localhost`, advanced: server `127.0.0.1`, port 5222 | 0.5 (Flatpak) |
 | Gajim | `org.gajim.Gajim` is **not** installed: `flatpak install flathub org.gajim.Gajim`. More devices for bob: `flatpak run org.gajim.Gajim --profile bob2`; a profile's data lives in `~/.var/app/org.gajim.Gajim/{data,config,cache}/gajim.<profile>` | 2.6.0 (Flatpak) |
-| Conversations | Android emulator AVD `Tablet_API_36`, start **only** with `./scripts/android_emulator.sh start Tablet_API_36` (werkstatt hub). The host is `10.0.2.2` from inside the emulator. APK from F-Droid. Account `bob@localhost`, set hostname `10.0.2.2`, port 5222 in the account's advanced options | |
+| Conversations | Android emulator AVD `Tablet_API_36`, start **only** with `./scripts/android_emulator.sh start Tablet_API_36` (werkstatt hub). The host is `10.0.2.2` from inside the emulator. APK from F-Droid. Account `bob@localhost`, set hostname `10.0.2.2`, port 5222 in the account's advanced options | 2.21.0+free (F-Droid) |
 
 Certificate acceptance. **Not verified by the author — UI labels and the exact steps need a
 hand check, correct this section as you go:**
@@ -53,9 +53,11 @@ hand check, correct this section as you go:**
   Undo after the run: `sudo rm /etc/pki/ca-trust/source/anchors/curlew-omemo-lab.crt && sudo update-ca-trust`.
   Dino has no profiles: bob lands in your everyday Dino, so remove that account afterwards.
 - Gajim: its certificate dialog for the account lets you accept the certificate once.
-- Conversations: it asks to trust the certificate. Whether it accepts a connection to host
-  `10.0.2.2` for the domain `localhost` is **unknown**; if not, note it here and fall back to
-  testing Conversations with Dino-equivalent steps against a lab domain that resolves.
+- Conversations 2.21.0: the hostname and port fields appear only after Settings → Connection →
+  "Hostname & Port" is on (reachable from the login screen's ⋮ menu). With host `10.0.2.2` it
+  asks to trust the `localhost` certificate; compare the SHA-256 with
+  `openssl x509 -in "$XDG_RUNTIME_DIR/curlew-omemo-lab/certs/localhost.crt" -noout -fingerprint -sha256`
+  and pick "Always". Item 10 is `adb shell pm clear eu.siacs.conversations` plus a new login.
 
 Before the first test, check with `omemo-lab status` that curlew is connected and
 `curlew omemo devices --account $ID` shows alice's own device.
@@ -67,17 +69,17 @@ their trust state. `omemo trust` needs a TTY and asks you to type the fingerprin
 
 | # | Check | Dino | Gajim | Conv. |
 |---|---|---|---|---|
-| 1 | First contact, peer → curlew | ✓ | ✓ | ☐ |
-| 2 | First contact, curlew → peer | ✓ | ✓ | ☐ |
-| 3 | BTBV: a new device is trusted without verification | –² | ✓ | ☐ |
-| 4 | Verified: an extra unverified device gets nothing | ✓ | ✓ | ☐ |
-| 5 | `distrusted` | ✓ | ✓ | ☐ |
-| 6 | No trusted device: refused, no plaintext | ✓ | ✓ | ☐ |
-| 7 | `encryption: "required"` refused against carol | ✓ | ✓ | ☐ |
-| 8 | Carbon from bob's second device | ✓¹ | ✓¹ | ☐ |
-| 9 | MAM catch-up after curlew downtime | ✓ | ✓ | ☐ |
-| 10 | Identity change (peer reinstalled) | ✓ | ✓ | ☐ |
-| 11 | `omemo reset` → new session, no hang | ✓³ | ✓ | ☐ |
+| 1 | First contact, peer → curlew | ✓ | ✓ | ✓ |
+| 2 | First contact, curlew → peer | ✓ | ✓ | ✓ |
+| 3 | BTBV: a new device is trusted without verification | –² | ✓ | –² |
+| 4 | Verified: an extra unverified device gets nothing | ✓ | ✓ | ✓ |
+| 5 | `distrusted` | ✓ | ✓ | ✓ |
+| 6 | No trusted device: refused, no plaintext | ✓ | ✓ | ✓ |
+| 7 | `encryption: "required"` refused against carol | ✓ | ✓ | ✓ |
+| 8 | Carbon from bob's second device | ✓¹ | ✓¹ | –⁴ |
+| 9 | MAM catch-up after curlew downtime | ✓ | ✓ | ✓ |
+| 10 | Identity change (peer reinstalled) | ✓ | ✓ | ✓ |
+| 11 | `omemo reset` → new session, no hang | ✓³ | ✓ | ✓ |
 
 ### 1. First contact, peer → curlew
 
@@ -241,3 +243,9 @@ one blindly (item 4). Gajim covered item 3.
 id"): Dino pins the first key it sees per device id and never replaces it, and it had pinned the
 wrong key from before `b0cceb2`. No real account was affected: none had the `xmpp.omemo` grant
 before the fix. After re-adding bob in Dino (item 10) the reset passed in both directions.
+
+**Conversations, 2026-10-30.** curlew `feat/omemo-lab` (PR #104), Conversations 2.21.0+free from
+F-Droid in the `Tablet_API_36` emulator, Prosody 13.0, driven through `adb` and `uiautomator`.
+Fingerprints matched in Conversations and curlew. Items 4–7 checked as for Dino. No deviations.
+
+⁴ Not run: no second bob client was online. Dino and Gajim covered item 8.
