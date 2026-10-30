@@ -10,8 +10,11 @@ export const MATRIX_MANIFEST: BackendManifest = {
   name: 'matrix',
   displayName: 'Matrix (matrix-js-sdk, Rust crypto as WebAssembly)',
   pluginApi: PLUGIN_API_VERSION,
-  // What the NETWORK can do. curlew v1 only reads, so none of this is a promise that curlew
-  // can SEND it.
+  // What the NETWORK can do, not what curlew does with it. Curlew reads, and with a
+  // `matrix.send` grant sends ONE plain-text `m.room.message` — so none of these flags is a
+  // promise that curlew can send that shape: no edit, no reaction, no threaded send, no
+  // receipt, and `e2ee: true` means this backend DECRYPTS, never that it encrypts (an
+  // encrypted room is refused, see send.ts).
   capabilities: {
     // `m.replace` relations.
     edits: true,
