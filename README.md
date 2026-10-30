@@ -43,7 +43,7 @@ is built on, which is where this is headed.
 - **Matrix** (optional, off by default) — the rooms you have joined, end-to-end
   encrypted ones included, through
   [matrix-js-sdk](https://github.com/matrix-org/matrix-js-sdk) and its Rust
-  crypto compiled to WebAssembly. See [Matrix](#matrix).
+  crypto compiled to WebAssembly. See [Matrix](#matrix-1).
 
 Everything is **read-only unless a grant names it**. Messages are fetched with
 IMAP `BODY.PEEK`, so opening a mail through Curlew never marks it as read.
@@ -53,7 +53,8 @@ or marked read. WhatsApp too: no message, no read receipt, no online presence
 sends). XMPP likewise — without an `xmpp.send` grant Curlew never sends a
 presence, so contacts do not see it online and your offline messages stay queued
 for your real clients. Matrix too: no presence, no read receipt, no typing
-notice, no message, and no invitation is accepted. Signal too: no message, no
+notice, no message without a `matrix.send` grant, and no invitation is
+accepted. Signal too: no message, no
 receipt, no typing notice (see [Signal](#signal) for the acknowledgement and the
 two requests at link time). The only writes are a granted send — one message,
 from one account, to one address, off by default
@@ -430,7 +431,7 @@ See [End-to-end encryption](#end-to-end-encryption-grant-xmppomemo) and
 An account can send one message, but only from an account and to an address you
 granted, as an exact `<account>/<address>` pair (see
 [Your data stays yours](#your-data-stays-yours)). Every backend has its own
-capability — `xmpp.send`, `mail.send` and `telegram.send` today — and one grant never authorises
+capability — `xmpp.send`, `mail.send`, `telegram.send` and `matrix.send` today — and one grant never authorises
 another backend:
 
 ```json
@@ -498,6 +499,25 @@ so run `curlew sync` once before the first send to a new chat:
 
 ```bash
 curlew send --account telegram-42 --to 1001 "Build is green"
+```
+
+#### Matrix
+
+`matrix.send` sends one plain-text `m.room.message` to a room. The address is the room
+id exactly as `curlew conversations list` shows it, colon and all, so a grant reads
+`{ "capability": "matrix.send", "target": "matrix-0123456789abcd/!room:example.org" }`.
+A body over 32000 UTF-8 bytes is refused rather than split, and there is no Markdown
+and no image. The sent message is stored in the index as your own message and replaced
+by the homeserver's copy on the next sync.
+
+**An end-to-end encrypted room is refused.** Curlew reads encrypted rooms — it decrypts
+what it holds the key for — but it does not encrypt, so it will not put a cleartext
+message into a room whose members chose encryption. Before every send it reads the
+room's `m.room.encryption` state; if the homeserver cannot answer, the send is refused
+too, never attempted in the dark:
+
+```bash
+curlew send --account matrix-0123456789abcd --to '!room:example.org' "Build is green"
 ```
 
 **Waiting for a reply.** Run `curlew daemon`: for granted XMPP accounts it
@@ -582,11 +602,14 @@ built yet. Curlew remembers such placeholders and tries them again on every
 sync, so a key that arrives later still turns them into text.
 
 Curlew never shows you as online (every sync says `set_presence=offline`) and
-never sends a read receipt, a typing notice or a message: a read-only gate
-refuses every request outside login, the sync filter and the encryption key
-exchange before it leaves the machine. The device's crypto store is saved after
-every sync step, before the server is told the keys arrived, so even a crash
-loses no key.
+never sends a read receipt or a typing notice: a read-only gate refuses every
+request outside login, the sync filter and the encryption key exchange before it
+leaves the machine. Messages are no exception until you grant one: with a
+`matrix.send` grant (see [Matrix](#matrix) under Sending) the granted room
+alone becomes reachable, through a second gate that passes exactly one request —
+the send of a plain-text message to that room — while the syncing side keeps
+refusing every write. The device's crypto store is saved after every sync step,
+before the server is told the keys arrived, so even a crash loses no key.
 
 The first sync takes the newest 200 messages of every joined room, later syncs
 walk forward. Edits and redactions arrive as events of their own and are applied
@@ -730,12 +753,13 @@ unknown capability is an error when the file loads.
   "grants": [
     { "capability": "xmpp.send", "target": "<account>/<address>" },
     { "capability": "mail.send", "target": "<account>/<address>" },
-    { "capability": "telegram.send", "target": "<account>/<chat id>" }
+    { "capability": "telegram.send", "target": "<account>/<chat id>" },
+    { "capability": "matrix.send", "target": "<account>/<room id>" }
   ]
 }
 ```
 
-`xmpp.send`, `mail.send` and `telegram.send` are the capabilities a command or tool uses today
+`xmpp.send`, `mail.send`, `telegram.send` and `matrix.send` are the capabilities a command or tool uses today
 (see [Sending](#sending-grants-backendsend)); a later backend gets its own
 `<backend>.send` row when it is built, and an unknown one is a config error.
 

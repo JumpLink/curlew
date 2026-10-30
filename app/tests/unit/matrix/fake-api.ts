@@ -11,6 +11,8 @@ import type {
   MxMessagesPage,
   MxRoom,
 } from '@curlew/matrix';
+import { accountIdFor, accountPath, writeAccessToken, writeAccountRecord } from '@curlew/matrix';
+import { SecretStore } from '@curlew/store';
 
 export const ME = '@me:example.org';
 export const ANNA = '@anna:example.org';
@@ -129,6 +131,24 @@ export function fakeConnector(api: FakeMatrixApi): MatrixConnector & { sessions:
     return api;
   };
   return Object.assign(connect, { sessions });
+}
+
+/** The synthetic homeserver every seeded account points at, as the account file holds it. */
+export const HOMESERVER = 'https://matrix.example.org';
+
+/**
+ * An account file a backend can open, written offline.
+ *
+ * Not through `addAccount`: that is `loginMatrix`, which would talk to a homeserver. The token is
+ * synthetic and the fake connector ignores it.
+ */
+export function seedAccount(dir: string, userId = ME): string {
+  const id = accountIdFor(userId);
+  const store = SecretStore.open(accountPath(dir, id));
+  writeAccountRecord(store, { userId, homeserver: HOMESERVER, deviceId: 'DEVICE' });
+  writeAccessToken(store, 'synthetic-token');
+  store.close();
+  return id;
 }
 
 /** An encrypted event this device has no key for. */

@@ -10,11 +10,15 @@ import type {
   BackendContext,
   ChatBackend,
   ChatSession,
+  MessageSender,
+  SendBackend,
+  SendPermit,
 } from '@curlew/protocol';
 import { SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
 import type { MatrixLoginPrompts } from './api.ts';
 import {
+  type AccountRecord,
   accountPath,
   listAccounts,
   readAccessToken,
@@ -22,8 +26,10 @@ import {
   secretStoreLedger,
 } from './accounts.ts';
 import { connectMatrixClient, type MatrixConnector } from './client.ts';
+import { sendFetch } from './guard.ts';
 import { loginMatrix } from './login.ts';
 import { MATRIX_MANIFEST } from './manifest.ts';
+import { matrixSendApi, MatrixSender } from './send.ts';
 import { MatrixChatSession } from './session.ts';
 
 export const reloginHint = (): string => _('log in again with `curlew accounts add matrix`');
@@ -38,15 +44,23 @@ export function matrixPrompts(prompter: AccountPrompter): MatrixLoginPrompts {
   };
 }
 
-export class MatrixBackend implements ChatBackend {
+export class MatrixBackend implements ChatBackend, SendBackend {
   readonly manifest = MATRIX_MANIFEST;
   readonly kind = 'chat' as const;
   private readonly context: BackendContext;
   private readonly connectClient: MatrixConnector;
+  private readonly httpFetch: typeof globalThis.fetch;
 
-  constructor(context: BackendContext, connectClient: MatrixConnector = connectMatrixClient) {
+  constructor(
+    context: BackendContext,
+    connectClient: MatrixConnector = connectMatrixClient,
+    httpFetch: typeof globalThis.fetch = globalThis.fetch.bind(globalThis),
+  ) {
     this.context = context;
     this.connectClient = connectClient;
+    // The send path's transport, injected by tests. It is wrapped per permit in `openSender` and
+    // never handed out unwrapped.
+    this.httpFetch = httpFetch;
   }
 
   async listAccounts(): Promise<BackendAccount[]> {
@@ -58,7 +72,12 @@ export class MatrixBackend implements ChatBackend {
     return loginMatrix(this.context, matrixPrompts(prompter), this.connectClient);
   }
 
-  async connect(accountId: string): Promise<ChatSession> {
+  /** Open the account's secret file and read what a session needs from it. */
+  private openAccount(accountId: string): {
+    store: SecretStore;
+    record: AccountRecord;
+    accessToken: string;
+  } {
     const path = accountPath(this.context.secretsDir, accountId);
     if (!existsSync(path)) throw new Error(fmt(_('no Matrix account {account} — {hint}'), { account: accountId, hint: reloginHint() }));
     const store = SecretStore.open(path);
@@ -70,6 +89,30 @@ export class MatrixBackend implements ChatBackend {
         fmt(_('the Matrix account file {account} is incomplete — {hint}'), { account: accountId, hint: reloginHint() }),
       );
     }
+    return { store, record, accessToken };
+  }
+
+  /**
+   * The only way to get a send path: one PUT endpoint, for the permit's rooms only.
+   *
+   * No matrix-js-sdk, no sync and no crypto store — a send needs the homeserver URL and the
+   * access token, nothing else. The read session built by `connect` has no sender and no way to
+   * reach one: its fetch is `readOnlyFetch`, which refuses the send PUT for every room.
+   */
+  async openSender(accountId: string, permit: SendPermit): Promise<MessageSender> {
+    const { store, record, accessToken } = this.openAccount(accountId);
+    const api = matrixSendApi({
+      homeserver: record.homeserver,
+      accessToken,
+      fetch: sendFetch(this.httpFetch, permit.addresses),
+    });
+    return new MatrixSender(api, permit, async () => {
+      store.close();
+    });
+  }
+
+  async connect(accountId: string): Promise<ChatSession> {
+    const { store, record, accessToken } = this.openAccount(accountId);
     let api;
     try {
       api = await this.connectClient({ ...record, accessToken, store, accountId });

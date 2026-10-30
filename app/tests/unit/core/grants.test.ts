@@ -74,10 +74,11 @@ export default async () => {
         [{ capability: 'calendar.create', target: 'acct' }],
         /"calendar\.create" is not a known capability/,
       );
-      // A backend whose send port is not built yet stays unknown; mail's and Telegram's are built.
+      // A backend whose send port is not built yet stays unknown; mail's, Telegram's and
+      // Matrix's are built.
       rejects(
-        [{ capability: 'matrix.send', target: 'acct/peer' }],
-        /"matrix\.send" is not a known capability/,
+        [{ capability: 'signal.send', target: 'acct/peer' }],
+        /"signal\.send" is not a known capability/,
       );
       rejects([{ capability: '*', target: 'acct' }], /not a known capability/);
     });
@@ -90,6 +91,16 @@ export default async () => {
       expect(isGranted(grants, 'telegram.send', 'telegram-42/-1004001')).toBe(true);
       expect(isGranted(grants, 'telegram.send', 'telegram-42/1002')).toBe(false);
       expect(isGranted(grants, 'xmpp.send', 'telegram-42/1001')).toBe(false);
+    });
+
+    await it('accepts matrix.send for a room id, which carries a colon but no slash', async () => {
+      const grants = parseGrants([
+        { capability: 'matrix.send', target: 'matrix-0123456789abcd/!dm:example.org' },
+      ]);
+      expect(isGranted(grants, 'matrix.send', 'matrix-0123456789abcd/!dm:example.org')).toBe(true);
+      // A room the grant does not name, and the same room under another account: both denied.
+      expect(isGranted(grants, 'matrix.send', 'matrix-0123456789abcd/!other:example.org')).toBe(false);
+      expect(isGranted(grants, 'matrix.send', 'matrix-ffffffffffffff/!dm:example.org')).toBe(false);
     });
 
     await it('rejects an empty, padded or wildcard target', async () => {

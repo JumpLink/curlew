@@ -143,6 +143,11 @@ export function toChatMessage(
     editedAt: null,
     sender: fromSelf ? null : toChatPeer(event.sender, displayNames.get(event.sender) ?? null),
     fromSelf,
+    // On Matrix the event id IS the id a send returns, so it serves as the client id too: the
+    // echo row the send path wrote (`local:<event id>`) is matched and dropped when the sync
+    // brings the server's copy of the same event. Only own events — someone else's message has
+    // no local row to replace, and a foreign id here would be a way to delete one.
+    clientId: fromSelf ? event.eventId : null,
     text: encrypted ? UNDECRYPTABLE_TEXT : messageText(event.content, replyTo !== null),
     hasAttachments:
       !encrypted && (event.type === 'm.sticker' || (msgtype !== null && FILE_MSGTYPES.has(msgtype))),
