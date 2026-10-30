@@ -431,7 +431,8 @@ See [End-to-end encryption](#end-to-end-encryption-grant-xmppomemo) and
 An account can send one message, but only from an account and to an address you
 granted, as an exact `<account>/<address>` pair (see
 [Your data stays yours](#your-data-stays-yours)). Every backend has its own
-capability — `xmpp.send`, `mail.send`, `telegram.send` and `matrix.send` today — and one grant never authorises
+capability — `xmpp.send`, `mail.send`, `telegram.send`, `matrix.send`, `signal.send` and
+`whatsapp.send` today — and one grant never authorises
 another backend:
 
 ```json
@@ -518,6 +519,29 @@ too, never attempted in the dark:
 
 ```bash
 curlew send --account matrix-0123456789abcd --to '!room:example.org' "Build is green"
+```
+
+#### WhatsApp
+
+`whatsapp.send` sends one plain-text message to a 1:1 chat. The address is the chat id
+exactly as `curlew conversations list` shows it — a full JID, `<digits>@lid` or
+`<digits>@s.whatsapp.net` — so a grant reads
+`{ "capability": "whatsapp.send", "target": "whatsapp-2084.../1348...@lid" }`. A bare phone
+number is refused, and so is a `<user>:3@…` device address: both leave open which chat is
+meant, and the grant has to name the string you read back. A text over 65536 UTF-8 bytes is
+refused rather than split, and there is no Markdown, no image and no reaction. Groups and
+status updates are refused — a group message needs a member list curlew does not keep. The
+sent message is stored in the index as your own message and replaced by WhatsApp's own copy
+when it comes back.
+
+**A send needs the daemon to let go of the account.** WhatsApp allows one connection per
+linked device, and the session state is a single file both would write, so curlew takes the
+same lease the daemon takes and refuses the send while the daemon holds it, naming
+`curlew daemon stop` as the way out. A refusal is the safe outcome here: a race on that file
+can end in a logout, and relinking would lose the history WhatsApp never hands out twice:
+
+```bash
+curlew send --account whatsapp-208451726394015 --to '134875029461837@lid' "Build is green"
 ```
 
 **Waiting for a reply.** Run `curlew daemon`: for granted XMPP accounts it
@@ -754,12 +778,15 @@ unknown capability is an error when the file loads.
     { "capability": "xmpp.send", "target": "<account>/<address>" },
     { "capability": "mail.send", "target": "<account>/<address>" },
     { "capability": "telegram.send", "target": "<account>/<chat id>" },
-    { "capability": "matrix.send", "target": "<account>/<room id>" }
+    { "capability": "matrix.send", "target": "<account>/<room id>" },
+    { "capability": "signal.send", "target": "<account>/<ACI>" },
+    { "capability": "whatsapp.send", "target": "<account>/<chat jid>" }
   ]
 }
 ```
 
-`xmpp.send`, `mail.send`, `telegram.send` and `matrix.send` are the capabilities a command or tool uses today
+`xmpp.send`, `mail.send`, `telegram.send`, `matrix.send`, `signal.send` and `whatsapp.send` are
+the capabilities a command or tool uses today
 (see [Sending](#sending-grants-backendsend)); a later backend gets its own
 `<backend>.send` row when it is built, and an unknown one is a config error.
 

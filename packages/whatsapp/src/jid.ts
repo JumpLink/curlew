@@ -42,6 +42,33 @@ export function isLidJid(jid: Jid | null): boolean {
 /** Stories: other people's status updates, not a chat. Never stored. */
 export const STATUS_BROADCAST = 'status@broadcast';
 
+/** `user@server` with a lowercase server and no device suffix — the form a chat is filed under. */
+export function bareJid(jid: Jid): string {
+  return `${jid.user}@${jid.server}`;
+}
+
+/**
+ * The JID a granted send may be addressed to, in the form the index files the chat under, or
+ * null when the address is not one curlew can send to.
+ *
+ * Only a full user JID counts — `<lid>@lid` or `<pn>@s.whatsapp.net`, exactly what `chatId`
+ * returns for a direct chat and therefore exactly what a caller reads back from
+ * `conversations_list`. Two forms are refused on purpose:
+ *
+ * - a bare phone number (`+4915…`, `4915…`). A direct chat is filed under the LID whenever one
+ *   is known, so a number names no chat here: curlew would either send into a conversation the
+ *   caller cannot read back, or have to resolve the number itself and address something other
+ *   than what the grant says. Both are worse than a refusal.
+ * - a device suffix (`<user>:3@…`). That addresses ONE of someone's devices; a message belongs
+ *   to the person, and the fan-out over their devices is the protocol's job, not the caller's.
+ */
+export function sendableJid(raw: string | null | undefined): string | null {
+  const jid = parseJid(raw);
+  if (!jid || jid.device !== null) return null;
+  if (!isPnJid(jid) && !isLidJid(jid)) return null;
+  return bareJid(jid);
+}
+
 /** What kind of chat a chat JID names. */
 export function chatKindOf(jid: Jid): ChatInfo['kind'] {
   if (jid.server === 'g.us') return 'group';
@@ -151,7 +178,7 @@ export class JidResolver {
   chatId(raw: string | null | undefined, alt?: string | null): string | null {
     const jid = parseJid(raw);
     if (!jid) return null;
-    if (chatKindOf(jid) !== 'direct') return `${jid.user}@${jid.server}`;
+    if (chatKindOf(jid) !== 'direct') return bareJid(jid);
     return this.user(raw, alt)?.id ?? null;
   }
 

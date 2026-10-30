@@ -5,7 +5,8 @@
   [Amendment 2026-10-30](#amendment-2026-10-30) and
   [Amendment (2026-10-30, telegram)](#amendment-2026-10-30-telegram) and
   [Amendment (2026-10-30, matrix)](#amendment-2026-10-30-matrix) and
-  [Amendment (2026-10-30, signal)](#amendment-2026-10-30-signal)
+  [Amendment (2026-10-30, signal)](#amendment-2026-10-30-signal) and
+  [Amendment (2026-10-30, whatsapp)](#amendment-2026-10-30-whatsapp)
 - **Scope:** `@gjsify/mcp` (the gate), `app` (config, MCP server, `curlew send`, `curlew daemon`),
   `@curlew/xmpp`, `@curlew/protocol` (calendar port), `@curlew/gnome` (EDS calendar driver)
 
@@ -297,3 +298,66 @@ receive path uses as the remote id of your own messages — so a transcript that
 linked device replaces the echo (`ChatMessage.clientId`) instead of adding a second copy. Unlike
 Matrix and Telegram this is a safety net rather than the normal path: Signal does not deliver a
 transcript back to the device that sent it.
+
+## Amendment (2026-10-30, whatsapp)
+
+`whatsapp.send` is built. Its target is `<account>/<address>` with the chat's remote id exactly as
+the index and `conversations_list` hold it — a full user JID, `<digits>@lid` or
+`<digits>@s.whatsapp.net`, for example `whatsapp-2084…/1348…@lid`. It sends one plain-text message
+of at most 65,536 UTF-8 bytes (WhatsApp's own text limit, read as bytes because a protobuf string
+field is bytes on the wire); a longer text is refused, never split. There is no Markdown, no
+attachment, no caption, no reaction, no edit and no quote.
+
+**Only a full JID is an address.** A bare phone number is refused with the reason that a chat is
+filed under the LID whenever curlew knows one, and a device suffix (`<user>:3@…`) is refused as
+one device of a person rather than the person. Both forms are ambiguous about which row of the
+index they mean, and the grant must name the same string a caller reads back. The sender sends to
+the JID the permit names, normalized and otherwise verbatim: curlew does **not** rewrite a granted
+phone-number JID to the LID it has learned for it, because a grant names one address. The local
+echo is still filed under the chat id the index uses, resolved from the key Baileys hands back.
+
+**Groups and broadcasts are refused.** A group message needs the sender-key fan-out over a member
+list this package does not keep; `status@broadcast` is not a chat. Both are turned away by address
+rather than half-attempted.
+
+**A send takes the receive lease.** Baileys' auth state is one SQLite secret file with write-behind
+and no lock, and WhatsApp allows one connection per linked device: a second socket while the daemon
+holds the account draws `connectionReplaced` (440), and a race on that file is how a session gets
+corrupted into a relink — which would cost the whole linked-device history. So `WHATSAPP_MANIFEST`
+carries `sendSharesReceiveState: true` and `app/src/core/actions/send.ts` takes the same receive
+lease the daemon takes (ADR 0002 §4) around the whole send; a send while the daemon holds the
+account is **refused** with the holder named and `curlew daemon stop` as the way out. As with
+Signal there is no heartbeat during a send.
+
+**Two socket shapes, not one gate.** WhatsApp speaks one multiplexed WebSocket, so a send cannot be
+fenced off by an HTTP allowlist the way Matrix's and Signal's are. The line is drawn at the handle
+instead: `WaSocketHandle` (receive) has no send method at all and is not a supertype of
+`WaSendSocketHandle` (send), so the sync and read path is not merely forbidden to send, it has
+nothing to call. The one argument a sender still chooses — which chat — is gated per permit and
+fail-closed in `guard.ts`, which `openSender` wraps around the socket before the sender sees it;
+`WhatsAppSender.recipient` re-checks the permit as well.
+
+**The fan-out is Baileys'.** `sendMessage` enumerates the recipient's and this account's devices,
+fetches the pre-keys it has no session for, encrypts once per device, and wraps the copies for the
+user's own devices in a `deviceSentMessage`, so the phone shows what curlew wrote. All of it leaves
+in one stanza, so a throw means nothing went out. `linkPreview: null` keeps the send from fetching
+any URL in the text. Not supported: a **retry request that arrives after the handle closed** —
+`getMessage` is backed by an in-memory map that lives as long as the send session, so a peer whose
+decryption failed later gets no resend from curlew, and asks the phone instead.
+
+**An unconfirmed send is a warning, never a throw.** Baileys resolves `sendMessage` when the stanza
+is written to the socket, which is not yet WhatsApp taking it; the sender waits up to 15 s for a
+`messages.update` carrying `SERVER_ACK` for its own key and reports a timeout as `sendWarning`,
+because failing the call would get the message sent twice by a caller that retries.
+
+**The send socket receives, too.** The server hands it the offline queue like any other connection,
+so it maps and journals everything it is given through the same `subscribeMapped` the receive path
+uses, into the same account journal, and closes without releasing it. Without that, a message that
+arrived during a send would be acknowledged to WhatsApp and then dropped. A journal failure before
+the send refuses the send; one noticed after it is a `sendWarning`.
+
+The sent message is indexed as a local echo whose id is the message id WhatsApp assigned — what the
+receive path uses as the remote id of our own messages — so the copy the connection echoes back
+replaces the echo (`ChatMessage.clientId`) instead of adding a second one. A note to self works the
+same way and is recognised as our own through `key.fromMe`; it needs a grant naming this account's
+own JID.

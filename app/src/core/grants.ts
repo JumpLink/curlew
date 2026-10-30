@@ -16,6 +16,7 @@ export type Capability =
   | 'telegram.send'
   | 'matrix.send'
   | 'signal.send'
+  | 'whatsapp.send'
   | 'xmpp.omemo'
   | 'canary.write';
 
@@ -32,6 +33,7 @@ export const CAPABILITIES = [
   'telegram.send',
   'matrix.send',
   'signal.send',
+  'whatsapp.send',
   'xmpp.omemo',
 ] as const;
 

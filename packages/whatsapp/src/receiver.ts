@@ -22,8 +22,9 @@
 
 import { _, fmt } from '@curlew/protocol';
 import type { DeliveryEvent, DeliveryMode, DeliveryOutcome, DeliverySession } from '@curlew/protocol';
-import type { WaEventMap, WaEventName, WaSocketHandle } from './api.ts';
+import type { WaEventMap, WaSocketHandle } from './api.ts';
 import { disconnectReason, disconnectStatus, LOGGED_OUT } from './api.ts';
+import { subscribeMapped } from './events.ts';
 import type { EventJournal } from './journal.ts';
 import type { WhatsAppMapper } from './map.ts';
 
@@ -62,8 +63,6 @@ export interface ReceiverOptions {
   setTimer?: (fn: () => void, ms: number) => unknown;
   clearTimer?: (handle: unknown) => void;
 }
-
-type Listener<E extends WaEventName> = (data: WaEventMap[E]) => void;
 
 export class WhatsAppReceiver implements DeliverySession {
   private readonly connect: () => WaSocketHandle;
@@ -131,80 +130,23 @@ export class WhatsAppReceiver implements DeliverySession {
   private open(): void {
     const socket = this.connect();
     this.socket = socket;
-    const listeners: Array<[WaEventName, Listener<WaEventName>]> = [];
-    const on = <E extends WaEventName>(event: E, listener: Listener<E>) => {
-      socket.ev.on(event, listener);
-      listeners.push([event, listener as Listener<WaEventName>]);
-    };
-    on('connection.update', (u) => this.onConnection(u));
-    on('messages.upsert', ({ messages, type }) =>
-      // `notify`: arrived live; `append`: from the offline queue or the phone. Neither is read yet.
-      this.push(
-        messages.flatMap((m) => this.mapper.message(m, false)),
-        type === 'notify' || type === 'append',
-      ),
-    );
-    on('messaging-history.set', (set) => {
-      this.historyRunning = typeof set.progress === 'number' && set.progress < 100;
-      this.push(this.mapper.history(set), true);
-    });
-    on('messaging-history.status', () => {
-      this.historyRunning = false;
-      this.touch();
-    });
-    on('messages.update', (u) => this.push(this.mapper.receipts(u), false));
-    on('message-receipt.update', (u) => this.push(this.mapper.userReceipts(u), false));
-    on('messages.delete', (d) => this.push(this.mapper.deletion(d), true));
-    on('chats.upsert', (chats) =>
-      this.push(
-        chats.flatMap((c) => this.mapper.chat(c, false)),
-        false,
-      ),
-    );
-    on('chats.update', (chats) =>
-      this.push(
-        chats.flatMap((c) => this.mapper.chat(c, false)),
-        false,
-      ),
-    );
-    on('chats.delete', (ids) => this.push(this.mapper.chatDeletion(ids), true));
-    on('contacts.upsert', (cs) =>
-      this.push(
-        cs.flatMap((c) => this.mapper.contact(c)),
-        false,
-      ),
-    );
-    on('contacts.update', (cs) =>
-      this.push(
-        cs.flatMap((c) => this.mapper.contact(c)),
-        false,
-      ),
-    );
-    on('groups.upsert', (gs) =>
-      this.push(
-        gs.flatMap((g) => this.mapper.group(g)),
-        false,
-      ),
-    );
-    on('groups.update', (gs) =>
-      this.push(
-        gs.flatMap((g) => this.mapper.group(g)),
-        false,
-      ),
-    );
-    on('lid-mapping.update', ({ lid, pn }) => {
-      this.mapper.resolver.learn(lid, pn);
-      this.push([], false);
-    });
-    on('creds.update', (update) => {
-      if (typeof update.accountSyncCounter === 'number' && update.accountSyncCounter > 0) {
-        this.awaitingInitialSync = false;
+    this.detach = subscribeMapped(socket.ev, this.mapper, {
+      events: (mapped, activity) => this.push(mapped, activity),
+      connection: (u) => this.onConnection(u),
+      history: (running) => {
+        this.historyRunning = running;
+      },
+      historyDone: () => {
+        this.historyRunning = false;
         this.touch();
-      }
+      },
+      creds: (update) => {
+        if (typeof update.accountSyncCounter === 'number' && update.accountSyncCounter > 0) {
+          this.awaitingInitialSync = false;
+          this.touch();
+        }
+      },
     });
-    this.detach = () => {
-      for (const [event, listener] of listeners) socket.ev.off(event, listener);
-    };
   }
 
   private onConnection(update: WaConnectionUpdateLike): void {

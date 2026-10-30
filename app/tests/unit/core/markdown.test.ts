@@ -4,11 +4,13 @@ import { MAX_CHUNK_CHARS, renderForXmpp, renderPlainText, stripQuotes } from '..
 import { TELEGRAM_MAX_MESSAGE_CHARS as BACKEND_LIMIT } from '@curlew/telegram';
 import { MATRIX_MAX_MESSAGE_BYTES as MATRIX_BACKEND_LIMIT } from '@curlew/matrix';
 import { SIGNAL_MAX_MESSAGE_BYTES as SIGNAL_BACKEND_LIMIT } from '@curlew/signal';
+import { WHATSAPP_MAX_MESSAGE_BYTES as WHATSAPP_BACKEND_LIMIT } from '@curlew/whatsapp';
 import {
   MATRIX_MAX_MESSAGE_BYTES,
   messagingCapabilities,
   SIGNAL_MAX_MESSAGE_BYTES,
   TELEGRAM_MAX_MESSAGE_CHARS,
+  WHATSAPP_MAX_MESSAGE_BYTES,
 } from '../../../src/core/actions/messaging.ts';
 import { WAIT_TIMEOUT_S } from '../../../src/core/actions/wait-reply.ts';
 
@@ -110,7 +112,7 @@ export default async () => {
   await describe('messaging_capabilities', async () => {
     await it('reports the XMPP limits without any address', async () => {
       const caps = messagingCapabilities('/nonexistent/curlew-config.json').protocols;
-      expect(caps.length).toBe(4);
+      expect(caps.length).toBe(5);
       const xmpp = caps[0];
       expect(xmpp.protocol).toBe('xmpp');
       expect(xmpp.maxMessageChars).toBe(8000);
@@ -159,6 +161,19 @@ export default async () => {
       expect(signal.splitsLongText).toBe(false);
       expect(signal.images.supported).toBe(false);
       expect(signal.accounts.length).toBe(0);
+    });
+
+    await it('reports WhatsApp as plain text, 65536 bytes, no splitting, no image', async () => {
+      const whatsapp = messagingCapabilities('/nonexistent/curlew-config.json').protocols[4];
+      expect(whatsapp.protocol).toBe('whatsapp');
+      expect(whatsapp.maxMessageBytes).toBe(WHATSAPP_MAX_MESSAGE_BYTES);
+      expect(WHATSAPP_MAX_MESSAGE_BYTES).toBe(WHATSAPP_BACKEND_LIMIT);
+      expect(WHATSAPP_BACKEND_LIMIT).toBe(65536);
+      expect(whatsapp.maxMessageChars).toBe(WHATSAPP_MAX_MESSAGE_BYTES);
+      expect(whatsapp.formats.join()).toBe('plain');
+      expect(whatsapp.splitsLongText).toBe(false);
+      expect(whatsapp.images.supported).toBe(false);
+      expect(whatsapp.accounts.length).toBe(0);
     });
   });
 };

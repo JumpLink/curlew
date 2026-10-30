@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-10-30 19:58+0100\n"
+"POT-Creation-Date: 2026-10-30 22:21+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -88,11 +88,11 @@ msgstr ""
 msgid "no {backend} account {account} — `curlew accounts list` shows them"
 msgstr ""
 
-#: app/src/core/actions/send.ts:340
+#: app/src/core/actions/send.ts:342
 msgid "{backend} cannot send an image — give text and leave image_url out"
 msgstr ""
 
-#: app/src/core/actions/send.ts:347
+#: app/src/core/actions/send.ts:349
 msgid "nothing to send: the text is empty after rendering"
 msgstr ""
 
@@ -1149,6 +1149,7 @@ msgstr[1] ""
 
 #: packages/imap/src/send.ts:52 packages/matrix/src/send.ts:162
 #: packages/signal/src/send.ts:260 packages/telegram/src/sender.ts:43
+#: packages/whatsapp/src/send.ts:236
 msgid "sending to {address} is not granted for account {account}"
 msgstr ""
 
@@ -1523,12 +1524,20 @@ msgid ""
 "shorten it"
 msgstr ""
 
-#: packages/whatsapp/src/backend.ts:86
+#: packages/whatsapp/src/backend.ts:110
 msgid "no WhatsApp session for {account} — {hint}"
 msgstr ""
 
-#: packages/whatsapp/src/backend.ts:95
+#: packages/whatsapp/src/backend.ts:120
 msgid "the WhatsApp session {account} was never linked — {hint}"
+msgstr ""
+
+#: packages/whatsapp/src/client.ts:164
+msgid "the WhatsApp connection closed: {reason}"
+msgstr ""
+
+#: packages/whatsapp/src/client.ts:178
+msgid "WhatsApp did not take the message — nothing was sent"
 msgstr ""
 
 #: packages/whatsapp/src/login.ts:43
@@ -1569,12 +1578,74 @@ msgid ""
 "everything queued to the first connection that takes it, once."
 msgstr ""
 
-#: packages/whatsapp/src/receiver.ts:30
+#: packages/whatsapp/src/receiver.ts:31
 msgid "link it again with `curlew accounts add whatsapp`"
 msgstr ""
 
-#: packages/whatsapp/src/receiver.ts:227
+#: packages/whatsapp/src/receiver.ts:169
 msgid "WhatsApp logged this device out ({reason}) — {hint}"
+msgstr ""
+
+#: packages/whatsapp/src/send.ts:128
+msgid ""
+"a WhatsApp message holds at most {max} bytes of text, this one has {bytes} — "
+"shorten it"
+msgstr ""
+
+#: packages/whatsapp/src/send.ts:141
+msgid ""
+"a message that arrived while curlew was connected could not be written down "
+"({reason}) — nothing was sent"
+msgstr ""
+
+#: packages/whatsapp/src/send.ts:154
+msgid ""
+"WhatsApp returned no id for the message — it may have been sent; look at the "
+"chat before sending it again"
+msgstr ""
+
+#: packages/whatsapp/src/send.ts:165
+msgid ""
+"WhatsApp did not confirm the message within {seconds} s — it was handed "
+"over, but look at the chat before sending it again"
+msgstr ""
+
+#: packages/whatsapp/src/send.ts:175
+msgid ""
+"the message was sent, but a message that arrived at the same time could not "
+"be written down ({reason}) — it may be missing from the chat"
+msgstr ""
+
+#: packages/whatsapp/src/send.ts:220
+msgid ""
+"curlew does not send status updates or broadcasts — send a message to a "
+"person instead"
+msgstr ""
+
+#: packages/whatsapp/src/send.ts:226
+msgid ""
+"curlew cannot send to a WhatsApp group: a group message is encrypted for "
+"every member, and curlew keeps no member list to do that with — send it from "
+"WhatsApp"
+msgstr ""
+
+#: packages/whatsapp/src/send.ts:250
+msgid ""
+"{address} names one device of a person, not the person — drop the `:"
+"<device>` and use the id `conversations_list` shows for the chat"
+msgstr ""
+
+#: packages/whatsapp/src/send.ts:258
+msgid ""
+"{address} is a phone number, not a WhatsApp chat id — a chat is filed under "
+"the LID whenever curlew knows one, so use the id `conversations_list` shows "
+"for the chat"
+msgstr ""
+
+#: packages/whatsapp/src/send.ts:265
+msgid ""
+"{address} is not a WhatsApp chat id — use the id `conversations_list` shows "
+"for the chat (`<digits>@lid` or `<digits>@s.whatsapp.net`)"
 msgstr ""
 
 #: packages/xmpp/src/accounts.ts:32

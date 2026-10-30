@@ -2,7 +2,6 @@ import { describe, expect, it } from '@gjsify/unit';
 import {
   existsSync,
   mkdirSync,
-  mkdtempSync,
   readdirSync,
   readFileSync,
   rmSync,
@@ -10,10 +9,9 @@ import {
   utimesSync,
   writeFileSync,
 } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import type { AccountPrompter, BackendContext, DeliveryEvent } from '@curlew/protocol';
+import type { DeliveryEvent } from '@curlew/protocol';
 import { isDeliveryBackend, validateManifest } from '@curlew/protocol';
 import {
   chatConversationId,
@@ -56,6 +54,7 @@ import {
   text,
   waMessage,
 } from './fake-socket.ts';
+import { ACCOUNT, context, link, ME, prompter, tempDir } from './world.ts';
 
 /**
  * The WhatsApp backend without WhatsApp: JID identity, mapping of Baileys' shapes, the auth state
@@ -63,58 +62,6 @@ import {
  * what it leaves on disk, and a whole sync through the backend into the conversation view. All
  * data is synthetic.
  */
-
-const ME = { id: '4915100000009:3@s.whatsapp.net', lid: '100000000000009:3@lid', name: 'Test Person' };
-const ACCOUNT = 'whatsapp-100000000000009';
-
-function tempDir(): string {
-  return mkdtempSync(join(tmpdir(), 'curlew-whatsapp-'));
-}
-
-function context(dir: string, settings: BackendContext['settings'] = {}): BackendContext {
-  return { settings, env: {}, secretsDir: join(dir, 'secrets', 'whatsapp') };
-}
-
-function prompter(answers: string[]): AccountPrompter & { asked: string[]; notes: string[] } {
-  const queue = [...answers];
-  const asked: string[] = [];
-  const notes: string[] = [];
-  return {
-    asked,
-    notes,
-    async ask(label) {
-      asked.push(label);
-      const next = queue.shift();
-      if (next === undefined) throw new Error('no answer left');
-      return next;
-    },
-    notify: (message) => notes.push(message),
-  };
-}
-
-/** Script a link: the first socket shows a QR code, the phone pairs, WhatsApp asks for a restart; the second opens. */
-function linkScript(socket: FakeSocket, index: number): void {
-  if (index === 0) {
-    socket.emit('connection.update', { qr: '2@synthetic-qr-payload,AAAA,BBBB,CCCC' });
-    socket.options.auth.state.creds.me = { ...ME };
-    socket.options.auth.saveCreds();
-    socket.emit('connection.update', {
-      connection: 'close',
-      lastDisconnect: {
-        error: Object.assign(new Error('restart required'), { output: { statusCode: 515 } }),
-      },
-    });
-  } else {
-    socket.emit('connection.update', { connection: 'open' });
-  }
-}
-
-async function link(dir: string, answers = ['']) {
-  const factory = fakeFactory(linkScript);
-  const ask = prompter(answers);
-  const account = await new WhatsAppBackend(context(dir), { createSocket: factory.create }).addAccount(ask);
-  return { account, ask, factory };
-}
 
 function receiver(socketScript: (s: FakeSocket, i: number) => void, clock: ManualClock, extra = {}) {
   const factory = fakeFactory(socketScript);

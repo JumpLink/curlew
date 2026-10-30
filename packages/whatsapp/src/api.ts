@@ -6,10 +6,14 @@
  * the receive path be unit-tested on Node and GJS against synthetic events, with no network, no
  * phone and no account.
  *
- * Read-only by construction: nothing here can send a message, a read receipt or a presence.
- * (Baileys itself still acknowledges each delivered message with a `delivery`/`inactive`
- * receipt — every linked device does, it is how the server knows it may forget the message.
- * That is the grey double tick, never the blue one; see `client.ts`.)
+ * The RECEIVE handle is read-only by construction: `WaSocketHandle` has no method that sends a
+ * message, a read receipt or a presence, so nothing reachable from a sync can write. (Baileys
+ * itself still acknowledges each delivered message with a `delivery`/`inactive` receipt — every
+ * linked device does, it is how the server knows it may forget the message. That is the grey
+ * double tick, never the blue one; see `client.ts`.)
+ *
+ * Writing lives in a shape of its own, `WaSendSocketHandle`, which only `openSender` builds and
+ * only behind a `whatsapp.send` grant (ADR 0004). Nothing converts one into the other.
  */
 
 /** A protobuf `Long`, as protobufjs decodes 64-bit fields. */
@@ -186,6 +190,41 @@ export interface WaSocketHandle {
    */
   end(): void;
 }
+
+/** What `sendMessage` hands back, reduced to what the send path reads off it. */
+export interface WaSentMessage {
+  key: WaMessageKey;
+  /** Seconds since the epoch, as the server stamped it. */
+  messageTimestamp?: WaNumber;
+}
+
+/**
+ * A socket that may ALSO send — the only shape in curlew with a send method.
+ *
+ * Deliberately NOT a `WaSocketHandle` with one more field: the read-only guarantee of the
+ * receive path is structural (`WaSocketHandle` exposes no way to write), and a subtype would
+ * make every receive-side variable a place a send handle could be put. Nothing but
+ * `openSender` constructs one, and the handle it returns is wrapped in the permit gate of
+ * `guard.ts` before anything can call it.
+ */
+export interface WaSendSocketHandle {
+  readonly ev: WaEventEmitter;
+  /**
+   * Resolve once the socket is open and the device may write. Baileys' `sendNode` throws
+   * `Connection Closed` while the WebSocket is not open yet, so every send waits for this.
+   */
+  ready(): Promise<void>;
+  sendText(jid: string, text: string): Promise<WaSentMessage>;
+  /** Close without logging out, exactly like `WaSocketHandle.end`. */
+  end(): void;
+}
+
+/**
+ * `proto.WebMessageInfo.Status.SERVER_ACK` — WhatsApp has the message. The status a
+ * `messages.update` carries for one of this account's own messages once the server took it; the
+ * grey single tick. Anything below it (`PENDING`, `ERROR`) is not a confirmation.
+ */
+export const SERVER_ACK = 2;
 
 /** Baileys' status code for "this device was logged out" (DisconnectReason.loggedOut). */
 export const LOGGED_OUT = 401;

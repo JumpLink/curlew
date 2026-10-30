@@ -74,11 +74,11 @@ export default async () => {
         [{ capability: 'calendar.create', target: 'acct' }],
         /"calendar\.create" is not a known capability/,
       );
-      // A backend whose send port is not built yet stays unknown; mail's, Telegram's, Matrix's
-      // and Signal's are built.
+      // A protocol Curlew does not speak stays unknown, however well-formed the capability
+      // reads; XMPP, mail, Telegram, Matrix, Signal and WhatsApp are the ones it does.
       rejects(
-        [{ capability: 'whatsapp.send', target: 'acct/peer' }],
-        /"whatsapp\.send" is not a known capability/,
+        [{ capability: 'discord.send', target: 'acct/peer' }],
+        /"discord\.send" is not a known capability/,
       );
       rejects([{ capability: '*', target: 'acct' }], /not a known capability/);
     });

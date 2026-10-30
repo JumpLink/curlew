@@ -310,6 +310,30 @@ for (const canary of DROPPED) {
 }
 console.log('OK: a signal.send grant alone serves send_message and nothing else that writes');
 
+const whatsappGrantsFile = join(scratch, 'granted-whatsapp.json');
+writeFileSync(
+  whatsappGrantsFile,
+  JSON.stringify({
+    backends: {},
+    grants: [{ capability: 'whatsapp.send', target: 'whatsapp-208451726394015/134875029461837@lid' }],
+  }),
+);
+const whatsappGranted = await listToolNames({
+  CURLEW_MCP_GATE_CANARY: '1',
+  CURLEW_CONFIG: whatsappGrantsFile,
+});
+assert(
+  whatsappGranted.includes('send_message'),
+  `send_message not served with a whatsapp.send grant (${whatsappGranted.join(', ')})`,
+);
+for (const canary of DROPPED) {
+  assert(
+    !whatsappGranted.includes(canary),
+    `GATE IS OPEN: ${canary} was served — ${whatsappGranted.join(', ')}`,
+  );
+}
+console.log('OK: a whatsapp.send grant alone serves send_message and nothing else that writes');
+
 // The env switch still opens setup_run, and only that.
 const ungated = await listToolNames({ CURLEW_MCP_GATE_CANARY: '1', CURLEW_MCP_ALLOW_WRITE: '1' });
 assert(
