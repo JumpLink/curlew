@@ -41,7 +41,7 @@ simply never publishes a device list).
 | Peer | How | Version tested |
 |---|---|---|
 | Dino | Flatpak `im.dino.Dino` is installed. `flatpak run im.dino.Dino`, add account `bob@localhost`, advanced: server `127.0.0.1`, port 5222 | |
-| Gajim | `org.gajim.Gajim` is **not** installed: `flatpak install flathub org.gajim.Gajim` | |
+| Gajim | `org.gajim.Gajim` is **not** installed: `flatpak install flathub org.gajim.Gajim`. More devices for bob: `flatpak run org.gajim.Gajim --profile bob2`; a profile's data lives in `~/.var/app/org.gajim.Gajim/{data,config,cache}/gajim.<profile>` | 2.6.0 (Flatpak) |
 | Conversations | Android emulator AVD `Tablet_API_36`, start **only** with `./scripts/android_emulator.sh start Tablet_API_36` (werkstatt hub). The host is `10.0.2.2` from inside the emulator. APK from F-Droid. Account `bob@localhost`, set hostname `10.0.2.2`, port 5222 in the account's advanced options | |
 
 Certificate acceptance. **Not verified by the author — UI labels and the exact steps need a
@@ -67,17 +67,17 @@ their trust state. `omemo trust` needs a TTY and asks you to type the fingerprin
 
 | # | Check | Dino | Gajim | Conv. |
 |---|---|---|---|---|
-| 1 | First contact, peer → curlew | ☐ | ☐ | ☐ |
-| 2 | First contact, curlew → peer | ☐ | ☐ | ☐ |
-| 3 | BTBV: a new device is trusted without verification | ☐ | ☐ | ☐ |
-| 4 | Verified: an extra unverified device gets nothing | ☐ | ☐ | ☐ |
-| 5 | `distrusted` | ☐ | ☐ | ☐ |
-| 6 | No trusted device: refused, no plaintext | ☐ | ☐ | ☐ |
-| 7 | `encryption: "required"` refused against carol | ☐ | ☐ | ☐ |
-| 8 | Carbon from bob's second device | ☐ | ☐ | ☐ |
-| 9 | MAM catch-up after curlew downtime | ☐ | ☐ | ☐ |
-| 10 | Identity change (peer reinstalled) | ☐ | ☐ | ☐ |
-| 11 | `omemo reset` → new session, no hang | ☐ | ☐ | ☐ |
+| 1 | First contact, peer → curlew | ☐ | ✓ | ☐ |
+| 2 | First contact, curlew → peer | ☐ | ✓ | ☐ |
+| 3 | BTBV: a new device is trusted without verification | ☐ | ✓ | ☐ |
+| 4 | Verified: an extra unverified device gets nothing | ☐ | ✓ | ☐ |
+| 5 | `distrusted` | ☐ | ✓ | ☐ |
+| 6 | No trusted device: refused, no plaintext | ☐ | ✓ | ☐ |
+| 7 | `encryption: "required"` refused against carol | ☐ | ✓ | ☐ |
+| 8 | Carbon from bob's second device | ☐ | ✓¹ | ☐ |
+| 9 | MAM catch-up after curlew downtime | ☐ | ✓ | ☐ |
+| 10 | Identity change (peer reinstalled) | ☐ | ✓ | ☐ |
+| 11 | `omemo reset` → new session, no hang | ☐ | ✓ | ☐ |
 
 ### 1. First contact, peer → curlew
 
@@ -122,7 +122,8 @@ curlew sync --account $ID
 curlew send "verified only" --account $ID --to bob@localhost
 ```
 
-Expect: the verified device decrypts it; the new unverified device gets nothing for it.
+Expect: the verified device decrypts it; the new unverified device gets nothing for it. A device
+that was already `blind` before the first verification keeps its blind trust and decrypts too.
 
 ### 5. distrusted
 
@@ -167,7 +168,8 @@ curlew sync --account $ID
 curlew conversations show <conversation-id> --bodies
 ```
 
-Expect: "from B" appears once, decrypted, from bob. The reverse: bob device A sends to alice,
+Expect: "from B" appears once, decrypted, from bob. Receiving decrypts from every device, a
+`distrusted` one included (ADR 0006 §6). The reverse: bob device A sends to alice,
 device B shows the carbon copy.
 
 ### 9. MAM catch-up after downtime
@@ -195,6 +197,10 @@ curlew conversations show <conversation-id> --bodies
 Expect: a notice in the chat about the changed identity, the old device is not silently the
 same one, and a send reaches the new device only under the trust rules of items 3–5.
 
+Gajim picks a NEW device id on a fresh profile, so this exercises "new device" (listed as
+`undecided` once any bob device is verified; the old id stays in bob's list), not "new key under
+the same id" — the identity notice only fires for the latter.
+
 ### 11. `omemo reset`
 
 ```sh
@@ -209,3 +215,12 @@ bob's reply decrypts too.
 ## Result
 
 Date, curlew commit, Prosody image, versions in the table above, deviations:
+
+**Gajim, 2026-10-30.** curlew `feat/omemo-lab` (PR #104), Gajim 2.6.0 Flatpak, Prosody 13.0.
+Found and fixed on the way: PEP results read from the iq child (`e123f86`); the peer's device
+list is fetched on every send, so a new device gets a key at once (`4a4aad0`, item 2 sent
+plaintext before it); the lab's stderr filter no longer holds prompts back (`2f81ca4`).
+
+¹ Delivered once and decrypted, but the sender device's trust (here: `distrusted`) does not reach
+the indexed message, so a reader cannot tell it from a verified one — ADR 0006 §6 promises it.
+Follow-up issue.
