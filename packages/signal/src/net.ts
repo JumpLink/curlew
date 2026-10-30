@@ -3,20 +3,34 @@
  * WebSocket and its framing inside the Rust addon (a W3C WebSocket cannot pin that root — see the
  * spike in `docs/adr/0001-multi-protocol-messenger.md`).
  *
- * Three kinds, each handed out with the least it needs:
+ * Four kinds, each handed out with the least it needs:
  * - the provisioning socket (link time): receives the address and the phone's envelope;
  * - an unauthenticated chat connection (link time): only a `guardedFetch('link', …)` leaves here;
- * - the authenticated chat connection (sync): a `ChatHandle` — receive and disconnect, no fetch.
+ * - the authenticated chat connection (sync): a `ChatHandle` — receive and disconnect, no fetch;
+ * - a granted send connection: only a `sendFetch(…, recipients)` leaves here.
+ *
+ * The request shape every one of them uses — Basic credentials, a JSON body — lives here too, so
+ * there is one place to read what curlew puts on a chat request.
  */
 
 import type * as Core from '@signalapp/libsignal-client';
 import type { ChatFetch } from './guard.ts';
-import { guardedFetch } from './guard.ts';
+import { guardedFetch, sendFetch } from './guard.ts';
 import type { SignalLib } from './lib.ts';
 import type { DeviceAccount } from './protocol-store.ts';
 import type { ChatConnector } from './receiver.ts';
 
 export const USER_AGENT = 'curlew';
+
+export function basicAuth(user: string, password: string): [string, string] {
+  return ['Authorization', `Basic ${btoa(`${user}:${password}`)}`];
+}
+
+export const JSON_TYPE: [string, string] = ['Content-Type', 'application/json'];
+
+export function jsonBody(value: unknown): Uint8Array {
+  return new TextEncoder().encode(JSON.stringify(value));
+}
 
 export function createNet(lib: SignalLib): Core.Net.Net {
   return new lib.core.Net.Net({ env: lib.core.Net.Environment.Production, userAgent: USER_AGENT });
@@ -76,6 +90,44 @@ export async function authenticatedChannel(
     });
     return { status: response.status, message: response.message, body: response.body };
   });
+  return { fetch, close: () => connection.disconnect() };
+}
+
+/**
+ * The connection ONE granted send uses, behind the per-permit gate: the recipient's pre-keys and
+ * the message itself may leave here, nothing else (`sendFetch`).
+ *
+ * It is its own connection for the same reason the key upload is: libsignal attaches credentials
+ * to the initial connect only. Envelopes the server pushes down it are dropped WITHOUT an
+ * acknowledgement — unacknowledged means the server keeps them, so the next sync still gets them;
+ * reading them here would need the receive path's journal-then-flush order, and a sender has
+ * neither.
+ */
+export async function sendChannel(
+  net: Core.Net.Net,
+  account: DeviceAccount,
+  recipients: readonly string[],
+): Promise<{ fetch: ChatFetch; close(): Promise<void> }> {
+  const connection = await net.connectAuthenticatedChat(
+    `${account.aci}.${account.deviceId}`,
+    account.password,
+    false,
+    {
+      onIncomingMessage: () => undefined,
+      onQueueEmpty: () => undefined,
+      onConnectionInterrupted: () => undefined,
+      onReceivedAlerts: () => undefined,
+    },
+  );
+  const fetch = sendFetch(async (request) => {
+    const response = await connection.fetch({
+      verb: request.verb,
+      path: request.path,
+      headers: request.headers,
+      body: request.body as Uint8Array<ArrayBuffer> | undefined,
+    });
+    return { status: response.status, message: response.message, body: response.body };
+  }, recipients);
   return { fetch, close: () => connection.disconnect() };
 }
 

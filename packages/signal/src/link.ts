@@ -34,6 +34,7 @@ import { decryptProvisionEnvelope, encryptDeviceName } from './crypto.ts';
 import type { ChatFetch } from './guard.ts';
 import { generateLinkKeys, generateOneTimeKeys, generatePassword, generatePniLinkKeys, generateRegistrationId } from './keys.ts';
 import type { SignalLib } from './lib.ts';
+import { basicAuth, JSON_TYPE, jsonBody } from './net.ts';
 import type { ProvisioningListener } from './provisioning.ts';
 import { SignalProtocolStore, toBase64 } from './protocol-store.ts';
 import { renderQr } from './qr.ts';
@@ -60,16 +61,6 @@ export interface LinkOptions {
   /** The name the phone lists this device under. */
   deviceName?: string;
   timeoutMs?: number;
-}
-
-function basicAuth(user: string, password: string): [string, string] {
-  return ['Authorization', `Basic ${btoa(`${user}:${password}`)}`];
-}
-
-const JSON_TYPE: [string, string] = ['Content-Type', 'application/json'];
-
-function jsonBody(value: unknown): Uint8Array {
-  return new TextEncoder().encode(JSON.stringify(value));
 }
 
 /** Wait for the phone's envelope, opening a new provisioning socket whenever one closes. */

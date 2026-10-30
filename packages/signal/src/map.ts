@@ -297,6 +297,11 @@ export class SignalMapper {
       editedAt: null,
       sender: fromSelf ? null : peerOf(authorAci),
       fromSelf,
+      // What `SignalSender` returns as the sent id, so a transcript replaces curlew's local echo.
+      // Only own messages: someone else's has no local row, and a foreign id here would be a way
+      // to delete one. Signal does not deliver a transcript back to the sending device, so this
+      // normally matches only a send from curlew's other device — a safety net, not the rule.
+      clientId: fromSelf ? messageRemoteId(authorAci, sentAt) : null,
       text,
       hasAttachments,
       replyToRemoteId:

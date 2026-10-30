@@ -11,7 +11,8 @@ export const SIGNAL_MANIFEST: BackendManifest = {
   name: 'signal',
   displayName: 'Signal (linked device, via libsignal)',
   pluginApi: PLUGIN_API_VERSION,
-  // What the NETWORK can do; curlew only reads.
+  // What the NETWORK can do; what curlew does with it is narrower — it reads everything here and
+  // writes only a plain-text message into a chat `signal.send` names.
   capabilities: {
     edits: true,
     // The network has reactions; map.ts drops them in mapDataMessage.
@@ -35,9 +36,12 @@ export const SIGNAL_MANIFEST: BackendManifest = {
   native: true,
   // A Signal account is an ACI (a UUID); the phone number is an optional, often hidden, alias.
   addressKinds: ['signal', 'phone'],
+  // Sending advances the Double Ratchet in the session file the receive loop has open: the app
+  // serialises a send through the receive lease, and refuses while the daemon holds the account.
+  sendSharesReceiveState: true,
   terms: {
     summary:
-      'curlew connects to Signal as a linked device (like Signal Desktop), using libsignal, the Rust library the official apps are built on. Signal does not offer an API and does not license third-party clients: curlew is not an official Signal client, and Signal does not support it. Independent clients of this kind (signal-cli, Flare, Whisperfish) exist and are used without known account bans, but Signal could block them at any time. curlew only reads: it never sends messages, read receipts or typing indicators (it does acknowledge delivery, as every linked device must). Signal keeps no server archive, so what curlew receives exists only in its local index, and Signal unlinks a linked device that stays offline for too long.',
+      'curlew connects to Signal as a linked device (like Signal Desktop), using libsignal, the Rust library the official apps are built on. Signal does not offer an API and does not license third-party clients: curlew is not an official Signal client, and Signal does not support it. Independent clients of this kind (signal-cli, Flare, Whisperfish) exist and are used without known account bans, but Signal could block them at any time. curlew reads your messages, and writes only where you granted it: it sends a plain-text message into a chat a `signal.send` grant names, and nothing else — no read receipts, no typing indicators, no attachments (it does acknowledge delivery, as every linked device must). Signal keeps no server archive, so what curlew receives exists only in its local index, and Signal unlinks a linked device that stays offline for too long.',
     url: 'https://signal.org/legal/',
   },
 };
