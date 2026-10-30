@@ -18,6 +18,7 @@ import {
   type SentMessage,
 } from '@curlew/protocol';
 import type { TelegramClientHandle } from './api.ts';
+import { remoteMessageId } from './map.ts';
 
 /** Telegram's limit for one text message. curlew refuses longer text rather than split it. */
 export const TELEGRAM_MAX_MESSAGE_CHARS = 4096;
@@ -61,7 +62,7 @@ export class TelegramSender implements MessageSender {
     const sent = await this.client.sendText(chatId, message.text);
     return {
       target: message.to,
-      id: String(sent.id),
+      id: remoteMessageId(chatId, sent.id),
       sentAt: sent.date.toISOString(),
       chatRemoteId: String(chatId),
     };

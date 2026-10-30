@@ -12,7 +12,8 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
   displayName: 'Telegram (official API via mtcute)',
   pluginApi: PLUGIN_API_VERSION,
   // What the NETWORK can do, as far as cloud chats go. The frontends read these to show or hide
-  // a feature; curlew reads and sends plain text, so none of this is a promise that curlew can SEND it (only plain text, behind `telegram.send`).
+  // a feature. curlew sends plain text only, behind `telegram.send`, so none of this is a promise
+  // that curlew can SEND it.
   capabilities: {
     // True, but by a different route than Matrix and XMPP: Telegram has no edit feed, so
     // `fetchHistory` never reports one. `getHistory` returns each message's CURRENT text, and an
