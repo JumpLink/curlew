@@ -30,7 +30,11 @@ export const sendCommand: CommandModule = {
         type: 'string',
         describe: _('Mail only: the subject line'),
       })
-      .option('account', { type: 'string', demandOption: true, describe: _('Account id from `curlew accounts list`') })
+      .option('account', {
+        type: 'string',
+        demandOption: true,
+        describe: _('Account id from `curlew accounts list`'),
+      })
       .option('to', {
         type: 'string',
         demandOption: true,

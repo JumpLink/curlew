@@ -181,9 +181,7 @@ export async function resolveSendBackend(
     const accounts = await backend.listAccounts();
     if (accounts.some((a) => a.id === accountId)) return backend;
   }
-  throw new Error(
-    fmt(_('no account {account} — `curlew accounts list` shows them'), { account: accountId }),
-  );
+  throw new Error(fmt(_('no account {account} — `curlew accounts list` shows them'), { account: accountId }));
 }
 
 /** The registry's xmpp backend, typed for its granted handle. The daemon follows one account. */

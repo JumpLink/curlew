@@ -53,7 +53,10 @@ async function withServer<T>(body: (server: DummyServer) => Promise<T>): Promise
 }
 
 /** A directory with a config the case writes, removed afterwards. */
-async function withConfig<T>(config: unknown, body: (paths: { dir: string; configPath: string }) => Promise<T>) {
+async function withConfig<T>(
+  config: unknown,
+  body: (paths: { dir: string; configPath: string }) => Promise<T>,
+) {
   const dir = mkdtempSync(join(tmpdir(), 'curlew-mail-send-'));
   try {
     const configPath = join(dir, 'config.json');
