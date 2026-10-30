@@ -38,7 +38,7 @@ import {
 import { MESSAGES } from './messages.ts';
 import { deleteConsumedPreKeys, type OwnDevice } from './omemo-device.ts';
 import { parseEncryptedElement } from './omemo-stanza.ts';
-import { receiveOmemo, type UndecryptableReason } from './omemo-receive.ts';
+import { noteSenderDevice, receiveOmemo, type UndecryptableReason } from './omemo-receive.ts';
 import { type ArchivedEntry, bareJid } from './stanza.ts';
 
 /**
@@ -167,6 +167,7 @@ export async function decryptEntries(
 
     if (outcome.kind === 'decrypted') {
       consumedPreKeys = true;
+      await noteSenderDevice(storage, senderJid, outcome.senderDeviceId);
       if (outcome.identity === 'replaced') {
         const notice = await identityNotice(storage, entry, senderJid, outcome.senderDeviceId);
         if (notice !== undefined) out.push(notice);

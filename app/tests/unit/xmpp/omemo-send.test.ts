@@ -138,6 +138,22 @@ export default async function omemoSend(): Promise<void> {
       expect((await refusal(() => sendTo(alice, BOB, 'hi'))).reason).toBe('device-list-failed');
     });
 
+    await it('asks the server for the peer\u2019s devices even while the cache is fresh', async () => {
+      const net = fakeNetwork();
+      const alice = await join(net, ALICE);
+      const bobLaptop = await join(net, BOB);
+      await sendTo(alice, BOB, 'first');
+
+      const bobPhone = await join(net, BOB);
+      // One minute later: far inside the TTL, so only a forced refresh can see the phone.
+      const soon = new Date(LATER.getTime() + 60 * 1000);
+      const plan = await planOmemoSend(alice.pep, alice.storage, alice.device, ALICE, BOB, {
+        now: () => soon,
+      });
+      const ids = (plan?.recipients ?? []).map((r) => r.address.deviceId).sort((a, b) => a - b);
+      expect(ids).toStrictEqual([bobLaptop.device.deviceId, bobPhone.device.deviceId].sort((a, b) => a - b));
+    });
+
     await it('sends to a stale cached list rather than sending in the clear', async () => {
       const net = fakeNetwork();
       const alice = await join(net, ALICE);

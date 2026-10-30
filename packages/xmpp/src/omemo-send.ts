@@ -173,7 +173,9 @@ export async function planOmemoSend(
 ): Promise<OmemoSendPlan | null> {
   const ttl = options.ttlMs === undefined ? {} : { ttlMs: options.ttlMs };
   const now = options.now ?? (() => new Date());
-  const peers = await fetchDeviceList(pep, storage, peerJid, { now, ...ttl });
+  // The peer's list is asked for on every send: a device they added since the last one is
+  // otherwise missing a key for up to the TTL. The cache is what answers when the server does not.
+  const peers = await fetchDeviceList(pep, storage, peerJid, { now, ttlMs: 0 });
   if (peers.kind === 'failed') throw new OmemoSendRefusedError('device-list-failed');
   if (peers.deviceIds.length === 0) {
     if (options.requireEncryption === true) throw new OmemoSendRefusedError('encryption-required');

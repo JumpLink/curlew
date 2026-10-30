@@ -19,6 +19,7 @@ import {
   NS,
   SecretStoreOmemoStorage,
   decryptEntries,
+  fetchDeviceList,
   encryptedChatMessage,
   omemoEncryptFor,
   type ArchivedEntry,
@@ -184,6 +185,33 @@ export default async function omemoArchive(): Promise<void> {
       expect(out.length).toBe(1);
       expect(out[0].encrypted).toBe(true);
       expect(out[0].body).toBe('encrypted');
+    });
+
+    await it('drops the sender\u2019s cached device list when the sending device is not on it', async () => {
+      const net = fakeNetwork();
+      const alice = await join(net, ALICE);
+      const bob = await joinReceiver(net, BOB);
+      // Bob caches Alice's list while it holds only her first device.
+      await fetchDeviceList(bob.pep, bob.storage, ALICE, { now: () => START });
+      expect(await bob.storage.loadDeviceList(ALICE)).not.toBe(undefined);
+
+      const phone = await join(net, ALICE);
+      const entry = await archived(phone, BOB, 'from the new phone', 'a-6');
+      const out = await decryptEntries(bob.storage, bob.device, BOB, [entry], { now: () => LATER });
+      expect(out[0].body).toBe('from the new phone');
+      expect(await bob.storage.loadDeviceList(ALICE)).toBe(undefined);
+      expect(alice.device.deviceId === phone.device.deviceId).toBe(false);
+    });
+
+    await it('keeps the cached device list when the sending device is on it', async () => {
+      const net = fakeNetwork();
+      const alice = await join(net, ALICE);
+      const bob = await joinReceiver(net, BOB);
+      await fetchDeviceList(bob.pep, bob.storage, ALICE, { now: () => START });
+
+      const entry = await archived(alice, BOB, 'as usual', 'a-7');
+      await decryptEntries(bob.storage, bob.device, BOB, [entry], { now: () => LATER });
+      expect(await bob.storage.loadDeviceList(ALICE)).not.toBe(undefined);
     });
   });
 }
