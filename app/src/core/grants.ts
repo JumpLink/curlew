@@ -10,7 +10,7 @@
  * puts it in front of every write handler is the gate's job.
  */
 
-export type Capability = 'xmpp.send' | 'xmpp.omemo' | 'canary.write';
+export type Capability = 'xmpp.send' | 'mail.send' | 'xmpp.omemo' | 'canary.write';
 
 export interface Grant {
   capability: Capability;
@@ -18,8 +18,8 @@ export interface Grant {
   target: string;
 }
 
-/** Capabilities a real configuration may grant. */
-export const CAPABILITIES = ['xmpp.send', 'xmpp.omemo'] as const;
+/** Capabilities a real configuration may grant. A new backend's `<backend>.send` gets its row when it is built. */
+export const CAPABILITIES = ['xmpp.send', 'mail.send', 'xmpp.omemo'] as const;
 
 /**
  * The test-only capability behind the gate's positive-control canary. It is accepted only while
@@ -37,16 +37,21 @@ const WILDCARD = /[*?]/;
 /** An account id as `accountIdFor` makes it — kept in step with `ACCOUNT_ID` in `@curlew/xmpp`. */
 const XMPP_ACCOUNT = /^xmpp-[0-9a-z]+$/;
 
+/** Does this capability name a send? `<backend>.send`, one per backend (ADR 0004, amended 2026-10-30). */
+export function isSendCapability(capability: string): boolean {
+  return capability.endsWith('.send');
+}
+
 /**
- * `xmpp.send` names the account AND the address: from where, and to whom. `xmpp.omemo` names
- * only the account, because end-to-end encryption is a property of the account's keys and not
- * of one conversation — it decrypts whatever that account receives, and publishes its device.
+ * Every `<backend>.send` names the account AND the address: from where, and to whom. `xmpp.omemo`
+ * names only the account, because end-to-end encryption is a property of the account's keys and
+ * not of one conversation — it decrypts whatever that account receives, and publishes its device.
  */
 function targetProblem(capability: Capability, target: string): string | undefined {
   if (target.length === 0 || target.trim() !== target)
     return 'must be a non-empty string without surrounding whitespace';
   if (WILDCARD.test(target)) return 'must name exactly one target, wildcards are not allowed';
-  if (capability === 'xmpp.send') {
+  if (isSendCapability(capability)) {
     const slash = target.indexOf('/');
     if (slash <= 0 || slash === target.length - 1) return 'must be "<account>/<address>"';
   }

@@ -14,6 +14,9 @@ import {
   type FolderInfo,
   type MailBackend,
   type MailTarget,
+  type MessageSender,
+  type SendBackend,
+  type SendPermit,
   decodeBytes,
   extractBodySection,
   hasFlag,
@@ -35,6 +38,7 @@ import {
 import { listMailTargets } from '@curlew/gnome';
 import { ImapClient, type ImapResponse } from './client.gjs.ts';
 import { MAIL_MANIFEST } from './manifest.ts';
+import { openMailSender } from './send.ts';
 
 /**
  * How much body text is indexed per message.
@@ -194,7 +198,7 @@ class ImapBackendSession implements BackendSession {
 }
 
 /** The live IMAP backend, resolving accounts through GNOME Online Accounts. */
-export class ImapBackend implements MailBackend {
+export class ImapBackend implements MailBackend, SendBackend {
   readonly manifest = MAIL_MANIFEST;
   readonly kind = 'mailbox' as const;
   private targets: MailTarget[] | null = null;
@@ -219,5 +223,13 @@ export class ImapBackend implements MailBackend {
     await client.connect(target);
     await client.login(target.user, target.getPassword());
     return new ImapBackendSession(client);
+  }
+
+  /**
+   * The send port (ADR 0004, amended 2026-10-30): SMTP through GOA, behind a `mail.send` permit.
+   * The permit is checked again on every send; this method reads no password.
+   */
+  async openSender(accountId: string, permit: SendPermit): Promise<MessageSender> {
+    return openMailSender(accountId, permit);
   }
 }

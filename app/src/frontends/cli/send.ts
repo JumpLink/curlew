@@ -1,8 +1,8 @@
 /**
- * `curlew send` — a plain-text chat message and/or one image from a granted XMPP account (ADR 0004 §4).
+ * `curlew send` — one message from a granted account (ADR 0004 §4, amended 2026-10-30).
  *
- * The same grant the MCP tool checks: `xmpp.send` with target `<account>/<address>`. Without it
- * the command refuses and writes nothing.
+ * The same grant the MCP tool checks: `<backend>.send` with target `<account>/<address>`, the
+ * account picking the backend. Without it the command refuses and writes nothing.
  */
 
 import { _ } from '@curlew/protocol';
@@ -14,7 +14,7 @@ import { runAndExit } from './output.ts';
 export const sendCommand: CommandModule = {
   command: 'send [text]',
   get describe() {
-    return _('Send a chat message from a granted XMPP account (needs an xmpp.send grant in the config)');
+    return _('Send a message from a granted account (needs a <backend>.send grant in the config)');
   },
   builder: (yargs) =>
     yargs
@@ -24,13 +24,21 @@ export const sendCommand: CommandModule = {
       })
       .option('image-url', {
         type: 'string',
-        describe: _('https URL of one image, sent as its own message after the text'),
+        describe: _('XMPP only: https URL of one image, sent as its own message after the text'),
       })
-      .option('account', { type: 'string', demandOption: true, describe: _('XMPP account id (xmpp-…)') })
+      .option('subject', {
+        type: 'string',
+        describe: _('Mail only: the subject line'),
+      })
+      .option('account', {
+        type: 'string',
+        demandOption: true,
+        describe: _('Account id from `curlew accounts list`'),
+      })
       .option('to', {
         type: 'string',
         demandOption: true,
-        describe: _('Bare address exactly as the grant spells it (name@example.org)'),
+        describe: _('Address exactly as the grant spells it (name@example.org)'),
       }),
   handler: (argv) => {
     const raw = argv as Record<string, unknown>;
@@ -39,6 +47,7 @@ export const sendCommand: CommandModule = {
         accountId: String(raw.account),
         to: String(raw.to),
         text: raw.text === undefined ? undefined : String(raw.text),
+        subject: raw.subject === undefined ? undefined : String(raw.subject),
         imageUrl: raw['image-url'] === undefined ? undefined : String(raw['image-url']),
         frontend: 'cli',
       }),

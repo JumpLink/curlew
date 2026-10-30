@@ -3,4 +3,5 @@
  */
 
 export { searchMail, getMessage, listFolders, listParts, fetchPart, ImapBackend } from './unavailable.ts';
+export { MailSender, openMailSender } from './send.ts';
 export { MAIL_MANIFEST } from './manifest.ts';

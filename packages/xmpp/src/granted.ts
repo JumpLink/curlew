@@ -8,7 +8,7 @@
  * permit, which is why the permit is per account with the addresses it may reach.
  */
 
-import type { ChatSession } from '@curlew/protocol';
+import type { ChatSession, SendPermit } from '@curlew/protocol';
 import { normalizeAddress } from '@curlew/protocol';
 import { randomUUID } from 'node:crypto';
 import type { XmppApi, XmppLink } from './api.ts';
@@ -21,10 +21,7 @@ import { type DecryptEntries, XmppChatSession } from './session.ts';
 export const MAX_TEXT_CHARS = 8_000;
 
 /** What the grants allow for ONE account: the exact addresses `xmpp.send` names for it. */
-export interface SendPermit {
-  account: string;
-  addresses: readonly string[];
-}
+export type { SendPermit };
 
 export interface SentChat {
   /** The bare JID the message went to. */

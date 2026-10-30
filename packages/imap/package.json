@@ -23,7 +23,8 @@
     "@girs/glib-2.0": "^4.1.0",
     "@girs/goa-1.0": "^4.1.0",
     "@curlew/gnome": "*",
-    "@curlew/protocol": "*"
+    "@curlew/protocol": "*",
+    "@curlew/smtp": "*"
   },
   "devDependencies": {
     "@girs/edataserver-1.2": "^4.1.0",

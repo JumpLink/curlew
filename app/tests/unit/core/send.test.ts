@@ -5,7 +5,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { chatConversationId, getConversation, recordSentChatMessage } from '@curlew/store';
-import { chatMessage, GrantedXmppSession, isArrivalHint, validateImageUrl } from '@curlew/xmpp';
+import {
+  chatMessage,
+  GrantedXmppSession,
+  isArrivalHint,
+  validateImageUrl,
+  XMPP_MANIFEST,
+  XmppSender,
+} from '@curlew/xmpp';
 import type { EncryptedStanza, XmppBackend, XmppLink } from '@curlew/xmpp';
 import xml from '@xmpp/xml';
 
@@ -13,6 +20,7 @@ import { permitFor, recordDelivered, requireSendGrant, sendMessage } from '../..
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
 import { waitReply } from '../../../src/core/actions/wait-reply.ts';
 import { appendWriteLog } from '../../../src/core/write-log.ts';
+import { SEND_GATE_CAPABILITY, withSendGateGrants } from '../../../src/frontends/mcp/tools/send.ts';
 import { freshDb } from '../store/fixtures.ts';
 import { createRecorder } from '../mcp/recorder.ts';
 
@@ -350,6 +358,41 @@ export default async () => {
     });
   });
 
+  await describe('send_message is gated by the union of every <backend>.send grant', async () => {
+    const register = (rec: ReturnType<typeof createRecorder>) =>
+      rec.server.registerTool(
+        'send',
+        requiresCapability(
+          { inputSchema: {}, annotations: { readOnlyHint: false } },
+          {
+            capability: SEND_GATE_CAPABILITY,
+            targetOf: (a: { account: string; to: string }) => `${a.account}/${a.to}`,
+          },
+        ) as never,
+        (async () => 'reached') as never,
+      );
+
+    await it('is dropped with no grant and served by a mail.send grant alone', async () => {
+      const closed = createRecorder();
+      applyGrantGate(closed.server, withSendGateGrants([]));
+      register(closed);
+      expect(closed.names().length).toBe(0);
+
+      const opened = createRecorder();
+      applyGrantGate(
+        opened.server,
+        withSendGateGrants([{ capability: 'mail.send', target: `${ACCOUNT}/${OWNER}` }]),
+      );
+      register(opened);
+      expect(opened.names().join()).toBe('send');
+      expect(await opened.handler('send')({ account: ACCOUNT, to: OWNER })).toBe('reached');
+      const bad = (await opened.handler('send')({ account: ACCOUNT, to: 'x@example.org' })) as {
+        isError?: boolean;
+      };
+      expect(bad.isError).toBe(true);
+    });
+  });
+
   await describe('a delivered message the index cannot take', async () => {
     await it('is reported, not thrown: a retry would send it twice', async () => {
       const dir = mkdtempSync(join(tmpdir(), 'curlew-send-'));
@@ -380,9 +423,10 @@ export default async () => {
         const oob: string[] = [];
         let n = 0;
         const backend = {
+          manifest: XMPP_MANIFEST,
           listAccounts: async () => [ACCOUNT_INFO],
-          openGranted: async (_id: string, permit: ReturnType<typeof permitFor>) =>
-            new GrantedXmppSession(fakeLink(sent, oob), permit, () => `id-${++n}`),
+          openSender: async (_id: string, permit: ReturnType<typeof permitFor>) =>
+            new XmppSender(new GrantedXmppSession(fakeLink(sent, oob), permit, () => `id-${++n}`)),
         } as unknown as XmppBackend;
         const out = await sendMessage({
           accountId: ACCOUNT,
@@ -445,14 +489,15 @@ export default async () => {
         const opened: Array<Record<string, unknown>> = [];
         let n = 0;
         const backend = {
+          manifest: XMPP_MANIFEST,
           listAccounts: async () => [ACCOUNT_INFO],
-          openGranted: async (
+          openSender: async (
             _id: string,
             permit: ReturnType<typeof permitFor>,
             options: Record<string, unknown>,
           ) => {
             opened.push(options);
-            return new GrantedXmppSession(fakeLink(sent), permit, () => `id-${++n}`);
+            return new XmppSender(new GrantedXmppSession(fakeLink(sent), permit, () => `id-${++n}`));
           },
         } as unknown as XmppBackend;
         await body({

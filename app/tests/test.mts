@@ -47,6 +47,7 @@ import omemoArchive from './unit/xmpp/omemo-archive.test.ts';
 import matrix from './unit/matrix/matrix.test.ts';
 import smtpMessage from './unit/smtp/message.test.ts';
 import smtpSend from './unit/smtp/send.test.ts';
+import mailSend from './unit/mail/send.test.ts';
 
 import date from './unit/core/date.test.ts';
 import i18n from './unit/core/i18n.test.ts';
@@ -115,6 +116,7 @@ run({
   matrix,
   smtpMessage,
   smtpSend,
+  mailSend,
   date,
   i18n,
   limits,

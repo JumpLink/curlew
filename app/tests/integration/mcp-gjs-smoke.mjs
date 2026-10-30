@@ -185,7 +185,7 @@ for (const canary of [...DROPPED, CONTROL]) {
 assert(!gated.includes('setup_run'), `GATE IS OPEN: setup_run was served — ${gated.join(', ')}`);
 assert(
   !gated.includes('send_message'),
-  `GATE IS OPEN: send_message was served with no xmpp.send grant — ${gated.join(', ')}`,
+  `GATE IS OPEN: send_message was served with no <backend>.send grant — ${gated.join(', ')}`,
 );
 assert(gated.includes('setup_status'), 'setup_status must be served: it declares itself read-only');
 assert.deepEqual(gated, EXPECTED_TOOLS, 'gated catalogue drifted');
@@ -221,6 +221,23 @@ assert(!granted.includes('setup_run'), 'setup_run must stay dropped without MCP_
 console.log(
   `OK: with grants the positive control and send_message are served, the other canaries stay dropped`,
 );
+
+// Any `<backend>.send` grant serves send_message, not only XMPP's: the tool is gated by the union,
+// the action then checks the exact backend's capability. A mail-only config is the proof.
+const mailGrantsFile = join(scratch, 'granted-mail.json');
+writeFileSync(
+  mailGrantsFile,
+  JSON.stringify({
+    backends: {},
+    grants: [{ capability: 'mail.send', target: 'goa-account-1/owner@example.org' }],
+  }),
+);
+const mailGranted = await listToolNames({ CURLEW_MCP_GATE_CANARY: '1', CURLEW_CONFIG: mailGrantsFile });
+assert(
+  mailGranted.includes('send_message'),
+  `send_message not served with a mail.send grant (${mailGranted.join(', ')})`,
+);
+console.log('OK: a mail.send grant alone serves send_message');
 
 // The env switch still opens setup_run, and only that.
 const ungated = await listToolNames({ CURLEW_MCP_GATE_CANARY: '1', CURLEW_MCP_ALLOW_WRITE: '1' });
