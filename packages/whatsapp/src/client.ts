@@ -27,7 +27,7 @@
  *     synced (`cleanDirtyBits`). None of it touches a chat's content, a message's read state or
  *     what contacts see of this device.
  *
- * The SEND socket (`createBaileysSendSocket`) keeps all of that and adds exactly one write,
+ * The SEND view (`WaConnection.openSend`) keeps all of that and adds exactly one write,
  * `sendMessage` with a plain text — see its own comment.
  *
  * The logger is silent: Baileys logs protocol objects (keys, message nodes) at info and debug,
@@ -51,6 +51,29 @@ export interface SocketOptions {
 }
 
 export type SocketFactory = (options: SocketOptions) => WaSocketHandle;
+
+/**
+ * One Baileys connection under TWO views — the shape `createBaileysConnection` returns.
+ *
+ * WhatsApp allows one connection per linked device, so a send that happens while the daemon
+ * holds the receive lease cannot open a second socket: it has to use the daemon's. That is what
+ * `openSend()` is for, and the split is what keeps the read-only guarantee intact while allowing
+ * it: the receive path is handed `handle` and nothing else, and `handle` is a `WaSocketHandle`,
+ * which has no way to write (`api.ts`). A send-capable view exists only where someone asked for
+ * one, behind a permit.
+ */
+export interface WaConnection {
+  /** The receive view: events, pairing code, and a real `end()` that closes the connection. */
+  readonly handle: WaSocketHandle;
+  /**
+   * A send-capable view of the SAME connection. Its `end()` is a NO-OP: whoever opened the
+   * connection owns its lifetime, and a sender that closed it would take the receive loop down
+   * with it. Close the connection through `handle.end()`.
+   */
+  openSend(): WaSendSocketHandle;
+}
+
+export type ConnectionFactory = (options: SocketOptions) => WaConnection;
 
 /**
  * Baileys builds its own WebSocket, and for a long time it could not do so on GJS: `@gjsify/ws`
@@ -80,8 +103,19 @@ function silentLogger(): Parameters<typeof makeWASocket>[0]['logger'] {
   return logger as unknown as Parameters<typeof makeWASocket>[0]['logger'];
 }
 
-/** The one place Baileys' socket is constructed. */
-export const createBaileysSocket: SocketFactory = ({ auth, fullHistory = false }) => {
+/**
+ * The one place Baileys' socket is constructed — for both views.
+ *
+ * The options are the receive options throughout; sending adds no option, only the
+ * `sendMessage` call in `openSend`. The one thing the unified socket carries that a pure
+ * receive socket did not is the `getMessage` callback over `outgoing`, and that map stays empty
+ * until someone sends: when a recipient's device cannot decrypt a message it asks the sender to
+ * send it again, and Baileys answers such a retry receipt out of this callback. It holds only
+ * what THIS connection sent — curlew keeps no store of outgoing message content.
+ */
+export const createBaileysConnection: ConnectionFactory = ({ auth, fullHistory = false }) => {
+  /** What this connection sent, for a retry receipt — keyed by the message id Baileys generated. */
+  const outgoing = new Map<string, proto.IMessage>();
   const sock = makeWASocket({
     auth: auth.state,
     logger: silentLogger(),
@@ -90,60 +124,13 @@ export const createBaileysSocket: SocketFactory = ({ auth, fullHistory = false }
     // Keep every history chunk the phone sends: Baileys' default drops the FULL one, and a
     // dropped chunk is gone — the phone does not send it twice.
     shouldSyncHistoryMessage: () => true,
-    // Only used to re-send the user's own messages on a retry request; this socket sends none.
-    getMessage: async () => undefined,
-  });
-  sock.ev.on('creds.update', () => auth.saveCreds());
-  return {
-    ev: sock.ev as unknown as WaSocketHandle['ev'],
-    requestPairingCode: (phoneNumber) => sock.requestPairingCode(phoneNumber),
-    end: () => {
-      // Hand over what Baileys still buffers BEFORE closing: `end()` destroys the buffer, and
-      // the messages in it were already acknowledged — the server will not send them again.
-      sock.ev.flush();
-      void sock.end(undefined).catch(() => {});
-    },
-  };
-};
-
-export type SendSocketFactory = (options: SocketOptions) => WaSendSocketHandle;
-
-/**
- * The second socket shape: one connection that may ALSO send, built only by
- * `WhatsAppBackend.openSender` and only behind a `whatsapp.send` grant (ADR 0004).
- *
- * It is a separate factory rather than a flag on the one above, because the read-only guarantee
- * of the receive path is structural: `createBaileysSocket` returns a handle with no send method,
- * so no amount of wiring can make a sync write. This one exposes exactly one write,
- * `sendText(jid, text)`, and `guard.ts` wraps even that before the sender sees it.
- *
- * Three details beyond the receive socket:
- *
- *   - `linkPreview: null`. `generateWAMessageContent` calls `generateLinkPreviewIfRequired` only
- *     when the field is `undefined`, and that would fetch a URL found in the message text over
- *     plain HTTP from this machine. `null` is the documented way to say no preview.
- *   - `getMessage` answers from what THIS handle sent. When a recipient's device cannot decrypt a
- *     message it asks the sender to send it again; Baileys answers such a retry receipt out of
- *     this callback. It only holds this handle's own sends: curlew has no store of outgoing
- *     message content, and a handle that has been closed answers nothing (see `send.ts`).
- *   - `ready()`. Baileys' `sendNode` throws `Connection Closed` while the WebSocket is not open,
- *     so a send waits for `connection: 'open'` instead of racing it.
- */
-export const createBaileysSendSocket: SendSocketFactory = ({ auth }) => {
-  /** What this handle sent, for a retry receipt — keyed by the message id Baileys generated. */
-  const outgoing = new Map<string, proto.IMessage>();
-  const sock = makeWASocket({
-    auth: auth.state,
-    logger: silentLogger(),
-    markOnlineOnConnect: false,
-    // A send is not the place to ask the phone for history; what the server hands over anyway is
-    // kept (the receive journal takes it), but nothing is requested.
-    syncFullHistory: false,
-    shouldSyncHistoryMessage: () => true,
     getMessage: async (key) => (key.id ? outgoing.get(key.id) : undefined),
   });
   sock.ev.on('creds.update', () => auth.saveCreds());
 
+  // Tracked for `openSend().ready()`: Baileys' `sendNode` throws `Connection Closed` while the
+  // WebSocket is not open, so a send waits for `connection: 'open'` instead of racing it. Watched
+  // from the moment the connection exists, because a send view may be opened long after.
   let markOpen = () => {};
   let markFailed = (_error: Error) => {};
   const opened = new Promise<void>((resolve, reject) => {
@@ -166,25 +153,61 @@ export const createBaileysSendSocket: SendSocketFactory = ({ auth }) => {
     markFailed(closed);
   });
 
-  return {
-    ev: sock.ev as unknown as WaSendSocketHandle['ev'],
-    ready: async () => {
-      await opened;
-      // Opened and then dropped: `opened` is already resolved, so only this reports it.
-      if (closed) throw closed;
-    },
-    sendText: async (jid, text) => {
-      const sent = await sock.sendMessage(jid, { text, linkPreview: null });
-      if (!sent) throw new Error(_('WhatsApp did not take the message — nothing was sent'));
-      if (sent.key.id && sent.message) outgoing.set(sent.key.id, sent.message);
-      return sent;
-    },
+  const handle: WaSocketHandle = {
+    ev: sock.ev as unknown as WaSocketHandle['ev'],
+    requestPairingCode: (phoneNumber) => sock.requestPairingCode(phoneNumber),
     end: () => {
-      // Same as the receive socket: hand over what Baileys still buffers BEFORE closing. This
-      // connection is handed the offline queue too, and those messages were already acknowledged.
+      // Hand over what Baileys still buffers BEFORE closing: `end()` destroys the buffer, and
+      // the messages in it were already acknowledged — the server will not send them again.
       sock.ev.flush();
       void sock.end(undefined).catch(() => {});
     },
+  };
+
+  return {
+    handle,
+    openSend: () => ({
+      ev: sock.ev as unknown as WaSendSocketHandle['ev'],
+      ready: async () => {
+        await opened;
+        // Opened and then dropped: `opened` is already resolved, so only this reports it.
+        if (closed) throw closed;
+      },
+      sendText: async (jid, text) => {
+        // `linkPreview: null`. `generateWAMessageContent` calls `generateLinkPreviewIfRequired`
+        // only when the field is `undefined`, and that would fetch a URL found in the message
+        // text over plain HTTP from this machine. `null` is the documented way to say no preview.
+        const sent = await sock.sendMessage(jid, { text, linkPreview: null });
+        if (!sent) throw new Error(_('WhatsApp did not take the message — nothing was sent'));
+        if (sent.key.id && sent.message) outgoing.set(sent.key.id, sent.message);
+        return sent;
+      },
+      // See `WaConnection.openSend`: the connection's owner closes it, never a send view.
+      end: () => {},
+    }),
+  };
+};
+
+/** The receive view of a fresh connection — a handle with no way to write, and nothing else. */
+export const createBaileysSocket: SocketFactory = (options) => createBaileysConnection(options).handle;
+
+export type SendSocketFactory = (options: SocketOptions) => WaSendSocketHandle;
+
+/**
+ * A connection of its OWN that may send — what `WhatsAppBackend.openSender` builds when no
+ * daemon holds the device, and only behind a `whatsapp.send` grant (ADR 0004).
+ *
+ * It is the send view of a fresh connection plus a real `end()`, because here the sender IS the
+ * connection's owner. A send is not the place to ask the phone for history, so `fullHistory` is
+ * off; what the server hands over anyway is kept (the send path journals it, `send.ts`).
+ */
+export const createBaileysSendSocket: SendSocketFactory = (options) => {
+  const connection = createBaileysConnection({ ...options, fullHistory: false });
+  return {
+    ...connection.openSend(),
+    // Hand over what Baileys still buffers before closing — this connection is handed the
+    // offline queue too, and those messages were already acknowledged.
+    end: () => connection.handle.end(),
   };
 };
 

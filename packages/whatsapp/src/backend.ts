@@ -26,11 +26,13 @@ import type {
 import { SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
 import type { WaSendSocketHandle } from './api.ts';
+import type { WaConnection } from './client.ts';
 import { listSessionAccounts, sessionPath } from './accounts.ts';
 import { SecretStoreAuthState } from './auth-state.ts';
 import {
+  type ConnectionFactory,
+  createBaileysConnection,
   createBaileysSendSocket,
-  createBaileysSocket,
   type SendSocketFactory,
   type SocketFactory,
 } from './client.ts';
@@ -67,6 +69,13 @@ export interface WhatsAppBackendOptions {
   createSocket?: SocketFactory;
   /** The send socket — a separate factory, so a test cannot hand a sending socket to a sync. */
   createSendSocket?: SendSocketFactory;
+  /**
+   * The two-view connection `connect()` runs on, when the session should be able to send on it
+   * (`DeliverySession.openSender`). Without it — and a test that overrides only `createSocket` is
+   * exactly that case — the session gets a receive-only connection and cannot send, which is the
+   * same fallback the app takes when no daemon is running.
+   */
+  createConnection?: ConnectionFactory;
   /** Receiver timing — tests shorten it. */
   receiver?: Omit<ReceiverOptions, 'mode'>;
   /** Auth-state write-behind delay. */
@@ -139,6 +148,8 @@ export class WhatsAppBackend implements DeliveryBackend, SendBackend {
    * daemon through the receive lease, which the manifest asks for with `sendSharesReceiveState`;
    * without it, a second socket on the same device credentials can get the daemon's connection
    * replaced (status 440) or, worse, leave the stored ratchet state behind what the server saw.
+   * This is therefore the path for when NO other process holds the device; while the daemon does,
+   * the send runs on its connection instead — `inSessionSender` above.
    *
    * Unlike Signal's sender, this one FLUSHES the auth state on close instead of discarding it:
    * Baileys writes the libsignal sessions of the recipient's devices through the same key store,
@@ -190,10 +201,61 @@ export class WhatsAppBackend implements DeliveryBackend, SendBackend {
     );
   }
 
+  /**
+   * Send on the connection a `connect()` session is already running on — what `curlew daemon`
+   * serves over the session bus (ADR 0004, amendment 2026-10-30, daemon send).
+   *
+   * WhatsApp allows ONE connection per linked device, so this is the only way a send can happen
+   * while the daemon has the device: not a second socket, a second VIEW of the daemon's
+   * (`WaConnection.openSend`). What makes it the same send as the direct path rather than a hole
+   * in it:
+   *
+   *   - the receive path still cannot write. It is handed `connection.handle`, a `WaSocketHandle`
+   *     with no send method, and the send view is built here and handed straight to
+   *     `guardedSendSocket` — so the per-permit fence sits between the sender and Baileys exactly
+   *     as it does for a socket of its own;
+   *   - `WhatsAppSender` re-checks the permit itself, as there;
+   *   - the auth state is the daemon's own: one process, one write-behind, no two writers on the
+   *     0600 session file — which is what made a second socket unsafe in the first place.
+   *
+   * `journal: null` because the daemon's receive loop is journalling this connection already, and
+   * the mapper is that loop's: a second `subscribeMapped` would map and journal every incoming
+   * message twice. `onClose` releases nothing — the connection, the journal and the session file
+   * belong to the receiver and outlive every sender.
+   */
+  private async inSessionSender(
+    live: () => WaConnection | null,
+    mapper: WhatsAppMapper,
+    permit: SendPermit,
+  ): Promise<MessageSender> {
+    const connection = live();
+    if (!connection) {
+      throw new Error(
+        fmt(_('the WhatsApp connection for {account} is not open — nothing was sent'), {
+          account: permit.account,
+        }),
+      );
+    }
+    return new WhatsAppSender(
+      {
+        socket: guardedSendSocket(connection.openSend(), permit.addresses),
+        mapper,
+        journal: null,
+        ...(this.options.sendAckMs === undefined ? {} : { ackMs: this.options.sendAckMs }),
+        onClose: () => {},
+      },
+      permit,
+    );
+  }
+
   async connect(accountId: string, options: DeliveryConnectOptions): Promise<DeliverySession> {
     parseSettings(this.context.settings);
     const { path, store, auth } = this.openSession(accountId);
-    const createSocket = this.options.createSocket ?? createBaileysSocket;
+    // One of the two, never both: a `createSocket` override means receive-only (see the option).
+    const createConnection = this.options.createSocket
+      ? null
+      : (this.options.createConnection ?? createBaileysConnection);
+    const createSocket = this.options.createSocket;
     const mapper = new WhatsAppMapper(new JidResolver(auth.lidLookup()));
     let journal: FileJournal;
     try {
@@ -203,7 +265,21 @@ export class WhatsAppBackend implements DeliveryBackend, SendBackend {
       store.close();
       throw err;
     }
-    const receiver = new WhatsAppReceiver(() => createSocket({ auth }), mapper, {
+    /**
+     * The connection the receiver is on RIGHT NOW. The receiver reconnects by asking for a fresh
+     * one, so a send view may only ever be opened off this — not off the connection the session
+     * started with, which a reconnect has already closed.
+     */
+    let live: WaConnection | null = null;
+    const openSocket = () => {
+      if (createSocket) return createSocket({ auth });
+      const connection = createConnection!({ auth });
+      live = connection;
+      // Only ever the receive view: the receiver is handed a `WaSocketHandle` and can do nothing
+      // else with it, exactly as before this connection learned to send.
+      return connection.handle;
+    };
+    const receiver = new WhatsAppReceiver(openSocket, mapper, {
       ...this.options.receiver,
       mode: options.mode,
       journal,
@@ -213,6 +289,9 @@ export class WhatsAppBackend implements DeliveryBackend, SendBackend {
     return {
       nextBatch: () => receiver.nextBatch(),
       outcome: () => receiver.outcome(),
+      ...(createConnection === null
+        ? {}
+        : { openSender: (permit: SendPermit) => this.inSessionSender(() => live, mapper, permit) }),
       close: async () => {
         try {
           await receiver.close();

@@ -1,7 +1,9 @@
 import type {
+  ConnectionFactory,
   SendSocketFactory,
   SocketFactory,
   SocketOptions,
+  WaConnection,
   WaEventMap,
   WaEventName,
   WaMessage,
@@ -23,7 +25,7 @@ import { SERVER_ACK } from '@curlew/whatsapp';
 type Listener = (data: unknown) => void;
 
 /** Baileys' `on`/`off` plus a hand-driven `emit`. Both socket shapes are built on this. */
-class FakeEvents {
+export class FakeEvents {
   private readonly listeners = new Map<string, Set<Listener>>();
 
   readonly ev = {
@@ -128,10 +130,17 @@ export class FakeSendSocket extends FakeEvents implements WaSendSocketHandle {
   private opened = false;
   private openWaiters: Array<() => void> = [];
   private openError: Error | null = null;
+  /**
+   * Where the echo and the ack of a send are emitted. Its own bus for a socket of its own; on a
+   * two-view connection the CONNECTION's bus, which the receive loop is listening to as well —
+   * that sharing is what an in-session send actually is.
+   */
+  private readonly bus: FakeEvents;
 
-  constructor(options: SocketOptions) {
+  constructor(options: SocketOptions, bus?: FakeEvents) {
     super();
     this.options = options;
+    this.bus = bus ?? this;
   }
 
   /** The connection is up; `ready()` resolves from here on. */
@@ -163,12 +172,12 @@ export class FakeSendSocket extends FakeEvents implements WaSendSocketHandle {
     // Baileys emits both of these after `sendMessage` resolved, through `process.nextTick`.
     queueMicrotask(() => {
       if (this.echo) {
-        this.emit('messages.upsert', {
+        this.bus.emit('messages.upsert', {
           type: 'append',
           messages: [{ key, message: { conversation: text }, messageTimestamp: seconds }],
         });
       }
-      if (this.ack) this.emit('messages.update', [{ key, update: { status: SERVER_ACK } }]);
+      if (this.ack) this.bus.emit('messages.update', [{ key, update: { status: SERVER_ACK } }]);
     });
     return { key, messageTimestamp: seconds };
   }
@@ -198,6 +207,70 @@ export function fakeSendFactory(onCreate: (socket: FakeSendSocket, index: number
         if (!socket.ended) socket.open();
       });
       return socket;
+    },
+  };
+}
+
+/**
+ * One connection under the two views `createBaileysConnection` returns: the receive handle, and
+ * a send view over the SAME event bus. The sharing is the point — the echo and the server's ack
+ * of an in-session send arrive where the daemon's receive loop is listening, as they do on a real
+ * connection, and the receive view still has no way to write.
+ *
+ * `ready()` follows the handle's `connection.update`, so the script that opens the connection is
+ * also what lets a send through. The send view's `end()` is a no-op here as it is there; it only
+ * counts, so a test can show the receive loop survives a sender's `close()`.
+ */
+export class FakeConnection implements WaConnection {
+  readonly handle: FakeSocket;
+  /** The send views opened off this connection, in order — one per `openSend()`. */
+  readonly sends: FakeSendSocket[] = [];
+  /** How often a send view's no-op `end()` was called. */
+  sendViewEnds = 0;
+  private opened = false;
+
+  constructor(options: SocketOptions) {
+    this.handle = new FakeSocket(options);
+    this.handle.ev.on('connection.update', (update) => {
+      if (update.connection === 'open') {
+        this.opened = true;
+        for (const send of this.sends) send.open();
+      } else if (update.connection === 'close') {
+        // Every open view reports the drop, as the real connection's `opened` promise does.
+        for (const send of this.sends) send.end();
+      }
+    });
+  }
+
+  openSend(): WaSendSocketHandle {
+    const send = new FakeSendSocket(this.handle.options, this.handle);
+    this.sends.push(send);
+    if (this.opened) send.open();
+    return {
+      ev: this.handle.ev,
+      ready: () => send.ready(),
+      sendText: (jid, body) => send.sendText(jid, body),
+      end: () => {
+        this.sendViewEnds++;
+      },
+    };
+  }
+}
+
+/** A factory of two-view connections — what `WhatsAppBackendOptions.createConnection` takes. */
+export function fakeConnectionFactory(
+  onCreate: (connection: FakeConnection, index: number) => void = () => {},
+): { create: ConnectionFactory; connections: FakeConnection[] } {
+  const connections: FakeConnection[] = [];
+  return {
+    connections,
+    create: (options) => {
+      const connection = new FakeConnection(options);
+      const index = connections.length;
+      connections.push(connection);
+      // Like Baileys: events come after construction, never synchronously inside it.
+      queueMicrotask(() => onCreate(connection, index));
+      return connection;
     },
   };
 }
