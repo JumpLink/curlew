@@ -30,7 +30,8 @@
  * This socket receives, too — the server hands it the offline queue like any other connection —
  * so it maps and journals everything it is given, through the same `subscribeMapped` the receive
  * path uses. Without that, a message that arrived during a send would be acknowledged to WhatsApp
- * and then dropped on close.
+ * and then dropped on close. The one case it does NOT do that is a send that shares the daemon's
+ * connection: there the daemon's own receive loop is already journalling it (`journal: null`).
  */
 
 import { _, fmt } from '@curlew/protocol';
@@ -71,8 +72,14 @@ const LOOKS_LIKE_A_NUMBER = /^\+?[\d\s()/.-]+$/;
 export interface WhatsAppSendSession {
   socket: WaSendSocketHandle;
   mapper: WhatsAppMapper;
-  /** The account's receive journal, opened by `openSender` and closed by `onClose`. */
-  journal: EventJournal;
+  /**
+   * The account's receive journal, opened by `openSender` and closed by `onClose` — or `null`
+   * when this sender shares the daemon's connection, which the daemon's own receive loop already
+   * journals. `null` means "do not listen for received events at all": the mapper is shared with
+   * that loop, and a second `subscribeMapped` on the same emitter would map and journal every
+   * message twice.
+   */
+  journal: EventJournal | null;
   /** Tear down what `openSender` opened. Runs after the socket is ended and the listeners are off. */
   onClose: () => Promise<void> | void;
   /** How long to wait for `SERVER_ACK`; tests shorten it. */
@@ -91,7 +98,7 @@ export class WhatsAppSender implements MessageSender {
   readonly features: SenderFeatures = { markdown: false };
   private readonly socket: WaSendSocketHandle;
   private readonly mapper: WhatsAppMapper;
-  private readonly journal: EventJournal;
+  private readonly journal: EventJournal | null;
   private readonly permit: SendPermit;
   private readonly onClose: () => Promise<void> | void;
   private readonly ackMs: number;
@@ -114,10 +121,15 @@ export class WhatsAppSender implements MessageSender {
     this.permit = permit;
     this.onClose = session.onClose;
     this.ackMs = session.ackMs ?? DEFAULT_ACK_MS;
+    // The ack listener is always attached: the confirmation of OUR send arrives on it, and it
+    // reads only this account's own keys — no mapping, nothing journalled.
     this.socket.ev.on('messages.update', this.onUpdate);
-    this.detach = subscribeMapped(this.socket.ev, this.mapper, {
-      events: (mapped) => this.record(mapped),
-    });
+    this.detach =
+      this.journal === null
+        ? () => {}
+        : subscribeMapped(this.socket.ev, this.mapper, {
+            events: (mapped) => this.record(mapped),
+          });
   }
 
   async send(message: SendingMessage): Promise<SentMessage> {
@@ -201,7 +213,9 @@ export class WhatsAppSender implements MessageSender {
     try {
       // `end()` hands over what Baileys still buffers before it closes, synchronously and while
       // the listeners are still attached — those messages were acknowledged to WhatsApp and exist
-      // nowhere else, so they have to reach the journal first.
+      // nowhere else, so they have to reach the journal first. On the daemon's shared connection
+      // this is a no-op (`WaConnection.openSend`): the connection keeps running and keeps
+      // receiving, which is the point.
       this.socket.end();
     } finally {
       this.socket.ev.off('messages.update', this.onUpdate);
@@ -274,6 +288,7 @@ export class WhatsAppSender implements MessageSender {
    * before the pair was known.
    */
   private record(mapped: DeliveryEvent[]): void {
+    if (this.journal === null) return;
     const events = [...mapped, ...this.mapper.takeMerges()];
     if (events.length === 0) return;
     try {

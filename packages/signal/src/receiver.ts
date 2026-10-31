@@ -170,6 +170,30 @@ type InboxItem =
   | { kind: 'envelope'; bytes: Uint8Array; ack: EnvelopeAck; generation: number }
   | { kind: 'queue-empty'; generation: number };
 
+/**
+ * One-at-a-time access to the protocol store.
+ *
+ * The receive path and a send write the same ratchet state and nothing in the store locks, so two
+ * of them interleaved would fork it: a send's `flush()` would carry half a decrypt's step, and a
+ * decrypt's `flush()` half an unsent message's. Everything that touches the store therefore runs
+ * through here as a whole — the drain (decrypt → journal → flush → acknowledge), the final commit
+ * of `stop()`, and an in-session send (encrypt → PUT → flush) via `exclusive`.
+ */
+class StoreQueue {
+  private tail: Promise<unknown> = Promise.resolve();
+
+  run<T>(work: () => Promise<T>): Promise<T> {
+    const next = this.tail.then(work);
+    // The queue itself never rejects: whatever went wrong belongs to that caller, not to the
+    // next piece of work, which still has to run.
+    this.tail = next.then(
+      () => undefined,
+      () => undefined,
+    );
+    return next;
+  }
+}
+
 export class SignalReceiver implements DeliverySession {
   private readonly connector: ChatConnector;
   private readonly decryptor: EnvelopeDecryptorLike;
@@ -192,6 +216,7 @@ export class SignalReceiver implements DeliverySession {
   private reconnects = 0;
   private inbox: InboxItem[] = [];
   private draining: Promise<void> | null = null;
+  private readonly storeQueue = new StoreQueue();
   private pendingAcks: EnvelopeAck[] = [];
   private pendingEvents: DeliveryEvent[] = [];
   private queue: DeliveryEvent[] = [];
@@ -317,7 +342,10 @@ export class SignalReceiver implements DeliverySession {
   }
 
   private kick(): void {
-    this.draining ??= this.drain().finally(() => {
+    // `draining` is the QUEUED drain, so awaiting it also waits out an in-session send ahead of
+    // it — and it settles after the queue is free again, which is what lets `stop()` await it and
+    // then queue its own commit without waiting for itself.
+    this.draining ??= this.storeQueue.run(() => this.drain()).finally(() => {
       this.draining = null;
       const finish = this.finishRequested;
       if (finish) {
@@ -486,7 +514,11 @@ export class SignalReceiver implements DeliverySession {
     this.maxTimer = null;
     // Let an envelope being decrypted finish, so its ratchet step and its events commit together.
     if (this.draining) await this.draining.catch(() => undefined);
-    this.commit();
+    // Through the queue, not straight: a send may be mid-flight on this store, and flushing
+    // underneath it would write a ratchet step for a message that is still on its way out.
+    await this.storeQueue.run(async () => {
+      this.commit();
+    });
     const handle = this.handle;
     this.handle = null;
     this.generation++;
@@ -514,6 +546,18 @@ export class SignalReceiver implements DeliverySession {
         this.waiter = resolve;
       });
     }
+  }
+
+  /**
+   * Run `work` with this session's protocol store to itself — what an in-session send goes
+   * through (ADR 0004, amendment 2026-10-30, daemon send).
+   *
+   * Nothing else is needed to make a send and this receiver safe on one ratchet: every drain ends
+   * in a `commit()`, so when `work` starts, the store holds exactly what disk holds, and whatever
+   * `work` leaves unwritten is its own to flush or to rewind before it returns.
+   */
+  exclusive<T>(work: () => Promise<T>): Promise<T> {
+    return this.storeQueue.run(work);
   }
 
   outcome(): DeliveryOutcome {

@@ -523,6 +523,24 @@ export interface DeliverySession {
    * still arrives is drained once, on the way out.
    */
   close(): Promise<void>;
+  /**
+   * Send on THIS session's live connection and protocol state (ADR 0004, amendment 2026-10-30,
+   * daemon send).
+   *
+   * A backend whose send writes the same state its receive path writes — `sendSharesReceiveState`
+   * — cannot be sent on from a second process while this session is open. Rather than refuse the
+   * send, the process holding the session performs it: `curlew daemon` exports this over the
+   * session bus, so a CLI or MCP send reaches the connection that is already up.
+   *
+   * The permit is the caller's, already checked against the grants, and the handle re-checks it
+   * exactly as `SendBackend.openSender` does — this is not a way around the fence, only a way to
+   * the right connection. The returned handle's `close()` must release ONLY what the send opened:
+   * closing a sender must never take this session's connection down with it.
+   *
+   * Optional: a session without it is one the daemon cannot send on, and the caller falls back to
+   * its own direct path.
+   */
+  openSender?(permit: SendPermit): Promise<MessageSender>;
 }
 
 /**

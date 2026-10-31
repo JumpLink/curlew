@@ -6,7 +6,8 @@
   [Amendment (2026-10-30, telegram)](#amendment-2026-10-30-telegram) and
   [Amendment (2026-10-30, matrix)](#amendment-2026-10-30-matrix) and
   [Amendment (2026-10-30, signal)](#amendment-2026-10-30-signal) and
-  [Amendment (2026-10-30, whatsapp)](#amendment-2026-10-30-whatsapp)
+  [Amendment (2026-10-30, whatsapp)](#amendment-2026-10-30-whatsapp) and
+  [Amendment (2026-10-30, daemon send)](#amendment-2026-10-30-daemon-send)
 - **Scope:** `@gjsify/mcp` (the gate), `app` (config, MCP server, `curlew send`, `curlew daemon`),
   `@curlew/xmpp`, `@curlew/protocol` (calendar port), `@curlew/gnome` (EDS calendar driver)
 
@@ -266,7 +267,9 @@ can decrypt from, and no retry repairs a broken ratchet. So the app takes the sa
 the daemon takes (ADR 0002 §4) around the whole send, and a send while the daemon holds the
 account is **refused** with the holder named and `curlew daemon stop` as the way out. A refusal
 is the point: with the daemon running, every CLI send is refused, and the user stops it or sends
-from their phone. The lease is taken in `app/src/core/actions/send.ts`, not in the backend — the
+from their phone. *(Superseded by [Amendment (2026-10-30, daemon
+send)](#amendment-2026-10-30-daemon-send): the send is now routed through the daemon, and only an
+unreachable daemon still refuses.)* The lease is taken in `app/src/core/actions/send.ts`, not in the
 lease lives in the index, which `@curlew/store` must never let a backend reach — and which
 backends need it is a new manifest field, `sendSharesReceiveState`. There is no heartbeat during
 a send: a send is seconds and the lease goes stale after 90 s, so a send that hangs far longer
@@ -327,7 +330,9 @@ corrupted into a relink — which would cost the whole linked-device history. So
 carries `sendSharesReceiveState: true` and `app/src/core/actions/send.ts` takes the same receive
 lease the daemon takes (ADR 0002 §4) around the whole send; a send while the daemon holds the
 account is **refused** with the holder named and `curlew daemon stop` as the way out. As with
-Signal there is no heartbeat during a send.
+Signal there is no heartbeat during a send. *(Superseded by [Amendment (2026-10-30, daemon
+send)](#amendment-2026-10-30-daemon-send): the send is now routed through the daemon, and only an
+unreachable daemon still refuses.)*
 
 **Two socket shapes, not one gate.** WhatsApp speaks one multiplexed WebSocket, so a send cannot be
 fenced off by an HTTP allowlist the way Matrix's and Signal's are. The line is drawn at the handle
@@ -361,3 +366,113 @@ receive path uses as the remote id of our own messages — so the copy the conne
 replaces the echo (`ChatMessage.clientId`) instead of adding a second one. A note to self works the
 same way and is recognised as our own through `key.fromMe`; it needs a grant naming this account's
 own JID.
+
+## Amendment (2026-10-30, daemon send)
+
+The two `sendSharesReceiveState` backends above each ended with the same refusal, and in normal
+use the daemon is always running — so in normal use a CLI or MCP send to Signal or WhatsApp
+*never worked*. "Stop the daemon" is not a workaround, it is a request to stop receiving in order
+to reply. The process that already holds the connection is the one that can send on it, so the
+send is **routed through the daemon** instead of being refused.
+
+### The transport is the session bus
+
+`curlew daemon` owns `eu.jumplink.curlew.Daemon` on the session bus, exports
+`/eu/jumplink/curlew/Daemon` with interface `eu.jumplink.curlew.Daemon1`, and serves one method:
+
+    Send(in s request_json, out s reply_json)
+
+Chosen over a unix socket under `$XDG_RUNTIME_DIR` for four reasons:
+
+1. **One implementation for both runtimes.** `gi://Gio` and `gi://GLib` import unchanged on GJS
+   *and* on Node through `@gjsify/node-gi` — the pattern `@curlew/gnome` already relies on — so
+   there is no `.gjs.ts`/`.node.ts` split, which a socket API would have needed. Verified end to
+   end on both runtimes before any of this was written: `app/tests/integration/daemon-send-dbus.ts`
+   owns the name, registers the object and round-trips a call, and is run by hand (it needs a real
+   session bus, which the unit suite deliberately does not have).
+2. **Liveness is the bus's job.** Name ownership answers "is a daemon running?" exactly, with no
+   pid file, no stale-socket cleanup and no connect-then-time-out probe: the call fails with
+   `NameHasNoOwner` and that *is* the "no daemon" branch.
+3. **Per-user by construction.** The session bus belongs to one user's session. There is no mode
+   bit to get wrong, as there would be with a `0600` socket.
+4. **Room to grow.** A later live-update interface (re-read grants, report follow state) is
+   another method on an interface that already exists.
+
+Raw `Gio.DBusConnection.register_object` + `Gio.bus_own_name_on_connection` are used, **not**
+`Gio.DBusExportedObject.wrapJSObject`: that wrapper is a GJS-only override and does not exist
+under node-gi.
+
+JSON in and out, with a `v` field, because the payload is a `SendParams` subset that will keep
+changing and a D-Bus signature is the wrong place to version it. The reply is a discriminated
+union — `sent` | `not-followed` | `refused` | `failed` — so a refusal is a *value*, not an
+exception; D-Bus errors stay reserved for transport and implementation faults. The call timeout is
+generous (120 s), because a WhatsApp send waits up to 15 s for `SERVER_ACK` on its own.
+
+### The plan is not duplicated, and neither is the write
+
+`sendThrough(sender, request) → SendStep[]` is extracted from `sendMessage`: the markdown split,
+the image validation, the plan, the actual `send`/`sendImage` calls. The direct path and the
+daemon's service call the same function. The daemon returns the steps; the **caller** writes the
+write log and indexes the local echo, always, on both paths. So "exactly once" is structural
+rather than a rule to remember, and `frontend` attribution — which the daemon cannot know —
+stays where it belongs.
+
+Routing in `sendMessage`, for a `sendSharesReceiveState` backend only:
+
+| Daemon | Outcome |
+|---|---|
+| not on the bus | today's direct path, under the receive lease, unchanged |
+| running, not following this account (`not-followed`) | today's direct path, unchanged |
+| running and following it | it sends; the caller logs and indexes |
+| running, following it, call fails | **refused**, with the message naming the daemon |
+
+The grant check stays the single one in `send.ts`, in the *calling* process, before anything is
+handed over — a shell is still no back door. The daemon then re-checks the grant against config
+it loads **fresh for that call** and fails closed. Fresh, not the grants it started with
+(ADR 0004 §1), because `daemonGrants` watches only `xmpp.send`/`xmpp.omemo`: a `signal.send` edit
+does not restart the daemon, so a revoked grant must not keep working until the next restart.
+This is a deliberate exception to "grants are read once per connection", and it is safe in the
+direction that matters: the per-call read can only ever *narrow* what the long-lived connection
+will do.
+
+### Sending on the connection that receives
+
+`DeliverySession` gains `openSender?(permit): Promise<MessageSender>` — an in-session send on the
+live connection — and `DeliverySyncOptions` gains `onSession?(account, session | null)` so the
+daemon is handed each follow-mode session, re-handed after every reconnect and `null` when the
+account's loop ends. `@curlew/store` still imports no backend: `DeliverySession` is a protocol
+type. The returned handle's `close()` closes only what the send opened, never the session's
+connection.
+
+**Signal: one mutex over the ratchet.** `SignalReceiver` gets an async mutex. `drain()` holds it
+for the whole drain, `stop()` takes it for its final `commit()` (after awaiting the drain in
+flight, so it cannot deadlock), and the in-session sender takes it for its entire
+encrypt → send → flush span. The in-session sender shares `store` and `account` with the receiver
+but opens its **own** guarded send channel — the receive `ChatHandle` still has no `fetch`, as the
+signal amendment requires — and its `onClose` closes that channel alone. Under the mutex the
+store is clean at every send: `drain()` always ends in `commit()`, so a send's `flush()` writes
+only its own ratchet steps, and the `store.discard()` on a failed send clears only the dirty map
+and therefore only that send's state. The ratchet never forks, and the lease is not involved at
+all — the daemon already holds it.
+
+**WhatsApp: one socket, two views.** No second socket is opened, so `connectionReplaced` (440) is
+impossible by construction. `client.ts` gains a two-view connection: the receiver is handed
+`handle: WaSocketHandle`, and `openSend()` returns a `WaSendSocketHandle` over the *same* Baileys
+socket. `WhatsAppBackend.connect()` wraps the receiver's socket factory in a closure that captures
+the current connection, so the receive path only ever sees `handle` — the structural guarantee of
+the whatsapp amendment is untouched, the receive path still has no send method to call — while
+`openSender` reads the live connection at send time and therefore survives reconnects. The
+in-session `WaSendSocketHandle.end()` is a **no-op**: a sender closing must not take the daemon's
+receive socket down with it. The per-permit `guard.ts` fence is unchanged and still wraps the
+socket before the sender sees it. `WhatsAppSendSession.journal` becomes nullable, `null` meaning
+"the session that owns this socket already journals it", which is what keeps the daemon from
+journalling every incoming message twice.
+
+### Also: the local-echo adoption is bounded
+
+`adoptLocalEchoes` scanned every `remote_id LIKE 'local:%'` row of the account on every batch — a
+full scan that grows with history and that the daemon now runs far more often. It looks up
+`remote_id IN ('local:<id>', …)` from the batch's own client ids instead, in chunks: an equality
+lookup on the existing `conversation_messages_remote (backend, account_id, remote_id)` index,
+bounded by batch size. A `LIKE 'local:%'` row the batch does not name is not an echo of anything
+in that batch, so nothing that was adopted before stops being adopted.

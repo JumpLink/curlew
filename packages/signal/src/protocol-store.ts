@@ -331,6 +331,24 @@ export class SignalProtocolStore {
     this.dirty.clear();
   }
 
+  /**
+   * Re-read the whole file, so memory holds what disk holds — a rewind, unlike `discard()`.
+   *
+   * `discard()` only forgets WHICH keys are unwritten; their changed values stay in memory. That
+   * is right for a store about to be closed, and wrong for one somebody keeps using: a ratchet
+   * step that never reached the network would sit in memory until an unrelated step marked the
+   * same key dirty, and then get written after all. An in-session send (`backend.ts`'s
+   * `openSender` on a live receive session) is that second case — it shares this store with the
+   * receiver — so it rewinds instead of discarding. Recorded identity changes go too: they
+   * describe changes that are no longer in the store.
+   */
+  reload(): void {
+    this.data.clear();
+    for (const [namespace, entries] of this.store.loadAll()) this.data.set(namespace, new Map(entries));
+    this.dirty.clear();
+    this.identityChanges = [];
+  }
+
   // ── the device ──
 
   get registered(): boolean {

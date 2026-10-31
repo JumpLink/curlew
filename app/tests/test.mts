@@ -37,8 +37,10 @@ import storeConcurrency from './unit/store/concurrency.test.ts';
 import telegram from './unit/telegram/telegram.test.ts';
 import signal from './unit/signal/signal.test.ts';
 import signalSend from './unit/signal/send.test.ts';
+import signalStoreFence from './unit/signal/store-fence.test.ts';
 import whatsapp from './unit/whatsapp/whatsapp.test.ts';
 import whatsappSend from './unit/whatsapp/send.test.ts';
+import whatsappInSessionSend from './unit/whatsapp/in-session-send.test.ts';
 import xmpp from './unit/xmpp/xmpp.test.ts';
 import xmppTls from './unit/xmpp/tls.spec.ts';
 import omemoUpkeep from './unit/xmpp/omemo-upkeep.test.ts';
@@ -63,6 +65,7 @@ import capabilities from './unit/core/capabilities.test.ts';
 import send from './unit/core/send.test.ts';
 import markdown from './unit/core/markdown.test.ts';
 import daemon from './unit/core/daemon.test.ts';
+import daemonSend from './unit/core/daemon-send.test.ts';
 import follow from './unit/core/follow.test.ts';
 import deliveries from './unit/core/deliveries.test.ts';
 import setup from './unit/core/setup.test.ts';
@@ -110,8 +113,10 @@ run({
   telegram,
   signal,
   signalSend,
+  signalStoreFence,
   whatsapp,
   whatsappSend,
+  whatsappInSessionSend,
   xmpp,
   xmppTls,
   omemoUpkeep,
@@ -134,6 +139,7 @@ run({
   send,
   markdown,
   daemon,
+  daemonSend,
   follow,
   deliveries,
   setup,

@@ -16,10 +16,12 @@ import {
   fromBase64,
   sendFetch,
   sendRefusal,
+  sessionPath,
   SIGNAL_MANIFEST,
   SIGNAL_MAX_MESSAGE_BYTES,
   SignalBackend,
   type SignalBackendOptions,
+  SignalProtocolStore,
   toBase64,
   unpadPlaintext,
 } from '@curlew/signal';
@@ -28,6 +30,7 @@ import {
   getConversation,
   rebuildConversations,
   receiveDeliveries,
+  SecretStore,
   takeReceiveLease,
 } from '@curlew/store';
 import * as Signal from '@signalapp/libsignal-client';
@@ -42,6 +45,7 @@ import {
   context,
   directEnvelope,
   FakeServer,
+  introduce,
   LIB,
   OUR_DEVICE,
   OWN_ACI,
@@ -395,6 +399,20 @@ async function withRig<T>(config: unknown, body: (rig: Rig) => Promise<T>): Prom
     });
   } finally {
     rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Start a session from `party` to curlew's device, off the session file, so it can encrypt an
+ * envelope to us. Where a send comes first, curlew's own fan-out does this: the pre-key message it
+ * PUTs starts the session when the party decrypts it. Where nothing was sent yet, this does.
+ */
+async function introduceTo(rig: Rig, party: Party): Promise<void> {
+  const file = SecretStore.open(sessionPath(context(rig.dir).secretsDir, rig.accountId));
+  try {
+    await introduce(party, SignalProtocolStore.open(LIB, file));
+  } finally {
+    file.close();
   }
 }
 
@@ -784,6 +802,86 @@ export default async () => {
         // Refused before the handle exists, so it costs no connection and no ratchet step.
         expect(rig.server.opened.length).toBe(0);
         expect(rig.server.requests.length).toBe(0);
+      });
+    });
+
+    await it('sends on the session the daemon is receiving on, through the same gate', async () => {
+      await withRig(GRANTED, async (rig) => {
+        // Decrypted on this store before the send, so the send below ratchets on state the
+        // receiver has moved — the case the fence in `receiver.exclusive` exists for.
+        const ts = 1_767_300_000_000;
+        await introduceTo(rig, rig.phone.device);
+        rig.inbox.push(
+          await directEnvelope(
+            rig.phone.device,
+            {
+              sent: {
+                destinationServiceId: CAROL_ACI,
+                timestamp: ts,
+                message: { body: 'vorher', timestamp: ts },
+              },
+            },
+            ts,
+          ),
+        );
+        const session = await rig.backend.connect(rig.accountId, { mode: 'follow' });
+        expect(((await session.nextBatch()) ?? []).length > 0).toBe(true);
+
+        const sender = await session.openSender!({ account: rig.accountId, addresses: [ALICE_ACI] });
+        // The same gate as a connection of its own: the permit plus this account's own ACI.
+        expect(rig.server.opened.length).toBe(1);
+        expect(rig.server.opened[0].join()).toBe([ALICE_ACI, OWN_ACI].join());
+
+        const sent = await sender.send({ to: ALICE_ACI, text: 'Hallo Alice' });
+        expect(sent.target).toBe(ALICE_ACI);
+        // The same fan-out, because it is the same sender on the same store — every device of
+        // Alice's and of this account's own, minus curlew itself.
+        expect(rig.server.delivered.map((d) => d.to).join()).toBe('alice.1,alice.4,self.1,self.3');
+
+        // The sender closed its send channel and nothing else: the connection, the journal and
+        // the session file belong to the receiver and outlive every sender.
+        await sender.close();
+        expect(rig.server.opened.length).toBe(1);
+        expect(session.outcome().error).toBe(null);
+        const pending = session.nextBatch();
+        await session.close();
+        expect(await pending).toBe(null);
+      });
+    });
+
+    await it('rewinds a ratchet step the server did not take, on the shared store', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const session = await rig.backend.connect(rig.accountId, { mode: 'follow' });
+        const sender = await session.openSender!({ account: rig.accountId, addresses: [ALICE_ACI] });
+        const keysOfAlice = () =>
+          rig.server.requests.filter((r) => r.verb === 'GET' && r.path === `/v2/keys/${ALICE_ACI}/*`).length;
+
+        // The server does not take the first attempt. The ratchet step it cost must not stay on
+        // the store the receiver decrypts with: `discard()` clears the dirty marks but keeps the
+        // advanced session in memory, so the store is rewound from the file instead.
+        rig.server.putStatus.set(ALICE_ACI, 500);
+        expect(await reasonOf(sender.send({ to: ALICE_ACI, text: 'Hallo Alice' }))).toMatch(
+          /refused the message.*nothing was sent/,
+        );
+        expect(rig.server.delivered.length).toBe(0);
+
+        // Rewound: the session that attempt established is gone with it, so the retry asks for
+        // Alice's pre-keys again instead of ratcheting on from a step she never saw.
+        rig.server.reset();
+        await sender.send({ to: ALICE_ACI, text: 'Hallo Alice' });
+        expect(keysOfAlice()).toBe(1);
+        expect(rig.server.delivered.map((d) => d.to).join()).toBe('alice.1,alice.4,self.1,self.3');
+
+        // And a send the server DID take flushed its state, so it survives the fence: the next
+        // one reuses the session and fetches nothing. Which is what makes the fetch above a
+        // measurement of the rewind rather than of a path that always re-fetches.
+        rig.server.reset();
+        await sender.send({ to: ALICE_ACI, text: 'Noch eine' });
+        expect(keysOfAlice()).toBe(0);
+        expect(rig.server.delivered.map((d) => d.to).join()).toBe('alice.1,alice.4,self.1,self.3');
+
+        await sender.close();
+        await session.close();
       });
     });
 
