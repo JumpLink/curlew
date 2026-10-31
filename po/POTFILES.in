@@ -22,6 +22,9 @@ app/src/core/backends/context.ts
 app/src/core/backends/registry.ts
 app/src/core/config.ts
 app/src/core/grants.ts
+app/src/core/lib/daemon-bus.ts
+app/src/core/lib/daemon-send-client.ts
+app/src/core/lib/daemon-send-service.ts
 app/src/core/lib/date.ts
 app/src/core/lib/i18n.ts
 app/src/core/markdown.ts
