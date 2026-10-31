@@ -160,30 +160,42 @@ export class SignalBackend implements DeliveryBackend, SendBackend {
   }
 
   /**
+   * The chat connection ONE granted send uses, with its own gate: the permitted service ids are
+   * the permit's addresses plus this account's own ACI, where the `SyncMessage.Sent` transcript
+   * goes. Both send paths — the direct one and the in-session one — open theirs here, so neither
+   * can reach an address the other could not.
+   */
+  private sendChannelFor(
+    lib: SignalLib,
+    account: DeviceAccount,
+    permit: SendPermit,
+  ): Promise<{ fetch: ChatFetch; close(): Promise<void> }> {
+    const recipients: string[] = [
+      ...permit.addresses.map((address) => normalizeServiceId(address) ?? address),
+      account.aci,
+    ];
+    return (this.options.sendChannel ?? ((a, r) => sendChannel(createNet(lib), a, r)))(
+      account,
+      recipients,
+    );
+  }
+
+  /**
    * A handle that may send ONE account's messages to the addresses the permit names (ADR 0004).
    *
-   * It gets its own chat connection and its own gate: the permitted service ids are the permit's
-   * addresses plus this account's own ACI, which is where the `SyncMessage.Sent` transcript goes —
-   * nothing else is reachable from here, whatever the grants say elsewhere.
-   *
-   * The ratchet state is the same file the receive path writes, and nothing in it locks: the
-   * caller serialises a send against the daemon through the receive lease, which the manifest asks
-   * for with `sendSharesReceiveState`.
+   * It gets its own chat connection and its own gate (`sendChannelFor`), and its own open session
+   * file: this path is for a process that has the ratchet state to ITSELF, which it holds through
+   * the receive lease the manifest asks for with `sendSharesReceiveState`. Where another process
+   * holds that lease, the send goes to it instead and arrives at `DeliverySession.openSender`
+   * below — same permit, same gate, one ratchet.
    */
   async openSender(accountId: string, permit: SendPermit): Promise<MessageSender> {
     parseSettings(this.context.settings);
     const lib = await this.lib();
     const { file, store, account } = await this.openSession(accountId, lib);
-    const recipients: string[] = [
-      ...permit.addresses.map((address) => normalizeServiceId(address) ?? address),
-      account.aci,
-    ];
     let channel: { fetch: ChatFetch; close(): Promise<void> };
     try {
-      channel = await (this.options.sendChannel ?? ((a, r) => sendChannel(createNet(lib), a, r)))(
-        account,
-        recipients,
-      );
+      channel = await this.sendChannelFor(lib, account, permit);
     } catch (err) {
       file.close();
       throw err;
@@ -249,6 +261,45 @@ export class SignalBackend implements DeliveryBackend, SendBackend {
     return {
       nextBatch: () => receiver.nextBatch(),
       outcome: () => receiver.outcome(),
+      /**
+       * Send on THIS session's ratchet state, for the process that holds the receive lease — what
+       * `curlew daemon` serves over the session bus (ADR 0004, amendment 2026-10-30).
+       *
+       * Three things make it the same send as the direct path and not a hole in it: the permit is
+       * re-checked by `SignalSender` exactly as there, the connection carries the same per-permit
+       * gate (`sendChannelFor`), and the whole send runs inside `receiver.exclusive`, so it never
+       * interleaves with a decrypt on the shared store.
+       *
+       * What the send did not get on the wire leaves memory again before the fence opens.
+       * `store.discard()` would not do here — it clears the dirty set but keeps the changed values
+       * in memory, and the receiver goes on using them — so the store is rewound from the file,
+       * which is safe precisely because a drain always ends in a commit: inside the fence, disk
+       * and memory agreed before the send started.
+       *
+       * `close()` closes the channel the send opened and nothing else: this session's connection,
+       * journal and file belong to the receiver and outlive every sender.
+       */
+      openSender: async (permit: SendPermit): Promise<MessageSender> => {
+        const channel = await this.sendChannelFor(lib, account, permit);
+        return new SignalSender(
+          {
+            lib,
+            store,
+            account,
+            fetch: channel.fetch,
+            onClose: () => channel.close(),
+            exclusive: (send) =>
+              receiver.exclusive(async () => {
+                try {
+                  return await send();
+                } finally {
+                  if (store.pending > 0) store.reload();
+                }
+              }),
+          },
+          permit,
+        );
+      },
       close: async () => {
         try {
           await receiver.close();

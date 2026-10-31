@@ -37,6 +37,7 @@ import storeConcurrency from './unit/store/concurrency.test.ts';
 import telegram from './unit/telegram/telegram.test.ts';
 import signal from './unit/signal/signal.test.ts';
 import signalSend from './unit/signal/send.test.ts';
+import signalStoreFence from './unit/signal/store-fence.test.ts';
 import whatsapp from './unit/whatsapp/whatsapp.test.ts';
 import whatsappSend from './unit/whatsapp/send.test.ts';
 import xmpp from './unit/xmpp/xmpp.test.ts';
@@ -110,6 +111,7 @@ run({
   telegram,
   signal,
   signalSend,
+  signalStoreFence,
   whatsapp,
   whatsappSend,
   xmpp,

@@ -118,6 +118,15 @@ export interface SignalSendSession {
   account: DeviceAccount;
   fetch: ChatFetch;
   onClose: () => Promise<void>;
+  /**
+   * Run one whole send — encrypt, PUT, flush — with the protocol store to itself.
+   *
+   * The direct path opens the session file for the send alone and needs nothing here. A send on a
+   * LIVE receive session (`backend.ts`, `DeliverySession.openSender`) shares the store with the
+   * receiver, and passes its queue: the fence belongs around the send as a whole, so it sits here
+   * rather than at one call site, where the next method added would walk straight past it.
+   */
+  exclusive?: (send: () => Promise<SentMessage>) => Promise<SentMessage>;
 }
 
 /** A status, never the response body: that can quote the message or name other people. */
@@ -149,6 +158,7 @@ export class SignalSender implements MessageSender {
   private readonly fetch: ChatFetch;
   private readonly permit: SendPermit;
   private readonly onClose: () => Promise<void>;
+  private readonly exclusive: (send: () => Promise<SentMessage>) => Promise<SentMessage>;
 
   constructor(session: SignalSendSession, permit: SendPermit) {
     this.lib = session.lib;
@@ -157,9 +167,14 @@ export class SignalSender implements MessageSender {
     this.fetch = session.fetch;
     this.permit = permit;
     this.onClose = session.onClose;
+    this.exclusive = session.exclusive ?? ((send) => send());
   }
 
-  async send(message: SendingMessage): Promise<SentMessage> {
+  send(message: SendingMessage): Promise<SentMessage> {
+    return this.exclusive(() => this.sendNow(message));
+  }
+
+  private async sendNow(message: SendingMessage): Promise<SentMessage> {
     const aci = this.recipient(message.to);
     const bytes = UTF8.encode(message.text).length;
     if (bytes > SIGNAL_MAX_MESSAGE_BYTES) {
