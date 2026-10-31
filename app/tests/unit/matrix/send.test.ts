@@ -222,6 +222,20 @@ export default async () => {
       });
     });
 
+    await it('sends to a room id without a server part (room version 12)', async () => {
+      await withRig(granted, async (rig) => {
+        const v12 = '!31hneApxJ_1o-63DmFrpeqnkFfWppnzWso1JvH3ogLM';
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [v12],
+        });
+        await sender.send({ to: v12, text: 'Hallo' });
+        expect(new URL(rig.http.puts()[0].url).pathname.startsWith(sendPath(v12))).toBe(true);
+        expect(await refused(sender.send({ to: '!other', text: 'Hallo' }))).toBe(true);
+        await sender.close();
+      });
+    });
+
     await it('sends one PUT with a transaction id, logs matrix.send, and indexes the message', async () => {
       await withRig(granted, async (rig) => {
         const out = await send(rig, ROOM, 'Hallo Anna');

@@ -3,7 +3,7 @@
  * behind a saved `matrix.send` grant.
  *
  * The address is the room id exactly as the index and `conversations_list` hold the chat's remote
- * id (`!abc:example.org`), so a grant target `<account>/<address>` matches what a caller reads
+ * id (`!abc:example.org`, or `!abc` from room version 12 on), so a grant target `<account>/<address>` matches what a caller reads
  * there. Matrix has no second spelling for a room that curlew ever shows — an alias is a label
  * the server resolves, not the chat's identity — so there is nothing to choose between.
  *
@@ -36,8 +36,11 @@ import {
  */
 export const MATRIX_MAX_MESSAGE_BYTES = 32_000;
 
-/** `!opaque:server` — the shape of a room id (client-server spec §room ids). */
-const ROOM_ID = /^![^\s:]+:\S+$/;
+/**
+ * `!opaque:server`, or just `!opaque` from room version 12 on (MSC4291: the id is the create
+ * event's hash, with no server part) — the shape of a room id (client-server spec §room ids).
+ */
+const ROOM_ID = /^![^\s:]+(:\S+)?$/;
 
 const UTF8 = new TextEncoder();
 
