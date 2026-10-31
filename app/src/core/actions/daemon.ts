@@ -20,6 +20,12 @@
  *   - reconnects a dropped session with backoff, and stops an account the network logged out;
  *   - rebuilds the conversations debounced, and once on stop, with the same address-book step
  *     `indexSync` uses;
+ *   - SENDS for the accounts it is holding, when asked over the session bus (ADR 0004, amendment
+ *     2026-10-30). A Signal or WhatsApp send cannot run in a second process while this one is
+ *     receiving, so `curlew send` hands it here and it goes out on the connection that is already
+ *     up. The grant is checked again here, against this daemon's own config read at that moment,
+ *     and the daemon writes neither the log line nor the index row — the caller owns both, so
+ *     each happens exactly once whichever process reached the network;
  *   - logs one line per state change to stderr, where journald collects it. Never message text,
  *     chat titles, peer names or phone numbers — a log line is a file that gets copied around,
  *     and the index's privacy rule applies to it.
@@ -30,19 +36,42 @@
  * was asked to stop did its job.
  */
 
-import { type MessageBackend, isChatBackend, isDeliveryBackend, isMailBackend } from '@curlew/protocol';
+import {
+  type DeliverySession,
+  type MessageBackend,
+  type MessageSender,
+  type SendPermit,
+  isChatBackend,
+  isDeliveryBackend,
+  isMailBackend,
+  _,
+  fmt,
+} from '@curlew/protocol';
 import type { DeliveryProgress, DeliverySyncResult, IndexDatabase, RebuildResult } from '@curlew/store';
 import { receiveDeliveries } from '@curlew/store';
 import type { XmppBackend } from '@curlew/xmpp';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
-import { loadConfig } from '../config.ts';
-import type { Grant } from '../grants.ts';
+import { loadConfig, type CurlewConfig } from '../config.ts';
+import type { Capability, Grant } from '../grants.ts';
 import { configPath } from '@curlew/store';
+import { DAEMON_WIRE_VERSION, type DaemonSendReply } from '../lib/daemon-bus.ts';
+import {
+  publishDaemonSend,
+  type DaemonSendHandler,
+  type DaemonSendService,
+} from '../lib/daemon-send-service.ts';
 import { followAccount, type FollowResult } from './follow.ts';
 import { openIndex, rebuildWithAddressBook } from './index-sync.ts';
 import { decryptAccounts, OMEMO_CAPABILITY } from './omemo.ts';
-import { createXmppBackend, permitFor, SEND_CAPABILITY } from './send.ts';
+import {
+  createXmppBackend,
+  permitFor,
+  requireAnySendGrant,
+  requireSendGrant,
+  sendThrough,
+  SEND_CAPABILITY,
+} from './send.ts';
 
 /** How often a running daemon looks whether the grants were edited (they apply on restart only). */
 export const GRANT_CHECK_MS = 30_000;
@@ -86,6 +115,12 @@ export interface DaemonParams {
   writeLogPath?: string;
   /** Injected by tests; the address-book rebuild `indexSync` also uses. */
   rebuild?: (db: IndexDatabase) => Promise<RebuildResult & { contacts: number | null }>;
+  /**
+   * How the send interface is published; injected by tests, which have no session bus. `null`
+   * publishes nothing, which is also what the default does when there is no bus to publish on —
+   * the daemon then receives as it always did and a send refuses on the lease this run holds.
+   */
+  publishSend?: typeof publishDaemonSend | null;
 }
 
 export interface DaemonAccountResult {
@@ -197,6 +232,106 @@ function line(event: DeliveryProgress, log: (line: string) => void): void {
   }
 }
 
+/** How a session is found again: the pair a send names, and the pair `onSession` hands over. */
+export function sessionKey(backend: string, accountId: string): string {
+  return `${backend}/${accountId}`;
+}
+
+export interface DaemonSendHandlerOptions {
+  /** The live sessions of this run, keyed by `sessionKey` — the map `onSession` keeps up to date. */
+  sessions: ReadonlyMap<string, DeliverySession>;
+  /**
+   * This daemon's grants, read AGAIN for every send. Deliberately not the set read at start
+   * (which decides what is followed and decrypted, and may not change under an open connection):
+   * a per-call read can only ever narrow what a send may do, so a grant withdrawn while the
+   * daemon runs stops the next send through it instead of the next restart.
+   */
+  config: () => Pick<CurlewConfig, 'grants'>;
+  log: (line: string) => void;
+}
+
+/**
+ * Answer one `Send` off the session bus (ADR 0004, amendment 2026-10-30, daemon send).
+ *
+ * Separate from the transport and from the run so it can be tested without a bus: everything that
+ * decides whether a send happens is here.
+ *
+ * Fail closed, in this order. The account has to be one this run holds a session for and the
+ * session has to be able to send on itself, or the caller is told `not-followed` and its own
+ * direct path decides what happens next. The grant has to name the exact pair for the exact
+ * backend, checked against the config read just now — the caller checked it too, and that is the
+ * check that reports a mistake to the person; this one is what makes a caller that did not check
+ * harmless. Only then is a sender opened, and it sends the ONE send plan `curlew send` would have
+ * sent (`sendThrough`), on the connection that is already receiving.
+ *
+ * It writes no log line and indexes nothing: the caller owns both.
+ */
+export function createDaemonSendHandler(options: DaemonSendHandlerOptions): DaemonSendHandler {
+  const { log, sessions } = options;
+  return async (request) => {
+    const who = sessionKey(request.backend, request.account);
+    const session = sessions.get(who);
+    if (session === undefined || session.openSender === undefined) {
+      log(`curlew-daemon: a send for ${who} is not this daemon's to make — the caller keeps it`);
+      return { v: DAEMON_WIRE_VERSION, kind: 'not-followed' };
+    }
+    let permit: SendPermit;
+    try {
+      const capability = `${request.backend}.send` as Capability;
+      if (request.capability !== capability) {
+        throw new Error(
+          fmt(_('{capability} is not what {backend} sends under — nothing was sent'), {
+            capability: request.capability,
+            backend: request.backend,
+          }),
+        );
+      }
+      const config = options.config();
+      requireAnySendGrant(config, request.account, request.to);
+      requireSendGrant(config, request.account, request.to, capability);
+      permit = permitFor(config.grants, request.account, capability);
+    } catch (error) {
+      log(`curlew-daemon: a send for ${who} was refused — it is not granted here`);
+      return { v: DAEMON_WIRE_VERSION, kind: 'refused', message: errText(error) };
+    }
+    let sender: MessageSender;
+    try {
+      sender = await session.openSender(permit);
+    } catch (error) {
+      // Nothing is on the wire yet, and saying so is worth a sentence of its own: the caller
+      // prints it to someone who has to decide whether to send again.
+      return {
+        v: DAEMON_WIRE_VERSION,
+        kind: 'failed',
+        message: fmt(_('the running curlew daemon could not open a sender ({reason}) — nothing was sent'), {
+          reason: errText(error),
+        }),
+      };
+    }
+    try {
+      const outcome = await sendThrough(
+        sender,
+        {
+          to: request.to,
+          ...(request.text === undefined ? {} : { text: request.text }),
+          ...(request.imageUrl === undefined ? {} : { imageUrl: request.imageUrl }),
+          ...(request.subject === undefined ? {} : { subject: request.subject }),
+          ...(request.format === undefined ? {} : { format: request.format }),
+        },
+        request.backend,
+      );
+      log(`curlew-daemon: sent ${outcome.steps.length} message(s) for ${who} on its open connection`);
+      return { v: DAEMON_WIRE_VERSION, kind: 'sent', markdown: outcome.markdown, steps: outcome.steps };
+    } catch (error) {
+      log(`curlew-daemon: a send for ${who} did not complete`);
+      return { v: DAEMON_WIRE_VERSION, kind: 'failed', message: errText(error) } satisfies DaemonSendReply;
+    } finally {
+      // Only what this send opened: the session's own connection stays up and receiving.
+      await sender.close().catch(() => {});
+    }
+  };
+}
+
 /**
  * Receive until `params.signal` aborts, then rebuild the conversations once and close the index.
  *
@@ -305,12 +440,29 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
         }, params.grantCheckMs ?? GRANT_CHECK_MS)
       : null;
   let followed: FollowResult[] = [];
+  // The sessions this run is holding, so a send asked for over the bus reaches the connection that
+  // is already up. A reconnect hands over `null` and then the new session, so a send during one
+  // finds nothing and is told `not-followed` rather than going out on a connection that is gone.
+  const sessions = new Map<string, DeliverySession>();
+  let sendService: DaemonSendService | null = null;
   try {
     log(
       `curlew-daemon: receiving from ${backends.map((b) => b.manifest.name).join(', ') || 'no delivery backend'}` +
         `${grantedAccounts.length > 0 ? ` and following ${grantedAccounts.length} xmpp account(s)` : ''} ` +
         `(${params.accountId ?? 'every account'}) — stop with SIGTERM`,
     );
+    const publish = params.publishSend === undefined ? publishDaemonSend : params.publishSend;
+    sendService =
+      publish === null
+        ? null
+        : publish(
+            createDaemonSendHandler({
+              sessions,
+              config: () => loadConfig(params.configPath ?? configPath()),
+              log,
+            }),
+            { log },
+          );
     const following = Promise.all(
       (xmpp === null ? [] : grantedAccounts).map((accountId) =>
         followAccount({
@@ -340,6 +492,11 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
               onProgress: (event) => {
                 if (event.type === 'batch') schedule();
                 line(event, log);
+              },
+              onSession: (account, session) => {
+                const key = sessionKey(account.backend, account.accountId);
+                if (session === null) sessions.delete(key);
+                else sessions.set(key, session);
               },
             }),
         ),
@@ -384,6 +541,10 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     };
   } finally {
     if (grantWatch !== null) clearInterval(grantWatch);
+    // Give the name up before the sessions are gone: a caller that arrives after this gets
+    // "no daemon" and takes its own direct path, which is true from here on.
+    sendService?.close();
+    sessions.clear();
     outer.removeEventListener('abort', forward);
     db.close();
   }

@@ -65,6 +65,7 @@ import capabilities from './unit/core/capabilities.test.ts';
 import send from './unit/core/send.test.ts';
 import markdown from './unit/core/markdown.test.ts';
 import daemon from './unit/core/daemon.test.ts';
+import daemonSend from './unit/core/daemon-send.test.ts';
 import follow from './unit/core/follow.test.ts';
 import deliveries from './unit/core/deliveries.test.ts';
 import setup from './unit/core/setup.test.ts';
@@ -138,6 +139,7 @@ run({
   send,
   markdown,
   daemon,
+  daemonSend,
   follow,
   deliveries,
   setup,

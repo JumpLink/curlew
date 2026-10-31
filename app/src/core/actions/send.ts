@@ -17,9 +17,21 @@
  * rows. A backend without `sendImage` refuses an image rather than sending a bare URL.
  *
  * A backend whose send writes the same protocol state its receive path writes — Signal's
- * double-ratchet session, `manifest.sendSharesReceiveState` — is serialised against the daemon
- * here, through the receive lease (`holdReceiveLease`): a send while another process receives that
- * account is refused, because a corrupted session is not something a retry fixes.
+ * double-ratchet session, WhatsApp's one-connection-per-device, `manifest.sendSharesReceiveState`
+ * — is serialised against the daemon here. Two writers would leave the session somewhere neither
+ * side can decrypt from, and no amount of retrying fixes that, so there is never a second one:
+ *
+ *   - the daemon is holding the account → the send is handed TO it over the session bus
+ *     (`daemon-bus.ts`) and runs on the connection and state that are already up. The daemon
+ *     re-checks the grant against its own config and sends; this process still writes the log line
+ *     and indexes the echo, so both happen exactly once whichever path carried the message;
+ *   - no daemon, or a daemon that is not holding this account → the direct path below, which takes
+ *     the receive lease for the length of the send (`holdReceiveLease`);
+ *   - a daemon that holds the account and cannot be reached → still refused, because the lease it
+ *     holds cannot be taken.
+ *
+ * The grant is checked HERE, once, in this process, before anything is handed over — the routing
+ * decides which connection sends, never whether a send is allowed.
  *
  * Order matters: send, then the write log, then index the outgoing message. Once the server has
  * the message it is sent, whatever happens next: the log line records that, and a failing log is
@@ -44,6 +56,8 @@ import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig, type CurlewConfig } from '../config.ts';
 import { type Capability, type Grant, isGranted, isSendCapability } from '../grants.ts';
+import { DAEMON_WIRE_VERSION, type DaemonSendRequest } from '../lib/daemon-bus.ts';
+import { type DaemonSendClient, gioDaemonSendClient } from '../lib/daemon-send-client.ts';
 import { MAX_CHUNK_CHARS, renderForXmpp, type MessageFormat } from '../markdown.ts';
 import { appendWriteLog, type WriteFrontend } from '../write-log.ts';
 import { openIndex } from './index-sync.ts';
@@ -72,6 +86,11 @@ export interface SendParams {
   writeLogPath?: string;
   /** Injected by tests: the backend that opens the granted sender. */
   backend?: MessageBackend;
+  /**
+   * Injected by tests: how a send reaches a running daemon. The default talks to the session bus,
+   * which the test suite deliberately has none of.
+   */
+  daemon?: DaemonSendClient;
 }
 
 export interface SendResult {
@@ -108,8 +127,11 @@ export interface SendResult {
  * Signal is that backend: the double-ratchet session lives in one file with no lock, and the
  * daemon loads it whole. Two writers would leave the session somewhere neither the sender nor the
  * recipient can decrypt from, and no amount of retrying fixes a broken ratchet — so a send takes
- * the same lease the receive path takes (ADR 0002 §4), and a send while the daemon holds the
- * account is REFUSED rather than risked. The user stops the daemon, or sends from the phone.
+ * the same lease the receive path takes (ADR 0002 §4).
+ *
+ * Reaching this with the lease held by someone else means the send could not be handed over to
+ * them either: a daemon that answers the session bus takes the send itself and this is never
+ * reached (see the module comment). So the refusal says what is actually left to do.
  *
  * It is taken here and not in the backend because the lease lives in the index, which a backend
  * does not reach: `@curlew/store` must never import a backend, and a backend never opens the index.
@@ -144,7 +166,7 @@ function holdReceiveLease(dbPath: string, backend: string, accountId: string): {
           )
         : fmt(
             _(
-              '{account} is being received by {holder} right now, and {backend} cannot send and receive at the same time — nothing was sent; stop that process (`curlew daemon stop`) and send again, or send from your phone',
+              '{account} is being received by {holder} right now, {backend} cannot send and receive at the same time, and that process did not take the send over — nothing was sent; stop it (`curlew daemon stop`) and send again, or send from your phone',
             ),
             { account: accountId, holder: take.holder, backend },
           ),
@@ -268,6 +290,118 @@ export function createXmppBackend(config: CurlewConfig): XmppBackend {
   return created;
 }
 
+/** One message that went out, and the body it carried — what the write log and the index need. */
+export interface SendStep {
+  sent: SentMessage;
+  body: string;
+}
+
+/** What a send asks for, once the account, the backend and the grant are settled. */
+export interface SendRequest {
+  to: string;
+  text?: string;
+  imageUrl?: string;
+  subject?: string;
+  format?: MessageFormat;
+}
+
+export interface SendOutcome {
+  steps: SendStep[];
+  /** Whether the text was rendered as Markdown — which decides `parts` and `originIds`. */
+  markdown: boolean;
+}
+
+/**
+ * Put one request on the wire through an open handle: plan the messages, send them in order, and
+ * answer with what went out.
+ *
+ * This is the ONE send plan, and that is the point of it being its own function: the direct path
+ * below and the daemon's `Send` both call it, so "a Markdown text becomes these chunks and these
+ * images, in this order" exists once. A second copy in the daemon would be a second answer to the
+ * question of what the user asked for.
+ *
+ * It neither logs nor indexes nor closes the handle: whoever asked for the send owns all three.
+ * Over the bus that is deliberate — the daemon sends, the caller records — so a message is
+ * written down exactly once no matter which process reached the network.
+ */
+export async function sendThrough(
+  sender: MessageSender,
+  request: SendRequest,
+  backendName: string,
+): Promise<SendOutcome> {
+  // A plain-text transport still gets the text — as written; only a chat sender renders Markdown.
+  const markdown = request.format === 'markdown' && sender.features.markdown;
+  const text = request.text !== undefined && request.text.trim().length > 0 ? request.text : undefined;
+  const steps: SendStep[] = [];
+  try {
+    const plan: Array<{ kind: 'text' | 'image'; value: string }> = [];
+    if (markdown && text !== undefined) {
+      for (const seg of renderForXmpp(text, undefined, MAX_CHUNK_CHARS))
+        plan.push(
+          seg.kind === 'text' ? { kind: 'text', value: seg.text } : { kind: 'image', value: seg.url },
+        );
+    } else if (text !== undefined) {
+      plan.push({ kind: 'text', value: text });
+    }
+    if (request.imageUrl !== undefined) {
+      if (sender.sendImage === undefined) {
+        throw new Error(
+          fmt(_('{backend} cannot send an image — give text and leave image_url out'), {
+            backend: backendName,
+          }),
+        );
+      }
+      plan.push({ kind: 'image', value: request.imageUrl });
+    }
+    if (plan.length === 0) throw new Error(_('nothing to send: the text is empty after rendering'));
+    for (const step of plan) if (step.kind === 'image') step.value = validateImageUrl(step.value);
+
+    for (const step of plan)
+      steps.push({
+        sent:
+          step.kind === 'text'
+            ? await sender.send({
+                to: request.to,
+                text: step.value,
+                ...(request.subject === undefined ? {} : { subject: request.subject }),
+              })
+            : await sender.sendImage!(request.to, step.value),
+        body: step.value,
+      });
+  } catch (error) {
+    // The typed refusal carries a reason, not a sentence. Turned into one here, where the
+    // address is known, so the person reads what to do rather than an enum.
+    if (isOmemoSendRefusedError(error)) throw new Error(MESSAGES.omemoRefused[error.reason](request.to));
+    throw error;
+  }
+  return { steps, markdown };
+}
+
+/**
+ * Hand the send to the daemon that is holding this account, or answer null when none is.
+ *
+ * Null covers every case the direct path should take over: no daemon on the bus, no session bus at
+ * all, and a daemon that is running but does not have this account (`not-followed`). A refusal or
+ * a failure from the daemon is NOT null — it is the answer, and it is raised here as the sentence
+ * the daemon put in it.
+ */
+async function routeThroughDaemon(
+  client: DaemonSendClient,
+  request: DaemonSendRequest,
+): Promise<SendOutcome | null> {
+  const reply = await client.send(request);
+  if (reply === null) return null;
+  switch (reply.kind) {
+    case 'sent':
+      return { markdown: reply.markdown, steps: reply.steps };
+    case 'not-followed':
+      return null;
+    case 'refused':
+    case 'failed':
+      throw new Error(reply.message);
+  }
+}
+
 export async function sendMessage(params: SendParams): Promise<SendResult> {
   const config = loadConfig(params.configPath ?? configPath());
   const granted = requireAnySendGrant(config, params.accountId, params.to);
@@ -306,70 +440,57 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
     throw new Error(MESSAGES.omemoRequiredWithoutGrant(params.accountId, params.to));
   const permit = permitFor(config.grants, params.accountId, capability);
   const dbPath = params.dbPath ?? indexDbPath();
-  // Before the handle exists, so a refusal costs no connection (see `holdReceiveLease`).
-  const lease = backend.manifest.sendSharesReceiveState
-    ? holdReceiveLease(dbPath, backend.manifest.name, params.accountId)
+  const request: SendRequest = {
+    to: params.to,
+    ...(text === undefined ? {} : { text }),
+    ...(imageUrl === undefined ? {} : { imageUrl }),
+    ...(params.subject === undefined ? {} : { subject: params.subject }),
+    ...(params.format === undefined ? {} : { format: params.format }),
+  };
+
+  // A backend that shares its state with the receive path asks the daemon FIRST: if one is
+  // holding this account, only it can send, and the lease below would refuse (see the module
+  // comment). The grant is already checked at this point, and the daemon checks it again.
+  const routed = backend.manifest.sendSharesReceiveState
+    ? await routeThroughDaemon(params.daemon ?? gioDaemonSendClient(), {
+        v: DAEMON_WIRE_VERSION,
+        backend: backend.manifest.name,
+        account: params.accountId,
+        capability,
+        ...request,
+      })
     : null;
-  let sender: MessageSender;
-  try {
-    sender = await backend.openSender(params.accountId, permit, {
-      decrypt,
-      requireEncryption: requireEncryptionFor(config, params.accountId, permit.addresses),
-    });
-  } catch (error) {
-    lease?.release();
-    throw error;
-  }
 
-  // A plain-text transport still gets the text — as written; only a chat sender renders Markdown.
-  const markdown = params.format === 'markdown' && sender.features.markdown;
-  const sends: Array<{ sent: SentMessage; body: string }> = [];
-  // Everything the open handle is needed for, so the one `finally` closes it and gives the lease
-  // back — a refusal in the plan below used to leave both to the garbage collector.
-  try {
-    const plan: Array<{ kind: 'text' | 'image'; value: string }> = [];
-    if (markdown && text !== undefined) {
-      for (const seg of renderForXmpp(text, undefined, MAX_CHUNK_CHARS))
-        plan.push(
-          seg.kind === 'text' ? { kind: 'text', value: seg.text } : { kind: 'image', value: seg.url },
-        );
-    } else if (text !== undefined) {
-      plan.push({ kind: 'text', value: text });
-    }
-    if (imageUrl !== undefined) {
-      if (sender.sendImage === undefined) {
-        throw new Error(
-          fmt(_('{backend} cannot send an image — give text and leave image_url out'), {
-            backend: backend.manifest.name,
-          }),
-        );
-      }
-      plan.push({ kind: 'image', value: imageUrl });
-    }
-    if (plan.length === 0) throw new Error(_('nothing to send: the text is empty after rendering'));
-    for (const step of plan) if (step.kind === 'image') step.value = validateImageUrl(step.value);
-
-    for (const step of plan)
-      sends.push({
-        sent:
-          step.kind === 'text'
-            ? await sender.send({
-                to: params.to,
-                text: step.value,
-                ...(params.subject === undefined ? {} : { subject: params.subject }),
-              })
-            : await sender.sendImage!(params.to, step.value),
-        body: step.value,
+  let outcome: SendOutcome;
+  if (routed !== null) {
+    outcome = routed;
+  } else {
+    // Today's path: take the lease, open a handle of our own, send, close, release. Before the
+    // handle exists, so a refusal costs no connection (see `holdReceiveLease`).
+    const lease = backend.manifest.sendSharesReceiveState
+      ? holdReceiveLease(dbPath, backend.manifest.name, params.accountId)
+      : null;
+    let sender: MessageSender;
+    try {
+      sender = await backend.openSender(params.accountId, permit, {
+        decrypt,
+        requireEncryption: requireEncryptionFor(config, params.accountId, permit.addresses),
       });
-  } catch (error) {
-    // The typed refusal carries a reason, not a sentence. Turned into one here, where the
-    // address is known, so the person reads what to do rather than an enum.
-    if (isOmemoSendRefusedError(error)) throw new Error(MESSAGES.omemoRefused[error.reason](params.to));
-    throw error;
-  } finally {
-    await sender.close().catch(() => {});
-    lease?.release();
+    } catch (error) {
+      lease?.release();
+      throw error;
+    }
+    // Everything the open handle is needed for, so the one `finally` closes it and gives the lease
+    // back — a refusal in the plan used to leave both to the garbage collector.
+    try {
+      outcome = await sendThrough(sender, request, backend.manifest.name);
+    } finally {
+      await sender.close().catch(() => {});
+      lease?.release();
+    }
   }
+  const sends = outcome.steps;
+  const markdown = outcome.markdown;
 
   const recorded = sends.map(({ sent, body }) => {
     appendWriteLog(
