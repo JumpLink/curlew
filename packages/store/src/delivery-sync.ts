@@ -69,6 +69,18 @@ export interface DeliverySyncOptions {
   sleep?: (ms: number) => Promise<void>;
   /** Every state change, for a log line. Never carries content — only names, counts and timings. */
   onProgress?: (event: DeliveryProgress) => void;
+  /**
+   * The live session of one account, handed over as soon as it is connected and withdrawn with
+   * `null` when it is gone — a reconnect is a `null` and then the new one. For a caller that must
+   * reach the open connection rather than the index: `curlew daemon` sends on it, because a
+   * `sendSharesReceiveState` backend cannot be sent on from anywhere else while it is receiving
+   * (ADR 0004, amendment 2026-10-30, daemon send).
+   *
+   * The engine itself does nothing with the session beyond receiving: it is handed out, never
+   * closed by the callee, and `@curlew/store` still imports no backend — `DeliverySession` is a
+   * protocol type.
+   */
+  onSession?: (account: { backend: string; accountId: string }, session: DeliverySession | null) => void;
 }
 
 /**
@@ -894,6 +906,7 @@ async function runSession(
   now: () => Date,
   signal: AbortSignal | undefined,
   onProgress: ((event: DeliveryProgress) => void) | undefined,
+  onSession: DeliverySyncOptions['onSession'],
   result: DeliveryAccountSyncResult,
   /** Why the last session ended, in a form that can be logged. Read after the call. */
   note: { reason: string | null },
@@ -926,6 +939,9 @@ async function runSession(
     return { caughtUp: false, error: null, loggedOut: false };
   }
   onProgress?.({ backend: name, accountId: account.id, type: 'connected' });
+  // Handed over only now: a session the caller could reach before it is connected, or after the
+  // `finally` below withdrew it, is one it would send on when there is nothing to send on.
+  onSession?.({ backend: name, accountId: account.id }, session);
 
   const state = loadState(db, name, account.id);
   // An abort closes the session: `nextBatch()` then resolves null and the loop ends normally,
@@ -977,6 +993,9 @@ async function runSession(
     return { caughtUp: false, error: result.error, loggedOut: false };
   } finally {
     signal?.removeEventListener('abort', onAbort);
+    // Withdrawn BEFORE the close: from here on the connection is going away, and a send that
+    // started against it would be sending into a socket about to be shut.
+    onSession?.({ backend: name, accountId: account.id }, null);
     if (closing) {
       // Already closing because the run was stopped: await that, do not close again.
       await closing;
@@ -1142,6 +1161,7 @@ async function receiveAccount(
           now,
           stop.signal,
           onProgress,
+          options.onSession,
           result,
           note,
         );
