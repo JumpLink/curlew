@@ -230,6 +230,55 @@ export default async () => {
     });
   });
 
+  await describe('live updates', async () => {
+    await it('announces the newest journal row after a batch and the account list on a state change', async () => {
+      const controller = new AbortController();
+      const seqs: number[] = [];
+      let accountsChanged = 0;
+      let accountsJson = '';
+      const backend = new ScriptedBackend(['a-1']);
+      try {
+        const received = runDeliveryDaemon({
+          dbPath: ':memory:',
+          configPath: NO_CONFIG,
+          backends: [backend],
+          signal: controller.signal,
+          rebuildDebounceMs: 5,
+          changePollMs: 5,
+          log: () => {},
+          rebuild: async () => REBUILD,
+          publishSend: (_handler, options) => {
+            accountsJson = '';
+            const read = () => {
+              accountsJson = JSON.stringify(options.accounts?.());
+            };
+            return {
+              emitChanged: (seq) => seqs.push(seq),
+              emitAccountsChanged: () => {
+                accountsChanged++;
+                read();
+              },
+              close: () => {},
+            };
+          },
+        });
+        await settle();
+        backend.sessions.get('a-1')?.push(incoming(message('a1/1', 1, ANNA_TEXT)));
+        for (let i = 0; i < 100 && seqs.length < 1; i++) await new Promise((r) => setTimeout(r, 5));
+        expect(seqs.length > 0).toBe(true);
+        expect(seqs[0] > 0).toBe(true);
+        expect(accountsChanged > 0).toBe(true);
+        expect(accountsJson.includes('a-1')).toBe(true);
+        // Nothing the peer wrote reaches the bus payloads.
+        expect(accountsJson.includes('Anna')).toBe(false);
+        controller.abort();
+        await received;
+      } finally {
+        controller.abort();
+      }
+    });
+  });
+
   await describe('the ids a log line may carry', async () => {
     // ADR 0002 §6 allows the account id in a log line and nothing else identifying. That rests on
     // one invariant of the id derivation: a WhatsApp id is the LID or the registration id, a
