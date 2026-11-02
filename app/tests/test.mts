@@ -68,6 +68,7 @@ import send from './unit/core/send.test.ts';
 import markdown from './unit/core/markdown.test.ts';
 import daemon from './unit/core/daemon.test.ts';
 import daemonAccounts from './unit/core/daemon-accounts.test.ts';
+import watch from './unit/core/watch.test.ts';
 import daemonSend from './unit/core/daemon-send.test.ts';
 import follow from './unit/core/follow.test.ts';
 import deliveries from './unit/core/deliveries.test.ts';
@@ -146,6 +147,7 @@ run({
   daemon,
   daemonAccounts,
   daemonSend,
+  watch,
   follow,
   deliveries,
   setup,

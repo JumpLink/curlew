@@ -18,3 +18,4 @@ export * from './omemo.ts';
 export * from './output.ts';
 export * from './send.ts';
 export * from './setup.ts';
+export * from './watch.ts';

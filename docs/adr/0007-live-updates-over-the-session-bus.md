@@ -132,6 +132,12 @@ whether the daemon is alive. With no daemon on the bus it says so once and falls
 own 2 s poll of the journal, so it works on a machine with only `sync` from a timer. It prints
 what the journal holds and nothing else: no text, no titles.
 
+`curlew watch` starts at the newest row, so only new changes print; `--since <seq>` starts
+earlier. A cursor older than the journal's smallest `seq` minus one prints one
+`{"resync":true,"oldest":…,"newest":…}` line and continues from the newest row — the reader's
+cue to re-read what it shows. With a daemon on the bus it wakes on `Changed` (with a 30 s read
+as the net under a lost signal); without one it polls every 2 s.
+
 No MCP tool: an agent asks the index when it needs to, and a streaming tool would be the first
 one that never returns.
 
