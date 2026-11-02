@@ -151,6 +151,30 @@ until each gets a follow source of its own, each in its own change:
 The journal does not care which of them wrote: a row is a row, which is why this is decided
 first.
 
+### 6. Workers: not a replacement for the bus, a way to keep main loops free
+
+gjsify 0.64.16 ships a WHATWG `Worker` (`@gjsify/web-worker`) over `worker_threads`; on GJS a
+worker is a child gjs process, ready in ~40 ms, and Comlink works over it (gjsify report
+`2026-10-30-web-worker-and-comlink-on-gjs.md`). It changes none of the above, and it is the
+right tool for two places beside it:
+
+- **Not the transport between daemon and GUI.** A worker belongs to the process that spawned
+  it and dies with it; the daemon runs under systemd and outlives every GUI window. Owning a
+  bus name is also the liveness check (ADR 0004 amendment). The bus stays.
+- **The journal holds across workers by construction.** A worker is its own process with its
+  own libgda connection; a write from it appends its row in its own transaction and the daemon's
+  poll sees it like a `sync` from a timer. A daemon may wake itself from a worker's message
+  instead of waiting for the poll — an optimisation, not a second path.
+- **The GUI reads the index in a worker.** `readChanges` and the conversation queries run off
+  the GTK main loop, as stamped's query worker does; nothing in §1 assumes the main thread.
+- **The daemon's rebuild is a candidate.** `rebuildConversations` is synchronous and, while it
+  runs, holds back `Send` replies and `Changed`. Whether it moves into a worker is decided by
+  measuring it on a real index, not here.
+
+Using any of this needs curlew on gjsify 0.64.16 or later (it is on 0.64.12); the bump comes
+first, all eight `@gjsify/*` packages together. Running each backend in its own worker for
+crash isolation (WASM out of memory, a native addon fault) is a separate decision.
+
 ## Consequences
 
 - Schema v10 adds one table and nothing else; no existing row is rewritten (the delivery-only
