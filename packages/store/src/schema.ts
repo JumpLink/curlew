@@ -21,7 +21,7 @@
 
 import { type IndexDatabase, withTransaction } from './db.ts';
 
-export const SCHEMA_VERSION = 9;
+export const SCHEMA_VERSION = 10;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -296,6 +296,17 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
   // v9: the id a reply POINTS AT, as the sender wrote it (XEP-0461 `<reply id>`). `reply_to_remote_id`
   // holds the resolved archive id; this one is what a caller's own sent id (`originId`) matches.
   9: [{ table: 'conversation_messages', column: 'reply_to_client_id', type: 'TEXT' }],
+  // v10: the change journal (ADR 0007 §1) — what changed, never what it says. A new table and
+  // nothing else, so no stored row is rewritten. Created here only, like `receive_leases`.
+  10: [
+    `CREATE TABLE IF NOT EXISTS index_changes (
+       seq INTEGER PRIMARY KEY AUTOINCREMENT,
+       at TEXT NOT NULL,
+       kind TEXT NOT NULL CHECK (kind IN ('messages', 'conversations', 'accounts')),
+       backend TEXT,
+       account_id TEXT,
+       conversation_id TEXT)`,
+  ],
 };
 
 function columnsOf(db: IndexDatabase, table: string): Set<string> {

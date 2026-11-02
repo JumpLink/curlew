@@ -48,13 +48,14 @@ import {
   fmt,
 } from '@curlew/protocol';
 import type { DeliveryProgress, DeliverySyncResult, IndexDatabase, RebuildResult } from '@curlew/store';
-import { receiveDeliveries } from '@curlew/store';
+import { newestSeq, receiveDeliveries } from '@curlew/store';
 import type { XmppBackend } from '@curlew/xmpp';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig, type CurlewConfig } from '../config.ts';
 import type { Capability, Grant } from '../grants.ts';
 import { configPath } from '@curlew/store';
+import { AccountTable } from '../lib/daemon-accounts.ts';
 import { DAEMON_WIRE_VERSION, type DaemonSendReply } from '../lib/daemon-bus.ts';
 import {
   publishDaemonSend,
@@ -87,6 +88,9 @@ export function daemonGrants(grants: readonly Grant[]): string {
   );
 }
 
+/** How often a running daemon looks whether another process moved the journal (ADR 0007 §2). */
+export const CHANGE_POLL_MS = 2_000;
+
 /** How long the conversations wait for the last written batch before they are rebuilt. */
 export const REBUILD_DEBOUNCE_MS = 30_000;
 
@@ -111,6 +115,8 @@ export interface DaemonParams {
   xmpp?: XmppBackend;
   /** Short only in tests. */
   grantCheckMs?: number;
+  /** Short only in tests. */
+  changePollMs?: number;
   /** Where the write log goes; injected by tests. */
   writeLogPath?: string;
   /** Injected by tests; the address-book rebuild `indexSync` also uses. */
@@ -445,6 +451,31 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   // finds nothing and is told `not-followed` rather than going out on a connection that is gone.
   const sessions = new Map<string, DeliverySession>();
   let sendService: DaemonSendService | null = null;
+  // ADR 0007: the account list for `GetAccounts` is built from the progress events the log lines
+  // above already name, and the journal's newest row is announced after the daemon's own commits
+  // and whenever a poll finds that another process moved it.
+  const table = new AccountTable();
+  for (const accountId of grantedAccounts) table.seed('xmpp', accountId, new Date());
+  let lastSeq: number | null = null;
+  try {
+    lastSeq = newestSeq(db);
+  } catch {
+    // A busy index is looked at again by the next poll.
+  }
+  const announce = (): void => {
+    try {
+      const newest = newestSeq(db);
+      if (newest === null || newest === lastSeq) return;
+      lastSeq = newest;
+      sendService?.emitChanged(newest);
+    } catch {
+      // A busy index is looked at again by the next poll.
+    }
+  };
+  const progress = (event: DeliveryProgress): void => {
+    if (table.apply(event, new Date())) sendService?.emitAccountsChanged();
+  };
+  const changeWatch = setInterval(announce, params.changePollMs ?? CHANGE_POLL_MS);
   try {
     log(
       `curlew-daemon: receiving from ${backends.map((b) => b.manifest.name).join(', ') || 'no delivery backend'}` +
@@ -461,8 +492,21 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
               config: () => loadConfig(params.configPath ?? configPath()),
               log,
             }),
-            { log },
+            { log, accounts: () => table.reply() },
           );
+    for (const backend of backends) {
+      void backend
+        .listAccounts()
+        .then((known) => {
+          let seeded = false;
+          for (const account of known) {
+            if (params.accountId && account.id !== params.accountId) continue;
+            seeded = table.seed(backend.manifest.name, account.id, new Date()) || seeded;
+          }
+          if (seeded) sendService?.emitAccountsChanged();
+        })
+        .catch(() => {});
+    }
     const following = Promise.all(
       (xmpp === null ? [] : grantedAccounts).map((accountId) =>
         followAccount({
@@ -473,7 +517,11 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
           permit: permitFor(config.grants, accountId),
           signal,
           log,
-          onWrite: schedule,
+          onWrite: () => {
+            schedule();
+            announce();
+          },
+          onProgress: progress,
           holder: String(process.pid),
           writeLogPath: params.writeLogPath,
         }),
@@ -490,7 +538,11 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
               signal,
               accountId: params.accountId,
               onProgress: (event) => {
-                if (event.type === 'batch') schedule();
+                if (event.type === 'batch') {
+                  schedule();
+                  announce();
+                }
+                progress(event);
                 line(event, log);
               },
               onSession: (account, session) => {
@@ -541,6 +593,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     };
   } finally {
     if (grantWatch !== null) clearInterval(grantWatch);
+    clearInterval(changeWatch);
     // Give the name up before the sessions are gone: a caller that arrives after this gets
     // "no daemon" and takes its own direct path, which is true from here on.
     sendService?.close();

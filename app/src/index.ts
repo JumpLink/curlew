@@ -25,6 +25,7 @@ import {
   sendCommand,
   setupCommand,
   syncCommand,
+  watchCommand,
 } from './frontends/cli/index.ts';
 
 // Before anything produces a string. Every `describe` below is evaluated while `parseArgs()`
@@ -53,6 +54,7 @@ const parseArgs = () =>
     .command(sendCommand)
     .command(omemoCommand)
     .command(daemonCommand)
+    .command(watchCommand)
     .command(indexCommand)
     .command(conversationsCommand)
     .command(deliveriesCommand)

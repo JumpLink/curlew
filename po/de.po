@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-10-31 06:33+0100\n"
+"POT-Creation-Date: 2026-11-02 21:50+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -12,13 +12,13 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app/src/core/actions/daemon.ts:283
+#: app/src/core/actions/daemon.ts:289
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 "{capability} ist nicht die Berechtigung, unter der {backend} sendet — es "
 "wurde nichts gesendet"
 
-#: app/src/core/actions/daemon.ts:306
+#: app/src/core/actions/daemon.ts:312
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
@@ -98,27 +98,27 @@ msgstr "Kein Konto {account} — `curlew accounts list` zeigt sie an"
 msgid "the xmpp backend is not available"
 msgstr "Das XMPP-Backend ist nicht verfügbar"
 
-#: app/src/core/actions/send.ts:347
+#: app/src/core/actions/send.ts:349
 msgid "{backend} cannot send an image — give text and leave image_url out"
 msgstr "{backend} kann kein Bild senden — gib Text an und lass image_url weg"
 
-#: app/src/core/actions/send.ts:354
+#: app/src/core/actions/send.ts:356
 msgid "nothing to send: the text is empty after rendering"
 msgstr "Nichts zu senden: Der Text ist nach dem Rendern leer"
 
-#: app/src/core/actions/send.ts:411
+#: app/src/core/actions/send.ts:413
 msgid "{backend} cannot send"
 msgstr "{backend} kann nicht senden"
 
-#: app/src/core/actions/send.ts:415
+#: app/src/core/actions/send.ts:417
 msgid "nothing to send: give text, an image URL or both"
 msgstr "Nichts zu senden: Gib Text, eine Bild-URL oder beides an"
 
-#: app/src/core/actions/send.ts:417
+#: app/src/core/actions/send.ts:419
 msgid "{backend} messages carry no subject"
 msgstr "Nachrichten von {backend} haben keinen Betreff"
 
-#: app/src/core/actions/send.ts:425
+#: app/src/core/actions/send.ts:427
 msgid "no {backend} account {account} — `curlew accounts list` shows them"
 msgstr "Kein {backend}-Konto {account} — `curlew accounts list` zeigt sie an"
 
@@ -647,6 +647,13 @@ msgstr ""
 "Befehl im PATH. Klone das Repository und führe `gjsify install` aus oder "
 "installiere den veröffentlichten Befehl, und starte dies dann erneut."
 
+#: app/src/core/actions/watch.ts:70
+msgid ""
+"no curlew daemon on the session bus — reading the journal every {seconds} s "
+"myself"
+msgstr ""
+"Kein curlew-Daemon am Session-Bus — ich lese das Journal selbst alle {seconds} s"
+
 #: app/src/core/backends/registry.ts:59
 msgid "backend {name} has an invalid manifest: {problems}"
 msgstr "Das Backend {name} hat ein ungültiges Manifest: {problems}"
@@ -667,7 +674,7 @@ msgstr ""
 "Das Backend {name} ist nicht aktiviert — `curlew backends enable {name}` "
 "schaltet es ein (und zeigt seine Bedingungen)"
 
-#: app/src/core/lib/daemon-bus.ts:120
+#: app/src/core/lib/daemon-bus.ts:169
 msgid ""
 "the running curlew daemon speaks send protocol {theirs} and this curlew "
 "speaks {ours} — nothing was sent; restart it with `systemctl --user restart "
@@ -677,7 +684,7 @@ msgstr ""
 "spricht {ours} — es wurde nichts gesendet; starte ihn mit `systemctl --user "
 "restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:157
+#: app/src/core/lib/daemon-bus.ts:206
 msgid ""
 "the caller speaks send protocol {theirs} and this curlew daemon speaks "
 "{ours} — nothing was sent; restart it with `systemctl --user restart curlew-"
@@ -1366,7 +1373,21 @@ msgid_plural "{n} warnings"
 msgstr[0] "{n} Warnung"
 msgstr[1] "{n} Warnungen"
 
-#: packages/imap/src/send.ts:52 packages/matrix/src/send.ts:162
+#: app/src/frontends/cli/watch.ts:20
+msgid ""
+"Print the change journal as it grows, one JSON line per row — the reference "
+"listener for the daemon’s Changed signal"
+msgstr ""
+"Gibt das Änderungsjournal beim Wachsen aus, eine JSON-Zeile je Eintrag — der Referenz-Zuhörer für das Changed-Signal des Daemons"
+
+#: app/src/frontends/cli/watch.ts:26
+msgid ""
+"Start after this journal seq; the default is the newest row, so only new "
+"changes print"
+msgstr ""
+"Beginnt nach dieser Journal-Nummer; Standard ist der neueste Eintrag, es erscheinen also nur neue Änderungen"
+
+#: packages/imap/src/send.ts:52 packages/matrix/src/send.ts:165
 #: packages/signal/src/send.ts:275 packages/telegram/src/sender.ts:43
 #: packages/whatsapp/src/send.ts:250
 msgid "sending to {address} is not granted for account {account}"
@@ -1430,7 +1451,7 @@ msgid "Logged in; setting up this device’s encryption keys…"
 msgstr ""
 "Angemeldet; die Verschlüsselungsschlüssel dieses Geräts werden eingerichtet …"
 
-#: packages/matrix/src/send.ts:110
+#: packages/matrix/src/send.ts:113
 msgid ""
 "the homeserver did not say whether {room} is encrypted ({reason}) — nothing "
 "was sent"
@@ -1438,17 +1459,17 @@ msgstr ""
 "Der Homeserver hat nicht mitgeteilt, ob {room} verschlüsselt ist ({reason}) "
 "— es wurde nichts gesendet"
 
-#: packages/matrix/src/send.ts:128
+#: packages/matrix/src/send.ts:131
 msgid "the homeserver refused the message to {room} ({reason})"
 msgstr "Der Homeserver hat die Nachricht an {room} abgewiesen ({reason})"
 
-#: packages/matrix/src/send.ts:137
+#: packages/matrix/src/send.ts:140
 msgid "the homeserver accepted the message to {room} but returned no event id"
 msgstr ""
 "Der Homeserver hat die Nachricht an {room} angenommen, aber keine Event-ID "
 "zurückgegeben"
 
-#: packages/matrix/src/send.ts:176
+#: packages/matrix/src/send.ts:179
 msgid ""
 "a Matrix message holds at most {max} bytes of text, this one has {bytes} — "
 "shorten it"
@@ -1456,7 +1477,7 @@ msgstr ""
 "Eine Matrix-Nachricht fasst höchstens {max} Byte Text, diese hat {bytes} — "
 "kürze sie"
 
-#: packages/matrix/src/send.ts:190
+#: packages/matrix/src/send.ts:193
 msgid ""
 "{room} is end-to-end encrypted and curlew cannot send encrypted messages yet "
 "— nothing was sent, send it from a Matrix client"

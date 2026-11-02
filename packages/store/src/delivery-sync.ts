@@ -32,6 +32,7 @@ import type {
   DeliverySession,
   ParticipantAddress,
 } from '@curlew/protocol';
+import { appendChanges, appendChangesTransaction } from './changes.ts';
 import { chatConversationId, classifyChatMessage, LOCAL_ECHO_PREFIX } from './chat-sync.ts';
 import type { IndexDatabase } from './db.ts';
 import { insertMany, placeholders, type SqlValue, withTransaction } from './db.ts';
@@ -303,6 +304,8 @@ class DeliveryBatch {
    */
   readonly clientIds = new Map<string, string>();
   readonly touchedChats = new Set<string>();
+  /** Chats a merge folded into another in this batch: gone as conversations, for the journal. */
+  readonly mergedAway = new Set<string>();
   readonly touchedPeers = new Set<string>();
   readonly members = new Map<string, SqlValue[]>();
   /** Counted as events are folded; a message deleted in the same batch still counts once as removed. */
@@ -624,6 +627,7 @@ function mergeChat(db: IndexDatabase, batch: DeliveryBatch, from: string, into: 
   state.chats.delete(from);
   // The target's row, cursor and aggregates are written by the batch this merge belongs to.
   batch.touchedChats.add(into);
+  batch.mergedAway.add(from);
   return true;
 }
 
@@ -641,7 +645,10 @@ function recordLinkState(
   dropped: boolean,
   now: Date,
 ): void {
-  const row = db.prepare('SELECT id FROM accounts WHERE id = ?').get(accountId) as { id: string } | undefined;
+  const row = db.prepare('SELECT id, link_dropped_at FROM accounts WHERE id = ?').get(accountId) as
+    | { id: string; link_dropped_at: string | null }
+    | undefined;
+  const was = row?.link_dropped_at != null;
   if (row === undefined) {
     db.prepare('INSERT INTO accounts (id, provider, last_sync_at, link_dropped_at) VALUES (?, ?, ?, ?)').run(
       accountId,
@@ -649,13 +656,15 @@ function recordLinkState(
       now.toISOString(),
       dropped ? now.toISOString() : null,
     );
-    return;
+  } else {
+    db.prepare('UPDATE accounts SET link_dropped_at = ?, last_sync_at = ? WHERE id = ?').run(
+      dropped ? now.toISOString() : null,
+      now.toISOString(),
+      accountId,
+    );
   }
-  db.prepare('UPDATE accounts SET link_dropped_at = ?, last_sync_at = ? WHERE id = ?').run(
-    dropped ? now.toISOString() : null,
-    now.toISOString(),
-    accountId,
-  );
+  // Only a flip is news: every run rewrites this, and a journal row per run would be noise.
+  if (was !== dropped) appendChangesTransaction(db, [{ kind: 'accounts', backend, accountId }], now);
 }
 
 function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: string): void {
@@ -780,6 +789,28 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
        WHERE id IN (${p})`,
       touched.map(conv),
     );
+    // A peer-only batch (a name, an address) changed no conversation and journals nothing.
+    const changed = new Set<string>();
+    for (const id of [
+      ...batch.touchedChats,
+      ...batch.deletedChats,
+      ...batch.clearedChats,
+      ...batch.mergedAway,
+      ...[...batch.messages.values()].map((p) => p.chatRemoteId),
+    ]) {
+      changed.add(conv(id));
+    }
+    for (const edit of batch.edits.values()) changed.add(edit.conversationId);
+    appendChanges(db, [
+      ...[...changed].map((conversationId) => ({
+        kind: 'messages' as const,
+        backend,
+        accountId,
+        conversationId,
+      })),
+      // A receipt that named no chat: it changed some message, the account is all we know.
+      ...(batch.peerReadByRemoteId.size > 0 ? [{ kind: 'messages' as const, backend, accountId }] : []),
+    ]);
   }
 }
 

@@ -32,6 +32,8 @@ import storeChatSync from './unit/store/chat-sync.test.ts';
 import storeDeliverySync from './unit/store/delivery-sync.test.ts';
 import storeDeliveryFollow from './unit/store/delivery-follow.test.ts';
 import storeReceiveLease from './unit/store/receive-lease.test.ts';
+import storeChanges from './unit/store/changes.test.ts';
+import storeChangeAppends from './unit/store/change-appends.test.ts';
 import storeConcurrency from './unit/store/concurrency.test.ts';
 
 import telegram from './unit/telegram/telegram.test.ts';
@@ -65,6 +67,8 @@ import capabilities from './unit/core/capabilities.test.ts';
 import send from './unit/core/send.test.ts';
 import markdown from './unit/core/markdown.test.ts';
 import daemon from './unit/core/daemon.test.ts';
+import daemonAccounts from './unit/core/daemon-accounts.test.ts';
+import watch from './unit/core/watch.test.ts';
 import daemonSend from './unit/core/daemon-send.test.ts';
 import follow from './unit/core/follow.test.ts';
 import deliveries from './unit/core/deliveries.test.ts';
@@ -109,6 +113,8 @@ run({
   storeDeliverySync,
   storeDeliveryFollow,
   storeReceiveLease,
+  storeChanges,
+  storeChangeAppends,
   storeConcurrency,
   telegram,
   signal,
@@ -139,7 +145,9 @@ run({
   send,
   markdown,
   daemon,
+  daemonAccounts,
   daemonSend,
+  watch,
   follow,
   deliveries,
   setup,

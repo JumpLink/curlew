@@ -22,6 +22,7 @@ import type {
   Participant,
   ParticipantAddress,
 } from '@curlew/protocol';
+import { appendChangesTransaction } from './changes.ts';
 import { normalizeAddress } from '@curlew/protocol';
 import { classifyMail, conversationVerdict, type MessageVerdict, type SenderOverrides } from './classify.ts';
 import type { IndexDatabase } from './db.ts';
@@ -274,7 +275,11 @@ interface SyncedTable {
   key: readonly number[];
 }
 
-const PARTICIPANTS: SyncedTable = { table: 'participants', columns: ['id', 'display_name', 'contact_uid'], key: [0] };
+const PARTICIPANTS: SyncedTable = {
+  table: 'participants',
+  columns: ['id', 'display_name', 'contact_uid'],
+  key: [0],
+};
 const PARTICIPANT_ADDRESSES: SyncedTable = {
   table: 'participant_addresses',
   columns: ['participant_id', 'kind', 'value'],
@@ -288,8 +293,18 @@ const CHAT_PEER_LINKS: SyncedTable = {
 const CONVERSATIONS: SyncedTable = {
   table: 'conversations',
   columns: [
-    'id', 'backend', 'account_id', 'kind', 'title', 'classification', 'classification_reason',
-    'first_message_at', 'last_message_at', 'message_count', 'unread_count', 'has_attachments',
+    'id',
+    'backend',
+    'account_id',
+    'kind',
+    'title',
+    'classification',
+    'classification_reason',
+    'first_message_at',
+    'last_message_at',
+    'message_count',
+    'unread_count',
+    'has_attachments',
   ],
   key: [0],
 };
@@ -301,14 +316,29 @@ const CONVERSATION_PARTICIPANTS: SyncedTable = {
 const MAIL_MESSAGES: SyncedTable = {
   table: 'conversation_messages',
   columns: [
-    'id', 'conversation_id', 'backend', 'account_id', 'presentation', 'sender_participant_id',
-    'sender_name', 'sender_kind', 'sender_address', 'from_self', 'sent_at', 'subject', 'seen',
-    'has_attachments', 'classification', 'classification_reason', 'folder_path', 'uid',
+    'id',
+    'conversation_id',
+    'backend',
+    'account_id',
+    'presentation',
+    'sender_participant_id',
+    'sender_name',
+    'sender_kind',
+    'sender_address',
+    'from_self',
+    'sent_at',
+    'subject',
+    'seen',
+    'has_attachments',
+    'classification',
+    'classification_reason',
+    'folder_path',
+    'uid',
   ],
   key: [0],
 };
 
-type Sync = (table: SyncedTable, rows: SqlValue[][], scope?: string, params?: SqlValue[]) => void;
+type Sync = (table: SyncedTable, rows: SqlValue[][], scope?: string, params?: SqlValue[]) => number;
 
 /** Rows per write transaction: a few milliseconds of lock, however large the table. */
 const WRITE_CHUNK = 500;
@@ -321,6 +351,8 @@ const tuple = (row: readonly unknown[], at?: readonly number[]): string =>
  * Make the rows of `table` inside `scope` equal `wanted`: delete what is gone, replace what is
  * new or changed, leave the rest. Each chunk is its own transaction, so no writer waits longer
  * than a chunk; the reads need no lock at all (WAL). An unchanged table opens no transaction.
+ * Returns how many rows it deleted or replaced, so the caller can tell a rebuild that changed
+ * something from one that did not (the change journal, ADR 0007).
  */
 function syncTable(
   db: IndexDatabase,
@@ -329,7 +361,7 @@ function syncTable(
   scope = '1',
   params: SqlValue[] = [],
   onChunk?: () => void,
-): void {
+): number {
   const want = new Map<string, SqlValue[]>();
   for (const row of wanted) {
     const key = tuple(row, def.key);
@@ -367,12 +399,17 @@ function syncTable(
     );
     onChunk?.();
   }
+  return gone.length + changed.length;
 }
 
-/** `UPDATE conversation_messages SET <set> WHERE <where>`, only if a row matches (no lock otherwise). */
-function updateIfAny(db: IndexDatabase, where: string, set: string): void {
-  if (!db.prepare(`SELECT 1 AS hit FROM conversation_messages WHERE ${where} LIMIT 1`).get()) return;
+/**
+ * `UPDATE conversation_messages SET <set> WHERE <where>`, only if a row matches (no lock otherwise).
+ * True when it ran.
+ */
+function updateIfAny(db: IndexDatabase, where: string, set: string): boolean {
+  if (!db.prepare(`SELECT 1 AS hit FROM conversation_messages WHERE ${where} LIMIT 1`).get()) return false;
   withTransaction(db, () => db.exec(`UPDATE conversation_messages SET ${set} WHERE ${where}`));
+  return true;
 }
 
 /**
@@ -522,7 +559,12 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
   // conversations that held the write lock for minutes, and a `curlew send` (or any other
   // writer) timed out against the daemon. A steady-state rebuild now changes nothing.
   // Readers never see an empty table; they may see the directory a step ahead of the messages.
-  const sync: Sync = (table, rows, scope, params) => syncTable(db, table, rows, scope, params, options.onChunk);
+  let changes = 0;
+  const sync: Sync = (table, rows, scope, params) => {
+    const n = syncTable(db, table, rows, scope, params, options.onChunk);
+    changes += n;
+    return n;
+  };
   sync(PARTICIPANTS, participantRows);
   sync(PARTICIPANT_ADDRESSES, addressRows);
   sync(CHAT_PEER_LINKS, peerLinkRows);
@@ -544,27 +586,38 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
     const linked = `(SELECT l.participant_id FROM chat_peer_links l
          WHERE l.backend = conversation_messages.backend AND l.account_id = conversation_messages.account_id
            AND l.peer_id = conversation_messages.sender_peer_id)`;
-    updateIfAny(
-      db,
-      `sender_peer_id IS NOT NULL AND COALESCE(sender_participant_id, '') != COALESCE(${linked}, '')`,
-      `sender_participant_id = ${linked}`,
-    );
+    if (
+      updateIfAny(
+        db,
+        `sender_peer_id IS NOT NULL AND COALESCE(sender_participant_id, '') != COALESCE(${linked}, '')`,
+        `sender_participant_id = ${linked}`,
+      )
+    ) {
+      changes++;
+    }
     // A chat message from a contact is `known-contact`, from anyone else in the chat
     // `chat-member`. Automated verdicts (broadcast, bot) are the network's own and stay.
     const reason = `CASE
          WHEN sender_participant_id IN (SELECT id FROM participants WHERE contact_uid IS NOT NULL) THEN 'known-contact'
          ELSE 'chat-member' END`;
-    updateIfAny(
-      db,
-      `sender_peer_id IS NOT NULL AND from_self = 0 AND classification = 'conversational' AND classification_reason != ${reason}`,
-      `classification_reason = ${reason}`,
-    );
+    if (
+      updateIfAny(
+        db,
+        `sender_peer_id IS NOT NULL AND from_self = 0 AND classification = 'conversational' AND classification_reason != ${reason}`,
+        `classification_reason = ${reason}`,
+      )
+    ) {
+      changes++;
+    }
     sync(
       CONVERSATION_PARTICIPANTS,
       chatMemberRows,
       'conversation_id IN (SELECT conversation_id FROM chat_cursors)',
     );
   }
+
+  // One row per rebuild that changed something: which conversations is not worth computing.
+  if (changes > 0) appendChangesTransaction(db, [{ kind: 'conversations' }]);
 
   return { conversations: threads.length, messages: messageRows.length, participants: participants.length };
 }

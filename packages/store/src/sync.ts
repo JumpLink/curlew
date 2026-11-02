@@ -10,6 +10,7 @@
 
 import type { BackendSession, MailBackend, FolderInfo } from '@curlew/protocol';
 import { searchableFolders } from '@curlew/protocol';
+import { appendChangesTransaction } from './changes.ts';
 import type { IndexDatabase } from './db.ts';
 import {
   clearFolder,
@@ -271,6 +272,7 @@ export async function syncIndex(
       continue;
     }
 
+    const firstOutcome = folders.length;
     try {
       const listed = await session.listFolders();
       for (const folder of listed) {
@@ -326,7 +328,17 @@ export async function syncIndex(
         error: err instanceof Error ? err.message : String(err),
       });
     } finally {
-      await session.close();
+      try {
+        await session.close();
+      } finally {
+        // One row per account per pass, and only when the pass changed something (ADR 0007).
+        // The mail writes are spread over a transaction per batch, so this has its own.
+        if (folders.slice(firstOutcome).some((f) => f.added + f.updated + f.removed > 0 || f.rebuilt)) {
+          appendChangesTransaction(db, [
+            { kind: 'messages', backend: backend.manifest.name, accountId: account.id },
+          ]);
+        }
+      }
     }
   }
 

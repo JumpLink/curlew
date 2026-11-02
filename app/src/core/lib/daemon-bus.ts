@@ -32,6 +32,13 @@ export const DAEMON_INTERFACE_XML = `<node>
       <arg type="s" name="request_json" direction="in"/>
       <arg type="s" name="reply_json" direction="out"/>
     </method>
+    <method name="GetAccounts">
+      <arg type="s" name="accounts_json" direction="out"/>
+    </method>
+    <signal name="Changed">
+      <arg type="t" name="seq"/>
+    </signal>
+    <signal name="AccountsChanged"/>
   </interface>
 </node>`;
 
@@ -98,6 +105,48 @@ export type DaemonSendReply =
   | { v: number; kind: 'not-followed' }
   | { v: number; kind: 'refused'; message: string }
   | { v: number; kind: 'failed'; message: string };
+
+/** Where an account the daemon looks after stands (ADR 0007 §3). */
+export type DaemonAccountState =
+  | 'connected'
+  | 'connecting'
+  | 'reconnecting'
+  | 'logged-out'
+  | 'held-elsewhere'
+  | 'stopped';
+
+/** One account. Ids, a state and timings — no content ever rides the bus (ADR 0007). */
+export interface DaemonAccountEntry {
+  backend: string;
+  accountId: string;
+  state: DaemonAccountState;
+  /** ISO time the account entered this state. */
+  since: string;
+  /** Only while `reconnecting`: the wait before the next attempt. */
+  retryInMs?: number;
+}
+
+/** What `GetAccounts` answers. */
+export interface DaemonAccountsReply {
+  v: number;
+  accounts: DaemonAccountEntry[];
+}
+
+/** Read a `GetAccounts` reply off the wire, or throw. */
+export function parseDaemonAccountsReply(json: string): DaemonAccountsReply {
+  let value: unknown;
+  try {
+    value = JSON.parse(json);
+  } catch (error) {
+    throw new Error('the curlew daemon answered something that is not JSON', { cause: error });
+  }
+  const reply = value as Partial<DaemonAccountsReply> | null;
+  if (typeof reply !== 'object' || reply === null || reply.v !== DAEMON_WIRE_VERSION) {
+    throw new Error('the curlew daemon answered an account list this curlew does not speak');
+  }
+  if (!Array.isArray(reply.accounts)) throw new Error('the curlew daemon answered no account list');
+  return reply as DaemonAccountsReply;
+}
 
 /**
  * Read a reply off the wire, or throw. Anything that is not one of the four kinds is a defect on

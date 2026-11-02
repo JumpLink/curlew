@@ -17,6 +17,8 @@ import {
   DAEMON_INTERFACE,
   DAEMON_INTERFACE_XML,
   DAEMON_OBJECT_PATH,
+  DAEMON_WIRE_VERSION,
+  type DaemonAccountsReply,
   type DaemonSendReply,
   type DaemonSendRequest,
   parseDaemonSendRequest,
@@ -26,6 +28,10 @@ import {
 export type DaemonSendHandler = (request: DaemonSendRequest) => Promise<DaemonSendReply>;
 
 export interface DaemonSendService {
+  /** `Changed(seq)`: the newest journal row (ADR 0007 §2). Carries a number, never content. */
+  emitChanged(seq: number): void;
+  /** `AccountsChanged`: ask again with `GetAccounts`. */
+  emitAccountsChanged(): void;
   /** Give the name and the object back. Twice is fine. */
   close(): void;
 }
@@ -33,6 +39,8 @@ export interface DaemonSendService {
 export interface PublishOptions {
   /** One line per state change, as everywhere in the daemon: names and counts, never content. */
   log: (line: string) => void;
+  /** What `GetAccounts` answers, read at the moment of the call. */
+  accounts?: () => DaemonAccountsReply;
 }
 
 function reasonOf(error: unknown): string {
@@ -71,6 +79,11 @@ export function publishDaemonSend(
     params: GLib.Variant,
     invocation: Gio.DBusMethodInvocation,
   ): void => {
+    if (method === 'GetAccounts') {
+      const reply: DaemonAccountsReply = options.accounts?.() ?? { v: DAEMON_WIRE_VERSION, accounts: [] };
+      invocation.return_value(new GLib.Variant('(s)', [JSON.stringify(reply)]));
+      return;
+    }
     if (method !== 'Send') {
       invocation.return_dbus_error('org.freedesktop.DBus.Error.UnknownMethod', `no method ${method}`);
       return;
@@ -117,8 +130,21 @@ export function publishDaemonSend(
       )) as unknown as Parameters<typeof Gio.bus_own_name_on_connection>[4],
   );
 
+  const emit = (name: string, parameters: GLib.Variant | null): void => {
+    try {
+      connection.emit_signal(null, DAEMON_OBJECT_PATH, DAEMON_INTERFACE, name, parameters);
+    } catch (error) {
+      log(`curlew-daemon: could not emit ${name} (${reasonOf(error)})`);
+    }
+  };
   let closed = false;
   return {
+    emitChanged: (seq) => {
+      if (!closed) emit('Changed', new GLib.Variant('(t)', [seq]));
+    },
+    emitAccountsChanged: () => {
+      if (!closed) emit('AccountsChanged', null);
+    },
     close: () => {
       if (closed) return;
       closed = true;

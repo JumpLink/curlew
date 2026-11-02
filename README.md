@@ -131,6 +131,7 @@ curlew index status                       # what it holds, and how fresh
 curlew index search "wärmepumpe"          # offline, no server contact
 
 curlew daemon                             # receive Signal/WhatsApp until stopped
+curlew watch                              # one JSON line per index change, as it happens
 
 curlew conversations list --people-only   # threads with a person in them, newest first
 curlew conversations show <id>            # its messages; bodies only with --bodies
@@ -701,6 +702,16 @@ collects — connected, a batch with its counts, a reconnect in N seconds, a
 logout, a stop. Never message text, chat titles, peer names or phone numbers:
 a log line is a file that gets copied and pasted around, and the same privacy
 rule that guards the index guards it.
+
+**Live updates.** The daemon tells listeners that the index changed, over the session
+bus (`eu.jumplink.curlew.Daemon1`, [ADR 0007](docs/adr/0007-live-updates-over-the-session-bus.md)):
+`Changed(seq)` after its own writes and whenever a poll every 2 s finds that a `sync` or
+`send` moved the change journal, `AccountsChanged` plus `GetAccounts` for each account's state
+(`connected`, `connecting`, `reconnecting`, `logged-out`, `held-elsewhere`, `stopped`). Ids,
+states and numbers only — never message text. `curlew watch` is the reference listener: one
+JSON line per journal row, starting at the newest (`--since <seq>` starts earlier). Without a
+daemon it says so once and reads the journal every 2 s itself. A
+`{"resync":true,…}` line means the journal moved past you: read what you show again.
 
 **And `sync` at the same time?** Yes — and that is what the **lease** is for.
 Both take a lease on each delivery account, stored in the index itself: whoever

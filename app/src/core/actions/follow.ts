@@ -14,6 +14,7 @@
 
 import type { ChatBackend } from '@curlew/protocol';
 import {
+  type DeliveryProgress,
   type IndexDatabase,
   LEASE_HEARTBEAT_MS,
   RECONNECT_CAP_MS,
@@ -42,6 +43,8 @@ export interface FollowDeps {
   /** Called after anything was written, so the conversations get rebuilt. */
   onWrite: () => void;
   holder: string;
+  /** The same state changes the log lines name, for the daemon's account list (ADR 0007 §3). */
+  onProgress?: (event: DeliveryProgress) => void;
   now?: () => Date;
   sleep?: (ms: number) => Promise<void>;
   leaseIntervalMs?: number;
@@ -82,6 +85,8 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
   const interval = deps.leaseIntervalMs ?? LEASE_HEARTBEAT_MS;
   const sleep = deps.sleep ?? ((ms: number) => abortableSleep(ms, signal));
   const minGap = deps.minGapMs ?? FOLLOW_MIN_GAP_MS;
+  const progress = (event: { type: DeliveryProgress['type'] } & Record<string, unknown>): void =>
+    deps.onProgress?.({ backend: 'xmpp', accountId, ...event } as DeliveryProgress);
   const result: FollowResult = { accountId, catchUps: 0, added: 0, heldBy: null };
 
   // The lease first: a `sync` on the same account stands down while a daemon holds it.
@@ -102,6 +107,7 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
       if (holder !== waitingFor) {
         waitingFor = holder;
         log(`curlew-daemon: ${who} is held by ${holder ?? 'another process'} — waiting for the lease`);
+        progress({ type: 'lease-waiting', holder });
       }
       await sleep(interval);
     }
@@ -125,6 +131,7 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
         leaseLost = true;
         clearInterval(heartbeat);
         log(`curlew-daemon: ${who} could not refresh the receive lease (index busy) — taking it again`);
+        progress({ type: 'lease-unrefreshable' });
         stopAccount.abort();
         return;
       }
@@ -133,6 +140,7 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
       leaseLost = true;
       clearInterval(heartbeat);
       log(`curlew-daemon: ${who} lost the receive lease — waiting to take it again`);
+      progress({ type: 'lease-lost' });
       stopAccount.abort();
     }, interval);
     const stop = (): void => stopAccount.abort();
@@ -211,6 +219,7 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
             { path: deps.writeLogPath },
           );
           log(`curlew-daemon: ${who} connected`);
+          progress({ type: 'connected' });
           attempt = 0;
           await catchUp();
           const reason = await closed;
@@ -222,6 +231,7 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
           attempt += 1;
           if (now().getTime() - openedAt >= RECONNECT_CAP_MS) wait = RECONNECT_FIRST_MS;
           log(`curlew-daemon: ${who} reconnect in ${wait} ms (attempt ${attempt}, ${errText(err)})`);
+          progress({ type: 'reconnect', delayMs: wait, attempt, reason: null });
           await abortableSleepOr(sleep, wait, live);
           wait = Math.min(wait * 2, RECONNECT_CAP_MS);
         } finally {
@@ -238,6 +248,7 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
       } catch {
         // A busy index leaves the lease to expire on its own.
       }
+      if (!leaseLost) progress({ type: 'stopped', reason: 'aborted' });
       log(
         `curlew-daemon: ${who} stopped (${signal.aborted ? 'aborted' : leaseLost ? 'lease lost' : 'ended'})`,
       );
