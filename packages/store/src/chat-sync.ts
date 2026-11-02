@@ -42,6 +42,7 @@ import type {
   ClassificationReason,
 } from '@curlew/protocol';
 import type { IndexDatabase } from './db.ts';
+import { appendChanges } from './changes.ts';
 import { insertMany, placeholders, seqColumn, type SqlValue, withTransaction } from './db.ts';
 import { upsertAccount } from './index-store.ts';
 import { stableId } from './threads.ts';
@@ -203,6 +204,12 @@ class ChatBatch {
    */
   readonly clientIds = new Map<string, SqlValue[]>();
 
+  /**
+   * The conversations this batch really changes, for the change journal (ADR 0007). Not derived
+   * from `conversations` or `cursors`: a sync writes those for every chat it looked at.
+   */
+  readonly changed = new Set<string>();
+
   readonly backend: string;
   readonly accountId: string;
 
@@ -211,7 +218,13 @@ class ChatBatch {
     this.accountId = accountId;
   }
 
+  retract(conversationId: string, remoteId: string): void {
+    this.retracted.push(stableId('m-', conversationId, remoteId));
+    this.changed.add(conversationId);
+  }
+
   edit(conversationId: string, edit: ChatEdit): void {
+    this.changed.add(conversationId);
     const row: SqlValue[] = [edit.text, edit.editedAt, conversationId, edit.remoteId];
     if (edit.senderRemoteId !== undefined) row.push(edit.senderRemoteId ?? '', edit.senderRemoteId ?? '');
     this.edits.push(row);
@@ -268,11 +281,7 @@ interface StoredMessage {
  * The stored messages of one account, by conversation — only loaded for a full scan, which is
  * the one run that can tell a deleted message from one that was never fetched.
  */
-function loadStoredSeqs(
-  db: IndexDatabase,
-  backend: string,
-  accountId: string,
-): Map<string, StoredMessage[]> {
+function loadStoredSeqs(db: IndexDatabase, backend: string, accountId: string): Map<string, StoredMessage[]> {
   const rows = db
     .prepare(
       `SELECT id, conversation_id, remote_id, ${seqColumn('remote_seq')} FROM conversation_messages
@@ -433,6 +442,15 @@ function writeBatch(db: IndexDatabase, batch: ChatBatch): void {
        WHERE backend = ? AND account_id = ?
          AND id IN (SELECT conversation_id FROM chat_cursors WHERE backend = ? AND account_id = ?)`,
     ).run(batch.backend, batch.accountId, batch.backend, batch.accountId);
+    appendChanges(
+      db,
+      [...batch.changed].map((conversationId) => ({
+        kind: 'messages' as const,
+        backend: batch.backend,
+        accountId: batch.accountId,
+        conversationId,
+      })),
+    );
   });
 }
 
@@ -561,7 +579,10 @@ async function syncAccount(
       // A chat that left the list (deleted, or the user left it) goes with its messages.
       const live = new Set(chats.map((c) => c.remoteId));
       for (const chatId of cursors.keys()) {
-        if (!live.has(chatId)) batch.deletedConversations.push(chatConversationId(name, account.id, chatId));
+        if (live.has(chatId)) continue;
+        const gone = chatConversationId(name, account.id, chatId);
+        batch.deletedConversations.push(gone);
+        batch.changed.add(gone);
       }
     }
 
@@ -578,9 +599,7 @@ async function syncAccount(
       let lastCursor = cursor?.lastCursor ?? null;
       const collect = (page: ChatHistoryPage): void => {
         for (const edit of page.edits ?? []) batch.edit(conversationId, edit);
-        for (const remoteId of page.retracted ?? []) {
-          batch.retracted.push(stableId('m-', conversationId, remoteId));
-        }
+        for (const remoteId of page.retracted ?? []) batch.retract(conversationId, remoteId);
         result.removed += page.retracted?.length ?? 0;
       };
       // A full scan re-takes the window only of a chat that is caught up; one with new messages
@@ -618,6 +637,7 @@ async function syncAccount(
               if (stored && cursor) {
                 const gone = deletedBy(page, stored.get(conversationId) ?? []);
                 batch.deletedMessages.push(...gone);
+                if (gone.length > 0) batch.changed.add(conversationId);
                 result.removed += gone.length;
                 if (!page.reachedStart && page.lowestSeq !== null) probeBelow = page.lowestSeq;
               }
@@ -679,6 +699,7 @@ async function syncAccount(
             for (const m of slice) {
               if (!gone.has(m.remoteId)) continue;
               batch.deletedMessages.push(m.id);
+              batch.changed.add(conversationId);
               result.removed++;
             }
             probeSeq = slice[slice.length - 1].seq;
@@ -710,6 +731,15 @@ async function syncAccount(
         if (m.clientId) batch.clientIds.set(m.clientId, row);
       }
       result.added += fetched.length;
+      // New messages, a chat new to the index, or a moved read marker (the unread count follows).
+      if (
+        fetched.length > 0 ||
+        !cursor ||
+        cursor.readInboxSeq !== chat.readInboxSeq ||
+        cursor.readOutboxSeq !== chat.readOutboxSeq
+      ) {
+        batch.changed.add(conversationId);
+      }
       batch.cursors.push([
         conversationId,
         name,
@@ -738,9 +768,7 @@ async function syncAccount(
         const conversationId = chatConversationId(name, account.id, revision.chatRemoteId);
         if (!cursors.has(revision.chatRemoteId) && !chats.some((c) => c.remoteId === revision.chatRemoteId))
           continue;
-        for (const remoteId of revision.retracted ?? []) {
-          batch.retracted.push(stableId('m-', conversationId, remoteId));
-        }
+        for (const remoteId of revision.retracted ?? []) batch.retract(conversationId, remoteId);
         result.removed += revision.retracted?.length ?? 0;
         for (const edit of revision.edits ?? []) batch.edit(conversationId, edit);
       }
@@ -856,19 +884,25 @@ export function recordSentChatMessage(
       null,
     ]);
   }
-  const row = messageRow(batch, conversationId, { kind: 'direct' }, {
-    remoteId: `${LOCAL_ECHO_PREFIX}${record.clientId}`,
-    seq: Date.parse(record.sentAt),
-    sentAt: record.sentAt,
-    editedAt: null,
-    sender: null,
-    fromSelf: true,
-    text: record.text,
-    hasAttachments: false,
-    replyToRemoteId: null,
-    threadRemoteId: null,
-  });
+  const row = messageRow(
+    batch,
+    conversationId,
+    { kind: 'direct' },
+    {
+      remoteId: `${LOCAL_ECHO_PREFIX}${record.clientId}`,
+      seq: Date.parse(record.sentAt),
+      sentAt: record.sentAt,
+      editedAt: null,
+      sender: null,
+      fromSelf: true,
+      text: record.text,
+      hasAttachments: false,
+      replyToRemoteId: null,
+      threadRemoteId: null,
+    },
+  );
   batch.messages.push(row);
+  batch.changed.add(conversationId);
   writeBatch(db, batch);
   return { conversationId, messageId: String(row[0]) };
 }

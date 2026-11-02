@@ -46,11 +46,7 @@ export const CHANGES_KEEP_MS = 7 * 24 * 60 * 60 * 1000;
  * Call it inside the transaction that made the change; an empty batch writes nothing.
  * A row survives the prune if it is among the newest `CHANGES_KEEP_ROWS` OR younger than 7 days.
  */
-export function appendChanges(
-  db: IndexDatabase,
-  rows: readonly ChangeInput[],
-  now: Date = new Date(),
-): void {
+export function appendChanges(db: IndexDatabase, rows: readonly ChangeInput[], now: Date = new Date()): void {
   if (rows.length === 0) return;
   const seen = new Set<string>();
   const unique: ChangeInput[] = [];
@@ -80,19 +76,13 @@ export function appendChanges(
 }
 
 /** `appendChanges` in a transaction of its own, for a writer that has none around the change. */
-export function appendChangesTransaction(
-  db: IndexDatabase,
-  rows: readonly ChangeInput[],
-  now?: Date,
-): void {
+export function appendChangesTransaction(db: IndexDatabase, rows: readonly ChangeInput[], now?: Date): void {
   if (rows.length === 0) return;
   withTransaction(db, () => appendChanges(db, rows, now));
 }
 
 export function newestSeq(db: IndexDatabase): number | null {
-  const row = db.prepare('SELECT MAX(seq) AS n FROM index_changes').get() as
-    | { n: number | null }
-    | undefined;
+  const row = db.prepare('SELECT MAX(seq) AS n FROM index_changes').get() as { n: number | null } | undefined;
   return row?.n === null || row?.n === undefined ? null : Number(row.n);
 }
 

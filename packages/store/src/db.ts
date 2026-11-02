@@ -104,7 +104,9 @@ export function probeFts5(db: DatabaseSync): void {
   }
   try {
     db.prepare('INSERT INTO temp.fts_probe(rowid, body) VALUES (?, ?)').run(1, 'Energieberatung März');
-    const hit = db.prepare('SELECT rowid FROM temp.fts_probe WHERE fts_probe MATCH ?').all('"Energieberatung"');
+    const hit = db
+      .prepare('SELECT rowid FROM temp.fts_probe WHERE fts_probe MATCH ?')
+      .all('"Energieberatung"');
     if (hit.length !== 1) throw new Error('a known row did not match its own text');
     // Diacritic folding is what makes "marz" find "März"; without it the tokenizer silently
     // gives a worse index rather than an error.
