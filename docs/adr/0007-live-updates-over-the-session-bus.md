@@ -1,6 +1,6 @@
 # ADR 0007 — live updates: a change journal in the index, a wake-up on the session bus
 
-- **Status:** Proposed (2026-11-02)
+- **Status:** Accepted (2026-11-02)
 - **Scope:** `@curlew/store` (a change journal, schema v10, additive), `app` (`curlew daemon`
   emits, `curlew watch` reads), `app/src/core/lib/daemon-bus.ts` (the interface); later the GUI
 
