@@ -822,7 +822,7 @@ the capabilities a command or tool uses today
 `<backend>.send` row when it is built, and an unknown one is a config error.
 
 **Agent access per account and contact** ([ADR 0009](docs/adr/0009-agent-access-per-account-and-contact.md)) —
-*parsed, enforced from the next release.* `agentAccess` holds rules that give one account, or one
+`agentAccess` holds rules that give one account, or one
 account/contact pair, a `read` mode (message bodies) and a `write` mode (sending): `allow`,
 `ask` or `deny`. A contact rule beats an account rule per kind, and a kind a rule leaves out falls
 through to the next rule up, then to `askWithoutRule` (default `true`: ask; `false`: deny). An
@@ -830,6 +830,36 @@ explicit `deny` is final, and a write needs the read: `write` `allow`/`ask` with
 is an error. Two rules with the same scope, an unknown key or a bad mode are errors when the
 file loads. Your old `<backend>.send` grants are read as contact rules with `read` and `write`
 `allow`, in memory; an explicit contact rule for the same pair wins, and the file is never rewritten.
+
+**Agents are held to these rules; you are not.** The MCP tools and the agent commands of the CLI
+(`curlew send`, and the read commands below) check them; your own use of the CLI and the GTK app
+checks nothing. A message to your own address is always allowed.
+
+- **Write** — `send_message` and `curlew send` need `write`. `allow` sends, `deny` refuses and
+  names the config key with an example rule, `ask` asks you (below).
+- **Read** — only message *bodies* are gated: `conversations_get` with `include_bodies`,
+  `xmpp_wait_reply`, `mail_get_message`, `mail_save_attachment`, and the CLI's
+  `conversations show --bodies`, `mail message`, `mail attachment` and the same for a `query` or
+  `body` search. Metadata (who, when, subjects, lists) stays readable. A mail's contact is its
+  sender (or, for your own mail, every recipient); a chat's contacts are its participants, so a
+  rule on a Matrix room id does not match a member-based check — write the rule for the member.
+- **Searches never ask.** `mail_search` with a query and `index_search` return only the hits
+  whose contact you have allowed, and say how many were left out (`withheld`); read that
+  conversation directly to be asked.
+
+**The prompt.** On `ask`, the running `curlew daemon` shows a desktop notification — *Allow once*,
+*For this session*, *Always*, *Deny* — naming the contact and, for a send, the first 80
+characters of the text. *For this session* lasts until that MCP process ends and lives in the
+daemon's memory only; a CLI call is always "once" and is not offered it. *Always* adds a rule to
+`agentAccess.rules` (a migrated rule is never rewritten). A dismissed notification, a *Deny* and
+no answer within 2 minutes all refuse; after a *Deny* the same session is not asked again for
+that contact and kind. Without a running daemon or a notification service, `ask` refuses and
+says so — start `curlew daemon`, or add a rule. Give the MCP tool call a timeout above 2 minutes
+in your agent, or it gives up while you are still reading.
+
+**Behaviour change in 0.2.0:** with no rule, bodies and sends are `ask`, so an agent that could
+read mail or chats freely before is now asked about, per contact. To keep the old behaviour for
+an account, add `{ "account": "<id>", "read": "allow" }`.
 
 ```json
 {

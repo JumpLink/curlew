@@ -21,6 +21,12 @@
   messages. The answer then carries `parts` and `originIds`.
 - `xmpp_wait_reply` takes an optional `strip_quotes` (default `false`) that removes quoted
   reply lines from the message text.
+- Agent access is enforced (ADR 0009): every agent send and every read of a message body is
+  checked against `agentAccess` per account and contact — in the MCP tools and in the CLI's
+  agent commands. On `ask`, `curlew daemon` shows a notification (*Allow once*, *For this
+  session*, *Always*, *Deny*); no answer in 2 minutes, a dismissal or *Deny* refuses. New bus
+  method `RequestAccess` on `eu.jumplink.curlew.Daemon1`. Searches that span contacts return only
+  the hits you allowed and report `withheld`.
 - New read-only MCP tool `messaging_capabilities`: per protocol the maximum message length,
   formats, image support, maximum wait timeout and splitting.
 
@@ -33,6 +39,12 @@
   JID with any resource, mail address, Telegram Saved Messages, Matrix user id) and which needs
   no grant. `send_message` is now always listed.
   Only an `xmpp.omemo` grant edit restarts the daemon now.
+
+- **Agents now need access to read message bodies.** With no rule a body is `ask`, so an agent
+  that read freely before is asked per contact (or refused when no daemon runs). The old
+  `<backend>.send` grants keep working as rules allowing read and write for that pair. A grant
+  for one backend's send now also covers the same account and address of another backend,
+  because rules are per account. Your own CLI and the GTK app are not affected.
 
 ### Fixed
 
