@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-03 09:14+0100\n"
+"POT-Creation-Date: 2026-11-03 09:40+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1214,31 +1214,31 @@ msgstr ""
 msgid "no mail account {account} with SMTP — `curlew accounts list` shows them"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:53
+#: packages/matrix/src/backend.ts:54
 msgid "log in again with `curlew accounts add matrix`"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:58
+#: packages/matrix/src/backend.ts:59
 msgid "Homeserver (URL like https://matrix.example.org, or the server name)"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:59
+#: packages/matrix/src/backend.ts:60
 msgid "Matrix user (@name:example.org)"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:60 packages/xmpp/src/backend.ts:41
+#: packages/matrix/src/backend.ts:61 packages/xmpp/src/backend.ts:41
 msgid "Password"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:100
+#: packages/matrix/src/backend.ts:101
 msgid "no Matrix account {account} — {hint}"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:107
+#: packages/matrix/src/backend.ts:108
 msgid "the Matrix account file {account} is incomplete — {hint}"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:141
+#: packages/matrix/src/backend.ts:142
 msgid "the Matrix account {account} is not usable ({reason}) — {hint}"
 msgstr ""
 
@@ -1263,6 +1263,12 @@ msgstr ""
 #: packages/matrix/src/login.ts:89
 msgid "Logged in; setting up this device’s encryption keys…"
 msgstr ""
+
+#: packages/matrix/src/redact.ts:47
+msgid "matrix: {n} event not decryptable"
+msgid_plural "matrix: {n} events not decryptable"
+msgstr[0] ""
+msgstr[1] ""
 
 #: packages/matrix/src/send.ts:113
 msgid ""
