@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-03 10:45+0100\n"
+"POT-Creation-Date: 2026-11-03 19:25+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -12,13 +12,104 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app/src/core/actions/daemon.ts:305
+#: app/src/core/access.ts:113
+msgid ""
+"sending to {target} is refused — no agentAccess rule covers it and "
+"config.agentAccess.askWithoutRule is false; add a rule like {rule} to "
+"config.agentAccess.rules"
+msgstr "Senden an {target} wird abgelehnt — keine agentAccess-Regel deckt es ab und config.agentAccess.askWithoutRule ist false; füge eine Regel wie {rule} zu config.agentAccess.rules hinzu"
+
+#: app/src/core/access.ts:119
+msgid ""
+"reading messages of {target} is refused — no agentAccess rule covers it and "
+"config.agentAccess.askWithoutRule is false; add a rule like {rule} to "
+"config.agentAccess.rules"
+msgstr "Das Lesen von Nachrichten von {target} wird abgelehnt — keine agentAccess-Regel deckt es ab und config.agentAccess.askWithoutRule ist false; füge eine Regel wie {rule} zu config.agentAccess.rules hinzu"
+
+#: app/src/core/access.ts:130
+msgid ""
+"sending to {target} is denied by config.agentAccess.rules — change the rule "
+"to allow it, for example {rule}"
+msgstr "Senden an {target} wird von config.agentAccess.rules verweigert — ändere die Regel, um es zu erlauben, zum Beispiel {rule}"
+
+#: app/src/core/access.ts:136
+msgid ""
+"reading messages of {target} is denied by config.agentAccess.rules — change "
+"the rule to allow it, for example {rule}"
+msgstr "Das Lesen von Nachrichten von {target} wird von config.agentAccess.rules verweigert — ändere die Regel, um es zu erlauben, zum Beispiel {rule}"
+
+#: app/src/core/access.ts:151
+msgid "sending to {target} was declined in the prompt"
+msgstr "Senden an {target} wurde in der Rückfrage abgelehnt"
+
+#: app/src/core/access.ts:152
+msgid "reading messages of {target} was declined in the prompt"
+msgstr "Das Lesen von Nachrichten von {target} wurde in der Rückfrage abgelehnt"
+
+#: app/src/core/access.ts:160
+msgid ""
+"sending to {target} was declined earlier in this session — it is not asked "
+"again; add a rule like {rule} to allow it"
+msgstr "Senden an {target} wurde früher in dieser Sitzung abgelehnt — es wird nicht erneut gefragt; füge eine Regel wie {rule} hinzu, um es zu erlauben"
+
+#: app/src/core/access.ts:166
+msgid ""
+"reading messages of {target} was declined earlier in this session — it is "
+"not asked again; add a rule like {rule} to allow it"
+msgstr "Das Lesen von Nachrichten von {target} wurde früher in dieser Sitzung abgelehnt — es wird nicht erneut gefragt; füge eine Regel wie {rule} hinzu, um es zu erlauben"
+
+#: app/src/core/access.ts:175
+msgid ""
+"sending to {target} was refused — nobody answered the prompt within 2 minutes"
+msgstr "Senden an {target} wurde abgelehnt — niemand hat die Rückfrage innerhalb von 2 Minuten beantwortet"
+
+#: app/src/core/access.ts:177
+msgid ""
+"reading messages of {target} was refused — nobody answered the prompt within "
+"2 minutes"
+msgstr "Das Lesen von Nachrichten von {target} wurde abgelehnt — niemand hat die Rückfrage innerhalb von 2 Minuten beantwortet"
+
+#: app/src/core/access.ts:185
+msgid "sending to {target} was refused — the prompt was dismissed"
+msgstr "Senden an {target} wurde abgelehnt — die Rückfrage wurde verworfen"
+
+#: app/src/core/access.ts:186
+msgid "reading messages of {target} was refused — the prompt was dismissed"
+msgstr "Das Lesen von Nachrichten von {target} wurde abgelehnt — die Rückfrage wurde verworfen"
+
+#: app/src/core/access.ts:194
+msgid ""
+"sending to {target} was refused — the prompt could not be shown (no "
+"notification service); add a rule like {rule} to config.agentAccess.rules"
+msgstr "Senden an {target} wurde abgelehnt — die Rückfrage konnte nicht angezeigt werden (kein Benachrichtigungsdienst); füge eine Regel wie {rule} zu config.agentAccess.rules hinzu"
+
+#: app/src/core/access.ts:200
+msgid ""
+"reading messages of {target} was refused — the prompt could not be shown (no "
+"notification service); add a rule like {rule} to config.agentAccess.rules"
+msgstr "Das Lesen von Nachrichten von {target} wurde abgelehnt — die Rückfrage konnte nicht angezeigt werden (kein Benachrichtigungsdienst); füge eine Regel wie {rule} zu config.agentAccess.rules hinzu"
+
+#: app/src/core/access.ts:217
+msgid ""
+"sending to {target} needs approval, but `curlew daemon` is not running, so "
+"nobody can be asked — start it, or add a rule like {rule} to "
+"config.agentAccess.rules"
+msgstr "Senden an {target} braucht eine Freigabe, aber `curlew daemon` läuft nicht, also kann niemand gefragt werden — starte ihn oder füge eine Regel wie {rule} zu config.agentAccess.rules hinzu"
+
+#: app/src/core/access.ts:223
+msgid ""
+"reading messages of {target} needs approval, but `curlew daemon` is not "
+"running, so nobody can be asked — start it, or add a rule like {rule} to "
+"config.agentAccess.rules"
+msgstr "Das Lesen von Nachrichten von {target} braucht eine Freigabe, aber `curlew daemon` läuft nicht, also kann niemand gefragt werden — starte ihn oder füge eine Regel wie {rule} zu config.agentAccess.rules hinzu"
+
+#: app/src/core/actions/daemon.ts:312
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 "{capability} ist nicht die Berechtigung, unter der {backend} sendet — es "
 "wurde nichts gesendet"
 
-#: app/src/core/actions/daemon.ts:327
+#: app/src/core/actions/daemon.ts:334
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
@@ -53,15 +144,15 @@ msgstr ""
 msgid "no xmpp account {account} — `curlew accounts list` shows them"
 msgstr "Kein XMPP-Konto {account} — `curlew accounts list` zeigt sie an"
 
-#: app/src/core/actions/send.ts:86
+#: app/src/core/actions/search-access.ts:30
 msgid ""
-"sending to {target} is not granted — add a grant like {grant} to the config "
-"file, naming the account and the address"
-msgstr ""
-"Das Senden an {target} ist nicht freigegeben — füge eine Freigabe wie "
-"{grant} in der Konfigurationsdatei hinzu, die Konto und Adresse nennt"
+"some hits are left out because you have no read access to their contact — a "
+"search never asks; read that conversation directly (conversations_get with "
+"include_bodies, or mail_get_message) to be asked, or add a read rule to "
+"config.agentAccess.rules"
+msgstr "Einige Treffer fehlen, weil du keinen Lesezugriff auf ihren Kontakt hast — eine Suche fragt nie nach; lies diese Unterhaltung direkt (conversations_get mit include_bodies oder mail_get_message), um gefragt zu werden, oder füge eine Leseregel zu config.agentAccess.rules hinzu"
 
-#: app/src/core/actions/send.ts:176 app/src/core/actions/send.ts:189
+#: app/src/core/actions/send.ts:166 app/src/core/actions/send.ts:179
 msgid ""
 "the message index is busy, so curlew cannot tell whether {account} is in use "
 "elsewhere — nothing was sent; try again in a moment"
@@ -70,7 +161,7 @@ msgstr ""
 "{account} anderswo in Benutzung ist — es wurde nichts gesendet; versuche es "
 "gleich noch einmal"
 
-#: app/src/core/actions/send.ts:195
+#: app/src/core/actions/send.ts:185
 msgid ""
 "{account} is being received by {holder} right now, {backend} cannot send and "
 "receive at the same time, and that process did not take the send over — "
@@ -82,35 +173,27 @@ msgstr ""
 "übernommen — es wurde nichts gesendet; beende ihn (`curlew daemon stop`) und "
 "sende erneut, oder sende von deinem Telefon"
 
-#: app/src/core/actions/send.ts:245
-msgid ""
-"{capability} is not granted for {target} — add {grant} to the grants in the "
-"config file"
-msgstr ""
-"{capability} ist für {target} nicht freigegeben — füge {grant} in der "
-"Konfigurationsdatei zu den Freigaben hinzu"
-
-#: app/src/core/actions/send.ts:296 app/src/core/actions/send.ts:489
-msgid "no account {account} — `curlew accounts list` shows them"
-msgstr "Kein Konto {account} — `curlew accounts list` zeigt sie an"
-
-#: app/src/core/actions/send.ts:390
+#: app/src/core/actions/send.ts:316
 msgid "{backend} cannot send an image — give text and leave image_url out"
 msgstr "{backend} kann kein Bild senden — gib Text an und lass image_url weg"
 
-#: app/src/core/actions/send.ts:397
+#: app/src/core/actions/send.ts:323
 msgid "nothing to send: the text is empty after rendering"
 msgstr "Nichts zu senden: Der Text ist nach dem Rendern leer"
 
-#: app/src/core/actions/send.ts:496
+#: app/src/core/actions/send.ts:401 app/src/core/actions/send.ts:421
+msgid "no account {account} — `curlew accounts list` shows them"
+msgstr "Kein Konto {account} — `curlew accounts list` zeigt sie an"
+
+#: app/src/core/actions/send.ts:428
 msgid "{backend} cannot send"
 msgstr "{backend} kann nicht senden"
 
-#: app/src/core/actions/send.ts:500
+#: app/src/core/actions/send.ts:432
 msgid "nothing to send: give text, an image URL or both"
 msgstr "Nichts zu senden: Gib Text, eine Bild-URL oder beides an"
 
-#: app/src/core/actions/send.ts:502
+#: app/src/core/actions/send.ts:434
 msgid "{backend} messages carry no subject"
 msgstr "Nachrichten von {backend} haben keinen Betreff"
 
@@ -639,7 +722,7 @@ msgstr ""
 "Befehl im PATH. Klone das Repository und führe `gjsify install` aus oder "
 "installiere den veröffentlichten Befehl, und starte dies dann erneut."
 
-#: app/src/core/actions/watch.ts:70
+#: app/src/core/actions/watch.ts:73
 msgid ""
 "no curlew daemon on the session bus — reading the journal every {seconds} s "
 "myself"
@@ -647,7 +730,7 @@ msgstr ""
 "Kein curlew-Daemon am Session-Bus — ich lese das Journal selbst alle "
 "{seconds} s"
 
-#: app/src/core/actions/watch.ts:71
+#: app/src/core/actions/watch.ts:77
 msgid ""
 "the curlew daemon left the session bus — reading the journal every {seconds} "
 "s myself"
@@ -655,7 +738,7 @@ msgstr ""
 "Der curlew-Daemon hat den Session-Bus verlassen — ich lese das Journal "
 "selbst alle {seconds} s"
 
-#: app/src/core/actions/watch.ts:73
+#: app/src/core/actions/watch.ts:80
 msgid "a curlew daemon is on the session bus — waking on its signal"
 msgstr "Ein curlew-Daemon ist am Session-Bus — ich warte auf sein Signal"
 
@@ -679,7 +762,47 @@ msgstr ""
 "Das Backend {name} ist nicht aktiviert — `curlew backends enable {name}` "
 "schaltet es ein (und zeigt seine Bedingungen)"
 
-#: app/src/core/lib/daemon-bus.ts:169
+#: app/src/core/lib/access-notifications.ts:37
+msgid "An agent wants to send a message"
+msgstr "Ein Agent möchte eine Nachricht senden"
+
+#: app/src/core/lib/access-notifications.ts:40
+msgid "To {contact} ({account})."
+msgstr "An {contact} ({account})."
+
+#: app/src/core/lib/access-notifications.ts:41
+msgid "To {contact} ({account}): “{preview}”"
+msgstr "An {contact} ({account}): „{preview}“"
+
+#: app/src/core/lib/access-notifications.ts:45
+msgid "An agent wants to read messages"
+msgstr "Ein Agent möchte Nachrichten lesen"
+
+#: app/src/core/lib/access-notifications.ts:46
+msgid "Messages of {contact} ({account})."
+msgstr "Nachrichten von {contact} ({account})."
+
+#: app/src/core/lib/access-notifications.ts:53
+msgid "Allow once"
+msgstr "Einmal erlauben"
+
+#: app/src/core/lib/access-notifications.ts:54
+msgid "For this session"
+msgstr "Für diese Sitzung"
+
+#: app/src/core/lib/access-notifications.ts:56
+msgid "Always"
+msgstr "Immer"
+
+#: app/src/core/lib/access-notifications.ts:58
+msgid "Deny"
+msgstr "Verweigern"
+
+#: app/src/core/lib/daemon-access-client.ts:78
+msgid "the running curlew daemon did not answer the access prompt ({reason})"
+msgstr "Der laufende curlew-Daemon hat die Zugriffsrückfrage nicht beantwortet ({reason})"
+
+#: app/src/core/lib/daemon-bus.ts:174
 msgid ""
 "the running curlew daemon speaks send protocol {theirs} and this curlew "
 "speaks {ours} — nothing was sent; restart it with `systemctl --user restart "
@@ -689,7 +812,7 @@ msgstr ""
 "spricht {ours} — es wurde nichts gesendet; starte ihn mit `systemctl --user "
 "restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:206
+#: app/src/core/lib/daemon-bus.ts:211
 msgid ""
 "the caller speaks send protocol {theirs} and this curlew daemon speaks "
 "{ours} — nothing was sent; restart it with `systemctl --user restart curlew-"
@@ -698,6 +821,18 @@ msgstr ""
 "Der Aufrufer spricht Sende-Protokoll {theirs}, dieser curlew-Daemon spricht "
 "{ours} — es wurde nichts gesendet; starte ihn mit `systemctl --user restart "
 "curlew-daemon` neu"
+
+#: app/src/core/lib/daemon-bus.ts:254
+msgid ""
+"the caller speaks access protocol {theirs} and this curlew daemon speaks "
+"{ours} — restart it with `systemctl --user restart curlew-daemon`"
+msgstr "Der Aufrufer spricht Zugriffsprotokoll {theirs}, dieser curlew-Daemon spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
+
+#: app/src/core/lib/daemon-bus.ts:286
+msgid ""
+"the running curlew daemon speaks access protocol {theirs} and this curlew "
+"speaks {ours} — restart it with `systemctl --user restart curlew-daemon`"
+msgstr "Der laufende curlew-Daemon spricht Zugriffsprotokoll {theirs}, dieses curlew spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
 #: app/src/core/lib/daemon-send-client.ts:107
 msgid ""
@@ -884,14 +1019,14 @@ msgid "Per-message body cap (default {default}, max {max})"
 msgstr ""
 "Obergrenze für den Text je Nachricht (Standard {default}, maximal {max})"
 
-#: app/src/frontends/cli/conversations.ts:95
+#: app/src/frontends/cli/conversations.ts:94
 msgid ""
 "Correct how mail from one sender is classified (auto = back to the rules)"
 msgstr ""
 "Korrigieren, wie Mails eines Absenders eingeordnet werden (auto = zurück zu "
 "den Regeln)"
 
-#: app/src/frontends/cli/conversations.ts:98
+#: app/src/frontends/cli/conversations.ts:97
 msgid "Sender mail address"
 msgstr "Mailadresse des Absenders"
 
@@ -1128,63 +1263,68 @@ msgstr ""
 "Auf eine GOA-Konto-ID beschränken (aus „accounts“); ohne Angabe alle "
 "durchsuchen"
 
-#: app/src/frontends/cli/mail.ts:98
+#: app/src/frontends/cli/mail.ts:96
+msgid ""
+"{count} hits left out: no read access to their contact (a search never asks)"
+msgstr "{count} Treffer ausgelassen: kein Lesezugriff auf ihren Kontakt (eine Suche fragt nie nach)"
+
+#: app/src/frontends/cli/mail.ts:110
 msgid "Fetch one full message (body + attachment metadata) by IMAP UID"
 msgstr "Eine vollständige Nachricht (Text + Anhangsdaten) per IMAP-UID abrufen"
 
-#: app/src/frontends/cli/mail.ts:102 app/src/frontends/cli/mail.ts:152
-#: app/src/frontends/cli/mail.ts:174
+#: app/src/frontends/cli/mail.ts:114 app/src/frontends/cli/mail.ts:165
+#: app/src/frontends/cli/mail.ts:187
 msgid "IMAP UID (from \"search\")"
 msgstr "IMAP-UID (aus „search“)"
 
-#: app/src/frontends/cli/mail.ts:106
+#: app/src/frontends/cli/mail.ts:118
 msgid "GOA account id the message belongs to (from \"accounts\")"
 msgstr "GOA-Konto-ID, zu der die Nachricht gehört (aus „accounts“)"
 
-#: app/src/frontends/cli/mail.ts:108 app/src/frontends/cli/mail.ts:154
-#: app/src/frontends/cli/mail.ts:176
+#: app/src/frontends/cli/mail.ts:120 app/src/frontends/cli/mail.ts:167
+#: app/src/frontends/cli/mail.ts:189
 msgid "Mailbox the UID belongs to (default INBOX)"
 msgstr "Postfach, zu dem die UID gehört (Standard INBOX)"
 
-#: app/src/frontends/cli/mail.ts:111
+#: app/src/frontends/cli/mail.ts:123
 msgid "Max body characters (default {default}, max {max})"
 msgstr "Höchstzahl an Zeichen des Textes (Standard {default}, maximal {max})"
 
-#: app/src/frontends/cli/mail.ts:132
+#: app/src/frontends/cli/mail.ts:145
 msgid "List mailboxes with their resolved roles (inbox, sent, trash, …)"
 msgstr ""
 "Postfächer mit ihren erkannten Rollen auflisten (Posteingang, Gesendet, "
 "Papierkorb, …)"
 
-#: app/src/frontends/cli/mail.ts:137
+#: app/src/frontends/cli/mail.ts:150
 msgid "Restrict to a GOA account id (from \"accounts\"); omit for all"
 msgstr "Auf eine GOA-Konto-ID beschränken (aus „accounts“); ohne Angabe alle"
 
-#: app/src/frontends/cli/mail.ts:148
+#: app/src/frontends/cli/mail.ts:161
 msgid "List one message's parts and their sections (what can be saved)"
 msgstr ""
 "Die Teile einer Nachricht und ihre Abschnitte auflisten (was gespeichert "
 "werden kann)"
 
-#: app/src/frontends/cli/mail.ts:153 app/src/frontends/cli/mail.ts:175
+#: app/src/frontends/cli/mail.ts:166 app/src/frontends/cli/mail.ts:188
 msgid "GOA account id"
 msgstr "GOA-Konto-ID"
 
-#: app/src/frontends/cli/mail.ts:170
+#: app/src/frontends/cli/mail.ts:183
 msgid "Save an attachment to disk (decoded; never overwrites an existing file)"
 msgstr ""
 "Einen Anhang auf der Festplatte speichern (dekodiert; überschreibt nie eine "
 "vorhandene Datei)"
 
-#: app/src/frontends/cli/mail.ts:179
+#: app/src/frontends/cli/mail.ts:192
 msgid "IMAP section from \"parts\"; omit for the first attachment"
 msgstr "IMAP-Abschnitt aus „parts“; ohne Angabe der erste Anhang"
 
-#: app/src/frontends/cli/mail.ts:181
+#: app/src/frontends/cli/mail.ts:194
 msgid "Directory to save into (default $XDG_DOWNLOAD_DIR)"
 msgstr "Zielverzeichnis (Standard $XDG_DOWNLOAD_DIR)"
 
-#: app/src/frontends/cli/mail.ts:184
+#: app/src/frontends/cli/mail.ts:197
 msgid "Refuse a part larger than this (default {default})"
 msgstr "Teile ablehnen, die größer sind als dieser Wert (Standard {default})"
 
@@ -1310,9 +1450,8 @@ msgid "Account id from `curlew accounts list`"
 msgstr "Konto-ID aus `curlew accounts list`"
 
 #: app/src/frontends/cli/send.ts:41
-msgid "Address exactly as the grant spells it (name@example.org)"
-msgstr ""
-"Reine Adresse genau so, wie die Freigabe sie schreibt (name@example.org)"
+msgid "Address exactly as the rule spells it (name@example.org)"
+msgstr "Reine Adresse genau so, wie die Regel sie schreibt (name@example.org)"
 
 #: app/src/frontends/cli/setup.ts:34
 msgid ""
@@ -1466,7 +1605,7 @@ msgid "Logged in; setting up this device’s encryption keys…"
 msgstr ""
 "Angemeldet; die Verschlüsselungsschlüssel dieses Geräts werden eingerichtet …"
 
-#: packages/matrix/src/redact.ts:47
+#: packages/matrix/src/redact.ts:50
 msgid "matrix: {n} event not decryptable"
 msgid_plural "matrix: {n} events not decryptable"
 msgstr[0] "matrix: {n} Ereignis nicht entschlüsselbar"
@@ -2221,6 +2360,20 @@ msgid ""
 msgstr ""
 "{count} Geräte von {jid} tragen diesen Fingerabdruck, er benennt also keines "
 "— nichts wurde geändert"
+
+#~ msgid ""
+#~ "sending to {target} is not granted — add a grant like {grant} to the "
+#~ "config file, naming the account and the address"
+#~ msgstr ""
+#~ "Das Senden an {target} ist nicht freigegeben — füge eine Freigabe wie "
+#~ "{grant} in der Konfigurationsdatei hinzu, die Konto und Adresse nennt"
+
+#~ msgid ""
+#~ "{capability} is not granted for {target} — add {grant} to the grants in "
+#~ "the config file"
+#~ msgstr ""
+#~ "{capability} ist für {target} nicht freigegeben — füge {grant} in der "
+#~ "Konfigurationsdatei zu den Freigaben hinzu"
 
 #~ msgid "the xmpp backend is not available"
 #~ msgstr "Das XMPP-Backend ist nicht verfügbar"
