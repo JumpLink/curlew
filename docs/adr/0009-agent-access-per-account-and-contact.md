@@ -42,17 +42,18 @@ A rule has a **scope** and two **modes**.
   §1.
 - **Modes:** one for **read** (message bodies, §7) and one for **write** (sending). Each is
   `allow`, `ask` or `deny`.
-- **Write needs read.** A rule that allows write and denies read is invalid and refused when the
-  config is parsed, naming the rule. A conversation an agent may write to is one it may read; a
-  write-only rule would be a rule the person did not mean.
+- **Write needs read.** A rule that sets write to `allow` or `ask` and read to `deny` is invalid
+  and refused when the config is parsed, naming the rule. Where the modes come from different
+  rules (§8), a write whose read resolves to `deny` is `deny`. A conversation an agent may write
+  to is one it may read; a write-only rule would be a rule the person did not mean.
 
 ### 2. Resolution fails closed
 
 For one request (account, contact, read or write):
 
 1. **The person's own address is allowed** (§3).
-2. **The most specific rule decides**: a contact rule beats an account rule. The rule's mode for
-   the request's kind is the answer.
+2. **The most specific rule decides**: a contact rule beats an account rule, per kind. A rule
+   that leaves a kind out says nothing about it, and the next rule up decides (§8).
 3. **An explicit `deny` is final.** No temporary grant (§6) and no prompt answer widens it.
 4. **With no rule**, the answer is `ask` when the person has *Ask for anything without a rule* on
    (the default), and `deny` when it is off.
@@ -143,12 +144,14 @@ Rules live in `config.json` beside the old grants and are `state`, not secret.
 ```
 
 - `askWithoutRule` defaults to `true`. A missing `agentAccess` is "ask, no rules".
-- A rule without `read` or `write` is `deny` for that kind. Two rules with the same scope are a
-  configuration error.
+- A rule without `read` or `write` says nothing about that kind: resolution falls through to the
+  account rule, then to the no-rule default (§2.4). So a contact rule `{ "read": "allow" }` under
+  an account rule `{ "write": "ask" }` reads quietly and asks before each send. The write-needs-read
+  check runs on the resolved modes as well (§1). Two rules with the same scope are a configuration error.
 - **Migration.** The old format stays readable: each `<backend>.send` grant
   (`<account>/<address>`) becomes a **contact rule** with `write: "allow"` and `read: "allow"`,
-  in memory, when both formats are present. A contact rule written out explicitly for the same
-  pair wins over the migrated one. Nothing rewrites the person's file; the GTK page (§Order of
+  in memory, whether or not `agentAccess` is present. A contact rule written out explicitly for
+  the same pair wins over the migrated one. Nothing rewrites the person's file; the GTK page (§Order of
   work) writes the new format.
 - **`xmpp.omemo` stays as it is** until decryption runs for every enabled account (§9). It goes
   away together with the last grant watch (ADR 0008 §5).
@@ -193,7 +196,8 @@ see from the log which sends were never asked about.
    config parse and the migration.
 2. MCP and CLI enforce read and write through it, with `ask` treated as deny until the prompt
    exists.
-3. The daemon prompt service: the bus method and the notification actions.
+3. The daemon prompt service: the bus method and the notification actions. Steps 2 and 3 are
+   deployed together, so agents in use never spend a release refused where they would be asked.
 4. Decryption for every enabled account, then removal of `xmpp.omemo` and the last grant watch.
 5. A GTK "agent access" page that edits the rules and later shows the prompt as a dialog.
 6. A sandbox (Flatpak/portal) between agents and the session bus.
