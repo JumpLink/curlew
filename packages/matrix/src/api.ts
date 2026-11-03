@@ -54,6 +54,25 @@ export interface MxMessagesPage {
   readonly displayNames: ReadonlyMap<string, string>;
 }
 
+/**
+ * What a connection that STAYS open reports (the daemon's follow mode, ADR 0007 §5). The sync
+ * loop that `connect` starts keeps long-polling `/sync` after the first response; this is how its
+ * outcome reaches a caller without handing out the SDK.
+ */
+export interface MatrixLive {
+  /**
+   * Called when a `/sync` response brought a new timeline event. Only a WAKE-UP: the caller reads
+   * through the same history walk `curlew sync` uses, so nothing here carries content.
+   */
+  onArrival(listener: () => void): () => void;
+  /**
+   * Called once when the sync loop gave up. `loggedOut` is the server saying this device's token
+   * is gone (`M_UNKNOWN_TOKEN`, HTTP 401): retrying cannot help. `reason` is a name or an HTTP
+   * status, never the SDK's message.
+   */
+  onClosed(listener: (end: { reason: string; loggedOut: boolean }) => void): void;
+}
+
 export interface MatrixApi {
   /** The logged-in user, `@local:server`. */
   readonly userId: string;
@@ -66,6 +85,8 @@ export interface MatrixApi {
    * returns it (deleted, or the user lost access).
    */
   fetchEvent(roomId: string, eventId: string): Promise<MxEvent | null>;
+  /** Present on a real client: its sync loop keeps running until `close`. */
+  readonly live?: MatrixLive;
   /** Stop syncing and persist the crypto store. Throws when the store could not be saved. */
   close(): Promise<void>;
 }

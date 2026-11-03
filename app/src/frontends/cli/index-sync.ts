@@ -64,6 +64,19 @@ function reportRateLimits(result: IndexSyncResult): void {
   }
 }
 
+/** One line per chat account left to the running daemon — it is receiving, so nothing is wrong. */
+function reportHeld(result: IndexSyncResult): void {
+  for (const chat of result.chats) {
+    for (const account of chat.accounts) {
+      if (!account.heldBy && !account.indexBusy) continue;
+      const line = account.heldBy
+        ? _('  {backend}: followed by the running daemon, left to it')
+        : _('  {backend}: index busy, skipped');
+      process.stderr.write(`${fmt(line, { backend: chat.backend })}\n`);
+    }
+  }
+}
+
 export const syncCommand: CommandModule = {
   command: 'sync',
   get describe() {
@@ -98,6 +111,7 @@ export const syncCommand: CommandModule = {
         onProgress: reportProgress,
       });
       reportRateLimits(result);
+      reportHeld(result);
       return result;
     });
   },

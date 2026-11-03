@@ -28,7 +28,7 @@ import {
   IDBVersionChangeEvent,
 } from 'fake-indexeddb';
 import type { MatrixClient, MatrixEvent, Room, SyncState } from 'matrix-js-sdk';
-import type { MatrixApi, MxEvent, MxMessagesPage, MxRoom } from './api.ts';
+import type { MatrixApi, MatrixLive, MxEvent, MxMessagesPage, MxRoom } from './api.ts';
 import { readOnlyFetch, ReadOnlyViolation, refusals } from './guard.ts';
 import { IndexedDbSnapshot } from './idb-snapshot.ts';
 
@@ -54,6 +54,9 @@ export async function loadMatrixSdk(): Promise<MatrixSdk> {
 
 /** The SDK's logger interface, as `createClient` takes it (not exported under a name). */
 type Logger = NonNullable<Parameters<MatrixSdk['createClient']>[0]['logger']>;
+
+/** How long the server may hold one `/sync` open when nothing happens. */
+export const SYNC_POLL_TIMEOUT_MS = 30_000;
 
 /** How long the first sync may take before `connect` gives up. */
 const FIRST_SYNC_TIMEOUT_MS = 120_000;
@@ -146,6 +149,14 @@ export interface MatrixSession {
   /** The account's secret file: the crypto store is saved into it. */
   store: SecretStore;
   accountId: string;
+  /** The transport under the read-only gate; the process's `fetch` unless a test supplies one. */
+  fetch?: typeof globalThis.fetch;
+}
+
+/** The server told this device its token is gone — retrying cannot help (`M_UNKNOWN_TOKEN`, 401). */
+export function isLoggedOutError(err: unknown): boolean {
+  const e = err as { errcode?: unknown; httpStatus?: unknown } | null;
+  return e?.errcode === 'M_UNKNOWN_TOKEN' || e?.httpStatus === 401;
 }
 
 export type MatrixConnector = (session: MatrixSession) => Promise<MatrixApi>;
@@ -223,6 +234,40 @@ function firstSync(sdk: MatrixSdk, client: MatrixClient): Promise<void> {
   });
 }
 
+/**
+ * What the running sync loop reports, after the first response (listeners attached earlier would
+ * hear the initial room list as arrivals). A new event in a timeline is a wake-up; the SDK giving
+ * up (`Error` after three failed polls, or at once on a dead token) closes the connection.
+ */
+function liveOf(sdk: MatrixSdk, client: MatrixClient): MatrixLive {
+  const arrivals = new Set<() => void>();
+  const closers = new Set<(end: { reason: string; loggedOut: boolean }) => void>();
+  client.on(sdk.RoomEvent.Timeline, (_event, _room, toStart, _removed, data) => {
+    if (toStart || data?.liveEvent === false) return;
+    for (const listener of [...arrivals]) listener();
+  });
+  client.on(sdk.ClientEvent.Sync, (state, _previous, data) => {
+    if (state !== sdk.SyncState.Error) return;
+    const error = data?.error as { errcode?: unknown; httpStatus?: unknown } | undefined;
+    const reason =
+      typeof error?.errcode === 'string'
+        ? error.errcode
+        : typeof error?.httpStatus === 'number'
+          ? `HTTP ${error.httpStatus}`
+          : 'sync error';
+    for (const listener of [...closers]) listener({ reason, loggedOut: isLoggedOutError(error) });
+  });
+  return {
+    onArrival: (listener) => {
+      arrivals.add(listener);
+      return () => arrivals.delete(listener);
+    },
+    onClosed: (listener) => {
+      closers.add(listener);
+    },
+  };
+}
+
 /** The one place matrix-js-sdk is constructed. */
 export const connectMatrixClient: MatrixConnector = async (session) => {
   const sdk = await loadMatrixSdk();
@@ -283,7 +328,7 @@ export const connectMatrixClient: MatrixConnector = async (session) => {
     deviceId: session.deviceId,
     logger: quietLogger(),
     store: new CheckpointStore(),
-    fetchFn: readOnlyFetch(globalThis.fetch.bind(globalThis)),
+    fetchFn: readOnlyFetch(session.fetch ?? globalThis.fetch.bind(globalThis)),
   });
   let running = false;
   try {
@@ -301,6 +346,8 @@ export const connectMatrixClient: MatrixConnector = async (session) => {
       // An omitted `set_presence` marks the user ONLINE on every /sync (client-server spec). The
       // read-only gate refuses such a request too; this keeps it from being attempted.
       disablePresence: true,
+      // The default, said out loud: follow mode relies on a long poll, not on a short loop.
+      pollTimeout: SYNC_POLL_TIMEOUT_MS,
     });
     await synced;
     await save();
@@ -318,7 +365,9 @@ export const connectMatrixClient: MatrixConnector = async (session) => {
   }
 
   const mapper = client.getEventMapper();
+  const live = liveOf(sdk, client);
   return {
+    live,
     userId: session.userId,
     listRooms: async () => {
       const direct = directRoomIds(client);

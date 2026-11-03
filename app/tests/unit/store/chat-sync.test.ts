@@ -1,5 +1,7 @@
 import { describe, expect, it } from '@gjsify/unit';
 
+import type { ChatSession } from '@curlew/protocol';
+
 import type { ContactDTO } from '@curlew/protocol';
 import { ChatRateLimitedError } from '@curlew/protocol';
 import {
@@ -9,8 +11,10 @@ import {
   listConversations,
   rebuildConversations,
   recordSentChatMessage,
+  releaseReceiveLease,
   syncChats,
   syncIndex,
+  takeReceiveLease,
   syncStatus,
 } from '@curlew/store';
 import { BEN, chatMessage, FakeChatBackend, telegramFixture } from './chat-fixtures.ts';
@@ -710,4 +714,104 @@ export default async () => {
       }
     });
   });
+
+  // A followed account is ONE device with ONE crypto store and ONE to-device stream (ADR 0002 §4):
+  // a `sync` that connected anyway would acknowledge half the room keys. Matrix and XMPP are the
+  // two backends the daemon follows; the rule is the same for both.
+  for (const network of ['matrix', 'xmpp']) {
+    await describe(`syncChats under the receive lease (${network})`, async () => {
+      const NOW = new Date('2026-11-03T10:00:00.000Z');
+      const clock =
+        (ms = 0) =>
+        () =>
+          new Date(NOW.getTime() + ms);
+      const named = () => {
+        const backend = telegramFixture();
+        Object.defineProperty(backend, 'manifest', {
+          value: { ...backend.manifest, name: network },
+        });
+        let connects = 0;
+        const connect = backend.connect.bind(backend);
+        backend.connect = async (accountId: string): Promise<ChatSession> => {
+          connects++;
+          return connect(accountId);
+        };
+        return { backend, connects: () => connects };
+      };
+
+      await it('stands down for a live foreign lease, reports who, and never connects', async () => {
+        const db = freshDb();
+        try {
+          const { backend, connects } = named();
+          takeReceiveLease(db, network, 'telegram-42', 'daemon-1', NOW);
+          const result = await syncChats(db, backend, { now: clock(1000), lease: { holder: 'sync-1' } });
+          expect(connects()).toBe(0);
+          expect(result.accounts[0].heldBy).toBe('daemon-1');
+          expect(result.accounts[0].error).toBe(null);
+          expect(result.errors).toBe(0);
+          expect(result.failed).toBe(false);
+          expect(result.added).toBe(0);
+          expect(count(db, 'SELECT COUNT(*) AS n FROM accounts')).toBe(0);
+        } finally {
+          db.close();
+        }
+      });
+
+      await it('goes ahead when the lease is absent, and gives it back afterwards', async () => {
+        const db = freshDb();
+        try {
+          const { backend, connects } = named();
+          const result = await syncChats(db, backend, { now: clock(), lease: { holder: 'sync-1' } });
+          expect(connects()).toBe(1);
+          expect(result.accounts[0].heldBy).toBe(undefined);
+          expect(result.added).toBe(7);
+          expect(count(db, 'SELECT COUNT(*) AS n FROM receive_leases')).toBe(0);
+        } finally {
+          db.close();
+        }
+      });
+
+      await it('is not blocked by a stale lease', async () => {
+        const db = freshDb();
+        try {
+          const { backend, connects } = named();
+          takeReceiveLease(db, network, 'telegram-42', 'dead-daemon', NOW, 30_000);
+          // Three missed heartbeats of the holder's own interval and a little more.
+          const result = await syncChats(db, backend, {
+            now: clock(3 * 30_000 + 1000),
+            lease: { holder: 'sync-1' },
+          });
+          expect(connects()).toBe(1);
+          expect(result.accounts[0].heldBy).toBe(undefined);
+          expect(result.added).toBe(7);
+        } finally {
+          db.close();
+        }
+      });
+
+      await it('leaves the daemon its lease when it stood down', async () => {
+        const db = freshDb();
+        try {
+          const { backend } = named();
+          takeReceiveLease(db, network, 'telegram-42', 'daemon-1', NOW);
+          await syncChats(db, backend, { now: clock(1000), lease: { holder: 'sync-1' } });
+          expect(releaseReceiveLease(db, network, 'telegram-42', 'daemon-1')).toBe(true);
+        } finally {
+          db.close();
+        }
+      });
+
+      await it('takes no lease when the caller passes none (the daemon catch-up holds its own)', async () => {
+        const db = freshDb();
+        try {
+          const { backend, connects } = named();
+          takeReceiveLease(db, network, 'telegram-42', 'daemon-1', NOW);
+          await syncChats(db, backend, { now: clock(1000) });
+          expect(connects()).toBe(1);
+        } finally {
+          db.close();
+        }
+      });
+    });
+  }
 };
