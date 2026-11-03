@@ -18,7 +18,7 @@ import {
   mailListFolders,
   mailListParts,
   mailSaveAttachment,
-  mailSearch,
+  mailSearchForAgent,
 } from '../../core/actions/index.ts';
 import { pickArgv, runAndExit } from './output.ts';
 
@@ -68,25 +68,37 @@ export const searchCommand: CommandModule = {
   handler: (argv) => {
     const raw = argv as Record<string, unknown>;
     runAndExit(() =>
-      mailSearch({
-        query: pickArgv<string>(raw, 'query'),
-        from: pickArgv<string>(raw, 'from'),
-        to: pickArgv<string>(raw, 'to'),
-        cc: pickArgv<string>(raw, 'cc'),
-        subject: pickArgv<string>(raw, 'subject'),
-        body: pickArgv<string>(raw, 'body'),
-        since: pickArgv<string>(raw, 'since'),
-        before: pickArgv<string>(raw, 'before'),
-        // yargs exposes a kebab-case option under both spellings; ask for both so a change in
-        // either upstream convention cannot silently drop the criterion.
-        receivedSince: pickArgv<string>(raw, 'received-since', 'receivedSince'),
-        receivedBefore: pickArgv<string>(raw, 'received-before', 'receivedBefore'),
-        unseen: pickArgv<boolean>(raw, 'unseen'),
-        flagged: pickArgv<boolean>(raw, 'flagged'),
-        folder: pickArgv<string>(raw, 'folder'),
-        allFolders: pickArgv<boolean>(raw, 'all-folders', 'allFolders'),
-        limit: pickArgv<number>(raw, 'limit'),
-        accountId: pickArgv<string>(raw, 'account'),
+      mailSearchForAgent(
+        {
+          query: pickArgv<string>(raw, 'query'),
+          from: pickArgv<string>(raw, 'from'),
+          to: pickArgv<string>(raw, 'to'),
+          cc: pickArgv<string>(raw, 'cc'),
+          subject: pickArgv<string>(raw, 'subject'),
+          body: pickArgv<string>(raw, 'body'),
+          since: pickArgv<string>(raw, 'since'),
+          before: pickArgv<string>(raw, 'before'),
+          // yargs exposes a kebab-case option under both spellings; ask for both so a change in
+          // either upstream convention cannot silently drop the criterion.
+          receivedSince: pickArgv<string>(raw, 'received-since', 'receivedSince'),
+          receivedBefore: pickArgv<string>(raw, 'received-before', 'receivedBefore'),
+          unseen: pickArgv<boolean>(raw, 'unseen'),
+          flagged: pickArgv<boolean>(raw, 'flagged'),
+          folder: pickArgv<string>(raw, 'folder'),
+          allFolders: pickArgv<boolean>(raw, 'all-folders', 'allFolders'),
+          limit: pickArgv<number>(raw, 'limit'),
+          accountId: pickArgv<string>(raw, 'account'),
+        },
+        { frontend: 'cli' },
+      ).then(({ messages, withheld }) => {
+        if (withheld > 0) {
+          console.error(
+            fmt(_('{count} hits left out: no read access to their contact (a search never asks)'), {
+              count: withheld,
+            }),
+          );
+        }
+        return messages;
       }),
     );
   },
@@ -121,6 +133,7 @@ export const messageCommand: CommandModule = {
         accountId: pickArgv<string>(raw, 'account') ?? '',
         folder: pickArgv<string>(raw, 'folder'),
         maxBodyChars: pickArgv<number>(raw, 'max-body', 'maxBody'),
+        agent: { frontend: 'cli' },
       }),
     );
   },
@@ -195,6 +208,7 @@ export const saveCommand: CommandModule = {
         section: pickArgv<string>(raw, 'section'),
         directory: pickArgv<string>(raw, 'out'),
         maxBytes: pickArgv<number>(raw, 'max-bytes', 'maxBytes'),
+        agent: { frontend: 'cli' },
       }),
     );
   },

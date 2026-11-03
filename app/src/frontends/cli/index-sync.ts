@@ -10,7 +10,7 @@ import type { CommandModule } from 'yargs';
 
 import type { SyncProgress } from '@curlew/store';
 import type { IndexSyncResult } from '../../core/actions/index.ts';
-import { indexSearch, indexStatus, indexSync } from '../../core/actions/index.ts';
+import { indexSearchForAgent, indexStatus, indexSync } from '../../core/actions/index.ts';
 import { MAIL_LIMIT, capLimit } from '../../core/actions/index.ts';
 import { pickArgv, runAndExit } from './output.ts';
 
@@ -155,8 +155,8 @@ export const indexCommand: CommandModule = {
         handler: (argv) => {
           const raw = argv as Record<string, unknown>;
           runAndExit(() =>
-            Promise.resolve(
-              indexSearch({
+            indexSearchForAgent(
+              {
                 query: pickArgv<string>(raw, 'query'),
                 from: pickArgv<string>(raw, 'from'),
                 subject: pickArgv<string>(raw, 'subject'),
@@ -168,7 +168,8 @@ export const indexCommand: CommandModule = {
                 accountId: pickArgv<string>(raw, 'account'),
                 folderPath: pickArgv<string>(raw, 'folder'),
                 limit: capLimit(pickArgv<number>(raw, 'limit'), MAIL_LIMIT),
-              }),
+              },
+              { frontend: 'cli' },
             ),
           );
         },

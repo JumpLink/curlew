@@ -22,6 +22,8 @@ export interface WriteLogEntry {
   frontend: WriteFrontend;
   /** The id of what was created or sent; a presence has none. */
   id?: string;
+  /** Agent writes: why it was allowed — `rule`, `migrated`, `once`, `session`, `temporary` or `self` (ADR 0009 §10). */
+  reason?: string;
   /** What happened when it is not a plain write, for example `presence available`. */
   note?: string;
 }

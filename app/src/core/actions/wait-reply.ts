@@ -1,7 +1,7 @@
 /**
  * `xmpp_wait_reply` — block until the other side answers, or the timeout passes.
  *
- * Reads the local index only (no write, no grant): `curlew daemon` is what puts a reply there, so
+ * Reads the local index only (no write; bodies need ADR 0009 `read` access for an agent): `curlew daemon` is what puts a reply there, so
  * without a running daemon this times out. The cursor is an ISO time — the `sentAt` of the
  * message sent, or the `cursor` of the previous answer — and only messages strictly newer count.
  * Each message carries `replyToId`: the id its `<reply>` (XEP-0461) names, or null. For a direct chat
@@ -12,7 +12,9 @@ import type { ConversationMessage } from '@curlew/protocol';
 import { chatConversationId, configPath, getConversation, indexDbPath } from '@curlew/store';
 import { loadConfig } from '../config.ts';
 import { stripQuotes } from '../markdown.ts';
+import type { AgentAccess } from './access.ts';
 import { openIndex } from './index-sync.ts';
+import { requireParticipantsRead } from './message-access.ts';
 
 export const WAIT_TIMEOUT_S = { default: 30, max: 120 } as const;
 const POLL_MS = 500;
@@ -27,6 +29,8 @@ export interface WaitReplyParams {
   includeBodies?: boolean;
   /** Only messages whose XEP-0461 reply names this id (the `originId` send_message returned). */
   replyTo?: string;
+  /** Set by an agent frontend: bodies are then read only with ADR 0009 `read` access. */
+  agent?: AgentAccess;
   /** Remove quoted lines (`>`, XEP-0393 / a reply's fallback) from the bodies. Default false. */
   stripQuotes?: boolean;
   dbPath?: string;
@@ -51,7 +55,12 @@ export async function waitReply(params: WaitReplyParams): Promise<WaitReplyResul
   if (Number.isNaN(Date.parse(params.after))) throw new Error('after must be an ISO 8601 time');
   const timeoutS = Math.min(Math.max(params.timeoutS ?? WAIT_TIMEOUT_S.default, 0), WAIT_TIMEOUT_S.max);
   const sleep = params.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
-  const { senders } = loadConfig(params.configPath ?? configPath());
+  const config = loadConfig(params.configPath ?? configPath());
+  const { senders } = config;
+  // Before the first poll: the answer to "may I read this" must not wait for a reply to arrive.
+  if (params.agent && params.includeBodies !== false) {
+    await requireParticipantsRead(config, params.agent, params.accountId, [params.peer]);
+  }
   const conversationId = chatConversationId('xmpp', params.accountId, params.peer);
   const db = openIndex(params.dbPath ?? indexDbPath());
   const deadline = Date.now() + timeoutS * 1000;

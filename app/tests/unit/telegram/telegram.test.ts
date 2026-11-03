@@ -550,7 +550,7 @@ export default async () => {
         const listed = conversationsList({ dbPath, configPath, peopleOnly: true });
         expect(listed.count).toBe(2);
         expect(listed.indexedAt !== null).toBe(true);
-        const shown = conversationsShow({
+        const shown = await conversationsShow({
           id: listed.conversations[0].id,
           dbPath,
           configPath,

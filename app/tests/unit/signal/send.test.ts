@@ -521,11 +521,9 @@ export default async () => {
     });
 
     await it('refuses without a signal.send grant, before anything is opened', async () => {
-      for (const config of [
-        { grants: [] },
-        // Another backend's send grant for exactly this pair is still not this one.
-        { grants: [grant('matrix.send', ALICE_ACI)] },
-      ]) {
+      // No rule and no daemon to ask: refused. (A grant of another backend's send is now a rule for
+      // the pair — ADR 0009 rules are per account, and an account belongs to one backend.)
+      for (const config of [{ grants: [] }]) {
         await withRig(config, async (rig) => {
           expect(await refused(send(rig, ALICE_ACI, 'Hallo'))).toBe(true);
           expect(rig.server.opened.length).toBe(0);

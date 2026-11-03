@@ -38,7 +38,7 @@ export const sendCommand: CommandModule = {
       .option('to', {
         type: 'string',
         demandOption: true,
-        describe: _('Address exactly as the grant spells it (name@example.org)'),
+        describe: _('Address exactly as the rule spells it (name@example.org)'),
       }),
   handler: (argv) => {
     const raw = argv as Record<string, unknown>;

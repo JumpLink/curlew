@@ -17,15 +17,10 @@ import {
 import type { EncryptedStanza, XmppBackend, XmppLink } from '@curlew/xmpp';
 import xml from '@xmpp/xml';
 
-import {
-  permitFor,
-  recordDelivered,
-  requireSendGrant,
-  sendAsAgent,
-  sendMessage,
-} from '../../../src/core/actions/send.ts';
+import { permitFor, recordDelivered, sendAsAgent, sendMessage } from '../../../src/core/actions/send.ts';
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
 import { waitReply } from '../../../src/core/actions/wait-reply.ts';
+import type { AccessPort, AccessReply } from '../../../src/core/access.ts';
 import { appendWriteLog } from '../../../src/core/write-log.ts';
 import { registerSendTools } from '../../../src/frontends/mcp/tools/send.ts';
 import { freshDb } from '../store/fixtures.ts';
@@ -118,27 +113,6 @@ export default async () => {
   });
 
   await describe('the send grant', async () => {
-    await it('is exact: another address or account is refused', async () => {
-      requireSendGrant({ grants: GRANTS }, ACCOUNT, OWNER);
-      let refused = 0;
-      for (const [a, t] of [
-        [ACCOUNT, 'other@example.org'],
-        ['xmpp-other', OWNER],
-      ] as const) {
-        try {
-          requireSendGrant({ grants: GRANTS }, a, t);
-        } catch {
-          refused++;
-        }
-      }
-      try {
-        requireSendGrant({ grants: [] }, ACCOUNT, OWNER);
-      } catch {
-        refused++;
-      }
-      expect(refused).toBe(3);
-    });
-
     await it('lists only the granted addresses of that account in the permit', async () => {
       expect(permitFor(GRANTS, ACCOUNT).addresses.join()).toBe(OWNER);
       expect(permitFor(GRANTS, 'xmpp-other').addresses.length).toBe(0);
@@ -389,16 +363,18 @@ export default async () => {
     const world = async (
       grants: unknown[],
       body: (w: {
-        agent: (to: string) => Promise<unknown>;
+        agent: (to: string, port?: AccessPort) => Promise<unknown>;
         person: (to: string) => Promise<unknown>;
         sent: Array<[string, string, string]>;
         logged: () => boolean;
+        logText: () => string;
       }) => Promise<void>,
+      extraConfig: Record<string, unknown> = {},
     ) => {
       const dir = mkdtempSync(join(tmpdir(), 'curlew-adr8-'));
       try {
         const configPath = join(dir, 'config.json');
-        writeFileSync(configPath, JSON.stringify({ grants }));
+        writeFileSync(configPath, JSON.stringify({ grants, ...extraConfig }));
         const sent: Array<[string, string, string]> = [];
         let n = 0;
         const backend = {
@@ -408,12 +384,13 @@ export default async () => {
           openSender: async (_id: string, permit: ReturnType<typeof permitFor>) =>
             new XmppSender(new GrantedXmppSession(fakeLink(sent), permit, () => `id-${++n}`)),
         } as unknown as XmppBackend;
-        const send = (call: typeof sendMessage) => (to: string) =>
+        const send = (call: typeof sendMessage) => (to: string, port?: AccessPort) =>
           call({
             accountId: ACCOUNT,
             to,
-            text: 'hi',
+            text: 'hi — a secret text',
             frontend: 'cli',
+            ...(port ? { agent: { port } } : {}),
             dbPath: join(dir, 'index.db'),
             configPath,
             writeLogPath: join(dir, 'write.log'),
@@ -424,6 +401,8 @@ export default async () => {
           person: send(sendMessage),
           sent,
           logged: () => existsSync(join(dir, 'write.log')),
+          logText: () =>
+            existsSync(join(dir, 'write.log')) ? readFileSync(join(dir, 'write.log'), 'utf8') : '',
         });
       } finally {
         rmSync(dir, { recursive: true, force: true });
@@ -432,12 +411,12 @@ export default async () => {
 
     await it('refuses an agent send no grant names, before anything is sent or logged', async () => {
       await world([], async ({ agent, sent, logged }) => {
-        await expect(agent(OWNER)).rejects.toThrow(/not granted/);
+        await expect(agent(OWNER)).rejects.toThrow(/needs approval/);
         expect(sent.length).toBe(0);
         expect(logged()).toBe(false);
       });
       await world(GRANTS, async ({ agent, sent }) => {
-        await expect(agent('other@example.org')).rejects.toThrow(/not granted/);
+        await expect(agent('other@example.org')).rejects.toThrow(/needs approval/);
         expect(sent.length).toBe(0);
       });
     });
@@ -463,9 +442,9 @@ export default async () => {
       await world([], async ({ agent, sent }) => {
         await agent('bot@example.org');
         expect(sent.length).toBe(1);
-        await expect(agent('bot@example.com')).rejects.toThrow(/not granted/);
-        await expect(agent('bot2@example.org')).rejects.toThrow(/not granted/);
-        await expect(agent('bot@example.org.evil.net')).rejects.toThrow(/not granted/);
+        await expect(agent('bot@example.com')).rejects.toThrow(/needs approval/);
+        await expect(agent('bot2@example.org')).rejects.toThrow(/needs approval/);
+        await expect(agent('bot@example.org.evil.net')).rejects.toThrow(/needs approval/);
         expect(sent.length).toBe(1);
       });
     });
@@ -492,7 +471,7 @@ export default async () => {
             configPath,
             backend,
           }),
-        ).rejects.toThrow(/not granted/);
+        ).rejects.toThrow(/needs approval/);
         const throwing = {
           ...backend,
           isSelfAddress: async () => {
@@ -508,7 +487,7 @@ export default async () => {
             configPath,
             backend: throwing,
           }),
-        ).rejects.toThrow(/not granted/);
+        ).rejects.toThrow(/needs approval/);
         expect(sent.length).toBe(0);
       } finally {
         rmSync(dir, { recursive: true, force: true });
@@ -542,18 +521,71 @@ export default async () => {
         );
         applyGrantGate(rec.server, []);
         expect(rec.names().join()).toBe('send_message');
-        expect(rec.find('send_message')?.description?.includes('only send to the person')).toBe(true);
+        expect(rec.find('send_message')?.description?.includes("person's own address")).toBe(true);
         const call = (to: string) =>
           rec.handler('send_message')({ account: ACCOUNT, to, text: 'hi' }) as Promise<{ isError?: boolean }>;
         expect((await call(ACCOUNT_INFO.identity)).isError === true).toBe(false);
         expect(sent.length).toBe(1);
         const refused = await call('someone@example.org');
         expect(refused.isError).toBe(true);
-        expect(JSON.stringify(refused)).toContain('not granted');
+        expect(JSON.stringify(refused)).toContain('needs approval');
         expect(sent.length).toBe(1);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
+    });
+
+    await it('logs why an agent send went through — and never the text', async () => {
+      const answer = (reply: AccessReply): AccessPort => ({ request: async () => reply });
+      const reasonOfLog = (text: string): string =>
+        String(JSON.parse(text.trim().split('\n').pop() ?? '{}').reason);
+      await world(GRANTS, async ({ agent, logText }) => {
+        await agent(OWNER);
+        expect(reasonOfLog(logText())).toBe('migrated');
+      });
+      await world([], async ({ agent, logText }) => {
+        await agent(ACCOUNT_INFO.identity);
+        expect(reasonOfLog(logText())).toBe('self');
+      });
+      await world(
+        [],
+        async ({ agent, logText }) => {
+          await agent(OWNER);
+          expect(reasonOfLog(logText())).toBe('rule');
+        },
+        { agentAccess: { rules: [{ account: ACCOUNT, contact: OWNER, write: 'allow' }] } },
+      );
+      await world([], async ({ agent, logText, sent }) => {
+        await agent(OWNER, answer({ allowed: true, reason: 'once' }));
+        await agent(OWNER, answer({ allowed: true, reason: 'session' }));
+        await agent(OWNER, answer({ allowed: true, reason: 'temporary' }));
+        expect(
+          logText()
+            .split('\n')
+            .filter(Boolean)
+            .map((l) => JSON.parse(l).reason),
+        ).toEqualArray(['once', 'session', 'temporary']);
+        expect(logText().includes('secret')).toBe(false);
+        expect(sent.length).toBe(3);
+      });
+    });
+
+    await it('refuses a deny rule and a refused prompt before anything is sent', async () => {
+      await world(
+        [],
+        async ({ agent, sent, logged }) => {
+          await expect(agent(OWNER)).rejects.toThrow(/denied by config\.agentAccess\.rules/);
+          expect(sent.length).toBe(0);
+          expect(logged()).toBe(false);
+        },
+        { agentAccess: { rules: [{ account: ACCOUNT, contact: OWNER, write: 'deny' }] } },
+      );
+      await world([], async ({ agent, sent }) => {
+        await expect(
+          agent(OWNER, { request: async () => ({ allowed: false, reason: 'timeout' }) }),
+        ).rejects.toThrow(/within 2 minutes/);
+        expect(sent.length).toBe(0);
+      });
     });
 
     await it('lets the person send from an enabled account with no grant at all, and logs it', async () => {

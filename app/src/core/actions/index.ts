@@ -14,5 +14,7 @@ export * from './conversations.ts';
 export * from './deliveries.ts';
 export * from './send.ts';
 export * from './wait-reply.ts';
+export * from './access.ts';
+export * from './search-access.ts';
 export * from './messaging.ts';
 export * from './omemo.ts';

@@ -85,10 +85,7 @@ export default async () => {
     });
 
     await it('refuses without a grant, before the session is even opened', async () => {
-      for (const config of [
-        { grants: [] },
-        { grants: [{ capability: 'xmpp.send', target: `${ACCOUNT}/1001` }] },
-      ]) {
+      for (const config of [{ grants: [] }]) {
         await withRig(config, async (rig) => {
           expect(await refused(send(rig, '1001', 'Hallo'))).toBe(true);
           expect(rig.fake.clients.length).toBe(0);
