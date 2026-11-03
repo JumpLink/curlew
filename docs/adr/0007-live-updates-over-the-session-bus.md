@@ -145,13 +145,26 @@ one that never returns.
 
 This ADR decides how a change reaches a listener once it is in the index. **Which backends
 write while the daemon runs** is unchanged by it: Signal and WhatsApp (ADR 0002) and the
-XMPP accounts a grant names (ADR 0004 §5). Matrix, Telegram and mail stay on `curlew sync`
-until each gets a follow source of its own, each in its own change:
+XMPP accounts a grant names (ADR 0004 §5), and since the Matrix change below, every enabled
+Matrix account. Telegram and mail stay on `curlew sync` until each gets a follow source of its
+own, each in its own change:
 
-- **Matrix** first: the sync loop is already read-only through `readOnlyFetch`, a long-polling
-  `GET /sync` with `set_presence=offline` is exactly what that gate passes, and the account
-  file is already the crypto store's snapshot. It needs the receive lease like every other
-  follow, so a `sync` stands down for it.
+- **Matrix** first — **implemented.** The long-polling `GET /sync` with `set_presence=offline`
+  and `timeout=30000` is exactly what `readOnlyFetch` passes; the guard is unchanged. It
+  deviates from the sketch in four places:
+  - *No stored `next_batch`.* curlew never kept one: `sync` runs the matrix-js-sdk loop in
+    memory for room keys and the room list and reads history backwards by timestamp. Follow
+    keeps that client open instead, treats a live timeline event as a wake-up (the XMPP
+    shape, ADR 0004 §5) and runs the ordinary `syncChats` catch-up over it. Journal rows and
+    `Changed` come from that one write path.
+  - *The lease protects against a second daemon only.* `syncChats` takes no chat lease, for
+    Matrix as for XMPP, so a `sync` does not stand down; chat writes are idempotent, so the
+    two cannot disagree.
+  - *Every enabled Matrix account is followed.* Enabling the backend is the opt-in; there is
+    no per-account grant.
+  - *Reconnect and logout* follow the XMPP loop: the SDK retries a few polls itself, then the
+    loop backs off 5 s doubling to 5 min; a 401 / `M_UNKNOWN_TOKEN` is `logged-out` and that
+    account stops. E2EE is unchanged: the same client, the same crypto store snapshot.
 - Telegram's update stream and IMAP IDLE after that, in that order.
 
 The journal does not care which of them wrote: a row is a row, which is why this is decided
