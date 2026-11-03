@@ -13,6 +13,7 @@
 import type { Classification } from '@curlew/protocol';
 import { normalizeAddress } from '@curlew/protocol';
 import { configPath, ensurePrivateDir } from '@curlew/store';
+import { type AgentAccessPolicy, defaultAgentAccess, parseAgentAccess } from './agent-access.ts';
 import { type Grant, type ParseGrantsOptions, parseGrants } from './grants.ts';
 import { chmodSync, existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -36,6 +37,12 @@ export interface CurlewConfig {
   /** Write grants (ADR 0004). Absent or empty denies every write. */
   grants: Grant[];
   /**
+   * Agent access per account and contact (ADR 0009), with the old `<backend>.send` grants folded
+   * in as migrated rules. Parsed and exposed; nothing enforces it yet. Saving writes only the
+   * rules the person wrote, never a migrated one.
+   */
+  agentAccess: AgentAccessPolicy;
+  /**
    * Peers this account must never be sent plain text, keyed like a grant target (ADR 0006 §7).
    *
    * `"<account>/<address>"` for one peer, `"<account>"` for every peer of that account. The only
@@ -53,7 +60,7 @@ export interface CurlewConfig {
   unknown: Record<string, unknown>;
 }
 
-const KNOWN_KEYS = ['backends', 'senders', 'grants', 'encryption'];
+const KNOWN_KEYS = ['backends', 'senders', 'grants', 'agentAccess', 'encryption'];
 
 /**
  * What an absent config file means. Mail is enabled by THIS default, not by a special case in
@@ -61,7 +68,14 @@ const KNOWN_KEYS = ['backends', 'senders', 'grants', 'encryption'];
  * every other, and a user who disables it in the file gets exactly that.
  */
 export function defaultConfig(): CurlewConfig {
-  return { backends: { mail: { enabled: true } }, senders: {}, grants: [], encryption: {}, unknown: {} };
+  return {
+    backends: { mail: { enabled: true } },
+    senders: {},
+    grants: [],
+    agentAccess: defaultAgentAccess(),
+    encryption: {},
+    unknown: {},
+  };
 }
 
 /** Parse and validate the file's text. Throws with the offending key named. */
@@ -121,6 +135,9 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   }
 
   const grants = parseGrants(obj.grants, options);
+  const access = parseAgentAccess(obj.agentAccess, grants);
+  if (!access.ok) throw new Error(access.errors.join('; '));
+  const agentAccess = access.policy;
   const encryption = parseEncryption(obj.encryption);
 
   const unknown: Record<string, unknown> = {};
@@ -128,7 +145,7 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     if (!KNOWN_KEYS.includes(key)) unknown[key] = value;
   }
 
-  return { backends, senders, grants, encryption, unknown };
+  return { backends, senders, grants, agentAccess, encryption, unknown };
 }
 
 /**
@@ -163,12 +180,16 @@ export function loadConfig(path = configPath()): CurlewConfig {
 export function saveConfig(config: CurlewConfig, path = configPath()): void {
   ensurePrivateDir(dirname(path));
   const part = `${path}.part`;
-  const { unknown, grants, encryption, ...known } = config;
+  const { unknown, grants, agentAccess, encryption, ...known } = config;
+  const writtenRules = agentAccess.rules.filter((rule) => !rule.migrated);
   const carried = Object.fromEntries(Object.entries(unknown).filter(([key]) => !KNOWN_KEYS.includes(key)));
   const out = {
     ...carried,
     ...known,
     ...(grants.length > 0 ? { grants } : {}),
+    ...(writtenRules.length > 0 || !agentAccess.askWithoutRule
+      ? { agentAccess: { askWithoutRule: agentAccess.askWithoutRule, rules: writtenRules } }
+      : {}),
     ...(Object.keys(encryption).length > 0 ? { encryption } : {}),
   };
   writeFileSync(part, `${JSON.stringify(out, null, 2)}\n`, { mode: 0o600 });
