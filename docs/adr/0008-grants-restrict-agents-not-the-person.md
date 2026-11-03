@@ -63,11 +63,16 @@ daemon's send service do not check grants: they are the person's. An agent front
 function (`sendAsAgent`) that checks the grant for the exact `<account>/<address>` pair and then
 calls the core, so the CLI and the MCP tool cannot drift.
 
-**A message to the person's own account stays allowed without a grant**: an address that is the
-account's own identity. That is a message to oneself, and it speaks in nobody's name. Where a
-backend's self-address is not its account identity (Signal's ACI, WhatsApp's JID), the grant is
-still what lets an agent write there; the MCP tool is, as before, registered only while at least
-one `*.send` grant exists, so a self-send over MCP needs that grant to exist.
+**A message to the person's own account never needs a grant**, on any backend and from any
+frontend: it reaches nobody else and speaks in nobody's name. What counts as "own" is each
+backend's knowledge, not the account `identity` (which is a display name for Signal, WhatsApp and
+Telegram) and not a switch in core: `SendBackend.isSelfAddress(account, to)` answers from what the
+backend already stores about itself — Signal's own ACI, WhatsApp's own JID and LID with or without
+device suffix, an XMPP bare JID with any resource, a mail address case-insensitively, Telegram's
+own user id (Saved Messages), a Matrix user id. Only positive knowledge counts: a backend that
+cannot tell (a Matrix room, a Signal phone number, a failing lookup, a missing method) answers
+"not self" and the grant is required. The MCP tool is always registered, outside the grant gate,
+and says in its description that without a grant it can only send to the person's own account.
 
 A later UI page ("agent access") edits the grants. The page is not part of this record, and the
 config format stays as ADR 0004 §1 specifies.

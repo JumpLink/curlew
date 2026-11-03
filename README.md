@@ -467,10 +467,10 @@ same `xmpp.send` grant covers it.
 
 The MCP server offers the same as `send_message` (`account`, `to`, `text`,
 `image_url`; at least one of the last two) —
-only when some `<backend>.send` grant exists; without one the tool is not even
-listed and the server stays read-only. The action then checks the exact backend
-named by the account, so a `mail.send` grant does not let an agent write over
-XMPP. For XMPP the answer carries `conversationId`, `sentAt` and `originId`.
+always listed. Without a grant it can only send to your own account (your own
+address, note to self); anything else needs the exact `<backend>.send` grant
+for the account and address, so a `mail.send` grant does not let an agent write
+over XMPP. For XMPP the answer carries `conversationId`, `sentAt` and `originId`.
 `send_message` also takes `format`: `plain` (default, the text goes out as is) or
 `markdown`. Markdown is rendered as XEP-0393 message styling (other protocols would get
 a plain-text degradation), an image link on its own line becomes an image message, and a
@@ -775,8 +775,8 @@ the way it is.
 The server is read-only by default and **fails closed**: a tool is registered
 only if it declares itself read-only or a grant names its capability, so a
 future write tool that forgets its annotation is withheld rather than silently
-exposed. `send_message` appears only when some `<backend>.send` grant exists,
-and every call is checked against the exact `<account>/<address>` pair.
+exposed. `send_message` is always listed, and every call is checked: your own
+address needs no grant, anything else the exact `<account>/<address>` pair.
 
 See [`.mcp.json`](.mcp.json) for a working registration.
 
