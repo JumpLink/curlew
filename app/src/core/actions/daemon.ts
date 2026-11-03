@@ -310,7 +310,9 @@ export function createDaemonSendHandler(options: DaemonSendHandlerOptions): Daem
       }
       permit = { account: request.account, addresses: [request.to] };
     } catch (error) {
-      log(`curlew-daemon: a send for ${who} was refused — it names the wrong capability`);
+      log(
+        `curlew-daemon: a send for ${who} was refused — the request names a capability this backend does not send under`,
+      );
       return { v: DAEMON_WIRE_VERSION, kind: 'refused', message: errText(error) };
     }
     let sender: MessageSender;

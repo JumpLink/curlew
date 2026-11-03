@@ -18,6 +18,15 @@ export function accountIdFor(userId: number): string {
   return `telegram-${userId}`;
 }
 
+/**
+ * Whether `to` is the account's own chat ("Saved Messages"): in Telegram a user's own id is the
+ * chat id of that chat, and the account id carries it. A group's negative id is never it.
+ */
+export function isOwnChatId(accountId: string, to: string): boolean {
+  if (!ACCOUNT_ID.test(accountId) || !/^\d+$/.test(to)) return false;
+  return BigInt(to) === BigInt(accountId.slice('telegram-'.length));
+}
+
 export function sessionPath(secretsDir: string, accountId: string): string {
   if (!ACCOUNT_ID.test(accountId)) throw new Error(`not a Telegram account id: ${accountId}`);
   return join(secretsDir, `${accountId}.db`);

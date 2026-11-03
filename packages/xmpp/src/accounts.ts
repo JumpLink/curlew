@@ -15,6 +15,7 @@ import { SecretStore, stableId } from '@curlew/store';
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { XmppLogin } from './client.ts';
+import { bareJid } from './stanza.ts';
 
 const ACCOUNT_ID = /^xmpp-[0-9a-z]+$/;
 // Rename fallback: the key inside existing account files, read back as-is. Do not rebrand.
@@ -31,6 +32,15 @@ export function normalizeJid(raw: string): string {
   const jid = normalizeAddress('jid', raw);
   if (!jid) throw new Error(_('not an XMPP address — expected name@example.org'));
   return jid;
+}
+
+/**
+ * Whether `to` is the account's own address: its bare JID with any resource, or none. XMPP
+ * addresses are case-insensitive. A JID with the same local part on another domain is not it.
+ */
+export function isOwnBareJid(identity: string, to: string): boolean {
+  const own = bareJid(identity.trim());
+  return own.includes('@') && bareJid(to.trim()) === own;
 }
 
 export function accountPath(secretsDir: string, accountId: string): string {

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-03 10:16+0100\n"
+"POT-Creation-Date: 2026-11-03 10:45+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -18,7 +18,7 @@ msgstr ""
 "{capability} ist nicht die Berechtigung, unter der {backend} sendet — es "
 "wurde nichts gesendet"
 
-#: app/src/core/actions/daemon.ts:325
+#: app/src/core/actions/daemon.ts:327
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
@@ -90,7 +90,7 @@ msgstr ""
 "{capability} ist für {target} nicht freigegeben — füge {grant} in der "
 "Konfigurationsdatei zu den Freigaben hinzu"
 
-#: app/src/core/actions/send.ts:296 app/src/core/actions/send.ts:476
+#: app/src/core/actions/send.ts:296 app/src/core/actions/send.ts:489
 msgid "no account {account} — `curlew accounts list` shows them"
 msgstr "Kein Konto {account} — `curlew accounts list` zeigt sie an"
 
@@ -102,15 +102,15 @@ msgstr "{backend} kann kein Bild senden — gib Text an und lass image_url weg"
 msgid "nothing to send: the text is empty after rendering"
 msgstr "Nichts zu senden: Der Text ist nach dem Rendern leer"
 
-#: app/src/core/actions/send.ts:483
+#: app/src/core/actions/send.ts:496
 msgid "{backend} cannot send"
 msgstr "{backend} kann nicht senden"
 
-#: app/src/core/actions/send.ts:487
+#: app/src/core/actions/send.ts:500
 msgid "nothing to send: give text, an image URL or both"
 msgstr "Nichts zu senden: Gib Text, eine Bild-URL oder beides an"
 
-#: app/src/core/actions/send.ts:489
+#: app/src/core/actions/send.ts:502
 msgid "{backend} messages carry no subject"
 msgstr "Nachrichten von {backend} haben keinen Betreff"
 
@@ -1390,42 +1390,42 @@ msgstr ""
 "Beginnt nach dieser Journal-Nummer; Standard ist der neueste Eintrag, es "
 "erscheinen also nur neue Änderungen"
 
-#: packages/imap/src/send.ts:52 packages/matrix/src/send.ts:165
+#: packages/imap/src/send.ts:61 packages/matrix/src/send.ts:165
 #: packages/signal/src/send.ts:275 packages/telegram/src/sender.ts:43
 #: packages/whatsapp/src/send.ts:250
 msgid "sending to {address} is not granted for account {account}"
 msgstr "Das Senden an {address} ist für Konto {account} nicht freigegeben"
 
-#: packages/imap/src/send.ts:81
+#: packages/imap/src/send.ts:96
 msgid "no mail account {account} with SMTP — `curlew accounts list` shows them"
 msgstr ""
 "Kein E-Mail-Konto {account} mit SMTP — `curlew accounts list` zeigt sie an"
 
-#: packages/matrix/src/backend.ts:54
+#: packages/matrix/src/backend.ts:55
 msgid "log in again with `curlew accounts add matrix`"
 msgstr "melde dich mit `curlew accounts add matrix` neu an"
 
-#: packages/matrix/src/backend.ts:59
+#: packages/matrix/src/backend.ts:60
 msgid "Homeserver (URL like https://matrix.example.org, or the server name)"
 msgstr "Homeserver (URL wie https://matrix.example.org oder der Servername)"
 
-#: packages/matrix/src/backend.ts:60
+#: packages/matrix/src/backend.ts:61
 msgid "Matrix user (@name:example.org)"
 msgstr "Matrix-Benutzer (@name:example.org)"
 
-#: packages/matrix/src/backend.ts:61 packages/xmpp/src/backend.ts:41
+#: packages/matrix/src/backend.ts:62 packages/xmpp/src/backend.ts:48
 msgid "Password"
 msgstr "Passwort"
 
-#: packages/matrix/src/backend.ts:101
+#: packages/matrix/src/backend.ts:108
 msgid "no Matrix account {account} — {hint}"
 msgstr "Kein Matrix-Konto {account} — {hint}"
 
-#: packages/matrix/src/backend.ts:108
+#: packages/matrix/src/backend.ts:115
 msgid "the Matrix account file {account} is incomplete — {hint}"
 msgstr "Die Matrix-Kontodatei {account} ist unvollständig — {hint}"
 
-#: packages/matrix/src/backend.ts:142
+#: packages/matrix/src/backend.ts:149
 msgid "the Matrix account {account} is not usable ({reason}) — {hint}"
 msgstr "Das Matrix-Konto {account} ist nicht nutzbar ({reason}) — {hint}"
 
@@ -1495,11 +1495,11 @@ msgstr ""
 "verschlüsselten Nachrichten senden — es wurde nichts gesendet, sende sie aus "
 "einem Matrix-Client"
 
-#: packages/signal/src/backend.ts:149
+#: packages/signal/src/backend.ts:154
 msgid "no Signal session for {account} — {hint}"
 msgstr "Keine Signal-Sitzung für {account} — {hint}"
 
-#: packages/signal/src/backend.ts:156
+#: packages/signal/src/backend.ts:161
 msgid "the Signal session {account} was never linked — {hint}"
 msgstr "Die Signal-Sitzung {account} wurde nie verknüpft — {hint}"
 
@@ -1723,11 +1723,11 @@ msgstr "Anmeldecode, den Telegram geschickt hat"
 msgid "Two-step verification password"
 msgstr "Passwort der zweistufigen Bestätigung"
 
-#: packages/telegram/src/backend.ts:115
+#: packages/telegram/src/backend.ts:120
 msgid "no Telegram session for {account} — {hint}"
 msgstr "keine Telegram-Sitzung für {account} — {hint}"
 
-#: packages/telegram/src/backend.ts:141
+#: packages/telegram/src/backend.ts:146
 msgid "the Telegram session {account} is not usable ({reason}) — {hint}"
 msgstr "die Telegram-Sitzung {account} ist nicht nutzbar ({reason}) — {hint}"
 
@@ -1868,15 +1868,15 @@ msgstr ""
 "Eine Telegram-Nachricht fasst höchstens {max} Zeichen, diese hat {length} — "
 "kürze sie"
 
-#: packages/whatsapp/src/backend.ts:119
+#: packages/whatsapp/src/backend.ts:139
 msgid "no WhatsApp session for {account} — {hint}"
 msgstr "Keine WhatsApp-Sitzung für {account} — {hint}"
 
-#: packages/whatsapp/src/backend.ts:129
+#: packages/whatsapp/src/backend.ts:149
 msgid "the WhatsApp session {account} was never linked — {hint}"
 msgstr "Die WhatsApp-Sitzung {account} wurde nie verknüpft — {hint}"
 
-#: packages/whatsapp/src/backend.ts:234
+#: packages/whatsapp/src/backend.ts:254
 msgid "the WhatsApp connection for {account} is not open — nothing was sent"
 msgstr ""
 "Die WhatsApp-Verbindung für {account} ist nicht offen — es wurde nichts "
@@ -2035,20 +2035,20 @@ msgstr ""
 "{address} ist keine WhatsApp-Chat-ID — nimm die ID, die `conversations_list` "
 "für den Chat anzeigt (`<digits>@lid` oder `<digits>@s.whatsapp.net`)"
 
-#: packages/xmpp/src/accounts.ts:32
+#: packages/xmpp/src/accounts.ts:33
 msgid "not an XMPP address — expected name@example.org"
 msgstr "Keine XMPP-Adresse — erwartet wird name@example.org"
 
-#: packages/xmpp/src/accounts.ts:37
+#: packages/xmpp/src/accounts.ts:47
 msgid "not an XMPP account id: {account}"
 msgstr "Keine XMPP-Konto-ID: {account}"
 
-#: packages/xmpp/src/accounts.ts:62
+#: packages/xmpp/src/accounts.ts:72
 msgid "no XMPP account {account} — add it with `curlew accounts add xmpp`"
 msgstr ""
 "Kein XMPP-Konto {account} — füge es mit `curlew accounts add xmpp` hinzu"
 
-#: packages/xmpp/src/accounts.ts:70
+#: packages/xmpp/src/accounts.ts:80
 msgid ""
 "the XMPP account {account} is incomplete — add it again with `curlew "
 "accounts add xmpp`"
@@ -2056,7 +2056,7 @@ msgstr ""
 "Das XMPP-Konto {account} ist unvollständig — füge es mit `curlew accounts "
 "add xmpp` erneut hinzu"
 
-#: packages/xmpp/src/accounts.ts:102
+#: packages/xmpp/src/accounts.ts:112
 msgid ""
 "an XMPP password does not belong in the config file (it is backed up in the "
 "clear) — remove backends.xmpp.settings.password; `curlew accounts add xmpp` "
@@ -2066,11 +2066,11 @@ msgstr ""
 "Klartext gesichert) — entferne backends.xmpp.settings.password; `curlew "
 "accounts add xmpp` legt es in einer 0600-Datei ab"
 
-#: packages/xmpp/src/backend.ts:40
+#: packages/xmpp/src/backend.ts:47
 msgid "XMPP address (name@example.org)"
 msgstr "XMPP-Adresse (name@example.org)"
 
-#: packages/xmpp/src/backend.ts:43
+#: packages/xmpp/src/backend.ts:50
 msgid ""
 "Server address — empty to discover it (e.g. xmpps://xmpp.example.org:5223, "
 "wss://…)"

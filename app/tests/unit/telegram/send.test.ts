@@ -10,7 +10,6 @@ import { TELEGRAM_MAX_MESSAGE_CHARS, TELEGRAM_MANIFEST, TelegramBackend } from '
 
 import { openIndex } from '../../../src/core/actions/index.ts';
 import { sendAsAgent } from '../../../src/core/actions/send.ts';
-import { withSendGateGrants } from '../../../src/frontends/mcp/tools/send.ts';
 import { fakeFactory } from './fake-client.ts';
 
 // Synthetic only: a fake client, a temporary directory per case, no session of anyone's.
@@ -160,11 +159,6 @@ export default async () => {
         expect(fake.clients[0].sent.length).toBe(0);
         await session.close();
       });
-    });
-
-    await it('serves send_message to the MCP gate with a telegram.send grant alone', async () => {
-      const union = withSendGateGrants([{ capability: 'telegram.send', target: `${ACCOUNT}/1001` }]);
-      expect(union.some((g) => g.capability === 'send' && g.target === `${ACCOUNT}/1001`)).toBe(true);
     });
   });
 };

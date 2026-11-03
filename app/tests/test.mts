@@ -67,6 +67,7 @@ import grants from './unit/core/grants.test.ts';
 import encryption from './unit/core/encryption.test.ts';
 import capabilities from './unit/core/capabilities.test.ts';
 import send from './unit/core/send.test.ts';
+import selfAddress from './unit/core/self-address.test.ts';
 import markdown from './unit/core/markdown.test.ts';
 import daemon from './unit/core/daemon.test.ts';
 import daemonAccounts from './unit/core/daemon-accounts.test.ts';
@@ -147,6 +148,7 @@ run({
   grants,
   encryption,
   send,
+  selfAddress,
   markdown,
   daemon,
   daemonAccounts,

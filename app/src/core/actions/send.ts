@@ -443,13 +443,26 @@ async function routeThroughDaemon(
   }
 }
 
+/** Positive knowledge only: a missing method or a failing lookup is "not self". */
+async function isSelf(backend: unknown, accountId: string, to: string): Promise<boolean> {
+  const ask = (backend as { isSelfAddress?: (account: string, to: string) => Promise<boolean> })
+    .isSelfAddress;
+  if (typeof ask !== 'function') return false;
+  try {
+    return (await ask.call(backend, accountId, to)) === true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Send as an agent: the CLI and MCP entry (ADR 0008). The grant is checked FIRST — before the core
  * is reached, before the daemon is asked — and a grant names the exact pair for the exact backend.
  *
  * The one thing allowed without a grant is a message to the account's own address: it reaches
- * nobody the person did not already own. Signal's and WhatsApp's own addresses are not that
- * address (`identity` is the phone number there), so those still need the grant.
+ * nobody the person did not already own. Which addresses those are is the backend's knowledge
+ * (`SendBackend.isSelfAddress`: Signal's ACI, WhatsApp's JID and LID, a mail address in any case…);
+ * a backend that cannot tell, or that errors, answers "not self" and the grant is required.
  */
 export async function sendAsAgent(params: SendParams): Promise<SendResult> {
   const config = loadConfig(params.configPath ?? configPath());
@@ -461,7 +474,7 @@ export async function sendAsAgent(params: SendParams): Promise<SendResult> {
     return sendMessage({ ...params, backend });
   }
   const found = await findAccountBackend(config, params.accountId, params.backend);
-  if (found === null || found.account.identity !== params.to) {
+  if (found === null || !(await isSelf(found.backend, found.account.id, params.to))) {
     throw notGrantedError(sendTarget(params.accountId, params.to));
   }
   return sendMessage({ ...params, backend: found.backend });

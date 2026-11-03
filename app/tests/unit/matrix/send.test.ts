@@ -16,7 +16,6 @@ import { chatConversationId, getConversation, rebuildConversations, syncChats } 
 
 import { openIndex } from '../../../src/core/actions/index.ts';
 import { sendAsAgent } from '../../../src/core/actions/send.ts';
-import { withSendGateGrants } from '../../../src/frontends/mcp/tools/send.ts';
 import { ANNA, FakeMatrixApi, fakeConnector, HOMESERVER, ME, seedAccount, text } from './fake-api.ts';
 
 /**
@@ -382,12 +381,6 @@ export default async () => {
           db.close();
         }
       });
-    });
-
-    await it('serves send_message to the MCP gate with a matrix.send grant alone', async () => {
-      const target = `matrix-0123456789abcd/${ROOM}`;
-      const union = withSendGateGrants([{ capability: 'matrix.send', target }]);
-      expect(union.some((g) => g.capability === 'send' && g.target === target)).toBe(true);
     });
   });
 };

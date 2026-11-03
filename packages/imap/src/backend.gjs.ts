@@ -38,7 +38,7 @@ import {
 import { listMailTargets } from '@curlew/gnome';
 import { ImapClient, type ImapResponse } from './client.gjs.ts';
 import { MAIL_MANIFEST } from './manifest.ts';
-import { openMailSender } from './send.ts';
+import { isOwnAddressOf, openMailSender } from './send.ts';
 
 /**
  * How much body text is indexed per message.
@@ -231,5 +231,10 @@ export class ImapBackend implements MailBackend, SendBackend {
    */
   async openSender(accountId: string, permit: SendPermit): Promise<MessageSender> {
     return openMailSender(accountId, permit);
+  }
+
+  /** The account's own mail address; an account without SMTP has none to recognise. */
+  async isSelfAddress(accountId: string, to: string): Promise<boolean> {
+    return isOwnAddressOf(accountId, to);
   }
 }

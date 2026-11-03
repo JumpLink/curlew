@@ -635,6 +635,16 @@ export interface MessageSender {
  */
 export interface SendBackend extends MessageBackend {
   openSender(accountId: string, permit: SendPermit, options?: ChatConnectOptions): Promise<MessageSender>;
+  /**
+   * Whether `to` is an address of this account itself — the person's own number, JID, mail
+   * address or note-to-self chat, in every spelling the network gives it (ADR 0008). A message
+   * there reaches nobody else, so an agent needs no grant for it.
+   *
+   * Only POSITIVE knowledge counts: a backend answers true when it can tell from what it already
+   * stores about its own account, and false for everything else — a lookalike, an unknown form, a
+   * session it cannot read. Leaving the method out means "cannot tell", which is false.
+   */
+  isSelfAddress?(accountId: string, to: string): Promise<boolean>;
 }
 
 /** Narrow a registry entry to the send port. */

@@ -34,6 +34,15 @@ function smtpAccountFor(target: SmtpTarget): SmtpAccount {
   };
 }
 
+/**
+ * Whether `to` is the account's own mail address (`from` of its SMTP target), compared
+ * case-insensitively and as a whole: a sub-address, another domain or a display-name form is not it.
+ */
+export function isOwnMailAddress(from: string, to: string): boolean {
+  const own = from.trim().toLowerCase();
+  return own.includes('@') && to.trim().toLowerCase() === own;
+}
+
 export class MailSender implements MessageSender {
   /** Mail bodies are plain text: no chat styling, no splitting. */
   readonly features: SenderFeatures = { markdown: false };
@@ -71,6 +80,12 @@ export class MailSender implements MessageSender {
 
   /** Nothing stays open between sends: the transport is closed inside `sendMessage`. */
   async close(): Promise<void> {}
+}
+
+/** The mail backend's `isSelfAddress`: the SMTP target knows the account's own address. */
+export async function isOwnAddressOf(accountId: string, to: string): Promise<boolean> {
+  const target = (await listSmtpTargets(accountId)).find((t) => t.accountId === accountId);
+  return target !== undefined && isOwnMailAddress(target.from, to);
 }
 
 /** Open the sender for one account. Reads no password until a message is actually sent. */
