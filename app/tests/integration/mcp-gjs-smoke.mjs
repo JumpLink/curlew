@@ -55,6 +55,7 @@ const EXPECTED_TOOLS = [
   'mail_sync_status',
   'messaging_capabilities',
   'omemo_devices',
+  'send_message',
   'setup_status',
   'xmpp_wait_reply',
 ];
@@ -85,9 +86,18 @@ assert.deepEqual(
 // The read-only promise, asserted ON THE WIRE rather than in the source: this is what an MCP
 // client actually sees. A tool that lost its annotation would have been dropped by the gate and
 // failed the catalogue check above; one that gained `readOnlyHint: false` fails here.
+// `send_message` is the one exception, deliberately (ADR 0008): it is listed with no grant and
+// the action refuses everything but the person's own address.
 for (const tool of tools) {
-  assert.equal(tool.annotations?.readOnlyHint, true, `tool ${tool.name} is not marked read-only`);
+  const writes = tool.name === 'send_message';
+  assert.equal(tool.annotations?.readOnlyHint, !writes, `tool ${tool.name} has the wrong read-only mark`);
 }
+const refused = await client.callTool({
+  name: 'send_message',
+  arguments: { account: 'xmpp-abc123', to: 'someone@example.org', text: 'hi' },
+});
+assert(refused.isError === true, 'send_message to a non-self address with no grant must be refused');
+assert(JSON.stringify(refused.content).includes('not granted'), 'the refusal must be the not-granted error');
 console.log(`OK: MCP stdio server on GJS — ${tools.length} read-only tools (${info.name} ${info.version})`);
 
 // A real tools/call. Tolerate environments without GOA (headless CI has no session bus): we
@@ -183,17 +193,16 @@ for (const canary of [...DROPPED, CONTROL]) {
   assert(!gated.includes(canary), `GATE IS OPEN: ${canary} was served without a grant — ${gated.join(', ')}`);
 }
 assert(!gated.includes('setup_run'), `GATE IS OPEN: setup_run was served — ${gated.join(', ')}`);
-assert(
-  !gated.includes('send_message'),
-  `GATE IS OPEN: send_message was served with no <backend>.send grant — ${gated.join(', ')}`,
-);
+// send_message is registered outside the gate: with no grant it is still listed, and sendAsAgent
+// refuses everything but the person's own address (ADR 0008).
+assert(gated.includes('send_message'), `send_message must be served with no grant — ${gated.join(', ')}`);
 assert(gated.includes('setup_status'), 'setup_status must be served: it declares itself read-only');
 assert.deepEqual(gated, EXPECTED_TOOLS, 'gated catalogue drifted');
 console.log(
-  `OK: without a grant the gate DROPS all canaries, setup_run and send_message (${gated.length} tools)`,
+  `OK: without a grant the gate DROPS all canaries and setup_run, and serves send_message (${gated.length} tools)`,
 );
 
-// With grants: the positive control and send_message appear, the other three still do not.
+// With grants: the positive control appears, the other three still do not.
 const grantsFile = join(scratch, 'granted.json');
 writeFileSync(
   grantsFile,
@@ -210,129 +219,11 @@ assert(
   granted.includes(CONTROL),
   `${CONTROL} never served — the gate drops everything (${granted.join(', ')})`,
 );
-assert(
-  granted.includes('send_message'),
-  `send_message not served with an xmpp.send grant (${granted.join(', ')})`,
-);
 for (const canary of DROPPED) {
   assert(!granted.includes(canary), `GATE IS OPEN: ${canary} was served — ${granted.join(', ')}`);
 }
 assert(!granted.includes('setup_run'), 'setup_run must stay dropped without MCP_ALLOW_WRITE');
-console.log(
-  `OK: with grants the positive control and send_message are served, the other canaries stay dropped`,
-);
-
-// Any `<backend>.send` grant serves send_message, not only XMPP's: the tool is gated by the union,
-// the action then checks the exact backend's capability. A mail-only config is the proof.
-const mailGrantsFile = join(scratch, 'granted-mail.json');
-writeFileSync(
-  mailGrantsFile,
-  JSON.stringify({
-    backends: {},
-    grants: [{ capability: 'mail.send', target: 'goa-account-1/owner@example.org' }],
-  }),
-);
-const mailGranted = await listToolNames({ CURLEW_MCP_GATE_CANARY: '1', CURLEW_CONFIG: mailGrantsFile });
-assert(
-  mailGranted.includes('send_message'),
-  `send_message not served with a mail.send grant (${mailGranted.join(', ')})`,
-);
-console.log('OK: a mail.send grant alone serves send_message');
-
-const telegramGrantsFile = join(scratch, 'granted-telegram.json');
-writeFileSync(
-  telegramGrantsFile,
-  JSON.stringify({
-    backends: {},
-    grants: [{ capability: 'telegram.send', target: 'telegram-42/1001' }],
-  }),
-);
-const telegramGranted = await listToolNames({
-  CURLEW_MCP_GATE_CANARY: '1',
-  CURLEW_CONFIG: telegramGrantsFile,
-});
-assert(
-  telegramGranted.includes('send_message'),
-  `send_message not served with a telegram.send grant (${telegramGranted.join(', ')})`,
-);
-for (const canary of DROPPED) {
-  assert(
-    !telegramGranted.includes(canary),
-    `GATE IS OPEN: ${canary} was served — ${telegramGranted.join(', ')}`,
-  );
-}
-console.log('OK: a telegram.send grant alone serves send_message and nothing else that writes');
-
-const matrixGrantsFile = join(scratch, 'granted-matrix.json');
-writeFileSync(
-  matrixGrantsFile,
-  JSON.stringify({
-    backends: {},
-    grants: [{ capability: 'matrix.send', target: 'matrix-0123456789abcd/!room:example.org' }],
-  }),
-);
-const matrixGranted = await listToolNames({
-  CURLEW_MCP_GATE_CANARY: '1',
-  CURLEW_CONFIG: matrixGrantsFile,
-});
-assert(
-  matrixGranted.includes('send_message'),
-  `send_message not served with a matrix.send grant (${matrixGranted.join(', ')})`,
-);
-for (const canary of DROPPED) {
-  assert(!matrixGranted.includes(canary), `GATE IS OPEN: ${canary} was served — ${matrixGranted.join(', ')}`);
-}
-console.log('OK: a matrix.send grant alone serves send_message and nothing else that writes');
-
-const signalGrantsFile = join(scratch, 'granted-signal.json');
-writeFileSync(
-  signalGrantsFile,
-  JSON.stringify({
-    backends: {},
-    grants: [
-      {
-        capability: 'signal.send',
-        target: 'signal-9f3a1c2e-7b4d-4e18-8c6a-2f5b1d0e3a47/9f3a1c2e-7b4d-4e18-8c6a-2f5b1d0e3a47',
-      },
-    ],
-  }),
-);
-const signalGranted = await listToolNames({
-  CURLEW_MCP_GATE_CANARY: '1',
-  CURLEW_CONFIG: signalGrantsFile,
-});
-assert(
-  signalGranted.includes('send_message'),
-  `send_message not served with a signal.send grant (${signalGranted.join(', ')})`,
-);
-for (const canary of DROPPED) {
-  assert(!signalGranted.includes(canary), `GATE IS OPEN: ${canary} was served — ${signalGranted.join(', ')}`);
-}
-console.log('OK: a signal.send grant alone serves send_message and nothing else that writes');
-
-const whatsappGrantsFile = join(scratch, 'granted-whatsapp.json');
-writeFileSync(
-  whatsappGrantsFile,
-  JSON.stringify({
-    backends: {},
-    grants: [{ capability: 'whatsapp.send', target: 'whatsapp-208451726394015/134875029461837@lid' }],
-  }),
-);
-const whatsappGranted = await listToolNames({
-  CURLEW_MCP_GATE_CANARY: '1',
-  CURLEW_CONFIG: whatsappGrantsFile,
-});
-assert(
-  whatsappGranted.includes('send_message'),
-  `send_message not served with a whatsapp.send grant (${whatsappGranted.join(', ')})`,
-);
-for (const canary of DROPPED) {
-  assert(
-    !whatsappGranted.includes(canary),
-    `GATE IS OPEN: ${canary} was served — ${whatsappGranted.join(', ')}`,
-  );
-}
-console.log('OK: a whatsapp.send grant alone serves send_message and nothing else that writes');
+console.log(`OK: with grants the positive control is served, the other canaries stay dropped`);
 
 // The env switch still opens setup_run, and only that.
 const ungated = await listToolNames({ CURLEW_MCP_GATE_CANARY: '1', CURLEW_MCP_ALLOW_WRITE: '1' });

@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { MAIL_MANIFEST, MailSender } from '@curlew/imap';
 import type { MessageBackend, SendPermit, SmtpTarget } from '@curlew/protocol';
 
-import { sendMessage } from '../../../src/core/actions/send.ts';
+import { sendAsAgent, sendMessage } from '../../../src/core/actions/send.ts';
 import { startDummyServer } from '../smtp/dummy-server.ts';
 import type { DummyServer } from '../smtp/dummy-server.ts';
 
@@ -169,7 +169,7 @@ export default async () => {
             let opened = 0;
             let refused = false;
             try {
-              await sendMessage({
+              await sendAsAgent({
                 accountId: ACCOUNT,
                 to: OWNER,
                 text: 'Hallo',
@@ -199,7 +199,7 @@ export default async () => {
             let opened = 0;
             let refused = false;
             try {
-              await sendMessage({
+              await sendAsAgent({
                 accountId: ACCOUNT,
                 to: OWNER,
                 text: 'Hallo',

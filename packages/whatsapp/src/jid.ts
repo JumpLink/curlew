@@ -39,6 +39,26 @@ export function isLidJid(jid: Jid | null): boolean {
   return jid !== null && LID_SERVERS.has(jid.server) && /^\d+$/.test(jid.user);
 }
 
+/**
+ * Whether `to` is the account itself: the user part of its own LID or of its own phone-number
+ * JID, with or without a device suffix, matched within the same kind — a LID never equals a phone
+ * number that happens to have the same digits. `me` is what the linked device's credentials say
+ * about it (`creds.me`); without it nothing is recognised.
+ */
+export function isOwnJid(
+  me: { id?: string | null; lid?: string | null } | null | undefined,
+  to: string,
+): boolean {
+  const target = parseJid(to);
+  if (!target) return false;
+  return [parseJid(me?.id), parseJid(me?.lid)].some(
+    (own) =>
+      own !== null &&
+      own.user === target.user &&
+      ((isPnJid(own) && isPnJid(target)) || (isLidJid(own) && isLidJid(target))),
+  );
+}
+
 /** Stories: other people's status updates, not a chat. Never stored. */
 export const STATUS_BROADCAST = 'status@broadcast';
 

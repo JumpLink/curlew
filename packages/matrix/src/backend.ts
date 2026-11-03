@@ -20,6 +20,7 @@ import type { MatrixApi, MatrixLoginPrompts } from './api.ts';
 import {
   type AccountRecord,
   accountPath,
+  isOwnUserId,
   listAccounts,
   readAccessToken,
   readAccountRecord,
@@ -84,6 +85,12 @@ export class MatrixBackend implements ChatBackend, SendBackend {
 
   async listAccounts(): Promise<BackendAccount[]> {
     return listAccounts(this.context.secretsDir);
+  }
+
+  /** The account's own user id (a room is never self; see `isOwnUserId`). */
+  async isSelfAddress(accountId: string, to: string): Promise<boolean> {
+    const account = (await this.listAccounts()).find((a) => a.id === accountId);
+    return account !== undefined && isOwnUserId(account.identity, to);
   }
 
   /** Log in with homeserver, user and password; SSO-only servers are refused with the reason. */

@@ -26,6 +26,17 @@ export function accountIdFor(userId: string): string {
   return stableId('matrix-', userId);
 }
 
+/**
+ * Whether `to` is the account's own Matrix user id. Only the id is recognised: a ROOM is not,
+ * because telling a note-to-self room from a room with other people in it takes the member list
+ * from the homeserver, and the answer can change after the check. A room that cannot be proven
+ * to hold only the person is not self.
+ */
+export function isOwnUserId(identity: string, to: string): boolean {
+  const own = identity.trim().toLowerCase();
+  return own.startsWith('@') && to.trim().toLowerCase() === own;
+}
+
 export function accountPath(secretsDir: string, accountId: string): string {
   if (!ACCOUNT_ID.test(accountId)) throw new Error(`not a Matrix account id: ${accountId}`);
   return join(secretsDir, `${accountId}.db`);

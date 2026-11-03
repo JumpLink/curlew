@@ -1,83 +1,53 @@
 /**
- * `send_message` — the granted send tool (ADR 0004 §3/§4, amended 2026-10-30).
+ * `send_message` — the send tool (ADR 0004 §3/§4, ADR 0008).
  *
- * It declares its capability through `requiresCapability`; the grant gate registers it only when
- * at least one `<backend>.send` grant exists and checks `<account>/<to>` against the grants on
- * every call before this handler runs. The action checks the same grant again — naming the exact
- * backend — so the CLI and this tool cannot drift.
- *
- * **The gate takes ONE capability per tool, and sending is granted per backend.** So the tool is
- * gated by the union of the send grants under one internal name, `SEND_GATE_CAPABILITY`, which
- * `parseGrants` rejects in a config: it exists for this registration and nothing else. What the
- * gate checks is therefore "this account/address pair is granted for sending somewhere"; the
- * action then checks `<backend>.send` for the pair, and that is the decision.
+ * Registered outside the grant gate and always served: the gate takes one capability per tool and
+ * sending is granted per backend, and a self-send needs no grant at all. `sendAsAgent` is the
+ * decision on every call — the exact `<backend>.send` grant for `<account>/<to>`, or an address
+ * the backend recognises as the person's own — so the CLI and this tool cannot drift.
  */
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { mcpSuccess, requiresCapability } from '@gjsify/mcp';
-import type { Grant } from '../../../core/grants.ts';
-import { isSendCapability } from '../../../core/grants.ts';
+import { mcpSuccess } from '@gjsify/mcp';
 import { z } from 'zod';
 
-import { sendMessage, sendTarget } from '../../../core/actions/index.ts';
+import { sendAsAgent } from '../../../core/actions/index.ts';
 import { MESSAGE_FORMATS } from '../../../core/markdown.ts';
 import { mcpErrorFrom } from '../types.ts';
 
-/**
- * The internal capability the send tool is gated by: one name for every `<backend>.send` grant.
- * Not in `CAPABILITIES`, so it cannot be written into a configuration.
- */
-export const SEND_GATE_CAPABILITY = 'send';
-
-/** The gate's grant set: the real grants, plus every `*.send` grant under {@link SEND_GATE_CAPABILITY}. */
-export function withSendGateGrants(grants: readonly Grant[]): Array<{ capability: string; target: string }> {
-  const union = grants
-    .filter((grant) => isSendCapability(grant.capability))
-    .map((grant) => ({ capability: SEND_GATE_CAPABILITY, target: grant.target }));
-  return [...grants, ...union];
-}
-
-export function registerSendTools(server: McpServer): void {
+/** `send` is the seam the tests use to hand the action an injected backend; the server passes none. */
+export function registerSendTools(server: McpServer, send: typeof sendAsAgent = sendAsAgent): void {
   server.registerTool(
     'send_message',
-    requiresCapability(
-      {
-        title: 'Send a Message',
-        description:
-          "Send one plain-text message from a granted account. The account picks the backend (mail, XMPP, Telegram, Matrix, Signal); only available when the config grants that backend's `<backend>.send` for the exact account/address pair. `subject` is mail only. For XMPP, `format` is `plain` (default: text sent exactly as given, max 8000 characters) or `markdown` (rendered as XEP-0393 message styling, a line that is only `![alt](https://…)` becomes its own image message, and texts over 7000 characters are split into several messages; the result then has `parts` and `originIds`, and `originId` is the first message), and an image is `image_url` (https only): it goes out as its own message after the text, body = the URL plus an XEP-0066 `jabber:x:oob` reference, so Conversations, Gajim and Monocles show it inline; it is not uploaded or fetched by curlew. For XMPP the answer carries `conversationId`, `sentAt` and `originId` (the stanza id and XEP-0359 origin-id, which a reply references in `replyToId` of xmpp_wait_reply): to wait for the reply, poll conversations_get with id=conversationId, since=sentAt, incoming_only=true, include_bodies=true while `curlew daemon` runs. For Telegram `to` is the chat's id as conversations_list shows it (the user id of a direct chat, the negative id of a group), the text is sent exactly as given (plain only, max 4096 characters, refused rather than split, no image). For Matrix `to` is the room id as conversations_list shows it (`!abc:example.org`), the text is sent exactly as given (plain only, max 32000 bytes of UTF-8, refused rather than split, no image), and a room with end-to-end encryption is refused: curlew cannot encrypt yet and will not put a message into such a room in the clear. For Signal `to` is the recipient's ACI as conversations_list shows a direct chat's id (a phone number is not an address here, and a group is refused), the text is sent exactly as given (plain only, max 2048 bytes of UTF-8, refused rather than split, no image), the own account id sends a note to self, and the send is refused while `curlew daemon` holds that account: both share the encryption state, so only one of them may use it at a time. A `sendWarning` in the answer means the message reached the recipient but the user's own other devices may not show it. For WhatsApp `to` is the chat's id as conversations_list shows a direct chat (`<lid>@lid` or `<phone>@s.whatsapp.net`); a bare phone number, an id with a device suffix (`…:3@…`), a group and a broadcast are refused. The text is sent exactly as given (plain only, max 65536 bytes of UTF-8, refused rather than split, no image), the own account's JID sends a note to self, and the send is refused while `curlew daemon` holds that account: WhatsApp allows one connection per linked device, so only one of them may use the session at a time. A `sendWarning` here means the message left curlew but WhatsApp did not acknowledge it in time. For mail only `sentAt` and the message id are meaningful. See messaging_capabilities. Not end-to-end encrypted on XMPP (OMEMO is not supported).",
-        inputSchema: {
-          account: z
-            .string()
-            .min(1)
-            .describe('Account id from accounts_list, exactly as the grant spells it'),
-          to: z.string().min(1).describe('Address, spelled exactly as in the grant'),
-          text: z
-            .string()
-            .min(1)
-            .optional()
-            .describe('The message (Markdown when format is markdown). Required unless image_url is given'),
-          subject: z.string().min(1).optional().describe('Mail only: the subject line'),
-          image_url: z
-            .string()
-            .min(1)
-            .optional()
-            .describe('XMPP only: https URL of one image, sent as its own message after the text'),
-          format: z
-            .enum(MESSAGE_FORMATS)
-            .optional()
-            .describe('XMPP: plain (default) or markdown (rendered per protocol, long texts split)'),
-        },
-        annotations: { readOnlyHint: false, openWorldHint: true },
+    {
+      title: 'Send a Message',
+      description:
+        "Send one plain-text message from an account. The account picks the backend (mail, XMPP, Telegram, Matrix, Signal, WhatsApp). Without a grant it can only send to the person's own account (their own address, note to self); anything else needs the config to grant that backend's `<backend>.send` for the exact account/address pair and is refused otherwise. `subject` is mail only. For XMPP, `format` is `plain` (default: text sent exactly as given, max 8000 characters) or `markdown` (rendered as XEP-0393 message styling, a line that is only `![alt](https://…)` becomes its own image message, and texts over 7000 characters are split into several messages; the result then has `parts` and `originIds`, and `originId` is the first message), and an image is `image_url` (https only): it goes out as its own message after the text, body = the URL plus an XEP-0066 `jabber:x:oob` reference, so Conversations, Gajim and Monocles show it inline; it is not uploaded or fetched by curlew. For XMPP the answer carries `conversationId`, `sentAt` and `originId` (the stanza id and XEP-0359 origin-id, which a reply references in `replyToId` of xmpp_wait_reply): to wait for the reply, poll conversations_get with id=conversationId, since=sentAt, incoming_only=true, include_bodies=true while `curlew daemon` runs. For Telegram `to` is the chat's id as conversations_list shows it (the user id of a direct chat, the negative id of a group), the text is sent exactly as given (plain only, max 4096 characters, refused rather than split, no image). For Matrix `to` is the room id as conversations_list shows it (`!abc:example.org`), the text is sent exactly as given (plain only, max 32000 bytes of UTF-8, refused rather than split, no image), and a room with end-to-end encryption is refused: curlew cannot encrypt yet and will not put a message into such a room in the clear. For Signal `to` is the recipient's ACI as conversations_list shows a direct chat's id (a phone number is not an address here, and a group is refused), the text is sent exactly as given (plain only, max 2048 bytes of UTF-8, refused rather than split, no image), the own account id sends a note to self, and the send is refused while `curlew daemon` holds that account: both share the encryption state, so only one of them may use it at a time. A `sendWarning` in the answer means the message reached the recipient but the user's own other devices may not show it. For WhatsApp `to` is the chat's id as conversations_list shows a direct chat (`<lid>@lid` or `<phone>@s.whatsapp.net`); a bare phone number, an id with a device suffix (`…:3@…`), a group and a broadcast are refused. The text is sent exactly as given (plain only, max 65536 bytes of UTF-8, refused rather than split, no image), the own account's JID sends a note to self, and the send is refused while `curlew daemon` holds that account: WhatsApp allows one connection per linked device, so only one of them may use the session at a time. A `sendWarning` here means the message left curlew but WhatsApp did not acknowledge it in time. For mail only `sentAt` and the message id are meaningful. See messaging_capabilities. Not end-to-end encrypted on XMPP (OMEMO is not supported).",
+      inputSchema: {
+        account: z.string().min(1).describe('Account id from accounts_list, exactly as the grant spells it'),
+        to: z.string().min(1).describe('Address, spelled exactly as in the grant'),
+        text: z
+          .string()
+          .min(1)
+          .optional()
+          .describe('The message (Markdown when format is markdown). Required unless image_url is given'),
+        subject: z.string().min(1).optional().describe('Mail only: the subject line'),
+        image_url: z
+          .string()
+          .min(1)
+          .optional()
+          .describe('XMPP only: https URL of one image, sent as its own message after the text'),
+        format: z
+          .enum(MESSAGE_FORMATS)
+          .optional()
+          .describe('XMPP: plain (default) or markdown (rendered per protocol, long texts split)'),
       },
-      {
-        capability: SEND_GATE_CAPABILITY,
-        targetOf: (args: { account: string; to: string }) => sendTarget(args.account, args.to),
-      },
-    ),
+      annotations: { readOnlyHint: false, openWorldHint: true },
+    },
     async (params) => {
       try {
         return mcpSuccess(
-          await sendMessage({
+          await send({
             accountId: params.account,
             to: params.to,
             text: params.text,

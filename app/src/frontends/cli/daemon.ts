@@ -23,7 +23,7 @@ export const daemonCommand: CommandModule = {
   command: 'daemon',
   get describe() {
     return _(
-      'Receive from every enabled delivery-only backend (Signal, WhatsApp) and every granted XMPP account until stopped — the systemd unit in contrib/ runs this',
+      'Receive from every enabled delivery-only backend (Signal, WhatsApp) and every enabled XMPP and Matrix account until stopped — the systemd unit in contrib/ runs this',
     );
   },
   builder: (yargs) =>

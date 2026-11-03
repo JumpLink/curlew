@@ -8,7 +8,7 @@
 import { _ } from '@curlew/protocol';
 import type { CommandModule } from 'yargs';
 
-import { sendMessage } from '../../core/actions/index.ts';
+import { sendAsAgent } from '../../core/actions/index.ts';
 import { runAndExit } from './output.ts';
 
 export const sendCommand: CommandModule = {
@@ -43,7 +43,7 @@ export const sendCommand: CommandModule = {
   handler: (argv) => {
     const raw = argv as Record<string, unknown>;
     runAndExit(() =>
-      sendMessage({
+      sendAsAgent({
         accountId: String(raw.account),
         to: String(raw.to),
         text: raw.text === undefined ? undefined : String(raw.text),

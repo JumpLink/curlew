@@ -45,18 +45,21 @@ is built on, which is where this is headed.
   [matrix-js-sdk](https://github.com/matrix-org/matrix-js-sdk) and its Rust
   crypto compiled to WebAssembly. See [Matrix](#matrix-1).
 
-Everything is **read-only unless a grant names it**. Messages are fetched with
+Everything is **read-only for an agent unless a grant names it**: grants are agent
+access, not a lock on you ([ADR 0008](docs/adr/0008-grants-restrict-agents-not-the-person.md)).
+An account you enabled is fully yours — the daemon follows it and your own
+frontends send from it without a grant. Messages are fetched with
 IMAP `BODY.PEEK`, so opening a mail through Curlew never marks it as read.
 Telegram is read the same way: without a grant nothing is sent, edited, deleted
 or marked read. WhatsApp too: no message, no read receipt, no online presence
 (see [WhatsApp](#whatsapp) for the one acknowledgement every linked device
-sends). XMPP likewise — without an `xmpp.send` grant Curlew never sends a
-presence, so contacts do not see it online and your offline messages stay queued
-for your real clients. Matrix too: no presence, no read receipt, no typing
+sends). XMPP likewise — the daemon follows an enabled account with a negative
+presence priority and no status text, so contacts do not see it online and your
+offline messages stay queued for your real clients. Matrix too: no presence, no read receipt, no typing
 notice, no message without a `matrix.send` grant, and no invitation is
 accepted. Signal too: no message, no
 receipt, no typing notice (see [Signal](#signal) for the acknowledgement and the
-two requests at link time). The only writes are a granted send — one message,
+two requests at link time). The only writes an agent can make are a granted send — one message,
 from one account, to one address, off by default
 (see [Sending](#sending-grants-backendsend)).
 
@@ -429,9 +432,13 @@ See [End-to-end encryption](#end-to-end-encryption-grant-xmppomemo) and
 
 ### Sending (grants `<backend>.send`)
 
-An account can send one message, but only from an account and to an address you
+Grants are **agent access** (ADR 0008): the CLI and the MCP tool — the frontends an
+agent drives — send one message only from an account and to an address you
 granted, as an exact `<account>/<address>` pair (see
-[Your data stays yours](#your-data-stays-yours)). Every backend has its own
+[Your data stays yours](#your-data-stays-yours)); a message to the account's own
+address needs no grant. Your own frontends — the daemon's send service today, the
+UI later — send from every enabled account without one. Every send, whoever made
+it, leaves a line in the write log. Every backend has its own
 capability — `xmpp.send`, `mail.send`, `telegram.send`, `matrix.send`, `signal.send` and
 `whatsapp.send` today — and one grant never authorises
 another backend:
@@ -439,6 +446,10 @@ another backend:
 ```json
 { "grants": [ { "capability": "xmpp.send", "target": "xmpp-abc123/owner@example.org" } ] }
 ```
+
+The limit, stated plainly: under one Unix user an agent with a shell can still call
+the daemon's D-Bus `Send` directly, and no grant stops that. A hard boundary needs
+a sandbox, which is future work.
 
 ```bash
 curlew send --account xmpp-abc123 --to owner@example.org "Build is green"
@@ -456,10 +467,10 @@ same `xmpp.send` grant covers it.
 
 The MCP server offers the same as `send_message` (`account`, `to`, `text`,
 `image_url`; at least one of the last two) —
-only when some `<backend>.send` grant exists; without one the tool is not even
-listed and the server stays read-only. The action then checks the exact backend
-named by the account, so a `mail.send` grant does not let an agent write over
-XMPP. For XMPP the answer carries `conversationId`, `sentAt` and `originId`.
+always listed. Without a grant it can only send to your own account (your own
+address, note to self); anything else needs the exact `<backend>.send` grant
+for the account and address, so a `mail.send` grant does not let an agent write
+over XMPP. For XMPP the answer carries `conversationId`, `sentAt` and `originId`.
 `send_message` also takes `format`: `plain` (default, the text goes out as is) or
 `markdown`. Markdown is rendered as XEP-0393 message styling (other protocols would get
 a plain-text degradation), an image link on its own line becomes an image message, and a
@@ -545,7 +556,7 @@ can end in a logout, and relinking would lose the history WhatsApp never hands o
 curlew send --account whatsapp-208451726394015 --to '134875029461837@lid' "Build is green"
 ```
 
-**Waiting for a reply.** Run `curlew daemon`: for granted XMPP accounts it
+**Waiting for a reply.** Run `curlew daemon`: for every enabled XMPP account it
 stays connected, enables carbons (XEP-0280) and catches up from the archive on
 every arrival and after every reconnect, so a reply reaches the index within
 seconds. Then call the read-only MCP tool
@@ -565,8 +576,9 @@ skewed clock can hide or repeat a message.
 Limits, stated plainly: there is no stream management (XEP-0198): a message
 written as the connection drops is not retransmitted (receiving is covered by
 the archive catch-up). Rooms are not joined; they are only read through the
-archive on connect and `curlew sync`. Grants are read when the daemon starts; it
-stops if they are edited, and the new set applies after a restart. Encryption is
+archive on connect and `curlew sync`. The `xmpp.omemo` grant is read when the daemon
+starts; it stops if that grant is edited, and the new set applies after a restart
+(send grants do not matter to it). Encryption is
 one-to-one only — a room is never encrypted.
 
 ### End-to-end encryption (grant `xmpp.omemo`)
@@ -662,8 +674,8 @@ curlew daemon                   # receive until stopped (SIGTERM/SIGINT)
 It connects to every **delivery-only** backend you enabled — Signal and
 WhatsApp — for every account, all at once, and keeps receiving. Mail and chat
 backends (IMAP, Telegram) stay on `curlew sync`: they are
-pull models with a cursor, and a daemon buys them nothing. XMPP accounts with
-an `xmpp.send` grant are followed as well, so replies arrive live, and so is every
+pull models with a cursor, and a daemon buys them nothing. Every enabled XMPP
+account is followed as well, so replies arrive live, and so is every
 account of an enabled Matrix backend (a long-polling `/sync`, read-only, no
 presence; a new message wakes an ordinary catch-up). While the daemon follows an
 account, `curlew sync` leaves that account to it (one device, one crypto store, one
@@ -763,8 +775,8 @@ the way it is.
 The server is read-only by default and **fails closed**: a tool is registered
 only if it declares itself read-only or a grant names its capability, so a
 future write tool that forgets its annotation is withheld rather than silently
-exposed. `send_message` appears only when some `<backend>.send` grant exists,
-and every call is checked against the exact `<account>/<address>` pair.
+exposed. `send_message` is always listed, and every call is checked: your own
+address needs no grant, anything else the exact `<account>/<address>` pair.
 
 See [`.mcp.json`](.mcp.json) for a working registration.
 
@@ -782,7 +794,9 @@ live in `$XDG_CONFIG_HOME/curlew/config.json` (mode `0600`, override with
 `CURLEW_CONFIG`). Unlike the index they cannot be rebuilt from a server, so
 back that file up. Keys this build does not know are kept when it saves the file.
 
-**Writes are off unless granted** ([ADR 0004](docs/adr/0004-sending-and-writing-granted-per-capability.md)).
+**Agent writes are off unless granted** ([ADR 0004](docs/adr/0004-sending-and-writing-granted-per-capability.md),
+[ADR 0008](docs/adr/0008-grants-restrict-agents-not-the-person.md)): grants are agent access,
+checked by the CLI and the MCP server, not by your own frontends.
 `grants` lists capabilities, each bound to exactly one target; no wildcards, and a
 missing or empty list denies everything. A malformed entry, an empty target or an
 unknown capability is an error when the file loads.

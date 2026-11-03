@@ -19,7 +19,7 @@ import {
 import { SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
 import type { LoginPrompts, TelegramApi, TelegramClientHandle } from './api.ts';
-import { listSessionAccounts, sessionPath } from './accounts.ts';
+import { isOwnChatId, listSessionAccounts, sessionPath } from './accounts.ts';
 import { type ClientFactory, createMtcuteClient } from './client.ts';
 import { embeddedCredentials, resolveCredentials, type TelegramCredentials } from './credentials.ts';
 import { loginTelegram } from './login.ts';
@@ -87,6 +87,11 @@ export class TelegramBackend implements ChatBackend, SendBackend {
 
   async listAccounts(): Promise<BackendAccount[]> {
     return listSessionAccounts(this.context.secretsDir);
+  }
+
+  /** The account's own user id, the chat id of its "Saved Messages". */
+  async isSelfAddress(accountId: string, to: string): Promise<boolean> {
+    return isOwnChatId(accountId, to);
   }
 
   /** Log in: phone number, the code Telegram sends, and the 2FA password when one is set. */

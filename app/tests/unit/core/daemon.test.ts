@@ -16,6 +16,7 @@ import { PLUGIN_API_VERSION } from '@curlew/protocol';
 import type { RebuildResult } from '@curlew/store';
 import { takeReceiveLease } from '@curlew/store';
 import { accountIdFor } from '@curlew/signal';
+import { GrantedXmppSession, type XmppBackend, type XmppLink } from '@curlew/xmpp';
 import { accountIdFromCreds } from '@curlew/whatsapp';
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
 import {
@@ -37,7 +38,7 @@ import {
 
 const BACKEND = 'fakedaemon';
 
-// Without this the daemon reads the user's real config: its xmpp.send grants would start a
+// Without this the daemon reads the user's real config: its enabled accounts would start a
 // follower, and its backend selection is not the test's. A path that never exists yields the
 // defaults.
 const NO_CONFIG = join(tmpdir(), 'curlew-daemon-test-no-config', 'config.json');
@@ -156,6 +157,25 @@ class ScriptedBackend implements DeliveryBackend {
     this.sessions.set(accountId, session);
     return session;
   }
+}
+
+/** An XMPP connection that does nothing — enough for a follower to open, go available and close. */
+function quietLink(): XmppLink {
+  return {
+    jid: 'me@example.org',
+    roster: async () => [],
+    bookmarks: async () => [],
+    features: async () => new Set(),
+    mam: async () => ({ entries: [], complete: true }),
+    close: async () => {},
+    sendChat: async () => {},
+    sendEncrypted: async () => {},
+    goAvailable: async () => {},
+    pepGet: async () => undefined,
+    pepSet: async () => {},
+    onArrival: () => () => {},
+    onClosed: () => {},
+  };
 }
 
 const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 1));
@@ -302,18 +322,84 @@ export default async () => {
   });
 
   await describe('daemonGrants', async () => {
-    await it('changes only with the grants the daemon follows and decrypts by', async () => {
-      const xmpp = [
-        { capability: 'xmpp.send', target: 'xmpp-a/anna@example.org' },
-        { capability: 'xmpp.omemo', target: 'xmpp-a' },
-      ] as const;
-      const before = daemonGrants([...xmpp]);
-      // Another backend's send grant is read by `curlew send`, not by a running daemon.
-      expect(daemonGrants([...xmpp, { capability: 'telegram.send', target: 'telegram-1/1' }])).toBe(before);
-      expect(daemonGrants([xmpp[0]])).not.toBe(before);
-      expect(daemonGrants([...xmpp, { capability: 'xmpp.send', target: 'xmpp-a/ben@example.org' }])).not.toBe(
+    await it('changes only with the decryption grant (send grants restrict agents, ADR 0008)', async () => {
+      const omemo = { capability: 'xmpp.omemo', target: 'xmpp-a' } as const;
+      const send = { capability: 'xmpp.send', target: 'xmpp-a/anna@example.org' } as const;
+      const before = daemonGrants([send, omemo]);
+      expect(daemonGrants([omemo])).toBe(before);
+      expect(daemonGrants([send, omemo, { capability: 'xmpp.send', target: 'xmpp-a/ben@example.org' }])).toBe(
         before,
       );
+      expect(daemonGrants([send, omemo, { capability: 'telegram.send', target: 'telegram-1/1' }])).toBe(
+        before,
+      );
+      expect(daemonGrants([send])).not.toBe(before);
+      expect(daemonGrants([send, omemo, { capability: 'xmpp.omemo', target: 'xmpp-b' }])).not.toBe(before);
+    });
+  });
+
+  await describe('xmpp follow', async () => {
+    await it('follows every enabled account without a grant, holding an empty permit', async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-daemon-xmpp-'));
+      const controller = new AbortController();
+      const opened: Array<{ id: string; addresses: string[] }> = [];
+      const xmpp = {
+        manifest: { name: 'xmpp' },
+        listAccounts: async () => [
+          { id: 'xmpp-a', identity: 'a@example.org', provider: 'Fake' },
+          { id: 'xmpp-b', identity: 'b@example.org', provider: 'Fake' },
+        ],
+        openGranted: async (id: string, permit: { addresses: string[] }) => {
+          opened.push({ id, addresses: [...permit.addresses] });
+          return new GrantedXmppSession(quietLink(), { account: id, addresses: [] }, () => 'oid');
+        },
+      } as unknown as XmppBackend;
+      const logs: string[] = [];
+      try {
+        const running = runDeliveryDaemon({
+          dbPath: ':memory:',
+          configPath: NO_CONFIG,
+          backends: [],
+          matrix: null,
+          xmpp,
+          accountId: 'xmpp-a',
+          signal: controller.signal,
+          rebuildDebounceMs: 5,
+          log: (line) => logs.push(line),
+          rebuild: async () => REBUILD,
+          publishSend: null,
+          writeLogPath: join(dir, 'write.log'),
+        });
+        for (let i = 0; i < 100 && opened.length < 1; i++) await new Promise((r) => setTimeout(r, 5));
+        controller.abort();
+        const result = await running;
+        // No grant anywhere, and the account was still followed — only the one asked for.
+        expect(opened.map((o) => o.id).join()).toBe('xmpp-a');
+        expect(opened[0].addresses.length).toBe(0);
+        expect(result.followed.map((f) => f.accountId).join()).toBe('xmpp-a');
+        expect(logs.some((l) => l.includes('following 1 xmpp account(s)'))).toBe(true);
+      } finally {
+        controller.abort();
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('has nothing to receive when XMPP is off and no other backend is enabled', async () => {
+      let message = '';
+      try {
+        await runDeliveryDaemon({
+          dbPath: ':memory:',
+          configPath: NO_CONFIG,
+          backends: [],
+          matrix: null,
+          xmpp: null,
+          publishSend: null,
+          log: () => {},
+        });
+      } catch (error) {
+        message = error instanceof Error ? error.message : String(error);
+      }
+      expect(message.includes('nothing to receive')).toBe(true);
     });
   });
 

@@ -37,7 +37,7 @@ import {
   type SocketFactory,
 } from './client.ts';
 import { guardedSendSocket } from './guard.ts';
-import { JidResolver } from './jid.ts';
+import { isOwnJid, JidResolver } from './jid.ts';
 import { FileJournal, journalPath } from './journal.ts';
 import { linkWhatsApp } from './login.ts';
 import { WHATSAPP_MANIFEST } from './manifest.ts';
@@ -97,6 +97,26 @@ export class WhatsAppBackend implements DeliveryBackend, SendBackend {
 
   async listAccounts(): Promise<BackendAccount[]> {
     return listSessionAccounts(this.context.secretsDir);
+  }
+
+  /**
+   * Own LID or own phone-number JID, from the linked device's credentials. A session that is
+   * missing, unlinked or unreadable recognises nothing.
+   */
+  async isSelfAddress(accountId: string, to: string): Promise<boolean> {
+    let session: { store: SecretStore; auth: SecretStoreAuthState };
+    try {
+      session = this.openSession(accountId);
+    } catch {
+      return false;
+    }
+    try {
+      return isOwnJid(session.auth.state.creds.me, to);
+    } finally {
+      // Nothing was changed: the write-behind timer `open` may have armed must not outlive the store.
+      session.auth.discard();
+      session.store.close();
+    }
   }
 
   /** Link curlew as a device: a QR code to scan, or a pairing code to type on the phone. */

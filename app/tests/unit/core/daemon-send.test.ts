@@ -32,8 +32,8 @@ import type { DaemonSendClient } from '../../../src/core/lib/daemon-send-client.
  *
  * What matters here and is asserted: a send reaches the daemon when one holds the account; it
  * takes the lease itself when none does; the message is written to the log and the index exactly
- * ONCE whichever process reached the network; and the daemon refuses a send its own grants do not
- * name, however the caller asked.
+ * ONCE whichever process reached the network; and the daemon checks no grant (ADR 0008), because
+ * grants restrict the agent frontends and this is the person's send service.
  *
  * All data is synthetic.
  */
@@ -259,6 +259,29 @@ export default async () => {
       });
     });
 
+    await it('sends from an enabled account without any grant (ADR 0008)', async () => {
+      await withWorld({}, async (world) => {
+        const sender = new FakeSender('own');
+        const { backend, opened } = callerBackend(sender);
+        const { client } = fakeClient(null);
+        const out = await sendMessage({
+          accountId: ACCOUNT,
+          to: PEER,
+          text: 'hi',
+          frontend: 'cli',
+          dbPath: world.dbPath,
+          configPath: world.configPath,
+          writeLogPath: world.writeLogPath,
+          backend: backend as never,
+          daemon: client,
+        });
+        expect(out.originId).toBe('own-1');
+        expect(opened[0].addresses.join()).toBe(PEER);
+        // Every write still leaves a line (ADR 0008 §4).
+        expect(world.logLines().length).toBe(1);
+      });
+    });
+
     await it('sends every part the daemon reported, and logs one line per part', async () => {
       await withWorld({ grants: GRANTS }, async (world) => {
         const { backend } = callerBackend(new FakeSender('own'));
@@ -406,19 +429,7 @@ export default async () => {
       text: 'hi',
       ...over,
     });
-    const handlerFor = (
-      sessions: Map<string, DeliverySession>,
-      grants: Array<{ capability: string; target: string }> = GRANTS,
-      onConfig?: () => void,
-    ) =>
-      createDaemonSendHandler({
-        sessions,
-        config: () => {
-          onConfig?.();
-          return { grants: grants as never };
-        },
-        log,
-      });
+    const handlerFor = (sessions: Map<string, DeliverySession>) => createDaemonSendHandler({ sessions, log });
 
     await it('sends on the session it is holding and closes only the sender', async () => {
       const sender = new FakeSender('daemon');
@@ -454,44 +465,29 @@ export default async () => {
       expect(reply.kind).toBe('not-followed');
     });
 
-    await it('refuses a send its own grants do not name, however the caller asked', async () => {
+    await it('checks no grant: the person sends from every account the daemon holds (ADR 0008)', async () => {
       const sender = new FakeSender('daemon');
-      const sessions = new Map([[sessionKey(BACKEND, ACCOUNT), heldSession(sender)]]);
-      // A caller that checked nothing, or whose grant was withdrawn since: the daemon's own
-      // config is the one that decides, and it is read for this very call.
-      for (const [grants, asked] of [
-        [[], request()],
-        [GRANTS, request({ to: 'other@example.org' })],
-        [[{ capability: CAPABILITY, target: `other-account/${PEER}` }], request()],
-      ] as const) {
-        const reply = await handlerFor(sessions, [...grants])(asked);
-        expect(reply.kind).toBe('refused');
-        expect(reply.kind === 'refused' && reply.message.length > 0).toBe(true);
+      const session = heldSession(sender);
+      const sessions = new Map([[sessionKey(BACKEND, ACCOUNT), session]]);
+      // No config, no grant anywhere — the handler has no way to read one.
+      for (const to of [PEER, 'other@example.org']) {
+        const reply = await handlerFor(sessions)(request({ to }));
+        expect(reply.kind).toBe('sent');
       }
-      expect(sender.sent.length).toBe(0);
+      expect(sender.sent.length).toBe(2);
+      // The permit names the one address asked for, so the sender's own check still has teeth.
+      expect(session.permits.map((p) => p.addresses.join()).join('|')).toBe(`${PEER}|other@example.org`);
     });
 
     await it('refuses a capability that is not the one this backend sends under', async () => {
       const sender = new FakeSender('daemon');
       const sessions = new Map([[sessionKey(BACKEND, ACCOUNT), heldSession(sender)]]);
-      // A grant for another backend's capability on the same pair must not open this one's
-      // session — the pair is checked together with the backend, never alone.
-      const reply = await handlerFor(sessions, [{ capability: 'xmpp.send', target: `${ACCOUNT}/${PEER}` }])(
-        request({ capability: 'xmpp.send' }),
-      );
+      // Another backend's capability on the same pair must not open this one's session — the
+      // pair is checked together with the backend, never alone. Not a grant check: a request that
+      // contradicts itself is a mistake in the caller.
+      const reply = await handlerFor(sessions)(request({ capability: 'xmpp.send' }));
       expect(reply.kind).toBe('refused');
       expect(sender.sent.length).toBe(0);
-    });
-
-    await it('reads the grants again for every send', async () => {
-      let reads = 0;
-      const sessions = new Map([[sessionKey(BACKEND, ACCOUNT), heldSession(new FakeSender('daemon'))]]);
-      const handler = handlerFor(sessions, GRANTS, () => {
-        reads++;
-      });
-      await handler(request());
-      await handler(request());
-      expect(reads).toBe(2);
     });
 
     await it('says nothing was sent when the sender cannot even be opened', async () => {

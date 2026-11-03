@@ -15,7 +15,14 @@ import type {
   SendBackend,
 } from '@curlew/protocol';
 import { SecretStore } from '@curlew/store';
-import { accountPath, caFileSetting, listAccounts, readLogin, refuseConfigSecrets } from './accounts.ts';
+import {
+  accountPath,
+  caFileSetting,
+  isOwnBareJid,
+  listAccounts,
+  readLogin,
+  refuseConfigSecrets,
+} from './accounts.ts';
 import type { LoginPrompts, XmppApi } from './api.ts';
 import { requireArchive } from './archive.ts';
 import {
@@ -68,6 +75,12 @@ export class XmppBackend implements ChatBackend, SendBackend {
 
   async listAccounts(): Promise<BackendAccount[]> {
     return listAccounts(this.context.secretsDir);
+  }
+
+  /** The account's own bare JID, whatever the resource; the account's identity IS that JID. */
+  async isSelfAddress(accountId: string, to: string): Promise<boolean> {
+    const account = (await this.listAccounts()).find((a) => a.id === accountId);
+    return account !== undefined && isOwnBareJid(account.identity, to);
   }
 
   addAccount(prompter: AccountPrompter): Promise<BackendAccount> {

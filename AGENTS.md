@@ -29,14 +29,20 @@ The code came out of `buchhaltung/packages/gnome`; the git history there is the 
 
 **The index and the MCP server are read-only and fail-closed.** IMAP is spoken with `BODY.PEEK`
 only, so `\Seen` is never set; there is no flag write, no move, no delete, and no MCP tool that
-writes without a grant. **Sending is a granted capability per backend**, `<backend>.send` with
+writes without a grant. **Grants are agent access, not a lock on the person**
+([ADR 0008](docs/adr/0008-grants-restrict-agents-not-the-person.md)): an enabled account is fully
+usable by the person's frontends (the daemon's bus send service, later the UI) with no grant.
+**An agent's sending is a granted capability per backend**, `<backend>.send` with
 an `<account>/<address>` target — `xmpp.send`, `mail.send`, `telegram.send`, `matrix.send`,
 `signal.send` and `whatsapp.send` exist today — off by default and
 refused for every pair a grant does not name
 ([ADR 0004](docs/adr/0004-sending-and-writing-granted-per-capability.md), amended 2026-10-30).
-The check lives once, in the app's send action; a backend's send path exists only on a handle
+The check lives once, in `sendAsAgent` (`core/actions/send.ts`), which the CLI and MCP call BEFORE
+the core or the bus — `sendMessage` and the daemon's send handler check none; a message to the
+account's own address needs no grant. Honest limit: under one Unix user an agent with a shell can
+call the daemon's D-Bus `Send` itself. A backend's send path exists only on a handle
 opened with a permit (`SendBackend.openSender`), and the sync handle cannot send (Telegram: `sendText` is on the full client handle only, never on `TelegramApi`/`ChatSession`; Matrix: the permit opens a second `fetch` that passes exactly one endpoint, `PUT …/rooms/{roomId}/send/m.room.message/{txnId}`, while the sync handle's `readOnlyFetch` refuses every write). Every
-frontend, CLI included, asks the same grant.
+agent frontend, CLI included, asks the same grant.
 
 ## Package layout — and the one rule that holds it together
 
@@ -50,7 +56,7 @@ frontend, CLI included, asks the same grant.
 | `@curlew/telegram` | Telegram `chat` backend on mtcute (web build: WebSocket, WebCrypto, WASM), its session storage on `SecretStore`, the login, the `telegram.send` sender (plain text, ≤ 4096 chars) | `protocol`, `store`, `@mtcute/*`, `node:*` — no `gi://` |
 | `@curlew/whatsapp` | WhatsApp `delivery` backend on Baileys (unofficial protocol: WebSocket, WASM, libsignal), its auth state on `SecretStore`, the QR / pairing-code link, the `whatsapp.send` sender (plain text, ≤ 65536 UTF-8 bytes, 1:1 only) | `protocol`, `store`, `baileys`, `node:*` — no `gi://` |
 | `@curlew/signal` | Signal `delivery` backend on `@signalapp/libsignal-client` (Rust behind N-API; on GJS through `@gjsify/napi`, loaded on first use), its protocol stores on `SecretStore`, the QR link as a linked device, the fail-closed request gate | `protocol`, `store`, `@signalapp/libsignal-client`, `qrcode-generator`, `node:*` — no `gi://` |
-| `@curlew/xmpp` | XMPP `chat` backend on xmpp.js (composed by hand: domain-checked direct TLS, WebSocket, SCRAM), history from MAM only, the account file on `SecretStore`, the login. Never sends presence, markers or messages without a grant | `protocol`, `store`, `@xmpp/*`, `node:*` — no `gi://` |
+| `@curlew/xmpp` | XMPP `chat` backend on xmpp.js (composed by hand: domain-checked direct TLS, WebSocket, SCRAM), history from MAM only, the account file on `SecretStore`, the login. Sends no markers or messages for an agent without a grant; the daemon's follow presence is negative-priority (ADR 0004 §5) | `protocol`, `store`, `@xmpp/*`, `node:*` — no `gi://` |
 | `@curlew/matrix` | Matrix `chat` backend on matrix-js-sdk + the Rust crypto as WASM (`@matrix-org/matrix-sdk-crypto-wasm`), its crypto store as an in-memory IndexedDB snapshotted into `SecretStore`, the password login, the `matrix.send` sender (plain text, ≤ 32000 UTF-8 bytes, refused for an encrypted room) | `protocol`, `store`, `matrix-js-sdk`, `@matrix-org/*`, `fake-indexeddb`, `node:*` — no `gi://` |
 | `curlew-cli` (`app/`) | yargs CLI + MCP server, config file, backend registry | all of the above |
 
@@ -234,7 +240,7 @@ the MCP server via `run_in_background` when driving it.
 - **SQLite runs on libgda, not sqlite3** — gjsify's `node:sqlite` is a `Gda` wrapper, and it
   leaks through in five ways that WILL bite you. Read
   [`packages/store/AGENTS.md`](packages/store/AGENTS.md) before writing any SQL.
-- **MCP tools are read-only or they do not register — unless a grant names them.** The server uses `applyGrantGate(server, grants)` (`server.ts`); `send_message` registers when ANY `<backend>.send` grant exists (the gate takes one capability per tool, so the app passes the union under an internal name no config can spell), and the app's send action then requires the exact `<backend>.send` for the `<account>/<address>`. A backend never sends without a permit from a grant (`SendBackend.openSender`; XMPP's `GrantedXmppSession`, `XmppApi` stays read-only; Telegram's `TelegramSender`, `TelegramApi` stays read-only; Matrix's `MatrixSender` on its own `sendFetch`, the sync client's `readOnlyFetch` stays read-only). Formerly `applyReadOnlyGate` — from
+- **MCP tools are read-only or they do not register — unless a grant names them.** The server uses `applyGrantGate(server, grants)` (`server.ts`); `send_message` is registered BEFORE the gate (like `setup_run`), so it is always listed, and `sendAsAgent` is the decision: the exact `<backend>.send` for the `<account>/<address>`, or an address the backend itself recognises as the person's own (`SendBackend.isSelfAddress`, positive knowledge only, fail closed) which needs no grant. A backend never sends without a permit from a grant (`SendBackend.openSender`; XMPP's `GrantedXmppSession`, `XmppApi` stays read-only; Telegram's `TelegramSender`, `TelegramApi` stays read-only; Matrix's `MatrixSender` on its own `sendFetch`, the sync client's `readOnlyFetch` stays read-only). Formerly `applyReadOnlyGate` — from
   **`@gjsify/mcp`**, since 0.54.0; it was `app/src/frontends/mcp/runtime.ts`, which no longer
   exists — registers a tool only when `annotations.readOnlyHint === true`; a tool that omits the
   annotation is dropped. Do not loosen this to a name list.

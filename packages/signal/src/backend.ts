@@ -21,7 +21,7 @@ import type {
 } from '@curlew/protocol';
 import { SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
-import { listSessionAccounts, sessionPath } from './accounts.ts';
+import { isOwnAci, listSessionAccounts, sessionPath } from './accounts.ts';
 import { SIGNAL_TRUST_ROOTS_BASE64 } from './constants.ts';
 import { type AttachmentDownloader, httpsDownloader } from './contacts.ts';
 import { EnvelopeDecryptor } from './decrypt.ts';
@@ -97,6 +97,11 @@ export class SignalBackend implements DeliveryBackend, SendBackend {
 
   async listAccounts(): Promise<BackendAccount[]> {
     return listSessionAccounts(this.context.secretsDir);
+  }
+
+  /** The own ACI is the one self-address Signal knows; see `isOwnAci` for what is not recognised. */
+  async isSelfAddress(accountId: string, to: string): Promise<boolean> {
+    return isOwnAci(accountId, to);
   }
 
   /**

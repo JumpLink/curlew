@@ -1,6 +1,6 @@
 import { applyGrantGate, requiresCapability } from '@gjsify/mcp';
 import { describe, expect, it } from '@gjsify/unit';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -8,6 +8,7 @@ import { chatConversationId, getConversation, recordSentChatMessage } from '@cur
 import {
   chatMessage,
   GrantedXmppSession,
+  isOwnBareJid,
   isArrivalHint,
   validateImageUrl,
   XMPP_MANIFEST,
@@ -16,11 +17,17 @@ import {
 import type { EncryptedStanza, XmppBackend, XmppLink } from '@curlew/xmpp';
 import xml from '@xmpp/xml';
 
-import { permitFor, recordDelivered, requireSendGrant, sendMessage } from '../../../src/core/actions/send.ts';
+import {
+  permitFor,
+  recordDelivered,
+  requireSendGrant,
+  sendAsAgent,
+  sendMessage,
+} from '../../../src/core/actions/send.ts';
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
 import { waitReply } from '../../../src/core/actions/wait-reply.ts';
 import { appendWriteLog } from '../../../src/core/write-log.ts';
-import { SEND_GATE_CAPABILITY, withSendGateGrants } from '../../../src/frontends/mcp/tools/send.ts';
+import { registerSendTools } from '../../../src/frontends/mcp/tools/send.ts';
 import { freshDb } from '../store/fixtures.ts';
 import { createRecorder } from '../mcp/recorder.ts';
 
@@ -358,41 +365,6 @@ export default async () => {
     });
   });
 
-  await describe('send_message is gated by the union of every <backend>.send grant', async () => {
-    const register = (rec: ReturnType<typeof createRecorder>) =>
-      rec.server.registerTool(
-        'send',
-        requiresCapability(
-          { inputSchema: {}, annotations: { readOnlyHint: false } },
-          {
-            capability: SEND_GATE_CAPABILITY,
-            targetOf: (a: { account: string; to: string }) => `${a.account}/${a.to}`,
-          },
-        ) as never,
-        (async () => 'reached') as never,
-      );
-
-    await it('is dropped with no grant and served by a mail.send grant alone', async () => {
-      const closed = createRecorder();
-      applyGrantGate(closed.server, withSendGateGrants([]));
-      register(closed);
-      expect(closed.names().length).toBe(0);
-
-      const opened = createRecorder();
-      applyGrantGate(
-        opened.server,
-        withSendGateGrants([{ capability: 'mail.send', target: `${ACCOUNT}/${OWNER}` }]),
-      );
-      register(opened);
-      expect(opened.names().join()).toBe('send');
-      expect(await opened.handler('send')({ account: ACCOUNT, to: OWNER })).toBe('reached');
-      const bad = (await opened.handler('send')({ account: ACCOUNT, to: 'x@example.org' })) as {
-        isError?: boolean;
-      };
-      expect(bad.isError).toBe(true);
-    });
-  });
-
   await describe('a delivered message the index cannot take', async () => {
     await it('is reported, not thrown: a retry would send it twice', async () => {
       const dir = mkdtempSync(join(tmpdir(), 'curlew-send-'));
@@ -413,6 +385,186 @@ export default async () => {
       }
     });
   });
+  await describe('sending without and with a grant (ADR 0008)', async () => {
+    const world = async (
+      grants: unknown[],
+      body: (w: {
+        agent: (to: string) => Promise<unknown>;
+        person: (to: string) => Promise<unknown>;
+        sent: Array<[string, string, string]>;
+        logged: () => boolean;
+      }) => Promise<void>,
+    ) => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-adr8-'));
+      try {
+        const configPath = join(dir, 'config.json');
+        writeFileSync(configPath, JSON.stringify({ grants }));
+        const sent: Array<[string, string, string]> = [];
+        let n = 0;
+        const backend = {
+          manifest: XMPP_MANIFEST,
+          listAccounts: async () => [ACCOUNT_INFO],
+          isSelfAddress: async (_id: string, to: string) => isOwnBareJid(ACCOUNT_INFO.identity, to),
+          openSender: async (_id: string, permit: ReturnType<typeof permitFor>) =>
+            new XmppSender(new GrantedXmppSession(fakeLink(sent), permit, () => `id-${++n}`)),
+        } as unknown as XmppBackend;
+        const send = (call: typeof sendMessage) => (to: string) =>
+          call({
+            accountId: ACCOUNT,
+            to,
+            text: 'hi',
+            frontend: 'cli',
+            dbPath: join(dir, 'index.db'),
+            configPath,
+            writeLogPath: join(dir, 'write.log'),
+            backend,
+          });
+        await body({
+          agent: send(sendAsAgent),
+          person: send(sendMessage),
+          sent,
+          logged: () => existsSync(join(dir, 'write.log')),
+        });
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    };
+
+    await it('refuses an agent send no grant names, before anything is sent or logged', async () => {
+      await world([], async ({ agent, sent, logged }) => {
+        await expect(agent(OWNER)).rejects.toThrow(/not granted/);
+        expect(sent.length).toBe(0);
+        expect(logged()).toBe(false);
+      });
+      await world(GRANTS, async ({ agent, sent }) => {
+        await expect(agent('other@example.org')).rejects.toThrow(/not granted/);
+        expect(sent.length).toBe(0);
+      });
+    });
+
+    await it('lets an agent send to the granted pair, and logs it', async () => {
+      await world(GRANTS, async ({ agent, sent, logged }) => {
+        await agent(OWNER);
+        expect(sent.length).toBe(1);
+        expect(sent[0][0]).toBe(OWNER);
+        expect(logged()).toBe(true);
+      });
+    });
+
+    await it("always lets an agent send to the account's own address", async () => {
+      await world([], async ({ agent, sent, logged }) => {
+        await agent(ACCOUNT_INFO.identity);
+        expect(sent.length).toBe(1);
+        expect(logged()).toBe(true);
+      });
+    });
+
+    await it('refuses a lookalike of the own JID without a grant', async () => {
+      await world([], async ({ agent, sent }) => {
+        await agent('bot@example.org');
+        expect(sent.length).toBe(1);
+        await expect(agent('bot@example.com')).rejects.toThrow(/not granted/);
+        await expect(agent('bot2@example.org')).rejects.toThrow(/not granted/);
+        await expect(agent('bot@example.org.evil.net')).rejects.toThrow(/not granted/);
+        expect(sent.length).toBe(1);
+      });
+    });
+
+    await it('refuses everything without a grant when the backend cannot tell what is self', async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-adr8-'));
+      try {
+        const configPath = join(dir, 'config.json');
+        writeFileSync(configPath, JSON.stringify({ grants: [] }));
+        const sent: Array<[string, string, string]> = [];
+        const backend = {
+          manifest: XMPP_MANIFEST,
+          listAccounts: async () => [ACCOUNT_INFO],
+          openSender: async () => {
+            throw new Error('must not be opened');
+          },
+        } as unknown as XmppBackend;
+        await expect(
+          sendAsAgent({
+            accountId: ACCOUNT,
+            to: ACCOUNT_INFO.identity,
+            text: 'hi',
+            frontend: 'cli',
+            configPath,
+            backend,
+          }),
+        ).rejects.toThrow(/not granted/);
+        const throwing = {
+          ...backend,
+          isSelfAddress: async () => {
+            throw new Error('boom');
+          },
+        } as unknown as XmppBackend;
+        await expect(
+          sendAsAgent({
+            accountId: ACCOUNT,
+            to: ACCOUNT_INFO.identity,
+            text: 'hi',
+            frontend: 'cli',
+            configPath,
+            backend: throwing,
+          }),
+        ).rejects.toThrow(/not granted/);
+        expect(sent.length).toBe(0);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('serves send_message with zero grants: self goes through, anything else is refused', async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-adr8-'));
+      try {
+        const configPath = join(dir, 'config.json');
+        writeFileSync(configPath, JSON.stringify({ grants: [] }));
+        const sent: Array<[string, string, string]> = [];
+        let n = 0;
+        const backend = {
+          manifest: XMPP_MANIFEST,
+          listAccounts: async () => [ACCOUNT_INFO],
+          isSelfAddress: async (_id: string, to: string) => isOwnBareJid(ACCOUNT_INFO.identity, to),
+          openSender: async (_id: string, permit: ReturnType<typeof permitFor>) =>
+            new XmppSender(new GrantedXmppSession(fakeLink(sent), permit, () => `id-${++n}`)),
+        } as unknown as XmppBackend;
+        const rec = createRecorder();
+        // The tool is registered outside the gate, as the server does; the gate must not touch it.
+        registerSendTools(rec.server, (params) =>
+          sendAsAgent({
+            ...params,
+            configPath,
+            backend,
+            dbPath: join(dir, 'index.db'),
+            writeLogPath: join(dir, 'write.log'),
+          }),
+        );
+        applyGrantGate(rec.server, []);
+        expect(rec.names().join()).toBe('send_message');
+        expect(rec.find('send_message')?.description?.includes('only send to the person')).toBe(true);
+        const call = (to: string) =>
+          rec.handler('send_message')({ account: ACCOUNT, to, text: 'hi' }) as Promise<{ isError?: boolean }>;
+        expect((await call(ACCOUNT_INFO.identity)).isError === true).toBe(false);
+        expect(sent.length).toBe(1);
+        const refused = await call('someone@example.org');
+        expect(refused.isError).toBe(true);
+        expect(JSON.stringify(refused)).toContain('not granted');
+        expect(sent.length).toBe(1);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('lets the person send from an enabled account with no grant at all, and logs it', async () => {
+      await world([], async ({ person, sent, logged }) => {
+        await person(OWNER);
+        expect(sent.length).toBe(1);
+        expect(logged()).toBe(true);
+      });
+    });
+  });
+
   await describe('sendMessage formats', async () => {
     const run = async (params: { text: string; format?: 'plain' | 'markdown' }) => {
       const dir = mkdtempSync(join(tmpdir(), 'curlew-fmt-'));

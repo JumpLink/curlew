@@ -36,8 +36,7 @@ import {
 import * as Signal from '@signalapp/libsignal-client';
 
 import { openIndex } from '../../../src/core/actions/index.ts';
-import { sendMessage } from '../../../src/core/actions/send.ts';
-import { withSendGateGrants } from '../../../src/frontends/mcp/tools/send.ts';
+import { sendAsAgent } from '../../../src/core/actions/send.ts';
 import { Party } from './stores.ts';
 import {
   ALICE_ACI,
@@ -417,7 +416,7 @@ async function introduceTo(rig: Rig, party: Party): Promise<void> {
 }
 
 const send = (rig: Rig, to: string, text: string) =>
-  sendMessage({
+  sendAsAgent({
     accountId: rig.accountId,
     to,
     text,
@@ -883,16 +882,6 @@ export default async () => {
         await sender.close();
         await session.close();
       });
-    });
-
-    await it('serves send_message to the MCP gate with a signal.send grant alone', async () => {
-      const target = `${ACCOUNT}/${ALICE_ACI}`;
-      const union = withSendGateGrants([{ capability: 'signal.send', target }]);
-      const sendGrants = union.filter((g) => g.capability === 'send');
-      expect(sendGrants.length).toBe(1);
-      expect(sendGrants[0].target).toBe(target);
-      // Nothing else that writes: the grant that serves `send_message` serves only that.
-      expect(union.every((g) => g.capability === 'send' || g.capability === 'signal.send')).toBe(true);
     });
   });
 };

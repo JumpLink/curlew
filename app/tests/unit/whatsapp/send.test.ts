@@ -22,8 +22,7 @@ import {
 } from '@curlew/whatsapp';
 
 import { openIndex } from '../../../src/core/actions/index.ts';
-import { sendMessage } from '../../../src/core/actions/send.ts';
-import { withSendGateGrants } from '../../../src/frontends/mcp/tools/send.ts';
+import { sendAsAgent } from '../../../src/core/actions/send.ts';
 import {
   ANNA_LID,
   ANNA_PN,
@@ -121,7 +120,7 @@ async function withRig<T>(
 }
 
 const send = (rig: Rig, to: string, text: string) =>
-  sendMessage({
+  sendAsAgent({
     accountId: rig.accountId,
     to,
     text,
@@ -453,16 +452,6 @@ export default async () => {
         // Refused before the handle exists, so it costs no connection and no relink risk.
         expect(rig.senders.length).toBe(0);
       });
-    });
-
-    await it('serves send_message to the MCP gate with a whatsapp.send grant alone', async () => {
-      const target = `${ACCOUNT}/${ANNA_LID}`;
-      const union = withSendGateGrants([{ capability: 'whatsapp.send', target }]);
-      const sendGrants = union.filter((g) => g.capability === 'send');
-      expect(sendGrants.length).toBe(1);
-      expect(sendGrants[0].target).toBe(target);
-      // Nothing else that writes: the grant that serves `send_message` serves only that.
-      expect(union.every((g) => g.capability === 'send' || g.capability === 'whatsapp.send')).toBe(true);
     });
   });
 };

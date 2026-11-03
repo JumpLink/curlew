@@ -7,7 +7,8 @@
   [Amendment (2026-10-30, matrix)](#amendment-2026-10-30-matrix) and
   [Amendment (2026-10-30, signal)](#amendment-2026-10-30-signal) and
   [Amendment (2026-10-30, whatsapp)](#amendment-2026-10-30-whatsapp) and
-  [Amendment (2026-10-30, daemon send)](#amendment-2026-10-30-daemon-send)
+  [Amendment (2026-10-30, daemon send)](#amendment-2026-10-30-daemon-send); §2, §4 and §5
+  amended by [ADR 0008](0008-grants-restrict-agents-not-the-person.md)
 - **Scope:** `@gjsify/mcp` (the gate), `app` (config, MCP server, `curlew send`, `curlew daemon`),
   `@curlew/xmpp`, `@curlew/protocol` (calendar port), `@curlew/gnome` (EDS calendar driver)
 
@@ -476,3 +477,18 @@ full scan that grows with history and that the daemon now runs far more often. I
 lookup on the existing `conversation_messages_remote (backend, account_id, remote_id)` index,
 bounded by batch size. A `LIKE 'local:%'` row the batch does not name is not an echo of anything
 in that batch, so nothing that was adopted before stops being adopted.
+
+## Amendment (2026-11-03, ADR 0008)
+
+[ADR 0008](0008-grants-restrict-agents-not-the-person.md) changes who a grant is for. Grants
+restrict **agents**, not the person: an enabled account is fully usable by the person's own
+frontends without one.
+
+- **§2** no longer holds for the person. An account sends for the person's frontends (the daemon's
+  bus send service, later the UI) without a grant; a grant is what lets an *agent* send from it.
+- **§4** holds for the agent frontends only — MCP and the CLI, which is one because any agent with
+  a shell runs it. They check the grant before they reach the core or the bus.
+- **§5**: the daemon follows every enabled XMPP account, not only the ones an `xmpp.send` grant
+  names. The presence rules (negative priority, no status text, a write-log line) stay, tied to
+  the account being enabled and followed.
+- §1 (the format), §3 (the gate), §6 and §7 are unchanged.

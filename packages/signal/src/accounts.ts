@@ -16,11 +16,24 @@ import { SecretStore } from '@curlew/store';
 import { existsSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { ACCOUNT_NAMESPACE } from './protocol-store.ts';
+import { normalizeServiceId } from './schema.ts';
 
 const ACCOUNT_ID = /^signal-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 export function isAccountId(id: string): boolean {
   return ACCOUNT_ID.test(id);
+}
+
+/**
+ * Whether `to` is this account's own ACI — the "Note to Self" chat. The account id carries the ACI,
+ * so this reads no file. The phone number is NOT recognised: the session does not keep it (only the
+ * ACI is stored), and a number is not an address a Signal send accepts anyway. PNI-prefixed ids
+ * are a different service id and do not match.
+ */
+export function isOwnAci(accountId: string, to: string): boolean {
+  if (!ACCOUNT_ID.test(accountId)) return false;
+  const aci = normalizeServiceId(to);
+  return aci !== null && aci === accountId.slice('signal-'.length);
 }
 
 export function accountIdFor(aci: string): string {

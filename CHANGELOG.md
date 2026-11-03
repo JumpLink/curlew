@@ -24,6 +24,16 @@
 - New read-only MCP tool `messaging_capabilities`: per protocol the maximum message length,
   formats, image support, maximum wait timeout and splitting.
 
+### Changed
+
+- Grants restrict agents, not the person (ADR 0008). The daemon follows every enabled XMPP
+  account without an `xmpp.send` grant, and the daemon's bus send service checks no grant.
+  `curlew send` and `send_message` still need a grant, except a message to the account itself,
+  which every backend recognises in its own spellings (Signal ACI, WhatsApp JID and LID, XMPP
+  JID with any resource, mail address, Telegram Saved Messages, Matrix user id) and which needs
+  no grant. `send_message` is now always listed.
+  Only an `xmpp.omemo` grant edit restarts the daemon now.
+
 ### Fixed
 
 - The `curlew-daemon.service` description names XMPP.
