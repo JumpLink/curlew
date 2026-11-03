@@ -665,7 +665,9 @@ backends (IMAP, Telegram) stay on `curlew sync`: they are
 pull models with a cursor, and a daemon buys them nothing. XMPP accounts with
 an `xmpp.send` grant are followed as well, so replies arrive live, and so is every
 account of an enabled Matrix backend (a long-polling `/sync`, read-only, no
-presence; a new message wakes an ordinary catch-up). A dropped connection
+presence; a new message wakes an ordinary catch-up). While the daemon follows an
+account, `curlew sync` leaves that account to it (one device, one crypto store, one
+to-device stream) and says so on stderr. A dropped connection
 is retried with growing pauses (5 s to 5 min); a device the network **logged out
 or unlinked** is not retried — the daemon stops that account and says so, because
 the credentials are gone and every retry would fail the same way while messages
