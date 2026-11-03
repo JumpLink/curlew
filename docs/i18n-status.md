@@ -89,7 +89,7 @@ Nothing user-facing. What stays English is listed below, with the reason.
   (`app/src/index.ts`), so `setup_status` and `setup_run` answer in English.
 - **Daemon log lines** (`curlew-daemon: …`). Operators grep journald and paste them into bug
   reports (ADR 0002 §6).
-- **Config and grants parse errors** (`config.ts`, `grants.ts`, the `backends.*.settings`
+- **Config and grants parse errors** (`config.ts`, `grants.ts`, `agent-access.ts`, the `backends.*.settings`
   checks): developer-facing, they name config keys.
 - **Internals** — crypto, protobuf, IMAP, store and database errors, XMPP transport errors,
   Signal CDN errors, OMEMO internals.

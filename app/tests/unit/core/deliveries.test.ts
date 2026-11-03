@@ -46,6 +46,7 @@ function tempWorld(backends: string[] = ['signal', 'whatsapp']): {
       ),
       senders: {},
       grants: [],
+      agentAccess: { askWithoutRule: true, rules: [] },
       encryption: {},
       unknown: {},
     },

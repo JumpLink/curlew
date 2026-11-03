@@ -821,6 +821,29 @@ the capabilities a command or tool uses today
 (see [Sending](#sending-grants-backendsend)); a later backend gets its own
 `<backend>.send` row when it is built, and an unknown one is a config error.
 
+**Agent access per account and contact** ([ADR 0009](docs/adr/0009-agent-access-per-account-and-contact.md)) —
+*parsed, enforced from the next release.* `agentAccess` holds rules that give one account, or one
+account/contact pair, a `read` mode (message bodies) and a `write` mode (sending): `allow`,
+`ask` or `deny`. A contact rule beats an account rule per kind, and a kind a rule leaves out falls
+through to the next rule up, then to `askWithoutRule` (default `true`: ask; `false`: deny). An
+explicit `deny` is final, and a write needs the read: `write` `allow`/`ask` with `read` `deny`
+is an error. Two rules with the same scope, an unknown key or a bad mode are errors when the
+file loads. Your old `<backend>.send` grants are read as contact rules with `read` and `write`
+`allow`, in memory; an explicit contact rule for the same pair wins, and the file is never rewritten.
+
+```json
+{
+  "agentAccess": {
+    "askWithoutRule": true,
+    "rules": [
+      { "account": "xmpp-abc123", "read": "allow", "write": "ask" },
+      { "account": "xmpp-abc123", "contact": "friend@example.org", "read": "allow", "write": "allow" },
+      { "account": "mail-def456", "read": "deny", "write": "deny" }
+    ]
+  }
+}
+```
+
 Chat sessions (Telegram, WhatsApp, Matrix — including Matrix's crypto store) and
 chat passwords (XMPP) are **secrets**, kept apart from the index under
 `$XDG_DATA_HOME/curlew/secrets/` — no command or MCP tool ever returns one.

@@ -18,6 +18,7 @@ app/src/core/actions/setup.ts
 app/src/core/actions/setup-unit.ts
 app/src/core/actions/wait-reply.ts
 app/src/core/actions/watch.ts
+app/src/core/agent-access.ts
 app/src/core/backends/builtin.ts
 app/src/core/backends/context.ts
 app/src/core/backends/registry.ts

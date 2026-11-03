@@ -49,12 +49,20 @@ export default async () => {
     await it('loads nothing the config does not enable — mail included', async () => {
       const registry = new BackendRegistry(BUILTIN_PLUGINS);
       expect(
-        registry.enabled({ backends: {}, senders: {}, grants: [], encryption: {}, unknown: {} }).length,
+        registry.enabled({
+          backends: {},
+          senders: {},
+          grants: [],
+          agentAccess: { askWithoutRule: true, rules: [] },
+          encryption: {},
+          unknown: {},
+        }).length,
       ).toBe(0);
       const off = {
         backends: { mail: { enabled: false } },
         senders: {},
         grants: [],
+        agentAccess: { askWithoutRule: true, rules: [] },
         encryption: {},
         unknown: {},
       };
@@ -88,6 +96,7 @@ export default async () => {
         backends: { chat: { enabled: true } },
         senders: {},
         grants: [],
+        agentAccess: { askWithoutRule: true, rules: [] },
         encryption: {},
         unknown: {},
       };
@@ -160,7 +169,14 @@ export default async () => {
       const { dir, path } = tempConfigPath();
       try {
         saveConfig(
-          { backends: { mail: { enabled: false } }, senders: {}, grants: [], encryption: {}, unknown: {} },
+          {
+            backends: { mail: { enabled: false } },
+            senders: {},
+            grants: [],
+            agentAccess: { askWithoutRule: true, rules: [] },
+            encryption: {},
+            unknown: {},
+          },
           path,
         );
         expect(loadConfig(path).backends.mail.enabled).toBe(false);
