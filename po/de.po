@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-02 21:50+0100\n"
+"POT-Creation-Date: 2026-11-03 09:14+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -12,13 +12,13 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app/src/core/actions/daemon.ts:289
+#: app/src/core/actions/daemon.ts:307
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 "{capability} ist nicht die Berechtigung, unter der {backend} sendet — es "
 "wurde nichts gesendet"
 
-#: app/src/core/actions/daemon.ts:312
+#: app/src/core/actions/daemon.ts:330
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
@@ -42,7 +42,7 @@ msgstr ""
 "Kein Backend ist aktiviert — `curlew backends list` zeigt sie an, `backends "
 "enable <name>` schaltet eines ein"
 
-#: app/src/core/actions/index-sync.ts:225
+#: app/src/core/actions/index-sync.ts:227
 msgid ""
 "backend {name} uses the {kind} driver, which this curlew cannot sync yet"
 msgstr ""
@@ -652,7 +652,8 @@ msgid ""
 "no curlew daemon on the session bus — reading the journal every {seconds} s "
 "myself"
 msgstr ""
-"Kein curlew-Daemon am Session-Bus — ich lese das Journal selbst alle {seconds} s"
+"Kein curlew-Daemon am Session-Bus — ich lese das Journal selbst alle "
+"{seconds} s"
 
 #: app/src/core/backends/registry.ts:59
 msgid "backend {name} has an invalid manifest: {problems}"
@@ -975,7 +976,15 @@ msgstr[1] "{n} Fehler"
 msgid "  {backend}: rate limited, retry in {seconds}s"
 msgstr "  {backend}: Ratenbegrenzung, neuer Versuch in {seconds} s"
 
-#: app/src/frontends/cli/index-sync.ts:70
+#: app/src/frontends/cli/index-sync.ts:73
+msgid "  {backend}: followed by the running daemon, left to it"
+msgstr "  {backend}: wird vom laufenden Daemon empfangen, ihm überlassen"
+
+#: app/src/frontends/cli/index-sync.ts:74
+msgid "  {backend}: index busy, skipped"
+msgstr "  {backend}: Index belegt, übersprungen"
+
+#: app/src/frontends/cli/index-sync.ts:83
 msgid ""
 "Build or update the local full-text index (the only command that writes to "
 "it)"
@@ -983,17 +992,17 @@ msgstr ""
 "Den lokalen Volltextindex aufbauen oder aktualisieren (der einzige Befehl, "
 "der ihn beschreibt)"
 
-#: app/src/frontends/cli/index-sync.ts:76
+#: app/src/frontends/cli/index-sync.ts:89
 msgid "Restrict to one account id (GOA, or e.g. telegram-…); omit for all"
 msgstr ""
 "Auf eine Konto-ID beschränken (GOA oder z. B. telegram-…); ohne Angabe alle"
 
-#: app/src/frontends/cli/index-sync.ts:80
+#: app/src/frontends/cli/index-sync.ts:93
 msgid "Restrict to one mailbox (skips chat backends); omit for all"
 msgstr ""
 "Auf ein Postfach beschränken (überspringt Chat-Backends); ohne Angabe alle"
 
-#: app/src/frontends/cli/index-sync.ts:85
+#: app/src/frontends/cli/index-sync.ts:98
 msgid ""
 "Mail: force the flag/expunge pass. Chats: re-fetch the newest window, "
 "picking up edits and removing what was deleted"
@@ -1002,63 +1011,63 @@ msgstr ""
 "das neueste Fenster erneut abrufen, Bearbeitungen übernehmen und Gelöschtes "
 "entfernen"
 
-#: app/src/frontends/cli/index-sync.ts:109
+#: app/src/frontends/cli/index-sync.ts:123
 msgid "Inspect or query the local index without touching the network"
 msgstr "Den lokalen Index ansehen oder abfragen, ohne das Netzwerk zu berühren"
 
-#: app/src/frontends/cli/index-sync.ts:114
+#: app/src/frontends/cli/index-sync.ts:128
 msgid "Choose a subcommand: status, search"
 msgstr "Wähle einen Unterbefehl: status, search"
 
-#: app/src/frontends/cli/index-sync.ts:117
+#: app/src/frontends/cli/index-sync.ts:131
 msgid "What the index holds, and which folders are stale"
 msgstr "Was der Index enthält und welche Ordner veraltet sind"
 
-#: app/src/frontends/cli/index-sync.ts:124
+#: app/src/frontends/cli/index-sync.ts:138
 msgid "Search the index only — offline, no server contact"
 msgstr "Nur den Index durchsuchen — offline, ohne Serverkontakt"
 
-#: app/src/frontends/cli/index-sync.ts:127
+#: app/src/frontends/cli/index-sync.ts:141
 msgid "Full text across subject, sender and body"
 msgstr "Volltext über Betreff, Absender und Text"
 
-#: app/src/frontends/cli/index-sync.ts:128 app/src/frontends/cli/mail.ts:36
+#: app/src/frontends/cli/index-sync.ts:142 app/src/frontends/cli/mail.ts:36
 msgid "Sender contains"
 msgstr "Absender enthält"
 
-#: app/src/frontends/cli/index-sync.ts:129 app/src/frontends/cli/mail.ts:39
+#: app/src/frontends/cli/index-sync.ts:143 app/src/frontends/cli/mail.ts:39
 msgid "Subject contains"
 msgstr "Betreff enthält"
 
-#: app/src/frontends/cli/index-sync.ts:130 app/src/frontends/cli/mail.ts:41
+#: app/src/frontends/cli/index-sync.ts:144 app/src/frontends/cli/mail.ts:41
 msgid "Date header on/after YYYY-MM-DD"
 msgstr "Date-Header am oder nach JJJJ-MM-TT"
 
-#: app/src/frontends/cli/index-sync.ts:131 app/src/frontends/cli/mail.ts:42
+#: app/src/frontends/cli/index-sync.ts:145 app/src/frontends/cli/mail.ts:42
 msgid "Date header before YYYY-MM-DD"
 msgstr "Date-Header vor JJJJ-MM-TT"
 
-#: app/src/frontends/cli/index-sync.ts:132 app/src/frontends/cli/mail.ts:48
+#: app/src/frontends/cli/index-sync.ts:146 app/src/frontends/cli/mail.ts:48
 msgid "Only unseen messages"
 msgstr "Nur ungelesene Nachrichten"
 
-#: app/src/frontends/cli/index-sync.ts:133 app/src/frontends/cli/mail.ts:49
+#: app/src/frontends/cli/index-sync.ts:147 app/src/frontends/cli/mail.ts:49
 msgid "Only flagged messages"
 msgstr "Nur markierte Nachrichten"
 
-#: app/src/frontends/cli/index-sync.ts:134
+#: app/src/frontends/cli/index-sync.ts:148
 msgid "Only messages with an attachment"
 msgstr "Nur Nachrichten mit Anhang"
 
-#: app/src/frontends/cli/index-sync.ts:135
+#: app/src/frontends/cli/index-sync.ts:149
 msgid "Restrict to a GOA account id"
 msgstr "Auf eine GOA-Konto-ID beschränken"
 
-#: app/src/frontends/cli/index-sync.ts:136
+#: app/src/frontends/cli/index-sync.ts:150
 msgid "Restrict to one mailbox (wire path)"
 msgstr "Auf ein Postfach beschränken (Pfad auf dem Server)"
 
-#: app/src/frontends/cli/index-sync.ts:139
+#: app/src/frontends/cli/index-sync.ts:153
 msgid "Max messages (max {max})"
 msgstr "Höchstzahl an Nachrichten (maximal {max})"
 
@@ -1378,14 +1387,16 @@ msgid ""
 "Print the change journal as it grows, one JSON line per row — the reference "
 "listener for the daemon’s Changed signal"
 msgstr ""
-"Gibt das Änderungsjournal beim Wachsen aus, eine JSON-Zeile je Eintrag — der Referenz-Zuhörer für das Changed-Signal des Daemons"
+"Gibt das Änderungsjournal beim Wachsen aus, eine JSON-Zeile je Eintrag — der "
+"Referenz-Zuhörer für das Changed-Signal des Daemons"
 
 #: app/src/frontends/cli/watch.ts:26
 msgid ""
 "Start after this journal seq; the default is the newest row, so only new "
 "changes print"
 msgstr ""
-"Beginnt nach dieser Journal-Nummer; Standard ist der neueste Eintrag, es erscheinen also nur neue Änderungen"
+"Beginnt nach dieser Journal-Nummer; Standard ist der neueste Eintrag, es "
+"erscheinen also nur neue Änderungen"
 
 #: packages/imap/src/send.ts:52 packages/matrix/src/send.ts:165
 #: packages/signal/src/send.ts:275 packages/telegram/src/sender.ts:43
@@ -1398,31 +1409,31 @@ msgid "no mail account {account} with SMTP — `curlew accounts list` shows them
 msgstr ""
 "Kein E-Mail-Konto {account} mit SMTP — `curlew accounts list` zeigt sie an"
 
-#: packages/matrix/src/backend.ts:35
+#: packages/matrix/src/backend.ts:53
 msgid "log in again with `curlew accounts add matrix`"
 msgstr "melde dich mit `curlew accounts add matrix` neu an"
 
-#: packages/matrix/src/backend.ts:40
+#: packages/matrix/src/backend.ts:58
 msgid "Homeserver (URL like https://matrix.example.org, or the server name)"
 msgstr "Homeserver (URL wie https://matrix.example.org oder der Servername)"
 
-#: packages/matrix/src/backend.ts:41
+#: packages/matrix/src/backend.ts:59
 msgid "Matrix user (@name:example.org)"
 msgstr "Matrix-Benutzer (@name:example.org)"
 
-#: packages/matrix/src/backend.ts:42 packages/xmpp/src/backend.ts:41
+#: packages/matrix/src/backend.ts:60 packages/xmpp/src/backend.ts:41
 msgid "Password"
 msgstr "Passwort"
 
-#: packages/matrix/src/backend.ts:82
+#: packages/matrix/src/backend.ts:100
 msgid "no Matrix account {account} — {hint}"
 msgstr "Kein Matrix-Konto {account} — {hint}"
 
-#: packages/matrix/src/backend.ts:89
+#: packages/matrix/src/backend.ts:107
 msgid "the Matrix account file {account} is incomplete — {hint}"
 msgstr "Die Matrix-Kontodatei {account} ist unvollständig — {hint}"
 
-#: packages/matrix/src/backend.ts:124
+#: packages/matrix/src/backend.ts:141
 msgid "the Matrix account {account} is not usable ({reason}) — {hint}"
 msgstr "Das Matrix-Konto {account} ist nicht nutzbar ({reason}) — {hint}"
 

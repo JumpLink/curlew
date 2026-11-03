@@ -45,6 +45,13 @@ import type { IndexDatabase } from './db.ts';
 import { appendChanges } from './changes.ts';
 import { insertMany, placeholders, seqColumn, type SqlValue, withTransaction } from './db.ts';
 import { upsertAccount } from './index-store.ts';
+import {
+  LEASE_HEARTBEAT_MS,
+  refreshReceiveLease,
+  releaseReceiveLease,
+  takeReceiveLease,
+  type LeaseTake,
+} from './receive-lease.ts';
 import { stableId } from './threads.ts';
 
 export interface ChatSyncOptions {
@@ -70,6 +77,21 @@ export interface ChatSyncOptions {
   decryptAccounts?: readonly string[];
   /** Clock, injected so tests are deterministic. */
   now?: () => Date;
+  /**
+   * Take the receive lease (ADR 0002 §4) around each account, and stand down for one somebody
+   * else holds — BEFORE connecting, so no client and no crypto store is opened. A bounded
+   * `curlew sync` passes it; the daemon's own catch-up already holds the lease and does not.
+   *
+   * Why a chat backend needs it: a followed account is ONE device with ONE crypto store and ONE
+   * to-device stream. A second client on it acknowledges half the room keys and writes the same
+   * crypto snapshot from another process, last writer wins.
+   */
+  lease?: {
+    /** Who holds it — the pid by default, as in the delivery path. */
+    holder?: string;
+    /** How often it is refreshed while the account syncs. Short only in tests. */
+    intervalMs?: number;
+  };
 }
 
 export interface ChatAccountSyncResult {
@@ -98,6 +120,13 @@ export interface ChatAccountSyncResult {
   rateLimited: { retryAfterMs: number } | null;
   /** An error that stopped the whole account (connect, listing the chats). */
   error: string | null;
+  /**
+   * Another holder (a running daemon) receives this account: this run left it alone, which is a
+   * success and not an error — the messages are arriving.
+   */
+  heldBy?: string;
+  /** The lease could not be taken because the index was busy; nobody is known to hold it. */
+  indexBusy?: true;
 }
 
 export interface ChatSyncResult {
@@ -529,7 +558,7 @@ async function syncAccount(
   db: IndexDatabase,
   backend: ChatBackend,
   account: { id: string; identity: string; provider: string },
-  options: Required<Omit<ChatSyncOptions, 'accountId'>>,
+  options: Required<Omit<ChatSyncOptions, 'accountId' | 'lease'>>,
   budget: { total: number; remaining: number; exhausted: boolean },
 ): Promise<ChatAccountSyncResult> {
   const name = backend.manifest.name;
@@ -790,6 +819,65 @@ async function syncAccount(
   return result;
 }
 
+/**
+ * One account behind the receive lease: taken and released like the delivery path does (there is
+ * no read-only check, and a daemon starting mid-run must wait for this run, not race it).
+ * A live foreign lease, or a busy index, ends the account here with nothing opened.
+ */
+async function syncUnderLease(
+  db: IndexDatabase,
+  backend: ChatBackend,
+  account: { id: string; identity: string; provider: string },
+  options: Required<Omit<ChatSyncOptions, 'accountId' | 'lease'>>,
+  budget: { total: number; remaining: number; exhausted: boolean },
+  lease: NonNullable<ChatSyncOptions['lease']>,
+): Promise<ChatAccountSyncResult> {
+  const name = backend.manifest.name;
+  const holder = lease.holder ?? String(process.pid);
+  const interval = lease.intervalMs ?? LEASE_HEARTBEAT_MS;
+  let take: LeaseTake;
+  try {
+    take = takeReceiveLease(db, name, account.id, holder, options.now(), interval);
+  } catch {
+    // The index was busy: not knowing who holds the account is the same as not holding it.
+    take = { acquired: false, holder: null, heartbeatAt: null };
+  }
+  if (!take.acquired) {
+    const standDown: ChatAccountSyncResult = {
+      backend: name,
+      accountId: account.id,
+      chats: 0,
+      chatsFetched: 0,
+      added: 0,
+      removed: 0,
+      chatErrors: 0,
+      chatErrorKinds: { 'rate-limited': 0, other: 0 },
+      rateLimited: null,
+      error: null,
+    };
+    if (take.holder === null) standDown.indexBusy = true;
+    else standDown.heldBy = take.holder;
+    return standDown;
+  }
+  const beat = setInterval(() => {
+    try {
+      refreshReceiveLease(db, name, account.id, holder, options.now(), interval);
+    } catch {
+      // A busy index misses one beat; the lease outlives several.
+    }
+  }, interval);
+  try {
+    return await syncAccount(db, backend, account, options, budget);
+  } finally {
+    clearInterval(beat);
+    try {
+      releaseReceiveLease(db, name, account.id, holder);
+    } catch {
+      // Left to expire.
+    }
+  }
+}
+
 /** Sync every account of one chat backend into the index. */
 export async function syncChats(
   db: IndexDatabase,
@@ -811,7 +899,11 @@ export async function syncChats(
   );
   const results: ChatAccountSyncResult[] = [];
   for (const account of accounts) {
-    results.push(await syncAccount(db, backend, account, resolved, budget));
+    results.push(
+      options.lease
+        ? await syncUnderLease(db, backend, account, resolved, budget, options.lease)
+        : await syncAccount(db, backend, account, resolved, budget),
+    );
   }
   const errors = results.filter((r) => r.error !== null).length;
   return {
