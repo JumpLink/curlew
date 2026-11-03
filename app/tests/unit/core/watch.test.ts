@@ -2,13 +2,22 @@ import { describe, expect, it } from '@gjsify/unit';
 
 import { appendChanges, CHANGES_KEEP_ROWS, type IndexDatabase } from '@curlew/store';
 import { runWatch, watchStep } from '../../../src/core/actions/watch.ts';
-import type { DaemonChangeSource } from '../../../src/core/lib/daemon-watch-client.ts';
+import {
+  type DaemonChangeSource,
+  type DaemonWatchHandlers,
+  nextPresence,
+} from '../../../src/core/lib/daemon-watch.ts';
 import { freshDb } from '../store/fixtures.ts';
 
 /** `curlew watch` (ADR 0007 §4) against a :memory: journal and an injected bus. Synthetic ids. */
 
 const T0 = new Date('2026-11-01T10:00:00.000Z');
-const noBus: DaemonChangeSource = { subscribe: () => null };
+const noBus: DaemonChangeSource = {
+  follow: (handlers) => {
+    handlers.owner(false);
+    return () => {};
+  },
+};
 
 const add = (db: IndexDatabase, conversationId: string): void =>
   appendChanges(db, [{ kind: 'messages', backend: 'xmpp', accountId: 'a-1', conversationId }], T0);
@@ -97,8 +106,9 @@ export default async () => {
       const notices: string[] = [];
       let nudge: (seq: number) => void = () => {};
       const bus: DaemonChangeSource = {
-        subscribe: (onChanged) => {
-          nudge = onChanged;
+        follow: (handlers) => {
+          nudge = handlers.changed;
+          handlers.owner(true);
           return () => {};
         },
       };
@@ -125,6 +135,69 @@ export default async () => {
         controller.abort();
         await running;
         expect(notices.length).toBe(0);
+      } finally {
+        controller.abort();
+        db.close();
+      }
+    });
+
+    await it('decides what a change of the bus name owner means', async () => {
+      expect(nextPresence('unknown', true).notice).toBe(null);
+      expect(nextPresence('unknown', false).notice).toBe('absent-at-start');
+      expect(nextPresence('present', false).notice).toBe('vanished');
+      expect(nextPresence('absent', true).notice).toBe('appeared');
+      expect(nextPresence('present', true).notice).toBe(null);
+      expect(nextPresence('absent', false).notice).toBe(null);
+      expect(nextPresence('absent', true).readNow).toBe(true);
+      expect(nextPresence('absent', false).readNow).toBe(false);
+    });
+
+    await it('follows the daemon appearing and vanishing, saying each once', async () => {
+      const db = freshDb();
+      const controller = new AbortController();
+      const out: string[] = [];
+      const notices: string[] = [];
+      let handlers: DaemonWatchHandlers | null = null;
+      const bus: DaemonChangeSource = {
+        follow: (h) => {
+          handlers = h;
+          h.owner(false);
+          return () => {};
+        },
+      };
+      try {
+        const running = runWatch({
+          db,
+          signal: controller.signal,
+          out: (line) => out.push(line),
+          notice: (text) => notices.push(text),
+          source: bus,
+          pollMs: 5,
+          safetyMs: 60_000,
+        });
+        await sleep(15);
+        expect(notices.length).toBe(1);
+        handlers!.owner(false);
+        expect(notices.length).toBe(1);
+        handlers!.owner(true);
+        expect(notices.length).toBe(2);
+        handlers!.owner(true);
+        expect(notices.length).toBe(2);
+        await sleep(15);
+        // Present: the safety timer is 60 s, so only a signal wakes it.
+        add(db, 'c-1');
+        await sleep(30);
+        expect(out.length).toBe(0);
+        handlers!.changed(1);
+        await sleep(15);
+        expect(out.length).toBe(1);
+        handlers!.owner(false);
+        expect(notices.length).toBe(3);
+        add(db, 'c-2');
+        await sleep(40);
+        expect(out.length).toBe(2);
+        controller.abort();
+        await running;
       } finally {
         controller.abort();
         db.close();
