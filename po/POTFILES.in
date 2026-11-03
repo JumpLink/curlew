@@ -27,7 +27,8 @@ app/src/core/lib/daemon-accounts.ts
 app/src/core/lib/daemon-bus.ts
 app/src/core/lib/daemon-send-client.ts
 app/src/core/lib/daemon-send-service.ts
-app/src/core/lib/daemon-watch-client.ts
+app/src/core/lib/daemon-watch-client.gjs.ts
+app/src/core/lib/daemon-watch.ts
 app/src/core/lib/date.ts
 app/src/core/lib/i18n.ts
 app/src/core/markdown.ts

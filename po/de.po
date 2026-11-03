@@ -647,6 +647,18 @@ msgstr ""
 "Kein curlew-Daemon am Session-Bus — ich lese das Journal selbst alle "
 "{seconds} s"
 
+#: app/src/core/actions/watch.ts:71
+msgid ""
+"the curlew daemon left the session bus — reading the journal every {seconds} "
+"s myself"
+msgstr ""
+"Der curlew-Daemon hat den Session-Bus verlassen — ich lese das Journal "
+"selbst alle {seconds} s"
+
+#: app/src/core/actions/watch.ts:73
+msgid "a curlew daemon is on the session bus — waking on its signal"
+msgstr "Ein curlew-Daemon ist am Session-Bus — ich warte auf sein Signal"
+
 #: app/src/core/backends/registry.ts:59
 msgid "backend {name} has an invalid manifest: {problems}"
 msgstr "Das Backend {name} hat ein ungültiges Manifest: {problems}"

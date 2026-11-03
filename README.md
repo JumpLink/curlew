@@ -726,7 +726,9 @@ bus (`eu.jumplink.curlew.Daemon1`, [ADR 0007](docs/adr/0007-live-updates-over-th
 (`connected`, `connecting`, `reconnecting`, `logged-out`, `held-elsewhere`, `stopped`). Ids,
 states and numbers only — never message text. `curlew watch` is the reference listener: one
 JSON line per journal row, starting at the newest (`--since <seq>` starts earlier). Without a
-daemon it says so once and reads the journal every 2 s itself. A
+daemon it says so once and reads the journal every 2 s itself; it follows the daemon
+coming and going on the bus, subscribing and reading once when one appears and saying once
+when it leaves. A
 `{"resync":true,…}` line means the journal moved past you: read what you show again.
 
 **And `sync` at the same time?** Yes — and that is what the **lease** is for.

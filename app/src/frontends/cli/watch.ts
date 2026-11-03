@@ -10,7 +10,7 @@ import type { CommandModule } from 'yargs';
 
 import { openIndex } from '../../core/actions/index-sync.ts';
 import { runWatch } from '../../core/actions/watch.ts';
-import { gioDaemonChangeSource } from '../../core/lib/daemon-watch-client.ts';
+import { gioDaemonChangeSource } from '../../core/lib/daemon-watch-client.gjs.ts';
 import { pickArgv } from './output.ts';
 
 export const watchCommand: CommandModule = {

@@ -11,7 +11,12 @@
 
 import { _, fmt } from '@curlew/protocol';
 import { type ChangeRow, type IndexDatabase, newestSeq, readChanges } from '@curlew/store';
-import type { DaemonChangeSource } from '../lib/daemon-watch-client.ts';
+import {
+  type DaemonChangeSource,
+  type DaemonNotice,
+  type DaemonPresence,
+  nextPresence,
+} from '../lib/daemon-watch.ts';
 
 /** How often `watch` looks at the journal when no daemon wakes it. */
 export const WATCH_POLL_MS = 2_000;
@@ -61,24 +66,39 @@ export interface WatchParams {
 
 export async function runWatch(params: WatchParams): Promise<void> {
   const { db, signal } = params;
+  const pollMs = params.pollMs ?? WATCH_POLL_MS;
+  const seconds = String(pollMs / 1000);
+  const say: Record<DaemonNotice, () => string> = {
+    'absent-at-start': () =>
+      fmt(_('no curlew daemon on the session bus — reading the journal every {seconds} s myself'), {
+        seconds,
+      }),
+    vanished: () =>
+      fmt(_('the curlew daemon left the session bus — reading the journal every {seconds} s myself'), {
+        seconds,
+      }),
+    appeared: () => _('a curlew daemon is on the session bus — waking on its signal'),
+  };
   let cursor = params.since ?? newestSeq(db) ?? 0;
+  const daemon: { presence: DaemonPresence } = { presence: 'unknown' };
   let wake: (() => void) | null = null;
   const nudge = (): void => wake?.();
-  const unsubscribe = params.source.subscribe(nudge);
-  if (unsubscribe === null) {
-    params.notice(
-      fmt(_('no curlew daemon on the session bus — reading the journal every {seconds} s myself'), {
-        seconds: String((params.pollMs ?? WATCH_POLL_MS) / 1000),
-      }),
-    );
-  }
-  const wait = unsubscribe === null ? (params.pollMs ?? WATCH_POLL_MS) : (params.safetyMs ?? WATCH_SAFETY_MS);
+  const stop = params.source.follow({
+    changed: nudge,
+    owner: (present) => {
+      const step = nextPresence(daemon.presence, present);
+      daemon.presence = step.presence;
+      if (step.notice !== null) params.notice(say[step.notice]());
+      if (step.readNow) nudge();
+    },
+  });
   signal.addEventListener('abort', nudge, { once: true });
   try {
     while (!signal.aborted) {
       const step = watchStep(db, cursor);
       for (const line of step.lines) params.out(JSON.stringify(line));
       cursor = step.cursor;
+      const wait = daemon.presence === 'present' ? (params.safetyMs ?? WATCH_SAFETY_MS) : pollMs;
       await new Promise<void>((resolve) => {
         const timer = setTimeout(done, wait);
         function done(): void {
@@ -92,7 +112,7 @@ export async function runWatch(params: WatchParams): Promise<void> {
       });
     }
   } finally {
-    unsubscribe?.();
+    stop();
     signal.removeEventListener('abort', nudge);
   }
 }
