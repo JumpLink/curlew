@@ -15,6 +15,10 @@
  *   - also follows every XMPP account named by an `xmpp.send` grant (`follow.ts`): carbons live,
  *     the archive as the truth, so a reply reaches the index within seconds. Grants are read
  *     once at start; the run stops when they change;
+ *   - follows every ENABLED Matrix account (ADR 0007 §5): the SDK's `/sync` long poll
+ *     (`set_presence=offline`, through the read-only gate) keeps the client current, a new event
+ *     is only a wake-up, and the same history walk `curlew sync` runs writes it. No new switch:
+ *     enabling the backend is the opt-in. A device the homeserver logs out is stopped, not retried;
  *   - takes the receive lease per account, so a `sync` on the same account stands down — two
  *     devices on one account each acknowledge half the copy (`@curlew/store`);
  *   - reconnects a dropped session with backoff, and stops an account the network logged out;
@@ -49,6 +53,7 @@ import {
 } from '@curlew/protocol';
 import type { DeliveryProgress, DeliverySyncResult, IndexDatabase, RebuildResult } from '@curlew/store';
 import { newestSeq, receiveDeliveries } from '@curlew/store';
+import { MatrixBackend } from '@curlew/matrix';
 import type { XmppBackend } from '@curlew/xmpp';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
@@ -113,6 +118,11 @@ export interface DaemonParams {
   backends?: readonly MessageBackend[];
   /** The XMPP backend that follows granted accounts. Injected by tests. */
   xmpp?: XmppBackend;
+  /**
+   * The Matrix backend whose accounts are followed. Injected by tests; by default the registry's,
+   * when the config enables it, and `null` to follow none.
+   */
+  matrix?: MatrixBackend | null;
   /** Short only in tests. */
   grantCheckMs?: number;
   /** Short only in tests. */
@@ -155,6 +165,14 @@ export interface DaemonResult {
   followed: FollowResult[];
   /** The run stopped because the grants it follows and decrypts by were edited. */
   grantsEdited: boolean;
+}
+
+/** The registry's Matrix backend when the config enables it (the daemon follows it), else `null`. */
+export function createMatrixBackend(config: CurlewConfig): MatrixBackend | null {
+  const registry = builtinRegistry();
+  if (!registry.enabled(config).some((plugin) => plugin.manifest.name === 'matrix')) return null;
+  const created = registry.create(config, 'matrix', backendContext('matrix', config));
+  return created instanceof MatrixBackend ? created : null;
 }
 
 /** The enabled delivery-only backends — what a daemon receives and what a `sync` stands down for. */
@@ -373,9 +391,16 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   // the daemon indexed textless stays that way, because the next sync finds nothing new for it.
   const decrypting = decryptAccounts(config.grants);
   const xmpp = grantedAccounts.length > 0 ? (params.xmpp ?? createXmppBackend(config)) : null;
-  if (backends.length === 0 && xmpp === null) {
+  const matrix = params.matrix === undefined ? createMatrixBackend(config) : params.matrix;
+  const matrixAccounts =
+    matrix === null
+      ? []
+      : (await matrix.listAccounts())
+          .map((a) => a.id)
+          .filter((id) => !params.accountId || id === params.accountId);
+  if (backends.length === 0 && xmpp === null && matrixAccounts.length === 0) {
     throw new Error(
-      'nothing to receive — no delivery-only backend is enabled (`curlew backends list`; the daemon receives Signal and WhatsApp) and no xmpp.send grant names an account to follow; `curlew sync` stays for mail and chat',
+      'nothing to receive — no delivery-only backend is enabled (`curlew backends list`; the daemon receives Signal and WhatsApp), no xmpp.send grant names an account to follow and no Matrix account is enabled; `curlew sync` stays for mail and the other chats',
     );
   }
 
@@ -446,6 +471,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
         }, params.grantCheckMs ?? GRANT_CHECK_MS)
       : null;
   let followed: FollowResult[] = [];
+  let followedMatrix: FollowResult[] = [];
   // The sessions this run is holding, so a send asked for over the bus reaches the connection that
   // is already up. A reconnect hands over `null` and then the new session, so a send during one
   // finds nothing and is told `not-followed` rather than going out on a connection that is gone.
@@ -456,6 +482,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   // and whenever a poll finds that another process moved it.
   const table = new AccountTable();
   for (const accountId of grantedAccounts) table.seed('xmpp', accountId, new Date());
+  for (const accountId of matrixAccounts) table.seed('matrix', accountId, new Date());
   let lastSeq: number | null = null;
   try {
     lastSeq = newestSeq(db);
@@ -479,7 +506,8 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   try {
     log(
       `curlew-daemon: receiving from ${backends.map((b) => b.manifest.name).join(', ') || 'no delivery backend'}` +
-        `${grantedAccounts.length > 0 ? ` and following ${grantedAccounts.length} xmpp account(s)` : ''} ` +
+        `${grantedAccounts.length > 0 ? ` and following ${grantedAccounts.length} xmpp account(s)` : ''}` +
+        `${matrixAccounts.length > 0 ? `${grantedAccounts.length > 0 ? ',' : ' and following'} ${matrixAccounts.length} matrix account(s)` : ''} ` +
         `(${params.accountId ?? 'every account'}) — stop with SIGTERM`,
     );
     const publish = params.publishSend === undefined ? publishDaemonSend : params.publishSend;
@@ -529,6 +557,29 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     ).then((done) => {
       followed = done;
     });
+    const followingMatrix = Promise.all(
+      matrixAccounts.map((accountId) =>
+        followAccount({
+          db,
+          backend: matrix as MatrixBackend,
+          backendName: 'matrix',
+          accountId,
+          open: (id) => (matrix as MatrixBackend).connectLive(id),
+          permit: { account: accountId, addresses: [] },
+          signal,
+          log,
+          onWrite: () => {
+            schedule();
+            announce();
+          },
+          onProgress: progress,
+          holder: String(process.pid),
+          writeLogPath: params.writeLogPath,
+        }),
+      ),
+    ).then((done) => {
+      followedMatrix = done;
+    });
     const [results] = await Promise.all([
       Promise.all(
         backends.map(
@@ -554,6 +605,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
         ),
       ),
       following,
+      followingMatrix,
     ]);
     // The writes are in: no more debounced rebuilds are scheduled, and whatever is already running
     // or queued is awaited — `rebuildNow` chains behind it, so this covers a rebuild that started
@@ -564,19 +616,34 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     }
     while (inFlight !== null) await inFlight;
     if (dirty) await rebuildNow();
-    const accounts: DaemonAccountResult[] = results.flatMap((r) =>
-      r.accounts.map((a) => ({
-        backend: a.backend,
-        accountId: a.accountId,
-        batches: a.batches,
-        added: a.added,
-        removed: a.removed,
-        error: a.error,
-        heldBy: a.heldBy ?? null,
-        indexBusy: a.indexBusy === true,
-        loggedOut: a.loggedOut === true,
+    const accounts: DaemonAccountResult[] = [
+      ...results.flatMap((r) =>
+        r.accounts.map((a) => ({
+          backend: a.backend,
+          accountId: a.accountId,
+          batches: a.batches,
+          added: a.added,
+          removed: a.removed,
+          error: a.error,
+          heldBy: a.heldBy ?? null,
+          indexBusy: a.indexBusy === true,
+          loggedOut: a.loggedOut === true,
+        })),
+      ),
+      // A Matrix follow ends the way a delivery account does: `2` when the homeserver dropped
+      // every account that was left, so systemd does not restart a device nobody can relink.
+      ...followedMatrix.map((f) => ({
+        backend: 'matrix',
+        accountId: f.accountId,
+        batches: f.catchUps,
+        added: f.added,
+        removed: 0,
+        error: null,
+        heldBy: f.heldBy,
+        indexBusy: false,
+        loggedOut: f.loggedOut,
       })),
-    );
+    ];
     const errors = accounts.filter((a) => a.error !== null).length;
     log(
       `curlew-daemon: stopped — ${accounts.length} account(s), ${accounts.reduce((n, a) => n + a.added, 0)} message(s) received, ${errors} error(s)`,
@@ -588,7 +655,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
       removed: results.reduce((n, r) => n + r.removed, 0),
       errors,
       conversations,
-      followed,
+      followed: [...followed, ...followedMatrix],
       grantsEdited,
     };
   } finally {

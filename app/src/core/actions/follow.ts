@@ -1,5 +1,6 @@
 /**
- * Follow mode for a granted XMPP account (ADR 0004 §5), run by `curlew daemon`.
+ * Follow mode for a granted XMPP account (ADR 0004 §5) and for a Matrix account (ADR 0007 §5),
+ * run by `curlew daemon`.
  *
  * The connection is held open with carbons on and a negative-priority presence, so the server
  * routes the person's chat to it. A stanza is only a WAKE-UP, though: the archive (MAM) is the
@@ -8,11 +9,14 @@
  * while the link was down, or came in while a sync was running. Wake-ups are coalesced and
  * rate-limited: a burst is one catch-up, never one per stanza.
  *
+ * Matrix is the same shape with a different wake-up: the SDK's `/sync` long poll is the link, a new
+ * timeline event is the hint, and the history walk `curlew sync` uses is the truth.
+ *
  * Per account: take the receive lease (ADR 0002 §4) before connecting, refresh it while running,
  * reconnect with backoff, release it on stop. Log lines carry names and counts, never text.
  */
 
-import type { ChatBackend } from '@curlew/protocol';
+import type { ChatBackend, ChatSession } from '@curlew/protocol';
 import {
   type DeliveryProgress,
   type IndexDatabase,
@@ -24,20 +28,43 @@ import {
   syncChats,
   takeReceiveLease,
 } from '@curlew/store';
-import type { GrantedXmppSession, SendPermit } from '@curlew/xmpp';
+import type { SendPermit } from '@curlew/xmpp';
 import { appendWriteLog } from '../write-log.ts';
 import { SEND_CAPABILITY } from './send.ts';
 
 /** The least time between two catch-ups of one account. */
 export const FOLLOW_MIN_GAP_MS = 1_000;
 
+/**
+ * What follow mode needs from an open connection: a chat session over it, a hint when something
+ * arrived, and the moment it ended. An XMPP `GrantedXmppSession` and a Matrix live connection both
+ * fit; `goAvailable` is XMPP's (presence), a Matrix client has no such step.
+ */
+export interface FollowLink {
+  chatSession(): ChatSession;
+  onArrival(listener: () => void): () => void;
+  /** `loggedOut`: the network dropped this device — retrying cannot help. */
+  onClosed(listener: (reason: string, loggedOut?: boolean) => void): void;
+  goAvailable?(): Promise<void>;
+  close(): Promise<void>;
+}
+
+/** An error that says the account was logged out (`loggedOut` property, as `MatrixLoggedOutError`). */
+function isLoggedOut(err: unknown): boolean {
+  return typeof err === 'object' && err !== null && (err as { loggedOut?: unknown }).loggedOut === true;
+}
+
 export interface FollowDeps {
   db: IndexDatabase;
   /** The chat backend whose accounts are followed; its own `connect` is never used here. */
   backend: ChatBackend;
-  /** Opens the granted session of one account. */
-  open: (accountId: string, permit: SendPermit) => Promise<GrantedXmppSession>;
+  /** Opens the session of one account. */
+  open: (accountId: string, permit: SendPermit) => Promise<FollowLink>;
+  /** The XMPP grant. A Matrix account has none: it names itself with `accountId`. */
   permit: SendPermit;
+  /** The backend the log and the account list name; XMPP unless said otherwise. */
+  backendName?: string;
+  accountId?: string;
   signal: AbortSignal;
   log: (line: string) => void;
   /** Called after anything was written, so the conversations get rebuilt. */
@@ -57,6 +84,8 @@ export interface FollowResult {
   catchUps: number;
   added: number;
   heldBy: string | null;
+  /** The network refused the account for good: it was stopped and not retried. */
+  loggedOut: boolean;
 }
 
 function abortableSleep(ms: number, signal: AbortSignal): Promise<void> {
@@ -72,6 +101,10 @@ function abortableSleep(ms: number, signal: AbortSignal): Promise<void> {
   });
 }
 
+class LoggedOut extends Error {
+  readonly loggedOut = true;
+}
+
 function errText(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
@@ -79,15 +112,16 @@ function errText(err: unknown): string {
 /** Follow one account until `deps.signal` aborts. Never throws: the outcome is the result. */
 export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
   const { db, backend, signal, log, permit } = deps;
-  const accountId = permit.account;
-  const who = `xmpp/${accountId}`;
+  const accountId = deps.accountId ?? permit.account;
+  const backendName = deps.backendName ?? 'xmpp';
+  const who = `${backendName}/${accountId}`;
   const now = deps.now ?? (() => new Date());
   const interval = deps.leaseIntervalMs ?? LEASE_HEARTBEAT_MS;
   const sleep = deps.sleep ?? ((ms: number) => abortableSleep(ms, signal));
   const minGap = deps.minGapMs ?? FOLLOW_MIN_GAP_MS;
   const progress = (event: { type: DeliveryProgress['type'] } & Record<string, unknown>): void =>
-    deps.onProgress?.({ backend: 'xmpp', accountId, ...event } as DeliveryProgress);
-  const result: FollowResult = { accountId, catchUps: 0, added: 0, heldBy: null };
+    deps.onProgress?.({ backend: backendName, accountId, ...event } as DeliveryProgress);
+  const result: FollowResult = { accountId, catchUps: 0, added: 0, heldBy: null, loggedOut: false };
 
   // The lease first: a `sync` on the same account stands down while a daemon holds it.
   const acquire = async (): Promise<boolean> => {
@@ -97,7 +131,7 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
       let acquired = false;
       let holder: string | null = null;
       try {
-        const take = takeReceiveLease(db, 'xmpp', accountId, deps.holder, now(), interval);
+        const take = takeReceiveLease(db, backendName, accountId, deps.holder, now(), interval);
         acquired = take.acquired;
         holder = take.acquired ? null : take.holder;
       } catch {
@@ -124,7 +158,7 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
     const heartbeat = setInterval(() => {
       let refreshed: boolean;
       try {
-        refreshed = refreshReceiveLease(db, 'xmpp', accountId, deps.holder, now(), interval);
+        refreshed = refreshReceiveLease(db, backendName, accountId, deps.holder, now(), interval);
       } catch {
         busyTicks += 1;
         if (busyTicks < 2) return;
@@ -155,7 +189,7 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
     let pending: Promise<void> = Promise.resolve();
     try {
       while (!live.aborted) {
-        let session: GrantedXmppSession | null = null;
+        let session: FollowLink | null = null;
         const openedAt = now().getTime();
         try {
           session = await deps.open(accountId, permit);
@@ -196,9 +230,11 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
             }
           };
 
-          const closed = new Promise<string>((resolve) => {
-            session?.onClosed(resolve);
-            live.addEventListener('abort', () => resolve('stopped'), { once: true });
+          const closed = new Promise<{ reason: string; loggedOut: boolean }>((resolve) => {
+            session?.onClosed((reason, loggedOut) => resolve({ reason, loggedOut: loggedOut === true }));
+            live.addEventListener('abort', () => resolve({ reason: 'stopped', loggedOut: false }), {
+              once: true,
+            });
           });
           const unsubscribe = session.onArrival(() => {
             log(`curlew-daemon: ${who} arrival hint — catching up`);
@@ -208,26 +244,35 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
             pending = Promise.all([pending, started]).then(() => {});
           });
 
-          await session.goAvailable();
-          appendWriteLog(
-            {
-              capability: SEND_CAPABILITY,
-              target: accountId,
-              frontend: 'daemon',
-              note: 'presence available',
-            },
-            { path: deps.writeLogPath },
-          );
+          if (session.goAvailable) {
+            await session.goAvailable();
+            appendWriteLog(
+              {
+                capability: SEND_CAPABILITY,
+                target: accountId,
+                frontend: 'daemon',
+                note: 'presence available',
+              },
+              { path: deps.writeLogPath },
+            );
+          }
           log(`curlew-daemon: ${who} connected`);
           progress({ type: 'connected' });
           attempt = 0;
           await catchUp();
-          const reason = await closed;
+          const end = await closed;
           unsubscribe();
           if (live.aborted) break;
-          throw new Error(reason);
+          if (end.loggedOut) throw new LoggedOut(end.reason);
+          throw new Error(end.reason);
         } catch (err) {
           if (live.aborted) break;
+          if (isLoggedOut(err)) {
+            result.loggedOut = true;
+            log(`curlew-daemon: ${who} logged out — link the device again`);
+            progress({ type: 'logged-out', error: null });
+            break;
+          }
           attempt += 1;
           if (now().getTime() - openedAt >= RECONNECT_CAP_MS) wait = RECONNECT_FIRST_MS;
           log(`curlew-daemon: ${who} reconnect in ${wait} ms (attempt ${attempt}, ${errText(err)})`);
@@ -244,13 +289,13 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
       clearInterval(heartbeat);
       signal.removeEventListener('abort', stop);
       try {
-        releaseReceiveLease(db, 'xmpp', accountId, deps.holder);
+        releaseReceiveLease(db, backendName, accountId, deps.holder);
       } catch {
         // A busy index leaves the lease to expire on its own.
       }
-      if (!leaseLost) progress({ type: 'stopped', reason: 'aborted' });
+      if (!leaseLost) progress({ type: 'stopped', reason: result.loggedOut ? 'logged-out' : 'aborted' });
       log(
-        `curlew-daemon: ${who} stopped (${signal.aborted ? 'aborted' : leaseLost ? 'lease lost' : 'ended'})`,
+        `curlew-daemon: ${who} stopped (${signal.aborted ? 'aborted' : leaseLost ? 'lease lost' : result.loggedOut ? 'logged out' : 'ended'})`,
       );
     }
     return leaseLost;

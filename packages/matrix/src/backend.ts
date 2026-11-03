@@ -16,7 +16,7 @@ import type {
 } from '@curlew/protocol';
 import { SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
-import type { MatrixLoginPrompts } from './api.ts';
+import type { MatrixApi, MatrixLoginPrompts } from './api.ts';
 import {
   type AccountRecord,
   accountPath,
@@ -25,12 +25,30 @@ import {
   readAccountRecord,
   secretStoreLedger,
 } from './accounts.ts';
-import { connectMatrixClient, type MatrixConnector } from './client.ts';
+import { connectMatrixClient, isLoggedOutError, type MatrixConnector } from './client.ts';
 import { sendFetch } from './guard.ts';
 import { loginMatrix } from './login.ts';
 import { MATRIX_MANIFEST } from './manifest.ts';
 import { matrixSendApi, MatrixSender } from './send.ts';
 import { MatrixChatSession } from './session.ts';
+
+/** A Matrix account whose token the server no longer knows: the daemon stops it instead of retrying. */
+export class MatrixLoggedOutError extends Error {
+  readonly loggedOut = true;
+  constructor(message: string) {
+    super(message);
+    this.name = 'MatrixLoggedOutError';
+  }
+}
+
+/** One open Matrix connection the daemon keeps (ADR 0007 §5): a sync loop plus fresh history walks. */
+export interface MatrixLiveConnection {
+  /** A new session over the open client; closing it leaves the client running. */
+  chatSession(): ChatSession;
+  onArrival(listener: () => void): () => void;
+  onClosed(listener: (reason: string, loggedOut: boolean) => void): void;
+  close(): Promise<void>;
+}
 
 export const reloginHint = (): string => _('log in again with `curlew accounts add matrix`');
 
@@ -111,24 +129,58 @@ export class MatrixBackend implements ChatBackend, SendBackend {
     });
   }
 
-  async connect(accountId: string): Promise<ChatSession> {
+  /** Open the account's client; the SDK's error text names the errcode, never the token. */
+  private async openClient(accountId: string): Promise<{ store: SecretStore; api: MatrixApi; record: AccountRecord }> {
     const { store, record, accessToken } = this.openAccount(accountId);
-    let api;
     try {
-      api = await this.connectClient({ ...record, accessToken, store, accountId });
+      const api = await this.connectClient({ ...record, accessToken, store, accountId });
+      return { store, api, record };
     } catch (err) {
       store.close();
-      // The SDK's error text names the server's errcode (M_UNKNOWN_TOKEN for a device logged out
-      // elsewhere); it never carries the token.
-      throw new Error(
-        fmt(_('the Matrix account {account} is not usable ({reason}) — {hint}'), {
-          account: record.userId,
-          reason: err instanceof Error ? err.message : String(err),
-          hint: reloginHint(),
-        }),
-      );
+      // M_UNKNOWN_TOKEN is a device logged out elsewhere.
+      const message = fmt(_('the Matrix account {account} is not usable ({reason}) — {hint}'), {
+        account: record.userId,
+        reason: err instanceof Error ? err.message : String(err),
+        hint: reloginHint(),
+      });
+      throw isLoggedOutError(err) ? new MatrixLoggedOutError(message) : new Error(message);
     }
-    const connected = api;
+  }
+
+  /**
+   * The connection a follow keeps open: the client's sync loop stays up after the first response,
+   * and every catch-up reads history through a session of its own (a session caches its walks, a
+   * stale cache would hide what arrived since). Closing that session does not stop the client.
+   */
+  async connectLive(accountId: string): Promise<MatrixLiveConnection> {
+    const { store, api } = await this.openClient(accountId);
+    const live = api.live;
+    return {
+      chatSession: () =>
+        new MatrixChatSession(
+          {
+            userId: api.userId,
+            listRooms: () => api.listRooms(),
+            messages: (roomId, from, limit) => api.messages(roomId, from, limit),
+            fetchEvent: (roomId, eventId) => api.fetchEvent(roomId, eventId),
+            close: async () => {},
+          },
+          secretStoreLedger(store),
+        ),
+      onArrival: (listener) => live?.onArrival(listener) ?? (() => {}),
+      onClosed: (listener) => live?.onClosed((end) => listener(end.reason, end.loggedOut)),
+      close: async () => {
+        try {
+          await api.close();
+        } finally {
+          store.close();
+        }
+      },
+    };
+  }
+
+  async connect(accountId: string): Promise<ChatSession> {
+    const { store, api: connected } = await this.openClient(accountId);
     return new MatrixChatSession(
       {
         userId: connected.userId,
