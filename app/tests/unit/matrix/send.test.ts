@@ -15,7 +15,7 @@ import {
 import { chatConversationId, getConversation, rebuildConversations, syncChats } from '@curlew/store';
 
 import { openIndex } from '../../../src/core/actions/index.ts';
-import { sendMessage } from '../../../src/core/actions/send.ts';
+import { sendAsAgent } from '../../../src/core/actions/send.ts';
 import { withSendGateGrants } from '../../../src/frontends/mcp/tools/send.ts';
 import { ANNA, FakeMatrixApi, fakeConnector, HOMESERVER, ME, seedAccount, text } from './fake-api.ts';
 
@@ -133,7 +133,7 @@ async function withRig<T>(
 }
 
 const send = (rig: Rig, to: string, text: string) =>
-  sendMessage({
+  sendAsAgent({
     accountId: rig.accountId,
     to,
     text,

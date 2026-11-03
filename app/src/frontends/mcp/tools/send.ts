@@ -19,7 +19,7 @@ import type { Grant } from '../../../core/grants.ts';
 import { isSendCapability } from '../../../core/grants.ts';
 import { z } from 'zod';
 
-import { sendMessage, sendTarget } from '../../../core/actions/index.ts';
+import { sendAsAgent, sendTarget } from '../../../core/actions/index.ts';
 import { MESSAGE_FORMATS } from '../../../core/markdown.ts';
 import { mcpErrorFrom } from '../types.ts';
 
@@ -77,7 +77,7 @@ export function registerSendTools(server: McpServer): void {
     async (params) => {
       try {
         return mcpSuccess(
-          await sendMessage({
+          await sendAsAgent({
             accountId: params.account,
             to: params.to,
             text: params.text,

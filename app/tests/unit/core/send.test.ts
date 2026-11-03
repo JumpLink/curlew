@@ -1,6 +1,6 @@
 import { applyGrantGate, requiresCapability } from '@gjsify/mcp';
 import { describe, expect, it } from '@gjsify/unit';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -16,7 +16,13 @@ import {
 import type { EncryptedStanza, XmppBackend, XmppLink } from '@curlew/xmpp';
 import xml from '@xmpp/xml';
 
-import { permitFor, recordDelivered, requireSendGrant, sendMessage } from '../../../src/core/actions/send.ts';
+import {
+  permitFor,
+  recordDelivered,
+  requireSendGrant,
+  sendAsAgent,
+  sendMessage,
+} from '../../../src/core/actions/send.ts';
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
 import { waitReply } from '../../../src/core/actions/wait-reply.ts';
 import { appendWriteLog } from '../../../src/core/write-log.ts';
@@ -413,6 +419,88 @@ export default async () => {
       }
     });
   });
+  await describe('sending without and with a grant (ADR 0008)', async () => {
+    const world = async (
+      grants: unknown[],
+      body: (w: {
+        agent: (to: string) => Promise<unknown>;
+        person: (to: string) => Promise<unknown>;
+        sent: Array<[string, string, string]>;
+        logged: () => boolean;
+      }) => Promise<void>,
+    ) => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-adr8-'));
+      try {
+        const configPath = join(dir, 'config.json');
+        writeFileSync(configPath, JSON.stringify({ grants }));
+        const sent: Array<[string, string, string]> = [];
+        let n = 0;
+        const backend = {
+          manifest: XMPP_MANIFEST,
+          listAccounts: async () => [ACCOUNT_INFO],
+          openSender: async (_id: string, permit: ReturnType<typeof permitFor>) =>
+            new XmppSender(new GrantedXmppSession(fakeLink(sent), permit, () => `id-${++n}`)),
+        } as unknown as XmppBackend;
+        const send = (call: typeof sendMessage) => (to: string) =>
+          call({
+            accountId: ACCOUNT,
+            to,
+            text: 'hi',
+            frontend: 'cli',
+            dbPath: join(dir, 'index.db'),
+            configPath,
+            writeLogPath: join(dir, 'write.log'),
+            backend,
+          });
+        await body({
+          agent: send(sendAsAgent),
+          person: send(sendMessage),
+          sent,
+          logged: () => existsSync(join(dir, 'write.log')),
+        });
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    };
+
+    await it('refuses an agent send no grant names, before anything is sent or logged', async () => {
+      await world([], async ({ agent, sent, logged }) => {
+        await expect(agent(OWNER)).rejects.toThrow(/not granted/);
+        expect(sent.length).toBe(0);
+        expect(logged()).toBe(false);
+      });
+      await world(GRANTS, async ({ agent, sent }) => {
+        await expect(agent('other@example.org')).rejects.toThrow(/not granted/);
+        expect(sent.length).toBe(0);
+      });
+    });
+
+    await it('lets an agent send to the granted pair, and logs it', async () => {
+      await world(GRANTS, async ({ agent, sent, logged }) => {
+        await agent(OWNER);
+        expect(sent.length).toBe(1);
+        expect(sent[0][0]).toBe(OWNER);
+        expect(logged()).toBe(true);
+      });
+    });
+
+    await it("always lets an agent send to the account's own address", async () => {
+      await world([], async ({ agent, sent, logged }) => {
+        await agent(ACCOUNT_INFO.identity);
+        expect(sent.length).toBe(1);
+        expect(logged()).toBe(true);
+      });
+    });
+
+    await it('lets the person send from an enabled account with no grant at all, and logs it', async () => {
+      await world([], async ({ person, sent, logged }) => {
+        await person(OWNER);
+        expect(sent.length).toBe(1);
+        expect(logged()).toBe(true);
+      });
+    });
+  });
+
   await describe('sendMessage formats', async () => {
     const run = async (params: { text: string; format?: 'plain' | 'markdown' }) => {
       const dir = mkdtempSync(join(tmpdir(), 'curlew-fmt-'));

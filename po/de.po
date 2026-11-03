@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-03 09:40+0100\n"
+"POT-Creation-Date: 2026-11-03 10:16+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -12,13 +12,13 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app/src/core/actions/daemon.ts:307
+#: app/src/core/actions/daemon.ts:305
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 "{capability} ist nicht die Berechtigung, unter der {backend} sendet — es "
 "wurde nichts gesendet"
 
-#: app/src/core/actions/daemon.ts:330
+#: app/src/core/actions/daemon.ts:325
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
@@ -53,7 +53,15 @@ msgstr ""
 msgid "no xmpp account {account} — `curlew accounts list` shows them"
 msgstr "Kein XMPP-Konto {account} — `curlew accounts list` zeigt sie an"
 
-#: app/src/core/actions/send.ts:150 app/src/core/actions/send.ts:163
+#: app/src/core/actions/send.ts:86
+msgid ""
+"sending to {target} is not granted — add a grant like {grant} to the config "
+"file, naming the account and the address"
+msgstr ""
+"Das Senden an {target} ist nicht freigegeben — füge eine Freigabe wie "
+"{grant} in der Konfigurationsdatei hinzu, die Konto und Adresse nennt"
+
+#: app/src/core/actions/send.ts:176 app/src/core/actions/send.ts:189
 msgid ""
 "the message index is busy, so curlew cannot tell whether {account} is in use "
 "elsewhere — nothing was sent; try again in a moment"
@@ -62,7 +70,7 @@ msgstr ""
 "{account} anderswo in Benutzung ist — es wurde nichts gesendet; versuche es "
 "gleich noch einmal"
 
-#: app/src/core/actions/send.ts:169
+#: app/src/core/actions/send.ts:195
 msgid ""
 "{account} is being received by {holder} right now, {backend} cannot send and "
 "receive at the same time, and that process did not take the send over — "
@@ -74,7 +82,7 @@ msgstr ""
 "übernommen — es wurde nichts gesendet; beende ihn (`curlew daemon stop`) und "
 "sende erneut, oder sende von deinem Telefon"
 
-#: app/src/core/actions/send.ts:219
+#: app/src/core/actions/send.ts:245
 msgid ""
 "{capability} is not granted for {target} — add {grant} to the grants in the "
 "config file"
@@ -82,45 +90,29 @@ msgstr ""
 "{capability} ist für {target} nicht freigegeben — füge {grant} in der "
 "Konfigurationsdatei zu den Freigaben hinzu"
 
-#: app/src/core/actions/send.ts:252
-msgid ""
-"sending to {target} is not granted — add a grant like {grant} to the config "
-"file, naming the account and the address"
-msgstr ""
-"Das Senden an {target} ist nicht freigegeben — füge eine Freigabe wie "
-"{grant} in der Konfigurationsdatei hinzu, die Konto und Adresse nennt"
-
-#: app/src/core/actions/send.ts:283
+#: app/src/core/actions/send.ts:296 app/src/core/actions/send.ts:476
 msgid "no account {account} — `curlew accounts list` shows them"
 msgstr "Kein Konto {account} — `curlew accounts list` zeigt sie an"
 
-#: app/src/core/actions/send.ts:289
-msgid "the xmpp backend is not available"
-msgstr "Das XMPP-Backend ist nicht verfügbar"
-
-#: app/src/core/actions/send.ts:349
+#: app/src/core/actions/send.ts:390
 msgid "{backend} cannot send an image — give text and leave image_url out"
 msgstr "{backend} kann kein Bild senden — gib Text an und lass image_url weg"
 
-#: app/src/core/actions/send.ts:356
+#: app/src/core/actions/send.ts:397
 msgid "nothing to send: the text is empty after rendering"
 msgstr "Nichts zu senden: Der Text ist nach dem Rendern leer"
 
-#: app/src/core/actions/send.ts:413
+#: app/src/core/actions/send.ts:483
 msgid "{backend} cannot send"
 msgstr "{backend} kann nicht senden"
 
-#: app/src/core/actions/send.ts:417
+#: app/src/core/actions/send.ts:487
 msgid "nothing to send: give text, an image URL or both"
 msgstr "Nichts zu senden: Gib Text, eine Bild-URL oder beides an"
 
-#: app/src/core/actions/send.ts:419
+#: app/src/core/actions/send.ts:489
 msgid "{backend} messages carry no subject"
 msgstr "Nachrichten von {backend} haben keinen Betreff"
-
-#: app/src/core/actions/send.ts:427
-msgid "no {backend} account {account} — `curlew accounts list` shows them"
-msgstr "Kein {backend}-Konto {account} — `curlew accounts list` zeigt sie an"
 
 #: app/src/core/actions/setup.ts:224
 msgid "Link Signal"
@@ -894,12 +886,12 @@ msgstr "Mailadresse des Absenders"
 #: app/src/frontends/cli/daemon.ts:26
 msgid ""
 "Receive from every enabled delivery-only backend (Signal, WhatsApp) and "
-"every granted XMPP account until stopped — the systemd unit in contrib/ runs "
-"this"
+"every enabled XMPP and Matrix account until stopped — the systemd unit in "
+"contrib/ runs this"
 msgstr ""
 "Von jedem aktivierten reinen Zustell-Backend (Signal, WhatsApp) und jedem "
-"freigegebenen XMPP-Konto empfangen, bis der Prozess beendet wird — die "
-"systemd-Unit in contrib/ führt dies aus"
+"aktivierten XMPP- und Matrix-Konto empfangen, bis der Prozess beendet wird — "
+"die systemd-Unit in contrib/ führt dies aus"
 
 #: app/src/frontends/cli/daemon.ts:33
 msgid "Restrict to one account id; omit for all"
@@ -2217,6 +2209,13 @@ msgid ""
 msgstr ""
 "{count} Geräte von {jid} tragen diesen Fingerabdruck, er benennt also keines "
 "— nichts wurde geändert"
+
+#~ msgid "the xmpp backend is not available"
+#~ msgstr "Das XMPP-Backend ist nicht verfügbar"
+
+#~ msgid "no {backend} account {account} — `curlew accounts list` shows them"
+#~ msgstr ""
+#~ "Kein {backend}-Konto {account} — `curlew accounts list` zeigt sie an"
 
 #~ msgid "XMPP account id (xmpp-…)"
 #~ msgstr "XMPP-Konto-ID (xmpp-…)"

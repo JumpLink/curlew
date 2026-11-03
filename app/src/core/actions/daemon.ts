@@ -12,9 +12,11 @@
  *     once (a follow session ends only when it is closed, so a queue would starve every account
  *     behind the first). Mail and chat backends stay on `curlew sync`: they are pull models
  *     with a cursor, and a daemon buys them nothing;
- *   - also follows every XMPP account named by an `xmpp.send` grant (`follow.ts`): carbons live,
- *     the archive as the truth, so a reply reaches the index within seconds. Grants are read
- *     once at start; the run stops when they change;
+ *   - also follows every ENABLED XMPP account (`follow.ts`, ADR 0008): carbons live, the archive
+ *     as the truth, so a reply reaches the index within seconds. An enabled account is the
+ *     person's own — no grant is needed to follow it; grants restrict agents. The one grant the
+ *     daemon still reads is `xmpp.omemo` (what it decrypts), read once at start: the run stops
+ *     when that changes;
  *   - follows every ENABLED Matrix account (ADR 0007 §5): the SDK's `/sync` long poll
  *     (`set_presence=offline`, through the read-only gate) keeps the client current, a new event
  *     is only a wake-up, and the same history walk `curlew sync` runs writes it. No new switch:
@@ -27,9 +29,9 @@
  *   - SENDS for the accounts it is holding, when asked over the session bus (ADR 0004, amendment
  *     2026-10-30). A Signal or WhatsApp send cannot run in a second process while this one is
  *     receiving, so `curlew send` hands it here and it goes out on the connection that is already
- *     up. The grant is checked again here, against this daemon's own config read at that moment,
- *     and the daemon writes neither the log line nor the index row — the caller owns both, so
- *     each happens exactly once whichever process reached the network;
+ *     up. The daemon checks no grant (ADR 0008: grants gate the agent frontends, and this is the
+ *     person's send service) and writes neither the log line nor the index row — the caller owns
+ *     both, so each happens exactly once whichever process reached the network;
  *   - logs one line per state change to stderr, where journald collects it. Never message text,
  *     chat titles, peer names or phone numbers — a log line is a file that gets copied around,
  *     and the index's privacy rule applies to it.
@@ -54,7 +56,7 @@ import {
 import type { DeliveryProgress, DeliverySyncResult, IndexDatabase, RebuildResult } from '@curlew/store';
 import { newestSeq, receiveDeliveries } from '@curlew/store';
 import { MatrixBackend } from '@curlew/matrix';
-import type { XmppBackend } from '@curlew/xmpp';
+import { XmppBackend } from '@curlew/xmpp';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig, type CurlewConfig } from '../config.ts';
@@ -70,27 +72,19 @@ import {
 import { followAccount, type FollowResult } from './follow.ts';
 import { openIndex, rebuildWithAddressBook } from './index-sync.ts';
 import { decryptAccounts, OMEMO_CAPABILITY } from './omemo.ts';
-import {
-  createXmppBackend,
-  permitFor,
-  requireAnySendGrant,
-  requireSendGrant,
-  sendThrough,
-  SEND_CAPABILITY,
-} from './send.ts';
+import { sendThrough } from './send.ts';
 
-/** How often a running daemon looks whether the grants were edited (they apply on restart only). */
+/** How often a running daemon looks whether its decryption grant was edited (it applies on restart only). */
 export const GRANT_CHECK_MS = 30_000;
 
 /**
- * The grants a running daemon depends on: who it follows (`xmpp.send`) and what it decrypts
- * (`xmpp.omemo`). Only an edit to THESE stops it — a send grant for another backend is read by
- * `curlew send` when it runs, and stopping the daemon for it would leave nothing receiving.
+ * The grants a running daemon depends on: what it decrypts (`xmpp.omemo`). Only an edit to THIS
+ * stops it. Send grants do not belong here any more (ADR 0008): who the daemon follows is the
+ * set of enabled accounts, and `curlew send` reads the send grants itself when it runs.
+ * Removed with the plaintext-index step of ADR 0008, when decryption stops depending on a grant.
  */
 export function daemonGrants(grants: readonly Grant[]): string {
-  return JSON.stringify(
-    grants.filter((g) => g.capability === SEND_CAPABILITY || g.capability === OMEMO_CAPABILITY),
-  );
+  return JSON.stringify(grants.filter((g) => g.capability === OMEMO_CAPABILITY));
 }
 
 /** How often a running daemon looks whether another process moved the journal (ADR 0007 §2). */
@@ -116,8 +110,11 @@ export interface DaemonParams {
    * chosen by the driver the backend implements — never by its name.
    */
   backends?: readonly MessageBackend[];
-  /** The XMPP backend that follows granted accounts. Injected by tests. */
-  xmpp?: XmppBackend;
+  /**
+   * The XMPP backend whose accounts are followed. Injected by tests; by default the registry's,
+   * when the config enables it, and `null` to follow none.
+   */
+  xmpp?: XmppBackend | null;
   /**
    * The Matrix backend whose accounts are followed. Injected by tests; by default the registry's,
    * when the config enables it, and `null` to follow none.
@@ -161,9 +158,9 @@ export interface DaemonResult {
   removed: number;
   errors: number;
   conversations: (RebuildResult & { contacts: number | null }) | null;
-  /** The granted XMPP accounts that were followed (ADR 0004 §5). */
+  /** The XMPP accounts that were followed (ADR 0004 §5, ADR 0008). */
   followed: FollowResult[];
-  /** The run stopped because the grants it follows and decrypts by were edited. */
+  /** The run stopped because the grant it decrypts by (`xmpp.omemo`) was edited. */
   grantsEdited: boolean;
 }
 
@@ -173,6 +170,14 @@ export function createMatrixBackend(config: CurlewConfig): MatrixBackend | null 
   if (!registry.enabled(config).some((plugin) => plugin.manifest.name === 'matrix')) return null;
   const created = registry.create(config, 'matrix', backendContext('matrix', config));
   return created instanceof MatrixBackend ? created : null;
+}
+
+/** The registry's XMPP backend when the config enables it (the daemon follows it), else `null`. */
+export function createEnabledXmppBackend(config: CurlewConfig): XmppBackend | null {
+  const registry = builtinRegistry();
+  if (!registry.enabled(config).some((plugin) => plugin.manifest.name === 'xmpp')) return null;
+  const created = registry.create(config, 'xmpp', backendContext('xmpp', config));
+  return created instanceof XmppBackend ? created : null;
 }
 
 /** The enabled delivery-only backends — what a daemon receives and what a `sync` stands down for. */
@@ -195,7 +200,7 @@ export function deliveryBackends(config: ReturnType<typeof loadConfig>): Message
  * (`RestartPreventExitStatus=2`) and the unit shows as **failed**, which is the only signal that
  * says "nothing is being received and you have to link the device again".
  *
- * `3` when the run stopped because its grants were edited: they apply on restart only, so the
+ * `3` when the run stopped because its decryption grant was edited: it applies on restart only, so the
  * unit has to come back — `Restart=on-failure` restarts any code but 0 and 2. A `0` here left
  * nothing receiving until someone noticed.
  *
@@ -264,13 +269,6 @@ export function sessionKey(backend: string, accountId: string): string {
 export interface DaemonSendHandlerOptions {
   /** The live sessions of this run, keyed by `sessionKey` — the map `onSession` keeps up to date. */
   sessions: ReadonlyMap<string, DeliverySession>;
-  /**
-   * This daemon's grants, read AGAIN for every send. Deliberately not the set read at start
-   * (which decides what is followed and decrypted, and may not change under an open connection):
-   * a per-call read can only ever narrow what a send may do, so a grant withdrawn while the
-   * daemon runs stops the next send through it instead of the next restart.
-   */
-  config: () => Pick<CurlewConfig, 'grants'>;
   log: (line: string) => void;
 }
 
@@ -282,11 +280,11 @@ export interface DaemonSendHandlerOptions {
  *
  * Fail closed, in this order. The account has to be one this run holds a session for and the
  * session has to be able to send on itself, or the caller is told `not-followed` and its own
- * direct path decides what happens next. The grant has to name the exact pair for the exact
- * backend, checked against the config read just now — the caller checked it too, and that is the
- * check that reports a mistake to the person; this one is what makes a caller that did not check
- * harmless. Only then is a sender opened, and it sends the ONE send plan `curlew send` would have
- * sent (`sendThrough`), on the connection that is already receiving.
+ * direct path decides what happens next. No grant is checked (ADR 0008): this is the person's
+ * send service, and grants restrict the agent frontends, which check them before they get here.
+ * The permit lists the one address asked for; the sender checks it again. Only then is a sender
+ * opened, and it sends the ONE send plan `curlew send` would have sent (`sendThrough`), on the
+ * connection that is already receiving.
  *
  * It writes no log line and indexes nothing: the caller owns both.
  */
@@ -310,12 +308,9 @@ export function createDaemonSendHandler(options: DaemonSendHandlerOptions): Daem
           }),
         );
       }
-      const config = options.config();
-      requireAnySendGrant(config, request.account, request.to);
-      requireSendGrant(config, request.account, request.to, capability);
-      permit = permitFor(config.grants, request.account, capability);
+      permit = { account: request.account, addresses: [request.to] };
     } catch (error) {
-      log(`curlew-daemon: a send for ${who} was refused — it is not granted here`);
+      log(`curlew-daemon: a send for ${who} was refused — it names the wrong capability`);
       return { v: DAEMON_WIRE_VERSION, kind: 'refused', message: errText(error) };
     }
     let sender: MessageSender;
@@ -377,20 +372,19 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     }
     return true;
   });
-  // Grants are read ONCE, here (ADR 0004 §1): an edit applies on restart, never halfway through
-  // a connection that is already open.
+  // The decryption grant is read ONCE, here (ADR 0004 §1): an edit applies on restart, never
+  // halfway through a connection that is already open.
   const grantsAtStart = daemonGrants(config.grants);
-  const grantedAccounts = [
-    ...new Set(
-      config.grants
-        .filter((g) => g.capability === SEND_CAPABILITY)
-        .map((g) => g.target.slice(0, g.target.indexOf('/'))),
-    ),
-  ].filter((id) => !params.accountId || id === params.accountId);
   // Follow mode is where a message is seen FIRST, so it decrypts what the grants allow: a row
   // the daemon indexed textless stays that way, because the next sync finds nothing new for it.
   const decrypting = decryptAccounts(config.grants);
-  const xmpp = grantedAccounts.length > 0 ? (params.xmpp ?? createXmppBackend(config)) : null;
+  const xmpp = params.xmpp === undefined ? createEnabledXmppBackend(config) : params.xmpp;
+  const xmppAccounts =
+    xmpp === null
+      ? []
+      : (await xmpp.listAccounts())
+          .map((a) => a.id)
+          .filter((id) => !params.accountId || id === params.accountId);
   const matrix = params.matrix === undefined ? createMatrixBackend(config) : params.matrix;
   const matrixAccounts =
     matrix === null
@@ -398,9 +392,9 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
       : (await matrix.listAccounts())
           .map((a) => a.id)
           .filter((id) => !params.accountId || id === params.accountId);
-  if (backends.length === 0 && xmpp === null && matrixAccounts.length === 0) {
+  if (backends.length === 0 && xmppAccounts.length === 0 && matrixAccounts.length === 0) {
     throw new Error(
-      'nothing to receive — no delivery-only backend is enabled (`curlew backends list`; the daemon receives Signal and WhatsApp), no xmpp.send grant names an account to follow and no Matrix account is enabled; `curlew sync` stays for mail and the other chats',
+      'nothing to receive — no delivery-only backend is enabled (`curlew backends list`; the daemon receives Signal and WhatsApp), no XMPP or Matrix account is enabled; `curlew sync` stays for mail and the other chats',
     );
   }
 
@@ -458,14 +452,16 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   else outer.addEventListener('abort', forward, { once: true });
   let grantsEdited = false;
   const grantWatch =
-    grantedAccounts.length > 0
+    xmppAccounts.length > 0
       ? setInterval(() => {
           try {
             if (daemonGrants(loadConfig(params.configPath ?? configPath()).grants) === grantsAtStart) return;
           } catch {
             // An unreadable config is also a change nobody approved.
           }
-          log('curlew-daemon: the grants were edited — stopping; the new set applies after a restart');
+          log(
+            'curlew-daemon: the decryption grant was edited — stopping; the new set applies after a restart',
+          );
           grantsEdited = true;
           run.abort();
         }, params.grantCheckMs ?? GRANT_CHECK_MS)
@@ -481,7 +477,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   // above already name, and the journal's newest row is announced after the daemon's own commits
   // and whenever a poll finds that another process moved it.
   const table = new AccountTable();
-  for (const accountId of grantedAccounts) table.seed('xmpp', accountId, new Date());
+  for (const accountId of xmppAccounts) table.seed('xmpp', accountId, new Date());
   for (const accountId of matrixAccounts) table.seed('matrix', accountId, new Date());
   let lastSeq: number | null = null;
   try {
@@ -506,8 +502,8 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   try {
     log(
       `curlew-daemon: receiving from ${backends.map((b) => b.manifest.name).join(', ') || 'no delivery backend'}` +
-        `${grantedAccounts.length > 0 ? ` and following ${grantedAccounts.length} xmpp account(s)` : ''}` +
-        `${matrixAccounts.length > 0 ? `${grantedAccounts.length > 0 ? ',' : ' and following'} ${matrixAccounts.length} matrix account(s)` : ''} ` +
+        `${xmppAccounts.length > 0 ? ` and following ${xmppAccounts.length} xmpp account(s)` : ''}` +
+        `${matrixAccounts.length > 0 ? `${xmppAccounts.length > 0 ? ',' : ' and following'} ${matrixAccounts.length} matrix account(s)` : ''} ` +
         `(${params.accountId ?? 'every account'}) — stop with SIGTERM`,
     );
     const publish = params.publishSend === undefined ? publishDaemonSend : params.publishSend;
@@ -517,7 +513,6 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
         : publish(
             createDaemonSendHandler({
               sessions,
-              config: () => loadConfig(params.configPath ?? configPath()),
               log,
             }),
             { log, accounts: () => table.reply() },
@@ -536,13 +531,13 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
         .catch(() => {});
     }
     const following = Promise.all(
-      (xmpp === null ? [] : grantedAccounts).map((accountId) =>
+      xmppAccounts.map((accountId) =>
         followAccount({
           db,
           backend: xmpp as XmppBackend,
           open: (id, permit) =>
             (xmpp as XmppBackend).openGranted(id, permit, { decrypt: decrypting.includes(id) }),
-          permit: permitFor(config.grants, accountId),
+          permit: { account: accountId, addresses: [] },
           signal,
           log,
           onWrite: () => {

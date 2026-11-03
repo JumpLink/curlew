@@ -9,7 +9,7 @@ import { chatConversationId, getConversation } from '@curlew/store';
 import { TELEGRAM_MAX_MESSAGE_CHARS, TELEGRAM_MANIFEST, TelegramBackend } from '@curlew/telegram';
 
 import { openIndex } from '../../../src/core/actions/index.ts';
-import { sendMessage } from '../../../src/core/actions/send.ts';
+import { sendAsAgent } from '../../../src/core/actions/send.ts';
 import { withSendGateGrants } from '../../../src/frontends/mcp/tools/send.ts';
 import { fakeFactory } from './fake-client.ts';
 
@@ -52,7 +52,7 @@ async function withRig<T>(config: unknown, body: (rig: Rig) => Promise<T>): Prom
 }
 
 const send = (rig: Rig, to: string, text: string) =>
-  sendMessage({
+  sendAsAgent({
     accountId: ACCOUNT,
     to,
     text,

@@ -36,7 +36,7 @@ import {
 import * as Signal from '@signalapp/libsignal-client';
 
 import { openIndex } from '../../../src/core/actions/index.ts';
-import { sendMessage } from '../../../src/core/actions/send.ts';
+import { sendAsAgent } from '../../../src/core/actions/send.ts';
 import { withSendGateGrants } from '../../../src/frontends/mcp/tools/send.ts';
 import { Party } from './stores.ts';
 import {
@@ -417,7 +417,7 @@ async function introduceTo(rig: Rig, party: Party): Promise<void> {
 }
 
 const send = (rig: Rig, to: string, text: string) =>
-  sendMessage({
+  sendAsAgent({
     accountId: rig.accountId,
     to,
     text,

@@ -1,15 +1,20 @@
 /**
- * `curlew send` / `send_message` — one message from a granted account, whatever its backend.
+ * `curlew send` / `send_message` — one message from an enabled account, whatever its backend.
  *
- * Both frontends call this, and this is where the grant is checked (ADR 0004 §4, amended
- * 2026-10-30): the CLI is no back door for an agent with a shell. The account names the backend
- * one way only — it is resolved through the registry — and the grant names the pair exactly:
- * `<backend>.send` for `<account>/<address>`. A grant for another address, or for another
- * backend, is refused before anything opens a connection.
+ * Two entries, one send (ADR 0008: grants restrict agents, not the person):
  *
- * A backend's send path exists only on a handle opened with a permit from a grant
- * (`SendBackend.openSender`, the `GrantedXmppSession` / Signal `guardedFetch` pattern); the
- * permit lists the addresses granted for this account and the handle checks them again.
+ *   - `sendAsAgent` is what the AGENT frontends — the CLI and MCP — call. It checks the grant
+ *     (ADR 0004 §4, amended 2026-10-30) before it reaches `sendMessage`, so the CLI is no back
+ *     door for an agent with a shell: `<backend>.send` for `<account>/<address>`, naming the pair
+ *     exactly. A grant for another address, or for another backend, is refused before anything
+ *     opens a connection. Only a message to the account's own address is allowed without one;
+ *   - `sendMessage` checks no grant. It is the person's path: the daemon's bus send service and
+ *     later the UI send from every enabled account. The account names the backend one way only —
+ *     it is resolved through the registry.
+ *
+ * A backend's send path exists only on a handle opened with a permit (`SendBackend.openSender`,
+ * the `GrantedXmppSession` / Signal `guardedFetch` pattern); the permit lists the address this
+ * send is for and the handle checks it again.
  *
  * An XMPP image goes out as its OWN stanza after the text (XEP-0066 practice: a client renders
  * the file inline only when the body is exactly the URL, so a caption cannot share the stanza).
@@ -23,15 +28,15 @@
  *
  *   - the daemon is holding the account → the send is handed TO it over the session bus
  *     (`daemon-bus.ts`) and runs on the connection and state that are already up. The daemon
- *     re-checks the grant against its own config and sends; this process still writes the log line
- *     and indexes the echo, so both happen exactly once whichever path carried the message;
+ *     checks no grant; this process still writes the log line and indexes the echo, so both
+ *     happen exactly once whichever path carried the message;
  *   - no daemon, or a daemon that is not holding this account → the direct path below, which takes
  *     the receive lease for the length of the send (`holdReceiveLease`);
  *   - a daemon that holds the account and cannot be reached → still refused, because the lease it
  *     holds cannot be taken.
  *
- * The grant is checked HERE, once, in this process, before anything is handed over — the routing
- * decides which connection sends, never whether a send is allowed.
+ * An agent's grant is checked in `sendAsAgent`, once, in this process, before anything is handed
+ * over — the routing decides which connection sends, never whether an agent may.
  *
  * Order matters: send, then the write log, then index the outgoing message. Once the server has
  * the message it is sent, whatever happens next: the log line records that, and a failing log is
@@ -49,9 +54,15 @@ import {
   takeReceiveLease,
 } from '@curlew/store';
 import type { LeaseTake, SentChatRecord } from '@curlew/store';
-import type { MessageBackend, MessageSender, SentMessage, SendPermit } from '@curlew/protocol';
+import type {
+  BackendAccount,
+  MessageBackend,
+  MessageSender,
+  SentMessage,
+  SendPermit,
+} from '@curlew/protocol';
 import { isSendBackend } from '@curlew/protocol';
-import { isOmemoSendRefusedError, MESSAGES, validateImageUrl, XmppBackend } from '@curlew/xmpp';
+import { isOmemoSendRefusedError, MESSAGES, validateImageUrl } from '@curlew/xmpp';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig, type CurlewConfig } from '../config.ts';
@@ -66,6 +77,21 @@ import { _, fmt } from '@curlew/protocol';
 
 /** The chat send capability, still the one the daemon follows accounts under. */
 export const SEND_CAPABILITY = 'xmpp.send';
+
+/** The sentence for an agent send no grant names, shared by the check and the self-send fallback. */
+function notGrantedError(target: string): Error {
+  return new Error(
+    fmt(
+      _(
+        'sending to {target} is not granted — add a grant like {grant} to the config file, naming the account and the address',
+      ),
+      {
+        target,
+        grant: `{ "capability": "<backend>.send", "target": "${target}" }`,
+      },
+    ),
+  );
+}
 
 export interface SendParams {
   accountId: string;
@@ -244,20 +270,7 @@ export function requireAnySendGrant(
   to: string,
 ): Capability[] {
   const capabilities = sendCapabilitiesFor(config.grants, accountId, to);
-  if (capabilities.length === 0) {
-    const target = sendTarget(accountId, to);
-    throw new Error(
-      fmt(
-        _(
-          'sending to {target} is not granted — add a grant like {grant} to the config file, naming the account and the address',
-        ),
-        {
-          target,
-          grant: `{ "capability": "<backend>.send", "target": "${target}" }`,
-        },
-      ),
-    );
-  }
+  if (capabilities.length === 0) throw notGrantedError(sendTarget(accountId, to));
   return capabilities;
 }
 
@@ -283,11 +296,39 @@ export async function resolveSendBackend(
   throw new Error(fmt(_('no account {account} — `curlew accounts list` shows them'), { account: accountId }));
 }
 
-/** The registry's xmpp backend, typed for its granted handle. The daemon follows one account. */
-export function createXmppBackend(config: CurlewConfig): XmppBackend {
-  const created = builtinRegistry().create(config, 'xmpp', backendContext('xmpp', config));
-  if (!(created instanceof XmppBackend)) throw new Error(_('the xmpp backend is not available'));
-  return created;
+/**
+ * The enabled send-capable backend that has this account, or the one a test injected. The person's
+ * path (ADR 0008): no grant names the backend, so every enabled backend is asked. A backend whose
+ * accounts cannot be listed (not set up, no keyring) is skipped, not fatal.
+ */
+async function findAccountBackend(
+  config: CurlewConfig,
+  accountId: string,
+  injected?: MessageBackend,
+): Promise<{ backend: MessageBackend; account: BackendAccount } | null> {
+  const registry = builtinRegistry();
+  const candidates = injected
+    ? [injected]
+    : registry
+        .enabled(config)
+        .map((plugin) => plugin.manifest.name)
+        .map((name) => {
+          try {
+            return registry.create(config, name, backendContext(name, config));
+          } catch {
+            return null;
+          }
+        })
+        .filter((b): b is MessageBackend => b !== null && isSendBackend(b));
+  for (const backend of candidates) {
+    try {
+      const account = (await backend.listAccounts()).find((a) => a.id === accountId);
+      if (account) return { backend, account };
+    } catch {
+      // Another backend may still have it.
+    }
+  }
+  return null;
 }
 
 /** One message that went out, and the body it carried — what the write log and the index need. */
@@ -402,13 +443,42 @@ async function routeThroughDaemon(
   }
 }
 
+/**
+ * Send as an agent: the CLI and MCP entry (ADR 0008). The grant is checked FIRST — before the core
+ * is reached, before the daemon is asked — and a grant names the exact pair for the exact backend.
+ *
+ * The one thing allowed without a grant is a message to the account's own address: it reaches
+ * nobody the person did not already own. Signal's and WhatsApp's own addresses are not that
+ * address (`identity` is the phone number there), so those still need the grant.
+ */
+export async function sendAsAgent(params: SendParams): Promise<SendResult> {
+  const config = loadConfig(params.configPath ?? configPath());
+  const granted = sendCapabilitiesFor(config.grants, params.accountId, params.to);
+  if (granted.length > 0) {
+    const backend = await resolveSendBackend(config, granted, params.accountId, params.backend);
+    // The account resolved to a backend no grant names for this pair: refuse before opening it.
+    requireSendGrant(config, params.accountId, params.to, `${backend.manifest.name}.send` as Capability);
+    return sendMessage({ ...params, backend });
+  }
+  const found = await findAccountBackend(config, params.accountId, params.backend);
+  if (found === null || found.account.identity !== params.to) {
+    throw notGrantedError(sendTarget(params.accountId, params.to));
+  }
+  return sendMessage({ ...params, backend: found.backend });
+}
+
+/** Send from an enabled account on the person's behalf: no grant is checked (ADR 0008). */
 export async function sendMessage(params: SendParams): Promise<SendResult> {
   const config = loadConfig(params.configPath ?? configPath());
-  const granted = requireAnySendGrant(config, params.accountId, params.to);
-  const backend = await resolveSendBackend(config, granted, params.accountId, params.backend);
+  const found = await findAccountBackend(config, params.accountId, params.backend);
+  if (found === null) {
+    throw new Error(
+      fmt(_('no account {account} — `curlew accounts list` shows them'), { account: params.accountId }),
+    );
+  }
+  const backend = found.backend;
+  const account = found.account;
   const capability = `${backend.manifest.name}.send` as Capability;
-  // The account resolved to a backend no grant names for this pair: refuse before opening it.
-  requireSendGrant(config, params.accountId, params.to, capability);
   if (!isSendBackend(backend))
     throw new Error(fmt(_('{backend} cannot send'), { backend: backend.manifest.name }));
 
@@ -421,16 +491,6 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
   // Validated before anything is sent, so a bad URL cannot leave the text half-delivered.
   const imageUrl = params.imageUrl === undefined ? undefined : validateImageUrl(params.imageUrl);
 
-  const account = (await backend.listAccounts()).find((a) => a.id === params.accountId);
-  if (!account) {
-    throw new Error(
-      fmt(_('no {backend} account {account} — `curlew accounts list` shows them'), {
-        backend: backend.manifest.name,
-        account: params.accountId,
-      }),
-    );
-  }
-
   // `xmpp.omemo` for this account turns the send path encrypted: the session then asks the peer
   // for their devices and refuses rather than sending a message in the clear that the person
   // believes is encrypted (ADR 0006 §7). Without the grant nothing changes — unless the config
@@ -438,7 +498,7 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
   const decrypt = decryptAccounts(config.grants).includes(params.accountId);
   if (!decrypt && encryptionRequired(config, params.accountId, params.to))
     throw new Error(MESSAGES.omemoRequiredWithoutGrant(params.accountId, params.to));
-  const permit = permitFor(config.grants, params.accountId, capability);
+  const permit: SendPermit = { account: params.accountId, addresses: [params.to] };
   const dbPath = params.dbPath ?? indexDbPath();
   const request: SendRequest = {
     to: params.to,
@@ -450,7 +510,7 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
 
   // A backend that shares its state with the receive path asks the daemon FIRST: if one is
   // holding this account, only it can send, and the lease below would refuse (see the module
-  // comment). The grant is already checked at this point, and the daemon checks it again.
+  // comment). An agent's grant is already checked by now (`sendAsAgent`).
   const routed = backend.manifest.sendSharesReceiveState
     ? await routeThroughDaemon(params.daemon ?? gioDaemonSendClient(), {
         v: DAEMON_WIRE_VERSION,
