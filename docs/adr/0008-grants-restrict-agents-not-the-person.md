@@ -101,6 +101,11 @@ needs the text for every enabled account, so:
   tools that return no body are unchanged. This is a new capability (`messages.read`, target: an
   account id) and follows the grant rules of ADR 0004 §1 and the gate of §3.
 
+> **Superseded in part by [ADR 0009](0009-agent-access-per-account-and-contact.md):** the read
+> grant `messages.read` is replaced by the read mode of an agent-access rule (per account or per
+> contact, `allow`, `ask` or `deny`). The rest of this section, decryption for every enabled
+> account once the read gate is enforced, stands.
+
 Both halves land together, in this order: the read grant first, because without it decrypting
 every account would hand agents text they could not read before. Until then decryption follows
 `xmpp.omemo` exactly as ADR 0006 specifies. That is the one reason the daemon still reads the
