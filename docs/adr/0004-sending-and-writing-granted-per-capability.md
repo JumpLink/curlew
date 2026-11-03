@@ -492,3 +492,11 @@ frontends without one.
   names. The presence rules (negative priority, no status text, a write-log line) stay, tied to
   the account being enabled and followed.
 - §1 (the format), §3 (the gate), §6 and §7 are unchanged.
+
+## Amendment (2026-11-03, ADR 0009)
+
+[ADR 0009](0009-agent-access-per-account-and-contact.md) adds agent-access rules: a scope (an
+account, or an account/contact pair) with a read mode and a write mode of `allow`, `ask` or
+`deny`. Each `<backend>.send` grant stays readable and is treated as a contact rule with write and
+read `allow`. §1 (the format), §3 (the gate) and §7 (the write log, which now also records how the
+write was allowed) otherwise stand.
