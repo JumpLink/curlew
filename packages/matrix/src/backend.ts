@@ -28,6 +28,7 @@ import {
 import { connectMatrixClient, isLoggedOutError, type MatrixConnector } from './client.ts';
 import { sendFetch } from './guard.ts';
 import { loginMatrix } from './login.ts';
+import { reportUndecryptable } from './redact.ts';
 import { MATRIX_MANIFEST } from './manifest.ts';
 import { matrixSendApi, MatrixSender } from './send.ts';
 import { MatrixChatSession } from './session.ts';
@@ -163,7 +164,9 @@ export class MatrixBackend implements ChatBackend, SendBackend {
             listRooms: () => api.listRooms(),
             messages: (roomId, from, limit) => api.messages(roomId, from, limit),
             fetchEvent: (roomId, eventId) => api.fetchEvent(roomId, eventId),
-            close: async () => {},
+            close: async () => {
+              reportUndecryptable();
+            },
           },
           secretStoreLedger(store),
         ),
@@ -191,6 +194,7 @@ export class MatrixBackend implements ChatBackend, SendBackend {
           try {
             await connected.close();
           } finally {
+            reportUndecryptable();
             store.close();
           }
         },

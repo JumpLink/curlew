@@ -31,6 +31,7 @@ import type { MatrixClient, MatrixEvent, Room, SyncState } from 'matrix-js-sdk';
 import type { MatrixApi, MatrixLive, MxEvent, MxMessagesPage, MxRoom } from './api.ts';
 import { readOnlyFetch, ReadOnlyViolation, refusals } from './guard.ts';
 import { IndexedDbSnapshot } from './idb-snapshot.ts';
+import { sdkLogLine } from './redact.ts';
 
 export type MatrixSdk = typeof import('matrix-js-sdk');
 
@@ -64,16 +65,15 @@ const FIRST_SYNC_TIMEOUT_MS = 120_000;
 /**
  * matrix-js-sdk logs every request at debug level to the console — on the MCP server that is
  * the protocol stream. Only warnings and errors pass, to stderr, and never an argument that is
- * not a string or an Error: a logged object can carry an event's content.
+ * not a string or an Error: a logged object can carry an event's content. Identifiers are
+ * redacted and the per-event decryption warning is only counted (`redact.ts`).
  */
 const drop = (): void => {};
 const toStderr =
   (level: string) =>
   (...msg: unknown[]): void => {
-    const text = msg
-      .map((m) => (typeof m === 'string' ? m : m instanceof Error ? m.message : '[…]'))
-      .join(' ');
-    console.error(`matrix ${level}: ${text}`);
+    const line = sdkLogLine(level, msg);
+    if (line) console.error(line);
   };
 
 function quietLogger(): Logger {
