@@ -75,6 +75,15 @@ export default async () => {
       expect(printed.join('|')).toBe('matrix: 3 events not decryptable');
     });
 
+    await it("counts the crypto machine's own decryption warning too", async () => {
+      takeUndecryptable();
+      const machine =
+        'WARN matrix_sdk_crypto::machine: Failed to decrypt a room event: ' +
+        "Can't find the room key to decrypt the event, withheld code: None";
+      expect(sdkLogLine('warning', [machine])).toBe(null);
+      expect(takeUndecryptable()).toBe(1);
+    });
+
     await it('words the summary for one event and for none', async () => {
       english(() => expect(undecryptableSummary(1)).toBe('matrix: 1 event not decryptable'));
       expect(undecryptableSummary(0)).toBe(null);

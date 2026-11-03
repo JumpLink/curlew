@@ -19,9 +19,12 @@ export function redactSdkText(text: string): string {
   return REDACTIONS.reduce((out, [pattern, mark]) => out.replace(pattern, mark), text);
 }
 
-/** The SDK's per-event decryption warning, whatever follows the prefix. */
+/**
+ * A per-event decryption warning, whatever follows the prefix: the JS SDK's own, and the Rust
+ * crypto machine's, which a long-running follow repeats for every event it still has no key for.
+ */
 export function isDecryptionWarning(text: string): boolean {
-  return text.includes('Error decrypting event');
+  return text.includes('Error decrypting event') || text.includes('Failed to decrypt a room event');
 }
 
 let undecryptable = 0;
