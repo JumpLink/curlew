@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-04 14:32+0100\n"
+"POT-Creation-Date: 2026-11-04 18:54+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -701,6 +701,7 @@ msgid "Always"
 msgstr ""
 
 #: app/src/core/lib/access-notifications.ts:62
+#: app/src/window/agent-access-page.ts:56
 msgid "Deny"
 msgstr ""
 
@@ -1352,6 +1353,160 @@ msgstr ""
 msgid ""
 "Start after this journal seq; the default is the newest row, so only new "
 "changes print"
+msgstr ""
+
+#: app/src/frontends/cli/window.ts:14
+msgid "Open the window (agent access rules)"
+msgstr ""
+
+#: app/src/frontends/cli/window.ts:18
+msgid "The window needs GJS (GTK 4 and libadwaita); this is the Node.js build."
+msgstr ""
+
+#: app/src/frontends/cli/window.ts:23
+msgid "curlew window takes no arguments."
+msgstr ""
+
+#: app/src/window/about.ts:14
+msgid "Curlew"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:52
+msgid "Allow"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:54
+msgid "Ask"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:58
+msgid "Not set"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:65
+msgid ""
+"A conversation an agent may write to is one it may read. Allow reading first."
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:67
+msgid "A rule needs a mode for reading or for writing."
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:69
+msgid "There is already a rule for this account and contact."
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:71
+msgid "That rule is gone — the list was updated."
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:73
+msgid ""
+"This rule comes from an old send grant. Change a mode to make it a rule of "
+"its own."
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:75
+msgid "That rule is not valid: {detail}"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:75
+msgid "That rule is not valid."
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:80
+msgid "Read: {read} · Write: {write}"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:140
+msgid "Whole account"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:153
+msgid "Remove this rule"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:162
+msgid "From an old send grant"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:164
+msgid ""
+"Changing a mode makes this a rule of its own. The grant stays in your "
+"configuration, and removing the rule brings this one back."
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:171
+#: app/src/window/agent-access-page.ts:199
+msgid "Read messages"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:171
+#: app/src/window/agent-access-page.ts:200
+msgid "Send messages"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:183
+msgid "Add a rule"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:190
+msgid "Account"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:195
+msgid "Account id"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:198
+msgid "Contact address (empty = the whole account)"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:206
+msgid "Cancel"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:208
+msgid "Add"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:259
+msgid "The configuration could not be read"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:271
+msgid ""
+"Your own commands and this window are never restricted, and your own "
+"addresses are always allowed. These rules decide what an AI agent may read "
+"and send."
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:275
+msgid "Ask when no rule applies"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:276
+msgid "Off: an agent request without a rule is refused without asking"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:294
+msgid "No rules yet"
+msgstr ""
+
+#: app/src/window/agent-access-page.ts:299
+msgid "Add rule"
+msgstr ""
+
+#: app/src/window/window.ts:132
+msgid "About Curlew"
+msgstr ""
+
+#: app/src/window/window.ts:133
+msgid "Quit"
+msgstr ""
+
+#: app/src/window/window.ts:142
+msgid "Agent access"
 msgstr ""
 
 #: packages/imap/src/send.ts:61 packages/matrix/src/send.ts:165
