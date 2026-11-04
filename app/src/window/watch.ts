@@ -44,13 +44,16 @@ export function watchConfig(path: string, onChange: () => void): () => void {
   };
 
   attach();
-  const tick = GLib.timeout_add(GLib.PRIORITY_DEFAULT, ATTACH_POLL_MS, () => {
+  let tick = GLib.timeout_add(GLib.PRIORITY_DEFAULT, ATTACH_POLL_MS, () => {
     attach();
-    return monitor ? GLib.SOURCE_REMOVE : GLib.SOURCE_CONTINUE;
+    if (!monitor) return GLib.SOURCE_CONTINUE;
+    // The source ends itself here; the cleanup must not remove an id GLib no longer knows.
+    tick = 0;
+    return GLib.SOURCE_REMOVE;
   });
 
   return () => {
-    GLib.source_remove(tick);
+    if (tick) GLib.source_remove(tick);
     if (pending) GLib.source_remove(pending);
     monitor?.cancel();
   };
