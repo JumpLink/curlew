@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<component type="desktop-application">
+  <id>eu.jumplink.curlew</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0-or-later</project_license>
+  <name>Curlew</name>
+  <summary>Mail and chat for agents</summary>
+  <summary xml:lang="de">Mail und Chat für Agenten</summary>
+  <developer id="eu.jumplink">
+    <name>Pascal Garber</name>
+  </developer>
+  <description>
+    <p>Curlew gives AI agents access to your mail, calendar, contacts and chats, and lets you decide what they may read and send.</p>
+    <p xml:lang="de">Curlew gibt KI-Agenten Zugriff auf deine Mails, deinen Kalender, deine Kontakte und Chats, und du bestimmst, was sie lesen und senden dürfen.</p>
+    <p>The window lists the access rules per account and contact. Each rule allows, asks about or denies reading and sending. Your own commands are never restricted.</p>
+    <p xml:lang="de">Das Fenster listet die Zugriffsregeln pro Konto und Kontakt. Jede Regel erlaubt, erfragt oder verweigert Lesen und Senden. Deine eigenen Befehle werden nie eingeschränkt.</p>
+  </description>
+  <url type="homepage">https://github.com/JumpLink/curlew</url>
+  <url type="vcs-browser">https://github.com/JumpLink/curlew</url>
+  <url type="bugtracker">https://github.com/JumpLink/curlew/issues</url>
+  <launchable type="desktop-id">eu.jumplink.curlew.desktop</launchable>
+  <provides>
+    <binary>curlew</binary>
+  </provides>
+  <content_rating type="oars-1.1"/>
+  <categories>
+    <category>Network</category>
+    <category>Email</category>
+  </categories>
+  <keywords>
+    <keyword>mail</keyword>
+    <keyword>chat</keyword>
+    <keyword>agent</keyword>
+    <keyword>MCP</keyword>
+  </keywords>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/agent-access.png</image>
+      <caption>Rules for what agents may read and send</caption>
+      <caption xml:lang="de">Regeln, was Agenten lesen und senden dürfen</caption>
+    </screenshot>
+  </screenshots>
+</component>

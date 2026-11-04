@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Curlew
+Name[de]=Curlew
+Comment=Agent access rules for mail and chat
+Comment[de]=Regeln für den Agentenzugriff auf Mail und Chat
+Exec=curlew window
+Icon=eu.jumplink.curlew
+Terminal=false
+Categories=Network;Email;GTK;
+Keywords=mail;chat;agent;MCP;access;
+StartupNotify=true

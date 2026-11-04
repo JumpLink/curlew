@@ -208,6 +208,7 @@ see from the log which sends were never asked about.
    **Done:** `xmpp.omemo` is a retired capability (an old config still loads, the entry ignored),
    the daemon watches no grants and no longer exits with code 3.
 5. A GTK "agent access" page that edits the rules and later shows the prompt as a dialog.
+   **Done:** the page (`curlew window`). **Open:** the prompt as a dialog.
 6. A sandbox (Flatpak/portal) between agents and the session bus.
 
 ## References
