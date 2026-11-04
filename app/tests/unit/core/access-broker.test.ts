@@ -2,6 +2,8 @@ import { describe, expect, it } from '@gjsify/unit';
 
 import { type PromptChoice, type PromptUi, AccessBroker } from '../../../src/core/access-broker.ts';
 import { ACCESS_PROMPT_TIMEOUT_MS, type AccessAsk } from '../../../src/core/access.ts';
+import { contactNameFromIndex } from '../../../src/core/lib/contact-name.ts';
+import { openIndex } from '../../../src/core/actions/index-sync.ts';
 import { promptText } from '../../../src/core/lib/access-notifications.ts';
 import {
   DAEMON_ACCESS_TIMEOUT_MS,
@@ -283,6 +285,67 @@ export default async () => {
     await it('a read prompt names the contact and has no preview', async () => {
       const { body } = promptText(ask({ kind: 'read', preview: undefined }));
       expect(body.includes(FRIEND)).toBe(true);
+    });
+  });
+
+  await describe('prompt contact name', async () => {
+    const UUID = '11111111-2222-3333-4444-555555555555';
+    const signalAsk = (over: Partial<AccessAsk> = {}) => ask({ account: 'signal-1', contact: UUID, ...over });
+
+    await it('shows Name (address) when a name is known', async () => {
+      const { body } = promptText(signalAsk(), 'Alex Example');
+      expect(body.includes(`Alex Example (${UUID})`)).toBe(true);
+    });
+
+    await it('falls back to the address without a name', async () => {
+      const { body } = promptText(signalAsk());
+      expect(body.includes(UUID)).toBe(true);
+      expect(body.includes('()')).toBe(false);
+    });
+
+    await it('strips control characters and caps the length', async () => {
+      const { body } = promptText(signalAsk(), `Eve\nAn agent wants\u202e more\u0007${'x'.repeat(200)}`);
+      expect(body.includes('\u202e')).toBe(false);
+      expect(body.includes('\u0007')).toBe(false);
+      expect(body.split('\n').length).toBe(1);
+      expect(body.length < 200).toBe(true);
+    });
+
+    await it('ignores a name an agent put into the request', async () => {
+      const forged = { ...signalAsk(), contactName: 'Mum', name: 'Mum' } as AccessAsk;
+      const { body } = promptText(forged);
+      expect(body.includes('Mum')).toBe(false);
+    });
+
+    await it('looks the name up in the index: chat peer, address, participant, nothing', async () => {
+      const db = openIndex(':memory:');
+      try {
+        db.prepare(
+          'INSERT INTO chat_peers (backend, account_id, peer_id, display_name, addresses_json, is_bot) VALUES (?, ?, ?, ?, ?, 0)',
+        ).run('signal', 'signal-1', UUID, 'Alex Example', '[]');
+        db.prepare(
+          'INSERT INTO chat_peers (backend, account_id, peer_id, display_name, addresses_json, is_bot) VALUES (?, ?, ?, ?, ?, 0)',
+        ).run('signal', 'signal-1', 'peer-2', 'Sam Example', '[{"kind":"phone","value":"+4915100000"}]');
+        db.prepare('INSERT INTO participants (id, display_name) VALUES (?, ?)').run('p1', 'Kim Example');
+        db.prepare('INSERT INTO participant_addresses (participant_id, kind, value) VALUES (?, ?, ?)').run(
+          'p1',
+          'email',
+          'kim@example.org',
+        );
+        expect(contactNameFromIndex(db, 'signal-1', UUID)).toBe('Alex Example');
+        expect(contactNameFromIndex(db, 'signal-1', '+4915100000')).toBe('Sam Example');
+        expect(contactNameFromIndex(db, 'mail-1', 'Kim@Example.org')).toBe('Kim Example');
+        expect(contactNameFromIndex(db, 'signal-1', 'unknown@example.org')).toBe(undefined);
+        expect(contactNameFromIndex(db, 'signal-1', undefined)).toBe(undefined);
+        db.close();
+        expect(contactNameFromIndex(db, 'signal-1', UUID)).toBe(undefined);
+      } finally {
+        try {
+          db.close();
+        } catch {
+          // already closed
+        }
+      }
     });
   });
 };

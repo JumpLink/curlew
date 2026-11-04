@@ -16,6 +16,7 @@ import Gio from 'gi://Gio?version=2.0';
 import { _, fmt } from '@curlew/protocol';
 import type { PromptChoice, PromptUi } from '../access-broker.ts';
 import { ACCESS_PROMPT_TIMEOUT_MS, type AccessAsk } from '../access.ts';
+import { sanitizeName } from './contact-name.ts';
 
 const NOTIFICATIONS_NAME = 'org.freedesktop.Notifications';
 const NOTIFICATIONS_PATH = '/org/freedesktop/Notifications';
@@ -29,8 +30,11 @@ const ACTION_CHOICES: Record<string, PromptChoice> = {
 };
 
 /** What the notification says, in the person's language. Exported for the tests. */
-export function promptText(ask: AccessAsk): { summary: string; body: string } {
-  const target = ask.contact === undefined ? ask.account : ask.contact;
+export function promptText(ask: AccessAsk, name?: string): { summary: string; body: string } {
+  const address = ask.contact === undefined ? ask.account : ask.contact;
+  // `name` is the daemon's own lookup, never a field of the request (an agent could mislead).
+  const shown = sanitizeName(name);
+  const target = shown === undefined || ask.contact === undefined ? address : fmt(_('{name} ({address})'), { name: shown, address });
   const values = { contact: target, account: ask.account, preview: ask.preview ?? '' };
   if (ask.kind === 'write') {
     return {
@@ -60,7 +64,7 @@ function actionsFor(ask: AccessAsk): string[] {
 }
 
 /** The prompt as a notification on the session bus; no bus or no notification service is `unavailable`. */
-export function gioNotificationPrompt(): PromptUi {
+export function gioNotificationPrompt(options: { nameOf?: (ask: AccessAsk) => string | undefined } = {}): PromptUi {
   return {
     ask: (ask, signal) =>
       new Promise<PromptChoice>((resolve) => {
@@ -129,7 +133,13 @@ export function gioNotificationPrompt(): PromptUi {
           if (notified === id && id !== 0) finish('dismissed');
         });
 
-        const { summary, body } = promptText(ask);
+        let name: string | undefined;
+        try {
+          name = options.nameOf?.(ask);
+        } catch {
+          // A name is convenience: the prompt shows the address without it.
+        }
+        const { summary, body } = promptText(ask, name);
         connection.call(
           NOTIFICATIONS_NAME,
           NOTIFICATIONS_PATH,

@@ -27,6 +27,9 @@
   session*, *Always*, *Deny*); no answer in 2 minutes, a dismissal or *Deny* refuses. New bus
   method `RequestAccess` on `eu.jumplink.curlew.Daemon1`. Searches that span contacts return only
   the hits you allowed and report `withheld`.
+- The access notification names the contact — `Name (address)` — for Signal, WhatsApp, Matrix
+  and mail, where the address alone is an ID nobody recognises. The daemon looks the name up in
+  its own index; a name in the request is ignored, and none known shows the address as before.
 - New read-only MCP tool `messaging_capabilities`: per protocol the maximum message length,
   formats, image support, maximum wait timeout and splitting.
 

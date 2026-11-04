@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-03 19:25+0100\n"
+"POT-Creation-Date: 2026-11-04 13:58+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -109,11 +109,11 @@ msgid ""
 "config.agentAccess.rules"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:312
+#: app/src/core/actions/daemon.ts:313
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:334
+#: app/src/core/actions/daemon.ts:335
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
@@ -665,38 +665,42 @@ msgid ""
 msgstr ""
 
 #: app/src/core/lib/access-notifications.ts:37
-msgid "An agent wants to send a message"
-msgstr ""
-
-#: app/src/core/lib/access-notifications.ts:40
-msgid "To {contact} ({account})."
+msgid "{name} ({address})"
 msgstr ""
 
 #: app/src/core/lib/access-notifications.ts:41
-msgid "To {contact} ({account}): “{preview}”"
+msgid "An agent wants to send a message"
+msgstr ""
+
+#: app/src/core/lib/access-notifications.ts:44
+msgid "To {contact} ({account})."
 msgstr ""
 
 #: app/src/core/lib/access-notifications.ts:45
+msgid "To {contact} ({account}): “{preview}”"
+msgstr ""
+
+#: app/src/core/lib/access-notifications.ts:49
 msgid "An agent wants to read messages"
 msgstr ""
 
-#: app/src/core/lib/access-notifications.ts:46
+#: app/src/core/lib/access-notifications.ts:50
 msgid "Messages of {contact} ({account})."
 msgstr ""
 
-#: app/src/core/lib/access-notifications.ts:53
+#: app/src/core/lib/access-notifications.ts:57
 msgid "Allow once"
 msgstr ""
 
-#: app/src/core/lib/access-notifications.ts:54
+#: app/src/core/lib/access-notifications.ts:58
 msgid "For this session"
 msgstr ""
 
-#: app/src/core/lib/access-notifications.ts:56
+#: app/src/core/lib/access-notifications.ts:60
 msgid "Always"
 msgstr ""
 
-#: app/src/core/lib/access-notifications.ts:58
+#: app/src/core/lib/access-notifications.ts:62
 msgid "Deny"
 msgstr ""
 

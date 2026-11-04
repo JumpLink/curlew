@@ -97,6 +97,12 @@ session)`), as the send service already travels there (ADR 0004, amendment 2026-
 - **A write prompt names the recipient and shows the start of the text.** "Ask every time" means
   the person confirms each message, and they cannot do that without seeing what it says. A read
   prompt names the account and contact.
+- **The prompt shows the contact's name, looked up by the daemon.** A Signal ACI, a WhatsApp JID
+  or a Matrix MXID is not recognisable, so the notification reads `Name (address)`. The daemon
+  resolves the name from its own index (chat peer, else the address-book or mail participant
+  that owns the address) and **never takes it from the request** — the requester is the agent,
+  and a name it supplied could talk the person into allowing the wrong contact. The name is
+  stripped of control characters and capped; no name or a failed lookup shows the address alone.
 - **Privacy.** The prompt runs on the person's own desktop, so showing the preview there is fine.
   The preview never appears in a log, and the write log still holds no text (ADR 0004 §7).
 - **The bus is the person's door.** A process that asks over the bus is what the §Honest limit

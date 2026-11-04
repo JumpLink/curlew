@@ -30,6 +30,7 @@ app/src/core/backends/registry.ts
 app/src/core/config.ts
 app/src/core/grants.ts
 app/src/core/lib/access-notifications.ts
+app/src/core/lib/contact-name.ts
 app/src/core/lib/daemon-access-client.ts
 app/src/core/lib/daemon-accounts.ts
 app/src/core/lib/daemon-bus.ts

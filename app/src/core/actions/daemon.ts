@@ -63,6 +63,7 @@ import { loadConfig, saveConfig, type CurlewConfig } from '../config.ts';
 import { AccessBroker, type PromptUi } from '../access-broker.ts';
 import { withAllowRule } from '../access.ts';
 import { gioNotificationPrompt } from '../lib/access-notifications.ts';
+import { contactNameFromIndex } from '../lib/contact-name.ts';
 import type { Capability, Grant } from '../grants.ts';
 import { configPath } from '@curlew/store';
 import { AccountTable } from '../lib/daemon-accounts.ts';
@@ -520,7 +521,9 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     // That never reaches the exit-3 restart below: `daemonGrants` looks at the decryption grant only.
     const accessConfigPath = params.configPath ?? configPath();
     const accessBroker = new AccessBroker({
-      ui: params.accessPrompt ?? gioNotificationPrompt(),
+      ui:
+        params.accessPrompt ??
+        gioNotificationPrompt({ nameOf: (ask) => contactNameFromIndex(db, ask.account, ask.contact) }),
       policy: () => loadConfig(accessConfigPath).agentAccess,
       addRule: (ask) => saveConfig(withAllowRule(loadConfig(accessConfigPath), ask), accessConfigPath),
       log,

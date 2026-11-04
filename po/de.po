@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-03 19:25+0100\n"
+"POT-Creation-Date: 2026-11-04 13:58+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -17,26 +17,36 @@ msgid ""
 "sending to {target} is refused — no agentAccess rule covers it and "
 "config.agentAccess.askWithoutRule is false; add a rule like {rule} to "
 "config.agentAccess.rules"
-msgstr "Senden an {target} wird abgelehnt — keine agentAccess-Regel deckt es ab und config.agentAccess.askWithoutRule ist false; füge eine Regel wie {rule} zu config.agentAccess.rules hinzu"
+msgstr ""
+"Senden an {target} wird abgelehnt — keine agentAccess-Regel deckt es ab und "
+"config.agentAccess.askWithoutRule ist false; füge eine Regel wie {rule} zu "
+"config.agentAccess.rules hinzu"
 
 #: app/src/core/access.ts:119
 msgid ""
 "reading messages of {target} is refused — no agentAccess rule covers it and "
 "config.agentAccess.askWithoutRule is false; add a rule like {rule} to "
 "config.agentAccess.rules"
-msgstr "Das Lesen von Nachrichten von {target} wird abgelehnt — keine agentAccess-Regel deckt es ab und config.agentAccess.askWithoutRule ist false; füge eine Regel wie {rule} zu config.agentAccess.rules hinzu"
+msgstr ""
+"Das Lesen von Nachrichten von {target} wird abgelehnt — keine agentAccess-"
+"Regel deckt es ab und config.agentAccess.askWithoutRule ist false; füge eine "
+"Regel wie {rule} zu config.agentAccess.rules hinzu"
 
 #: app/src/core/access.ts:130
 msgid ""
 "sending to {target} is denied by config.agentAccess.rules — change the rule "
 "to allow it, for example {rule}"
-msgstr "Senden an {target} wird von config.agentAccess.rules verweigert — ändere die Regel, um es zu erlauben, zum Beispiel {rule}"
+msgstr ""
+"Senden an {target} wird von config.agentAccess.rules verweigert — ändere die "
+"Regel, um es zu erlauben, zum Beispiel {rule}"
 
 #: app/src/core/access.ts:136
 msgid ""
 "reading messages of {target} is denied by config.agentAccess.rules — change "
 "the rule to allow it, for example {rule}"
-msgstr "Das Lesen von Nachrichten von {target} wird von config.agentAccess.rules verweigert — ändere die Regel, um es zu erlauben, zum Beispiel {rule}"
+msgstr ""
+"Das Lesen von Nachrichten von {target} wird von config.agentAccess.rules "
+"verweigert — ändere die Regel, um es zu erlauben, zum Beispiel {rule}"
 
 #: app/src/core/access.ts:151
 msgid "sending to {target} was declined in the prompt"
@@ -44,30 +54,40 @@ msgstr "Senden an {target} wurde in der Rückfrage abgelehnt"
 
 #: app/src/core/access.ts:152
 msgid "reading messages of {target} was declined in the prompt"
-msgstr "Das Lesen von Nachrichten von {target} wurde in der Rückfrage abgelehnt"
+msgstr ""
+"Das Lesen von Nachrichten von {target} wurde in der Rückfrage abgelehnt"
 
 #: app/src/core/access.ts:160
 msgid ""
 "sending to {target} was declined earlier in this session — it is not asked "
 "again; add a rule like {rule} to allow it"
-msgstr "Senden an {target} wurde früher in dieser Sitzung abgelehnt — es wird nicht erneut gefragt; füge eine Regel wie {rule} hinzu, um es zu erlauben"
+msgstr ""
+"Senden an {target} wurde früher in dieser Sitzung abgelehnt — es wird nicht "
+"erneut gefragt; füge eine Regel wie {rule} hinzu, um es zu erlauben"
 
 #: app/src/core/access.ts:166
 msgid ""
 "reading messages of {target} was declined earlier in this session — it is "
 "not asked again; add a rule like {rule} to allow it"
-msgstr "Das Lesen von Nachrichten von {target} wurde früher in dieser Sitzung abgelehnt — es wird nicht erneut gefragt; füge eine Regel wie {rule} hinzu, um es zu erlauben"
+msgstr ""
+"Das Lesen von Nachrichten von {target} wurde früher in dieser Sitzung "
+"abgelehnt — es wird nicht erneut gefragt; füge eine Regel wie {rule} hinzu, "
+"um es zu erlauben"
 
 #: app/src/core/access.ts:175
 msgid ""
 "sending to {target} was refused — nobody answered the prompt within 2 minutes"
-msgstr "Senden an {target} wurde abgelehnt — niemand hat die Rückfrage innerhalb von 2 Minuten beantwortet"
+msgstr ""
+"Senden an {target} wurde abgelehnt — niemand hat die Rückfrage innerhalb von "
+"2 Minuten beantwortet"
 
 #: app/src/core/access.ts:177
 msgid ""
 "reading messages of {target} was refused — nobody answered the prompt within "
 "2 minutes"
-msgstr "Das Lesen von Nachrichten von {target} wurde abgelehnt — niemand hat die Rückfrage innerhalb von 2 Minuten beantwortet"
+msgstr ""
+"Das Lesen von Nachrichten von {target} wurde abgelehnt — niemand hat die "
+"Rückfrage innerhalb von 2 Minuten beantwortet"
 
 #: app/src/core/access.ts:185
 msgid "sending to {target} was refused — the prompt was dismissed"
@@ -75,41 +95,55 @@ msgstr "Senden an {target} wurde abgelehnt — die Rückfrage wurde verworfen"
 
 #: app/src/core/access.ts:186
 msgid "reading messages of {target} was refused — the prompt was dismissed"
-msgstr "Das Lesen von Nachrichten von {target} wurde abgelehnt — die Rückfrage wurde verworfen"
+msgstr ""
+"Das Lesen von Nachrichten von {target} wurde abgelehnt — die Rückfrage wurde "
+"verworfen"
 
 #: app/src/core/access.ts:194
 msgid ""
 "sending to {target} was refused — the prompt could not be shown (no "
 "notification service); add a rule like {rule} to config.agentAccess.rules"
-msgstr "Senden an {target} wurde abgelehnt — die Rückfrage konnte nicht angezeigt werden (kein Benachrichtigungsdienst); füge eine Regel wie {rule} zu config.agentAccess.rules hinzu"
+msgstr ""
+"Senden an {target} wurde abgelehnt — die Rückfrage konnte nicht angezeigt "
+"werden (kein Benachrichtigungsdienst); füge eine Regel wie {rule} zu "
+"config.agentAccess.rules hinzu"
 
 #: app/src/core/access.ts:200
 msgid ""
 "reading messages of {target} was refused — the prompt could not be shown (no "
 "notification service); add a rule like {rule} to config.agentAccess.rules"
-msgstr "Das Lesen von Nachrichten von {target} wurde abgelehnt — die Rückfrage konnte nicht angezeigt werden (kein Benachrichtigungsdienst); füge eine Regel wie {rule} zu config.agentAccess.rules hinzu"
+msgstr ""
+"Das Lesen von Nachrichten von {target} wurde abgelehnt — die Rückfrage "
+"konnte nicht angezeigt werden (kein Benachrichtigungsdienst); füge eine "
+"Regel wie {rule} zu config.agentAccess.rules hinzu"
 
 #: app/src/core/access.ts:217
 msgid ""
 "sending to {target} needs approval, but `curlew daemon` is not running, so "
 "nobody can be asked — start it, or add a rule like {rule} to "
 "config.agentAccess.rules"
-msgstr "Senden an {target} braucht eine Freigabe, aber `curlew daemon` läuft nicht, also kann niemand gefragt werden — starte ihn oder füge eine Regel wie {rule} zu config.agentAccess.rules hinzu"
+msgstr ""
+"Senden an {target} braucht eine Freigabe, aber `curlew daemon` läuft nicht, "
+"also kann niemand gefragt werden — starte ihn oder füge eine Regel wie "
+"{rule} zu config.agentAccess.rules hinzu"
 
 #: app/src/core/access.ts:223
 msgid ""
 "reading messages of {target} needs approval, but `curlew daemon` is not "
 "running, so nobody can be asked — start it, or add a rule like {rule} to "
 "config.agentAccess.rules"
-msgstr "Das Lesen von Nachrichten von {target} braucht eine Freigabe, aber `curlew daemon` läuft nicht, also kann niemand gefragt werden — starte ihn oder füge eine Regel wie {rule} zu config.agentAccess.rules hinzu"
+msgstr ""
+"Das Lesen von Nachrichten von {target} braucht eine Freigabe, aber `curlew "
+"daemon` läuft nicht, also kann niemand gefragt werden — starte ihn oder füge "
+"eine Regel wie {rule} zu config.agentAccess.rules hinzu"
 
-#: app/src/core/actions/daemon.ts:312
+#: app/src/core/actions/daemon.ts:313
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 "{capability} ist nicht die Berechtigung, unter der {backend} sendet — es "
 "wurde nichts gesendet"
 
-#: app/src/core/actions/daemon.ts:334
+#: app/src/core/actions/daemon.ts:335
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
@@ -150,7 +184,11 @@ msgid ""
 "search never asks; read that conversation directly (conversations_get with "
 "include_bodies, or mail_get_message) to be asked, or add a read rule to "
 "config.agentAccess.rules"
-msgstr "Einige Treffer fehlen, weil du keinen Lesezugriff auf ihren Kontakt hast — eine Suche fragt nie nach; lies diese Unterhaltung direkt (conversations_get mit include_bodies oder mail_get_message), um gefragt zu werden, oder füge eine Leseregel zu config.agentAccess.rules hinzu"
+msgstr ""
+"Einige Treffer fehlen, weil du keinen Lesezugriff auf ihren Kontakt hast — "
+"eine Suche fragt nie nach; lies diese Unterhaltung direkt (conversations_get "
+"mit include_bodies oder mail_get_message), um gefragt zu werden, oder füge "
+"eine Leseregel zu config.agentAccess.rules hinzu"
 
 #: app/src/core/actions/send.ts:166 app/src/core/actions/send.ts:179
 msgid ""
@@ -763,44 +801,50 @@ msgstr ""
 "schaltet es ein (und zeigt seine Bedingungen)"
 
 #: app/src/core/lib/access-notifications.ts:37
+msgid "{name} ({address})"
+msgstr "{name} ({address})"
+
+#: app/src/core/lib/access-notifications.ts:41
 msgid "An agent wants to send a message"
 msgstr "Ein Agent möchte eine Nachricht senden"
 
-#: app/src/core/lib/access-notifications.ts:40
+#: app/src/core/lib/access-notifications.ts:44
 msgid "To {contact} ({account})."
 msgstr "An {contact} ({account})."
 
-#: app/src/core/lib/access-notifications.ts:41
+#: app/src/core/lib/access-notifications.ts:45
 msgid "To {contact} ({account}): “{preview}”"
 msgstr "An {contact} ({account}): „{preview}“"
 
-#: app/src/core/lib/access-notifications.ts:45
+#: app/src/core/lib/access-notifications.ts:49
 msgid "An agent wants to read messages"
 msgstr "Ein Agent möchte Nachrichten lesen"
 
-#: app/src/core/lib/access-notifications.ts:46
+#: app/src/core/lib/access-notifications.ts:50
 msgid "Messages of {contact} ({account})."
 msgstr "Nachrichten von {contact} ({account})."
 
-#: app/src/core/lib/access-notifications.ts:53
+#: app/src/core/lib/access-notifications.ts:57
 msgid "Allow once"
 msgstr "Einmal erlauben"
 
-#: app/src/core/lib/access-notifications.ts:54
+#: app/src/core/lib/access-notifications.ts:58
 msgid "For this session"
 msgstr "Für diese Sitzung"
 
-#: app/src/core/lib/access-notifications.ts:56
+#: app/src/core/lib/access-notifications.ts:60
 msgid "Always"
 msgstr "Immer"
 
-#: app/src/core/lib/access-notifications.ts:58
+#: app/src/core/lib/access-notifications.ts:62
 msgid "Deny"
 msgstr "Verweigern"
 
 #: app/src/core/lib/daemon-access-client.ts:78
 msgid "the running curlew daemon did not answer the access prompt ({reason})"
-msgstr "Der laufende curlew-Daemon hat die Zugriffsrückfrage nicht beantwortet ({reason})"
+msgstr ""
+"Der laufende curlew-Daemon hat die Zugriffsrückfrage nicht beantwortet "
+"({reason})"
 
 #: app/src/core/lib/daemon-bus.ts:174
 msgid ""
@@ -826,13 +870,17 @@ msgstr ""
 msgid ""
 "the caller speaks access protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
-msgstr "Der Aufrufer spricht Zugriffsprotokoll {theirs}, dieser curlew-Daemon spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
+msgstr ""
+"Der Aufrufer spricht Zugriffsprotokoll {theirs}, dieser curlew-Daemon "
+"spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
 #: app/src/core/lib/daemon-bus.ts:286
 msgid ""
 "the running curlew daemon speaks access protocol {theirs} and this curlew "
 "speaks {ours} — restart it with `systemctl --user restart curlew-daemon`"
-msgstr "Der laufende curlew-Daemon spricht Zugriffsprotokoll {theirs}, dieses curlew spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
+msgstr ""
+"Der laufende curlew-Daemon spricht Zugriffsprotokoll {theirs}, dieses curlew "
+"spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
 #: app/src/core/lib/daemon-send-client.ts:107
 msgid ""
@@ -1266,7 +1314,9 @@ msgstr ""
 #: app/src/frontends/cli/mail.ts:96
 msgid ""
 "{count} hits left out: no read access to their contact (a search never asks)"
-msgstr "{count} Treffer ausgelassen: kein Lesezugriff auf ihren Kontakt (eine Suche fragt nie nach)"
+msgstr ""
+"{count} Treffer ausgelassen: kein Lesezugriff auf ihren Kontakt (eine Suche "
+"fragt nie nach)"
 
 #: app/src/frontends/cli/mail.ts:110
 msgid "Fetch one full message (body + attachment metadata) by IMAP UID"
