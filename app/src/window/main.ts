@@ -25,6 +25,15 @@ const application = new AdwaitaApp({
     const quitAfter = Number(process.env.CURLEW_WINDOW_QUIT_AFTER_MS);
     if (quitAfter > 0)
       GLib.timeout_add(GLib.PRIORITY_DEFAULT, quitAfter, () => (app.quit(), GLib.SOURCE_REMOVE));
+    // Likewise for a narrow screenshot: `WIDTHxHEIGHT`, which the monitor would otherwise cap.
+    const size = /^(\d+)x(\d+)$/.exec(process.env.CURLEW_WINDOW_SIZE ?? '');
+    if (size) window.set_default_size(Number(size[1]), Number(size[2]));
+    // Likewise for the dialog screenshot: opens it as soon as the window is up.
+    if (process.env.CURLEW_WINDOW_OPEN_ACCESS === '1')
+      GLib.idle_add(
+        GLib.PRIORITY_DEFAULT,
+        () => (window.activate_action('agent-access', null), GLib.SOURCE_REMOVE),
+      );
     return window;
   },
 });

@@ -3,7 +3,7 @@
  * in `agent-access-model.ts`; the file is touched by the caller through `onEdit`.
  *
  * Plain Adw widgets: a switch row for `askWithoutRule`, one preferences group per account with an
- * expander row per rule, and an `Adw.Dialog` to add a rule. The page never writes anything itself
+ * expander row per rule (read and write as `Adw.ToggleGroup`), and an `Adw.Dialog` to add a rule. The page never writes anything itself
  * and never refreshes itself after an edit — the caller reloads the file and calls `show` again,
  * which is also what an external change does.
  */
@@ -83,15 +83,41 @@ function modeLine(rule: RuleView): string {
   });
 }
 
-function choiceRow(title: string, selected: Choice): Adw.ComboRow {
-  return new Adw.ComboRow({
-    title,
-    model: Gtk.StringList.new(CHOICES.map(choiceLabel)),
-    selected: CHOICES.indexOf(selected),
-  });
+interface ChoiceRow {
+  row: Adw.PreferencesRow;
+  value(): Choice;
+  onChange(handler: () => void): void;
 }
 
-const choiceOf = (row: Adw.ComboRow): Choice => CHOICES[row.get_selected()] ?? 'unset';
+/**
+ * A segmented control (docs/design/ui.md): four fixed options all visible at once. The title sits
+ * above it, not beside it, so the row still fits a 360 px window.
+ */
+function choiceRow(title: string, selected: Choice): ChoiceRow {
+  const group = new Adw.ToggleGroup({ homogeneous: true });
+  for (const choice of CHOICES) group.add(new Adw.Toggle({ name: choice, label: choiceLabel(choice) }));
+  group.set_active_name(selected);
+  const heading = new Gtk.Label({ label: title, xalign: 0 });
+  heading.add_css_class('caption-heading');
+  const box = new Gtk.Box({
+    orientation: Gtk.Orientation.VERTICAL,
+    spacing: 6,
+    marginTop: 8,
+    marginBottom: 8,
+    marginStart: 12,
+    marginEnd: 12,
+  });
+  box.append(heading);
+  box.append(group);
+  const row = new Adw.PreferencesRow({ title, activatable: false });
+  row.set_child(box);
+  return {
+    row,
+    value: () => (group.get_active_name() as Choice | null) ?? 'unset',
+    onChange: (handler) => group.connect('notify::active-name', handler),
+  };
+}
+
 const keyOf = (rule: { account: string; contact?: string }): string =>
   JSON.stringify([rule.account, rule.contact ?? null]);
 
@@ -169,11 +195,11 @@ export function createAgentAccessPage(
     }
     for (const kind of ['read', 'write'] as const) {
       const combo = choiceRow(kind === 'read' ? _('Read messages') : _('Send messages'), rule[kind]);
-      combo.connect('notify::selected', () => {
+      combo.onChange(() => {
         if (filling) return;
-        apply(setMode(rule, kind, choiceOf(combo)));
+        apply(setMode(rule, kind, combo.value()));
       });
-      row.add_row(combo);
+      row.add_row(combo.row);
     }
     void group;
     return row;
@@ -198,7 +224,7 @@ export function createAgentAccessPage(
     const contact = new Adw.EntryRow({ title: _('Contact address (empty = the whole account)') });
     const read = choiceRow(_('Read messages'), 'allow');
     const write = choiceRow(_('Send messages'), 'ask');
-    for (const row of [contact, read, write]) group.add(row);
+    for (const row of [contact, read.row, write.row]) group.add(row);
 
     const problem = new Gtk.Label({ wrap: true, xalign: 0, visible: false });
     problem.add_css_class('error');
@@ -211,8 +237,8 @@ export function createAgentAccessPage(
       const account = accountCombo
         ? (accounts[accountCombo.get_selected()]?.id ?? '')
         : (accountEntry?.get_text() ?? '');
-      const readChoice = choiceOf(read);
-      const writeChoice = choiceOf(write);
+      const readChoice = read.value();
+      const writeChoice = write.value();
       const result = onEdit(
         addRule({
           account,

@@ -42,11 +42,11 @@ export const NO_FILTER: ListFilter = { backends: new Set(), accounts: new Set(),
 
 const PROTOCOLS: Record<string, { label: () => string; icon: string }> = {
   mail: { label: () => _('Mail'), icon: 'mail-unread-symbolic' },
-  xmpp: { label: () => _('XMPP'), icon: 'chat-bubble-text-symbolic' },
-  signal: { label: () => _('Signal'), icon: 'chat-bubble-text-symbolic' },
-  matrix: { label: () => _('Matrix'), icon: 'chat-bubble-text-symbolic' },
-  telegram: { label: () => _('Telegram'), icon: 'chat-bubble-text-symbolic' },
-  whatsapp: { label: () => _('WhatsApp'), icon: 'chat-bubble-text-symbolic' },
+  xmpp: { label: () => _('XMPP'), icon: 'chat-message-new-symbolic' },
+  signal: { label: () => _('Signal'), icon: 'chat-message-new-symbolic' },
+  matrix: { label: () => _('Matrix'), icon: 'chat-message-new-symbolic' },
+  telegram: { label: () => _('Telegram'), icon: 'chat-message-new-symbolic' },
+  whatsapp: { label: () => _('WhatsApp'), icon: 'chat-message-new-symbolic' },
 };
 
 const FALLBACK_ICON = 'network-workgroup-symbolic';
@@ -136,12 +136,15 @@ export function backendChoices(entries: ListEntry[]): string[] {
   return found.length > 1 ? found : [];
 }
 
-/** Accounts present (within the chosen protocols), for the filter chips; likewise only when there is a choice. */
+/**
+ * Accounts of the chosen protocols, for the filter chips. Offered only after a protocol is chosen
+ * and only when that choice holds more than one account: account ids are not names a person
+ * reads, so a row of them next to the protocols is noise.
+ */
 export function accountChoices(entries: ListEntry[], backends: ReadonlySet<string>): string[] {
+  if (backends.size === 0) return [];
   const found = [
-    ...new Set(
-      entries.filter((entry) => backends.size === 0 || backends.has(entry.backend)).map((entry) => entry.accountId),
-    ),
+    ...new Set(entries.filter((entry) => backends.has(entry.backend)).map((entry) => entry.accountId)),
   ].sort();
   return found.length > 1 ? found : [];
 }

@@ -47,7 +47,7 @@ const entry = (over: Partial<ListEntry> & { id: string }): ListEntry => ({
 
 const ids = (list: ListEntry[]): string[] => list.map((e) => e.id);
 
-export default () => {
+export default async () => {
   describe('conversation list model', () => {
     it('titles a conversation by stored title, then people, then a fallback', () => {
       expect(entryTitle(conversation({ id: 'a', title: '  Team  ' }))).toBe('Team');
@@ -55,7 +55,12 @@ export default () => {
         id: 'b',
         participants: [
           { id: 'p1', displayName: 'Anna Example', addresses: [], contactUid: null },
-          { id: 'p2', displayName: null, addresses: [{ kind: 'email', value: 'ben@example.org' }], contactUid: null },
+          {
+            id: 'p2',
+            displayName: null,
+            addresses: [{ kind: 'email', value: 'ben@example.org' }],
+            contactUid: null,
+          },
         ],
       } as Partial<Conversation> & { id: string });
       expect(entryTitle(people)).toBe('Anna Example, ben@example.org');
@@ -96,7 +101,9 @@ export default () => {
         entry({ id: 'c', title: 'Annika', backend: 'mail', accountId: 'mail-zzz999' }),
       ];
       const flat = (f: Parameters<typeof buildSections>[1]) =>
-        ids(buildSections(all, f).flatMap((s) => s.entries)).sort().join(',');
+        ids(buildSections(all, f).flatMap((s) => s.entries))
+          .sort()
+          .join(',');
       expect(flat({ ...NO_FILTER, backends: new Set(['mail']) })).toBe('b,c');
       expect(flat({ ...NO_FILTER, accounts: new Set(['mail-def456']) })).toBe('b');
       expect(flat({ ...NO_FILTER, query: ' ANN ' })).toBe('a,c');
@@ -107,8 +114,10 @@ export default () => {
       expect(backendChoices(one).length).toBe(0);
       const two = [entry({ id: 'a' }), entry({ id: 'b', backend: 'mail', accountId: 'mail-def456' })];
       expect(backendChoices(two).join(',')).toBe('mail,xmpp');
-      expect(accountChoices(two, new Set()).length).toBe(2);
+      expect(accountChoices(two, new Set()).length).toBe(0);
       expect(accountChoices(two, new Set(['mail'])).length).toBe(0);
+      const mails = [...two, entry({ id: 'c', backend: 'mail', accountId: 'mail-zzz999' })];
+      expect(accountChoices(mails, new Set(['mail'])).join(',')).toBe('mail-def456,mail-zzz999');
     });
 
     it('names protocols and falls back for an unknown backend', () => {

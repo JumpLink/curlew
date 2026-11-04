@@ -1,156 +1,122 @@
 /**
- * The window: one page, "Agent access" (ADR 0009 step 5), under a header bar with a menu.
- * The file is read and written through `agent-access-store.ts`; this module wires the page to it.
+ * The window (docs/design/ui.md): a split view with the combined conversation list as the sidebar
+ * and a content pane. At 720 sp and narrower it collapses to one pane. Agent access is not a main
+ * area; it opens from the primary menu.
  */
 
 import Adw from 'gi://Adw?version=1';
 import Gio from 'gi://Gio?version=2.0';
-import Gtk from 'gi://Gtk?version=4.0';
-import { _ } from '@curlew/protocol';
-import { configPath, indexDbPath, openIndexDb } from '@curlew/store';
-import { existsSync } from 'node:fs';
+import { _, fmt } from '@curlew/protocol';
 
 import { backendAccountsList } from '../core/actions/accounts.ts';
-import { contactNameFromIndex } from '../core/lib/contact-name.ts';
-import { groupByAccount, type EditResult, type PolicyEdit } from './agent-access-model.ts';
-import { createAgentAccessPage } from './agent-access-page.ts';
-import { loadAgentAccess, updateAgentAccess } from './agent-access-store.ts';
-import { watchConfig } from './watch.ts';
+import { presentAgentAccess } from './agent-access-dialog.ts';
+import { loadConversationEntries } from './conversation-list-store.ts';
+import { type ListEntry, protocolLabel } from './conversation-list-model.ts';
+import { createConversationList } from './conversation-list.ts';
+import { loadAgentAccess } from './agent-access-store.ts';
+import { configPath } from '@curlew/store';
 
+const COLLAPSE_AT = 'max-width: 720sp';
 const ACCOUNTS_TIMEOUT_MS = 4_000;
 
-/** Account id → identity, from every enabled backend; a backend that fails or hangs adds nothing. */
-async function accountLabels(backends: string[], path: string): Promise<Map<string, string>> {
+/** Account id → identity for the filter chips and rows; a backend that fails adds nothing. */
+async function accountLabels(): Promise<Map<string, string>> {
   const labels = new Map<string, string>();
+  let backends: string[] = [];
+  try {
+    backends = loadAgentAccess(configPath()).backends;
+  } catch {
+    return labels;
+  }
   await Promise.all(
     backends.map(async (name) => {
       try {
         const listed = await Promise.race([
-          backendAccountsList(name, path),
+          backendAccountsList(name, configPath()),
           new Promise<never>((_resolve, reject) =>
             setTimeout(() => reject(new Error('timeout')), ACCOUNTS_TIMEOUT_MS),
           ),
         ]);
         for (const account of listed.accounts) labels.set(account.id, account.identity);
       } catch {
-        // No label: the page shows the id.
+        // No label: the row shows the protocol only.
       }
     }),
   );
   return labels;
 }
 
-/** A read-only lookup of display names; without an index there are simply no names. */
-function nameLookup(): {
-  nameOf: (account: string, contact: string) => string | undefined;
-  close: () => void;
-} {
-  const path = indexDbPath();
-  if (!existsSync(path)) return { nameOf: () => undefined, close: () => {} };
-  try {
-    const db = openIndexDb(path, { busyTimeoutMs: 300 });
-    return {
-      nameOf: (account, contact) => contactNameFromIndex(db, account, contact),
-      close: () => db.close(),
-    };
-  } catch {
-    return { nameOf: () => undefined, close: () => {} };
-  }
+function placeholder(entry: ListEntry | null): Adw.NavigationPage {
+  const status = new Adw.StatusPage({
+    iconName: 'chat-message-new-symbolic',
+    title: entry ? entry.title : _('Select a conversation'),
+    description: entry
+      ? fmt(_('{protocol} conversation. Reading and writing here is not built yet.'), {
+          protocol: protocolLabel(entry.backend),
+        })
+      : _('Pick a conversation from the list.'),
+  });
+  const toolbar = new Adw.ToolbarView();
+  toolbar.add_top_bar(new Adw.HeaderBar());
+  toolbar.set_content(status);
+  const page = new Adw.NavigationPage({ title: entry ? entry.title : _('Curlew'), tag: 'content' });
+  page.set_child(toolbar);
+  return page;
 }
 
 export function createWindow(app: Adw.Application): Adw.ApplicationWindow {
-  const path = configPath();
-  const overlay = new Adw.ToastOverlay();
-  const toast = (title: string) => overlay.add_toast(new Adw.Toast({ title, timeout: 4 }));
-  let window: Adw.ApplicationWindow | null = null;
-  let labels = new Map<string, string>();
-  let labelledBackends = '';
-  let loading = false;
-  let again = false;
-
-  const page = createAgentAccessPage(
-    (edit: PolicyEdit): EditResult => {
-      let result: EditResult;
-      try {
-        result = updateAgentAccess(edit, path);
-      } catch (err) {
-        result = { ok: false, error: 'invalid', detail: err instanceof Error ? err.message : String(err) };
-      }
-      // The file is the truth: show what is in it now, also after a refusal.
-      void reload();
-      return result;
-    },
-    toast,
-    () => window,
-  );
-
-  async function reload(): Promise<void> {
-    if (loading) {
-      again = true;
-      return;
-    }
-    loading = true;
-    try {
-      let state;
-      try {
-        state = loadAgentAccess(path);
-      } catch (err) {
-        page.showError(err instanceof Error ? err.message : String(err));
-        return;
-      }
-      // Names from the index are looked up per refresh: they change as the daemon syncs.
-      const render = () => {
-        const names = nameLookup();
-        try {
-          const groups = groupByAccount(state.policy, labels, names.nameOf);
-          const accounts = [...labels].map(([id, label]) => ({ id, label }));
-          page.show({ askWithoutRule: state.policy.askWithoutRule, groups, accounts });
-        } finally {
-          names.close();
-        }
-      };
-      // The page appears first with ids; the labels follow, because asking a backend for its
-      // accounts can be slow and must not hold the first paint back.
-      render();
-      const key = state.backends.join(',');
-      if (key !== labelledBackends) {
-        labelledBackends = key;
-        labels = await accountLabels(state.backends, path);
-        render();
-      }
-    } finally {
-      loading = false;
-      if (again) {
-        again = false;
-        void reload();
-      }
-    }
-  }
-
-  const header = new Adw.HeaderBar();
-  const menu = new Gio.Menu();
-  menu.append(_('About Curlew'), 'app.about');
-  menu.append(_('Quit'), 'app.quit');
-  header.pack_end(new Gtk.MenuButton({ iconName: 'open-menu-symbolic', menuModel: menu, primary: true }));
-  const toolbar = new Adw.ToolbarView();
-  toolbar.add_top_bar(header);
-  toolbar.set_content(page.widget);
-  overlay.set_child(toolbar);
-
-  window = new Adw.ApplicationWindow({
+  const window = new Adw.ApplicationWindow({
     application: app,
-    title: _('Agent access'),
-    defaultWidth: 680,
+    title: _('Curlew'),
+    defaultWidth: 900,
     defaultHeight: 640,
     widthRequest: 360,
   });
-  window.set_content(overlay);
 
-  void reload();
-  const stop = watchConfig(path, () => void reload());
-  window.connect('close-request', () => {
-    stop();
-    return false;
+  const split = new Adw.NavigationSplitView({
+    minSidebarWidth: 280,
+    maxSidebarWidth: 400,
+    sidebarWidthFraction: 0.3,
   });
+
+  const menu = new Gio.Menu();
+  menu.append(_('Agent access'), 'win.agent-access');
+  const appSection = new Gio.Menu();
+  appSection.append(_('About Curlew'), 'app.about');
+  appSection.append(_('Quit'), 'app.quit');
+  menu.append_section(null, appSection);
+
+  const setContent = (entry: ListEntry | null) => split.set_content(placeholder(entry));
+  const sidebar = createConversationList(menu, (entry) => {
+    setContent(entry);
+    split.set_show_content(true);
+  });
+  split.set_sidebar(sidebar.page);
+  setContent(null);
+
+  const breakpoint = new Adw.Breakpoint({ condition: Adw.BreakpointCondition.parse(COLLAPSE_AT) });
+  breakpoint.add_setter(split, 'collapsed', true);
+  window.add_breakpoint(breakpoint);
+  window.set_content(split);
+
+  const action = new Gio.SimpleAction({ name: 'agent-access' });
+  action.connect('activate', () => presentAgentAccess(window));
+  window.add_action(action);
+
+  let labels = new Map<string, string>();
+  let labelled = false;
+  const refresh = () => sidebar.setEntries(loadConversationEntries(), labels);
+  refresh();
+  // The index changes as the daemon syncs; coming back to the window is the cheap moment to look.
+  window.connect('notify::is-active', () => {
+    if (window.is_active) refresh();
+  });
+  if (!labelled) {
+    labelled = true;
+    void accountLabels().then((found) => {
+      labels = found;
+      refresh();
+    });
+  }
   return window;
 }
