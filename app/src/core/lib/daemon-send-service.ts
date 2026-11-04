@@ -127,6 +127,9 @@ export function publishDaemonSend(
         invocation.return_dbus_error('org.freedesktop.DBus.Error.InvalidArgs', reasonOf(error));
         return;
       }
+      // The caller names its session, the bus names the caller: a session is only ever reached
+      // from the connection that opened it, so no other process can borrow its grants.
+      request = { ...request, session: `${sender}/${request.session}` };
       watchCaller(sender, request.session);
       options.access(request).then(
         (reply) => {
