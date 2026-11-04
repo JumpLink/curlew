@@ -4,6 +4,8 @@ import { activeCatalogue, setCatalogue } from '@curlew/protocol';
 import {
   reportUndecryptable,
   redactSdkText,
+  sdkLogAdmits,
+  sdkLogLevel,
   sdkLogLine,
   takeUndecryptable,
   undecryptableSummary,
@@ -87,6 +89,45 @@ export default async () => {
     await it('words the summary for one event and for none', async () => {
       english(() => expect(undecryptableSummary(1)).toBe('matrix: 1 event not decryptable'));
       expect(undecryptableSummary(0)).toBe(null);
+    });
+
+    await it('drops login and sync chatter at the default level and keeps warnings and errors', async () => {
+      expect(sdkLogLevel({})).toBe('warn');
+      expect(sdkLogLine('info', ['sync complete'], 'warn')).toBe(null);
+      expect(sdkLogLine('debug', ['GET /sync'], 'warn')).toBe(null);
+      expect(sdkLogLine('trace', ['push rules loaded'], 'warn')).toBe(null);
+      expect(sdkLogLine('warning', ['rate limited'], 'warn')).toBe('matrix warning: rate limited');
+      expect(sdkLogLine('error', ['request failed'], 'warn')).toBe('matrix error: request failed');
+    });
+
+    await it('lets CURLEW_MATRIX_LOG raise the level, and silent drop everything', async () => {
+      const before = process.env.CURLEW_MATRIX_LOG;
+      process.env.CURLEW_MATRIX_LOG = 'debug';
+      try {
+        expect(sdkLogLevel()).toBe('debug');
+        expect(sdkLogLine('info', ['logged in as @alice:example.org'])).toBe('matrix info: logged in as @…');
+        expect(sdkLogLine('debug', ['joined !room:example.org'])).toBe('matrix debug: joined !…');
+        expect(sdkLogLine('trace', ['chatter'])).toBe(null);
+
+        process.env.CURLEW_MATRIX_LOG = 'silent';
+        expect(sdkLogLevel()).toBe('silent');
+        expect(sdkLogLine('warning', ['rate limited'])).toBe(null);
+        expect(sdkLogLine('error', ['request failed'])).toBe(null);
+
+        process.env.CURLEW_MATRIX_LOG = 'loud';
+        expect(sdkLogLevel()).toBe('warn');
+      } finally {
+        if (before === undefined) delete process.env.CURLEW_MATRIX_LOG;
+        else process.env.CURLEW_MATRIX_LOG = before;
+      }
+    });
+
+    await it('admits every level above the limit, and an unknown level always', async () => {
+      expect(sdkLogAdmits('info', 'info')).toBe(true);
+      expect(sdkLogAdmits('info', 'debug')).toBe(false);
+      expect(sdkLogAdmits('error', 'warning')).toBe(false);
+      expect(sdkLogAdmits('warn', 'something else')).toBe(true);
+      expect(sdkLogAdmits('silent', 'error')).toBe(false);
     });
   });
 };

@@ -630,6 +630,12 @@ keys. Only password login is supported: a homeserver that offers single
 sign-on alone — matrix.org, since its move to the Matrix Authentication
 Service — is refused with that reason for now.
 
+Login and sync are quiet by default: the SDK's info and debug narration is
+dropped, and only its warnings and errors reach stderr, with user, room and
+event ids redacted. `CURLEW_MATRIX_LOG` changes that for a diagnosis — `debug`
+or `trace` to see the SDK's own logging, `silent` to mute it; the output is
+redacted at every level.
+
 Encrypted rooms are decrypted where this device holds the room key. That is
 every message sent **after** the login: senders encrypt for the new device from
 then on, and its keys arrive with each sync. Messages sent **before** it show as

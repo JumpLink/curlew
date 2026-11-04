@@ -5,6 +5,7 @@
  */
 
 import { _n, fmt } from '@curlew/protocol';
+import { envValue } from '@curlew/store';
 
 /** Order matters: ids first, so the key rule only sees what is left over. */
 const REDACTIONS: ReadonlyArray<readonly [RegExp, string]> = [
@@ -25,6 +26,38 @@ export function redactSdkText(text: string): string {
  */
 export function isDecryptionWarning(text: string): boolean {
   return text.includes('Error decrypting event') || text.includes('Failed to decrypt a room event');
+}
+
+/**
+ * How much of the SDK's own logging survives. `warn` is the default: login and sync are normal
+ * operation, not a transcript, and the SDK narrates both at info and below. `CURLEW_MATRIX_LOG`
+ * (`trace`, `debug`, `info`, `warn`, `error`, `silent`) turns that up or off for a diagnosis —
+ * the output is redacted either way. Read at every call, so a run and a test can change it.
+ */
+export const SDK_LOG_LEVELS = ['trace', 'debug', 'info', 'warn', 'error', 'silent'] as const;
+export type SdkLogLevel = (typeof SDK_LOG_LEVELS)[number];
+
+/** `CURLEW_MATRIX_LOG`, or `warn` when it is unset or names no level. */
+export function sdkLogLevel(env: NodeJS.ProcessEnv = process.env): SdkLogLevel {
+  const wanted = envValue(env, 'MATRIX_LOG')?.toLowerCase() ?? '';
+  return (SDK_LOG_LEVELS as readonly string[]).includes(wanted) ? (wanted as SdkLogLevel) : 'warn';
+}
+
+/** Rank of a message level; the SDK says `warn`, the lines we print say `warning`. */
+const LEVEL_RANK: Readonly<Record<string, number>> = {
+  trace: 0,
+  debug: 1,
+  info: 2,
+  warn: 3,
+  warning: 3,
+  error: 4,
+};
+
+/** Whether a message at `level` gets past `limit`; an unknown level is shown, not hidden. */
+export function sdkLogAdmits(limit: SdkLogLevel, level: string): boolean {
+  if (limit === 'silent') return false;
+  const rank = LEVEL_RANK[level];
+  return rank === undefined || rank >= LEVEL_RANK[limit];
 }
 
 let undecryptable = 0;
@@ -57,10 +90,14 @@ export function reportUndecryptable(print: (line: string) => void = console.erro
 }
 
 /**
- * The line an SDK `warn`/`error` becomes, or null when it is only counted. A non-string,
+ * The line an SDK message becomes, or null when it is counted or below the limit. A non-string,
  * non-Error argument is never printed: a logged object can carry an event's content.
  */
-export function sdkLogLine(level: string, args: readonly unknown[]): string | null {
+export function sdkLogLine(
+  level: string,
+  args: readonly unknown[],
+  limit: SdkLogLevel = sdkLogLevel(),
+): string | null {
   const text = args
     .map((m) => (typeof m === 'string' ? m : m instanceof Error ? m.message : '[…]'))
     .join(' ');
@@ -68,5 +105,6 @@ export function sdkLogLine(level: string, args: readonly unknown[]): string | nu
     noteUndecryptable();
     return null;
   }
+  if (!sdkLogAdmits(limit, level)) return null;
   return `matrix ${level}: ${redactSdkText(text)}`;
 }

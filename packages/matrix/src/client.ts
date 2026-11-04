@@ -31,7 +31,7 @@ import type { MatrixClient, MatrixEvent, Room, SyncState } from 'matrix-js-sdk';
 import type { MatrixApi, MatrixLive, MxEvent, MxMessagesPage, MxRoom } from './api.ts';
 import { readOnlyFetch, ReadOnlyViolation, refusals } from './guard.ts';
 import { IndexedDbSnapshot } from './idb-snapshot.ts';
-import { sdkLogLine } from './redact.ts';
+import { sdkLogLevel, sdkLogLine, type SdkLogLevel } from './redact.ts';
 
 export type MatrixSdk = typeof import('matrix-js-sdk');
 
@@ -63,32 +63,44 @@ export const SYNC_POLL_TIMEOUT_MS = 30_000;
 const FIRST_SYNC_TIMEOUT_MS = 120_000;
 
 /**
- * matrix-js-sdk logs every request at debug level to the console — on the MCP server that is
- * the protocol stream. Only warnings and errors pass, to stderr, and never an argument that is
- * not a string or an Error: a logged object can carry an event's content. Identifiers are
- * redacted and the per-event decryption warning is only counted (`redact.ts`).
+ * matrix-js-sdk logs every request and every login step at info or debug to the console — on the
+ * MCP server that is the protocol stream. Only `warn` and `error` pass by default (`warn`), to
+ * stderr, and never an argument that is not a string or an Error: a logged object can carry an
+ * event's content. Identifiers are redacted and the per-event decryption warning is only counted
+ * (`redact.ts`). `CURLEW_MATRIX_LOG` raises the level for a diagnosis; nothing ever reaches stdout.
  */
 const drop = (): void => {};
 const toStderr =
-  (level: string) =>
+  (level: string, limit: SdkLogLevel) =>
   (...msg: unknown[]): void => {
-    const line = sdkLogLine(level, msg);
+    const line = sdkLogLine(level, msg, limit);
     if (line) console.error(line);
   };
 
-function quietLogger(): Logger {
+/** The logger handed to every client — login, sync and follow alike. */
+export function quietLogger(limit: SdkLogLevel = sdkLogLevel()): Logger {
   const logger: Logger = {
-    trace: drop,
-    debug: drop,
-    info: drop,
-    warn: toStderr('warning'),
-    error: toStderr('error'),
+    trace: toStderr('trace', limit),
+    debug: toStderr('debug', limit),
+    info: toStderr('info', limit),
+    warn: toStderr('warning', limit),
+    error: toStderr('error', limit),
     getChild: () => logger,
   };
   return logger;
 }
 
 let globalLoggersQuiet = false;
+
+/** loglevel's method names, mapped to the level a line is labelled with; anything else is chatter. */
+const METHOD_LEVELS: Readonly<Record<string, string | undefined>> = {
+  trace: 'trace',
+  debug: 'debug',
+  info: 'info',
+  warn: 'warning',
+  error: 'error',
+  log: 'debug',
+};
 
 /**
  * The same for the SDK's module-level loggers (room and event models log through a global
@@ -99,8 +111,11 @@ async function quietGlobalLoggers(): Promise<void> {
   if (globalLoggersQuiet) return;
   globalLoggersQuiet = true;
   const loglevel = (await import('loglevel')).default;
-  const factory = (method: string) =>
-    method === 'warn' || method === 'error' ? toStderr(method === 'warn' ? 'warning' : 'error') : drop;
+  const limit = sdkLogLevel();
+  const factory = (method: string) => {
+    const level = METHOD_LEVELS[method];
+    return level === undefined ? drop : toStderr(level, limit);
+  };
   for (const logger of [loglevel, ...Object.values(loglevel.getLoggers())]) {
     logger.methodFactory = factory as typeof logger.methodFactory;
     logger.rebuild();
@@ -336,8 +351,17 @@ export const connectMatrixClient: MatrixConnector = async (session) => {
       useIndexedDB: true,
       cryptoDatabasePrefix: cryptoStorePrefix(session.accountId),
     });
-    // The WASM logs through its own tracing, at debug level by default.
-    if (Tracing.isAvailable()) new Tracing(LoggerLevel.Warn).turnOn();
+    // The WASM logs through its own tracing, at debug level by default; it follows the same limit
+    // as the JS logger, and its binding has no "off", so `silent` means errors only.
+    const cryptoLevel: Record<SdkLogLevel, number> = {
+      trace: LoggerLevel.Trace,
+      debug: LoggerLevel.Debug,
+      info: LoggerLevel.Info,
+      warn: LoggerLevel.Warn,
+      error: LoggerLevel.Error,
+      silent: LoggerLevel.Error,
+    };
+    if (Tracing.isAvailable()) new Tracing(cryptoLevel[sdkLogLevel()]).turnOn();
     const synced = firstSync(sdk, client);
     running = true;
     await client.startClient({
