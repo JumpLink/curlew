@@ -19,7 +19,8 @@ import {
   mailListFolders,
   mailListParts,
   mailSaveAttachment,
-  mailSearch,
+  mailSearchForAgent,
+  withheldFields,
 } from '../../../core/actions/index.ts';
 import { mcpErrorFrom } from '../types.ts';
 
@@ -90,25 +91,28 @@ export function registerMailTools(server: McpServer): void {
     },
     async (params) => {
       try {
-        const messages = await mailSearch({
-          query: params.query,
-          from: params.from,
-          to: params.to,
-          cc: params.cc,
-          subject: params.subject,
-          body: params.body,
-          since: params.since,
-          before: params.before,
-          receivedSince: params.received_since,
-          receivedBefore: params.received_before,
-          unseen: params.unseen_only,
-          flagged: params.flagged_only,
-          accountId: params.account_id,
-          folder: params.folder,
-          allFolders: params.all_folders,
-          limit: params.limit,
-        });
-        return mcpSuccess({ count: messages.length, messages });
+        const { messages, withheld } = await mailSearchForAgent(
+          {
+            query: params.query,
+            from: params.from,
+            to: params.to,
+            cc: params.cc,
+            subject: params.subject,
+            body: params.body,
+            since: params.since,
+            before: params.before,
+            receivedSince: params.received_since,
+            receivedBefore: params.received_before,
+            unseen: params.unseen_only,
+            flagged: params.flagged_only,
+            accountId: params.account_id,
+            folder: params.folder,
+            allFolders: params.all_folders,
+            limit: params.limit,
+          },
+          { frontend: 'mcp' },
+        );
+        return mcpSuccess({ count: messages.length, messages, ...withheldFields(withheld) });
       } catch (err) {
         return mcpErrorFrom(err);
       }
@@ -144,6 +148,7 @@ export function registerMailTools(server: McpServer): void {
           uid: params.uid,
           folder: params.folder,
           maxBodyChars: params.max_body_chars,
+          agent: { frontend: 'mcp' },
         });
         return mcpSuccess({ message });
       } catch (err) {
@@ -219,6 +224,7 @@ export function registerMailTools(server: McpServer): void {
           folder: params.folder,
           section: params.section,
           maxBytes: params.max_bytes,
+          agent: { frontend: 'mcp' },
         });
         return mcpSuccess({ saved });
       } catch (err) {

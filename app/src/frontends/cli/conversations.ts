@@ -78,15 +78,14 @@ export const conversationsCommand: CommandModule = {
         handler: (argv) => {
           const raw = argv as Record<string, unknown>;
           runAndExit(() =>
-            Promise.resolve(
-              conversationsShow({
-                id: String(raw.id),
-                includeBodies: pickArgv<boolean>(raw, 'bodies'),
-                maxBodyChars: pickArgv<number>(raw, 'max-body-chars', 'maxBodyChars'),
-                since: pickArgv<string>(raw, 'since'),
-                incomingOnly: pickArgv<boolean>(raw, 'incoming-only', 'incomingOnly'),
-              }),
-            ),
+            conversationsShow({
+              id: String(raw.id),
+              includeBodies: pickArgv<boolean>(raw, 'bodies'),
+              maxBodyChars: pickArgv<number>(raw, 'max-body-chars', 'maxBodyChars'),
+              since: pickArgv<string>(raw, 'since'),
+              incomingOnly: pickArgv<boolean>(raw, 'incoming-only', 'incomingOnly'),
+              agent: { frontend: 'cli' },
+            }),
           );
         },
       })

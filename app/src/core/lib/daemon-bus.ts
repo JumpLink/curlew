@@ -21,6 +21,7 @@
  */
 
 import { _, fmt } from '@curlew/protocol';
+import type { AccessAsk, AccessReply } from '../access.ts';
 
 export const DAEMON_BUS_NAME = 'eu.jumplink.curlew.Daemon';
 export const DAEMON_OBJECT_PATH = '/eu/jumplink/curlew/Daemon';
@@ -29,6 +30,10 @@ export const DAEMON_INTERFACE = 'eu.jumplink.curlew.Daemon1';
 export const DAEMON_INTERFACE_XML = `<node>
   <interface name="${DAEMON_INTERFACE}">
     <method name="Send">
+      <arg type="s" name="request_json" direction="in"/>
+      <arg type="s" name="reply_json" direction="out"/>
+    </method>
+    <method name="RequestAccess">
       <arg type="s" name="request_json" direction="in"/>
       <arg type="s" name="reply_json" direction="out"/>
     </method>
@@ -214,4 +219,78 @@ export function parseDaemonSendRequest(json: string): DaemonSendRequest {
       throw new Error(`the send request has no ${field}`);
   }
   return request as DaemonSendRequest;
+}
+
+/**
+ * How long a caller waits for `RequestAccess`: the daemon waits up to 2 minutes for the person
+ * (`ACCESS_PROMPT_TIMEOUT_MS`), and the answer has to outlive that or a late "Allow" would find
+ * nobody listening. The D-Bus default of 25 s is far too short.
+ */
+export const DAEMON_ACCESS_TIMEOUT_MS = 150_000;
+
+/** `RequestAccess` carries `AccessAsk` as it is, plus the wire version. */
+export type DaemonAccessRequest = AccessAsk & { v: number };
+
+/** `RequestAccess` answers `AccessReply` as it is, plus the wire version. */
+export type DaemonAccessReply = AccessReply & { v: number };
+
+const ACCESS_REASONS = ['policy', 'denied', 'denied-before', 'timeout', 'dismissed', 'unavailable'];
+const ALLOW_REASONS = ['self', 'rule', 'migrated', 'once', 'session', 'temporary'];
+
+/** Read a `RequestAccess` request off the wire, or throw — the daemon's side of the check. */
+export function parseDaemonAccessRequest(json: string): DaemonAccessRequest {
+  let value: unknown;
+  try {
+    value = JSON.parse(json);
+  } catch (error) {
+    throw new Error('the access request is not JSON', { cause: error });
+  }
+  if (typeof value !== 'object' || value === null) throw new Error('the access request is not an object');
+  const request = value as Partial<DaemonAccessRequest>;
+  if (request.v !== DAEMON_WIRE_VERSION) {
+    throw new Error(
+      fmt(
+        _(
+          'the caller speaks access protocol {theirs} and this curlew daemon speaks {ours} — restart it with `systemctl --user restart curlew-daemon`',
+        ),
+        { theirs: String(request.v), ours: String(DAEMON_WIRE_VERSION) },
+      ),
+    );
+  }
+  for (const field of ['account', 'session'] as const) {
+    if (typeof request[field] !== 'string' || request[field] === '')
+      throw new Error(`the access request has no ${field}`);
+  }
+  if (request.kind !== 'read' && request.kind !== 'write') throw new Error('the access request has no kind');
+  if (request.contact !== undefined && typeof request.contact !== 'string')
+    throw new Error('the access request has a contact that is not a string');
+  if (request.preview !== undefined && typeof request.preview !== 'string')
+    throw new Error('the access request has a preview that is not a string');
+  return { ...request, oneShot: request.oneShot === true } as DaemonAccessRequest;
+}
+
+/** Read a `RequestAccess` reply off the wire, or throw. */
+export function parseDaemonAccessReply(json: string): AccessReply {
+  let value: unknown;
+  try {
+    value = JSON.parse(json);
+  } catch (error) {
+    throw new Error('the curlew daemon answered something that is not JSON', { cause: error });
+  }
+  if (typeof value !== 'object' || value === null) throw new Error('the curlew daemon answered no object');
+  const reply = value as Partial<DaemonAccessReply>;
+  if (reply.v !== DAEMON_WIRE_VERSION) {
+    throw new Error(
+      fmt(
+        _(
+          'the running curlew daemon speaks access protocol {theirs} and this curlew speaks {ours} — restart it with `systemctl --user restart curlew-daemon`',
+        ),
+        { theirs: String(reply.v), ours: String(DAEMON_WIRE_VERSION) },
+      ),
+    );
+  }
+  const reasons = reply.allowed === true ? ALLOW_REASONS : ACCESS_REASONS;
+  if (typeof reply.allowed !== 'boolean' || typeof reply.reason !== 'string' || !reasons.includes(reply.reason))
+    throw new Error('the curlew daemon answered an access reply this curlew does not understand');
+  return { allowed: reply.allowed, reason: reply.reason } as AccessReply;
 }

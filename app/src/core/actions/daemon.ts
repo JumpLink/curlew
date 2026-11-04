@@ -59,7 +59,10 @@ import { MatrixBackend } from '@curlew/matrix';
 import { XmppBackend } from '@curlew/xmpp';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
-import { loadConfig, type CurlewConfig } from '../config.ts';
+import { loadConfig, saveConfig, type CurlewConfig } from '../config.ts';
+import { AccessBroker, type PromptUi } from '../access-broker.ts';
+import { withAllowRule } from '../access.ts';
+import { gioNotificationPrompt } from '../lib/access-notifications.ts';
 import type { Capability, Grant } from '../grants.ts';
 import { configPath } from '@curlew/store';
 import { AccountTable } from '../lib/daemon-accounts.ts';
@@ -134,6 +137,10 @@ export interface DaemonParams {
    * the daemon then receives as it always did and a send refuses on the lease this run holds.
    */
   publishSend?: typeof publishDaemonSend | null;
+  /** How an agent access prompt is shown; injected by tests, which have no notification server. */
+  accessPrompt?: PromptUi;
+  /** Short only in tests: how long a prompt waits for an answer. */
+  accessTimeoutMs?: number;
 }
 
 export interface DaemonAccountResult {
@@ -508,6 +515,17 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
         `${matrixAccounts.length > 0 ? `${xmppAccounts.length > 0 ? ',' : ' and following'} ${matrixAccounts.length} matrix account(s)` : ''} ` +
         `(${params.accountId ?? 'every account'}) — stop with SIGTERM`,
     );
+    // The prompt service (ADR 0009). The policy is read afresh per request, so a rule edited by
+    // hand applies at once; "Always" saves through the same path as every other config write.
+    // That never reaches the exit-3 restart below: `daemonGrants` looks at the decryption grant only.
+    const accessConfigPath = params.configPath ?? configPath();
+    const accessBroker = new AccessBroker({
+      ui: params.accessPrompt ?? gioNotificationPrompt(),
+      policy: () => loadConfig(accessConfigPath).agentAccess,
+      addRule: (ask) => saveConfig(withAllowRule(loadConfig(accessConfigPath), ask), accessConfigPath),
+      log,
+      timeoutMs: params.accessTimeoutMs,
+    });
     const publish = params.publishSend === undefined ? publishDaemonSend : params.publishSend;
     sendService =
       publish === null
@@ -517,7 +535,15 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
               sessions,
               log,
             }),
-            { log, accounts: () => table.reply() },
+            {
+              log,
+              accounts: () => table.reply(),
+              access: (request) => accessBroker.request(request),
+              onSessionEnd: (session) => {
+                accessBroker.endSession(session);
+                log('curlew-daemon: an agent session ended — its temporary access grants are gone');
+              },
+            },
           );
     for (const backend of backends) {
       void backend

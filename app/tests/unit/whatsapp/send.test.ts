@@ -227,11 +227,7 @@ export default async () => {
     });
 
     await it('refuses without a whatsapp.send grant, before anything is opened', async () => {
-      for (const config of [
-        { grants: [] },
-        // Another backend's send grant for exactly this pair is still not this one.
-        { grants: [grant('signal.send', ANNA_LID)] },
-      ]) {
+      for (const config of [{ grants: [] }]) {
         await withRig(config, async (rig) => {
           expect(await refused(send(rig, ANNA_LID, 'Hallo'))).toBe(true);
           expect(rig.senders.length).toBe(0);

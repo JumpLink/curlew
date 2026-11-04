@@ -19,13 +19,20 @@ import {
   DAEMON_OBJECT_PATH,
   DAEMON_WIRE_VERSION,
   type DaemonAccountsReply,
+  type DaemonAccessReply,
+  type DaemonAccessRequest,
   type DaemonSendReply,
   type DaemonSendRequest,
+  parseDaemonAccessRequest,
   parseDaemonSendRequest,
 } from './daemon-bus.ts';
+import type { AccessReply } from '../access.ts';
 
 /** Answer one send. Never throws: every outcome is a reply, which is what the caller reads. */
 export type DaemonSendHandler = (request: DaemonSendRequest) => Promise<DaemonSendReply>;
+
+/** Answer one access question (ADR 0009). Never throws: every outcome is a reply. */
+export type DaemonAccessHandler = (request: DaemonAccessRequest) => Promise<AccessReply>;
 
 export interface DaemonSendService {
   /** `Changed(seq)`: the newest journal row (ADR 0007 §2). Carries a number, never content. */
@@ -41,6 +48,10 @@ export interface PublishOptions {
   log: (line: string) => void;
   /** What `GetAccounts` answers, read at the moment of the call. */
   accounts?: () => DaemonAccountsReply;
+  /** Serves `RequestAccess`. Absent: the method answers `UnknownMethod`, as an old daemon would. */
+  access?: DaemonAccessHandler;
+  /** A caller that asked left the bus: its session is over and so are its grants. */
+  onSessionEnd?: (session: string) => void;
 }
 
 function reasonOf(error: unknown): string {
@@ -70,9 +81,33 @@ export function publishDaemonSend(
   const iface = Gio.DBusNodeInfo.new_for_xml(DAEMON_INTERFACE_XML).lookup_interface(DAEMON_INTERFACE);
   if (!iface) throw new Error(`the interface ${DAEMON_INTERFACE} is not in the introspection XML`);
 
+  // One watch per caller that asked: a vanished MCP process ends the sessions it opened.
+  const watched = new Map<string, { watchId: number; sessions: Set<string> }>();
+  const watchCaller = (sender: string, session: string): void => {
+    const known = watched.get(sender);
+    if (known) {
+      known.sessions.add(session);
+      return;
+    }
+    const entry = { watchId: 0, sessions: new Set([session]) };
+    watched.set(sender, entry);
+    entry.watchId = Gio.bus_watch_name_on_connection(
+      connection,
+      sender,
+      Gio.BusNameWatcherFlags.NONE,
+      null,
+      (() => {
+        if (watched.get(sender) !== entry) return;
+        watched.delete(sender);
+        for (const ended of entry.sessions) options.onSessionEnd?.(ended);
+        Gio.bus_unwatch_name(entry.watchId);
+      }) as unknown as Parameters<typeof Gio.bus_watch_name_on_connection>[4],
+    );
+  };
+
   const onMethodCall = (
     _connection: Gio.DBusConnection,
-    _sender: string,
+    sender: string,
     _path: string,
     _ifaceName: string,
     method: string,
@@ -82,6 +117,30 @@ export function publishDaemonSend(
     if (method === 'GetAccounts') {
       const reply: DaemonAccountsReply = options.accounts?.() ?? { v: DAEMON_WIRE_VERSION, accounts: [] };
       invocation.return_value(new GLib.Variant('(s)', [JSON.stringify(reply)]));
+      return;
+    }
+    if (method === 'RequestAccess' && options.access) {
+      let request: DaemonAccessRequest;
+      try {
+        request = parseDaemonAccessRequest((params.recursiveUnpack() as [string])[0]);
+      } catch (error) {
+        invocation.return_dbus_error('org.freedesktop.DBus.Error.InvalidArgs', reasonOf(error));
+        return;
+      }
+      // The caller names its session, the bus names the caller: a session is only ever reached
+      // from the connection that opened it, so no other process can borrow its grants.
+      request = { ...request, session: `${sender}/${request.session}` };
+      watchCaller(sender, request.session);
+      options.access(request).then(
+        (reply) => {
+          const wire: DaemonAccessReply = { v: DAEMON_WIRE_VERSION, ...reply };
+          invocation.return_value(new GLib.Variant('(s)', [JSON.stringify(wire)]));
+        },
+        (error: unknown) => {
+          log(`curlew-daemon: the access handler threw — ${reasonOf(error)}`);
+          invocation.return_dbus_error('org.freedesktop.DBus.Error.Failed', reasonOf(error));
+        },
+      );
       return;
     }
     if (method !== 'Send') {
@@ -148,6 +207,8 @@ export function publishDaemonSend(
     close: () => {
       if (closed) return;
       closed = true;
+      for (const entry of watched.values()) Gio.bus_unwatch_name(entry.watchId);
+      watched.clear();
       Gio.bus_unown_name(ownerId);
       connection.unregister_object(registered);
     },

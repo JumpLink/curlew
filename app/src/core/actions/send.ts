@@ -3,11 +3,10 @@
  *
  * Two entries, one send (ADR 0008: grants restrict agents, not the person):
  *
- *   - `sendAsAgent` is what the AGENT frontends — the CLI and MCP — call. It checks the grant
- *     (ADR 0004 §4, amended 2026-10-30) before it reaches `sendMessage`, so the CLI is no back
- *     door for an agent with a shell: `<backend>.send` for `<account>/<address>`, naming the pair
- *     exactly. A grant for another address, or for another backend, is refused before anything
- *     opens a connection. Only a message to the account's own address is allowed without one;
+ *   - `sendAsAgent` is what the AGENT frontends — the CLI and MCP — call. It settles access
+ *     (ADR 0009: a rule, the person's own address, or a prompt through the daemon) before it
+ *     reaches `sendMessage`, so the CLI is no back door for an agent with a shell. A refusal comes
+ *     before anything opens a connection;
  *   - `sendMessage` checks no grant. It is the person's path: the daemon's bus send service and
  *     later the UI send from every enabled account. The account names the backend one way only —
  *     it is resolved through the registry.
@@ -35,7 +34,7 @@
  *   - a daemon that holds the account and cannot be reached → still refused, because the lease it
  *     holds cannot be taken.
  *
- * An agent's grant is checked in `sendAsAgent`, once, in this process, before anything is handed
+ * An agent's access is settled in `sendAsAgent`, once, in this process, before anything is handed
  * over — the routing decides which connection sends, never whether an agent may.
  *
  * Order matters: send, then the write log, then index the outgoing message. Once the server has
@@ -66,7 +65,9 @@ import { isOmemoSendRefusedError, MESSAGES, validateImageUrl } from '@curlew/xmp
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig, type CurlewConfig } from '../config.ts';
-import { type Capability, type Grant, isGranted, isSendCapability } from '../grants.ts';
+import { type AllowReason, previewOf, requireAccess } from '../access.ts';
+import { type AgentAccess, agentGate } from './access.ts';
+import type { Capability, Grant } from '../grants.ts';
 import { DAEMON_WIRE_VERSION, type DaemonSendRequest } from '../lib/daemon-bus.ts';
 import { type DaemonSendClient, gioDaemonSendClient } from '../lib/daemon-send-client.ts';
 import { MAX_CHUNK_CHARS, renderForXmpp, type MessageFormat } from '../markdown.ts';
@@ -77,21 +78,6 @@ import { _, fmt } from '@curlew/protocol';
 
 /** The chat send capability, still the one the daemon follows accounts under. */
 export const SEND_CAPABILITY = 'xmpp.send';
-
-/** The sentence for an agent send no grant names, shared by the check and the self-send fallback. */
-function notGrantedError(target: string): Error {
-  return new Error(
-    fmt(
-      _(
-        'sending to {target} is not granted — add a grant like {grant} to the config file, naming the account and the address',
-      ),
-      {
-        target,
-        grant: `{ "capability": "<backend>.send", "target": "${target}" }`,
-      },
-    ),
-  );
-}
 
 export interface SendParams {
   accountId: string;
@@ -106,6 +92,10 @@ export interface SendParams {
   /** `plain` (default) sends `text` as is; `markdown` renders it per chat protocol and splits long texts. */
   format?: MessageFormat;
   frontend: WriteFrontend;
+  /** Agent path only: which session asks and where the prompt goes. Defaults to this process's. */
+  agent?: Pick<AgentAccess, 'session' | 'port'>;
+  /** Set by `sendAsAgent` once access is settled: the write log records it. */
+  accessReason?: AllowReason;
   dbPath?: string;
   configPath?: string;
   /** Where the write log goes; injected by tests. */
@@ -232,76 +222,12 @@ export function permitFor(
   };
 }
 
-/** Throw unless the grants name exactly this pair for this capability. */
-export function requireSendGrant(
-  config: Pick<CurlewConfig, 'grants'>,
-  accountId: string,
-  to: string,
-  capability: Capability = SEND_CAPABILITY,
-): void {
-  if (!isGranted(config.grants, capability, sendTarget(accountId, to))) {
-    const target = sendTarget(accountId, to);
-    throw new Error(
-      fmt(_('{capability} is not granted for {target} — add {grant} to the grants in the config file'), {
-        capability,
-        target,
-        grant: `{ "capability": "${capability}", "target": "${target}" }`,
-      }),
-    );
-  }
-}
-
-/** The `<backend>.send` capabilities that name exactly this pair. Empty = nothing granted. */
-export function sendCapabilitiesFor(
-  grants: readonly Grant[] | undefined,
-  accountId: string,
-  to: string,
-): Capability[] {
-  const target = sendTarget(accountId, to);
-  return (grants ?? [])
-    .filter((g) => isSendCapability(g.capability) && g.target === target)
-    .map((g) => g.capability);
-}
-
-/** Throw unless SOME `<backend>.send` names exactly this pair — before any backend is constructed. */
-export function requireAnySendGrant(
-  config: Pick<CurlewConfig, 'grants'>,
-  accountId: string,
-  to: string,
-): Capability[] {
-  const capabilities = sendCapabilitiesFor(config.grants, accountId, to);
-  if (capabilities.length === 0) throw notGrantedError(sendTarget(accountId, to));
-  return capabilities;
-}
-
-/**
- * The registry's backend for one account, or the one a test injected. Only backends named by a
- * granted `<backend>.send` are asked, so a send never constructs a backend nobody granted (and
- * never touches GOA to find the XMPP account).
- */
-export async function resolveSendBackend(
-  config: CurlewConfig,
-  capabilities: readonly Capability[],
-  accountId: string,
-  injected?: MessageBackend,
-): Promise<MessageBackend> {
-  if (injected) return injected;
-  const registry = builtinRegistry();
-  for (const capability of capabilities) {
-    const name = capability.slice(0, -'.send'.length);
-    const backend = registry.create(config, name, backendContext(name, config));
-    const accounts = await backend.listAccounts();
-    if (accounts.some((a) => a.id === accountId)) return backend;
-  }
-  throw new Error(fmt(_('no account {account} — `curlew accounts list` shows them'), { account: accountId }));
-}
-
 /**
  * The enabled send-capable backend that has this account, or the one a test injected. The person's
  * path (ADR 0008): no grant names the backend, so every enabled backend is asked. A backend whose
  * accounts cannot be listed (not set up, no keyring) is skipped, not fatal.
  */
-async function findAccountBackend(
+export async function findAccountBackend(
   config: CurlewConfig,
   accountId: string,
   injected?: MessageBackend,
@@ -444,7 +370,7 @@ async function routeThroughDaemon(
 }
 
 /** Positive knowledge only: a missing method or a failing lookup is "not self". */
-async function isSelf(backend: unknown, accountId: string, to: string): Promise<boolean> {
+export async function isSelf(backend: unknown, accountId: string, to: string): Promise<boolean> {
   const ask = (backend as { isSelfAddress?: (account: string, to: string) => Promise<boolean> })
     .isSelfAddress;
   if (typeof ask !== 'function') return false;
@@ -456,28 +382,34 @@ async function isSelf(backend: unknown, accountId: string, to: string): Promise<
 }
 
 /**
- * Send as an agent: the CLI and MCP entry (ADR 0008). The grant is checked FIRST — before the core
- * is reached, before the daemon is asked — and a grant names the exact pair for the exact backend.
+ * Send as an agent: the CLI and MCP entry (ADR 0008, ADR 0009). Access is settled FIRST — before
+ * the core is reached, before the daemon is asked to send — by `requireAccess`: the person's own
+ * address is always allowed, a rule allows or denies, and an `ask` is put to the person through the
+ * daemon's prompt. A refusal costs no connection.
  *
- * The one thing allowed without a grant is a message to the account's own address: it reaches
- * nobody the person did not already own. Which addresses those are is the backend's knowledge
- * (`SendBackend.isSelfAddress`: Signal's ACI, WhatsApp's JID and LID, a mail address in any case…);
- * a backend that cannot tell, or that errors, answers "not self" and the grant is required.
+ * Which addresses are the person's own is the backend's knowledge (`SendBackend.isSelfAddress`:
+ * Signal's ACI, WhatsApp's JID and LID, a mail address in any case…); a backend that cannot tell,
+ * or that errors, answers "not self" and the policy decides. The old `<backend>.send` grant check
+ * is gone with this: a grant is a migrated rule now (`parseAgentAccess`), so the policy already
+ * says what the grant said.
  */
 export async function sendAsAgent(params: SendParams): Promise<SendResult> {
   const config = loadConfig(params.configPath ?? configPath());
-  const granted = sendCapabilitiesFor(config.grants, params.accountId, params.to);
-  if (granted.length > 0) {
-    const backend = await resolveSendBackend(config, granted, params.accountId, params.backend);
-    // The account resolved to a backend no grant names for this pair: refuse before opening it.
-    requireSendGrant(config, params.accountId, params.to, `${backend.manifest.name}.send` as Capability);
-    return sendMessage({ ...params, backend });
-  }
   const found = await findAccountBackend(config, params.accountId, params.backend);
-  if (found === null || !(await isSelf(found.backend, found.account.id, params.to))) {
-    throw notGrantedError(sendTarget(params.accountId, params.to));
+  if (found === null) {
+    throw new Error(
+      fmt(_('no account {account} — `curlew accounts list` shows them'), { account: params.accountId }),
+    );
   }
-  return sendMessage({ ...params, backend: found.backend });
+  const gate = agentGate(config, { frontend: params.frontend === 'mcp' ? 'mcp' : 'cli', ...params.agent });
+  const accessReason = await requireAccess(gate, {
+    account: params.accountId,
+    contact: params.to,
+    kind: 'write',
+    self: await isSelf(found.backend, found.account.id, params.to),
+    preview: previewOf(params.text ?? params.imageUrl),
+  });
+  return sendMessage({ ...params, backend: found.backend, accessReason });
 }
 
 /** Send from an enabled account on the person's behalf: no grant is checked (ADR 0008). */
@@ -572,6 +504,7 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
         target: sendTarget(params.accountId, params.to),
         frontend: params.frontend,
         id: sent.id,
+        ...(params.accessReason === undefined ? {} : { reason: params.accessReason }),
       },
       { path: params.writeLogPath },
     );

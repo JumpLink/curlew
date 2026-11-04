@@ -177,13 +177,7 @@ export default async () => {
     });
 
     await it('refuses without a matrix.send grant, before anything is opened', async () => {
-      for (const config of [
-        () => ({ grants: [] }),
-        // A grant for another backend's send, for exactly this pair, is still not this one.
-        (accountId: string) => ({
-          grants: [{ capability: 'telegram.send', target: `${accountId}/${ROOM}` }],
-        }),
-      ]) {
+      for (const config of [() => ({ grants: [] })]) {
         await withRig(config, async (rig) => {
           expect(await refused(send(rig, ROOM, 'Hallo'))).toBe(true);
           expect(rig.http.calls.length).toBe(0);

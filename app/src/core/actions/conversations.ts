@@ -10,6 +10,8 @@ import type { Classification, Conversation, ConversationMessage } from '@curlew/
 import { normalizeAddress } from '@curlew/protocol';
 import { configPath, getConversation, indexDbPath, listConversations, syncStatus } from '@curlew/store';
 import { loadConfig, saveConfig } from '../config.ts';
+import type { AgentAccess } from './access.ts';
+import { requireParticipantsRead } from './message-access.ts';
 import { MAX_STALENESS_HOURS, openIndex } from './index-sync.ts';
 import { CONVERSATION_BODY_CHARS, CONVERSATION_LIMIT, capLimit } from './limits.ts';
 
@@ -55,15 +57,18 @@ export interface ConversationShowParams {
   since?: string;
   /** Only messages from the other side. */
   incomingOnly?: boolean;
+  /** Set by an agent frontend: bodies are then read only with ADR 0009 `read` access. */
+  agent?: AgentAccess;
   dbPath?: string;
   configPath?: string;
 }
 
-export function conversationsShow(params: ConversationShowParams): {
+export async function conversationsShow(params: ConversationShowParams): Promise<{
   conversation: Conversation;
   messages: ConversationMessage[];
-} {
-  const { senders } = loadConfig(params.configPath ?? configPath());
+}> {
+  const config = loadConfig(params.configPath ?? configPath());
+  const { senders } = config;
   const db = openIndex(params.dbPath ?? indexDbPath());
   try {
     const found = getConversation(db, params.id, {
@@ -74,6 +79,15 @@ export function conversationsShow(params: ConversationShowParams): {
       incomingOnly: params.incomingOnly,
     });
     if (!found) throw new Error(`no conversation with id ${params.id} — run \`curlew conversations list\``);
+    if (params.agent && params.includeBodies) {
+      const { conversation } = found;
+      await requireParticipantsRead(
+        config,
+        params.agent,
+        conversation.accountId,
+        conversation.participants.flatMap((p) => p.addresses.map((a) => a.value)),
+      );
+    }
     return found;
   } finally {
     db.close();

@@ -16,7 +16,10 @@ import type {
   SaveAttachmentResult,
 } from '@curlew/protocol';
 import { decodingSink, safeFileName } from '@curlew/protocol';
-import { attachmentsDir, ensurePrivateDir, FileSink, resolveDownloadPath } from '@curlew/store';
+import { attachmentsDir, configPath, ensurePrivateDir, FileSink, resolveDownloadPath } from '@curlew/store';
+import { loadConfig } from '../config.ts';
+import type { AgentAccess } from './access.ts';
+import { requireMessageRead } from './message-access.ts';
 import { ATTACHMENT_BYTES, BODY_CHARS, capLimit, MAIL_LIMIT } from './limits.ts';
 
 /** Mail search params; folder defaults to INBOX, and no account means all of them. */
@@ -51,6 +54,9 @@ export interface MailGetMessageParams {
   uid: string;
   folder?: string;
   maxBodyChars?: number;
+  /** Set by an agent frontend: the body is returned only with ADR 0009 `read` access to its contact. */
+  agent?: AgentAccess;
+  configPath?: string;
 }
 
 export interface MailListPartsParams {
@@ -69,6 +75,9 @@ export interface MailSaveAttachmentParams {
   directory?: string;
   /** Refuse a part larger than this, before any bytes are transferred. */
   maxBytes?: number;
+  /** Set by an agent frontend: saving needs the same `read` access as the body. */
+  agent?: AgentAccess;
+  configPath?: string;
 }
 
 /** Search mail headers/metadata; caps the count so a caller can't dump a mailbox. */
@@ -95,12 +104,16 @@ export async function mailSearch(params: MailSearchParams = {}): Promise<MailSum
 
 /** Fetch one full message (body + attachment metadata); caps the body length. */
 export async function mailGetMessage(params: MailGetMessageParams): Promise<MailMessageDTO> {
-  return getMessage({
+  const message = await getMessage({
     accountId: params.accountId,
     uid: params.uid,
     folder: params.folder,
     maxBodyChars: capLimit(params.maxBodyChars, BODY_CHARS),
   });
+  // Fetched first: whose message it is only shows in its headers.
+  if (params.agent)
+    await requireMessageRead(loadConfig(params.configPath ?? configPath()), params.agent, message);
+  return message;
 }
 
 /** List the mailboxes of one or every account, with their resolved roles. */
@@ -122,6 +135,16 @@ export async function mailListParts(params: MailListPartsParams): Promise<MailPa
  * through, so what lands on disk is the actual file rather than its base64 text.
  */
 export async function mailSaveAttachment(params: MailSaveAttachmentParams): Promise<SaveAttachmentResult> {
+  if (params.agent) {
+    // Headers only: a few characters of body are all the gate's fetch needs.
+    const message = await getMessage({
+      accountId: params.accountId,
+      uid: params.uid,
+      folder: params.folder,
+      maxBodyChars: 1,
+    });
+    await requireMessageRead(loadConfig(params.configPath ?? configPath()), params.agent, message);
+  }
   const directory = ensurePrivateDir(params.directory ?? attachmentsDir());
   const maxBytes = capLimit(params.maxBytes, ATTACHMENT_BYTES);
 

@@ -189,35 +189,5 @@ export default async () => {
         expect(server.dialogue.commands.length).toBe(0);
       });
     });
-
-    await it('refuses a pair granted only for another backend’s send', async () => {
-      await withServer(async (server) => {
-        await withConfig(
-          // Same account/address string, but the grant names XMPP: the mail backend may not use it.
-          { grants: [{ capability: 'xmpp.send', target: `${ACCOUNT}/${OWNER}` }] },
-          async ({ dir, configPath }) => {
-            let opened = 0;
-            let refused = false;
-            try {
-              await sendAsAgent({
-                accountId: ACCOUNT,
-                to: OWNER,
-                text: 'Hallo',
-                frontend: 'cli',
-                dbPath: join(dir, 'index.db'),
-                configPath,
-                writeLogPath: join(dir, 'writes.log'),
-                backend: mailBackend(server.port, () => opened++),
-              });
-            } catch {
-              refused = true;
-            }
-            expect(refused).toBe(true);
-            expect(opened).toBe(0);
-          },
-        );
-        expect(server.dialogue.commands.length).toBe(0);
-      });
-    });
   });
 };

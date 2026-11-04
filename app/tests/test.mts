@@ -64,6 +64,8 @@ import i18n from './unit/core/i18n.test.ts';
 import limits from './unit/core/limits.test.ts';
 import registry from './unit/core/registry.test.ts';
 import grants from './unit/core/grants.test.ts';
+import access from './unit/core/access.test.ts';
+import accessBroker from './unit/core/access-broker.test.ts';
 import agentAccess from './unit/core/agent-access.test.ts';
 import encryption from './unit/core/encryption.test.ts';
 import capabilities from './unit/core/capabilities.test.ts';
@@ -147,6 +149,8 @@ run({
   limits,
   registry,
   grants,
+  access,
+  accessBroker,
   agentAccess,
   encryption,
   send,

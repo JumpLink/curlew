@@ -35,6 +35,8 @@ delete env.GI_TYPELIB_PATH;
 // Never the real config: grants in it would change the catalogue. No file = no grants.
 const scratch = mkdtempSync(join(tmpdir(), 'curlew-mcp-'));
 env.CURLEW_CONFIG = join(scratch, 'none.json');
+// No session bus: an `ask` must refuse here, never reach a real daemon and put a prompt on the screen.
+env.DBUS_SESSION_BUS_ADDRESS = 'unix:path=/nonexistent';
 
 // Sorted, because the comparison below is a sorted deepEqual — the ordering is the assertion.
 // `setup_run` is deliberately ABSENT: it declares `readOnlyHint: false`, so the gate must drop it
@@ -87,7 +89,8 @@ assert.deepEqual(
 // client actually sees. A tool that lost its annotation would have been dropped by the gate and
 // failed the catalogue check above; one that gained `readOnlyHint: false` fails here.
 // `send_message` is the one exception, deliberately (ADR 0008): it is listed with no grant and
-// the action refuses everything but the person's own address.
+// the action refuses everything but the person's own address — unless the policy allows it or the
+// person answers the daemon's prompt (ADR 0009).
 for (const tool of tools) {
   const writes = tool.name === 'send_message';
   assert.equal(tool.annotations?.readOnlyHint, !writes, `tool ${tool.name} has the wrong read-only mark`);
@@ -96,8 +99,13 @@ const refused = await client.callTool({
   name: 'send_message',
   arguments: { account: 'xmpp-abc123', to: 'someone@example.org', text: 'hi' },
 });
-assert(refused.isError === true, 'send_message to a non-self address with no grant must be refused');
-assert(JSON.stringify(refused.content).includes('not granted'), 'the refusal must be the not-granted error');
+assert(refused.isError === true, 'send_message to a non-self address with no rule must be refused');
+// The account is looked up first (to tell the person's own address from another one), and a
+// headless run has none: either refusal proves nothing was sent. The policy itself is unit-tested.
+assert(
+  /needs approval|no account/.test(JSON.stringify(refused.content)),
+  'the refusal must be the unknown account or the approval that nobody could give',
+);
 console.log(`OK: MCP stdio server on GJS — ${tools.length} read-only tools (${info.name} ${info.version})`);
 
 // A real tools/call. Tolerate environments without GOA (headless CI has no session bus): we

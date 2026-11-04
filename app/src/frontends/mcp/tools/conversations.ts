@@ -62,7 +62,7 @@ export function registerConversationTools(server: McpServer): void {
     {
       title: 'Get One Conversation (offline)',
       description:
-        'One conversation from the local index with its messages, oldest first: sender, date, subject, presentation (bubble for chat, document for mail), classification with its reason, and a ref — for mail (account, folder, uid), which mail_get_message accepts for the full message; for chats the network message id (remoteId), plus edit time, reply and thread ids and, on your own messages, whether the other side has read them. Bodies are omitted unless include_bodies is true, and then capped per message.',
+        'One conversation from the local index with its messages, oldest first: sender, date, subject, presentation (bubble for chat, document for mail), classification with its reason, and a ref — for mail (account, folder, uid), which mail_get_message accepts for the full message; for chats the network message id (remoteId), plus edit time, reply and thread ids and, on your own messages, whether the other side has read them. Bodies are omitted unless include_bodies is true, and then capped per message. Bodies need `read` access (config.agentAccess): by a rule, or the person answers a prompt, which waits up to 2 minutes; without either the call is refused.',
       inputSchema: {
         id: z.string().min(1).describe('Conversation id from conversations_list'),
         include_bodies: z.boolean().optional().describe('Include each message body (default false)'),
@@ -88,12 +88,13 @@ export function registerConversationTools(server: McpServer): void {
     async (params) => {
       try {
         return mcpSuccess(
-          conversationsShow({
+          await conversationsShow({
             id: params.id,
             includeBodies: params.include_bodies,
             maxBodyChars: params.max_body_chars,
             since: params.since,
             incomingOnly: params.incoming_only,
+            agent: { frontend: 'mcp' },
           }),
         );
       } catch (err) {
@@ -106,7 +107,7 @@ export function registerConversationTools(server: McpServer): void {
     'xmpp_wait_reply',
     {
       title: 'Wait for a Reply (XMPP)',
-      description: `Block up to timeout_s (default ${WAIT_TIMEOUT_S.default}, max ${WAIT_TIMEOUT_S.max}) for the next incoming message from one peer, newer than the cursor \`after\`. Pass the sentAt that send_message returned; for the next wait pass the cursor of the previous answer. Returns status "reply" with the messages, or "timeout" with an unchanged cursor — then call again or stop. Reads the local index, which \`curlew daemon\` fills within seconds; without a running daemon it always times out. Each message has \`replyToId\`: the id its XEP-0461 reply names (null when it is not a reply). Compare it with the \`originId\` that send_message returned to see which sent message was answered. Pass \`reply_to\` (an originId) to return only replies to that message; other messages are skipped. The body has the reply's quoted fallback text (XEP-0428) removed. Pass \`strip_quotes: true\` to also drop every remaining quoted line (starting with \`>\`) from the bodies (default false). Read-only.`,
+      description: `Block up to timeout_s (default ${WAIT_TIMEOUT_S.default}, max ${WAIT_TIMEOUT_S.max}) for the next incoming message from one peer, newer than the cursor \`after\`. Pass the sentAt that send_message returned; for the next wait pass the cursor of the previous answer. Returns status "reply" with the messages, or "timeout" with an unchanged cursor — then call again or stop. Reads the local index, which \`curlew daemon\` fills within seconds; without a running daemon it always times out. Each message has \`replyToId\`: the id its XEP-0461 reply names (null when it is not a reply). Compare it with the \`originId\` that send_message returned to see which sent message was answered. Pass \`reply_to\` (an originId) to return only replies to that message; other messages are skipped. The body has the reply's quoted fallback text (XEP-0428) removed. Pass \`strip_quotes: true\` to also drop every remaining quoted line (starting with \`>\`) from the bodies (default false). Read-only. Unless a rule allows reading this peer, the person is asked first (up to 2 minutes); set include_bodies false to skip that.`,
       inputSchema: {
         account: z.string().min(1).describe('XMPP account id'),
         peer: z.string().min(1).describe('The peer bare address, as used in send_message'),
@@ -136,6 +137,7 @@ export function registerConversationTools(server: McpServer): void {
             timeoutS: params.timeout_s,
             includeBodies: params.include_bodies,
             stripQuotes: params.strip_quotes,
+            agent: { frontend: 'mcp' },
           }),
         );
       } catch (err) {

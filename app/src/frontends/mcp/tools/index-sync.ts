@@ -10,7 +10,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { mcpSuccess } from '@gjsify/mcp';
 import { z } from 'zod';
 
-import { MAIL_LIMIT, indexSearch, indexStatus } from '../../../core/actions/index.ts';
+import { MAIL_LIMIT, indexSearchForAgent, indexStatus, withheldFields } from '../../../core/actions/index.ts';
 import { mcpErrorFrom } from '../types.ts';
 
 export function registerIndexTools(server: McpServer): void {
@@ -60,19 +60,22 @@ export function registerIndexTools(server: McpServer): void {
     },
     async (params) => {
       try {
-        const result = indexSearch({
-          query: params.query,
-          from: params.from,
-          subject: params.subject,
-          since: params.since,
-          before: params.before,
-          unseen: params.unseen_only,
-          flagged: params.flagged_only,
-          hasAttachment: params.has_attachment,
-          accountId: params.account_id,
-          folderPath: params.folder,
-          limit: params.limit ?? MAIL_LIMIT.default,
-        });
+        const result = await indexSearchForAgent(
+          {
+            query: params.query,
+            from: params.from,
+            subject: params.subject,
+            since: params.since,
+            before: params.before,
+            unseen: params.unseen_only,
+            flagged: params.flagged_only,
+            hasAttachment: params.has_attachment,
+            accountId: params.account_id,
+            folderPath: params.folder,
+            limit: params.limit ?? MAIL_LIMIT.default,
+          },
+          { frontend: 'mcp' },
+        );
         // The provenance travels with the answer: a caller must be able to tell a complete
         // result from one drawn out of a half-built index.
         return mcpSuccess({
@@ -81,6 +84,7 @@ export function registerIndexTools(server: McpServer): void {
           indexedAt: result.indexedAt,
           staleFolders: result.staleFolders,
           messages: result.messages,
+          ...withheldFields(result.withheld),
         });
       } catch (err) {
         return mcpErrorFrom(err);

@@ -1,6 +1,6 @@
 # ADR 0009 — agent access per account and contact
 
-- **Status:** Accepted (2026-11-03)
+- **Status:** Accepted (2026-11-03). Steps 1–3 implemented (policy core, enforcement, daemon prompt).
 - **Scope:** `app` (the policy core, config, MCP and CLI enforcement, `curlew daemon`, the
   session-bus prompt service, the GTK "agent access" page). Supersedes the read grant
   `messages.read` of [ADR 0008](0008-grants-restrict-agents-not-the-person.md) §5 and extends the

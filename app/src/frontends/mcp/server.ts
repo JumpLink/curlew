@@ -59,12 +59,12 @@ export function createMcpServer(): McpServer {
   // gate exists; the grant gate then judges everything else, so a granted write still needs its
   // grant and nothing else becomes reachable through the switch.
   if (allowWrite) registerSetupTools(server);
-  // Always served, outside the gate: `sendAsAgent` decides per call (the exact `<backend>.send`
-  // grant for the pair, or the person's own address, which needs none — ADR 0008).
+  // Always served, outside the gate: `sendAsAgent` decides per call (an agentAccess rule for
+  // the pair, the person's own address, or the daemon's prompt — ADR 0009).
   registerSendTools(server);
   // Before any other registration — the gate works by wrapping registerTool. Fails CLOSED: a tool
   // without a readOnlyHint or an ungranted capability goes missing from `tools/list`. The send
-  // send tool is registered above, before the gate, like setup_run: the grant decision is sendAsAgent's.
+  // send tool is registered above, before the gate, like setup_run: the access decision is sendAsAgent's.
   applyGrantGate(server, loadConfig(configPath()).grants);
   for (const register of REGISTRARS) {
     if (allowWrite && register === registerSetupTools) continue;
