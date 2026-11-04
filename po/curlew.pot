@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-04 18:54+0100\n"
+"POT-Creation-Date: 2026-11-04 19:46+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1367,8 +1367,13 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr ""
 
-#: app/src/window/about.ts:14
+#: app/src/window/about.ts:14 app/src/window/window.ts:62
+#: app/src/window/window.ts:70
 msgid "Curlew"
+msgstr ""
+
+#: app/src/window/agent-access-dialog.ts:138 app/src/window/window.ts:83
+msgid "Agent access"
 msgstr ""
 
 #: app/src/window/agent-access-page.ts:52
@@ -1418,95 +1423,169 @@ msgstr ""
 msgid "Read: {read} · Write: {write}"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:140
+#: app/src/window/agent-access-page.ts:166
 msgid "Whole account"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:153
+#: app/src/window/agent-access-page.ts:179
 msgid "Remove this rule"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:162
+#: app/src/window/agent-access-page.ts:188
 msgid "From an old send grant"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:164
+#: app/src/window/agent-access-page.ts:190
 msgid ""
 "Changing a mode makes this a rule of its own. The grant stays in your "
 "configuration, and removing the rule brings this one back."
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:171
-#: app/src/window/agent-access-page.ts:199
+#: app/src/window/agent-access-page.ts:197
+#: app/src/window/agent-access-page.ts:225
 msgid "Read messages"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:171
-#: app/src/window/agent-access-page.ts:200
+#: app/src/window/agent-access-page.ts:197
+#: app/src/window/agent-access-page.ts:226
 msgid "Send messages"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:183
+#: app/src/window/agent-access-page.ts:209
 msgid "Add a rule"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:190
+#: app/src/window/agent-access-page.ts:216
 msgid "Account"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:195
+#: app/src/window/agent-access-page.ts:221
 msgid "Account id"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:198
+#: app/src/window/agent-access-page.ts:224
 msgid "Contact address (empty = the whole account)"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:206
+#: app/src/window/agent-access-page.ts:232
 msgid "Cancel"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:208
+#: app/src/window/agent-access-page.ts:234
 msgid "Add"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:259
+#: app/src/window/agent-access-page.ts:285
 msgid "The configuration could not be read"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:271
+#: app/src/window/agent-access-page.ts:297
 msgid ""
 "Your own commands and this window are never restricted, and your own "
 "addresses are always allowed. These rules decide what an AI agent may read "
 "and send."
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:275
+#: app/src/window/agent-access-page.ts:301
 msgid "Ask when no rule applies"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:276
+#: app/src/window/agent-access-page.ts:302
 msgid "Off: an agent request without a rule is refused without asking"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:294
+#: app/src/window/agent-access-page.ts:320
 msgid "No rules yet"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:299
+#: app/src/window/agent-access-page.ts:325
 msgid "Add rule"
 msgstr ""
 
-#: app/src/window/window.ts:132
+#: app/src/window/conversation-list-model.ts:44
+msgid "Mail"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:45
+msgid "XMPP"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:46
+msgid "Signal"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:47
+msgid "Matrix"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:48
+msgid "Telegram"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:49
+msgid "WhatsApp"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:74
+msgid "Unnamed conversation"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:122
+msgid "People"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:123
+msgid "Groups"
+msgstr ""
+
+#: app/src/window/conversation-list.ts:141
+msgid "Search conversations"
+msgstr ""
+
+#: app/src/window/conversation-list.ts:178
+msgid "No conversations yet"
+msgstr ""
+
+#: app/src/window/conversation-list.ts:178
+msgid "No matches"
+msgstr ""
+
+#: app/src/window/conversation-list.ts:181
+msgid ""
+"Conversations appear here after Curlew has synced an account. Run \"curlew "
+"sync\" first."
+msgstr ""
+
+#: app/src/window/conversation-list.ts:182
+msgid "Nothing fits the search and filters."
+msgstr ""
+
+#: app/src/window/conversation-list.ts:221
+msgid "Search"
+msgstr ""
+
+#: app/src/window/conversation-list.ts:232
+msgid "Conversations"
+msgstr ""
+
+#: app/src/window/window.ts:52
+msgid "Select a conversation"
+msgstr ""
+
+#: app/src/window/window.ts:54
+msgid "{protocol} conversation. Reading and writing here is not built yet."
+msgstr ""
+
+#: app/src/window/window.ts:57
+msgid "Pick a conversation from the list."
+msgstr ""
+
+#: app/src/window/window.ts:85
 msgid "About Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:133
+#: app/src/window/window.ts:86
 msgid "Quit"
-msgstr ""
-
-#: app/src/window/window.ts:142
-msgid "Agent access"
 msgstr ""
 
 #: packages/imap/src/send.ts:61 packages/matrix/src/send.ts:165

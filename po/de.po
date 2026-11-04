@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-04 18:54+0100\n"
+"POT-Creation-Date: 2026-11-04 19:46+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1605,9 +1605,14 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
-#: app/src/window/about.ts:14
+#: app/src/window/about.ts:14 app/src/window/window.ts:62
+#: app/src/window/window.ts:70
 msgid "Curlew"
 msgstr "Curlew"
+
+#: app/src/window/agent-access-dialog.ts:138 app/src/window/window.ts:83
+msgid "Agent access"
+msgstr "Agentenzugriff"
 
 #: app/src/window/agent-access-page.ts:52
 msgid "Allow"
@@ -1619,7 +1624,7 @@ msgstr "Nachfragen"
 
 #: app/src/window/agent-access-page.ts:58
 msgid "Not set"
-msgstr "Nicht festgelegt"
+msgstr "Offen"
 
 #: app/src/window/agent-access-page.ts:65
 msgid ""
@@ -1660,19 +1665,19 @@ msgstr "Diese Regel ist ungültig."
 msgid "Read: {read} · Write: {write}"
 msgstr "Lesen: {read} · Schreiben: {write}"
 
-#: app/src/window/agent-access-page.ts:140
+#: app/src/window/agent-access-page.ts:166
 msgid "Whole account"
 msgstr "Ganzes Konto"
 
-#: app/src/window/agent-access-page.ts:153
+#: app/src/window/agent-access-page.ts:179
 msgid "Remove this rule"
 msgstr "Diese Regel entfernen"
 
-#: app/src/window/agent-access-page.ts:162
+#: app/src/window/agent-access-page.ts:188
 msgid "From an old send grant"
 msgstr "Aus einer alten Sendefreigabe"
 
-#: app/src/window/agent-access-page.ts:164
+#: app/src/window/agent-access-page.ts:190
 msgid ""
 "Changing a mode makes this a rule of its own. The grant stays in your "
 "configuration, and removing the rule brings this one back."
@@ -1681,45 +1686,45 @@ msgstr ""
 "bleibt in deiner Konfiguration, und wenn du die Regel entfernst, kommt diese "
 "wieder zurück."
 
-#: app/src/window/agent-access-page.ts:171
-#: app/src/window/agent-access-page.ts:199
+#: app/src/window/agent-access-page.ts:197
+#: app/src/window/agent-access-page.ts:225
 msgid "Read messages"
 msgstr "Nachrichten lesen"
 
-#: app/src/window/agent-access-page.ts:171
-#: app/src/window/agent-access-page.ts:200
+#: app/src/window/agent-access-page.ts:197
+#: app/src/window/agent-access-page.ts:226
 msgid "Send messages"
 msgstr "Nachrichten senden"
 
-#: app/src/window/agent-access-page.ts:183
+#: app/src/window/agent-access-page.ts:209
 msgid "Add a rule"
 msgstr "Regel hinzufügen"
 
-#: app/src/window/agent-access-page.ts:190
+#: app/src/window/agent-access-page.ts:216
 msgid "Account"
 msgstr "Konto"
 
-#: app/src/window/agent-access-page.ts:195
+#: app/src/window/agent-access-page.ts:221
 msgid "Account id"
 msgstr "Konto-ID"
 
-#: app/src/window/agent-access-page.ts:198
+#: app/src/window/agent-access-page.ts:224
 msgid "Contact address (empty = the whole account)"
 msgstr "Kontaktadresse (leer = ganzes Konto)"
 
-#: app/src/window/agent-access-page.ts:206
+#: app/src/window/agent-access-page.ts:232
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: app/src/window/agent-access-page.ts:208
+#: app/src/window/agent-access-page.ts:234
 msgid "Add"
 msgstr "Hinzufügen"
 
-#: app/src/window/agent-access-page.ts:259
+#: app/src/window/agent-access-page.ts:285
 msgid "The configuration could not be read"
 msgstr "Die Konfiguration konnte nicht gelesen werden"
 
-#: app/src/window/agent-access-page.ts:271
+#: app/src/window/agent-access-page.ts:297
 msgid ""
 "Your own commands and this window are never restricted, and your own "
 "addresses are always allowed. These rules decide what an AI agent may read "
@@ -1729,33 +1734,109 @@ msgstr ""
 "eigenen Adressen sind immer erlaubt. Diese Regeln bestimmen, was ein KI-"
 "Agent lesen und senden darf."
 
-#: app/src/window/agent-access-page.ts:275
+#: app/src/window/agent-access-page.ts:301
 msgid "Ask when no rule applies"
 msgstr "Nachfragen, wenn keine Regel greift"
 
-#: app/src/window/agent-access-page.ts:276
+#: app/src/window/agent-access-page.ts:302
 msgid "Off: an agent request without a rule is refused without asking"
 msgstr "Aus: Eine Agentenanfrage ohne Regel wird ohne Nachfrage abgelehnt"
 
-#: app/src/window/agent-access-page.ts:294
+#: app/src/window/agent-access-page.ts:320
 msgid "No rules yet"
 msgstr "Noch keine Regeln"
 
-#: app/src/window/agent-access-page.ts:299
+#: app/src/window/agent-access-page.ts:325
 msgid "Add rule"
 msgstr "Regel hinzufügen"
 
-#: app/src/window/window.ts:132
+#: app/src/window/conversation-list-model.ts:44
+msgid "Mail"
+msgstr "E-Mail"
+
+#: app/src/window/conversation-list-model.ts:45
+msgid "XMPP"
+msgstr "XMPP"
+
+#: app/src/window/conversation-list-model.ts:46
+msgid "Signal"
+msgstr "Signal"
+
+#: app/src/window/conversation-list-model.ts:47
+msgid "Matrix"
+msgstr "Matrix"
+
+#: app/src/window/conversation-list-model.ts:48
+msgid "Telegram"
+msgstr "Telegram"
+
+#: app/src/window/conversation-list-model.ts:49
+msgid "WhatsApp"
+msgstr "WhatsApp"
+
+#: app/src/window/conversation-list-model.ts:74
+msgid "Unnamed conversation"
+msgstr "Unbenannte Unterhaltung"
+
+#: app/src/window/conversation-list-model.ts:122
+msgid "People"
+msgstr "Personen"
+
+#: app/src/window/conversation-list-model.ts:123
+msgid "Groups"
+msgstr "Gruppen"
+
+#: app/src/window/conversation-list.ts:141
+msgid "Search conversations"
+msgstr "Unterhaltungen durchsuchen"
+
+#: app/src/window/conversation-list.ts:178
+msgid "No conversations yet"
+msgstr "Noch keine Unterhaltungen"
+
+#: app/src/window/conversation-list.ts:178
+msgid "No matches"
+msgstr "Keine Treffer"
+
+#: app/src/window/conversation-list.ts:181
+msgid ""
+"Conversations appear here after Curlew has synced an account. Run \"curlew "
+"sync\" first."
+msgstr ""
+"Unterhaltungen erscheinen hier, sobald Curlew ein Konto synchronisiert hat. "
+"Führe zuerst „curlew sync“ aus."
+
+#: app/src/window/conversation-list.ts:182
+msgid "Nothing fits the search and filters."
+msgstr "Nichts passt zur Suche und den Filtern."
+
+#: app/src/window/conversation-list.ts:221
+msgid "Search"
+msgstr "Suchen"
+
+#: app/src/window/conversation-list.ts:232
+msgid "Conversations"
+msgstr "Unterhaltungen"
+
+#: app/src/window/window.ts:52
+msgid "Select a conversation"
+msgstr "Unterhaltung auswählen"
+
+#: app/src/window/window.ts:54
+msgid "{protocol} conversation. Reading and writing here is not built yet."
+msgstr "{protocol}-Unterhaltung. Lesen und Schreiben ist hier noch nicht gebaut."
+
+#: app/src/window/window.ts:57
+msgid "Pick a conversation from the list."
+msgstr "Wähle eine Unterhaltung aus der Liste."
+
+#: app/src/window/window.ts:85
 msgid "About Curlew"
 msgstr "Über Curlew"
 
-#: app/src/window/window.ts:133
+#: app/src/window/window.ts:86
 msgid "Quit"
 msgstr "Beenden"
-
-#: app/src/window/window.ts:142
-msgid "Agent access"
-msgstr "Agentenzugriff"
 
 #: packages/imap/src/send.ts:61 packages/matrix/src/send.ts:165
 #: packages/signal/src/send.ts:275 packages/telegram/src/sender.ts:43
