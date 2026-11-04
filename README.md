@@ -873,15 +873,25 @@ an account, add `{ "account": "<id>", "read": "allow" }`.
 }
 ```
 
-**The window.** `curlew window` opens a GTK 4 / libadwaita window with one page, *Agent access*
-(needs GJS and a desktop session; only this explicit command opens it, so a bare `curlew`, and an
-agent running one, never shows a window). It lists the rules grouped by account, with `Name
-(address)` where the index knows the contact and *Whole account* for an account-wide rule. Each
-rule has a read and a write mode (allow, ask, deny); you can remove a rule, add one, and switch
-`askWithoutRule`. Your own commands and the window are never restricted, and your own addresses
-are always allowed — the page says so.
+**The window.** `curlew window` opens a GTK 4 / libadwaita window (needs GJS and a desktop
+session; only this explicit command opens it, so a bare `curlew`, and an agent running one, never
+shows a window). The sidebar is one read-only list of every conversation from the local index,
+whatever the messenger, in collapsible sections *People* and *Groups*. Each row shows an avatar with
+a small protocol badge, the title (bold while unread), the protocol and account, and a grey unread
+count. Filter chips narrow it by protocol (and by account, once a protocol with several is
+chosen); the search button filters by name. Reading and writing a conversation is not built yet.
+At 720 sp and narrower the window collapses to one pane, down to 360 px wide. The layout rules and
+their role models are in [`docs/design/ui.md`](docs/design/ui.md).
 
-![The Agent access page](docs/screenshots/agent-access.png)
+![The conversation list](docs/screenshots/conversations.png)
+
+**Agent access** is not a main area: it opens from the primary menu as a dialog. It lists the
+rules grouped by account, with `Name (address)` where the index knows the contact and *Whole
+account* for an account-wide rule. Each rule has a read and a write mode (allow, ask, deny); you
+can remove a rule, add one, and switch `askWithoutRule`. Your own commands and the window are
+never restricted, and your own addresses are always allowed — the dialog says so.
+
+![The Agent access dialog](docs/screenshots/agent-access.png)
 
 - *Writing.* Every edit re-reads `config.json`, changes only `agentAccess`, and writes it
   atomically with mode 0600 — no other key is touched. The daemon can write the same file (an

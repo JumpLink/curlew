@@ -4,11 +4,14 @@
 
 ### Added
 
-- `curlew window`: the first GTK 4 / libadwaita window, with an *Agent access* page that lists
-  and edits the `agentAccess` rules — per account and contact, read and write as allow, ask or
-  deny, add and remove a rule, and the `askWithoutRule` switch. A rule that comes from an old
-  send grant is shown as such. Only the explicit command opens a window. A desktop file and
-  AppStream metadata (`eu.jumplink.curlew`) ship with it; the icon is still open.
+- `curlew window`: the first GTK 4 / libadwaita window. A split view whose sidebar is one
+  read-only list of every conversation in the index (People and Groups, protocol and account
+  chips, search, protocol badge, grey unread count) and which collapses to one pane at 720 sp.
+  *Agent access* opens from the primary menu as a dialog that lists and edits the `agentAccess`
+  rules — per account and contact, read and write as allow, ask or deny, add and remove a rule,
+  and the `askWithoutRule` switch. A rule that comes from an old send grant is shown as such.
+  Only the explicit command opens a window. A desktop file and AppStream metadata
+  (`eu.jumplink.curlew`) ship with it; the icon is still open. Rules: `docs/design/ui.md`.
 
 ## 0.2.0
 

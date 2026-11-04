@@ -36,6 +36,11 @@
   </keywords>
   <screenshots>
     <screenshot type="default">
+      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversations.png</image>
+      <caption>Every conversation in one list</caption>
+      <caption xml:lang="de">Alle Unterhaltungen in einer Liste</caption>
+    </screenshot>
+    <screenshot>
       <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/agent-access.png</image>
       <caption>Rules for what agents may read and send</caption>
       <caption xml:lang="de">Regeln, was Agenten lesen und senden dürfen</caption>
