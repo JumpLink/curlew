@@ -159,7 +159,7 @@ Rules live in `config.json` beside the old grants and are `state`, not secret.
   in memory, whether or not `agentAccess` is present. A contact rule written out explicitly for
   the same pair wins over the migrated one. Nothing rewrites the person's file; the GTK page (§Order of
   work) writes the new format.
-- **`xmpp.omemo` stays as it is** until decryption runs for every enabled account (§9). It goes
+- **`xmpp.omemo` stayed as it was** until decryption runs for every enabled account (§9). It goes
   away together with the last grant watch (ADR 0008 §5).
 
 ### 9. Decryption
@@ -205,6 +205,8 @@ see from the log which sends were never asked about.
 3. The daemon prompt service: the bus method and the notification actions. Steps 2 and 3 are
    deployed together, so agents in use never spend a release refused where they would be asked.
 4. Decryption for every enabled account, then removal of `xmpp.omemo` and the last grant watch.
+   **Done:** `xmpp.omemo` is a retired capability (an old config still loads, the entry ignored),
+   the daemon watches no grants and no longer exits with code 3.
 5. A GTK "agent access" page that edits the rules and later shows the prompt as a dialog.
 6. A sandbox (Flatpak/portal) between agents and the session bus.
 

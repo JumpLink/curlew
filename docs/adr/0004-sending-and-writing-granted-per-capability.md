@@ -430,7 +430,7 @@ Routing in `sendMessage`, for a `sendSharesReceiveState` backend only:
 The grant check stays the single one in `send.ts`, in the *calling* process, before anything is
 handed over — a shell is still no back door. The daemon then re-checks the grant against config
 it loads **fresh for that call** and fails closed. Fresh, not the grants it started with
-(ADR 0004 §1), because `daemonGrants` watches only `xmpp.send`/`xmpp.omemo`: a `signal.send` edit
+(ADR 0004 §1), because the daemon watches no grants (`daemonGrants` is gone, ADR 0009 step 4): a `signal.send` edit
 does not restart the daemon, so a revoked grant must not keep working until the next restart.
 This is a deliberate exception to "grants are read once per connection", and it is safe in the
 direction that matters: the per-call read can only ever *narrow* what the long-lived connection

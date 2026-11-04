@@ -41,13 +41,16 @@
   which every backend recognises in its own spellings (Signal ACI, WhatsApp JID and LID, XMPP
   JID with any resource, mail address, Telegram Saved Messages, Matrix user id) and which needs
   no grant. `send_message` is now always listed.
-  Only an `xmpp.omemo` grant edit restarts the daemon now.
 
 - **Agents now need access to read message bodies.** With no rule a body is `ask`, so an agent
   that read freely before is asked per contact (or refused when no daemon runs). The old
   `<backend>.send` grants keep working as rules allowing read and write for that pair. A grant
   for one backend's send now also covers the same account and address of another backend,
   because rules are per account. Your own CLI and the GTK app are not affected.
+
+- OMEMO is decrypted for every enabled XMPP account (ADR 0009 §9); the `xmpp.omemo` grant is
+  gone and an old config that lists it still loads, the entry ignored. The daemon no longer
+  watches the config for grant edits, so it never exits with code 3 to restart.
 
 ### Fixed
 
