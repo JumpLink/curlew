@@ -73,7 +73,7 @@ import { type DaemonSendClient, gioDaemonSendClient } from '../lib/daemon-send-c
 import { MAX_CHUNK_CHARS, renderForXmpp, type MessageFormat } from '../markdown.ts';
 import { appendWriteLog, type WriteFrontend } from '../write-log.ts';
 import { openIndex } from './index-sync.ts';
-import { decryptAccounts, encryptionRequired, requireEncryptionFor } from './omemo.ts';
+import { requireEncryptionFor } from './omemo.ts';
 import { _, fmt } from '@curlew/protocol';
 
 /** The chat send capability, still the one the daemon follows accounts under. */
@@ -436,13 +436,6 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
   // Validated before anything is sent, so a bad URL cannot leave the text half-delivered.
   const imageUrl = params.imageUrl === undefined ? undefined : validateImageUrl(params.imageUrl);
 
-  // `xmpp.omemo` for this account turns the send path encrypted: the session then asks the peer
-  // for their devices and refuses rather than sending a message in the clear that the person
-  // believes is encrypted (ADR 0006 §7). Without the grant nothing changes — unless the config
-  // requires encryption for this peer, which without keys cannot be honoured at all.
-  const decrypt = decryptAccounts(config.grants).includes(params.accountId);
-  if (!decrypt && encryptionRequired(config, params.accountId, params.to))
-    throw new Error(MESSAGES.omemoRequiredWithoutGrant(params.accountId, params.to));
   const permit: SendPermit = { account: params.accountId, addresses: [params.to] };
   const dbPath = params.dbPath ?? indexDbPath();
   const request: SendRequest = {
@@ -478,7 +471,7 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
     let sender: MessageSender;
     try {
       sender = await backend.openSender(params.accountId, permit, {
-        decrypt,
+        decrypt: true,
         requireEncryption: requireEncryptionFor(config, params.accountId, permit.addresses),
       });
     } catch (error) {

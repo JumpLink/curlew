@@ -6,8 +6,8 @@
  * which keeps the knowledge out of the backend and out of the session.
  *
  * Opening it PUBLISHES: a first run writes a device list entry and a bundle, and a later one
- * rotates the signed prekey or replaces spent prekeys. So it runs only for a caller that holds
- * `xmpp.omemo` for this account. The caller owns the store it passes and closes it; this does
+ * rotates the signed prekey or replaces spent prekeys. So it runs only for a caller that asks
+ * to decrypt (`ChatConnectOptions.decrypt`). The caller owns the store it passes and closes it; this does
  * not, because the same store may outlive the session that borrowed it.
  */
 

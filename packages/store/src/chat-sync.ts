@@ -67,14 +67,6 @@ export interface ChatSyncOptions {
   fullScan?: boolean;
   /** Stored ids one full scan asks about below the window, per chat (ADR 0004). */
   probeDepth?: number;
-  /**
-   * Account ids whose end-to-end encryption grant the caller has checked, so their connection
-   * may decrypt (`ChatConnectOptions.decrypt`). Every other account syncs without it.
-   *
-   * A list rather than a flag: one run covers every account of a backend, and a grant is given
-   * per account. Passing them all because one of them has it would be the gate leaking.
-   */
-  decryptAccounts?: readonly string[];
   /** Clock, injected so tests are deterministic. */
   now?: () => Date;
   /**
@@ -579,7 +571,7 @@ async function syncAccount(
   let session: ChatSession;
   try {
     session = await backend.connect(account.id, {
-      decrypt: options.decryptAccounts.includes(account.id),
+      decrypt: true,
     });
   } catch (err) {
     result.error = err instanceof Error ? err.message : String(err);
@@ -890,7 +882,6 @@ export async function syncChats(
     pageSize: options.pageSize ?? DEFAULT_PAGE,
     fullScan: options.fullScan ?? false,
     probeDepth: options.probeDepth ?? CHAT_PROBE_DEPTH,
-    decryptAccounts: options.decryptAccounts ?? [],
     now: options.now ?? (() => new Date()),
   };
   const budget = { total: resolved.maxMessages, remaining: resolved.maxMessages, exhausted: false };

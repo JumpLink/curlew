@@ -86,20 +86,6 @@ export const MESSAGES = {
       ),
       { jid, printed },
     ),
-  /**
-   * `encryption: "required"` for a peer whose account has no `xmpp.omemo` grant (§7).
-   *
-   * Refused before the connection, because without the grant curlew holds no keys and could only
-   * send in the clear — which is the one thing the setting rules out. Both halves of the fix are
-   * named, since either one is a legitimate answer.
-   */
-  omemoRequiredWithoutGrant: (accountId: string, to: string) =>
-    fmt(
-      _(
-        'nothing was sent: encryption is required for {to}, but {accountId} has no `xmpp.omemo` grant — grant it, or remove {to} from config.encryption',
-      ),
-      { accountId, to },
-    ),
   /** Why a trust decision changed nothing — one line per way the typed fingerprint can miss. */
   omemoTrust: {
     get unparsable() {

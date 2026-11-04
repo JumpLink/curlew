@@ -60,7 +60,7 @@ export function validateImageUrl(url: string): string {
 }
 
 /**
- * The account's OMEMO, opened by the backend for a caller that also holds `xmpp.omemo`.
+ * The account's OMEMO, opened by the backend for a caller that decrypts.
  *
  * Separate from the send permit because the two grants are separate: following an account may
  * decrypt without being allowed to send, and sending does not imply decrypting.

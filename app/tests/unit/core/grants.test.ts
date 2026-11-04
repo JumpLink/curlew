@@ -69,6 +69,16 @@ export default async () => {
       );
     });
 
+    await it('still loads a config that lists the retired xmpp.omemo grant, and drops it', async () => {
+      const grants = parseGrants([{ capability: 'xmpp.omemo', target: 'xmpp-abc123' }, XMPP]);
+      expect(grants.length).toBe(1);
+      expect(grants[0].capability).toBe('xmpp.send');
+      const config = parseConfig(
+        JSON.stringify({ grants: [{ capability: 'xmpp.omemo', target: 'anything at all' }] }),
+      );
+      expect(config.grants.length).toBe(0);
+    });
+
     await it('rejects an unknown capability', async () => {
       rejects(
         [{ capability: 'calendar.create', target: 'acct' }],

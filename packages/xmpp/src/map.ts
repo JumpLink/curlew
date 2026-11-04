@@ -283,8 +283,8 @@ export function buildPage(
       editedAt: null,
       sender: fromSelf ? null : senderOf(context, entry),
       fromSelf,
-      // Still encrypted here means the decrypt pass could not open it (or never ran, without the
-      // `xmpp.omemo` grant). The body is then the sender's "this message is encrypted" fallback
+      // Still encrypted here means the decrypt pass could not open it (or never ran, on a connection
+      // opened without `decrypt`). The body is then the sender's "this message is encrypted" fallback
       // rather than what they wrote, so no text is indexed — `omemo-archive.ts` has already
       // replaced the body of everything it could read.
       text,

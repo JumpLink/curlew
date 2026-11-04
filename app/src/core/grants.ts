@@ -17,7 +17,6 @@ export type Capability =
   | 'matrix.send'
   | 'signal.send'
   | 'whatsapp.send'
-  | 'xmpp.omemo'
   | 'canary.write';
 
 export interface Grant {
@@ -34,8 +33,15 @@ export const CAPABILITIES = [
   'matrix.send',
   'signal.send',
   'whatsapp.send',
-  'xmpp.omemo',
 ] as const;
+
+/**
+ * Capabilities that existed once and mean nothing now. A config that still lists one keeps loading:
+ * the entry is dropped without a notice (the person did nothing wrong, and a file the daemon
+ * rewrites on "Always" loses it by itself). `xmpp.omemo` went with ADR 0009 §9: the daemon
+ * decrypts every enabled XMPP account and reading bodies is gated per contact.
+ */
+export const RETIRED_CAPABILITIES: readonly string[] = ['xmpp.omemo'];
 
 /**
  * The test-only capability behind the gate's positive-control canary. It is accepted only while
@@ -50,8 +56,6 @@ export interface ParseGrantsOptions {
 }
 
 const WILDCARD = /[*?]/;
-/** An account id as `accountIdFor` makes it — kept in step with `ACCOUNT_ID` in `@curlew/xmpp`. */
-const XMPP_ACCOUNT = /^xmpp-[0-9a-z]+$/;
 
 /** Does this capability name a send? `<backend>.send`, one per backend (ADR 0004, amended 2026-10-30). */
 export function isSendCapability(capability: string): boolean {
@@ -59,9 +63,7 @@ export function isSendCapability(capability: string): boolean {
 }
 
 /**
- * Every `<backend>.send` names the account AND the address: from where, and to whom. `xmpp.omemo`
- * names only the account, because end-to-end encryption is a property of the account's keys and
- * not of one conversation — it decrypts whatever that account receives, and publishes its device.
+ * Every `<backend>.send` names the account AND the address: from where, and to whom.
  */
 function targetProblem(capability: Capability, target: string): string | undefined {
   if (target.length === 0 || target.trim() !== target)
@@ -70,9 +72,6 @@ function targetProblem(capability: Capability, target: string): string | undefin
   if (isSendCapability(capability)) {
     const slash = target.indexOf('/');
     if (slash <= 0 || slash === target.length - 1) return 'must be "<account>/<address>"';
-  }
-  if (capability === 'xmpp.omemo' && !XMPP_ACCOUNT.test(target)) {
-    return 'must be an xmpp account id ("xmpp-…"), not an address';
   }
   return undefined;
 }
@@ -84,7 +83,8 @@ export function parseGrants(raw: unknown, options: ParseGrantsOptions = {}): Gra
   const canary = options.canary ?? process.env.CURLEW_MCP_GATE_CANARY === '1';
   const known: readonly string[] = canary ? [...CAPABILITIES, CANARY_CAPABILITY] : CAPABILITIES;
 
-  return raw.map((entry: unknown, index): Grant => {
+  const grants: Grant[] = [];
+  raw.forEach((entry: unknown, index) => {
     const where = `config.grants[${index}]`;
     if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
       throw new Error(`${where} must be an object { capability, target }`);
@@ -94,6 +94,7 @@ export function parseGrants(raw: unknown, options: ParseGrantsOptions = {}): Gra
       if (key !== 'capability' && key !== 'target') throw new Error(`${where}.${key} is not a grant field`);
     }
     const { capability, target } = fields;
+    if (typeof capability === 'string' && RETIRED_CAPABILITIES.includes(capability)) return;
     if (typeof capability !== 'string' || !known.includes(capability)) {
       throw new Error(
         `${where}.capability ${JSON.stringify(capability)} is not a known capability (${known.join(', ')})`,
@@ -102,8 +103,9 @@ export function parseGrants(raw: unknown, options: ParseGrantsOptions = {}): Gra
     if (typeof target !== 'string') throw new Error(`${where}.target must be a string`);
     const problem = targetProblem(capability as Capability, target);
     if (problem) throw new Error(`${where}.target ${problem}`);
-    return { capability: capability as Capability, target };
+    grants.push({ capability: capability as Capability, target });
   });
+  return grants;
 }
 
 /** Does a grant for exactly this capability and exactly this target exist? Missing = deny. */

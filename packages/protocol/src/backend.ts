@@ -329,12 +329,11 @@ export interface ChatRevision {
 /** What a connection may do beyond reading the archive — one field per grant that widens it. */
 export interface ChatConnectOptions {
   /**
-   * The caller holds this account's end-to-end encryption grant (`xmpp.omemo`), so the backend
-   * may decrypt what it syncs and publish whatever keys that takes.
+   * The backend may decrypt what it syncs and publish whatever keys that takes. Every frontend
+   * passes it for every account (ADR 0009 §9; reading bodies is gated per contact).
    *
    * Absent or false, the connection reads the archive exactly as before and encrypted messages
-   * are indexed without text. The decision belongs to the frontend that checked the grants; a
-   * backend never reads them itself.
+   * are indexed without text.
    */
   decrypt?: boolean;
   /**

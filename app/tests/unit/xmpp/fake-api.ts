@@ -4,10 +4,12 @@ import type {
   ArchivedEntry,
   Bookmark,
   ClientFactory,
+  LinkFactory,
   MamPage,
   MamQuery,
   RosterItem,
   XmppApi,
+  XmppLink,
 } from '@curlew/xmpp';
 import { NS, parseMamResult, XmppQueryError } from '@curlew/xmpp';
 
@@ -159,4 +161,23 @@ export function fakeFactory(
   }) as ClientFactory & { logins: number };
   factory.logins = 0;
   return factory;
+}
+
+/**
+ * A link factory over the fake: the sync path decrypts for every account now, so it opens a link.
+ * It has no PEP content, so the account announces a fresh device and nothing is sent.
+ */
+export function fakeLinkFactory(server: FakeServer, password = 'correct horse'): LinkFactory {
+  const clients = fakeFactory(server, password);
+  return async (options) =>
+    ({
+      ...(await clients(options)),
+      sendChat: async () => {},
+      sendEncrypted: async () => {},
+      goAvailable: async () => {},
+      pepGet: async () => undefined,
+      pepSet: async () => {},
+      onArrival: () => () => {},
+      onClosed: () => {},
+    }) satisfies XmppLink;
 }
