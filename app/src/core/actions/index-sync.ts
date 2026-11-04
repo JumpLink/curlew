@@ -37,7 +37,6 @@ import {
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig } from '../config.ts';
-import { decryptAccounts } from './omemo.ts';
 import { chmodSync } from 'node:fs';
 import { dirname } from 'node:path';
 
@@ -205,7 +204,6 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
             syncChats(db, backend, {
               accountId: params.accountId,
               fullScan: params.fullScan,
-              decryptAccounts: decryptAccounts(config.grants),
               // A daemon following the account holds the lease: stand down for it.
               lease: {},
             }),

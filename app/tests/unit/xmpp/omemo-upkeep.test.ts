@@ -25,7 +25,6 @@ import {
   summarizeDevices,
 } from '@curlew/xmpp';
 
-import { decryptAccounts } from '../../../src/core/actions/omemo.ts';
 import { registerOmemoTools } from '../../../src/frontends/mcp/tools/omemo.ts';
 import { createRecorder } from '../mcp/recorder.ts';
 import { fakeNetwork } from './fake-pep.ts';
@@ -209,18 +208,7 @@ export default async function omemoUpkeep(): Promise<void> {
     });
   });
 
-  await describe('the xmpp.omemo grant and its MCP tool', async () => {
-    await it('decrypts only for accounts a grant names, once each', async () => {
-      expect(decryptAccounts(undefined)).toEqualArray([]);
-      expect(
-        decryptAccounts([
-          { capability: 'xmpp.omemo', target: 'xmpp-1' },
-          { capability: 'xmpp.omemo', target: 'xmpp-1' },
-          { capability: 'xmpp.send', target: 'xmpp-2/bob@example.org' },
-        ]),
-      ).toEqualArray(['xmpp-1']);
-    });
-
+  await describe('the omemo MCP tool', async () => {
     await it('registers omemo_devices as read-only and closed-world', async () => {
       const rec = createRecorder();
       registerOmemoTools(rec.server);

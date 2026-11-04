@@ -3,7 +3,7 @@
  *
  * Everything here is storage plus arithmetic — no stanza, no socket. The caller publishes what
  * {@link ensureBundle} hands back, which is what keeps the "may we even publish?" question
- * (the `xmpp.omemo` grant, ADR 0006 §5) out of this module and in the one that holds the link.
+ * (the `decrypt` option, ADR 0006 §5) out of this module and in the one that holds the link.
  *
  * Both entry points run inside a storage transaction, because both are read-decide-write: two
  * processes that each see "no device yet" would otherwise register two devices on one account,

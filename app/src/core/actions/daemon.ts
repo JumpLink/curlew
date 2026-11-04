@@ -14,9 +14,8 @@
  *     with a cursor, and a daemon buys them nothing;
  *   - also follows every ENABLED XMPP account (`follow.ts`, ADR 0008): carbons live, the archive
  *     as the truth, so a reply reaches the index within seconds. An enabled account is the
- *     person's own — no grant is needed to follow it; grants restrict agents. The one grant the
- *     daemon still reads is `xmpp.omemo` (what it decrypts), read once at start: the run stops
- *     when that changes;
+ *     person's own — no grant is needed to follow it; grants restrict agents. It decrypts OMEMO for
+ *     every one of them (ADR 0009 §9): bodies are gated per contact when an agent reads them;
  *   - follows every ENABLED Matrix account (ADR 0007 §5): the SDK's `/sync` long poll
  *     (`set_presence=offline`, through the read-only gate) keeps the client current, a new event
  *     is only a wake-up, and the same history walk `curlew sync` runs writes it. No new switch:
@@ -64,7 +63,7 @@ import { AccessBroker, type PromptUi } from '../access-broker.ts';
 import { withAllowRule } from '../access.ts';
 import { gioNotificationPrompt } from '../lib/access-notifications.ts';
 import { contactNameFromIndex } from '../lib/contact-name.ts';
-import type { Capability, Grant } from '../grants.ts';
+import type { Capability } from '../grants.ts';
 import { configPath } from '@curlew/store';
 import { AccountTable } from '../lib/daemon-accounts.ts';
 import { DAEMON_WIRE_VERSION, type DaemonSendReply } from '../lib/daemon-bus.ts';
@@ -75,21 +74,7 @@ import {
 } from '../lib/daemon-send-service.ts';
 import { followAccount, type FollowResult } from './follow.ts';
 import { openIndex, rebuildWithAddressBook } from './index-sync.ts';
-import { decryptAccounts, OMEMO_CAPABILITY } from './omemo.ts';
 import { sendThrough } from './send.ts';
-
-/** How often a running daemon looks whether its decryption grant was edited (it applies on restart only). */
-export const GRANT_CHECK_MS = 30_000;
-
-/**
- * The grants a running daemon depends on: what it decrypts (`xmpp.omemo`). Only an edit to THIS
- * stops it. Send grants do not belong here any more (ADR 0008): who the daemon follows is the
- * set of enabled accounts, and `curlew send` reads the send grants itself when it runs.
- * Removed with the plaintext-index step of ADR 0008, when decryption stops depending on a grant.
- */
-export function daemonGrants(grants: readonly Grant[]): string {
-  return JSON.stringify(grants.filter((g) => g.capability === OMEMO_CAPABILITY));
-}
 
 /** How often a running daemon looks whether another process moved the journal (ADR 0007 §2). */
 export const CHANGE_POLL_MS = 2_000;
@@ -124,8 +109,6 @@ export interface DaemonParams {
    * when the config enables it, and `null` to follow none.
    */
   matrix?: MatrixBackend | null;
-  /** Short only in tests. */
-  grantCheckMs?: number;
   /** Short only in tests. */
   changePollMs?: number;
   /** Where the write log goes; injected by tests. */
@@ -168,8 +151,6 @@ export interface DaemonResult {
   conversations: (RebuildResult & { contacts: number | null }) | null;
   /** The XMPP accounts that were followed (ADR 0004 §5, ADR 0008). */
   followed: FollowResult[];
-  /** The run stopped because the grant it decrypts by (`xmpp.omemo`) was edited. */
-  grantsEdited: boolean;
 }
 
 /** The registry's Matrix backend when the config enables it (the daemon follows it), else `null`. */
@@ -208,18 +189,11 @@ export function deliveryBackends(config: ReturnType<typeof loadConfig>): Message
  * (`RestartPreventExitStatus=2`) and the unit shows as **failed**, which is the only signal that
  * says "nothing is being received and you have to link the device again".
  *
- * `3` when the run stopped because its decryption grant was edited: it applies on restart only, so the
- * unit has to come back — `Restart=on-failure` restarts any code but 0 and 2. A `0` here left
- * nothing receiving until someone noticed.
- *
  * Everything else is `0`, including a normal SIGTERM stop, a run that is still receiving on
  * another account, and a machine with no linked account at all: a daemon that was asked to stop
  * did its job, and a non-zero code on a clean stop would restart-loop.
  */
-export function daemonExitCode(
-  run: Pick<DaemonResult, 'accounts'> & Partial<Pick<DaemonResult, 'grantsEdited'>>,
-): 0 | 2 | 3 {
-  if (run.grantsEdited === true) return 3;
+export function daemonExitCode(run: Pick<DaemonResult, 'accounts'>): 0 | 2 {
   const dead = (account: DaemonAccountResult): boolean =>
     account.loggedOut || account.heldBy !== null || account.error !== null;
   if (run.accounts.length > 0 && run.accounts.every(dead) && run.accounts.some((a) => a.loggedOut)) {
@@ -382,12 +356,6 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     }
     return true;
   });
-  // The decryption grant is read ONCE, here (ADR 0004 §1): an edit applies on restart, never
-  // halfway through a connection that is already open.
-  const grantsAtStart = daemonGrants(config.grants);
-  // Follow mode is where a message is seen FIRST, so it decrypts what the grants allow: a row
-  // the daemon indexed textless stays that way, because the next sync finds nothing new for it.
-  const decrypting = decryptAccounts(config.grants);
   const xmpp = params.xmpp === undefined ? createEnabledXmppBackend(config) : params.xmpp;
   const xmppAccounts =
     xmpp === null
@@ -460,22 +428,6 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   const forward = (): void => run.abort();
   if (outer.aborted) run.abort();
   else outer.addEventListener('abort', forward, { once: true });
-  let grantsEdited = false;
-  const grantWatch =
-    xmppAccounts.length > 0
-      ? setInterval(() => {
-          try {
-            if (daemonGrants(loadConfig(params.configPath ?? configPath()).grants) === grantsAtStart) return;
-          } catch {
-            // An unreadable config is also a change nobody approved.
-          }
-          log(
-            'curlew-daemon: the decryption grant was edited — stopping; the new set applies after a restart',
-          );
-          grantsEdited = true;
-          run.abort();
-        }, params.grantCheckMs ?? GRANT_CHECK_MS)
-      : null;
   let followed: FollowResult[] = [];
   let followedMatrix: FollowResult[] = [];
   // The sessions this run is holding, so a send asked for over the bus reaches the connection that
@@ -518,7 +470,6 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     );
     // The prompt service (ADR 0009). The policy is read afresh per request, so a rule edited by
     // hand applies at once; "Always" saves through the same path as every other config write.
-    // That never reaches the exit-3 restart below: `daemonGrants` looks at the decryption grant only.
     const accessConfigPath = params.configPath ?? configPath();
     const accessBroker = new AccessBroker({
       ui:
@@ -566,8 +517,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
         followAccount({
           db,
           backend: xmpp as XmppBackend,
-          open: (id, permit) =>
-            (xmpp as XmppBackend).openGranted(id, permit, { decrypt: decrypting.includes(id) }),
+          open: (id, permit) => (xmpp as XmppBackend).openGranted(id, permit, { decrypt: true }),
           permit: { account: accountId, addresses: [] },
           signal,
           log,
@@ -682,10 +632,8 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
       errors,
       conversations,
       followed: [...followed, ...followedMatrix],
-      grantsEdited,
     };
   } finally {
-    if (grantWatch !== null) clearInterval(grantWatch);
     clearInterval(changeWatch);
     // Give the name up before the sessions are gone: a caller that arrives after this gets
     // "no daemon" and takes its own direct path, which is true from here on.

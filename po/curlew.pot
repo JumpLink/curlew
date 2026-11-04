@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-04 13:58+0100\n"
+"POT-Creation-Date: 2026-11-04 14:32+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -109,34 +109,34 @@ msgid ""
 "config.agentAccess.rules"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:313
+#: app/src/core/actions/daemon.ts:287
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:335
+#: app/src/core/actions/daemon.ts:309
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
 msgstr ""
 
-#: app/src/core/actions/index-sync.ts:157
+#: app/src/core/actions/index-sync.ts:156
 msgid ""
 "the index stayed locked by another process during the {phase} phase "
 "({message})"
 msgstr ""
 
-#: app/src/core/actions/index-sync.ts:176
+#: app/src/core/actions/index-sync.ts:175
 msgid ""
 "no backend is enabled — `curlew backends list` shows them, `backends enable "
 "<name>` turns one on"
 msgstr ""
 
-#: app/src/core/actions/index-sync.ts:227
+#: app/src/core/actions/index-sync.ts:225
 msgid ""
 "backend {name} uses the {kind} driver, which this curlew cannot sync yet"
 msgstr ""
 
-#: app/src/core/actions/omemo.ts:79
+#: app/src/core/actions/omemo.ts:65
 msgid "no xmpp account {account} — `curlew accounts list` shows them"
 msgstr ""
 
@@ -1414,7 +1414,7 @@ msgstr ""
 msgid "Logged in; setting up this device’s encryption keys…"
 msgstr ""
 
-#: packages/matrix/src/redact.ts:50
+#: packages/matrix/src/redact.ts:83
 msgid "matrix: {n} event not decryptable"
 msgid_plural "matrix: {n} events not decryptable"
 msgstr[0] ""
@@ -1976,28 +1976,22 @@ msgid ""
 "out of band — `curlew omemo trust` decides."
 msgstr ""
 
-#: packages/xmpp/src/messages.ts:99
-msgid ""
-"nothing was sent: encryption is required for {to}, but {accountId} has no "
-"`xmpp.omemo` grant — grant it, or remove {to} from config.encryption"
-msgstr ""
-
-#: packages/xmpp/src/messages.ts:106
+#: packages/xmpp/src/messages.ts:92
 msgid ""
 "that is not an OMEMO fingerprint: expected 64 hex characters, in any grouping"
 msgstr ""
 
-#: packages/xmpp/src/messages.ts:110
+#: packages/xmpp/src/messages.ts:96
 msgid "that is not the fingerprint you passed — nothing changed"
 msgstr ""
 
-#: packages/xmpp/src/messages.ts:113
+#: packages/xmpp/src/messages.ts:99
 msgid ""
 "no device of {jid} carries that fingerprint — `curlew omemo devices` lists "
 "them"
 msgstr ""
 
-#: packages/xmpp/src/messages.ts:116
+#: packages/xmpp/src/messages.ts:102
 msgid ""
 "{count} devices of {jid} carry that fingerprint, so it does not name one — "
 "nothing changed"

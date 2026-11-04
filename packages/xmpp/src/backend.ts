@@ -102,8 +102,8 @@ export class XmppBackend implements ChatBackend, SendBackend {
   }
 
   /**
-   * The same sync session, reading the account's OMEMO state — only for a caller that holds
-   * `xmpp.omemo` (`ChatConnectOptions.decrypt`).
+   * The same sync session, reading the account's OMEMO state — only for a caller that asks
+   * for it (`ChatConnectOptions.decrypt`).
    *
    * A LINK rather than a client, because keeping the device current PUBLISHES. The session still
    * gets the read-only face of it, so decrypting cannot become sending by accident: the only

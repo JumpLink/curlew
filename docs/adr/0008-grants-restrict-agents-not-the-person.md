@@ -90,7 +90,10 @@ a portal between the agent and the session bus), which is future work and not de
 ADR 0004 §7 is unchanged: each write appends a line to the write log after it happened, whoever
 caused it. The `frontend` field already tells the callers apart.
 
-### 5. Decryption and plaintext in the index — decided, not yet built
+### 5. Decryption and plaintext in the index — built (ADR 0009 step 4)
+
+> **Amendment:** the daemon and `curlew sync` now decrypt every enabled XMPP account, `xmpp.omemo`
+> is retired, and the grant watch and exit code 3 are gone.
 
 The daemon decrypts OMEMO only for accounts an `xmpp.omemo` grant names (ADR 0006). A messenger
 needs the text for every enabled account, so:

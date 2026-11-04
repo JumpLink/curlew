@@ -175,6 +175,11 @@ already lives in one SQLite file that can lock itself).
 
 ### 5. Becoming a device is a grant: `xmpp.omemo`
 
+> **Amended by ADR 0008 §5 / ADR 0009 §9:** there is no `xmpp.omemo` grant any more. Every enabled
+> XMPP account becomes a device and decrypts; reading bodies is gated per contact. An old grant in
+> the config is ignored. The rules of §7 (no plaintext to a peer with devices) are unchanged, and
+> `config.encryption` is honoured on every account.
+
 Decrypting is impossible without publishing a device: a peer encrypts only for devices on our
 list. Publishing one is a write with reach — every contact's client starts encrypting for it,
 and the person's other clients announce a new device. Session upkeep also sends stanzas: empty

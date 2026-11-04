@@ -425,9 +425,8 @@ config — a config that carries one is refused.
 
 Chats are your roster contacts and the bookmarked rooms you join automatically.
 Corrections (XEP-0308) replace the stored text, retractions (XEP-0424/0425)
-remove the message. OMEMO-encrypted messages are read and written for an account
-you granted `xmpp.omemo`; without that grant they are indexed without their text.
-See [End-to-end encryption](#end-to-end-encryption-grant-xmppomemo) and
+remove the message. OMEMO-encrypted messages are read and written for every enabled
+account; no grant is involved. See [End-to-end encryption](#end-to-end-encryption) and
 [ADR 0006](docs/adr/0006-omemo-end-to-end-encryption.md).
 
 ### Sending (grants `<backend>.send`)
@@ -576,22 +575,17 @@ skewed clock can hide or repeat a message.
 Limits, stated plainly: there is no stream management (XEP-0198): a message
 written as the connection drops is not retransmitted (receiving is covered by
 the archive catch-up). Rooms are not joined; they are only read through the
-archive on connect and `curlew sync`. The `xmpp.omemo` grant is read when the daemon
-starts; it stops if that grant is edited, and the new set applies after a restart
-(send grants do not matter to it). Encryption is
+archive on connect and `curlew sync`. Encryption is
 one-to-one only — a room is never encrypted.
 
-### End-to-end encryption (grant `xmpp.omemo`)
+### End-to-end encryption
 
 OMEMO (XEP-0384, the `eu.siacs.conversations.axolotl` version every current
-client speaks) is off until you grant it. The grant names only the account,
-because keys belong to the account rather than to one conversation:
+client speaks) is on for every enabled XMPP account; there is no grant for it.
+What an agent may read of the decrypted text is decided per account and contact
+by `agentAccess`. An old `xmpp.omemo` grant in the config is ignored.
 
-```json
-{ "grants": [ { "capability": "xmpp.omemo", "target": "xmpp-abc123" } ] }
-```
-
-With it, curlew becomes a device of that account: it publishes an identity key
+Curlew becomes a device of that account: it publishes an identity key
 and a bundle, decrypts incoming messages into the index, and encrypts what you
 send to every trusted device of the peer and to your own other devices. Keys
 live in the account's secret file (`0600`), next to the password, and never in
@@ -606,8 +600,7 @@ encryption off.**
 A peer who has OMEMO devices is never sent plaintext. If their key material
 cannot be fetched, or no device of theirs is trusted, the send is **refused**
 with the reason — it does not quietly go out in the clear. A peer with no OMEMO
-at all still gets plaintext, as before. Without the grant nothing changes:
-curlew holds no keys and sends plaintext as it always did.
+at all still gets plaintext, as before.
 
 Verifying a fingerprint by hand, resetting a broken session and the
 "encryption required" setting are not there yet

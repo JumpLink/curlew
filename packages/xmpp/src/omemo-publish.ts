@@ -2,10 +2,9 @@
  * Announcing this device to the server, and reading what other devices announced (ADR 0006 §3).
  *
  * Everything here is a PEP round trip, which means everything here WRITES or asks on the
- * account's behalf: it runs only for a caller that holds the `xmpp.omemo` grant. The receive path
- * itself needs none of it — a message is decrypted with keys already in the account file — so an
- * account without the grant syncs exactly as it did before, with its encrypted messages indexed
- * textless.
+ * account's behalf: it runs only for a caller that asks to decrypt. The receive path itself needs none of
+ * it — a message is decrypted with keys already in the account file — so a connection opened
+ * without `decrypt` syncs with its encrypted messages indexed textless.
  *
  * The one rule this module exists to keep: **a device list is read, changed and written back,
  * never written from what we alone know.** Publishing just our own id is the classic OMEMO bug —

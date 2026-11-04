@@ -704,22 +704,10 @@ export default async () => {
       }
     };
 
-    await it('refuses to send at all when the account has no xmpp.omemo grant', async () => {
-      // The one case where `required` has to stop the send in the action rather than in the
-      // session: without the grant there are no keys, so nothing downstream would refuse.
-      await run(
-        { grants: GRANTS, encryption: { [`${ACCOUNT}/${OWNER}`]: 'required' } },
-        async ({ send, sent }) => {
-          await expect(send()).rejects.toThrow(/no `xmpp\.omemo` grant/);
-          expect(sent.length).toBe(0);
-        },
-      );
-    });
-
-    await it('hands the covered address to the session when the grant is there', async () => {
+    await it('hands the covered address to the session, which decrypts without any grant', async () => {
       await run(
         {
-          grants: [...GRANTS, { capability: 'xmpp.omemo', target: ACCOUNT }],
+          grants: GRANTS,
           encryption: { [`${ACCOUNT}/${OWNER}`]: 'required' },
         },
         async ({ send, opened }) => {
@@ -733,7 +721,7 @@ export default async () => {
     await it('requires nothing of the session when the config requires nothing', async () => {
       await run({ grants: GRANTS }, async ({ send, opened }) => {
         await send();
-        expect(opened[0].decrypt).toBe(false);
+        expect(opened[0].decrypt).toBe(true);
         expect((opened[0].requireEncryption as string[]).length).toBe(0);
       });
     });

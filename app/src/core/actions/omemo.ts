@@ -2,7 +2,7 @@
  * What the frontends may ask about OMEMO (ADR 0006 §6/§7).
  *
  * Everything here works on the account's secret file and nothing connects or publishes. The two
- * readers — which accounts the grants let curlew decrypt, which device keys a file holds — are
+ * readers — which device keys a file holds, which peers need encryption — are
  * open to every frontend. The two WRITERS, a trust decision and a session reset, exist only
  * because the CLI calls them after a person retyped a fingerprint at a terminal; no grant covers
  * them and the MCP server registers neither, because an agent reads message text written by
@@ -30,21 +30,7 @@ import {
 import { existsSync } from 'node:fs';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig, type CurlewConfig } from '../config.ts';
-import type { Grant } from '../grants.ts';
 import { _, fmt } from '@curlew/protocol';
-
-export const OMEMO_CAPABILITY = 'xmpp.omemo';
-
-/**
- * The accounts whose connection may decrypt — `ChatSyncOptions.decryptAccounts`.
- *
- * The grant names the account alone, so this is the whole check: no address to match, nothing
- * to parse. An account missing from the list syncs as it always did, with its encrypted
- * messages indexed without text.
- */
-export function decryptAccounts(grants: readonly Grant[] | undefined): string[] {
-  return [...new Set((grants ?? []).filter((g) => g.capability === OMEMO_CAPABILITY).map((g) => g.target))];
-}
 
 export interface OmemoDevicesParams {
   /** The xmpp account to look in. */

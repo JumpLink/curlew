@@ -21,7 +21,6 @@ import { accountIdFromCreds } from '@curlew/whatsapp';
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
 import {
   daemonExitCode,
-  daemonGrants,
   type DaemonAccountResult,
   runDeliveryDaemon,
 } from '../../../src/core/actions/daemon.ts';
@@ -321,36 +320,19 @@ export default async () => {
     });
   });
 
-  await describe('daemonGrants', async () => {
-    await it('changes only with the decryption grant (send grants restrict agents, ADR 0008)', async () => {
-      const omemo = { capability: 'xmpp.omemo', target: 'xmpp-a' } as const;
-      const send = { capability: 'xmpp.send', target: 'xmpp-a/anna@example.org' } as const;
-      const before = daemonGrants([send, omemo]);
-      expect(daemonGrants([omemo])).toBe(before);
-      expect(daemonGrants([send, omemo, { capability: 'xmpp.send', target: 'xmpp-a/ben@example.org' }])).toBe(
-        before,
-      );
-      expect(daemonGrants([send, omemo, { capability: 'telegram.send', target: 'telegram-1/1' }])).toBe(
-        before,
-      );
-      expect(daemonGrants([send])).not.toBe(before);
-      expect(daemonGrants([send, omemo, { capability: 'xmpp.omemo', target: 'xmpp-b' }])).not.toBe(before);
-    });
-  });
-
   await describe('xmpp follow', async () => {
     await it('follows every enabled account without a grant, holding an empty permit', async () => {
       const dir = mkdtempSync(join(tmpdir(), 'curlew-daemon-xmpp-'));
       const controller = new AbortController();
-      const opened: Array<{ id: string; addresses: string[] }> = [];
+      const opened: Array<{ id: string; addresses: string[]; decrypt: boolean | undefined }> = [];
       const xmpp = {
         manifest: { name: 'xmpp' },
         listAccounts: async () => [
           { id: 'xmpp-a', identity: 'a@example.org', provider: 'Fake' },
           { id: 'xmpp-b', identity: 'b@example.org', provider: 'Fake' },
         ],
-        openGranted: async (id: string, permit: { addresses: string[] }) => {
-          opened.push({ id, addresses: [...permit.addresses] });
+        openGranted: async (id: string, permit: { addresses: string[] }, options?: { decrypt?: boolean }) => {
+          opened.push({ id, addresses: [...permit.addresses], decrypt: options?.decrypt });
           return new GrantedXmppSession(quietLink(), { account: id, addresses: [] }, () => 'oid');
         },
       } as unknown as XmppBackend;
@@ -376,6 +358,8 @@ export default async () => {
         // No grant anywhere, and the account was still followed — only the one asked for.
         expect(opened.map((o) => o.id).join()).toBe('xmpp-a');
         expect(opened[0].addresses.length).toBe(0);
+        // No xmpp.omemo grant either: the daemon decrypts every account it follows (ADR 0009 §9).
+        expect(opened[0].decrypt).toBe(true);
         expect(result.followed.map((f) => f.accountId).join()).toBe('xmpp-a');
         expect(logs.some((l) => l.includes('following 1 xmpp account(s)'))).toBe(true);
       } finally {
@@ -429,14 +413,6 @@ export default async () => {
           ],
         }),
       ).toBe(2);
-    });
-
-    await it('is 3 after a grant edit, so systemd restarts it with the new set', async () => {
-      expect(daemonExitCode({ accounts: [account()], grantsEdited: true })).toBe(3);
-      // Even when every account was logged out: the restart re-reads the grants first.
-      expect(
-        daemonExitCode({ accounts: [account({ loggedOut: true, error: 'logged out' })], grantsEdited: true }),
-      ).toBe(3);
     });
 
     await it('is 0 for a normal stop, and when something still receives', async () => {

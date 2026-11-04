@@ -40,7 +40,18 @@ import {
   XmppChatSession,
 } from '@curlew/xmpp';
 import { freshDb } from '../store/fixtures.ts';
-import { ANNA, BEN, entry, fakeApi, fakeFactory, fakeServer, ME, resultXml, ROOM } from './fake-api.ts';
+import {
+  ANNA,
+  BEN,
+  entry,
+  fakeApi,
+  fakeFactory,
+  fakeLinkFactory,
+  fakeServer,
+  ME,
+  resultXml,
+  ROOM,
+} from './fake-api.ts';
 
 /**
  * The XMPP backend without a server: the stanza grammar, the mapping of archive entries into
@@ -754,7 +765,7 @@ export default async () => {
             ],
           ]),
         });
-        const backend = new XmppBackend(context(dir), fakeFactory(server));
+        const backend = new XmppBackend(context(dir), fakeFactory(server), fakeLinkFactory(server));
         expect(isChatBackend(backend)).toBe(true);
         const account = await backend.addAccount(prompter([ME, 'correct horse', '']));
         const first = await syncChats(db, backend);
@@ -812,7 +823,7 @@ export default async () => {
           roster: [{ jid: BEN, name: null, subscription: 'both' }],
           own: [entry({ id: 'b1', at: at(1), from: BEN, body: 'Hallo' })],
         });
-        const backend = new XmppBackend(context(dir), fakeFactory(server));
+        const backend = new XmppBackend(context(dir), fakeFactory(server), fakeLinkFactory(server));
         const account = await backend.addAccount(prompter([ME, 'correct horse', '']));
         await syncChats(db, backend);
         rebuildConversations(db, {

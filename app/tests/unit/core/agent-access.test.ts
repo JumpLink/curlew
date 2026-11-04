@@ -425,8 +425,8 @@ export default async () => {
       );
     });
 
-    await it('leaves xmpp.omemo and other non-send grants alone', async () => {
-      same(parsed(undefined, [{ capability: 'xmpp.omemo', target: ACC }]).rules, []);
+    await it('leaves non-send grants alone', async () => {
+      same(parsed(undefined, [{ capability: 'canary.write', target: ACC }]).rules, []);
     });
 
     await it('an explicit contact rule for the same pair beats the migrated one', async () => {
