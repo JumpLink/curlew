@@ -25,7 +25,15 @@ const ACCOUNTS: Array<[id: string, identity: string]> = [
   ['whatsapp-demo1', 'Robin (WhatsApp)'],
 ];
 
-type Row = [id: string, backend: string, account: string, kind: string, title: string, minutesAgo: number, unread: number];
+type Row = [
+  id: string,
+  backend: string,
+  account: string,
+  kind: string,
+  title: string,
+  minutesAgo: number,
+  unread: number,
+];
 const CONVERSATIONS: Row[] = [
   ['c1', 'signal', 'signal-demo1', 'direct', 'Alex Weber', 4, 2],
   ['c2', 'matrix', 'matrix-demo1', 'group', 'GNOME Design', 18, 14],
