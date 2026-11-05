@@ -42,14 +42,14 @@ export const NO_FILTER: ListFilter = { backends: new Set(), accounts: new Set(),
 
 const PROTOCOLS: Record<string, { label: () => string; icon: string }> = {
   mail: { label: () => _('Mail'), icon: 'mail-unread-symbolic' },
-  xmpp: { label: () => _('XMPP'), icon: 'chat-message-new-symbolic' },
-  signal: { label: () => _('Signal'), icon: 'chat-message-new-symbolic' },
-  matrix: { label: () => _('Matrix'), icon: 'chat-message-new-symbolic' },
-  telegram: { label: () => _('Telegram'), icon: 'chat-message-new-symbolic' },
-  whatsapp: { label: () => _('WhatsApp'), icon: 'chat-message-new-symbolic' },
+  xmpp: { label: () => _('XMPP'), icon: 'network-server-symbolic' },
+  signal: { label: () => _('Signal'), icon: 'security-high-symbolic' },
+  matrix: { label: () => _('Matrix'), icon: 'network-workgroup-symbolic' },
+  telegram: { label: () => _('Telegram'), icon: 'send-to-symbolic' },
+  whatsapp: { label: () => _('WhatsApp'), icon: 'call-start-symbolic' },
 };
 
-const FALLBACK_ICON = 'network-workgroup-symbolic';
+const FALLBACK_ICON = 'network-transmit-receive-symbolic';
 
 /** The name a person knows the protocol by; an unknown backend shows its own name. */
 export function protocolLabel(backend: string): string {
@@ -58,10 +58,27 @@ export function protocolLabel(backend: string): string {
 
 /**
  * A neutral themed symbolic icon: the protocols' own logos are trademarks with their own licences,
- * so the badge says "mail" or "chat" and the tooltip names the protocol.
+ * so each badge is a distinct symbol (envelope, server, shield, globe, paper plane, phone) and the
+ * tooltip names the protocol.
  */
 export function protocolIcon(backend: string): string {
   return PROTOCOLS[backend]?.icon ?? FALLBACK_ICON;
+}
+
+/**
+ * A short time for the title line: `14:05` today, "Yesterday", else the ISO date. Locale-neutral
+ * on purpose, so a German and an English window agree except for the one word.
+ */
+export function shortTime(iso: string | null, now: Date = new Date()): string {
+  if (!iso) return '';
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return '';
+  const two = (n: number) => String(n).padStart(2, '0');
+  const day = (d: Date) => `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`;
+  if (day(at) === day(now)) return `${two(at.getHours())}:${two(at.getMinutes())}`;
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  return day(at) === day(yesterday) ? _('Yesterday') : day(at);
 }
 
 /** The title a row shows: the stored one, else the people in it, else the first address. */

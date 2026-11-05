@@ -10,35 +10,12 @@ import { _ } from '@curlew/protocol';
 import { configPath, indexDbPath, openIndexDb } from '@curlew/store';
 import { existsSync } from 'node:fs';
 
-import { backendAccountsList } from '../core/actions/accounts.ts';
+import { indexAccountLabels, loadAccountLabels } from './account-labels.ts';
 import { contactNameFromIndex } from '../core/lib/contact-name.ts';
 import { groupByAccount, type EditResult, type PolicyEdit } from './agent-access-model.ts';
 import { createAgentAccessPage } from './agent-access-page.ts';
 import { loadAgentAccess, updateAgentAccess } from './agent-access-store.ts';
 import { watchConfig } from './watch.ts';
-
-const ACCOUNTS_TIMEOUT_MS = 4_000;
-
-/** Account id → identity, from every enabled backend; a backend that fails or hangs adds nothing. */
-async function accountLabels(backends: string[], path: string): Promise<Map<string, string>> {
-  const labels = new Map<string, string>();
-  await Promise.all(
-    backends.map(async (name) => {
-      try {
-        const listed = await Promise.race([
-          backendAccountsList(name, path),
-          new Promise<never>((_resolve, reject) =>
-            setTimeout(() => reject(new Error('timeout')), ACCOUNTS_TIMEOUT_MS),
-          ),
-        ]);
-        for (const account of listed.accounts) labels.set(account.id, account.identity);
-      } catch {
-        // No label: the page shows the id.
-      }
-    }),
-  );
-  return labels;
-}
 
 /** A read-only lookup of display names; without an index there are simply no names. */
 function nameLookup(): {
@@ -62,7 +39,7 @@ export function presentAgentAccess(parent: Gtk.Window | null): void {
   const path = configPath();
   const overlay = new Adw.ToastOverlay();
   const toast = (title: string) => overlay.add_toast(new Adw.Toast({ title, timeout: 4 }));
-  let labels = new Map<string, string>();
+  let labels = indexAccountLabels();
   let labelledBackends = '';
   let loading = false;
   let again = false;
@@ -116,7 +93,7 @@ export function presentAgentAccess(parent: Gtk.Window | null): void {
       const key = state.backends.join(',');
       if (key !== labelledBackends) {
         labelledBackends = key;
-        labels = await accountLabels(state.backends, path);
+        labels = await loadAccountLabels(state.backends, path);
         render();
       }
     } finally {

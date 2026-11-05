@@ -11,6 +11,7 @@ import {
   initials,
   protocolIcon,
   protocolLabel,
+  shortTime,
   toEntry,
   unreadText,
   unreadTier,
@@ -49,6 +50,20 @@ const ids = (list: ListEntry[]): string[] => list.map((e) => e.id);
 
 export default async () => {
   describe('conversation list model', () => {
+    it('has a distinct badge icon per protocol', () => {
+      const icons = ['mail', 'xmpp', 'signal', 'matrix', 'telegram', 'whatsapp'].map(protocolIcon);
+      expect(new Set(icons).size).toBe(6);
+    });
+
+    it('shows a short time: clock today, a word for yesterday, else the date', () => {
+      const now = new Date(2026, 10, 5, 15, 0);
+      expect(shortTime(new Date(2026, 10, 5, 9, 5).toISOString(), now)).toBe('09:05');
+      expect(shortTime(new Date(2026, 10, 4, 23, 0).toISOString(), now)).toBe('Yesterday');
+      expect(shortTime(new Date(2026, 9, 30, 12, 0).toISOString(), now)).toBe('2026-10-30');
+      expect(shortTime(null, now)).toBe('');
+      expect(shortTime('nonsense', now)).toBe('');
+    });
+
     it('titles a conversation by stored title, then people, then a fallback', () => {
       expect(entryTitle(conversation({ id: 'a', title: '  Team  ' }))).toBe('Team');
       const people = conversation({

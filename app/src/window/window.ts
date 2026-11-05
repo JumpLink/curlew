@@ -8,7 +8,7 @@ import Adw from 'gi://Adw?version=1';
 import Gio from 'gi://Gio?version=2.0';
 import { _, fmt } from '@curlew/protocol';
 
-import { backendAccountsList } from '../core/actions/accounts.ts';
+import { indexAccountLabels, loadAccountLabels } from './account-labels.ts';
 import { presentAgentAccess } from './agent-access-dialog.ts';
 import { loadConversationEntries } from './conversation-list-store.ts';
 import { type ListEntry, protocolLabel } from './conversation-list-model.ts';
@@ -17,38 +17,17 @@ import { loadAgentAccess } from './agent-access-store.ts';
 import { configPath } from '@curlew/store';
 
 const COLLAPSE_AT = 'max-width: 720sp';
-const ACCOUNTS_TIMEOUT_MS = 4_000;
-
-/** Account id → identity for the filter chips and rows; a backend that fails adds nothing. */
 async function accountLabels(): Promise<Map<string, string>> {
-  const labels = new Map<string, string>();
-  let backends: string[] = [];
   try {
-    backends = loadAgentAccess(configPath()).backends;
+    return await loadAccountLabels(loadAgentAccess(configPath()).backends, configPath());
   } catch {
-    return labels;
+    return indexAccountLabels();
   }
-  await Promise.all(
-    backends.map(async (name) => {
-      try {
-        const listed = await Promise.race([
-          backendAccountsList(name, configPath()),
-          new Promise<never>((_resolve, reject) =>
-            setTimeout(() => reject(new Error('timeout')), ACCOUNTS_TIMEOUT_MS),
-          ),
-        ]);
-        for (const account of listed.accounts) labels.set(account.id, account.identity);
-      } catch {
-        // No label: the row shows the protocol only.
-      }
-    }),
-  );
-  return labels;
 }
 
 function placeholder(entry: ListEntry | null): Adw.NavigationPage {
   const status = new Adw.StatusPage({
-    iconName: 'chat-message-new-symbolic',
+    iconName: 'view-dual-symbolic',
     title: entry ? entry.title : _('Select a conversation'),
     description: entry
       ? fmt(_('{protocol} conversation. Reading and writing here is not built yet.'), {
@@ -103,7 +82,7 @@ export function createWindow(app: Adw.Application): Adw.ApplicationWindow {
   action.connect('activate', () => presentAgentAccess(window));
   window.add_action(action);
 
-  let labels = new Map<string, string>();
+  let labels = indexAccountLabels();
   let labelled = false;
   const refresh = () => sidebar.setEntries(loadConversationEntries(), labels);
   refresh();

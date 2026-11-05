@@ -22,6 +22,7 @@ import {
   initials,
   protocolIcon,
   protocolLabel,
+  shortTime,
   unreadText,
   unreadTier,
 } from './conversation-list-model.ts';
@@ -36,7 +37,7 @@ type RowRef = { kind: 'section'; id: string } | { kind: 'entry'; entry: ListEntr
 
 function badgedAvatar(entry: ListEntry): Gtk.Widget {
   const avatar = new Adw.Avatar({ size: 40, text: entry.title, showInitials: initials(entry.title) !== '' });
-  const badge = new Gtk.Image({ iconName: protocolIcon(entry.backend), pixelSize: 12 });
+  const badge = new Gtk.Image({ iconName: protocolIcon(entry.backend), pixelSize: 16 });
   badge.add_css_class('osd');
   badge.add_css_class('circular');
   badge.set_halign(Gtk.Align.END);
@@ -52,21 +53,38 @@ function entryRow(entry: ListEntry, accountLabel: string | undefined): Gtk.ListB
   const title = new Gtk.Label({ label: entry.title, xalign: 0, ellipsize: 3, hexpand: true });
   // Bold while unread; the HIG's own style class, so dark mode and accents stay Adwaita's.
   if (unreadTier(entry) === 'count') title.add_css_class('heading');
-  const protocol = protocolLabel(entry.backend);
+  const time = new Gtk.Label({ label: shortTime(entry.lastMessageAt), xalign: 1 });
+  time.add_css_class('caption');
+  time.add_css_class('dim-label');
+  const titleLine = new Gtk.Box({ spacing: 6 });
+  titleLine.append(title);
+  titleLine.append(time);
+
+  // The protocol is the badge on the avatar, not text. There is no stored preview of the last
+  // message yet (docs/design/ui.md), so the line names the account.
   const subtitle = new Gtk.Label({
-    label: accountLabel ? `${protocol} · ${accountLabel}` : protocol,
+    label: accountLabel ?? entry.accountId,
     xalign: 0,
     ellipsize: 3,
+    hexpand: true,
   });
   subtitle.add_css_class('caption');
   subtitle.add_css_class('dim-label');
+  const subtitleLine = new Gtk.Box({ spacing: 6 });
+  subtitleLine.append(subtitle);
+  if (unreadTier(entry) === 'count') {
+    const count = new Gtk.Label({ label: unreadText(entry.unread), valign: Gtk.Align.CENTER });
+    count.add_css_class('numeric');
+    count.add_css_class('dim-label');
+    subtitleLine.append(count);
+  }
   const text = new Gtk.Box({
     orientation: Gtk.Orientation.VERTICAL,
     valign: Gtk.Align.CENTER,
     hexpand: true,
   });
-  text.append(title);
-  text.append(subtitle);
+  text.append(titleLine);
+  text.append(subtitleLine);
 
   const box = new Gtk.Box({
     spacing: 12,
@@ -77,12 +95,6 @@ function entryRow(entry: ListEntry, accountLabel: string | undefined): Gtk.ListB
   });
   box.append(badgedAvatar(entry));
   box.append(text);
-  if (unreadTier(entry) === 'count') {
-    const count = new Gtk.Label({ label: unreadText(entry.unread), valign: Gtk.Align.CENTER });
-    count.add_css_class('numeric');
-    count.add_css_class('dim-label');
-    box.append(count);
-  }
   const row = new Gtk.ListBoxRow();
   row.set_child(box);
   return row;
@@ -125,7 +137,7 @@ export function createConversationList(
   list.add_css_class('navigation-sidebar');
   const scroller = new Gtk.ScrolledWindow({ hscrollbarPolicy: Gtk.PolicyType.NEVER, vexpand: true });
   scroller.set_child(list);
-  const empty = new Adw.StatusPage({ iconName: 'chat-message-new-symbolic', vexpand: true });
+  const empty = new Adw.StatusPage({ iconName: 'view-dual-symbolic', vexpand: true });
   empty.add_css_class('compact');
   const stack = new Gtk.Stack();
   stack.add_named(scroller, 'list');
@@ -146,6 +158,7 @@ export function createConversationList(
 
   const chip = (label: string, set: Set<string>, key: string): Gtk.ToggleButton => {
     const button = new Gtk.ToggleButton({ label, active: set.has(key) });
+    button.add_css_class('flat');
     button.add_css_class('caption');
     button.connect('toggled', () => {
       if (button.get_active()) set.add(key);
