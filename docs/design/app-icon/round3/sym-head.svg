@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Symbolic 1 — head, neck and bill, tuned to the round-3 combo variants: the head is a little
+larger and rounder than in round 2, so it matches the portrait that sits on the bubble, and the
+neck is short and wide rather than a thin stalk, which is what kept it from merging with the
+head at 16 px. The eye is a hole, the single mark that turns the curve from a hook into a bird.
+-->
+<svg width="16" height="16" viewBox="0 0 16 16" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <g fill="#222222">
+    <!-- neck: wider than the round-2 stalk, running off the bottom edge as a crop -->
+    <path d="M3.0 8.2 C2.3 10.6 2.2 13.3 2.7 16 L6.6 16 C6.0 13.3 6.1 10.6 6.9 8.6 Z"/>
+    <!-- the bill leaves the face at eye level and stays near level before it decurves, which is
+         what keeps it a curlew rather than a hook -->
+    <path d="M9.4 3.0 C12.6 4.2 14.6 8.0 15.1 13.8 L13.2 14.0 C12.7 9.0 11.1 6.0 8.9 5.0 Z"/>
+    <path fill-rule="evenodd"
+          d="M5.5 0.9 C8.0 0.9 10.0 2.7 10.0 5.1 C10.0 7.5 8.0 9.3 5.5 9.3
+             C3.1 9.3 1.1 7.5 1.1 5.1 C1.1 2.7 3.1 0.9 5.5 0.9 Z
+             M7.4 3.1 C6.7 3.1 6.2 3.7 6.2 4.4 C6.2 5.1 6.7 5.6 7.4 5.6
+             C8.1 5.6 8.6 5.1 8.6 4.4 C8.6 3.7 8.1 3.1 7.4 3.1 Z"/>
+  </g>
+</svg>

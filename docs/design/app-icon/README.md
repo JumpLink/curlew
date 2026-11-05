@@ -48,6 +48,22 @@ dark silhouette read as a penguin or an ibis. Also keep the calling idea of 5 an
 held up, but with a larger head and one natural curve of neck and bill instead of a kink, and
 fewer, larger bubbles so it stays calm at 32 px.
 
-## Round 3
+## Round 3 — combinations and the call
 
-In progress: combinations of 3 and 4b, and calling variants with the bill up.
+![Round 3 overview](round3/overview.png)
+
+| # | File | Idea |
+|---|---|---|
+| 1 | `v1-combo-a.svg` | orange bubble, the head of 3 painted on it, the bill breaking out at the lower right |
+| 2 | `v2-combo-b.svg` | the bubble as backdrop, the bird in front of it from the lower left |
+| 3 | `v3-combo-red.svg` | 1 in GNOME red |
+| 4 | `v4-call-one.svg` | calling, bill raised, one orange bubble |
+| 5 | `v5-call-many.svg` | calling, three bubbles for the several networks |
+| 6 | `v6-call-tail.svg` | calling, the bill's curve runs on into the bubble |
+| 7 | `v7-call-merged.svg` | calling, two warm bubbles merged into one outline |
+| 8 | `v8-combo-yellow.svg` | 2 in GNOME yellow |
+
+Strongest: 3 (red) and 1 (orange) — the only ones that stay both a bird and a message at 16 px
+(contact sheets in `round3/`). The calling variants have the right posture now, but leave two
+corners empty and read as a tool rather than a bird at 16 px. Symbolic: `sym-head.svg` again;
+`sym-call.svg` failed at 16 px (`round3/symbolic-strip.png`).
