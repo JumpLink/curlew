@@ -67,6 +67,8 @@ import grants from './unit/core/grants.test.ts';
 import access from './unit/core/access.test.ts';
 import accessBroker from './unit/core/access-broker.test.ts';
 import agentAccess from './unit/core/agent-access.test.ts';
+import windowAgentAccess from './unit/window/agent-access-model.test.ts';
+import windowConversationList from './unit/window/conversation-list-model.test.ts';
 import encryption from './unit/core/encryption.test.ts';
 import capabilities from './unit/core/capabilities.test.ts';
 import send from './unit/core/send.test.ts';
@@ -152,6 +154,8 @@ run({
   access,
   accessBroker,
   agentAccess,
+  windowAgentAccess,
+  windowConversationList,
   encryption,
   send,
   selfAddress,

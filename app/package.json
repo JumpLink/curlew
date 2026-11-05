@@ -134,7 +134,8 @@
     "@curlew/xmpp": "*",
     "dotenv": "^17.4.2",
     "yargs": "^18.1.0",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "@gjsify/adwaita-app": "0.64.16"
   },
   "devDependencies": {
     "@gjsify/cli": "0.64.16",
@@ -163,6 +164,8 @@
     "fake-indexeddb": "6.2.5",
     "oxfmt": "^0.56.0",
     "oxlint": "^1.71.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "@girs/adw-1": "^4.1.0",
+    "@girs/gtk-4.0": "^4.1.0"
   }
 }

@@ -63,6 +63,7 @@ app/src/frontends/cli/prompt.ts
 app/src/frontends/cli/send.ts
 app/src/frontends/cli/setup.ts
 app/src/frontends/cli/watch.ts
+app/src/frontends/cli/window.ts
 app/src/frontends/mcp/server.ts
 app/src/frontends/mcp/tools/accounts.ts
 app/src/frontends/mcp/tools/calendar.ts
@@ -76,6 +77,18 @@ app/src/frontends/mcp/tools/send.ts
 app/src/frontends/mcp/tools/setup.ts
 app/src/frontends/mcp/types.ts
 app/src/index.ts
+app/src/window/about.ts
+app/src/window/account-labels.ts
+app/src/window/agent-access-dialog.ts
+app/src/window/agent-access-model.ts
+app/src/window/agent-access-page.ts
+app/src/window/agent-access-store.ts
+app/src/window/conversation-list-model.ts
+app/src/window/conversation-list-store.ts
+app/src/window/conversation-list.ts
+app/src/window/main.ts
+app/src/window/watch.ts
+app/src/window/window.ts
 packages/gnome/src/calendar.gjs.ts
 packages/gnome/src/contacts.gjs.ts
 packages/gnome/src/credentials.gjs.ts

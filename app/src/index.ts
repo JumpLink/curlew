@@ -26,6 +26,7 @@ import {
   setupCommand,
   syncCommand,
   watchCommand,
+  windowCommand,
 } from './frontends/cli/index.ts';
 
 // Before anything produces a string. Every `describe` below is evaluated while `parseArgs()`
@@ -34,6 +35,17 @@ import {
 // Not for `curlew mcp`: an agent parses what the tools return, and a German step title or error
 // would change what a model sees from one desktop to the next (docs/i18n-status.md).
 if (hideBin(process.argv)[0] !== 'mcp') initI18n();
+
+// The window runs a GtkApplication, which cannot nest inside the GLib.MainLoop the command
+// handlers below run in (its `activate` never fires). So a plain `curlew window` hands over before
+// the parser and the loop exist; `windowCommand` stays registered for `--help` and for Node.
+if (
+  typeof (globalThis as { imports?: unknown }).imports !== 'undefined' &&
+  hideBin(process.argv).length === 1 &&
+  hideBin(process.argv)[0] === 'window'
+) {
+  await import(new URL('./window.gjs.mjs', import.meta.url).href);
+}
 
 function reportError(err: unknown): void {
   // With yargs' `.fail(false)` (below) yargs no longer prints its own usage dump on a
@@ -66,6 +78,7 @@ const parseArgs = () =>
     .command(checkCommand)
     .command(setupCommand)
     .command(addonCanaryCommand)
+    .command(windowCommand)
     .demandCommand(1, 'Please provide a command — `curlew --help` lists them all.')
     // Reject unknown commands instead of silently resolving — on GJS an unmatched command
     // would otherwise leave the main loop running forever (hang); on Node it would exit 0.

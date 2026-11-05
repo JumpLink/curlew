@@ -271,6 +271,7 @@ the MCP server via `run_in_background` when driving it.
   and `accountsCommand.describe`), and a plural built from an `n === 1` check at the call site
   takes the rule away from the language. MCP output stays English on purpose — agents parse it.
   What is translated, what is not, and why: [`docs/i18n-status.md`](docs/i18n-status.md).
+  Window layout rules and role models: [`docs/design/ui.md`](docs/design/ui.md).
 - Conventional commits (`feat(imap): …`, `fix(store): …`), imperative, subject ≤ 50 chars.
   Run `gjsify foreach -A check` and the tests before committing. No `--no-verify`.
 - This repo is a **submodule of werkstatt**: commit here on `main`, push, *then* bump the
