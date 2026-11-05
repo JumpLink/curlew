@@ -33,6 +33,7 @@ export const sendCommand: CommandModule = {
       .option('attach', {
         type: 'string',
         array: true,
+        nargs: 1,
         describe: _('Mail only: absolute path of a file to attach (repeatable)'),
       })
       .option('account', {
