@@ -30,6 +30,11 @@ export const sendCommand: CommandModule = {
         type: 'string',
         describe: _('Mail only: the subject line'),
       })
+      .option('attach', {
+        type: 'string',
+        array: true,
+        describe: _('Mail only: absolute path of a file to attach (repeatable)'),
+      })
       .option('account', {
         type: 'string',
         demandOption: true,
@@ -49,6 +54,7 @@ export const sendCommand: CommandModule = {
         text: raw.text === undefined ? undefined : String(raw.text),
         subject: raw.subject === undefined ? undefined : String(raw.subject),
         imageUrl: raw['image-url'] === undefined ? undefined : String(raw['image-url']),
+        attachments: Array.isArray(raw.attach) && raw.attach.length > 0 ? raw.attach.map(String) : undefined,
         frontend: 'cli',
       }),
     );

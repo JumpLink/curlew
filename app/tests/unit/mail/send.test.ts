@@ -1,9 +1,9 @@
 import { describe, expect, it } from '@gjsify/unit';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { MAIL_MANIFEST, MailSender } from '@curlew/imap';
+import { MAIL_MANIFEST, MailSender, contentTypeFor, readAttachments } from '@curlew/imap';
 import type { MessageBackend, SendPermit, SmtpTarget } from '@curlew/protocol';
 
 import { sendAsAgent, sendMessage } from '../../../src/core/actions/send.ts';
@@ -186,6 +186,165 @@ export default async () => {
             expect(opened).toBe(0);
           });
         }
+        expect(server.dialogue.commands.length).toBe(0);
+      });
+    });
+  });
+
+  await describe('mail attachments', async () => {
+    // Synthetic bytes that look like a PDF header; 0xff/0x00 make sure nothing is text-decoded.
+    const PDF_BYTES = Buffer.concat([
+      Buffer.from('%PDF-1.4\n'),
+      Buffer.from([0x00, 0xff, 0x10, 0x80]),
+      Buffer.from('\n%%EOF\n'),
+    ]);
+
+    async function withFiles<T>(body: (dir: string) => Promise<T>): Promise<T> {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-mail-attach-'));
+      try {
+        return await body(dir);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    }
+
+    async function refusal(promise: Promise<unknown>): Promise<string> {
+      try {
+        await promise;
+      } catch (err) {
+        return err instanceof Error ? err.message : String(err);
+      }
+      return '';
+    }
+
+    await it('delivers a file as a base64 attachment under its base name, and logs name and size only', async () => {
+      await withServer(async (server) => {
+        await withFiles(async (files) => {
+          const path = join(files, 'rechnung.pdf');
+          writeFileSync(path, PDF_BYTES);
+          await withConfig(granted, async ({ dir, configPath }) => {
+            const out = await sendMessage({
+              accountId: ACCOUNT,
+              to: OWNER,
+              text: 'Anbei',
+              subject: 'Mit Anhang',
+              attachments: [path],
+              frontend: 'mcp',
+              dbPath: join(dir, 'index.db'),
+              configPath,
+              writeLogPath: join(dir, 'writes.log'),
+              backend: mailBackend(server.port, () => {}),
+            });
+
+            expect(server.dialogue.messages.length).toBe(1);
+            const raw = server.dialogue.messages[0];
+            expect(raw.includes('filename=rechnung.pdf') || raw.includes('filename="rechnung.pdf"')).toBe(
+              true,
+            );
+            expect(raw.includes('application/pdf')).toBe(true);
+            expect(raw.includes('Content-Transfer-Encoding: base64')).toBe(true);
+            expect(raw.replace(/\s+/g, '').includes(PDF_BYTES.toString('base64'))).toBe(true);
+            expect(out.attachments).toStrictEqual([{ filename: 'rechnung.pdf', size: PDF_BYTES.length }]);
+
+            const logText = readFileSync(join(dir, 'writes.log'), 'utf8');
+            const line = JSON.parse(logText.trim());
+            expect(line.attachments).toStrictEqual([{ filename: 'rechnung.pdf', size: PDF_BYTES.length }]);
+            expect(logText.includes(PDF_BYTES.toString('base64'))).toBe(false);
+            expect(logText.includes('%PDF')).toBe(false);
+            expect(logText.includes(files)).toBe(false);
+          });
+        });
+      });
+    });
+
+    await it('refuses a relative path, a directory, a missing file and a link to a directory, sending nothing', async () => {
+      await withServer(async (server) => {
+        await withFiles(async (files) => {
+          const sub = join(files, 'sub');
+          mkdirSync(sub);
+          const link = join(files, 'link.pdf');
+          symlinkSync(sub, link);
+          for (const path of ['relative/rechnung.pdf', sub, join(files, 'missing.pdf'), link]) {
+            const sender = new MailSender(targetFor(server.port), PERMIT);
+            const message = await refusal(sender.send({ to: OWNER, text: 'x', attachments: [{ path }] }));
+            expect(message.length > 0).toBe(true);
+          }
+        });
+        expect(server.dialogue.commands.length).toBe(0);
+        expect(server.dialogue.messages.length).toBe(0);
+      });
+    });
+
+    await it('follows a link to a regular file once', async () => {
+      await withServer(async (server) => {
+        await withFiles(async (files) => {
+          const real = join(files, 'real.txt');
+          writeFileSync(real, 'synthetic');
+          const link = join(files, 'alias.txt');
+          symlinkSync(real, link);
+          const sender = new MailSender(targetFor(server.port), PERMIT);
+          const sent = await sender.send({ to: OWNER, text: 'x', attachments: [{ path: link }] });
+          expect(sent.attachments).toStrictEqual([{ filename: 'alias.txt', size: 9 }]);
+        });
+      });
+    });
+
+    await it('refuses a file over the size limit and a set over the total, sending nothing', async () => {
+      await withFiles(async (files) => {
+        const a = join(files, 'a.bin');
+        const b = join(files, 'b.bin');
+        writeFileSync(a, Buffer.alloc(100));
+        writeFileSync(b, Buffer.alloc(100));
+        expect(
+          (await refusal(Promise.resolve().then(() => readAttachments([{ path: a }], { perFile: 99 }))))
+            .length > 0,
+        ).toBe(true);
+        expect(
+          (
+            await refusal(
+              Promise.resolve().then(() =>
+                readAttachments([{ path: a }, { path: b }], { perFile: 100, total: 150 }),
+              ),
+            )
+          ).length > 0,
+        ).toBe(true);
+        expect(readAttachments([{ path: a }, { path: b }], { perFile: 100, total: 200 }).length).toBe(2);
+        expect(contentTypeFor('x.unknownext')).toBe('application/octet-stream');
+      });
+    });
+
+    await it('refuses attachments on a backend that cannot carry them, before opening a sender', async () => {
+      await withServer(async (server) => {
+        await withFiles(async (files) => {
+          const path = join(files, 'a.pdf');
+          writeFileSync(path, PDF_BYTES);
+          await withConfig(granted, async ({ dir, configPath }) => {
+            let opened = 0;
+            const backend = mailBackend(server.port, () => opened++);
+            const noFiles = {
+              ...backend,
+              manifest: {
+                ...MAIL_MANIFEST,
+                capabilities: { ...MAIL_MANIFEST.capabilities, attachments: false },
+              },
+            } as unknown as MessageBackend;
+            const message = await refusal(
+              sendMessage({
+                accountId: ACCOUNT,
+                to: OWNER,
+                text: 'x',
+                attachments: [path],
+                frontend: 'cli',
+                dbPath: join(dir, 'index.db'),
+                configPath,
+                writeLogPath: join(dir, 'writes.log'),
+                backend: noFiles,
+              }),
+            );
+            expect(message.includes('cannot send attachments')).toBe(true);
+            expect(opened).toBe(0);
+          });
+        });
         expect(server.dialogue.commands.length).toBe(0);
       });
     });

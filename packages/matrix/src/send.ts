@@ -147,7 +147,7 @@ export function matrixSendApi(session: MatrixSendSession): MatrixSendApi {
 
 export class MatrixSender implements MessageSender {
   /** Matrix formatting is HTML in a second field, not curlew's chat Markdown: the body goes out as typed. */
-  readonly features: SenderFeatures = { markdown: false };
+  readonly features: SenderFeatures = { markdown: false, attachments: false };
   private readonly api: MatrixSendApi;
   private readonly permit: SendPermit;
   private readonly onClose: () => Promise<void>;

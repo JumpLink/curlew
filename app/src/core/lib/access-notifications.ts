@@ -37,12 +37,14 @@ export function promptText(ask: AccessAsk, name?: string): { summary: string; bo
   const target = shown === undefined || ask.contact === undefined ? address : fmt(_('{name} ({address})'), { name: shown, address });
   const values = { contact: target, account: ask.account, preview: ask.preview ?? '' };
   if (ask.kind === 'write') {
+    const head =
+      ask.preview === undefined
+        ? fmt(_('To {contact} ({account}).'), values)
+        : fmt(_('To {contact} ({account}): “{preview}”'), values);
+    const files = (ask.attachments ?? []).map((n) => sanitizeName(n) ?? '').filter((n) => n !== '');
     return {
       summary: _('An agent wants to send a message'),
-      body:
-        ask.preview === undefined
-          ? fmt(_('To {contact} ({account}).'), values)
-          : fmt(_('To {contact} ({account}): “{preview}”'), values),
+      body: files.length === 0 ? head : `${head}\n${fmt(_('Attachments: {files}'), { files: files.join(', ') })}`,
     };
   }
   return {

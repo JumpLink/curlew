@@ -42,6 +42,8 @@ export interface AccessAsk {
   oneShot: boolean;
   /** Write only: the start of the text, shown in the notification and never logged. */
   preview?: string;
+  /** Write only: the file names (not paths, not content) the message carries, shown in the notification. */
+  attachments?: string[];
   /** Answer from the policy and the session's grants only; never show a prompt. */
   probe?: boolean;
 }
@@ -78,6 +80,7 @@ export interface AccessTarget {
   /** `SendBackend.isSelfAddress` answered yes. */
   self?: boolean;
   preview?: string;
+  attachments?: string[];
 }
 
 const PREVIEW_CHARS = 80;
@@ -254,6 +257,7 @@ export async function requireAccess(gate: AccessGate, target: AccessTarget): Pro
       session: gate.session,
       oneShot: gate.oneShot,
       ...(target.preview === undefined ? {} : { preview: target.preview }),
+      ...(target.attachments === undefined ? {} : { attachments: target.attachments }),
     });
   } catch (error) {
     throw noDaemon(target, error);

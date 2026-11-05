@@ -487,15 +487,30 @@ Every send is logged (time, grant, target, never the text) to
 #### Mail
 
 `mail.send` sends one plain-text mail with an optional `--subject` (or
-`subject` in `send_message`). The recipient is the granted address and the
+`subject` in `send_message`) and optional file attachments. The recipient is the granted address and the
 sender is the account's own address from GNOME Online Accounts; the SMTP
 credentials come from GOA too and appear in no output, log or error. There is
-no HTML and no attachment, and a sent mail is not indexed as a conversation —
+no HTML, and a sent mail is not indexed as a conversation —
 the answer has `sentAt` and the message id, no `conversationId`:
 
 ```bash
 curlew send --account <goa-account-id> --to owner@example.org \
   --subject "Build is green" "All tests passed."
+```
+
+Attachments: repeat `--attach <absolute path>` on the CLI, or pass
+`attachments: ["/abs/path/report.pdf"]` to `send_message`. Only mail carries them; every
+other backend refuses, as does the daemon's bus send. Rules: absolute paths, regular
+files only (a symlink is followed once and its target must be a regular file), at most 10
+files, 20 MB each and 25 MB together. The attachment name is the file's base name and the type
+comes from the extension (otherwise `application/octet-stream`). They ride on the address
+grant ([ADR 0004](docs/adr/0004-sending-and-writing-granted-per-capability.md)); the
+permission prompt lists the file names, and the write log records names and sizes, never
+content.
+
+```bash
+curlew send --account <goa-account-id> --to owner@example.org \
+  --subject "Report" --attach /home/me/report.pdf "Attached."
 ```
 
 #### Telegram

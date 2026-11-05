@@ -25,7 +25,7 @@ export const TELEGRAM_MAX_MESSAGE_CHARS = 4096;
 
 export class TelegramSender implements MessageSender {
   /** Telegram's own formatting is not curlew's chat Markdown: the body goes out as typed. */
-  readonly features: SenderFeatures = { markdown: false };
+  readonly features: SenderFeatures = { markdown: false, attachments: false };
   private readonly client: TelegramClientHandle;
   private readonly permit: SendPermit;
   private readonly onClose: () => Promise<void>;

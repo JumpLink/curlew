@@ -75,6 +75,7 @@ import { appendWriteLog, type WriteFrontend } from '../write-log.ts';
 import { openIndex } from './index-sync.ts';
 import { requireEncryptionFor } from './omemo.ts';
 import { _, fmt } from '@curlew/protocol';
+import { basename } from 'node:path';
 
 /** The chat send capability, still the one the daemon follows accounts under. */
 export const SEND_CAPABILITY = 'xmpp.send';
@@ -89,6 +90,8 @@ export interface SendParams {
   imageUrl?: string;
   /** Mail only: the subject line. A backend whose manifest has no `subject` refuses it. */
   subject?: string;
+  /** Mail only: absolute paths of files to attach. A backend that cannot attach refuses them. */
+  attachments?: string[];
   /** `plain` (default) sends `text` as is; `markdown` renders it per chat protocol and splits long texts. */
   format?: MessageFormat;
   frontend: WriteFrontend;
@@ -132,6 +135,8 @@ export interface SendResult {
   parts?: number;
   /** Markdown only: every message's origin-id, in order. */
   originIds?: string[];
+  /** Mail: what was attached, file name and byte size. */
+  attachments?: { filename: string; size: number }[];
   /** The message went out, but something around it did not — the backend's one sentence for it. */
   sendWarning?: string;
 }
@@ -269,6 +274,7 @@ export interface SendRequest {
   text?: string;
   imageUrl?: string;
   subject?: string;
+  attachments?: string[];
   format?: MessageFormat;
 }
 
@@ -322,6 +328,10 @@ export async function sendThrough(
     }
     if (plan.length === 0) throw new Error(_('nothing to send: the text is empty after rendering'));
     for (const step of plan) if (step.kind === 'image') step.value = validateImageUrl(step.value);
+    const attachments = request.attachments ?? [];
+    if (attachments.length > 0 && !sender.features.attachments) {
+      throw new Error(fmt(_('{backend} cannot send attachments'), { backend: backendName }));
+    }
 
     for (const step of plan)
       steps.push({
@@ -331,6 +341,7 @@ export async function sendThrough(
                 to: request.to,
                 text: step.value,
                 ...(request.subject === undefined ? {} : { subject: request.subject }),
+                ...(attachments.length === 0 ? {} : { attachments: attachments.map((path) => ({ path })) }),
               })
             : await sender.sendImage!(request.to, step.value),
         body: step.value,
@@ -408,6 +419,9 @@ export async function sendAsAgent(params: SendParams): Promise<SendResult> {
     kind: 'write',
     self: await isSelf(found.backend, found.account.id, params.to),
     preview: previewOf(params.text ?? params.imageUrl),
+    ...(params.attachments === undefined || params.attachments.length === 0
+      ? {}
+      : { attachments: params.attachments.map((p) => basename(p)) }),
   });
   return sendMessage({ ...params, backend: found.backend, accessReason });
 }
@@ -433,6 +447,18 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
   if (params.subject !== undefined && !backend.manifest.capabilities.subject) {
     throw new Error(fmt(_('{backend} messages carry no subject'), { backend: backend.manifest.name }));
   }
+  const attachments = params.attachments ?? [];
+  if (attachments.length > 0) {
+    if (!backend.manifest.capabilities.attachments) {
+      throw new Error(fmt(_('{backend} cannot send attachments'), { backend: backend.manifest.name }));
+    }
+    // A backend that sends over the daemon's bus has no attachment on the wire: refused, not dropped.
+    if (backend.manifest.sendSharesReceiveState) {
+      throw new Error(
+        fmt(_('{backend} cannot send attachments through the daemon'), { backend: backend.manifest.name }),
+      );
+    }
+  }
   // Validated before anything is sent, so a bad URL cannot leave the text half-delivered.
   const imageUrl = params.imageUrl === undefined ? undefined : validateImageUrl(params.imageUrl);
 
@@ -443,6 +469,7 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
     ...(text === undefined ? {} : { text }),
     ...(imageUrl === undefined ? {} : { imageUrl }),
     ...(params.subject === undefined ? {} : { subject: params.subject }),
+    ...(attachments.length === 0 ? {} : { attachments }),
     ...(params.format === undefined ? {} : { format: params.format }),
   };
 
@@ -498,6 +525,9 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
         frontend: params.frontend,
         id: sent.id,
         ...(params.accessReason === undefined ? {} : { reason: params.accessReason }),
+        ...(sent.attachments === undefined || sent.attachments.length === 0
+          ? {}
+          : { attachments: sent.attachments }),
       },
       { path: params.writeLogPath },
     );
@@ -522,6 +552,9 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
     ...(!markdown && sends.length > 1 ? { imageOriginId: sends[1].sent.id } : {}),
     ...(markdown ? { parts: sends.length, originIds: sends.map((x) => x.sent.id) } : {}),
     sentAt: first.sent.sentAt,
+    ...(first.sent.attachments === undefined || first.sent.attachments.length === 0
+      ? {}
+      : { attachments: first.sent.attachments }),
     ...(warnings.length === 0 ? {} : { sendWarning: warnings.join(' ') }),
   };
 }

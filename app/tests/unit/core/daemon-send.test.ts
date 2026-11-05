@@ -76,7 +76,7 @@ const MANIFEST: BackendManifest = {
 
 /** A sender that records what it was given and never touches a network. */
 class FakeSender implements MessageSender {
-  readonly features = { markdown: false };
+  readonly features = { markdown: false, attachments: false };
   readonly sent: SendingMessage[] = [];
   closed = 0;
 

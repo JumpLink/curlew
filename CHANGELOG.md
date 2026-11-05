@@ -4,6 +4,11 @@
 
 ### Added
 
+- Mail attachments: `send_message` takes `attachments` (absolute paths) and `curlew send` a
+  repeatable `--attach <path>`. Mail only; other backends and the daemon send path refuse
+  them. Limits: 10 files, 20 MB each, 25 MB total. The permission prompt lists the file
+  names and the write log records names and sizes, never content.
+
 - `curlew window`: the first GTK 4 / libadwaita window. A split view whose sidebar is one
   read-only list of every conversation in the index (People and Groups, protocol and account
   chips, search, protocol badge, grey unread count) and which collapses to one pane at 720 sp.

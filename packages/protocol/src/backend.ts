@@ -583,6 +583,13 @@ export interface SendPermit {
 export interface SenderFeatures {
   /** The text is chat Markdown, rendered per protocol and split at the protocol's limit (XMPP's XEP-0393). */
   markdown: boolean;
+  /** The sender can attach files (`SendingMessage.attachments`); one that cannot is never handed any. */
+  attachments: boolean;
+}
+
+/** A file to send with a message, by absolute path. Only the sender that claims `attachments` reads it. */
+export interface SendingAttachment {
+  path: string;
 }
 
 /** One message handed to a sender. */
@@ -591,6 +598,8 @@ export interface SendingMessage {
   text: string;
   /** Only when the backend's manifest claims `capabilities.subject` (mail). */
   subject?: string;
+  /** Only when the sender's `features.attachments` is true (mail). */
+  attachments?: SendingAttachment[];
 }
 
 /** What a send returned. `id` is the network's own id and what the write log records (ADR 0004 §7). */
@@ -612,6 +621,8 @@ export interface SentMessage {
    * it, the user's own other devices were not told). One sentence for the user, never a stack.
    */
   warning?: string;
+  /** The files that went out, by name and size — never their content. What the write log records. */
+  attachments?: Array<{ filename: string; size: number }>;
 }
 
 /**
