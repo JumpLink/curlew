@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+C8 — one shape that is both: a speech bubble whose tail is the curlew's bill. Read it as a
+bubble and the bill is the pointer; read it as a bird and the bubble is the head. The bubble is
+deliberately wider than it is tall with a modest corner radius — a near-circle read as an egg —
+and the dark crown, the pale stripe and the eye are the only marks on it, which is why it still
+works at 16 px where every other concept has to give something up.
+-->
+<svg width="128" height="128" viewBox="0 0 128 128" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="buff" x1="0" y1="14" x2="0" y2="92" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8e8c8"/>
+      <stop offset="0.55" stop-color="#e2c091"/>
+      <stop offset="1" stop-color="#b98a5c"/>
+    </linearGradient>
+    <linearGradient id="bill" x1="92" y1="44" x2="120" y2="110" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6f4d2e"/>
+      <stop offset="0.55" stop-color="#4a3420"/>
+      <stop offset="1" stop-color="#2f2114"/>
+    </linearGradient>
+
+    <rect id="bub8" x="5" y="14" width="85" height="68" rx="24"/>
+    <clipPath id="bub8-clip"><use href="#bub8"/></clipPath>
+  </defs>
+
+  <!-- the tail of the bubble is the bill: it leaves the face at eye level, the way a curlew's
+       does, and sweeps down past the corner the way a bubble's pointer does -->
+  <path fill="url(#bill)"
+        d="M80 36 C102 44 117 70 123 110 L113 112 C107 78 95 57 75 50 Z"/>
+
+  <use href="#bub8" fill="url(#buff)"/>
+  <g clip-path="url(#bub8-clip)">
+    <!-- the crown, dark as the real bird's cap -->
+    <path fill="#a97a4e" d="M3 38 C10 21 27 13 48 13 C70 13 86 23 90 37 C69 24 21 25 3 38 Z"/>
+    <!-- and the pale stripe over the eye -->
+    <path fill="#fbf0d8" opacity="0.8" d="M5 45 C25 30 69 31 90 41 L90 47 C66 36 24 37 5 52 Z"/>
+  </g>
+
+  <circle cx="68" cy="43" r="8" fill="#241f31"/>
+  <circle cx="70.8" cy="40.2" r="2.6" fill="#ffffff" opacity="0.88"/>
+</svg>

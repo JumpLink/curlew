@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+C7 — the bird as a silhouette against a dusk horizon disc. Curlews call at dusk over the tidal
+flats, and a silhouette is the one treatment that survives any size: pure contrast, no internal
+detail to lose. The disc is the HIG's round shape and the low sun sits behind the bird to lift it
+off the sky.
+
+The waterline sits low on purpose. An earlier version put it across the bird's shins, which hid
+the long legs — and the legs are the whole reason a silhouette reads as a wader rather than as a
+duck. Here the bird stands clear of the water with its feet at the edge and a short reflection
+below, so the posture survives all the way down to 16 px.
+-->
+<svg width="128" height="128" viewBox="0 0 128 128" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="6" x2="0" y2="106" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6d4291"/>
+      <stop offset="0.38" stop-color="#d4533c"/>
+      <stop offset="0.72" stop-color="#ff9c2b"/>
+      <stop offset="1" stop-color="#ffd396"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0" y1="106" x2="0" y2="124" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2f6b78"/>
+      <stop offset="1" stop-color="#1b4350"/>
+    </linearGradient>
+    <circle id="disc" cx="64" cy="64" r="58"/>
+    <clipPath id="disc-clip"><use href="#disc"/></clipPath>
+  </defs>
+
+  <use href="#disc" fill="url(#sky)"/>
+
+  <g clip-path="url(#disc-clip)">
+    <!-- the low sun, behind the bird -->
+    <circle cx="46" cy="58" r="27" fill="#ffe9b0" opacity="0.5"/>
+    <circle cx="46" cy="58" r="17" fill="#fff6dc" opacity="0.7"/>
+
+    <!-- the reflection, before the bird so the bird sits on top of it -->
+    <g fill="#241f31" opacity="0.28">
+      <path d="M9 110 C20 116 46 119 60 116 C68 114 70 111 70 109 Z"/>
+    </g>
+
+    <!-- the bird: long shallow body, slender neck standing clear, small head, long legs -->
+    <g fill="#241f31">
+      <path d="M70 60 C72 70 65 77 53 78 C40 79 26 76 18 69
+               C14 66 11 63 9 60 C20 51 42 47 56 49 C65 50 69 54 70 60 Z"/>
+      <path d="M57 62 C55 45 60 31 70 22 L79 28 C71 36 68 46 67 63 Z"/>
+      <ellipse cx="81" cy="16" rx="9" ry="8.2"/>
+      <!-- the bill: level at the face, decurving only over its outer half, and long enough that
+           it clears the body instead of curling back at it -->
+      <path d="M87 8 C101 13 111 29 119 53 L112.5 54.5 C105 32 97 20 85.5 18 Z"/>
+    </g>
+    <g fill="none" stroke="#241f31" stroke-linecap="round">
+      <path stroke-width="4.4" d="M55 74 L50 88 L57 103"/>
+      <path stroke-width="3.4" d="M57 103 L67 105"/>
+      <path stroke-width="4.4" d="M39 76 L33 89 L41 103"/>
+      <path stroke-width="3.4" d="M41 103 L51 105"/>
+    </g>
+
+    <!-- the water, low, with the last of the light on its edge -->
+    <path d="M0 106 H128 V128 H0 Z" fill="url(#water)"/>
+    <path d="M0 106 H128 V108.5 H0 Z" fill="#ffd396" opacity="0.6"/>
+  </g>
+</svg>

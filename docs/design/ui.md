@@ -116,6 +116,11 @@ It is a permission policy, not something one does all day. It lives in the prima
 choice (allow, ask, deny) is an `Adw.ToggleGroup`: three or four fixed options, all visible at
 once, which a dropdown would hide.
 
+## App icon
+
+The app icon follows the GNOME HIG for app icons; how it came about, round by round, with every
+overview and contact sheet: [`app-icon/README.md`](app-icon/README.md).
+
 ## Screenshots and metadata
 
 Flathub's quality guidelines apply to every listing: English first screenshot, a German one
