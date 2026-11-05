@@ -1,4 +1,4 @@
-import { describe, expect, it as plainIt } from '@gjsify/unit';
+import { describe, expect, it } from '@gjsify/unit';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -70,15 +70,6 @@ import {
  */
 
 const ACCOUNT = accountIdFor(OWN_ACI);
-
-/**
- * Every test builds libsignal objects through N-API, and on gjs each GC sweep walks the whole weak
- * reference list once per dead object (`weak_sweep_callback` in @gjsify/napi: quadratic). With a busy
- * machine that stalls the loop for 4-6 s inside `signalEncrypt`, past the 5 s default, though no test
- * waits on real time. The work is correct and only slow, so these get room until napi sweeps in
- * linear time (JumpLink/curlew#124).
- */
-const it = (name: string, fn: () => Promise<void>) => plainIt(name, fn, { timeout: 30_000 });
 
 /** Short names for the ACIs in the assertions, so a device list reads as `alice.1,self.3`. */
 const NAMES: Record<string, string> = { [ALICE_ACI]: 'alice', [OWN_ACI]: 'self', [CAROL_ACI]: 'carol' };
