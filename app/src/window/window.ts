@@ -43,7 +43,12 @@ function placeholder(entry: ListEntry | null): Adw.NavigationPage {
   return page;
 }
 
-export function createWindow(app: Adw.Application): Adw.ApplicationWindow {
+export interface WindowOptions {
+  /** Start with this protocol chip on (the screenshot hook `CURLEW_WINDOW_FILTER`). */
+  protocol?: string;
+}
+
+export function createWindow(app: Adw.Application, options: WindowOptions = {}): Adw.ApplicationWindow {
   const window = new Adw.ApplicationWindow({
     application: app,
     title: _('Curlew'),
@@ -86,6 +91,7 @@ export function createWindow(app: Adw.Application): Adw.ApplicationWindow {
   let labelled = false;
   const refresh = () => sidebar.setEntries(loadConversationEntries(), labels);
   refresh();
+  if (options.protocol) sidebar.chooseProtocol(options.protocol);
   // The index changes as the daemon syncs; coming back to the window is the cheap moment to look.
   window.connect('notify::is-active', () => {
     if (window.is_active) refresh();

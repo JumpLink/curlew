@@ -74,7 +74,7 @@ get the same view: topic, members, settings.
 All contacts, channels and groups of every messenger in **one** list.
 
 - Sections (collapsible): People, Groups; later Favourites and Channels.
-- **Filters are toggle chips**, not tabs: one per protocol, shown only when there is a choice; once a
+- **Filters are toggle chips** (`pill`, plus `suggested-action` while on), not tabs: one per protocol, shown only when there is a choice; once a
   protocol is chosen, one per account of it, if it has several.
 - Row: avatar with protocol badge (the protocol is shown ONLY there, never as text), title with a
   short time right-aligned, a subtitle line with the unread marker at its end. The subtitle is a
@@ -97,7 +97,7 @@ Also not built: the **last-message preview**. The index keeps the time (`last_me
 no preview text on the conversation row; chat bodies sit in `conversation_messages` and mail bodies
 only in the FTS table, so a preview needs a per-conversation column filled at sync time.
 
-Protocol badges are 16 px themed Adwaita symbolic icons, one distinct icon per protocol (mail:
+Protocol badges are 16 px themed Adwaita symbolic icons on a solid 22 px circle (the `card` style class: it contrasts in light and dark mode) that hangs on the avatar's lower-right rim so the initials stay readable; one distinct icon per protocol (mail:
 envelope, XMPP: server, Signal: shield, Matrix: globe of nodes, Telegram: paper plane, WhatsApp:
 phone), with a tooltip naming the protocol.
 The protocols' logos have their own trademark licences, so Curlew ships none.

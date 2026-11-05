@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Changed
+
+- `curlew window`: the filter chips are pills that fill with the accent colour while on, and the
+  protocol badge sits on a solid circle at the avatar's rim, so it is legible and no longer covers
+  the initials. gjsify 0.64.19.
+
 ### Added
 
 - Mail attachments: `send_message` takes `attachments` (absolute paths) and `curlew send` a

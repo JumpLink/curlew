@@ -31,17 +31,43 @@ export interface ConversationList {
   page: Adw.NavigationPage;
   /** Replace the entries; the selection and the filters stay. */
   setEntries(entries: ListEntry[], accountLabels: Map<string, string>): void;
+  /** Switch one protocol chip on, as a click would. */
+  chooseProtocol(backend: string): void;
 }
 
 type RowRef = { kind: 'section'; id: string } | { kind: 'entry'; entry: ListEntry };
 
+const AVATAR_SIZE = 40;
+const BADGE_SIZE = 22;
+/** Room the badge hangs in, so it sits on the avatar's rim and the initials stay readable. */
+const BADGE_OVERHANG = 6;
+
 function badgedAvatar(entry: ListEntry): Gtk.Widget {
-  const avatar = new Adw.Avatar({ size: 40, text: entry.title, showInitials: initials(entry.title) !== '' });
-  const badge = new Gtk.Image({ iconName: protocolIcon(entry.backend), pixelSize: 16 });
-  badge.add_css_class('osd');
-  badge.add_css_class('circular');
-  badge.set_halign(Gtk.Align.END);
-  badge.set_valign(Gtk.Align.END);
+  const avatar = new Adw.Avatar({
+    size: AVATAR_SIZE,
+    text: entry.title,
+    showInitials: initials(entry.title) !== '',
+    marginEnd: BADGE_OVERHANG,
+    marginBottom: BADGE_OVERHANG,
+  });
+  // A solid backdrop in the theme's own card colour: it contrasts with the avatar in light and dark
+  // mode, and its 12 px radius on a 22 px box clamps to half the width, so it draws a circle.
+  const badge = new Gtk.Box({
+    widthRequest: BADGE_SIZE,
+    heightRequest: BADGE_SIZE,
+    halign: Gtk.Align.END,
+    valign: Gtk.Align.END,
+  });
+  badge.add_css_class('card');
+  badge.add_css_class('view');
+  const icon = new Gtk.Image({
+    iconName: protocolIcon(entry.backend),
+    pixelSize: 16,
+    hexpand: true,
+    halign: Gtk.Align.CENTER,
+    valign: Gtk.Align.CENTER,
+  });
+  badge.append(icon);
   const overlay = new Gtk.Overlay();
   overlay.set_child(avatar);
   overlay.add_overlay(badge);
@@ -158,11 +184,19 @@ export function createConversationList(
 
   const chip = (label: string, set: Set<string>, key: string): Gtk.ToggleButton => {
     const button = new Gtk.ToggleButton({ label, active: set.has(key) });
-    button.add_css_class('flat');
-    button.add_css_class('caption');
+    // The plain button shape stays compact enough for several chips per line at 360 px (`pill` took
+    // a line each); the accent fill (`suggested-action`) only while it is on, so the state reads at
+    // a glance in light and dark mode without a stylesheet.
+    button.add_css_class('caption-heading');
+    const paint = () => {
+      if (button.get_active()) button.add_css_class('suggested-action');
+      else button.remove_css_class('suggested-action');
+    };
+    paint();
     button.connect('toggled', () => {
       if (button.get_active()) set.add(key);
       else set.delete(key);
+      paint();
       rebuild();
     });
     return button;
@@ -254,6 +288,12 @@ export function createConversationList(
       // A filter whose choice vanished (an account removed) must not hide everything.
       for (const key of backends) if (!entries.some((e) => e.backend === key)) backends.delete(key);
       for (const key of accounts) if (!entries.some((e) => e.accountId === key)) accounts.delete(key);
+      rebuildChips();
+      rebuild();
+    },
+    chooseProtocol(backend) {
+      if (!entries.some((e) => e.backend === backend)) return;
+      backends.add(backend);
       rebuildChips();
       rebuild();
     },
