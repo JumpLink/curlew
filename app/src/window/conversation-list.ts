@@ -31,6 +31,8 @@ export interface ConversationList {
   page: Adw.NavigationPage;
   /** Replace the entries; the selection and the filters stay. */
   setEntries(entries: ListEntry[], accountLabels: Map<string, string>): void;
+  /** Switch one protocol chip on, as a click would. */
+  chooseProtocol(backend: string): void;
 }
 
 type RowRef = { kind: 'section'; id: string } | { kind: 'entry'; entry: ListEntry };
@@ -158,11 +160,19 @@ export function createConversationList(
 
   const chip = (label: string, set: Set<string>, key: string): Gtk.ToggleButton => {
     const button = new Gtk.ToggleButton({ label, active: set.has(key) });
-    button.add_css_class('flat');
-    button.add_css_class('caption');
+    // `pill` is the rounded chip shape; the accent fill (`suggested-action`) only while it is on, so
+    // the state reads at a glance in light and dark mode without a stylesheet.
+    button.add_css_class('pill');
+    button.add_css_class('caption-heading');
+    const paint = () => {
+      if (button.get_active()) button.add_css_class('suggested-action');
+      else button.remove_css_class('suggested-action');
+    };
+    paint();
     button.connect('toggled', () => {
       if (button.get_active()) set.add(key);
       else set.delete(key);
+      paint();
       rebuild();
     });
     return button;
@@ -254,6 +264,12 @@ export function createConversationList(
       // A filter whose choice vanished (an account removed) must not hide everything.
       for (const key of backends) if (!entries.some((e) => e.backend === key)) backends.delete(key);
       for (const key of accounts) if (!entries.some((e) => e.accountId === key)) accounts.delete(key);
+      rebuildChips();
+      rebuild();
+    },
+    chooseProtocol(backend) {
+      if (!entries.some((e) => e.backend === backend)) return;
+      backends.add(backend);
       rebuildChips();
       rebuild();
     },

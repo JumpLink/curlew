@@ -19,7 +19,8 @@ const application = new AdwaitaApp({
   applicationId: APP_ID,
   createWindow: (app) => {
     installAboutAction(app);
-    const window = createWindow(app);
+    // `CURLEW_WINDOW_FILTER=<backend>` starts with that protocol chip switched on, for screenshots.
+    const window = createWindow(app, { protocol: process.env.CURLEW_WINDOW_FILTER || undefined });
     // A smoke hook for screenshots and CI: the process ends itself. An environment variable and
     // not a flag, because GApplication rejects options it does not know.
     const quitAfter = Number(process.env.CURLEW_WINDOW_QUIT_AFTER_MS);
