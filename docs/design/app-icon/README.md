@@ -67,3 +67,32 @@ Strongest: 3 (red) and 1 (orange) — the only ones that stay both a bird and a 
 (contact sheets in `round3/`). The calling variants have the right posture now, but leave two
 corners empty and read as a tool rather than a bird at 16 px. Symbolic: `sym-head.svg` again;
 `sym-call.svg` failed at 16 px (`round3/symbolic-strip.png`).
+
+Feedback: the bubble must have exactly the shape of Fractal's and Flare's, so the icons line up
+side by side in GNOME; only the painting differs. Put the calling pose of 4–7 inside that bubble
+the way 1–3 sit in it. Add a bird-only variant seen from the front, looking at the viewer, like
+Pidgin.
+
+## Round 4 — the shared bubble, the call inside it, the frontal bird
+
+![Round 4 overview](round4/overview.png)
+
+The bubble outline, radius, tail and base are traced from Fractal and Flare once and emitted from
+one block in `round4/build.py`; the `ref` row of the overview sets them side by side.
+
+| # | File | Idea |
+|---|---|---|
+| 1 | `v1-bubble-orange.svg` | the shared bubble in orange, the head low left, the bill breaking out right |
+| 2 | `v2-bubble-lowleft.svg` | the head entering from the lower left, the bill sweeping up across |
+| 3 | `v3-bubble-red.svg` | 1 in GNOME red |
+| 4 | `v4-call-orange.svg` | the calling pose inside the bubble, the bill rising out at the top right |
+| 5 | `v5-call-red.svg` | 4 in red |
+| 6 | `v6-call-sound.svg` | 4 with two sound arcs at the bill tip |
+| 7 | `v7-front-straight.svg` | the whole bird from the front, Pidgin style |
+| 8 | `v8-front-quarter.svg` | 7 turned slightly, so the bill's curve shows |
+
+Strongest: 3 (still legible at 16 px on both themes) and 8 (the strongest new idea: the only bird
+in a messenger tray; reads down to 32 px). 4 and 5 are handsome at 128 px, but at 32 px only the
+bill stroke survives; the arcs of 6 read as a detached hook. Symbolic: `sym-head.svg` and
+`sym-bubble.svg` hold at 16 px; `sym-front.svg` failed — head-on, the bill points at the viewer
+and one colour cannot draw it.
