@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-04 19:46+0100\n"
+"POT-Creation-Date: 2026-11-05 07:20+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1367,12 +1367,12 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr ""
 
-#: app/src/window/about.ts:14 app/src/window/window.ts:62
-#: app/src/window/window.ts:70
+#: app/src/window/about.ts:14 app/src/window/window.ts:41
+#: app/src/window/window.ts:49
 msgid "Curlew"
 msgstr ""
 
-#: app/src/window/agent-access-dialog.ts:138 app/src/window/window.ts:83
+#: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:62
 msgid "Agent access"
 msgstr ""
 
@@ -1526,65 +1526,69 @@ msgstr ""
 msgid "WhatsApp"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:74
+#: app/src/window/conversation-list-model.ts:81
+msgid "Yesterday"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:91
 msgid "Unnamed conversation"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:122
+#: app/src/window/conversation-list-model.ts:139
 msgid "People"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:123
+#: app/src/window/conversation-list-model.ts:140
 msgid "Groups"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:141
+#: app/src/window/conversation-list.ts:153
 msgid "Search conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:178
+#: app/src/window/conversation-list.ts:191
 msgid "No conversations yet"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:178
+#: app/src/window/conversation-list.ts:191
 msgid "No matches"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:181
+#: app/src/window/conversation-list.ts:194
 msgid ""
 "Conversations appear here after Curlew has synced an account. Run \"curlew "
 "sync\" first."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:182
+#: app/src/window/conversation-list.ts:195
 msgid "Nothing fits the search and filters."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:221
+#: app/src/window/conversation-list.ts:234
 msgid "Search"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:232
+#: app/src/window/conversation-list.ts:245
 msgid "Conversations"
 msgstr ""
 
-#: app/src/window/window.ts:52
+#: app/src/window/window.ts:31
 msgid "Select a conversation"
 msgstr ""
 
-#: app/src/window/window.ts:54
+#: app/src/window/window.ts:33
 msgid "{protocol} conversation. Reading and writing here is not built yet."
 msgstr ""
 
-#: app/src/window/window.ts:57
+#: app/src/window/window.ts:36
 msgid "Pick a conversation from the list."
 msgstr ""
 
-#: app/src/window/window.ts:85
+#: app/src/window/window.ts:64
 msgid "About Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:86
+#: app/src/window/window.ts:65
 msgid "Quit"
 msgstr ""
 

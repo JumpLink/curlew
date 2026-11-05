@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-04 19:46+0100\n"
+"POT-Creation-Date: 2026-11-05 07:20+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1605,12 +1605,12 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
-#: app/src/window/about.ts:14 app/src/window/window.ts:62
-#: app/src/window/window.ts:70
+#: app/src/window/about.ts:14 app/src/window/window.ts:41
+#: app/src/window/window.ts:49
 msgid "Curlew"
 msgstr "Curlew"
 
-#: app/src/window/agent-access-dialog.ts:138 app/src/window/window.ts:83
+#: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:62
 msgid "Agent access"
 msgstr "Agentenzugriff"
 
@@ -1774,31 +1774,35 @@ msgstr "Telegram"
 msgid "WhatsApp"
 msgstr "WhatsApp"
 
-#: app/src/window/conversation-list-model.ts:74
+#: app/src/window/conversation-list-model.ts:81
+msgid "Yesterday"
+msgstr "Gestern"
+
+#: app/src/window/conversation-list-model.ts:91
 msgid "Unnamed conversation"
 msgstr "Unbenannte Unterhaltung"
 
-#: app/src/window/conversation-list-model.ts:122
+#: app/src/window/conversation-list-model.ts:139
 msgid "People"
 msgstr "Personen"
 
-#: app/src/window/conversation-list-model.ts:123
+#: app/src/window/conversation-list-model.ts:140
 msgid "Groups"
 msgstr "Gruppen"
 
-#: app/src/window/conversation-list.ts:141
+#: app/src/window/conversation-list.ts:153
 msgid "Search conversations"
 msgstr "Unterhaltungen durchsuchen"
 
-#: app/src/window/conversation-list.ts:178
+#: app/src/window/conversation-list.ts:191
 msgid "No conversations yet"
 msgstr "Noch keine Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:178
+#: app/src/window/conversation-list.ts:191
 msgid "No matches"
 msgstr "Keine Treffer"
 
-#: app/src/window/conversation-list.ts:181
+#: app/src/window/conversation-list.ts:194
 msgid ""
 "Conversations appear here after Curlew has synced an account. Run \"curlew "
 "sync\" first."
@@ -1806,35 +1810,36 @@ msgstr ""
 "Unterhaltungen erscheinen hier, sobald Curlew ein Konto synchronisiert hat. "
 "Führe zuerst „curlew sync“ aus."
 
-#: app/src/window/conversation-list.ts:182
+#: app/src/window/conversation-list.ts:195
 msgid "Nothing fits the search and filters."
 msgstr "Nichts passt zur Suche und den Filtern."
 
-#: app/src/window/conversation-list.ts:221
+#: app/src/window/conversation-list.ts:234
 msgid "Search"
 msgstr "Suchen"
 
-#: app/src/window/conversation-list.ts:232
+#: app/src/window/conversation-list.ts:245
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
-#: app/src/window/window.ts:52
+#: app/src/window/window.ts:31
 msgid "Select a conversation"
 msgstr "Unterhaltung auswählen"
 
-#: app/src/window/window.ts:54
+#: app/src/window/window.ts:33
 msgid "{protocol} conversation. Reading and writing here is not built yet."
-msgstr "{protocol}-Unterhaltung. Lesen und Schreiben ist hier noch nicht gebaut."
+msgstr ""
+"{protocol}-Unterhaltung. Lesen und Schreiben ist hier noch nicht gebaut."
 
-#: app/src/window/window.ts:57
+#: app/src/window/window.ts:36
 msgid "Pick a conversation from the list."
 msgstr "Wähle eine Unterhaltung aus der Liste."
 
-#: app/src/window/window.ts:85
+#: app/src/window/window.ts:64
 msgid "About Curlew"
 msgstr "Über Curlew"
 
-#: app/src/window/window.ts:86
+#: app/src/window/window.ts:65
 msgid "Quit"
 msgstr "Beenden"
 
