@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Curlew symbolic: head, bill and a slim nape running off the bottom edge. Head and bill alone
-     read as a comma at 16 px; the nape is what says "bird", so it stays, but narrow — a wide one
-     turns the icon into one black mass. The eye is a hole. Fill only. -->
-<svg width="16" height="16" viewBox="0 0 16 16" version="1.1"
-     xmlns="http://www.w3.org/2000/svg">
-  <g fill="#241f31">
-    <path fill-rule="evenodd"
-          d="M2.1 5.2 A2.9 2.9 0 1 1 7.9 5.2 A2.9 2.9 0 1 1 2.1 5.2 Z
-             M5.05 4.3 A0.85 0.85 0 1 0 6.75 4.3 A0.85 0.85 0 1 0 5.05 4.3 Z"/>
-    <path d="M2.9 6.8 C2.4 10 2.6 13 3 15 H5.6 C5.2 12.4 5.4 9.6 6.4 7.2 Z"/>
-    <!-- the two edges stay ~1.5 px apart until the last third: a bill that tapers early
-         vanishes at 16 px and the whole icon turns into a hook -->
-    <path d="M7.3 2.2 C11.3 2.2 14.6 5.2 15 11.6 C13.4 8.2 11.2 5 7.8 4.6 Z"/>
-  </g>
+<!--
+  eu.jumplink.curlew-symbolic — the calling head from the app icon, reduced to one shape.
+
+  At 16 px the bubble outline from the colour icon competes with the head and both go mushy, so
+  only the bird is left: a 10 px head circle on the grid from 1,5 to 11,15, the eye punched out
+  as a hole with the same winding rule, and the bill rising out of the gape to the top right
+  corner. The bill keeps more weight towards the tip than the drawing does, because a tapered
+  tip disappears into the antialiasing at this size.
+-->
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <path fill="#222222" fill-rule="evenodd"
+        d="M6 5 A5 5 0 1 0 6 15 A5 5 0 1 0 6 5 Z
+           M8.2 5.4 C10.2 3.9 12.6 2.4 15 1 C13.0 2.9 11.8 5.3 10.9 8.4 Z
+           M7.6 9.4 A1.3 1.3 0 1 1 7.6 12 A1.3 1.3 0 1 1 7.6 9.4 Z"/>
 </svg>
