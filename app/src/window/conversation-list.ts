@@ -59,6 +59,7 @@ function badgedAvatar(entry: ListEntry): Gtk.Widget {
     valign: Gtk.Align.END,
   });
   badge.add_css_class('card');
+  badge.add_css_class('view');
   const icon = new Gtk.Image({
     iconName: protocolIcon(entry.backend),
     pixelSize: 16,
@@ -183,9 +184,9 @@ export function createConversationList(
 
   const chip = (label: string, set: Set<string>, key: string): Gtk.ToggleButton => {
     const button = new Gtk.ToggleButton({ label, active: set.has(key) });
-    // `pill` is the rounded chip shape; the accent fill (`suggested-action`) only while it is on, so
-    // the state reads at a glance in light and dark mode without a stylesheet.
-    button.add_css_class('pill');
+    // The plain button shape stays compact enough for several chips per line at 360 px (`pill` took
+    // a line each); the accent fill (`suggested-action`) only while it is on, so the state reads at
+    // a glance in light and dark mode without a stylesheet.
     button.add_css_class('caption-heading');
     const paint = () => {
       if (button.get_active()) button.add_css_class('suggested-action');
