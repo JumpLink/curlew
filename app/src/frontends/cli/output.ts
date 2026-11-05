@@ -13,6 +13,10 @@ export function runAndExit<T>(fn: () => Promise<T>, options: { print?: (value: T
     .then(() => process.exit(0))
     .catch((err) => {
       console.error(err instanceof Error ? err.message : err);
+      // An SmtpError's detail is already scrubbed of secrets; without it "connection failed"
+      // cannot be told apart from a refused certificate or a timeout.
+      const detail = (err as { detail?: unknown } | null)?.detail;
+      if (typeof detail === 'string' && detail !== '') console.error(detail);
       process.exit(1);
     });
 }
