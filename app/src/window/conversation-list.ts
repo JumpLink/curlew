@@ -37,13 +37,36 @@ export interface ConversationList {
 
 type RowRef = { kind: 'section'; id: string } | { kind: 'entry'; entry: ListEntry };
 
+const AVATAR_SIZE = 40;
+const BADGE_SIZE = 22;
+/** Room the badge hangs in, so it sits on the avatar's rim and the initials stay readable. */
+const BADGE_OVERHANG = 6;
+
 function badgedAvatar(entry: ListEntry): Gtk.Widget {
-  const avatar = new Adw.Avatar({ size: 40, text: entry.title, showInitials: initials(entry.title) !== '' });
-  const badge = new Gtk.Image({ iconName: protocolIcon(entry.backend), pixelSize: 16 });
-  badge.add_css_class('osd');
-  badge.add_css_class('circular');
-  badge.set_halign(Gtk.Align.END);
-  badge.set_valign(Gtk.Align.END);
+  const avatar = new Adw.Avatar({
+    size: AVATAR_SIZE,
+    text: entry.title,
+    showInitials: initials(entry.title) !== '',
+    marginEnd: BADGE_OVERHANG,
+    marginBottom: BADGE_OVERHANG,
+  });
+  // A solid backdrop in the theme's own card colour: it contrasts with the avatar in light and dark
+  // mode, and its 12 px radius on a 22 px box clamps to half the width, so it draws a circle.
+  const badge = new Gtk.Box({
+    widthRequest: BADGE_SIZE,
+    heightRequest: BADGE_SIZE,
+    halign: Gtk.Align.END,
+    valign: Gtk.Align.END,
+  });
+  badge.add_css_class('card');
+  const icon = new Gtk.Image({
+    iconName: protocolIcon(entry.backend),
+    pixelSize: 16,
+    hexpand: true,
+    halign: Gtk.Align.CENTER,
+    valign: Gtk.Align.CENTER,
+  });
+  badge.append(icon);
   const overlay = new Gtk.Overlay();
   overlay.set_child(avatar);
   overlay.add_overlay(badge);
