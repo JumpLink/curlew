@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+V5 – V4 in the GNOME red.
+-->
+
+<svg
+   width="128"
+   height="128"
+   viewBox="0 0 128 128"
+   version="1.1"
+   id="svg30"
+   sodipodi:docname="v5b-call-red.svg"
+   inkscape:version="1.4.4 (dcaf3e7d9e, 2026-05-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview30"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="9.3125"
+     inkscape:cx="64"
+     inkscape:cy="64"
+     inkscape:window-width="2560"
+     inkscape:window-height="1403"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g28" />
+  <defs
+     id="defs17">
+    <linearGradient
+       id="face"
+       x1="48"
+       y1="100"
+       x2="80"
+       y2="32"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0"
+         stop-color="#e01b24"
+         id="stop1" />
+      <stop
+         offset="1"
+         stop-color="#f66151"
+         id="stop2" />
+    </linearGradient>
+    <linearGradient
+       id="wall"
+       x1="8"
+       y1="70"
+       x2="120"
+       y2="70"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0"
+         stop-color="#c01c28"
+         id="stop3" />
+      <stop
+         offset="0.0714286"
+         stop-color="#f66151"
+         id="stop4" />
+      <stop
+         offset="0.142857"
+         stop-color="#c01c28"
+         id="stop5" />
+      <stop
+         offset="0.857143"
+         stop-color="#c01c28"
+         id="stop6" />
+      <stop
+         offset="0.928571"
+         stop-color="#f66151"
+         id="stop7" />
+      <stop
+         offset="1"
+         stop-color="#c01c28"
+         id="stop8" />
+    </linearGradient>
+    <linearGradient
+       id="fold"
+       x1="31.462524"
+       y1="114"
+       x2="39"
+       y2="114"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0"
+         stop-color="#c01c28"
+         id="stop9" />
+      <stop
+         offset="0.469318"
+         stop-color="#f66151"
+         id="stop10" />
+      <stop
+         offset="1"
+         stop-color="#c01c28"
+         id="stop11" />
+    </linearGradient>
+    <path
+       id="tail"
+       fill-rule="evenodd"
+       d="M24 100 V112 H28 C30.210938 112 32 113.789062 32 116 V123              C32 124.992188 33.183594 126.792969 35.011719 127.585938              C36.839844 128.375 38.964844 128.003906 40.417969 126.640625              L53.941406 113.933594 C55.265625 112.691406 57.011719 112 58.824219 112              H68 V100 Z" />
+    <path
+       id="lip"
+       fill-rule="evenodd"
+       d="M24 106 V108 H28 C30.210938 108 32 109.789062 32 112 V119              C32 120.992188 33.183594 122.792969 35.011719 123.585938              C36.839844 124.375 38.964844 124.003906 40.417969 122.640625              L53.941406 109.933594 C55.265625 108.691406 57.011719 108 58.824219 108              H68 V106 Z" />
+    <path
+       id="wallrect"
+       d="M24 28 H104 C112.835938 28 120 35.164062 120 44 V96              C120 104.835938 112.835938 112 104 112 H24              C15.164062 112 8 104.835938 8 96 V44 C8 35.164062 15.164062 28 24 28 Z" />
+    <path
+       id="facerect"
+       d="M24 24 H104 C112.835938 24 120 31.164062 120 40 V92              C120 100.835938 112.835938 108 104 108 H24              C15.164062 108 8 100.835938 8 92 V40 C8 31.164062 15.164062 24 24 24 Z" />
+    <clipPath
+       id="face-clip">
+      <use
+         href="#facerect"
+         id="use11" />
+    </clipPath>
+    <linearGradient
+       id="buff"
+       x1="10"
+       y1="40"
+       x2="74"
+       y2="124"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0"
+         stop-color="#f8e8c8"
+         id="stop12" />
+      <stop
+         offset="0.55"
+         stop-color="#e2c091"
+         id="stop13" />
+      <stop
+         offset="1"
+         stop-color="#b0804f"
+         id="stop14" />
+    </linearGradient>
+    <linearGradient
+       id="bill"
+       x1="50"
+       y1="70"
+       x2="112"
+       y2="24"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0"
+         stop-color="#6f4d2e"
+         id="stop15" />
+      <stop
+         offset="0.5"
+         stop-color="#4a3420"
+         id="stop16" />
+      <stop
+         offset="1"
+         stop-color="#332315"
+         id="stop17" />
+    </linearGradient>
+    <ellipse
+       id="head"
+       cx="28"
+       cy="92"
+       rx="29"
+       ry="25" />
+    <clipPath
+       id="head-clip">
+      <use
+         href="#head"
+         id="use17" />
+    </clipPath>
+  </defs>
+  <use
+     href="#tail"
+     fill="url(#fold)"
+     id="use18" />
+  <use
+     href="#wallrect"
+     fill="url(#wall)"
+     id="use19" />
+  <use
+     href="#facerect"
+     fill="url(#face)"
+     id="use20" />
+  <use
+     href="#lip"
+     fill="#e01b24"
+     id="use21" />
+  <g
+     clip-path="url(#face-clip)"
+     id="g29">
+    <g
+       transform="translate(22,-18) rotate(15 28 92)"
+       id="g28">
+      <!-- neck and breast, run well past the clip so the bubble floor never shows a cut edge -->
+      <g
+         transform="rotate(-24 28 92)"
+         id="g27">
+        <use
+           href="#head"
+           fill="url(#buff)"
+           id="use24" />
+        <g
+           clip-path="url(#head-clip)"
+           id="g26">
+          <path
+             fill="#8a5f3a"
+             d="M2 88 C4 74 14 68 28 68 C42 68 52 74 55 84 C38 74 14 76 2 88 Z"
+             id="path25" />
+          <path
+             fill="#fbf0d8"
+             opacity="0.5"
+             d="M4 94 C18 83 42 83 55 89 L55 93 C40 86 17 88 5 98 Z"
+             id="path26" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <g
+     transform="translate(22,-18) rotate(15 28 92)"
+     id="g30">
+    <path
+       fill="url(#bill)"
+       d="M47 68 C59 54 71 42 88 30 C80 42 70 52 55 75 Z"
+       id="path29" />
+    <circle
+       cx="46"
+       cy="84"
+       r="6.6"
+       fill="#241f31"
+       id="circle29" />
+    <circle
+       cx="48.2"
+       cy="81.8"
+       r="2"
+       fill="#ffffff"
+       opacity="0.85"
+       id="circle30" />
+  </g>
+</svg>

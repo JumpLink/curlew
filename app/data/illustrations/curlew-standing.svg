@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The whole bird standing upright on the mudflat, side view.
+
+  The proportions are measured off the real Eurasian curlew: the body is a long shallow wedge,
+  roughly twice as wide as it is deep, tapering to a tail point at the left; the neck is a
+  slender column that stands clear of the body; the head is small; the legs are as long as the
+  body is deep, with the ankle bending backwards; and the bill is longer than head and neck
+  together, leaving the face at eye level and decurving only over its outer half. The wing's
+  trailing edge is scalloped — the plumage pattern drawn as a silhouette rather than as dots —
+  and it stops short of the belly, which stays pale the way the real bird's does.
+
+  Design round 2, candidate C1.
+-->
+<svg width="128" height="127" viewBox="0 1 128 127" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="buff" x1="0" y1="8" x2="0" y2="92" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f6e2bd"/>
+      <stop offset="0.55" stop-color="#e2c091"/>
+      <stop offset="1" stop-color="#bd8f62"/>
+    </linearGradient>
+    <linearGradient id="wing" x1="0" y1="52" x2="0" y2="82" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#b07d46"/>
+      <stop offset="1" stop-color="#6b4a2c"/>
+    </linearGradient>
+    <linearGradient id="bill" x1="92" y1="6" x2="122" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6b4a2c"/>
+      <stop offset="0.5" stop-color="#4a3420"/>
+      <stop offset="1" stop-color="#372618"/>
+    </linearGradient>
+    <linearGradient id="sand" x1="0" y1="110" x2="0" y2="126" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e7d6b2"/>
+      <stop offset="1" stop-color="#c2ab82"/>
+    </linearGradient>
+
+    <!-- body: breast right, tail point left, twice as wide as deep -->
+    <path id="body"
+          d="M74 68 C76 79 68 87 54 88 C40 89 24 86 15 78
+             C10 74 6 71 4 68 C16 58 41 53 58 55 C68 56 73 61 74 68 Z"/>
+    <clipPath id="body-clip"><use href="#body"/></clipPath>
+    <!-- neck: a slender column standing clear of the body -->
+    <path id="neck" d="M60 72 C57 53 62 37 72 26 L81 33 C73 43 70 55 69 73 Z"/>
+    <clipPath id="neck-clip"><use href="#neck"/></clipPath>
+  </defs>
+
+  <!-- mudflat: the HIG base, a lit top face over a darker profile -->
+  <ellipse cx="64" cy="120" rx="57" ry="7" fill="#9c8a66"/>
+  <ellipse cx="64" cy="116" rx="57" ry="7" fill="url(#sand)"/>
+
+  <!-- far leg, behind the body; long tarsus, the ankle bending backwards -->
+  <g fill="none" stroke="#908f94" stroke-linecap="round">
+    <path stroke-width="4.2" d="M58 82 L52 100 L59 115"/>
+    <path stroke-width="3.2" d="M59 115 L70 117"/>
+  </g>
+  <!-- near leg -->
+  <g fill="none" stroke="#6f6d74" stroke-linecap="round">
+    <path stroke-width="4.6" d="M41 84 L34 101 L42 115"/>
+    <path stroke-width="3.6" d="M42 115 L53 117"/>
+  </g>
+
+  <use href="#body" fill="url(#buff)"/>
+  <!-- folded wing over the back; the scalloped edge leaves the pale belly showing below -->
+  <path clip-path="url(#body-clip)" fill="url(#wing)"
+        d="M3 68 C16 57 41 52 58 54 C68 55 73 60 74 67
+           C68 69 67 63 61 64 C55 65 54 60 48 61 C42 62 41 57 35 58
+           C29 59 28 55 22 56 C16 57 9 63 4 63 Z"/>
+  <!-- tail point, a shade darker so the rear reads as a tip -->
+  <path clip-path="url(#body-clip)" fill="#5e4127"
+        d="M4 68 C3 63 5 58 9 55 L16 60 C11 64 9 69 9 76 Z"/>
+
+  <!-- neck, slender, finely streaked the way a curlew's is -->
+  <use href="#neck" fill="url(#buff)"/>
+  <g clip-path="url(#neck-clip)" fill="#9a6c42" opacity="0.5">
+    <path d="M62 60 l5 2 -4 6 -5 -2 Z"/>
+    <path d="M69 44 l5 2 -4 6 -5 -2 Z"/>
+    <path d="M64 36 l4 2 -3 5 -4 -2 Z"/>
+    <path d="M59 50 l4 2 -3 5 -4 -2 Z"/>
+    <path d="M67 65 l4 2 -3 5 -4 -2 Z"/>
+  </g>
+
+  <!-- head: small, as the real one is next to that bill -->
+  <ellipse cx="83" cy="19" rx="9.4" ry="8.6" fill="url(#buff)"/>
+  <path fill="#a97a4e" d="M73.8 16 C74.6 10 78 7 83 7 C88.6 7 93 10 93 15.5 C87 12 78.6 12 73.8 16 Z"/>
+
+  <!-- the bill: level at the face, decurving over its outer half -->
+  <path fill="url(#bill)"
+        d="M90 10 C105 15 115 32 122 55 L115.5 56.5 C109 34 101 22 88.5 20 Z"/>
+
+  <circle cx="86" cy="17" r="3.6" fill="#241f31"/>
+  <circle cx="87.2" cy="15.8" r="1.1" fill="#ffffff" opacity="0.85"/>
+</svg>

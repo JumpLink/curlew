@@ -4,6 +4,7 @@
  */
 
 import GLib from 'gi://GLib?version=2.0';
+import Gtk from 'gi://Gtk?version=4.0';
 import system from 'system';
 import { AdwaitaApp, runApplication } from '@gjsify/adwaita-app';
 
@@ -14,6 +15,10 @@ import { createWindow } from './window.ts';
 // This bundle carries its own copy of the gettext runtime, so the CLI bundle's catalogue is not
 // the one `_()` reads here.
 initI18n();
+
+// Wayland matches the window to its icon through the application id, but X11 and anything that
+// cannot read it need the name spelled out.
+Gtk.Window.set_default_icon_name(APP_ID);
 
 const application = new AdwaitaApp({
   applicationId: APP_ID,

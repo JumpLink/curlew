@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Curlew B — the same bird, read as a graphic rather than a scene: no pool, flat fills, a bold
+orange nobody else in the messenger shelf uses (Pidgin is purple, Adium green, Fractal and
+Flare blue). The bird carries its own HIG base: the darker band along the bottom of the body is
+the front profile, and the feet sit on the baseline. Light from straight above.
+-->
+<svg width="128" height="128" viewBox="0 0 128 128" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="b-buff" x1="0" y1="10" x2="0" y2="86" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffd396"/>
+      <stop offset="0.55" stop-color="#ffbe6f"/>
+      <stop offset="1" stop-color="#ff9a3c"/>
+    </linearGradient>
+    <linearGradient id="b-wing" x1="0" y1="36" x2="0" y2="78" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff7800"/>
+      <stop offset="1" stop-color="#e05d00"/>
+    </linearGradient>
+    <linearGradient id="b-bill" x1="92" y1="14" x2="118" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#a0714a"/>
+      <stop offset="1" stop-color="#5e4129"/>
+    </linearGradient>
+    <path id="b-body"
+          d="M8 62 C12 48 28 39 48 39 C69 39 85 50 85 64 C85 77 69 85 50 84 C31 83 14 75 8 62 Z"/>
+    <clipPath id="b-body-clip"><use href="#b-body"/></clipPath>
+  </defs>
+
+  <!-- legs, bare and graphic, standing on the baseline -->
+  <rect x="35" y="76" width="6" height="42" rx="3" fill="#5e5c64"/>
+  <rect x="52" y="76" width="6" height="42" rx="3" fill="#77767b"/>
+  <rect x="29" y="112" width="18" height="6" rx="3" fill="#5e5c64"/>
+  <rect x="46" y="112" width="18" height="6" rx="3" fill="#77767b"/>
+
+  <!-- body: buff underparts, one dark folded wing, and a 4 px front profile along the bottom -->
+  <use href="#b-body" fill="url(#b-buff)"/>
+  <path clip-path="url(#b-body-clip)" fill="url(#b-wing)"
+        d="M74 58 C70 44 48 36 30 39 C17 41 9 50 7 61 C17 71 33 76 48 75 C62 74 71 68 74 58 Z"/>
+  <ellipse clip-path="url(#b-body-clip)" cx="47" cy="106" rx="42" ry="26" fill="#ff9a3c"/>
+
+  <!-- neck, slender, rising from the right shoulder so the nape notch stays open -->
+  <path fill="url(#b-buff)" d="M63 56 C61 43 66 30 75 24 L87 30 C81 39 80 47 80 60 Z"/>
+  <ellipse cx="83" cy="22" rx="12" ry="11" fill="url(#b-buff)"/>
+  <!-- the bill: level at the face, decurved over its second half -->
+  <path fill="url(#b-bill)"
+        d="M92 13 C110 14 121 30 121 68 C119 62 117 54 116 46 C114 31 104 24 91 24 Z"/>
+  <circle cx="86" cy="19" r="4.5" fill="#241f31"/>
+  <circle cx="87.6" cy="17.4" r="1.4" fill="#ffffff" opacity="0.85"/>
+</svg>

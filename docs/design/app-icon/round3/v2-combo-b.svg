@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+V2 — Combo B: the bubble as a backdrop, the bird in front of it. The head comes in from outside,
+overlapping the bubble's left edge, and the bill reaches right across the bubble and out past its
+corner. Where V1 paints the bird onto the message, this one puts the bird between the viewer and
+the message, which gives the icon real depth and keeps the whole head silhouette intact.
+-->
+<svg width="128" height="128" viewBox="0 0 128 128" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bub" x1="0" y1="12" x2="0" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffd396"/>
+      <stop offset="0.55" stop-color="#ffbe6f"/>
+      <stop offset="1" stop-color="#ff7800"/>
+    </linearGradient>
+    <linearGradient id="buff" x1="8" y1="28" x2="56" y2="110" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8e8c8"/>
+      <stop offset="0.55" stop-color="#e2c091"/>
+      <stop offset="1" stop-color="#b0804f"/>
+    </linearGradient>
+    <linearGradient id="bill" x1="70" y1="42" x2="118" y2="110" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6f4d2e"/>
+      <stop offset="0.5" stop-color="#4a3420"/>
+      <stop offset="1" stop-color="#332315"/>
+    </linearGradient>
+
+    <ellipse id="head2" cx="40" cy="56" rx="32" ry="28"/>
+    <clipPath id="head2-clip"><use href="#head2"/></clipPath>
+  </defs>
+
+  <!-- the bubble, behind everything: tail at the bottom right, away from the bird -->
+  <path fill="url(#bub)"
+        d="M46 12 H102 C114 12 124 22 124 34 V74 C124 86 114 96 102 96 H92
+           L112 120 L76 96 H46 C34 96 24 86 24 74 V34 C24 22 34 12 46 12 Z"/>
+
+  <!-- neck, running off the bottom edge so the head reads as a crop, not a floating ball -->
+  <path fill="url(#buff)" d="M26 78 C18 96 16 114 20 128 L54 128 C50 112 52 94 60 80 Z"/>
+  <g fill="#9a6c42" opacity="0.3">
+    <path d="M28 86 l3 1 -5 16 -3 -1 Z"/>
+    <path d="M40 87 l3 1 -5 16 -3 -1 Z"/>
+    <path d="M24 110 l3 1 -4 14 -3 -1 Z"/>
+    <path d="M36 112 l3 1 -4 14 -3 -1 Z"/>
+  </g>
+
+  <use href="#head2" fill="url(#buff)"/>
+  <g clip-path="url(#head2-clip)">
+    <path fill="#8a5f3a" d="M6 50 C12 34 26 26 41 26 C58 26 69 33 73 45 C53 32 21 35 6 50 Z"/>
+    <path fill="#fbf0d8" opacity="0.55" d="M8 55 C25 42 56 42 73 49 L73 53 C53 45 24 48 9 60 Z"/>
+  </g>
+
+  <!-- the bill reaches right across the bubble and out past its lower right -->
+  <path fill="url(#bill)"
+        d="M66 42 C92 51 112 76 121 112 L113 114 C103 82 85 60 63 55 Z"/>
+
+  <circle cx="56" cy="49" r="6.6" fill="#241f31"/>
+  <circle cx="58.2" cy="46.8" r="2" fill="#ffffff" opacity="0.85"/>
+</svg>

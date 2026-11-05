@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The bird as a flat silhouette: long shallow body, slender neck standing clear of it, small
+  head, the long decurved bill, and the long legs with the ankle bending backwards. The legs
+  are the whole reason a silhouette reads as a wader rather than as a duck, so nothing crosses
+  them.
+
+  Pure contrast and no internal detail, which is what makes this the one treatment that survives
+  any size. The dusk disc, sun, water and reflection of the icon round are gone; what is left is
+  a single-colour shape that can be tinted to whatever it sits on.
+
+  Design round 2, candidate C7.
+-->
+<svg width="122" height="112" viewBox="3 1 122 112" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <g fill="#241f31">
+    <path d="M70 60 C72 70 65 77 53 78 C40 79 26 76 18 69
+             C14 66 11 63 9 60 C20 51 42 47 56 49 C65 50 69 54 70 60 Z"/>
+    <path d="M57 62 C55 45 60 31 70 22 L79 28 C71 36 68 46 67 63 Z"/>
+    <ellipse cx="81" cy="16" rx="9" ry="8.2"/>
+    <!-- the bill: level at the face, decurving only over its outer half, and long enough that
+         it clears the body instead of curling back at it -->
+    <path d="M87 8 C101 13 111 29 119 53 L112.5 54.5 C105 32 97 20 85.5 18 Z"/>
+  </g>
+  <g fill="none" stroke="#241f31" stroke-linecap="round">
+    <path stroke-width="4.4" d="M55 74 L50 88 L57 103"/>
+    <path stroke-width="3.4" d="M57 103 L67 105"/>
+    <path stroke-width="4.4" d="M39 76 L33 89 L41 103"/>
+    <path stroke-width="3.4" d="M41 103 L51 105"/>
+  </g>
+</svg>

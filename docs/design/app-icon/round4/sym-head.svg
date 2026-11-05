@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+sym-head – the round-3 symbolic, carried over: one head, one bill, nothing else. At 16 px the
+decurve is the whole message, so the bill gets the width it needs and the head stays plain.
+-->
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <g fill="#222222">
+    <circle cx="5.6" cy="9.4" r="4.1"/>
+    <path d="M8.6 7.2 C10.8 5.6 12.9 4 15.4 2.4 C13.6 4.9 11.6 6.9 9.6 8.6 Z"/>
+  </g>
+</svg>

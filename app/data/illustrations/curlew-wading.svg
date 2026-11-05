@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A Eurasian curlew wading in a tide pool.
+
+  The bill leaves the face at eye level, stays near level over its first half and decurves over
+  its second, the way the real one does, so it reads as a long shallow sweep. The bird is two
+  shapes, as the real one is marked: buff head, neck and underparts, and one dark folded wing
+  over the back ending in the tail point. The pool is the HIG base — a lit top face with a 4 px
+  darker front profile below it. Light from straight above.
+
+  Design round 1, variant A.
+-->
+<svg width="123" height="123" viewBox="0 5 123 123" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- one gradient in user space for head, neck and body, so the overlaps have no seam -->
+    <linearGradient id="buff" x1="0" y1="10" x2="0" y2="82" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#eccb8e"/>
+      <stop offset="0.55" stop-color="#d5a65f"/>
+      <stop offset="1" stop-color="#b9873f"/>
+    </linearGradient>
+    <linearGradient id="wing-fill" x1="0" y1="38" x2="0" y2="76" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c0832f"/>
+      <stop offset="1" stop-color="#874f15"/>
+    </linearGradient>
+    <!-- warm at the base, dark at the tip -->
+    <linearGradient id="bill-ink" x1="87" y1="16" x2="114" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8a5f38"/>
+      <stop offset="0.4" stop-color="#55381f"/>
+      <stop offset="1" stop-color="#3d2b1b"/>
+    </linearGradient>
+    <linearGradient id="pool-face" x1="0" y1="90" x2="0" y2="118" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#a6dde2"/>
+      <stop offset="1" stop-color="#69bcc6"/>
+    </linearGradient>
+    <!-- a horizontal egg, fat end forward, closing to a blunt tail point at the rear -->
+    <path id="body"
+          d="M10 60 C14 48 28 40 46 40 C65 40 80 50 80 62 C80 74 65 81 48 80 C30 79 15 72 10 60 Z"/>
+    <clipPath id="body-clip"><use href="#body"/></clipPath>
+  </defs>
+
+  <!-- the pool, drawn first: darker front profile, lit top face 4 px above it -->
+  <ellipse cx="60" cy="108" rx="56" ry="14" fill="#3f8f99"/>
+  <ellipse cx="60" cy="104" rx="56" ry="14" fill="url(#pool-face)"/>
+
+  <!-- legs stand in the water, the ripple closes over them where they break the surface -->
+  <rect x="33" y="72" width="6" height="22" rx="3" fill="#5e5c64"/>
+  <rect x="48" y="72" width="6" height="23" rx="3" fill="#77767b"/>
+  <ellipse cx="44" cy="95" rx="19" ry="5" fill="none" stroke="#ffffff" stroke-width="2.5"
+           opacity="0.5"/>
+
+  <!-- body: buff underparts, with the folded wing as the one dark mass over the back -->
+  <use href="#body" fill="url(#buff)"/>
+  <path clip-path="url(#body-clip)" fill="url(#wing-fill)"
+        d="M70 56 C66 44 46 38 30 41 C18 43 11 51 9 59 C18 68 32 72 46 71 C58 70 67 65 70 56 Z"/>
+
+  <!-- neck, slender, rising from the right shoulder so the nape notch stays open -->
+  <path fill="url(#buff)"
+        d="M60 54 C58 42 63 30 71 24 L82 30 C77 38 76 46 76 58 Z"/>
+  <ellipse cx="78" cy="22" rx="11.5" ry="10.5" fill="url(#buff)"/>
+  <!-- the bill: the whole identity of the bird — level at the face, decurved at the tip -->
+  <path fill="url(#bill-ink)"
+        d="M87 14 C105 15 117 30 117 64 C115 59 113 52 112 44 C110 30 100 25 86 25 Z"/>
+  <!-- eye, with the light from above as a catchlight -->
+  <circle cx="81" cy="19" r="4.5" fill="#241f31"/>
+  <circle cx="82.6" cy="17.4" r="1.4" fill="#ffffff" opacity="0.85"/>
+</svg>

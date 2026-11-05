@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+C4, colourful: the same bubble and the same head, painted in GNOME orange instead of sand, with
+the bird in near-black so it holds together at 16 px. Same drawing, a louder voice — and orange
+sits clear of Pidgin purple, Adium green and Fractal blue.
+-->
+<svg width="128" height="128" viewBox="0 0 128 128" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bub" x1="0" y1="8" x2="0" y2="118" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffd396"/>
+      <stop offset="0.55" stop-color="#ffbe6f"/>
+      <stop offset="1" stop-color="#ff7800"/>
+    </linearGradient>
+    <linearGradient id="bird" x1="0" y1="20" x2="0" y2="84" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4b3a2d"/>
+      <stop offset="1" stop-color="#241f31"/>
+    </linearGradient>
+
+    <path id="bubble4b"
+          d="M30 8 H98 C110 8 120 18 120 30 V68 C120 80 110 90 98 90 H52
+             L24 118 L30 90 C18 89 8 80 8 68 V30 C8 18 18 8 30 8 Z"/>
+    <clipPath id="bubble4b-clip"><use href="#bubble4b"/></clipPath>
+  </defs>
+
+  <use href="#bubble4b" fill="url(#bub)"/>
+
+  <g clip-path="url(#bubble4b-clip)">
+    <path fill="url(#bird)" d="M48 56 C43 72 43 86 46 102 L78 102 C73 86 73 70 80 58 Z"/>
+    <ellipse cx="60" cy="44" rx="23" ry="21" fill="url(#bird)"/>
+  </g>
+
+  <path fill="url(#bird)"
+        d="M80 30 C99 39 114 61 122 98 L114 100 C105 68 93 47 77 41 Z"/>
+
+  <circle cx="71" cy="38" r="5.6" fill="#ffd396"/>
+  <circle cx="71.8" cy="38" r="2.9" fill="#241f31"/>
+</svg>

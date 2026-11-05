@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="app/data/icons/hicolor/scalable/apps/eu.jumplink.curlew.svg" alt="" width="128" height="128">
+</p>
+
 # Curlew
 
 *Formerly `postbote`.* The GitHub repository is `JumpLink/curlew` (old URLs redirect). An existing `~/.local/share/postbote` / `~/.config/postbote` keeps being used as it is, and the old `POSTBOTE_*` variables still work.
