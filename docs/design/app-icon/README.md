@@ -96,3 +96,23 @@ in a messenger tray; reads down to 32 px). 4 and 5 are handsome at 128 px, but a
 bill stroke survives; the arcs of 6 read as a detached hook. Symbolic: `sym-head.svg` and
 `sym-bubble.svg` hold at 16 px; `sym-front.svg` failed — head-on, the bill points at the viewer
 and one colour cannot draw it.
+
+## Final — Pascal's variant
+
+![Final icon in all sizes](final/overview.png)
+
+Pascal took round-4 variant 5 (calling, red bubble) and removed the neck in Inkscape
+(`final/pascal-v5b-call-red.svg`): a round head with the cap and the eye in the middle of the
+shared bubble, the bill rising out at the top right. The shipped
+`app/data/icons/hicolor/scalable/apps/eu.jumplink.curlew.svg` is that file with only the editor
+metadata removed; it renders pixel-identical (`magick compare -metric AE` = 0 at 16–1024 px).
+
+![Final icon beside GNOME apps](final/contact-sheet.png)
+
+Symbolic: the head alone, eye punched out, bill rising to the top right
+(`final/symbolic-strip.png`); a version inside a bubble outline closed up the eye at 16 px.
+
+The bird views without a bubble are kept as illustrations for the README and the app, in
+[`app/data/illustrations/`](../../../app/data/illustrations/README.md):
+
+![Illustrations](final/illustrations.png)
