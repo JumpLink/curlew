@@ -21,7 +21,7 @@ function sent(sentChat: SentChat): SentMessage {
 
 export class XmppSender implements MessageSender {
   /** Long texts are rendered as XEP-0393 and split (see `core/markdown.ts`). */
-  readonly features: SenderFeatures = { markdown: true };
+  readonly features: SenderFeatures = { markdown: true, attachments: false };
   private readonly session: GrantedXmppSession;
 
   constructor(session: GrantedXmppSession) {

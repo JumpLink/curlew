@@ -26,6 +26,8 @@ export interface WriteLogEntry {
   reason?: string;
   /** What happened when it is not a plain write, for example `presence available`. */
   note?: string;
+  /** Mail attachments: file names and byte sizes only, never content. */
+  attachments?: { filename: string; size: number }[];
 }
 
 export const WRITE_LOG_FILE = 'writes.log';

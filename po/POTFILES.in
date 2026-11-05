@@ -98,6 +98,7 @@ packages/gnome/src/goa.gjs.ts
 packages/gnome/src/index.ts
 packages/gnome/src/libs.gjs.ts
 packages/gnome/src/optional.ts
+packages/imap/src/attachments.ts
 packages/imap/src/backend.gjs.ts
 packages/imap/src/client.gjs.ts
 packages/imap/src/index.gjs.ts

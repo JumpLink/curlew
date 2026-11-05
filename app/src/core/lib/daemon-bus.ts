@@ -266,6 +266,11 @@ export function parseDaemonAccessRequest(json: string): DaemonAccessRequest {
     throw new Error('the access request has a contact that is not a string');
   if (request.preview !== undefined && typeof request.preview !== 'string')
     throw new Error('the access request has a preview that is not a string');
+  if (
+    request.attachments !== undefined &&
+    (!Array.isArray(request.attachments) || request.attachments.some((n) => typeof n !== 'string'))
+  )
+    throw new Error('the access request has attachments that are not a list of strings');
   return { ...request, oneShot: request.oneShot === true } as DaemonAccessRequest;
 }
 

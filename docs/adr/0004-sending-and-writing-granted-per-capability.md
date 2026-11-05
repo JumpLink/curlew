@@ -7,7 +7,8 @@
   [Amendment (2026-10-30, matrix)](#amendment-2026-10-30-matrix) and
   [Amendment (2026-10-30, signal)](#amendment-2026-10-30-signal) and
   [Amendment (2026-10-30, whatsapp)](#amendment-2026-10-30-whatsapp) and
-  [Amendment (2026-10-30, daemon send)](#amendment-2026-10-30-daemon-send); §2, §4 and §5
+  [Amendment (2026-10-30, daemon send)](#amendment-2026-10-30-daemon-send) and
+  [Amendment (2026-11-05, mail attachments)](#amendment-2026-11-05-mail-attachments); §2, §4 and §5
   amended by [ADR 0008](0008-grants-restrict-agents-not-the-person.md)
 - **Scope:** `@gjsify/mcp` (the gate), `app` (config, MCP server, `curlew send`, `curlew daemon`),
   `@curlew/xmpp`, `@curlew/protocol` (calendar port), `@curlew/gnome` (EDS calendar driver)
@@ -500,3 +501,16 @@ account, or an account/contact pair) with a read mode and a write mode of `allow
 `deny`. Each `<backend>.send` grant stays readable and is treated as a contact rule with write and
 read `allow`. §1 (the format), §3 (the gate) and §7 (the write log, which now also records how the
 write was allowed) otherwise stand.
+
+## Amendment (2026-11-05, mail attachments)
+
+`mail.send` may carry file attachments (`attachments` in `send_message`, `--attach` in the CLI).
+They ride on the existing address grant and add no capability of their own. That is acceptable
+because the grant already lets the agent put arbitrary text in front of that address, and the
+recipient is the one the person named; the added risk is reading a local file, which is bounded:
+`readAttachments` is the only place a path becomes bytes, takes absolute regular files only (a
+symlink is resolved once and re-checked, so a link cannot smuggle in a directory, device or fifo),
+caps size per file and in total, and every refusal comes before a connection exists. The
+permission prompt lists the file names, so the person sees what would leave. The write log records
+names and sizes, never content. Every other backend refuses attachments, and the daemon's bus send
+refuses them too, so the wire format is unchanged. §1, §3, §6 and §7 stand.

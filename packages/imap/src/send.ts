@@ -22,6 +22,7 @@ import type {
 import { listSmtpTargets } from '@curlew/gnome';
 import { sendMessage, type SmtpAccount } from '@curlew/smtp';
 import { _, fmt } from '@curlew/protocol';
+import { readAttachments } from './attachments.ts';
 
 /** `'none'` exists for a loopback dummy server; `@curlew/smtp` allows it on 127.0.0.1 only. */
 function smtpAccountFor(target: SmtpTarget): SmtpAccount {
@@ -45,7 +46,7 @@ export function isOwnMailAddress(from: string, to: string): boolean {
 
 export class MailSender implements MessageSender {
   /** Mail bodies are plain text: no chat styling, no splitting. */
-  readonly features: SenderFeatures = { markdown: false };
+  readonly features: SenderFeatures = { markdown: false, attachments: true };
   private readonly target: SmtpTarget;
   private readonly permit: SendPermit;
 
@@ -69,13 +70,29 @@ export class MailSender implements MessageSender {
 
   async send(message: SendingMessage): Promise<SentMessage> {
     const to = this.address(message.to);
+    // Read (and refused) before the connection exists; the content goes to `@curlew/smtp` only.
+    const files = readAttachments(message.attachments ?? []);
     const result = await sendMessage(smtpAccountFor(this.target), {
       from: this.target.from,
       to: [to],
       subject: message.subject ?? '',
       text: message.text,
+      ...(files.length === 0
+        ? {}
+        : {
+            attachments: files.map((f) => ({
+              filename: f.filename,
+              contentType: f.contentType,
+              content: f.content,
+            })),
+          }),
     });
-    return { target: to, id: result.messageId, sentAt: new Date().toISOString() };
+    return {
+      target: to,
+      id: result.messageId,
+      sentAt: new Date().toISOString(),
+      ...(files.length === 0 ? {} : { attachments: files.map((f) => ({ filename: f.filename, size: f.size })) }),
+    };
   }
 
   /** Nothing stays open between sends: the transport is closed inside `sendMessage`. */
