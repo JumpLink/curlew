@@ -1,6 +1,6 @@
 /**
  * Writes a synthetic index for screenshots: `node --experimental-strip-types app/scripts/demo-index.ts <dir>`
- * creates `<dir>/index.db` and an empty `<dir>/config.json`. Then run the window with
+ * creates `<dir>/index.db` and `<dir>/config.json` with a few agent-access rules. Then run the window with
  * `CURLEW_DB_PATH=<dir>/index.db CURLEW_CONFIG=<dir>/config.json` under `scripts/headless-run`.
  * Every name and address here is made up (`example.org`); never point this at a real index.
  */
@@ -15,7 +15,18 @@ if (!dir) {
   process.exit(2);
 }
 mkdirSync(dir, { recursive: true });
-writeFileSync(join(dir, 'config.json'), '{}\n');
+// A few agent-access rules, so the dialog shows a contact rule and a whole-account rule.
+const config = {
+  agentAccess: {
+    askWithoutRule: true,
+    rules: [
+      { account: 'xmpp-demo1', contact: 'jo@chat.example.org', read: 'allow', write: 'ask' },
+      { account: 'mail-demo1', read: 'allow', write: 'deny' },
+      { account: 'signal-demo1', write: 'ask' },
+    ],
+  },
+};
+writeFileSync(join(dir, 'config.json'), `${JSON.stringify(config, null, 2)}\n`);
 
 const ACCOUNTS: Array<[id: string, identity: string]> = [
   ['mail-demo1', 'robin@example.org'],
