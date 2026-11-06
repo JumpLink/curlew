@@ -3,6 +3,7 @@
  * here, so the CLI bundle never pulls it in.
  */
 
+import Gdk from 'gi://Gdk?version=4.0';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import system from 'system';
@@ -20,12 +21,28 @@ initI18n();
 // cannot read it need the name spelled out.
 Gtk.Window.set_default_icon_name(APP_ID);
 
+// An installed curlew finds its icon in the hicolor theme. A run from the source tree has none
+// installed, so the window, the About dialog and the shell all fell back to a generic icon:
+// <app>/dist/window.gjs.mjs → <app>/data/icons.
+function addSourceTreeIcons(): void {
+  const display = Gdk.Display.get_default();
+  if (!display || !import.meta.url.startsWith('file:')) return;
+  const bundleDir = GLib.path_get_dirname(GLib.filename_from_uri(import.meta.url)[0]);
+  const icons = GLib.build_filenamev([bundleDir, '..', 'data', 'icons']);
+  if (GLib.file_test(icons, GLib.FileTest.IS_DIR)) Gtk.IconTheme.get_for_display(display).add_search_path(icons);
+}
+
 const application = new AdwaitaApp({
   applicationId: APP_ID,
   createWindow: (app) => {
+    addSourceTreeIcons();
     installAboutAction(app);
-    // `CURLEW_WINDOW_FILTER=<backend>` starts with that protocol chip switched on, for screenshots.
-    const window = createWindow(app, { protocol: process.env.CURLEW_WINDOW_FILTER || undefined });
+    // `CURLEW_WINDOW_FILTER=<backend>` starts with that protocol filter switched on, and
+    // `CURLEW_WINDOW_OPEN=<conversation id>` with that conversation open, for screenshots.
+    const window = createWindow(app, {
+      protocol: process.env.CURLEW_WINDOW_FILTER || undefined,
+      open: process.env.CURLEW_WINDOW_OPEN || undefined,
+    });
     // A smoke hook for screenshots and CI: the process ends itself. An environment variable and
     // not a flag, because GApplication rejects options it does not know.
     const quitAfter = Number(process.env.CURLEW_WINDOW_QUIT_AFTER_MS);

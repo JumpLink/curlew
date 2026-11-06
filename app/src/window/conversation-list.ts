@@ -169,24 +169,30 @@ export function createConversationList(
   stack.add_named(scroller, 'list');
   stack.add_named(empty, 'empty');
 
-  const chips = new Adw.WrapBox({
-    childSpacing: 6,
-    lineSpacing: 6,
-    marginStart: 12,
-    marginEnd: 12,
-    marginBottom: 6,
-  });
   const search = new Gtk.SearchEntry({ placeholderText: _('Search conversations'), hexpand: true });
   const searchBar = new Gtk.SearchBar({ child: search });
   searchBar.connect_entry(search);
 
+  // Filters live in a popover instead of a row of chips, so a long account or protocol
+  // list cannot push the conversation list down or wrap across several lines.
+  const filterButton = new Gtk.MenuButton({ iconName: 'view-filter-symbolic', tooltipText: _('Filter conversations') });
+  const filterPopover = new Gtk.Popover({ autohide: true });
+  filterButton.set_popover(filterPopover);
+  const filterBox = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 6, marginStart: 12, marginEnd: 12, marginTop: 8, marginBottom: 8 });
+  filterPopover.set_child(filterBox);
+
+  const activeFilterCount = (): number => backends.size + accounts.size;
+  const updateFilterButton = () => {
+    const n = activeFilterCount();
+    filterButton.set_label(n > 0 ? String(n) : '');
+    if (n > 0) filterButton.add_css_class('suggested-action');
+    else filterButton.remove_css_class('suggested-action');
+  };
+
   const filter = (): ListFilter => ({ backends, accounts, query });
 
-  const chip = (label: string, set: Set<string>, key: string): Gtk.ToggleButton => {
+  function makeToggle(label: string, set: Set<string>, key: string): Gtk.ToggleButton {
     const button = new Gtk.ToggleButton({ label, active: set.has(key) });
-    // The plain button shape stays compact enough for several chips per line at 360 px (`pill` took
-    // a line each); the accent fill (`suggested-action`) only while it is on, so the state reads at
-    // a glance in light and dark mode without a stylesheet.
     button.add_css_class('caption-heading');
     const paint = () => {
       if (button.get_active()) button.add_css_class('suggested-action');
@@ -197,23 +203,58 @@ export function createConversationList(
       if (button.get_active()) set.add(key);
       else set.delete(key);
       paint();
+      updateFilterButton();
       rebuild();
     });
     return button;
-  };
+  }
 
-  function rebuildChips(): void {
-    let child = chips.get_first_child();
+  function rebuildFilters(): void {
+    // Rebuild the popover contents from the current entries.
+    let child = filterBox.get_first_child();
     while (child) {
       const next = child.get_next_sibling();
-      chips.remove(child);
+      filterBox.remove(child);
       child = next;
     }
-    for (const backend of backendChoices(entries))
-      chips.append(chip(protocolLabel(backend), backends, backend));
-    for (const account of accountChoices(entries, backends))
-      chips.append(chip(labels.get(account) ?? account, accounts, account));
-    chips.set_visible(chips.get_first_child() !== null);
+
+    const backendsList = backendChoices(entries);
+    if (backendsList.length > 0) {
+      const header = new Gtk.Label({ label: _('Protocols'), xalign: 0 });
+      header.add_css_class('heading');
+      header.add_css_class('caption');
+      filterBox.append(header);
+      const wrap = new Adw.WrapBox({ childSpacing: 6, lineSpacing: 6 });
+      for (const backend of backendsList)
+        wrap.append(makeToggle(protocolLabel(backend), backends, backend));
+      filterBox.append(wrap);
+    }
+
+    const accountsList = accountChoices(entries, backends);
+    if (accountsList.length > 0) {
+      const header = new Gtk.Label({ label: _('Accounts'), xalign: 0 });
+      header.add_css_class('heading');
+      header.add_css_class('caption');
+      filterBox.append(header);
+      const wrap = new Adw.WrapBox({ childSpacing: 6, lineSpacing: 6 });
+      for (const account of accountsList)
+        wrap.append(makeToggle(labels.get(account) ?? account, accounts, account));
+      filterBox.append(wrap);
+    }
+
+    const clear = new Gtk.Button({ label: _('Clear filters') });
+    clear.add_css_class('flat');
+    clear.connect('clicked', () => {
+      backends.clear();
+      accounts.clear();
+      rebuildFilters();
+      rebuild();
+    });
+    clear.set_sensitive(backends.size + accounts.size > 0);
+    filterBox.append(clear);
+
+    filterButton.set_visible(backendsList.length > 0 || accountsList.length > 0);
+    updateFilterButton();
   }
 
   function rebuild(): void {
@@ -269,12 +310,12 @@ export function createConversationList(
   searchToggle.bind_property('active', searchBar, 'search-mode-enabled', GObject.BindingFlags.BIDIRECTIONAL);
   const header = new Adw.HeaderBar();
   header.pack_start(searchToggle);
+  header.pack_start(filterButton);
   header.pack_end(new Gtk.MenuButton({ iconName: 'open-menu-symbolic', menuModel: menu, primary: true }));
 
   const toolbar = new Adw.ToolbarView();
   toolbar.add_top_bar(header);
   toolbar.add_top_bar(searchBar);
-  toolbar.add_top_bar(chips);
   toolbar.set_content(stack);
   const page = new Adw.NavigationPage({ title: _('Conversations'), tag: 'list' });
   page.set_child(toolbar);
@@ -288,13 +329,13 @@ export function createConversationList(
       // A filter whose choice vanished (an account removed) must not hide everything.
       for (const key of backends) if (!entries.some((e) => e.backend === key)) backends.delete(key);
       for (const key of accounts) if (!entries.some((e) => e.accountId === key)) accounts.delete(key);
-      rebuildChips();
+      rebuildFilters();
       rebuild();
     },
     chooseProtocol(backend) {
       if (!entries.some((e) => e.backend === backend)) return;
       backends.add(backend);
-      rebuildChips();
+      rebuildFilters();
       rebuild();
     },
   };

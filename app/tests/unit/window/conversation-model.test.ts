@@ -1,0 +1,126 @@
+import { describe, expect, it } from '@gjsify/unit';
+import type { ConversationMessage } from '@curlew/protocol';
+
+import {
+  bubbleText,
+  chatSubject,
+  composeMailReply,
+  cursorOf,
+  dayStarts,
+  newOlder,
+  replySubject,
+  subjectLabels,
+} from '../../../src/window/conversation-model.ts';
+
+function message(over: Partial<ConversationMessage> & { id: string }): ConversationMessage {
+  return {
+    conversationId: 'c',
+    backend: 'mail',
+    presentation: 'document',
+    senderId: null,
+    senderName: null,
+    senderAddress: null,
+    fromSelf: false,
+    sentAt: null,
+    subject: null,
+    seen: true,
+    hasAttachments: false,
+    emailChat: false,
+    classification: 'conversational',
+    classificationReason: 'known-contact',
+    ref: { accountId: 'a' },
+    ...over,
+  };
+}
+
+export default async () => {
+  await describe('mail chat presentation', async () => {
+    await it('uses a generic excerpt for chat mail and Re for ordinary replies', async () => {
+      expect(chatSubject('  Hallo\n Welt  ')).toBe('Chat: Hallo Welt');
+      expect(chatSubject('')).toBe('Chat');
+      expect(replySubject('Frage')).toBe('Re: Frage');
+      expect(replySubject('Re: Frage')).toBe('Re: Frage');
+      expect(composeMailReply(message({ id: 'a', emailChat: true }), null, 'Hallo').subject).toBe('Chat: Hallo');
+      expect(composeMailReply(message({ id: 'a', subject: 'Frage' }), null, 'Hallo').subject).toBe('Re: Frage');
+    });
+
+    await it('threads onto the parent Message-ID without duplicating References', async () => {
+      const reply = composeMailReply(message({ id: 'a', emailChat: true }), {
+        messageId: '<child@example.org>',
+        references: ['<root@example.org>', '<child@example.org>'],
+      }, 'Hallo');
+      expect(reply.inReplyTo).toBe('<child@example.org>');
+      expect(reply.references).toEqualArray(['<root@example.org>', '<child@example.org>']);
+      expect(reply.emailChat).toBe(true);
+    });
+
+    await it('labels ordinary subject changes but never generic chat subjects', async () => {
+      const labels = subjectLabels([
+        message({ id: 'a', subject: 'First' }),
+        message({ id: 'b', subject: 'Re: First' }),
+        message({ id: 'c', subject: 'Chat: Hello', emailChat: true }),
+        message({ id: 'd', subject: 'Second' }),
+        message({ id: 'e', subject: 'Re: Second' }),
+      ]);
+      expect([...labels.entries()]).toStrictEqual([['a', 'First'], ['d', 'Second']]);
+    });
+  });
+
+  await describe('bubbleText', async () => {
+    await it('keeps a short body whole', async () => {
+      expect(bubbleText('hello\nthere', 600, 12)).toStrictEqual({ text: 'hello\nthere', clipped: false });
+    });
+    await it('clips at the character limit', async () => {
+      expect(bubbleText('x'.repeat(20), 8, 12)).toStrictEqual({ text: 'x'.repeat(8), clipped: true });
+    });
+    await it('clips at the line limit', async () => {
+      expect(bubbleText('a\nb\nc\nd', 600, 2)).toStrictEqual({ text: 'a\nb', clipped: true });
+    });
+    await it('does not clip a body that ends exactly at the limit', async () => {
+      expect(bubbleText('a\nb', 600, 2)).toStrictEqual({ text: 'a\nb', clipped: false });
+    });
+  });
+
+  await describe('paging helpers', async () => {
+    await it('takes the cursor from the oldest message, missing time included', async () => {
+      expect(cursorOf(message({ id: 'a', sentAt: '2026-08-01T10:00:00Z' }))).toStrictEqual({
+        sentAt: '2026-08-01T10:00:00Z',
+        id: 'a',
+      });
+      expect(cursorOf(message({ id: 'b' }))).toStrictEqual({ sentAt: null, id: 'b' });
+    });
+
+    await it('drops what an older page repeats', async () => {
+      const shown = [message({ id: 'c' }), message({ id: 'd' })];
+      const page = [message({ id: 'b' }), message({ id: 'c' })];
+      expect(newOlder(shown, page).map((m) => m.id)).toStrictEqual(['b']);
+    });
+
+    await it('puts a day separator above the first message of each day, also after a page was added', async () => {
+      const shown = [
+        message({ id: 'c', sentAt: '2026-08-02T08:00:00Z' }),
+        message({ id: 'd', sentAt: '2026-08-02T09:00:00Z' }),
+        message({ id: 'e', sentAt: '2026-08-03T09:00:00Z' }),
+      ];
+      expect([...dayStarts(shown)]).toStrictEqual(['c', 'e']);
+      const merged = [message({ id: 'b', sentAt: '2026-08-02T07:00:00Z' }), ...shown];
+      expect([...dayStarts(merged)]).toStrictEqual(['b', 'e']);
+    });
+
+    await it('lets a message without a time follow the day before it', async () => {
+      const shown = [
+        message({ id: 'a', sentAt: '2026-08-02T08:00:00Z' }),
+        message({ id: 'b' }),
+        message({ id: 'c', sentAt: '2026-08-02T09:00:00Z' }),
+      ];
+      expect([...dayStarts(shown)]).toStrictEqual(['a']);
+    });
+
+    await it('labels a subject only where the topic changes, over what is shown', async () => {
+      const older = [message({ id: 'a', subject: 'Plan' }), message({ id: 'b', subject: 'Re: Plan' })];
+      const shown = [message({ id: 'c', subject: 'Re: Plan' })];
+      expect([...subjectLabels(shown).keys()]).toStrictEqual(['c']);
+      expect([...subjectLabels([...older, ...shown]).keys()]).toStrictEqual(['a']);
+    });
+  });
+};

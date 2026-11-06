@@ -6,7 +6,7 @@
  * "is this Signal?"; the backend name only picks the badge and the filter chip.
  */
 
-import type { Conversation } from '@curlew/protocol';
+import type { AddressKind, Conversation } from '@curlew/protocol';
 import { _ } from '@curlew/protocol';
 
 export type SectionId = 'people' | 'groups';
@@ -14,12 +14,17 @@ export type SectionId = 'people' | 'groups';
 /** A conversation reduced to what a row needs. */
 export interface ListEntry {
   id: string;
+  /** Canonical threads behind this row; several for a direct-mail contact conversation. */
+  conversationIds: string[];
   title: string;
   backend: string;
   accountId: string;
   kind: Conversation['kind'];
   unread: number;
   lastMessageAt: string | null;
+  /** Address the composer answers, when this is a direct conversation. */
+  target: string | null;
+  emailChat: boolean;
 }
 
 export interface Section {
@@ -83,24 +88,78 @@ export function shortTime(iso: string | null, now: Date = new Date()): string {
 
 /** The title a row shows: the stored one, else the people in it, else the first address. */
 export function entryTitle(conversation: Conversation): string {
-  const stored = conversation.title?.trim();
-  if (stored) return stored;
   const names = conversation.participants
     .map((p) => p.displayName?.trim() || p.addresses[0]?.value || '')
     .filter((name) => name !== '');
+  // A direct chat is a person, not its first mail subject. Groups keep their stored topic.
+  if (conversation.kind === 'direct' && names.length > 0) return names.join(', ');
+  const stored = conversation.title?.trim();
+  if (stored) return stored;
   return names.length > 0 ? names.join(', ') : _('Unnamed conversation');
+}
+
+// The address kind each backend sends to. A participant often carries addresses of several
+// networks (a phone number first), and only the backend's own kind names the chat it can send to.
+const SEND_KIND: Readonly<Record<string, AddressKind>> = {
+  mail: 'email',
+  signal: 'signal',
+  telegram: 'telegram',
+  whatsapp: 'whatsapp',
+  matrix: 'matrix',
+  xmpp: 'jid',
+};
+
+function targetOf(conversation: Conversation): string | null {
+  if (conversation.kind !== 'direct' || conversation.participants.length !== 1) return null;
+  const kind = SEND_KIND[conversation.backend];
+  if (kind === undefined) return null;
+  return conversation.participants[0].addresses.find((address) => address.kind === kind)?.value ?? null;
 }
 
 export function toEntry(conversation: Conversation): ListEntry {
   return {
     id: conversation.id,
+    conversationIds: [conversation.id],
     title: entryTitle(conversation),
     backend: conversation.backend,
     accountId: conversation.accountId,
     kind: conversation.kind,
     unread: Math.max(0, conversation.unreadCount),
     lastMessageAt: conversation.lastMessageAt,
+    target: targetOf(conversation),
+    emailChat: conversation.emailChat,
   };
+}
+
+/**
+ * Direct mail threads with the same person become ONE presentation conversation. Canonical threads
+ * stay untouched: their ids travel with the row, and replies still use RFC 5322 references.
+ */
+export function toEntries(conversations: Conversation[], showAllEmails = true): ListEntry[] {
+  const entries: ListEntry[] = [];
+  const mailContacts = new Map<string, ListEntry>();
+  for (const conversation of conversations) {
+    if (conversation.backend === 'mail' && !showAllEmails && !conversation.emailChat) continue;
+    const entry = toEntry(conversation);
+    const participant = conversation.participants.length === 1 ? conversation.participants[0] : null;
+    if (conversation.backend !== 'mail' || conversation.kind !== 'direct' || !participant || !entry.target) {
+      entries.push(entry);
+      continue;
+    }
+    const key = `${conversation.accountId}\u0000${participant.id}`;
+    const existing = mailContacts.get(key);
+    if (!existing) {
+      entry.id = `mail-contact:${conversation.accountId}:${participant.id}`;
+      mailContacts.set(key, entry);
+      entries.push(entry);
+      continue;
+    }
+    existing.conversationIds.push(conversation.id);
+    existing.unread += entry.unread;
+    existing.emailChat ||= entry.emailChat;
+    if ((entry.lastMessageAt ?? '') > (existing.lastMessageAt ?? '')) existing.lastMessageAt = entry.lastMessageAt;
+  }
+  return entries;
 }
 
 /**

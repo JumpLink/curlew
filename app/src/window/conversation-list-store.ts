@@ -8,7 +8,7 @@ import { configPath, indexDbPath, listConversations, openIndexDb } from '@curlew
 import { existsSync } from 'node:fs';
 
 import { loadConfig } from '../core/config.ts';
-import { type ListEntry, toEntry } from './conversation-list-model.ts';
+import { type ListEntry, toEntries } from './conversation-list-model.ts';
 
 const LIST_LIMIT = 500;
 
@@ -17,8 +17,8 @@ export function loadConversationEntries(dbPath = indexDbPath(), cfgPath = config
   try {
     const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
     try {
-      const { senders } = loadConfig(cfgPath);
-      return listConversations(db, { limit: LIST_LIMIT, overrides: senders }).map(toEntry);
+      const { senders, ui } = loadConfig(cfgPath);
+      return toEntries(listConversations(db, { limit: LIST_LIMIT, overrides: senders }), ui.showAllEmails);
     } finally {
       db.close();
     }

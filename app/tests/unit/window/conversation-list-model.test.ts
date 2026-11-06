@@ -12,6 +12,7 @@ import {
   protocolIcon,
   protocolLabel,
   shortTime,
+  toEntries,
   toEntry,
   unreadText,
   unreadTier,
@@ -37,12 +38,15 @@ function conversation(over: Partial<Conversation> & { id: string }): Conversatio
 }
 
 const entry = (over: Partial<ListEntry> & { id: string }): ListEntry => ({
+  conversationIds: [over.id],
   title: over.id,
   backend: 'xmpp',
   accountId: 'xmpp-abc123',
   kind: 'direct',
   unread: 0,
   lastMessageAt: null,
+  target: null,
+  emailChat: false,
   ...over,
 });
 
@@ -84,10 +88,70 @@ export default async () => {
 
     it('clamps a negative unread count and tiers by it', () => {
       expect(toEntry(conversation({ id: 'a', unreadCount: -3 })).unread).toBe(0);
+    });
+
+    it("sends to the backend's own address kind, not the participant's first address", () => {
+      const person = (...addresses: Conversation['participants'][number]['addresses']) => [
+        { id: 'p', displayName: null, addresses, contactUid: null },
+      ];
+      const phone = { kind: 'phone' as const, value: '+15550100' };
+      const targetFor = (backend: string, participants: Conversation['participants']) =>
+        toEntry(conversation({ id: 'a', backend, participants })).target;
+      expect(targetFor('signal', person(phone, { kind: 'signal', value: 'aci-1' }))).toBe('aci-1');
+      expect(targetFor('whatsapp', person(phone, { kind: 'whatsapp', value: '15550100@s.whatsapp.net' }))).toBe(
+        '15550100@s.whatsapp.net',
+      );
+      expect(targetFor('telegram', person(phone, { kind: 'telegram', value: '42' }))).toBe('42');
+      expect(targetFor('xmpp', person({ kind: 'email', value: 'a@example.invalid' }, { kind: 'jid', value: 'a@example.org' }))).toBe(
+        'a@example.org',
+      );
+      expect(targetFor('signal', person(phone))).toBe(null);
+      expect(targetFor('signal', person({ kind: 'signal', value: 'aci-1' }, { kind: 'signal', value: 'aci-2' }).concat(person(phone)))).toBe(null);
       expect(unreadTier(entry({ id: 'a', unread: 2 }))).toBe('count');
       expect(unreadTier(entry({ id: 'a' }))).toBe('none');
       expect(unreadText(7)).toBe('7');
       expect(unreadText(150)).toBe('99+');
+    });
+
+    const mailWith = (id: string, person: string, over: Partial<Conversation> = {}): Conversation =>
+      conversation({
+        id,
+        backend: 'mail',
+        accountId: 'mail-1',
+        emailChat: false,
+        participants: [
+          {
+            id: person,
+            displayName: null,
+            addresses: [{ kind: 'email', value: `${person}@example.invalid` }],
+            contactUid: null,
+          },
+        ],
+        ...over,
+      } as Partial<Conversation> & { id: string });
+
+    it('folds direct mail threads with one person into one row, keeping every thread id', () => {
+      const list = toEntries([
+        mailWith('t-1', 'anna', { unreadCount: 1, lastMessageAt: '2026-11-01T00:00:00Z' }),
+        mailWith('t-2', 'anna', { unreadCount: 2, lastMessageAt: '2026-11-03T00:00:00Z', emailChat: true }),
+        mailWith('t-3', 'ben'),
+        conversation({ id: 'x-1' }),
+      ]);
+      expect(ids(list)).toStrictEqual(['mail-contact:mail-1:anna', 'mail-contact:mail-1:ben', 'x-1']);
+      expect(list[0].conversationIds).toStrictEqual(['t-1', 't-2']);
+      expect(list[0].unread).toBe(3);
+      expect(list[0].lastMessageAt).toBe('2026-11-03T00:00:00Z');
+      expect(list[0].emailChat).toBe(true);
+      expect(list[0].target).toBe('anna@example.invalid');
+    });
+
+    it('hides unmarked mail threads when not showing all emails, never other backends', () => {
+      const list = toEntries(
+        [mailWith('t-1', 'anna'), mailWith('t-2', 'ben', { emailChat: true }), conversation({ id: 'x-1' })],
+        false,
+      );
+      expect(ids(list)).toStrictEqual(['mail-contact:mail-1:ben', 'x-1']);
+      expect(list[0].conversationIds).toStrictEqual(['t-2']);
     });
 
     it('splits into people and groups, newest first, undated last', () => {
