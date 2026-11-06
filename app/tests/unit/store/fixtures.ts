@@ -54,6 +54,7 @@ export function message(
     inReplyTo: null,
     references: [],
     automation: { listId: null, listUnsubscribe: null, autoSubmitted: null, precedence: null },
+    emailChat: false,
     ...extra,
   };
 }

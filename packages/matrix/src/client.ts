@@ -31,6 +31,7 @@ import type { MatrixClient, MatrixEvent, Room, SyncState } from 'matrix-js-sdk';
 import type { MatrixApi, MatrixLive, MxEvent, MxMessagesPage, MxRoom } from './api.ts';
 import { readOnlyFetch, ReadOnlyViolation, refusals } from './guard.ts';
 import { IndexedDbSnapshot } from './idb-snapshot.ts';
+import { roomFactsOf } from './map.ts';
 import { sdkLogLevel, sdkLogLine, type SdkLogLevel } from './redact.ts';
 
 export type MatrixSdk = typeof import('matrix-js-sdk');
@@ -221,6 +222,14 @@ function toMxRoom(client: MatrixClient, room: Room, direct: Map<string, string>)
     roomId: room.roomId,
     name: room.name || null,
     direct: directWith !== undefined,
+    ...roomFactsOf({
+      createSeen: room.currentState.getStateEvents('m.room.create', '') !== null,
+      joinRule: (room.currentState.getStateEvents('m.room.join_rules', '')?.getContent() as
+        | { join_rule?: unknown }
+        | undefined)?.join_rule,
+      encryptionSeen: room.hasEncryptionStateEvent(),
+      joinedMembers: room.getJoinedMemberCount(),
+    }),
     members,
     lastEventTs: last > 0 ? last : null,
     readUpToTs: receiptTs(room, self),

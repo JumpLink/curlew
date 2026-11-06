@@ -64,6 +64,7 @@ interface MailRow extends ThreadMember {
   listUnsubscribe: string | null;
   autoSubmitted: string | null;
   precedence: string | null;
+  emailChat: boolean;
 }
 
 function str(value: unknown): string | null {
@@ -89,7 +90,7 @@ function loadMailRows(db: IndexDatabase): MailRow[] {
     .prepare(
       `SELECT account_id, folder_path, uid, message_id, subject, sender, date, internal_date, seen,
               has_attachment, in_reply_to, thread_refs, from_json, to_json, list_id,
-              list_unsubscribe, auto_submitted, precedence
+              list_unsubscribe, auto_submitted, precedence, email_chat
          FROM messages ORDER BY id`,
     )
     .all() as Array<Record<string, unknown>>;
@@ -112,6 +113,7 @@ function loadMailRows(db: IndexDatabase): MailRow[] {
     listUnsubscribe: str(r.list_unsubscribe),
     autoSubmitted: str(r.auto_submitted),
     precedence: str(r.precedence),
+    emailChat: Number(r.email_chat) === 1,
   }));
 }
 
@@ -305,6 +307,7 @@ const CONVERSATIONS: SyncedTable = {
     'message_count',
     'unread_count',
     'has_attachments',
+    'email_chat',
   ],
   key: [0],
 };
@@ -334,6 +337,7 @@ const MAIL_MESSAGES: SyncedTable = {
     'classification_reason',
     'folder_path',
     'uid',
+    'email_chat',
   ],
   key: [0],
 };
@@ -496,6 +500,7 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
         verdict.reason,
         row.folderPath,
         row.uid,
+        row.emailChat ? 1 : 0,
       ]);
     }
 
@@ -515,6 +520,7 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
       thread.members.length,
       unread,
       attachments ? 1 : 0,
+      thread.members.some((row) => row.emailChat) ? 1 : 0,
     ]);
     for (const participantId of others) memberRows.push([conversationId, participantId]);
   }
@@ -756,11 +762,12 @@ function rowToConversation(
     messageCount: Number(r.message_count),
     unreadCount: Number(r.unread_count),
     hasAttachments: Number(r.has_attachments) === 1,
+    emailChat: Number(r.email_chat) === 1,
   };
 }
 
 const CONVERSATION_COLUMNS = `id, backend, account_id, kind, title, first_message_at, last_message_at,
-  message_count, unread_count, has_attachments`;
+  message_count, unread_count, has_attachments, email_chat`;
 
 function hydrate(
   db: IndexDatabase,
@@ -834,71 +841,160 @@ export function getConversation(
 
   const rows = db
     .prepare(
-      `SELECT id, conversation_id, backend, account_id, presentation, sender_participant_id, sender_name,
-              sender_kind, sender_address, from_self, sent_at, subject, seen, has_attachments,
-              classification, classification_reason, folder_path, uid, remote_id, ${seqColumn('remote_seq')}, body,
-              edited_at, reply_to_remote_id, thread_remote_id, reply_to_client_id, peer_read
+      `SELECT ${MESSAGE_COLUMNS}
          FROM conversation_messages WHERE conversation_id = ?${options.since ? ' AND sent_at > ?' : ''}${options.incomingOnly ? ' AND from_self = 0' : ''}
         ORDER BY sent_at, conversation_messages.remote_seq, id`,
     )
     .all(...(options.since ? [id, options.since] : [id])) as Array<Record<string, unknown>>;
 
-  const messages = rows.map((r): ConversationMessage => {
-    const senderAddress = str(r.sender_address);
-    const forced = senderAddress && Number(r.from_self) !== 1 ? overrides[senderAddress] : undefined;
-    const folder = str(r.folder_path);
-    const uid = r.uid === null || r.uid === undefined ? undefined : Number(r.uid);
-    const message: ConversationMessage = {
-      id: String(r.id),
-      conversationId: String(r.conversation_id),
-      backend: String(r.backend),
-      presentation: presentationOf(r.presentation),
-      senderId: str(r.sender_participant_id),
-      senderName: str(r.sender_name),
-      senderAddress:
-        senderAddress && r.sender_kind
-          ? { kind: String(r.sender_kind) as ParticipantAddress['kind'], value: senderAddress }
-          : null,
-      fromSelf: Number(r.from_self) === 1,
-      sentAt: str(r.sent_at),
-      subject: str(r.subject),
-      seen: Number(r.seen) === 1,
-      hasAttachments: Number(r.has_attachments) === 1,
-      classification: forced ?? (String(r.classification) as Classification),
-      classificationReason: forced ? 'override' : (String(r.classification_reason) as ClassificationReason),
-      ref: {
-        accountId: String(r.account_id),
-        ...(folder ? { folder } : {}),
-        ...(uid !== undefined ? { uid } : {}),
-        ...(r.remote_id ? { remoteId: String(r.remote_id) } : {}),
-      },
-    };
-    // Chat rows carry a sequence; their extra fields are set only for them, so a mail message
-    // looks exactly as it did before chats existed.
-    const chat = r.remote_seq !== null && r.remote_seq !== undefined;
-    if (chat) {
-      message.editedAt = str(r.edited_at);
-      message.replyToRemoteId = str(r.reply_to_remote_id);
-      message.replyToClientId = str(r.reply_to_client_id);
-      message.threadRemoteId = str(r.thread_remote_id);
-      if (message.fromSelf) message.readByPeer = Number(r.peer_read) === 1;
-    }
-    // A notice is what the network said about the chat: shown with or without bodies.
-    if (message.presentation === 'notice') message.notice = str(r.body);
-    if (options.includeBodies) {
-      // Mail keeps its body once, in the FTS table; a chat message keeps it on its own row.
-      const body =
-        folder && uid !== undefined
-          ? messageBody(db, message.ref.accountId, folder, uid)
-          : chat
-            ? str(r.body)
-            : null;
-      const cap = options.maxBodyChars;
-      message.bodyText = body !== null && cap !== undefined && body.length > cap ? body.slice(0, cap) : body;
-      message.bodyTruncated = body !== null && cap !== undefined && body.length > cap;
-    }
-    return message;
-  });
+  return { conversation, messages: rows.map((r) => toMessage(db, r, options, overrides)) };
+}
 
-  return { conversation, messages };
+/** Where a page of history ends: the oldest message already shown. */
+export interface MessageCursor {
+  sentAt: string | null;
+  id: string;
+}
+
+export interface RecentMessagesOptions {
+  /** How many of the newest messages to return, across all the conversations together. */
+  limit: number;
+  /** Only messages strictly older than this one, in the (sent_at, id) order: the next page back. */
+  before?: MessageCursor;
+  includeBodies?: boolean;
+  maxBodyChars?: number;
+  overrides?: SenderOverrides;
+}
+
+/**
+ * The newest messages of several conversations, oldest first, in one query. A person's direct mail
+ * can span hundreds of threads; reading each in full would fetch every body, and a mail body is an
+ * FTS lookup libgda runs twice. Only the `limit` messages returned have their body read.
+ *
+ * The order is (sent_at, id), a total order, so `before` pages through the history without a gap
+ * or a repeat even where timestamps are equal. A NULL sent_at sorts first, as the oldest.
+ */
+export function getRecentMessages(
+  db: IndexDatabase,
+  ids: readonly string[],
+  options: RecentMessagesOptions,
+): ConversationMessage[] {
+  if (ids.length === 0 || options.limit <= 0) return [];
+  const before = options.before;
+  const older = !before
+    ? ''
+    : before.sentAt === null
+      ? ' AND sent_at IS NULL AND id < ?'
+      : ' AND (sent_at < ? OR sent_at IS NULL OR (sent_at = ? AND id < ?))';
+  const cursor = !before ? [] : before.sentAt === null ? [before.id] : [before.sentAt, before.sentAt, before.id];
+  const rows = db
+    .prepare(
+      `SELECT ${MESSAGE_COLUMNS}
+         FROM conversation_messages WHERE conversation_id IN (${ids.map(() => '?').join(', ')})${older}
+        ORDER BY sent_at DESC, id DESC LIMIT ?`,
+    )
+    .all(...ids, ...cursor, options.limit) as Array<Record<string, unknown>>;
+  return rows.reverse().map((r) => toMessage(db, r, options, options.overrides ?? {}));
+}
+
+const MESSAGE_COLUMNS = `id, conversation_id, backend, account_id, presentation, sender_participant_id, sender_name,
+              sender_kind, sender_address, from_self, sent_at, subject, seen, has_attachments,
+              classification, classification_reason, folder_path, uid, remote_id, email_chat, ${seqColumn('remote_seq')}, body,
+              edited_at, reply_to_remote_id, thread_remote_id, reply_to_client_id, peer_read`;
+
+function toMessage(
+  db: IndexDatabase,
+  r: Record<string, unknown>,
+  options: { includeBodies?: boolean; maxBodyChars?: number },
+  overrides: SenderOverrides,
+): ConversationMessage {
+  const senderAddress = str(r.sender_address);
+  const forced = senderAddress && Number(r.from_self) !== 1 ? overrides[senderAddress] : undefined;
+  const folder = str(r.folder_path);
+  const uid = r.uid === null || r.uid === undefined ? undefined : Number(r.uid);
+  const message: ConversationMessage = {
+    id: String(r.id),
+    conversationId: String(r.conversation_id),
+    backend: String(r.backend),
+    presentation: presentationOf(r.presentation),
+    senderId: str(r.sender_participant_id),
+    senderName: str(r.sender_name),
+    senderAddress:
+      senderAddress && r.sender_kind
+        ? { kind: String(r.sender_kind) as ParticipantAddress['kind'], value: senderAddress }
+        : null,
+    fromSelf: Number(r.from_self) === 1,
+    sentAt: str(r.sent_at),
+    subject: str(r.subject),
+    seen: Number(r.seen) === 1,
+    hasAttachments: Number(r.has_attachments) === 1,
+    emailChat: Number(r.email_chat) === 1,
+    classification: forced ?? (String(r.classification) as Classification),
+    classificationReason: forced ? 'override' : (String(r.classification_reason) as ClassificationReason),
+    ref: {
+      accountId: String(r.account_id),
+      ...(folder ? { folder } : {}),
+      ...(uid !== undefined ? { uid } : {}),
+      ...(r.remote_id ? { remoteId: String(r.remote_id) } : {}),
+    },
+  };
+  // Chat rows carry a sequence; their extra fields are set only for them, so a mail message
+  // looks exactly as it did before chats existed.
+  const chat = r.remote_seq !== null && r.remote_seq !== undefined;
+  if (chat) {
+    message.editedAt = str(r.edited_at);
+    message.replyToRemoteId = str(r.reply_to_remote_id);
+    message.replyToClientId = str(r.reply_to_client_id);
+    message.threadRemoteId = str(r.thread_remote_id);
+    if (message.fromSelf) message.readByPeer = Number(r.peer_read) === 1;
+  }
+  // A notice is what the network said about the chat: shown with or without bodies.
+  if (message.presentation === 'notice') message.notice = str(r.body);
+  if (options.includeBodies) {
+    // Mail keeps its body once, in the FTS table; a chat message keeps it on its own row.
+    const body =
+      folder && uid !== undefined
+        ? messageBody(db, message.ref.accountId, folder, uid)
+        : chat
+          ? str(r.body)
+          : null;
+    const cap = options.maxBodyChars;
+    message.bodyText = body !== null && cap !== undefined && body.length > cap ? body.slice(0, cap) : body;
+    message.bodyTruncated = body !== null && cap !== undefined && body.length > cap;
+  }
+  return message;
+}
+
+/** What the index knows about the chat behind a conversation: where to address it and the room facts. */
+export interface ChatRoomRow {
+  /** The network's id for the chat (Matrix: the room id) — the address a send names. */
+  chatId: string;
+  /** NULL columns come back as null: the network did not say. */
+  public: boolean | null;
+  encrypted: boolean | null;
+  memberCount: number | null;
+}
+
+function tri(value: unknown): boolean | null {
+  return value === null || value === undefined ? null : Number(value) === 1;
+}
+
+/** The chat rows of one backend by conversation id; empty for a backend with no chats. */
+export function listChatRooms(db: IndexDatabase, backend: string): Map<string, ChatRoomRow> {
+  const rows = db
+    .prepare(
+      'SELECT conversation_id, chat_id, room_public, room_encrypted, room_members FROM chat_cursors WHERE backend = ?',
+    )
+    .all(backend) as Array<Record<string, unknown>>;
+  return new Map(
+    rows.map((r) => [
+      String(r.conversation_id),
+      {
+        chatId: String(r.chat_id),
+        public: tri(r.room_public),
+        encrypted: tri(r.room_encrypted),
+        memberCount: r.room_members === null || r.room_members === undefined ? null : Number(r.room_members),
+      },
+    ]),
+  );
 }

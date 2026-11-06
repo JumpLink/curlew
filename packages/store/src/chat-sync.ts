@@ -43,8 +43,10 @@ import type {
 } from '@curlew/protocol';
 import type { IndexDatabase } from './db.ts';
 import { appendChanges } from './changes.ts';
+import { conversationTotalsSql } from './conversation-totals.ts';
 import { insertMany, placeholders, seqColumn, type SqlValue, withTransaction } from './db.ts';
 import { upsertAccount } from './index-store.ts';
+import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 import {
   LEASE_HEARTBEAT_MS,
   refreshReceiveLease,
@@ -153,6 +155,11 @@ interface Cursor {
    * about. NULL starts again at the chat's oldest stored message (ADR 0004).
    */
   probeSeq: number | null;
+}
+
+/** A tri-state flag as the column holds it: NULL = the network did not say. */
+function flag(value: boolean | null | undefined): number | null {
+  return value === null || value === undefined ? null : value ? 1 : 0;
 }
 
 function num(value: unknown): number | null {
@@ -354,125 +361,121 @@ export function deletedBy(
   return stored.filter((m) => m.seq >= low && m.seq <= high && !live.has(m.seq)).map((m) => m.id);
 }
 
-/** The remote id of a message curlew sent and has not yet met in the network's own history. */
-export const LOCAL_ECHO_PREFIX = 'local:';
+export { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 
 function writeBatch(db: IndexDatabase, batch: ChatBatch): void {
-  withTransaction(db, () => {
-    // The network's copy of a message curlew sent replaces the local echo written at send time.
-    if (batch.clientIds.size > 0) {
-      const echoes = db
-        .prepare(
-          `SELECT id, remote_id, body FROM conversation_messages
-             WHERE backend = ? AND account_id = ? AND remote_id LIKE '${LOCAL_ECHO_PREFIX}%'`,
-        )
-        .all(batch.backend, batch.accountId) as Array<Record<string, unknown>>;
-      if (echoes.length > 0) {
-        const gone: string[] = [];
-        for (const echo of echoes) {
-          const remoteId = String(echo.remote_id);
-          const row = batch.clientIds.get(remoteId.slice(LOCAL_ECHO_PREFIX.length));
-          if (!remoteId.startsWith(LOCAL_ECHO_PREFIX) || row === undefined) continue;
-          adoptEchoBody(row, echo.body);
-          gone.push(String(echo.id));
-        }
-        deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, gone);
-      }
-    }
-    // Deletions first: other people's words the server no longer has must not outlive it here.
-    deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, batch.deletedMessages);
-    for (const table of [
-      'conversation_messages',
-      'chat_members',
-      'chat_cursors',
-      'conversation_participants',
-    ]) {
-      deleteIn(db, (p) => `DELETE FROM ${table} WHERE conversation_id IN (${p})`, batch.deletedConversations);
-    }
-    deleteIn(db, (p) => `DELETE FROM conversations WHERE id IN (${p})`, batch.deletedConversations);
+  withTransaction(db, () => writeBatchRows(db, batch));
+}
 
-    // A replace resets the aggregates to their defaults; the UPDATE below recomputes them in
-    // the same transaction.
-    insertMany(
-      db,
-      `INSERT OR REPLACE INTO conversations
-         (id, backend, account_id, kind, title, classification, classification_reason)`,
-      batch.conversations,
-    );
-    // INSERT OR REPLACE: a re-fetched message (a full scan) replaces its row with the edited text.
-    insertMany(
-      db,
-      `INSERT OR REPLACE INTO conversation_messages
-         (id, conversation_id, backend, account_id, presentation, sender_name, sender_kind,
-          sender_address, from_self, sent_at, has_attachments, classification, classification_reason,
-          remote_id, body, remote_seq, sender_peer_id, edited_at, reply_to_remote_id, thread_remote_id, reply_to_client_id)`,
-      batch.messages,
-    );
-    insertMany(
-      db,
-      'INSERT OR REPLACE INTO chat_peers (backend, account_id, peer_id, display_name, addresses_json, is_bot)',
-      [...batch.peers.values()],
-    );
-    // REPLACE, not IGNORE, although the row is identical: libgda logs a warning for every
-    // ignored insert, when it looks for the "last inserted row" that was never inserted.
-    insertMany(db, 'INSERT OR REPLACE INTO chat_members (conversation_id, backend, account_id, peer_id)', [
-      ...batch.members.values(),
-    ]);
-    insertMany(
-      db,
-      `INSERT OR REPLACE INTO chat_cursors
-         (conversation_id, backend, account_id, chat_id, kind, last_seq, read_inbox_seq, read_outbox_seq, last_sync_at,
-          last_cursor, probe_seq)`,
-      batch.cursors,
-    );
-    // After the inserts, so a correction or retraction of a message written in this very batch
-    // lands on it. Both are rare (one statement per edit is fine for the execution budget).
-    for (const edit of batch.edits) {
-      // With a sender: the user's own message matches '', anyone else's its peer id.
-      const bySender =
-        edit.length > 4 ? ` AND ((from_self = 1 AND ? = '') OR (from_self = 0 AND sender_peer_id = ?))` : '';
-      db.prepare(
-        `UPDATE conversation_messages SET body = ?, edited_at = ? WHERE conversation_id = ? AND remote_id = ?${bySender}`,
-      ).run(...edit);
+/** The batch's writes, without the transaction — for a caller that already opened one. */
+function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
+  // The network's copy of a message curlew sent replaces the local echo written at send time.
+  if (batch.clientIds.size > 0) {
+    const echoes = db
+      .prepare(
+        `SELECT id, remote_id, body FROM conversation_messages
+           WHERE backend = ? AND account_id = ? AND remote_id LIKE '${LOCAL_ECHO_PREFIX}%'`,
+      )
+      .all(batch.backend, batch.accountId) as Array<Record<string, unknown>>;
+    if (echoes.length > 0) {
+      const gone: string[] = [];
+      for (const echo of echoes) {
+        const remoteId = String(echo.remote_id);
+        const row = batch.clientIds.get(remoteId.slice(LOCAL_ECHO_PREFIX.length));
+        if (!remoteId.startsWith(LOCAL_ECHO_PREFIX) || row === undefined) continue;
+        adoptEchoBody(row, echo.body);
+        gone.push(String(echo.id));
+      }
+      deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, gone);
     }
-    deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, batch.retracted);
-    // Read state and the conversation aggregates, set-based: two executions per account however
-    // many chats changed. `seen` for the user's own messages is always 1; for the others it is
-    // the network's read marker, which moves without any new message arriving. A notice is seen
-    // too — nobody sent it, so no read marker will ever reach it and the chat would stay unread.
+  }
+  // Deletions first: other people's words the server no longer has must not outlive it here.
+  deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, batch.deletedMessages);
+  for (const table of [
+    'conversation_messages',
+    'chat_members',
+    'chat_cursors',
+    'conversation_participants',
+  ]) {
+    deleteIn(db, (p) => `DELETE FROM ${table} WHERE conversation_id IN (${p})`, batch.deletedConversations);
+  }
+  deleteIn(db, (p) => `DELETE FROM conversations WHERE id IN (${p})`, batch.deletedConversations);
+
+  // A replace resets the aggregates to their defaults; the UPDATE below recomputes them in
+  // the same transaction.
+  insertMany(
+    db,
+    `INSERT OR REPLACE INTO conversations
+       (id, backend, account_id, kind, title, classification, classification_reason)`,
+    batch.conversations,
+  );
+  // INSERT OR REPLACE: a re-fetched message (a full scan) replaces its row with the edited text.
+  insertMany(
+    db,
+    `INSERT OR REPLACE INTO conversation_messages
+       (id, conversation_id, backend, account_id, presentation, sender_name, sender_kind,
+        sender_address, from_self, sent_at, has_attachments, classification, classification_reason,
+        remote_id, body, remote_seq, sender_peer_id, edited_at, reply_to_remote_id, thread_remote_id, reply_to_client_id)`,
+    batch.messages,
+  );
+  insertMany(
+    db,
+    'INSERT OR REPLACE INTO chat_peers (backend, account_id, peer_id, display_name, addresses_json, is_bot)',
+    [...batch.peers.values()],
+  );
+  // REPLACE, not IGNORE, although the row is identical: libgda logs a warning for every
+  // ignored insert, when it looks for the "last inserted row" that was never inserted.
+  insertMany(db, 'INSERT OR REPLACE INTO chat_members (conversation_id, backend, account_id, peer_id)', [
+    ...batch.members.values(),
+  ]);
+  insertMany(
+    db,
+    `INSERT OR REPLACE INTO chat_cursors
+       (conversation_id, backend, account_id, chat_id, kind, last_seq, read_inbox_seq, read_outbox_seq, last_sync_at,
+        last_cursor, probe_seq, room_public, room_encrypted, room_members)`,
+    batch.cursors,
+  );
+  // After the inserts, so a correction or retraction of a message written in this very batch
+  // lands on it. Both are rare (one statement per edit is fine for the execution budget).
+  for (const edit of batch.edits) {
+    // With a sender: the user's own message matches '', anyone else's its peer id.
+    const bySender =
+      edit.length > 4 ? ` AND ((from_self = 1 AND ? = '') OR (from_self = 0 AND sender_peer_id = ?))` : '';
     db.prepare(
-      `UPDATE conversation_messages SET
-         seen = CASE WHEN from_self = 1 OR presentation = 'notice' THEN 1
-                     WHEN remote_seq <= COALESCE((SELECT c.read_inbox_seq FROM chat_cursors c
-                            WHERE c.conversation_id = conversation_messages.conversation_id), 0) THEN 1
-                     ELSE 0 END,
-         peer_read = CASE WHEN from_self = 1 AND remote_seq <= COALESCE((SELECT c.read_outbox_seq FROM chat_cursors c
-                            WHERE c.conversation_id = conversation_messages.conversation_id), 0) THEN 1
-                     ELSE 0 END
-       WHERE backend = ? AND account_id = ? AND remote_seq IS NOT NULL`,
-    ).run(batch.backend, batch.accountId);
-    db.prepare(
-      `UPDATE conversations SET
-         message_count = (SELECT COUNT(*) FROM conversation_messages m WHERE m.conversation_id = conversations.id),
-         unread_count = (SELECT COUNT(*) FROM conversation_messages m
-                          WHERE m.conversation_id = conversations.id AND m.from_self = 0 AND m.seen = 0),
-         first_message_at = (SELECT MIN(sent_at) FROM conversation_messages m WHERE m.conversation_id = conversations.id),
-         last_message_at = (SELECT MAX(sent_at) FROM conversation_messages m WHERE m.conversation_id = conversations.id),
-         has_attachments = (SELECT COUNT(*) > 0 FROM conversation_messages m
-                             WHERE m.conversation_id = conversations.id AND m.has_attachments = 1)
-       WHERE backend = ? AND account_id = ?
-         AND id IN (SELECT conversation_id FROM chat_cursors WHERE backend = ? AND account_id = ?)`,
-    ).run(batch.backend, batch.accountId, batch.backend, batch.accountId);
-    appendChanges(
-      db,
-      [...batch.changed].map((conversationId) => ({
-        kind: 'messages' as const,
-        backend: batch.backend,
-        accountId: batch.accountId,
-        conversationId,
-      })),
-    );
-  });
+      `UPDATE conversation_messages SET body = ?, edited_at = ? WHERE conversation_id = ? AND remote_id = ?${bySender}`,
+    ).run(...edit);
+  }
+  deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, batch.retracted);
+  // Read state and the conversation aggregates, set-based: two executions per account however
+  // many chats changed. `seen` for the user's own messages is always 1; for the others it is
+  // the network's read marker, which moves without any new message arriving. A notice is seen
+  // too — nobody sent it, so no read marker will ever reach it and the chat would stay unread.
+  db.prepare(
+    `UPDATE conversation_messages SET
+       seen = CASE WHEN from_self = 1 OR presentation = 'notice' THEN 1
+                   WHEN remote_seq <= COALESCE((SELECT c.read_inbox_seq FROM chat_cursors c
+                          WHERE c.conversation_id = conversation_messages.conversation_id), 0) THEN 1
+                   ELSE 0 END,
+       peer_read = CASE WHEN from_self = 1 AND remote_seq <= COALESCE((SELECT c.read_outbox_seq FROM chat_cursors c
+                          WHERE c.conversation_id = conversation_messages.conversation_id), 0) THEN 1
+                   ELSE 0 END
+     WHERE backend = ? AND account_id = ? AND remote_seq IS NOT NULL`,
+  ).run(batch.backend, batch.accountId);
+  db.prepare(
+    conversationTotalsSql(
+      `backend = ? AND account_id = ?
+       AND id IN (SELECT conversation_id FROM chat_cursors WHERE backend = ? AND account_id = ?)`,
+    ),
+  ).run(batch.backend, batch.accountId, batch.backend, batch.accountId);
+  appendChanges(
+    db,
+    [...batch.changed].map((conversationId) => ({
+      kind: 'messages' as const,
+      backend: batch.backend,
+      accountId: batch.accountId,
+      conversationId,
+    })),
+  );
 }
 
 /** Where `body` sits in a {@link messageRow}. The INSERT's column list is the other half. */
@@ -549,7 +552,7 @@ function recordChatError(result: ChatAccountSyncResult, err: unknown): void {
 async function syncAccount(
   db: IndexDatabase,
   backend: ChatBackend,
-  account: { id: string; identity: string; provider: string },
+  account: { id: string; identity: string; provider: string; address?: string },
   options: Required<Omit<ChatSyncOptions, 'accountId' | 'lease'>>,
   budget: { total: number; remaining: number; exhausted: boolean },
 ): Promise<ChatAccountSyncResult> {
@@ -773,6 +776,9 @@ async function syncAccount(
         syncedAt,
         lastCursor,
         probeSeq,
+        flag(chat.room?.public),
+        flag(chat.room?.encrypted),
+        chat.room?.memberCount ?? null,
       ]);
       // The network asked this account to wait. What this chat already delivered is in the batch
       // and is committed by the `finally` below; the cursor covers exactly it, so a later run
@@ -819,7 +825,7 @@ async function syncAccount(
 async function syncUnderLease(
   db: IndexDatabase,
   backend: ChatBackend,
-  account: { id: string; identity: string; provider: string },
+  account: { id: string; identity: string; provider: string; address?: string },
   options: Required<Omit<ChatSyncOptions, 'accountId' | 'lease'>>,
   budget: { total: number; remaining: number; exhausted: boolean },
   lease: NonNullable<ChatSyncOptions['lease']>,
@@ -909,7 +915,7 @@ export async function syncChats(
 
 export interface SentChatRecord {
   backend: string;
-  account: { id: string; identity: string; provider: string };
+  account: { id: string; identity: string; provider: string; address?: string };
   /** The chat's remote id — for a direct XMPP chat, the peer's bare JID. */
   chatRemoteId: string;
   /** The id the message was sent with (XMPP origin-id): the network's own copy replaces this row. */
@@ -929,8 +935,19 @@ export function recordSentChatMessage(
   db: IndexDatabase,
   record: SentChatRecord,
 ): { conversationId: string; messageId: string } {
+  // One transaction around the lookup AND the write: the delivered copy may land between them
+  // otherwise, and the echo written then is the duplicate this check exists to prevent.
+  return withTransaction(db, () => recordSentRows(db, record));
+}
+
+function recordSentRows(
+  db: IndexDatabase,
+  record: SentChatRecord,
+): { conversationId: string; messageId: string } {
   const { backend, account, chatRemoteId } = record;
   upsertAccount(db, account);
+  const delivered = deliveredTwin(db, backend, account.id, record.clientId);
+  if (delivered !== null) return adoptedByDelivered(db, record, delivered);
   const conversationId = chatConversationId(backend, account.id, chatRemoteId);
   const batch = new ChatBatch(backend, account.id);
   if (!db.prepare('SELECT 1 FROM conversations WHERE id = ?').get(conversationId)) {
@@ -965,6 +982,9 @@ export function recordSentChatMessage(
       record.sentAt,
       null,
       null,
+      null,
+      null,
+      null,
     ]);
   }
   const row = messageRow(
@@ -986,6 +1006,62 @@ export function recordSentChatMessage(
   );
   batch.messages.push(row);
   batch.changed.add(conversationId);
-  writeBatch(db, batch);
+  writeBatchRows(db, batch);
   return { conversationId, messageId: String(row[0]) };
+}
+
+interface DeliveredTwin {
+  id: string;
+  conversationId: string;
+  body: unknown;
+}
+
+/**
+ * The network's own copy of the message about to be recorded, when it is already in the index.
+ *
+ * With a daemon running, a send is routed THROUGH it (`sendSharesReceiveState`), and the
+ * daemon's socket receives the message back — writing the delivered row — before the caller
+ * returns from the send and records it. An echo written beside that row would never be adopted:
+ * the adoption in {@link writeBatchRows} happens when the delivered copy ARRIVES, and it arrives
+ * exactly once. The duplicate would stand in the chat forever, which is what it did.
+ */
+function deliveredTwin(
+  db: IndexDatabase,
+  backend: string,
+  accountId: string,
+  clientId: string,
+): DeliveredTwin | null {
+  const row = db
+    .prepare(
+      `SELECT id, conversation_id, body FROM conversation_messages
+         WHERE backend = ? AND account_id = ? AND remote_id = ?`,
+    )
+    .get(backend, accountId, clientId) as Record<string, unknown> | undefined;
+  if (!row) return null;
+  return { id: String(row.id), conversationId: String(row.conversation_id), body: row.body };
+}
+
+/**
+ * Record the send as the delivered row that already holds it, giving that row the sent text
+ * when it has none — the same hole-filling, never-overwriting rule as {@link adoptEchoBody},
+ * for the order in which the echo is the one that comes second.
+ */
+function adoptedByDelivered(
+  db: IndexDatabase,
+  record: SentChatRecord,
+  delivered: DeliveredTwin,
+): { conversationId: string; messageId: string } {
+  const empty = delivered.body === null || delivered.body === undefined || delivered.body === '';
+  if (empty && record.text.length > 0) {
+    db.prepare('UPDATE conversation_messages SET body = ? WHERE id = ?').run(record.text, delivered.id);
+    appendChanges(db, [
+      {
+        kind: 'messages',
+        backend: record.backend,
+        accountId: record.account.id,
+        conversationId: delivered.conversationId,
+      },
+    ]);
+  }
+  return { conversationId: delivered.conversationId, messageId: delivered.id };
 }

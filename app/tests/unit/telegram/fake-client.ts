@@ -2,6 +2,7 @@ import type {
   ClientOptions,
   LoginPrompts,
   TelegramClientHandle,
+  TelegramLive,
   TgChat,
   TgDialog,
   TgDialogsParams,
@@ -120,11 +121,41 @@ export class FakeClient implements TelegramClientHandle {
   /** Every `sendText` call, in order. */
   readonly sent: Array<{ chatId: number; text: string }> = [];
   private nextSentId = 9000;
+  /** Present when the client was made with `live: true`; the test drives it with `arrive` and `end`. */
+  readonly live?: TelegramLive;
+  /** `live.start()` calls. */
+  liveStarts = 0;
+  private readonly arrivals = new Set<() => void>();
+  private readonly closers: Array<(end: { reason: string; loggedOut: boolean }) => void> = [];
 
   constructor(options: ClientOptions, script: FakeScript) {
+    if (options.live) {
+      this.live = {
+        start: async () => {
+          this.liveStarts++;
+        },
+        onArrival: (listener) => {
+          this.arrivals.add(listener);
+          return () => this.arrivals.delete(listener);
+        },
+        onClosed: (listener) => {
+          this.closers.push(listener);
+        },
+      };
+    }
     this.storage = options.storage;
     this.credentials = options.credentials;
     this.script = script;
+  }
+
+  /** An update arrived: Telegram said something changed. */
+  arrive(): void {
+    for (const listener of this.arrivals) listener();
+  }
+
+  /** The connection gave up. */
+  end(reason: string, loggedOut = false): void {
+    for (const closer of this.closers) closer({ reason, loggedOut });
   }
 
   async connect(): Promise<void> {
@@ -134,7 +165,9 @@ export class FakeClient implements TelegramClientHandle {
 
   async getMe(): Promise<TgUser> {
     this.calls.push('getMe');
-    if (this.script.unauthorized) throw new Error('AUTH_KEY_UNREGISTERED');
+    if (this.script.unauthorized) {
+      throw Object.assign(new Error('AUTH_KEY_UNREGISTERED'), { text: 'AUTH_KEY_UNREGISTERED' });
+    }
     return ME;
   }
 

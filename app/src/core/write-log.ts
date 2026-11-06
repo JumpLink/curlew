@@ -12,7 +12,7 @@ import { dataDir, ensurePrivateDir } from '@curlew/store';
 import { appendFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-export type WriteFrontend = 'cli' | 'mcp' | 'daemon';
+export type WriteFrontend = 'cli' | 'mcp' | 'daemon' | 'window';
 
 export interface WriteLogEntry {
   /** `<area>.<verb>`, for example `xmpp.send`. */

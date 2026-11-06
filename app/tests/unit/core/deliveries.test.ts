@@ -44,6 +44,7 @@ function tempWorld(backends: string[] = ['signal', 'whatsapp']): {
       backends: Object.fromEntries(
         backends.map((name) => [name, { enabled: true, termsAcceptedAt: '2026-09-01T00:00:00.000Z' }]),
       ),
+      ui: { showAllEmails: true },
       senders: {},
       grants: [],
       agentAccess: { askWithoutRule: true, rules: [] },

@@ -64,12 +64,15 @@ export interface FolderCursor {
 
 export function upsertAccount(
   db: IndexDatabase,
-  account: { id: string; identity: string; provider: string },
+  account: { id: string; identity: string; provider: string; address?: string },
 ): void {
+  // An absent address keeps what an earlier run stored: a backend that cannot read it right now
+  // (a session mid-link) must not erase what the window uses to recognise the chat with oneself.
   db.prepare(
-    `INSERT INTO accounts (id, identity, provider) VALUES (?, ?, ?)
-     ON CONFLICT(id) DO UPDATE SET identity = excluded.identity, provider = excluded.provider`,
-  ).run(account.id, account.identity, account.provider);
+    `INSERT INTO accounts (id, identity, provider, address) VALUES (?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET identity = excluded.identity, provider = excluded.provider,
+       address = COALESCE(excluded.address, accounts.address)`,
+  ).run(account.id, account.identity, account.provider, account.address ?? null);
 }
 
 export function upsertFolder(
@@ -230,7 +233,7 @@ export function upsertMessages(
       `INSERT INTO messages
          (account_id, folder_path, uid, message_id, subject, sender, recipients, date, internal_date,
           size, seen, flagged, has_attachment, indexed_at, in_reply_to, thread_refs, from_json, to_json,
-          list_id, list_unsubscribe, auto_submitted, precedence)`,
+          list_id, list_unsubscribe, auto_submitted, precedence, email_chat)`,
       messages.map((message): SqlValue[] => [
         accountId,
         folderPath,
@@ -256,6 +259,7 @@ export function upsertMessages(
         message.automation.listUnsubscribe,
         message.automation.autoSubmitted,
         message.automation.precedence,
+        message.emailChat ? 1 : 0,
       ]),
     );
 

@@ -26,6 +26,7 @@ import {
   FileJournal,
   journalPath,
   JidResolver,
+  ownAddressOf,
   parseJid,
   parsePairingPhone,
   parseSettings,
@@ -134,6 +135,16 @@ export default async () => {
     await it('names an account by its LID, never by the phone number', async () => {
       expect(accountIdFromCreds({ me: ME })).toBe(ACCOUNT);
       expect(accountIdFromCreds({ me: { id: ME.id }, registrationId: 4711 })).toBe('whatsapp-4711');
+    });
+  });
+
+  await describe('WhatsApp own address', async () => {
+    await it('reads the bare phone and LID JIDs, and nothing else', async () => {
+      expect(ownAddressOf({ id: '4915100000000:12@s.whatsapp.net', lid: '123456789:3@lid' })).toBe(
+        '4915100000000@s.whatsapp.net 123456789@lid',
+      );
+      expect(ownAddressOf({ id: 'group@g.us', lid: null })).toBe(null);
+      expect(ownAddressOf(null)).toBe(null);
     });
   });
 

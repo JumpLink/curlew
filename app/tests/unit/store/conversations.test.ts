@@ -3,7 +3,10 @@ import { describe, expect, it } from '@gjsify/unit';
 import type { AutomationHeaders, ContactDTO } from '@curlew/protocol';
 import {
   getConversation,
+  getRecentMessages,
   listConversations,
+  mailAttachments,
+  mailReplyTarget,
   migrate,
   openIndexDb,
   rebuildConversations,
@@ -305,6 +308,138 @@ export default async () => {
         const withBodies = getConversation(db, id, { includeBodies: true, maxBodyChars: 5 });
         expect(withBodies?.messages[0].bodyText).toBe('Komms');
         expect(withBodies?.messages[0].bodyTruncated).toBe(true);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('marks a thread an email chat when any message carries Chat-Version, per message too', async () => {
+      const backend = new FakeBackend();
+      backend.put('INBOX', [
+        message(1, 'Chat: Hallo', 'Hallo', { messageId: '<c1@example.org>', from: [ANNA], to: [ME] }),
+        message(2, 'Chat: Hallo', 'Hi', {
+          messageId: '<c2@example.com>',
+          from: [ME],
+          to: [ANNA],
+          inReplyTo: '<c1@example.org>',
+          references: ['<c1@example.org>'],
+          emailChat: true,
+        }),
+        message(3, 'Rechnung', 'Anbei', { messageId: '<r1@example.net>', from: [BEN], to: [ME] }),
+      ]);
+      const db = freshDb();
+      try {
+        await syncIndex(db, backend, { now: AT('2026-08-06T12:00:00Z') });
+        rebuildConversations(db, { contacts: CONTACTS });
+        const all = listConversations(db);
+        const chat = all.find((c) => c.messageCount === 2);
+        expect(chat?.emailChat).toBe(true);
+        expect(all.find((c) => c.messageCount === 1)?.emailChat).toBe(false);
+        const found = getConversation(db, chat?.id ?? '');
+        expect(found?.messages.map((m) => m.emailChat)).toStrictEqual([false, true]);
+        const target = mailReplyTarget(db, found?.messages[1].ref ?? { accountId: '' });
+        expect(target?.messageId).toBe('<c2@example.com>');
+        expect(target?.references).toStrictEqual(['<c1@example.org>']);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('lists what a mail message carries, by file name and type', async () => {
+      const backend = new FakeBackend();
+      backend.put('INBOX', [
+        message(1, 'Foto', '', {
+          from: [ANNA],
+          to: [ME],
+          hasAttachment: true,
+          attachments: [
+            { section: '2', filename: 'cat.jpg', mimeType: 'image/jpeg', size: 10 },
+            { section: '3', filename: null, mimeType: 'application/pdf', size: 20 },
+          ],
+        }),
+        message(2, 'Ohne', 'Text', { from: [BEN], to: [ME] }),
+      ]);
+      const db = freshDb();
+      try {
+        await syncIndex(db, backend, { now: AT('2026-08-06T12:00:00Z') });
+        rebuildConversations(db, { contacts: CONTACTS });
+        const ref = { accountId: 'fake', folder: 'INBOX', uid: 1 };
+        const found = listConversations(db).flatMap((c) => getConversation(db, c.id)?.messages ?? []);
+        const withFile = found.find((m) => m.hasAttachments);
+        expect(
+          mailAttachments(db, withFile?.ref ?? ref).map((a) => [a.section, a.filename, a.mimeType, a.size]),
+        ).toStrictEqual([
+          ['2', 'cat.jpg', 'image/jpeg', 10],
+          ['3', null, 'application/pdf', 20],
+        ]);
+        expect(mailAttachments(db, found.find((m) => !m.hasAttachments)?.ref ?? ref).length).toBe(0);
+        expect(mailAttachments(db, { accountId: 'fake' }).length).toBe(0);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('reads only the newest messages of several conversations, oldest first', async () => {
+      const { db } = await built();
+      try {
+        const all = listConversations(db);
+        const newest = getRecentMessages(
+          db,
+          all.map((c) => c.id),
+          { limit: 2, includeBodies: true },
+        );
+        expect(newest.map((m) => m.bodyText)).toStrictEqual(['Hallo, eine Frage', 'Hallo Ben und Anna']);
+        const fest = all.find((c) => c.title === 'Sommerfest')?.id ?? '';
+        const one = getRecentMessages(db, [fest], { limit: 10, includeBodies: true });
+        expect(one.map((m) => m.bodyText)).toStrictEqual(['Kommst du am Samstag?', 'Ja, gerne']);
+        expect(getRecentMessages(db, [fest], { limit: 10 })[0].bodyText).toBe(undefined);
+        expect(getRecentMessages(db, [], { limit: 10 }).length).toBe(0);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('pages back with a cursor: each message once, in order, across equal and missing timestamps', async () => {
+      const db = freshDb();
+      try {
+        const stamps: Array<[string, string | null, string]> = [
+          ['m-a', null, 'c-1'],
+          ['m-b', null, 'c-2'],
+          ['m-c', '2026-08-01T10:00:00Z', 'c-1'],
+          ['m-d', '2026-08-01T10:00:00Z', 'c-2'],
+          ['m-e', '2026-08-01T10:00:00Z', 'c-1'],
+          ['m-f', '2026-08-02T10:00:00Z', 'c-2'],
+          ['m-g', '2026-08-03T10:00:00Z', 'c-1'],
+        ];
+        for (const [id, sentAt, conversation] of stamps) {
+          db.prepare(
+            `INSERT INTO conversation_messages (id, conversation_id, backend, account_id, presentation,
+               from_self, sent_at, seen, has_attachments, classification, classification_reason)
+             VALUES (?, ?, 'mail', 'a-1', 'document', 0, ?, 1, 0, 'conversational', 'known-contact')`,
+          ).run(id, conversation, sentAt);
+        }
+        const expected = ['m-a', 'm-b', 'm-c', 'm-d', 'm-e', 'm-f', 'm-g'];
+        for (const size of [1, 2, 3, 7, 10]) {
+          const seen: string[] = [];
+          let before: { sentAt: string | null; id: string } | undefined;
+          for (let guard = 0; guard < 20; guard++) {
+            const page = getRecentMessages(db, ['c-1', 'c-2'], {
+              limit: size,
+              ...(before ? { before } : {}),
+            });
+            seen.unshift(...page.map((m) => m.id));
+            if (page.length < size) break;
+            before = { sentAt: page[0].sentAt, id: page[0].id };
+          }
+          expect(seen).toStrictEqual(expected);
+        }
+        const mid = getRecentMessages(db, ['c-1', 'c-2'], {
+          limit: 10,
+          before: { sentAt: '2026-08-01T10:00:00Z', id: 'm-d' },
+        });
+        expect(mid.map((m) => m.id)).toStrictEqual(['m-a', 'm-b', 'm-c']);
+        const onlyOne = getRecentMessages(db, ['c-1'], { limit: 10, before: { sentAt: null, id: 'm-b' } });
+        expect(onlyOne.map((m) => m.id)).toStrictEqual(['m-a']);
       } finally {
         db.close();
       }

@@ -26,6 +26,7 @@ export const THREAD_HEADER_FIELDS: readonly string[] = [
   'LIST-UNSUBSCRIBE',
   'AUTO-SUBMITTED',
   'PRECEDENCE',
+  'CHAT-VERSION',
 ];
 
 /** The FETCH item that asks for them without setting `\Seen`. */
@@ -73,6 +74,8 @@ export interface ThreadHeaders {
   references: string[];
   inReplyTo: string | null;
   automation: AutomationHeaders;
+  /** Only version 1.0 is understood; a future version is not guessed at. */
+  emailChat: boolean;
 }
 
 /** Parse the fetched header block into threading and classification input. */
@@ -92,5 +95,6 @@ export function parseThreadHeaders(block: string): ThreadHeaders {
       autoSubmitted: get('auto-submitted'),
       precedence: get('precedence'),
     },
+    emailChat: get('chat-version') === '1.0',
   };
 }

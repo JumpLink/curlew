@@ -92,6 +92,10 @@ export interface SendParams {
   subject?: string;
   /** Mail only: absolute paths of files to attach. A backend that cannot attach refuses them. */
   attachments?: string[];
+  /** Mail from the chat UI: Delta Chat's marker and an optional RFC 5322 parent. */
+  emailChat?: boolean;
+  inReplyTo?: string;
+  references?: string[];
   /** `plain` (default) sends `text` as is; `markdown` renders it per chat protocol and splits long texts. */
   format?: MessageFormat;
   frontend: WriteFrontend;
@@ -275,6 +279,9 @@ export interface SendRequest {
   imageUrl?: string;
   subject?: string;
   attachments?: string[];
+  emailChat?: boolean;
+  inReplyTo?: string;
+  references?: string[];
   format?: MessageFormat;
 }
 
@@ -341,6 +348,9 @@ export async function sendThrough(
                 to: request.to,
                 text: step.value,
                 ...(request.subject === undefined ? {} : { subject: request.subject }),
+                ...(request.emailChat ? { emailChat: true } : {}),
+                ...(request.inReplyTo ? { inReplyTo: request.inReplyTo } : {}),
+                ...(request.references ? { references: request.references } : {}),
                 ...(attachments.length === 0 ? {} : { attachments: attachments.map((path) => ({ path })) }),
               })
             : await sender.sendImage!(request.to, step.value),
@@ -447,6 +457,9 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
   if (params.subject !== undefined && !backend.manifest.capabilities.subject) {
     throw new Error(fmt(_('{backend} messages carry no subject'), { backend: backend.manifest.name }));
   }
+  if ((params.emailChat || params.inReplyTo || params.references) && !backend.manifest.capabilities.subject) {
+    throw new Error(fmt(_('{backend} cannot send email chat headers'), { backend: backend.manifest.name }));
+  }
   const attachments = params.attachments ?? [];
   if (attachments.length > 0) {
     if (!backend.manifest.capabilities.attachments) {
@@ -469,6 +482,9 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
     ...(text === undefined ? {} : { text }),
     ...(imageUrl === undefined ? {} : { imageUrl }),
     ...(params.subject === undefined ? {} : { subject: params.subject }),
+    ...(params.emailChat ? { emailChat: true } : {}),
+    ...(params.inReplyTo ? { inReplyTo: params.inReplyTo } : {}),
+    ...(params.references ? { references: params.references } : {}),
     ...(attachments.length === 0 ? {} : { attachments }),
     ...(params.format === undefined ? {} : { format: params.format }),
   };

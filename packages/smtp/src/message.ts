@@ -30,6 +30,11 @@ export function composerOptions(message: OutgoingMessage, messageId: string): Ma
     text: message.text,
     html: message.html,
     messageId,
+    headers: {
+      ...(message.emailChat ? { 'Chat-Version': '1.0' } : {}),
+      ...(message.inReplyTo ? { 'In-Reply-To': message.inReplyTo } : {}),
+      ...(message.references && message.references.length > 0 ? { References: message.references.join(' ') } : {}),
+    },
     attachments: (message.attachments ?? []).map((attachment) => ({
       filename: attachment.filename,
       content: Buffer.from(attachment.content),

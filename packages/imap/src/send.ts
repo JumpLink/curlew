@@ -77,6 +77,9 @@ export class MailSender implements MessageSender {
       to: [to],
       subject: message.subject ?? '',
       text: message.text,
+      ...(message.emailChat ? { emailChat: true } : {}),
+      ...(message.inReplyTo ? { inReplyTo: message.inReplyTo } : {}),
+      ...(message.references ? { references: message.references } : {}),
       ...(files.length === 0
         ? {}
         : {

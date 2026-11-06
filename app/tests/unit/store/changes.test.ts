@@ -6,6 +6,7 @@ import {
   CHANGES_KEEP_ROWS,
   migrate,
   readChanges,
+  upsertAccount,
   SCHEMA_VERSION,
 } from '@curlew/store';
 import { freshDb } from './fixtures.ts';
@@ -120,13 +121,93 @@ export default async () => {
           value: string;
         };
         expect(version.value).toBe(String(SCHEMA_VERSION));
-        expect(SCHEMA_VERSION).toBe(10);
+        expect(SCHEMA_VERSION).toBe(13);
         const kept = db.prepare('SELECT body FROM conversation_messages WHERE id = ?').get('m-1') as {
           body: string;
         };
         expect(kept.body).toBe('bleibt');
         appendChanges(db, [{ kind: 'accounts' }], T0);
         expect(readChanges(db, 0, 10).changes.length).toBe(1);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('migrates a v12 index to v13, adding room facts and the account address as unknown', async () => {
+      const db = freshDb();
+      try {
+        db.prepare(`INSERT INTO accounts (id, identity) VALUES ('acc-1', 'wa-1')`).run();
+        db.exec('ALTER TABLE accounts DROP COLUMN address');
+        db.exec('ALTER TABLE chat_cursors DROP COLUMN room_public');
+        db.exec('ALTER TABLE chat_cursors DROP COLUMN room_encrypted');
+        db.exec('ALTER TABLE chat_cursors DROP COLUMN room_members');
+        db.prepare(`UPDATE schema_meta SET value = '12' WHERE key = 'schema_version'`).run();
+        expect(() => migrate(db)).not.toThrow();
+        const row = db.prepare('SELECT identity, address FROM accounts WHERE id = ?').get('acc-1') as {
+          identity: string;
+          address: string | null;
+        };
+        expect(row.identity).toBe('wa-1');
+        expect(row.address).toBe(null);
+        db.prepare(
+          `INSERT INTO chat_cursors (conversation_id, backend, account_id, chat_id, kind, room_public)
+           VALUES ('c-1', 'matrix', 'acc-1', '!r:example.org', 'group', 1)`,
+        ).run();
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('keeps a stored account address when a later upsert has none', async () => {
+      const db = freshDb();
+      try {
+        upsertAccount(db, {
+          id: 'a-1',
+          identity: 'wa-1',
+          provider: 'whatsapp',
+          address: '4915100000000@s.whatsapp.net',
+        });
+        upsertAccount(db, { id: 'a-1', identity: 'wa-1', provider: 'whatsapp' });
+        const row = db.prepare('SELECT address FROM accounts WHERE id = ?').get('a-1') as {
+          address: string | null;
+        };
+        expect(row.address).toBe('4915100000000@s.whatsapp.net');
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('migrates a v10 index to v11 by re-fetching mail, keeping every stored row', async () => {
+      const db = freshDb();
+      try {
+        db.prepare(
+          `INSERT INTO folders (account_id, path, name, uid_validity, uid_next, last_uid, message_count)
+           VALUES ('a-1', 'INBOX', 'INBOX', 7, 43, 42, 40)`,
+        ).run();
+        db.prepare(
+          `INSERT INTO conversation_messages (id, conversation_id, backend, account_id, presentation,
+             from_self, seen, has_attachments, classification, classification_reason, remote_id, body)
+           VALUES ('m-1', 'c-1', 'xmpp', 'a-1', 'bubble', 0, 0, 0, 'conversational', 'known-contact', 'x-1', 'bleibt')`,
+        ).run();
+        db.prepare(`UPDATE schema_meta SET value = '10' WHERE key = 'schema_version'`).run();
+        expect(() => migrate(db)).not.toThrow();
+        const folder = db
+          .prepare(`SELECT uid_validity, uid_next, last_uid, message_count FROM folders WHERE path = 'INBOX'`)
+          .get() as {
+          uid_validity: number;
+          uid_next: number | null;
+          last_uid: number;
+          message_count: number | null;
+        };
+        expect(folder.last_uid).toBe(0);
+        expect(folder.uid_next).toBe(null);
+        expect(folder.message_count).toBe(null);
+        expect(folder.uid_validity).toBe(7);
+        const kept = db
+          .prepare('SELECT body, email_chat FROM conversation_messages WHERE id = ?')
+          .get('m-1') as { body: string; email_chat: number };
+        expect(kept.body).toBe('bleibt');
+        expect(kept.email_chat).toBe(0);
       } finally {
         db.close();
       }
