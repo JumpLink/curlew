@@ -19,7 +19,7 @@ function demoPng(width: number, height: number): Buffer {
     for (let x = 0; x < width; x++) {
       raw[row + 1 + x * 3] = Math.round((x / width) * 200) + 30;
       raw[row + 2 + x * 3] = Math.round((y / height) * 160) + 70;
-      raw[row + 3 + x * 3] = 90 + ((x >> 5) + (y >> 5)) % 2 * 60;
+      raw[row + 3 + x * 3] = 90 + (((x >> 5) + (y >> 5)) % 2) * 60;
     }
   }
   const chunk = (type: string, data: Buffer): Buffer => {
@@ -122,7 +122,9 @@ try {
     conversation.run(id, backend, acc, kind, title, at, at, unread);
   }
 
-  db.prepare(`UPDATE accounts SET address = ? WHERE id = 'whatsapp-demo1'`).run('4915100000000@s.whatsapp.net');
+  db.prepare(`UPDATE accounts SET address = ? WHERE id = 'whatsapp-demo1'`).run(
+    '4915100000000@s.whatsapp.net',
+  );
   const cursor = db.prepare(
     `INSERT OR REPLACE INTO chat_cursors (conversation_id, backend, account_id, chat_id, kind,
        room_public, room_encrypted, room_members) VALUES (?, 'matrix', 'matrix-demo1', ?, ?, ?, ?, ?)`,
@@ -135,8 +137,12 @@ try {
   // Two conversations with a person and a history, so the conversation view has something to show:
   // an email chat (Delta Chat's `Chat-Version` marker) and an XMPP chat.
   const participant = db.prepare('INSERT OR REPLACE INTO participants (id, display_name) VALUES (?, ?)');
-  const address = db.prepare('INSERT OR REPLACE INTO participant_addresses (participant_id, kind, value) VALUES (?, ?, ?)');
-  const member = db.prepare('INSERT OR REPLACE INTO conversation_participants (conversation_id, participant_id) VALUES (?, ?)');
+  const address = db.prepare(
+    'INSERT OR REPLACE INTO participant_addresses (participant_id, kind, value) VALUES (?, ?, ?)',
+  );
+  const member = db.prepare(
+    'INSERT OR REPLACE INTO conversation_participants (conversation_id, participant_id) VALUES (?, ?)',
+  );
   for (const [conversationId, id, name, kind, value] of [
     ['c3', 'p-sam', 'Sam Fischer', 'email', 'sam@example.org'],
     ['c15', 'p-robin-wa', 'Robin', 'whatsapp', '4915100000000@s.whatsapp.net'],
@@ -157,7 +163,13 @@ try {
     ['p-mia', ['p-mia', 'Mia Schulz', 'matrix', '@mia:example.org']],
     ['p-noah', ['p-noah', 'Noah Braun', 'matrix', '@noah:example.org']],
   ]);
-  type Line = [conversation: string, fromSelf: boolean, minutesAgo: number, text: string, subject: string | null];
+  type Line = [
+    conversation: string,
+    fromSelf: boolean,
+    minutesAgo: number,
+    text: string,
+    subject: string | null,
+  ];
   const HISTORY: Line[] = [
     ['c3', false, 60 * 26, 'Are we still on for the garden day on Saturday?', 'Chat: Garden day'],
     ['c3', true, 60 * 25, 'Yes! I will bring the seedlings and some coffee.', 'Chat: Garden day'],
@@ -193,11 +205,17 @@ try {
   const mailBody = db.prepare('INSERT OR REPLACE INTO messages_fts (rowid, subject, body) VALUES (?, ?, ?)');
   HISTORY.forEach(([conversationId, fromSelf, minutesAgo, text, subject], i) => {
     const [, backend, acc] = CONVERSATIONS.find(([id]) => id === conversationId)!;
-    const sender = fromSelf ? null
-      : conversationId === 'c3' ? 'p-sam'
-      : conversationId === 'c14' ? 'p-mia'
-      : conversationId === 'c2' ? (text.startsWith('Can') ? 'p-noah' : 'p-mia')
-      : 'p-jo';
+    const sender = fromSelf
+      ? null
+      : conversationId === 'c3'
+        ? 'p-sam'
+        : conversationId === 'c14'
+          ? 'p-mia'
+          : conversationId === 'c2'
+            ? text.startsWith('Can')
+              ? 'p-noah'
+              : 'p-mia'
+            : 'p-jo';
     const at = new Date(now - minutesAgo * 60_000).toISOString();
     const mail = backend === 'mail';
     const n = i + 1;
@@ -205,12 +223,27 @@ try {
       mailRow.run(n, acc, n, subject, at, at);
       mailBody.run(n, subject, text);
     }
-    message.run(`m${n}`, conversationId, backend, acc, sender, fromSelf ? 1 : 0, at, subject, `r${n}`,
-      mail ? null : text, mail ? 1 : 0, mail ? 'INBOX' : null, mail ? n : null, mail ? null : n);
+    message.run(
+      `m${n}`,
+      conversationId,
+      backend,
+      acc,
+      sender,
+      fromSelf ? 1 : 0,
+      at,
+      subject,
+      `r${n}`,
+      mail ? null : text,
+      mail ? 1 : 0,
+      mail ? 'INBOX' : null,
+      mail ? n : null,
+      mail ? null : n,
+    );
     if (sender) {
       const [, name, kind, value] = [...PEOPLE.values()].find(([id]) => id === sender)!;
-      db.prepare('UPDATE conversation_messages SET sender_name = ?, sender_kind = ?, sender_address = ? WHERE id = ?')
-        .run(name, kind, value, `m${n}`);
+      db.prepare(
+        'UPDATE conversation_messages SET sender_name = ?, sender_kind = ?, sender_address = ? WHERE id = ?',
+      ).run(name, kind, value, `m${n}`);
     }
     if (!text) db.prepare(`UPDATE conversation_messages SET has_attachments = 1 WHERE id = ?`).run(`m${n}`);
   });
@@ -223,10 +256,28 @@ try {
     const subject = 'Chat: Garden day';
     mailRow.run(n, 'mail-demo1', n, subject, at, at);
     mailBody.run(n, subject, 'Here is the plan for the beds, and the invoice for the seedlings.');
-    message.run(`m${n}`, 'c3', 'mail', 'mail-demo1', 'p-sam', 0, at, subject, `r${n}`, null, 1, 'INBOX', n, null);
-    db.prepare('UPDATE conversation_messages SET sender_name = ?, sender_kind = ?, sender_address = ?, has_attachments = 1 WHERE id = ?')
-      .run('Sam Fischer', 'email', 'sam@example.org', `m${n}`);
-    const attach = db.prepare('INSERT OR REPLACE INTO attachments (message_id, section, filename, mime_type, size) VALUES (?, ?, ?, ?, ?)');
+    message.run(
+      `m${n}`,
+      'c3',
+      'mail',
+      'mail-demo1',
+      'p-sam',
+      0,
+      at,
+      subject,
+      `r${n}`,
+      null,
+      1,
+      'INBOX',
+      n,
+      null,
+    );
+    db.prepare(
+      'UPDATE conversation_messages SET sender_name = ?, sender_kind = ?, sender_address = ?, has_attachments = 1 WHERE id = ?',
+    ).run('Sam Fischer', 'email', 'sam@example.org', `m${n}`);
+    const attach = db.prepare(
+      'INSERT OR REPLACE INTO attachments (message_id, section, filename, mime_type, size) VALUES (?, ?, ?, ?, ?)',
+    );
     const png = demoPng(480, 320);
     attach.run(n, '2', 'garden-beds.png', 'image/png', png.length);
     attach.run(n, '3', 'seedlings-invoice.pdf', 'application/pdf', 48_200);
@@ -256,7 +307,22 @@ try {
     const at = new Date(now - (60 * 200 + (129 - i) * 55) * 60_000).toISOString();
     mailRow.run(n, 'mail-demo1', n, subject, at, at);
     mailBody.run(n, subject, text);
-    message.run(`m${n}`, 'c11', 'mail', 'mail-demo1', 'p-alerts', 0, at, subject, `r${n}`, null, 0, 'INBOX', n, null);
+    message.run(
+      `m${n}`,
+      'c11',
+      'mail',
+      'mail-demo1',
+      'p-alerts',
+      0,
+      at,
+      subject,
+      `r${n}`,
+      null,
+      0,
+      'INBOX',
+      n,
+      null,
+    );
   }
 } finally {
   db.close();

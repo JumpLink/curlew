@@ -24,7 +24,10 @@ export interface MediaViewer {
   install(window: Gtk.Window): void;
 }
 
-export function createMediaViewer(toast: (text: string) => void, onShownChanged: (shown: boolean) => void): MediaViewer {
+export function createMediaViewer(
+  toast: (text: string) => void,
+  onShownChanged: (shown: boolean) => void,
+): MediaViewer {
   const toolbar = new Adw.ToolbarView({ visible: false, focusable: true });
   toolbar.add_css_class('background');
 
@@ -43,7 +46,15 @@ export function createMediaViewer(toast: (text: string) => void, onShownChanged:
   toolbar.add_top_bar(header);
 
   const stack = new Gtk.Stack();
-  stack.add_named(new Adw.Spinner({ halign: Gtk.Align.CENTER, valign: Gtk.Align.CENTER, widthRequest: 48, heightRequest: 48 }), 'loading');
+  stack.add_named(
+    new Adw.Spinner({
+      halign: Gtk.Align.CENTER,
+      valign: Gtk.Align.CENTER,
+      widthRequest: 48,
+      heightRequest: 48,
+    }),
+    'loading',
+  );
   const picture = new Gtk.Picture({
     contentFit: Gtk.ContentFit.CONTAIN,
     canShrink: true,
@@ -56,7 +67,10 @@ export function createMediaViewer(toast: (text: string) => void, onShownChanged:
   stack.add_named(picture, 'image');
   const videoSlot = new Gtk.Box({ hexpand: true, vexpand: true });
   stack.add_named(videoSlot, 'video');
-  const failed = new Adw.StatusPage({ iconName: 'image-missing-symbolic', title: _('Could not load the attachment') });
+  const failed = new Adw.StatusPage({
+    iconName: 'image-missing-symbolic',
+    title: _('Could not load the attachment'),
+  });
   stack.add_named(failed, 'error');
   toolbar.set_content(stack);
 

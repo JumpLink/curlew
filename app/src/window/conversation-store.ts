@@ -66,7 +66,10 @@ function loadPage(
   }
 }
 
-export function loadMailReplyTarget(message: ConversationMessage | null, dbPath = indexDbPath()): MailReplyTarget | null {
+export function loadMailReplyTarget(
+  message: ConversationMessage | null,
+  dbPath = indexDbPath(),
+): MailReplyTarget | null {
   if (!message || message.backend !== 'mail') return null;
   const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
   try {

@@ -48,7 +48,8 @@ function cachedFile(dir: string): string | null {
 /** The local path of the part's bytes: the cached copy, else one fetch shared by every caller. */
 export function fetchAttachment(source: AttachmentSource, root = previewsDir()): Promise<string> {
   const { ref, info } = source;
-  if (info.section === undefined || ref.uid === undefined) return Promise.reject(new Error('Not a mail attachment'));
+  if (info.section === undefined || ref.uid === undefined)
+    return Promise.reject(new Error('Not a mail attachment'));
   const dir = partDir(source, root);
   const hit = cachedFile(dir);
   if (hit) return Promise.resolve(join(dir, hit));

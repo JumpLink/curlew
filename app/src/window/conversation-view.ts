@@ -110,7 +110,7 @@ export function createConversationView(
   const loadPass = () => {
     passScheduled = false;
     let started = 0;
-    for (let i = 0; i < waiting.length && started < STARTS_PER_PASS; ) {
+    for (let i = 0; i < waiting.length && started < STARTS_PER_PASS;) {
       const item = waiting[i]!;
       if (!nearScreen(item.widget)) {
         i++;
@@ -206,7 +206,8 @@ export function createConversationView(
     if (heading) bubble.append(heading);
     const written = message.bodyText?.trim() || message.notice;
     const full =
-      (written || (message.hasAttachments ? attachmentLines(message.attachments).join('\n') : _('No text body'))) +
+      (written ||
+        (message.hasAttachments ? attachmentLines(message.attachments).join('\n') : _('No text body'))) +
       (message.bodyTruncated ? ' …' : '');
     // What is listed below the text stands for the attachments itself; the placeholder line is
     // only for a message whose parts the index does not know.
@@ -302,7 +303,15 @@ export function createConversationView(
     prepending = true;
     lastUpper = adjustment.get_upper();
     const spin = new Gtk.ListBoxRow({ selectable: false, activatable: false });
-    spin.set_child(new Adw.Spinner({ halign: Gtk.Align.CENTER, widthRequest: 32, heightRequest: 32, marginTop: 12, marginBottom: 12 }));
+    spin.set_child(
+      new Adw.Spinner({
+        halign: Gtk.Align.CENTER,
+        widthRequest: 32,
+        heightRequest: 32,
+        marginTop: 12,
+        marginBottom: 12,
+      }),
+    );
     spinner = spin;
     history.insert(spin, 0);
     const run = generation;
@@ -409,7 +418,9 @@ export function createConversationView(
       .catch((err: unknown) => {
         overlay.add_toast(
           new Adw.Toast({
-            title: fmt(_('Message not sent: {error}'), { error: err instanceof Error ? err.message : String(err) }),
+            title: fmt(_('Message not sent: {error}'), {
+              error: err instanceof Error ? err.message : String(err),
+            }),
             timeout: 6,
           }),
         );

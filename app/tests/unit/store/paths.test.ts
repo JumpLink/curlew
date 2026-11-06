@@ -4,7 +4,15 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from '@gjsify/unit';
 
-import { attachmentsDir, configPath, dataDir, homeSubdir, indexDbPath, previewsDir, xdgDataHome } from '@curlew/store';
+import {
+  attachmentsDir,
+  configPath,
+  dataDir,
+  homeSubdir,
+  indexDbPath,
+  previewsDir,
+  xdgDataHome,
+} from '@curlew/store';
 
 // Every function here takes its environment as a parameter, so the promise these tests check —
 // nothing is EVER written inside the repository — is checkable without touching the real one.

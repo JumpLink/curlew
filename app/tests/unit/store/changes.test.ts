@@ -136,9 +136,7 @@ export default async () => {
     await it('migrates a v12 index to v13, adding room facts and the account address as unknown', async () => {
       const db = freshDb();
       try {
-        db.prepare(
-          `INSERT INTO accounts (id, identity) VALUES ('acc-1', 'wa-1')`,
-        ).run();
+        db.prepare(`INSERT INTO accounts (id, identity) VALUES ('acc-1', 'wa-1')`).run();
         db.exec('ALTER TABLE accounts DROP COLUMN address');
         db.exec('ALTER TABLE chat_cursors DROP COLUMN room_public');
         db.exec('ALTER TABLE chat_cursors DROP COLUMN room_encrypted');
@@ -163,9 +161,16 @@ export default async () => {
     await it('keeps a stored account address when a later upsert has none', async () => {
       const db = freshDb();
       try {
-        upsertAccount(db, { id: 'a-1', identity: 'wa-1', provider: 'whatsapp', address: '4915100000000@s.whatsapp.net' });
+        upsertAccount(db, {
+          id: 'a-1',
+          identity: 'wa-1',
+          provider: 'whatsapp',
+          address: '4915100000000@s.whatsapp.net',
+        });
         upsertAccount(db, { id: 'a-1', identity: 'wa-1', provider: 'whatsapp' });
-        const row = db.prepare('SELECT address FROM accounts WHERE id = ?').get('a-1') as { address: string | null };
+        const row = db.prepare('SELECT address FROM accounts WHERE id = ?').get('a-1') as {
+          address: string | null;
+        };
         expect(row.address).toBe('4915100000000@s.whatsapp.net');
       } finally {
         db.close();
@@ -188,7 +193,12 @@ export default async () => {
         expect(() => migrate(db)).not.toThrow();
         const folder = db
           .prepare(`SELECT uid_validity, uid_next, last_uid, message_count FROM folders WHERE path = 'INBOX'`)
-          .get() as { uid_validity: number; uid_next: number | null; last_uid: number; message_count: number | null };
+          .get() as {
+          uid_validity: number;
+          uid_next: number | null;
+          last_uid: number;
+          message_count: number | null;
+        };
         expect(folder.last_uid).toBe(0);
         expect(folder.uid_next).toBe(null);
         expect(folder.message_count).toBe(null);

@@ -73,8 +73,13 @@ export interface Size {
 }
 
 /** `natural` scaled down, never up, to fit the box; the ratio is kept and nothing collapses to zero. */
-export function boundedSize(natural: Size, maxWidth = BUBBLE_MAX_IMAGE_WIDTH, maxHeight = BUBBLE_MAX_IMAGE_HEIGHT): Size {
-  if (!(natural.width > 0) || !(natural.height > 0)) return { width: maxWidth, height: Math.round(maxHeight / 2) };
+export function boundedSize(
+  natural: Size,
+  maxWidth = BUBBLE_MAX_IMAGE_WIDTH,
+  maxHeight = BUBBLE_MAX_IMAGE_HEIGHT,
+): Size {
+  if (!(natural.width > 0) || !(natural.height > 0))
+    return { width: maxWidth, height: Math.round(maxHeight / 2) };
   const scale = Math.min(1, maxWidth / natural.width, maxHeight / natural.height);
   return {
     width: Math.max(1, Math.round(natural.width * scale)),
@@ -94,6 +99,9 @@ export function shownAttachments(
 }
 
 /** Where a fetched part is cached: one directory per message part, so a part is fetched once. */
-export function previewKey(ref: { accountId: string; folder?: string; uid?: number }, section: string): string {
+export function previewKey(
+  ref: { accountId: string; folder?: string; uid?: number },
+  section: string,
+): string {
   return [ref.accountId, ref.folder ?? '', ref.uid ?? '', section].join('\u0000');
 }

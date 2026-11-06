@@ -11,7 +11,9 @@ import {
   tileAction,
 } from '../../../src/window/attachment-model.ts';
 
-const part = (over: Partial<{ filename: string | null; mimeType: string | null; section: string; size: number | null }>) => ({
+const part = (
+  over: Partial<{ filename: string | null; mimeType: string | null; section: string; size: number | null }>,
+) => ({
   filename: 'photo.png',
   mimeType: 'image/png',
   section: '2',
@@ -95,7 +97,10 @@ export default async () => {
       expect(previewKey(ref, '2')).toBe(previewKey({ ...ref }, '2'));
       expect(previewKey(ref, '2') === previewKey(ref, '3')).toBe(false);
       expect(previewKey(ref, '2') === previewKey({ ...ref, uid: 8 }, '2')).toBe(false);
-      expect(previewKey({ accountId: 'ab', folder: 'c' }, '1') === previewKey({ accountId: 'a', folder: 'bc' }, '1')).toBe(false);
+      expect(
+        previewKey({ accountId: 'ab', folder: 'c' }, '1') ===
+          previewKey({ accountId: 'a', folder: 'bc' }, '1'),
+      ).toBe(false);
     });
   });
 };

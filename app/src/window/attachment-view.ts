@@ -43,7 +43,9 @@ export function attachmentName(info: AttachmentInfo): string {
 function sizeText(info: AttachmentInfo): string {
   const mime = effectiveMime(info);
   const type = mime ? Gio.content_type_get_description(mime) : '';
-  return info.size === null || info.size === undefined ? type : [type, GLib.format_size(info.size)].filter(Boolean).join(' · ');
+  return info.size === null || info.size === undefined
+    ? type
+    : [type, GLib.format_size(info.size)].filter(Boolean).join(' · ');
 }
 
 function tile(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Widget {
@@ -56,9 +58,20 @@ function tile(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Widge
   const mime = effectiveMime(info) ?? 'application/octet-stream';
   box.append(new Gtk.Image({ gicon: Gio.content_type_get_icon(mime), pixelSize: 32, marginStart: 4 }));
 
-  const text = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, hexpand: true, valign: Gtk.Align.CENTER });
-  text.append(new Gtk.Label({ label: name, xalign: 0, ellipsize: Pango.EllipsizeMode.MIDDLE, maxWidthChars: 28 }));
-  const detail = new Gtk.Label({ label: sizeText(info), xalign: 0, ellipsize: Pango.EllipsizeMode.END, maxWidthChars: 28 });
+  const text = new Gtk.Box({
+    orientation: Gtk.Orientation.VERTICAL,
+    hexpand: true,
+    valign: Gtk.Align.CENTER,
+  });
+  text.append(
+    new Gtk.Label({ label: name, xalign: 0, ellipsize: Pango.EllipsizeMode.MIDDLE, maxWidthChars: 28 }),
+  );
+  const detail = new Gtk.Label({
+    label: sizeText(info),
+    xalign: 0,
+    ellipsize: Pango.EllipsizeMode.END,
+    maxWidthChars: 28,
+  });
   detail.add_css_class('caption');
   detail.add_css_class('dim-label');
   text.append(detail);
@@ -70,7 +83,11 @@ function tile(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Widge
     tooltipText: action === 'view' ? _('Play') : _('Open'),
     valign: Gtk.Align.CENTER,
   });
-  const save = new Gtk.Button({ iconName: 'document-save-symbolic', tooltipText: _('Save as…'), valign: Gtk.Align.CENTER });
+  const save = new Gtk.Button({
+    iconName: 'document-save-symbolic',
+    tooltipText: _('Save as…'),
+    valign: Gtk.Align.CENTER,
+  });
   for (const button of [open, save]) {
     button.add_css_class('flat');
     button.add_css_class('circular');
@@ -92,7 +109,9 @@ function tile(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Widge
     if (action === 'view') handlers.view(source, kind);
     else run(open, (path, window) => openWithDesktop(window, path));
   });
-  save.connect('clicked', () => run(save, (path, window) => saveCopyAs(window, path, GLib.path_get_basename(path))));
+  save.connect('clicked', () =>
+    run(save, (path, window) => saveCopyAs(window, path, GLib.path_get_basename(path))),
+  );
   return box;
 }
 
@@ -110,7 +129,13 @@ function picture(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Wi
   const button = new Gtk.Button({ child: image, tooltipText: attachmentName(source.info) });
   button.add_css_class('flat');
   button.add_css_class('image-button');
-  const spinner = new Adw.Spinner({ halign: Gtk.Align.CENTER, valign: Gtk.Align.CENTER, widthRequest: 32, heightRequest: 32, visible: false });
+  const spinner = new Adw.Spinner({
+    halign: Gtk.Align.CENTER,
+    valign: Gtk.Align.CENTER,
+    widthRequest: 32,
+    heightRequest: 32,
+    visible: false,
+  });
   frame.set_child(button);
   frame.add_overlay(spinner);
   slot.append(frame);

@@ -147,7 +147,10 @@ export function selfAddressOf(conversation: Conversation, identity?: string): st
 
 /** `user@server`, lowercase, without a device suffix — how both the index and the account row spell a JID. */
 function bareLower(jid: string): string {
-  return jid.trim().toLowerCase().replace(/^([^@:\s]+):\d+@/, '$1@');
+  return jid
+    .trim()
+    .toLowerCase()
+    .replace(/^([^@:\s]+):\d+@/, '$1@');
 }
 
 /** The user JIDs in a WhatsApp account's `address` (space-separated); a display name yields none. */
@@ -198,7 +201,11 @@ export function targetOf(conversation: Conversation, room: RoomFacts | null = nu
 }
 
 /** `identities`: account id → the address the account is known by, as the index stores it. */
-export function toEntry(conversation: Conversation, identity?: string, room: RoomFacts | null = null): ListEntry {
+export function toEntry(
+  conversation: Conversation,
+  identity?: string,
+  room: RoomFacts | null = null,
+): ListEntry {
   return {
     id: conversation.id,
     conversationIds: [conversation.id],
@@ -256,7 +263,11 @@ export function toEntries(
   const mailContacts = new Map<string, ListEntry>();
   for (const conversation of conversations) {
     if (conversation.backend === 'mail' && !showAllEmails && !conversation.emailChat) continue;
-    const entry = toEntry(conversation, identities.get(conversation.accountId), rooms.get(conversation.id) ?? null);
+    const entry = toEntry(
+      conversation,
+      identities.get(conversation.accountId),
+      rooms.get(conversation.id) ?? null,
+    );
     const participant = conversation.participants.length === 1 ? conversation.participants[0] : null;
     if (conversation.backend !== 'mail' || conversation.kind !== 'direct' || !participant || !entry.target) {
       entries.push(entry);
@@ -273,7 +284,8 @@ export function toEntries(
     existing.conversationIds.push(conversation.id);
     existing.unread += entry.unread;
     existing.emailChat ||= entry.emailChat;
-    if ((entry.lastMessageAt ?? '') > (existing.lastMessageAt ?? '')) existing.lastMessageAt = entry.lastMessageAt;
+    if ((entry.lastMessageAt ?? '') > (existing.lastMessageAt ?? ''))
+      existing.lastMessageAt = entry.lastMessageAt;
   }
   return entries;
 }
@@ -355,7 +367,7 @@ export function dropDeselectedAccounts(
   accounts: Map<string, Set<string>>,
   backends: ReadonlySet<string>,
 ): void {
-  for (const backend of [...accounts.keys()]) if (!backends.has(backend)) accounts.delete(backend);
+  for (const backend of accounts.keys()) if (!backends.has(backend)) accounts.delete(backend);
 }
 
 /** Up to two letters for the avatar: first letters of the first two words. */

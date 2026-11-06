@@ -33,7 +33,9 @@ export function presentPreferences(parent: Gtk.Window | null, onChanged: () => v
       saveConfig(config, path);
       onChanged();
     } catch (err) {
-      overlay.add_toast(new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }));
+      overlay.add_toast(
+        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
+      );
     }
   });
   dialog.present(parent);

@@ -628,15 +628,30 @@ export default async () => {
     });
 
     await it('reports room facts only where the state was synced', async () => {
-      const open = roomFactsOf({ createSeen: true, joinRule: 'public', encryptionSeen: false, joinedMembers: 12 });
+      const open = roomFactsOf({
+        createSeen: true,
+        joinRule: 'public',
+        encryptionSeen: false,
+        joinedMembers: 12,
+      });
       expect(open.isPublic).toBe(true);
       expect(open.encrypted).toBe(false);
       expect(open.memberCount).toBe(12);
-      const closed = roomFactsOf({ createSeen: true, joinRule: 'invite', encryptionSeen: true, joinedMembers: 2 });
+      const closed = roomFactsOf({
+        createSeen: true,
+        joinRule: 'invite',
+        encryptionSeen: true,
+        joinedMembers: 2,
+      });
       expect(closed.isPublic).toBe(false);
       expect(closed.encrypted).toBe(true);
       expect(closed.memberCount).toBe(2);
-      const unknown = roomFactsOf({ createSeen: false, joinRule: undefined, encryptionSeen: false, joinedMembers: 0 });
+      const unknown = roomFactsOf({
+        createSeen: false,
+        joinRule: undefined,
+        encryptionSeen: false,
+        joinedMembers: 0,
+      });
       expect(unknown.isPublic).toBe(null);
       expect(unknown.encrypted).toBe(null);
       expect(unknown.memberCount).toBe(null);
@@ -648,8 +663,22 @@ export default async () => {
       try {
         const accountId = seedAccount(dir);
         const api = new FakeMatrixApi();
-        api.addRoom({ roomId: '!pub:example.org', name: 'Open', direct: false, isPublic: true, encrypted: false, memberCount: 7 });
-        api.addRoom({ roomId: '!enc:example.org', name: 'Closed', direct: false, isPublic: false, encrypted: true, memberCount: 3 });
+        api.addRoom({
+          roomId: '!pub:example.org',
+          name: 'Open',
+          direct: false,
+          isPublic: true,
+          encrypted: false,
+          memberCount: 7,
+        });
+        api.addRoom({
+          roomId: '!enc:example.org',
+          name: 'Closed',
+          direct: false,
+          isPublic: false,
+          encrypted: true,
+          memberCount: 3,
+        });
         api.addRoom({ roomId: '!unk:example.org', name: 'Unknown', direct: false });
         api.post('!pub:example.org', text(ANNA, T0, 'hi'));
         const backend = new MatrixBackend({ settings: {}, env: {}, secretsDir: dir }, fakeConnector(api));

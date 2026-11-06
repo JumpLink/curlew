@@ -87,38 +87,43 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
 
   let currentEntry: ListEntry | null = null;
   let currentMessages: ConversationMessage[] = [];
-  const conversation = createConversationView(async (text) => {
-    const entry = currentEntry;
-    if (!entry?.target) throw new Error(_('This conversation has no recipient address.'));
-    const parent = currentMessages[currentMessages.length - 1] ?? null;
-    const mail = entry.backend === 'mail' ? composeMailReply(parent, loadMailReplyTarget(parent), text) : null;
-    const result = await sendMessage({
-      accountId: entry.accountId,
-      to: entry.target,
-      text,
-      frontend: 'window',
-      ...(mail ?? {}),
-    });
-    return {
-      id: result.originId,
-      conversationId: parent?.conversationId ?? entry.conversationIds[0] ?? entry.id,
-      backend: entry.backend,
-      presentation: 'bubble',
-      senderId: null,
-      senderName: null,
-      senderAddress: null,
-      fromSelf: true,
-      sentAt: result.sentAt,
-      subject: mail?.subject ?? null,
-      seen: true,
-      hasAttachments: false,
-      emailChat: mail !== null,
-      classification: 'conversational',
-      classificationReason: 'self',
-      ref: { accountId: entry.accountId },
-      bodyText: text,
-    };
-  }, (entry, oldest) => loadOlderMessages(entry, oldest), (source, kind) => viewer.open(source, kind));
+  const conversation = createConversationView(
+    async (text) => {
+      const entry = currentEntry;
+      if (!entry?.target) throw new Error(_('This conversation has no recipient address.'));
+      const parent = currentMessages[currentMessages.length - 1] ?? null;
+      const mail =
+        entry.backend === 'mail' ? composeMailReply(parent, loadMailReplyTarget(parent), text) : null;
+      const result = await sendMessage({
+        accountId: entry.accountId,
+        to: entry.target,
+        text,
+        frontend: 'window',
+        ...mail,
+      });
+      return {
+        id: result.originId,
+        conversationId: parent?.conversationId ?? entry.conversationIds[0] ?? entry.id,
+        backend: entry.backend,
+        presentation: 'bubble',
+        senderId: null,
+        senderName: null,
+        senderAddress: null,
+        fromSelf: true,
+        sentAt: result.sentAt,
+        subject: mail?.subject ?? null,
+        seen: true,
+        hasAttachments: false,
+        emailChat: mail !== null,
+        classification: 'conversational',
+        classificationReason: 'self',
+        ref: { accountId: entry.accountId },
+        bodyText: text,
+      };
+    },
+    (entry, oldest) => loadOlderMessages(entry, oldest),
+    (source, kind) => viewer.open(source, kind),
+  );
   const select = (entry: ListEntry) => {
     currentEntry = entry;
     currentMessages = loadConversationMessages(entry);
