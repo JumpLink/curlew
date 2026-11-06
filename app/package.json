@@ -34,7 +34,7 @@
     "ship": {
       "appId": "eu.jumplink.curlew",
       "binaryName": "curlew",
-      "kind": "cli",
+      "kind": "app",
       "name": "Curlew",
       "localeDir": "dist/locale",
       "bundle": {
@@ -51,16 +51,12 @@
         "name": "Pascal Garber",
         "email": "pascal@jumplink.eu"
       },
-      "summary": "Mail, contacts and calendar on the command line and as an MCP server",
+      "summary": "Mail, contacts and calendar for you and your agents",
       "license": {
         "project": "AGPL-3.0-or-later"
       },
       "description": "curlew reads the mail (IMAP), contacts (CardDAV) and calendar (CalDAV) of the accounts already configured in GNOME Online Accounts, as a CLI and an MCP server. Read-only unless a grant says otherwise: it never sets \\Seen, and its only write is one granted send to one address. GNOME Online Accounts and Evolution Data Server are Linux-only, so the macOS and Windows packages ship with every account backend unavailable — see the Releasing section of README.md.",
-      "icon": "data/icons/hicolor/scalable/apps/eu.jumplink.curlew.svg",
-      "extraFiles": {
-        "share/icons/hicolor/scalable/apps/eu.jumplink.curlew.svg": "data/icons/hicolor/scalable/apps/eu.jumplink.curlew.svg",
-        "share/icons/hicolor/symbolic/apps/eu.jumplink.curlew-symbolic.svg": "data/icons/hicolor/symbolic/apps/eu.jumplink.curlew-symbolic.svg"
-      },
+      "icon": "data/icons",
       "homepageUrl": "https://github.com/JumpLink/curlew",
       "bugtrackerUrl": "https://github.com/JumpLink/curlew/issues",
       "vcsBrowserUrl": "https://github.com/JumpLink/curlew",
@@ -89,6 +85,38 @@
           "deb": "gir1.2-ical-3.0",
           "rpm": "libical-glib"
         }
+      },
+      "categories": [
+        "Network",
+        "Email",
+        "Office"
+      ],
+      "keywords": [
+        "mail",
+        "chat",
+        "calendar",
+        "contacts",
+        "agent",
+        "MCP",
+        "GOA"
+      ],
+      "branding": {
+        "accentLight": "#e01b24",
+        "accentDark": "#a51d2d"
+      },
+      "contentRating": "oars-1.1",
+      "flatpak": {
+        "runtimeVersion": "51",
+        "finishArgs": [
+          "--share=network",
+          "--share=ipc",
+          "--socket=wayland",
+          "--socket=fallback-x11",
+          "--device=dri",
+          "--talk-name=org.gnome.OnlineAccounts",
+          "--filesystem=xdg-config/curlew:create",
+          "--filesystem=xdg-data/curlew:create"
+        ]
       }
     },
     "excludeGlobals": [
