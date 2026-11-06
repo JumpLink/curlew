@@ -178,4 +178,4 @@ One app, `Adw.NavigationSplitView`: a sidebar with **Conversations** and **Mailb
 ## References
 
 The code behind every claim above is in [`refs/`](../../refs/), catalogued in
-[AGENTS.md → References](../../AGENTS.md#references).
+[docs/references/index.md](../references/index.md).

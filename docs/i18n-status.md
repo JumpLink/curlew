@@ -48,6 +48,7 @@ Two rules for call sites:
   getters.
 - **Never build a plural from an `n === 1` check.** Use `_n()`; the rule is a property of the
   language and belongs in the catalogue.
+- **MCP output stays English on purpose** — agents parse it.
 
 German uses informal "du", matching the sibling projects.
 
