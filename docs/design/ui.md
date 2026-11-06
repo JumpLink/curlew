@@ -31,8 +31,8 @@ below names the file it comes from.
 A window is an `Adw.NavigationSplitView` (sidebar plus content) with an `Adw.Breakpoint`. At
 **720 sp and narrower** the split view collapses to one pane: the list, and a selected entry
 pushes the content pane with the automatic back button. The window's minimum width is **360 px**
-(Phosh, phones). Nothing may need a wider window: rows ellipsize, chips wrap
-(`Adw.WrapBox`), and segmented controls get their own line.
+(Phosh, phones). Nothing may need a wider window: rows ellipsize, filters sit in a popover
+instead of a bar, and segmented controls get their own line.
 
 ## macOS as layout inspiration only
 
@@ -53,7 +53,8 @@ structure; it uses Adwaita's style classes.
 - A missing capability **hides** the control. No greyed-out controls, no per-protocol special
   views. Where a limit needs explaining (an encrypted Matrix room that cannot be sent to yet), a
   short hint sits at the composer.
-- The protocol is secondary: a small badge on the avatar and a filter chip. Nothing else.
+- The protocol is secondary: a small badge on the avatar and an entry in the filter popover.
+  Nothing else.
 
 Shared controls, an open list: emoji picker (one for reactions and the composer; custom emoji and
 stickers get their own section only where the backend has them; a backend with one reaction per
@@ -74,8 +75,15 @@ get the same view: topic, members, settings.
 All contacts, channels and groups of every messenger in **one** list.
 
 - Sections (collapsible): People, Groups; later Favourites and Channels.
-- **Filters are toggle chips** (`pill`, plus `suggested-action` while on), not tabs: one per protocol, shown only when there is a choice; once a
-  protocol is chosen, one per account of it, if it has several.
+- **Filters live in a popover**, not tabs: a `view-filter-symbolic` menu button in the sidebar
+  header opens toggles under *Protocols* and, once a protocol is chosen and it has several
+  accounts, under *Accounts*, plus **Clear filters**. The button is shown only when there is a
+  choice (two protocols or two accounts); a list with one account has none.
+- **Direct mail is grouped by person**: every direct mail thread with the same person is one
+  row. Chat backends are not regrouped, their conversations already are one per person.
+- **Show all emails** (Preferences, on by default). Off, the list keeps only mail threads that
+  carry the chat marker (`Chat-Version`, see below) and the replies to them, so the window reads
+  like a messenger beside the mail client.
 - Row: avatar with protocol badge (the protocol is shown ONLY there, never as text), title with a
   short time right-aligned, a subtitle line with the unread marker at its end. The subtitle is a
   one-line preview of the last message (Fractal, Flare) once the index stores one; until then it
@@ -87,7 +95,8 @@ All contacts, channels and groups of every messenger in **one** list.
 
 ### Built and not built
 
-Built: the list, sections, chips, search, badges, the grey count with bold title, the empty state.
+Built: the list, sections, the filter popover, search, badges, the grey count with bold title,
+the empty state, grouping by person, the Preferences dialog.
 
 Not built, future work: the **accent count** and the **dot**. The index keeps one `unread_count`
 per conversation; a mention and activity-without-count need the backends to store that state in
@@ -102,12 +111,39 @@ envelope, XMPP: server, Signal: shield, Matrix: globe of nodes, Telegram: paper 
 phone), with a tooltip naming the protocol.
 The protocols' logos have their own trademark licences, so Curlew ships none.
 
-## Conversation view (documented, not built)
+## Conversation view
 
-Header: title and a one-line subtitle or topic. History: day separators, system events collapsed
-into one expandable line ("3 room changes"), reaction chips, stacked read-receipt avatars.
-Composer: attach, emoji, a rounded entry, a more-menu, a round accent send button. The window
-shows a placeholder until the backends' send paths are wired to it.
+Built: a header with the title and the protocol as subtitle; a history of bubbles (`card`, own
+messages right-aligned, the time at the bubble's foot, "Contains attachments" when there are
+some) with a day separator between days; a mail subject only where the topic changes, so an
+email chat reads like a chat; a composer (a rounded entry and a round accent send button,
+`mail-send-symbolic` + `circular`) shown only when the conversation has a reply target. A
+failed send stays in the entry and shows a toast.
+
+**History is paged** (Fractal's rule). The pane opens on the newest 50 messages and scrolls to
+the end; when the scroll position comes within two viewports of the top (`value < page_size * 2`)
+it reads the next older 50, with an `Adw.Spinner` row on top meanwhile, until a page comes back
+short. The cursor is `(sent_at, id)`, strictly older than the oldest message shown — a total
+order, so equal timestamps neither repeat nor skip, and a message without a time sorts as the
+oldest. The new rows go in front a few per idle turn, and every growth of `upper` is added to
+`value`, so what the person reads does not move. Day separators and subject labels are computed
+over everything shown, so the seam between two pages is corrected, not duplicated. A newer
+conversation cancels a running page load.
+
+**A long body fades** (Tuba's "Show More"). `FadeBin` clamps its child to 300 px when it would be
+taller than 400 px and fades the last 125 px with a gradient alpha mask; a `pill opaque` "Show
+more" button over the foot lifts the clamp. A label is still laid out in full under a clamp, so
+`bubbleText` also cuts a body at 1500 characters / 30 lines until the button is used, which is
+what keeps the pane from freezing on a long history.
+
+Sending from the window is the person's own action (ADR 0008), so it asks no grant. Mail is sent
+as an **email chat** after Delta Chat's convention: a `Chat-Version: 1.0` header, a generic
+subject (`Chat: <first words>`, or `Re: <subject>` when answering ordinary mail) and normal `In-Reply-To`/`References` threading, so any mail
+client still shows a readable thread. The index records the marker on receipt (`email_chat`),
+which is what *Show all emails* filters on. No encryption yet (curlew#145).
+
+Not built: system events collapsed into one expandable line ("3 room changes"), reaction chips,
+stacked read-receipt avatars, attach, emoji and the more-menu in the composer.
 
 ## Agent access is not a main area
 
@@ -128,3 +164,16 @@ tagged `xml:lang`, default settings, the window alone, at most 1000×700 logical
 content (`example.org`), a one-sentence caption without a full stop. Shots are taken with
 `scripts/headless-run` against a temporary config and a temporary synthetic index, never the
 real ones.
+
+```bash
+rm -rf /tmp/curlew-demo && (cd app && node --experimental-strip-types scripts/demo-index.ts /tmp/curlew-demo)
+CURLEW_DB_PATH=/tmp/curlew-demo/index.db CURLEW_CONFIG=/tmp/curlew-demo/config.json \
+CURLEW_WINDOW_OPEN=c3 LC_ALL=en_US.UTF-8 LANGUAGE=en \
+  ../../scripts/headless-run --size 2600x1800 --scale 2 --window-shot /tmp/curlew-en.png -- \
+  gjsify run app/dist/curlew.gjs.mjs window
+```
+
+`CURLEW_WINDOW_OPEN=<conversation id>` selects a conversation at start (`c3` is the email chat,
+`c5` an XMPP chat); `CURLEW_WINDOW_FILTER`, `CURLEW_WINDOW_SIZE` and
+`CURLEW_WINDOW_QUIT_AFTER_MS` are read in `app/src/window/main.ts` too. A smaller `--size` cuts
+off the window shadow.
