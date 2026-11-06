@@ -8,6 +8,8 @@
 import { createHash } from 'node:crypto';
 import { readdirSync, rmSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
+import Gdk from 'gi://Gdk?version=4.0';
+import GdkPixbuf from 'gi://GdkPixbuf?version=2.0';
 import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
@@ -69,6 +71,46 @@ export function fetchAttachment(source: AttachmentSource, root = previewsDir()):
   })().finally(() => inFlight.delete(dir));
   inFlight.set(dir, fetching);
   return fetching;
+}
+
+/**
+ * Decodes a picture into a texture OFF the main loop: a phone photo can be 12 MB
+ * (`INLINE_IMAGE_MAX_BYTES`), and decoding one on the main loop stalls the window for as long
+ * as it takes. `max` is the box in device pixels to scale into, ratio kept; omit it for the
+ * picture's own size. Rejects when the bytes are not a picture — the caller keeps its fallback.
+ */
+export function loadTexture(path: string, max?: { width: number; height: number }): Promise<Gdk.Texture> {
+  return new Promise((resolve, reject) => {
+    Gio.File.new_for_path(path).read_async(GLib.PRIORITY_DEFAULT, null, (file, result) => {
+      let stream: Gio.FileInputStream;
+      try {
+        stream = (file as Gio.File).read_finish(result);
+      } catch (err) {
+        reject(err);
+        return;
+      }
+      // The decode's own outcome is what the caller needs; a failing close must not mask it.
+      const done = (err: unknown, pixbuf: GdkPixbuf.Pixbuf | null) => {
+        try {
+          stream.close(null);
+        } catch {
+          // A read-only stream that fails to close changed nothing.
+        }
+        if (!err && pixbuf) resolve(Gdk.Texture.new_for_pixbuf(pixbuf));
+        else reject(err);
+      };
+      const decoded = (_source: unknown, res: Gio.AsyncResult) => {
+        try {
+          done(null, GdkPixbuf.Pixbuf.new_from_stream_finish(res));
+        } catch (err) {
+          done(err, null);
+        }
+      };
+      if (max)
+        GdkPixbuf.Pixbuf.new_from_stream_at_scale_async(stream, max.width, max.height, true, null, decoded);
+      else GdkPixbuf.Pixbuf.new_from_stream_async(stream, null, decoded);
+    });
+  });
 }
 
 /** Asks where to put a copy of `path` and copies it; false when the person cancelled. */

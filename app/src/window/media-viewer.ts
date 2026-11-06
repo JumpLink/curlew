@@ -12,7 +12,13 @@ import Pango from 'gi://Pango?version=1.0';
 import { _, fmt } from '@curlew/protocol';
 
 import type { AttachmentKind } from './attachment-model.ts';
-import { type AttachmentSource, failureText, fetchAttachment, saveCopyAs } from './attachment-store.ts';
+import {
+  type AttachmentSource,
+  failureText,
+  fetchAttachment,
+  loadTexture,
+  saveCopyAs,
+} from './attachment-store.ts';
 import { attachmentName } from './attachment-view.ts';
 
 export interface MediaViewer {
@@ -158,7 +164,7 @@ export function createMediaViewer(
       onShownChanged(true);
       toolbar.grab_focus();
       void fetchAttachment(source)
-        .then((path) => {
+        .then(async (path) => {
           if (mine !== run || !current) return;
           current.path = path;
           save.set_sensitive(true);
@@ -168,7 +174,9 @@ export function createMediaViewer(
             videoSlot.append(video);
             stack.set_visible_child_name('video');
           } else {
-            const texture = Gdk.Texture.new_from_filename(path);
+            const texture = await loadTexture(path);
+            // `close()` or another `open()` may have run while the decoder worked.
+            if (mine !== run || !current) return;
             current.texture = texture;
             picture.set_paintable(texture);
             copy.set_sensitive(true);

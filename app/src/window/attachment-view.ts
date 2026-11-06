@@ -1,7 +1,6 @@
 /** The attachments of one bubble: a picture for an image, a tile with name, size and buttons for the rest. */
 
 import Adw from 'gi://Adw?version=1';
-import Gdk from 'gi://Gdk?version=4.0';
 import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
@@ -13,6 +12,8 @@ import {
   type AttachmentKind,
   attachmentKind,
   boundedSize,
+  BUBBLE_MAX_IMAGE_HEIGHT,
+  BUBBLE_MAX_IMAGE_WIDTH,
   effectiveMime,
   showsInline,
   tileAction,
@@ -21,6 +22,7 @@ import {
   type AttachmentSource,
   failureText,
   fetchAttachment,
+  loadTexture,
   openWithDesktop,
   saveCopyAs,
 } from './attachment-store.ts';
@@ -147,10 +149,20 @@ function picture(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Wi
   };
   handlers.whenVisible(frame, () => {
     spinner.set_visible(true);
+    // The box the bubble gives a picture, in the pixels the texture is decoded at.
+    const scale = frame.get_scale_factor();
     void fetchAttachment(source)
-      .then((path) => {
-        const texture = Gdk.Texture.new_from_filename(path);
-        const size = boundedSize({ width: texture.get_width(), height: texture.get_height() });
+      .then((path) =>
+        loadTexture(path, {
+          width: BUBBLE_MAX_IMAGE_WIDTH * scale,
+          height: BUBBLE_MAX_IMAGE_HEIGHT * scale,
+        }),
+      )
+      .then((texture) => {
+        const size = boundedSize({
+          width: texture.get_width() / scale,
+          height: texture.get_height() / scale,
+        });
         image.set_paintable(texture);
         image.set_size_request(size.width, size.height);
         spinner.set_visible(false);
