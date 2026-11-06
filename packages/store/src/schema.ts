@@ -20,8 +20,9 @@
  */
 
 import { type IndexDatabase, withTransaction } from './db.ts';
+import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 
-export const SCHEMA_VERSION = 11;
+export const SCHEMA_VERSION = 12;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -315,6 +316,45 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
     { table: 'conversations', column: 'email_chat', type: 'INTEGER NOT NULL DEFAULT 0' },
     { table: 'conversation_messages', column: 'email_chat', type: 'INTEGER NOT NULL DEFAULT 0' },
     'UPDATE folders SET last_uid = 0, uid_next = NULL, message_count = NULL',
+  ],
+  // v12: remove the local echoes a send left beside the network's own copy of the same message.
+  // A send routed through the daemon came back on the daemon's socket and was stored BEFORE the
+  // sender recorded it, and the echo written then had nothing left to adopt it (`deliveredTwin`
+  // in chat-sync.ts is the fix; this repairs what the bug already wrote). Conservative on
+  // purpose: an echo goes only when its delivered twin is in the same backend, account AND
+  // conversation, it hands its text over first when the twin has none, and a lonely echo —
+  // a message the network never delivered back — is left alone. Then the chat aggregates, which
+  // counted the duplicate.
+  12: [
+    `UPDATE conversation_messages SET body = (SELECT e.body FROM conversation_messages e
+         WHERE e.backend = conversation_messages.backend
+           AND e.account_id = conversation_messages.account_id
+           AND e.conversation_id = conversation_messages.conversation_id
+           AND e.remote_id = '${LOCAL_ECHO_PREFIX}' || conversation_messages.remote_id)
+       WHERE (body IS NULL OR body = '')
+         AND remote_id NOT LIKE '${LOCAL_ECHO_PREFIX}%'
+         AND EXISTS (SELECT 1 FROM conversation_messages e
+           WHERE e.backend = conversation_messages.backend
+             AND e.account_id = conversation_messages.account_id
+             AND e.conversation_id = conversation_messages.conversation_id
+             AND e.remote_id = '${LOCAL_ECHO_PREFIX}' || conversation_messages.remote_id
+             AND e.body IS NOT NULL AND e.body <> '')`,
+    `DELETE FROM conversation_messages WHERE remote_id LIKE '${LOCAL_ECHO_PREFIX}%'
+       AND EXISTS (SELECT 1 FROM conversation_messages d
+         WHERE d.backend = conversation_messages.backend
+           AND d.account_id = conversation_messages.account_id
+           AND d.conversation_id = conversation_messages.conversation_id
+           AND d.remote_id NOT LIKE '${LOCAL_ECHO_PREFIX}%'
+           AND conversation_messages.remote_id = '${LOCAL_ECHO_PREFIX}' || d.remote_id)`,
+    `UPDATE conversations SET
+         message_count = (SELECT COUNT(*) FROM conversation_messages m WHERE m.conversation_id = conversations.id),
+         unread_count = (SELECT COUNT(*) FROM conversation_messages m
+                          WHERE m.conversation_id = conversations.id AND m.from_self = 0 AND m.seen = 0),
+         first_message_at = (SELECT MIN(sent_at) FROM conversation_messages m WHERE m.conversation_id = conversations.id),
+         last_message_at = (SELECT MAX(sent_at) FROM conversation_messages m WHERE m.conversation_id = conversations.id),
+         has_attachments = (SELECT COUNT(*) > 0 FROM conversation_messages m
+                             WHERE m.conversation_id = conversations.id AND m.has_attachments = 1)
+       WHERE id IN (SELECT conversation_id FROM chat_cursors)`,
   ],
 };
 
