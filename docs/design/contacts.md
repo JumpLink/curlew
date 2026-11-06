@@ -22,23 +22,56 @@ Ordered by strength; the stronger evidence wins, and only the top three act on t
 | One EDS/CardDAV contact owns both addresses (mail, phone, JID) | merges automatically — today already |
 | A chat peer's phone number belongs to a contact | merges automatically (a Telegram user whose number is in the book is that contact) |
 | A JID that is letter for letter a contact's mail address | merges automatically (most people's XMPP and mail share the provider); only a CONTACT's address counts — someone who merely mailed from it is no proof |
-| The same display name on two networks | never merges; names are not identity |
+| The same or a similar display name on two networks | never merges on its own; names are not identity — but they are what the merge assistant proposes |
 | The same phone number on two different contacts | ambiguous — a suggestion, never an act |
 | The person says so (manual merge) | the strongest evidence; beats everything above |
 
 - **Automatic merges** are exactly what the address book positively owns, nothing more.
   The rebuild already redoes these links every run because the address book can change
   without a new message; a merged row therefore appears and disappears with the evidence.
-- **Confirmed merges**: a candidate — two directory entries sharing one weak signal (a
-  number claimed by two contacts, an identical name plus an overlapping network) — is
-  offered once in the profile view ("Merge with …?" naming the shared evidence), never
-  performed silently. A declined suggestion is remembered in the config and not re-asked.
-- **Manual merge** is the person's act in the profile view: pick a second entry, see the
-  two avatars and what would join, confirm. Curlew stores the link itself.
+- **Confirmed merges** go through the merge assistant (below): candidates are offered as
+  sets, never merged silently. A declined set is remembered in the config and not re-asked.
+- **Manual merge** is the person's act in the list's selection mode (below), and in the
+  profile view for a single pair. Curlew stores the link itself.
 - **Unmerge** is always available: the profile view lists the merged identities with
   *Trennen* beside each. Unmerging removes a grouping; it never deletes or rewrites a
   message. An unmerged automatic merge returns with the next rebuild if the evidence
   still holds; a manual one stays apart until merged again.
+
+## Two ways to merge
+
+Both are built mobile first, in the idiom of current Android and iOS messengers: touch
+gestures and a bottom action bar on a phone, the same flow by pointer and keyboard on a
+desktop. Minimal chrome, one decision per screen.
+
+### Selection mode (by hand)
+
+- **Enter**: a long press on a row of the conversation list (desktop: right click →
+  *Select*, or Ctrl+click). The pressed row is the first selected.
+- **In the mode**: a tap toggles a row; every row shows a check circle in place of its
+  badge; the header shows the count ("2 selected", de "2 ausgewählt") and a *Cancel*
+  button; Escape or Back leaves the mode.
+- **Tools** sit in a bottom action bar and act on the selection: *Merge* (de
+  "Zusammenführen", enabled from two people), *Mark as read*, *Pin*, *Archive* — each as
+  far as it exists. Merge shows the avatars and protocols that would join, confirms once,
+  and leaves the mode on the merged row.
+
+### The merge assistant (guided)
+
+- Reached from the main menu ("Merge contacts…", de "Kontakte zusammenführen…") and from
+  a quiet banner on the list while candidates exist.
+- It walks **sets** of people with similar names, one set per screen: avatar, name,
+  protocol badge and last message per person, each with a check box. The person ticks who
+  really is one person and continues; *Skip* moves on, and an untouched set counts as
+  declined.
+- It keeps going while sets remain, then ends with a summary ("3 merged"). Declined sets
+  are not offered again; a set gains a newcomer → it is offered again with the newcomer.
+- **Similar** means equal after normalising case, diacritics, spacing and the
+  "Last, First" order, or close by token overlap (a first name plus a matching initial,
+  a nickname as one token). Where the line lies is open question 5; it errs towards
+  asking, because the person decides every merge anyway.
+- Only people already in the list are offered; a set never mixes in the person
+  themselves (the merged Note to self handles that).
 
 ## What a merge touches — and what it never touches
 
@@ -143,30 +176,30 @@ address; a mail thread with oneself stays an ordinary mail thread — fail close
    "Automatic" pick? (Leaning: the protocol the row was opened or searched from.)
 2. **Read state**: opening a merged timeline — does it clear unread on every protocol
    shown, or only where the person actually scrolled? (Leaning: only what was shown.)
-3. **View vs carrier**: should the picker also filter the timeline to one protocol, or
-   stay carrier-only?
+3. ~~View vs carrier~~ — decided: the picker sets the carrier only; the timeline always
+   interleaves every protocol, chronologically.
 4. Is the optional address-book write-back offered on manual merge? (Default no.)
-5. How weak may a candidate be before a suggestion is not worth asking?
+5. How weak may a name similarity be before the assistant does not offer the set?
 6. Does a merged row's search cover every merged conversation's history (FTS is per
    conversation today)?
 7. Does the merged Note to self get draft sync in a later phase, or stay read/send only?
 
 ## Phased rollout
 
-- **Phase 1 — the smallest useful step**: merged rows from the links the directory
-  already computes. No new merge machinery: where the address book positively links a
-  person (their number on Telegram plus their mail thread), one row — badge = last
-  message's protocol, unread summed, opening the row opens that conversation unchanged.
-  Manual merge/unmerge in the profile view; suggestions not yet. Demoable against the
-  synthetic `example.org` index.
-- **Phase 2**: the interleaved timeline — run badges, the "Continuing via …" divider, the
-  composer picker with the last-message default.
-- **Phase 3**: pinning ("Automatic" / "Only via …") and the suggestion flow.
-- **Phase 4**: the merged Note to self.
+- **Phase 1 — the merged Note to self**: one row for every backend that identified its
+  own address, the interleaved timeline with run badges and the "Continuing via …"
+  divider, and the composer picker defaulting to the carrier of the last message, sent or
+  received. It builds the timeline and the picker on the one merge that needs no
+  evidence, and is demoable against the synthetic `example.org` index.
+- **Phase 2**: merged rows for people — from the links the directory already computes,
+  and from manual merges in selection mode; unmerge in the profile view.
+- **Phase 3**: the merge assistant.
+- **Phase 4**: pinning ("Automatic" / "Only via …").
 
 Every user-facing string above goes through gettext: English msgid, German catalogue from
 the first string — "Notiz an mich", "Über Telegram gesendet", "Weiter über Telegram",
-"Nur über Signal", "Automatisch", "Trennen".
+"Nur über Signal", "Automatisch", "Trennen", "Zusammenführen", "Kontakte zusammenführen…",
+"2 ausgewählt".
 
 ## Not built
 
