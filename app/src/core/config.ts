@@ -30,8 +30,14 @@ export interface BackendConfig {
   settings?: Record<string, string | number | boolean>;
 }
 
+export interface UiConfig {
+  /** Show ordinary mail threads beside messages carrying `Chat-Version: 1.0`. */
+  showAllEmails: boolean;
+}
+
 export interface CurlewConfig {
   backends: Record<string, BackendConfig>;
+  ui: UiConfig;
   /** Per-sender classification overrides, keyed by normalized mail address. */
   senders: Record<string, Classification>;
   /** Write grants (ADR 0004). Absent or empty denies every write. */
@@ -60,7 +66,7 @@ export interface CurlewConfig {
   unknown: Record<string, unknown>;
 }
 
-const KNOWN_KEYS = ['backends', 'senders', 'grants', 'agentAccess', 'encryption'];
+const KNOWN_KEYS = ['backends', 'ui', 'senders', 'grants', 'agentAccess', 'encryption'];
 
 /**
  * What an absent config file means. Mail is enabled by THIS default, not by a special case in
@@ -70,6 +76,7 @@ const KNOWN_KEYS = ['backends', 'senders', 'grants', 'agentAccess', 'encryption'
 export function defaultConfig(): CurlewConfig {
   return {
     backends: { mail: { enabled: true } },
+    ui: { showAllEmails: true },
     senders: {},
     grants: [],
     agentAccess: defaultAgentAccess(),
@@ -120,6 +127,14 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     };
   }
 
+  const rawUi = obj.ui ?? {};
+  if (typeof rawUi !== 'object' || rawUi === null || Array.isArray(rawUi)) {
+    throw new Error('config.ui must be an object');
+  }
+  const showAllEmails = (rawUi as Record<string, unknown>).showAllEmails ?? true;
+  if (typeof showAllEmails !== 'boolean') throw new Error('config.ui.showAllEmails must be true or false');
+  const ui = { showAllEmails };
+
   const senders: Record<string, Classification> = {};
   const rawSenders = obj.senders ?? {};
   if (typeof rawSenders !== 'object' || rawSenders === null || Array.isArray(rawSenders)) {
@@ -145,7 +160,7 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     if (!KNOWN_KEYS.includes(key)) unknown[key] = value;
   }
 
-  return { backends, senders, grants, agentAccess, encryption, unknown };
+  return { backends, ui, senders, grants, agentAccess, encryption, unknown };
 }
 
 /**
