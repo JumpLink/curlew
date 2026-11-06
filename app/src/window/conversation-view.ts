@@ -11,6 +11,7 @@ import type { MessageCursor } from '@curlew/store';
 import type { ListEntry } from './conversation-list-model.ts';
 import { initials, protocolLabel, shortTime } from './conversation-list-model.ts';
 import {
+  attachmentLines,
   bubbleText,
   cursorOf,
   dayOf,
@@ -18,13 +19,14 @@ import {
   newOlder,
   PAGE_SIZE,
   senderRunStarts,
+  type ShownMessage,
   subjectLabels,
 } from './conversation-model.ts';
 import { fadedOverlay } from './fade-bin.ts';
 
 export interface ConversationView {
   page: Adw.NavigationPage;
-  show(entry: ListEntry, messages: ConversationMessage[]): void;
+  show(entry: ListEntry, messages: ShownMessage[]): void;
 }
 
 const ROWS_PER_TURN = 8;
@@ -40,11 +42,11 @@ interface Built {
 
 export function createConversationView(
   onSend: (text: string) => Promise<ConversationMessage>,
-  loadOlder: (entry: ListEntry, oldest: MessageCursor) => ConversationMessage[],
+  loadOlder: (entry: ListEntry, oldest: MessageCursor) => ShownMessage[],
 ): ConversationView {
   let entry: ListEntry | null = null;
   // The array is the caller's: a sent message is pushed onto it, an older page spliced in front.
-  let messages: ConversationMessage[] = [];
+  let messages: ShownMessage[] = [];
   let sending = false;
   let generation = 0;
   const built = new Map<string, Built>();
@@ -131,7 +133,7 @@ export function createConversationView(
 
   // Builds the rows of one message; `position` is where the first goes in the list, -1 for the end.
   const addRow = (
-    message: ConversationMessage,
+    message: ShownMessage,
     subject: string | undefined,
     sender: string | undefined,
     startsDay: boolean,
@@ -152,7 +154,10 @@ export function createConversationView(
     if (senderBox) bubble.append(senderBox);
     const heading = subject ? subjectHeading(subject) : null;
     if (heading) bubble.append(heading);
-    const full = (message.bodyText?.trim() || message.notice || _('No text body')) + (message.bodyTruncated ? ' …' : '');
+    const written = message.bodyText?.trim() || message.notice;
+    const full =
+      (written || (message.hasAttachments ? attachmentLines(message.attachments).join('\n') : _('No text body'))) +
+      (message.bodyTruncated ? ' …' : '');
     const preview = bubbleText(full);
     const body = new Gtk.Label({
       label: preview.clipped ? `${preview.text} …` : preview.text,
@@ -164,7 +169,7 @@ export function createConversationView(
       maxWidthChars: 56,
     });
     bubble.append(fadedOverlay(body, preview.clipped, () => body.set_label(full)));
-    if (message.hasAttachments) {
+    if (message.hasAttachments && written) {
       const attachments = new Gtk.Label({ label: _('Contains attachments'), xalign: 0 });
       attachments.add_css_class('caption');
       attachments.add_css_class('dim-label');
@@ -258,7 +263,7 @@ export function createConversationView(
     // The spinner gets a frame before the read blocks the loop.
     GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
       if (run !== generation) return GLib.SOURCE_REMOVE;
-      let fresh: ConversationMessage[];
+      let fresh: ShownMessage[];
       try {
         const page = loadOlder(shownEntry, cursorOf(oldest));
         exhausted = page.length < PAGE_SIZE;

@@ -5,6 +5,7 @@ import {
   getConversation,
   getRecentMessages,
   listConversations,
+  mailAttachments,
   mailReplyTarget,
   migrate,
   openIndexDb,
@@ -339,6 +340,38 @@ export default async () => {
         const target = mailReplyTarget(db, found?.messages[1].ref ?? { accountId: '' });
         expect(target?.messageId).toBe('<c2@example.com>');
         expect(target?.references).toStrictEqual(['<c1@example.org>']);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('lists what a mail message carries, by file name and type', async () => {
+      const backend = new FakeBackend();
+      backend.put('INBOX', [
+        message(1, 'Foto', '', {
+          from: [ANNA],
+          to: [ME],
+          hasAttachment: true,
+          attachments: [
+            { section: '2', filename: 'cat.jpg', mimeType: 'image/jpeg', size: 10 },
+            { section: '3', filename: null, mimeType: 'application/pdf', size: 20 },
+          ],
+        }),
+        message(2, 'Ohne', 'Text', { from: [BEN], to: [ME] }),
+      ]);
+      const db = freshDb();
+      try {
+        await syncIndex(db, backend, { now: AT('2026-08-06T12:00:00Z') });
+        rebuildConversations(db, { contacts: CONTACTS });
+        const ref = { accountId: 'fake', folder: 'INBOX', uid: 1 };
+        const found = listConversations(db).flatMap((c) => getConversation(db, c.id)?.messages ?? []);
+        const withFile = found.find((m) => m.hasAttachments);
+        expect(mailAttachments(db, withFile?.ref ?? ref).map((a) => [a.filename, a.mimeType])).toStrictEqual([
+          ['cat.jpg', 'image/jpeg'],
+          [null, 'application/pdf'],
+        ]);
+        expect(mailAttachments(db, found.find((m) => !m.hasAttachments)?.ref ?? ref).length).toBe(0);
+        expect(mailAttachments(db, { accountId: 'fake' }).length).toBe(0);
       } finally {
         db.close();
       }

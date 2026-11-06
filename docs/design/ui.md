@@ -76,9 +76,13 @@ All contacts, channels and groups of every messenger in **one** list.
 
 - Sections (collapsible): People, Groups; later Favourites and Channels.
 - **Filters live in a popover**, not tabs: a `view-filter-symbolic` menu button in the sidebar
-  header opens toggles under *Protocols* and, once a protocol is chosen and it has several
-  accounts, under *Accounts*, plus **Clear filters**. The button is shown only when there is a
-  choice (two protocols or two accounts); a list with one account has none.
+  header opens toggles under *Protocols* and, for each chosen protocol with several accounts, a
+  group of account toggles under that protocol's name, plus **Clear filters**. An account choice
+  narrows only its own protocol; deselecting a protocol drops its account choices. The button is
+  shown only when there are two protocols or an account choice to make.
+- **Note to self**: a chat with one's own account is titled *Note to self* and gets a composer.
+  Recognised where the index tells positively (Signal, Telegram, XMPP, Matrix); WhatsApp and
+  mail are not, because the index lacks the own address.
 - **Direct mail is grouped by person**: every direct mail thread with the same person is one
   row. Chat backends are not regrouped, their conversations already are one per person.
 - **Show all emails** (Preferences, on by default). Off, the list keeps only mail threads that
@@ -118,7 +122,10 @@ messages right-aligned, the time at the bubble's foot, "Contains attachments" wh
 some) with a day separator between days; a mail subject only where the topic changes, so an
 email chat reads like a chat; a composer (a rounded entry and a round accent send button,
 `mail-send-symbolic` + `circular`) shown only when the conversation has a reply target. A
-failed send stays in the entry and shows a toast.
+failed send stays in the entry and shows a toast. In a group, the first bubble of a run from one
+sender carries the sender's name and a small initials avatar (not for own messages or direct
+chats). A message with only attachments shows their kind and file name where the index has them
+(mail), else "Attachment".
 
 **History is paged** (Fractal's rule). The pane opens on the newest 50 messages and scrolls to
 the end; when the scroll position comes within two viewports of the top (`value < page_size * 2`)

@@ -139,3 +139,39 @@ function senderKey(message: ConversationMessage): string | null {
 export function senderName(message: ConversationMessage): string {
   return message.senderName?.trim() || message.senderAddress?.value || _('Unknown sender');
 }
+
+/** What the index knows about one attachment; chat backends keep none of it. */
+export interface AttachmentInfo {
+  filename: string | null;
+  mimeType: string | null;
+}
+
+/** A message as the view shows it: the attachment details are read only for attachment-only ones. */
+export interface ShownMessage extends ConversationMessage {
+  attachments?: AttachmentInfo[];
+}
+
+const MAX_ATTACHMENT_LINES = 3;
+
+function attachmentLine(info: AttachmentInfo): string {
+  const mime = info.mimeType?.toLowerCase() ?? '';
+  const kind = mime.startsWith('image/')
+    ? _('Image')
+    : mime.startsWith('video/')
+      ? _('Video')
+      : mime.startsWith('audio/')
+        ? _('Audio')
+        : info.filename
+          ? _('File')
+          : _('Attachment');
+  return info.filename ? fmt(_('{kind}: {name}'), { kind, name: info.filename }) : kind;
+}
+
+/** The lines that stand in for a message without text: what it carries, else just "Attachment". */
+export function attachmentLines(attachments: readonly AttachmentInfo[] | undefined): string[] {
+  if (!attachments || attachments.length === 0) return [_('Attachment')];
+  const lines = attachments.slice(0, MAX_ATTACHMENT_LINES).map(attachmentLine);
+  const more = attachments.length - lines.length;
+  if (more > 0) lines.push(fmt(_n('and {n} more attachment', 'and {n} more attachments', more), { n: more }));
+  return lines;
+}

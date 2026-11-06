@@ -74,7 +74,7 @@ German uses informal "du", matching the sibling projects.
 | Backend registry, `send`, `omemo`, `index-sync` actions | the refusals and errors that reach a user |
 | Window ([`app/src/window/`](../app/src/window/)) | the conversation list (sections, filter popover, empty states), the conversation view (composer, attachment hint, send errors), the Preferences and Agent access dialogs, the primary menu |
 
-492 msgids. Covered by `app/tests/unit/core/i18n.test.ts`: a German locale yields German, a
+500 msgids. Covered by `app/tests/unit/core/i18n.test.ts`: a German locale yields German, a
 language we do not ship falls back to English, `LC_ALL=C` wins over `LANGUAGE`, and a wired
 Telegram error comes out German once the catalogue is installed.
 

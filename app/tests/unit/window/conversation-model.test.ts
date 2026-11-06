@@ -2,6 +2,7 @@ import { describe, expect, it } from '@gjsify/unit';
 import type { ConversationMessage } from '@curlew/protocol';
 
 import {
+  attachmentLines,
   bubbleText,
   chatSubject,
   composeMailReply,
@@ -164,5 +165,16 @@ export default async () => {
       expect(senderName(message({ id: 'x', senderName: '  ' }))).toBe('Unknown sender');
     });
 
+    await it('says what an attachment-only message carries, else just Attachment', async () => {
+      expect(attachmentLines(undefined)).toStrictEqual(['Attachment']);
+      expect(attachmentLines([])).toStrictEqual(['Attachment']);
+      expect(attachmentLines([{ filename: null, mimeType: null }])).toStrictEqual(['Attachment']);
+      expect(attachmentLines([{ filename: 'report.pdf', mimeType: 'application/pdf' }])).toStrictEqual(['File: report.pdf']);
+      expect(attachmentLines([{ filename: 'cat.jpg', mimeType: 'image/jpeg' }])).toStrictEqual(['Image: cat.jpg']);
+      expect(attachmentLines([{ filename: null, mimeType: 'video/mp4' }])).toStrictEqual(['Video']);
+      expect(attachmentLines([{ filename: null, mimeType: 'audio/ogg' }])).toStrictEqual(['Audio']);
+      const many = Array.from({ length: 5 }, (_unused, i) => ({ filename: `f${i}.txt`, mimeType: 'text/plain' }));
+      expect(attachmentLines(many).slice(2)).toStrictEqual(['File: f2.txt', 'and 2 more attachments']);
+    });
   });
 };

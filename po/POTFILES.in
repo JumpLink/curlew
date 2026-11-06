@@ -201,6 +201,7 @@ packages/store/src/download.ts
 packages/store/src/fts.ts
 packages/store/src/index-store.ts
 packages/store/src/index.ts
+packages/store/src/local-echo.ts
 packages/store/src/mail-reply.ts
 packages/store/src/paths.ts
 packages/store/src/receive-lease.ts

@@ -19,3 +19,26 @@ export function mailReplyTarget(db: IndexDatabase, ref: MessageRef): MailReplyTa
     references: typeof row.thread_refs === 'string' ? row.thread_refs.split(' ').filter(Boolean) : [],
   };
 }
+
+export interface MailAttachmentInfo {
+  filename: string | null;
+  mimeType: string | null;
+  size: number | null;
+}
+
+/** What the index knows about a mail message's attachments; chat backends keep only a flag. */
+export function mailAttachments(db: IndexDatabase, ref: MessageRef): MailAttachmentInfo[] {
+  if (!ref.folder || ref.uid === undefined) return [];
+  const rows = db
+    .prepare(
+      `SELECT a.filename, a.mime_type, a.size FROM attachments a
+         JOIN messages m ON m.id = a.message_id
+        WHERE m.account_id = ? AND m.folder_path = ? AND m.uid = ? ORDER BY a.section`,
+    )
+    .all(ref.accountId, ref.folder, ref.uid) as Array<{ filename: unknown; mime_type: unknown; size: unknown }>;
+  return rows.map((r) => ({
+    filename: typeof r.filename === 'string' && r.filename.trim() ? r.filename.trim() : null,
+    mimeType: typeof r.mime_type === 'string' && r.mime_type ? r.mime_type : null,
+    size: r.size === null || r.size === undefined ? null : Number(r.size),
+  }));
+}

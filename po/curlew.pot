@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-05 16:54+0100\n"
+"POT-Creation-Date: 2026-11-06 09:07+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1387,7 +1387,7 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr ""
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:50
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:62
 #: app/src/window/window.ts:43 app/src/window/window.ts:58
 msgid "Curlew"
 msgstr ""
@@ -1522,122 +1522,157 @@ msgstr ""
 msgid "Add rule"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:49
+#: app/src/window/conversation-list-model.ts:52
 msgid "Mail"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:50
+#: app/src/window/conversation-list-model.ts:53
 msgid "XMPP"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:51
+#: app/src/window/conversation-list-model.ts:54
 msgid "Signal"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:52
+#: app/src/window/conversation-list-model.ts:55
 msgid "Matrix"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:53
+#: app/src/window/conversation-list-model.ts:56
 msgid "Telegram"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:54
+#: app/src/window/conversation-list-model.ts:57
 msgid "WhatsApp"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:86
+#: app/src/window/conversation-list-model.ts:89
 msgid "Yesterday"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:98
+#: app/src/window/conversation-list-model.ts:132
+msgid "Note to self"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:140
 msgid "Unnamed conversation"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:189
+#: app/src/window/conversation-list-model.ts:247
 msgid "People"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:190
+#: app/src/window/conversation-list-model.ts:248
 msgid "Groups"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:172
+#: app/src/window/conversation-list.ts:174
 msgid "Search conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:178
+#: app/src/window/conversation-list.ts:180
 msgid "Filter conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:223
+#: app/src/window/conversation-list.ts:235
 msgid "Protocols"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:235
-msgid "Accounts"
-msgstr ""
-
-#: app/src/window/conversation-list.ts:245
+#: app/src/window/conversation-list.ts:258
 msgid "Clear filters"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:266
+#: app/src/window/conversation-list.ts:279
 msgid "No conversations yet"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:266
+#: app/src/window/conversation-list.ts:279
 msgid "No matches"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:269
+#: app/src/window/conversation-list.ts:282
 msgid ""
 "Conversations appear here after Curlew has synced an account. Run \"curlew "
 "sync\" first."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:270
+#: app/src/window/conversation-list.ts:283
 msgid "Nothing fits the search and filters."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:309
+#: app/src/window/conversation-list.ts:322
 msgid "Search"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:320
+#: app/src/window/conversation-list.ts:333
 #: app/src/window/preferences-dialog.ts:18
 msgid "Conversations"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:59
+#: app/src/window/conversation-model.ts:140
+msgid "Unknown sender"
+msgstr ""
+
+#: app/src/window/conversation-model.ts:159
+msgid "Image"
+msgstr ""
+
+#: app/src/window/conversation-model.ts:161
+msgid "Video"
+msgstr ""
+
+#: app/src/window/conversation-model.ts:163
+msgid "Audio"
+msgstr ""
+
+#: app/src/window/conversation-model.ts:165
+msgid "File"
+msgstr ""
+
+#: app/src/window/conversation-model.ts:166
+#: app/src/window/conversation-model.ts:172
+msgid "Attachment"
+msgstr ""
+
+#: app/src/window/conversation-model.ts:167
+msgid "{kind}: {name}"
+msgstr ""
+
+#: app/src/window/conversation-model.ts:175
+msgid "and {n} more attachment"
+msgid_plural "and {n} more attachments"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/window/conversation-view.ts:71
 msgid "Write a message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:60
+#: app/src/window/conversation-view.ts:72
 msgid "Send message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:73
+#: app/src/window/conversation-view.ts:85
 msgid "Conversation"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:127
+#: app/src/window/conversation-view.ts:159
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:140
+#: app/src/window/conversation-view.ts:173
 msgid "Contains attachments"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:231
+#: app/src/window/conversation-view.ts:276
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:300
+#: app/src/window/conversation-view.ts:347
 msgid "Message not sent: {error}"
 msgstr ""
 
-#: app/src/window/fade-bin.ts:131
+#: app/src/window/fade-bin.ts:142
 msgid "Show more"
 msgstr ""
 

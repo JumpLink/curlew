@@ -57,6 +57,7 @@ const CONVERSATIONS: Row[] = [
   ['c9', 'whatsapp', 'whatsapp-demo1', 'direct', 'Lee Hoffmann', 60 * 80, 0],
   ['c10', 'xmpp', 'xmpp-demo1', 'group', 'Book club', 60 * 120, 0],
   ['c11', 'mail', 'mail-demo1', 'direct', 'Monitoring Alerts', 60 * 200, 0],
+  ['c12', 'signal', 'signal-0b8e1c2a-1111-4222-8333-444455556666', 'direct', '', 5, 0],
 ];
 
 const db = openIndexDb(join(dir, 'index.db'));
@@ -83,6 +84,9 @@ try {
   for (const [conversationId, id, name, kind, value] of [
     ['c3', 'p-sam', 'Sam Fischer', 'email', 'sam@example.org'],
     ['c5', 'p-jo', 'Jo Klein', 'jid', 'jo@chat.example.org'],
+    ['c1', 'p-alex', 'Alex Weber', 'signal', '1f0c6a52-2222-4333-8444-555566667777'],
+    ['c2', 'p-mia', 'Mia Schulz', 'matrix', '@mia:example.org'],
+    ['c2', 'p-noah', 'Noah Braun', 'matrix', '@noah:example.org'],
   ]) {
     participant.run(id, name);
     address.run(id, kind, value);
@@ -90,6 +94,12 @@ try {
   }
   db.prepare(`UPDATE conversations SET email_chat = 1 WHERE id = 'c3'`).run();
 
+  const PEOPLE = new Map([
+    ['p-sam', ['p-sam', 'Sam Fischer', 'email', 'sam@example.org']],
+    ['p-jo', ['p-jo', 'Jo Klein', 'jid', 'jo@chat.example.org']],
+    ['p-mia', ['p-mia', 'Mia Schulz', 'matrix', '@mia:example.org']],
+    ['p-noah', ['p-noah', 'Noah Braun', 'matrix', '@noah:example.org']],
+  ]);
   type Line = [conversation: string, fromSelf: boolean, minutesAgo: number, text: string, subject: string | null];
   const HISTORY: Line[] = [
     ['c3', false, 60 * 26, 'Are we still on for the garden day on Saturday?', 'Chat: Garden day'],
@@ -97,6 +107,13 @@ try {
     ['c3', false, 70, 'Great. Could you also bring the long ladder?', 'Chat: Garden day'],
     ['c3', true, 60, 'Sure, it fits in the car.', 'Chat: Garden day'],
     ['c3', false, 52, 'Perfect, see you at ten.', 'Chat: Garden day'],
+    ['c2', false, 120, 'Here is the new icon draft.', null],
+    ['c2', false, 119, 'I made the corners a bit rounder.', null],
+    ['c2', false, 118, '', null],
+    ['c2', true, 100, 'Looks great, thanks!', null],
+    ['c2', false, 30, 'Can we ship it with the next release?', null],
+    ['c2', false, 18, 'Noah, what do you think?', null],
+    ['c12', true, 6, 'Buy oat milk and stamps', null],
     ['c5', false, 200, 'Did the new release build on your machine?', null],
     ['c5', true, 190, 'It did, the tests are green on both runtimes.', null],
     ['c5', false, 180, 'Nice, then I will tag it tonight.', null],
@@ -116,7 +133,10 @@ try {
   const mailBody = db.prepare('INSERT OR REPLACE INTO messages_fts (rowid, subject, body) VALUES (?, ?, ?)');
   HISTORY.forEach(([conversationId, fromSelf, minutesAgo, text, subject], i) => {
     const [, backend, acc] = CONVERSATIONS.find(([id]) => id === conversationId)!;
-    const sender = fromSelf ? null : conversationId === 'c3' ? 'p-sam' : 'p-jo';
+    const sender = fromSelf ? null
+      : conversationId === 'c3' ? 'p-sam'
+      : conversationId === 'c2' ? (text.startsWith('Can') ? 'p-noah' : 'p-mia')
+      : 'p-jo';
     const at = new Date(now - minutesAgo * 60_000).toISOString();
     const mail = backend === 'mail';
     const n = i + 1;
@@ -126,6 +146,12 @@ try {
     }
     message.run(`m${n}`, conversationId, backend, acc, sender, fromSelf ? 1 : 0, at, subject, `r${n}`,
       mail ? null : text, mail ? 1 : 0, mail ? 'INBOX' : null, mail ? n : null, mail ? null : n);
+    if (sender) {
+      const [, name, kind, value] = [...PEOPLE.values()].find(([id]) => id === sender)!;
+      db.prepare('UPDATE conversation_messages SET sender_name = ?, sender_kind = ?, sender_address = ? WHERE id = ?')
+        .run(name, kind, value, `m${n}`);
+    }
+    if (!text) db.prepare(`UPDATE conversation_messages SET has_attachments = 1 WHERE id = ?`).run(`m${n}`);
   });
 
   // A long mail conversation (130 messages over several days, some with multi-paragraph bodies)
