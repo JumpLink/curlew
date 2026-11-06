@@ -9,6 +9,8 @@ import {
   dayStarts,
   newOlder,
   replySubject,
+  senderName,
+  senderRunStarts,
   subjectLabels,
 } from '../../../src/window/conversation-model.ts';
 
@@ -122,5 +124,45 @@ export default async () => {
       expect([...subjectLabels(shown).keys()]).toStrictEqual(['c']);
       expect([...subjectLabels([...older, ...shown]).keys()]).toStrictEqual(['a']);
     });
+
+    await it('shows the sender above the first bubble of a run in a group', async () => {
+      const from = (id: string, sender: string, over: Partial<ConversationMessage> = {}) =>
+        message({ id, senderId: sender, senderName: sender, backend: 'signal', presentation: 'bubble', ...over });
+      const shown = [
+        from('a', 'Anna'),
+        from('b', 'Anna'),
+        from('c', 'Ben'),
+        from('d', 'x', { fromSelf: true, senderId: null, senderName: null }),
+        from('e', 'Ben'),
+        from('f', 'Anna'),
+      ];
+      expect([...senderRunStarts(shown, true)]).toStrictEqual([
+        ['a', 'Anna'],
+        ['c', 'Ben'],
+        ['e', 'Ben'],
+        ['f', 'Anna'],
+      ]);
+      expect(senderRunStarts(shown, false).size).toBe(0);
+    });
+
+    await it('keeps sender runs right when an older page is prepended', async () => {
+      const from = (id: string, sender: string) =>
+        message({ id, senderId: sender, senderName: sender, presentation: 'bubble' });
+      const newer = [from('c', 'Anna'), from('d', 'Ben')];
+      expect([...senderRunStarts(newer, true).keys()]).toStrictEqual(['c', 'd']);
+      // The older page ends with the same sender: 'c' joins that run and loses its label.
+      const merged = [from('a', 'Ben'), from('b', 'Anna'), ...newer];
+      expect([...senderRunStarts(merged, true).keys()]).toStrictEqual(['a', 'b', 'd']);
+    });
+
+    await it('skips notices and names an unlabelled sender by address', async () => {
+      const shown = [
+        message({ id: 'n', presentation: 'notice', senderId: 'p' }),
+        message({ id: 'a', presentation: 'bubble', senderId: 'p', senderAddress: { kind: 'jid', value: 'anna@example.org' } }),
+      ];
+      expect([...senderRunStarts(shown, true)]).toStrictEqual([['a', 'anna@example.org']]);
+      expect(senderName(message({ id: 'x', senderName: '  ' }))).toBe('Unknown sender');
+    });
+
   });
 };

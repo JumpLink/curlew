@@ -9,8 +9,17 @@ import type { ConversationMessage } from '@curlew/protocol';
 import type { MessageCursor } from '@curlew/store';
 
 import type { ListEntry } from './conversation-list-model.ts';
-import { protocolLabel, shortTime } from './conversation-list-model.ts';
-import { bubbleText, cursorOf, dayOf, dayStarts, newOlder, PAGE_SIZE, subjectLabels } from './conversation-model.ts';
+import { initials, protocolLabel, shortTime } from './conversation-list-model.ts';
+import {
+  bubbleText,
+  cursorOf,
+  dayOf,
+  dayStarts,
+  newOlder,
+  PAGE_SIZE,
+  senderRunStarts,
+  subjectLabels,
+} from './conversation-model.ts';
 import { fadedOverlay } from './fade-bin.ts';
 
 export interface ConversationView {
@@ -26,6 +35,7 @@ interface Built {
   bubble: Gtk.Box;
   separator: Gtk.ListBoxRow | null;
   subject: Gtk.Label | null;
+  sender: Gtk.Box | null;
 }
 
 export function createConversationView(
@@ -109,8 +119,24 @@ export function createConversationView(
     return label;
   };
 
+  // Who wrote the run of bubbles it opens: a small avatar with initials, like the list, and the name.
+  const senderHeading = (name: string): Gtk.Box => {
+    const box = new Gtk.Box({ spacing: 6 });
+    box.append(new Adw.Avatar({ size: 20, text: name, showInitials: initials(name) !== '' }));
+    const label = new Gtk.Label({ label: name, xalign: 0, ellipsize: Pango.EllipsizeMode.END });
+    label.add_css_class('caption-heading');
+    box.append(label);
+    return box;
+  };
+
   // Builds the rows of one message; `position` is where the first goes in the list, -1 for the end.
-  const addRow = (message: ConversationMessage, subject: string | undefined, startsDay: boolean, position: number) => {
+  const addRow = (
+    message: ConversationMessage,
+    subject: string | undefined,
+    sender: string | undefined,
+    startsDay: boolean,
+    position: number,
+  ) => {
     const card = new Gtk.Box();
     card.add_css_class('card');
     const bubble = new Gtk.Box({
@@ -122,6 +148,8 @@ export function createConversationView(
       marginBottom: 8,
     });
     card.append(bubble);
+    const senderBox = sender !== undefined ? senderHeading(sender) : null;
+    if (senderBox) bubble.append(senderBox);
     const heading = subject ? subjectHeading(subject) : null;
     if (heading) bubble.append(heading);
     const full = (message.bodyText?.trim() || message.notice || _('No text body')) + (message.bodyTruncated ? ' …' : '');
@@ -167,11 +195,16 @@ export function createConversationView(
       history.insert(row, position);
       if (separator) history.insert(separator, position);
     }
-    built.set(message.id, { row, bubble, separator, subject: heading });
+    built.set(message.id, { row, bubble, separator, subject: heading, sender: senderBox });
   };
 
   // After a page went in front, its newest neighbour may no longer open a day or a topic.
-  const reconcile = (message: ConversationMessage, subject: string | undefined, startsDay: boolean) => {
+  const reconcile = (
+    message: ConversationMessage,
+    subject: string | undefined,
+    sender: string | undefined,
+    startsDay: boolean,
+  ) => {
     const one = built.get(message.id);
     if (!one) return;
     if (one.separator && !startsDay) {
@@ -180,6 +213,13 @@ export function createConversationView(
     } else if (!one.separator && startsDay) {
       one.separator = daySeparator(dayOf(message));
       history.insert(one.separator, one.row.get_index());
+    }
+    if (one.sender && sender === undefined) {
+      one.bubble.remove(one.sender);
+      one.sender = null;
+    } else if (!one.sender && sender !== undefined) {
+      one.sender = senderHeading(sender);
+      one.bubble.prepend(one.sender);
     }
     if (one.subject && !subject) {
       one.bubble.remove(one.subject);
@@ -245,6 +285,7 @@ export function createConversationView(
       messages.splice(0, 0, ...fresh);
       const subjects = subjectLabels(messages);
       const starts = dayStarts(messages);
+      const senders = senderRunStarts(messages, shownEntry.kind === 'group');
       let next = joinedAt - 1;
       // Newest of the page first, each above the one before, so the rows grow upward from the
       // spinner and the person's place below them is the one that has to hold still.
@@ -253,11 +294,11 @@ export function createConversationView(
         const stop = Math.max(next - ROWS_PER_TURN, -1);
         for (; next > stop; next--) {
           const message = messages[next]!;
-          addRow(message, subjects.get(message.id), starts.has(message.id), 1);
+          addRow(message, subjects.get(message.id), senders.get(message.id), starts.has(message.id), 1);
         }
         if (next >= 0) return GLib.SOURCE_CONTINUE;
         const joined = messages[joinedAt]!;
-        reconcile(joined, subjects.get(joined.id), starts.has(joined.id));
+        reconcile(joined, subjects.get(joined.id), senders.get(joined.id), starts.has(joined.id));
         finish();
         return GLib.SOURCE_REMOVE;
       });
@@ -290,7 +331,8 @@ export function createConversationView(
         const previousDay = dayOf(messages[messages.length - 1] ?? message);
         messages.push(message);
         const day = dayOf(message);
-        addRow(message, undefined, day !== '' && day !== previousDay, -1);
+        // The person's own message starts no sender run, and the next one from another starts its own.
+        addRow(message, undefined, undefined, day !== '' && day !== previousDay, -1);
         input.set_text('');
         scrollToEnd();
       })
@@ -325,6 +367,7 @@ export function createConversationView(
       input.set_text('');
       const subjects = subjectLabels(messages);
       const starts = dayStarts(messages);
+      const senders = senderRunStarts(messages, nextEntry.kind === 'group');
       const shown = [...messages];
       const run = ++generation;
       // A newer show() ends every older build and page load; their callbacks see the new generation.
@@ -341,7 +384,7 @@ export function createConversationView(
         const stop = Math.min(next + ROWS_PER_TURN, shown.length);
         for (; next < stop; next++) {
           const message = shown[next]!;
-          addRow(message, subjects.get(message.id), starts.has(message.id), -1);
+          addRow(message, subjects.get(message.id), senders.get(message.id), starts.has(message.id), -1);
         }
         scrollToEnd();
         if (next < shown.length) return GLib.SOURCE_CONTINUE;

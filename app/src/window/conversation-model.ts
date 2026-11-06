@@ -1,6 +1,7 @@
 /** Presentation rules for reading a conversation as a chat, without changing mail threading. */
 
 import type { ConversationMessage } from '@curlew/protocol';
+import { _, fmt, _n } from '@curlew/protocol';
 import { normalizeSubject, type MessageCursor } from '@curlew/store';
 
 /** How many messages one page of history holds; a shorter page means the start was reached. */
@@ -110,4 +111,31 @@ export function bubbleText(text: string, maxChars = 1500, maxLines = 30): Bubble
   end = Math.min(end, maxChars);
   if (end >= text.length) return { text, clipped: false };
   return { text: text.slice(0, end).trimEnd(), clipped: true };
+}
+
+/**
+ * The ids of the messages that open a run of bubbles from one sender in a group, with the name to
+ * show above it. A run ends when the sender changes or the person's own message comes between;
+ * direct chats, the person's own messages and notices carry no label. Computed over everything
+ * that is loaded, so a page prepended in front corrects the run its newest message joins.
+ */
+export function senderRunStarts(messages: readonly ConversationMessage[], isGroup: boolean): Map<string, string> {
+  const starts = new Map<string, string>();
+  if (!isGroup) return starts;
+  let previous: string | null = null;
+  for (const message of messages) {
+    const key = message.fromSelf || message.presentation === 'notice' ? null : senderKey(message);
+    if (key !== null && key !== previous) starts.set(message.id, senderName(message));
+    previous = key;
+  }
+  return starts;
+}
+
+function senderKey(message: ConversationMessage): string | null {
+  return message.senderId ?? message.senderAddress?.value ?? message.senderName?.trim() ?? null;
+}
+
+/** The name a sender is shown under: the display name, else the address, else a placeholder. */
+export function senderName(message: ConversationMessage): string {
+  return message.senderName?.trim() || message.senderAddress?.value || _('Unknown sender');
 }
