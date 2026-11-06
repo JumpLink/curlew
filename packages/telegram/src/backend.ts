@@ -20,7 +20,7 @@ import { SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
 import type { LoginPrompts, TelegramApi, TelegramClientHandle } from './api.ts';
 import { isOwnChatId, listSessionAccounts, sessionPath } from './accounts.ts';
-import { type ClientFactory, createMtcuteClient } from './client.ts';
+import { type ClientFactory, createMtcuteClient, sessionGone } from './client.ts';
 import { embeddedCredentials, resolveCredentials, type TelegramCredentials } from './credentials.ts';
 import { loginTelegram } from './login.ts';
 import { TELEGRAM_MANIFEST } from './manifest.ts';
@@ -67,6 +67,23 @@ export function telegramPrompts(prompter: AccountPrompter): LoginPrompts {
   };
 }
 
+/** One open Telegram connection the daemon keeps: updates as wake-ups, a fresh read-only session per catch-up. */
+export interface TelegramLiveConnection {
+  chatSession(): ChatSession;
+  onArrival(listener: () => void): () => void;
+  onClosed(listener: (reason: string, loggedOut: boolean) => void): void;
+  close(): Promise<void>;
+}
+
+/** The session is gone for good (revoked, deactivated): a follow stops the account instead of retrying. */
+export class TelegramLoggedOutError extends Error {
+  readonly loggedOut = true;
+  constructor(message: string) {
+    super(message);
+    this.name = 'TelegramLoggedOutError';
+  }
+}
+
 export class TelegramBackend implements ChatBackend, SendBackend {
   readonly manifest = TELEGRAM_MANIFEST;
   readonly kind = 'chat' as const;
@@ -106,6 +123,28 @@ export class TelegramBackend implements ChatBackend, SendBackend {
     return new TelegramChatSession(api);
   }
 
+  /**
+   * The connection a follow keeps open (ADR 0002 §4): updates only wake the caller, and every
+   * catch-up reads through a session over the same read-only wrapper `connect` hands out, so a
+   * follow cannot send either. The caller holds the receive lease.
+   */
+  async connectLive(accountId: string): Promise<TelegramLiveConnection> {
+    const { client, api } = await this.open(accountId, true);
+    const live = client.live;
+    try {
+      await live?.start();
+    } catch (err) {
+      await api.destroy().catch(() => {});
+      throw err;
+    }
+    return {
+      chatSession: () => new TelegramChatSession(api),
+      onArrival: (listener) => live?.onArrival(listener) ?? (() => {}),
+      onClosed: (listener) => live?.onClosed((end) => listener(end.reason, end.loggedOut)),
+      close: () => api.destroy(),
+    };
+  }
+
   /** The only way to get `sendText`: the full handle, behind a permit. */
   async openSender(accountId: string, permit: SendPermit): Promise<MessageSender> {
     const { client, api } = await this.open(accountId);
@@ -113,7 +152,7 @@ export class TelegramBackend implements ChatBackend, SendBackend {
   }
 
   /** Open the session file, connect and prove the session is still authorized. */
-  private async open(accountId: string): Promise<{ client: TelegramClientHandle; api: TelegramApi }> {
+  private async open(accountId: string, live = false): Promise<{ client: TelegramClientHandle; api: TelegramApi }> {
     const path = sessionPath(this.context.secretsDir, accountId);
     if (!existsSync(path)) {
       throw new Error(
@@ -127,6 +166,7 @@ export class TelegramBackend implements ChatBackend, SendBackend {
       client = this.createClient({
         credentials: resolveCredentials(this.context, store, this.embedded),
         storage: new SecretStoreStorage(store),
+        ...(live ? { live } : {}),
       });
       // The store belongs to the client from here on: `withStoreClose` closes it with the client,
       // so every path out of the try below goes through `api.destroy()` and not through here.
@@ -142,13 +182,12 @@ export class TelegramBackend implements ChatBackend, SendBackend {
       await client.getMe();
     } catch (err) {
       await api.destroy().catch(() => {});
-      throw new Error(
-        fmt(_('the Telegram session {account} is not usable ({reason}) — {hint}'), {
-          account: accountId,
-          reason: err instanceof Error ? err.message : String(err),
-          hint: reloginHint(),
-        }),
-      );
+      const message = fmt(_('the Telegram session {account} is not usable ({reason}) — {hint}'), {
+        account: accountId,
+        reason: err instanceof Error ? err.message : String(err),
+        hint: reloginHint(),
+      });
+      throw sessionGone(err) !== null ? new TelegramLoggedOutError(message) : new Error(message);
     }
     return { client, api };
   }

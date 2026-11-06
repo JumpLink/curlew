@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-06 09:27+0100\n"
+"POT-Creation-Date: 2026-11-06 13:02+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -109,11 +109,11 @@ msgid ""
 "config.agentAccess.rules"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:287
+#: app/src/core/actions/daemon.ts:303
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:309
+#: app/src/core/actions/daemon.ts:325
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
@@ -2021,30 +2021,30 @@ msgstr ""
 msgid "Two-step verification password"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:120
+#: packages/telegram/src/backend.ts:159
 msgid "no Telegram session for {account} — {hint}"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:146
+#: packages/telegram/src/backend.ts:185
 msgid "the Telegram session {account} is not usable ({reason}) — {hint}"
 msgstr ""
 
-#: packages/telegram/src/client.ts:101
+#: packages/telegram/src/client.ts:161
 msgid ""
 "Telegram asks for an email login setup first — finish it in an official app"
 msgstr ""
 
 #. TRANSLATORS: {channel} is Telegram's own word for the route it used ("sms", "app", …),
 #. and arrives untranslated from the server.
-#: packages/telegram/src/client.ts:105
+#: packages/telegram/src/client.ts:165
 msgid "Telegram sent the login code via {channel}."
 msgstr ""
 
-#: packages/telegram/src/client.ts:109
+#: packages/telegram/src/client.ts:169
 msgid "That code was not accepted — try again."
 msgstr ""
 
-#: packages/telegram/src/client.ts:109
+#: packages/telegram/src/client.ts:169
 msgid "Wrong password — try again."
 msgstr ""
 
