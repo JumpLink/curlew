@@ -81,8 +81,12 @@ All contacts, channels and groups of every messenger in **one** list.
   narrows only its own protocol; deselecting a protocol drops its account choices. The button is
   shown only when there are two protocols or an account choice to make.
 - **Note to self**: a chat with one's own account is titled *Note to self* and gets a composer.
-  Recognised where the index tells positively (Signal, Telegram, XMPP, Matrix); WhatsApp and
-  mail are not, because the index lacks the own address.
+  Recognised where the index tells positively (Signal, Telegram, XMPP, Matrix, WhatsApp); mail
+  is not. WhatsApp reads the own JIDs from `accounts.address`, which a sync or daemon run fills
+  from the stored session; with none known the chat stays an ordinary one.
+- **Matrix rooms** get a composer targeting the room id. A line above it reads "Public room · N
+  members" or "Room · N members", only once the homeserver said both; an unknown is left out. A
+  room known to be encrypted keeps the composer disabled with the reason shown instead.
 - **Direct mail is grouped by person**: every direct mail thread with the same person is one
   row. Chat backends are not regrouped, their conversations already are one per person.
 - **Show all emails** (Preferences, on by default). Off, the list keeps only mail threads that

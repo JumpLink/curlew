@@ -156,6 +156,11 @@ interface Cursor {
   probeSeq: number | null;
 }
 
+/** A tri-state flag as the column holds it: NULL = the network did not say. */
+function flag(value: boolean | null | undefined): number | null {
+  return value === null || value === undefined ? null : value ? 1 : 0;
+}
+
 function num(value: unknown): number | null {
   return value === null || value === undefined ? null : Number(value);
 }
@@ -426,7 +431,7 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
     db,
     `INSERT OR REPLACE INTO chat_cursors
        (conversation_id, backend, account_id, chat_id, kind, last_seq, read_inbox_seq, read_outbox_seq, last_sync_at,
-        last_cursor, probe_seq)`,
+        last_cursor, probe_seq, room_public, room_encrypted, room_members)`,
     batch.cursors,
   );
   // After the inserts, so a correction or retraction of a message written in this very batch
@@ -552,7 +557,7 @@ function recordChatError(result: ChatAccountSyncResult, err: unknown): void {
 async function syncAccount(
   db: IndexDatabase,
   backend: ChatBackend,
-  account: { id: string; identity: string; provider: string },
+  account: { id: string; identity: string; provider: string; address?: string },
   options: Required<Omit<ChatSyncOptions, 'accountId' | 'lease'>>,
   budget: { total: number; remaining: number; exhausted: boolean },
 ): Promise<ChatAccountSyncResult> {
@@ -776,6 +781,9 @@ async function syncAccount(
         syncedAt,
         lastCursor,
         probeSeq,
+        flag(chat.room?.public),
+        flag(chat.room?.encrypted),
+        chat.room?.memberCount ?? null,
       ]);
       // The network asked this account to wait. What this chat already delivered is in the batch
       // and is committed by the `finally` below; the cursor covers exactly it, so a later run
@@ -822,7 +830,7 @@ async function syncAccount(
 async function syncUnderLease(
   db: IndexDatabase,
   backend: ChatBackend,
-  account: { id: string; identity: string; provider: string },
+  account: { id: string; identity: string; provider: string; address?: string },
   options: Required<Omit<ChatSyncOptions, 'accountId' | 'lease'>>,
   budget: { total: number; remaining: number; exhausted: boolean },
   lease: NonNullable<ChatSyncOptions['lease']>,
@@ -912,7 +920,7 @@ export async function syncChats(
 
 export interface SentChatRecord {
   backend: string;
-  account: { id: string; identity: string; provider: string };
+  account: { id: string; identity: string; provider: string; address?: string };
   /** The chat's remote id — for a direct XMPP chat, the peer's bare JID. */
   chatRemoteId: string;
   /** The id the message was sent with (XMPP origin-id): the network's own copy replaces this row. */
@@ -977,6 +985,9 @@ function recordSentRows(
       null,
       null,
       record.sentAt,
+      null,
+      null,
+      null,
       null,
       null,
     ]);

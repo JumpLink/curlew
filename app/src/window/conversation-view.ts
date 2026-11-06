@@ -9,7 +9,7 @@ import type { ConversationMessage } from '@curlew/protocol';
 import type { MessageCursor } from '@curlew/store';
 
 import type { ListEntry } from './conversation-list-model.ts';
-import { initials, protocolLabel, shortTime } from './conversation-list-model.ts';
+import { composerBlock, initials, protocolLabel, roomHint, shortTime } from './conversation-list-model.ts';
 import {
   attachmentLines,
   bubbleText,
@@ -76,7 +76,11 @@ export function createConversationView(
   composer.append(send);
 
   const content = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
+  const hint = new Gtk.Label({ xalign: 0, marginStart: 12, marginEnd: 12, marginTop: 4, visible: false });
+  hint.add_css_class('dim-label');
+  hint.add_css_class('caption');
   content.append(scroller);
+  content.append(hint);
   content.append(composer);
   const overlay = new Adw.ToastOverlay({ child: content });
   const toolbar = new Adw.ToolbarView();
@@ -369,6 +373,12 @@ export function createConversationView(
       history.remove_all();
       built.clear();
       composer.set_visible(nextEntry.target !== null);
+      const blocked = composerBlock(nextEntry);
+      const roomLine = blocked ?? roomHint(nextEntry);
+      hint.set_label(roomLine ?? '');
+      hint.set_visible(nextEntry.target !== null && roomLine !== null);
+      input.set_sensitive(blocked === null);
+      send.set_sensitive(blocked === null);
       input.set_text('');
       const subjects = subjectLabels(messages);
       const starts = dayStarts(messages);

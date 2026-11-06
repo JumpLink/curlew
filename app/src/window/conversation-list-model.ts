@@ -7,7 +7,7 @@
  */
 
 import type { AddressKind, Conversation } from '@curlew/protocol';
-import { _ } from '@curlew/protocol';
+import { _, _n, fmt } from '@curlew/protocol';
 
 export type SectionId = 'people' | 'groups';
 
@@ -22,9 +22,19 @@ export interface ListEntry {
   kind: Conversation['kind'];
   unread: number;
   lastMessageAt: string | null;
-  /** Address the composer answers, when this is a direct conversation. */
+  /** Address the composer answers: the other person, or for a Matrix room its room id. */
   target: string | null;
   emailChat: boolean;
+  /** What the index knows about the room behind a Matrix chat; null for every other backend. */
+  room: RoomFacts | null;
+}
+
+/** The room facts the window uses (`listChatRooms`); `null` fields are unknown, never "no". */
+export interface RoomFacts {
+  chatId: string;
+  public: boolean | null;
+  encrypted: boolean | null;
+  memberCount: number | null;
 }
 
 export interface Section {
@@ -98,8 +108,10 @@ export function shortTime(iso: string | null, now: Date = new Date()): string {
  *   ACI is the account id's suffix.
  * - XMPP, Matrix: the only participant carries the account's own JID / user id (`identity`).
  * - Telegram: Saved Messages is the chat with the own user id, which is the account id's suffix.
- * - WhatsApp: the account id is a registration id and the identity a display name, so the own JID
- *   is not in the index; not recognised.
+ * - WhatsApp: the account's own JIDs (`accounts.address`, written at sync time from the linked
+ *   device's credentials; the account id is a registration id and the identity a display name, so
+ *   neither helps). A direct chat whose only participant carries one of them. Without a stored
+ *   JID the chat stays an ordinary one.
  */
 export function selfAddressOf(conversation: Conversation, identity?: string): string | null {
   if (conversation.kind !== 'direct') return null;
@@ -115,6 +127,12 @@ export function selfAddressOf(conversation: Conversation, identity?: string): st
       const id = /^telegram-(\d+)$/.exec(accountId)?.[1];
       return id !== undefined && participants.length === 1 && values('telegram').includes(id) ? id : null;
     }
+    case 'whatsapp': {
+      const own = ownJids(identity);
+      if (own.size === 0 || participants.length !== 1) return null;
+      const jids = values('whatsapp');
+      return jids.some((v) => own.has(bareLower(v))) ? jids[0] : null;
+    }
     case 'xmpp':
     case 'matrix': {
       const own = identity?.trim().toLowerCase();
@@ -125,6 +143,20 @@ export function selfAddressOf(conversation: Conversation, identity?: string): st
     default:
       return null;
   }
+}
+
+/** `user@server`, lowercase, without a device suffix — how both the index and the account row spell a JID. */
+function bareLower(jid: string): string {
+  return jid.trim().toLowerCase().replace(/^([^@:\s]+):\d+@/, '$1@');
+}
+
+/** The user JIDs in a WhatsApp account's `address` (space-separated); a display name yields none. */
+function ownJids(address: string | undefined): Set<string> {
+  const jids = (address ?? '')
+    .split(/\s+/)
+    .map(bareLower)
+    .filter((v) => /^\d+@(s\.whatsapp\.net|lid)$/.test(v));
+  return new Set(jids);
 }
 
 /** The title a row shows: the stored one, else the people in it, else the first address. */
@@ -151,7 +183,14 @@ const SEND_KIND: Readonly<Record<string, AddressKind>> = {
   xmpp: 'jid',
 };
 
-function targetOf(conversation: Conversation): string | null {
+/**
+ * The address the composer sends to. A Matrix message goes to a ROOM, so its target is the room id
+ * the index holds as the chat's remote id (the form the send path's permit names) — for a direct
+ * chat and a group alike, and null while the index has no room row for it. Every other backend
+ * answers only a direct chat, by the other person's address.
+ */
+export function targetOf(conversation: Conversation, room: RoomFacts | null = null): string | null {
+  if (conversation.backend === 'matrix') return room?.chatId ?? null;
   if (conversation.kind !== 'direct' || conversation.participants.length !== 1) return null;
   const kind = SEND_KIND[conversation.backend];
   if (kind === undefined) return null;
@@ -159,7 +198,7 @@ function targetOf(conversation: Conversation): string | null {
 }
 
 /** `identities`: account id → the address the account is known by, as the index stores it. */
-export function toEntry(conversation: Conversation, identity?: string): ListEntry {
+export function toEntry(conversation: Conversation, identity?: string, room: RoomFacts | null = null): ListEntry {
   return {
     id: conversation.id,
     conversationIds: [conversation.id],
@@ -169,9 +208,38 @@ export function toEntry(conversation: Conversation, identity?: string): ListEntr
     kind: conversation.kind,
     unread: Math.max(0, conversation.unreadCount),
     lastMessageAt: conversation.lastMessageAt,
-    target: selfAddressOf(conversation, identity) ?? targetOf(conversation),
+    target:
+      conversation.backend === 'matrix'
+        ? targetOf(conversation, room)
+        : (selfAddressOf(conversation, identity) ?? targetOf(conversation)),
     emailChat: conversation.emailChat,
+    room: conversation.backend === 'matrix' ? room : null,
   };
+}
+
+/**
+ * Why the composer cannot be used in this conversation, or null when it can. An encrypted Matrix
+ * room is the one case: curlew has no way to encrypt, and a cleartext message there would be
+ * readable by the server and defeat what the room's members chose (the send path refuses it too;
+ * this only says so before anyone types). Unknown encryption is not a block — the sender asks the
+ * homeserver again right before the send.
+ */
+export function composerBlock(entry: ListEntry): string | null {
+  return entry.room?.encrypted === true ? _('Encrypted rooms are not supported yet') : null;
+}
+
+/**
+ * The small line above a Matrix room's composer: "Public room · 12 members". Only for a room
+ * that is not a direct chat, and only once the homeserver has said whether it is public and how
+ * many are in it — an unknown is left out, not guessed.
+ */
+export function roomHint(entry: ListEntry): string | null {
+  const room = entry.room;
+  if (!room || entry.kind === 'direct' || room.public === null || room.memberCount === null) return null;
+  const count = room.memberCount;
+  return room.public
+    ? fmt(_n('Public room · {count} member', 'Public room · {count} members', count), { count })
+    : fmt(_n('Room · {count} member', 'Room · {count} members', count), { count });
 }
 
 /**
@@ -182,12 +250,13 @@ export function toEntries(
   conversations: Conversation[],
   showAllEmails = true,
   identities: ReadonlyMap<string, string> = new Map(),
+  rooms: ReadonlyMap<string, RoomFacts> = new Map(),
 ): ListEntry[] {
   const entries: ListEntry[] = [];
   const mailContacts = new Map<string, ListEntry>();
   for (const conversation of conversations) {
     if (conversation.backend === 'mail' && !showAllEmails && !conversation.emailChat) continue;
-    const entry = toEntry(conversation, identities.get(conversation.accountId));
+    const entry = toEntry(conversation, identities.get(conversation.accountId), rooms.get(conversation.id) ?? null);
     const participant = conversation.participants.length === 1 ? conversation.participants[0] : null;
     if (conversation.backend !== 'mail' || conversation.kind !== 'direct' || !participant || !entry.target) {
       entries.push(entry);

@@ -932,7 +932,7 @@ function raceAbort<T>(work: Promise<T>, signal: AbortSignal | undefined): Promis
 async function runSession(
   db: IndexDatabase,
   backend: DeliveryBackend,
-  account: { id: string; identity: string; provider: string },
+  account: { id: string; identity: string; provider: string; address?: string },
   mode: DeliveryMode,
   now: () => Date,
   signal: AbortSignal | undefined,
@@ -1047,7 +1047,7 @@ async function runSession(
 async function receiveAccount(
   db: IndexDatabase,
   backend: DeliveryBackend,
-  account: { id: string; identity: string; provider: string },
+  account: { id: string; identity: string; provider: string; address?: string },
   options: DeliverySyncOptions,
 ): Promise<DeliveryAccountSyncResult> {
   const mode = options.mode ?? 'catch-up';

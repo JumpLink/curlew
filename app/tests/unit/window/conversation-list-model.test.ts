@@ -5,6 +5,10 @@ import {
   type ListEntry,
   NO_FILTER,
   accountChoices,
+  composerBlock,
+  roomHint,
+  selfAddressOf,
+  targetOf,
   backendChoices,
   buildSections,
   entryTitle,
@@ -49,6 +53,7 @@ const entry = (over: Partial<ListEntry> & { id: string }): ListEntry => ({
   lastMessageAt: null,
   target: null,
   emailChat: false,
+  room: null,
   ...over,
 });
 
@@ -59,6 +64,48 @@ export default async () => {
     it('has a distinct badge icon per protocol', () => {
       const icons = ['mail', 'xmpp', 'signal', 'matrix', 'telegram', 'whatsapp'].map(protocolIcon);
       expect(new Set(icons).size).toBe(6);
+    });
+
+    it('targets a Matrix room by its room id, never without a room row', () => {
+      const c = conversation({ id: 'm1', backend: 'matrix', kind: 'group' });
+      const room = { chatId: '!r:example.org', public: true, encrypted: false, memberCount: 3 };
+      expect(targetOf(c, room)).toBe('!r:example.org');
+      expect(targetOf(c, null)).toBe(null);
+    });
+
+    it('blocks the composer only in a room known to be encrypted', () => {
+      const room = (encrypted: boolean | null) => ({ chatId: '!r', public: false, encrypted, memberCount: 2 });
+      expect(composerBlock(entry({ id: 'a', room: room(true) }))).not.toBe(null);
+      expect(composerBlock(entry({ id: 'b', room: room(false) }))).toBe(null);
+      expect(composerBlock(entry({ id: 'c', room: room(null) }))).toBe(null);
+      expect(composerBlock(entry({ id: 'd' }))).toBe(null);
+    });
+
+    it('hints a room as public with its members, and says nothing it does not know', () => {
+      const room = (pub: boolean | null, n: number | null) => ({ chatId: '!r', public: pub, encrypted: false, memberCount: n });
+      expect(roomHint(entry({ id: 'a', kind: 'group', room: room(true, 12) }))).toBe('Public room · 12 members');
+      expect(roomHint(entry({ id: 'b', kind: 'group', room: room(true, 1) }))).toBe('Public room · 1 member');
+      expect(roomHint(entry({ id: 'c', kind: 'group', room: room(false, 4) }))).toBe('Room · 4 members');
+      expect(roomHint(entry({ id: 'd', kind: 'group', room: room(null, 4) }))).toBe(null);
+      expect(roomHint(entry({ id: 'e', kind: 'group', room: room(true, null) }))).toBe(null);
+      expect(roomHint(entry({ id: 'f', kind: 'direct', room: room(true, 2) }))).toBe(null);
+    });
+
+    it('finds the WhatsApp chat with oneself only when the own JID is known', () => {
+      const me = conversation({
+        id: 'w1',
+        backend: 'whatsapp',
+        accountId: 'whatsapp-x',
+        participants: [
+          {
+            displayName: null,
+            addresses: [{ kind: 'whatsapp', value: '4915100000000@s.whatsapp.net' }],
+          },
+        ] as unknown as Conversation['participants'],
+      });
+      expect(selfAddressOf(me, '4915100000000@s.whatsapp.net 123@lid')).toBe('4915100000000@s.whatsapp.net');
+      expect(selfAddressOf(me, '4915199999999@s.whatsapp.net')).toBe(null);
+      expect(selfAddressOf(me, undefined)).toBe(null);
     });
 
     it('shows a short time: clock today, a word for yesterday, else the date', () => {

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-06 09:07+0100\n"
+"POT-Creation-Date: 2026-11-06 09:27+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1522,47 +1522,63 @@ msgstr ""
 msgid "Add rule"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:52
+#: app/src/window/conversation-list-model.ts:62
 msgid "Mail"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:53
+#: app/src/window/conversation-list-model.ts:63
 msgid "XMPP"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:54
+#: app/src/window/conversation-list-model.ts:64
 msgid "Signal"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:55
+#: app/src/window/conversation-list-model.ts:65
 msgid "Matrix"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:56
+#: app/src/window/conversation-list-model.ts:66
 msgid "Telegram"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:57
+#: app/src/window/conversation-list-model.ts:67
 msgid "WhatsApp"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:89
+#: app/src/window/conversation-list-model.ts:99
 msgid "Yesterday"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:132
+#: app/src/window/conversation-list-model.ts:164
 msgid "Note to self"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:140
+#: app/src/window/conversation-list-model.ts:172
 msgid "Unnamed conversation"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:247
+#: app/src/window/conversation-list-model.ts:228
+msgid "Encrypted rooms are not supported yet"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:241
+msgid "Public room · {count} member"
+msgid_plural "Public room · {count} members"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/window/conversation-list-model.ts:242
+msgid "Room · {count} member"
+msgid_plural "Room · {count} members"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/window/conversation-list-model.ts:316
 msgid "People"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:248
+#: app/src/window/conversation-list-model.ts:317
 msgid "Groups"
 msgstr ""
 
@@ -1652,23 +1668,23 @@ msgstr ""
 msgid "Send message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:85
+#: app/src/window/conversation-view.ts:89
 msgid "Conversation"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:159
+#: app/src/window/conversation-view.ts:163
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:173
+#: app/src/window/conversation-view.ts:177
 msgid "Contains attachments"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:276
+#: app/src/window/conversation-view.ts:280
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:347
+#: app/src/window/conversation-view.ts:351
 msgid "Message not sent: {error}"
 msgstr ""
 

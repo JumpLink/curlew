@@ -8,6 +8,7 @@ import { isChatBackend, validateManifest } from '@curlew/protocol';
 import {
   chatConversationId,
   getConversation,
+  listChatRooms,
   rebuildConversations,
   SecretStore,
   syncChats,
@@ -23,6 +24,7 @@ import {
   MatrixBackend,
   MatrixChatSession,
   mapEvents,
+  roomFactsOf,
   readOnlyFetch,
   ReadOnlyViolation,
   refusal,
@@ -619,6 +621,49 @@ export default async () => {
         expect(bodies.join('|')).toBe('Ja|Treffen um 6|Bis dann');
         expect(view?.messages[1].editedAt).toBe(new Date(at(20)).toISOString());
         expect(existsSync(join(dir, `${accountId}.db`))).toBe(true);
+      } finally {
+        db.close();
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('reports room facts only where the state was synced', async () => {
+      const open = roomFactsOf({ createSeen: true, joinRule: 'public', encryptionSeen: false, joinedMembers: 12 });
+      expect(open.isPublic).toBe(true);
+      expect(open.encrypted).toBe(false);
+      expect(open.memberCount).toBe(12);
+      const closed = roomFactsOf({ createSeen: true, joinRule: 'invite', encryptionSeen: true, joinedMembers: 2 });
+      expect(closed.isPublic).toBe(false);
+      expect(closed.encrypted).toBe(true);
+      expect(closed.memberCount).toBe(2);
+      const unknown = roomFactsOf({ createSeen: false, joinRule: undefined, encryptionSeen: false, joinedMembers: 0 });
+      expect(unknown.isPublic).toBe(null);
+      expect(unknown.encrypted).toBe(null);
+      expect(unknown.memberCount).toBe(null);
+    });
+
+    await it('stores the room facts a sync saw, and nothing for an unknown room', async () => {
+      const dir = tempDir();
+      const db = freshDb();
+      try {
+        const accountId = seedAccount(dir);
+        const api = new FakeMatrixApi();
+        api.addRoom({ roomId: '!pub:example.org', name: 'Open', direct: false, isPublic: true, encrypted: false, memberCount: 7 });
+        api.addRoom({ roomId: '!enc:example.org', name: 'Closed', direct: false, isPublic: false, encrypted: true, memberCount: 3 });
+        api.addRoom({ roomId: '!unk:example.org', name: 'Unknown', direct: false });
+        api.post('!pub:example.org', text(ANNA, T0, 'hi'));
+        const backend = new MatrixBackend({ settings: {}, env: {}, secretsDir: dir }, fakeConnector(api));
+        await syncChats(db, backend);
+        const rooms = listChatRooms(db, 'matrix');
+        const pub = rooms.get(chatConversationId('matrix', accountId, '!pub:example.org'));
+        expect(pub?.public).toBe(true);
+        expect(pub?.encrypted).toBe(false);
+        expect(pub?.memberCount).toBe(7);
+        expect(rooms.get(chatConversationId('matrix', accountId, '!enc:example.org'))?.encrypted).toBe(true);
+        const unknown = rooms.get(chatConversationId('matrix', accountId, '!unk:example.org'));
+        expect(unknown?.public).toBe(null);
+        expect(unknown?.encrypted).toBe(null);
+        expect(unknown?.memberCount).toBe(null);
       } finally {
         db.close();
         rmSync(dir, { recursive: true, force: true });
