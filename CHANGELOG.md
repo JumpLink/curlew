@@ -10,6 +10,13 @@
 
 ### Added
 
+- `packaging:install` (new `scripts/install-packaging.sh`): installs the desktop entry, the
+  hicolor icons and the AppStream metadata into `~/.local/share` — honouring `XDG_DATA_HOME`,
+  `PREFIX` and `DESTDIR` — and refreshes the desktop and icon caches, so GNOME Shell lists
+  Curlew, matches the window to its launcher and finds the window icon. The desktop file now
+  sets `StartupWMClass=eu.jumplink.curlew`. The script writes no `curlew` wrapper and no
+  systemd unit; that wiring stays with `curlew setup` and the machine.
+
 - Mail attachments: `send_message` takes `attachments` (absolute paths) and `curlew send` a
   repeatable `--attach <path>`. Mail only; other backends and the daemon send path refuse
   them. Limits: 10 files, 20 MB each, 25 MB total. The permission prompt lists the file
