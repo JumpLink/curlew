@@ -86,7 +86,12 @@ app/src/window/agent-access-store.ts
 app/src/window/conversation-list-model.ts
 app/src/window/conversation-list-store.ts
 app/src/window/conversation-list.ts
+app/src/window/conversation-model.ts
+app/src/window/conversation-store.ts
+app/src/window/conversation-view.ts
+app/src/window/fade-bin.ts
 app/src/window/main.ts
+app/src/window/preferences-dialog.ts
 app/src/window/watch.ts
 app/src/window/window.ts
 packages/gnome/src/calendar.gjs.ts
@@ -196,6 +201,7 @@ packages/store/src/download.ts
 packages/store/src/fts.ts
 packages/store/src/index-store.ts
 packages/store/src/index.ts
+packages/store/src/mail-reply.ts
 packages/store/src/paths.ts
 packages/store/src/receive-lease.ts
 packages/store/src/schema.ts
