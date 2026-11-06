@@ -18,7 +18,6 @@ import {
   disableMissingFolders,
   getFolderCursor,
   indexedFlags,
-  maxIndexedUid,
   setFolderCursor,
   setFolderProgress,
   updateFlagsBatch,
@@ -141,22 +140,10 @@ async function syncFolder(
       result.rebuilt = true;
     }
 
-    let lastUid = result.rebuilt ? 0 : (cursor?.lastUid ?? 0);
-    // A cursor that lost its position while the rows stayed (an upgrade that reset the cursors,
-    // a killed run on an older build) must not send a 60 000-message folder back to UID 0: that
-    // pass outlives the run's time limit and never records progress. The stored rows are the
-    // truth about how far the folder was read, so resume after the highest one — but only when
-    // the cursor KNOWS its UIDVALIDITY and the server agrees (a mismatch was cleared above). With
-    // no known UIDVALIDITY the rows cannot be tied to this server's UID space, so they are
-    // re-fetched from 0; the first batch records the validity and later runs resume.
-    if (
-      lastUid === 0 &&
-      !result.rebuilt &&
-      cursor?.uidValidity != null &&
-      (status.uidValidity == null || status.uidValidity === cursor.uidValidity)
-    ) {
-      lastUid = maxIndexedUid(db, accountId, folder.path);
-    }
+    // A cursor at 0 beside stored rows is NOT resumed from those rows: the schema upgrades reset
+    // it on purpose so every row is fetched again (v11: to learn the `email_chat` marker). What
+    // keeps such a re-fetch from outliving the run is the per-batch progress below.
+    const lastUid = result.rebuilt ? 0 : (cursor?.lastUid ?? 0);
     const unchanged =
       !result.rebuilt &&
       cursor != null &&

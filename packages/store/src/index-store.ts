@@ -170,14 +170,6 @@ export function setFolderProgress(
   ).run(uidValidity, lastUid, accountId, path);
 }
 
-/** The highest UID the index holds for a folder, 0 when it holds none. */
-export function maxIndexedUid(db: IndexDatabase, accountId: string, path: string): number {
-  const row = db
-    .prepare('SELECT MAX(uid) AS u FROM messages WHERE account_id = ? AND folder_path = ?')
-    .get(accountId, path) as { u: number | null } | undefined;
-  return Number(row?.u ?? 0);
-}
-
 /**
  * Drop every message of a folder — used when UIDVALIDITY changes, which means every UID the
  * index holds now refers to a different message, or to none.
