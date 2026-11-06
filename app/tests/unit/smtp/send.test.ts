@@ -213,6 +213,24 @@ export default async () => {
       });
     });
 
+    for (const size of [100 * 1024, 1024 * 1024]) {
+      await it(`sends a ${size / 1024} KB attachment over implicit TLS`, async () => {
+        await withServer({ tls: 'implicit' }, async (server) => {
+          const content = new Uint8Array(size);
+          for (let i = 0; i < size; i++) content[i] = (i * 31 + 7) & 0xff;
+          const message: OutgoingMessage = {
+            ...MESSAGE,
+            attachments: [{ filename: 'big.bin', content, contentType: 'application/octet-stream' }],
+          };
+          const result = await sendMessage(tlsAccount(server.port, 'tls'), message);
+          expect(result.accepted.length).toBe(1);
+          expect(server.dialogue.messages.length).toBe(1);
+          // base64 of the payload, wrapped at 76 columns, must arrive whole.
+          expect(server.dialogue.messages[0].length > Math.floor((size * 4) / 3)).toBe(true);
+        });
+      });
+    }
+
     await it('fails with tls when the upgrade is refused, without a login', async () => {
       await withServer({ tls: 'starttls', refuseStarttls: true }, async (server) => {
         const err = await failure(() => verifyAccount(tlsAccount(server.port, 'starttls')));
