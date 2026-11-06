@@ -358,6 +358,133 @@ export default async () => {
     });
   });
 
+  // `curlew sync` timed out on every run for a folder of ~60 000 rows whose cursor had been reset
+  // to 0 by an upgrade: the pass restarted at UID 0 each time and the cursor was only written
+  // after the whole pass, so a killed run never got anywhere.
+  await describe('a pass that is killed, and a cursor an upgrade reset', async () => {
+    /** Wrap the fake so `fetchNewer` fails from its `failAfter`-th call on, recording each start. */
+    const killable = (backend: FakeBackend, failAfter: number, starts: number[]) => {
+      const connect = backend.connect;
+      let calls = 0;
+      backend.connect = async () => {
+        const session = await connect();
+        const fetchNewer = session.fetchNewer;
+        session.fetchNewer = async (path, afterUid, batchSize) => {
+          starts.push(afterUid);
+          if (++calls > failAfter) throw new Error('killed');
+          return fetchNewer(path, afterUid, batchSize);
+        };
+        return session;
+      };
+    };
+    const rows = (n: number) => Array.from({ length: n }, (_, i) => message(i + 1, `Betreff ${i}`));
+    const cursorOf = (db: ReturnType<typeof freshDb>) =>
+      db.prepare('SELECT uid_validity, uid_next, last_uid, message_count FROM folders').get() as {
+        uid_validity: number | null;
+        uid_next: number | null;
+        last_uid: number;
+        message_count: number | null;
+      };
+
+    await it('keeps the resume point of a killed pass and continues there', async () => {
+      const db = freshDb();
+      const backend = new FakeBackend();
+      backend.put('INBOX', rows(10));
+      const starts: number[] = [];
+      killable(backend, 2, starts);
+      try {
+        const killed = await syncIndex(db, backend, { batchSize: 3, now: AT('2026-08-06T12:00:00Z') });
+        expect(killed.errors).toBe(1);
+        const cursor = cursorOf(db);
+        expect(cursor.last_uid).toBe(6);
+        expect(cursor.uid_validity).toBe(1);
+        // Not caught up yet: a recorded uidNext would let the next run skip the folder as unchanged.
+        expect(cursor.uid_next).toBe(null);
+
+        const resumed = new FakeBackend();
+        resumed.put('INBOX', rows(10));
+        const afterStarts: number[] = [];
+        killable(resumed, 99, afterStarts);
+        const second = await syncIndex(db, resumed, { batchSize: 3, now: AT('2026-08-06T12:10:00Z') });
+        expect(afterStarts[0]).toBe(6);
+        expect(second.added).toBe(4);
+        expect(second.errors).toBe(0);
+        expect(db.prepare('SELECT uid FROM messages').all().length).toBe(10);
+        expect(cursorOf(db).uid_next).toBe(11);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('re-fetches a folder an upgrade reset, resuming a killed pass', async () => {
+      const db = freshDb();
+      const backend = new FakeBackend();
+      backend.put('INBOX', rows(10));
+      try {
+        await syncIndex(db, backend, { now: AT('2026-08-06T12:00:00Z') });
+        // What the v2/v11 upgrades do to every folder, on purpose: every row is fetched again.
+        db.exec('UPDATE folders SET last_uid = 0, uid_next = NULL, message_count = NULL');
+        const starts: number[] = [];
+        killable(backend, 2, starts);
+        const killed = await syncIndex(db, backend, { batchSize: 3, now: AT('2026-08-07T12:00:00Z') });
+        expect(starts[0]).toBe(0);
+        expect(killed.errors).toBe(1);
+        expect(cursorOf(db).last_uid).toBe(6);
+
+        const resumed = new FakeBackend();
+        resumed.put('INBOX', rows(10));
+        const afterStarts: number[] = [];
+        killable(resumed, 99, afterStarts);
+        const second = await syncIndex(db, resumed, { batchSize: 3, now: AT('2026-08-07T12:10:00Z') });
+        expect(afterStarts[0]).toBe(6);
+        expect(second.errors).toBe(0);
+        expect(db.prepare('SELECT uid FROM messages').all().length).toBe(10);
+        expect(cursorOf(db).uid_next).toBe(11);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('starts over when the UIDVALIDITY changed behind a lost cursor', async () => {
+      const db = freshDb();
+      const backend = new FakeBackend();
+      backend.put('INBOX', rows(10));
+      try {
+        await syncIndex(db, backend, { now: AT('2026-08-06T12:00:00Z') });
+        db.exec('UPDATE folders SET last_uid = 0, uid_next = NULL, message_count = NULL');
+        backend.uidValidity = 2;
+        backend.put('INBOX', rows(4));
+        const again = await syncIndex(db, backend, { now: AT('2026-08-07T12:00:00Z') });
+        expect(again.folders[0].rebuilt).toBe(true);
+        expect(again.added).toBe(4);
+        expect(db.prepare('SELECT uid FROM messages').all().length).toBe(4);
+        expect(cursorOf(db).uid_validity).toBe(2);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('re-fetches from 0 when the cursor never knew its UIDVALIDITY', async () => {
+      const db = freshDb();
+      const backend = new FakeBackend();
+      backend.put('INBOX', rows(10));
+      try {
+        await syncIndex(db, backend, { now: AT('2026-08-06T12:00:00Z') });
+        db.exec(
+          'UPDATE folders SET last_uid = 0, uid_next = NULL, message_count = NULL, uid_validity = NULL',
+        );
+        const starts: number[] = [];
+        killable(backend, 99, starts);
+        const again = await syncIndex(db, backend, { now: AT('2026-08-07T12:00:00Z') });
+        expect(starts[0]).toBe(0);
+        expect(again.added).toBe(10);
+        expect(cursorOf(db).uid_validity).toBe(1);
+      } finally {
+        db.close();
+      }
+    });
+  });
+
   await describe('a full resync of a large folder', async () => {
     await it(
       'completes, and every read afterwards is complete',

@@ -19,6 +19,7 @@ import {
   getFolderCursor,
   indexedFlags,
   setFolderCursor,
+  setFolderProgress,
   updateFlagsBatch,
   upsertAccount,
   upsertFolder,
@@ -139,6 +140,9 @@ async function syncFolder(
       result.rebuilt = true;
     }
 
+    // A cursor at 0 beside stored rows is NOT resumed from those rows: the schema upgrades reset
+    // it on purpose so every row is fetched again (v11: to learn the `email_chat` marker). What
+    // keeps such a re-fetch from outliving the run is the per-batch progress below.
     const lastUid = result.rebuilt ? 0 : (cursor?.lastUid ?? 0);
     const unchanged =
       !result.rebuilt &&
@@ -185,6 +189,9 @@ async function syncFolder(
       upsertMessages(db, accountId, folder.path, fresh, options.now.toISOString());
       result.added += fresh.length;
       for (const message of fresh) if (message.uid > highest) highest = message.uid;
+      // Persist the resume point per batch: a run killed mid-folder continues here next time
+      // instead of from the cursor of the last COMPLETE pass.
+      if (fresh.length > 0) setFolderProgress(db, accountId, folder.path, status.uidValidity, highest);
       // A batch that advanced nothing would loop forever.
       if (batch.every((m) => m.uid <= lastUid)) break;
       if (batch.length < options.batchSize) break;
