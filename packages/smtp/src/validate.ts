@@ -80,6 +80,14 @@ export function validateMessage(message: OutgoingMessage): void {
   if (message.messageId !== undefined && !MESSAGE_ID.test(message.messageId)) {
     throw config('messageId must look like <id@host>');
   }
+  if (message.inReplyTo !== undefined && !MESSAGE_ID.test(message.inReplyTo)) {
+    throw config('inReplyTo must look like <id@host>');
+  }
+  if (message.references !== undefined) {
+    if (!Array.isArray(message.references) || message.references.some((id) => !MESSAGE_ID.test(id))) {
+      throw config('references must be a list of <id@host> values');
+    }
+  }
 
   for (const attachment of message.attachments ?? []) {
     if (!nonEmptyString(attachment?.filename) || CONTROL.test(attachment.filename)) {

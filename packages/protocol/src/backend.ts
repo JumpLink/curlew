@@ -58,6 +58,8 @@ export interface BackendMessage {
   references: string[];
   /** The headers that mark bulk or machine mail — the classifier's input. */
   automation: AutomationHeaders;
+  /** Delta Chat's open email-chat marker (`Chat-Version: 1.0`). */
+  emailChat: boolean;
 }
 
 /** Just the parts needed to detect a flag change or an expunge. */
@@ -600,6 +602,10 @@ export interface SendingMessage {
   subject?: string;
   /** Only when the sender's `features.attachments` is true (mail). */
   attachments?: SendingAttachment[];
+  /** Mail from the chat UI: add `Chat-Version: 1.0` and optionally answer an existing message. */
+  emailChat?: boolean;
+  inReplyTo?: string;
+  references?: string[];
 }
 
 /** What a send returned. `id` is the network's own id and what the write log records (ADR 0004 §7). */

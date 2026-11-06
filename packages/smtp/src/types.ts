@@ -32,6 +32,11 @@ export interface OutgoingMessage {
   attachments?: OutgoingAttachment[];
   /** `<id@host>`. Generated from the domain of `from` when absent. */
   messageId?: string;
+  /** Add Delta Chat's open `Chat-Version: 1.0` marker. */
+  emailChat?: boolean;
+  /** RFC 5322 threading headers, used when this is a reply. */
+  inReplyTo?: string;
+  references?: string[];
 }
 
 export interface SendResult {

@@ -216,6 +216,8 @@ export interface Conversation {
   messageCount: number;
   unreadCount: number;
   hasAttachments: boolean;
+  /** Mail only: at least one message carries `Chat-Version: 1.0`; always false for other backends. */
+  emailChat: boolean;
 }
 
 /**
@@ -264,6 +266,8 @@ export interface ConversationMessage {
   readByPeer?: boolean;
   /** A notice's text (presentation `notice`) — always present for a notice, bodies or not. */
   notice?: string | null;
+  /** Mail only: this message itself carries `Chat-Version: 1.0`. */
+  emailChat: boolean;
   /** Plain-text body — present only when explicitly requested. */
   bodyText?: string | null;
   bodyTruncated?: boolean;

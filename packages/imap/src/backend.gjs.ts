@@ -164,6 +164,7 @@ class ImapBackendSession implements BackendSession {
         inReplyTo: thread.inReplyTo ?? parseMessageIdList(env.inReplyTo)[0] ?? null,
         references: thread.references,
         automation: thread.automation,
+        emailChat: thread.emailChat,
       });
     }
     // Ascending, so the engine's cursor advances monotonically.
