@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-06 13:38+0100\n"
+"POT-Creation-Date: 2026-11-06 14:47+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1770,24 +1770,24 @@ msgstr "Noch keine Regeln"
 msgid "Add rule"
 msgstr "Regel hinzufügen"
 
-#: app/src/window/attachment-view.ts:70
+#: app/src/window/attachment-view.ts:85
 msgid "Play"
 msgstr "Abspielen"
 
-#: app/src/window/attachment-view.ts:70
+#: app/src/window/attachment-view.ts:85
 msgid "Open"
 msgstr "Öffnen"
 
-#: app/src/window/attachment-view.ts:73 app/src/window/media-viewer.ts:38
+#: app/src/window/attachment-view.ts:90 app/src/window/media-viewer.ts:47
 msgid "Save as…"
 msgstr "Speichern unter…"
 
-#: app/src/window/attachment-view.ts:87
+#: app/src/window/attachment-view.ts:106
 msgid "Could not fetch the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
-#: app/src/window/attachment-view.ts:152
-#: app/src/window/conversation-model.ts:178
+#: app/src/window/attachment-view.ts:198
+#: app/src/window/conversation-model.ts:186
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] "und {n} weiterer Anhang"
@@ -1821,35 +1821,35 @@ msgstr "WhatsApp"
 msgid "Yesterday"
 msgstr "Gestern"
 
-#: app/src/window/conversation-list-model.ts:164
+#: app/src/window/conversation-list-model.ts:167
 msgid "Note to self"
 msgstr "Notiz an mich"
 
-#: app/src/window/conversation-list-model.ts:172
+#: app/src/window/conversation-list-model.ts:175
 msgid "Unnamed conversation"
 msgstr "Unbenannte Unterhaltung"
 
-#: app/src/window/conversation-list-model.ts:228
+#: app/src/window/conversation-list-model.ts:235
 msgid "Encrypted rooms are not supported yet"
 msgstr "Verschlüsselte Räume werden noch nicht unterstützt"
 
-#: app/src/window/conversation-list-model.ts:241
+#: app/src/window/conversation-list-model.ts:248
 msgid "Public room · {count} member"
 msgid_plural "Public room · {count} members"
 msgstr[0] "Öffentlicher Raum · {count} Mitglied"
 msgstr[1] "Öffentlicher Raum · {count} Mitglieder"
 
-#: app/src/window/conversation-list-model.ts:242
+#: app/src/window/conversation-list-model.ts:249
 msgid "Room · {count} member"
 msgid_plural "Room · {count} members"
 msgstr[0] "Raum · {count} Mitglied"
 msgstr[1] "Raum · {count} Mitglieder"
 
-#: app/src/window/conversation-list-model.ts:316
+#: app/src/window/conversation-list-model.ts:328
 msgid "People"
 msgstr "Personen"
 
-#: app/src/window/conversation-list-model.ts:317
+#: app/src/window/conversation-list-model.ts:329
 msgid "Groups"
 msgstr "Gruppen"
 
@@ -1857,27 +1857,27 @@ msgstr "Gruppen"
 msgid "Search conversations"
 msgstr "Unterhaltungen durchsuchen"
 
-#: app/src/window/conversation-list.ts:180
+#: app/src/window/conversation-list.ts:182
 msgid "Filter conversations"
 msgstr "Unterhaltungen filtern"
 
-#: app/src/window/conversation-list.ts:235
+#: app/src/window/conversation-list.ts:245
 msgid "Protocols"
 msgstr "Protokolle"
 
-#: app/src/window/conversation-list.ts:258
+#: app/src/window/conversation-list.ts:268
 msgid "Clear filters"
 msgstr "Filter zurücksetzen"
 
-#: app/src/window/conversation-list.ts:279
+#: app/src/window/conversation-list.ts:289
 msgid "No conversations yet"
 msgstr "Noch keine Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:279
+#: app/src/window/conversation-list.ts:289
 msgid "No matches"
 msgstr "Keine Treffer"
 
-#: app/src/window/conversation-list.ts:282
+#: app/src/window/conversation-list.ts:292
 msgid ""
 "Conversations appear here after Curlew has synced an account. Run \"curlew "
 "sync\" first."
@@ -1885,45 +1885,45 @@ msgstr ""
 "Unterhaltungen erscheinen hier, sobald Curlew ein Konto synchronisiert hat. "
 "Führe zuerst „curlew sync“ aus."
 
-#: app/src/window/conversation-list.ts:283
+#: app/src/window/conversation-list.ts:293
 msgid "Nothing fits the search and filters."
 msgstr "Nichts passt zur Suche und den Filtern."
 
-#: app/src/window/conversation-list.ts:322
+#: app/src/window/conversation-list.ts:332
 msgid "Search"
 msgstr "Suchen"
 
-#: app/src/window/conversation-list.ts:333
+#: app/src/window/conversation-list.ts:343
 #: app/src/window/preferences-dialog.ts:18
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
-#: app/src/window/conversation-model.ts:140
+#: app/src/window/conversation-model.ts:148
 msgid "Unknown sender"
 msgstr "Unbekannter Absender"
 
-#: app/src/window/conversation-model.ts:162
+#: app/src/window/conversation-model.ts:170
 msgid "Image"
 msgstr "Bild"
 
-#: app/src/window/conversation-model.ts:164
+#: app/src/window/conversation-model.ts:172
 msgid "Video"
 msgstr "Video"
 
-#: app/src/window/conversation-model.ts:166
+#: app/src/window/conversation-model.ts:174
 msgid "Audio"
 msgstr "Audio"
 
-#: app/src/window/conversation-model.ts:168
+#: app/src/window/conversation-model.ts:176
 msgid "File"
 msgstr "Datei"
 
-#: app/src/window/conversation-model.ts:169
-#: app/src/window/conversation-model.ts:175
+#: app/src/window/conversation-model.ts:177
+#: app/src/window/conversation-model.ts:183
 msgid "Attachment"
 msgstr "Anhang"
 
-#: app/src/window/conversation-model.ts:170
+#: app/src/window/conversation-model.ts:178
 msgid "{kind}: {name}"
 msgstr "{kind}: {name}"
 
@@ -1939,51 +1939,51 @@ msgstr "Nachricht senden"
 msgid "Conversation"
 msgstr "Unterhaltung"
 
-#: app/src/window/conversation-view.ts:209
+#: app/src/window/conversation-view.ts:210
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:230
+#: app/src/window/conversation-view.ts:231
 msgid "Contains attachments"
 msgstr "Enthält Anhänge"
 
-#: app/src/window/conversation-view.ts:333
+#: app/src/window/conversation-view.ts:342
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:412
+#: app/src/window/conversation-view.ts:421
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
-#: app/src/window/fade-bin.ts:142
+#: app/src/window/fade-bin.ts:147
 msgid "Show more"
 msgstr "Mehr anzeigen"
 
-#: app/src/window/media-viewer.ts:35
+#: app/src/window/media-viewer.ts:44
 msgid "Back"
 msgstr "Zurück"
 
-#: app/src/window/media-viewer.ts:36 app/src/window/media-viewer.ts:176
+#: app/src/window/media-viewer.ts:45 app/src/window/media-viewer.ts:199
 msgid "Fullscreen"
 msgstr "Vollbild"
 
-#: app/src/window/media-viewer.ts:37
+#: app/src/window/media-viewer.ts:46
 msgid "Copy image"
 msgstr "Bild kopieren"
 
-#: app/src/window/media-viewer.ts:59
+#: app/src/window/media-viewer.ts:78
 msgid "Could not load the attachment"
 msgstr "Der Anhang konnte nicht geladen werden"
 
-#: app/src/window/media-viewer.ts:104
+#: app/src/window/media-viewer.ts:124
 msgid "Could not save the attachment: {error}"
 msgstr "Der Anhang konnte nicht gespeichert werden: {error}"
 
-#: app/src/window/media-viewer.ts:115
+#: app/src/window/media-viewer.ts:135
 msgid "Image copied"
 msgstr "Bild kopiert"
 
-#: app/src/window/media-viewer.ts:176
+#: app/src/window/media-viewer.ts:199
 msgid "Leave fullscreen"
 msgstr "Vollbild beenden"
 
@@ -2018,7 +2018,7 @@ msgstr "Über Curlew"
 msgid "Quit"
 msgstr "Beenden"
 
-#: app/src/window/window.ts:92
+#: app/src/window/window.ts:93
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
@@ -2357,33 +2357,41 @@ msgstr ""
 msgid "log in again with `curlew accounts add telegram`"
 msgstr "melde dich mit `curlew accounts add telegram` neu an"
 
+#: packages/telegram/src/backend.ts:51
+msgid ""
+"Telegram live updates are unavailable in this build: the follow will not "
+"wake on new messages"
+msgstr ""
+"Telegram-Live-Aktualisierungen sind in diesem Build nicht verfügbar: der "
+"Daemon wird bei neuen Nachrichten nicht geweckt"
+
 #. TRANSLATORS: `api_id` and `api_hash` are Telegram's own field names — do not translate them,
 #. the user has to recognise them on my.telegram.org.
-#: packages/telegram/src/backend.ts:61
+#: packages/telegram/src/backend.ts:77
 msgid "api_id of your Telegram app (from my.telegram.org)"
 msgstr "api_id deiner Telegram-App (von my.telegram.org)"
 
-#: packages/telegram/src/backend.ts:62
+#: packages/telegram/src/backend.ts:78
 msgid "api_hash of that app"
 msgstr "api_hash derselben App"
 
-#: packages/telegram/src/backend.ts:63
+#: packages/telegram/src/backend.ts:79
 msgid "Phone number of the Telegram account (international, e.g. +49…)"
 msgstr "Telefonnummer des Telegram-Kontos (international, z. B. +49…)"
 
-#: packages/telegram/src/backend.ts:64
+#: packages/telegram/src/backend.ts:80
 msgid "Login code Telegram sent you"
 msgstr "Anmeldecode, den Telegram geschickt hat"
 
-#: packages/telegram/src/backend.ts:65
+#: packages/telegram/src/backend.ts:81
 msgid "Two-step verification password"
 msgstr "Passwort der zweistufigen Bestätigung"
 
-#: packages/telegram/src/backend.ts:159
+#: packages/telegram/src/backend.ts:176
 msgid "no Telegram session for {account} — {hint}"
 msgstr "keine Telegram-Sitzung für {account} — {hint}"
 
-#: packages/telegram/src/backend.ts:185
+#: packages/telegram/src/backend.ts:202
 msgid "the Telegram session {account} is not usable ({reason}) — {hint}"
 msgstr "die Telegram-Sitzung {account} ist nicht nutzbar ({reason}) — {hint}"
 

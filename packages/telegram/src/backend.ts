@@ -36,6 +36,22 @@ import { SecretStoreStorage } from './storage.ts';
  */
 export const reloginHint = (): string => _('log in again with `curlew accounts add telegram`');
 
+let warnedNoLive = false;
+
+/**
+ * A client made with `live: true` carries the update stream; one that does not — a build or a
+ * factory without it — leaves the follow unable to wake. Say so ONCE per process: the follow
+ * reconnects, and an account that cannot be followed is a degraded mode, not a silent one.
+ * The line names no account and carries no secret.
+ */
+function warnNoLive(): void {
+  if (warnedNoLive) return;
+  warnedNoLive = true;
+  console.warn(
+    _('Telegram live updates are unavailable in this build: the follow will not wake on new messages'),
+  );
+}
+
 /** The client, plus closing the session file once mtcute has saved into it. */
 function withStoreClose(client: TelegramClientHandle, store: SecretStore): TelegramApi {
   return {
@@ -131,6 +147,7 @@ export class TelegramBackend implements ChatBackend, SendBackend {
   async connectLive(accountId: string): Promise<TelegramLiveConnection> {
     const { client, api } = await this.open(accountId, true);
     const live = client.live;
+    if (!live) warnNoLive();
     try {
       await live?.start();
     } catch (err) {
