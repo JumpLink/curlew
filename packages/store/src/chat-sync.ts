@@ -43,6 +43,7 @@ import type {
 } from '@curlew/protocol';
 import type { IndexDatabase } from './db.ts';
 import { appendChanges } from './changes.ts';
+import { conversationTotalsSql } from './conversation-totals.ts';
 import { insertMany, placeholders, seqColumn, type SqlValue, withTransaction } from './db.ts';
 import { upsertAccount } from './index-store.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
@@ -461,16 +462,10 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
      WHERE backend = ? AND account_id = ? AND remote_seq IS NOT NULL`,
   ).run(batch.backend, batch.accountId);
   db.prepare(
-    `UPDATE conversations SET
-       message_count = (SELECT COUNT(*) FROM conversation_messages m WHERE m.conversation_id = conversations.id),
-       unread_count = (SELECT COUNT(*) FROM conversation_messages m
-                        WHERE m.conversation_id = conversations.id AND m.from_self = 0 AND m.seen = 0),
-       first_message_at = (SELECT MIN(sent_at) FROM conversation_messages m WHERE m.conversation_id = conversations.id),
-       last_message_at = (SELECT MAX(sent_at) FROM conversation_messages m WHERE m.conversation_id = conversations.id),
-       has_attachments = (SELECT COUNT(*) > 0 FROM conversation_messages m
-                           WHERE m.conversation_id = conversations.id AND m.has_attachments = 1)
-     WHERE backend = ? AND account_id = ?
+    conversationTotalsSql(
+      `backend = ? AND account_id = ?
        AND id IN (SELECT conversation_id FROM chat_cursors WHERE backend = ? AND account_id = ?)`,
+    ),
   ).run(batch.backend, batch.accountId, batch.backend, batch.accountId);
   appendChanges(
     db,

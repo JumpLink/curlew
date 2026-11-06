@@ -34,6 +34,7 @@ import type {
 } from '@curlew/protocol';
 import { appendChanges, appendChangesTransaction } from './changes.ts';
 import { chatConversationId, classifyChatMessage, LOCAL_ECHO_PREFIX } from './chat-sync.ts';
+import { conversationTotalsSql } from './conversation-totals.ts';
 import type { IndexDatabase } from './db.ts';
 import { insertMany, placeholders, type SqlValue, withTransaction } from './db.ts';
 import { upsertAccount } from './index-store.ts';
@@ -778,15 +779,7 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
     );
     runIn(
       db,
-      (p) => `UPDATE conversations SET
-         message_count = (SELECT COUNT(*) FROM conversation_messages m WHERE m.conversation_id = conversations.id),
-         unread_count = (SELECT COUNT(*) FROM conversation_messages m
-                          WHERE m.conversation_id = conversations.id AND m.from_self = 0 AND m.seen = 0),
-         first_message_at = (SELECT MIN(sent_at) FROM conversation_messages m WHERE m.conversation_id = conversations.id),
-         last_message_at = (SELECT MAX(sent_at) FROM conversation_messages m WHERE m.conversation_id = conversations.id),
-         has_attachments = (SELECT COUNT(*) > 0 FROM conversation_messages m
-                             WHERE m.conversation_id = conversations.id AND m.has_attachments = 1)
-       WHERE id IN (${p})`,
+      (p) => conversationTotalsSql(`id IN (${p})`),
       touched.map(conv),
     );
     // A peer-only batch (a name, an address) changed no conversation and journals nothing.

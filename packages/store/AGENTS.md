@@ -77,6 +77,13 @@ survive it. Per-sender overrides are NOT stored here — they come from the conf
 read time, and `peopleOnlyClause` (SQL) must keep agreeing with `conversationVerdict` (JS);
 a test pins both directions.
 
+The five header aggregates (count, unread, first/last timestamp, attachments) are ONE statement
+in `conversation-totals.ts`. Both chat engines write them with their own selection — `syncChats`
+by backend + account through `chat_cursors`, `receiveDeliveries` by the ids its batch touched —
+so only the WHERE differs. They had drifted into two verbatim copies before; do not write a
+third. `schema.ts` keeps the copy inside the v12 upgrade on purpose: a migration records what
+that binary ran and never follows a live helper.
+
 ## Chats are written once, and linked on every rebuild
 
 `syncChats` (the `chat` driver's engine) writes chat messages into `conversation_messages`
