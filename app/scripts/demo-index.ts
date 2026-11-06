@@ -57,6 +57,9 @@ const CONVERSATIONS: Row[] = [
   ['c9', 'whatsapp', 'whatsapp-demo1', 'direct', 'Lee Hoffmann', 60 * 80, 0],
   ['c10', 'xmpp', 'xmpp-demo1', 'group', 'Book club', 60 * 120, 0],
   ['c11', 'mail', 'mail-demo1', 'direct', 'Monitoring Alerts', 60 * 200, 0],
+  ['c13', 'matrix', 'matrix-demo1', 'group', 'Release planning', 25, 0],
+  ['c14', 'matrix', 'matrix-demo1', 'group', 'Security team', 35, 0],
+  ['c15', 'whatsapp', 'whatsapp-demo1', 'direct', 'Robin', 7, 0],
   ['c12', 'signal', 'signal-0b8e1c2a-1111-4222-8333-444455556666', 'direct', '', 5, 0],
 ];
 
@@ -76,6 +79,16 @@ try {
     conversation.run(id, backend, acc, kind, title, at, at, unread);
   }
 
+  db.prepare(`UPDATE accounts SET address = ? WHERE id = 'whatsapp-demo1'`).run('4915100000000@s.whatsapp.net');
+  const cursor = db.prepare(
+    `INSERT OR REPLACE INTO chat_cursors (conversation_id, backend, account_id, chat_id, kind,
+       room_public, room_encrypted, room_members) VALUES (?, 'matrix', 'matrix-demo1', ?, ?, ?, ?, ?)`,
+  );
+  cursor.run('c2', '!design:example.org', 'group', 1, 0, 14);
+  cursor.run('c13', '!planning:example.org', 'group', 0, 0, 6);
+  cursor.run('c14', '!security:example.org', 'group', 0, 1, 4);
+  cursor.run('c8', '!dana:example.org', 'direct', 0, 0, 2);
+
   // Two conversations with a person and a history, so the conversation view has something to show:
   // an email chat (Delta Chat's `Chat-Version` marker) and an XMPP chat.
   const participant = db.prepare('INSERT OR REPLACE INTO participants (id, display_name) VALUES (?, ?)');
@@ -83,6 +96,7 @@ try {
   const member = db.prepare('INSERT OR REPLACE INTO conversation_participants (conversation_id, participant_id) VALUES (?, ?)');
   for (const [conversationId, id, name, kind, value] of [
     ['c3', 'p-sam', 'Sam Fischer', 'email', 'sam@example.org'],
+    ['c15', 'p-robin-wa', 'Robin', 'whatsapp', '4915100000000@s.whatsapp.net'],
     ['c5', 'p-jo', 'Jo Klein', 'jid', 'jo@chat.example.org'],
     ['c1', 'p-alex', 'Alex Weber', 'signal', '1f0c6a52-2222-4333-8444-555566667777'],
     ['c2', 'p-mia', 'Mia Schulz', 'matrix', '@mia:example.org'],
@@ -113,6 +127,9 @@ try {
     ['c2', true, 100, 'Looks great, thanks!', null],
     ['c2', false, 30, 'Can we ship it with the next release?', null],
     ['c2', false, 18, 'Noah, what do you think?', null],
+    ['c15', true, 9, 'Remember: passport renewal appointment', null],
+    ['c15', true, 7, 'https://example.org/forms/passport', null],
+    ['c14', false, 35, 'Rotating the keys on Friday.', null],
     ['c12', true, 6, 'Buy oat milk and stamps', null],
     ['c5', false, 200, 'Did the new release build on your machine?', null],
     ['c5', true, 190, 'It did, the tests are green on both runtimes.', null],
@@ -135,6 +152,7 @@ try {
     const [, backend, acc] = CONVERSATIONS.find(([id]) => id === conversationId)!;
     const sender = fromSelf ? null
       : conversationId === 'c3' ? 'p-sam'
+      : conversationId === 'c14' ? 'p-mia'
       : conversationId === 'c2' ? (text.startsWith('Can') ? 'p-noah' : 'p-mia')
       : 'p-jo';
     const at = new Date(now - minutesAgo * 60_000).toISOString();
