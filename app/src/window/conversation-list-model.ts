@@ -38,12 +38,15 @@ export interface Section {
 export interface ListFilter {
   /** Empty = every protocol. */
   backends: ReadonlySet<string>;
-  /** Empty = every account. */
-  accounts: ReadonlySet<string>;
+  /**
+   * Chosen accounts per protocol. A protocol with no choice shows every account; a choice narrows
+   * only inside its own protocol, and counts only while that protocol is chosen.
+   */
+  accounts: ReadonlyMap<string, ReadonlySet<string>>;
   query: string;
 }
 
-export const NO_FILTER: ListFilter = { backends: new Set(), accounts: new Set(), query: '' };
+export const NO_FILTER: ListFilter = { backends: new Set(), accounts: new Map(), query: '' };
 
 const PROTOCOLS: Record<string, { label: () => string; icon: string }> = {
   mail: { label: () => _('Mail'), icon: 'mail-unread-symbolic' },
@@ -176,7 +179,9 @@ export const unreadText = (count: number): string => (count > 99 ? '99+' : Strin
 
 export function matches(entry: ListEntry, filter: ListFilter): boolean {
   if (filter.backends.size > 0 && !filter.backends.has(entry.backend)) return false;
-  if (filter.accounts.size > 0 && !filter.accounts.has(entry.accountId)) return false;
+  // Accounts narrow only within their own protocol, and only while that protocol is chosen.
+  const own = filter.backends.has(entry.backend) ? filter.accounts.get(entry.backend) : undefined;
+  if (own !== undefined && own.size > 0 && !own.has(entry.accountId)) return false;
   const query = filter.query.trim().toLowerCase();
   return query === '' || entry.title.toLowerCase().includes(query);
 }
@@ -212,17 +217,32 @@ export function backendChoices(entries: ListEntry[]): string[] {
   return found.length > 1 ? found : [];
 }
 
+export interface AccountGroup {
+  backend: string;
+  accounts: string[];
+}
+
 /**
- * Accounts of the chosen protocols, for the filter chips. Offered only after a protocol is chosen
- * and only when that choice holds more than one account: account ids are not names a person
- * reads, so a row of them next to the protocols is noise.
+ * Account chips, grouped under their protocol. Offered only for a chosen protocol that holds more
+ * than one account: account ids are not names a person reads, and one account is no choice.
  */
-export function accountChoices(entries: ListEntry[], backends: ReadonlySet<string>): string[] {
-  if (backends.size === 0) return [];
-  const found = [
-    ...new Set(entries.filter((entry) => backends.has(entry.backend)).map((entry) => entry.accountId)),
-  ].sort();
-  return found.length > 1 ? found : [];
+export function accountChoices(entries: ListEntry[], backends: ReadonlySet<string>): AccountGroup[] {
+  const groups: AccountGroup[] = [];
+  for (const backend of [...backends].sort()) {
+    const accounts = [
+      ...new Set(entries.filter((entry) => entry.backend === backend).map((entry) => entry.accountId)),
+    ].sort();
+    if (accounts.length > 1) groups.push({ backend, accounts });
+  }
+  return groups;
+}
+
+/** Account choices of protocols that are not chosen (any more) are dropped, in place. */
+export function dropDeselectedAccounts(
+  accounts: Map<string, Set<string>>,
+  backends: ReadonlySet<string>,
+): void {
+  for (const backend of [...accounts.keys()]) if (!backends.has(backend)) accounts.delete(backend);
 }
 
 /** Up to two letters for the avatar: first letters of the first two words. */

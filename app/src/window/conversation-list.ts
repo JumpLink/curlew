@@ -7,6 +7,7 @@
  */
 
 import Adw from 'gi://Adw?version=1';
+import GLib from 'gi://GLib?version=2.0';
 import GObject from 'gi://GObject?version=2.0';
 import type Gio from 'gi://Gio?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
@@ -17,6 +18,7 @@ import {
   type ListFilter,
   type Section,
   accountChoices,
+  dropDeselectedAccounts,
   backendChoices,
   buildSections,
   initials,
@@ -155,7 +157,7 @@ export function createConversationList(
   let selectedId: string | null = null;
   const collapsed = new Set<string>();
   const backends = new Set<string>();
-  const accounts = new Set<string>();
+  const accounts = new Map<string, Set<string>>();
   let query = '';
   const refs = new Map<Gtk.ListBoxRow, RowRef>();
 
@@ -181,7 +183,8 @@ export function createConversationList(
   const filterBox = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 6, marginStart: 12, marginEnd: 12, marginTop: 8, marginBottom: 8 });
   filterPopover.set_child(filterBox);
 
-  const activeFilterCount = (): number => backends.size + accounts.size;
+  const activeAccountCount = (): number => [...accounts.values()].reduce((n, set) => n + set.size, 0);
+  const activeFilterCount = (): number => backends.size + activeAccountCount();
   const updateFilterButton = () => {
     const n = activeFilterCount();
     filterButton.set_label(n > 0 ? String(n) : '');
@@ -202,6 +205,15 @@ export function createConversationList(
     button.connect('toggled', () => {
       if (button.get_active()) set.add(key);
       else set.delete(key);
+      // A protocol that is deselected takes its account choices with it.
+      if (set === backends) {
+        dropDeselectedAccounts(accounts, backends);
+        // The account chips follow the protocols; rebuilt after this handler, not inside it.
+        GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+          rebuildFilters();
+          return GLib.SOURCE_REMOVE;
+        });
+      }
       paint();
       updateFilterButton();
       rebuild();
@@ -230,15 +242,16 @@ export function createConversationList(
       filterBox.append(wrap);
     }
 
-    const accountsList = accountChoices(entries, backends);
-    if (accountsList.length > 0) {
-      const header = new Gtk.Label({ label: _('Accounts'), xalign: 0 });
+    const accountGroups = accountChoices(entries, backends);
+    for (const group of accountGroups) {
+      const header = new Gtk.Label({ label: protocolLabel(group.backend), xalign: 0 });
       header.add_css_class('heading');
       header.add_css_class('caption');
       filterBox.append(header);
+      let chosen = accounts.get(group.backend);
+      if (!chosen) accounts.set(group.backend, (chosen = new Set()));
       const wrap = new Adw.WrapBox({ childSpacing: 6, lineSpacing: 6 });
-      for (const account of accountsList)
-        wrap.append(makeToggle(labels.get(account) ?? account, accounts, account));
+      for (const account of group.accounts) wrap.append(makeToggle(labels.get(account) ?? account, chosen, account));
       filterBox.append(wrap);
     }
 
@@ -250,10 +263,10 @@ export function createConversationList(
       rebuildFilters();
       rebuild();
     });
-    clear.set_sensitive(backends.size + accounts.size > 0);
+    clear.set_sensitive(activeFilterCount() > 0);
     filterBox.append(clear);
 
-    filterButton.set_visible(backendsList.length > 0 || accountsList.length > 0);
+    filterButton.set_visible(backendsList.length > 0);
     updateFilterButton();
   }
 
@@ -328,7 +341,8 @@ export function createConversationList(
       labels = accountLabels;
       // A filter whose choice vanished (an account removed) must not hide everything.
       for (const key of backends) if (!entries.some((e) => e.backend === key)) backends.delete(key);
-      for (const key of accounts) if (!entries.some((e) => e.accountId === key)) accounts.delete(key);
+      for (const [backend, chosen] of accounts)
+        for (const key of chosen) if (!entries.some((e) => e.backend === backend && e.accountId === key)) chosen.delete(key);
       rebuildFilters();
       rebuild();
     },

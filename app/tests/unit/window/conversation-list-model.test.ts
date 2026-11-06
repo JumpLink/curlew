@@ -8,7 +8,9 @@ import {
   backendChoices,
   buildSections,
   entryTitle,
+  dropDeselectedAccounts,
   initials,
+  matches,
   protocolIcon,
   protocolLabel,
   shortTime,
@@ -184,7 +186,7 @@ export default async () => {
           .sort()
           .join(',');
       expect(flat({ ...NO_FILTER, backends: new Set(['mail']) })).toBe('b,c');
-      expect(flat({ ...NO_FILTER, accounts: new Set(['mail-def456']) })).toBe('b');
+      expect(flat({ ...NO_FILTER, backends: new Set(['mail']), accounts: new Map([['mail', new Set(['mail-def456'])]]) })).toBe('b');
       expect(flat({ ...NO_FILTER, query: ' ANN ' })).toBe('a,c');
     });
 
@@ -196,7 +198,63 @@ export default async () => {
       expect(accountChoices(two, new Set()).length).toBe(0);
       expect(accountChoices(two, new Set(['mail'])).length).toBe(0);
       const mails = [...two, entry({ id: 'c', backend: 'mail', accountId: 'mail-zzz999' })];
-      expect(accountChoices(mails, new Set(['mail'])).join(',')).toBe('mail-def456,mail-zzz999');
+      const groups = accountChoices(mails, new Set(['mail']));
+      expect(groups.length).toBe(1);
+      expect(groups[0].backend).toBe('mail');
+      expect(groups[0].accounts.join(',')).toBe('mail-def456,mail-zzz999');
+    });
+
+    it('offers no account chips for three protocols with one account each', () => {
+      const three = [
+        entry({ id: 'a' }),
+        entry({ id: 'b', backend: 'mail', accountId: 'mail-def456' }),
+        entry({ id: 'c', backend: 'signal', accountId: 'signal-1' }),
+      ];
+      expect(accountChoices(three, new Set(['xmpp', 'mail', 'signal'])).length).toBe(0);
+    });
+
+    it('groups account chips under the protocol that has several', () => {
+      const list = [
+        entry({ id: 'a', backend: 'mail', accountId: 'mail-1' }),
+        entry({ id: 'b', backend: 'mail', accountId: 'mail-2' }),
+        entry({ id: 'c', backend: 'signal', accountId: 'signal-1' }),
+        entry({ id: 'd', backend: 'xmpp', accountId: 'xmpp-1' }),
+        entry({ id: 'e', backend: 'xmpp', accountId: 'xmpp-2' }),
+      ];
+      const groups = accountChoices(list, new Set(['mail', 'signal', 'xmpp']));
+      expect(groups.map((g) => g.backend).join(',')).toBe('mail,xmpp');
+      expect(accountChoices(list, new Set(['signal'])).length).toBe(0);
+    });
+
+    it('narrows an account choice only within its own protocol', () => {
+      const list = [
+        entry({ id: 'a', backend: 'mail', accountId: 'mail-1' }),
+        entry({ id: 'b', backend: 'mail', accountId: 'mail-2' }),
+        entry({ id: 'c', backend: 'signal', accountId: 'signal-1' }),
+      ];
+      const filter = {
+        ...NO_FILTER,
+        backends: new Set(['mail', 'signal']),
+        accounts: new Map([['mail', new Set(['mail-1'])]]),
+      };
+      expect(list.filter((e) => matches(e, filter)).map((e) => e.id).join(',')).toBe('a,c');
+    });
+
+    it('ignores account choices of a protocol that is not chosen', () => {
+      const list = [
+        entry({ id: 'a', backend: 'mail', accountId: 'mail-1' }),
+        entry({ id: 'b', backend: 'mail', accountId: 'mail-2' }),
+        entry({ id: 'c', backend: 'signal', accountId: 'signal-1' }),
+      ];
+      const accounts = new Map([['mail', new Set(['mail-1'])]]);
+      const stale = { ...NO_FILTER, backends: new Set(['signal']), accounts };
+      expect(list.filter((e) => matches(e, stale)).map((e) => e.id).join(',')).toBe('c');
+      const chosen = new Set(['signal']);
+      dropDeselectedAccounts(accounts, chosen);
+      expect(accounts.size).toBe(0);
+      const kept = new Map([['mail', new Set(['mail-1'])], ['signal', new Set(['signal-1'])]]);
+      dropDeselectedAccounts(kept, new Set(['signal']));
+      expect([...kept.keys()].join(',')).toBe('signal');
     });
 
     it('names protocols and falls back for an unknown backend', () => {
