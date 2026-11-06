@@ -111,11 +111,16 @@ export const FadeBin = GObject.registerClass(
       const clear = new Gdk.RGBA({ red: 0, green: 0, blue: 0, alpha: 0 });
       const fadeFrom = Math.max(0, (height - FADE_HEIGHT) / height);
       snapshot.push_mask(Gsk.MaskMode.ALPHA);
-      snapshot.append_linear_gradient(bounds, new Graphene.Point().init(0, 0), new Graphene.Point().init(0, height), [
-        new Gsk.ColorStop({ offset: 0, color: opaque }),
-        new Gsk.ColorStop({ offset: fadeFrom, color: opaque }),
-        new Gsk.ColorStop({ offset: 1, color: clear }),
-      ]);
+      snapshot.append_linear_gradient(
+        bounds,
+        new Graphene.Point().init(0, 0),
+        new Graphene.Point().init(0, height),
+        [
+          new Gsk.ColorStop({ offset: 0, color: opaque }),
+          new Gsk.ColorStop({ offset: fadeFrom, color: opaque }),
+          new Gsk.ColorStop({ offset: 1, color: clear }),
+        ],
+      );
       snapshot.pop();
       this.snapshot_child(child, snapshot);
       snapshot.pop();

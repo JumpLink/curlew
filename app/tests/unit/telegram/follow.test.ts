@@ -32,7 +32,9 @@ async function until(done: () => boolean, ms = 3000): Promise<void> {
   while (!done() && Date.now() < end) await new Promise((r) => setTimeout(r, 10));
 }
 
-async function rig(body: (r: { dir: string; backend: TelegramBackend; clients: FakeClient[] }) => Promise<void>) {
+async function rig(
+  body: (r: { dir: string; backend: TelegramBackend; clients: FakeClient[] }) => Promise<void>,
+) {
   const dir = mkdtempSync(join(tmpdir(), 'curlew-telegram-follow-'));
   try {
     const context: BackendContext = {
@@ -42,7 +44,9 @@ async function rig(body: (r: { dir: string; backend: TelegramBackend; clients: F
     };
     const history = new Map([[ANNA.id, [tgMessage(ANNA, 1, ANNA, 'Hallo')]]]);
     const fake = fakeFactory({
-      dialogs: [{ peer: ANNA, lastMessage: history.get(ANNA.id)![0], lastReadIngoing: 0, lastReadOutgoing: 0 }],
+      dialogs: [
+        { peer: ANNA, lastMessage: history.get(ANNA.id)![0], lastReadIngoing: 0, lastReadOutgoing: 0 },
+      ],
       history,
     });
     const backend = new TelegramBackend(context, fake.create);
@@ -57,7 +61,10 @@ async function rig(body: (r: { dir: string; backend: TelegramBackend; clients: F
 /** mtcute's emitter, as far as `mtcuteLive` uses it. */
 function emitter<T>() {
   const listeners: Array<(value: T) => void> = [];
-  return { add: (l: (value: T) => void) => void listeners.push(l), emit: (v: T) => listeners.forEach((l) => l(v)) };
+  return {
+    add: (l: (value: T) => void) => void listeners.push(l),
+    emit: (v: T) => listeners.forEach((l) => l(v)),
+  };
 }
 
 export default async () => {
@@ -73,7 +80,10 @@ export default async () => {
       const onUpdate = emitter<unknown>();
       const onConnectionState = emitter<string>();
       const onError = emitter<unknown>();
-      const live = mtcuteLive({ onUpdate, onConnectionState, onError, startUpdatesLoop: async () => {} } as never, 20);
+      const live = mtcuteLive(
+        { onUpdate, onConnectionState, onError, startUpdatesLoop: async () => {} } as never,
+        20,
+      );
       let woke = 0;
       const ends: string[] = [];
       live.onArrival(() => woke++);
@@ -93,7 +103,12 @@ export default async () => {
     await it('closes as logged out when Telegram says the session is gone', () => {
       const onError = emitter<unknown>();
       const live = mtcuteLive(
-        { onUpdate: emitter(), onConnectionState: emitter(), onError, startUpdatesLoop: async () => {} } as never,
+        {
+          onUpdate: emitter(),
+          onConnectionState: emitter(),
+          onError,
+          startUpdatesLoop: async () => {},
+        } as never,
         20,
       );
       const ends: string[] = [];

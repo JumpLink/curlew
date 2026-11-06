@@ -13,6 +13,7 @@ export * from './classify.ts';
 export * from './threads.ts';
 export * from './mail-reply.ts';
 export * from './conversations.ts';
+export * from './conversation-totals.ts';
 export * from './secret-store.ts';
 export * from './chat-sync.ts';
 export * from './delivery-sync.ts';

@@ -132,6 +132,19 @@ sender carries the sender's name and a small initials avatar (not for own messag
 chats). A message with only attachments shows their kind and file name where the index has them
 (mail), else "Attachment".
 
+**Mail attachments** (mail only; chat backends keep the "Attachment" line). A picture of a known
+raster type up to 12 MB is shown in the bubble (`Gtk.Picture`, scaled down to 420 × 300, an
+`Adw.Spinner` while it loads); any other part, and a picture that fails to load, is a tile: a
+themed icon from the MIME type, name, size, and Open / Save as… (a video's primary button is
+Play). Parts stack vertically above the text; a message with no written text hides its body.
+Clicking a picture opens the **viewer**, an overlay over the split view (as in Fractal) with
+Back, Save, Copy and Fullscreen; Escape closes it, F11 toggles fullscreen, a video uses
+`Gtk.Video`'s own controls. No carousel, zoom or animation. The bytes are not in the index: a
+picture is fetched when it nears the screen, any other part on a click, through the same
+`mailSaveAttachment` as the CLI, into `$XDG_CACHE_HOME/curlew/previews` (`CURLEW_PREVIEWS_DIR`).
+That cache is message content, so the window empties it at start. Not built: SVG, audio in the
+viewer, thumbnails decoded off the main thread, screen-reader labels beyond the tooltips.
+
 **History is paged** (Fractal's rule). The pane opens on the newest 50 messages and scrolls to
 the end; when the scroll position comes within two viewports of the top (`value < page_size * 2`)
 it reads the next older 50, with an `Adw.Spinner` row on top meanwhile, until a page comes back
