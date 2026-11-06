@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from '@gjsify/unit';
 
-import { attachmentsDir, configPath, dataDir, homeSubdir, indexDbPath, xdgDataHome } from '@curlew/store';
+import { attachmentsDir, configPath, dataDir, homeSubdir, indexDbPath, previewsDir, xdgDataHome } from '@curlew/store';
 
 // Every function here takes its environment as a parameter, so the promise these tests check —
 // nothing is EVER written inside the repository — is checkable without touching the real one.
@@ -55,6 +55,17 @@ export default async () => {
       expect(indexDbPath({ CURLEW_DB_PATH: '/tmp/mine.sqlite' })).toBe('/tmp/mine.sqlite.db');
       expect(indexDbPath({ CURLEW_DB_PATH: '/tmp/mine' })).toBe('/tmp/mine.db');
       expect(indexDbPath({ CURLEW_DB_PATH: '/tmp/mine.db' })).toBe('/tmp/mine.db');
+    });
+  });
+
+  await describe('previewsDir', async () => {
+    await it('lives under the cache home, apart from the data', async () => {
+      expect(previewsDir({ XDG_CACHE_HOME: '/c' })).toBe('/c/curlew/previews');
+      expect(previewsDir({ XDG_CACHE_HOME: 'relative' }).endsWith('/.cache/curlew/previews')).toBe(true);
+    });
+
+    await it('is overridable', async () => {
+      expect(previewsDir({ CURLEW_PREVIEWS_DIR: '/p', XDG_CACHE_HOME: '/c' })).toBe('/p');
     });
   });
 

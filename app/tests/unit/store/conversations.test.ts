@@ -366,9 +366,9 @@ export default async () => {
         const ref = { accountId: 'fake', folder: 'INBOX', uid: 1 };
         const found = listConversations(db).flatMap((c) => getConversation(db, c.id)?.messages ?? []);
         const withFile = found.find((m) => m.hasAttachments);
-        expect(mailAttachments(db, withFile?.ref ?? ref).map((a) => [a.filename, a.mimeType])).toStrictEqual([
-          ['cat.jpg', 'image/jpeg'],
-          [null, 'application/pdf'],
+        expect(mailAttachments(db, withFile?.ref ?? ref).map((a) => [a.section, a.filename, a.mimeType, a.size])).toStrictEqual([
+          ['2', 'cat.jpg', 'image/jpeg', 10],
+          ['3', null, 'application/pdf', 20],
         ]);
         expect(mailAttachments(db, found.find((m) => !m.hasAttachments)?.ref ?? ref).length).toBe(0);
         expect(mailAttachments(db, { accountId: 'fake' }).length).toBe(0);
