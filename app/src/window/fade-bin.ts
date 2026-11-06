@@ -4,6 +4,7 @@
  * whole pane without cutting its text off abruptly.
  */
 
+import Adw from 'gi://Adw?version=1';
 import Gdk from 'gi://Gdk?version=4.0';
 import GLib from 'gi://GLib?version=2.0';
 import GObject from 'gi://GObject?version=2.0';
@@ -25,13 +26,17 @@ export const FadeBin = GObject.registerClass(
       expanded: GObject.ParamSpec.boolean('expanded', null, null, GObject.ParamFlags.READWRITE, false),
     },
   },
-  class FadeBin extends Gtk.Widget {
-    private content: Gtk.Widget | null = null;
+  // An Adw.Bin, not a bare Gtk.Widget, so the child is unparented by C code: a widget dropped
+  // with its row is disposed during garbage collection, where GJS refuses to run a JS
+  // vfunc_dispose, and the child would leak.
+  class FadeBin extends Adw.Bin {
     private isExpanded = false;
     private isCollapsed = false;
 
     constructor() {
       super({ overflow: Gtk.Overflow.HIDDEN });
+      // Adw.Bin's BinLayout would bypass the measure and allocate vfuncs below.
+      this.set_layout_manager(null);
     }
 
     get collapsed(): boolean {
@@ -49,12 +54,6 @@ export const FadeBin = GObject.registerClass(
       this.queue_resize();
     }
 
-    setChild(child: Gtk.Widget): void {
-      this.content?.unparent();
-      this.content = child;
-      child.set_parent(this);
-    }
-
     private clamps(natural: number): boolean {
       return !this.isExpanded && natural > COLLAPSE_ABOVE;
     }
@@ -63,11 +62,11 @@ export const FadeBin = GObject.registerClass(
     // width: a wrapping label then answers for its widest layout, fewer lines than it gets, and the
     // allocation cuts off its top and bottom.
     vfunc_get_request_mode(): Gtk.SizeRequestMode {
-      return this.content?.get_request_mode() ?? Gtk.SizeRequestMode.CONSTANT_SIZE;
+      return this.child?.get_request_mode() ?? Gtk.SizeRequestMode.CONSTANT_SIZE;
     }
 
     vfunc_measure(orientation: Gtk.Orientation, forSize: number): [number, number, number, number] {
-      const child = this.content;
+      const child = this.child;
       if (!child || !child.should_layout()) return [0, 0, -1, -1];
       // The clamped height is not the child's: asked for its width at 300 px, a wrapping label
       // answers with the width that fits ALL its text into 300 px and runs past the window.
@@ -80,7 +79,7 @@ export const FadeBin = GObject.registerClass(
     }
 
     vfunc_size_allocate(width: number, height: number, baseline: number): void {
-      const child = this.content;
+      const child = this.child;
       if (!child || !child.should_layout()) return;
       const [, natural] = child.measure(Gtk.Orientation.VERTICAL, width);
       const collapsed = this.clamps(natural);
@@ -98,7 +97,7 @@ export const FadeBin = GObject.registerClass(
     }
 
     vfunc_snapshot(snapshot: Gtk.Snapshot): void {
-      const child = this.content;
+      const child = this.child;
       if (!child) return;
       if (!this.isCollapsed) {
         this.snapshot_child(child, snapshot);
@@ -125,12 +124,6 @@ export const FadeBin = GObject.registerClass(
       this.snapshot_child(child, snapshot);
       snapshot.pop();
     }
-
-    vfunc_dispose(): void {
-      this.content?.unparent();
-      this.content = null;
-      super.vfunc_dispose();
-    }
   },
 );
 export type FadeBin = InstanceType<typeof FadeBin>;
@@ -142,7 +135,7 @@ export type FadeBin = InstanceType<typeof FadeBin>;
  */
 export function fadedOverlay(child: Gtk.Widget, forced: boolean, onExpand: () => void): Gtk.Overlay {
   const bin = new FadeBin();
-  bin.setChild(child);
+  bin.child = child;
   const more = new Gtk.Button({
     label: _('Show more'),
     halign: Gtk.Align.CENTER,
