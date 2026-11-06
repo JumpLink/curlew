@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-06 13:02+0100\n"
+"POT-Creation-Date: 2026-11-06 13:38+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1625,12 +1625,12 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:62
-#: app/src/window/window.ts:43 app/src/window/window.ts:58
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:66
+#: app/src/window/window.ts:46 app/src/window/window.ts:61
 msgid "Curlew"
 msgstr "Curlew"
 
-#: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:72
+#: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:75
 msgid "Agent access"
 msgstr "Agentenzugriff"
 
@@ -1770,6 +1770,29 @@ msgstr "Noch keine Regeln"
 msgid "Add rule"
 msgstr "Regel hinzufügen"
 
+#: app/src/window/attachment-view.ts:70
+msgid "Play"
+msgstr "Abspielen"
+
+#: app/src/window/attachment-view.ts:70
+msgid "Open"
+msgstr "Öffnen"
+
+#: app/src/window/attachment-view.ts:73 app/src/window/media-viewer.ts:38
+msgid "Save as…"
+msgstr "Speichern unter…"
+
+#: app/src/window/attachment-view.ts:87
+msgid "Could not fetch the attachment: {error}"
+msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
+
+#: app/src/window/attachment-view.ts:152
+#: app/src/window/conversation-model.ts:178
+msgid "and {n} more attachment"
+msgid_plural "and {n} more attachments"
+msgstr[0] "und {n} weiterer Anhang"
+msgstr[1] "und {n} weitere Anhänge"
+
 #: app/src/window/conversation-list-model.ts:62
 msgid "Mail"
 msgstr "E-Mail"
@@ -1879,68 +1902,90 @@ msgstr "Unterhaltungen"
 msgid "Unknown sender"
 msgstr "Unbekannter Absender"
 
-#: app/src/window/conversation-model.ts:159
+#: app/src/window/conversation-model.ts:162
 msgid "Image"
 msgstr "Bild"
 
-#: app/src/window/conversation-model.ts:161
+#: app/src/window/conversation-model.ts:164
 msgid "Video"
 msgstr "Video"
 
-#: app/src/window/conversation-model.ts:163
+#: app/src/window/conversation-model.ts:166
 msgid "Audio"
 msgstr "Audio"
 
-#: app/src/window/conversation-model.ts:165
+#: app/src/window/conversation-model.ts:168
 msgid "File"
 msgstr "Datei"
 
-#: app/src/window/conversation-model.ts:166
-#: app/src/window/conversation-model.ts:172
+#: app/src/window/conversation-model.ts:169
+#: app/src/window/conversation-model.ts:175
 msgid "Attachment"
 msgstr "Anhang"
 
-#: app/src/window/conversation-model.ts:167
+#: app/src/window/conversation-model.ts:170
 msgid "{kind}: {name}"
 msgstr "{kind}: {name}"
 
-#: app/src/window/conversation-model.ts:175
-msgid "and {n} more attachment"
-msgid_plural "and {n} more attachments"
-msgstr[0] "und {n} weiterer Anhang"
-msgstr[1] "und {n} weitere Anhänge"
-
-#: app/src/window/conversation-view.ts:71
+#: app/src/window/conversation-view.ts:75
 msgid "Write a message"
 msgstr "Nachricht schreiben"
 
-#: app/src/window/conversation-view.ts:72
+#: app/src/window/conversation-view.ts:76
 msgid "Send message"
 msgstr "Nachricht senden"
 
-#: app/src/window/conversation-view.ts:89
+#: app/src/window/conversation-view.ts:93
 msgid "Conversation"
 msgstr "Unterhaltung"
 
-#: app/src/window/conversation-view.ts:163
+#: app/src/window/conversation-view.ts:209
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:177
+#: app/src/window/conversation-view.ts:230
 msgid "Contains attachments"
 msgstr "Enthält Anhänge"
 
-#: app/src/window/conversation-view.ts:280
+#: app/src/window/conversation-view.ts:333
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:351
+#: app/src/window/conversation-view.ts:412
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
 #: app/src/window/fade-bin.ts:142
 msgid "Show more"
 msgstr "Mehr anzeigen"
+
+#: app/src/window/media-viewer.ts:35
+msgid "Back"
+msgstr "Zurück"
+
+#: app/src/window/media-viewer.ts:36 app/src/window/media-viewer.ts:176
+msgid "Fullscreen"
+msgstr "Vollbild"
+
+#: app/src/window/media-viewer.ts:37
+msgid "Copy image"
+msgstr "Bild kopieren"
+
+#: app/src/window/media-viewer.ts:59
+msgid "Could not load the attachment"
+msgstr "Der Anhang konnte nicht geladen werden"
+
+#: app/src/window/media-viewer.ts:104
+msgid "Could not save the attachment: {error}"
+msgstr "Der Anhang konnte nicht gespeichert werden: {error}"
+
+#: app/src/window/media-viewer.ts:115
+msgid "Image copied"
+msgstr "Bild kopiert"
+
+#: app/src/window/media-viewer.ts:176
+msgid "Leave fullscreen"
+msgstr "Vollbild beenden"
 
 #: app/src/window/preferences-dialog.ts:14
 msgid "Show all emails"
@@ -1953,27 +1998,27 @@ msgstr ""
 "Gewöhnliche E-Mail-Verläufe neben Unterhaltungen aus einem Chat-Messenger "
 "anzeigen"
 
-#: app/src/window/preferences-dialog.ts:26 app/src/window/window.ts:71
+#: app/src/window/preferences-dialog.ts:26 app/src/window/window.ts:74
 msgid "Preferences"
 msgstr "Einstellungen"
 
-#: app/src/window/window.ts:37
+#: app/src/window/window.ts:40
 msgid "Select a conversation"
 msgstr "Unterhaltung auswählen"
 
-#: app/src/window/window.ts:38
+#: app/src/window/window.ts:41
 msgid "Pick a conversation from the list."
 msgstr "Wähle eine Unterhaltung aus der Liste."
 
-#: app/src/window/window.ts:74
+#: app/src/window/window.ts:77
 msgid "About Curlew"
 msgstr "Über Curlew"
 
-#: app/src/window/window.ts:75
+#: app/src/window/window.ts:78
 msgid "Quit"
 msgstr "Beenden"
 
-#: app/src/window/window.ts:82
+#: app/src/window/window.ts:92
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 

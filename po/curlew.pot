@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-06 13:02+0100\n"
+"POT-Creation-Date: 2026-11-06 13:38+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1387,12 +1387,12 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr ""
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:62
-#: app/src/window/window.ts:43 app/src/window/window.ts:58
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:66
+#: app/src/window/window.ts:46 app/src/window/window.ts:61
 msgid "Curlew"
 msgstr ""
 
-#: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:72
+#: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:75
 msgid "Agent access"
 msgstr ""
 
@@ -1522,6 +1522,29 @@ msgstr ""
 msgid "Add rule"
 msgstr ""
 
+#: app/src/window/attachment-view.ts:70
+msgid "Play"
+msgstr ""
+
+#: app/src/window/attachment-view.ts:70
+msgid "Open"
+msgstr ""
+
+#: app/src/window/attachment-view.ts:73 app/src/window/media-viewer.ts:38
+msgid "Save as…"
+msgstr ""
+
+#: app/src/window/attachment-view.ts:87
+msgid "Could not fetch the attachment: {error}"
+msgstr ""
+
+#: app/src/window/attachment-view.ts:152
+#: app/src/window/conversation-model.ts:178
+msgid "and {n} more attachment"
+msgid_plural "and {n} more attachments"
+msgstr[0] ""
+msgstr[1] ""
+
 #: app/src/window/conversation-list-model.ts:62
 msgid "Mail"
 msgstr ""
@@ -1629,67 +1652,89 @@ msgstr ""
 msgid "Unknown sender"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:159
+#: app/src/window/conversation-model.ts:162
 msgid "Image"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:161
+#: app/src/window/conversation-model.ts:164
 msgid "Video"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:163
+#: app/src/window/conversation-model.ts:166
 msgid "Audio"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:165
+#: app/src/window/conversation-model.ts:168
 msgid "File"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:166
-#: app/src/window/conversation-model.ts:172
+#: app/src/window/conversation-model.ts:169
+#: app/src/window/conversation-model.ts:175
 msgid "Attachment"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:167
+#: app/src/window/conversation-model.ts:170
 msgid "{kind}: {name}"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:175
-msgid "and {n} more attachment"
-msgid_plural "and {n} more attachments"
-msgstr[0] ""
-msgstr[1] ""
-
-#: app/src/window/conversation-view.ts:71
+#: app/src/window/conversation-view.ts:75
 msgid "Write a message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:72
+#: app/src/window/conversation-view.ts:76
 msgid "Send message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:89
+#: app/src/window/conversation-view.ts:93
 msgid "Conversation"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:163
+#: app/src/window/conversation-view.ts:209
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:177
+#: app/src/window/conversation-view.ts:230
 msgid "Contains attachments"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:280
+#: app/src/window/conversation-view.ts:333
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:351
+#: app/src/window/conversation-view.ts:412
 msgid "Message not sent: {error}"
 msgstr ""
 
 #: app/src/window/fade-bin.ts:142
 msgid "Show more"
+msgstr ""
+
+#: app/src/window/media-viewer.ts:35
+msgid "Back"
+msgstr ""
+
+#: app/src/window/media-viewer.ts:36 app/src/window/media-viewer.ts:176
+msgid "Fullscreen"
+msgstr ""
+
+#: app/src/window/media-viewer.ts:37
+msgid "Copy image"
+msgstr ""
+
+#: app/src/window/media-viewer.ts:59
+msgid "Could not load the attachment"
+msgstr ""
+
+#: app/src/window/media-viewer.ts:104
+msgid "Could not save the attachment: {error}"
+msgstr ""
+
+#: app/src/window/media-viewer.ts:115
+msgid "Image copied"
+msgstr ""
+
+#: app/src/window/media-viewer.ts:176
+msgid "Leave fullscreen"
 msgstr ""
 
 #: app/src/window/preferences-dialog.ts:14
@@ -1701,27 +1746,27 @@ msgid ""
 "Show ordinary email threads beside conversations started by a chat messenger"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:26 app/src/window/window.ts:71
+#: app/src/window/preferences-dialog.ts:26 app/src/window/window.ts:74
 msgid "Preferences"
 msgstr ""
 
-#: app/src/window/window.ts:37
+#: app/src/window/window.ts:40
 msgid "Select a conversation"
 msgstr ""
 
-#: app/src/window/window.ts:38
+#: app/src/window/window.ts:41
 msgid "Pick a conversation from the list."
 msgstr ""
 
-#: app/src/window/window.ts:74
+#: app/src/window/window.ts:77
 msgid "About Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:75
+#: app/src/window/window.ts:78
 msgid "Quit"
 msgstr ""
 
-#: app/src/window/window.ts:82
+#: app/src/window/window.ts:92
 msgid "This conversation has no recipient address."
 msgstr ""
 
