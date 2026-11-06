@@ -153,6 +153,32 @@ export function setFolderCursor(
 }
 
 /**
+ * Record how far a folder pass got, mid-pass. Only the resume point moves: `uid_next` is cleared
+ * so the next run can never take the folder for "unchanged" before it has caught up, and
+ * `message_count` and `last_sync_at` stay as the last COMPLETE pass left them, so the expunge
+ * detection and the full-scan schedule keep judging the last finished pass.
+ */
+export function setFolderProgress(
+  db: IndexDatabase,
+  accountId: string,
+  path: string,
+  uidValidity: number | null,
+  lastUid: number,
+): void {
+  db.prepare(
+    `UPDATE folders SET uid_validity = ?, uid_next = NULL, last_uid = ? WHERE account_id = ? AND path = ?`,
+  ).run(uidValidity, lastUid, accountId, path);
+}
+
+/** The highest UID the index holds for a folder, 0 when it holds none. */
+export function maxIndexedUid(db: IndexDatabase, accountId: string, path: string): number {
+  const row = db
+    .prepare('SELECT MAX(uid) AS u FROM messages WHERE account_id = ? AND folder_path = ?')
+    .get(accountId, path) as { u: number | null } | undefined;
+  return Number(row?.u ?? 0);
+}
+
+/**
  * Drop every message of a folder — used when UIDVALIDITY changes, which means every UID the
  * index holds now refers to a different message, or to none.
  */
