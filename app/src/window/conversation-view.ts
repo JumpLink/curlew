@@ -110,7 +110,8 @@ export function createConversationView(
   const loadPass = () => {
     passScheduled = false;
     let started = 0;
-    for (let i = 0; i < waiting.length && started < STARTS_PER_PASS;) {
+    let i = 0;
+    while (i < waiting.length && started < STARTS_PER_PASS) {
       const item = waiting[i]!;
       if (!nearScreen(item.widget)) {
         i++;
