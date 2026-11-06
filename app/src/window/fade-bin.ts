@@ -34,7 +34,8 @@ export const FadeBin = GObject.registerClass(
     private isCollapsed = false;
 
     constructor() {
-      super({ overflow: Gtk.Overflow.HIDDEN });
+      // START, not FILL: measured at its natural width below, it must also be laid out at it.
+      super({ overflow: Gtk.Overflow.HIDDEN, halign: Gtk.Align.START });
       // Adw.Bin's BinLayout would bypass the measure and allocate vfuncs below.
       this.set_layout_manager(null);
     }
@@ -70,7 +71,14 @@ export const FadeBin = GObject.registerClass(
       if (!child || !child.should_layout()) return [0, 0, -1, -1];
       // The clamped height is not the child's: asked for its width at 300 px, a wrapping label
       // answers with the width that fits ALL its text into 300 px and runs past the window.
-      const childForSize = orientation === Gtk.Orientation.HORIZONTAL ? -1 : forSize;
+      // Nor wider than its natural width: a list measures a row's height at the full list width,
+      // where a wrapping label needs fewer lines than at the width it is laid out at, and an
+      // expanded bubble ran past its card.
+      let childForSize = -1;
+      if (orientation === Gtk.Orientation.VERTICAL) {
+        const [, naturalWidth] = child.measure(Gtk.Orientation.HORIZONTAL, -1);
+        childForSize = forSize < 0 ? naturalWidth : Math.min(forSize, naturalWidth);
+      }
       const [min, natural, minBaseline, naturalBaseline] = child.measure(orientation, childForSize);
       if (orientation === Gtk.Orientation.VERTICAL && this.clamps(natural)) {
         return [COLLAPSED_HEIGHT, COLLAPSED_HEIGHT, -1, -1];
