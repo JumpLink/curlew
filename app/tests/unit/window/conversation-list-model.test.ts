@@ -257,6 +257,35 @@ export default async () => {
       expect([...kept.keys()].join(',')).toBe('signal');
     });
 
+    it('titles and addresses the chat with oneself on every backend that can tell', () => {
+      const person = (kind: 'jid' | 'matrix' | 'telegram' | 'signal', value: string) =>
+        ({ id: `p-${value}`, displayName: null, addresses: [{ kind, value }] }) as unknown as Conversation['participants'][number];
+      const signal = conversation({ id: 's', backend: 'signal', accountId: 'signal-0a1b2c' });
+      expect(toEntry(signal).title).toBe('Note to self');
+      expect(toEntry(signal).target).toBe('0a1b2c');
+      const other = conversation({ id: 's2', backend: 'signal', accountId: 'signal-0a1b2c', participants: [person('signal', 'ffee')] });
+      expect(toEntry(other).title).toBe('ffee');
+      const group = conversation({ id: 's3', backend: 'signal', accountId: 'signal-0a1b2c', kind: 'group' });
+      expect(toEntry(group).target).toBe(null);
+
+      const tg = conversation({ id: 't', backend: 'telegram', accountId: 'telegram-4711', participants: [person('telegram', '4711')] });
+      expect(toEntry(tg).title).toBe('Note to self');
+      expect(toEntry(tg).target).toBe('4711');
+      const tgOther = conversation({ id: 't2', backend: 'telegram', accountId: 'telegram-4711', participants: [person('telegram', '99')] });
+      expect(toEntry(tgOther).title).toBe('99');
+
+      const xmpp = conversation({ id: 'x', accountId: 'xmpp-abc123', participants: [person('jid', 'Me@Example.org')] });
+      expect(toEntry(xmpp, 'me@example.org').title).toBe('Note to self');
+      expect(toEntry(xmpp, 'me@example.org').target).toBe('me@example.org');
+      expect(toEntry(xmpp).title).toBe('Me@Example.org');
+      expect(toEntry(xmpp, 'you@example.org').title).toBe('Me@Example.org');
+      const mx = conversation({ id: 'm', backend: 'matrix', accountId: 'matrix-1', participants: [person('matrix', '@me:example.org')] });
+      expect(toEntry(mx, '@me:example.org').title).toBe('Note to self');
+      // A WhatsApp or mail chat cannot be told from the index, so it stays an ordinary one.
+      const wa = conversation({ id: 'w', backend: 'whatsapp', accountId: 'whatsapp-1' });
+      expect(toEntry(wa, 'Me').title).toBe('Unnamed conversation');
+    });
+
     it('names protocols and falls back for an unknown backend', () => {
       expect(protocolLabel('mail')).toBe('Mail');
       expect(protocolLabel('future')).toBe('future');

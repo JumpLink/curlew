@@ -89,8 +89,47 @@ export function shortTime(iso: string | null, now: Date = new Date()): string {
   return day(at) === day(yesterday) ? _('Yesterday') : day(at);
 }
 
+/**
+ * The account's own address when this conversation is the one the person writes to themselves
+ * ("Note to self"), else null. Positive knowledge only, from what the index stores: a backend that
+ * cannot tell from it answers null and the chat stays an ordinary one.
+ *
+ * - Signal: the chat with the account's own ACI is a direct chat with nobody else in it, and the
+ *   ACI is the account id's suffix.
+ * - XMPP, Matrix: the only participant carries the account's own JID / user id (`identity`).
+ * - Telegram: Saved Messages is the chat with the own user id, which is the account id's suffix.
+ * - WhatsApp: the account id is a registration id and the identity a display name, so the own JID
+ *   is not in the index; not recognised.
+ */
+export function selfAddressOf(conversation: Conversation, identity?: string): string | null {
+  if (conversation.kind !== 'direct') return null;
+  const { backend, accountId, participants } = conversation;
+  const values = (kind: AddressKind): string[] =>
+    participants.flatMap((p) => p.addresses.filter((a) => a.kind === kind).map((a) => a.value));
+  switch (backend) {
+    case 'signal': {
+      const aci = /^signal-(.+)$/.exec(accountId)?.[1];
+      return aci !== undefined && participants.length === 0 ? aci : null;
+    }
+    case 'telegram': {
+      const id = /^telegram-(\d+)$/.exec(accountId)?.[1];
+      return id !== undefined && participants.length === 1 && values('telegram').includes(id) ? id : null;
+    }
+    case 'xmpp':
+    case 'matrix': {
+      const own = identity?.trim().toLowerCase();
+      if (!own || participants.length !== 1) return null;
+      const kind = backend === 'xmpp' ? 'jid' : 'matrix';
+      return values(kind).some((v) => v.trim().toLowerCase() === own) ? identity!.trim() : null;
+    }
+    default:
+      return null;
+  }
+}
+
 /** The title a row shows: the stored one, else the people in it, else the first address. */
-export function entryTitle(conversation: Conversation): string {
+export function entryTitle(conversation: Conversation, identity?: string): string {
+  if (selfAddressOf(conversation, identity) !== null) return _('Note to self');
   const names = conversation.participants
     .map((p) => p.displayName?.trim() || p.addresses[0]?.value || '')
     .filter((name) => name !== '');
@@ -119,17 +158,18 @@ function targetOf(conversation: Conversation): string | null {
   return conversation.participants[0].addresses.find((address) => address.kind === kind)?.value ?? null;
 }
 
-export function toEntry(conversation: Conversation): ListEntry {
+/** `identities`: account id → the address the account is known by, as the index stores it. */
+export function toEntry(conversation: Conversation, identity?: string): ListEntry {
   return {
     id: conversation.id,
     conversationIds: [conversation.id],
-    title: entryTitle(conversation),
+    title: entryTitle(conversation, identity),
     backend: conversation.backend,
     accountId: conversation.accountId,
     kind: conversation.kind,
     unread: Math.max(0, conversation.unreadCount),
     lastMessageAt: conversation.lastMessageAt,
-    target: targetOf(conversation),
+    target: selfAddressOf(conversation, identity) ?? targetOf(conversation),
     emailChat: conversation.emailChat,
   };
 }
@@ -138,12 +178,16 @@ export function toEntry(conversation: Conversation): ListEntry {
  * Direct mail threads with the same person become ONE presentation conversation. Canonical threads
  * stay untouched: their ids travel with the row, and replies still use RFC 5322 references.
  */
-export function toEntries(conversations: Conversation[], showAllEmails = true): ListEntry[] {
+export function toEntries(
+  conversations: Conversation[],
+  showAllEmails = true,
+  identities: ReadonlyMap<string, string> = new Map(),
+): ListEntry[] {
   const entries: ListEntry[] = [];
   const mailContacts = new Map<string, ListEntry>();
   for (const conversation of conversations) {
     if (conversation.backend === 'mail' && !showAllEmails && !conversation.emailChat) continue;
-    const entry = toEntry(conversation);
+    const entry = toEntry(conversation, identities.get(conversation.accountId));
     const participant = conversation.participants.length === 1 ? conversation.participants[0] : null;
     if (conversation.backend !== 'mail' || conversation.kind !== 'direct' || !participant || !entry.target) {
       entries.push(entry);

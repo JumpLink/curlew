@@ -4,7 +4,7 @@
  * window then shows its empty state instead of an error about a file the person never made.
  */
 
-import { configPath, indexDbPath, listConversations, openIndexDb } from '@curlew/store';
+import { configPath, type IndexDatabase, indexDbPath, listConversations, openIndexDb } from '@curlew/store';
 import { existsSync } from 'node:fs';
 
 import { loadConfig } from '../core/config.ts';
@@ -12,13 +12,26 @@ import { type ListEntry, toEntries } from './conversation-list-model.ts';
 
 const LIST_LIMIT = 500;
 
+/** Account id → the address the account is known by, for recognising the chat with oneself. */
+function accountIdentities(db: IndexDatabase): Map<string, string> {
+  const rows = db.prepare('SELECT id, identity FROM accounts').all() as Array<{
+    id: string;
+    identity: string | null;
+  }>;
+  return new Map(rows.filter((r) => r.identity?.trim()).map((r) => [r.id, r.identity!.trim()]));
+}
+
 export function loadConversationEntries(dbPath = indexDbPath(), cfgPath = configPath()): ListEntry[] {
   if (!existsSync(dbPath)) return [];
   try {
     const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
     try {
       const { senders, ui } = loadConfig(cfgPath);
-      return toEntries(listConversations(db, { limit: LIST_LIMIT, overrides: senders }), ui.showAllEmails);
+      return toEntries(
+        listConversations(db, { limit: LIST_LIMIT, overrides: senders }),
+        ui.showAllEmails,
+        accountIdentities(db),
+      );
     } finally {
       db.close();
     }
