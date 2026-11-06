@@ -21,7 +21,7 @@
 
 import { type IndexDatabase, withTransaction } from './db.ts';
 
-export const SCHEMA_VERSION = 10;
+export const SCHEMA_VERSION = 11;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -306,6 +306,15 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
        backend TEXT,
        account_id TEXT,
        conversation_id TEXT)`,
+  ],
+  // v11: Delta Chat's open `Chat-Version: 1.0` marker. A thread counts as an email chat when any
+  // message carries it, so an unmarked reply from an ordinary MUA stays in that conversation.
+  // Older mail rows need one re-fetch to learn the marker; delivery-only chat rows are untouched.
+  11: [
+    { table: 'messages', column: 'email_chat', type: 'INTEGER NOT NULL DEFAULT 0' },
+    { table: 'conversations', column: 'email_chat', type: 'INTEGER NOT NULL DEFAULT 0' },
+    { table: 'conversation_messages', column: 'email_chat', type: 'INTEGER NOT NULL DEFAULT 0' },
+    'UPDATE folders SET last_uid = 0, uid_next = NULL, message_count = NULL',
   ],
 };
 

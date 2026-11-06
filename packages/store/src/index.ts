@@ -11,6 +11,7 @@ export * from './index-store.ts';
 export * from './sync.ts';
 export * from './classify.ts';
 export * from './threads.ts';
+export * from './mail-reply.ts';
 export * from './conversations.ts';
 export * from './secret-store.ts';
 export * from './chat-sync.ts';
