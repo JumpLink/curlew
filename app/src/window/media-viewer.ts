@@ -165,7 +165,7 @@ export function createMediaViewer(
       toolbar.grab_focus();
       void fetchAttachment(source)
         .then(async (path) => {
-          if (mine !== run || !current) return;
+          if (mine !== run || !current || toolbar.get_root() === null) return;
           current.path = path;
           save.set_sensitive(true);
           if (kind === 'video') {
@@ -175,8 +175,9 @@ export function createMediaViewer(
             stack.set_visible_child_name('video');
           } else {
             const texture = await loadTexture(path);
-            // `close()` or another `open()` may have run while the decoder worked.
-            if (mine !== run || !current) return;
+            // `close()`, another `open()` or the window's end may have happened while the
+            // decoder worked.
+            if (mine !== run || !current || toolbar.get_root() === null) return;
             current.texture = texture;
             picture.set_paintable(texture);
             copy.set_sensitive(true);
@@ -184,7 +185,7 @@ export function createMediaViewer(
           }
         })
         .catch((err: unknown) => {
-          if (mine !== run) return;
+          if (mine !== run || toolbar.get_root() === null) return;
           failed.set_description(failureText(err));
           stack.set_visible_child_name('error');
         });

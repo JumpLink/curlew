@@ -105,7 +105,11 @@ function tile(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Widge
       .catch((err: unknown) =>
         handlers.toast(fmt(_('Could not fetch the attachment: {error}'), { error: failureText(err) })),
       )
-      .finally(() => button.set_sensitive(true));
+      // The window may have been closed while the part was fetched; a button that is gone from
+      // the tree has no state left to restore.
+      .finally(() => {
+        if (button.get_root() !== null) button.set_sensitive(true);
+      });
   };
   open.connect('clicked', () => {
     if (action === 'view') handlers.view(source, kind);
@@ -159,6 +163,8 @@ function picture(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Wi
         }),
       )
       .then((texture) => {
+        // The bubble left the window while the picture decoded; there is nothing to paint into.
+        if (frame.get_root() === null) return;
         const size = boundedSize({
           width: texture.get_width() / scale,
           height: texture.get_height() / scale,
@@ -167,7 +173,10 @@ function picture(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Wi
         image.set_size_request(size.width, size.height);
         spinner.set_visible(false);
       })
-      .catch(() => fail());
+      .catch(() => {
+        if (frame.get_root() === null) return;
+        fail();
+      });
   });
   return slot;
 }
