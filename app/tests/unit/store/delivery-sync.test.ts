@@ -15,9 +15,11 @@ import {
   deliveredMessageId,
   getConversation,
   listConversations,
+  migrate,
   rebuildConversations,
   receiveDeliveries,
   recordSentChatMessage,
+  SCHEMA_VERSION,
 } from '@curlew/store';
 import { freshDb } from './fixtures.ts';
 
@@ -571,6 +573,202 @@ export default async () => {
         // The bound itself: the echo lookup names the batch's ids, so there is no `local:%` scan.
         expect(sql.some((text) => text.includes('remote_id LIKE'))).toBe(false);
         expect(sql.some((text) => text.includes('remote_id IN'))).toBe(true);
+      } finally {
+        db.close();
+      }
+    });
+  });
+
+  // The other order, and the one a running daemon produces every time: the send is routed
+  // through the daemon, whose own socket receives the message back and writes the delivered row
+  // before the caller gets to `recordDelivered`. An echo written then has no adopter left — the
+  // delivered copy arrives exactly once — so it stayed in the chat as a second bubble forever.
+  await describe('a send recorded after its delivered copy', async () => {
+    const ACCOUNT_RECORD = { id: ACCOUNT, identity: 'Me', provider: 'Fake' };
+    const ECHO_TEXT = 'Bis gleich';
+
+    async function sendAfterDelivery(deliveredText: string | null, echoText = ECHO_TEXT) {
+      const db = freshDb();
+      const delivered = await receiveDeliveries(
+        db,
+        fakeBackend([[incoming('d-anna', msg('anna/9', 9, deliveredText, { fromSelf: true, sender: null }))]]),
+      );
+      expect(delivered.accounts[0].error).toBe(null);
+      const recorded = recordSentChatMessage(db, {
+        backend: BACKEND,
+        account: ACCOUNT_RECORD,
+        chatRemoteId: 'd-anna',
+        clientId: 'anna/9',
+        text: echoText,
+        sentAt: '2026-01-01T12:00:09.000Z',
+      });
+      return { db, recorded };
+    }
+
+    const bodies = (db: ReturnType<typeof freshDb>) =>
+      (getConversation(db, conv('d-anna'), { includeBodies: true })?.messages ?? []).map(
+        (m) => `${m.ref.remoteId}=${String(m.bodyText)}`,
+      );
+
+    await it('writes no echo beside it and answers with the delivered row', async () => {
+      const { db, recorded } = await sendAfterDelivery(ECHO_TEXT);
+      try {
+        expect(bodies(db).join('|')).toBe(`anna/9=${ECHO_TEXT}`);
+        expect(recorded.conversationId).toBe(conv('d-anna'));
+        expect(recorded.messageId).toBe(deliveredMessageId(BACKEND, ACCOUNT, 'd-anna', 'anna/9'));
+        const left = db
+          .prepare(`SELECT COUNT(*) AS n FROM conversation_messages WHERE remote_id LIKE 'local:%'`)
+          .get() as Record<string, unknown>;
+        expect(Number(left.n)).toBe(0);
+        // The chat counts the message once, as it would have before the send was recorded.
+        const row = db.prepare('SELECT message_count FROM conversations WHERE id = ?').get(conv('d-anna')) as
+          | Record<string, unknown>
+          | undefined;
+        expect(Number(row?.message_count)).toBe(1);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('gives the delivered copy the text it has none of', async () => {
+      const { db } = await sendAfterDelivery(null);
+      try {
+        expect(bodies(db).join('|')).toBe(`anna/9=${ECHO_TEXT}`);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it("leaves the delivered copy's own text alone", async () => {
+      const { db } = await sendAfterDelivery('wie das Netz es kennt');
+      try {
+        expect(bodies(db).join('|')).toBe('anna/9=wie das Netz es kennt');
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('still writes the echo while the network has not delivered it', async () => {
+      const db = freshDb();
+      try {
+        const recorded = recordSentChatMessage(db, {
+          backend: BACKEND,
+          account: ACCOUNT_RECORD,
+          chatRemoteId: 'd-anna',
+          clientId: 'anna/9',
+          text: ECHO_TEXT,
+          sentAt: '2026-01-01T12:00:09.000Z',
+        });
+        const row = db
+          .prepare('SELECT remote_id, body FROM conversation_messages WHERE id = ?')
+          .get(recorded.messageId) as Record<string, unknown>;
+        expect(String(row.remote_id)).toBe('local:anna/9');
+        expect(String(row.body)).toBe(ECHO_TEXT);
+      } finally {
+        db.close();
+      }
+    });
+  });
+
+  // What the bug above left in every index it ran against. The repair is a schema upgrade, so it
+  // runs once, on the next open, for an index nobody will ever think to look at.
+  await describe('the schema repair of orphaned echoes', async () => {
+    const CHAT = conv('d-anna');
+    const OTHER = conv('d-ben');
+    const ECHO_SURVIVES = 'der Text, den nur das Echo hat';
+
+    /** A v11 index holding one adoptable echo, one lonely one, and one twin in another chat. */
+    function v11WithEchoes() {
+      const db = freshDb();
+      const message = (id: string, conversationId: string, remoteId: string, body: string | null) =>
+        db
+          .prepare(
+            `INSERT INTO conversation_messages (id, conversation_id, backend, account_id, presentation,
+               from_self, seen, has_attachments, classification, classification_reason, remote_id, body, sent_at)
+             VALUES (?, ?, ?, ?, 'bubble', 1, 1, 0, 'conversational', 'known-contact', ?, ?, '2026-01-01T12:00:09.000Z')`,
+          )
+          .run(id, conversationId, BACKEND, ACCOUNT, remoteId, body);
+      const chat = (id: string, chatRemoteId: string) => {
+        db.prepare(
+          `INSERT INTO conversations (id, backend, account_id, kind, title, classification,
+             classification_reason, message_count)
+           VALUES (?, ?, ?, 'direct', ?, 'conversational', 'known-contact', 99)`,
+        ).run(id, BACKEND, ACCOUNT, chatRemoteId);
+        db.prepare(
+          `INSERT INTO chat_cursors (conversation_id, backend, account_id, chat_id, kind)
+           VALUES (?, ?, ?, ?, 'direct')`,
+        ).run(id, BACKEND, ACCOUNT, chatRemoteId);
+      };
+      chat(CHAT, 'd-anna');
+      chat(OTHER, 'd-ben');
+      message('m-delivered', CHAT, 'anna/9', null);
+      message('m-echo', CHAT, 'local:anna/9', ECHO_SURVIVES);
+      message('m-lonely', CHAT, 'local:anna/10', 'noch unterwegs');
+      message('m-elsewhere', CHAT, 'anna/11', 'in diesem Chat');
+      message('m-foreign-echo', OTHER, 'local:anna/11', 'im anderen Chat');
+      db.prepare(`UPDATE schema_meta SET value = '11' WHERE key = 'schema_version'`).run();
+      return db;
+    }
+
+    const remoteIds = (db: ReturnType<typeof freshDb>) =>
+      (
+        db.prepare('SELECT remote_id FROM conversation_messages ORDER BY remote_id').all() as Array<
+          Record<string, unknown>
+        >
+      )
+        .map((r) => String(r.remote_id))
+        .join('|');
+
+    await it('deletes an echo whose delivered twin is in the same chat, and keeps its text', async () => {
+      const db = v11WithEchoes();
+      try {
+        migrate(db);
+        const version = db.prepare(`SELECT value FROM schema_meta WHERE key = 'schema_version'`).get() as {
+          value: string;
+        };
+        expect(version.value).toBe(String(SCHEMA_VERSION));
+        expect(remoteIds(db)).toBe('anna/11|anna/9|local:anna/10|local:anna/11');
+        const delivered = db.prepare('SELECT body FROM conversation_messages WHERE id = ?').get('m-delivered') as
+          | Record<string, unknown>
+          | undefined;
+        expect(String(delivered?.body)).toBe(ECHO_SURVIVES);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('leaves a delivered copy that has a text of its own', async () => {
+      const db = v11WithEchoes();
+      try {
+        db.prepare('UPDATE conversation_messages SET body = ? WHERE id = ?').run('vom Netz', 'm-delivered');
+        migrate(db);
+        const delivered = db.prepare('SELECT body FROM conversation_messages WHERE id = ?').get('m-delivered') as
+          | Record<string, unknown>
+          | undefined;
+        expect(String(delivered?.body)).toBe('vom Netz');
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('recomputes the counts of the chats it changed and runs again unchanged', async () => {
+      const db = v11WithEchoes();
+      try {
+        migrate(db);
+        const counts = () =>
+          (db.prepare('SELECT id, message_count FROM conversations ORDER BY id').all() as Array<
+            Record<string, unknown>
+          >)
+            .map((r) => `${String(r.id) === CHAT ? 'anna' : 'ben'}=${Number(r.message_count)}`)
+            .sort()
+            .join('|');
+        expect(counts()).toBe('anna=3|ben=1');
+        // Idempotent: an index that was repaired once and somehow re-enters the upgrade (a v11
+        // binary wrote its own version back) must not lose a second row.
+        db.prepare(`UPDATE schema_meta SET value = '11' WHERE key = 'schema_version'`).run();
+        migrate(db);
+        expect(remoteIds(db)).toBe('anna/11|anna/9|local:anna/10|local:anna/11');
+        expect(counts()).toBe('anna=3|ben=1');
       } finally {
         db.close();
       }
