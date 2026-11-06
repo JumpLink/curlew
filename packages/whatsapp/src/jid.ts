@@ -59,6 +59,23 @@ export function isOwnJid(
   );
 }
 
+/**
+ * The account's own user JIDs from the linked device's credentials, as the index files a chat
+ * under them: bare (no device suffix), lowercase server, the phone-number JID and the LID, in that
+ * order, each only when it really is a user JID. Space-separated, the form `BackendAccount.address`
+ * carries; null when the credentials name neither (an unlinked device).
+ *
+ * A JID is an address, not a secret: it is what every chat with this account already contains.
+ * Only the two strings of `creds.me` are read — nothing else of the credentials leaves the file.
+ */
+export function ownAddressOf(me: { id?: string | null; lid?: string | null } | null | undefined): string | null {
+  const jids = [parseJid(me?.id), parseJid(me?.lid)]
+    .filter((jid): jid is Jid => isPnJid(jid) || isLidJid(jid))
+    .map(bareJid);
+  const unique = [...new Set(jids)];
+  return unique.length > 0 ? unique.join(' ') : null;
+}
+
 /** Stories: other people's status updates, not a chat. Never stored. */
 export const STATUS_BROADCAST = 'status@broadcast';
 

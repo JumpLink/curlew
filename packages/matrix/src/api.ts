@@ -37,6 +37,15 @@ export interface MxRoom {
   readonly direct: boolean;
   /** The other members worth naming: for a direct chat, the other person. */
   readonly members: ReadonlyArray<{ readonly userId: string; readonly displayName: string | null }>;
+  /**
+   * `join_rule: public`, or null when the room's join rules were not in the synced state — never
+   * a default: an unknown room is not reported as private.
+   */
+  readonly isPublic?: boolean | null;
+  /** `m.room.encryption` state present; null when the room's state was not synced at all. */
+  readonly encrypted?: boolean | null;
+  /** Joined members the server counted, the user included; null when it did not say. */
+  readonly memberCount?: number | null;
   /** `origin_server_ts` of the newest event the server reported, or null for an empty room. */
   readonly lastEventTs: number | null;
   /** How far the user has read, as a timestamp (null: unknown). */

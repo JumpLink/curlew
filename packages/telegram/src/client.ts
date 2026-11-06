@@ -9,15 +9,28 @@
 import { _, fmt } from '@curlew/protocol';
 import type { ITelegramStorageProvider, RpcCallMiddleware } from '@mtcute/core';
 import { MemoryStorage, networkMiddlewares, TelegramClient, WebPlatform } from '@mtcute/web';
-import type { LoginPrompts, TelegramApi, TelegramClientHandle, TgUser } from './api.ts';
+import type { LoginPrompts, TelegramApi, TelegramClientHandle, TelegramLive, TgUser } from './api.ts';
 import type { TelegramCredentials } from './credentials.ts';
 
 export interface ClientOptions {
   credentials: TelegramCredentials;
   storage: ITelegramStorageProvider;
+  /** Keep receiving updates (the daemon's follow). Off for sync, which only reads. */
+  live?: boolean;
 }
 
 export type ClientFactory = (options: ClientOptions) => TelegramClientHandle;
+
+/** How long the connection may stay offline before a follow gives up on it and reconnects. */
+export const OFFLINE_GRACE_MS = 60_000;
+
+const SESSION_GONE = /^(AUTH_KEY_UNREGISTERED|SESSION_REVOKED|SESSION_EXPIRED|USER_DEACTIVATED(_BAN)?)$/;
+
+/** Telegram's own name for an error that says the session is gone, read structurally. */
+export function sessionGone(err: unknown): string | null {
+  const text = typeof err === 'object' && err !== null ? (err as { text?: unknown }).text : undefined;
+  return typeof text === 'string' && SESSION_GONE.test(text) ? text : null;
+}
 
 /** mtcute's log levels: 0 off, 1 error, 2 warn, 3 info, 4 debug, 5 verbose. */
 const LOG_WARN = 2;
@@ -71,14 +84,60 @@ class CurlewPlatform extends WebPlatform {
   // worth watching — the connection's own errors are what tell curlew it is offline.
 }
 
-/** The one place mtcute's client is constructed. Updates are off: curlew syncs, it does not listen. */
-export const createMtcuteClient: ClientFactory = ({ credentials, storage }) => {
+/**
+ * What `live` wraps: mtcute's update stream as a wake-up. mtcute reconnects and fills update gaps
+ * itself, so a short offline spell needs nothing from curlew; one that outlasts `graceMs` is
+ * reported closed, and the follow loop reconnects with its own backoff.
+ */
+export function mtcuteLive(
+  client: Pick<TelegramClient, 'onUpdate' | 'onConnectionState' | 'onError' | 'startUpdatesLoop'>,
+  graceMs: number = OFFLINE_GRACE_MS,
+): TelegramLive {
+  const arrivals = new Set<() => void>();
+  const closers: Array<(end: { reason: string; loggedOut: boolean }) => void> = [];
+  let closed = false;
+  let offline: ReturnType<typeof setTimeout> | null = null;
+  const close = (end: { reason: string; loggedOut: boolean }): void => {
+    if (closed) return;
+    closed = true;
+    if (offline !== null) clearTimeout(offline);
+    for (const closer of closers) closer(end);
+  };
+  client.onUpdate.add(() => {
+    for (const listener of arrivals) listener();
+  });
+  client.onConnectionState.add((state) => {
+    if (state === 'offline') {
+      offline ??= setTimeout(() => close({ reason: 'offline', loggedOut: false }), graceMs);
+    } else if (offline !== null) {
+      clearTimeout(offline);
+      offline = null;
+    }
+  });
+  client.onError.add((err) => {
+    const gone = sessionGone(err);
+    if (gone !== null) close({ reason: gone, loggedOut: true });
+  });
+  return {
+    start: () => client.startUpdatesLoop(),
+    onArrival: (listener) => {
+      arrivals.add(listener);
+      return () => arrivals.delete(listener);
+    },
+    onClosed: (listener) => {
+      closers.push(listener);
+    },
+  };
+}
+
+/** The one place mtcute's client is constructed. Updates are off unless `live`: sync only reads. */
+export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }) => {
   const client = new TelegramClient({
     apiId: credentials.apiId,
     apiHash: credentials.apiHash,
     storage,
     platform: new CurlewPlatform(),
-    disableUpdates: true,
+    disableUpdates: live !== true,
     logLevel: LOG_WARN,
     network: { middlewares: telegramMiddlewares() },
   });
@@ -89,6 +148,7 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage }) => {
     getHistory: (chatId, params) => api.getHistory(chatId, params),
     getMessages: (chatId, messageIds) => api.getMessages(chatId, [...messageIds]),
     sendText: (chatId, text) => client.sendText(chatId, text),
+    ...(live === true ? { live: mtcuteLive(client) } : {}),
     destroy: () => client.destroy(),
     connect: () => client.connect(),
     login: async (prompts: LoginPrompts): Promise<TgUser> =>

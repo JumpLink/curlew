@@ -22,7 +22,7 @@
 import { type IndexDatabase, withTransaction } from './db.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 
-export const SCHEMA_VERSION = 12;
+export const SCHEMA_VERSION = 13;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -355,6 +355,17 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
          has_attachments = (SELECT COUNT(*) > 0 FROM conversation_messages m
                              WHERE m.conversation_id = conversations.id AND m.has_attachments = 1)
        WHERE id IN (SELECT conversation_id FROM chat_cursors)`,
+  ],
+  // v13: what a window needs to talk into a room and to recognise the chat with oneself, both
+  // learned at sync time so the window never opens a secret. `accounts.address` is the account's
+  // own address (never a key); the room columns are NULL until the network has said (a reader
+  // must not read NULL as "private" or "unencrypted"). Nothing to re-fetch: the next sync fills
+  // them, and an index that has not synced yet simply shows no hint.
+  13: [
+    { table: 'accounts', column: 'address', type: 'TEXT' },
+    { table: 'chat_cursors', column: 'room_public', type: 'INTEGER' },
+    { table: 'chat_cursors', column: 'room_encrypted', type: 'INTEGER' },
+    { table: 'chat_cursors', column: 'room_members', type: 'INTEGER' },
   ],
 };
 

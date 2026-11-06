@@ -6,6 +6,7 @@
 
 import Adw from 'gi://Adw?version=1';
 import Gio from 'gi://Gio?version=2.0';
+import Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 import type { ConversationMessage } from '@curlew/protocol';
 
@@ -16,7 +17,9 @@ import type { ListEntry } from './conversation-list-model.ts';
 import { createConversationList } from './conversation-list.ts';
 import { composeMailReply } from './conversation-model.ts';
 import { loadConversationMessages, loadMailReplyTarget, loadOlderMessages } from './conversation-store.ts';
+import { clearPreviews } from './attachment-store.ts';
 import { createConversationView } from './conversation-view.ts';
+import { createMediaViewer } from './media-viewer.ts';
 import { presentPreferences } from './preferences-dialog.ts';
 import { loadAgentAccess } from './agent-access-store.ts';
 import { sendMessage } from '../core/actions/send.ts';
@@ -75,40 +78,52 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   appSection.append(_('Quit'), 'app.quit');
   menu.append_section(null, appSection);
 
+  // Fetched attachments are message content; an earlier run's leftovers go before this one's.
+  if (!process.env.CURLEW_PREVIEWS_DIR && !process.env.POSTBOTE_PREVIEWS_DIR) clearPreviews();
+  const viewer = createMediaViewer(
+    (title) => toasts.add_toast(new Adw.Toast({ title, timeout: 4 })),
+    (shown) => split.set_sensitive(!shown),
+  );
+
   let currentEntry: ListEntry | null = null;
   let currentMessages: ConversationMessage[] = [];
-  const conversation = createConversationView(async (text) => {
-    const entry = currentEntry;
-    if (!entry?.target) throw new Error(_('This conversation has no recipient address.'));
-    const parent = currentMessages[currentMessages.length - 1] ?? null;
-    const mail = entry.backend === 'mail' ? composeMailReply(parent, loadMailReplyTarget(parent), text) : null;
-    const result = await sendMessage({
-      accountId: entry.accountId,
-      to: entry.target,
-      text,
-      frontend: 'window',
-      ...(mail ?? {}),
-    });
-    return {
-      id: result.originId,
-      conversationId: parent?.conversationId ?? entry.conversationIds[0] ?? entry.id,
-      backend: entry.backend,
-      presentation: 'bubble',
-      senderId: null,
-      senderName: null,
-      senderAddress: null,
-      fromSelf: true,
-      sentAt: result.sentAt,
-      subject: mail?.subject ?? null,
-      seen: true,
-      hasAttachments: false,
-      emailChat: mail !== null,
-      classification: 'conversational',
-      classificationReason: 'self',
-      ref: { accountId: entry.accountId },
-      bodyText: text,
-    };
-  }, (entry, oldest) => loadOlderMessages(entry, oldest));
+  const conversation = createConversationView(
+    async (text) => {
+      const entry = currentEntry;
+      if (!entry?.target) throw new Error(_('This conversation has no recipient address.'));
+      const parent = currentMessages[currentMessages.length - 1] ?? null;
+      const mail =
+        entry.backend === 'mail' ? composeMailReply(parent, loadMailReplyTarget(parent), text) : null;
+      const result = await sendMessage({
+        accountId: entry.accountId,
+        to: entry.target,
+        text,
+        frontend: 'window',
+        ...mail,
+      });
+      return {
+        id: result.originId,
+        conversationId: parent?.conversationId ?? entry.conversationIds[0] ?? entry.id,
+        backend: entry.backend,
+        presentation: 'bubble',
+        senderId: null,
+        senderName: null,
+        senderAddress: null,
+        fromSelf: true,
+        sentAt: result.sentAt,
+        subject: mail?.subject ?? null,
+        seen: true,
+        hasAttachments: false,
+        emailChat: mail !== null,
+        classification: 'conversational',
+        classificationReason: 'self',
+        ref: { accountId: entry.accountId },
+        bodyText: text,
+      };
+    },
+    (entry, oldest) => loadOlderMessages(entry, oldest),
+    (source, kind) => viewer.open(source, kind),
+  );
   const select = (entry: ListEntry) => {
     currentEntry = entry;
     currentMessages = loadConversationMessages(entry);
@@ -123,7 +138,12 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   const breakpoint = new Adw.Breakpoint({ condition: Adw.BreakpointCondition.parse(COLLAPSE_AT) });
   breakpoint.add_setter(split, 'collapsed', true);
   window.add_breakpoint(breakpoint);
-  window.set_content(split);
+  // The viewer is a sibling of the split view, over it, as in Fractal; the toasts sit above both.
+  const stage = new Gtk.Overlay({ child: split });
+  stage.add_overlay(viewer.widget);
+  const toasts = new Adw.ToastOverlay({ child: stage });
+  window.set_content(toasts);
+  viewer.install(window);
 
   const action = new Gio.SimpleAction({ name: 'agent-access' });
   action.connect('activate', () => presentAgentAccess(window));

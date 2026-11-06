@@ -29,7 +29,8 @@ function addSourceTreeIcons(): void {
   if (!display || !import.meta.url.startsWith('file:')) return;
   const bundleDir = GLib.path_get_dirname(GLib.filename_from_uri(import.meta.url)[0]);
   const icons = GLib.build_filenamev([bundleDir, '..', 'data', 'icons']);
-  if (GLib.file_test(icons, GLib.FileTest.IS_DIR)) Gtk.IconTheme.get_for_display(display).add_search_path(icons);
+  if (GLib.file_test(icons, GLib.FileTest.IS_DIR))
+    Gtk.IconTheme.get_for_display(display).add_search_path(icons);
 }
 
 const application = new AdwaitaApp({

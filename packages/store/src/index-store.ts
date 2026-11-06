@@ -64,12 +64,15 @@ export interface FolderCursor {
 
 export function upsertAccount(
   db: IndexDatabase,
-  account: { id: string; identity: string; provider: string },
+  account: { id: string; identity: string; provider: string; address?: string },
 ): void {
+  // An absent address keeps what an earlier run stored: a backend that cannot read it right now
+  // (a session mid-link) must not erase what the window uses to recognise the chat with oneself.
   db.prepare(
-    `INSERT INTO accounts (id, identity, provider) VALUES (?, ?, ?)
-     ON CONFLICT(id) DO UPDATE SET identity = excluded.identity, provider = excluded.provider`,
-  ).run(account.id, account.identity, account.provider);
+    `INSERT INTO accounts (id, identity, provider, address) VALUES (?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET identity = excluded.identity, provider = excluded.provider,
+       address = COALESCE(excluded.address, accounts.address)`,
+  ).run(account.id, account.identity, account.provider, account.address ?? null);
 }
 
 export function upsertFolder(

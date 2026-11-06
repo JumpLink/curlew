@@ -83,6 +83,9 @@ app/src/window/agent-access-dialog.ts
 app/src/window/agent-access-model.ts
 app/src/window/agent-access-page.ts
 app/src/window/agent-access-store.ts
+app/src/window/attachment-model.ts
+app/src/window/attachment-store.ts
+app/src/window/attachment-view.ts
 app/src/window/conversation-list-model.ts
 app/src/window/conversation-list-store.ts
 app/src/window/conversation-list.ts
@@ -91,6 +94,7 @@ app/src/window/conversation-store.ts
 app/src/window/conversation-view.ts
 app/src/window/fade-bin.ts
 app/src/window/main.ts
+app/src/window/media-viewer.ts
 app/src/window/preferences-dialog.ts
 app/src/window/watch.ts
 app/src/window/window.ts
@@ -195,12 +199,14 @@ packages/store/src/changes.ts
 packages/store/src/chat-sync.ts
 packages/store/src/classify.ts
 packages/store/src/conversations.ts
+packages/store/src/conversation-totals.ts
 packages/store/src/db.ts
 packages/store/src/delivery-sync.ts
 packages/store/src/download.ts
 packages/store/src/fts.ts
 packages/store/src/index-store.ts
 packages/store/src/index.ts
+packages/store/src/local-echo.ts
 packages/store/src/mail-reply.ts
 packages/store/src/paths.ts
 packages/store/src/receive-lease.ts

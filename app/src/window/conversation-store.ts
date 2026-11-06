@@ -6,6 +6,7 @@ import {
   getRecentMessages,
   type MessageCursor,
   indexDbPath,
+  mailAttachments,
   mailReplyTarget,
   openIndexDb,
   type MailReplyTarget,
@@ -14,7 +15,7 @@ import {
 import { loadConfig } from '../core/config.ts';
 import type { ListEntry } from './conversation-list-model.ts';
 
-import { PAGE_SIZE } from './conversation-model.ts';
+import { PAGE_SIZE, type ShownMessage } from './conversation-model.ts';
 
 // The view opens on the newest page of a conversation and reads older ones as it is scrolled up;
 // a person with years of mail would otherwise block the main loop while every body is read and
@@ -25,7 +26,7 @@ export function loadConversationMessages(
   entry: ListEntry,
   dbPath = indexDbPath(),
   cfgPath = configPath(),
-): ConversationMessage[] {
+): ShownMessage[] {
   return loadPage(entry, undefined, dbPath, cfgPath);
 }
 
@@ -35,7 +36,7 @@ export function loadOlderMessages(
   oldest: MessageCursor,
   dbPath = indexDbPath(),
   cfgPath = configPath(),
-): ConversationMessage[] {
+): ShownMessage[] {
   return loadPage(entry, oldest, dbPath, cfgPath);
 }
 
@@ -44,23 +45,31 @@ function loadPage(
   before: MessageCursor | undefined,
   dbPath: string,
   cfgPath: string,
-): ConversationMessage[] {
+): ShownMessage[] {
   const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
   try {
     const { senders } = loadConfig(cfgPath);
-    return getRecentMessages(db, entry.conversationIds, {
+    const page: ShownMessage[] = getRecentMessages(db, entry.conversationIds, {
       limit: PAGE_SIZE,
       ...(before ? { before } : {}),
       includeBodies: true,
       maxBodyChars: BODY_LIMIT,
       overrides: senders,
     });
+    // The parts are metadata only; the bytes are fetched when the person looks at them.
+    for (const message of page) {
+      if (message.hasAttachments && !message.notice) message.attachments = mailAttachments(db, message.ref);
+    }
+    return page;
   } finally {
     db.close();
   }
 }
 
-export function loadMailReplyTarget(message: ConversationMessage | null, dbPath = indexDbPath()): MailReplyTarget | null {
+export function loadMailReplyTarget(
+  message: ConversationMessage | null,
+  dbPath = indexDbPath(),
+): MailReplyTarget | null {
   if (!message || message.backend !== 'mail') return null;
   const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
   try {
