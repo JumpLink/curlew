@@ -22,7 +22,7 @@ import {
   SecretStore,
   syncChats,
 } from '@curlew/store';
-import type { TgMessage } from '@curlew/telegram';
+import type { ClientOptions, TgMessage } from '@curlew/telegram';
 import {
   API_HASH_ENV,
   API_ID_ENV,
@@ -586,6 +586,37 @@ export default async () => {
         expect(accounts.map((a) => `${a.id} ${a.identity}`)).toEqualArray(['telegram-42 @me_example']);
         // The account list carries no phone number anywhere.
         expect(JSON.stringify(accounts).includes('4917')).toBe(false);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('warns once when the client has no live side — a follow that cannot wake is not silent', async () => {
+      const dir = tempDir();
+      try {
+        const factory = fakeFactory({});
+        // A factory that ignores `live`: the shape a client without an update stream has.
+        const noLive = (options: ClientOptions) => {
+          const { live: _live, ...rest } = options;
+          return factory.create(rest);
+        };
+        const backend = new TelegramBackend(context(dir), noLive);
+        await backend.addAccount(prompter(['+49 170 0000000', '12345', 'correct horse']));
+        const lines: string[] = [];
+        const original = console.warn;
+        console.warn = (...args: unknown[]) => lines.push(args.map(String).join(' '));
+        try {
+          await (await backend.connectLive('telegram-42')).close();
+          await (await backend.connectLive('telegram-42')).close();
+        } finally {
+          console.warn = original;
+        }
+        // Once for the process, although the follow reconnects: the warning names no account.
+        expect(lines.length).toBe(1);
+        expect(lines[0]).toMatch(/live/i);
+        expect(lines[0].includes('telegram-42')).toBe(false);
+        // The session itself still reads; only the wake-up is missing.
+        expect(factory.clients.length).toBe(3);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }

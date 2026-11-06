@@ -36,7 +36,9 @@ export function composeMailReply(
   target: MailReplyTarget | null,
   text: string,
 ): MailReply {
-  const references = [...new Set([...(target?.references ?? []), ...(target?.messageId ? [target.messageId] : [])])];
+  const references = [
+    ...new Set([...(target?.references ?? []), ...(target?.messageId ? [target.messageId] : [])]),
+  ];
   return {
     subject: parent?.emailChat ? chatSubject(text) : replySubject(parent?.subject ?? null),
     emailChat: true,
@@ -67,7 +69,10 @@ export function cursorOf(message: ConversationMessage): MessageCursor {
 }
 
 /** What an older page adds: the messages not shown yet, so an overlap never shows one twice. */
-export function newOlder(shown: readonly ConversationMessage[], page: readonly ConversationMessage[]): ConversationMessage[] {
+export function newOlder(
+  shown: readonly ConversationMessage[],
+  page: readonly ConversationMessage[],
+): ConversationMessage[] {
   const have = new Set(shown.map((m) => m.id));
   return page.filter((m) => !have.has(m.id));
 }
@@ -119,7 +124,10 @@ export function bubbleText(text: string, maxChars = 1500, maxLines = 30): Bubble
  * direct chats, the person's own messages and notices carry no label. Computed over everything
  * that is loaded, so a page prepended in front corrects the run its newest message joins.
  */
-export function senderRunStarts(messages: readonly ConversationMessage[], isGroup: boolean): Map<string, string> {
+export function senderRunStarts(
+  messages: readonly ConversationMessage[],
+  isGroup: boolean,
+): Map<string, string> {
   const starts = new Map<string, string>();
   if (!isGroup) return starts;
   let previous: string | null = null;
@@ -144,16 +152,19 @@ export function senderName(message: ConversationMessage): string {
 export interface AttachmentInfo {
   filename: string | null;
   mimeType: string | null;
+  /** IMAP section (mail only): the key to fetch the bytes with. */
+  section?: string;
+  size?: number | null;
 }
 
-/** A message as the view shows it: the attachment details are read only for attachment-only ones. */
+/** A message as the view shows it, with the attachment parts the index lists for it (mail). */
 export interface ShownMessage extends ConversationMessage {
   attachments?: AttachmentInfo[];
 }
 
 const MAX_ATTACHMENT_LINES = 3;
 
-function attachmentLine(info: AttachmentInfo): string {
+export function attachmentLine(info: AttachmentInfo): string {
   const mime = info.mimeType?.toLowerCase() ?? '';
   const kind = mime.startsWith('image/')
     ? _('Image')

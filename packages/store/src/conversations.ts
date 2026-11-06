@@ -964,3 +964,37 @@ function toMessage(
   }
   return message;
 }
+
+/** What the index knows about the chat behind a conversation: where to address it and the room facts. */
+export interface ChatRoomRow {
+  /** The network's id for the chat (Matrix: the room id) — the address a send names. */
+  chatId: string;
+  /** NULL columns come back as null: the network did not say. */
+  public: boolean | null;
+  encrypted: boolean | null;
+  memberCount: number | null;
+}
+
+function tri(value: unknown): boolean | null {
+  return value === null || value === undefined ? null : Number(value) === 1;
+}
+
+/** The chat rows of one backend by conversation id; empty for a backend with no chats. */
+export function listChatRooms(db: IndexDatabase, backend: string): Map<string, ChatRoomRow> {
+  const rows = db
+    .prepare(
+      'SELECT conversation_id, chat_id, room_public, room_encrypted, room_members FROM chat_cursors WHERE backend = ?',
+    )
+    .all(backend) as Array<Record<string, unknown>>;
+  return new Map(
+    rows.map((r) => [
+      String(r.conversation_id),
+      {
+        chatId: String(r.chat_id),
+        public: tri(r.room_public),
+        encrypted: tri(r.room_encrypted),
+        memberCount: r.room_members === null || r.room_members === undefined ? null : Number(r.room_members),
+      },
+    ]),
+  );
+}

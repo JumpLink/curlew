@@ -23,7 +23,7 @@
 import type { SecretChange, SecretStore } from '@curlew/store';
 import { BufferJSON, initAuthCreds, proto } from 'baileys';
 import type { AuthenticationCreds, AuthenticationState, SignalDataSet, SignalDataTypeMap } from 'baileys';
-import type { LidLookup } from './jid.ts';
+import { type LidLookup, ownAddressOf } from './jid.ts';
 
 const CREDS_NAMESPACE = 'baileys.creds';
 const CREDS_KEY = 'creds';
@@ -40,6 +40,26 @@ export interface AuthStateOptions {
   flushDelayMs?: number;
   setTimer?: (fn: () => void, ms: number) => unknown;
   clearTimer?: (handle: unknown) => void;
+}
+
+/**
+ * The account's own user JIDs (`ownAddressOf`) read straight from the stored credentials, without
+ * building the whole auth state: `curlew sync` and the daemon list accounts through here and hand
+ * the result to the index, so a reader that never opens this file (the window) can still tell
+ * the chat with oneself. Only `me.id` and `me.lid` are looked at; no key is parsed or returned.
+ */
+export function readOwnAddress(store: SecretStore): string | null {
+  const stored = store.get(CREDS_NAMESPACE, CREDS_KEY);
+  if (!stored) return null;
+  try {
+    const me = (JSON.parse(stored) as { me?: { id?: unknown; lid?: unknown } | null }).me;
+    return ownAddressOf({
+      id: typeof me?.id === 'string' ? me.id : null,
+      lid: typeof me?.lid === 'string' ? me.lid : null,
+    });
+  } catch {
+    return null;
+  }
 }
 
 const serialize = (value: unknown): string => JSON.stringify(value, BufferJSON.replacer);

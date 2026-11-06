@@ -56,10 +56,9 @@ function loadPage(
       maxBodyChars: BODY_LIMIT,
       overrides: senders,
     });
-    // Only a message that is nothing but attachments needs to say what they are.
+    // The parts are metadata only; the bytes are fetched when the person looks at them.
     for (const message of page) {
-      if (message.hasAttachments && !message.bodyText?.trim() && !message.notice)
-        message.attachments = mailAttachments(db, message.ref);
+      if (message.hasAttachments && !message.notice) message.attachments = mailAttachments(db, message.ref);
     }
     return page;
   } finally {
@@ -67,7 +66,10 @@ function loadPage(
   }
 }
 
-export function loadMailReplyTarget(message: ConversationMessage | null, dbPath = indexDbPath()): MailReplyTarget | null {
+export function loadMailReplyTarget(
+  message: ConversationMessage | null,
+  dbPath = indexDbPath(),
+): MailReplyTarget | null {
   if (!message || message.backend !== 'mail') return null;
   const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
   try {

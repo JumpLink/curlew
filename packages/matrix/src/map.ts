@@ -52,6 +52,29 @@ export function toChatPeer(userId: string, displayName: string | null): ChatPeer
   };
 }
 
+function roomFactsKnown(room: MxRoom): boolean {
+  return room.isPublic != null || room.encrypted != null || room.memberCount != null;
+}
+
+/**
+ * What the synced room state says about the room, with `null` for everything it does not say.
+ * `createSeen` tells a room whose state arrived from one whose state did not (a room with no
+ * `m.room.create` has nothing to read yet), so "no encryption event" counts as "not encrypted"
+ * only when the state is there to be read.
+ */
+export function roomFactsOf(state: {
+  createSeen: boolean;
+  joinRule: unknown;
+  encryptionSeen: boolean;
+  joinedMembers: number;
+}): Pick<MxRoom, 'isPublic' | 'encrypted' | 'memberCount'> {
+  return {
+    isPublic: typeof state.joinRule === 'string' && state.joinRule !== '' ? state.joinRule === 'public' : null,
+    encrypted: state.createSeen || state.encryptionSeen ? state.encryptionSeen : null,
+    memberCount: state.joinedMembers > 0 ? state.joinedMembers : null,
+  };
+}
+
 export function toChatInfo(room: MxRoom): ChatInfo {
   return {
     remoteId: room.roomId,
@@ -60,6 +83,15 @@ export function toChatInfo(room: MxRoom): ChatInfo {
     // Like Telegram: a direct chat names the other person; a group's members join through the
     // messages they write (lazy-loaded rooms do not list every member up front).
     members: room.direct ? room.members.map((m) => toChatPeer(m.userId, m.displayName)) : [],
+    ...(roomFactsKnown(room)
+      ? {
+          room: {
+            public: room.isPublic ?? null,
+            encrypted: room.encrypted ?? null,
+            memberCount: room.memberCount ?? null,
+          },
+        }
+      : {}),
     lastSeq: room.lastEventTs === null ? null : seqOf(room.lastEventTs),
     readInboxSeq: room.readUpToTs === null ? null : seqOf(room.readUpToTs),
     readOutboxSeq: room.peerReadUpToTs === null ? null : seqOf(room.peerReadUpToTs),

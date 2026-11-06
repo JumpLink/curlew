@@ -591,7 +591,9 @@ export default async () => {
       const db = freshDb();
       const delivered = await receiveDeliveries(
         db,
-        fakeBackend([[incoming('d-anna', msg('anna/9', 9, deliveredText, { fromSelf: true, sender: null }))]]),
+        fakeBackend([
+          [incoming('d-anna', msg('anna/9', 9, deliveredText, { fromSelf: true, sender: null }))],
+        ]),
       );
       expect(delivered.accounts[0].error).toBe(null);
       const recorded = recordSentChatMessage(db, {
@@ -728,9 +730,9 @@ export default async () => {
         };
         expect(version.value).toBe(String(SCHEMA_VERSION));
         expect(remoteIds(db)).toBe('anna/11|anna/9|local:anna/10|local:anna/11');
-        const delivered = db.prepare('SELECT body FROM conversation_messages WHERE id = ?').get('m-delivered') as
-          | Record<string, unknown>
-          | undefined;
+        const delivered = db
+          .prepare('SELECT body FROM conversation_messages WHERE id = ?')
+          .get('m-delivered') as Record<string, unknown> | undefined;
         expect(String(delivered?.body)).toBe(ECHO_SURVIVES);
       } finally {
         db.close();
@@ -742,9 +744,9 @@ export default async () => {
       try {
         db.prepare('UPDATE conversation_messages SET body = ? WHERE id = ?').run('vom Netz', 'm-delivered');
         migrate(db);
-        const delivered = db.prepare('SELECT body FROM conversation_messages WHERE id = ?').get('m-delivered') as
-          | Record<string, unknown>
-          | undefined;
+        const delivered = db
+          .prepare('SELECT body FROM conversation_messages WHERE id = ?')
+          .get('m-delivered') as Record<string, unknown> | undefined;
         expect(String(delivered?.body)).toBe('vom Netz');
       } finally {
         db.close();
@@ -756,9 +758,11 @@ export default async () => {
       try {
         migrate(db);
         const counts = () =>
-          (db.prepare('SELECT id, message_count FROM conversations ORDER BY id').all() as Array<
-            Record<string, unknown>
-          >)
+          (
+            db.prepare('SELECT id, message_count FROM conversations ORDER BY id').all() as Array<
+              Record<string, unknown>
+            >
+          )
             .map((r) => `${String(r.id) === CHAT ? 'anna' : 'ben'}=${Number(r.message_count)}`)
             .sort()
             .join('|');

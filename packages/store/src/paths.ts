@@ -85,6 +85,17 @@ export function attachmentsDir(env: NodeJS.ProcessEnv = process.env): string {
   return join(dataDir(env), 'attachments');
 }
 
+/**
+ * Where the window keeps attachments it fetched for a preview. A cache: it holds message content,
+ * so it is private (0700 where created) and the window empties it at start.
+ */
+export function previewsDir(env: NodeJS.ProcessEnv = process.env): string {
+  const explicit = envValue(env, 'PREVIEWS_DIR');
+  if (explicit) return explicit;
+  const cache = env.XDG_CACHE_HOME?.trim();
+  return join(cache && cache.startsWith('/') ? cache : join(homedir(), '.cache'), 'curlew', 'previews');
+}
+
 /** `$XDG_CONFIG_HOME`, or the spec's default. A relative value is ignored, as for the data home. */
 export function xdgConfigHome(env: NodeJS.ProcessEnv = process.env): string {
   const explicit = env.XDG_CONFIG_HOME?.trim();

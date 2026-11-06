@@ -16,6 +16,7 @@
     "test": "gjsify workspace curlew-cli test",
     "format": "gjsify workspace curlew-cli format",
     "lint": "gjsify workspace curlew-cli lint",
+    "packaging:install": "sh scripts/install-packaging.sh",
     "i18n:extract": "./dev/i18n.sh extract",
     "i18n:compile": "./dev/i18n.sh compile"
   }

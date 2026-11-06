@@ -10,3 +10,4 @@ Terminal=false
 Categories=Network;Email;GTK;
 Keywords=mail;chat;agent;MCP;access;
 StartupNotify=true
+StartupWMClass=eu.jumplink.curlew
