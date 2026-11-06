@@ -95,6 +95,16 @@ absolute path it was built at, so do not move or copy a built tree — the copy
 fails at the first Signal command. `curlew-cli test:relocation` measures this
 and says so out loud; the fix is tracked in gjsify.
 
+### Desktop install (development)
+
+`npm run packaging:install` copies the desktop entry, the hicolor icons and the
+metainfo from `app/data/` into `~/.local/share` and refreshes the desktop and icon
+caches — the step that makes GNOME Shell show Curlew in the app grid, match its
+window to the launcher (`StartupWMClass=eu.jumplink.curlew`, the GTK application
+id) and find the window icon by name. It is idempotent and installs nothing else:
+`Exec=curlew window` calls whatever `curlew` your machine has on `PATH`, and no
+systemd unit is touched — that wiring is [`curlew setup`](#setup)'s or your own.
+
 ### Setup
 
 `curlew setup` walks you through the whole thing — linking Signal and WhatsApp,

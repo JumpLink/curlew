@@ -74,7 +74,12 @@ export default async () => {
     });
 
     it('blocks the composer only in a room known to be encrypted', () => {
-      const room = (encrypted: boolean | null) => ({ chatId: '!r', public: false, encrypted, memberCount: 2 });
+      const room = (encrypted: boolean | null) => ({
+        chatId: '!r',
+        public: false,
+        encrypted,
+        memberCount: 2,
+      });
       expect(composerBlock(entry({ id: 'a', room: room(true) }))).not.toBe(null);
       expect(composerBlock(entry({ id: 'b', room: room(false) }))).toBe(null);
       expect(composerBlock(entry({ id: 'c', room: room(null) }))).toBe(null);
@@ -82,8 +87,15 @@ export default async () => {
     });
 
     it('hints a room as public with its members, and says nothing it does not know', () => {
-      const room = (pub: boolean | null, n: number | null) => ({ chatId: '!r', public: pub, encrypted: false, memberCount: n });
-      expect(roomHint(entry({ id: 'a', kind: 'group', room: room(true, 12) }))).toBe('Public room · 12 members');
+      const room = (pub: boolean | null, n: number | null) => ({
+        chatId: '!r',
+        public: pub,
+        encrypted: false,
+        memberCount: n,
+      });
+      expect(roomHint(entry({ id: 'a', kind: 'group', room: room(true, 12) }))).toBe(
+        'Public room · 12 members',
+      );
       expect(roomHint(entry({ id: 'b', kind: 'group', room: room(true, 1) }))).toBe('Public room · 1 member');
       expect(roomHint(entry({ id: 'c', kind: 'group', room: room(false, 4) }))).toBe('Room · 4 members');
       expect(roomHint(entry({ id: 'd', kind: 'group', room: room(null, 4) }))).toBe(null);
@@ -147,15 +159,25 @@ export default async () => {
       const targetFor = (backend: string, participants: Conversation['participants']) =>
         toEntry(conversation({ id: 'a', backend, participants })).target;
       expect(targetFor('signal', person(phone, { kind: 'signal', value: 'aci-1' }))).toBe('aci-1');
-      expect(targetFor('whatsapp', person(phone, { kind: 'whatsapp', value: '15550100@s.whatsapp.net' }))).toBe(
-        '15550100@s.whatsapp.net',
-      );
+      expect(
+        targetFor('whatsapp', person(phone, { kind: 'whatsapp', value: '15550100@s.whatsapp.net' })),
+      ).toBe('15550100@s.whatsapp.net');
       expect(targetFor('telegram', person(phone, { kind: 'telegram', value: '42' }))).toBe('42');
-      expect(targetFor('xmpp', person({ kind: 'email', value: 'a@example.invalid' }, { kind: 'jid', value: 'a@example.org' }))).toBe(
-        'a@example.org',
-      );
+      expect(
+        targetFor(
+          'xmpp',
+          person({ kind: 'email', value: 'a@example.invalid' }, { kind: 'jid', value: 'a@example.org' }),
+        ),
+      ).toBe('a@example.org');
       expect(targetFor('signal', person(phone))).toBe(null);
-      expect(targetFor('signal', person({ kind: 'signal', value: 'aci-1' }, { kind: 'signal', value: 'aci-2' }).concat(person(phone)))).toBe(null);
+      expect(
+        targetFor(
+          'signal',
+          person({ kind: 'signal', value: 'aci-1' }, { kind: 'signal', value: 'aci-2' }).concat(
+            person(phone),
+          ),
+        ),
+      ).toBe(null);
       expect(unreadTier(entry({ id: 'a', unread: 2 }))).toBe('count');
       expect(unreadTier(entry({ id: 'a' }))).toBe('none');
       expect(unreadText(7)).toBe('7');
@@ -233,7 +255,13 @@ export default async () => {
           .sort()
           .join(',');
       expect(flat({ ...NO_FILTER, backends: new Set(['mail']) })).toBe('b,c');
-      expect(flat({ ...NO_FILTER, backends: new Set(['mail']), accounts: new Map([['mail', new Set(['mail-def456'])]]) })).toBe('b');
+      expect(
+        flat({
+          ...NO_FILTER,
+          backends: new Set(['mail']),
+          accounts: new Map([['mail', new Set(['mail-def456'])]]),
+        }),
+      ).toBe('b');
       expect(flat({ ...NO_FILTER, query: ' ANN ' })).toBe('a,c');
     });
 
@@ -284,7 +312,12 @@ export default async () => {
         backends: new Set(['mail', 'signal']),
         accounts: new Map([['mail', new Set(['mail-1'])]]),
       };
-      expect(list.filter((e) => matches(e, filter)).map((e) => e.id).join(',')).toBe('a,c');
+      expect(
+        list
+          .filter((e) => matches(e, filter))
+          .map((e) => e.id)
+          .join(','),
+      ).toBe('a,c');
     });
 
     it('ignores account choices of a protocol that is not chosen', () => {
@@ -295,38 +328,74 @@ export default async () => {
       ];
       const accounts = new Map([['mail', new Set(['mail-1'])]]);
       const stale = { ...NO_FILTER, backends: new Set(['signal']), accounts };
-      expect(list.filter((e) => matches(e, stale)).map((e) => e.id).join(',')).toBe('c');
+      expect(
+        list
+          .filter((e) => matches(e, stale))
+          .map((e) => e.id)
+          .join(','),
+      ).toBe('c');
       const chosen = new Set(['signal']);
       dropDeselectedAccounts(accounts, chosen);
       expect(accounts.size).toBe(0);
-      const kept = new Map([['mail', new Set(['mail-1'])], ['signal', new Set(['signal-1'])]]);
+      const kept = new Map([
+        ['mail', new Set(['mail-1'])],
+        ['signal', new Set(['signal-1'])],
+      ]);
       dropDeselectedAccounts(kept, new Set(['signal']));
       expect([...kept.keys()].join(',')).toBe('signal');
     });
 
     it('titles and addresses the chat with oneself on every backend that can tell', () => {
       const person = (kind: 'jid' | 'matrix' | 'telegram' | 'signal', value: string) =>
-        ({ id: `p-${value}`, displayName: null, addresses: [{ kind, value }] }) as unknown as Conversation['participants'][number];
+        ({
+          id: `p-${value}`,
+          displayName: null,
+          addresses: [{ kind, value }],
+        }) as unknown as Conversation['participants'][number];
       const signal = conversation({ id: 's', backend: 'signal', accountId: 'signal-0a1b2c' });
       expect(toEntry(signal).title).toBe('Note to self');
       expect(toEntry(signal).target).toBe('0a1b2c');
-      const other = conversation({ id: 's2', backend: 'signal', accountId: 'signal-0a1b2c', participants: [person('signal', 'ffee')] });
+      const other = conversation({
+        id: 's2',
+        backend: 'signal',
+        accountId: 'signal-0a1b2c',
+        participants: [person('signal', 'ffee')],
+      });
       expect(toEntry(other).title).toBe('ffee');
       const group = conversation({ id: 's3', backend: 'signal', accountId: 'signal-0a1b2c', kind: 'group' });
       expect(toEntry(group).target).toBe(null);
 
-      const tg = conversation({ id: 't', backend: 'telegram', accountId: 'telegram-4711', participants: [person('telegram', '4711')] });
+      const tg = conversation({
+        id: 't',
+        backend: 'telegram',
+        accountId: 'telegram-4711',
+        participants: [person('telegram', '4711')],
+      });
       expect(toEntry(tg).title).toBe('Note to self');
       expect(toEntry(tg).target).toBe('4711');
-      const tgOther = conversation({ id: 't2', backend: 'telegram', accountId: 'telegram-4711', participants: [person('telegram', '99')] });
+      const tgOther = conversation({
+        id: 't2',
+        backend: 'telegram',
+        accountId: 'telegram-4711',
+        participants: [person('telegram', '99')],
+      });
       expect(toEntry(tgOther).title).toBe('99');
 
-      const xmpp = conversation({ id: 'x', accountId: 'xmpp-abc123', participants: [person('jid', 'Me@Example.org')] });
+      const xmpp = conversation({
+        id: 'x',
+        accountId: 'xmpp-abc123',
+        participants: [person('jid', 'Me@Example.org')],
+      });
       expect(toEntry(xmpp, 'me@example.org').title).toBe('Note to self');
       expect(toEntry(xmpp, 'me@example.org').target).toBe('me@example.org');
       expect(toEntry(xmpp).title).toBe('Me@Example.org');
       expect(toEntry(xmpp, 'you@example.org').title).toBe('Me@Example.org');
-      const mx = conversation({ id: 'm', backend: 'matrix', accountId: 'matrix-1', participants: [person('matrix', '@me:example.org')] });
+      const mx = conversation({
+        id: 'm',
+        backend: 'matrix',
+        accountId: 'matrix-1',
+        participants: [person('matrix', '@me:example.org')],
+      });
       expect(toEntry(mx, '@me:example.org').title).toBe('Note to self');
       // A WhatsApp or mail chat cannot be told from the index, so it stays an ordinary one.
       const wa = conversation({ id: 'w', backend: 'whatsapp', accountId: 'whatsapp-1' });

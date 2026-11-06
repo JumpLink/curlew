@@ -177,10 +177,20 @@ export function createConversationList(
 
   // Filters live in a popover instead of a row of chips, so a long account or protocol
   // list cannot push the conversation list down or wrap across several lines.
-  const filterButton = new Gtk.MenuButton({ iconName: 'view-filter-symbolic', tooltipText: _('Filter conversations') });
+  const filterButton = new Gtk.MenuButton({
+    iconName: 'view-filter-symbolic',
+    tooltipText: _('Filter conversations'),
+  });
   const filterPopover = new Gtk.Popover({ autohide: true });
   filterButton.set_popover(filterPopover);
-  const filterBox = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 6, marginStart: 12, marginEnd: 12, marginTop: 8, marginBottom: 8 });
+  const filterBox = new Gtk.Box({
+    orientation: Gtk.Orientation.VERTICAL,
+    spacing: 6,
+    marginStart: 12,
+    marginEnd: 12,
+    marginTop: 8,
+    marginBottom: 8,
+  });
   filterPopover.set_child(filterBox);
 
   const activeAccountCount = (): number => [...accounts.values()].reduce((n, set) => n + set.size, 0);
@@ -237,8 +247,7 @@ export function createConversationList(
       header.add_css_class('caption');
       filterBox.append(header);
       const wrap = new Adw.WrapBox({ childSpacing: 6, lineSpacing: 6 });
-      for (const backend of backendsList)
-        wrap.append(makeToggle(protocolLabel(backend), backends, backend));
+      for (const backend of backendsList) wrap.append(makeToggle(protocolLabel(backend), backends, backend));
       filterBox.append(wrap);
     }
 
@@ -251,7 +260,8 @@ export function createConversationList(
       let chosen = accounts.get(group.backend);
       if (!chosen) accounts.set(group.backend, (chosen = new Set()));
       const wrap = new Adw.WrapBox({ childSpacing: 6, lineSpacing: 6 });
-      for (const account of group.accounts) wrap.append(makeToggle(labels.get(account) ?? account, chosen, account));
+      for (const account of group.accounts)
+        wrap.append(makeToggle(labels.get(account) ?? account, chosen, account));
       filterBox.append(wrap);
     }
 
@@ -342,7 +352,8 @@ export function createConversationList(
       // A filter whose choice vanished (an account removed) must not hide everything.
       for (const key of backends) if (!entries.some((e) => e.backend === key)) backends.delete(key);
       for (const [backend, chosen] of accounts)
-        for (const key of chosen) if (!entries.some((e) => e.backend === backend && e.accountId === key)) chosen.delete(key);
+        for (const key of chosen)
+          if (!entries.some((e) => e.backend === backend && e.accountId === key)) chosen.delete(key);
       rebuildFilters();
       rebuild();
     },

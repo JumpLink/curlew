@@ -22,6 +22,9 @@ import {
   type ShownMessage,
   subjectLabels,
 } from './conversation-model.ts';
+import { attachmentList, type AttachmentHandlers } from './attachment-view.ts';
+import { shownAttachments, type AttachmentKind } from './attachment-model.ts';
+import type { AttachmentSource } from './attachment-store.ts';
 import { fadedOverlay } from './fade-bin.ts';
 
 export interface ConversationView {
@@ -43,6 +46,7 @@ interface Built {
 export function createConversationView(
   onSend: (text: string) => Promise<ConversationMessage>,
   loadOlder: (entry: ListEntry, oldest: MessageCursor) => ShownMessage[],
+  openMedia: (source: AttachmentSource, kind: AttachmentKind) => void,
 ): ConversationView {
   let entry: ListEntry | null = null;
   // The array is the caller's: a sent message is pushed onto it, an older page spliced in front.
@@ -90,6 +94,48 @@ export function createConversationView(
   page.set_child(toolbar);
 
   const adjustment = scroller.get_vadjustment();
+
+  // Pictures are fetched from the mailbox, so they wait until the bubble is near the screen, a
+  // couple per pass: a conversation of fifty photos must not open fifty connections at once.
+  const waiting: Array<{ widget: Gtk.Widget; load: () => void }> = [];
+  const STARTS_PER_PASS = 2;
+  let passScheduled = false;
+  const nearScreen = (widget: Gtk.Widget): boolean => {
+    if (!widget.get_mapped() || widget.get_height() <= 0) return false;
+    const [ok, rect] = widget.compute_bounds(scroller);
+    if (!ok) return false;
+    const page = scroller.get_height();
+    return rect.get_y() + rect.get_height() > -page && rect.get_y() < page * 2;
+  };
+  const loadPass = () => {
+    passScheduled = false;
+    let started = 0;
+    for (let i = 0; i < waiting.length && started < STARTS_PER_PASS;) {
+      const item = waiting[i]!;
+      if (!nearScreen(item.widget)) {
+        i++;
+        continue;
+      }
+      waiting.splice(i, 1);
+      item.load();
+      started++;
+    }
+    if (started === STARTS_PER_PASS) schedulePass(400);
+    return GLib.SOURCE_REMOVE;
+  };
+  const schedulePass = (delay = 50) => {
+    if (passScheduled || waiting.length === 0) return;
+    passScheduled = true;
+    GLib.timeout_add(GLib.PRIORITY_DEFAULT_IDLE, delay, loadPass);
+  };
+  const handlers: AttachmentHandlers = {
+    view: openMedia,
+    toast: (title) => overlay.add_toast(new Adw.Toast({ title, timeout: 6 })),
+    whenVisible: (widget, load) => {
+      waiting.push({ widget, load });
+      schedulePass();
+    },
+  };
 
   const scrollToEnd = () => {
     GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
@@ -160,20 +206,28 @@ export function createConversationView(
     if (heading) bubble.append(heading);
     const written = message.bodyText?.trim() || message.notice;
     const full =
-      (written || (message.hasAttachments ? attachmentLines(message.attachments).join('\n') : _('No text body'))) +
+      (written ||
+        (message.hasAttachments ? attachmentLines(message.attachments).join('\n') : _('No text body'))) +
       (message.bodyTruncated ? ' …' : '');
-    const preview = bubbleText(full);
-    const body = new Gtk.Label({
-      label: preview.clipped ? `${preview.text} …` : preview.text,
-      xalign: 0,
-      wrap: true,
-      // A long URL has no word break and would widen the bubble past the window.
-      wrapMode: Pango.WrapMode.WORD_CHAR,
-      selectable: true,
-      maxWidthChars: 56,
-    });
-    bubble.append(fadedOverlay(body, preview.clipped, () => body.set_label(full)));
-    if (message.hasAttachments && written) {
+    // What is listed below the text stands for the attachments itself; the placeholder line is
+    // only for a message whose parts the index does not know.
+    const { shown, more } = shownAttachments(message.attachments);
+    const listed = shown.length > 0;
+    if (listed) bubble.append(attachmentList(message.ref, shown, more, handlers));
+    if (written || !listed) {
+      const preview = bubbleText(full);
+      const body = new Gtk.Label({
+        label: preview.clipped ? `${preview.text} …` : preview.text,
+        xalign: 0,
+        wrap: true,
+        // A long URL has no word break and would widen the bubble past the window.
+        wrapMode: Pango.WrapMode.WORD_CHAR,
+        selectable: true,
+        maxWidthChars: 56,
+      });
+      bubble.append(fadedOverlay(body, preview.clipped, () => body.set_label(full)));
+    }
+    if (message.hasAttachments && written && !listed) {
       const attachments = new Gtk.Label({ label: _('Contains attachments'), xalign: 0 });
       attachments.add_css_class('caption');
       attachments.add_css_class('dim-label');
@@ -249,7 +303,15 @@ export function createConversationView(
     prepending = true;
     lastUpper = adjustment.get_upper();
     const spin = new Gtk.ListBoxRow({ selectable: false, activatable: false });
-    spin.set_child(new Adw.Spinner({ halign: Gtk.Align.CENTER, widthRequest: 32, heightRequest: 32, marginTop: 12, marginBottom: 12 }));
+    spin.set_child(
+      new Adw.Spinner({
+        halign: Gtk.Align.CENTER,
+        widthRequest: 32,
+        heightRequest: 32,
+        marginTop: 12,
+        marginBottom: 12,
+      }),
+    );
     spinner = spin;
     history.insert(spin, 0);
     const run = generation;
@@ -316,7 +378,11 @@ export function createConversationView(
   };
 
   // What came in front pushed the rows the person was reading down by the growth of `upper`.
+  // A picture that arrives after the build changes the height; a person reading the newest
+  // messages stays at the end, one who scrolled up keeps their place.
+  let atEnd = true;
   adjustment.connect('notify::upper', () => {
+    if (ready && !prepending && atEnd) scrollToEnd();
     if (prepending) {
       const upper = adjustment.get_upper();
       const grown = upper - lastUpper;
@@ -324,10 +390,14 @@ export function createConversationView(
       if (grown !== 0) adjustment.set_value(adjustment.get_value() + grown);
     }
     if (ready && nearTop()) loadPage();
+    schedulePass();
   });
   adjustment.connect('value-changed', () => {
+    if (ready) atEnd = adjustment.get_value() + adjustment.get_page_size() >= adjustment.get_upper() - 8;
     if (ready && nearTop()) loadPage();
+    schedulePass();
   });
+  adjustment.connect('notify::page-size', () => schedulePass());
 
   const submit = () => {
     const text = input.get_text().trim();
@@ -348,7 +418,9 @@ export function createConversationView(
       .catch((err: unknown) => {
         overlay.add_toast(
           new Adw.Toast({
-            title: fmt(_('Message not sent: {error}'), { error: err instanceof Error ? err.message : String(err) }),
+            title: fmt(_('Message not sent: {error}'), {
+              error: err instanceof Error ? err.message : String(err),
+            }),
             timeout: 6,
           }),
         );
@@ -372,6 +444,8 @@ export function createConversationView(
       title.set_subtitle(protocolLabel(nextEntry.backend));
       history.remove_all();
       built.clear();
+      waiting.length = 0;
+      atEnd = true;
       composer.set_visible(nextEntry.target !== null);
       const blocked = composerBlock(nextEntry);
       const roomLine = blocked ?? roomHint(nextEntry);
