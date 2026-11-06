@@ -99,7 +99,8 @@ All contacts, channels and groups of every messenger in **one** list.
 - Unread has three tiers: an **accent count** (a mention), a **grey count** (unread), a **dot**
   (activity without a count); the title is bold while unread.
 - Future: grouping one person across messengers by hand. A separate ADR; the leaning is that
-  Curlew stores the link itself and never writes the address book without confirmation.
+  Curlew stores the link itself and never writes the address book without confirmation. The
+  concept — merged rows, the protocol picker, pins — is [`contacts.md`](contacts.md).
 
 ### Built and not built
 
