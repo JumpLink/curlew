@@ -144,16 +144,19 @@ export function senderName(message: ConversationMessage): string {
 export interface AttachmentInfo {
   filename: string | null;
   mimeType: string | null;
+  /** IMAP section (mail only): the key to fetch the bytes with. */
+  section?: string;
+  size?: number | null;
 }
 
-/** A message as the view shows it: the attachment details are read only for attachment-only ones. */
+/** A message as the view shows it, with the attachment parts the index lists for it (mail). */
 export interface ShownMessage extends ConversationMessage {
   attachments?: AttachmentInfo[];
 }
 
 const MAX_ATTACHMENT_LINES = 3;
 
-function attachmentLine(info: AttachmentInfo): string {
+export function attachmentLine(info: AttachmentInfo): string {
   const mime = info.mimeType?.toLowerCase() ?? '';
   const kind = mime.startsWith('image/')
     ? _('Image')

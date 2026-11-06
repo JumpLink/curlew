@@ -6,8 +6,51 @@
  */
 
 import { migrate, openIndexDb } from '@curlew/store';
+import { createHash } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { deflateSync } from 'node:zlib';
+
+/** A small RGB gradient PNG, made here so the demo needs no file or network. */
+function demoPng(width: number, height: number): Buffer {
+  const raw = Buffer.alloc((width * 3 + 1) * height);
+  for (let y = 0; y < height; y++) {
+    const row = y * (width * 3 + 1);
+    for (let x = 0; x < width; x++) {
+      raw[row + 1 + x * 3] = Math.round((x / width) * 200) + 30;
+      raw[row + 2 + x * 3] = Math.round((y / height) * 160) + 70;
+      raw[row + 3 + x * 3] = 90 + ((x >> 5) + (y >> 5)) % 2 * 60;
+    }
+  }
+  const chunk = (type: string, data: Buffer): Buffer => {
+    const head = Buffer.alloc(8);
+    head.writeUInt32BE(data.length, 0);
+    head.write(type, 4, 'ascii');
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(crc32(Buffer.concat([head.subarray(4), data])), 0);
+    return Buffer.concat([head, data, crc]);
+  };
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8;
+  ihdr[9] = 2;
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', ihdr),
+    chunk('IDAT', deflateSync(raw)),
+    chunk('IEND', Buffer.alloc(0)),
+  ]);
+}
+
+function crc32(data: Buffer): number {
+  let c = 0xffffffff;
+  for (const byte of data) {
+    c ^= byte;
+    for (let k = 0; k < 8; k++) c = c & 1 ? (c >>> 1) ^ 0xedb88320 : c >>> 1;
+  }
+  return (c ^ 0xffffffff) >>> 0;
+}
 
 const dir = process.argv[2];
 if (!dir) {
@@ -171,6 +214,27 @@ try {
     }
     if (!text) db.prepare(`UPDATE conversation_messages SET has_attachments = 1 WHERE id = ?`).run(`m${n}`);
   });
+
+  // A mail with a picture and a PDF. The bytes are not in the index, so the picture is written where
+  // a finished download would sit (run the window with CURLEW_PREVIEWS_DIR=<dir>/previews).
+  {
+    const n = 500;
+    const at = new Date(now - 40 * 60_000).toISOString();
+    const subject = 'Chat: Garden day';
+    mailRow.run(n, 'mail-demo1', n, subject, at, at);
+    mailBody.run(n, subject, 'Here is the plan for the beds, and the invoice for the seedlings.');
+    message.run(`m${n}`, 'c3', 'mail', 'mail-demo1', 'p-sam', 0, at, subject, `r${n}`, null, 1, 'INBOX', n, null);
+    db.prepare('UPDATE conversation_messages SET sender_name = ?, sender_kind = ?, sender_address = ?, has_attachments = 1 WHERE id = ?')
+      .run('Sam Fischer', 'email', 'sam@example.org', `m${n}`);
+    const attach = db.prepare('INSERT OR REPLACE INTO attachments (message_id, section, filename, mime_type, size) VALUES (?, ?, ?, ?, ?)');
+    const png = demoPng(480, 320);
+    attach.run(n, '2', 'garden-beds.png', 'image/png', png.length);
+    attach.run(n, '3', 'seedlings-invoice.pdf', 'application/pdf', 48_200);
+    const key = ['mail-demo1', 'INBOX', n, '2'].join('\u0000');
+    const cache = join(dir, 'previews', createHash('sha256').update(key).digest('hex'));
+    mkdirSync(cache, { recursive: true });
+    writeFileSync(join(cache, 'garden-beds.png'), png);
+  }
 
   // A long mail conversation (130 messages over several days, some with multi-paragraph bodies)
   // for the paging and the faded long body of the conversation view.

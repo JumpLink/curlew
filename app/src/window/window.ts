@@ -16,6 +16,7 @@ import type { ListEntry } from './conversation-list-model.ts';
 import { createConversationList } from './conversation-list.ts';
 import { composeMailReply } from './conversation-model.ts';
 import { loadConversationMessages, loadMailReplyTarget, loadOlderMessages } from './conversation-store.ts';
+import { clearPreviews } from './attachment-store.ts';
 import { createConversationView } from './conversation-view.ts';
 import { presentPreferences } from './preferences-dialog.ts';
 import { loadAgentAccess } from './agent-access-store.ts';
@@ -75,6 +76,9 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   appSection.append(_('Quit'), 'app.quit');
   menu.append_section(null, appSection);
 
+  // Fetched attachments are message content; an earlier run's leftovers go before this one's.
+  if (!process.env.CURLEW_PREVIEWS_DIR && !process.env.POSTBOTE_PREVIEWS_DIR) clearPreviews();
+
   let currentEntry: ListEntry | null = null;
   let currentMessages: ConversationMessage[] = [];
   const conversation = createConversationView(async (text) => {
@@ -108,7 +112,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
       ref: { accountId: entry.accountId },
       bodyText: text,
     };
-  }, (entry, oldest) => loadOlderMessages(entry, oldest));
+  }, (entry, oldest) => loadOlderMessages(entry, oldest), () => {});
   const select = (entry: ListEntry) => {
     currentEntry = entry;
     currentMessages = loadConversationMessages(entry);
