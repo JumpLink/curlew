@@ -20,6 +20,8 @@
  *     (`set_presence=offline`, through the read-only gate) keeps the client current, a new event
  *     is only a wake-up, and the same history walk `curlew sync` runs writes it. No new switch:
  *     enabling the backend is the opt-in. A device the homeserver logs out is stopped, not retried;
+ *   - follows every ENABLED Telegram account the same way: mtcute's update stream is only a
+ *     wake-up (`TelegramLive`), the read-only chat sync writes, and the handle never sends;
  *   - takes the receive lease per account, so a `sync` on the same account stands down — two
  *     devices on one account each acknowledge half the copy (`@curlew/store`);
  *   - reconnects a dropped session with backoff, and stops an account the network logged out;
@@ -55,6 +57,7 @@ import {
 import type { DeliveryProgress, DeliverySyncResult, IndexDatabase, RebuildResult } from '@curlew/store';
 import { newestSeq, receiveDeliveries } from '@curlew/store';
 import { MatrixBackend } from '@curlew/matrix';
+import { TelegramBackend } from '@curlew/telegram';
 import { XmppBackend } from '@curlew/xmpp';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
@@ -109,6 +112,11 @@ export interface DaemonParams {
    * when the config enables it, and `null` to follow none.
    */
   matrix?: MatrixBackend | null;
+  /**
+   * The Telegram backend whose accounts are followed. Injected by tests; by default the registry's,
+   * when the config enables it, and `null` to follow none.
+   */
+  telegram?: TelegramBackend | null;
   /** Short only in tests. */
   changePollMs?: number;
   /** Where the write log goes; injected by tests. */
@@ -159,6 +167,14 @@ export function createMatrixBackend(config: CurlewConfig): MatrixBackend | null 
   if (!registry.enabled(config).some((plugin) => plugin.manifest.name === 'matrix')) return null;
   const created = registry.create(config, 'matrix', backendContext('matrix', config));
   return created instanceof MatrixBackend ? created : null;
+}
+
+/** The registry's Telegram backend when the config enables it (the daemon follows it), else `null`. */
+export function createTelegramBackend(config: CurlewConfig): TelegramBackend | null {
+  const registry = builtinRegistry();
+  if (!registry.enabled(config).some((plugin) => plugin.manifest.name === 'telegram')) return null;
+  const created = registry.create(config, 'telegram', backendContext('telegram', config));
+  return created instanceof TelegramBackend ? created : null;
 }
 
 /** The registry's XMPP backend when the config enables it (the daemon follows it), else `null`. */
@@ -370,7 +386,19 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
       : (await matrix.listAccounts())
           .map((a) => a.id)
           .filter((id) => !params.accountId || id === params.accountId);
-  if (backends.length === 0 && xmppAccounts.length === 0 && matrixAccounts.length === 0) {
+  const telegram = params.telegram === undefined ? createTelegramBackend(config) : params.telegram;
+  const telegramAccounts =
+    telegram === null
+      ? []
+      : (await telegram.listAccounts())
+          .map((a) => a.id)
+          .filter((id) => !params.accountId || id === params.accountId);
+  if (
+    backends.length === 0 &&
+    xmppAccounts.length === 0 &&
+    matrixAccounts.length === 0 &&
+    telegramAccounts.length === 0
+  ) {
     throw new Error(
       'nothing to receive — no delivery-only backend is enabled (`curlew backends list`; the daemon receives Signal and WhatsApp), no XMPP or Matrix account is enabled; `curlew sync` stays for mail and the other chats',
     );
@@ -430,6 +458,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   else outer.addEventListener('abort', forward, { once: true });
   let followed: FollowResult[] = [];
   let followedMatrix: FollowResult[] = [];
+  let followedTelegram: FollowResult[] = [];
   // The sessions this run is holding, so a send asked for over the bus reaches the connection that
   // is already up. A reconnect hands over `null` and then the new session, so a send during one
   // finds nothing and is told `not-followed` rather than going out on a connection that is gone.
@@ -441,6 +470,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   const table = new AccountTable();
   for (const accountId of xmppAccounts) table.seed('xmpp', accountId, new Date());
   for (const accountId of matrixAccounts) table.seed('matrix', accountId, new Date());
+  for (const accountId of telegramAccounts) table.seed('telegram', accountId, new Date());
   let lastSeq: number | null = null;
   try {
     lastSeq = newestSeq(db);
@@ -465,7 +495,8 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     log(
       `curlew-daemon: receiving from ${backends.map((b) => b.manifest.name).join(', ') || 'no delivery backend'}` +
         `${xmppAccounts.length > 0 ? ` and following ${xmppAccounts.length} xmpp account(s)` : ''}` +
-        `${matrixAccounts.length > 0 ? `${xmppAccounts.length > 0 ? ',' : ' and following'} ${matrixAccounts.length} matrix account(s)` : ''} ` +
+        `${matrixAccounts.length > 0 ? `${xmppAccounts.length > 0 ? ',' : ' and following'} ${matrixAccounts.length} matrix account(s)` : ''}` +
+        `${telegramAccounts.length > 0 ? `${xmppAccounts.length + matrixAccounts.length > 0 ? ',' : ' and following'} ${telegramAccounts.length} telegram account(s)` : ''} ` +
         `(${params.accountId ?? 'every account'}) — stop with SIGTERM`,
     );
     // The prompt service (ADR 0009). The policy is read afresh per request, so a rule edited by
@@ -556,6 +587,29 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     ).then((done) => {
       followedMatrix = done;
     });
+    const followingTelegram = Promise.all(
+      telegramAccounts.map((accountId) =>
+        followAccount({
+          db,
+          backend: telegram as TelegramBackend,
+          backendName: 'telegram',
+          accountId,
+          open: (id) => (telegram as TelegramBackend).connectLive(id),
+          permit: { account: accountId, addresses: [] },
+          signal,
+          log,
+          onWrite: () => {
+            schedule();
+            announce();
+          },
+          onProgress: progress,
+          holder: String(process.pid),
+          writeLogPath: params.writeLogPath,
+        }),
+      ),
+    ).then((done) => {
+      followedTelegram = done;
+    });
     const [results] = await Promise.all([
       Promise.all(
         backends.map(
@@ -582,6 +636,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
       ),
       following,
       followingMatrix,
+      followingTelegram,
     ]);
     // The writes are in: no more debounced rebuilds are scheduled, and whatever is already running
     // or queued is awaited — `rebuildNow` chains behind it, so this covers a rebuild that started
@@ -619,6 +674,17 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
         indexBusy: false,
         loggedOut: f.loggedOut,
       })),
+      ...followedTelegram.map((f) => ({
+        backend: 'telegram',
+        accountId: f.accountId,
+        batches: f.catchUps,
+        added: f.added,
+        removed: 0,
+        error: null,
+        heldBy: f.heldBy,
+        indexBusy: false,
+        loggedOut: f.loggedOut,
+      })),
     ];
     const errors = accounts.filter((a) => a.error !== null).length;
     log(
@@ -631,7 +697,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
       removed: results.reduce((n, r) => n + r.removed, 0),
       errors,
       conversations,
-      followed: [...followed, ...followedMatrix],
+      followed: [...followed, ...followedMatrix, ...followedTelegram],
     };
   } finally {
     clearInterval(changeWatch);

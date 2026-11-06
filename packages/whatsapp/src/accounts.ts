@@ -13,7 +13,7 @@ import type { BackendAccount } from '@curlew/protocol';
 import { SecretStore } from '@curlew/store';
 import { existsSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { ACCOUNT_NAMESPACE } from './auth-state.ts';
+import { ACCOUNT_NAMESPACE, readOwnAddress } from './auth-state.ts';
 
 const ACCOUNT_ID = /^whatsapp-\d+$/;
 
@@ -68,7 +68,13 @@ export function listSessionAccounts(secretsDir: string): BackendAccount[] {
     if (!id || !ACCOUNT_ID.test(id)) continue;
     const store = SecretStore.open(join(secretsDir, file));
     try {
-      accounts.push({ id, identity: store.get(ACCOUNT_NAMESPACE, 'identity') ?? id, provider: 'WhatsApp' });
+      const address = readOwnAddress(store);
+      accounts.push({
+        id,
+        identity: store.get(ACCOUNT_NAMESPACE, 'identity') ?? id,
+        provider: 'WhatsApp',
+        ...(address !== null ? { address } : {}),
+      });
     } finally {
       store.close();
     }

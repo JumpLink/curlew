@@ -2,6 +2,7 @@ import { describe, expect, it } from '@gjsify/unit';
 import type { ConversationMessage } from '@curlew/protocol';
 
 import {
+  attachmentLines,
   bubbleText,
   chatSubject,
   composeMailReply,
@@ -9,6 +10,8 @@ import {
   dayStarts,
   newOlder,
   replySubject,
+  senderName,
+  senderRunStarts,
   subjectLabels,
 } from '../../../src/window/conversation-model.ts';
 
@@ -40,15 +43,23 @@ export default async () => {
       expect(chatSubject('')).toBe('Chat');
       expect(replySubject('Frage')).toBe('Re: Frage');
       expect(replySubject('Re: Frage')).toBe('Re: Frage');
-      expect(composeMailReply(message({ id: 'a', emailChat: true }), null, 'Hallo').subject).toBe('Chat: Hallo');
-      expect(composeMailReply(message({ id: 'a', subject: 'Frage' }), null, 'Hallo').subject).toBe('Re: Frage');
+      expect(composeMailReply(message({ id: 'a', emailChat: true }), null, 'Hallo').subject).toBe(
+        'Chat: Hallo',
+      );
+      expect(composeMailReply(message({ id: 'a', subject: 'Frage' }), null, 'Hallo').subject).toBe(
+        'Re: Frage',
+      );
     });
 
     await it('threads onto the parent Message-ID without duplicating References', async () => {
-      const reply = composeMailReply(message({ id: 'a', emailChat: true }), {
-        messageId: '<child@example.org>',
-        references: ['<root@example.org>', '<child@example.org>'],
-      }, 'Hallo');
+      const reply = composeMailReply(
+        message({ id: 'a', emailChat: true }),
+        {
+          messageId: '<child@example.org>',
+          references: ['<root@example.org>', '<child@example.org>'],
+        },
+        'Hallo',
+      );
       expect(reply.inReplyTo).toBe('<child@example.org>');
       expect(reply.references).toEqualArray(['<root@example.org>', '<child@example.org>']);
       expect(reply.emailChat).toBe(true);
@@ -62,7 +73,10 @@ export default async () => {
         message({ id: 'd', subject: 'Second' }),
         message({ id: 'e', subject: 'Re: Second' }),
       ]);
-      expect([...labels.entries()]).toStrictEqual([['a', 'First'], ['d', 'Second']]);
+      expect([...labels.entries()]).toStrictEqual([
+        ['a', 'First'],
+        ['d', 'Second'],
+      ]);
     });
   });
 
@@ -121,6 +135,76 @@ export default async () => {
       const shown = [message({ id: 'c', subject: 'Re: Plan' })];
       expect([...subjectLabels(shown).keys()]).toStrictEqual(['c']);
       expect([...subjectLabels([...older, ...shown]).keys()]).toStrictEqual(['a']);
+    });
+
+    await it('shows the sender above the first bubble of a run in a group', async () => {
+      const from = (id: string, sender: string, over: Partial<ConversationMessage> = {}) =>
+        message({
+          id,
+          senderId: sender,
+          senderName: sender,
+          backend: 'signal',
+          presentation: 'bubble',
+          ...over,
+        });
+      const shown = [
+        from('a', 'Anna'),
+        from('b', 'Anna'),
+        from('c', 'Ben'),
+        from('d', 'x', { fromSelf: true, senderId: null, senderName: null }),
+        from('e', 'Ben'),
+        from('f', 'Anna'),
+      ];
+      expect([...senderRunStarts(shown, true)]).toStrictEqual([
+        ['a', 'Anna'],
+        ['c', 'Ben'],
+        ['e', 'Ben'],
+        ['f', 'Anna'],
+      ]);
+      expect(senderRunStarts(shown, false).size).toBe(0);
+    });
+
+    await it('keeps sender runs right when an older page is prepended', async () => {
+      const from = (id: string, sender: string) =>
+        message({ id, senderId: sender, senderName: sender, presentation: 'bubble' });
+      const newer = [from('c', 'Anna'), from('d', 'Ben')];
+      expect([...senderRunStarts(newer, true).keys()]).toStrictEqual(['c', 'd']);
+      // The older page ends with the same sender: 'c' joins that run and loses its label.
+      const merged = [from('a', 'Ben'), from('b', 'Anna'), ...newer];
+      expect([...senderRunStarts(merged, true).keys()]).toStrictEqual(['a', 'b', 'd']);
+    });
+
+    await it('skips notices and names an unlabelled sender by address', async () => {
+      const shown = [
+        message({ id: 'n', presentation: 'notice', senderId: 'p' }),
+        message({
+          id: 'a',
+          presentation: 'bubble',
+          senderId: 'p',
+          senderAddress: { kind: 'jid', value: 'anna@example.org' },
+        }),
+      ];
+      expect([...senderRunStarts(shown, true)]).toStrictEqual([['a', 'anna@example.org']]);
+      expect(senderName(message({ id: 'x', senderName: '  ' }))).toBe('Unknown sender');
+    });
+
+    await it('says what an attachment-only message carries, else just Attachment', async () => {
+      expect(attachmentLines(undefined)).toStrictEqual(['Attachment']);
+      expect(attachmentLines([])).toStrictEqual(['Attachment']);
+      expect(attachmentLines([{ filename: null, mimeType: null }])).toStrictEqual(['Attachment']);
+      expect(attachmentLines([{ filename: 'report.pdf', mimeType: 'application/pdf' }])).toStrictEqual([
+        'File: report.pdf',
+      ]);
+      expect(attachmentLines([{ filename: 'cat.jpg', mimeType: 'image/jpeg' }])).toStrictEqual([
+        'Image: cat.jpg',
+      ]);
+      expect(attachmentLines([{ filename: null, mimeType: 'video/mp4' }])).toStrictEqual(['Video']);
+      expect(attachmentLines([{ filename: null, mimeType: 'audio/ogg' }])).toStrictEqual(['Audio']);
+      const many = Array.from({ length: 5 }, (_unused, i) => ({
+        filename: `f${i}.txt`,
+        mimeType: 'text/plain',
+      }));
+      expect(attachmentLines(many).slice(2)).toStrictEqual(['File: f2.txt', 'and 2 more attachments']);
     });
   });
 };

@@ -43,6 +43,7 @@ import type {
 } from '@curlew/protocol';
 import type { IndexDatabase } from './db.ts';
 import { appendChanges } from './changes.ts';
+import { conversationTotalsSql } from './conversation-totals.ts';
 import { insertMany, placeholders, seqColumn, type SqlValue, withTransaction } from './db.ts';
 import { upsertAccount } from './index-store.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
@@ -154,6 +155,11 @@ interface Cursor {
    * about. NULL starts again at the chat's oldest stored message (ADR 0004).
    */
   probeSeq: number | null;
+}
+
+/** A tri-state flag as the column holds it: NULL = the network did not say. */
+function flag(value: boolean | null | undefined): number | null {
+  return value === null || value === undefined ? null : value ? 1 : 0;
 }
 
 function num(value: unknown): number | null {
@@ -426,7 +432,7 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
     db,
     `INSERT OR REPLACE INTO chat_cursors
        (conversation_id, backend, account_id, chat_id, kind, last_seq, read_inbox_seq, read_outbox_seq, last_sync_at,
-        last_cursor, probe_seq)`,
+        last_cursor, probe_seq, room_public, room_encrypted, room_members)`,
     batch.cursors,
   );
   // After the inserts, so a correction or retraction of a message written in this very batch
@@ -456,16 +462,10 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
      WHERE backend = ? AND account_id = ? AND remote_seq IS NOT NULL`,
   ).run(batch.backend, batch.accountId);
   db.prepare(
-    `UPDATE conversations SET
-       message_count = (SELECT COUNT(*) FROM conversation_messages m WHERE m.conversation_id = conversations.id),
-       unread_count = (SELECT COUNT(*) FROM conversation_messages m
-                        WHERE m.conversation_id = conversations.id AND m.from_self = 0 AND m.seen = 0),
-       first_message_at = (SELECT MIN(sent_at) FROM conversation_messages m WHERE m.conversation_id = conversations.id),
-       last_message_at = (SELECT MAX(sent_at) FROM conversation_messages m WHERE m.conversation_id = conversations.id),
-       has_attachments = (SELECT COUNT(*) > 0 FROM conversation_messages m
-                           WHERE m.conversation_id = conversations.id AND m.has_attachments = 1)
-     WHERE backend = ? AND account_id = ?
+    conversationTotalsSql(
+      `backend = ? AND account_id = ?
        AND id IN (SELECT conversation_id FROM chat_cursors WHERE backend = ? AND account_id = ?)`,
+    ),
   ).run(batch.backend, batch.accountId, batch.backend, batch.accountId);
   appendChanges(
     db,
@@ -552,7 +552,7 @@ function recordChatError(result: ChatAccountSyncResult, err: unknown): void {
 async function syncAccount(
   db: IndexDatabase,
   backend: ChatBackend,
-  account: { id: string; identity: string; provider: string },
+  account: { id: string; identity: string; provider: string; address?: string },
   options: Required<Omit<ChatSyncOptions, 'accountId' | 'lease'>>,
   budget: { total: number; remaining: number; exhausted: boolean },
 ): Promise<ChatAccountSyncResult> {
@@ -776,6 +776,9 @@ async function syncAccount(
         syncedAt,
         lastCursor,
         probeSeq,
+        flag(chat.room?.public),
+        flag(chat.room?.encrypted),
+        chat.room?.memberCount ?? null,
       ]);
       // The network asked this account to wait. What this chat already delivered is in the batch
       // and is committed by the `finally` below; the cursor covers exactly it, so a later run
@@ -822,7 +825,7 @@ async function syncAccount(
 async function syncUnderLease(
   db: IndexDatabase,
   backend: ChatBackend,
-  account: { id: string; identity: string; provider: string },
+  account: { id: string; identity: string; provider: string; address?: string },
   options: Required<Omit<ChatSyncOptions, 'accountId' | 'lease'>>,
   budget: { total: number; remaining: number; exhausted: boolean },
   lease: NonNullable<ChatSyncOptions['lease']>,
@@ -912,7 +915,7 @@ export async function syncChats(
 
 export interface SentChatRecord {
   backend: string;
-  account: { id: string; identity: string; provider: string };
+  account: { id: string; identity: string; provider: string; address?: string };
   /** The chat's remote id — for a direct XMPP chat, the peer's bare JID. */
   chatRemoteId: string;
   /** The id the message was sent with (XMPP origin-id): the network's own copy replaces this row. */
@@ -977,6 +980,9 @@ function recordSentRows(
       null,
       null,
       record.sentAt,
+      null,
+      null,
+      null,
       null,
       null,
     ]);

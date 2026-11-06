@@ -102,6 +102,24 @@ export interface TelegramApi {
   destroy(): Promise<void>;
 }
 
+/**
+ * The live side of a client that keeps listening (the daemon's follow, ADR 0002 §4). Only a
+ * WAKE-UP, like `MatrixLive`: no update carries content out, the caller reads through the same
+ * history walk `curlew sync` runs. Nothing here can send, edit or mark anything read.
+ */
+export interface TelegramLive {
+  /** Start receiving updates. Called once, after `connect()` proved the session. */
+  start(): Promise<void>;
+  /** Called when an update that may carry a new, edited or deleted message arrived. */
+  onArrival(listener: () => void): () => void;
+  /**
+   * Called once when this connection will not recover by itself. `loggedOut` is Telegram saying
+   * the session is gone (revoked, deactivated): retrying cannot help. `reason` is a name, never
+   * Telegram's message.
+   */
+  onClosed(listener: (end: { reason: string; loggedOut: boolean }) => void): void;
+}
+
 /** What the interactive login asks the user for. Each is called only when Telegram needs it. */
 export interface LoginPrompts {
   /** Your own app's api_id and api_hash — asked only when the environment does not set them. */
@@ -128,6 +146,8 @@ export interface TelegramClientHandle extends TelegramApi {
   /** Send ONE plain-text message to the chat (a marked id, as in `TgPeer.id`); returns it as sent. */
   sendText(chatId: number, text: string): Promise<TgMessage>;
   connect(): Promise<void>;
+  /** Present only on a client made with `live: true`. */
+  readonly live?: TelegramLive;
   /** Log in (phone → code → optional 2FA password) and return the logged-in user. */
   login(prompts: LoginPrompts): Promise<TgUser>;
 }

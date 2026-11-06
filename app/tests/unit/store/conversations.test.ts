@@ -5,6 +5,7 @@ import {
   getConversation,
   getRecentMessages,
   listConversations,
+  mailAttachments,
   mailReplyTarget,
   migrate,
   openIndexDb,
@@ -344,11 +345,49 @@ export default async () => {
       }
     });
 
+    await it('lists what a mail message carries, by file name and type', async () => {
+      const backend = new FakeBackend();
+      backend.put('INBOX', [
+        message(1, 'Foto', '', {
+          from: [ANNA],
+          to: [ME],
+          hasAttachment: true,
+          attachments: [
+            { section: '2', filename: 'cat.jpg', mimeType: 'image/jpeg', size: 10 },
+            { section: '3', filename: null, mimeType: 'application/pdf', size: 20 },
+          ],
+        }),
+        message(2, 'Ohne', 'Text', { from: [BEN], to: [ME] }),
+      ]);
+      const db = freshDb();
+      try {
+        await syncIndex(db, backend, { now: AT('2026-08-06T12:00:00Z') });
+        rebuildConversations(db, { contacts: CONTACTS });
+        const ref = { accountId: 'fake', folder: 'INBOX', uid: 1 };
+        const found = listConversations(db).flatMap((c) => getConversation(db, c.id)?.messages ?? []);
+        const withFile = found.find((m) => m.hasAttachments);
+        expect(
+          mailAttachments(db, withFile?.ref ?? ref).map((a) => [a.section, a.filename, a.mimeType, a.size]),
+        ).toStrictEqual([
+          ['2', 'cat.jpg', 'image/jpeg', 10],
+          ['3', null, 'application/pdf', 20],
+        ]);
+        expect(mailAttachments(db, found.find((m) => !m.hasAttachments)?.ref ?? ref).length).toBe(0);
+        expect(mailAttachments(db, { accountId: 'fake' }).length).toBe(0);
+      } finally {
+        db.close();
+      }
+    });
+
     await it('reads only the newest messages of several conversations, oldest first', async () => {
       const { db } = await built();
       try {
         const all = listConversations(db);
-        const newest = getRecentMessages(db, all.map((c) => c.id), { limit: 2, includeBodies: true });
+        const newest = getRecentMessages(
+          db,
+          all.map((c) => c.id),
+          { limit: 2, includeBodies: true },
+        );
         expect(newest.map((m) => m.bodyText)).toStrictEqual(['Hallo, eine Frage', 'Hallo Ben und Anna']);
         const fest = all.find((c) => c.title === 'Sommerfest')?.id ?? '';
         const one = getRecentMessages(db, [fest], { limit: 10, includeBodies: true });
@@ -384,14 +423,20 @@ export default async () => {
           const seen: string[] = [];
           let before: { sentAt: string | null; id: string } | undefined;
           for (let guard = 0; guard < 20; guard++) {
-            const page = getRecentMessages(db, ['c-1', 'c-2'], { limit: size, ...(before ? { before } : {}) });
+            const page = getRecentMessages(db, ['c-1', 'c-2'], {
+              limit: size,
+              ...(before ? { before } : {}),
+            });
             seen.unshift(...page.map((m) => m.id));
             if (page.length < size) break;
             before = { sentAt: page[0].sentAt, id: page[0].id };
           }
           expect(seen).toStrictEqual(expected);
         }
-        const mid = getRecentMessages(db, ['c-1', 'c-2'], { limit: 10, before: { sentAt: '2026-08-01T10:00:00Z', id: 'm-d' } });
+        const mid = getRecentMessages(db, ['c-1', 'c-2'], {
+          limit: 10,
+          before: { sentAt: '2026-08-01T10:00:00Z', id: 'm-d' },
+        });
         expect(mid.map((m) => m.id)).toStrictEqual(['m-a', 'm-b', 'm-c']);
         const onlyOne = getRecentMessages(db, ['c-1'], { limit: 10, before: { sentAt: null, id: 'm-b' } });
         expect(onlyOne.map((m) => m.id)).toStrictEqual(['m-a']);

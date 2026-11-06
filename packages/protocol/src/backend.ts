@@ -90,6 +90,13 @@ export interface BackendAccount {
   id: string;
   identity: string;
   provider: string;
+  /**
+   * The account's own address(es) on the network, when the backend knows them without opening a
+   * secret — a space-separated list when the network has more than one spelling (WhatsApp: the
+   * phone-number JID and the LID). Lets a reader that has no access to the account's secrets
+   * recognise the chat with oneself. Never a key, a token or a password; absent when unknown.
+   */
+  address?: string;
 }
 
 /**
@@ -192,6 +199,21 @@ export interface ChatInfo {
    * decides "caught up" by comparing it with the cursor it stored, not by `lastSeq`.
    */
   lastCursor?: string | null;
+  /**
+   * What a room-based network reports about the room itself. Every field is null when the network
+   * did not say: a reader must not guess "public" or "not encrypted" from silence.
+   */
+  room?: ChatRoomFacts;
+}
+
+/** The room facts a window shows next to a composer; null = unknown. */
+export interface ChatRoomFacts {
+  /** Anyone may join (Matrix `join_rule: public`). */
+  public: boolean | null;
+  /** End-to-end encrypted (Matrix `m.room.encryption` state present). */
+  encrypted: boolean | null;
+  /** Joined members, the user included. */
+  memberCount: number | null;
 }
 
 /** One message in a chat. */

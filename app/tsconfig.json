@@ -20,6 +20,7 @@
       "@girs/ebookcontacts-1.2",
       "@girs/ecal-2.0",
       "@girs/icalglib-3.0",
+      "@girs/gdkpixbuf-2.0",
       "@girs/gtk-4.0/ambient",
       "@girs/adw-1/ambient"
     ]

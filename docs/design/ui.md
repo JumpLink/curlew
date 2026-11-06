@@ -76,9 +76,17 @@ All contacts, channels and groups of every messenger in **one** list.
 
 - Sections (collapsible): People, Groups; later Favourites and Channels.
 - **Filters live in a popover**, not tabs: a `view-filter-symbolic` menu button in the sidebar
-  header opens toggles under *Protocols* and, once a protocol is chosen and it has several
-  accounts, under *Accounts*, plus **Clear filters**. The button is shown only when there is a
-  choice (two protocols or two accounts); a list with one account has none.
+  header opens toggles under *Protocols* and, for each chosen protocol with several accounts, a
+  group of account toggles under that protocol's name, plus **Clear filters**. An account choice
+  narrows only its own protocol; deselecting a protocol drops its account choices. The button is
+  shown only when there are two protocols or an account choice to make.
+- **Note to self**: a chat with one's own account is titled *Note to self* and gets a composer.
+  Recognised where the index tells positively (Signal, Telegram, XMPP, Matrix, WhatsApp); mail
+  is not. WhatsApp reads the own JIDs from `accounts.address`, which a sync or daemon run fills
+  from the stored session; with none known the chat stays an ordinary one.
+- **Matrix rooms** get a composer targeting the room id. A line above it reads "Public room · N
+  members" or "Room · N members", only once the homeserver said both; an unknown is left out. A
+  room known to be encrypted keeps the composer disabled with the reason shown instead.
 - **Direct mail is grouped by person**: every direct mail thread with the same person is one
   row. Chat backends are not regrouped, their conversations already are one per person.
 - **Show all emails** (Preferences, on by default). Off, the list keeps only mail threads that
@@ -91,7 +99,8 @@ All contacts, channels and groups of every messenger in **one** list.
 - Unread has three tiers: an **accent count** (a mention), a **grey count** (unread), a **dot**
   (activity without a count); the title is bold while unread.
 - Future: grouping one person across messengers by hand. A separate ADR; the leaning is that
-  Curlew stores the link itself and never writes the address book without confirmation.
+  Curlew stores the link itself and never writes the address book without confirmation. The
+  concept — merged rows, the protocol picker, pins — is [`contacts.md`](contacts.md).
 
 ### Built and not built
 
@@ -118,7 +127,23 @@ messages right-aligned, the time at the bubble's foot, "Contains attachments" wh
 some) with a day separator between days; a mail subject only where the topic changes, so an
 email chat reads like a chat; a composer (a rounded entry and a round accent send button,
 `mail-send-symbolic` + `circular`) shown only when the conversation has a reply target. A
-failed send stays in the entry and shows a toast.
+failed send stays in the entry and shows a toast. In a group, the first bubble of a run from one
+sender carries the sender's name and a small initials avatar (not for own messages or direct
+chats). A message with only attachments shows their kind and file name where the index has them
+(mail), else "Attachment".
+
+**Mail attachments** (mail only; chat backends keep the "Attachment" line). A picture of a known
+raster type up to 12 MB is shown in the bubble (`Gtk.Picture`, scaled down to 420 × 300, an
+`Adw.Spinner` while it loads); any other part, and a picture that fails to load, is a tile: a
+themed icon from the MIME type, name, size, and Open / Save as… (a video's primary button is
+Play). Parts stack vertically above the text; a message with no written text hides its body.
+Clicking a picture opens the **viewer**, an overlay over the split view (as in Fractal) with
+Back, Save, Copy and Fullscreen; Escape closes it, F11 toggles fullscreen, a video uses
+`Gtk.Video`'s own controls. No carousel, zoom or animation. The bytes are not in the index: a
+picture is fetched when it nears the screen, any other part on a click, through the same
+`mailSaveAttachment` as the CLI, into `$XDG_CACHE_HOME/curlew/previews` (`CURLEW_PREVIEWS_DIR`).
+That cache is message content, so the window empties it at start. Not built: SVG, audio in the
+viewer, thumbnails decoded off the main thread, screen-reader labels beyond the tooltips.
 
 **History is paged** (Fractal's rule). The pane opens on the newest 50 messages and scrolls to
 the end; when the scroll position comes within two viewports of the top (`value < page_size * 2`)
