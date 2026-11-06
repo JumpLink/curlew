@@ -576,4 +576,95 @@ export default async () => {
       }
     });
   });
+
+  // The other order, and the one a running daemon produces every time: the send is routed
+  // through the daemon, whose own socket receives the message back and writes the delivered row
+  // before the caller gets to `recordDelivered`. An echo written then has no adopter left — the
+  // delivered copy arrives exactly once — so it stayed in the chat as a second bubble forever.
+  await describe('a send recorded after its delivered copy', async () => {
+    const ACCOUNT_RECORD = { id: ACCOUNT, identity: 'Me', provider: 'Fake' };
+    const ECHO_TEXT = 'Bis gleich';
+
+    async function sendAfterDelivery(deliveredText: string | null, echoText = ECHO_TEXT) {
+      const db = freshDb();
+      const delivered = await receiveDeliveries(
+        db,
+        fakeBackend([[incoming('d-anna', msg('anna/9', 9, deliveredText, { fromSelf: true, sender: null }))]]),
+      );
+      expect(delivered.accounts[0].error).toBe(null);
+      const recorded = recordSentChatMessage(db, {
+        backend: BACKEND,
+        account: ACCOUNT_RECORD,
+        chatRemoteId: 'd-anna',
+        clientId: 'anna/9',
+        text: echoText,
+        sentAt: '2026-01-01T12:00:09.000Z',
+      });
+      return { db, recorded };
+    }
+
+    const bodies = (db: ReturnType<typeof freshDb>) =>
+      (getConversation(db, conv('d-anna'), { includeBodies: true })?.messages ?? []).map(
+        (m) => `${m.ref.remoteId}=${String(m.bodyText)}`,
+      );
+
+    await it('writes no echo beside it and answers with the delivered row', async () => {
+      const { db, recorded } = await sendAfterDelivery(ECHO_TEXT);
+      try {
+        expect(bodies(db).join('|')).toBe(`anna/9=${ECHO_TEXT}`);
+        expect(recorded.conversationId).toBe(conv('d-anna'));
+        expect(recorded.messageId).toBe(deliveredMessageId(BACKEND, ACCOUNT, 'd-anna', 'anna/9'));
+        const left = db
+          .prepare(`SELECT COUNT(*) AS n FROM conversation_messages WHERE remote_id LIKE 'local:%'`)
+          .get() as Record<string, unknown>;
+        expect(Number(left.n)).toBe(0);
+        // The chat counts the message once, as it would have before the send was recorded.
+        const row = db.prepare('SELECT message_count FROM conversations WHERE id = ?').get(conv('d-anna')) as
+          | Record<string, unknown>
+          | undefined;
+        expect(Number(row?.message_count)).toBe(1);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('gives the delivered copy the text it has none of', async () => {
+      const { db } = await sendAfterDelivery(null);
+      try {
+        expect(bodies(db).join('|')).toBe(`anna/9=${ECHO_TEXT}`);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it("leaves the delivered copy's own text alone", async () => {
+      const { db } = await sendAfterDelivery('wie das Netz es kennt');
+      try {
+        expect(bodies(db).join('|')).toBe('anna/9=wie das Netz es kennt');
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('still writes the echo while the network has not delivered it', async () => {
+      const db = freshDb();
+      try {
+        const recorded = recordSentChatMessage(db, {
+          backend: BACKEND,
+          account: ACCOUNT_RECORD,
+          chatRemoteId: 'd-anna',
+          clientId: 'anna/9',
+          text: ECHO_TEXT,
+          sentAt: '2026-01-01T12:00:09.000Z',
+        });
+        const row = db
+          .prepare('SELECT remote_id, body FROM conversation_messages WHERE id = ?')
+          .get(recorded.messageId) as Record<string, unknown>;
+        expect(String(row.remote_id)).toBe('local:anna/9');
+        expect(String(row.body)).toBe(ECHO_TEXT);
+      } finally {
+        db.close();
+      }
+    });
+  });
 };
