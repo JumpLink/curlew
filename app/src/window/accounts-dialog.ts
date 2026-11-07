@@ -32,10 +32,8 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
   const onError = (err: Error) => overlay.add_toast(new Adw.Toast({ title: err.message, timeout: 4 }));
   const page = createAccountsPage(onError);
 
-  const toolbar = new Adw.ToolbarView();
-  toolbar.add_top_bar(new Adw.HeaderBar());
-  toolbar.set_content(page.widget);
-  overlay.set_child(toolbar);
+  // The page is a navigation view with its own header bar, so the next pages get a back button.
+  overlay.set_child(page.widget);
 
   const dialog = new Adw.Dialog({
     title: _('Accounts'),
