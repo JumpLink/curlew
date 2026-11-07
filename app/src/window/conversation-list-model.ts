@@ -284,6 +284,31 @@ export function singleChoice(entry: ListEntry): ProtocolChoice | null {
 }
 
 /**
+ * The subtitle under a merged "Note to self" header: the protocols it can send through, each once,
+ * in a fixed order. An ordinary row keeps the single protocol label.
+ */
+export function entryProtocolSubtitle(entry: ListEntry): string {
+  if (entry.members.length === 0) return protocolLabel(entry.backend);
+  const labels = [...new Set(entry.members.map((m) => protocolLabel(m.backend)))].sort();
+  return labels.join(' · ');
+}
+
+/**
+ * The subtitle for a list row. Ordinary rows show the account label if there is one, else the
+ * protocol name; merged rows show one label per member the same way. The raw account id is never
+ * surfaced because it is not text a person reads.
+ */
+export function listSubtitle(entry: ListEntry, accountLabels: ReadonlyMap<string, string>): string {
+  if (entry.members.length === 0) {
+    return accountLabels.get(entry.accountId) ?? protocolLabel(entry.backend);
+  }
+  const labels = [
+    ...new Set(entry.members.map((m) => accountLabels.get(m.accountId) ?? protocolLabel(m.backend))),
+  ].sort();
+  return labels.join(' · ');
+}
+
+/**
  * The small line above a Matrix room's composer: "Public room · 12 members". Only for a room
  * that is not a direct chat, and only once the homeserver has said whether it is public and how
  * many are in it — an unknown is left out, not guessed.

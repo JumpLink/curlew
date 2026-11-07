@@ -22,6 +22,7 @@ import {
   backendChoices,
   buildSections,
   initials,
+  listSubtitle,
   protocolIcon,
   protocolLabel,
   shortTime,
@@ -77,7 +78,7 @@ function badgedAvatar(entry: ListEntry): Gtk.Widget {
   return overlay;
 }
 
-function entryRow(entry: ListEntry, accountLabel: string | undefined): Gtk.ListBoxRow {
+function entryRow(entry: ListEntry, accountLabels: Map<string, string>): Gtk.ListBoxRow {
   const title = new Gtk.Label({ label: entry.title, xalign: 0, ellipsize: 3, hexpand: true });
   // Bold while unread; the HIG's own style class, so dark mode and accents stay Adwaita's.
   if (unreadTier(entry) === 'count') title.add_css_class('heading');
@@ -91,7 +92,7 @@ function entryRow(entry: ListEntry, accountLabel: string | undefined): Gtk.ListB
   // The protocol is the badge on the avatar, not text. There is no stored preview of the last
   // message yet (docs/design/ui.md), so the line names the account.
   const subtitle = new Gtk.Label({
-    label: accountLabel ?? entry.accountId,
+    label: listSubtitle(entry, accountLabels),
     xalign: 0,
     ellipsize: 3,
     hexpand: true,
@@ -303,7 +304,7 @@ export function createConversationList(
       list.append(header);
       if (isCollapsed) continue;
       for (const entry of section.entries) {
-        const row = entryRow(entry, labels.get(entry.accountId));
+        const row = entryRow(entry, labels);
         refs.set(row, { kind: 'entry', entry });
         list.append(row);
         if (entry.id === selectedId) list.select_row(row);

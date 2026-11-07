@@ -8,7 +8,9 @@ import {
   canSend,
   composerBlock,
   dropDeselectedAccounts,
+  entryProtocolSubtitle,
   initials,
+  listSubtitle,
   matches,
   protocolChoices,
   protocolIcon,
@@ -479,6 +481,50 @@ export default async () => {
       expect(initials('  (team) chat room')).toBe('TC');
       expect(initials('ben')).toBe('B');
       expect(initials('')).toBe('');
+    });
+
+    it('subtitles a merged row with every member protocol once, sorted', () => {
+      const merged = entry({
+        id: 'note-to-self',
+        members: [
+          entry({ id: 'm1', backend: 'signal', target: 'aci' }),
+          entry({ id: 'm2', backend: 'xmpp', target: 'a@example.org' }),
+          entry({ id: 'm3', backend: 'signal', target: 'aci' }),
+        ],
+      });
+      expect(entryProtocolSubtitle(merged)).toBe('Signal · XMPP');
+    });
+
+    it('subtitles an ordinary row with its protocol', () => {
+      expect(entryProtocolSubtitle(entry({ id: 'a', backend: 'matrix' }))).toBe('Matrix');
+      expect(entryProtocolSubtitle(entry({ id: 'b', backend: 'future' }))).toBe('future');
+    });
+
+    it('lists the account label for an ordinary row, never the raw account id', () => {
+      const labels = new Map([['xmpp-abc123', 'Me@example.org']]);
+      expect(listSubtitle(entry({ id: 'a', backend: 'xmpp', accountId: 'xmpp-abc123' }), labels)).toBe(
+        'Me@example.org',
+      );
+      expect(listSubtitle(entry({ id: 'b', backend: 'future', accountId: 'future-1' }), labels)).toBe(
+        'future',
+      );
+    });
+
+    it('lists a label per member for a merged row, falling back to the protocol', () => {
+      const merged = entry({
+        id: 'note-to-self',
+        members: [
+          entry({ id: 'm1', backend: 'signal', accountId: 'signal-1', target: 'aci' }),
+          entry({ id: 'm2', backend: 'xmpp', accountId: 'xmpp-1', target: 'a@example.org' }),
+          entry({ id: 'm3', backend: 'signal', accountId: 'signal-1', target: 'aci' }),
+          entry({ id: 'm4', backend: 'telegram', accountId: 'telegram-1', target: '42' }),
+        ],
+      });
+      const labels = new Map([
+        ['signal-1', 'My Signal'],
+        ['xmpp-1', 'Me@example.org'],
+      ]);
+      expect(listSubtitle(merged, labels)).toBe('Me@example.org · My Signal · Telegram');
     });
   });
 };
