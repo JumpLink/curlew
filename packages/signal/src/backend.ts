@@ -8,6 +8,7 @@
 
 import { _, fmt } from '@curlew/protocol';
 import type {
+  AttachmentFetcher,
   AccountPrompter,
   BackendAccount,
   BackendContext,
@@ -23,6 +24,7 @@ import { SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
 import { isOwnAci, listSessionAccounts, sessionPath } from './accounts.ts';
 import { SIGNAL_TRUST_ROOTS_BASE64 } from './constants.ts';
+import { SignalAttachments } from './attachments.ts';
 import { type AttachmentDownloader, httpsDownloader } from './contacts.ts';
 import { EnvelopeDecryptor } from './decrypt.ts';
 import type { ChatFetch } from './guard.ts';
@@ -73,7 +75,7 @@ export interface SignalBackendOptions {
     account: DeviceAccount,
     recipients: readonly string[],
   ) => Promise<{ fetch: ChatFetch; close(): Promise<void> }>;
-  /** The contact-sync download. */
+  /** The contact-sync download, and the one a tapped attachment uses. */
   download?: AttachmentDownloader;
   /** Sealed-sender trust roots (serialized public keys); Signal's production roots by default. */
   trustRoots?: readonly Uint8Array[];
@@ -97,6 +99,17 @@ export class SignalBackend implements DeliveryBackend, SendBackend {
 
   async listAccounts(): Promise<BackendAccount[]> {
     return listSessionAccounts(this.context.secretsDir);
+  }
+
+  /**
+   * The download handle for received files. It needs no session state — the key is in the stored
+   * message — so it cannot collide with the receive loop's lease. A missing account is still refused.
+   */
+  async openAttachments(accountId: string): Promise<AttachmentFetcher> {
+    if (!existsSync(sessionPath(this.context.secretsDir, accountId))) {
+      throw new Error(fmt(_('no Signal session for {account} — {hint}'), { account: accountId, hint: relinkHint() }));
+    }
+    return new SignalAttachments((limit) => this.options.download ?? httpsDownloader(limit));
   }
 
   /** The own ACI is the one self-address Signal knows; see `isOwnAci` for what is not recognised. */

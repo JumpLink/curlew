@@ -131,6 +131,10 @@ export interface AttachmentPointer {
   size: number | null;
   digest: Uint8Array | null;
   fileName: string | null;
+  /** Bit 0 marks a voice note. */
+  flags: number;
+  width: number | null;
+  height: number | null;
   caption: string | null;
 }
 
@@ -144,6 +148,9 @@ export function decodeAttachmentPointer(f: Fields): AttachmentPointer {
     size: numberField(f, 4),
     digest: bytesField(f, 6),
     fileName: stringField(f, 7),
+    flags: numberField(f, 8) ?? 0,
+    width: numberField(f, 9),
+    height: numberField(f, 10),
     caption: stringField(f, 11),
   };
 }
@@ -375,7 +382,18 @@ export interface DataMessageInput {
   groupMasterKey?: Uint8Array;
   quote?: { id: number; authorAci: string };
   deleteTarget?: number;
-  attachments?: Array<{ fileName?: string; contentType?: string }>;
+  attachments?: Array<{
+    fileName?: string;
+    contentType?: string;
+    cdnKey?: string;
+    cdnNumber?: number;
+    key?: Uint8Array;
+    size?: number;
+    digest?: Uint8Array;
+    flags?: number;
+    width?: number;
+    height?: number;
+  }>;
   reaction?: boolean;
   flags?: number;
 }
@@ -383,7 +401,20 @@ export interface DataMessageInput {
 export function encodeDataMessage(d: DataMessageInput): ProtoWriter {
   const w = new ProtoWriter().string(1, d.body);
   for (const a of d.attachments ?? []) {
-    w.message(2, new ProtoWriter().string(2, a.contentType).string(7, a.fileName));
+    w.message(
+      2,
+      new ProtoWriter()
+        .string(2, a.contentType)
+        .bytes(3, a.key)
+        .uint(4, a.size)
+        .bytes(6, a.digest)
+        .string(7, a.fileName)
+        .uint(8, a.flags)
+        .uint(9, a.width)
+        .uint(10, a.height)
+        .uint(14, a.cdnNumber)
+        .string(15, a.cdnKey),
+    );
   }
   w.uint(4, d.flags);
   w.uint(7, d.timestamp);

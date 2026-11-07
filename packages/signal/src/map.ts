@@ -24,7 +24,7 @@
  * the index counts unread per chat, and a wrong guess would mark unseen messages read.
  */
 
-import type { ChatMessage, ChatPeer, DeliveryEvent } from '@curlew/protocol';
+import type { AttachmentKind, ChatAttachment, ChatMessage, ChatPeer, DeliveryEvent } from '@curlew/protocol';
 import {
   type AttachmentPointer,
   type Content,
@@ -35,7 +35,7 @@ import {
   ReceiptType,
   type SyncMessage,
 } from './schema.ts';
-import { toBase64 } from './protocol-store.ts';
+import { fromBase64, toBase64 } from './protocol-store.ts';
 
 export const GROUP_PREFIX = 'group:';
 
@@ -65,6 +65,101 @@ export interface MapContext {
   timestamp: number;
   /** The group of a sealed sender-key message, when the envelope named one. */
   groupId: Uint8Array | null;
+}
+
+/** What a download needs, kept in the index: the CDN pointer, the key and the digest. */
+export interface SignalAttachmentHandle {
+  cdnNumber: number;
+  cdnKey: string | null;
+  /** The legacy numeric id, as decimal text, for a pointer that has no `cdnKey`. */
+  cdnId: string | null;
+  /** Base64, 64 bytes: the AES key and the MAC key. */
+  key: string;
+  /** Base64 SHA-256 of the whole download, when the sender gave one. */
+  digest: string | null;
+  /** The plaintext length: the encrypted file carries zero padding past it. */
+  size: number | null;
+}
+
+export function attachmentHandle(handle: SignalAttachmentHandle): string {
+  return JSON.stringify(handle);
+}
+
+/** What a stored handle names, or null when it is not one this backend wrote. */
+export function parseAttachmentHandle(text: string): SignalAttachmentHandle | null {
+  try {
+    const value: unknown = JSON.parse(text);
+    if (typeof value !== 'object' || value === null) return null;
+    const { cdnNumber, cdnKey, cdnId, key, digest, size } = value as Record<string, unknown>;
+    const orNull = (v: unknown) => (v === null ? null : typeof v === 'string' && v !== '' ? v : undefined);
+    const k = orNull(cdnKey);
+    const id = orNull(cdnId);
+    const d = orNull(digest);
+    if (k === undefined || id === undefined || d === undefined) return null;
+    if (k === null && id === null) return null;
+    if (typeof cdnNumber !== 'number' || !Number.isSafeInteger(cdnNumber) || cdnNumber < 0) return null;
+    if (typeof key !== 'string' || key === '') return null;
+    if (size !== null && (typeof size !== 'number' || !Number.isSafeInteger(size) || size < 0)) return null;
+    return { cdnNumber, cdnKey: k, cdnId: id, key, digest: d, size };
+  } catch {
+    return null;
+  }
+}
+
+/** The pointer a handle was made from, ready for `attachmentUrl`. */
+export function pointerOfHandle(handle: SignalAttachmentHandle): AttachmentPointer {
+  return {
+    cdnId: handle.cdnId === null ? null : BigInt(handle.cdnId),
+    cdnKey: handle.cdnKey,
+    cdnNumber: handle.cdnNumber,
+    contentType: null,
+    key: fromBase64(handle.key),
+    size: handle.size,
+    digest: handle.digest === null ? null : fromBase64(handle.digest),
+    fileName: null,
+    flags: 0,
+    width: null,
+    height: null,
+    caption: null,
+  };
+}
+
+const VOICE_MESSAGE = 1;
+
+function attachmentKind(pointer: AttachmentPointer): AttachmentKind {
+  if (pointer.flags & VOICE_MESSAGE) return 'voice';
+  const major = pointer.contentType?.split('/')[0];
+  return major === 'image' || major === 'video' || major === 'audio' ? major : 'file';
+}
+
+/**
+ * The files of a message that can be fetched later: a pointer without a key or without a CDN
+ * address (a sender that sent only its name) gets no row, so the UI never offers a dead tap.
+ */
+export function toChatAttachments(data: DataMessage): ChatAttachment[] | undefined {
+  const out: ChatAttachment[] = [];
+  for (const pointer of data.attachments) {
+    const hasCdn = pointer.cdnKey || (pointer.cdnId !== null && pointer.cdnId !== 0n);
+    if (!pointer.key?.byteLength || !hasCdn) continue;
+    out.push({
+      filename: pointer.fileName,
+      mimeType: pointer.contentType,
+      size: pointer.size,
+      kind: attachmentKind(pointer),
+      width: pointer.width || null,
+      height: pointer.height || null,
+      durationMs: null,
+      handle: attachmentHandle({
+        cdnNumber: pointer.cdnNumber,
+        cdnKey: pointer.cdnKey || null,
+        cdnId: pointer.cdnKey || pointer.cdnId === null || pointer.cdnId === 0n ? null : pointer.cdnId.toString(),
+        key: toBase64(pointer.key),
+        digest: pointer.digest?.byteLength ? toBase64(pointer.digest) : null,
+        size: pointer.size,
+      }),
+    });
+  }
+  return out.length > 0 ? out : undefined;
 }
 
 export class SignalMapper {
@@ -304,6 +399,7 @@ export class SignalMapper {
       clientId: fromSelf ? messageRemoteId(authorAci, sentAt) : null,
       text,
       hasAttachments,
+      attachments: toChatAttachments(data),
       replyToRemoteId:
         data.quote?.authorAci && data.quote.id !== null
           ? messageRemoteId(data.quote.authorAci, data.quote.id)

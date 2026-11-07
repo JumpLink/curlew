@@ -18,6 +18,7 @@ export * from './accounts.ts';
 export * from './journal.ts';
 export * from './decrypt.ts';
 export * from './map.ts';
+export * from './attachments.ts';
 export * from './contacts.ts';
 export * from './receiver.ts';
 export * from './provisioning.ts';

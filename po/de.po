@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-07 23:56+0100\n"
+"POT-Creation-Date: 2026-11-08 00:12+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2234,7 +2234,7 @@ msgid "no mail account {account} with SMTP — `curlew accounts list` shows them
 msgstr ""
 "Kein E-Mail-Konto {account} mit SMTP — `curlew accounts list` zeigt sie an"
 
-#: packages/matrix/src/attachments.ts:45
+#: packages/matrix/src/attachments.ts:45 packages/signal/src/attachments.ts:30
 #: packages/telegram/src/attachments.ts:66
 #: packages/whatsapp/src/attachments.ts:25
 msgid "the attachment is larger than the limit of {limit} bytes"
@@ -2349,11 +2349,34 @@ msgstr ""
 "verschlüsselten Nachrichten senden — es wurde nichts gesendet, sende sie aus "
 "einem Matrix-Client"
 
-#: packages/signal/src/backend.ts:154
+#: packages/signal/src/attachments.ts:37
+msgid "Signal did not deliver the file ({reason})"
+msgstr "Signal hat die Datei nicht geliefert ({reason})"
+
+#: packages/signal/src/attachments.ts:38
+#: packages/whatsapp/src/attachments.ts:40
+msgid "download failed"
+msgstr "Download fehlgeschlagen"
+
+#: packages/signal/src/attachments.ts:57
+msgid "this Signal attachment cannot be found any more"
+msgstr "dieser Signal-Anhang ist nicht mehr zu finden"
+
+#: packages/signal/src/attachments.ts:74
+msgid "the Signal attachment could not be verified ({reason})"
+msgstr "der Signal-Anhang konnte nicht verifiziert werden ({reason})"
+
+#: packages/signal/src/attachments.ts:81
+msgid ""
+"the Signal attachment arrived with {actual} bytes, not the announced "
+"{announced}"
+msgstr "der Signal-Anhang kam mit {actual} Bytes an, angekündigt waren {announced}"
+
+#: packages/signal/src/backend.ts:110 packages/signal/src/backend.ts:167
 msgid "no Signal session for {account} — {hint}"
 msgstr "Keine Signal-Sitzung für {account} — {hint}"
 
-#: packages/signal/src/backend.ts:161
+#: packages/signal/src/backend.ts:174
 msgid "the Signal session {account} was never linked — {hint}"
 msgstr "Die Signal-Sitzung {account} wurde nie verknüpft — {hint}"
 
@@ -2750,10 +2773,6 @@ msgstr ""
 "WhatsApp hat die Datei nicht geliefert ({reason}) – Medien bleiben dort nur "
 "begrenzt lange erhalten"
 
-#: packages/whatsapp/src/attachments.ts:40
-msgid "download failed"
-msgstr "Download fehlgeschlagen"
-
 #: packages/whatsapp/src/attachments.ts:59
 msgid "this WhatsApp attachment cannot be found any more"
 msgstr "dieser WhatsApp-Anhang ist nicht mehr zu finden"
@@ -2762,7 +2781,8 @@ msgstr "dieser WhatsApp-Anhang ist nicht mehr zu finden"
 msgid ""
 "the WhatsApp attachment arrived with {actual} bytes, not the announced "
 "{announced}"
-msgstr "der WhatsApp-Anhang kam mit {actual} Bytes an, angekündigt waren {announced}"
+msgstr ""
+"der WhatsApp-Anhang kam mit {actual} Bytes an, angekündigt waren {announced}"
 
 #: packages/whatsapp/src/attachments.ts:106
 msgid "the WhatsApp attachment does not match its announced checksum"
