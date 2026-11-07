@@ -35,9 +35,10 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
     e2ee: false,
     subject: false,
     folders: false,
-    // hasAttachments metadata only; no download path in session.ts.
+    // Receiving only: `openAttachments` downloads a photo, file or voice note a person tapped.
+    // Sending a file is not built, so `attachments` stays false.
     attachments: false,
-    attachmentsRead: false,
+    attachmentsRead: true,
   },
   // Telegram keeps the full history of cloud chats: the index is rebuildable (`derived`).
   // The session file with the auth key is not — it is `secret`, and kept apart from the index.

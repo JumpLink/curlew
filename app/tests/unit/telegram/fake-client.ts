@@ -6,6 +6,7 @@ import type {
   TgChat,
   TgDialog,
   TgDialogsParams,
+  TgMediaDownload,
   TgMessage,
   TgPeer,
   TgUser,
@@ -89,6 +90,8 @@ export interface FakeScript {
    * follow-up calls) throws. The session is authorized at that point and must not be thrown away.
    */
   failAfterSignIn?: string;
+  /** The bytes `openMedia` streams per message, keyed `<chatId>/<messageId>`, as the chunks given. */
+  mediaBytes?: Map<string, Uint8Array[]>;
 }
 
 /**
@@ -210,6 +213,19 @@ export class FakeClient implements TelegramClientHandle {
     const all = this.script.history?.get(chatId) ?? [];
     const byId = new Map(all.map((m) => [m.id, m]));
     return messageIds.slice(0, SERVER_HISTORY_CAP).map((id) => byId.get(id) ?? null);
+  }
+
+  async openMedia(chatId: number, messageId: number): Promise<TgMediaDownload | null> {
+    this.calls.push(`openMedia:${chatId}/${messageId}`);
+    const message = (this.script.history?.get(chatId) ?? []).find((m) => m.id === messageId);
+    const chunks = this.script.mediaBytes?.get(`${chatId}/${messageId}`);
+    if (!message?.media || !chunks) return null;
+    return {
+      media: message.media,
+      chunks: (async function* () {
+        for (const chunk of chunks) yield chunk;
+      })(),
+    };
   }
 
   async sendText(chatId: number, text: string): Promise<TgMessage> {

@@ -7,7 +7,7 @@
  */
 
 import { _, fmt } from '@curlew/protocol';
-import type { ITelegramStorageProvider, RpcCallMiddleware } from '@mtcute/core';
+import { FileLocation, type ITelegramStorageProvider, type RpcCallMiddleware } from '@mtcute/core';
 import { MemoryStorage, networkMiddlewares, TelegramClient, WebPlatform } from '@mtcute/web';
 import type { LoginPrompts, TelegramApi, TelegramClientHandle, TelegramLive, TgUser } from './api.ts';
 import type { TelegramCredentials } from './credentials.ts';
@@ -141,12 +141,20 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
     logLevel: LOG_WARN,
     network: { middlewares: telegramMiddlewares() },
   });
-  const api: TelegramApi = client;
+  // Structural check of the reads mtcute's client satisfies as it is; `openMedia` is built below.
+  const api: Omit<TelegramApi, 'openMedia' | 'destroy'> = client;
   return {
     getMe: () => api.getMe(),
     iterDialogs: (params) => api.iterDialogs(params),
     getHistory: (chatId, params) => api.getHistory(chatId, params),
     getMessages: (chatId, messageIds) => api.getMessages(chatId, [...messageIds]),
+    openMedia: async (chatId, messageId) => {
+      const [message] = await client.getMessages(chatId, [messageId]);
+      const media = message?.media;
+      // Contacts, polls, link previews and paid media have no file of their own to download.
+      if (!media || !(media instanceof FileLocation)) return null;
+      return { media, chunks: client.downloadAsIterable(media) };
+    },
     sendText: (chatId, text) => client.sendText(chatId, text),
     ...(live === true ? { live: mtcuteLive(client) } : {}),
     destroy: () => client.destroy(),

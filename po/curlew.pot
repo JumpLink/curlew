@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-07 22:44+0100\n"
+"POT-Creation-Date: 2026-11-07 23:26+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2207,11 +2207,26 @@ msgid ""
 "nothing was sent"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:37
+#: packages/telegram/src/attachments.ts:34
+#: packages/telegram/src/attachments.ts:36
+msgid "this Telegram attachment cannot be found any more"
+msgstr ""
+
+#: packages/telegram/src/attachments.ts:52
+msgid ""
+"the Telegram attachment arrived with {actual} bytes, not the announced "
+"{announced}"
+msgstr ""
+
+#: packages/telegram/src/attachments.ts:66
+msgid "the attachment is larger than the limit of {limit} bytes"
+msgstr ""
+
+#: packages/telegram/src/backend.ts:39
 msgid "log in again with `curlew accounts add telegram`"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:51
+#: packages/telegram/src/backend.ts:53
 msgid ""
 "Telegram live updates are unavailable in this build: the follow will not "
 "wake on new messages"
@@ -2219,50 +2234,50 @@ msgstr ""
 
 #. TRANSLATORS: `api_id` and `api_hash` are Telegram's own field names — do not translate them,
 #. the user has to recognise them on my.telegram.org.
-#: packages/telegram/src/backend.ts:77
+#: packages/telegram/src/backend.ts:80
 msgid "api_id of your Telegram app (from my.telegram.org)"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:78
+#: packages/telegram/src/backend.ts:81
 msgid "api_hash of that app"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:79
+#: packages/telegram/src/backend.ts:82
 msgid "Phone number of the Telegram account (international, e.g. +49…)"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:80
+#: packages/telegram/src/backend.ts:83
 msgid "Login code Telegram sent you"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:81
+#: packages/telegram/src/backend.ts:84
 msgid "Two-step verification password"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:176
+#: packages/telegram/src/backend.ts:185
 msgid "no Telegram session for {account} — {hint}"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:202
+#: packages/telegram/src/backend.ts:211
 msgid "the Telegram session {account} is not usable ({reason}) — {hint}"
 msgstr ""
 
-#: packages/telegram/src/client.ts:161
+#: packages/telegram/src/client.ts:169
 msgid ""
 "Telegram asks for an email login setup first — finish it in an official app"
 msgstr ""
 
 #. TRANSLATORS: {channel} is Telegram's own word for the route it used ("sms", "app", …),
 #. and arrives untranslated from the server.
-#: packages/telegram/src/client.ts:165
+#: packages/telegram/src/client.ts:173
 msgid "Telegram sent the login code via {channel}."
 msgstr ""
 
-#: packages/telegram/src/client.ts:169
+#: packages/telegram/src/client.ts:177
 msgid "That code was not accepted — try again."
 msgstr ""
 
-#: packages/telegram/src/client.ts:169
+#: packages/telegram/src/client.ts:177
 msgid "Wrong password — try again."
 msgstr ""
 
@@ -2328,7 +2343,7 @@ msgid ""
 "again."
 msgstr ""
 
-#: packages/telegram/src/manifest.ts:54
+#: packages/telegram/src/manifest.ts:55
 msgid ""
 "curlew talks to Telegram through the official MTProto API as a third-party "
 "client (mtcute). Telegram requires every client to use API credentials "
