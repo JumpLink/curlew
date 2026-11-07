@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-08 00:12+0100\n"
+"POT-Creation-Date: 2026-11-08 07:27+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2236,7 +2236,7 @@ msgstr ""
 
 #: packages/matrix/src/attachments.ts:45 packages/signal/src/attachments.ts:30
 #: packages/telegram/src/attachments.ts:66
-#: packages/whatsapp/src/attachments.ts:25
+#: packages/whatsapp/src/attachments.ts:25 packages/xmpp/src/attachments.ts:28
 msgid "the attachment is larger than the limit of {limit} bytes"
 msgstr "der Anhang ist größer als das Limit von {limit} Bytes"
 
@@ -2267,7 +2267,7 @@ msgstr "Homeserver (URL wie https://matrix.example.org oder der Servername)"
 msgid "Matrix user (@name:example.org)"
 msgstr "Matrix-Benutzer (@name:example.org)"
 
-#: packages/matrix/src/backend.ts:64 packages/xmpp/src/backend.ts:48
+#: packages/matrix/src/backend.ts:64 packages/xmpp/src/backend.ts:50
 msgid "Password"
 msgstr "Passwort"
 
@@ -2370,7 +2370,8 @@ msgstr "der Signal-Anhang konnte nicht verifiziert werden ({reason})"
 msgid ""
 "the Signal attachment arrived with {actual} bytes, not the announced "
 "{announced}"
-msgstr "der Signal-Anhang kam mit {actual} Bytes an, angekündigt waren {announced}"
+msgstr ""
+"der Signal-Anhang kam mit {actual} Bytes an, angekündigt waren {announced}"
 
 #: packages/signal/src/backend.ts:110 packages/signal/src/backend.ts:167
 msgid "no Signal session for {account} — {hint}"
@@ -2990,11 +2991,35 @@ msgstr ""
 "Klartext gesichert) — entferne backends.xmpp.settings.password; `curlew "
 "accounts add xmpp` legt es in einer 0600-Datei ab"
 
-#: packages/xmpp/src/backend.ts:47
+#: packages/xmpp/src/attachments.ts:32
+msgid "the file server refused the download ({reason})"
+msgstr "der Dateiserver hat den Download abgewiesen ({reason})"
+
+#: packages/xmpp/src/attachments.ts:48
+msgid "the file is not on a public https server"
+msgstr "die Datei liegt nicht auf einem öffentlichen https-Server"
+
+#: packages/xmpp/src/attachments.ts:60
+msgid "too many redirects"
+msgstr "zu viele Weiterleitungen"
+
+#: packages/xmpp/src/attachments.ts:70
+msgid "this XMPP attachment cannot be found any more"
+msgstr "dieser XMPP-Anhang ist nicht mehr zu finden"
+
+#: packages/xmpp/src/attachments.ts:107
+msgid "the encrypted attachment is too short"
+msgstr "der verschlüsselte Anhang ist zu kurz"
+
+#: packages/xmpp/src/attachments.ts:118
+msgid "the encrypted attachment could not be verified"
+msgstr "der verschlüsselte Anhang konnte nicht verifiziert werden"
+
+#: packages/xmpp/src/backend.ts:49
 msgid "XMPP address (name@example.org)"
 msgstr "XMPP-Adresse (name@example.org)"
 
-#: packages/xmpp/src/backend.ts:50
+#: packages/xmpp/src/backend.ts:52
 msgid ""
 "Server address — empty to discover it (e.g. xmpps://xmpp.example.org:5223, "
 "wss://…)"

@@ -28,9 +28,10 @@ export const XMPP_MANIFEST: BackendManifest = {
     e2ee: false,
     subject: false,
     folders: false,
-    // Out-of-band links (XEP-0066), which HTTP File Upload (XEP-0363) produces; URLs only, no download.
+    // Out-of-band links (XEP-0066), which HTTP File Upload (XEP-0363) produces, and OMEMO's
+    // `aesgcm://` links: `openAttachments` fetches one after a tap. Sending a file is not built.
     attachments: false,
-    attachmentsRead: false,
+    attachmentsRead: true,
   },
   // With MAM (XEP-0313) the server keeps the history: the index is rebuildable (`derived`).
   // A server WITHOUT MAM leaves nothing to read — curlew says so at connect and does not
