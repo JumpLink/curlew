@@ -152,6 +152,7 @@ function sectionRow(section: Section, collapsed: boolean): Gtk.ListBoxRow {
 export function createConversationList(
   menu: Gio.Menu,
   onSelect: (entry: ListEntry) => void,
+  onAddAccount: () => void,
 ): ConversationList {
   let entries: ListEntry[] = [];
   let labels = new Map<string, string>();
@@ -168,6 +169,10 @@ export function createConversationList(
   scroller.set_child(list);
   const empty = new Adw.StatusPage({ iconName: 'view-dual-symbolic', vexpand: true });
   empty.add_css_class('compact');
+  const addButton = new Gtk.Button({ label: _('Add an account'), marginTop: 12 });
+  addButton.add_css_class('suggested-action');
+  addButton.connect('clicked', () => onAddAccount());
+  empty.set_child(addButton);
   const stack = new Gtk.Stack();
   stack.add_named(scroller, 'list');
   stack.add_named(empty, 'empty');
@@ -293,6 +298,7 @@ export function createConversationList(
           ? _('Conversations appear here after Curlew has synced an account. Run "curlew sync" first.')
           : _('Nothing fits the search and filters.'),
       );
+      addButton.set_visible(none);
       stack.set_visible_child_name('empty');
       return;
     }

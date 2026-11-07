@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-07 15:36+0100\n"
+"POT-Creation-Date: 2026-11-07 16:21+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1388,11 +1388,66 @@ msgid "curlew window takes no arguments."
 msgstr ""
 
 #: app/src/window/about.ts:14 app/src/window/conversation-view.ts:87
-#: app/src/window/window.ts:46 app/src/window/window.ts:61
+#: app/src/window/window.ts:47 app/src/window/window.ts:62
 msgid "Curlew"
 msgstr ""
 
-#: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:75
+#: app/src/window/accounts-dialog.ts:41 app/src/window/accounts-page.ts:114
+#: app/src/window/window.ts:75
+msgid "Accounts"
+msgstr ""
+
+#: app/src/window/accounts-model.ts:67
+msgid ""
+"Mail, contacts and calendar accounts are managed in GNOME Settings → Online "
+"Accounts."
+msgstr ""
+
+#: app/src/window/accounts-page.ts:22
+msgid "Connected"
+msgstr ""
+
+#: app/src/window/accounts-page.ts:24
+msgid "Connecting"
+msgstr ""
+
+#: app/src/window/accounts-page.ts:26
+msgid "Offline"
+msgstr ""
+
+#: app/src/window/accounts-page.ts:28
+msgid "Daemon not running"
+msgstr ""
+
+#: app/src/window/accounts-page.ts:51
+msgid "Loading…"
+msgstr ""
+
+#: app/src/window/accounts-page.ts:57
+msgid "Could not load accounts"
+msgstr ""
+
+#: app/src/window/accounts-page.ts:63 app/src/window/accounts-page.ts:103
+msgid "No accounts"
+msgstr ""
+
+#: app/src/window/accounts-page.ts:68
+msgid "Online Accounts"
+msgstr ""
+
+#: app/src/window/accounts-page.ts:69
+msgid "Open GNOME Settings"
+msgstr ""
+
+#: app/src/window/accounts-page.ts:99
+msgid "Accounts could not be loaded"
+msgstr ""
+
+#: app/src/window/accounts-page.ts:104
+msgid "Enable a backend in Preferences to add accounts here."
+msgstr ""
+
+#: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:77
 msgid "Agent access"
 msgstr ""
 
@@ -1612,45 +1667,49 @@ msgstr ""
 msgid "Groups"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:175
+#: app/src/window/conversation-list.ts:172
+msgid "Add an account"
+msgstr ""
+
+#: app/src/window/conversation-list.ts:180
 msgid "Search conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:183
+#: app/src/window/conversation-list.ts:188
 msgid "Filter conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:246
+#: app/src/window/conversation-list.ts:251
 msgid "Protocols"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:269
+#: app/src/window/conversation-list.ts:274
 msgid "Clear filters"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:290
+#: app/src/window/conversation-list.ts:295
 msgid "No conversations yet"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:290
+#: app/src/window/conversation-list.ts:295
 msgid "No matches"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:293
+#: app/src/window/conversation-list.ts:298
 msgid ""
 "Conversations appear here after Curlew has synced an account. Run \"curlew "
 "sync\" first."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:294
+#: app/src/window/conversation-list.ts:299
 msgid "Nothing fits the search and filters."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:333
+#: app/src/window/conversation-list.ts:339
 msgid "Search"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:344
+#: app/src/window/conversation-list.ts:350
 #: app/src/window/preferences-dialog.ts:18
 msgid "Conversations"
 msgstr ""
@@ -1753,27 +1812,27 @@ msgid ""
 "Show ordinary email threads beside conversations started by a chat messenger"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:26 app/src/window/window.ts:74
+#: app/src/window/preferences-dialog.ts:26 app/src/window/window.ts:76
 msgid "Preferences"
 msgstr ""
 
-#: app/src/window/window.ts:40
+#: app/src/window/window.ts:41
 msgid "Select a conversation"
 msgstr ""
 
-#: app/src/window/window.ts:41
+#: app/src/window/window.ts:42
 msgid "Pick a conversation from the list."
 msgstr ""
 
-#: app/src/window/window.ts:77
+#: app/src/window/window.ts:79
 msgid "About Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:78
+#: app/src/window/window.ts:80
 msgid "Quit"
 msgstr ""
 
-#: app/src/window/window.ts:93
+#: app/src/window/window.ts:95
 msgid "This conversation has no recipient address."
 msgstr ""
 
