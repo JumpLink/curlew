@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-07 16:38+0100\n"
+"POT-Creation-Date: 2026-11-07 18:50+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -137,13 +137,30 @@ msgstr ""
 "daemon` läuft nicht, also kann niemand gefragt werden — starte ihn oder füge "
 "eine Regel wie {rule} zu config.agentAccess.rules hinzu"
 
-#: app/src/core/actions/daemon.ts:303
+#: app/src/core/actions/chat-attachment.ts:139
+#: app/src/core/actions/daemon.ts:420
+msgid "the attachment was not found in the index"
+msgstr "Der Anhang wurde im Index nicht gefunden"
+
+#: app/src/core/actions/chat-attachment.ts:142
+msgid "the attachment has no fetchable handle"
+msgstr "Der Anhang hat keinen abrufbaren Handle"
+
+#: app/src/core/actions/chat-attachment.ts:178
+msgid "no account {account} for {backend}"
+msgstr "Kein Konto {account} für {backend}"
+
+#: app/src/core/actions/chat-attachment.ts:185
+msgid "{backend} cannot fetch attachments"
+msgstr "{backend} kann keine Anhänge abrufen"
+
+#: app/src/core/actions/daemon.ts:338
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 "{capability} ist nicht die Berechtigung, unter der {backend} sendet — es "
 "wurde nichts gesendet"
 
-#: app/src/core/actions/daemon.ts:325
+#: app/src/core/actions/daemon.ts:360
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
@@ -863,7 +880,7 @@ msgstr ""
 "Der laufende curlew-Daemon hat die Zugriffsrückfrage nicht beantwortet "
 "({reason})"
 
-#: app/src/core/lib/daemon-bus.ts:174
+#: app/src/core/lib/daemon-bus.ts:185
 msgid ""
 "the running curlew daemon speaks send protocol {theirs} and this curlew "
 "speaks {ours} — nothing was sent; restart it with `systemctl --user restart "
@@ -873,7 +890,7 @@ msgstr ""
 "spricht {ours} — es wurde nichts gesendet; starte ihn mit `systemctl --user "
 "restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:211
+#: app/src/core/lib/daemon-bus.ts:222
 msgid ""
 "the caller speaks send protocol {theirs} and this curlew daemon speaks "
 "{ours} — nothing was sent; restart it with `systemctl --user restart curlew-"
@@ -883,7 +900,24 @@ msgstr ""
 "{ours} — es wurde nichts gesendet; starte ihn mit `systemctl --user restart "
 "curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:254
+#: app/src/core/lib/daemon-bus.ts:274
+msgid ""
+"the caller speaks attachment protocol {theirs} and this curlew daemon speaks "
+"{ours} — restart it with `systemctl --user restart curlew-daemon`"
+msgstr ""
+"Der Aufrufer spricht Anhangsprotokoll {theirs}, dieser curlew-Daemon spricht "
+"{ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
+
+#: app/src/core/lib/daemon-bus.ts:303
+msgid ""
+"the running curlew daemon speaks attachment protocol {theirs} and this "
+"curlew speaks {ours} — restart it with `systemctl --user restart curlew-"
+"daemon`"
+msgstr ""
+"Der laufende curlew-Daemon spricht Anhangsprotokoll {theirs}, dieses curlew "
+"spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
+
+#: app/src/core/lib/daemon-bus.ts:368
 msgid ""
 "the caller speaks access protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -891,7 +925,7 @@ msgstr ""
 "Der Aufrufer spricht Zugriffsprotokoll {theirs}, dieser curlew-Daemon "
 "spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:291
+#: app/src/core/lib/daemon-bus.ts:405
 msgid ""
 "the running curlew daemon speaks access protocol {theirs} and this curlew "
 "speaks {ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -899,7 +933,7 @@ msgstr ""
 "Der laufende curlew-Daemon spricht Zugriffsprotokoll {theirs}, dieses curlew "
 "spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-send-client.ts:107
+#: app/src/core/lib/daemon-send-client.ts:113
 msgid ""
 "the running curlew daemon did not answer ({reason}); it may have sent the "
 "message — look at the chat before sending it again"
@@ -907,6 +941,12 @@ msgstr ""
 "Der laufende curlew-Daemon hat nicht geantwortet ({reason}); er hat die "
 "Nachricht möglicherweise gesendet — sieh in den Chat, bevor du sie erneut "
 "sendest"
+
+#: app/src/core/lib/daemon-send-client.ts:154
+msgid ""
+"the running curlew daemon did not answer the attachment fetch ({reason})"
+msgstr ""
+"Der laufende curlew-Daemon hat den Anhangsabruf nicht beantwortet ({reason})"
 
 #: app/src/frontends/cli/accounts.ts:22
 msgid ""
@@ -1630,7 +1670,7 @@ msgstr "curlew window nimmt keine Argumente."
 msgid "Curlew"
 msgstr "Curlew"
 
-#: app/src/window/accounts-dialog.ts:37 app/src/window/accounts-page.ts:139
+#: app/src/window/accounts-dialog.ts:33 app/src/window/accounts-page.ts:152
 #: app/src/window/window.ts:75
 msgid "Accounts"
 msgstr "Konten"
@@ -1664,38 +1704,40 @@ msgstr "Offline"
 msgid "Daemon not running"
 msgstr "Daemon läuft nicht"
 
-#: app/src/window/accounts-page.ts:93
+#: app/src/window/accounts-page.ts:101
 msgid "Manage…"
 msgstr "Verwalten …"
 
-#: app/src/window/accounts-page.ts:94
+#: app/src/window/accounts-page.ts:102
 msgid "Open GNOME Settings → Online Accounts"
 msgstr "GNOME-Einstellungen → Online-Konten öffnen"
 
-#: app/src/window/accounts-page.ts:103
+#: app/src/window/accounts-page.ts:111
 msgid "Could not load accounts"
 msgstr "Konten konnten nicht geladen werden"
 
-#: app/src/window/accounts-page.ts:105
+#: app/src/window/accounts-page.ts:113
 msgid "No accounts yet"
 msgstr "Noch keine Konten"
 
-#: app/src/window/accounts-page.ts:117
+#: app/src/window/accounts-page.ts:130
 msgid "Accounts could not be loaded"
 msgstr "Konten konnten nicht geladen werden"
 
-#: app/src/window/accounts-page.ts:121
+#: app/src/window/accounts-page.ts:134
 msgid "No accounts"
 msgstr "Keine Konten"
 
-#: app/src/window/accounts-page.ts:122
+#: app/src/window/accounts-page.ts:135
 msgid "Enable a backend in Preferences to add accounts here."
 msgstr ""
 "Aktiviere in den Einstellungen ein Backend, um hier Konten hinzuzufügen."
 
-#: app/src/window/accounts-page.ts:132
+#: app/src/window/accounts-page.ts:145
 msgid "The background service is not running, so chat accounts cannot connect."
-msgstr "Der Hintergrunddienst läuft nicht, daher können sich Chat-Konten nicht verbinden."
+msgstr ""
+"Der Hintergrunddienst läuft nicht, daher können sich Chat-Konten nicht "
+"verbinden."
 
 #: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:77
 msgid "Agent access"
@@ -1854,13 +1896,13 @@ msgid "Could not fetch the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
 #: app/src/window/attachment-view.ts:136 app/src/window/attachment-view.ts:145
-#: app/src/window/conversation-model.ts:242
-#: app/src/window/conversation-model.ts:247
+#: app/src/window/conversation-model.ts:249
+#: app/src/window/conversation-model.ts:254
 msgid "Attachment"
 msgstr "Anhang"
 
-#: app/src/window/attachment-view.ts:231
-#: app/src/window/conversation-model.ts:250
+#: app/src/window/attachment-view.ts:232
+#: app/src/window/conversation-model.ts:257
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] "und {n} weiterer Anhang"
@@ -1981,23 +2023,23 @@ msgstr "Weiter über {protocol}"
 msgid "Unknown sender"
 msgstr "Unbekannter Absender"
 
-#: app/src/window/conversation-model.ts:233
+#: app/src/window/conversation-model.ts:240
 msgid "{kind}: {name}"
 msgstr "{kind}: {name}"
 
-#: app/src/window/conversation-model.ts:238
+#: app/src/window/conversation-model.ts:245
 msgid "Image"
 msgstr "Bild"
 
-#: app/src/window/conversation-model.ts:239
+#: app/src/window/conversation-model.ts:246
 msgid "Video"
 msgstr "Video"
 
-#: app/src/window/conversation-model.ts:240
+#: app/src/window/conversation-model.ts:247
 msgid "Audio"
 msgstr "Audio"
 
-#: app/src/window/conversation-model.ts:241
+#: app/src/window/conversation-model.ts:248
 msgid "File"
 msgstr "Datei"
 

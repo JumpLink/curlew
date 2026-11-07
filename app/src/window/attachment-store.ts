@@ -16,6 +16,7 @@ import Gtk from 'gi://Gtk?version=4.0';
 import type { MessageRef } from '@curlew/protocol';
 import { ensurePrivateDir, previewsDir } from '@curlew/store';
 
+import { chatSaveAttachment } from '../core/actions/chat-attachment.ts';
 import { mailSaveAttachment } from '../core/actions/mail.ts';
 import { previewKey } from './attachment-model.ts';
 import type { AttachmentInfo } from './conversation-model.ts';
@@ -50,9 +51,6 @@ function cachedFile(dir: string): string | null {
 /** The local path of the part's bytes: the cached copy, else one fetch shared by every caller. */
 export function fetchAttachment(source: AttachmentSource, root = previewsDir()): Promise<string> {
   const { ref, info } = source;
-  // Chat attachments are stored as descriptors only in this PR; fetching them is not wired yet.
-  if (ref.backend !== 'mail' || info.section === undefined || ref.uid === undefined)
-    return Promise.reject(new Error('Not a mail attachment'));
   const dir = partDir(source, root);
   const hit = cachedFile(dir);
   if (hit) return Promise.resolve(join(dir, hit));
@@ -61,13 +59,20 @@ export function fetchAttachment(source: AttachmentSource, root = previewsDir()):
   const fetching = (async () => {
     ensurePrivateDir(dir);
     for (const name of readdirSync(dir)) unlinkSync(join(dir, name));
-    const saved = await mailSaveAttachment({
-      accountId: ref.accountId,
-      uid: String(ref.uid),
-      ...(ref.folder ? { folder: ref.folder } : {}),
-      section: info.section,
-      directory: dir,
-    });
+    const saved =
+      ref.backend === 'mail' && info.section !== undefined && info.section !== '' && ref.uid !== undefined
+        ? await mailSaveAttachment({
+            accountId: ref.accountId,
+            uid: String(ref.uid),
+            ...(ref.folder ? { folder: ref.folder } : {}),
+            section: info.section,
+            directory: dir,
+          })
+        : await chatSaveAttachment({
+            ref,
+            index: info.index as number,
+            directory: dir,
+          });
     return saved.path;
   })().finally(() => inFlight.delete(dir));
   inFlight.set(dir, fetching);

@@ -7,6 +7,7 @@ export * from './accounts.ts';
 export * from './contacts.ts';
 export * from './calendar.ts';
 export * from './mail.ts';
+export * from './chat-attachment.ts';
 export * from './index-sync.ts';
 export * from './daemon.ts';
 export * from './backends.ts';

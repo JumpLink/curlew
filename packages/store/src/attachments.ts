@@ -18,6 +18,8 @@ export interface AttachmentInfo {
   width: number | null;
   height: number | null;
   durationMs: number | null;
+  /** True when a chat attachment row has a non-empty backend handle and can be fetched. */
+  fetchable: boolean;
 }
 
 /** Load every attachment descriptor for a message; routes by `ref.backend`. */
@@ -33,6 +35,7 @@ export function loadAttachments(db: IndexDatabase, ref: MessageRef): AttachmentI
       width: null,
       height: null,
       durationMs: null,
+      fetchable: false,
     }));
   }
   return chatAttachments(db, ref);
@@ -55,7 +58,7 @@ function chatAttachments(db: IndexDatabase, ref: MessageRef): AttachmentInfo[] {
   if (!ref.remoteId) return [];
   const rows = db
     .prepare(
-      `SELECT a.idx, a.filename, a.mime_type, a.size, a.kind, a.width, a.height, a.duration_ms
+      `SELECT a.idx, a.filename, a.mime_type, a.size, a.kind, a.width, a.height, a.duration_ms, a.handle
          FROM message_attachments a
          JOIN conversation_messages m ON m.id = a.message_id
         WHERE m.backend = ? AND m.account_id = ? AND m.remote_id = ?
@@ -70,6 +73,7 @@ function chatAttachments(db: IndexDatabase, ref: MessageRef): AttachmentInfo[] {
       width: unknown;
       height: unknown;
       duration_ms: unknown;
+      handle: unknown;
     }>;
   return rows.map((r) => ({
     index: Number(r.idx),
@@ -80,6 +84,7 @@ function chatAttachments(db: IndexDatabase, ref: MessageRef): AttachmentInfo[] {
     width: num(r.width),
     height: num(r.height),
     durationMs: num(r.duration_ms),
+    fetchable: typeof r.handle === 'string' && r.handle !== '',
   }));
 }
 

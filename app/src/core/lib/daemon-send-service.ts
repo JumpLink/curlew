@@ -21,15 +21,21 @@ import {
   type DaemonAccountsReply,
   type DaemonAccessReply,
   type DaemonAccessRequest,
+  type DaemonFetchAttachmentReply,
+  type DaemonFetchAttachmentRequest,
   type DaemonSendReply,
   type DaemonSendRequest,
   parseDaemonAccessRequest,
+  parseDaemonFetchAttachmentRequest,
   parseDaemonSendRequest,
 } from './daemon-bus.ts';
 import type { AccessReply } from '../access.ts';
 
 /** Answer one send. Never throws: every outcome is a reply, which is what the caller reads. */
 export type DaemonSendHandler = (request: DaemonSendRequest) => Promise<DaemonSendReply>;
+
+/** Answer one attachment fetch. Never throws: every outcome is a reply. */
+export type DaemonFetchHandler = (request: DaemonFetchAttachmentRequest) => Promise<DaemonFetchAttachmentReply>;
 
 /** Answer one access question (ADR 0009). Never throws: every outcome is a reply. */
 export type DaemonAccessHandler = (request: DaemonAccessRequest) => Promise<AccessReply>;
@@ -50,6 +56,8 @@ export interface PublishOptions {
   accounts?: () => DaemonAccountsReply;
   /** Serves `RequestAccess`. Absent: the method answers `UnknownMethod`, as an old daemon would. */
   access?: DaemonAccessHandler;
+  /** Serves `FetchAttachment`. Absent: the method answers `UnknownMethod`. */
+  fetch?: DaemonFetchHandler;
   /** A caller that asked left the bus: its session is over and so are its grants. */
   onSessionEnd?: (session: string) => void;
 }
@@ -138,6 +146,23 @@ export function publishDaemonSend(
         },
         (error: unknown) => {
           log(`curlew-daemon: the access handler threw — ${reasonOf(error)}`);
+          invocation.return_dbus_error('org.freedesktop.DBus.Error.Failed', reasonOf(error));
+        },
+      );
+      return;
+    }
+    if (method === 'FetchAttachment' && options.fetch) {
+      let request: DaemonFetchAttachmentRequest;
+      try {
+        request = parseDaemonFetchAttachmentRequest((params.recursiveUnpack() as [string])[0]);
+      } catch (error) {
+        invocation.return_dbus_error('org.freedesktop.DBus.Error.InvalidArgs', reasonOf(error));
+        return;
+      }
+      options.fetch(request).then(
+        (reply) => invocation.return_value(new GLib.Variant('(s)', [JSON.stringify(reply)])),
+        (error: unknown) => {
+          log(`curlew-daemon: the fetch handler threw — ${reasonOf(error)}`);
           invocation.return_dbus_error('org.freedesktop.DBus.Error.Failed', reasonOf(error));
         },
       );

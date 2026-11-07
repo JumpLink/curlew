@@ -16,6 +16,7 @@ import {
   deliveredMessageId,
   getConversation,
   listConversations,
+  loadAttachmentHandle,
   loadAttachments,
   migrate,
   rebuildConversations,
@@ -474,7 +475,11 @@ export default async () => {
         expect(loaded[0].kind).toBe('voice');
         expect(loaded[0].durationMs).toBe(1200);
         expect(loaded[0].index).toBe(0);
-        expect((loaded[0] as { handle?: unknown }).handle).toBe(undefined);
+        expect(loaded[0].fetchable).toBe(true);
+        expect('handle' in loaded[0]).toBe(false);
+        expect(loadAttachmentHandle(db, message!.ref, 0)).toBe(
+          JSON.stringify({ url: 'https://example.org/voice.ogg' }),
+        );
       } finally {
         db.close();
       }

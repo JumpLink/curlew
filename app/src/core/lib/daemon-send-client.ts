@@ -16,11 +16,15 @@ import Gio from 'gi://Gio?version=2.0';
 import { _, fmt } from '@curlew/protocol';
 import {
   DAEMON_BUS_NAME,
+  DAEMON_FETCH_TIMEOUT_MS,
   DAEMON_INTERFACE,
   DAEMON_OBJECT_PATH,
   DAEMON_SEND_TIMEOUT_MS,
+  type DaemonFetchAttachmentReply,
+  type DaemonFetchAttachmentRequest,
   type DaemonSendReply,
   type DaemonSendRequest,
+  parseDaemonFetchAttachmentReply,
   parseDaemonSendReply,
 } from './daemon-bus.ts';
 
@@ -28,6 +32,8 @@ import {
 export interface DaemonSendClient {
   /** The daemon's answer, or `null` when no daemon is there to answer. */
   send(request: DaemonSendRequest): Promise<DaemonSendReply | null>;
+  /** Ask the daemon to fetch a chat attachment on a connection it is already holding. */
+  fetchAttachment(request: DaemonFetchAttachmentRequest): Promise<DaemonFetchAttachmentReply | null>;
 }
 
 /**
@@ -111,6 +117,46 @@ export function gioDaemonSendClient(): DaemonSendClient {
         );
       }
       return parseDaemonSendReply(json);
+    },
+    fetchAttachment: async (request) => {
+      let connection: Gio.DBusConnection;
+      try {
+        connection = Gio.bus_get_sync(Gio.BusType.SESSION, null);
+      } catch {
+        return null;
+      }
+      let json: string;
+      try {
+        json = await new Promise<string>((resolve, reject) => {
+          connection.call(
+            DAEMON_BUS_NAME,
+            DAEMON_OBJECT_PATH,
+            DAEMON_INTERFACE,
+            'FetchAttachment',
+            new GLib.Variant('(s)', [JSON.stringify(request)]),
+            new GLib.VariantType('(s)'),
+            Gio.DBusCallFlags.NO_AUTO_START,
+            DAEMON_FETCH_TIMEOUT_MS,
+            null,
+            (_source, result) => {
+              try {
+                resolve((connection.call_finish(result!).recursiveUnpack() as [string])[0]);
+              } catch (error) {
+                reject(error as Error);
+              }
+            },
+          );
+        });
+      } catch (error) {
+        if (meansNoDaemon(error)) return null;
+        throw new Error(
+          fmt(
+            _('the running curlew daemon did not answer the attachment fetch ({reason})'),
+            { reason: reasonOf(error) },
+          ),
+        );
+      }
+      return parseDaemonFetchAttachmentReply(json);
     },
   };
 }

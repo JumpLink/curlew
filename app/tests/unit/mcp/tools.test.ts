@@ -48,6 +48,7 @@ const BOUNDED: Array<{ tool: string; field: string; spec: LimitSpec }> = [
   { tool: 'contacts_search', field: 'limit', spec: CONTACT_LIMIT },
   { tool: 'calendar_list_events', field: 'limit', spec: EVENT_LIMIT },
   { tool: 'mail_save_attachment', field: 'max_bytes', spec: ATTACHMENT_BYTES },
+  { tool: 'message_save_attachment', field: 'max_bytes', spec: ATTACHMENT_BYTES },
   { tool: 'mail_search_local', field: 'limit', spec: MAIL_LIMIT },
   { tool: 'conversations_list', field: 'limit', spec: CONVERSATION_LIMIT },
   { tool: 'conversations_get', field: 'max_body_chars', spec: CONVERSATION_BODY_CHARS },
@@ -73,6 +74,7 @@ export default async () => {
         'mail_search',
         'mail_search_local',
         'mail_sync_status',
+        'message_save_attachment',
         'messaging_capabilities',
         'xmpp_wait_reply',
       ]);
@@ -146,6 +148,7 @@ export default async () => {
         'mail_search',
         'mail_search_local',
         'mail_sync_status',
+        'message_save_attachment',
         'messaging_capabilities',
         'setup_run',
         'setup_status',

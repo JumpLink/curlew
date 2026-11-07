@@ -19,6 +19,7 @@ import type {
   Conversation,
   ConversationMessage,
   MailAddress,
+  MessageRef,
   Participant,
   ParticipantAddress,
 } from '@curlew/protocol';
@@ -736,6 +737,47 @@ function loadVerdicts(db: IndexDatabase, conversationIds: string[]): Map<string,
     result.set(String(r.conversation_id), list);
   }
   return result;
+}
+
+/**
+ * The address values of every participant in the conversation a message belongs to.
+ *
+ * This is what the read-access gate needs for `message_save_attachment`: a contact whose
+ * conversation is closed may not be read through their pictures either. An unknown message
+ * returns an empty list, which leaves the gate to refuse.
+ */
+export function messageParticipantAddresses(db: IndexDatabase, ref: MessageRef): string[] {
+  const row = db
+    .prepare(
+      `SELECT conversation_id FROM conversation_messages
+        WHERE backend = ? AND account_id = ?
+          AND (remote_id = ? OR (folder_path = ? AND uid = ?))`,
+    )
+    .get(
+      ref.backend,
+      ref.accountId,
+      ref.remoteId ?? null,
+      ref.folder ?? null,
+      ref.uid ?? null,
+    ) as { conversation_id?: unknown } | undefined;
+  const conversationId = row?.conversation_id;
+  if (conversationId === undefined || conversationId === null) return [];
+  const participantRows = db
+    .prepare(
+      `SELECT p.id FROM conversation_participants cp
+         JOIN participants p ON p.id = cp.participant_id
+        WHERE cp.conversation_id = ?`,
+    )
+    .all(String(conversationId)) as Array<{ id: unknown }>;
+  if (participantRows.length === 0) return [];
+  const ids = participantRows.map((r) => String(r.id));
+  const addressRows = db
+    .prepare(
+      `SELECT value FROM participant_addresses
+        WHERE participant_id IN (${placeholders(ids.length)})`,
+    )
+    .all(...ids) as Array<{ value: unknown }>;
+  return addressRows.map((r) => String(r.value));
 }
 
 function presentationOf(value: unknown): ConversationMessage['presentation'] {

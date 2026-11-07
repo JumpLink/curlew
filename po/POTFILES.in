@@ -4,6 +4,7 @@ app/src/core/actions/access.ts
 app/src/core/actions/accounts.ts
 app/src/core/actions/backends.ts
 app/src/core/actions/calendar.ts
+app/src/core/actions/chat-attachment.ts
 app/src/core/actions/contacts.ts
 app/src/core/actions/conversations.ts
 app/src/core/actions/daemon.ts

@@ -1,6 +1,6 @@
 # ADR 0010 — attachments across protocols
 
-- **Status:** Proposed (2026-11-07)
+- **Status:** Accepted (2026-11-07) — AP1.4 implemented: backend-agnostic fetch path, daemon bus, window auto-fetch and MCP tool.
 - **Scope:** `@curlew/protocol` (the attachment descriptor, the fetch capability), `@curlew/store`
   (one table, schema v14), every chat backend (`signal`, `whatsapp`, `telegram`, `matrix`, `xmpp`),
   `app` (core action, daemon bus, GTK window, MCP). Builds on

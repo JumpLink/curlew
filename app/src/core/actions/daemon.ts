@@ -43,11 +43,17 @@
  * was asked to stop did its job.
  */
 
+import { createHash } from 'node:crypto';
+import { readdirSync, rmSync } from 'node:fs';
+import { basename, join } from 'node:path';
 import {
+  type ChatSession,
   type DeliverySession,
   type MessageBackend,
+  type MessageRef,
   type MessageSender,
   type SendPermit,
+  isAttachmentFetcherBackend,
   isChatBackend,
   isDeliveryBackend,
   isMailBackend,
@@ -55,7 +61,16 @@ import {
   fmt,
 } from '@curlew/protocol';
 import type { DeliveryProgress, DeliverySyncResult, IndexDatabase, RebuildResult } from '@curlew/store';
-import { newestSeq, receiveDeliveries } from '@curlew/store';
+import {
+  ensurePrivateDir,
+  FileSink,
+  loadAttachmentHandle,
+  loadAttachments,
+  newestSeq,
+  previewsDir,
+  receiveDeliveries,
+  resolveDownloadPath,
+} from '@curlew/store';
 import { MatrixBackend } from '@curlew/matrix';
 import { TelegramBackend } from '@curlew/telegram';
 import { XmppBackend } from '@curlew/xmpp';
@@ -72,6 +87,7 @@ import { AccountTable } from '../lib/daemon-accounts.ts';
 import { DAEMON_WIRE_VERSION, type DaemonSendReply } from '../lib/daemon-bus.ts';
 import {
   publishDaemonSend,
+  type DaemonFetchHandler,
   type DaemonSendHandler,
   type DaemonSendService,
 } from '../lib/daemon-send-service.ts';
@@ -270,6 +286,25 @@ export interface DaemonSendHandlerOptions {
   log: (line: string) => void;
 }
 
+export interface DaemonFetchHandlerOptions {
+  /** The index the daemon is writing, so the handle can be looked up. */
+  db: IndexDatabase;
+  /** The backends that can fetch attachments for the accounts this run holds, keyed by `sessionKey`. */
+  fetchBackends: ReadonlyMap<
+    string,
+    MessageBackend & { openAttachments: NonNullable<MessageBackend['openAttachments']> }
+  >;
+  log: (line: string) => void;
+}
+
+/** The directory the daemon keeps one attachment preview in; mirrors the window's `partDir`. */
+function previewDirFor(ref: MessageRef, index: number, root: string): string {
+  const key = [ref.accountId, ref.folder ?? '', ref.uid ?? '', ref.remoteId ?? '', String(index)].join(
+    '\u0000',
+  );
+  return join(root, createHash('sha256').update(key).digest('hex'));
+}
+
 /**
  * Answer one `Send` off the session bus (ADR 0004, amendment 2026-10-30, daemon send).
  *
@@ -347,6 +382,71 @@ export function createDaemonSendHandler(options: DaemonSendHandlerOptions): Daem
     } finally {
       // Only what this send opened: the session's own connection stays up and receiving.
       await sender.close().catch(() => {});
+    }
+  };
+}
+
+/**
+ * Answer one `FetchAttachment` off the session bus (ADR 0010).
+ *
+ * Like `createDaemonSendHandler`, this is separate from the transport so it can be tested without
+ * a bus. The account has to be one this run holds a chat session for and the backend has to be
+ * able to fetch attachments, or the caller is told `not-followed` and its own direct path decides.
+ * The daemon writes the file to its private previews directory and returns the path: the caller
+ * cannot choose the directory, only receive what the daemon wrote.
+ */
+export function createDaemonFetchHandler(options: DaemonFetchHandlerOptions): DaemonFetchHandler {
+  const { db, fetchBackends, log } = options;
+  return async (request) => {
+    const who = sessionKey(request.backend, request.account);
+    const backend = fetchBackends.get(who);
+    if (backend === undefined) {
+      log(`curlew-daemon: an attachment fetch for ${who} is not this daemon's to make — the caller keeps it`);
+      return { v: DAEMON_WIRE_VERSION, kind: 'not-followed' };
+    }
+    const ref: MessageRef = {
+      backend: request.backend,
+      accountId: request.account,
+      remoteId: request.remoteId,
+    };
+    const infos = loadAttachments(db, ref);
+    const info = infos.find((a) => a.index === request.index);
+    const handle = info === undefined ? null : loadAttachmentHandle(db, ref, request.index);
+    if (info === undefined || !info.fetchable || handle === null || handle === '') {
+      log(`curlew-daemon: an attachment fetch for ${who} found no handle in the index`);
+      return {
+        v: DAEMON_WIRE_VERSION,
+        kind: 'failed',
+        message: _('the attachment was not found in the index'),
+      };
+    }
+    const dir = ensurePrivateDir(previewDirFor(ref, request.index, previewsDir()));
+    // A stale cached file would make `resolveDownloadPath` pick a colliding name, so clear first.
+    for (const name of readdirSync(dir)) rmSync(join(dir, name), { recursive: true, force: true });
+    const path = resolveDownloadPath(dir, info.filename, 'attachment');
+    const sink = new FileSink(path);
+    try {
+      const fetcher = await backend.openAttachments(request.account);
+      const result = await fetcher.fetchAttachment(
+        { backend: request.backend, accountId: request.account },
+        { kind: info.kind, handle },
+        sink,
+        { maxBytes: request.maxBytes },
+      );
+      sink.close();
+      log(`curlew-daemon: fetched attachment for ${who} (${result.size} bytes)`);
+      return {
+        v: DAEMON_WIRE_VERSION,
+        kind: 'fetched',
+        path,
+        filename: basename(path),
+        bytes: result.size,
+        mimeType: result.mimeType ?? info.mimeType ?? 'application/octet-stream',
+      };
+    } catch (error) {
+      sink.abort(errText(error));
+      log(`curlew-daemon: attachment fetch for ${who} failed`);
+      return { v: DAEMON_WIRE_VERSION, kind: 'failed', message: errText(error) };
     }
   };
 }
@@ -463,6 +563,11 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   // is already up. A reconnect hands over `null` and then the new session, so a send during one
   // finds nothing and is told `not-followed` rather than going out on a connection that is gone.
   const sessions = new Map<string, DeliverySession>();
+  // The backends that can fetch attachments for every account this run holds, chat or delivery.
+  const fetchBackends = new Map<
+    string,
+    MessageBackend & { openAttachments: NonNullable<MessageBackend['openAttachments']> }
+  >();
   let sendService: DaemonSendService | null = null;
   // ADR 0007: the account list for `GetAccounts` is built from the progress events the log lines
   // above already name, and the journal's newest row is announced after the daemon's own commits
@@ -524,6 +629,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
               log,
               accounts: () => table.reply(),
               access: (request) => accessBroker.request(request),
+              fetch: createDaemonFetchHandler({ db, fetchBackends, log }),
               onSessionEnd: (session) => {
                 accessBroker.endSession(session);
                 log('curlew-daemon: an agent session ended — its temporary access grants are gone');
@@ -543,6 +649,16 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
         })
         .catch(() => {});
     }
+    const onFollowSession =
+      (backend: MessageBackend) =>
+      (account: { backend: string; accountId: string }, session: ChatSession | null): void => {
+        const key = sessionKey(account.backend, account.accountId);
+        if (session === null || !isAttachmentFetcherBackend(backend)) {
+          fetchBackends.delete(key);
+        } else {
+          fetchBackends.set(key, backend);
+        }
+      };
     const following = Promise.all(
       xmppAccounts.map((accountId) =>
         followAccount({
@@ -557,6 +673,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
             announce();
           },
           onProgress: progress,
+          onSession: onFollowSession(xmpp as MessageBackend),
           holder: String(process.pid),
           writeLogPath: params.writeLogPath,
         }),
@@ -580,6 +697,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
             announce();
           },
           onProgress: progress,
+          onSession: onFollowSession(matrix as MessageBackend),
           holder: String(process.pid),
           writeLogPath: params.writeLogPath,
         }),
@@ -603,6 +721,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
             announce();
           },
           onProgress: progress,
+          onSession: onFollowSession(telegram as MessageBackend),
           holder: String(process.pid),
           writeLogPath: params.writeLogPath,
         }),
@@ -628,8 +747,13 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
               },
               onSession: (account, session) => {
                 const key = sessionKey(account.backend, account.accountId);
-                if (session === null) sessions.delete(key);
-                else sessions.set(key, session);
+                if (session === null) {
+                  sessions.delete(key);
+                  fetchBackends.delete(key);
+                } else {
+                  sessions.set(key, session);
+                  if (isAttachmentFetcherBackend(backend)) fetchBackends.set(key, backend);
+                }
               },
             }),
         ),

@@ -134,6 +134,7 @@ function fakeClient(reply: Awaited<ReturnType<DaemonSendClient['send']>>): {
         asked.push(request);
         return reply;
       },
+      fetchAttachment: async () => null,
     },
   };
 }

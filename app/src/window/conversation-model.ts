@@ -219,6 +219,13 @@ export interface AttachmentInfo {
   durationMs?: number | null;
   /** IMAP section (mail only): the key to fetch the bytes with. */
   section?: string;
+  /** True when the chat backend has a non-empty handle for this attachment (ADR 0010). */
+  fetchable?: boolean;
+  /**
+   * True when the account's backend manifest declares `capabilities.attachmentsRead`. The window
+   * must not offer to fetch an attachment the backend cannot serve (spec item 4).
+   */
+  backendCanFetch?: boolean;
 }
 
 /** A message as the view shows it, with the attachment parts the index lists for it. */

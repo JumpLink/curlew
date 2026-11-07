@@ -72,6 +72,8 @@ export interface FollowDeps {
   holder: string;
   /** The same state changes the log lines name, for the daemon's account list (ADR 0007 §3). */
   onProgress?: (event: DeliveryProgress) => void;
+  /** Called when a chat session is opened or closed, so the daemon can route fetches to it. */
+  onSession?: (account: { backend: string; accountId: string }, session: ChatSession | null) => void;
   now?: () => Date;
   sleep?: (ms: number) => Promise<void>;
   leaseIntervalMs?: number;
@@ -258,6 +260,7 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
           }
           log(`curlew-daemon: ${who} connected`);
           progress({ type: 'connected' });
+          deps.onSession?.({ backend: backendName, accountId }, link.chatSession());
           attempt = 0;
           await catchUp();
           const end = await closed;
@@ -280,6 +283,7 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
           await abortableSleepOr(sleep, wait, live);
           wait = Math.min(wait * 2, RECONNECT_CAP_MS);
         } finally {
+          deps.onSession?.({ backend: backendName, accountId }, null);
           if (session) await session.close().catch(() => {});
           await pending;
         }

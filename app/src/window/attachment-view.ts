@@ -182,7 +182,7 @@ function picture(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Wi
     slot.remove(frame);
     slot.append(tile(source, handlers));
   };
-  handlers.whenVisible(frame, () => {
+  const load = (): void => {
     spinner.set_visible(true);
     // The box the bubble gives a picture, in the pixels the texture is decoded at.
     const scale = frame.get_scale_factor();
@@ -208,7 +208,8 @@ function picture(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Wi
         if (frame.get_root() === null) return;
         fail();
       });
-  });
+  };
+  handlers.whenVisible(frame, load);
   return slot;
 }
 

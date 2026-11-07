@@ -55,6 +55,7 @@ const EXPECTED_TOOLS = [
   'mail_search',
   'mail_search_local',
   'mail_sync_status',
+  'message_save_attachment',
   'messaging_capabilities',
   'omemo_devices',
   'send_message',
