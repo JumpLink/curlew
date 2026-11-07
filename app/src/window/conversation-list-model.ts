@@ -254,12 +254,12 @@ export function composerBlock(entry: ListEntry): string | null {
 /** True when the composer has at least one carrier it can send through. */
 export function canSend(entry: ListEntry): boolean {
   if (entry.target !== null) return true;
-  return (entry.members ?? []).some((m) => m.target !== null);
+  return entry.members.some((m) => m.target !== null);
 }
 
 /** The carriers a merged row can send through; empty for a non-merged row. */
 export function protocolChoices(entry: ListEntry): ProtocolChoice[] {
-  return (entry.members ?? [])
+  return entry.members
     .filter((m) => m.target !== null)
     .map((m) => ({
       backend: m.backend,
@@ -272,7 +272,7 @@ export function protocolChoices(entry: ListEntry): ProtocolChoice[] {
 
 /** The single carrier for a non-merged row, or the only member of a merged one. */
 export function singleChoice(entry: ListEntry): ProtocolChoice | null {
-  const source = entry.members?.length === 1 ? entry.members[0]! : entry;
+  const source = entry.members.length === 1 ? entry.members[0]! : entry;
   if (source.target === null) return null;
   return {
     backend: source.backend,
@@ -297,10 +297,6 @@ export function roomHint(entry: ListEntry): string | null {
     : fmt(_n('Room · {count} member', 'Room · {count} members', count), { count });
 }
 
-/**
- * Direct mail threads with the same person become ONE presentation conversation. Canonical threads
- * stay untouched: their ids travel with the row, and replies still use RFC 5322 references.
- */
 /** Stable id for the merged "Note to self" row. */
 const NOTE_TO_SELF_ID = 'note-to-self';
 
@@ -323,6 +319,10 @@ function mergeSelfEntries(members: ListEntry[]): ListEntry {
   };
 }
 
+/**
+ * Direct mail threads with the same person become ONE presentation conversation. Canonical threads
+ * stay untouched: their ids travel with the row, and replies still use RFC 5322 references.
+ */
 export function toEntries(
   conversations: Conversation[],
   showAllEmails = true,

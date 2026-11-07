@@ -598,16 +598,14 @@ export function createConversationView(
       const choices = protocolChoices(nextEntry);
       const only = singleChoice(nextEntry);
       const blocked = composerBlock(nextEntry);
-      const canUseComposer = canSend(nextEntry) && blocked === null;
-      composer.set_visible(canUseComposer);
-      hint.set_visible(false);
-      if (canUseComposer) {
-        const roomLine = blocked ?? roomHint(nextEntry);
-        hint.set_label(roomLine ?? '');
-        hint.set_visible(roomLine !== null);
-      }
-      input.set_sensitive(canUseComposer);
-      send.set_sensitive(canUseComposer);
+      // A blocked composer stays visible but insensitive, so the hint can say why.
+      const sendable = canSend(nextEntry);
+      composer.set_visible(sendable);
+      const roomLine = blocked ?? roomHint(nextEntry);
+      hint.set_label(roomLine ?? '');
+      hint.set_visible(sendable && roomLine !== null);
+      input.set_sensitive(blocked === null);
+      send.set_sensitive(blocked === null);
       input.set_text('');
       if (choices.length > 1) {
         selectedChoice = defaultProtocolChoice(messages, choices);

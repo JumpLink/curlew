@@ -91,7 +91,11 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     async (text, choice) => {
       const entry = currentEntry;
       if (!entry) throw new Error(_('This conversation has no recipient address.'));
-      const parent = currentMessages[currentMessages.length - 1] ?? null;
+      // The carrier's own last message: a mail reply must not thread onto a Signal note.
+      const parent =
+        [...currentMessages]
+          .reverse()
+          .find((m) => m.backend === choice.backend && m.ref.accountId === choice.accountId) ?? null;
       const mail =
         choice.backend === 'mail' ? composeMailReply(parent, loadMailReplyTarget(parent), text) : null;
       const result = await sendMessage({
