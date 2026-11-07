@@ -5,6 +5,7 @@ import { _, fmt, _n } from '@curlew/protocol';
 import { normalizeSubject, type MessageCursor } from '@curlew/store';
 
 import { protocolLabel, type ProtocolChoice } from './conversation-list-model.ts';
+import { attachmentKind, type AttachmentKind } from './attachment-model.ts';
 
 /** How many messages one page of history holds; a shorter page means the start was reached. */
 export const PAGE_SIZE = 50;
@@ -204,16 +205,23 @@ export function senderName(message: ConversationMessage): string {
   return message.senderName?.trim() || message.senderAddress?.value || _('Unknown sender');
 }
 
-/** What the index knows about one attachment; chat backends keep none of it. */
+/** What the index knows about one attachment: mail uses `section`, chats use `index`. */
 export interface AttachmentInfo {
   filename: string | null;
   mimeType: string | null;
+  size?: number | null;
+  /** Position in the message; mail uses `section` instead. */
+  index?: number;
+  /** What the UI shows it as — from the backend or derived from the MIME type. */
+  kind?: AttachmentKind;
+  width?: number | null;
+  height?: number | null;
+  duration?: number | null;
   /** IMAP section (mail only): the key to fetch the bytes with. */
   section?: string;
-  size?: number | null;
 }
 
-/** A message as the view shows it, with the attachment parts the index lists for it (mail). */
+/** A message as the view shows it, with the attachment parts the index lists for it. */
 export interface ShownMessage extends ConversationMessage {
   attachments?: AttachmentInfo[];
 }
@@ -221,17 +229,17 @@ export interface ShownMessage extends ConversationMessage {
 const MAX_ATTACHMENT_LINES = 3;
 
 export function attachmentLine(info: AttachmentInfo): string {
-  const mime = info.mimeType?.toLowerCase() ?? '';
-  const kind = mime.startsWith('image/')
-    ? _('Image')
-    : mime.startsWith('video/')
-      ? _('Video')
-      : mime.startsWith('audio/')
-        ? _('Audio')
-        : info.filename
-          ? _('File')
-          : _('Attachment');
+  const kind = attachmentKindName(info);
   return info.filename ? fmt(_('{kind}: {name}'), { kind, name: info.filename }) : kind;
+}
+
+function attachmentKindName(info: AttachmentInfo): string {
+  const kind = info.kind ?? attachmentKind(info);
+  if (kind === 'image') return _('Image');
+  if (kind === 'video') return _('Video');
+  if (kind === 'audio' || kind === 'voice') return _('Audio');
+  if (info.filename) return _('File');
+  return _('Attachment');
 }
 
 /** The lines that stand in for a message without text: what it carries, else just "Attachment". */

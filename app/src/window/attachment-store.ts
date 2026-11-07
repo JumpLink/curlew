@@ -34,7 +34,7 @@ export function clearPreviews(dir = previewsDir()): void {
 }
 
 function partDir(source: AttachmentSource, root: string): string {
-  const key = previewKey(source.ref, source.info.section ?? '');
+  const key = previewKey(source.ref, source.info.section ?? '', source.info.index);
   // Not GLib's checksum: it reads a C string and stops at the NUL that separates the key's fields.
   return join(root, createHash('sha256').update(key).digest('hex'));
 }
@@ -50,7 +50,8 @@ function cachedFile(dir: string): string | null {
 /** The local path of the part's bytes: the cached copy, else one fetch shared by every caller. */
 export function fetchAttachment(source: AttachmentSource, root = previewsDir()): Promise<string> {
   const { ref, info } = source;
-  if (info.section === undefined || ref.uid === undefined)
+  // Chat attachments are stored as descriptors only in this PR; fetching them is not wired yet.
+  if (ref.backend !== 'mail' || info.section === undefined || ref.uid === undefined)
     return Promise.reject(new Error('Not a mail attachment'));
   const dir = partDir(source, root);
   const hit = cachedFile(dir);

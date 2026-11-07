@@ -316,7 +316,8 @@ export function createConversationView(
     // only for a message whose parts the index does not know.
     const { shown, more } = shownAttachments(message.attachments);
     const listed = shown.length > 0;
-    if (listed) bubble.append(attachmentList(message.ref, shown, more, handlers));
+    const generic = message.hasAttachments && !listed;
+    if (listed || generic) bubble.append(attachmentList(message.ref, shown, more, handlers, generic));
     if (written || !listed) {
       const preview = bubbleText(full);
       const body = new Gtk.Label({

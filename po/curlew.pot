@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-07 10:01+0100\n"
+"POT-Creation-Date: 2026-11-07 15:36+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1522,24 +1522,30 @@ msgstr ""
 msgid "Add rule"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:85
+#: app/src/window/attachment-view.ts:90
 msgid "Play"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:85
+#: app/src/window/attachment-view.ts:90
 msgid "Open"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:90 app/src/window/media-viewer.ts:47
+#: app/src/window/attachment-view.ts:95 app/src/window/media-viewer.ts:47
 msgid "Save as…"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:106
+#: app/src/window/attachment-view.ts:113
 msgid "Could not fetch the attachment: {error}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:198
+#: app/src/window/attachment-view.ts:136 app/src/window/attachment-view.ts:145
 #: app/src/window/conversation-model.ts:242
+#: app/src/window/conversation-model.ts:247
+msgid "Attachment"
+msgstr ""
+
+#: app/src/window/attachment-view.ts:231
+#: app/src/window/conversation-model.ts:250
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] ""
@@ -1649,38 +1655,33 @@ msgstr ""
 msgid "Conversations"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:113
-#: app/src/window/conversation-view.ts:579
+#: app/src/window/conversation-model.ts:114
+#: app/src/window/conversation-view.ts:583
 msgid "Continuing via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:204
+#: app/src/window/conversation-model.ts:205
 msgid "Unknown sender"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:226
+#: app/src/window/conversation-model.ts:233
+msgid "{kind}: {name}"
+msgstr ""
+
+#: app/src/window/conversation-model.ts:238
 msgid "Image"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:228
+#: app/src/window/conversation-model.ts:239
 msgid "Video"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:230
+#: app/src/window/conversation-model.ts:240
 msgid "Audio"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:232
+#: app/src/window/conversation-model.ts:241
 msgid "File"
-msgstr ""
-
-#: app/src/window/conversation-model.ts:233
-#: app/src/window/conversation-model.ts:239
-msgid "Attachment"
-msgstr ""
-
-#: app/src/window/conversation-model.ts:234
-msgid "{kind}: {name}"
 msgstr ""
 
 #: app/src/window/conversation-view.ts:96
@@ -1695,23 +1696,23 @@ msgstr ""
 msgid "Conversation"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:238
+#: app/src/window/conversation-view.ts:240
 msgid "Send via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:310
+#: app/src/window/conversation-view.ts:313
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:331
+#: app/src/window/conversation-view.ts:335
 msgid "Contains attachments"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:484
+#: app/src/window/conversation-view.ts:488
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:589
+#: app/src/window/conversation-view.ts:593
 msgid "Message not sent: {error}"
 msgstr ""
 
@@ -2171,7 +2172,7 @@ msgid ""
 "again."
 msgstr ""
 
-#: packages/telegram/src/manifest.ts:53
+#: packages/telegram/src/manifest.ts:54
 msgid ""
 "curlew talks to Telegram through the official MTProto API as a third-party "
 "client (mtcute). Telegram requires every client to use API credentials "

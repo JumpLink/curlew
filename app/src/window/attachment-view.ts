@@ -15,6 +15,7 @@ import {
   BUBBLE_MAX_IMAGE_HEIGHT,
   BUBBLE_MAX_IMAGE_WIDTH,
   effectiveMime,
+  isOpenable,
   showsInline,
   tileAction,
 } from './attachment-model.ts';
@@ -79,45 +80,75 @@ function tile(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Widge
   text.append(detail);
   box.append(text);
 
+  const openable = isOpenable(info);
   const action = tileAction(kind);
-  const open = new Gtk.Button({
-    iconName: action === 'view' ? 'media-playback-start-symbolic' : 'document-open-symbolic',
-    tooltipText: action === 'view' ? _('Play') : _('Open'),
-    valign: Gtk.Align.CENTER,
-  });
-  const save = new Gtk.Button({
-    iconName: 'document-save-symbolic',
-    tooltipText: _('Save as…'),
-    valign: Gtk.Align.CENTER,
-  });
-  for (const button of [open, save]) {
-    button.add_css_class('flat');
-    button.add_css_class('circular');
-    box.append(button);
+  let open: Gtk.Button | null = null;
+  let save: Gtk.Button | null = null;
+  if (openable) {
+    open = new Gtk.Button({
+      iconName: action === 'view' ? 'media-playback-start-symbolic' : 'document-open-symbolic',
+      tooltipText: action === 'view' ? _('Play') : _('Open'),
+      valign: Gtk.Align.CENTER,
+    });
+    save = new Gtk.Button({
+      iconName: 'document-save-symbolic',
+      tooltipText: _('Save as…'),
+      valign: Gtk.Align.CENTER,
+    });
+    for (const button of [open, save]) {
+      button.add_css_class('flat');
+      button.add_css_class('circular');
+      box.append(button);
+    }
   }
 
-  // The button is blocked while the part is fetched, so a second click cannot start a second fetch.
-  const run = (button: Gtk.Button, work: (path: string, window: Gtk.Window | null) => Promise<unknown>) => {
-    button.set_sensitive(false);
-    const window = button.get_root() as Gtk.Window | null;
-    void fetchAttachment(source)
-      .then((path) => work(path, window))
-      .catch((err: unknown) =>
-        handlers.toast(fmt(_('Could not fetch the attachment: {error}'), { error: failureText(err) })),
-      )
-      // The window may have been closed while the part was fetched; a button that is gone from
-      // the tree has no state left to restore.
-      .finally(() => {
-        if (button.get_root() !== null) button.set_sensitive(true);
-      });
-  };
-  open.connect('clicked', () => {
-    if (action === 'view') handlers.view(source, kind);
-    else run(open, (path, window) => openWithDesktop(window, path));
-  });
-  save.connect('clicked', () =>
-    run(save, (path, window) => saveCopyAs(window, path, GLib.path_get_basename(path))),
+  if (openable) {
+    // The button is blocked while the part is fetched, so a second click cannot start a second fetch.
+    const run = (button: Gtk.Button, work: (path: string, window: Gtk.Window | null) => Promise<unknown>) => {
+      button.set_sensitive(false);
+      const window = button.get_root() as Gtk.Window | null;
+      void fetchAttachment(source)
+        .then((path) => work(path, window))
+        .catch((err: unknown) =>
+          handlers.toast(fmt(_('Could not fetch the attachment: {error}'), { error: failureText(err) })),
+        )
+        // The window may have been closed while the part was fetched; a button that is gone from
+        // the tree has no state left to restore.
+        .finally(() => {
+          if (button.get_root() !== null) button.set_sensitive(true);
+        });
+    };
+    open!.connect('clicked', () => {
+      if (action === 'view') handlers.view(source, kind);
+      else run(open!, (path, window) => openWithDesktop(window, path));
+    });
+    save!.connect('clicked', () =>
+      run(save!, (path, window) => saveCopyAs(window, path, GLib.path_get_basename(path))),
+    );
+  }
+  return box;
+}
+
+/** A placeholder tile for a chat message whose backend said it has attachments but gave no descriptors yet. */
+function genericTile(): Gtk.Widget {
+  const box = new Gtk.Box({ spacing: 10, marginStart: 8, marginEnd: 8, marginTop: 8, marginBottom: 8 });
+  box.add_css_class('card');
+  box.set_tooltip_text(_('Attachment'));
+  box.append(
+    new Gtk.Image({
+      gicon: Gio.content_type_get_icon('application/octet-stream'),
+      pixelSize: 32,
+      marginStart: 4,
+    }),
   );
+  const text = new Gtk.Label({
+    label: _('Attachment'),
+    xalign: 0,
+    ellipsize: Pango.EllipsizeMode.MIDDLE,
+    maxWidthChars: 28,
+  });
+  text.add_css_class('dim-label');
+  box.append(text);
   return box;
 }
 
@@ -187,12 +218,14 @@ export function attachmentList(
   shown: readonly AttachmentInfo[],
   more: number,
   handlers: AttachmentHandlers,
+  generic = false,
 ): Gtk.Box {
   const list = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 6 });
   for (const info of shown) {
     const source = { ref, info };
     list.append(showsInline(info) ? picture(source, handlers) : tile(source, handlers));
   }
+  if (generic) list.append(genericTile());
   if (more > 0) {
     const rest = new Gtk.Label({
       label: fmt(_n('and {n} more attachment', 'and {n} more attachments', more), { n: more }),

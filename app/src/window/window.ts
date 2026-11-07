@@ -121,7 +121,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
         emailChat: mail !== null,
         classification: 'conversational',
         classificationReason: 'self',
-        ref: { accountId: choice.accountId },
+        ref: { accountId: choice.accountId, backend: choice.backend },
         bodyText: text,
       };
     },

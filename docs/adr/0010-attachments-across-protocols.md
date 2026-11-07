@@ -58,9 +58,9 @@ backend that wrote it. A window, a CLI, an MCP client or a log line never sees i
 CREATE TABLE IF NOT EXISTS message_attachments (
   message_id TEXT NOT NULL,     -- conversation_messages.id
   idx        INTEGER NOT NULL,  -- position in the message
-  kind TEXT NOT NULL, filename TEXT, mime_type TEXT, size INTEGER,
+  kind TEXT, filename TEXT, mime_type TEXT, size INTEGER,
   width INTEGER, height INTEGER, duration_ms INTEGER,
-  handle TEXT NOT NULL, thumbnail BLOB,
+  handle TEXT,                  -- null when only has_attachments was known
   PRIMARY KEY (message_id, idx))
 ```
 
