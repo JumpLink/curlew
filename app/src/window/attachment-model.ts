@@ -54,17 +54,34 @@ export function attachmentKind(info: Pick<AttachmentInfo, 'filename' | 'mimeType
   return 'file';
 }
 
-/** True when the part can be opened/saved today: mail only, chat fetches are not wired yet (ADR 0010). */
+/** True when the part can be opened/saved: mail has a section, chat is fetchable and its backend can fetch (ADR 0010). */
 export function isOpenable(info: AttachmentInfo): boolean {
-  return info.section !== undefined && info.section !== '';
+  if (info.section !== undefined && info.section !== '') return true;
+  return info.fetchable === true && info.backendCanFetch === true;
 }
 
 /** Above this a thumbnail is not worth decoding in the bubble; the tile and the viewer still work. */
 export const INLINE_IMAGE_MAX_BYTES = 12_000_000;
 
+/** A chat image is fetched on its own only up to this size; a larger one waits for a tap (ADR 0010). */
+export const AUTO_FETCH_IMAGE_MAX_BYTES = 2_000_000;
+
+/** Whether a chat image is small enough to be fetched without a tap once its bubble is in view. */
+export function shouldAutoFetch(info: AttachmentInfo): boolean {
+  return (
+    isOpenable(info) &&
+    attachmentKind(info) === 'image' &&
+    info.size !== null &&
+    info.size !== undefined &&
+    info.size <= AUTO_FETCH_IMAGE_MAX_BYTES
+  );
+}
+
 /** Whether the bubble shows the picture itself (true) or a tile (false). */
 export function showsInline(info: AttachmentInfo): boolean {
   if (!isOpenable(info) || attachmentKind(info) !== 'image') return false;
+  // Showing the picture means fetching it unasked, which a chat part may only do when small.
+  if (info.section === undefined || info.section === '') return shouldAutoFetch(info);
   return info.size === null || info.size === undefined || info.size <= INLINE_IMAGE_MAX_BYTES;
 }
 
@@ -104,6 +121,7 @@ export function shownAttachments(
   limit = MAX_SHOWN_ATTACHMENTS,
 ): { shown: AttachmentInfo[]; more: number } {
   // Mail parts are keyed by their section (an empty one cannot be fetched); chat parts by position.
+  // A chat part that cannot be fetched yet still lists, as a tile that does nothing.
   const usable = (attachments ?? []).filter((a) =>
     a.section !== undefined ? a.section !== '' : a.index !== undefined,
   );

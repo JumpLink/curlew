@@ -117,6 +117,11 @@ export interface MessageBackend {
    * session itself. Resolves with the new account; nothing secret is in it.
    */
   addAccount?(prompter: AccountPrompter, options?: AccountAddOptions): Promise<BackendAccount>;
+  /**
+   * Open a handle for fetching received attachments, when the manifest claims
+   * `capabilities.attachmentsRead`. Optional: a backend without it cannot fetch attachments.
+   */
+  openAttachments?(accountId: string): Promise<AttachmentFetcher>;
 }
 
 /** Flags of `accounts add` that a backend may honour; the others ignore them. */
@@ -402,6 +407,13 @@ export interface ChatBackend extends MessageBackend {
 /** Narrow a registry entry to the chat driver. */
 export function isChatBackend(backend: MessageBackend): backend is ChatBackend {
   return backend.kind === 'chat';
+}
+
+/** Narrow a registry entry to one that can fetch attachments. */
+export function isAttachmentFetcherBackend(
+  backend: MessageBackend,
+): backend is MessageBackend & { openAttachments: NonNullable<MessageBackend['openAttachments']> } {
+  return typeof backend.openAttachments === 'function';
 }
 
 // ── the delivery driver ─────────────────────────────────────────────────

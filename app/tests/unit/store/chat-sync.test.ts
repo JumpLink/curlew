@@ -9,6 +9,7 @@ import {
   deletedBy,
   getConversation,
   listConversations,
+  loadAttachmentHandle,
   loadAttachments,
   rebuildConversations,
   recordSentChatMessage,
@@ -752,8 +753,10 @@ export default async () => {
         expect(attachments.map((a) => a.kind)).toEqualArray(['image', 'image']);
         expect(attachments[0].index).toBe(0);
         expect(attachments[1].index).toBe(1);
-        // The opaque handle never leaves the store.
-        expect((attachments[0] as { handle?: unknown }).handle).toBe(undefined);
+        expect(attachments.every((a) => a.fetchable)).toBe(true);
+        expect('handle' in attachments[0]).toBe(false);
+        expect(loadAttachmentHandle(db, message!.ref, 0)).toBe(JSON.stringify({ fileId: 'a.jpg' }));
+        expect(loadAttachmentHandle(db, message!.ref, 1)).toBe(JSON.stringify({ fileId: 'b.jpg' }));
       } finally {
         db.close();
       }

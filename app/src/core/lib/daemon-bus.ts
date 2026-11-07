@@ -33,6 +33,10 @@ export const DAEMON_INTERFACE_XML = `<node>
       <arg type="s" name="request_json" direction="in"/>
       <arg type="s" name="reply_json" direction="out"/>
     </method>
+    <method name="FetchAttachment">
+      <arg type="s" name="request_json" direction="in"/>
+      <arg type="s" name="reply_json" direction="out"/>
+    </method>
     <method name="RequestAccess">
       <arg type="s" name="request_json" direction="in"/>
       <arg type="s" name="reply_json" direction="out"/>
@@ -48,6 +52,13 @@ export const DAEMON_INTERFACE_XML = `<node>
 </node>`;
 
 /**
+ * How long a caller waits for an attachment fetch.
+ *
+ * Large on purpose: behind this call is a real download from a CDN or a homeserver.
+ */
+export const DAEMON_FETCH_TIMEOUT_MS = 120_000;
+
+/**
  * How long a caller waits for the daemon's answer.
  *
  * Generous on purpose: behind this call is a real send, and a WhatsApp send alone waits up to 15 s
@@ -57,7 +68,7 @@ export const DAEMON_INTERFACE_XML = `<node>
 export const DAEMON_SEND_TIMEOUT_MS = 120_000;
 
 /** The wire version. Bump it when a field stops being optional or changes meaning. */
-export const DAEMON_WIRE_VERSION = 1;
+export const DAEMON_WIRE_VERSION = 2;
 
 /**
  * One send, as the calling process asks for it.
@@ -219,6 +230,109 @@ export function parseDaemonSendRequest(json: string): DaemonSendRequest {
       throw new Error(`the send request has no ${field}`);
   }
   return request as DaemonSendRequest;
+}
+
+/** One attachment fetch, as the calling process asks for it. */
+export interface DaemonFetchAttachmentRequest {
+  v: number;
+  backend: string;
+  account: string;
+  /** The network's opaque message id. */
+  remoteId: string;
+  /** Position of the attachment inside the message. */
+  index: number;
+  /** Max bytes before the fetch is aborted. */
+  maxBytes: number;
+}
+
+/** What the daemon answers for one attachment fetch. */
+export type DaemonFetchAttachmentReply =
+  | { v: number; kind: 'fetched'; path: string; filename: string; bytes: number; mimeType: string }
+  | { v: number; kind: 'not-followed' }
+  | { v: number; kind: 'refused'; message: string }
+  | { v: number; kind: 'failed'; message: string };
+
+function isCount(n: unknown, min: number): n is number {
+  return typeof n === 'number' && Number.isInteger(n) && n >= min && n <= Number.MAX_SAFE_INTEGER;
+}
+
+/** Read a `FetchAttachment` request off the wire, or throw. */
+export function parseDaemonFetchAttachmentRequest(json: string): DaemonFetchAttachmentRequest {
+  let value: unknown;
+  try {
+    value = JSON.parse(json);
+  } catch (error) {
+    throw new Error('the attachment fetch request is not JSON', { cause: error });
+  }
+  if (typeof value !== 'object' || value === null)
+    throw new Error('the attachment fetch request is not an object');
+  const request = value as Partial<DaemonFetchAttachmentRequest>;
+  if (request.v !== DAEMON_WIRE_VERSION) {
+    throw new Error(
+      fmt(
+        _(
+          'the caller speaks attachment protocol {theirs} and this curlew daemon speaks {ours} — restart it with `systemctl --user restart curlew-daemon`',
+        ),
+        { theirs: String(request.v), ours: String(DAEMON_WIRE_VERSION) },
+      ),
+    );
+  }
+  for (const field of ['backend', 'account', 'remoteId'] as const) {
+    if (typeof request[field] !== 'string' || request[field] === '')
+      throw new Error(`the attachment fetch request has no ${field}`);
+  }
+  if (!isCount(request.index, 0)) throw new Error('the attachment fetch request has no index');
+  if (!isCount(request.maxBytes, 1)) throw new Error('the attachment fetch request has no maxBytes');
+  return request as DaemonFetchAttachmentRequest;
+}
+
+/** Read a `FetchAttachment` reply off the wire, or throw. */
+export function parseDaemonFetchAttachmentReply(json: string): DaemonFetchAttachmentReply {
+  let value: unknown;
+  try {
+    value = JSON.parse(json);
+  } catch (error) {
+    throw new Error('the curlew daemon answered something that is not JSON', { cause: error });
+  }
+  if (typeof value !== 'object' || value === null) throw new Error('the curlew daemon answered no object');
+  const reply = value as Partial<DaemonFetchAttachmentReply>;
+  if (reply.v !== DAEMON_WIRE_VERSION) {
+    throw new Error(
+      fmt(
+        _(
+          'the running curlew daemon speaks attachment protocol {theirs} and this curlew speaks {ours} — restart it with `systemctl --user restart curlew-daemon`',
+        ),
+        { theirs: String(reply.v), ours: String(DAEMON_WIRE_VERSION) },
+      ),
+    );
+  }
+  switch (reply.kind) {
+    case 'fetched': {
+      const payload = reply as Partial<DaemonFetchAttachmentReply> & {
+        path?: unknown;
+        filename?: unknown;
+        bytes?: unknown;
+        mimeType?: unknown;
+      };
+      if (
+        typeof payload.path !== 'string' ||
+        typeof payload.filename !== 'string' ||
+        typeof payload.bytes !== 'number' ||
+        typeof payload.mimeType !== 'string'
+      )
+        throw new Error('the curlew daemon reported a fetch without the file it fetched');
+      return reply as DaemonFetchAttachmentReply;
+    }
+    case 'not-followed':
+      return reply as DaemonFetchAttachmentReply;
+    case 'refused':
+    case 'failed':
+      if (typeof (reply as { message?: unknown }).message !== 'string')
+        throw new Error('the curlew daemon reported a problem without saying what it was');
+      return reply as DaemonFetchAttachmentReply;
+    default:
+      throw new Error(`the curlew daemon answered an unknown reply kind ${String(reply.kind)}`);
+  }
 }
 
 /**

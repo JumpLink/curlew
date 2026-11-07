@@ -798,7 +798,7 @@ the way it is.
 `curlew mcp` speaks MCP over stdio. Registered in an MCP client it exposes
 `mail_search`, `mail_get_message`, `mail_list_folders`, `mail_list_parts`,
 `mail_save_attachment`, `mail_search_local`, `mail_sync_status`,
-`conversations_list`, `conversations_get`, `contacts_search`,
+`conversations_list`, `conversations_get`, `message_save_attachment`, `contacts_search`,
 `calendar_list_events` and `accounts_list` — plus `send_message` when some
 `<backend>.send` grant exists.
 
@@ -866,7 +866,7 @@ checks nothing. A message to your own address is always allowed.
 - **Write** — `send_message` and `curlew send` need `write`. `allow` sends, `deny` refuses and
   names the config key with an example rule, `ask` asks you (below).
 - **Read** — only message *bodies* are gated: `conversations_get` with `include_bodies`,
-  `xmpp_wait_reply`, `mail_get_message`, `mail_save_attachment`, and the CLI's
+  `xmpp_wait_reply`, `mail_get_message`, `mail_save_attachment`, `message_save_attachment`, and the CLI's
   `conversations show --bodies`, `mail message`, `mail attachment` and the same for a `query` or
   `body` search. Metadata (who, when, subjects, lists) stays readable. A mail's contact is its
   sender (or, for your own mail, every recipient); a chat's contacts are its participants, so a

@@ -13,6 +13,7 @@ import {
 } from '@curlew/store';
 
 import { loadConfig } from '../core/config.ts';
+import { backendsList } from '../core/actions/backends.ts';
 import type { ListEntry } from './conversation-list-model.ts';
 
 import { PAGE_SIZE, type ShownMessage } from './conversation-model.ts';
@@ -49,6 +50,9 @@ function loadPage(
   const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
   try {
     const { senders } = loadConfig(cfgPath);
+    const canFetch = new Map(
+      backendsList(cfgPath).backends.map((status) => [status.name, status.capabilities.attachmentsRead]),
+    );
     const page: ShownMessage[] = getRecentMessages(db, entry.conversationIds, {
       limit: PAGE_SIZE,
       ...(before ? { before } : {}),
@@ -58,7 +62,12 @@ function loadPage(
     });
     // The parts are metadata only; the bytes are fetched when the person looks at them.
     for (const message of page) {
-      if (message.hasAttachments && !message.notice) message.attachments = loadAttachments(db, message.ref);
+      if (!message.hasAttachments || message.notice) continue;
+      const backendCanFetch = canFetch.get(message.ref.backend) ?? false;
+      message.attachments = loadAttachments(db, message.ref).map((a) => ({
+        ...a,
+        backendCanFetch,
+      }));
     }
     return page;
   } finally {

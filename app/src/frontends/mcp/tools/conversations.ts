@@ -11,6 +11,8 @@ import { mcpSuccess } from '@gjsify/mcp';
 import { z } from 'zod';
 
 import {
+  ATTACHMENT_BYTES,
+  chatSaveAttachment,
   CONVERSATION_BODY_CHARS,
   CONVERSATION_LIMIT,
   conversationsList,
@@ -140,6 +142,51 @@ export function registerConversationTools(server: McpServer): void {
             agent: { frontend: 'mcp' },
           }),
         );
+      } catch (err) {
+        return mcpErrorFrom(err);
+      }
+    },
+  );
+
+  // ── message_save_attachment ─────────────────────────────────────────
+
+  server.registerTool(
+    'message_save_attachment',
+    {
+      title: 'Save Chat Attachment',
+      description:
+        "Download one attachment from a chat message to the user's attachment directory and return the path it was written to. The filename is sanitized and an existing file is never overwritten. Returns a path, not contents — read the file separately if you need it.",
+      inputSchema: {
+        backend: z.string().min(1).describe('Backend name from the message ref (e.g. telegram, matrix)'),
+        account_id: z.string().min(1).describe('Account id the message belongs to'),
+        remote_id: z.string().min(1).describe('Network message id from conversations_get'),
+        index: z.number().int().nonnegative().describe('Attachment index from conversations_get'),
+        max_bytes: z
+          .number()
+          .int()
+          .positive()
+          .max(ATTACHMENT_BYTES.max)
+          .optional()
+          .describe(`Refuse a part larger than this (default ${ATTACHMENT_BYTES.default})`),
+      },
+      // Writing a file is a side effect, but the tool reads the chat — it cannot alter the
+      // conversation, and the write goes only to the user's own attachment directory. Marked
+      // read-only so it survives the default-deny gate.
+      annotations: { readOnlyHint: true, openWorldHint: false },
+    },
+    async (params) => {
+      try {
+        const saved = await chatSaveAttachment({
+          ref: {
+            backend: params.backend,
+            accountId: params.account_id,
+            remoteId: params.remote_id,
+          },
+          index: params.index,
+          maxBytes: params.max_bytes,
+          agent: { frontend: 'mcp' },
+        });
+        return mcpSuccess({ saved });
       } catch (err) {
         return mcpErrorFrom(err);
       }

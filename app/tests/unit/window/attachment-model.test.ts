@@ -8,6 +8,7 @@ import {
   INLINE_IMAGE_MAX_BYTES,
   isOpenable,
   previewKey,
+  shouldAutoFetch,
   showsInline,
   shownAttachments,
   tileAction,
@@ -69,12 +70,52 @@ export default async () => {
       expect(isOpenable(part({ section: '' }))).toBe(false);
       expect(isOpenable({ filename: 'x.png', mimeType: 'image/png', index: 0 })).toBe(false);
     });
+
+    await it('opens a chat part only when it is fetchable and its backend can fetch', async () => {
+      const chat = { filename: 'x.png', mimeType: 'image/png', index: 0, size: 1000 };
+      expect(isOpenable({ ...chat, fetchable: true, backendCanFetch: true })).toBe(true);
+      expect(isOpenable({ ...chat, fetchable: true, backendCanFetch: false })).toBe(false);
+      expect(isOpenable({ ...chat, fetchable: false, backendCanFetch: true })).toBe(false);
+      expect(isOpenable({ ...chat, fetchable: true })).toBe(false);
+    });
+  });
+
+  await describe('shouldAutoFetch', async () => {
+    await it('fetches only small openable images', async () => {
+      const chat = {
+        filename: 'x.png',
+        mimeType: 'image/png',
+        index: 0,
+        fetchable: true,
+        backendCanFetch: true,
+      };
+      expect(shouldAutoFetch({ ...chat, size: 1_000_000 })).toBe(true);
+      expect(shouldAutoFetch({ ...chat, size: 3_000_000 })).toBe(false);
+      expect(shouldAutoFetch({ ...chat, size: null })).toBe(false);
+      expect(shouldAutoFetch({ ...chat, size: 1000, backendCanFetch: false })).toBe(false);
+      expect(shouldAutoFetch({ ...chat, size: 1000, mimeType: 'application/pdf', filename: 'a.pdf' })).toBe(
+        false,
+      );
+    });
   });
 
   await describe('showsInline', async () => {
     await it('shows a fetchable image of reasonable size', async () => {
       expect(showsInline(part({}))).toBe(true);
       expect(showsInline(part({ size: null }))).toBe(true);
+    });
+
+    await it('shows a chat image inline only when small enough to fetch unasked', async () => {
+      const chat = {
+        filename: 'x.png',
+        mimeType: 'image/png',
+        index: 0,
+        fetchable: true,
+        backendCanFetch: true,
+      };
+      expect(showsInline({ ...chat, size: 1_000_000 })).toBe(true);
+      expect(showsInline({ ...chat, size: 5_000_000 })).toBe(false);
+      expect(showsInline({ ...chat, size: null })).toBe(false);
     });
 
     await it('leaves huge images, other kinds and unfetchable parts to the tile', async () => {
