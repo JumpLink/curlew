@@ -9,7 +9,7 @@ protocol.
 
 ## Role models
 
-Read-only checkouts under `refs/` (Fractal, Flare) and in the gjsify tree (Tuba). Each pattern
+Read-only checkouts under `refs/` (Fractal, Flare, Paper Plane, Dino, Hylki, Convey) and in the gjsify tree (Tuba). Each pattern
 below names the file it comes from.
 
 | Pattern | From | Where |
@@ -25,6 +25,11 @@ below names the file it comes from.
 | Settings in an `Adw.PreferencesDialog` with switch rows | Flare | `data/resources/ui/preferences_window.blp` |
 | History: day dividers, message rows, reactions, read receipts, typing, title | Fractal | `src/session_view/room_history/` (`divider_row`, `message_row`, `read_receipts_list`, `typing_row`, `title.blp`) |
 | Composer: attach, emoji, entry, send | Fractal | `src/session_view/room_history/message_toolbar/` |
+| Attachment bubbles: photo, picture, document with transfer state, reply quote | Paper Plane | `src/ui/session/content/message_row/` (`photo.blp`, `media_picture.blp`, `document/`, `reply.blp`) |
+| Send-media sheet: preview before sending, caption | Paper Plane | `src/ui/session/content/send_media_window.blp` |
+| File input and upload overlay in the composer | Dino | `dino/main/data/` (`file_input_widget.ui`, `file_send_overlay.ui`, `file_default_widget.ui`) |
+| Accounts: add, per-account subpage, picker row | Dino | `dino/main/data/preferences_window/` (`add_account_dialog.ui`, `account_preferences_subpage.ui`), `account_picker_row.ui` |
+| Accounts page for several providers | Hylki | `src/ui/accounts.rs`, `src/ui/cloud_accounts.rs` |
 
 ## Responsive
 
