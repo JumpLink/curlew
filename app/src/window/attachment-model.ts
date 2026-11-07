@@ -50,7 +50,7 @@ export function attachmentKind(info: Pick<AttachmentInfo, 'filename' | 'mimeType
   if (!mime) return 'file';
   if (IMAGE_TYPES.has(mime)) return 'image';
   if (mime.startsWith('video/')) return 'video';
-  if (mime.startsWith('audio/')) return mime === 'audio/ogg' ? 'voice' : 'audio';
+  if (mime.startsWith('audio/')) return 'audio';
   return 'file';
 }
 
@@ -103,7 +103,10 @@ export function shownAttachments(
   attachments: readonly AttachmentInfo[] | undefined,
   limit = MAX_SHOWN_ATTACHMENTS,
 ): { shown: AttachmentInfo[]; more: number } {
-  const usable = (attachments ?? []).filter((a) => a.section !== undefined || a.index !== undefined);
+  // Mail parts are keyed by their section (an empty one cannot be fetched); chat parts by position.
+  const usable = (attachments ?? []).filter((a) =>
+    a.section !== undefined ? a.section !== '' : a.index !== undefined,
+  );
   return { shown: usable.slice(0, limit), more: usable.length - Math.min(usable.length, limit) };
 }
 

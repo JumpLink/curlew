@@ -35,7 +35,7 @@ export default async () => {
       expect(attachmentKind({ filename: null, mimeType: 'image/jpeg' })).toBe('image');
       expect(attachmentKind({ filename: null, mimeType: 'IMAGE/PNG; name=x' })).toBe('image');
       expect(attachmentKind({ filename: null, mimeType: 'video/mp4' })).toBe('video');
-      expect(attachmentKind({ filename: null, mimeType: 'audio/ogg' })).toBe('voice');
+      expect(attachmentKind({ filename: null, mimeType: 'audio/ogg' })).toBe('audio');
       expect(attachmentKind({ filename: null, mimeType: 'audio/mpeg' })).toBe('audio');
       expect(attachmentKind({ filename: null, mimeType: 'application/pdf' })).toBe('file');
     });
@@ -48,7 +48,7 @@ export default async () => {
     await it('falls back to the extension for a generic type', async () => {
       expect(attachmentKind({ filename: 'IMG_1.JPG', mimeType: 'application/octet-stream' })).toBe('image');
       expect(attachmentKind({ filename: 'clip.webm', mimeType: null })).toBe('video');
-      expect(attachmentKind({ filename: 'note.opus', mimeType: 'application/octet-stream' })).toBe('voice');
+      expect(attachmentKind({ filename: 'note.opus', mimeType: 'application/octet-stream' })).toBe('audio');
       expect(attachmentKind({ filename: 'noext', mimeType: 'application/octet-stream' })).toBe('file');
       expect(effectiveMime({ filename: 'a.pdf', mimeType: 'application/pdf' })).toBe('application/pdf');
     });
@@ -116,6 +116,11 @@ export default async () => {
       expect(shown.map((p) => p.section)).toStrictEqual(['1']);
       expect(more).toBe(1);
       expect(shownAttachments(undefined)).toStrictEqual({ shown: [], more: 0 });
+    });
+
+    await it('skips a mail part with an empty section even when it has an index', async () => {
+      const { shown } = shownAttachments([{ filename: 'x', mimeType: null, section: '', index: 0 }]);
+      expect(shown).toStrictEqual([]);
     });
 
     await it('includes chat attachments that only have an index', async () => {

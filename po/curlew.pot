@@ -1656,7 +1656,7 @@ msgid "Conversations"
 msgstr ""
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:583
+#: app/src/window/conversation-view.ts:577
 msgid "Continuing via {protocol}"
 msgstr ""
 
@@ -1704,15 +1704,11 @@ msgstr ""
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:335
-msgid "Contains attachments"
-msgstr ""
-
-#: app/src/window/conversation-view.ts:488
+#: app/src/window/conversation-view.ts:482
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:593
+#: app/src/window/conversation-view.ts:587
 msgid "Message not sent: {error}"
 msgstr ""
 

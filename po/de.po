@@ -1906,7 +1906,7 @@ msgid "Conversations"
 msgstr "Unterhaltungen"
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:583
+#: app/src/window/conversation-view.ts:577
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -1954,15 +1954,11 @@ msgstr "Senden über {protocol}"
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:335
-msgid "Contains attachments"
-msgstr "Enthält Anhänge"
-
-#: app/src/window/conversation-view.ts:488
+#: app/src/window/conversation-view.ts:482
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:593
+#: app/src/window/conversation-view.ts:587
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
@@ -2875,6 +2871,9 @@ msgid ""
 msgstr ""
 "{count} Geräte von {jid} tragen diesen Fingerabdruck, er benennt also keines "
 "— nichts wurde geändert"
+
+#~ msgid "Contains attachments"
+#~ msgstr "Enthält Anhänge"
 
 #~ msgid "Accounts"
 #~ msgstr "Konten"

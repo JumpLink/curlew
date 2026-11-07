@@ -216,7 +216,7 @@ export interface AttachmentInfo {
   kind?: AttachmentKind;
   width?: number | null;
   height?: number | null;
-  duration?: number | null;
+  durationMs?: number | null;
   /** IMAP section (mail only): the key to fetch the bytes with. */
   section?: string;
 }
