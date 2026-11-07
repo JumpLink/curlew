@@ -79,6 +79,11 @@ app/src/frontends/mcp/types.ts
 app/src/index.ts
 app/src/window/about.ts
 app/src/window/account-labels.ts
+app/src/window/accounts-daemon.ts
+app/src/window/accounts-dialog.ts
+app/src/window/accounts-model.ts
+app/src/window/accounts-page.ts
+app/src/window/accounts-store.ts
 app/src/window/agent-access-dialog.ts
 app/src/window/agent-access-model.ts
 app/src/window/agent-access-page.ts

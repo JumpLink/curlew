@@ -1,0 +1,197 @@
+import { describe, expect, it } from '@gjsify/unit';
+import type { BackendAccount, GnomeAccount } from '@curlew/protocol';
+
+import {
+  accountStatus,
+  buildProtocolGroups,
+  loadingGroups,
+  type AccountsDaemonState,
+  type AccountsLoadState,
+} from '../../../src/window/accounts-model.ts';
+import type { BackendStatus } from '../../../src/core/backends/registry.ts';
+
+function backend(name: string, enabled = true): BackendStatus {
+  return {
+    name,
+    displayName: name,
+    enabled,
+    syncModel: 'continuous',
+    storeTier: 'derived',
+    native: true,
+    capabilities: { send: false, receive: false, readOnly: true, agentSend: false },
+    terms: null,
+    termsAccepted: true,
+  } as unknown as BackendStatus;
+}
+
+function goaAccount(over: Partial<GnomeAccount> & { id: string }): GnomeAccount {
+  return {
+    provider: 'google',
+    providerName: 'Google',
+    identity: over.id,
+    presentation: over.id,
+    capabilities: { mail: true, calendar: false, contacts: false, files: false },
+    auth: { oauth2: true, password: false },
+    ...over,
+  } as GnomeAccount;
+}
+
+function chatAccount(over: Partial<BackendAccount> & { id: string }): BackendAccount {
+  return {
+    identity: over.id,
+    provider: 'dummy',
+    ...over,
+  } as BackendAccount;
+}
+
+function daemonState(present: boolean, accounts: AccountsDaemonState['accounts']): AccountsDaemonState {
+  return { present, accounts };
+}
+
+export default async () => {
+  describe('accounts model', () => {
+    it('maps daemon states to shown statuses', () => {
+      expect(accountStatus(false, 'connected', '2026-01-01T00:00:00Z')).toStrictEqual({
+        status: 'daemon-not-running',
+      });
+      expect(accountStatus(true, 'connected', '2026-01-01T00:00:00Z')).toStrictEqual({
+        status: 'connected',
+        since: '2026-01-01T00:00:00Z',
+      });
+      expect(accountStatus(true, 'connecting', 't1')).toStrictEqual({ status: 'connecting', since: 't1' });
+      expect(accountStatus(true, 'reconnecting', 't2')).toStrictEqual({ status: 'connecting', since: 't2' });
+      expect(accountStatus(true, 'logged-out', 't3')).toStrictEqual({ status: 'offline', since: 't3' });
+      expect(accountStatus(true, 'held-elsewhere', 't4')).toStrictEqual({ status: 'offline', since: 't4' });
+      expect(accountStatus(true, 'stopped', 't5')).toStrictEqual({ status: 'offline', since: 't5' });
+      expect(accountStatus(true, undefined, 't6')).toStrictEqual({ status: 'offline', since: 't6' });
+    });
+
+    it('builds loading groups for mail and enabled chat backends only', () => {
+      const groups = loadingGroups([
+        backend('mail'),
+        backend('xmpp'),
+        backend('signal'),
+        backend('telegram', false),
+      ]);
+      expect(groups.map((g) => g.backend)).toStrictEqual(['mail', 'xmpp', 'signal']);
+      const mail = groups.find((g) => g.backend === 'mail')!;
+      expect(mail.loading).toBe(true);
+      expect(mail.isGoa).toBe(true);
+      expect(mail.description).toContain('GNOME Settings');
+    });
+
+    it('groups GOA accounts under mail and chat accounts under their protocol', () => {
+      const load: AccountsLoadState = {
+        backends: [backend('mail'), backend('xmpp'), backend('signal')],
+        goaAccounts: {
+          accounts: [
+            goaAccount({ id: 'goa-2', identity: 'beta@example.org' }),
+            goaAccount({ id: 'goa-1', identity: 'alpha@example.org' }),
+          ],
+        },
+        chatAccounts: [
+          { backend: 'xmpp', accounts: [chatAccount({ id: 'xmpp-b' }), chatAccount({ id: 'xmpp-a' })] },
+          { backend: 'signal', accounts: [chatAccount({ id: 'signal-1' })] },
+        ],
+        labels: new Map([['xmpp-b', 'Work XMPP']]),
+      };
+      const state = buildProtocolGroups(load, daemonState(true, new Map()));
+      expect(state.daemonPresent).toBe(true);
+      expect(state.groups.map((g) => g.backend)).toStrictEqual(['mail', 'xmpp', 'signal']);
+
+      const mail = state.groups.find((g) => g.backend === 'mail')!;
+      expect(mail.rows.map((r) => r.label)).toStrictEqual(['alpha@example.org', 'beta@example.org']);
+      expect(mail.rows[0]!.status).toBe('offline');
+
+      const xmpp = state.groups.find((g) => g.backend === 'xmpp')!;
+      expect(xmpp.rows.map((r) => r.label)).toStrictEqual(['Work XMPP', 'xmpp-a']);
+    });
+
+    it('hides chat backends that are disabled', () => {
+      const load: AccountsLoadState = {
+        backends: [backend('mail'), backend('xmpp', false)],
+        goaAccounts: { accounts: [] },
+        chatAccounts: [{ backend: 'xmpp', accounts: [chatAccount({ id: 'xmpp-1' })] }],
+        labels: new Map(),
+      };
+      const state = buildProtocolGroups(load, daemonState(true, new Map()));
+      expect(state.groups.map((g) => g.backend)).toStrictEqual(['mail']);
+    });
+
+    it('shows a per-group error when a source fails', () => {
+      const load: AccountsLoadState = {
+        backends: [backend('mail'), backend('xmpp')],
+        goaAccounts: { accounts: [], error: 'GOA unreachable' },
+        chatAccounts: [{ backend: 'xmpp', accounts: [], error: 'backend crashed' }],
+        labels: new Map(),
+      };
+      const state = buildProtocolGroups(load, daemonState(true, new Map()));
+      expect(state.groups.find((g) => g.backend === 'mail')!.error).toBe('GOA unreachable');
+      expect(state.groups.find((g) => g.backend === 'xmpp')!.error).toBe('backend crashed');
+    });
+
+    it('labels GOA accounts by identity, presentation, then id', () => {
+      const load: AccountsLoadState = {
+        backends: [backend('mail')],
+        goaAccounts: {
+          accounts: [
+            goaAccount({ id: 'a', identity: 'identity-a', presentation: 'Pres' }),
+            goaAccount({ id: 'b', identity: '', presentation: 'Pres-b' }),
+            goaAccount({ id: 'c', identity: '', presentation: '' }),
+          ],
+        },
+        chatAccounts: [],
+        labels: new Map(),
+      };
+      const state = buildProtocolGroups(load, daemonState(true, new Map()));
+      const byId = new Map(state.groups[0]!.rows.map((r) => [r.id, r.label]));
+      expect(byId.get('a')).toBe('identity-a');
+      expect(byId.get('b')).toBe('Pres-b');
+      expect(byId.get('c')).toBe('c');
+    });
+
+    it('matches daemon state to accounts by backend and id', () => {
+      const load: AccountsLoadState = {
+        backends: [backend('mail'), backend('xmpp')],
+        goaAccounts: { accounts: [goaAccount({ id: 'goa-1' })] },
+        chatAccounts: [{ backend: 'xmpp', accounts: [chatAccount({ id: 'xmpp-1' })] }],
+        labels: new Map(),
+      };
+      const accounts = new Map([
+        ['mail/goa-1', { backend: 'mail', accountId: 'goa-1', state: 'connected' as const, since: 't1' }],
+        ['xmpp/xmpp-1', { backend: 'xmpp', accountId: 'xmpp-1', state: 'connecting' as const, since: 't2' }],
+      ]);
+      const state = buildProtocolGroups(load, daemonState(true, accounts));
+      const mailRow = state.groups.find((g) => g.backend === 'mail')!.rows[0]!;
+      const xmppRow = state.groups.find((g) => g.backend === 'xmpp')!.rows[0]!;
+      expect(mailRow.status).toBe('connected');
+      expect(mailRow.since).toBe('t1');
+      expect(xmppRow.status).toBe('connecting');
+      expect(xmppRow.since).toBe('t2');
+    });
+
+    it('reports daemon-not-running for every account when the daemon is absent', () => {
+      const load: AccountsLoadState = {
+        backends: [backend('mail')],
+        goaAccounts: { accounts: [goaAccount({ id: 'goa-1' })] },
+        chatAccounts: [],
+        labels: new Map(),
+      };
+      const state = buildProtocolGroups(load, daemonState(false, new Map()));
+      expect(state.daemonPresent).toBe(false);
+      expect(state.groups[0]!.rows[0]!.status).toBe('daemon-not-running');
+    });
+
+    it('keeps chat accounts out of the mail group', () => {
+      const load: AccountsLoadState = {
+        backends: [backend('mail'), backend('xmpp')],
+        goaAccounts: { accounts: [] },
+        chatAccounts: [{ backend: 'xmpp', accounts: [chatAccount({ id: 'xmpp-1' })] }],
+        labels: new Map(),
+      };
+      const state = buildProtocolGroups(load, daemonState(true, new Map()));
+      expect(state.groups.map((g) => g.backend)).toStrictEqual(['mail', 'xmpp']);
+      expect(state.groups[0]!.rows.length).toBe(0);
+    });
+  });
+};
