@@ -18,7 +18,7 @@
  * printed apart from the QR code itself.
  */
 
-import { _, fmt } from '@curlew/protocol';
+import { _, fmt, notifyQr } from '@curlew/protocol';
 import type { AccountPrompter, BackendAccount, BackendContext } from '@curlew/protocol';
 import { ensurePrivateDir, SecretStore } from '@curlew/store';
 import type * as Core from '@signalapp/libsignal-client';
@@ -80,8 +80,11 @@ async function receiveProvisioning(
       timer = setTimeout(() => resolve({ timeout: true }), Math.max(0, deadline - Date.now()));
       socket = network.provisioning(key, {
         onUrl: (url) =>
-          prompter.notify(
-            `${renderQr(url)}\n${_('Scan this with the phone: Signal → Settings → Linked devices → Link new device.')}`,
+          notifyQr(
+            prompter,
+            url,
+            _('Scan this with the phone: Signal → Settings → Linked devices → Link new device.'),
+            renderQr,
           ),
         onEnvelope: (envelope) => resolve({ envelope }),
         onClosed: () => resolve({ closed: true }),

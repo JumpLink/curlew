@@ -17,7 +17,7 @@
  * the public name.
  */
 
-import { _, fmt } from '@curlew/protocol';
+import { _, fmt, notifyQr } from '@curlew/protocol';
 import type { AccountPrompter, BackendAccount, BackendContext } from '@curlew/protocol';
 import { ensurePrivateDir, SecretStore } from '@curlew/store';
 import { existsSync, renameSync, rmSync } from 'node:fs';
@@ -94,8 +94,13 @@ function runLinkSocket(
             )
             .catch((err: unknown) => reject(err instanceof Error ? err : new Error(String(err))));
         } else {
-          prompter.notify(
-            `${renderQr(update.qr)}\n${_('Scan this with the phone: WhatsApp → Settings → Linked devices → Link a device. (A new code appears every ~20 s.)')}`,
+          notifyQr(
+            prompter,
+            update.qr,
+            _(
+              'Scan this with the phone: WhatsApp → Settings → Linked devices → Link a device. (A new code appears every ~20 s.)',
+            ),
+            renderQr,
           );
         }
       }

@@ -79,7 +79,10 @@ app/src/frontends/mcp/tools/setup.ts
 app/src/frontends/mcp/types.ts
 app/src/index.ts
 app/src/window/about.ts
+app/src/window/account-add-model.ts
+app/src/window/account-add.ts
 app/src/window/account-labels.ts
+app/src/window/account-prompter.ts
 app/src/window/accounts-daemon.ts
 app/src/window/accounts-dialog.ts
 app/src/window/accounts-model.ts
@@ -102,6 +105,7 @@ app/src/window/fade-bin.ts
 app/src/window/main.ts
 app/src/window/media-viewer.ts
 app/src/window/preferences-dialog.ts
+app/src/window/qr-image.ts
 app/src/window/watch.ts
 app/src/window/window.ts
 packages/gnome/src/calendar.gjs.ts

@@ -12,6 +12,9 @@ import type { AccountRow, AccountStatus, AccountsPageState, ProtocolGroup } from
 
 export interface AccountsPage {
   widget: Gtk.Widget;
+  navigation: Adw.NavigationView;
+  /** The page of the account list, which later pages return to. */
+  root: Adw.NavigationPage;
   /** Until both the accounts and the daemon have answered, so no half-true state flashes by. */
   showLoading(): void;
   show(state: AccountsPageState): void;
@@ -39,7 +42,7 @@ const STATUS_CLASS: Record<AccountStatus, string> = {
   'daemon-not-running': 'dim-label',
 };
 
-function openGoaSettings(onError: (err: Error) => void): void {
+export function openGoaSettings(onError: (err: Error) => void): void {
   try {
     const appInfo = Gio.AppInfo.create_from_commandline(
       'gnome-control-center online-accounts',
@@ -117,7 +120,7 @@ function buildGroup(
   return prefGroup;
 }
 
-export function createAccountsPage(onError: (err: Error) => void): AccountsPage {
+export function createAccountsPage(onError: (err: Error) => void, onAdd: () => void): AccountsPage {
   const preferencesPage = new Adw.PreferencesPage();
   const loading = new Adw.Spinner({
     halign: Gtk.Align.CENTER,
@@ -132,8 +135,15 @@ export function createAccountsPage(onError: (err: Error) => void): AccountsPage 
   const emptyPage = new Adw.StatusPage({
     iconName: 'user-info-symbolic',
     title: _('No accounts'),
-    description: _('Enable a backend in Preferences to add accounts here.'),
+    description: _('Add a chat account, or add a mail account in GNOME Settings.'),
   });
+  const emptyAdd = new Gtk.Button({
+    label: _('Add Account'),
+    halign: Gtk.Align.CENTER,
+    cssClasses: ['suggested-action', 'pill'],
+  });
+  emptyAdd.connect('clicked', onAdd);
+  emptyPage.set_child(emptyAdd);
   const stack = new Gtk.Stack();
   stack.add_named(loading, 'loading');
   stack.add_named(preferencesPage, 'content');
@@ -146,7 +156,14 @@ export function createAccountsPage(onError: (err: Error) => void): AccountsPage 
     revealed: false,
   });
   const toolbar = new Adw.ToolbarView();
-  toolbar.add_top_bar(new Adw.HeaderBar());
+  const header = new Adw.HeaderBar();
+  const addButton = new Gtk.Button({
+    iconName: 'list-add-symbolic',
+    tooltipText: _('Add Account'),
+  });
+  addButton.connect('clicked', onAdd);
+  header.pack_start(addButton);
+  toolbar.add_top_bar(header);
   toolbar.add_top_bar(banner);
   toolbar.set_content(stack);
   const navPage = new Adw.NavigationPage({ title: _('Accounts') });
@@ -164,6 +181,8 @@ export function createAccountsPage(onError: (err: Error) => void): AccountsPage 
 
   return {
     widget: navView,
+    navigation: navView,
+    root: navPage,
     showLoading() {
       stack.set_visible_child_name('loading');
     },
