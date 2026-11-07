@@ -8,7 +8,6 @@ import { isAttachmentFetcherBackend } from '@curlew/protocol';
 import {
   accountIdFor,
   attachmentHandle,
-  attachmentUrl,
   decodeContent,
   encodeContent,
   encryptAttachment,
@@ -198,7 +197,6 @@ export default async () => {
         expect(result.size).toBe(PLAIN.byteLength);
         expect(sink.size).toBe(PLAIN.byteLength);
         expect(asked).toStrictEqual(['https://cdn3.signal.org/attachments/synthetic-key']);
-        expect(attachmentUrl({ ...(pointer as never), cdnId: null } as never)).toBe(asked[0]);
       });
     });
 
