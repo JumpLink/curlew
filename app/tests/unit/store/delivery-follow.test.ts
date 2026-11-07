@@ -122,6 +122,7 @@ class FollowBackend implements DeliveryBackend {
       subject: false,
       folders: false,
       attachments: true,
+      attachmentsRead: false,
     },
     syncModel: 'delivery-only',
     native: false,

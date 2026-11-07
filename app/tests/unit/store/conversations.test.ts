@@ -337,7 +337,7 @@ export default async () => {
         expect(all.find((c) => c.messageCount === 1)?.emailChat).toBe(false);
         const found = getConversation(db, chat?.id ?? '');
         expect(found?.messages.map((m) => m.emailChat)).toStrictEqual([false, true]);
-        const target = mailReplyTarget(db, found?.messages[1].ref ?? { accountId: '' });
+        const target = mailReplyTarget(db, found?.messages[1].ref ?? { accountId: '', backend: 'mail' });
         expect(target?.messageId).toBe('<c2@example.com>');
         expect(target?.references).toStrictEqual(['<c1@example.org>']);
       } finally {
@@ -363,7 +363,7 @@ export default async () => {
       try {
         await syncIndex(db, backend, { now: AT('2026-08-06T12:00:00Z') });
         rebuildConversations(db, { contacts: CONTACTS });
-        const ref = { accountId: 'fake', folder: 'INBOX', uid: 1 };
+        const ref = { accountId: 'fake', backend: 'mail', folder: 'INBOX', uid: 1 };
         const found = listConversations(db).flatMap((c) => getConversation(db, c.id)?.messages ?? []);
         const withFile = found.find((m) => m.hasAttachments);
         expect(
@@ -373,7 +373,7 @@ export default async () => {
           ['3', null, 'application/pdf', 20],
         ]);
         expect(mailAttachments(db, found.find((m) => !m.hasAttachments)?.ref ?? ref).length).toBe(0);
-        expect(mailAttachments(db, { accountId: 'fake' }).length).toBe(0);
+        expect(mailAttachments(db, { accountId: 'fake', backend: 'mail' }).length).toBe(0);
       } finally {
         db.close();
       }

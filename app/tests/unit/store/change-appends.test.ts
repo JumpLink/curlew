@@ -98,6 +98,7 @@ function fakeDelivery(batches: DeliveryEvent[][], outcome: DeliveryOutcome): Del
         subject: false,
         folders: false,
         attachments: true,
+        attachmentsRead: false,
       },
       syncModel: 'delivery-only',
       native: false,

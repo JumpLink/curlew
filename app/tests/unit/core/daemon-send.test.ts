@@ -65,6 +65,7 @@ const MANIFEST: BackendManifest = {
     subject: false,
     folders: false,
     attachments: false,
+    attachmentsRead: false,
   },
   syncModel: 'delivery-only',
   native: false,

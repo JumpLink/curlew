@@ -31,6 +31,7 @@
 
 import { isChatRateLimitedError } from '@curlew/protocol';
 import type {
+  ChatAttachment,
   ChatBackend,
   ChatEdit,
   ChatHistoryPage,
@@ -231,6 +232,8 @@ class ChatBatch {
    * not — see {@link adoptEchoBody}.
    */
   readonly clientIds = new Map<string, SqlValue[]>();
+  /** Attachment rows for chat messages, written once and never rewritten (ADR 0010). */
+  readonly messageAttachments: SqlValue[][] = [];
 
   /**
    * The conversations this batch really changes, for the change journal (ADR 0007). Not derived
@@ -276,6 +279,21 @@ class ChatBatch {
       this.backend,
       this.accountId,
       peer.remoteId,
+    ]);
+  }
+
+  messageAttachment(messageId: string, idx: number, attachment: ChatAttachment): void {
+    this.messageAttachments.push([
+      messageId,
+      idx,
+      attachment.filename,
+      attachment.mimeType,
+      attachment.size,
+      attachment.kind,
+      attachment.width,
+      attachment.height,
+      attachment.durationMs,
+      attachment.handle,
     ]);
   }
 }
@@ -391,6 +409,9 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
   }
   // Deletions first: other people's words the server no longer has must not outlive it here.
   deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, batch.deletedMessages);
+  if (batch.deletedMessages.length > 0) {
+    deleteIn(db, (p) => `DELETE FROM message_attachments WHERE message_id IN (${p})`, batch.deletedMessages);
+  }
   for (const table of [
     'conversation_messages',
     'chat_members',
@@ -398,6 +419,12 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
     'conversation_participants',
   ]) {
     deleteIn(db, (p) => `DELETE FROM ${table} WHERE conversation_id IN (${p})`, batch.deletedConversations);
+  }
+  if (batch.deletedConversations.length > 0) {
+    db.prepare(
+      `DELETE FROM message_attachments WHERE message_id IN
+         (SELECT id FROM conversation_messages WHERE conversation_id IN (${placeholders(batch.deletedConversations.length)}))`,
+    ).run(...batch.deletedConversations);
   }
   deleteIn(db, (p) => `DELETE FROM conversations WHERE id IN (${p})`, batch.deletedConversations);
 
@@ -417,6 +444,12 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
         sender_address, from_self, sent_at, has_attachments, classification, classification_reason,
         remote_id, body, remote_seq, sender_peer_id, edited_at, reply_to_remote_id, thread_remote_id, reply_to_client_id)`,
     batch.messages,
+  );
+  insertMany(
+    db,
+    `INSERT OR IGNORE INTO message_attachments
+       (message_id, idx, filename, mime_type, size, kind, width, height, duration_ms, handle)`,
+    batch.messageAttachments,
   );
   insertMany(
     db,
@@ -446,6 +479,9 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
     ).run(...edit);
   }
   deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, batch.retracted);
+  if (batch.retracted.length > 0) {
+    deleteIn(db, (p) => `DELETE FROM message_attachments WHERE message_id IN (${p})`, batch.retracted);
+  }
   // Read state and the conversation aggregates, set-based: two executions per account however
   // many chats changed. `seen` for the user's own messages is always 1; for the others it is
   // the network's read marker, which moves without any new message arriving. A notice is seen
@@ -508,6 +544,7 @@ function messageRow(
   const verdict = classifyChatMessage(chat, m);
   const sender = m.fromSelf ? null : m.sender;
   const address = sender?.addresses[0] ?? null;
+  const hasAttachments = m.hasAttachments || (m.attachments !== undefined && m.attachments.length > 0);
   return [
     stableId('m-', conversationId, m.remoteId),
     conversationId,
@@ -521,7 +558,7 @@ function messageRow(
     address?.value ?? null,
     m.fromSelf ? 1 : 0,
     m.sentAt,
-    m.hasAttachments ? 1 : 0,
+    hasAttachments ? 1 : 0,
     verdict.classification,
     verdict.reason,
     m.remoteId,
@@ -752,6 +789,11 @@ async function syncAccount(
         if (!m.fromSelf && m.sender) batch.member(conversationId, m.sender);
         const row = messageRow(batch, conversationId, chat, m);
         batch.messages.push(row);
+        if (m.attachments) {
+          for (let i = 0; i < m.attachments.length; i++) {
+            batch.messageAttachment(String(row[0]), i, m.attachments[i]);
+          }
+        }
         if (m.clientId) batch.clientIds.set(m.clientId, row);
       }
       result.added += fetched.length;

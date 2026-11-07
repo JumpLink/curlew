@@ -1,10 +1,12 @@
 import { describe, expect, it } from '@gjsify/unit';
+import type { AttachmentKind } from '../../../src/window/attachment-model.ts';
 
 import {
   attachmentKind,
   boundedSize,
   effectiveMime,
   INLINE_IMAGE_MAX_BYTES,
+  isOpenable,
   previewKey,
   showsInline,
   shownAttachments,
@@ -12,7 +14,13 @@ import {
 } from '../../../src/window/attachment-model.ts';
 
 const part = (
-  over: Partial<{ filename: string | null; mimeType: string | null; section: string; size: number | null }>,
+  over: Partial<{
+    filename: string | null;
+    mimeType: string | null;
+    section: string;
+    size: number | null;
+    kind: AttachmentKind;
+  }>,
 ) => ({
   filename: 'photo.png',
   mimeType: 'image/png',
@@ -28,6 +36,7 @@ export default async () => {
       expect(attachmentKind({ filename: null, mimeType: 'IMAGE/PNG; name=x' })).toBe('image');
       expect(attachmentKind({ filename: null, mimeType: 'video/mp4' })).toBe('video');
       expect(attachmentKind({ filename: null, mimeType: 'audio/ogg' })).toBe('audio');
+      expect(attachmentKind({ filename: null, mimeType: 'audio/mpeg' })).toBe('audio');
       expect(attachmentKind({ filename: null, mimeType: 'application/pdf' })).toBe('file');
     });
 
@@ -39,8 +48,26 @@ export default async () => {
     await it('falls back to the extension for a generic type', async () => {
       expect(attachmentKind({ filename: 'IMG_1.JPG', mimeType: 'application/octet-stream' })).toBe('image');
       expect(attachmentKind({ filename: 'clip.webm', mimeType: null })).toBe('video');
+      expect(attachmentKind({ filename: 'note.opus', mimeType: 'application/octet-stream' })).toBe('audio');
       expect(attachmentKind({ filename: 'noext', mimeType: 'application/octet-stream' })).toBe('file');
       expect(effectiveMime({ filename: 'a.pdf', mimeType: 'application/pdf' })).toBe('application/pdf');
+    });
+
+    await it('trusts an explicit kind from the backend', async () => {
+      expect(attachmentKind({ filename: 'x.bin', mimeType: 'application/octet-stream', kind: 'video' })).toBe(
+        'video',
+      );
+      expect(attachmentKind({ filename: 'x.bin', mimeType: 'application/octet-stream', kind: 'voice' })).toBe(
+        'voice',
+      );
+    });
+  });
+
+  await describe('isOpenable', async () => {
+    await it('is true only for mail parts with a section today', async () => {
+      expect(isOpenable(part({}))).toBe(true);
+      expect(isOpenable(part({ section: '' }))).toBe(false);
+      expect(isOpenable({ filename: 'x.png', mimeType: 'image/png', index: 0 })).toBe(false);
     });
   });
 
@@ -62,6 +89,7 @@ export default async () => {
       expect(tileAction('video')).toBe('view');
       expect(tileAction('file')).toBe('open');
       expect(tileAction('audio')).toBe('open');
+      expect(tileAction('voice')).toBe('open');
     });
   });
 
@@ -82,12 +110,27 @@ export default async () => {
   });
 
   await describe('shownAttachments', async () => {
-    await it('skips parts without a section and reports the surplus', async () => {
+    await it('skips parts without a section or index and reports the surplus', async () => {
       const parts = [part({ section: '1' }), { filename: 'x', mimeType: null }, part({ section: '3' })];
       const { shown, more } = shownAttachments(parts, 1);
       expect(shown.map((p) => p.section)).toStrictEqual(['1']);
       expect(more).toBe(1);
       expect(shownAttachments(undefined)).toStrictEqual({ shown: [], more: 0 });
+    });
+
+    await it('skips a mail part with an empty section even when it has an index', async () => {
+      const { shown } = shownAttachments([{ filename: 'x', mimeType: null, section: '', index: 0 }]);
+      expect(shown).toStrictEqual([]);
+    });
+
+    await it('includes chat attachments that only have an index', async () => {
+      const parts = [
+        { filename: 'x.png', mimeType: 'image/png', index: 0 },
+        { filename: 'y.pdf', mimeType: 'application/pdf', index: 1 },
+      ];
+      const { shown, more } = shownAttachments(parts);
+      expect(shown).toStrictEqual(parts);
+      expect(more).toBe(0);
     });
   });
 
@@ -101,6 +144,13 @@ export default async () => {
         previewKey({ accountId: 'ab', folder: 'c' }, '1') ===
           previewKey({ accountId: 'a', folder: 'bc' }, '1'),
       ).toBe(false);
+    });
+
+    await it('uses the index for chat attachments without a section', async () => {
+      const ref = { accountId: 'telegram-1', remoteId: 'msg-42' };
+      expect(previewKey(ref, '', 0)).toBe(previewKey({ ...ref }, '', 0));
+      expect(previewKey(ref, '', 0) === previewKey(ref, '', 1)).toBe(false);
+      expect(previewKey(ref, '', 0) === previewKey({ ...ref, remoteId: 'msg-43' }, '', 0)).toBe(false);
     });
   });
 };

@@ -316,8 +316,9 @@ export function createConversationView(
     // only for a message whose parts the index does not know.
     const { shown, more } = shownAttachments(message.attachments);
     const listed = shown.length > 0;
-    if (listed) bubble.append(attachmentList(message.ref, shown, more, handlers));
-    if (written || !listed) {
+    const generic = message.hasAttachments && !listed;
+    if (listed || generic) bubble.append(attachmentList(message.ref, shown, more, handlers, generic));
+    if (written || (!listed && !generic)) {
       const preview = bubbleText(full);
       const body = new Gtk.Label({
         label: preview.clipped ? `${preview.text} …` : preview.text,
@@ -329,12 +330,6 @@ export function createConversationView(
         maxWidthChars: 56,
       });
       bubble.append(fadedOverlay(body, preview.clipped, () => body.set_label(full)));
-    }
-    if (message.hasAttachments && written && !listed) {
-      const attachments = new Gtk.Label({ label: _('Contains attachments'), xalign: 0 });
-      attachments.add_css_class('caption');
-      attachments.add_css_class('dim-label');
-      bubble.append(attachments);
     }
     const time = new Gtk.Label({ label: shortTime(message.sentAt), xalign: 1 });
     time.add_css_class('caption');

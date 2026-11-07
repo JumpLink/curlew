@@ -30,6 +30,7 @@ export const XMPP_MANIFEST: BackendManifest = {
     folders: false,
     // Out-of-band links (XEP-0066), which HTTP File Upload (XEP-0363) produces; URLs only, no download.
     attachments: false,
+    attachmentsRead: false,
   },
   // With MAM (XEP-0313) the server keeps the history: the index is rebuildable (`derived`).
   // A server WITHOUT MAM leaves nothing to read — curlew says so at connect and does not

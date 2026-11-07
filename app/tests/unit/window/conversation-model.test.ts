@@ -34,7 +34,7 @@ function message(over: Partial<ConversationMessage> & { id: string }): Conversat
     emailChat: false,
     classification: 'conversational',
     classificationReason: 'known-contact',
-    ref: { accountId: 'a' },
+    ref: { accountId: 'a', backend: 'mail' },
     ...over,
   };
 }
@@ -169,7 +169,7 @@ export default async () => {
 
     await it('badges the first bubble of each protocol run and adds a divider on switches', async () => {
       const m = (id: string, backend: string, accountId = 'a') =>
-        message({ id, backend, presentation: 'bubble', ref: { accountId } });
+        message({ id, backend, presentation: 'bubble', ref: { accountId, backend } });
       const runs = protocolRunStarts([m('a', 'signal'), m('b', 'signal'), m('c', 'mail'), m('d', 'signal')]);
       expect([...runs.entries()]).toStrictEqual([
         ['a', { backend: 'signal' }],
@@ -195,7 +195,7 @@ export default async () => {
       ];
       expect(defaultProtocolChoice([], choices)).toBe(choices[0]);
       const m = (id: string, backend: string, accountId = 'a') =>
-        message({ id, backend, presentation: 'bubble', ref: { accountId } });
+        message({ id, backend, presentation: 'bubble', ref: { accountId, backend } });
       expect(defaultProtocolChoice([m('a', 'xmpp', 'xmpp-1')], choices)).toBe(choices[1]);
       expect(defaultProtocolChoice([m('a', 'xmpp', 'xmpp-2')], choices)).toBe(choices[1]);
       expect(defaultProtocolChoice([m('a', 'signal', 'signal-1')], choices)).toBe(choices[0]);

@@ -2,7 +2,7 @@
 
 import type { AttachmentInfo } from './conversation-model.ts';
 
-export type AttachmentKind = 'image' | 'video' | 'audio' | 'file';
+export type AttachmentKind = 'image' | 'video' | 'audio' | 'voice' | 'file';
 
 /** Formats the toolkit decodes everywhere; SVG stays a file, as drawing foreign vector markup is not worth it. */
 const IMAGE_TYPES = new Set([
@@ -41,7 +41,11 @@ export function effectiveMime(info: Pick<AttachmentInfo, 'filename' | 'mimeType'
   return (ext && info.filename?.includes('.') ? BY_EXTENSION[ext] : undefined) ?? mime;
 }
 
-export function attachmentKind(info: Pick<AttachmentInfo, 'filename' | 'mimeType'>): AttachmentKind {
+export function attachmentKind(info: Pick<AttachmentInfo, 'filename' | 'mimeType' | 'kind'>): AttachmentKind {
+  // Trust the backend/store when it already classified the part (chat, or mail coming soon).
+  if (info.kind === 'image' || info.kind === 'video' || info.kind === 'audio' || info.kind === 'voice') {
+    return info.kind;
+  }
   const mime = effectiveMime(info);
   if (!mime) return 'file';
   if (IMAGE_TYPES.has(mime)) return 'image';
@@ -50,12 +54,17 @@ export function attachmentKind(info: Pick<AttachmentInfo, 'filename' | 'mimeType
   return 'file';
 }
 
+/** True when the part can be opened/saved today: mail only, chat fetches are not wired yet (ADR 0010). */
+export function isOpenable(info: AttachmentInfo): boolean {
+  return info.section !== undefined && info.section !== '';
+}
+
 /** Above this a thumbnail is not worth decoding in the bubble; the tile and the viewer still work. */
 export const INLINE_IMAGE_MAX_BYTES = 12_000_000;
 
 /** Whether the bubble shows the picture itself (true) or a tile (false). */
 export function showsInline(info: AttachmentInfo): boolean {
-  if (info.section === undefined || attachmentKind(info) !== 'image') return false;
+  if (!isOpenable(info) || attachmentKind(info) !== 'image') return false;
   return info.size === null || info.size === undefined || info.size <= INLINE_IMAGE_MAX_BYTES;
 }
 
@@ -94,14 +103,20 @@ export function shownAttachments(
   attachments: readonly AttachmentInfo[] | undefined,
   limit = MAX_SHOWN_ATTACHMENTS,
 ): { shown: AttachmentInfo[]; more: number } {
-  const usable = (attachments ?? []).filter((a) => a.section !== undefined && a.section !== '');
+  // Mail parts are keyed by their section (an empty one cannot be fetched); chat parts by position.
+  const usable = (attachments ?? []).filter((a) =>
+    a.section !== undefined ? a.section !== '' : a.index !== undefined,
+  );
   return { shown: usable.slice(0, limit), more: usable.length - Math.min(usable.length, limit) };
 }
 
 /** Where a fetched part is cached: one directory per message part, so a part is fetched once. */
 export function previewKey(
-  ref: { accountId: string; folder?: string; uid?: number },
+  ref: { accountId: string; folder?: string; uid?: number; remoteId?: string },
   section: string,
+  index?: number,
 ): string {
-  return [ref.accountId, ref.folder ?? '', ref.uid ?? '', section].join('\u0000');
+  // Chat attachments have no IMAP section; their position is the index.
+  const segment = section !== undefined && section !== '' ? section : String(index ?? '');
+  return [ref.accountId, ref.folder ?? '', ref.uid ?? '', ref.remoteId ?? '', segment].join('\u0000');
 }

@@ -1,6 +1,14 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { insertMany, openIndexDb, seqColumn, type IndexDatabase } from '@curlew/store';
+import {
+  IndexTooNewError,
+  insertMany,
+  migrate,
+  openIndexDb,
+  SCHEMA_VERSION,
+  seqColumn,
+  type IndexDatabase,
+} from '@curlew/store';
 
 /**
  * The libgda-backed `node:sqlite` reads columns, and what it hands back is a contract this
@@ -135,5 +143,45 @@ export default async () => {
       },
       { timeout: 300_000 },
     );
+  });
+
+  await describe('schema migration', async () => {
+    await it('creates message_attachments when migrating from v13 to v14', async () => {
+      withDb((db) => {
+        // Simulate a v13 index: build the current schema, then drop the v14 table and rewind.
+        migrate(db);
+        db.exec('DROP TABLE message_attachments');
+        db.prepare("INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('schema_version', '13')").run();
+
+        migrate(db);
+
+        expect(SCHEMA_VERSION).toBe(14);
+        const after = db
+          .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'message_attachments'")
+          .get() as { name: string };
+        expect(after.name).toBe('message_attachments');
+        const version = db.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get() as {
+          value: string;
+        };
+        expect(Number(version.value)).toBe(14);
+      });
+    });
+
+    await it('throws IndexTooNewError when the database is newer than supported', async () => {
+      withDb((db) => {
+        db.exec('CREATE TABLE IF NOT EXISTS schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
+        db.prepare("INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('schema_version', '999')").run();
+        let thrown: IndexTooNewError | null = null;
+        try {
+          migrate(db);
+        } catch (err) {
+          if (err instanceof IndexTooNewError) thrown = err;
+          else throw err;
+        }
+        expect(thrown).not.toBeNull();
+        expect(thrown!.found).toBe(999);
+        expect(thrown!.supported).toBe(SCHEMA_VERSION);
+      });
+    });
   });
 };

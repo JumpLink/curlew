@@ -6,7 +6,7 @@ import {
   getRecentMessages,
   type MessageCursor,
   indexDbPath,
-  mailAttachments,
+  loadAttachments,
   mailReplyTarget,
   openIndexDb,
   type MailReplyTarget,
@@ -58,7 +58,7 @@ function loadPage(
     });
     // The parts are metadata only; the bytes are fetched when the person looks at them.
     for (const message of page) {
-      if (message.hasAttachments && !message.notice) message.attachments = mailAttachments(db, message.ref);
+      if (message.hasAttachments && !message.notice) message.attachments = loadAttachments(db, message.ref);
     }
     return page;
   } finally {

@@ -933,6 +933,7 @@ function toMessage(
     classificationReason: forced ? 'override' : (String(r.classification_reason) as ClassificationReason),
     ref: {
       accountId: String(r.account_id),
+      backend: String(r.backend),
       ...(folder ? { folder } : {}),
       ...(uid !== undefined ? { uid } : {}),
       ...(r.remote_id ? { remoteId: String(r.remote_id) } : {}),

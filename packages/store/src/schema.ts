@@ -22,7 +22,7 @@
 import { type IndexDatabase, withTransaction } from './db.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 
-export const SCHEMA_VERSION = 13;
+export const SCHEMA_VERSION = 14;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -89,6 +89,21 @@ const STATEMENTS: readonly string[] = [
      mime_type TEXT,
      size INTEGER,
      PRIMARY KEY (message_id, section))`,
+
+  // Chat message attachments: one row per part. `idx` is the order from the backend; `handle`
+  // is opaque to everyone but the backend and never leaves `@curlew/store`.
+  `CREATE TABLE IF NOT EXISTS message_attachments (
+     message_id TEXT NOT NULL,
+     idx INTEGER NOT NULL,
+     filename TEXT,
+     mime_type TEXT,
+     size INTEGER,
+     kind TEXT,
+     width INTEGER,
+     height INTEGER,
+     duration_ms INTEGER,
+     handle TEXT,
+     PRIMARY KEY (message_id, idx))`,
 
   FTS_TABLE,
 
@@ -366,6 +381,21 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
     { table: 'chat_cursors', column: 'room_public', type: 'INTEGER' },
     { table: 'chat_cursors', column: 'room_encrypted', type: 'INTEGER' },
     { table: 'chat_cursors', column: 'room_members', type: 'INTEGER' },
+  ],
+  // v14: chat attachments across protocols (ADR 0010). A new table, no stored row rewritten.
+  14: [
+    `CREATE TABLE IF NOT EXISTS message_attachments (
+       message_id TEXT NOT NULL,
+       idx INTEGER NOT NULL,
+       filename TEXT,
+       mime_type TEXT,
+       size INTEGER,
+       kind TEXT,
+       width INTEGER,
+       height INTEGER,
+       duration_ms INTEGER,
+       handle TEXT,
+       PRIMARY KEY (message_id, idx))`,
   ],
 };
 

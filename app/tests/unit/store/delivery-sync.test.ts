@@ -2,6 +2,7 @@ import { describe, expect, it } from '@gjsify/unit';
 
 import type {
   BackendAccount,
+  ChatAttachment,
   ChatMessage,
   ChatPeer,
   DeliveryBackend,
@@ -15,6 +16,7 @@ import {
   deliveredMessageId,
   getConversation,
   listConversations,
+  loadAttachments,
   migrate,
   rebuildConversations,
   receiveDeliveries,
@@ -53,6 +55,7 @@ function fakeBackend(
         subject: false,
         folders: false,
         attachments: true,
+        attachmentsRead: false,
       },
       syncModel: 'delivery-only',
       native: false,
@@ -433,6 +436,115 @@ export default async () => {
         db.close();
       }
     });
+
+    await it('writes chat attachment rows with the message and reads them back', async () => {
+      const db = freshDb();
+      try {
+        const attachment: ChatAttachment = {
+          filename: 'voice.ogg',
+          mimeType: 'audio/ogg',
+          size: 9876,
+          kind: 'voice',
+          width: null,
+          height: null,
+          durationMs: 1200,
+          handle: JSON.stringify({ url: 'https://example.org/voice.ogg' }),
+        };
+        await receiveDeliveries(
+          db,
+          fakeBackend([
+            [
+              { type: 'chat', chat: { remoteId: 'd-anna', kind: 'direct', title: 'Anna', members: [ANNA] } },
+              incoming(
+                'd-anna',
+                msg('d-anna/1', 1, 'listen', {
+                  hasAttachments: true,
+                  attachments: [attachment],
+                }),
+              ),
+            ],
+          ]),
+        );
+        const message = getConversation(db, conv('d-anna'))?.messages[0];
+        expect(message?.hasAttachments).toBe(true);
+        expect(message?.ref.backend).toBe(BACKEND);
+        const loaded = loadAttachments(db, message!.ref);
+        expect(loaded.length).toBe(1);
+        expect(loaded[0].filename).toBe('voice.ogg');
+        expect(loaded[0].kind).toBe('voice');
+        expect(loaded[0].durationMs).toBe(1200);
+        expect(loaded[0].index).toBe(0);
+        expect((loaded[0] as { handle?: unknown }).handle).toBe(undefined);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('sets has_attachments when the backend says so even without descriptors', async () => {
+      const db = freshDb();
+      try {
+        await receiveDeliveries(
+          db,
+          fakeBackend([
+            [
+              { type: 'chat', chat: { remoteId: 'd-anna', kind: 'direct', title: 'Anna', members: [ANNA] } },
+              incoming('d-anna', msg('d-anna/1', 1, 'look', { hasAttachments: true })),
+            ],
+          ]),
+        );
+        const message = getConversation(db, conv('d-anna'))?.messages[0];
+        expect(message?.hasAttachments).toBe(true);
+        expect(loadAttachments(db, message!.ref)).toStrictEqual([]);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('removes attachment rows when a message is deleted or a chat is cleared', async () => {
+      const db = freshDb();
+      try {
+        await receiveDeliveries(
+          db,
+          fakeBackend([
+            [
+              { type: 'chat', chat: { remoteId: 'd-anna', kind: 'direct', title: 'Anna', members: [ANNA] } },
+              incoming(
+                'd-anna',
+                msg('d-anna/1', 1, 'look', {
+                  hasAttachments: true,
+                  attachments: [
+                    {
+                      filename: 'a.jpg',
+                      mimeType: 'image/jpeg',
+                      size: 1000,
+                      kind: 'image',
+                      width: null,
+                      height: null,
+                      durationMs: null,
+                      handle: '{"id":"a"}',
+                    },
+                  ],
+                }),
+              ),
+            ],
+          ]),
+        );
+        const message = getConversation(db, conv('d-anna'))?.messages[0];
+        expect(loadAttachments(db, message!.ref).length).toBe(1);
+        await receiveDeliveries(
+          db,
+          fakeBackend([[{ type: 'delete', chatRemoteId: 'd-anna', remoteId: 'd-anna/1' }]]),
+        );
+        expect(getConversation(db, conv('d-anna'))?.messages.length).toBe(0);
+        expect(loadAttachments(db, message!.ref)).toStrictEqual([]);
+        expect(
+          Number((db.prepare('SELECT COUNT(*) AS n FROM message_attachments').get() as { n?: number }).n),
+        ).toBe(0);
+      } finally {
+        db.close();
+      }
+    });
+
     await it('merges a chat filed under a second id into the first, in one transaction', async () => {
       const db = freshDb();
       try {

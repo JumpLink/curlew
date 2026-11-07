@@ -216,6 +216,26 @@ export interface ChatRoomFacts {
   memberCount: number | null;
 }
 
+/** What kind of attachment a chat message carries. */
+export type AttachmentKind = 'image' | 'video' | 'audio' | 'voice' | 'file';
+
+/** One attachment on a chat message. */
+export interface ChatAttachment {
+  filename: string | null;
+  mimeType: string | null;
+  size: number | null;
+  /** What the UI should show it as — the MIME type, or the network's own label (voice note). */
+  kind: AttachmentKind;
+  width: number | null;
+  height: number | null;
+  durationMs: number | null;
+  /**
+   * Opaque to everyone but the backend that wrote it: a backend-private JSON string that lets the
+   * backend fetch the bytes later. Never leaves `@curlew/store`.
+   */
+  handle: string;
+}
+
 /** One message in a chat. */
 export interface ChatMessage {
   /** The network's message id, opaque to curlew and unique within the account. */
@@ -229,6 +249,8 @@ export interface ChatMessage {
   fromSelf: boolean;
   text: string | null;
   hasAttachments: boolean;
+  /** Attachment metadata for the window; the bytes stay on the network until fetched. */
+  attachments?: ChatAttachment[];
   replyToRemoteId: string | null;
   /**
    * The id the reply names, exactly as its sender wrote it (XMPP's `<reply id>`), when the
@@ -587,6 +609,41 @@ export interface DeliveryBackend extends MessageBackend {
 /** Narrow a registry entry to the delivery driver. */
 export function isDeliveryBackend(backend: MessageBackend): backend is DeliveryBackend {
   return backend.kind === 'delivery';
+}
+
+// ── the attachment fetch port ───────────────────────────────────────────
+
+/** Which account an attachment fetch is for. */
+export interface AccountRef {
+  backend: string;
+  accountId: string;
+}
+
+/** What a fetch needs from the stored attachment row; the handle is opaque to the caller. */
+export interface FetchableAttachment {
+  kind: AttachmentKind;
+  handle: string;
+}
+
+/** Where the backend writes the bytes it fetches. */
+export interface ByteSink {
+  write(chunk: Uint8Array): Promise<void> | void;
+  close(): Promise<void> | void;
+}
+
+/**
+ * Optional handle a backend exposes when its manifest claims `attachmentsRead`.
+ *
+ * Fetches are always the person's own action or a small picture that scrolled into view; the
+ * backend verifies the bytes before the sink sees the last one and throws on mismatch.
+ */
+export interface AttachmentFetcher {
+  fetchAttachment(
+    account: AccountRef,
+    attachment: FetchableAttachment,
+    sink: ByteSink,
+    options: { maxBytes: number; signal?: AbortSignal },
+  ): Promise<{ mimeType: string | null; size: number }>;
 }
 
 // ── the send port ───────────────────────────────────────────────────────
