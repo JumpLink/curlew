@@ -12,7 +12,14 @@
  * older timestamp than the cursor, which an incremental run skips and the next full scan finds.
  */
 
-import type { ChatInfo, ChatMessage, ChatPeer, ChatEdit } from '@curlew/protocol';
+import type {
+  AttachmentKind,
+  ChatAttachment,
+  ChatEdit,
+  ChatInfo,
+  ChatMessage,
+  ChatPeer,
+} from '@curlew/protocol';
 import { normalizeAddress } from '@curlew/protocol';
 import type { MxEvent, MxRoom } from './api.ts';
 
@@ -111,6 +118,74 @@ export function stripReplyFallback(body: string): string {
   return lines.slice(i).join('\n');
 }
 
+function num(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+/** The backend-private handle: the `mxc://` URI, and the size the sender announced. */
+export function attachmentHandle(mxc: string, size: number | null): string {
+  return JSON.stringify({ mxc, size });
+}
+
+/** What a stored handle names, or null when it is not one this backend wrote. */
+export function parseAttachmentHandle(handle: string): { mxc: string; size: number | null } | null {
+  try {
+    const value: unknown = JSON.parse(handle);
+    if (typeof value !== 'object' || value === null) return null;
+    const { mxc, size } = value as Record<string, unknown>;
+    if (typeof mxc !== 'string' || !parseMxc(mxc)) return null;
+    if (size !== null && (typeof size !== 'number' || !Number.isSafeInteger(size) || size < 0)) return null;
+    return { mxc, size };
+  } catch {
+    return null;
+  }
+}
+
+/** `mxc://server/mediaId` split into its two parts, or null when it is anything else. */
+export function parseMxc(uri: string): { server: string; mediaId: string } | null {
+  const match = /^mxc:\/\/([^/\s?#]+)\/([^/\s?#]+)$/.exec(uri);
+  return match ? { server: match[1]!, mediaId: match[2]! } : null;
+}
+
+function attachmentKind(msgtype: string | null, mimeType: string | null, voice: boolean): AttachmentKind {
+  if (voice) return 'voice';
+  if (msgtype === 'm.image') return 'image';
+  if (msgtype === 'm.video') return 'video';
+  if (msgtype === 'm.audio') return 'audio';
+  const major = mimeType?.split('/')[0];
+  return major === 'image' ? 'image' : 'file';
+}
+
+/**
+ * The one file an unencrypted event carries. An encrypted file (`content.file`, no `url`) gets
+ * none: its bytes are ciphertext until the key in the event is applied, which comes with E2EE.
+ */
+function toChatAttachments(event: MxEvent): ChatAttachment[] | undefined {
+  const content = event.content;
+  const msgtype = str(content.msgtype);
+  if (event.type !== 'm.sticker' && !(msgtype && FILE_MSGTYPES.has(msgtype))) return undefined;
+  const url = str(content.url);
+  if (url === null || !parseMxc(url)) return undefined;
+  const info = content.info && typeof content.info === 'object' ? (content.info as Content) : {};
+  const mimeType = str(info.mimetype);
+  const size = num(info.size);
+  const voice = content['org.matrix.msc3245.voice'] !== undefined || content['m.voice'] !== undefined;
+  const filename = str(content.filename) ?? (event.type === 'm.sticker' ? null : messageText(content, false) === null ? str(content.body) : null);
+  const duration = num(info.duration) ?? num((content['org.matrix.msc1767.audio'] as Content | undefined)?.duration);
+  return [
+    {
+      filename,
+      mimeType,
+      size,
+      kind: event.type === 'm.sticker' ? 'image' : attachmentKind(msgtype, mimeType, voice),
+      width: num(info.w),
+      height: num(info.h),
+      durationMs: duration === null ? null : Math.round(duration),
+      handle: attachmentHandle(url, size),
+    },
+  ];
+}
+
 /** The text a person wrote, or null for a bare file. */
 export function messageText(content: Content, reply: boolean): string | null {
   const body = str(content.body);
@@ -183,6 +258,7 @@ export function toChatMessage(
     text: encrypted ? UNDECRYPTABLE_TEXT : messageText(event.content, replyTo !== null),
     hasAttachments:
       !encrypted && (event.type === 'm.sticker' || (msgtype !== null && FILE_MSGTYPES.has(msgtype))),
+    attachments: encrypted ? undefined : toChatAttachments(event),
     replyToRemoteId: replyTo,
     threadRemoteId: rel?.rel_type === 'm.thread' ? str(rel.event_id) : null,
   };

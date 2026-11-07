@@ -129,6 +129,7 @@ packages/imap/src/transport.gjs.ts
 packages/imap/src/unavailable.ts
 packages/matrix/src/accounts.ts
 packages/matrix/src/api.ts
+packages/matrix/src/attachments.ts
 packages/matrix/src/backend.ts
 packages/matrix/src/client.ts
 packages/matrix/src/guard.ts

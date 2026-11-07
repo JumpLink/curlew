@@ -6,6 +6,7 @@
 import { _, fmt } from '@curlew/protocol';
 import type {
   AccountPrompter,
+  AttachmentFetcher,
   BackendAccount,
   BackendContext,
   ChatBackend,
@@ -27,7 +28,8 @@ import {
   secretStoreLedger,
 } from './accounts.ts';
 import { connectMatrixClient, isLoggedOutError, type MatrixConnector } from './client.ts';
-import { sendFetch } from './guard.ts';
+import { MatrixAttachments } from './attachments.ts';
+import { readOnlyFetch, sendFetch } from './guard.ts';
 import { loginMatrix } from './login.ts';
 import { reportUndecryptable } from './redact.ts';
 import { MATRIX_MANIFEST } from './manifest.ts';
@@ -134,6 +136,20 @@ export class MatrixBackend implements ChatBackend, SendBackend {
     });
     return new MatrixSender(api, permit, async () => {
       store.close();
+    });
+  }
+
+  /**
+   * The read-only download handle: plain GETs for media, through the read-only gate. Like
+   * `openSender` it needs no sync and no crypto store, only the homeserver and the token.
+   */
+  async openAttachments(accountId: string): Promise<AttachmentFetcher> {
+    const { store, record, accessToken } = this.openAccount(accountId);
+    return new MatrixAttachments({
+      homeserver: record.homeserver,
+      accessToken,
+      fetch: readOnlyFetch(this.httpFetch),
+      onClose: () => store.close(),
     });
   }
 

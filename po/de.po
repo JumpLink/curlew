@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-07 22:44+0100\n"
+"POT-Creation-Date: 2026-11-07 23:39+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1710,7 +1710,9 @@ msgstr "Chats"
 msgid ""
 "Signal, WhatsApp and Telegram link this computer as another device of your "
 "account."
-msgstr "Signal, WhatsApp und Telegram verknüpfen diesen Computer als weiteres Gerät deines Kontos."
+msgstr ""
+"Signal, WhatsApp und Telegram verknüpfen diesen Computer als weiteres Gerät "
+"deines Kontos."
 
 #: app/src/window/account-add.ts:287
 msgid "Mail, calendar and contacts"
@@ -1789,7 +1791,8 @@ msgstr "Keine Konten"
 
 #: app/src/window/accounts-page.ts:138
 msgid "Add a chat account, or add a mail account in GNOME Settings."
-msgstr "Füge ein Chat-Konto hinzu oder ein E-Mail-Konto in den GNOME-Einstellungen."
+msgstr ""
+"Füge ein Chat-Konto hinzu oder ein E-Mail-Konto in den GNOME-Einstellungen."
 
 #: app/src/window/accounts-page.ts:155
 msgid "The background service is not running, so chat accounts cannot connect."
@@ -2231,31 +2234,50 @@ msgid "no mail account {account} with SMTP — `curlew accounts list` shows them
 msgstr ""
 "Kein E-Mail-Konto {account} mit SMTP — `curlew accounts list` zeigt sie an"
 
-#: packages/matrix/src/backend.ts:55
+#: packages/matrix/src/attachments.ts:45
+#: packages/telegram/src/attachments.ts:66
+msgid "the attachment is larger than the limit of {limit} bytes"
+msgstr "der Anhang ist größer als das Limit von {limit} Bytes"
+
+#: packages/matrix/src/attachments.ts:67 packages/matrix/src/attachments.ts:74
+msgid "the homeserver refused the download ({reason})"
+msgstr "der Homeserver hat den Download abgewiesen ({reason})"
+
+#: packages/matrix/src/attachments.ts:87
+msgid "this Matrix attachment cannot be found any more"
+msgstr "dieser Matrix-Anhang ist nicht mehr zu finden"
+
+#: packages/matrix/src/attachments.ts:114
+msgid ""
+"the Matrix attachment arrived with {actual} bytes, not the announced "
+"{announced}"
+msgstr "der Matrix-Anhang kam mit {actual} Bytes an, angekündigt waren {announced}"
+
+#: packages/matrix/src/backend.ts:57
 msgid "log in again with `curlew accounts add matrix`"
 msgstr "melde dich mit `curlew accounts add matrix` neu an"
 
-#: packages/matrix/src/backend.ts:60
+#: packages/matrix/src/backend.ts:62
 msgid "Homeserver (URL like https://matrix.example.org, or the server name)"
 msgstr "Homeserver (URL wie https://matrix.example.org oder der Servername)"
 
-#: packages/matrix/src/backend.ts:61
+#: packages/matrix/src/backend.ts:63
 msgid "Matrix user (@name:example.org)"
 msgstr "Matrix-Benutzer (@name:example.org)"
 
-#: packages/matrix/src/backend.ts:62 packages/xmpp/src/backend.ts:48
+#: packages/matrix/src/backend.ts:64 packages/xmpp/src/backend.ts:48
 msgid "Password"
 msgstr "Passwort"
 
-#: packages/matrix/src/backend.ts:108
+#: packages/matrix/src/backend.ts:110
 msgid "no Matrix account {account} — {hint}"
 msgstr "Kein Matrix-Konto {account} — {hint}"
 
-#: packages/matrix/src/backend.ts:115
+#: packages/matrix/src/backend.ts:117
 msgid "the Matrix account file {account} is incomplete — {hint}"
 msgstr "Die Matrix-Kontodatei {account} ist unvollständig — {hint}"
 
-#: packages/matrix/src/backend.ts:149
+#: packages/matrix/src/backend.ts:165
 msgid "the Matrix account {account} is not usable ({reason}) — {hint}"
 msgstr "Das Matrix-Konto {account} ist nicht nutzbar ({reason}) — {hint}"
 
@@ -2536,11 +2558,8 @@ msgstr "dieser Telegram-Anhang ist nicht mehr zu finden"
 msgid ""
 "the Telegram attachment arrived with {actual} bytes, not the announced "
 "{announced}"
-msgstr "der Telegram-Anhang kam mit {actual} Bytes an, angekündigt waren {announced}"
-
-#: packages/telegram/src/attachments.ts:66
-msgid "the attachment is larger than the limit of {limit} bytes"
-msgstr "der Anhang ist größer als das Limit von {limit} Bytes"
+msgstr ""
+"der Telegram-Anhang kam mit {actual} Bytes an, angekündigt waren {announced}"
 
 #: packages/telegram/src/backend.ts:39
 msgid "log in again with `curlew accounts add telegram`"

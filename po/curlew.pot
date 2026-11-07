@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-07 23:26+0100\n"
+"POT-Creation-Date: 2026-11-07 23:39+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1971,31 +1971,50 @@ msgstr ""
 msgid "no mail account {account} with SMTP — `curlew accounts list` shows them"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:55
+#: packages/matrix/src/attachments.ts:45
+#: packages/telegram/src/attachments.ts:66
+msgid "the attachment is larger than the limit of {limit} bytes"
+msgstr ""
+
+#: packages/matrix/src/attachments.ts:67 packages/matrix/src/attachments.ts:74
+msgid "the homeserver refused the download ({reason})"
+msgstr ""
+
+#: packages/matrix/src/attachments.ts:87
+msgid "this Matrix attachment cannot be found any more"
+msgstr ""
+
+#: packages/matrix/src/attachments.ts:114
+msgid ""
+"the Matrix attachment arrived with {actual} bytes, not the announced "
+"{announced}"
+msgstr ""
+
+#: packages/matrix/src/backend.ts:57
 msgid "log in again with `curlew accounts add matrix`"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:60
+#: packages/matrix/src/backend.ts:62
 msgid "Homeserver (URL like https://matrix.example.org, or the server name)"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:61
+#: packages/matrix/src/backend.ts:63
 msgid "Matrix user (@name:example.org)"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:62 packages/xmpp/src/backend.ts:48
+#: packages/matrix/src/backend.ts:64 packages/xmpp/src/backend.ts:48
 msgid "Password"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:108
+#: packages/matrix/src/backend.ts:110
 msgid "no Matrix account {account} — {hint}"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:115
+#: packages/matrix/src/backend.ts:117
 msgid "the Matrix account file {account} is incomplete — {hint}"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:149
+#: packages/matrix/src/backend.ts:165
 msgid "the Matrix account {account} is not usable ({reason}) — {hint}"
 msgstr ""
 
@@ -2216,10 +2235,6 @@ msgstr ""
 msgid ""
 "the Telegram attachment arrived with {actual} bytes, not the announced "
 "{announced}"
-msgstr ""
-
-#: packages/telegram/src/attachments.ts:66
-msgid "the attachment is larger than the limit of {limit} bytes"
 msgstr ""
 
 #: packages/telegram/src/backend.ts:39
