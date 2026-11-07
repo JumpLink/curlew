@@ -9,18 +9,33 @@ import type { ConversationMessage } from '@curlew/protocol';
 import type { MessageCursor } from '@curlew/store';
 
 import type { ListEntry } from './conversation-list-model.ts';
-import { composerBlock, initials, protocolLabel, roomHint, shortTime } from './conversation-list-model.ts';
+import {
+  canSend,
+  composerBlock,
+  initials,
+  protocolChoices,
+  protocolIcon,
+  protocolLabel,
+  roomHint,
+  shortTime,
+  singleChoice,
+  type ProtocolChoice,
+} from './conversation-list-model.ts';
 import {
   attachmentLines,
   bubbleText,
   cursorOf,
   dayOf,
   dayStarts,
+  defaultProtocolChoice,
   newOlder,
   PAGE_SIZE,
+  protocolDividers,
+  protocolRunStarts,
   senderRunStarts,
   type ShownMessage,
   subjectLabels,
+  type ProtocolRun,
 } from './conversation-model.ts';
 import { attachmentList, type AttachmentHandlers } from './attachment-view.ts';
 import { shownAttachments, type AttachmentKind } from './attachment-model.ts';
@@ -29,7 +44,7 @@ import { fadedOverlay } from './fade-bin.ts';
 
 export interface ConversationView {
   page: Adw.NavigationPage;
-  show(entry: ListEntry, messages: ShownMessage[]): void;
+  show(entry: ListEntry, messages: ShownMessage[], accountLabels: Map<string, string>): void;
 }
 
 const ROWS_PER_TURN = 8;
@@ -38,19 +53,24 @@ const ROWS_PER_TURN = 8;
 interface Built {
   row: Gtk.ListBoxRow;
   bubble: Gtk.Box;
+  meta: Gtk.Box;
   separator: Gtk.ListBoxRow | null;
+  protocolDivider: Gtk.ListBoxRow | null;
   subject: Gtk.Label | null;
   sender: Gtk.Box | null;
+  badge: Gtk.Image | null;
 }
 
 export function createConversationView(
-  onSend: (text: string) => Promise<ConversationMessage>,
+  onSend: (text: string, choice: ProtocolChoice) => Promise<ConversationMessage>,
   loadOlder: (entry: ListEntry, oldest: MessageCursor) => ShownMessage[],
   openMedia: (source: AttachmentSource, kind: AttachmentKind) => void,
 ): ConversationView {
   let entry: ListEntry | null = null;
   // The array is the caller's: a sent message is pushed onto it, an older page spliced in front.
   let messages: ShownMessage[] = [];
+  let accountLabels = new Map<string, string>();
+  let selectedChoice: ProtocolChoice | null = null;
   let sending = false;
   let generation = 0;
   const built = new Map<string, Built>();
@@ -73,10 +93,21 @@ export function createConversationView(
 
   const composer = new Gtk.Box({ spacing: 6, marginStart: 12, marginEnd: 12, marginTop: 8, marginBottom: 8 });
   const input = new Gtk.Entry({ placeholderText: _('Write a message'), hexpand: true });
+  const picker = new Gtk.MenuButton({
+    iconName: 'network-transmit-receive-symbolic',
+    tooltipText: protocolLabel(''),
+    visible: false,
+  });
+  picker.add_css_class('circular');
+  picker.add_css_class('flat');
+  const pickerBox = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 4 });
+  const pickerPopover = new Gtk.Popover({ autohide: true, child: pickerBox });
+  picker.set_popover(pickerPopover);
   const send = new Gtk.Button({ iconName: 'mail-send-symbolic', tooltipText: _('Send message') });
   send.add_css_class('suggested-action');
   send.add_css_class('circular');
   composer.append(input);
+  composer.append(picker);
   composer.append(send);
 
   const content = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
@@ -166,6 +197,15 @@ export function createConversationView(
     return row;
   };
 
+  const protocolDividerRow = (text: string): Gtk.ListBoxRow => {
+    const label = new Gtk.Label({ label: text, xalign: 0.5, marginTop: 8, marginBottom: 4 });
+    label.add_css_class('dim-label');
+    label.add_css_class('caption');
+    const row = new Gtk.ListBoxRow({ selectable: false, activatable: false });
+    row.set_child(label);
+    return row;
+  };
+
   const subjectHeading = (subject: string): Gtk.Label => {
     const label = new Gtk.Label({ label: subject, xalign: 0, wrap: true });
     label.add_css_class('heading');
@@ -182,11 +222,50 @@ export function createConversationView(
     return box;
   };
 
+  const selectChoice = (choice: ProtocolChoice): void => {
+    selectedChoice = choice;
+    picker.icon_name = choice.icon;
+    picker.set_tooltip_text(protocolLabel(choice.backend));
+  };
+
+  const rebuildPicker = (choices: ProtocolChoice[]): void => {
+    let child = pickerBox.get_first_child();
+    while (child) {
+      const next = child.get_next_sibling();
+      pickerBox.remove(child);
+      child = next;
+    }
+    for (const choice of choices) {
+      const row = new Gtk.Box({
+        spacing: 12,
+        marginStart: 12,
+        marginEnd: 12,
+        marginTop: 8,
+        marginBottom: 8,
+      });
+      row.append(new Gtk.Image({ iconName: choice.icon, pixelSize: 16 }));
+      const label = new Gtk.Label({
+        label: accountLabels.get(choice.accountId) ?? choice.label,
+        xalign: 0,
+      });
+      row.append(label);
+      const button = new Gtk.Button({ child: row });
+      button.add_css_class('flat');
+      button.connect('clicked', () => {
+        selectChoice(choice);
+        pickerPopover.popdown();
+      });
+      pickerBox.append(button);
+    }
+  };
+
   // Builds the rows of one message; `position` is where the first goes in the list, -1 for the end.
   const addRow = (
     message: ShownMessage,
     subject: string | undefined,
     sender: string | undefined,
+    run: ProtocolRun | undefined,
+    divider: string | undefined,
     startsDay: boolean,
     position: number,
   ) => {
@@ -237,7 +316,15 @@ export function createConversationView(
     const time = new Gtk.Label({ label: shortTime(message.sentAt), xalign: 1 });
     time.add_css_class('caption');
     time.add_css_class('dim-label');
-    bubble.append(time);
+    const meta = new Gtk.Box({ spacing: 6, halign: Gtk.Align.END });
+    let badge: Gtk.Image | null = null;
+    if (run) {
+      badge = new Gtk.Image({ iconName: protocolIcon(run.backend), pixelSize: 12 });
+      badge.set_tooltip_text(protocolLabel(run.backend));
+      meta.append(badge);
+    }
+    meta.append(time);
+    bubble.append(meta);
 
     const row = new Gtk.ListBoxRow({
       selectable: false,
@@ -250,23 +337,37 @@ export function createConversationView(
     row.set_child(card);
     row.set_halign(message.fromSelf ? Gtk.Align.END : Gtk.Align.START);
     const separator = startsDay ? daySeparator(dayOf(message)) : null;
-    // The separator goes above its message: before it when appending, after it when both are put
-    // in front at the same index.
+    const protocolDivider = divider ? protocolDividerRow(divider) : null;
+    // Dividers and day separators go above their message: before it when appending, after it when
+    // both are put in front at the same index.
     if (position === -1) {
       if (separator) history.insert(separator, -1);
+      if (protocolDivider) history.insert(protocolDivider, -1);
       history.insert(row, -1);
     } else {
       history.insert(row, position);
+      if (protocolDivider) history.insert(protocolDivider, position);
       if (separator) history.insert(separator, position);
     }
-    built.set(message.id, { row, bubble, separator, subject: heading, sender: senderBox });
+    built.set(message.id, {
+      row,
+      bubble,
+      meta,
+      badge,
+      separator,
+      protocolDivider,
+      subject: heading,
+      sender: senderBox,
+    });
   };
 
-  // After a page went in front, its newest neighbour may no longer open a day or a topic.
+  // After a page went in front, its newest neighbour may no longer open a day, a topic or a run.
   const reconcile = (
     message: ConversationMessage,
     subject: string | undefined,
     sender: string | undefined,
+    run: ProtocolRun | undefined,
+    divider: string | undefined,
     startsDay: boolean,
   ) => {
     const one = built.get(message.id);
@@ -277,6 +378,26 @@ export function createConversationView(
     } else if (!one.separator && startsDay) {
       one.separator = daySeparator(dayOf(message));
       history.insert(one.separator, one.row.get_index());
+    }
+    if (one.protocolDivider && divider === undefined) {
+      history.remove(one.protocolDivider);
+      one.protocolDivider = null;
+    } else if (!one.protocolDivider && divider !== undefined) {
+      one.protocolDivider = protocolDividerRow(divider);
+      history.insert(one.protocolDivider, one.row.get_index());
+    }
+    if (run) {
+      if (one.badge) {
+        one.badge.icon_name = protocolIcon(run.backend);
+        one.badge.set_tooltip_text(protocolLabel(run.backend));
+      } else {
+        one.badge = new Gtk.Image({ iconName: protocolIcon(run.backend), pixelSize: 12 });
+        one.badge.set_tooltip_text(protocolLabel(run.backend));
+        one.meta.prepend(one.badge);
+      }
+    } else if (one.badge) {
+      one.meta.remove(one.badge);
+      one.badge = null;
     }
     if (one.sender && sender === undefined) {
       one.bubble.remove(one.sender);
@@ -358,6 +479,8 @@ export function createConversationView(
       const subjects = subjectLabels(messages);
       const starts = dayStarts(messages);
       const senders = senderRunStarts(messages, shownEntry.kind === 'group');
+      const runs = protocolRunStarts(messages);
+      const dividers = protocolDividers(messages);
       let next = joinedAt - 1;
       // Newest of the page first, each above the one before, so the rows grow upward from the
       // spinner and the person's place below them is the one that has to hold still.
@@ -366,11 +489,26 @@ export function createConversationView(
         const stop = Math.max(next - ROWS_PER_TURN, -1);
         for (; next > stop; next--) {
           const message = messages[next]!;
-          addRow(message, subjects.get(message.id), senders.get(message.id), starts.has(message.id), 1);
+          addRow(
+            message,
+            subjects.get(message.id),
+            senders.get(message.id),
+            runs.get(message.id),
+            dividers.get(message.id),
+            starts.has(message.id),
+            1,
+          );
         }
         if (next >= 0) return GLib.SOURCE_CONTINUE;
         const joined = messages[joinedAt]!;
-        reconcile(joined, subjects.get(joined.id), senders.get(joined.id), starts.has(joined.id));
+        reconcile(
+          joined,
+          subjects.get(joined.id),
+          senders.get(joined.id),
+          runs.get(joined.id),
+          dividers.get(joined.id),
+          starts.has(joined.id),
+        );
         finish();
         return GLib.SOURCE_REMOVE;
       });
@@ -402,17 +540,26 @@ export function createConversationView(
 
   const submit = () => {
     const text = input.get_text().trim();
-    if (!text || sending || !entry) return;
+    if (!text || sending || !entry || !selectedChoice) return;
     sending = true;
     input.set_sensitive(false);
     send.set_sensitive(false);
-    void onSend(text)
+    void onSend(text, selectedChoice)
       .then((message) => {
-        const previousDay = dayOf(messages[messages.length - 1] ?? message);
+        const previous = messages[messages.length - 1] ?? null;
+        const previousDay = dayOf(previous ?? message);
         messages.push(message);
         const day = dayOf(message);
+        const run =
+          previous === null || previous.backend !== message.backend
+            ? { backend: message.backend }
+            : undefined;
+        const divider =
+          previous && previous.backend !== message.backend
+            ? fmt(_('Continuing via {protocol}'), { protocol: protocolLabel(message.backend) })
+            : undefined;
         // The person's own message starts no sender run, and the next one from another starts its own.
-        addRow(message, undefined, undefined, day !== '' && day !== previousDay, -1);
+        addRow(message, undefined, undefined, run, divider, day !== '' && day !== previousDay, -1);
         input.set_text('');
         scrollToEnd();
       })
@@ -438,26 +585,47 @@ export function createConversationView(
 
   return {
     page,
-    show(nextEntry, nextMessages) {
+    show(nextEntry, nextMessages, nextLabels) {
       entry = nextEntry;
       messages = nextMessages;
+      accountLabels = nextLabels;
       title.set_title(nextEntry.title);
       title.set_subtitle(protocolLabel(nextEntry.backend));
       history.remove_all();
       built.clear();
       waiting.length = 0;
       atEnd = true;
-      composer.set_visible(nextEntry.target !== null);
+      const choices = protocolChoices(nextEntry);
+      const only = singleChoice(nextEntry);
       const blocked = composerBlock(nextEntry);
-      const roomLine = blocked ?? roomHint(nextEntry);
-      hint.set_label(roomLine ?? '');
-      hint.set_visible(nextEntry.target !== null && roomLine !== null);
-      input.set_sensitive(blocked === null);
-      send.set_sensitive(blocked === null);
+      const canUseComposer = canSend(nextEntry) && blocked === null;
+      composer.set_visible(canUseComposer);
+      hint.set_visible(false);
+      if (canUseComposer) {
+        const roomLine = blocked ?? roomHint(nextEntry);
+        hint.set_label(roomLine ?? '');
+        hint.set_visible(roomLine !== null);
+      }
+      input.set_sensitive(canUseComposer);
+      send.set_sensitive(canUseComposer);
       input.set_text('');
+      if (choices.length > 1) {
+        selectedChoice = defaultProtocolChoice(messages, choices);
+        rebuildPicker(choices);
+        picker.set_visible(true);
+      } else if (only) {
+        selectedChoice = only;
+        picker.set_visible(false);
+      } else {
+        selectedChoice = null;
+        picker.set_visible(false);
+      }
+      if (selectedChoice) selectChoice(selectedChoice);
       const subjects = subjectLabels(messages);
       const starts = dayStarts(messages);
       const senders = senderRunStarts(messages, nextEntry.kind === 'group');
+      const runs = protocolRunStarts(messages);
+      const dividers = protocolDividers(messages);
       const shown = [...messages];
       const run = ++generation;
       // A newer show() ends every older build and page load; their callbacks see the new generation.
@@ -474,7 +642,15 @@ export function createConversationView(
         const stop = Math.min(next + ROWS_PER_TURN, shown.length);
         for (; next < stop; next++) {
           const message = shown[next]!;
-          addRow(message, subjects.get(message.id), senders.get(message.id), starts.has(message.id), -1);
+          addRow(
+            message,
+            subjects.get(message.id),
+            senders.get(message.id),
+            runs.get(message.id),
+            dividers.get(message.id),
+            starts.has(message.id),
+            -1,
+          );
         }
         scrollToEnd();
         if (next < shown.length) return GLib.SOURCE_CONTINUE;

@@ -27,6 +27,21 @@ export interface ListEntry {
   emailChat: boolean;
   /** What the index knows about the room behind a Matrix chat; null for every other backend. */
   room: RoomFacts | null;
+  /**
+   * For merged rows only: the child rows this presentation combines. A merged "Note to self"
+   * carries every self-chat backend here; non-merged rows keep an empty array.
+   */
+  members: ListEntry[];
+}
+
+/** One carrier the composer can send a merged row through. */
+export interface ProtocolChoice {
+  backend: string;
+  accountId: string;
+  /** The address or room id the selected protocol sends to. */
+  target: string;
+  label: string;
+  icon: string;
 }
 
 /** The room facts the window uses (`listChatRooms`); `null` fields are unknown, never "no". */
@@ -221,6 +236,7 @@ export function toEntry(
         : (selfAddressOf(conversation, identity) ?? targetOf(conversation)),
     emailChat: conversation.emailChat,
     room: conversation.backend === 'matrix' ? room : null,
+    members: [],
   };
 }
 
@@ -233,6 +249,38 @@ export function toEntry(
  */
 export function composerBlock(entry: ListEntry): string | null {
   return entry.room?.encrypted === true ? _('Encrypted rooms are not supported yet') : null;
+}
+
+/** True when the composer has at least one carrier it can send through. */
+export function canSend(entry: ListEntry): boolean {
+  if (entry.target !== null) return true;
+  return (entry.members ?? []).some((m) => m.target !== null);
+}
+
+/** The carriers a merged row can send through; empty for a non-merged row. */
+export function protocolChoices(entry: ListEntry): ProtocolChoice[] {
+  return (entry.members ?? [])
+    .filter((m) => m.target !== null)
+    .map((m) => ({
+      backend: m.backend,
+      accountId: m.accountId,
+      target: m.target!,
+      label: protocolLabel(m.backend),
+      icon: protocolIcon(m.backend),
+    }));
+}
+
+/** The single carrier for a non-merged row, or the only member of a merged one. */
+export function singleChoice(entry: ListEntry): ProtocolChoice | null {
+  const source = entry.members?.length === 1 ? entry.members[0]! : entry;
+  if (source.target === null) return null;
+  return {
+    backend: source.backend,
+    accountId: source.accountId,
+    target: source.target,
+    label: protocolLabel(source.backend),
+    icon: protocolIcon(source.backend),
+  };
 }
 
 /**
@@ -253,6 +301,28 @@ export function roomHint(entry: ListEntry): string | null {
  * Direct mail threads with the same person become ONE presentation conversation. Canonical threads
  * stay untouched: their ids travel with the row, and replies still use RFC 5322 references.
  */
+/** Stable id for the merged "Note to self" row. */
+const NOTE_TO_SELF_ID = 'note-to-self';
+
+/** Merge every self-chat into one row, newest message picking the visible protocol. */
+function mergeSelfEntries(members: ListEntry[]): ListEntry {
+  const newest = members.reduce((a, b) => ((a.lastMessageAt ?? '') >= (b.lastMessageAt ?? '') ? a : b));
+  return {
+    id: NOTE_TO_SELF_ID,
+    conversationIds: members.flatMap((m) => m.conversationIds),
+    title: _('Note to self'),
+    backend: newest.backend,
+    accountId: newest.accountId,
+    kind: 'direct',
+    unread: members.reduce((sum, m) => sum + m.unread, 0),
+    lastMessageAt: newest.lastMessageAt,
+    target: null,
+    emailChat: false,
+    room: null,
+    members,
+  };
+}
+
 export function toEntries(
   conversations: Conversation[],
   showAllEmails = true,
@@ -261,13 +331,15 @@ export function toEntries(
 ): ListEntry[] {
   const entries: ListEntry[] = [];
   const mailContacts = new Map<string, ListEntry>();
+  const selfEntries: ListEntry[] = [];
   for (const conversation of conversations) {
     if (conversation.backend === 'mail' && !showAllEmails && !conversation.emailChat) continue;
-    const entry = toEntry(
-      conversation,
-      identities.get(conversation.accountId),
-      rooms.get(conversation.id) ?? null,
-    );
+    const identity = identities.get(conversation.accountId);
+    const entry = toEntry(conversation, identity, rooms.get(conversation.id) ?? null);
+    if (selfAddressOf(conversation, identity) !== null) {
+      selfEntries.push(entry);
+      continue;
+    }
     const participant = conversation.participants.length === 1 ? conversation.participants[0] : null;
     if (conversation.backend !== 'mail' || conversation.kind !== 'direct' || !participant || !entry.target) {
       entries.push(entry);
@@ -287,6 +359,7 @@ export function toEntries(
     if ((entry.lastMessageAt ?? '') > (existing.lastMessageAt ?? ''))
       existing.lastMessageAt = entry.lastMessageAt;
   }
+  if (selfEntries.length > 0) entries.push(mergeSelfEntries(selfEntries));
   return entries;
 }
 

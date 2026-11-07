@@ -5,19 +5,22 @@ import {
   type ListEntry,
   NO_FILTER,
   accountChoices,
+  canSend,
   composerBlock,
+  dropDeselectedAccounts,
+  initials,
+  matches,
+  protocolChoices,
+  protocolIcon,
+  protocolLabel,
   roomHint,
   selfAddressOf,
+  shortTime,
+  singleChoice,
   targetOf,
   backendChoices,
   buildSections,
   entryTitle,
-  dropDeselectedAccounts,
-  initials,
-  matches,
-  protocolIcon,
-  protocolLabel,
-  shortTime,
   toEntries,
   toEntry,
   unreadText,
@@ -54,6 +57,7 @@ const entry = (over: Partial<ListEntry> & { id: string }): ListEntry => ({
   target: null,
   emailChat: false,
   room: null,
+  members: [],
   ...over,
 });
 
@@ -345,6 +349,45 @@ export default async () => {
       expect([...kept.keys()].join(',')).toBe('signal');
     });
 
+    it('merges every self-chat into one row ordered by the newest message', () => {
+      const selfChat = (
+        id: string,
+        backend: string,
+        accountId: string,
+        lastMessageAt: string | null,
+        participants: Conversation['participants'] = [],
+      ) => conversation({ id, backend, accountId, lastMessageAt, participants });
+      const list = toEntries(
+        [
+          selfChat('x', 'xmpp', 'xmpp-me', '2026-11-01T10:00:00Z', [
+            {
+              id: 'p',
+              displayName: null,
+              addresses: [{ kind: 'jid', value: 'me@example.org' }],
+              contactUid: null,
+            },
+          ]),
+          selfChat('s', 'signal', 'signal-aci', '2026-11-02T10:00:00Z'),
+          selfChat('t', 'telegram', 'telegram-42', '2026-11-01T12:00:00Z', [
+            { id: 'p', displayName: null, addresses: [{ kind: 'telegram', value: '42' }], contactUid: null },
+          ]),
+        ],
+        true,
+        new Map([['xmpp-me', 'me@example.org']]),
+      );
+      const note = list.find((e) => e.id === 'note-to-self');
+      expect(note).not.toBe(undefined);
+      expect(note!.title).toBe('Note to self');
+      expect(note!.backend).toBe('signal');
+      expect(
+        note!.members
+          .map((m) => m.backend)
+          .sort()
+          .join(','),
+      ).toBe('signal,telegram,xmpp');
+      expect(note!.conversationIds).toStrictEqual(['x', 's', 't']);
+    });
+
     it('titles and addresses the chat with oneself on every backend that can tell', () => {
       const person = (kind: 'jid' | 'matrix' | 'telegram' | 'signal', value: string) =>
         ({
@@ -400,6 +443,29 @@ export default async () => {
       // A WhatsApp or mail chat cannot be told from the index, so it stays an ordinary one.
       const wa = conversation({ id: 'w', backend: 'whatsapp', accountId: 'whatsapp-1' });
       expect(toEntry(wa, 'Me').title).toBe('Unnamed conversation');
+    });
+
+    it('knows when the composer can send and which carriers are available', () => {
+      expect(canSend(entry({ id: 'a', target: 'x' }))).toBe(true);
+      expect(canSend(entry({ id: 'b' }))).toBe(false);
+      expect(canSend(entry({ id: 'c', members: [entry({ id: 'm1', target: 't' })] }))).toBe(true);
+      expect(canSend(entry({ id: 'd', members: [entry({ id: 'm1' })] }))).toBe(false);
+      const choices = protocolChoices(
+        entry({ id: 'e', members: [entry({ id: 'm1', backend: 'signal', target: 'aci' })] }),
+      );
+      expect(choices.length).toBe(1);
+      expect(choices[0]!.backend).toBe('signal');
+      expect(choices[0]!.target).toBe('aci');
+      const xmpp = singleChoice(entry({ id: 'f', backend: 'xmpp', target: 'a@example.org' }));
+      expect(xmpp).not.toBe(null);
+      expect(xmpp!.backend).toBe('xmpp');
+      expect(xmpp!.target).toBe('a@example.org');
+      const signal = singleChoice(
+        entry({ id: 'g', members: [entry({ id: 'm1', backend: 'signal', target: 'aci' })] }),
+      );
+      expect(signal).not.toBe(null);
+      expect(signal!.backend).toBe('signal');
+      expect(signal!.target).toBe('aci');
     });
 
     it('names protocols and falls back for an unknown backend', () => {

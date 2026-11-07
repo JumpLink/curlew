@@ -4,6 +4,8 @@ import type { ConversationMessage } from '@curlew/protocol';
 import { _, fmt, _n } from '@curlew/protocol';
 import { normalizeSubject, type MessageCursor } from '@curlew/store';
 
+import { protocolLabel, type ProtocolChoice } from './conversation-list-model.ts';
+
 /** How many messages one page of history holds; a shorter page means the start was reached. */
 export const PAGE_SIZE = 50;
 
@@ -75,6 +77,60 @@ export function newOlder(
 ): ConversationMessage[] {
   const have = new Set(shown.map((m) => m.id));
   return page.filter((m) => !have.has(m.id));
+}
+
+/** A run of consecutive bubbles that share a carrier; the badge sits on the run's first bubble. */
+export interface ProtocolRun {
+  backend: string;
+}
+
+/**
+ * The ids of messages that open a new protocol run. Like sender runs in groups, a run ends when
+ * the carrier changes; the first message of every run carries the protocol badge.
+ */
+export function protocolRunStarts(messages: readonly ConversationMessage[]): Map<string, ProtocolRun> {
+  const runs = new Map<string, ProtocolRun>();
+  let previous: string | null = null;
+  for (const message of messages) {
+    if (message.backend !== previous) runs.set(message.id, { backend: message.backend });
+    previous = message.backend;
+  }
+  return runs;
+}
+
+/**
+ * Divider texts for messages where the carrier changes from the previous one. The first message
+ * starts fresh and gets no "Continuing via" line; every later switch does, once per switch.
+ */
+export function protocolDividers(messages: readonly ConversationMessage[]): Map<string, string> {
+  const dividers = new Map<string, string>();
+  for (let i = 1; i < messages.length; i++) {
+    const current = messages[i]!;
+    const previous = messages[i - 1]!;
+    if (current.backend !== previous.backend) {
+      dividers.set(
+        current.id,
+        fmt(_('Continuing via {protocol}'), { protocol: protocolLabel(current.backend) }),
+      );
+    }
+  }
+  return dividers;
+}
+
+/** The carrier of the last message, sent or received; null when the timeline is empty. */
+export function defaultProtocolChoice(
+  messages: readonly ConversationMessage[],
+  choices: ProtocolChoice[],
+): ProtocolChoice | null {
+  if (choices.length === 0) return null;
+  const last = messages[messages.length - 1];
+  if (!last) return choices[0] ?? null;
+  return (
+    choices.find((c) => c.backend === last.backend && c.accountId === last.ref.accountId) ??
+    choices.find((c) => c.backend === last.backend) ??
+    choices[0] ??
+    null
+  );
 }
 
 export function dayOf(message: ConversationMessage): string {
