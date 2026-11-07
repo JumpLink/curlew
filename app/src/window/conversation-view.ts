@@ -12,6 +12,7 @@ import type { ListEntry } from './conversation-list-model.ts';
 import {
   canSend,
   composerBlock,
+  entryProtocolSubtitle,
   initials,
   protocolChoices,
   protocolIcon,
@@ -222,13 +223,27 @@ export function createConversationView(
     return box;
   };
 
+  let pickerChoiceIcons: Array<{ choice: ProtocolChoice; icon: Gtk.Image }> = [];
+
+  const updateSelectedIcon = (): void => {
+    for (const { choice, icon } of pickerChoiceIcons) {
+      icon.set_visible(choice === selectedChoice);
+    }
+  };
+
   const selectChoice = (choice: ProtocolChoice): void => {
     selectedChoice = choice;
     picker.icon_name = choice.icon;
     picker.set_tooltip_text(protocolLabel(choice.backend));
+    picker.update_property(
+      [Gtk.AccessibleProperty.LABEL],
+      [fmt(_('Send via {protocol}'), { protocol: protocolLabel(choice.backend) })],
+    );
+    updateSelectedIcon();
   };
 
   const rebuildPicker = (choices: ProtocolChoice[]): void => {
+    pickerChoiceIcons = [];
     let child = pickerBox.get_first_child();
     while (child) {
       const next = child.get_next_sibling();
@@ -247,8 +262,16 @@ export function createConversationView(
       const label = new Gtk.Label({
         label: accountLabels.get(choice.accountId) ?? choice.label,
         xalign: 0,
+        hexpand: true,
       });
       row.append(label);
+      const selectedIcon = new Gtk.Image({
+        iconName: 'object-select-symbolic',
+        pixelSize: 16,
+        visible: false,
+      });
+      row.append(selectedIcon);
+      pickerChoiceIcons.push({ choice, icon: selectedIcon });
       const button = new Gtk.Button({ child: row });
       button.add_css_class('flat');
       button.connect('clicked', () => {
@@ -590,7 +613,7 @@ export function createConversationView(
       messages = nextMessages;
       accountLabels = nextLabels;
       title.set_title(nextEntry.title);
-      title.set_subtitle(protocolLabel(nextEntry.backend));
+      title.set_subtitle(entryProtocolSubtitle(nextEntry));
       history.remove_all();
       built.clear();
       waiting.length = 0;
