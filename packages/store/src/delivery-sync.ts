@@ -22,6 +22,7 @@
  */
 
 import type {
+  ChatAttachment,
   ChatMessage,
   ChatPeer,
   DeliveryBackend,
@@ -304,6 +305,8 @@ class DeliveryBatch {
    * message because the echo may hold text the delivered copy does not.
    */
   readonly clientIds = new Map<string, string>();
+  /** Attachment rows for chat messages, written once and never rewritten (ADR 0010). */
+  readonly messageAttachments: SqlValue[][] = [];
   readonly touchedChats = new Set<string>();
   /** Chats a merge folded into another in this batch: gone as conversations, for the journal. */
   readonly mergedAway = new Set<string>();
@@ -330,6 +333,21 @@ class DeliveryBatch {
 
   private rowId(chatRemoteId: string, remoteId: string): string {
     return deliveredMessageId(this.backend, this.accountId, chatRemoteId, remoteId);
+  }
+
+  messageAttachment(messageId: string, idx: number, attachment: ChatAttachment): void {
+    this.messageAttachments.push([
+      messageId,
+      idx,
+      attachment.filename,
+      attachment.mimeType,
+      attachment.size,
+      attachment.kind,
+      attachment.width,
+      attachment.height,
+      attachment.durationMs,
+      attachment.handle,
+    ]);
   }
 
   /** Merge a peer into what is known: a name or an address is never lost to a report that lacks it. */
@@ -398,6 +416,11 @@ class DeliveryBatch {
           seen: message.fromSelf || event.seen,
           peerRead: false,
         });
+        if (message.attachments) {
+          for (let i = 0; i < message.attachments.length; i++) {
+            this.messageAttachment(id, i, message.attachments[i]);
+          }
+        }
         return;
       }
       case 'edit': {
@@ -547,6 +570,7 @@ function messageRow(batch: DeliveryBatch, id: string, pending: PendingMessage): 
   const verdict = classifyChatMessage({ kind: pending.chatKind }, m);
   const sender = m.fromSelf ? null : m.sender;
   const address = sender?.addresses[0] ?? null;
+  const hasAttachments = m.hasAttachments || (m.attachments !== undefined && m.attachments.length > 0);
   return [
     id,
     chatConversationId(batch.backend, batch.accountId, pending.chatRemoteId),
@@ -559,7 +583,7 @@ function messageRow(batch: DeliveryBatch, id: string, pending: PendingMessage): 
     m.fromSelf ? 1 : 0,
     m.sentAt,
     pending.seen || m.notice ? 1 : 0,
-    m.hasAttachments ? 1 : 0,
+    hasAttachments ? 1 : 0,
     verdict.classification,
     verdict.reason,
     m.remoteId,
@@ -607,6 +631,48 @@ function mergeChat(db: IndexDatabase, batch: DeliveryBatch, from: string, into: 
         const v = r[c];
         return v === undefined ? null : (v as SqlValue);
       }),
+    ),
+  );
+  // Move the attachments with their messages; the source rows go when the source messages go.
+  const attachments = db
+    .prepare(
+      `SELECT m.id AS old_id, m.remote_id, a.idx, a.filename, a.mime_type, a.size, a.kind,
+              a.width, a.height, a.duration_ms, a.handle
+         FROM message_attachments a
+         JOIN conversation_messages m ON m.id = a.message_id
+        WHERE m.conversation_id = ?`,
+    )
+    .all(conv(from)) as Array<{
+      old_id: unknown;
+      remote_id: unknown;
+      idx: unknown;
+      filename: unknown;
+      mime_type: unknown;
+      size: unknown;
+      kind: unknown;
+      width: unknown;
+      height: unknown;
+      duration_ms: unknown;
+      handle: unknown;
+    }>;
+  insertMany(
+    db,
+    `INSERT OR IGNORE INTO message_attachments
+       (message_id, idx, filename, mime_type, size, kind, width, height, duration_ms, handle)`,
+    attachments.map(
+      (r) =>
+        [
+          deliveredMessageId(backend, accountId, into, String(r.remote_id)),
+          r.idx,
+          r.filename,
+          r.mime_type,
+          r.size,
+          r.kind,
+          r.width,
+          r.height,
+          r.duration_ms,
+          r.handle,
+        ] as SqlValue[],
     ),
   );
   db.prepare('DELETE FROM conversation_messages WHERE conversation_id = ?').run(conv(from));
@@ -675,8 +741,17 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
     adoptLocalEchoes(db, batch);
     // Deletions first: words the user or the sender took back must not outlive that here.
     runIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, [...batch.deletedMessages]);
+    if (batch.deletedMessages.size > 0) {
+      runIn(db, (p) => `DELETE FROM message_attachments WHERE message_id IN (${p})`, [...batch.deletedMessages]);
+    }
     const cleared = [...batch.clearedChats, ...batch.deletedChats].map(conv);
     runIn(db, (p) => `DELETE FROM conversation_messages WHERE conversation_id IN (${p})`, cleared);
+    if (cleared.length > 0) {
+      db.prepare(
+        `DELETE FROM message_attachments WHERE message_id IN
+           (SELECT id FROM conversation_messages WHERE conversation_id IN (${placeholders(cleared.length)}))`,
+      ).run(...cleared);
+    }
     const gone = [...batch.deletedChats].map(conv);
     for (const table of ['chat_members', 'chat_cursors', 'conversation_participants', 'conversations']) {
       const column = table === 'conversations' ? 'id' : 'conversation_id';
@@ -710,6 +785,12 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
           sender_address, from_self, sent_at, seen, has_attachments, classification, classification_reason,
           remote_id, body, remote_seq, sender_peer_id, edited_at, reply_to_remote_id, thread_remote_id, peer_read)`,
       [...batch.messages].map(([id, pending]) => messageRow(batch, id, pending)),
+    );
+    insertMany(
+      db,
+      `INSERT OR IGNORE INTO message_attachments
+         (message_id, idx, filename, mime_type, size, kind, width, height, duration_ms, handle)`,
+      batch.messageAttachments,
     );
     for (const [id, edit] of batch.edits) {
       db.prepare('UPDATE conversation_messages SET body = ?, edited_at = ? WHERE id = ?').run(

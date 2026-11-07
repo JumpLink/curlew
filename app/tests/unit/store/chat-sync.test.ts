@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import type { ChatSession } from '@curlew/protocol';
+import type { ChatAttachment, ChatSession } from '@curlew/protocol';
 
 import type { ContactDTO } from '@curlew/protocol';
 import { ChatRateLimitedError } from '@curlew/protocol';
@@ -9,6 +9,7 @@ import {
   deletedBy,
   getConversation,
   listConversations,
+  loadAttachments,
   rebuildConversations,
   recordSentChatMessage,
   releaseReceiveLease,
@@ -709,6 +710,117 @@ export default async () => {
         const messages = getConversation(db, conversationId, { includeBodies: true })?.messages ?? [];
         expect(messages.length).toBe(1);
         expect(messages[0].bodyText).toBe('wie der Server es kennt');
+      } finally {
+        db.close();
+      }
+    });
+  });
+
+  await describe('chat attachments (ADR 0010)', async () => {
+    function photo(filename: string): ChatAttachment {
+      return {
+        filename,
+        mimeType: 'image/jpeg',
+        size: 1234,
+        kind: 'image',
+        width: 100,
+        height: 100,
+        durationMs: null,
+        handle: JSON.stringify({ fileId: filename }),
+      };
+    }
+
+    await it('writes attachment rows with the message and reads them back', async () => {
+      const backend = new FakeChatBackend();
+      backend.addChat({ remoteId: '1002', kind: 'direct', title: 'Ben', members: [BEN] });
+      backend.post(
+        '1002',
+        chatMessage('1002', 1, BEN, 'look', {
+          hasAttachments: true,
+          attachments: [photo('a.jpg'), photo('b.jpg')],
+        }),
+      );
+      const db = freshDb();
+      try {
+        await syncChats(db, backend);
+        const message = getConversation(db, chatConversationId('telegram', ACCOUNT, '1002'))?.messages[0];
+        expect(message?.hasAttachments).toBe(true);
+        expect(message?.ref.backend).toBe('telegram');
+        const attachments = loadAttachments(db, message!.ref);
+        expect(attachments.length).toBe(2);
+        expect(attachments.map((a) => a.filename)).toEqualArray(['a.jpg', 'b.jpg']);
+        expect(attachments.map((a) => a.kind)).toEqualArray(['image', 'image']);
+        expect(attachments[0].index).toBe(0);
+        expect(attachments[1].index).toBe(1);
+        // The opaque handle never leaves the store.
+        expect((attachments[0] as { handle?: unknown }).handle).toBe(undefined);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('sets has_attachments when the backend says so even without descriptors', async () => {
+      const backend = new FakeChatBackend();
+      backend.addChat({ remoteId: '1002', kind: 'direct', title: 'Ben', members: [BEN] });
+      backend.post('1002', chatMessage('1002', 1, BEN, 'look', { hasAttachments: true }));
+      const db = freshDb();
+      try {
+        await syncChats(db, backend);
+        const message = getConversation(db, chatConversationId('telegram', ACCOUNT, '1002'))?.messages[0];
+        expect(message?.hasAttachments).toBe(true);
+        expect(loadAttachments(db, message!.ref)).toStrictEqual([]);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('deduplicates attachment rows on re-sync', async () => {
+      const backend = new FakeChatBackend();
+      backend.addChat({ remoteId: '1002', kind: 'direct', title: 'Ben', members: [BEN] });
+      backend.post(
+        '1002',
+        chatMessage('1002', 1, BEN, 'look', {
+          hasAttachments: true,
+          attachments: [photo('a.jpg')],
+        }),
+      );
+      const db = freshDb();
+      try {
+        await syncChats(db, backend);
+        await syncChats(db, backend, { fullScan: true });
+        const message = getConversation(db, chatConversationId('telegram', ACCOUNT, '1002'))?.messages[0];
+        const rows = db
+          .prepare('SELECT COUNT(*) AS n FROM message_attachments WHERE message_id = ?')
+          .get(message!.id) as { n?: number };
+        expect(Number(rows.n)).toBe(1);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('removes attachment rows when a message is deleted on the server', async () => {
+      const backend = new FakeChatBackend();
+      backend.canProbe = true;
+      backend.addChat({ remoteId: '1002', kind: 'direct', title: 'Ben', members: [BEN] });
+      backend.post(
+        '1002',
+        chatMessage('1002', 1, BEN, 'look', {
+          hasAttachments: true,
+          attachments: [photo('a.jpg')],
+        }),
+      );
+      const db = freshDb();
+      const id = chatConversationId('telegram', ACCOUNT, '1002');
+      try {
+        await syncChats(db, backend);
+        const message = getConversation(db, id)?.messages[0];
+        expect(loadAttachments(db, message!.ref).length).toBe(1);
+        backend.chats.get('1002')!.messages = [];
+        await syncChats(db, backend, { fullScan: true, probeDepth: 5 });
+        expect(getConversation(db, id)?.messages.length).toBe(0);
+        expect(
+          count(db, 'SELECT COUNT(*) AS n FROM message_attachments WHERE message_id = ?', message!.id),
+        ).toBe(0);
       } finally {
         db.close();
       }
