@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-07 16:21+0100\n"
+"POT-Creation-Date: 2026-11-07 16:38+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1392,59 +1392,70 @@ msgstr ""
 msgid "Curlew"
 msgstr ""
 
-#: app/src/window/accounts-dialog.ts:41 app/src/window/accounts-page.ts:114
+#: app/src/window/accounts-dialog.ts:37 app/src/window/accounts-page.ts:139
 #: app/src/window/window.ts:75
 msgid "Accounts"
 msgstr ""
 
-#: app/src/window/accounts-model.ts:67
-msgid ""
-"Mail, contacts and calendar accounts are managed in GNOME Settings → Online "
-"Accounts."
+#: app/src/window/accounts-model.ts:74
+#: app/src/window/conversation-list-model.ts:77
+msgid "Mail"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:22
-msgid "Connected"
+#: app/src/window/accounts-model.ts:75
+msgid "Calendar"
+msgstr ""
+
+#: app/src/window/accounts-model.ts:76
+msgid "Contacts"
 msgstr ""
 
 #: app/src/window/accounts-page.ts:24
-msgid "Connecting"
+msgid "Connected"
 msgstr ""
 
 #: app/src/window/accounts-page.ts:26
-msgid "Offline"
+msgid "Connecting"
 msgstr ""
 
 #: app/src/window/accounts-page.ts:28
+msgid "Offline"
+msgstr ""
+
+#: app/src/window/accounts-page.ts:30
 msgid "Daemon not running"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:51
-msgid "Loading…"
+#: app/src/window/accounts-page.ts:93
+msgid "Manage…"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:57
+#: app/src/window/accounts-page.ts:94
+msgid "Open GNOME Settings → Online Accounts"
+msgstr ""
+
+#: app/src/window/accounts-page.ts:103
 msgid "Could not load accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:63 app/src/window/accounts-page.ts:103
-msgid "No accounts"
+#: app/src/window/accounts-page.ts:105
+msgid "No accounts yet"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:68
-msgid "Online Accounts"
-msgstr ""
-
-#: app/src/window/accounts-page.ts:69
-msgid "Open GNOME Settings"
-msgstr ""
-
-#: app/src/window/accounts-page.ts:99
+#: app/src/window/accounts-page.ts:117
 msgid "Accounts could not be loaded"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:104
+#: app/src/window/accounts-page.ts:121
+msgid "No accounts"
+msgstr ""
+
+#: app/src/window/accounts-page.ts:122
 msgid "Enable a backend in Preferences to add accounts here."
+msgstr ""
+
+#: app/src/window/accounts-page.ts:132
+msgid "The background service is not running, so chat accounts cannot connect."
 msgstr ""
 
 #: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:77
@@ -1605,10 +1616,6 @@ msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] ""
 msgstr[1] ""
-
-#: app/src/window/conversation-list-model.ts:77
-msgid "Mail"
-msgstr ""
 
 #: app/src/window/conversation-list-model.ts:78
 msgid "XMPP"
