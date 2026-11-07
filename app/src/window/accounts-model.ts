@@ -18,7 +18,10 @@ export type AccountStatus = 'connected' | 'connecting' | 'offline' | 'daemon-not
 export interface AccountRow {
   id: string;
   label: string;
-  status: AccountStatus;
+  /** Provider and what the account covers, for mail; the address behind a nickname, for chats. */
+  detail?: string;
+  /** Null when no live state applies: mail accounts are not held by the daemon. */
+  status: AccountStatus | null;
   /** ISO time the daemon entered this state, when it is known. */
   since?: string;
 }
@@ -27,11 +30,9 @@ export interface ProtocolGroup {
   backend: string;
   label: string;
   icon: string;
-  /** GOA-sourced mail group carries the GNOME Settings button description. */
-  description?: string;
   rows: AccountRow[];
-  loading: boolean;
   error?: string;
+  /** Accounts of this group are managed in GNOME Settings, so the group links there. */
   isGoa: boolean;
 }
 
@@ -63,12 +64,17 @@ function sortGroups(groups: ProtocolGroup[]): ProtocolGroup[] {
   return [...groups].sort((a, b) => groupSortKey(a.backend) - groupSortKey(b.backend));
 }
 
-function goaDescription(): string {
-  return _('Mail, contacts and calendar accounts are managed in GNOME Settings → Online Accounts.');
-}
-
 function goaAccountLabel(account: GnomeAccount): string {
   return account.identity || account.presentation || account.id;
+}
+
+/** "Google · Mail, Calendar": the provider and what the account covers in Curlew. */
+function goaAccountDetail(account: GnomeAccount): string {
+  const covers: string[] = [];
+  if (account.capabilities.mail) covers.push(_('Mail'));
+  if (account.capabilities.calendar) covers.push(_('Calendar'));
+  if (account.capabilities.contacts) covers.push(_('Contacts'));
+  return [account.providerName, covers.join(', ')].filter(Boolean).join(' · ');
 }
 
 function chatAccountLabel(account: BackendAccount, labels: ReadonlyMap<string, string>): string {
@@ -106,37 +112,18 @@ export function accountStatus(
   }
 }
 
-function makeRow(id: string, label: string, backend: string, daemon: AccountsDaemonState): AccountRow {
+function makeRow(
+  id: string,
+  label: string,
+  backend: string,
+  daemon: AccountsDaemonState,
+  detail?: string,
+): AccountRow {
   const entry = lookupDaemon(daemon, backend, id);
+  // The daemon holds live chat sessions only; a mail account has no state of its own to show.
+  if (backend === 'mail' && !entry) return { id, label, detail, status: null };
   const { status, since } = accountStatus(daemon.present, entry?.state, entry?.since);
-  return { id, label, status, since };
-}
-
-/** Groups to show while accounts are still loading. */
-export function loadingGroups(backends: BackendStatus[]): ProtocolGroup[] {
-  const groups: ProtocolGroup[] = [
-    {
-      backend: 'mail',
-      label: protocolLabel('mail'),
-      icon: protocolIcon('mail'),
-      description: goaDescription(),
-      rows: [],
-      loading: true,
-      isGoa: true,
-    },
-  ];
-  for (const backend of backends) {
-    if (backend.name === 'mail' || !backend.enabled) continue;
-    groups.push({
-      backend: backend.name,
-      label: protocolLabel(backend.name),
-      icon: protocolIcon(backend.name),
-      rows: [],
-      loading: true,
-      isGoa: false,
-    });
-  }
-  return sortGroups(groups);
+  return { id, label, detail, status, since };
 }
 
 /** Build the full page state from loaded accounts and live daemon state. */
@@ -146,11 +133,13 @@ export function buildProtocolGroups(load: AccountsLoadState, daemon: AccountsDae
       backend: 'mail',
       label: protocolLabel('mail'),
       icon: protocolIcon('mail'),
-      description: goaDescription(),
       rows: load.goaAccounts.accounts
-        .map((account) => makeRow(account.id, goaAccountLabel(account), 'mail', daemon))
+        // A GOA account that only holds calendars or contacts has no mail to show here.
+        .filter((account) => account.capabilities.mail)
+        .map((account) =>
+          makeRow(account.id, goaAccountLabel(account), 'mail', daemon, goaAccountDetail(account)),
+        )
         .sort((a, b) => a.label.localeCompare(b.label)),
-      loading: false,
       error: load.goaAccounts.error,
       isGoa: true,
     },
@@ -164,9 +153,13 @@ export function buildProtocolGroups(load: AccountsLoadState, daemon: AccountsDae
       label: protocolLabel(result.backend),
       icon: protocolIcon(result.backend),
       rows: result.accounts
-        .map((account) => makeRow(account.id, chatAccountLabel(account, load.labels), result.backend, daemon))
+        .map((account) => {
+          const label = chatAccountLabel(account, load.labels);
+          // A nickname hides the address; show it underneath so two accounts stay tellable apart.
+          const detail = account.identity && account.identity !== label ? account.identity : undefined;
+          return makeRow(account.id, label, result.backend, daemon, detail);
+        })
         .sort((a, b) => a.label.localeCompare(b.label)),
-      loading: false,
       error: result.error,
       isGoa: false,
     });

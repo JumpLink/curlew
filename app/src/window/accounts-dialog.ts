@@ -8,16 +8,10 @@ import type Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 import { configPath } from '@curlew/store';
 
-import {
-  buildProtocolGroups,
-  loadingGroups,
-  type AccountsDaemonState,
-  type AccountsPageState,
-} from './accounts-model.ts';
+import { buildProtocolGroups, type AccountsDaemonState, type AccountsPageState } from './accounts-model.ts';
 import { createAccountsPage } from './accounts-page.ts';
 import { gioAccountsDaemonSource } from './accounts-daemon.ts';
 import { loadAccountsState } from './accounts-store.ts';
-import { backendsList } from '../core/actions/backends.ts';
 
 export interface AccountsDialogOptions {
   /** Width of the dialog content; defaults to 360. */
@@ -44,12 +38,13 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
 
   let open = true;
   let loadState: Awaited<ReturnType<typeof loadAccountsState>> | null = null;
-  let daemonState: AccountsDaemonState = { present: false, accounts: new Map() };
+  // Null until the bus has answered, so the dialog never claims "daemon not running" while it is still asking.
+  let daemonState: AccountsDaemonState | null = null;
   let loading = false;
   let again = false;
 
   const render = () => {
-    if (!open || !loadState) return;
+    if (!open || !loadState || !daemonState) return;
     const state: AccountsPageState = buildProtocolGroups(loadState, daemonState);
     page.show(state);
   };
@@ -80,7 +75,7 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
     render();
   };
 
-  page.show({ groups: loadingGroups(backendsList(path).backends), daemonPresent: false });
+  page.showLoading();
   const stopDaemon = gioAccountsDaemonSource().start(onDaemon);
   void reload();
 

@@ -4,7 +4,6 @@ import type { BackendAccount, GnomeAccount } from '@curlew/protocol';
 import {
   accountStatus,
   buildProtocolGroups,
-  loadingGroups,
   type AccountsDaemonState,
   type AccountsLoadState,
 } from '../../../src/window/accounts-model.ts';
@@ -66,20 +65,6 @@ export default async () => {
       expect(accountStatus(true, undefined, 't6')).toStrictEqual({ status: 'offline', since: 't6' });
     });
 
-    it('builds loading groups for mail and enabled chat backends only', () => {
-      const groups = loadingGroups([
-        backend('mail'),
-        backend('xmpp'),
-        backend('signal'),
-        backend('telegram', false),
-      ]);
-      expect(groups.map((g) => g.backend)).toStrictEqual(['mail', 'xmpp', 'signal']);
-      const mail = groups.find((g) => g.backend === 'mail')!;
-      expect(mail.loading).toBe(true);
-      expect(mail.isGoa).toBe(true);
-      expect(mail.description).toContain('GNOME Settings');
-    });
-
     it('groups GOA accounts under mail and chat accounts under their protocol', () => {
       const load: AccountsLoadState = {
         backends: [backend('mail'), backend('xmpp'), backend('signal')],
@@ -101,7 +86,8 @@ export default async () => {
 
       const mail = state.groups.find((g) => g.backend === 'mail')!;
       expect(mail.rows.map((r) => r.label)).toStrictEqual(['alpha@example.org', 'beta@example.org']);
-      expect(mail.rows[0]!.status).toBe('offline');
+      // The daemon does not hold mail accounts, so no state is invented for them.
+      expect(mail.rows[0]!.status).toBeNull();
 
       const xmpp = state.groups.find((g) => g.backend === 'xmpp')!;
       expect(xmpp.rows.map((r) => r.label)).toStrictEqual(['Work XMPP', 'xmpp-a']);
@@ -170,16 +156,64 @@ export default async () => {
       expect(xmppRow.since).toBe('t2');
     });
 
-    it('reports daemon-not-running for every account when the daemon is absent', () => {
+    it('reports daemon-not-running for chat accounts when the daemon is absent', () => {
       const load: AccountsLoadState = {
-        backends: [backend('mail')],
+        backends: [backend('mail'), backend('xmpp')],
         goaAccounts: { accounts: [goaAccount({ id: 'goa-1' })] },
-        chatAccounts: [],
+        chatAccounts: [{ backend: 'xmpp', accounts: [chatAccount({ id: 'xmpp-1' })] }],
         labels: new Map(),
       };
       const state = buildProtocolGroups(load, daemonState(false, new Map()));
       expect(state.daemonPresent).toBe(false);
-      expect(state.groups[0]!.rows[0]!.status).toBe('daemon-not-running');
+      expect(state.groups[0]!.rows[0]!.status).toBeNull();
+      expect(state.groups[1]!.rows[0]!.status).toBe('daemon-not-running');
+    });
+
+    it('lists only GOA accounts that carry mail, once each', () => {
+      const load: AccountsLoadState = {
+        backends: [backend('mail')],
+        goaAccounts: {
+          accounts: [
+            goaAccount({
+              id: 'imap',
+              identity: 'a@example.org',
+              providerName: 'IMAP and SMTP',
+              capabilities: { mail: true, calendar: false, contacts: false, files: false },
+            }),
+            goaAccount({
+              id: 'dav',
+              identity: 'a@example.org',
+              providerName: 'Nextcloud',
+              capabilities: { mail: false, calendar: true, contacts: true, files: true },
+            }),
+          ],
+        },
+        chatAccounts: [],
+        labels: new Map(),
+      };
+      const rows = buildProtocolGroups(load, daemonState(true, new Map())).groups[0]!.rows;
+      expect(rows.map((r) => r.id)).toStrictEqual(['imap']);
+      expect(rows[0]!.detail).toBe('IMAP and SMTP · Mail');
+    });
+
+    it('shows the address under a chat nickname only when they differ', () => {
+      const load: AccountsLoadState = {
+        backends: [backend('xmpp')],
+        goaAccounts: { accounts: [] },
+        chatAccounts: [
+          {
+            backend: 'xmpp',
+            accounts: [
+              chatAccount({ id: 'a', identity: 'a@example.org' }),
+              chatAccount({ id: 'b', identity: 'b@example.org' }),
+            ],
+          },
+        ],
+        labels: new Map([['b', 'Work']]),
+      };
+      const rows = buildProtocolGroups(load, daemonState(true, new Map())).groups[1]!.rows;
+      expect(rows.find((r) => r.id === 'a')!.detail).toBeUndefined();
+      expect(rows.find((r) => r.id === 'b')!.detail).toBe('b@example.org');
     });
 
     it('keeps chat accounts out of the mail group', () => {
