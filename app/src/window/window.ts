@@ -88,15 +88,19 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   let currentEntry: ListEntry | null = null;
   let currentMessages: ConversationMessage[] = [];
   const conversation = createConversationView(
-    async (text) => {
+    async (text, choice) => {
       const entry = currentEntry;
-      if (!entry?.target) throw new Error(_('This conversation has no recipient address.'));
-      const parent = currentMessages[currentMessages.length - 1] ?? null;
+      if (!entry) throw new Error(_('This conversation has no recipient address.'));
+      // The carrier's own last message: a mail reply must not thread onto a Signal note.
+      const parent =
+        [...currentMessages]
+          .reverse()
+          .find((m) => m.backend === choice.backend && m.ref.accountId === choice.accountId) ?? null;
       const mail =
-        entry.backend === 'mail' ? composeMailReply(parent, loadMailReplyTarget(parent), text) : null;
+        choice.backend === 'mail' ? composeMailReply(parent, loadMailReplyTarget(parent), text) : null;
       const result = await sendMessage({
-        accountId: entry.accountId,
-        to: entry.target,
+        accountId: choice.accountId,
+        to: choice.target,
         text,
         frontend: 'window',
         ...mail,
@@ -104,7 +108,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
       return {
         id: result.originId,
         conversationId: parent?.conversationId ?? entry.conversationIds[0] ?? entry.id,
-        backend: entry.backend,
+        backend: choice.backend,
         presentation: 'bubble',
         senderId: null,
         senderName: null,
@@ -117,7 +121,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
         emailChat: mail !== null,
         classification: 'conversational',
         classificationReason: 'self',
-        ref: { accountId: entry.accountId },
+        ref: { accountId: choice.accountId },
         bodyText: text,
       };
     },
@@ -127,7 +131,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   const select = (entry: ListEntry) => {
     currentEntry = entry;
     currentMessages = loadConversationMessages(entry);
-    conversation.show(entry, currentMessages);
+    conversation.show(entry, currentMessages, labels);
     split.set_content(conversation.page);
     split.set_show_content(true);
   };

@@ -8,7 +8,10 @@ import {
   composeMailReply,
   cursorOf,
   dayStarts,
+  defaultProtocolChoice,
   newOlder,
+  protocolDividers,
+  protocolRunStarts,
   replySubject,
   senderName,
   senderRunStarts,
@@ -162,6 +165,41 @@ export default async () => {
         ['f', 'Anna'],
       ]);
       expect(senderRunStarts(shown, false).size).toBe(0);
+    });
+
+    await it('badges the first bubble of each protocol run and adds a divider on switches', async () => {
+      const m = (id: string, backend: string, accountId = 'a') =>
+        message({ id, backend, presentation: 'bubble', ref: { accountId } });
+      const runs = protocolRunStarts([m('a', 'signal'), m('b', 'signal'), m('c', 'mail'), m('d', 'signal')]);
+      expect([...runs.entries()]).toStrictEqual([
+        ['a', { backend: 'signal' }],
+        ['c', { backend: 'mail' }],
+        ['d', { backend: 'signal' }],
+      ]);
+      const dividers = protocolDividers([
+        m('a', 'signal'),
+        m('b', 'signal'),
+        m('c', 'mail'),
+        m('d', 'signal'),
+      ]);
+      expect([...dividers.entries()]).toStrictEqual([
+        ['c', 'Continuing via Mail'],
+        ['d', 'Continuing via Signal'],
+      ]);
+    });
+
+    await it('defaults the picker to the last message carrier, falling back to the first choice', async () => {
+      const choices = [
+        { backend: 'signal', accountId: 'signal-1', target: 'aci-1', label: 'Signal', icon: '' },
+        { backend: 'xmpp', accountId: 'xmpp-1', target: 'x', label: 'XMPP', icon: '' },
+      ];
+      expect(defaultProtocolChoice([], choices)).toBe(choices[0]);
+      const m = (id: string, backend: string, accountId = 'a') =>
+        message({ id, backend, presentation: 'bubble', ref: { accountId } });
+      expect(defaultProtocolChoice([m('a', 'xmpp', 'xmpp-1')], choices)).toBe(choices[1]);
+      expect(defaultProtocolChoice([m('a', 'xmpp', 'xmpp-2')], choices)).toBe(choices[1]);
+      expect(defaultProtocolChoice([m('a', 'signal', 'signal-1')], choices)).toBe(choices[0]);
+      expect(defaultProtocolChoice([m('a', 'mail')], choices)).toBe(choices[0]);
     });
 
     await it('keeps sender runs right when an older page is prepended', async () => {

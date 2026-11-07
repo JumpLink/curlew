@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-06 14:47+0100\n"
+"POT-Creation-Date: 2026-11-07 00:59+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1387,7 +1387,7 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr ""
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:66
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:86
 #: app/src/window/window.ts:46 app/src/window/window.ts:61
 msgid "Curlew"
 msgstr ""
@@ -1539,69 +1539,70 @@ msgid "Could not fetch the attachment: {error}"
 msgstr ""
 
 #: app/src/window/attachment-view.ts:198
-#: app/src/window/conversation-model.ts:186
+#: app/src/window/conversation-model.ts:239
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-list-model.ts:62
+#: app/src/window/conversation-list-model.ts:77
 msgid "Mail"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:63
+#: app/src/window/conversation-list-model.ts:78
 msgid "XMPP"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:64
+#: app/src/window/conversation-list-model.ts:79
 msgid "Signal"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:65
+#: app/src/window/conversation-list-model.ts:80
 msgid "Matrix"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:66
+#: app/src/window/conversation-list-model.ts:81
 msgid "Telegram"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:67
+#: app/src/window/conversation-list-model.ts:82
 msgid "WhatsApp"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:99
+#: app/src/window/conversation-list-model.ts:114
 msgid "Yesterday"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:167
+#: app/src/window/conversation-list-model.ts:182
+#: app/src/window/conversation-list-model.ts:313
 msgid "Note to self"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:175
+#: app/src/window/conversation-list-model.ts:190
 msgid "Unnamed conversation"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:235
+#: app/src/window/conversation-list-model.ts:251
 msgid "Encrypted rooms are not supported yet"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:248
+#: app/src/window/conversation-list-model.ts:296
 msgid "Public room · {count} member"
 msgid_plural "Public room · {count} members"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-list-model.ts:249
+#: app/src/window/conversation-list-model.ts:297
 msgid "Room · {count} member"
 msgid_plural "Room · {count} members"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-list-model.ts:328
+#: app/src/window/conversation-list-model.ts:401
 msgid "People"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:329
+#: app/src/window/conversation-list-model.ts:402
 msgid "Groups"
 msgstr ""
 
@@ -1648,64 +1649,69 @@ msgstr ""
 msgid "Conversations"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:148
+#: app/src/window/conversation-model.ts:111
+#: app/src/window/conversation-view.ts:545
+msgid "Continuing via {protocol}"
+msgstr ""
+
+#: app/src/window/conversation-model.ts:201
 msgid "Unknown sender"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:170
+#: app/src/window/conversation-model.ts:223
 msgid "Image"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:172
+#: app/src/window/conversation-model.ts:225
 msgid "Video"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:174
+#: app/src/window/conversation-model.ts:227
 msgid "Audio"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:176
+#: app/src/window/conversation-model.ts:229
 msgid "File"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:177
-#: app/src/window/conversation-model.ts:183
+#: app/src/window/conversation-model.ts:230
+#: app/src/window/conversation-model.ts:236
 msgid "Attachment"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:178
+#: app/src/window/conversation-model.ts:231
 msgid "{kind}: {name}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:75
+#: app/src/window/conversation-view.ts:95
 msgid "Write a message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:76
+#: app/src/window/conversation-view.ts:106
 msgid "Send message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:93
+#: app/src/window/conversation-view.ts:124
 msgid "Conversation"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:210
+#: app/src/window/conversation-view.ts:290
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:231
+#: app/src/window/conversation-view.ts:311
 msgid "Contains attachments"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:342
+#: app/src/window/conversation-view.ts:454
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:421
+#: app/src/window/conversation-view.ts:555
 msgid "Message not sent: {error}"
 msgstr ""
 
-#: app/src/window/fade-bin.ts:147
+#: app/src/window/fade-bin.ts:148
 msgid "Show more"
 msgstr ""
 
