@@ -167,6 +167,7 @@
     "@curlew/xmpp": "*",
     "dotenv": "^17.4.2",
     "yargs": "^18.1.0",
+    "qrcode-generator": "2.0.4",
     "zod": "^4.4.3",
     "@gjsify/adwaita-app": "0.64.22"
   },

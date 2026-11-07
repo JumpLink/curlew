@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-07 18:50+0100\n"
+"POT-Creation-Date: 2026-11-07 22:44+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1670,7 +1670,66 @@ msgstr "curlew window nimmt keine Argumente."
 msgid "Curlew"
 msgstr "Curlew"
 
-#: app/src/window/accounts-dialog.ts:33 app/src/window/accounts-page.ts:152
+#: app/src/window/account-add.ts:147
+msgid "Please read this first"
+msgstr "Bitte zuerst lesen"
+
+#: app/src/window/account-add.ts:152
+msgid "Accept and Continue"
+msgstr "Zustimmen und fortfahren"
+
+#: app/src/window/account-add.ts:189
+msgid "Continue"
+msgstr "Weiter"
+
+#: app/src/window/account-add.ts:212
+msgid "Adding account…"
+msgstr "Konto wird hinzugefügt …"
+
+#: app/src/window/account-add.ts:220
+msgid "Try Again"
+msgstr "Erneut versuchen"
+
+#: app/src/window/account-add.ts:224
+msgid "Could not add the account"
+msgstr "Konto konnte nicht hinzugefügt werden"
+
+#: app/src/window/account-add.ts:235
+msgid "Connecting…"
+msgstr "Verbindung wird hergestellt …"
+
+#: app/src/window/account-add.ts:259
+msgid "Asks you to accept terms first"
+msgstr "Verlangt zuerst deine Zustimmung zu den Bedingungen"
+
+#: app/src/window/account-add.ts:274
+msgid "Chats"
+msgstr "Chats"
+
+#: app/src/window/account-add.ts:275
+msgid ""
+"Signal, WhatsApp and Telegram link this computer as another device of your "
+"account."
+msgstr "Signal, WhatsApp und Telegram verknüpfen diesen Computer als weiteres Gerät deines Kontos."
+
+#: app/src/window/account-add.ts:287
+msgid "Mail, calendar and contacts"
+msgstr "E-Mail, Kalender und Kontakte"
+
+#: app/src/window/account-add.ts:289
+msgid "GNOME Online Accounts"
+msgstr "GNOME-Online-Konten"
+
+#: app/src/window/account-add.ts:290
+msgid "Mail accounts are added in GNOME Settings"
+msgstr "E-Mail-Konten werden in den GNOME-Einstellungen hinzugefügt"
+
+#: app/src/window/account-add.ts:306 app/src/window/accounts-page.ts:141
+#: app/src/window/accounts-page.ts:162
+msgid "Add Account"
+msgstr "Konto hinzufügen"
+
+#: app/src/window/accounts-dialog.ts:43 app/src/window/accounts-page.ts:169
 #: app/src/window/window.ts:75
 msgid "Accounts"
 msgstr "Konten"
@@ -1688,52 +1747,51 @@ msgstr "Kalender"
 msgid "Contacts"
 msgstr "Kontakte"
 
-#: app/src/window/accounts-page.ts:24
+#: app/src/window/accounts-page.ts:27
 msgid "Connected"
 msgstr "Verbunden"
 
-#: app/src/window/accounts-page.ts:26
+#: app/src/window/accounts-page.ts:29
 msgid "Connecting"
 msgstr "Verbindung wird hergestellt"
 
-#: app/src/window/accounts-page.ts:28
+#: app/src/window/accounts-page.ts:31
 msgid "Offline"
 msgstr "Offline"
 
-#: app/src/window/accounts-page.ts:30
+#: app/src/window/accounts-page.ts:33
 msgid "Daemon not running"
 msgstr "Daemon läuft nicht"
 
-#: app/src/window/accounts-page.ts:101
+#: app/src/window/accounts-page.ts:104
 msgid "Manage…"
 msgstr "Verwalten …"
 
-#: app/src/window/accounts-page.ts:102
+#: app/src/window/accounts-page.ts:105
 msgid "Open GNOME Settings → Online Accounts"
 msgstr "GNOME-Einstellungen → Online-Konten öffnen"
 
-#: app/src/window/accounts-page.ts:111
+#: app/src/window/accounts-page.ts:114
 msgid "Could not load accounts"
 msgstr "Konten konnten nicht geladen werden"
 
-#: app/src/window/accounts-page.ts:113
+#: app/src/window/accounts-page.ts:116
 msgid "No accounts yet"
 msgstr "Noch keine Konten"
 
-#: app/src/window/accounts-page.ts:130
+#: app/src/window/accounts-page.ts:133
 msgid "Accounts could not be loaded"
 msgstr "Konten konnten nicht geladen werden"
 
-#: app/src/window/accounts-page.ts:134
+#: app/src/window/accounts-page.ts:137
 msgid "No accounts"
 msgstr "Keine Konten"
 
-#: app/src/window/accounts-page.ts:135
-msgid "Enable a backend in Preferences to add accounts here."
-msgstr ""
-"Aktiviere in den Einstellungen ein Backend, um hier Konten hinzuzufügen."
+#: app/src/window/accounts-page.ts:138
+msgid "Add a chat account, or add a mail account in GNOME Settings."
+msgstr "Füge ein Chat-Konto hinzu oder ein E-Mail-Konto in den GNOME-Einstellungen."
 
-#: app/src/window/accounts-page.ts:145
+#: app/src/window/accounts-page.ts:155
 msgid "The background service is not running, so chat accounts cannot connect."
 msgstr ""
 "Der Hintergrunddienst läuft nicht, daher können sich Chat-Konten nicht "
@@ -2275,7 +2333,7 @@ msgstr "Keine Signal-Sitzung für {account} — {hint}"
 msgid "the Signal session {account} was never linked — {hint}"
 msgstr "Die Signal-Sitzung {account} wurde nie verknüpft — {hint}"
 
-#: packages/signal/src/link.ts:84
+#: packages/signal/src/link.ts:86
 msgid ""
 "Scan this with the phone: Signal → Settings → Linked devices → Link new "
 "device."
@@ -2283,55 +2341,55 @@ msgstr ""
 "Scanne dies mit dem Telefon: Signal → Einstellungen → Verknüpfte Geräte → "
 "Neues Gerät verknüpfen."
 
-#: packages/signal/src/link.ts:97
+#: packages/signal/src/link.ts:100
 msgid "the provisioning connection failed ({reason}) — nothing was saved"
 msgstr ""
 "Die Kopplungsverbindung ist fehlgeschlagen ({reason}) — es wurde nichts "
 "gespeichert"
 
-#: packages/signal/src/link.ts:102 packages/whatsapp/src/login.ts:139
+#: packages/signal/src/link.ts:105 packages/whatsapp/src/login.ts:144
 msgid "no phone linked this device in time — nothing was saved"
 msgstr ""
 "Kein Telefon hat dieses Gerät rechtzeitig verknüpft — es wurde nichts "
 "gespeichert"
 
-#: packages/signal/src/link.ts:129
+#: packages/signal/src/link.ts:132
 msgid "the phone sent an incomplete link message — nothing was saved"
 msgstr ""
 "Das Telefon hat eine unvollständige Verknüpfungsnachricht gesendet — es "
 "wurde nichts gespeichert"
 
-#: packages/signal/src/link.ts:131
+#: packages/signal/src/link.ts:134
 msgid "The phone answered. Registering this device…"
 msgstr "Das Telefon hat geantwortet. Dieses Gerät wird registriert …"
 
-#: packages/signal/src/link.ts:154
+#: packages/signal/src/link.ts:157
 msgid ""
 "the phone sent a number but no phone number identity key — nothing was saved"
 msgstr ""
 "Das Telefon hat eine Nummer, aber keinen Identitätsschlüssel zur "
 "Telefonnummer gesendet — es wurde nichts gespeichert"
 
-#: packages/signal/src/link.ts:157
+#: packages/signal/src/link.ts:160
 msgid ""
 "the phone sent a phone number identity key but no number — nothing was saved"
 msgstr ""
 "Das Telefon hat einen Identitätsschlüssel zur Telefonnummer, aber keine "
 "Nummer gesendet — es wurde nichts gespeichert"
 
-#: packages/signal/src/link.ts:207
+#: packages/signal/src/link.ts:210
 msgid "Signal refused the link (status {status}{detail}) — nothing was saved"
 msgstr ""
 "Signal hat die Verknüpfung abgelehnt (Status {status}{detail}) — es wurde "
 "nichts gespeichert"
 
-#: packages/signal/src/link.ts:218
+#: packages/signal/src/link.ts:221
 msgid "Signal answered the link for a different account — nothing was saved"
 msgstr ""
 "Signal hat die Verknüpfung für ein anderes Konto beantwortet — es wurde "
 "nichts gespeichert"
 
-#: packages/signal/src/link.ts:238
+#: packages/signal/src/link.ts:241
 msgid ""
 "Linked, but the one-time keys were not published ({reason}); new contacts "
 "fall back to the last-resort key."
@@ -2339,7 +2397,7 @@ msgstr ""
 "Verknüpft, aber die Einmalschlüssel wurden nicht veröffentlicht ({reason}); "
 "neue Kontakte weichen auf den Notfallschlüssel aus."
 
-#: packages/signal/src/link.ts:258
+#: packages/signal/src/link.ts:261
 msgid ""
 "Linked. Run `curlew sync` now: Signal keeps what arrived for this device "
 "only until it is received, and the phone sends the contact list on its own."
@@ -2687,7 +2745,7 @@ msgstr ""
 "Auf dem Telefon: WhatsApp → Einstellungen → Verknüpfte Geräte → Gerät "
 "hinzufügen → „Stattdessen mit Telefonnummer verknüpfen“ und ihn eintippen."
 
-#: packages/whatsapp/src/login.ts:98
+#: packages/whatsapp/src/login.ts:101
 msgid ""
 "Scan this with the phone: WhatsApp → Settings → Linked devices → Link a "
 "device. (A new code appears every ~20 s.)"
@@ -2695,12 +2753,12 @@ msgstr ""
 "Scanne dies mit dem Telefon: WhatsApp → Einstellungen → Verknüpfte Geräte → "
 "Gerät hinzufügen. (Etwa alle 20 s erscheint ein neuer Code.)"
 
-#: packages/whatsapp/src/login.ts:107
+#: packages/whatsapp/src/login.ts:112
 msgid "linking failed ({reason}) — nothing was saved"
 msgstr ""
 "Die Verknüpfung ist fehlgeschlagen ({reason}) — es wurde nichts gespeichert"
 
-#: packages/whatsapp/src/login.ts:123
+#: packages/whatsapp/src/login.ts:128
 msgid ""
 "Phone number for a pairing code (international, e.g. +49…) — leave empty to "
 "scan a QR code"
@@ -2708,13 +2766,13 @@ msgstr ""
 "Telefonnummer für einen Kopplungscode (international, z. B. +49…) — leer "
 "lassen, um einen QR-Code zu scannen"
 
-#: packages/whatsapp/src/login.ts:145
+#: packages/whatsapp/src/login.ts:150
 msgid "WhatsApp kept asking for a reconnect — nothing was saved"
 msgstr ""
 "WhatsApp verlangte immer wieder eine Neuverbindung — es wurde nichts "
 "gespeichert"
 
-#: packages/whatsapp/src/login.ts:167
+#: packages/whatsapp/src/login.ts:172
 msgid ""
 "Linked. Run `curlew sync` now: WhatsApp hands the recent history and "
 "everything queued to the first connection that takes it, once."
@@ -2981,18 +3039,12 @@ msgstr ""
 "{count} Geräte von {jid} tragen diesen Fingerabdruck, er benennt also keines "
 "— nichts wurde geändert"
 
-#~ msgid ""
-#~ "Mail, contacts and calendar accounts are managed in GNOME Settings → "
-#~ "Online Accounts."
+#~ msgid "Enable a backend in Preferences to add accounts here."
 #~ msgstr ""
-#~ "E-Mail-, Kontakt- und Kalenderkonten werden in GNOME Einstellungen → "
-#~ "Online-Konten verwaltet."
+#~ "Aktiviere in den Einstellungen ein Backend, um hier Konten hinzuzufügen."
 
 #~ msgid "Loading…"
 #~ msgstr "Wird geladen…"
-
-#~ msgid "Online Accounts"
-#~ msgstr "Online-Konten"
 
 #~ msgid "Contains attachments"
 #~ msgstr "Enthält Anhänge"

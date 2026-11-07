@@ -83,6 +83,10 @@ import daemon from './unit/core/daemon.test.ts';
 import daemonAccounts from './unit/core/daemon-accounts.test.ts';
 import watch from './unit/core/watch.test.ts';
 import daemonSend from './unit/core/daemon-send.test.ts';
+import accountPrompter from './unit/window/account-prompter.test.ts';
+import accountAddModel from './unit/window/account-add-model.test.ts';
+import qrImage from './unit/window/qr-image.test.ts';
+import notifyQr from './unit/protocol/notify-qr.test.ts';
 import daemonFetch from './unit/core/daemon-fetch.test.ts';
 import chatAttachment from './unit/core/chat-attachment.test.ts';
 import follow from './unit/core/follow.test.ts';
@@ -176,6 +180,10 @@ run({
   daemonAccounts,
   daemonSend,
   daemonFetch,
+  accountPrompter,
+  accountAddModel,
+  qrImage,
+  notifyQr,
   chatAttachment,
   watch,
   follow,

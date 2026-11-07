@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-07 18:50+0100\n"
+"POT-Creation-Date: 2026-11-07 22:44+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1427,7 +1427,66 @@ msgstr ""
 msgid "Curlew"
 msgstr ""
 
-#: app/src/window/accounts-dialog.ts:33 app/src/window/accounts-page.ts:152
+#: app/src/window/account-add.ts:147
+msgid "Please read this first"
+msgstr ""
+
+#: app/src/window/account-add.ts:152
+msgid "Accept and Continue"
+msgstr ""
+
+#: app/src/window/account-add.ts:189
+msgid "Continue"
+msgstr ""
+
+#: app/src/window/account-add.ts:212
+msgid "Adding account…"
+msgstr ""
+
+#: app/src/window/account-add.ts:220
+msgid "Try Again"
+msgstr ""
+
+#: app/src/window/account-add.ts:224
+msgid "Could not add the account"
+msgstr ""
+
+#: app/src/window/account-add.ts:235
+msgid "Connecting…"
+msgstr ""
+
+#: app/src/window/account-add.ts:259
+msgid "Asks you to accept terms first"
+msgstr ""
+
+#: app/src/window/account-add.ts:274
+msgid "Chats"
+msgstr ""
+
+#: app/src/window/account-add.ts:275
+msgid ""
+"Signal, WhatsApp and Telegram link this computer as another device of your "
+"account."
+msgstr ""
+
+#: app/src/window/account-add.ts:287
+msgid "Mail, calendar and contacts"
+msgstr ""
+
+#: app/src/window/account-add.ts:289
+msgid "GNOME Online Accounts"
+msgstr ""
+
+#: app/src/window/account-add.ts:290
+msgid "Mail accounts are added in GNOME Settings"
+msgstr ""
+
+#: app/src/window/account-add.ts:306 app/src/window/accounts-page.ts:141
+#: app/src/window/accounts-page.ts:162
+msgid "Add Account"
+msgstr ""
+
+#: app/src/window/accounts-dialog.ts:43 app/src/window/accounts-page.ts:169
 #: app/src/window/window.ts:75
 msgid "Accounts"
 msgstr ""
@@ -1445,51 +1504,51 @@ msgstr ""
 msgid "Contacts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:24
+#: app/src/window/accounts-page.ts:27
 msgid "Connected"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:26
+#: app/src/window/accounts-page.ts:29
 msgid "Connecting"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:28
+#: app/src/window/accounts-page.ts:31
 msgid "Offline"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:30
+#: app/src/window/accounts-page.ts:33
 msgid "Daemon not running"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:101
+#: app/src/window/accounts-page.ts:104
 msgid "Manage…"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:102
+#: app/src/window/accounts-page.ts:105
 msgid "Open GNOME Settings → Online Accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:111
+#: app/src/window/accounts-page.ts:114
 msgid "Could not load accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:113
+#: app/src/window/accounts-page.ts:116
 msgid "No accounts yet"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:130
+#: app/src/window/accounts-page.ts:133
 msgid "Accounts could not be loaded"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:134
+#: app/src/window/accounts-page.ts:137
 msgid "No accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:135
-msgid "Enable a backend in Preferences to add accounts here."
+#: app/src/window/accounts-page.ts:138
+msgid "Add a chat account, or add a mail account in GNOME Settings."
 msgstr ""
 
-#: app/src/window/accounts-page.ts:145
+#: app/src/window/accounts-page.ts:155
 msgid "The background service is not running, so chat accounts cannot connect."
 msgstr ""
 
@@ -2002,53 +2061,53 @@ msgstr ""
 msgid "the Signal session {account} was never linked — {hint}"
 msgstr ""
 
-#: packages/signal/src/link.ts:84
+#: packages/signal/src/link.ts:86
 msgid ""
 "Scan this with the phone: Signal → Settings → Linked devices → Link new "
 "device."
 msgstr ""
 
-#: packages/signal/src/link.ts:97
+#: packages/signal/src/link.ts:100
 msgid "the provisioning connection failed ({reason}) — nothing was saved"
 msgstr ""
 
-#: packages/signal/src/link.ts:102 packages/whatsapp/src/login.ts:139
+#: packages/signal/src/link.ts:105 packages/whatsapp/src/login.ts:144
 msgid "no phone linked this device in time — nothing was saved"
 msgstr ""
 
-#: packages/signal/src/link.ts:129
+#: packages/signal/src/link.ts:132
 msgid "the phone sent an incomplete link message — nothing was saved"
 msgstr ""
 
-#: packages/signal/src/link.ts:131
+#: packages/signal/src/link.ts:134
 msgid "The phone answered. Registering this device…"
-msgstr ""
-
-#: packages/signal/src/link.ts:154
-msgid ""
-"the phone sent a number but no phone number identity key — nothing was saved"
 msgstr ""
 
 #: packages/signal/src/link.ts:157
 msgid ""
+"the phone sent a number but no phone number identity key — nothing was saved"
+msgstr ""
+
+#: packages/signal/src/link.ts:160
+msgid ""
 "the phone sent a phone number identity key but no number — nothing was saved"
 msgstr ""
 
-#: packages/signal/src/link.ts:207
+#: packages/signal/src/link.ts:210
 msgid "Signal refused the link (status {status}{detail}) — nothing was saved"
 msgstr ""
 
-#: packages/signal/src/link.ts:218
+#: packages/signal/src/link.ts:221
 msgid "Signal answered the link for a different account — nothing was saved"
 msgstr ""
 
-#: packages/signal/src/link.ts:238
+#: packages/signal/src/link.ts:241
 msgid ""
 "Linked, but the one-time keys were not published ({reason}); new contacts "
 "fall back to the last-resort key."
 msgstr ""
 
-#: packages/signal/src/link.ts:258
+#: packages/signal/src/link.ts:261
 msgid ""
 "Linked. Run `curlew sync` now: Signal keeps what arrived for this device "
 "only until it is received, and the phone sends the contact list on its own."
@@ -2323,27 +2382,27 @@ msgid ""
 "with phone number instead\", and type it."
 msgstr ""
 
-#: packages/whatsapp/src/login.ts:98
+#: packages/whatsapp/src/login.ts:101
 msgid ""
 "Scan this with the phone: WhatsApp → Settings → Linked devices → Link a "
 "device. (A new code appears every ~20 s.)"
 msgstr ""
 
-#: packages/whatsapp/src/login.ts:107
+#: packages/whatsapp/src/login.ts:112
 msgid "linking failed ({reason}) — nothing was saved"
 msgstr ""
 
-#: packages/whatsapp/src/login.ts:123
+#: packages/whatsapp/src/login.ts:128
 msgid ""
 "Phone number for a pairing code (international, e.g. +49…) — leave empty to "
 "scan a QR code"
 msgstr ""
 
-#: packages/whatsapp/src/login.ts:145
+#: packages/whatsapp/src/login.ts:150
 msgid "WhatsApp kept asking for a reconnect — nothing was saved"
 msgstr ""
 
-#: packages/whatsapp/src/login.ts:167
+#: packages/whatsapp/src/login.ts:172
 msgid ""
 "Linked. Run `curlew sync` now: WhatsApp hands the recent history and "
 "everything queued to the first connection that takes it, once."

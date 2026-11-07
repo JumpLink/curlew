@@ -136,6 +136,24 @@ export interface AccountPrompter {
   ask(label: string, options?: { secret?: boolean }): Promise<string>;
   /** Progress to show the user. Never carries a secret. */
   notify(message: string): void;
+  /**
+   * Show a linking QR code. The payload is the credential: whoever scans it owns the linked
+   * device, so an implementation shows it and never stores or logs it. Optional: a prompter
+   * without it (the terminal) gets the code rendered as text through `notify` instead, which is
+   * what `notifyQr` does.
+   */
+  showQr?(data: string, instructions: string): void;
+}
+
+/** Show a QR code the best way this prompter can: as an image when it can, else as text. */
+export function notifyQr(
+  prompter: AccountPrompter,
+  data: string,
+  instructions: string,
+  renderText: (data: string) => string,
+): void {
+  if (prompter.showQr) prompter.showQr(data, instructions);
+  else prompter.notify(`${renderText(data)}\n${instructions}`);
 }
 
 /** The mailbox sync driver: folders, UIDs and flags, driven by `syncIndex` in `@curlew/store`. */
