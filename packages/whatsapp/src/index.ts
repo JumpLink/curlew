@@ -13,6 +13,7 @@ export * from './events.ts';
 export * from './receiver.ts';
 export * from './guard.ts';
 export * from './send.ts';
+export * from './attachments.ts';
 export * from './journal.ts';
 export * from './accounts.ts';
 export * from './qr.ts';

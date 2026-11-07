@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-07 23:39+0100\n"
+"POT-Creation-Date: 2026-11-07 23:56+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2236,6 +2236,7 @@ msgstr ""
 
 #: packages/matrix/src/attachments.ts:45
 #: packages/telegram/src/attachments.ts:66
+#: packages/whatsapp/src/attachments.ts:25
 msgid "the attachment is larger than the limit of {limit} bytes"
 msgstr "der Anhang ist größer als das Limit von {limit} Bytes"
 
@@ -2251,7 +2252,8 @@ msgstr "dieser Matrix-Anhang ist nicht mehr zu finden"
 msgid ""
 "the Matrix attachment arrived with {actual} bytes, not the announced "
 "{announced}"
-msgstr "der Matrix-Anhang kam mit {actual} Bytes an, angekündigt waren {announced}"
+msgstr ""
+"der Matrix-Anhang kam mit {actual} Bytes an, angekündigt waren {announced}"
 
 #: packages/matrix/src/backend.ts:57
 msgid "log in again with `curlew accounts add matrix`"
@@ -2740,15 +2742,45 @@ msgstr ""
 "Eine Telegram-Nachricht fasst höchstens {max} Zeichen, diese hat {length} — "
 "kürze sie"
 
-#: packages/whatsapp/src/backend.ts:139
+#: packages/whatsapp/src/attachments.ts:39
+msgid ""
+"WhatsApp did not deliver the file ({reason}) — it keeps media only for a "
+"limited time"
+msgstr ""
+"WhatsApp hat die Datei nicht geliefert ({reason}) – Medien bleiben dort nur "
+"begrenzt lange erhalten"
+
+#: packages/whatsapp/src/attachments.ts:40
+msgid "download failed"
+msgstr "Download fehlgeschlagen"
+
+#: packages/whatsapp/src/attachments.ts:59
+msgid "this WhatsApp attachment cannot be found any more"
+msgstr "dieser WhatsApp-Anhang ist nicht mehr zu finden"
+
+#: packages/whatsapp/src/attachments.ts:99
+msgid ""
+"the WhatsApp attachment arrived with {actual} bytes, not the announced "
+"{announced}"
+msgstr "der WhatsApp-Anhang kam mit {actual} Bytes an, angekündigt waren {announced}"
+
+#: packages/whatsapp/src/attachments.ts:106
+msgid "the WhatsApp attachment does not match its announced checksum"
+msgstr "der WhatsApp-Anhang passt nicht zur angekündigten Prüfsumme"
+
+#: packages/whatsapp/src/backend.ts:134
+msgid "no WhatsApp account {account}"
+msgstr "kein WhatsApp-Konto {account}"
+
+#: packages/whatsapp/src/backend.ts:156
 msgid "no WhatsApp session for {account} — {hint}"
 msgstr "Keine WhatsApp-Sitzung für {account} — {hint}"
 
-#: packages/whatsapp/src/backend.ts:149
+#: packages/whatsapp/src/backend.ts:166
 msgid "the WhatsApp session {account} was never linked — {hint}"
 msgstr "Die WhatsApp-Sitzung {account} wurde nie verknüpft — {hint}"
 
-#: packages/whatsapp/src/backend.ts:254
+#: packages/whatsapp/src/backend.ts:271
 msgid "the WhatsApp connection for {account} is not open — nothing was sent"
 msgstr ""
 "Die WhatsApp-Verbindung für {account} ist nicht offen — es wurde nichts "

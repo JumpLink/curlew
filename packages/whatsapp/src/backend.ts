@@ -14,6 +14,7 @@
 import { _, fmt } from '@curlew/protocol';
 import type {
   AccountPrompter,
+  AttachmentFetcher,
   BackendAccount,
   BackendContext,
   DeliveryBackend,
@@ -25,12 +26,14 @@ import type {
 } from '@curlew/protocol';
 import { SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
-import type { WaSendSocketHandle } from './api.ts';
+import type { WaMediaDownloader, WaSendSocketHandle } from './api.ts';
+import { WhatsAppAttachments } from './attachments.ts';
 import type { WaConnection } from './client.ts';
 import { listSessionAccounts, sessionPath } from './accounts.ts';
 import { SecretStoreAuthState } from './auth-state.ts';
 import {
   type ConnectionFactory,
+  baileysMediaDownloader,
   createBaileysConnection,
   createBaileysSendSocket,
   type SendSocketFactory,
@@ -76,6 +79,8 @@ export interface WhatsAppBackendOptions {
    * same fallback the app takes when no daemon is running.
    */
   createConnection?: ConnectionFactory;
+  /** Where a received file's bytes come from — tests hand in a fake, no network. */
+  createMediaDownloader?: () => WaMediaDownloader;
   /** Receiver timing — tests shorten it. */
   receiver?: Omit<ReceiverOptions, 'mode'>;
   /** Auth-state write-behind delay. */
@@ -117,6 +122,18 @@ export class WhatsAppBackend implements DeliveryBackend, SendBackend {
       session.auth.discard();
       session.store.close();
     }
+  }
+
+  /**
+   * The download handle for received files. It needs no session file and no socket — the key is in
+   * the stored message — so it cannot collide with the receive loop's lease and touches no state.
+   * A missing account is still refused, so a typo in the account id fails like everywhere else.
+   */
+  async openAttachments(accountId: string): Promise<AttachmentFetcher> {
+    if (!existsSync(sessionPath(this.context.secretsDir, accountId))) {
+      throw new Error(fmt(_('no WhatsApp account {account}'), { account: accountId }));
+    }
+    return new WhatsAppAttachments(this.options.createMediaDownloader?.() ?? baileysMediaDownloader);
   }
 
   /** Link curlew as a device: a QR code to scan, or a pairing code to type on the phone. */

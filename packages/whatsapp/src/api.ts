@@ -42,7 +42,40 @@ export interface WaMedia {
   caption?: string | null;
   fileName?: string | null;
   contextInfo?: WaContextInfo | null;
+  /** The CDN pointer and the key that opens it; with these two the file can be fetched later. */
+  url?: string | null;
+  directPath?: string | null;
+  mediaKey?: Uint8Array | null;
+  /** SHA-256 of the plaintext, and its length: what a download is checked against. */
+  fileSha256?: Uint8Array | null;
+  fileLength?: WaNumber;
+  mimetype?: string | null;
+  width?: number | null;
+  height?: number | null;
+  /** Duration of a video, audio file or voice note. */
+  seconds?: number | null;
+  /** `audioMessage` only: a voice note rather than an audio file. */
+  ptt?: boolean | null;
 }
+
+/** Baileys' media kinds: the one a key is derived for, so the one a download must name. */
+export type WaMediaType = 'image' | 'video' | 'ptv' | 'audio' | 'document' | 'sticker';
+
+/** What a download needs of a message: the CDN pointer and the key. */
+export interface WaMediaSource {
+  type: WaMediaType;
+  mediaKey: Uint8Array;
+  directPath: string | null;
+  url: string | null;
+}
+
+/**
+ * The decrypted bytes of one media file, in order. It needs no socket and no session — only the
+ * key from the message — so a fetch opens nothing that holds the linked device. A failure carries
+ * the HTTP status in `statusCode` when the CDN refused; the message is never shown (it quotes a
+ * signed URL).
+ */
+export type WaMediaDownloader = (source: WaMediaSource) => Promise<AsyncIterable<Uint8Array>>;
 
 export interface WaProtocolMessage {
   key?: WaMessageKey | null;

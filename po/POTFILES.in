@@ -241,6 +241,7 @@ packages/telegram/src/session.ts
 packages/telegram/src/storage.ts
 packages/whatsapp/src/accounts.ts
 packages/whatsapp/src/api.ts
+packages/whatsapp/src/attachments.ts
 packages/whatsapp/src/auth-state.ts
 packages/whatsapp/src/backend.ts
 packages/whatsapp/src/client.ts

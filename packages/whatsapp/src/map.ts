@@ -10,13 +10,16 @@
  * protocol housekeeping, and status updates (`status@broadcast`: other people's stories).
  */
 
-import type { ChatMessage, DeliveryEvent } from '@curlew/protocol';
+import { Buffer } from 'node:buffer';
+import type { AttachmentKind, ChatAttachment, ChatMessage, DeliveryEvent } from '@curlew/protocol';
 import type {
   WaChat,
   WaContact,
   WaEventMap,
   WaGroup,
   WaMessage,
+  WaMedia,
+  WaMediaType,
   WaMessageContent,
   WaMessageKey,
 } from './api.ts';
@@ -60,6 +63,101 @@ const MEDIA = [
   'documentMessage',
   'stickerMessage',
 ] as const;
+
+const MEDIA_TYPES: Record<(typeof MEDIA)[number], WaMediaType> = {
+  imageMessage: 'image',
+  videoMessage: 'video',
+  ptvMessage: 'ptv',
+  audioMessage: 'audio',
+  documentMessage: 'document',
+  stickerMessage: 'sticker',
+};
+
+/** What a download needs, kept in the index: the key and the CDN pointer, never shown or logged. */
+export interface WaAttachmentHandle {
+  type: WaMediaType;
+  /** Base64. */
+  mediaKey: string;
+  directPath: string | null;
+  url: string | null;
+  /** Base64 SHA-256 of the plaintext, when the sender announced one. */
+  sha256: string | null;
+  length: number | null;
+}
+
+export function attachmentHandle(handle: WaAttachmentHandle): string {
+  return JSON.stringify(handle);
+}
+
+const isMediaType = (value: unknown): value is WaMediaType =>
+  typeof value === 'string' && (Object.values(MEDIA_TYPES) as string[]).includes(value);
+
+const strOrNull = (value: unknown): string | null | undefined =>
+  value === null ? null : typeof value === 'string' ? value : undefined;
+
+/** What a stored handle names, or null when it is not one this backend wrote. */
+export function parseAttachmentHandle(handle: string): WaAttachmentHandle | null {
+  try {
+    const value: unknown = JSON.parse(handle);
+    if (typeof value !== 'object' || value === null) return null;
+    const { type, mediaKey, directPath, url, sha256, length } = value as Record<string, unknown>;
+    if (!isMediaType(type) || typeof mediaKey !== 'string' || mediaKey === '') return null;
+    const path = strOrNull(directPath);
+    const link = strOrNull(url);
+    const digest = strOrNull(sha256);
+    if (path === undefined || link === undefined || digest === undefined) return null;
+    if (path === null && link === null) return null;
+    if (length !== null && (typeof length !== 'number' || !Number.isSafeInteger(length) || length < 0)) return null;
+    return { type, mediaKey, directPath: path, url: link, sha256: digest, length };
+  } catch {
+    return null;
+  }
+}
+
+function attachmentKind(type: WaMediaType, media: WaMedia): AttachmentKind {
+  if (type === 'audio') return media.ptt === true ? 'voice' : 'audio';
+  if (type === 'image' || type === 'sticker') return 'image';
+  if (type === 'video' || type === 'ptv') return 'video';
+  return media.mimetype?.startsWith('image/') ? 'image' : 'file';
+}
+
+const positive = (value: number | null | undefined): number | null =>
+  typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null;
+
+/**
+ * The files a message carries, as far as they can be fetched later: a media message without a
+ * key or without a CDN pointer (a contact card, a malformed one) gets no row, so the UI never
+ * offers a tap that cannot succeed.
+ */
+export function extractAttachments(content: WaMessageContent | null): ChatAttachment[] {
+  if (!content) return [];
+  const out: ChatAttachment[] = [];
+  for (const field of MEDIA) {
+    const media = content[field];
+    if (!media?.mediaKey?.byteLength || (!media.directPath && !media.url)) continue;
+    const type = MEDIA_TYPES[field];
+    const length = toNumber(media.fileLength);
+    const seconds = positive(media.seconds);
+    out.push({
+      filename: type === 'document' ? (media.fileName ?? null) : null,
+      mimeType: media.mimetype ?? null,
+      size: length,
+      kind: attachmentKind(type, media),
+      width: positive(media.width),
+      height: positive(media.height),
+      durationMs: seconds === null ? null : seconds * 1000,
+      handle: attachmentHandle({
+        type,
+        mediaKey: Buffer.from(media.mediaKey).toString('base64'),
+        directPath: media.directPath ?? null,
+        url: media.url ?? null,
+        sha256: media.fileSha256?.byteLength ? Buffer.from(media.fileSha256).toString('base64') : null,
+        length,
+      }),
+    });
+  }
+  return out;
+}
 
 /** What a person wrote, or null for content that is not a message (a reaction, housekeeping). */
 export function extractContent(content: WaMessageContent | null): ExtractedContent | null {
@@ -175,6 +273,7 @@ export class WhatsAppMapper {
     if (raw.messageStubType) return [];
     const extracted = extractContent(content);
     if (!extracted) return [];
+    const attachments = extractAttachments(content);
 
     const kind = chatKindOf(chatJid);
     const fromSelf = key.fromMe === true;
@@ -195,6 +294,7 @@ export class WhatsAppMapper {
       fromSelf,
       text: extracted.text,
       hasAttachments: extracted.hasAttachments,
+      attachments: attachments.length > 0 ? attachments : undefined,
       replyToRemoteId: extracted.replyTo ? remoteMessageId(extracted.replyTo) : null,
       threadRemoteId: null,
       // For our own messages the id IS the id the sender gave it: Baileys generates it before the

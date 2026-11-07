@@ -35,8 +35,8 @@
  */
 
 import { _, fmt } from '@curlew/protocol';
-import { makeWASocket, type proto } from 'baileys';
-import type { WaSendSocketHandle, WaSocketHandle } from './api.ts';
+import { downloadContentFromMessage, makeWASocket, type proto } from 'baileys';
+import type { WaMediaDownloader, WaSendSocketHandle, WaSocketHandle } from './api.ts';
 import { disconnectReason } from './api.ts';
 import type { SecretStoreAuthState } from './auth-state.ts';
 
@@ -190,6 +190,13 @@ export const createBaileysConnection: ConnectionFactory = ({ auth, fullHistory =
 
 /** The receive view of a fresh connection — a handle with no way to write, and nothing else. */
 export const createBaileysSocket: SocketFactory = (options) => createBaileysConnection(options).handle;
+
+/**
+ * Fetch and decrypt one media file from WhatsApp's CDN (Baileys' `downloadContentFromMessage`).
+ * Plain HTTPS plus AES-CBC with the key from the message: no socket, no auth state.
+ */
+export const baileysMediaDownloader: WaMediaDownloader = ({ type, mediaKey, directPath, url }) =>
+  downloadContentFromMessage({ mediaKey, directPath, url }, type);
 
 export type SendSocketFactory = (options: SocketOptions) => WaSendSocketHandle;
 

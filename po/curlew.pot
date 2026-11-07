@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-07 23:39+0100\n"
+"POT-Creation-Date: 2026-11-07 23:56+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1973,6 +1973,7 @@ msgstr ""
 
 #: packages/matrix/src/attachments.ts:45
 #: packages/telegram/src/attachments.ts:66
+#: packages/whatsapp/src/attachments.ts:25
 msgid "the attachment is larger than the limit of {limit} bytes"
 msgstr ""
 
@@ -2380,15 +2381,43 @@ msgid ""
 "shorten it"
 msgstr ""
 
-#: packages/whatsapp/src/backend.ts:139
+#: packages/whatsapp/src/attachments.ts:39
+msgid ""
+"WhatsApp did not deliver the file ({reason}) — it keeps media only for a "
+"limited time"
+msgstr ""
+
+#: packages/whatsapp/src/attachments.ts:40
+msgid "download failed"
+msgstr ""
+
+#: packages/whatsapp/src/attachments.ts:59
+msgid "this WhatsApp attachment cannot be found any more"
+msgstr ""
+
+#: packages/whatsapp/src/attachments.ts:99
+msgid ""
+"the WhatsApp attachment arrived with {actual} bytes, not the announced "
+"{announced}"
+msgstr ""
+
+#: packages/whatsapp/src/attachments.ts:106
+msgid "the WhatsApp attachment does not match its announced checksum"
+msgstr ""
+
+#: packages/whatsapp/src/backend.ts:134
+msgid "no WhatsApp account {account}"
+msgstr ""
+
+#: packages/whatsapp/src/backend.ts:156
 msgid "no WhatsApp session for {account} — {hint}"
 msgstr ""
 
-#: packages/whatsapp/src/backend.ts:149
+#: packages/whatsapp/src/backend.ts:166
 msgid "the WhatsApp session {account} was never linked — {hint}"
 msgstr ""
 
-#: packages/whatsapp/src/backend.ts:254
+#: packages/whatsapp/src/backend.ts:271
 msgid "the WhatsApp connection for {account} is not open — nothing was sent"
 msgstr ""
 
