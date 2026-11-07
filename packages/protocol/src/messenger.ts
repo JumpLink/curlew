@@ -47,7 +47,10 @@ export interface BackendCapabilities {
   subject: boolean;
   /** Messages live in server-side folders (mail). */
   folders: boolean;
+  /** Messages can be sent with attachments. */
   attachments: boolean;
+  /** The backend can fetch received attachments back from the network. */
+  attachmentsRead: boolean;
 }
 
 export const CAPABILITY_NAMES: ReadonlyArray<keyof BackendCapabilities> = [
@@ -60,6 +63,7 @@ export const CAPABILITY_NAMES: ReadonlyArray<keyof BackendCapabilities> = [
   'subject',
   'folders',
   'attachments',
+  'attachmentsRead',
 ];
 
 /** The kinds of address a participant can be reached at. */
@@ -227,6 +231,8 @@ export interface Conversation {
  */
 export interface MessageRef {
   accountId: string;
+  /** Backend name from the manifest; `loadAttachments` routes mail vs chat by this. */
+  backend: string;
   /** Mail only: the mailbox the message is in. */
   folder?: string;
   /** Mail only: its IMAP UID within `folder`. */

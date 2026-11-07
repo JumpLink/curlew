@@ -32,6 +32,7 @@ export const MATRIX_MANIFEST: BackendManifest = {
     folders: false,
     // hasAttachments metadata only; no attachment download in session.ts.
     attachments: false,
+    attachmentsRead: false,
   },
   // The homeserver keeps the room history: the index is rebuildable (`derived`). The crypto
   // store (the device's Olm account and the room keys it received) is not — it is `secret`,

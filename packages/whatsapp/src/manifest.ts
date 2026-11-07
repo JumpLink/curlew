@@ -29,6 +29,7 @@ export const WHATSAPP_MANIFEST: BackendManifest = {
     folders: false,
     // hasAttachments metadata only; no attachment download in receiver.ts.
     attachments: false,
+    attachmentsRead: false,
   },
   // No server archive: a message is gone from WhatsApp's servers once a device acknowledged it.
   // What curlew stores is the only copy (`state`); the auth state is `secret`.

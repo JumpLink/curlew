@@ -37,6 +37,7 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
     folders: false,
     // hasAttachments metadata only; no download path in session.ts.
     attachments: false,
+    attachmentsRead: false,
   },
   // Telegram keeps the full history of cloud chats: the index is rebuildable (`derived`).
   // The session file with the auth key is not — it is `secret`, and kept apart from the index.
