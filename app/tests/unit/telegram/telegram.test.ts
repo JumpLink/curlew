@@ -181,6 +181,7 @@ export default async () => {
       expect(photo?.text).toBe(null);
       const link = toChatMessage(tgMessage(ANNA, 5, ANNA, 'see', { media: { type: 'webpage' } }));
       expect(link?.hasAttachments).toBe(false);
+      expect(link?.attachments === undefined).toBe(true);
       const topic = toChatMessage(
         tgMessage(ORGA, 20, BEN, 'im Thema', {
           replyToMessage: { id: 18, threadId: 15 },

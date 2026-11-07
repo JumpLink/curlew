@@ -37,6 +37,30 @@ export interface TgRepliedMessage {
   readonly threadId: number | null;
 }
 
+/**
+ * What a message carries, as far as curlew reads it. Only `type` is always there; the rest is
+ * what mtcute's media classes report when they have it (a photo has no name or MIME type, a
+ * voice note has a duration).
+ */
+export interface TgMedia {
+  /** mtcute's discriminator: `photo`, `video`, `audio`, `voice`, `document`, `sticker`, `webpage`, … */
+  readonly type: string;
+  readonly fileName?: string | null | undefined;
+  readonly mimeType?: string | null | undefined;
+  /** Bytes, when Telegram announced them. */
+  readonly fileSize?: number | null | undefined;
+  readonly width?: number | null | undefined;
+  readonly height?: number | null | undefined;
+  /** Seconds. */
+  readonly duration?: number | null | undefined;
+}
+
+/** A media file being downloaded: what the message says it is, and its bytes in order. */
+export interface TgMediaDownload {
+  readonly media: TgMedia;
+  readonly chunks: AsyncIterable<Uint8Array>;
+}
+
 export interface TgMessage {
   readonly id: number;
   readonly date: Date;
@@ -47,7 +71,7 @@ export interface TgMessage {
   /** Joins, pins, title changes — notices, not something a person wrote. */
   readonly isService: boolean;
   readonly text: string;
-  readonly media: { readonly type: string } | null;
+  readonly media: TgMedia | null;
   readonly replyToMessage: TgRepliedMessage | null;
   readonly isTopicMessage: boolean;
 }
@@ -99,6 +123,11 @@ export interface TelegramApi {
    * mtcute's client satisfies this interface structurally (see `client.ts`).
    */
   getMessages(chatId: number, messageIds: number[]): Promise<ReadonlyArray<TgMessage | null>>;
+  /**
+   * The media of one message, downloaded. Null when the message or its file is gone. It reads
+   * the message again instead of keeping a file reference, because those expire.
+   */
+  openMedia(chatId: number, messageId: number): Promise<TgMediaDownload | null>;
   destroy(): Promise<void>;
 }
 

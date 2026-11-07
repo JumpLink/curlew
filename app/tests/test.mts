@@ -60,6 +60,7 @@ import smtpSend from './unit/smtp/send.test.ts';
 import mailSend from './unit/mail/send.test.ts';
 import telegramSend from './unit/telegram/send.test.ts';
 import telegramFollow from './unit/telegram/follow.test.ts';
+import telegramAttachments from './unit/telegram/attachments.test.ts';
 
 import date from './unit/core/date.test.ts';
 import i18n from './unit/core/i18n.test.ts';
@@ -159,6 +160,7 @@ run({
   mailSend,
   telegramSend,
   telegramFollow,
+  telegramAttachments,
   date,
   i18n,
   limits,

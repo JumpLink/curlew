@@ -6,6 +6,7 @@
 import {
   _,
   type AccountAddOptions,
+  type AttachmentFetcher,
   type AccountPrompter,
   type BackendAccount,
   type BackendContext,
@@ -24,6 +25,7 @@ import { type ClientFactory, createMtcuteClient, sessionGone } from './client.ts
 import { embeddedCredentials, resolveCredentials, type TelegramCredentials } from './credentials.ts';
 import { loginTelegram } from './login.ts';
 import { TELEGRAM_MANIFEST } from './manifest.ts';
+import { TelegramAttachments } from './attachments.ts';
 import { TelegramSender } from './sender.ts';
 import { TelegramChatSession } from './session.ts';
 import { SecretStoreStorage } from './storage.ts';
@@ -59,6 +61,7 @@ function withStoreClose(client: TelegramClientHandle, store: SecretStore): Teleg
     iterDialogs: (params) => client.iterDialogs(params),
     getHistory: (chatId, params) => client.getHistory(chatId, params),
     getMessages: (chatId, messageIds) => client.getMessages(chatId, messageIds),
+    openMedia: (chatId, messageId) => client.openMedia(chatId, messageId),
     destroy: async () => {
       try {
         await client.destroy();
@@ -166,6 +169,12 @@ export class TelegramBackend implements ChatBackend, SendBackend {
   async openSender(accountId: string, permit: SendPermit): Promise<MessageSender> {
     const { client, api } = await this.open(accountId);
     return new TelegramSender(client, permit, () => api.destroy());
+  }
+
+  /** The read-only download handle: it reads one message again and streams its media, nothing else. */
+  async openAttachments(accountId: string): Promise<AttachmentFetcher> {
+    const { api } = await this.open(accountId);
+    return new TelegramAttachments(api);
   }
 
   /** Open the session file, connect and prove the session is still authorized. */

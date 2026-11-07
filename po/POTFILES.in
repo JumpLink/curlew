@@ -227,6 +227,7 @@ packages/store/src/sync.ts
 packages/store/src/threads.ts
 packages/telegram/src/accounts.ts
 packages/telegram/src/api.ts
+packages/telegram/src/attachments.ts
 packages/telegram/src/backend.ts
 packages/telegram/src/client.ts
 packages/telegram/src/credentials.ts

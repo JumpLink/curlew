@@ -5,12 +5,66 @@
  * synthetic objects on both runtimes.
  */
 
-import type { ChatInfo, ChatMessage, ChatPeer, ParticipantAddress } from '@curlew/protocol';
+import type {
+  AttachmentKind,
+  ChatAttachment,
+  ChatInfo,
+  ChatMessage,
+  ChatPeer,
+  ParticipantAddress,
+} from '@curlew/protocol';
 import { normalizeAddress } from '@curlew/protocol';
-import type { TgDialog, TgMessage, TgPeer } from './api.ts';
+import type { TgDialog, TgMedia, TgMessage, TgPeer } from './api.ts';
 
 /** Media that is a file a person sent. A link preview (`webpage`), a poll or a dice roll is not. */
 const FILE_MEDIA = new Set(['photo', 'video', 'audio', 'voice', 'document', 'sticker', 'paid']);
+
+/** What the window shows an attachment as: by MIME type, except where Telegram has its own word. */
+function attachmentKind(media: TgMedia, mimeType: string | null): AttachmentKind {
+  if (media.type === 'voice') return 'voice';
+  if (media.type === 'photo') return 'image';
+  const major = mimeType?.split('/')[0];
+  if (major === 'image' || major === 'video' || major === 'audio') return major;
+  return 'file';
+}
+
+/** The backend-private handle: where to find the message again. File references expire; ids do not. */
+export function attachmentHandle(chatId: number, messageId: number): string {
+  return JSON.stringify({ chatId, messageId });
+}
+
+/** The ids behind a stored handle, or null when it is not one this backend wrote. */
+export function parseAttachmentHandle(handle: string): { chatId: number; messageId: number } | null {
+  try {
+    const value: unknown = JSON.parse(handle);
+    if (typeof value !== 'object' || value === null) return null;
+    const { chatId, messageId } = value as Record<string, unknown>;
+    if (!Number.isSafeInteger(chatId) || !Number.isSafeInteger(messageId)) return null;
+    return { chatId: chatId as number, messageId: messageId as number };
+  } catch {
+    return null;
+  }
+}
+
+/** The one file a message carries, or none: a link preview, a poll or paid media has nothing to fetch. */
+function toChatAttachments(message: TgMessage): ChatAttachment[] | undefined {
+  const media = message.media;
+  if (media === null || media.type === 'paid' || !FILE_MEDIA.has(media.type)) return undefined;
+  // A photo is always re-encoded to JPEG by Telegram and carries no MIME type of its own.
+  const mimeType = media.type === 'photo' ? 'image/jpeg' : (media.mimeType ?? null);
+  return [
+    {
+      filename: media.fileName ?? null,
+      mimeType,
+      size: media.fileSize ?? null,
+      kind: attachmentKind(media, mimeType),
+      width: media.width ?? null,
+      height: media.height ?? null,
+      durationMs: typeof media.duration === 'number' ? Math.round(media.duration * 1000) : null,
+      handle: attachmentHandle(message.chat.id, message.id),
+    },
+  ];
+}
 
 function address(kind: ParticipantAddress['kind'], raw: string | null): ParticipantAddress | null {
   if (!raw) return null;
@@ -95,6 +149,7 @@ export function toChatMessage(message: TgMessage): ChatMessage | null {
     clientId: fromSelf ? remoteMessageId(chatId, message.id) : null,
     text: message.text || null,
     hasAttachments: message.media !== null && FILE_MEDIA.has(message.media.type),
+    attachments: toChatAttachments(message),
     replyToRemoteId: reply?.id ? remoteMessageId(chatId, reply.id) : null,
     threadRemoteId:
       message.isTopicMessage && reply?.threadId ? remoteMessageId(chatId, reply.threadId) : null,
