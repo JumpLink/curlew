@@ -30,9 +30,10 @@ export const MATRIX_MANIFEST: BackendManifest = {
     e2ee: true,
     subject: false,
     folders: false,
-    // hasAttachments metadata only; no attachment download in session.ts.
+    // Receiving only, and only unencrypted files: `openAttachments` downloads an `mxc://` file a
+    // person tapped. Sending a file is not built, so `attachments` stays false.
     attachments: false,
-    attachmentsRead: false,
+    attachmentsRead: true,
   },
   // The homeserver keeps the room history: the index is rebuildable (`derived`). The crypto
   // store (the device's Olm account and the room keys it received) is not — it is `secret`,
