@@ -83,6 +83,18 @@ export default async () => {
       expect(denied.shown.length + probed.shown.length).toBe(0);
     });
 
+    await it('asks for a request with files even under an allow rule or a session grant', async () => {
+      const ruled = rig(['once'], [{ account: ACC, contact: FRIEND, write: 'allow' }]);
+      await ruled.broker.request(ask({ attachments: ['a.pdf'] }));
+      expect(ruled.shown.length).toBe(1);
+      const granted = rig(['session', 'once']);
+      await granted.broker.request(ask());
+      await granted.broker.request(ask());
+      expect(granted.shown.length).toBe(1);
+      await granted.broker.request(ask({ attachments: ['a.pdf'] }));
+      expect(granted.shown.length).toBe(2);
+    });
+
     await it('ask → once: allowed, and the next request asks again', async () => {
       const { broker, shown } = rig(['once', 'once']);
       expect(JSON.stringify(await broker.request(ask()))).toBe('{"allowed":true,"reason":"once"}');

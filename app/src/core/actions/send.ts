@@ -90,7 +90,7 @@ export interface SendParams {
   imageUrl?: string;
   /** Mail only: the subject line. A backend whose manifest has no `subject` refuses it. */
   subject?: string;
-  /** Mail only: absolute paths of files to attach. A backend that cannot attach refuses them. */
+  /** Absolute paths of files to send. A backend that cannot attach refuses them. */
   attachments?: string[];
   /** Mail from the chat UI: Delta Chat's marker and an optional RFC 5322 parent. */
   emailChat?: boolean;
@@ -430,14 +430,8 @@ export async function sendAsAgent(params: SendParams): Promise<SendResult> {
     );
   }
   // A chat backend's attachment is a path on the person's disk that an agent names (ADR 0010 §4):
-  // until the access rules can say "this agent may attach files" (AP4.6), only mail takes them.
-  if ((params.attachments ?? []).length > 0 && found.backend.manifest.name !== 'mail') {
-    throw new Error(
-      fmt(_('{backend} takes no attachments from an agent — pick the file in the Curlew window'), {
-        backend: found.backend.manifest.name,
-      }),
-    );
-  }
+  // there it is always put to the person, whatever the rules say. Mail keeps its established rule.
+  const confirmFiles = (params.attachments ?? []).length > 0 && found.backend.manifest.name !== 'mail';
   const gate = agentGate(config, { frontend: params.frontend === 'mcp' ? 'mcp' : 'cli', ...params.agent });
   const accessReason = await requireAccess(gate, {
     account: params.accountId,
@@ -445,6 +439,7 @@ export async function sendAsAgent(params: SendParams): Promise<SendResult> {
     kind: 'write',
     self: await isSelf(found.backend, found.account.id, params.to),
     preview: previewOf(params.text ?? params.imageUrl),
+    ...(confirmFiles ? { confirmFiles } : {}),
     ...(params.attachments === undefined || params.attachments.length === 0
       ? {}
       : { attachments: params.attachments.map((p) => basename(p)) }),

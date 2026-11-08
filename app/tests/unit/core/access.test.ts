@@ -55,6 +55,22 @@ export default async () => {
       expect(asked.length).toBe(0);
     });
 
+    await it('asks for files even where a rule allows, but never for the own address', async () => {
+      const allow = rig([{ account: ACC, contact: FRIEND, write: 'allow' }], {
+        allowed: true,
+        reason: 'once',
+      });
+      const target = { account: ACC, contact: FRIEND, kind: 'write' as const, confirmFiles: true };
+      expect(await requireAccess(allow.gate, { ...target, attachments: ['a.pdf'] })).toBe('once');
+      expect(allow.asked.length).toBe(1);
+      expect((allow.asked[0].attachments ?? []).join()).toBe('a.pdf');
+      const self = rig([], null);
+      expect(await requireAccess(self.gate, { ...target, contact: 'me@example.org', self: true })).toBe(
+        'self',
+      );
+      expect(self.asked.length).toBe(0);
+    });
+
     await it('allows self without asking, whatever the rules say', async () => {
       const { gate, asked } = rig([{ account: ACC, write: 'deny' }]);
       expect(
