@@ -20,7 +20,7 @@ import type {
   SendPermit,
   SetAsideLedger,
 } from '@curlew/protocol';
-import { SecretStore } from '@curlew/store';
+import { removeSecretFiles, SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
 import { isOwnAci, listSessionAccounts, sessionPath } from './accounts.ts';
 import { SIGNAL_TRUST_ROOTS_BASE64 } from './constants.ts';
@@ -99,6 +99,12 @@ export class SignalBackend implements DeliveryBackend, SendBackend {
 
   async listAccounts(): Promise<BackendAccount[]> {
     return listSessionAccounts(this.context.secretsDir);
+  }
+
+  /** Unlink: the stored session goes, the indexed messages stay. */
+  async removeAccount(accountId: string): Promise<void> {
+    const path = sessionPath(this.context.secretsDir, accountId);
+    removeSecretFiles(path, [journalPath(path)]);
   }
 
   /**

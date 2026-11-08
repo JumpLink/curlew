@@ -122,6 +122,12 @@ export interface MessageBackend {
    * `capabilities.attachmentsRead`. Optional: a backend without it cannot fetch attachments.
    */
   openAttachments?(accountId: string): Promise<AttachmentFetcher>;
+  /**
+   * Unlink an account from this machine: delete the stored login or session. The messages already
+   * indexed stay, and the account stays linked on the service's side — the person unlinks the
+   * device there. Optional: mail accounts live in GNOME Online Accounts and are removed there.
+   */
+  removeAccount?(accountId: string): Promise<void>;
 }
 
 /** Flags of `accounts add` that a backend may honour; the others ignore them. */
@@ -432,6 +438,13 @@ export function isAttachmentFetcherBackend(
   backend: MessageBackend,
 ): backend is MessageBackend & { openAttachments: NonNullable<MessageBackend['openAttachments']> } {
   return typeof backend.openAttachments === 'function';
+}
+
+/** Narrow a registry entry to one that can unlink an account. */
+export function isAccountRemoverBackend(
+  backend: MessageBackend,
+): backend is MessageBackend & { removeAccount: NonNullable<MessageBackend['removeAccount']> } {
+  return typeof backend.removeAccount === 'function';
 }
 
 // ── the delivery driver ─────────────────────────────────────────────────

@@ -8,15 +8,14 @@
 
 import Adw from 'gi://Adw?version=1';
 import Gdk from 'gi://Gdk?version=4.0';
-import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 
 import { accountsAdd } from '../core/actions/accounts.ts';
 import { backendsEnable, backendsList } from '../core/actions/backends.ts';
-import { UNIT_NAME } from '../core/actions/setup-unit.ts';
 import { addableProtocols, needsTerms, type AddableProtocol } from './account-add-model.ts';
+import { restartDaemonIfRunning } from './accounts-daemon.ts';
 import { createSurfacePrompter, type PromptStep, type SurfacePrompter } from './account-prompter.ts';
 import { qrImage, qrScaleFor } from './qr-image.ts';
 
@@ -93,15 +92,6 @@ function qrWidget(data: string): Gtk.Widget {
   );
   const picture = new Gtk.Picture({ paintable: texture, canShrink: false, halign: Gtk.Align.CENTER });
   return new Adw.Bin({ child: picture, halign: Gtk.Align.CENTER, cssClasses: ['card'] });
-}
-
-/** A new account is only followed once the daemon has read the account list again. */
-function restartDaemonIfRunning(): void {
-  try {
-    Gio.Subprocess.new(['systemctl', '--user', 'try-restart', UNIT_NAME], Gio.SubprocessFlags.NONE);
-  } catch {
-    // No systemd user session: the next start of the daemon reads the new account.
-  }
 }
 
 class LoginPage {

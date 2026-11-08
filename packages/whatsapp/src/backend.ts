@@ -24,7 +24,7 @@ import type {
   SendBackend,
   SendPermit,
 } from '@curlew/protocol';
-import { SecretStore } from '@curlew/store';
+import { removeSecretFiles, SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
 import type { WaMediaDownloader, WaSendSocketHandle } from './api.ts';
 import { WhatsAppAttachments } from './attachments.ts';
@@ -102,6 +102,12 @@ export class WhatsAppBackend implements DeliveryBackend, SendBackend {
 
   async listAccounts(): Promise<BackendAccount[]> {
     return listSessionAccounts(this.context.secretsDir);
+  }
+
+  /** Unlink: the stored session goes, the indexed messages stay. */
+  async removeAccount(accountId: string): Promise<void> {
+    const path = sessionPath(this.context.secretsDir, accountId);
+    removeSecretFiles(path);
   }
 
   /**

@@ -17,7 +17,7 @@ import {
   type SendBackend,
   type SendPermit,
 } from '@curlew/protocol';
-import { SecretStore } from '@curlew/store';
+import { removeSecretFiles, SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
 import type { LoginPrompts, TelegramApi, TelegramClientHandle } from './api.ts';
 import { isOwnChatId, listSessionAccounts, sessionPath } from './accounts.ts';
@@ -123,6 +123,12 @@ export class TelegramBackend implements ChatBackend, SendBackend {
 
   async listAccounts(): Promise<BackendAccount[]> {
     return listSessionAccounts(this.context.secretsDir);
+  }
+
+  /** Unlink: the stored session goes, the indexed messages stay. */
+  async removeAccount(accountId: string): Promise<void> {
+    const path = sessionPath(this.context.secretsDir, accountId);
+    removeSecretFiles(path);
   }
 
   /** The account's own user id, the chat id of its "Saved Messages". */

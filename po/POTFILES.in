@@ -81,8 +81,10 @@ app/src/index.ts
 app/src/window/about.ts
 app/src/window/account-add-model.ts
 app/src/window/account-add.ts
+app/src/window/account-detail.ts
 app/src/window/account-labels.ts
 app/src/window/account-prompter.ts
+app/src/window/account-remove-model.ts
 app/src/window/accounts-daemon.ts
 app/src/window/accounts-dialog.ts
 app/src/window/accounts-model.ts
