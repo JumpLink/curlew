@@ -13,7 +13,8 @@ import type { BackendStatus } from '../core/backends/registry.ts';
 import type { DaemonAccountEntry, DaemonAccountState } from '../core/lib/daemon-bus.ts';
 import { protocolIcon, protocolLabel } from './conversation-list-model.ts';
 
-export type AccountStatus = 'connected' | 'connecting' | 'offline' | 'daemon-not-running';
+/** `disabled`: the person switched the account off, so there is no state to follow. */
+export type AccountStatus = 'connected' | 'connecting' | 'offline' | 'daemon-not-running' | 'disabled';
 
 export interface AccountRow {
   id: string;
@@ -118,7 +119,9 @@ function makeRow(
   backend: string,
   daemon: AccountsDaemonState,
   detail?: string,
+  disabled = false,
 ): AccountRow {
+  if (disabled) return { id, label, detail, status: 'disabled' };
   const entry = lookupDaemon(daemon, backend, id);
   // The daemon holds live chat sessions only; a mail account has no state of its own to show.
   if (backend === 'mail' && !entry) return { id, label, detail, status: null };
@@ -157,7 +160,7 @@ export function buildProtocolGroups(load: AccountsLoadState, daemon: AccountsDae
           const label = chatAccountLabel(account, load.labels);
           // A nickname hides the address; show it underneath so two accounts stay tellable apart.
           const detail = account.identity && account.identity !== label ? account.identity : undefined;
-          return makeRow(account.id, label, result.backend, daemon, detail);
+          return makeRow(account.id, label, result.backend, daemon, detail, account.disabled === true);
         })
         .sort((a, b) => a.label.localeCompare(b.label)),
       error: result.error,

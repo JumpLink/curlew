@@ -6,11 +6,12 @@
  * reading its manifest touch no native code, so curlew starts on a platform without the addon.
  */
 
-import { _, fmt } from '@curlew/protocol';
+import { _, fmt, visibleAccounts } from '@curlew/protocol';
 import type {
   AttachmentFetcher,
   AccountPrompter,
   BackendAccount,
+  ListAccountsOptions,
   BackendContext,
   DeliveryBackend,
   DeliveryConnectOptions,
@@ -97,8 +98,8 @@ export class SignalBackend implements DeliveryBackend, SendBackend {
     return this.options.lib ? Promise.resolve(this.options.lib) : loadSignalLib();
   }
 
-  async listAccounts(): Promise<BackendAccount[]> {
-    return listSessionAccounts(this.context.secretsDir);
+  async listAccounts(options?: ListAccountsOptions): Promise<BackendAccount[]> {
+    return visibleAccounts(this.context, listSessionAccounts(this.context.secretsDir), options);
   }
 
   /** Unlink: the stored session goes, the indexed messages stay. */

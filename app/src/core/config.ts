@@ -60,13 +60,18 @@ export interface CurlewConfig {
    */
   encryption: Record<string, 'required'>;
   /**
+   * Accounts the person switched off, as `"<backend>/<accountId>"`. They stay linked and keep
+   * their messages, but nothing syncs or sends from them. Set from the Accounts page.
+   */
+  disabledAccounts: string[];
+  /**
    * Top-level keys this build does not know, carried through unchanged so a build that does not
    * know a key cannot drop it on save (ADR 0004).
    */
   unknown: Record<string, unknown>;
 }
 
-const KNOWN_KEYS = ['backends', 'ui', 'senders', 'grants', 'agentAccess', 'encryption'];
+const KNOWN_KEYS = ['backends', 'ui', 'senders', 'grants', 'agentAccess', 'encryption', 'disabledAccounts'];
 
 /**
  * What an absent config file means. Mail is enabled by THIS default, not by a special case in
@@ -81,6 +86,7 @@ export function defaultConfig(): CurlewConfig {
     grants: [],
     agentAccess: defaultAgentAccess(),
     encryption: {},
+    disabledAccounts: [],
     unknown: {},
   };
 }
@@ -154,13 +160,21 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   if (!access.ok) throw new Error(access.errors.join('; '));
   const agentAccess = access.policy;
   const encryption = parseEncryption(obj.encryption);
+  const disabledAccounts = parseDisabledAccounts(obj.disabledAccounts);
 
   const unknown: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
     if (!KNOWN_KEYS.includes(key)) unknown[key] = value;
   }
 
-  return { backends, ui, senders, grants, agentAccess, encryption, unknown };
+  return { backends, ui, senders, grants, agentAccess, encryption, disabledAccounts, unknown };
+}
+
+function parseDisabledAccounts(raw: unknown): string[] {
+  if (raw === undefined) return [];
+  if (!Array.isArray(raw) || raw.some((v) => typeof v !== 'string' || !/^[^/\s]+\/[^/\s]+$/.test(v)))
+    throw new Error('config.disabledAccounts must be a list of "<backend>/<accountId>"');
+  return [...new Set(raw as string[])];
 }
 
 /**
@@ -195,7 +209,7 @@ export function loadConfig(path = configPath()): CurlewConfig {
 export function saveConfig(config: CurlewConfig, path = configPath()): void {
   ensurePrivateDir(dirname(path));
   const part = `${path}.part`;
-  const { unknown, grants, agentAccess, encryption, ...known } = config;
+  const { unknown, grants, agentAccess, encryption, disabledAccounts, ...known } = config;
   const writtenRules = agentAccess.rules.filter((rule) => !rule.migrated);
   const carried = Object.fromEntries(Object.entries(unknown).filter(([key]) => !KNOWN_KEYS.includes(key)));
   const out = {
@@ -206,6 +220,7 @@ export function saveConfig(config: CurlewConfig, path = configPath()): void {
       ? { agentAccess: { askWithoutRule: agentAccess.askWithoutRule, rules: writtenRules } }
       : {}),
     ...(Object.keys(encryption).length > 0 ? { encryption } : {}),
+    ...(disabledAccounts.length > 0 ? { disabledAccounts } : {}),
   };
   writeFileSync(part, `${JSON.stringify(out, null, 2)}\n`, { mode: 0o600 });
   chmodSync(part, 0o600);

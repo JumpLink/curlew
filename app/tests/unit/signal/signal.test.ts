@@ -228,6 +228,7 @@ export default async () => {
             grants: [],
             agentAccess: { askWithoutRule: true, rules: [] },
             encryption: {},
+            disabledAccounts: [],
             unknown: {},
           })
           .find((e) => e.name === 'signal');

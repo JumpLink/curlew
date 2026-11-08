@@ -76,6 +76,7 @@ import accessBroker from './unit/core/access-broker.test.ts';
 import agentAccess from './unit/core/agent-access.test.ts';
 import windowAgentAccess from './unit/window/agent-access-model.test.ts';
 import accountRemove from './unit/core/account-remove.test.ts';
+import accountToggle from './unit/core/account-toggle.test.ts';
 import windowAccounts from './unit/window/accounts-model.test.ts';
 import windowConversationList from './unit/window/conversation-list-model.test.ts';
 import windowAttachment from './unit/window/attachment-model.test.ts';
@@ -181,6 +182,7 @@ run({
   windowAgentAccess,
   windowAccounts,
   accountRemove,
+  accountToggle,
   windowConversationList,
   windowConversation,
   windowAttachment,

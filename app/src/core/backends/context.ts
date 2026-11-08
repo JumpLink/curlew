@@ -18,5 +18,8 @@ export function backendContext(
     settings: config.backends[name]?.settings ?? {},
     env,
     secretsDir: join(secretsDir(env), name),
+    disabledAccounts: config.disabledAccounts
+      .filter((key) => key.startsWith(`${name}/`))
+      .map((key) => key.slice(name.length + 1)),
   };
 }

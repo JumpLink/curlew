@@ -31,6 +31,8 @@ export function accountStatusLabel(status: AccountStatus): string {
       return _('Offline');
     case 'daemon-not-running':
       return _('Daemon not running');
+    case 'disabled':
+      return _('Off');
   }
 }
 
@@ -40,6 +42,7 @@ const STATUS_CLASS: Record<AccountStatus, string> = {
   connecting: 'warning',
   offline: 'dim-label',
   'daemon-not-running': 'dim-label',
+  disabled: 'dim-label',
 };
 
 export function openGoaSettings(onError: (err: Error) => void): void {
@@ -72,7 +75,7 @@ function buildRow(row: AccountRow, daemonPresent: boolean, onOpen: (() => void) 
     }),
   );
   // With the daemon down every chat row would say the same; the banner says it once instead.
-  if (row.status && daemonPresent) {
+  if (row.status && (daemonPresent || row.status === 'disabled')) {
     widget.add_suffix(
       new Gtk.Label({
         label: accountStatusLabel(row.status),
