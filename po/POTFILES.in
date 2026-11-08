@@ -178,6 +178,7 @@ packages/protocol/src/sink.ts
 packages/protocol/src/transfer-decode.ts
 packages/protocol/src/types.ts
 packages/signal/src/accounts.ts
+packages/signal/src/attachments.ts
 packages/signal/src/backend.ts
 packages/signal/src/constants.ts
 packages/signal/src/contacts.ts
