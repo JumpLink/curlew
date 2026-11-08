@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-08 11:40+0100\n"
+"POT-Creation-Date: 2026-11-08 11:59+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2204,7 +2204,8 @@ msgstr "Unterhaltung"
 
 #: app/src/window/conversation-view.ts:253
 msgid "{protocol} cannot send files; the attached files were removed"
-msgstr "{protocol} kann keine Dateien senden; die angehängten Dateien wurden entfernt"
+msgstr ""
+"{protocol} kann keine Dateien senden; die angehängten Dateien wurden entfernt"
 
 #: app/src/window/conversation-view.ts:268
 msgid "Send via {protocol}"
@@ -2318,7 +2319,7 @@ msgstr "Anhang {path} hat {size} Bytes, erlaubt sind höchstens {max} pro Datei"
 msgid "the attachments together exceed {max} bytes"
 msgstr "die Anhänge zusammen überschreiten {max} Bytes"
 
-#: packages/imap/src/send.ts:62 packages/matrix/src/send.ts:165
+#: packages/imap/src/send.ts:62 packages/matrix/src/send.ts:235
 #: packages/signal/src/send.ts:275 packages/telegram/src/sender.ts:57
 #: packages/whatsapp/src/send.ts:250
 msgid "sending to {address} is not granted for account {account}"
@@ -2409,7 +2410,17 @@ msgid_plural "matrix: {n} events not decryptable"
 msgstr[0] "matrix: {n} Ereignis nicht entschlüsselbar"
 msgstr[1] "matrix: {n} Ereignisse nicht entschlüsselbar"
 
-#: packages/matrix/src/send.ts:113
+#: packages/matrix/src/send.ts:139
+msgid "the homeserver refused the message to {room} ({reason})"
+msgstr "Der Homeserver hat die Nachricht an {room} abgewiesen ({reason})"
+
+#: packages/matrix/src/send.ts:148
+msgid "the homeserver accepted the message to {room} but returned no event id"
+msgstr ""
+"Der Homeserver hat die Nachricht an {room} angenommen, aber keine Event-ID "
+"zurückgegeben"
+
+#: packages/matrix/src/send.ts:167
 msgid ""
 "the homeserver did not say whether {room} is encrypted ({reason}) — nothing "
 "was sent"
@@ -2417,17 +2428,15 @@ msgstr ""
 "Der Homeserver hat nicht mitgeteilt, ob {room} verschlüsselt ist ({reason}) "
 "— es wurde nichts gesendet"
 
-#: packages/matrix/src/send.ts:131
-msgid "the homeserver refused the message to {room} ({reason})"
-msgstr "Der Homeserver hat die Nachricht an {room} abgewiesen ({reason})"
+#: packages/matrix/src/send.ts:186
+msgid "the homeserver refused the file {file} ({reason})"
+msgstr "der Homeserver hat die Datei {file} abgewiesen ({reason})"
 
-#: packages/matrix/src/send.ts:140
-msgid "the homeserver accepted the message to {room} but returned no event id"
-msgstr ""
-"Der Homeserver hat die Nachricht an {room} angenommen, aber keine Event-ID "
-"zurückgegeben"
+#: packages/matrix/src/send.ts:195
+msgid "the homeserver accepted the file {file} but returned no media URI"
+msgstr "der Homeserver hat die Datei {file} angenommen, aber keine Medien-URI zurückgegeben"
 
-#: packages/matrix/src/send.ts:179
+#: packages/matrix/src/send.ts:253
 msgid ""
 "a Matrix message holds at most {max} bytes of text, this one has {bytes} — "
 "shorten it"
@@ -2435,7 +2444,7 @@ msgstr ""
 "Eine Matrix-Nachricht fasst höchstens {max} Byte Text, diese hat {bytes} — "
 "kürze sie"
 
-#: packages/matrix/src/send.ts:193
+#: packages/matrix/src/send.ts:267
 msgid ""
 "{room} is end-to-end encrypted and curlew cannot send encrypted messages yet "
 "— nothing was sent, send it from a Matrix client"

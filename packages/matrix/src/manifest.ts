@@ -11,7 +11,7 @@ export const MATRIX_MANIFEST: BackendManifest = {
   displayName: 'Matrix (matrix-js-sdk, Rust crypto as WebAssembly)',
   pluginApi: PLUGIN_API_VERSION,
   // What the NETWORK can do, not what curlew does with it. Curlew reads, and with a
-  // `matrix.send` grant sends ONE plain-text `m.room.message` — so none of these flags is a
+  // `matrix.send` grant sends plain-text `m.room.message`s and files (`m.image`/`m.file`) — so none of these flags is a
   // promise that curlew can send that shape: no edit, no reaction, no threaded send, no
   // receipt, and `e2ee: true` means this backend DECRYPTS, never that it encrypts (an
   // encrypted room is refused, see send.ts).
@@ -30,9 +30,9 @@ export const MATRIX_MANIFEST: BackendManifest = {
     e2ee: true,
     subject: false,
     folders: false,
-    // Receiving only, and only unencrypted files: `openAttachments` downloads an `mxc://` file a
-    // person tapped. Sending a file is not built, so `attachments` stays false.
-    attachments: false,
+    // Unencrypted files only, both ways: `openAttachments` downloads an `mxc://` file a person
+    // tapped, and a send uploads one to the media repository and posts it as `m.image`/`m.file`.
+    attachments: true,
     attachmentsRead: true,
   },
   // The homeserver keeps the room history: the index is rebuildable (`derived`). The crypto

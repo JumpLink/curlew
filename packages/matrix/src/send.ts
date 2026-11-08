@@ -1,6 +1,6 @@
 /**
- * The Matrix backend's send path: one plain-text `m.room.message` into a room a grant names,
- * behind a saved `matrix.send` grant.
+ * The Matrix backend's send path: a plain-text `m.room.message`, or files (an upload and one
+ * `m.image`/`m.file` event each), into a room a grant names, behind a saved `matrix.send` grant.
  *
  * The address is the room id exactly as the index and `conversations_list` hold the chat's remote
  * id (`!abc:example.org`, or `!abc` from room version 12 on), so a grant target `<account>/<address>` matches what a caller reads
@@ -16,6 +16,8 @@
  * allows only this one endpoint for only these rooms: a bug above cannot widen a grant.
  */
 
+import { readFileSync } from 'node:fs';
+
 import {
   _,
   fmt,
@@ -25,6 +27,7 @@ import {
   type SenderFeatures,
   type SentMessage,
 } from '@curlew/protocol';
+import { inspectSendFiles, type SendFile } from '@curlew/store';
 
 /**
  * The longest text one message may carry. curlew refuses more rather than splitting it.
@@ -37,6 +40,16 @@ import {
 export const MATRIX_MAX_MESSAGE_BYTES = 32_000;
 
 /**
+ * What one file may weigh. Synapse's default `max_upload_size` is 50 MB and other servers differ;
+ * a bigger file is refused here before the bytes are read, a smaller one the server may still
+ * refuse (`M_TOO_LARGE`), which the error then names.
+ */
+export const MATRIX_MAX_FILE_BYTES = 50_000_000;
+
+/** How many files one message may carry; each becomes its own event. */
+export const MATRIX_MAX_FILES = 10;
+
+/**
  * `!opaque:server`, or just `!opaque` from room version 12 on (MSC4291: the id is the create
  * event's hash, with no server part) — the shape of a room id (client-server spec §room ids).
  */
@@ -47,6 +60,9 @@ const UTF8 = new TextEncoder();
 /** The Matrix API version this path speaks; both endpoints it uses are stable in v3. */
 const V3 = '/_matrix/client/v3';
 
+/** The media repository's upload endpoint; it lives outside `/client/`. */
+const UPLOAD = '/_matrix/media/v3/upload';
+
 /** What one granted sender needs to reach a homeserver. */
 export interface MatrixSendSession {
   /** Base URL without a trailing slash, as the account file holds it. */
@@ -56,12 +72,27 @@ export interface MatrixSendSession {
   fetch: typeof globalThis.fetch;
 }
 
-/** The two requests a send makes. An interface so a test can answer them without HTTP. */
+/** One file event: its `msgtype` follows the type, the caption (if any) is the body. */
+export interface FileEvent {
+  msgtype: 'm.image' | 'm.file';
+  /** `mxc://` URI the upload returned. */
+  url: string;
+  filename: string;
+  size: number;
+  contentType: string;
+  caption?: string;
+}
+
+/** The requests a send makes. An interface so a test can answer them without HTTP. */
 export interface MatrixSendApi {
   /** Does the room have `m.room.encryption` state? Then nothing is sent. */
   isEncrypted(roomId: string): Promise<boolean>;
   /** PUT one `m.room.message`; resolves with the event id the homeserver assigned. */
   sendText(roomId: string, text: string, txnId: string): Promise<string>;
+  /** Upload the bytes to the media repository; resolves with the `mxc://` URI. */
+  uploadFile(bytes: Uint8Array, contentType: string, filename: string): Promise<string>;
+  /** PUT one `m.image` or `m.file` event for an uploaded file. */
+  sendFile(roomId: string, file: FileEvent, txnId: string): Promise<string>;
 }
 
 /** The homeserver's `errcode`, or null when the body is not a Matrix error. */
@@ -96,6 +127,29 @@ export function matrixSendApi(session: MatrixSendSession): MatrixSendApi {
   const base = session.homeserver.replace(/\/+$/, '');
   const room = (roomId: string): string => `${base}${V3}/rooms/${encodeURIComponent(roomId)}`;
   const auth = { Authorization: `Bearer ${session.accessToken}` };
+  const putEvent = async (roomId: string, content: object, txnId: string): Promise<string> => {
+    const response = await session.fetch(`${room(roomId)}/send/m.room.message/${encodeURIComponent(txnId)}`, {
+      method: 'PUT',
+      headers: { ...auth, 'Content-Type': 'application/json' },
+      body: JSON.stringify(content),
+    });
+    if (!response.ok) {
+      const errcode = await errcodeOf(response);
+      throw new Error(
+        fmt(_('the homeserver refused the message to {room} ({reason})'), {
+          room: roomId,
+          reason: reasonOf(response, errcode),
+        }),
+      );
+    }
+    const body = (await response.json()) as { event_id?: unknown };
+    if (typeof body.event_id !== 'string' || body.event_id.length === 0) {
+      throw new Error(
+        fmt(_('the homeserver accepted the message to {room} but returned no event id'), { room: roomId }),
+      );
+    }
+    return body.event_id;
+  };
   return {
     async isEncrypted(roomId) {
       // A GET passes the read-only gate unchanged; the state event exists exactly in an
@@ -117,37 +171,53 @@ export function matrixSendApi(session: MatrixSendSession): MatrixSendApi {
       );
     },
     async sendText(roomId, text, txnId) {
-      const response = await session.fetch(
-        `${room(roomId)}/send/m.room.message/${encodeURIComponent(txnId)}`,
-        {
-          method: 'PUT',
-          headers: { ...auth, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ msgtype: 'm.text', body: text }),
-        },
-      );
+      return putEvent(roomId, { msgtype: 'm.text', body: text }, txnId);
+    },
+    async uploadFile(bytes, contentType, filename) {
+      const response = await session.fetch(`${base}${UPLOAD}?filename=${encodeURIComponent(filename)}`, {
+        method: 'POST',
+        headers: { ...auth, 'Content-Type': contentType },
+        // A file read from disk is never backed by a SharedArrayBuffer, which is all the cast drops.
+        body: bytes as Uint8Array<ArrayBuffer>,
+      });
       if (!response.ok) {
         const errcode = await errcodeOf(response);
         throw new Error(
-          fmt(_('the homeserver refused the message to {room} ({reason})'), {
-            room: roomId,
+          fmt(_('the homeserver refused the file {file} ({reason})'), {
+            file: filename,
             reason: reasonOf(response, errcode),
           }),
         );
       }
-      const body = (await response.json()) as { event_id?: unknown };
-      if (typeof body.event_id !== 'string' || body.event_id.length === 0) {
+      const body = (await response.json()) as { content_uri?: unknown };
+      if (typeof body.content_uri !== 'string' || !body.content_uri.startsWith('mxc://')) {
         throw new Error(
-          fmt(_('the homeserver accepted the message to {room} but returned no event id'), { room: roomId }),
+          fmt(_('the homeserver accepted the file {file} but returned no media URI'), { file: filename }),
         );
       }
-      return body.event_id;
+      return body.content_uri;
+    },
+    async sendFile(roomId, file, txnId) {
+      // Since client-server v1.10 `body` may be a caption and `filename` then names the file;
+      // without a caption the body is the file name, which every client understands.
+      return putEvent(
+        roomId,
+        {
+          msgtype: file.msgtype,
+          body: file.caption ?? file.filename,
+          filename: file.filename,
+          url: file.url,
+          info: { mimetype: file.contentType, size: file.size },
+        },
+        txnId,
+      );
     },
   };
 }
 
 export class MatrixSender implements MessageSender {
   /** Matrix formatting is HTML in a second field, not curlew's chat Markdown: the body goes out as typed. */
-  readonly features: SenderFeatures = { markdown: false, attachments: false };
+  readonly features: SenderFeatures = { markdown: false, attachments: true };
   private readonly api: MatrixSendApi;
   private readonly permit: SendPermit;
   private readonly onClose: () => Promise<void>;
@@ -173,6 +243,10 @@ export class MatrixSender implements MessageSender {
 
   async send(message: SendingMessage): Promise<SentMessage> {
     const roomId = this.roomId(message.to);
+    const files = inspectSendFiles(message.attachments ?? [], {
+      perFile: MATRIX_MAX_FILE_BYTES,
+      count: MATRIX_MAX_FILES,
+    });
     const bytes = UTF8.encode(message.text).length;
     if (bytes > MATRIX_MAX_MESSAGE_BYTES) {
       throw new Error(
@@ -196,6 +270,7 @@ export class MatrixSender implements MessageSender {
         ),
       );
     }
+    if (files.length > 0) return this.sendFiles(roomId, message, files);
     const eventId = await this.api.sendText(roomId, message.text, nextTxnId());
     return {
       target: message.to,
@@ -205,6 +280,43 @@ export class MatrixSender implements MessageSender {
       sentAt: new Date().toISOString(),
       chatRemoteId: roomId,
       encrypted: false,
+    };
+  }
+
+  /**
+   * One event per file, the text as the caption of the first. The result is the first event;
+   * the others reach the index with the next sync.
+   */
+  private async sendFiles(
+    roomId: string,
+    message: SendingMessage,
+    files: readonly SendFile[],
+  ): Promise<SentMessage> {
+    const caption = message.text.trim().length === 0 ? undefined : message.text;
+    let first: string | undefined;
+    for (const [index, file] of files.entries()) {
+      const url = await this.api.uploadFile(readFileSync(file.realPath), file.contentType, file.filename);
+      const eventId = await this.api.sendFile(
+        roomId,
+        {
+          msgtype: file.contentType.startsWith('image/') ? 'm.image' : 'm.file',
+          url,
+          filename: file.filename,
+          size: file.size,
+          contentType: file.contentType,
+          ...(index === 0 && caption !== undefined ? { caption } : {}),
+        },
+        nextTxnId(),
+      );
+      first ??= eventId;
+    }
+    return {
+      target: message.to,
+      id: first!,
+      sentAt: new Date().toISOString(),
+      chatRemoteId: roomId,
+      encrypted: false,
+      attachments: files.map((f) => ({ filename: f.filename, size: f.size })),
     };
   }
 
