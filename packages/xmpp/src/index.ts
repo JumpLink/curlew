@@ -25,5 +25,6 @@ export * from './granted.ts';
 export * from './messages.ts';
 export * from './attachment-link.ts';
 export * from './attachments.ts';
+export * from './upload.ts';
 export * from './backend.ts';
 export * from './sender.ts';

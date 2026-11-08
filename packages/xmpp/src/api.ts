@@ -10,6 +10,7 @@
 
 import type { EncryptedStanza } from './omemo-stanza.ts';
 import type { ArchivedEntry, Bookmark, RosterItem, XmlElement } from './stanza.ts';
+import type { SlotRequest, UploadBody, UploadSlot } from './upload.ts';
 
 export interface MamQuery {
   /** The archive to ask: null for the user's own, else a room's bare JID. */
@@ -71,6 +72,13 @@ export interface XmppLink extends XmppApi {
    * body must not be able to send it by accident once encryption was asked for.
    */
   sendEncrypted(to: string, id: string, encrypted: EncryptedStanza, fallback?: string): Promise<void>;
+  /**
+   * Ask the account's upload service (XEP-0363) for a slot. Throws with the reason when the
+   * server offers none, the file is over its limit, or it answers a slot curlew will not use.
+   */
+  uploadSlot(request: SlotRequest): Promise<UploadSlot>;
+  /** PUT the bytes to a slot's `put` URL; throws unless the server answers 2xx. */
+  putFile(slot: UploadSlot, file: UploadBody): Promise<void>;
   /**
    * `<iq type='get' to='jid'>` with a `<pubsub>` payload: the `<pubsub>` of the answer, or
    * undefined when the node does not exist. Sits here rather than on `XmppApi` because OMEMO's

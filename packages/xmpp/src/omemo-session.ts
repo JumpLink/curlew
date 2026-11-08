@@ -17,7 +17,7 @@ import { decryptEntries } from './omemo-archive.ts';
 import type { UndecryptableReason } from './omemo-receive.ts';
 import type { OmemoDeviceOptions, OwnDevice } from './omemo-device.ts';
 import { announceDevice, type Announcement, type PepPort } from './omemo-publish.ts';
-import { omemoEncryptFor } from './omemo-send.ts';
+import { omemoEncryptFor, planOmemoSend } from './omemo-send.ts';
 import type { EncryptedStanza } from './omemo-stanza.ts';
 import { SecretStoreOmemoStorage } from './omemo-storage.ts';
 import type { DecryptEntries } from './session.ts';
@@ -50,6 +50,8 @@ export interface OmemoSession {
    * refused that way instead of answered null.
    */
   encrypt(peerJid: string, text: string | null): Promise<EncryptedStanza | null>;
+  /** Whether `encrypt` would encrypt for this peer: the plan's answer, without encrypting. */
+  encrypts(peerJid: string): Promise<boolean>;
 }
 
 /**
@@ -86,5 +88,10 @@ export async function openOmemo(
         ...shared,
         ...(required.has(peerJid) ? { requireEncryption: true } : {}),
       }),
+    encrypts: async (peerJid) =>
+      (await planOmemoSend(pep, storage, device, selfJid, peerJid, {
+        ...shared,
+        ...(required.has(peerJid) ? { requireEncryption: true } : {}),
+      })) !== null,
   };
 }

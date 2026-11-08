@@ -40,6 +40,7 @@ import xml, { type Element } from '@xmpp/xml';
 import SASLFactory from 'saslmechanisms';
 import { readFileSync } from 'node:fs';
 import tls from 'node:tls';
+import { MESSAGES } from './messages.ts';
 import { type MamPage, type MamQuery, type XmppApi, type XmppLink, XmppQueryError } from './api.ts';
 import { encryptedChatMessage, type EncryptedStanza } from './omemo-stanza.ts';
 import {
@@ -70,6 +71,17 @@ import {
   parseRoster,
   rosterQuery,
 } from './stanza.ts';
+import {
+  discoItemsQuery,
+  parseDiscoItems,
+  parseUploadService,
+  parseUploadSlot,
+  type SlotRequest,
+  type UploadService,
+  type UploadBody,
+  type UploadSlot,
+  uploadSlotRequest,
+} from './upload.ts';
 
 export interface XmppLogin {
   /** The account's bare JID. */
@@ -95,6 +107,8 @@ const NS_TLS = 'urn:ietf:params:xml:ns:xmpp-tls';
 const CONNECT_TIMEOUT_MS = 20_000;
 const QUERY_TIMEOUT_MS = 60_000;
 const CLOSE_TIMEOUT_MS = 2_000;
+/** One file's PUT; a stalled upload must not hold the window's send for ever. */
+const UPLOAD_TIMEOUT_MS = 10 * 60_000;
 /** A followed link idle this long is probed with a ping; one that does not answer is dead. */
 const PING_IDLE_MS = 30_000;
 const PING_TIMEOUT_MS = 15_000;
@@ -183,6 +197,8 @@ class XmppConnection implements XmppLink {
   private readonly deadListeners = new Set<(reason: string) => void>();
   private lastHeard = Date.now();
   private keepAlive: ReturnType<typeof setInterval> | undefined;
+  /** The upload service, found once per connection. */
+  private uploadService: Promise<{ jid: string } & UploadService> | undefined;
 
   constructor(jid: string, entity: Client, iq: ReturnType<typeof iqCaller>) {
     this.jid = jid;
@@ -236,6 +252,69 @@ class XmppConnection implements XmppLink {
    */
   async pepGet(jid: string, payload: Element): Promise<Element | undefined> {
     return pepRead(this.iq, jid === this.jid ? undefined : jid, payload);
+  }
+
+  /** The domain's own disco#info, then each of its items': the first that offers file upload. */
+  private async findUploadService(): Promise<{ jid: string } & UploadService> {
+    const domain = domainOf(this.jid);
+    const candidates = [domain];
+    try {
+      candidates.push(...parseDiscoItems(await this.iq.get(discoItemsQuery(), domain, QUERY_TIMEOUT_MS)));
+    } catch {
+      // A server that lists no items may still offer the service itself.
+    }
+    for (const jid of candidates) {
+      try {
+        const service = parseUploadService(await this.iq.get(discoInfoQuery(), jid, QUERY_TIMEOUT_MS));
+        if (service !== null) return { jid, ...service };
+      } catch {
+        // Not every item answers disco#info; the next may be the one.
+      }
+    }
+    throw new Error(MESSAGES.noUploadService(domain));
+  }
+
+  async uploadSlot(request: SlotRequest): Promise<UploadSlot> {
+    this.uploadService ??= this.findUploadService();
+    let service: { jid: string } & UploadService;
+    try {
+      service = await this.uploadService;
+    } catch (err) {
+      this.uploadService = undefined;
+      throw err;
+    }
+    if (service.maxBytes !== null && request.size > service.maxBytes) {
+      throw new Error(MESSAGES.uploadTooLarge(request.filename, service.maxBytes));
+    }
+    let answer: Element;
+    try {
+      answer = await this.iq.get(uploadSlotRequest(request), service.jid, QUERY_TIMEOUT_MS);
+    } catch (err) {
+      throw new Error(MESSAGES.uploadRefused(request.filename, queryError(err).message));
+    }
+    const slot = parseUploadSlot(answer);
+    if (slot === null) throw new Error(MESSAGES.uploadBadSlot(request.filename));
+    return slot;
+  }
+
+  async putFile(slot: UploadSlot, file: UploadBody): Promise<void> {
+    // `parseUploadSlot` checked this already; the PUT carries credentials, so it is checked twice.
+    if (!slot.putUrl.startsWith('https://')) throw new Error(MESSAGES.uploadBadSlot(file.filename));
+    const response = await withTimeout(
+      fetch(slot.putUrl, {
+        method: 'PUT',
+        headers: { ...slot.headers, 'Content-Type': file.contentType },
+        // A file read from disk is never backed by a SharedArrayBuffer, which is all the cast drops.
+        body: file.bytes as Uint8Array<ArrayBuffer>,
+        // The slot named this URL; following a redirect would send the headers somewhere it did not.
+        redirect: 'manual',
+      }),
+      UPLOAD_TIMEOUT_MS,
+      'uploading the file',
+    );
+    if (response.status < 200 || response.status > 299) {
+      throw new Error(MESSAGES.uploadRefused(file.filename, `HTTP ${response.status}`));
+    }
   }
 
   async pepSet(payload: Element): Promise<void> {

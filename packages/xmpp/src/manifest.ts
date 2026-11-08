@@ -29,8 +29,9 @@ export const XMPP_MANIFEST: BackendManifest = {
     subject: false,
     folders: false,
     // Out-of-band links (XEP-0066), which HTTP File Upload (XEP-0363) produces, and OMEMO's
-    // `aesgcm://` links: `openAttachments` fetches one after a tap. Sending a file is not built.
-    attachments: false,
+    // `aesgcm://` links: `openAttachments` fetches one after a tap, and a send uploads the file
+    // to the server's HTTP File Upload service and sends the link.
+    attachments: true,
     attachmentsRead: true,
   },
   // With MAM (XEP-0313) the server keeps the history: the index is rebuildable (`derived`).

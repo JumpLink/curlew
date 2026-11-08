@@ -50,6 +50,7 @@ import whatsappInSessionSend from './unit/whatsapp/in-session-send.test.ts';
 import xmpp from './unit/xmpp/xmpp.test.ts';
 import xmppTls from './unit/xmpp/tls.spec.ts';
 import xmppAttachments from './unit/xmpp/attachments.test.ts';
+import xmppSendFiles from './unit/xmpp/send-files.test.ts';
 import omemoUpkeep from './unit/xmpp/omemo-upkeep.test.ts';
 import pepRead from './unit/xmpp/pep-read.test.ts';
 import omemoSend from './unit/xmpp/omemo-send.test.ts';
@@ -158,6 +159,7 @@ run({
   xmpp,
   xmppTls,
   xmppAttachments,
+  xmppSendFiles,
   omemoUpkeep,
   pepRead,
   omemoSend,

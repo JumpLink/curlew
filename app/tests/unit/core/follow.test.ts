@@ -24,6 +24,10 @@ function fakeLink(onClose: () => void = () => {}, onArrival?: (fire: () => void)
     close: async () => onClose(),
     sendChat: async () => {},
     sendEncrypted: async () => {},
+    uploadSlot: async () => {
+      throw new Error('no upload in this fake');
+    },
+    putFile: async () => {},
     goAvailable: async () => {},
     pepGet: async () => undefined,
     pepSet: async () => {},

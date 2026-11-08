@@ -174,6 +174,10 @@ export function fakeLinkFactory(server: FakeServer, password = 'correct horse'):
       ...(await clients(options)),
       sendChat: async () => {},
       sendEncrypted: async () => {},
+      uploadSlot: async () => {
+        throw new Error('no upload in this fake');
+      },
+      putFile: async () => {},
       goAvailable: async () => {},
       pepGet: async () => undefined,
       pepSet: async () => {},

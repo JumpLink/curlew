@@ -6,7 +6,10 @@
  * Nothing here decides anything: the permit check and the encryption policy are the session's.
  */
 
+import { readFileSync } from 'node:fs';
+
 import type { MessageSender, SenderFeatures, SendingMessage, SentMessage } from '@curlew/protocol';
+import { inspectSendFiles } from '@curlew/store';
 import type { GrantedXmppSession, SentChat } from './granted.ts';
 
 function sent(sentChat: SentChat): SentMessage {
@@ -19,17 +22,48 @@ function sent(sentChat: SentChat): SentMessage {
   };
 }
 
+/**
+ * What one file may weigh. The upload service's own limit (often 10–100 MB) is checked after
+ * this, by the slot request; this one keeps a file — and its encrypted copy — from filling memory.
+ */
+export const XMPP_MAX_FILE_BYTES = 50_000_000;
+
+/** How many files one message may carry; each becomes its own message. */
+export const XMPP_MAX_FILES = 10;
+
 export class XmppSender implements MessageSender {
   /** Long texts are rendered as XEP-0393 and split (see `core/markdown.ts`). */
-  readonly features: SenderFeatures = { markdown: true, attachments: false };
+  readonly features: SenderFeatures = { markdown: true, attachments: true };
   private readonly session: GrantedXmppSession;
 
   constructor(session: GrantedXmppSession) {
     this.session = session;
   }
 
+  /**
+   * Files first, one message each, then the text: a file's stanza is a bare link and cannot carry
+   * a caption, so the text follows as a message of its own. The result is the first message sent
+   * (the file, else the text); the others reach the index with the next sync.
+   */
   async send(message: SendingMessage): Promise<SentMessage> {
-    return sent(await this.session.send(message.to, message.text));
+    const files = inspectSendFiles(message.attachments ?? [], {
+      perFile: XMPP_MAX_FILE_BYTES,
+      count: XMPP_MAX_FILES,
+    });
+    if (files.length === 0) return sent(await this.session.send(message.to, message.text));
+    let first: SentMessage | undefined;
+    for (const file of files) {
+      const out = sent(
+        await this.session.sendFile(message.to, {
+          bytes: readFileSync(file.realPath),
+          filename: file.filename,
+          contentType: file.contentType,
+        }),
+      );
+      first ??= { ...out, attachments: files.map((f) => ({ filename: f.filename, size: f.size })) };
+    }
+    if (message.text.trim().length > 0) await this.session.send(message.to, message.text);
+    return first!;
   }
 
   async sendImage(to: string, url: string): Promise<SentMessage> {
