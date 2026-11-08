@@ -135,6 +135,7 @@ export function createAccountsPage(
   onError: (err: Error) => void,
   onAdd: () => void,
   onOpenAccount: (group: ProtocolGroup, row: AccountRow, daemonPresent: boolean) => void,
+  onStartDaemon: () => void,
 ): AccountsPage {
   const preferencesPage = new Adw.PreferencesPage();
   const loading = new Adw.Spinner({
@@ -168,8 +169,10 @@ export function createAccountsPage(
 
   const banner = new Adw.Banner({
     title: _('The background service is not running, so chat accounts cannot connect.'),
+    buttonLabel: _('Start'),
     revealed: false,
   });
+  banner.connect('button-clicked', onStartDaemon);
   const toolbar = new Adw.ToolbarView();
   const header = new Adw.HeaderBar();
   const addButton = new Gtk.Button({

@@ -6,6 +6,8 @@
 import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 
+import { _ } from '@curlew/protocol';
+
 import { UNIT_NAME } from '../core/actions/setup-unit.ts';
 import {
   DAEMON_BUS_NAME,
@@ -30,6 +32,31 @@ export function restartDaemonIfRunning(): void {
   } catch {
     // No systemd user session: the next start of the daemon reads the new account list.
   }
+}
+
+/**
+ * Start the background service. Resolves with an error when there is no unit to start (the user
+ * has not run `curlew setup`); on success the bus watch reports the daemon as present.
+ */
+export function startDaemon(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    try {
+      const process = Gio.Subprocess.new(
+        ['systemctl', '--user', 'start', UNIT_NAME],
+        Gio.SubprocessFlags.STDERR_SILENCE,
+      );
+      process.wait_check_async(null, (_source, result) => {
+        try {
+          process.wait_check_finish(result);
+          resolve();
+        } catch {
+          reject(new Error(_('Could not start the background service. Run “curlew setup” first.')));
+        }
+      });
+    } catch {
+      reject(new Error(_('Could not start the background service. Run “curlew setup” first.')));
+    }
+  });
 }
 
 function entryMap(accounts: DaemonAccountEntry[]): Map<string, DaemonAccountEntry> {

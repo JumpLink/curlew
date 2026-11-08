@@ -12,7 +12,7 @@ import { buildProtocolGroups, type AccountsDaemonState, type AccountsPageState }
 import { pushAddAccountPage } from './account-add.ts';
 import { pushAccountPage } from './account-detail.ts';
 import { createAccountsPage, openGoaSettings } from './accounts-page.ts';
-import { gioAccountsDaemonSource } from './accounts-daemon.ts';
+import { gioAccountsDaemonSource, startDaemon } from './accounts-daemon.ts';
 import { loadAccountsState } from './accounts-store.ts';
 
 export interface AccountsDialogOptions {
@@ -50,6 +50,7 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
         onRemoved: () => void reload(),
         onChanged: () => void reload(),
       }),
+    () => void startDaemon().catch((err: Error) => onError(err)),
   );
 
   // The page is a navigation view with its own header bar, so the next pages get a back button.
