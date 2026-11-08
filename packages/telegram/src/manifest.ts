@@ -35,9 +35,9 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
     e2ee: false,
     subject: false,
     folders: false,
-    // Receiving only: `openAttachments` downloads a photo, file or voice note a person tapped.
-    // Sending a file is not built, so `attachments` stays false.
-    attachments: false,
+    // `openAttachments` downloads a photo, file or voice note a person tapped; the sender uploads
+    // one file per message the person picked in the window.
+    attachments: true,
     attachmentsRead: true,
   },
   // Telegram keeps the full history of cloud chats: the index is rebuildable (`derived`).
@@ -52,7 +52,7 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
     // what every frontend already does, so nothing else changes.
     get summary() {
       return _(
-        "curlew talks to Telegram through the official MTProto API as a third-party client (mtcute). Telegram requires every client to use API credentials (api_id and api_hash). A packaged build MAY embed a pair supplied by its distributor, so the login needs only your phone number and code; curlew itself ships none, and you can always use your own — create them for YOURSELF at my.telegram.org and run `curlew accounts add telegram --own-credentials` (or set them in the environment). They are kept with the session. Use is subject to Telegram's API Terms of Service; an account that misuses the API can be limited or banned by Telegram. curlew reads by default; it sends a plain-text message only to a chat you granted with `telegram.send`, and never edits or deletes. It keeps the session key on this machine only.",
+        "curlew talks to Telegram through the official MTProto API as a third-party client (mtcute). Telegram requires every client to use API credentials (api_id and api_hash). A packaged build MAY embed a pair supplied by its distributor, so the login needs only your phone number and code; curlew itself ships none, and you can always use your own — create them for YOURSELF at my.telegram.org and run `curlew accounts add telegram --own-credentials` (or set them in the environment). They are kept with the session. Use is subject to Telegram's API Terms of Service; an account that misuses the API can be limited or banned by Telegram. curlew reads by default; it sends a plain-text message only to a chat you granted with `telegram.send`; a file goes out only when you pick it in the window, and curlew never edits or deletes. It keeps the session key on this machine only.",
       );
     },
     url: 'https://core.telegram.org/api/terms',

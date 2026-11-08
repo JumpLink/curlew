@@ -8,6 +8,7 @@ import type {
   TgDialogsParams,
   TgMediaDownload,
   TgMessage,
+  TgOutgoingFile,
   TgPeer,
   TgUser,
 } from '@curlew/telegram';
@@ -233,6 +234,28 @@ export class FakeClient implements TelegramClientHandle {
     this.sent.push({ chatId, text });
     const chat = (this.script.dialogs ?? []).find((d) => d.peer.id === chatId)?.peer ?? user(chatId, 'Peer');
     return tgMessage(chat, this.nextSentId++, 'me', text);
+  }
+
+  /** Every `sendFile` call, in order: the name, size and caption — the bytes are not kept. */
+  readonly files: Array<{
+    chatId: number;
+    fileName: string;
+    size: number;
+    caption?: string;
+    asPhoto: boolean;
+  }> = [];
+
+  async sendFile(chatId: number, file: TgOutgoingFile): Promise<TgMessage> {
+    this.calls.push(`sendFile:${chatId}`);
+    this.files.push({
+      chatId,
+      fileName: file.fileName,
+      size: file.bytes.byteLength,
+      asPhoto: file.asPhoto,
+      ...(file.caption === undefined ? {} : { caption: file.caption }),
+    });
+    const chat = (this.script.dialogs ?? []).find((d) => d.peer.id === chatId)?.peer ?? user(chatId, 'Peer');
+    return tgMessage(chat, this.nextSentId++, 'me', file.caption ?? '');
   }
 
   async login(prompts: LoginPrompts): Promise<TgUser> {

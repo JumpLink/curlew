@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-08 09:20+0100\n"
+"POT-Creation-Date: 2026-11-08 09:35+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -232,35 +232,41 @@ msgstr ""
 msgid "{backend} cannot send an image — give text and leave image_url out"
 msgstr "{backend} kann kein Bild senden — gib Text an und lass image_url weg"
 
-#: app/src/core/actions/send.ts:336
+#: app/src/core/actions/send.ts:339
 msgid "nothing to send: the text is empty after rendering"
 msgstr "Nichts zu senden: Der Text ist nach dem Rendern leer"
 
-#: app/src/core/actions/send.ts:340 app/src/core/actions/send.ts:466
+#: app/src/core/actions/send.ts:342 app/src/core/actions/send.ts:482
 msgid "{backend} cannot send attachments"
 msgstr "{backend} kann keine Anhänge senden"
 
-#: app/src/core/actions/send.ts:422 app/src/core/actions/send.ts:445
+#: app/src/core/actions/send.ts:429 app/src/core/actions/send.ts:461
 msgid "no account {account} — `curlew accounts list` shows them"
 msgstr "Kein Konto {account} — `curlew accounts list` zeigt sie an"
 
-#: app/src/core/actions/send.ts:452
+#: app/src/core/actions/send.ts:436
+msgid ""
+"{backend} takes no attachments from an agent — pick the file in the Curlew "
+"window"
+msgstr "{backend} nimmt von einem Agenten keine Anhänge an — wähle die Datei im Curlew-Fenster"
+
+#: app/src/core/actions/send.ts:468
 msgid "{backend} cannot send"
 msgstr "{backend} kann nicht senden"
 
-#: app/src/core/actions/send.ts:456
-msgid "nothing to send: give text, an image URL or both"
-msgstr "Nichts zu senden: Gib Text, eine Bild-URL oder beides an"
+#: app/src/core/actions/send.ts:472
+msgid "nothing to send: give text, an image URL or an attachment"
+msgstr "Nichts zu senden: Gib Text, eine Bild-URL oder einen Anhang an"
 
-#: app/src/core/actions/send.ts:458
+#: app/src/core/actions/send.ts:474
 msgid "{backend} messages carry no subject"
 msgstr "Nachrichten von {backend} haben keinen Betreff"
 
-#: app/src/core/actions/send.ts:461
+#: app/src/core/actions/send.ts:477
 msgid "{backend} cannot send email chat headers"
 msgstr "{backend} kann keine E-Mail-Chat-Kopfzeilen senden"
 
-#: app/src/core/actions/send.ts:471
+#: app/src/core/actions/send.ts:487
 msgid "{backend} cannot send attachments through the daemon"
 msgstr "{backend} kann Anhänge nicht über den Daemon senden"
 
@@ -1781,7 +1787,9 @@ msgstr "Konto entfernen"
 
 #: app/src/window/accounts-daemon.ts:53 app/src/window/accounts-daemon.ts:57
 msgid "Could not start the background service. Run “curlew setup” first."
-msgstr "Der Hintergrunddienst ließ sich nicht starten. Führe zuerst „curlew setup“ aus."
+msgstr ""
+"Der Hintergrunddienst ließ sich nicht starten. Führe zuerst „curlew setup“ "
+"aus."
 
 #: app/src/window/accounts-dialog.ts:60 app/src/window/accounts-page.ts:187
 #: app/src/window/window.ts:75
@@ -2255,19 +2263,20 @@ msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 msgid "at most {max} attachments per mail, this one has {count}"
 msgstr "höchstens {max} Anhänge pro E-Mail, diese hat {count}"
 
-#: packages/imap/src/attachments.ts:88
+#: packages/imap/src/attachments.ts:88 packages/store/src/send-files.ts:86
 msgid "attachment {path} is not an absolute path"
 msgstr "Anhang {path} ist kein absoluter Pfad"
 
-#: packages/imap/src/attachments.ts:96
+#: packages/imap/src/attachments.ts:96 packages/store/src/send-files.ts:94
 msgid "attachment {path} is not a regular file"
 msgstr "Anhang {path} ist keine reguläre Datei"
 
 #: packages/imap/src/attachments.ts:101 packages/imap/src/attachments.ts:123
+#: packages/store/src/send-files.ts:99
 msgid "attachment {path} cannot be read"
 msgstr "Anhang {path} kann nicht gelesen werden"
 
-#: packages/imap/src/attachments.ts:105
+#: packages/imap/src/attachments.ts:105 packages/store/src/send-files.ts:103
 msgid "attachment {path} is {size} bytes, more than the {max} allowed per file"
 msgstr "Anhang {path} hat {size} Bytes, erlaubt sind höchstens {max} pro Datei"
 
@@ -2276,7 +2285,7 @@ msgid "the attachments together exceed {max} bytes"
 msgstr "die Anhänge zusammen überschreiten {max} Bytes"
 
 #: packages/imap/src/send.ts:62 packages/matrix/src/send.ts:165
-#: packages/signal/src/send.ts:275 packages/telegram/src/sender.ts:43
+#: packages/signal/src/send.ts:275 packages/telegram/src/sender.ts:57
 #: packages/whatsapp/src/send.ts:250
 msgid "sending to {address} is not granted for account {account}"
 msgstr "Das Senden an {address} ist für Konto {account} nicht freigegeben"
@@ -2627,6 +2636,10 @@ msgstr ""
 "Signal hat eine Geräteabweichung gemeldet ({status}), ohne ein Gerät zu "
 "nennen — es wurde nichts gesendet"
 
+#: packages/store/src/send-files.ts:78
+msgid "at most {max} attachments per message, this one has {count}"
+msgstr "höchstens {max} Anhänge pro Nachricht, diese hat {count}"
+
 #: packages/telegram/src/attachments.ts:34
 #: packages/telegram/src/attachments.ts:36
 msgid "this Telegram attachment cannot be found any more"
@@ -2681,7 +2694,7 @@ msgstr "keine Telegram-Sitzung für {account} — {hint}"
 msgid "the Telegram session {account} is not usable ({reason}) — {hint}"
 msgstr "die Telegram-Sitzung {account} ist nicht nutzbar ({reason}) — {hint}"
 
-#: packages/telegram/src/client.ts:169
+#: packages/telegram/src/client.ts:180
 msgid ""
 "Telegram asks for an email login setup first — finish it in an official app"
 msgstr ""
@@ -2690,15 +2703,15 @@ msgstr ""
 
 #. TRANSLATORS: {channel} is Telegram's own word for the route it used ("sms", "app", …),
 #. and arrives untranslated from the server.
-#: packages/telegram/src/client.ts:173
+#: packages/telegram/src/client.ts:184
 msgid "Telegram sent the login code via {channel}."
 msgstr "Telegram hat den Anmeldecode über {channel} geschickt."
 
-#: packages/telegram/src/client.ts:177
+#: packages/telegram/src/client.ts:188
 msgid "That code was not accepted — try again."
 msgstr "Dieser Code wurde nicht akzeptiert — versuche es noch einmal."
 
-#: packages/telegram/src/client.ts:177
+#: packages/telegram/src/client.ts:188
 msgid "Wrong password — try again."
 msgstr "Falsches Passwort — versuche es noch einmal."
 
@@ -2793,24 +2806,11 @@ msgid ""
 "session. Use is subject to Telegram's API Terms of Service; an account that "
 "misuses the API can be limited or banned by Telegram. curlew reads by "
 "default; it sends a plain-text message only to a chat you granted with "
-"`telegram.send`, and never edits or deletes. It keeps the session key on "
-"this machine only."
-msgstr ""
-"curlew spricht als Drittanbieter-Client (mtcute) über die offizielle MTProto-"
-"API mit Telegram. Telegram verlangt von jedem Client API-Zugangsdaten "
-"(api_id und api_hash). Ein paketierter Build KANN ein Paar mitbringen, das "
-"sein Distributor beigesteuert hat — dann braucht die Anmeldung nur deine "
-"Telefonnummer und den Code; curlew selbst liefert keines, und du kannst "
-"immer eigene verwenden: erstelle sie für DICH SELBST auf my.telegram.org und "
-"starte `curlew accounts add telegram --own-credentials` (oder setze sie in "
-"der Umgebung). Sie werden bei der Sitzung aufbewahrt. Die Nutzung unterliegt "
-"den API-Nutzungsbedingungen von Telegram; ein Konto, das die API "
-"missbraucht, kann von Telegram eingeschränkt oder gesperrt werden. curlew "
-"liest standardmäßig; es sendet eine Nur-Text-Nachricht nur an einen Chat, "
-"den du mit `telegram.send` freigegeben hast, und bearbeitet oder löscht nie. "
-"Den Sitzungsschlüssel behält es ausschließlich auf diesem Rechner."
+"`telegram.send`; a file goes out only when you pick it in the window, and "
+"curlew never edits or deletes. It keeps the session key on this machine only."
+msgstr "curlew spricht als Drittanbieter-Client (mtcute) über die offizielle MTProto-API mit Telegram. Telegram verlangt von jedem Client API-Zugangsdaten (api_id und api_hash). Ein paketierter Build KANN ein Paar mitbringen, das sein Distributor beigesteuert hat — dann braucht die Anmeldung nur deine Telefonnummer und den Code; curlew selbst liefert keines, und du kannst immer eigene verwenden: erstelle sie für DICH SELBST auf my.telegram.org und starte `curlew accounts add telegram --own-credentials` (oder setze sie in der Umgebung). Sie werden bei der Sitzung aufbewahrt. Die Nutzung unterliegt den API-Nutzungsbedingungen von Telegram; ein Konto, das die API missbraucht, kann von Telegram eingeschränkt oder gesperrt werden. curlew liest standardmäßig; es sendet eine Nur-Text-Nachricht nur an einen Chat, den du mit `telegram.send` freigegeben hast; eine Datei geht nur raus, wenn du sie im Fenster auswählst, und curlew bearbeitet oder löscht nie. Den Sitzungsschlüssel behält es ausschließlich auf diesem Rechner."
 
-#: packages/telegram/src/sender.ts:56
+#: packages/telegram/src/sender.ts:74
 msgid ""
 "a Telegram message holds at most {max} characters, this one has {length} — "
 "shorten it"

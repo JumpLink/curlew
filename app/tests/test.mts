@@ -22,6 +22,7 @@ import mailHeaders from './unit/protocol/mail-headers.test.ts';
 
 import storePaths from './unit/store/paths.test.ts';
 import storeDownload from './unit/store/download.test.ts';
+import storeSendFiles from './unit/store/send-files.test.ts';
 import storeFts from './unit/store/fts.test.ts';
 import storeDb from './unit/store/db.test.ts';
 import storeSync from './unit/store/sync.test.ts';
@@ -129,6 +130,7 @@ run({
   mailHeaders,
   storePaths,
   storeDownload,
+  storeSendFiles,
   storeFts,
   storeDb,
   storeSync,

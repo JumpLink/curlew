@@ -96,7 +96,7 @@ export default async () => {
   await describe('Telegram attachments', async () => {
     await it('claims reading but not sending in its manifest', async () => {
       expect(TELEGRAM_MANIFEST.capabilities.attachmentsRead).toBe(true);
-      expect(TELEGRAM_MANIFEST.capabilities.attachments).toBe(false);
+      expect(TELEGRAM_MANIFEST.capabilities.attachments).toBe(true);
     });
 
     await it('maps each kind of media to one attachment with its facts and a handle', async () => {
