@@ -12,7 +12,7 @@ import GLib from 'gi://GLib?version=2.0';
 import GObject from 'gi://GObject?version=2.0';
 import type Gio from 'gi://Gio?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
-import { _ } from '@curlew/protocol';
+import { _, _n, fmt } from '@curlew/protocol';
 
 import {
   type ListEntry,
@@ -36,12 +36,16 @@ import { mergeSummary, prunePicks, selectionTitle, selectionTools, togglePick } 
 export interface PeopleTools {
   merge(personIds: string[]): void;
   unmerge(personIds: string[]): void;
+  /** Open the merge assistant, from the banner. */
+  review(): void;
 }
 
 export interface ConversationList {
   page: Adw.NavigationPage;
   /** Replace the entries; the selection and the filters stay. */
   setEntries(entries: ListEntry[], accountLabels: Map<string, string>): void;
+  /** How many sets of similar people the assistant has to offer; the banner shows while it is above 0. */
+  setSuggestions(count: number): void;
   /** Switch one protocol chip on, as a click would. */
   chooseProtocol(backend: string): void;
 }
@@ -488,7 +492,14 @@ export function createConversationList(
   toolbar.add_top_bar(searchBar);
   toolbar.add_bottom_bar(actions);
   toolbar.set_reveal_bottom_bars(false);
-  toolbar.set_content(stack);
+  // A quiet banner above the list while the assistant has something to offer.
+  const banner = new Adw.Banner({ buttonLabel: _('Review'), revealed: false });
+  banner.connect('button-clicked', () => people.review());
+  const content = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
+  stack.set_vexpand(true);
+  content.append(banner);
+  content.append(stack);
+  toolbar.set_content(content);
   const page = new Adw.NavigationPage({ title: _('Conversations'), tag: 'list' });
   page.set_child(toolbar);
   page.add_controller(keys);
@@ -508,6 +519,12 @@ export function createConversationList(
       rebuildFilters();
       rebuild();
       if (picking) refreshTools();
+    },
+    setSuggestions(count) {
+      banner.set_title(
+        fmt(_n('{count} possible duplicate', '{count} possible duplicates', count), { count }),
+      );
+      banner.set_revealed(count > 0);
     },
     chooseProtocol(backend) {
       if (!entries.some((e) => e.backend === backend)) return;

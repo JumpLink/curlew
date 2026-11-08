@@ -70,6 +70,11 @@ export interface CurlewConfig {
    */
   mergedPeople: string[][];
   /**
+   * Sets of people the merge assistant offered and the person skipped, as participant ids. A set
+   * is not offered again until someone joins it.
+   */
+  declinedMerges: string[][];
+  /**
    * Top-level keys this build does not know, carried through unchanged so a build that does not
    * know a key cannot drop it on save (ADR 0004).
    */
@@ -85,6 +90,7 @@ const KNOWN_KEYS = [
   'encryption',
   'disabledAccounts',
   'mergedPeople',
+  'declinedMerges',
 ];
 
 /**
@@ -102,6 +108,7 @@ export function defaultConfig(): CurlewConfig {
     encryption: {},
     disabledAccounts: [],
     mergedPeople: [],
+    declinedMerges: [],
     unknown: {},
   };
 }
@@ -176,19 +183,31 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   const agentAccess = access.policy;
   const encryption = parseEncryption(obj.encryption);
   const disabledAccounts = parseDisabledAccounts(obj.disabledAccounts);
-  const mergedPeople = parseMergedPeople(obj.mergedPeople);
+  const mergedPeople = parseIdGroups(obj.mergedPeople, 'mergedPeople');
+  const declinedMerges = parseIdGroups(obj.declinedMerges, 'declinedMerges');
 
   const unknown: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
     if (!KNOWN_KEYS.includes(key)) unknown[key] = value;
   }
 
-  return { backends, ui, senders, grants, agentAccess, encryption, disabledAccounts, mergedPeople, unknown };
+  return {
+    backends,
+    ui,
+    senders,
+    grants,
+    agentAccess,
+    encryption,
+    disabledAccounts,
+    mergedPeople,
+    declinedMerges,
+    unknown,
+  };
 }
 
-function parseMergedPeople(raw: unknown): string[][] {
+function parseIdGroups(raw: unknown, key: string): string[][] {
   if (raw === undefined) return [];
-  const bad = () => new Error('config.mergedPeople must be a list of lists of participant ids');
+  const bad = () => new Error(`config.${key} must be a list of lists of participant ids`);
   if (!Array.isArray(raw)) throw bad();
   return raw.map((group) => {
     if (!Array.isArray(group) || group.some((id) => typeof id !== 'string' || id === '')) throw bad();
@@ -235,7 +254,16 @@ export function loadConfig(path = configPath()): CurlewConfig {
 export function saveConfig(config: CurlewConfig, path = configPath()): void {
   ensurePrivateDir(dirname(path));
   const part = `${path}.part`;
-  const { unknown, grants, agentAccess, encryption, disabledAccounts, mergedPeople, ...known } = config;
+  const {
+    unknown,
+    grants,
+    agentAccess,
+    encryption,
+    disabledAccounts,
+    mergedPeople,
+    declinedMerges,
+    ...known
+  } = config;
   const writtenRules = agentAccess.rules.filter((rule) => !rule.migrated);
   const carried = Object.fromEntries(Object.entries(unknown).filter(([key]) => !KNOWN_KEYS.includes(key)));
   const out = {
@@ -248,6 +276,7 @@ export function saveConfig(config: CurlewConfig, path = configPath()): void {
     ...(Object.keys(encryption).length > 0 ? { encryption } : {}),
     ...(disabledAccounts.length > 0 ? { disabledAccounts } : {}),
     ...(mergedPeople.length > 0 ? { mergedPeople } : {}),
+    ...(declinedMerges.length > 0 ? { declinedMerges } : {}),
   };
   writeFileSync(part, `${JSON.stringify(out, null, 2)}\n`, { mode: 0o600 });
   chmodSync(part, 0o600);

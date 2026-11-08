@@ -3,7 +3,13 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { peopleMerge, peopleUnmerge, withMerge, withoutMerge } from '../../../src/core/actions/people.ts';
+import {
+  peopleDecline,
+  peopleMerge,
+  peopleUnmerge,
+  withMerge,
+  withoutMerge,
+} from '../../../src/core/actions/people.ts';
 import { defaultConfig, loadConfig, parseConfig, saveConfig } from '../../../src/core/config.ts';
 
 export default async () => {
@@ -49,6 +55,20 @@ export default async () => {
         peopleUnmerge(['p-b'], path);
         expect(loadConfig(path).mergedPeople).toStrictEqual([]);
         expect(readFileSync(path, 'utf8').includes('mergedPeople')).toBe(false);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('remembers a skipped set once, whatever the order of its people', async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-people-'));
+      try {
+        const path = join(dir, 'config.json');
+        saveConfig(defaultConfig(), path);
+        peopleDecline(['p-b', 'p-a'], path);
+        peopleDecline(['p-a', 'p-b'], path);
+        expect(loadConfig(path).declinedMerges).toStrictEqual([['p-b', 'p-a']]);
+        expect(() => parseConfig('{"declinedMerges": [[1]]}')).toThrow(/declinedMerges/);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }

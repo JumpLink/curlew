@@ -230,6 +230,7 @@ export default async () => {
             encryption: {},
             disabledAccounts: [],
             mergedPeople: [],
+            declinedMerges: [],
             unknown: {},
           })
           .find((e) => e.name === 'signal');

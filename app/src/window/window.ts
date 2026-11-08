@@ -15,7 +15,10 @@ import { presentAccounts } from './accounts-dialog.ts';
 import { presentAgentAccess } from './agent-access-dialog.ts';
 import { loadConversationEntries } from './conversation-list-store.ts';
 import type { ListEntry } from './conversation-list-model.ts';
-import { peopleMerge, peopleUnmerge } from '../core/actions/people.ts';
+import { loadConfig } from '../core/config.ts';
+import { candidateSets } from './merge-candidates-model.ts';
+import { presentMergeAssistant } from './merge-assistant.ts';
+import { peopleDecline, peopleMerge, peopleUnmerge } from '../core/actions/people.ts';
 import { createConversationList } from './conversation-list.ts';
 import { composeMailReply } from './conversation-model.ts';
 import {
@@ -80,6 +83,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
 
   const menu = new Gio.Menu();
   menu.append(_('Accounts'), 'win.accounts');
+  menu.append(_('Merge contacts…'), 'win.merge-contacts');
   menu.append(_('Preferences'), 'win.preferences');
   menu.append(_('Agent access'), 'win.agent-access');
   const appSection = new Gio.Menu();
@@ -155,6 +159,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
       peopleUnmerge(ids);
       refresh();
     },
+    review: () => review(),
   });
   split.set_sidebar(sidebar.page);
   split.set_content(placeholder());
@@ -172,6 +177,9 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   const accounts = new Gio.SimpleAction({ name: 'accounts' });
   accounts.connect('activate', () => presentAccounts(window));
   window.add_action(accounts);
+  const mergeContacts = new Gio.SimpleAction({ name: 'merge-contacts' });
+  mergeContacts.connect('activate', () => review());
+  window.add_action(mergeContacts);
   const action = new Gio.SimpleAction({ name: 'agent-access' });
   action.connect('activate', () => presentAgentAccess(window));
   window.add_action(action);
@@ -188,7 +196,24 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
 
   let labels = indexAccountLabels();
   let labelled = false;
-  const refresh = () => sidebar.setEntries(loadConversationEntries(), labels);
+  let shown: ListEntry[] = [];
+  const refresh = () => {
+    shown = loadConversationEntries();
+    sidebar.setEntries(shown, labels);
+    sidebar.setSuggestions(candidateSets(shown, loadConfig(configPath()).declinedMerges).length);
+  };
+  const review = () => {
+    const sets = candidateSets(shown, loadConfig(configPath()).declinedMerges);
+    if (sets.length === 0) {
+      toasts.add_toast(new Adw.Toast({ title: _('No contacts to merge'), timeout: 3 }));
+      return;
+    }
+    presentMergeAssistant(window, sets, labels, {
+      merge: (ids) => peopleMerge(ids),
+      decline: (ids) => peopleDecline(ids),
+      closed: () => refresh(),
+    });
+  };
   refresh();
   if (options.protocol) sidebar.chooseProtocol(options.protocol);
   const open = options.open;

@@ -58,6 +58,7 @@ export default async () => {
           encryption: {},
           disabledAccounts: [],
           mergedPeople: [],
+          declinedMerges: [],
           unknown: {},
         }).length,
       ).toBe(0);
@@ -70,6 +71,7 @@ export default async () => {
         encryption: {},
         disabledAccounts: [],
         mergedPeople: [],
+        declinedMerges: [],
         unknown: {},
       };
       expect(registry.enabled(off).length).toBe(0);
@@ -107,6 +109,7 @@ export default async () => {
         encryption: {},
         disabledAccounts: [],
         mergedPeople: [],
+        declinedMerges: [],
         unknown: {},
       };
       expect(registry.enabled(config).length).toBe(0);
@@ -187,6 +190,7 @@ export default async () => {
             encryption: {},
             disabledAccounts: [],
             mergedPeople: [],
+            declinedMerges: [],
             unknown: {},
           },
           path,
