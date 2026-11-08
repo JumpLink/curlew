@@ -6,6 +6,7 @@
 import { _, fmt } from '@curlew/protocol';
 import type {
   AccountPrompter,
+  AttachmentFetcher,
   BackendAccount,
   BackendContext,
   ChatBackend,
@@ -24,6 +25,7 @@ import {
   refuseConfigSecrets,
 } from './accounts.ts';
 import type { LoginPrompts, XmppApi } from './api.ts';
+import { XmppAttachments } from './attachments.ts';
 import { requireArchive } from './archive.ts';
 import {
   type ClientFactory,
@@ -58,6 +60,7 @@ export class XmppBackend implements ChatBackend, SendBackend {
   private readonly context: BackendContext;
   private readonly createClient: ClientFactory;
   private readonly createLink: LinkFactory;
+  private readonly attachmentFetch: typeof globalThis.fetch;
 
   /**
    * Two factories on purpose: the sync path gets a connection typed read-only, the grant-opened
@@ -67,14 +70,27 @@ export class XmppBackend implements ChatBackend, SendBackend {
     context: BackendContext,
     createClient: ClientFactory = createXmppClient,
     createLink: LinkFactory = createXmppLink,
+    attachmentFetch: typeof globalThis.fetch = (input, init) => globalThis.fetch(input, init),
   ) {
     this.context = context;
     this.createClient = createClient;
     this.createLink = createLink;
+    this.attachmentFetch = attachmentFetch;
   }
 
   async listAccounts(): Promise<BackendAccount[]> {
     return listAccounts(this.context.secretsDir);
+  }
+
+  /**
+   * The download handle for received files. It opens no session: a link is plain HTTPS, so a fetch
+   * cannot collide with the receive loop. A missing account is still refused.
+   */
+  async openAttachments(accountId: string): Promise<AttachmentFetcher> {
+    if (!(await this.listAccounts()).some((a) => a.id === accountId)) {
+      throw new Error(MESSAGES.noAccount(accountId));
+    }
+    return new XmppAttachments(this.attachmentFetch);
   }
 
   /** The account's own bare JID, whatever the resource; the account's identity IS that JID. */

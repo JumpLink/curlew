@@ -23,6 +23,7 @@ import type {
   ParticipantAddress,
 } from '@curlew/protocol';
 import { normalizeAddress } from '@curlew/protocol';
+import { attachmentsOfLinks } from './attachment-link.ts';
 import { type ArchivedEntry, bareJid, leadingQuote, resourceOf } from './stanza.ts';
 
 /**
@@ -197,6 +198,17 @@ export function assignSeqs(entries: readonly ArchivedEntry[], afterSeq: number |
 
 const iso = (ms: number | null): string | null => (ms === null ? null : new Date(ms).toISOString());
 
+/**
+ * The links a message carries as files: its out-of-band references, and an `aesgcm://` body — what
+ * OMEMO media sharing sends, only ever readable once the message was decrypted.
+ */
+function linksOf(entry: ArchivedEntry): string[] {
+  const links = [...entry.attachmentUrls];
+  const body = entry.encrypted ? null : entry.body?.trim();
+  if (body?.startsWith('aesgcm://') && !/\s/.test(body) && !links.includes(body)) links.push(body);
+  return links;
+}
+
 export interface PageOptions {
   afterSeq: number | null;
   exhausted: boolean;
@@ -263,7 +275,8 @@ export function buildPage(
       }
       return;
     }
-    const hasContent = entry.body !== null || entry.attachmentUrls.length > 0 || entry.encrypted;
+    const links = linksOf(entry);
+    const hasContent = entry.body !== null || links.length > 0 || entry.encrypted;
     // Markers, receipts, reactions, chat states: entries of the archive, not messages.
     if (!hasContent) return;
     const fromSelf = isFromSelf(context, entry);
@@ -276,6 +289,9 @@ export function buildPage(
       replyClientId = inferred.target.originId ?? inferred.target.id;
       text = inferred.rest;
     }
+    // An upload's body is its own URL: the file is the message, so the link is not also its text.
+    if (links.length === 1 && text !== null && text.trim() === links[0]) text = null;
+    const attachments = attachmentsOfLinks(links);
     messages.set(entry.archiveId, {
       remoteId: entry.archiveId,
       seq: seqs[index],
@@ -288,7 +304,8 @@ export function buildPage(
       // rather than what they wrote, so no text is indexed — `omemo-archive.ts` has already
       // replaced the body of everything it could read.
       text,
-      hasAttachments: entry.attachmentUrls.length > 0,
+      hasAttachments: links.length > 0,
+      ...(attachments.length > 0 ? { attachments } : {}),
       replyToRemoteId: reply ? reply.archiveId : null,
       replyToClientId: replyClientId,
       threadRemoteId: null,

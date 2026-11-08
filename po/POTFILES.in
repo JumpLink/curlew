@@ -260,6 +260,8 @@ packages/whatsapp/src/send.ts
 packages/xmpp/src/accounts.ts
 packages/xmpp/src/api.ts
 packages/xmpp/src/archive.ts
+packages/xmpp/src/attachment-link.ts
+packages/xmpp/src/attachments.ts
 packages/xmpp/src/backend.ts
 packages/xmpp/src/client.ts
 packages/xmpp/src/granted.ts
