@@ -56,4 +56,11 @@
       <caption xml:lang="de">Regeln, was Agenten lesen und senden dürfen</caption>
     </screenshot>
   </screenshots>
+  <releases>
+    <release version="0.2.0" date="2026-10-26">
+      <description>
+        <p>Agent access rules, OMEMO for XMPP, and sending on Telegram, Matrix and WhatsApp.</p>
+      </description>
+    </release>
+  </releases>
 </component>

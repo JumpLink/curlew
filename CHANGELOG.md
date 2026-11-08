@@ -10,6 +10,24 @@
 
 ### Added
 
+- `curlew window` is a chat client. A conversation opens as bubbles with paging, day separators,
+  the sender in groups and a composer that sends through the daemon or the backend. One person
+  who writes on several messengers is one row and one chat; the composer and the header menu pick
+  the protocol, *Only via {protocol}* pins it, and a merge assistant offers people with similar
+  names (a local grouping only: the address book and the messages stay as they are). Your own
+  chat with yourself shows as *Note to self*. Design: `docs/design/contacts.md`.
+- Attachments across protocols (ADR 0010). Telegram, Signal, WhatsApp, Matrix and XMPP list the
+  files of a message; the window fetches one through the daemon on demand, shows small pictures
+  in the bubble (up to 2 MB, fetched when the bubble is in view) and opens anything else from a
+  tile. Agents get the read-gated tool `message_save_attachment`. The daemon wire version is 2.
+- Sending files from the window: a paperclip in the composer for Telegram, Matrix and XMPP.
+  An agent sends a file to a chat only after you confirm in a prompt that lists the file names,
+  never the paths; a file to your own address needs no prompt. Signal and WhatsApp still refuse
+  attachments.
+- Accounts in the window: add a chat account, switch one off, remove one (its messages stay),
+  and start the background service from the banner.
+- AppStream metadata and screenshots describe Curlew as a chat client, in English and German.
+
 - `packaging:install` (new `scripts/install-packaging.sh`): installs the desktop entry, the
   hicolor icons and the AppStream metadata into `~/.local/share` — honouring `XDG_DATA_HOME`,
   `PREFIX` and `DESTDIR` — and refreshes the desktop and icon caches, so GNOME Shell lists
@@ -29,7 +47,7 @@
   rules — per account and contact, read and write as allow, ask or deny, add and remove a rule,
   and the `askWithoutRule` switch. A rule that comes from an old send grant is shown as such.
   Only the explicit command opens a window. A desktop file and AppStream metadata
-  (`eu.jumplink.curlew`) ship with it; the icon is still open. Rules: `docs/design/ui.md`.
+  (`eu.jumplink.curlew`) ship with it. Rules: `docs/design/ui.md`.
 
 ## 0.2.0
 
