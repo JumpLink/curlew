@@ -223,7 +223,7 @@ export default async () => {
         const entry = builtinRegistry()
           .status({
             backends: {},
-            ui: { showAllEmails: true },
+            ui: { showAllEmails: true, notifications: 'preview' },
             senders: {},
             grants: [],
             agentAccess: { askWithoutRule: true, rules: [] },

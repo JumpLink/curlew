@@ -67,6 +67,7 @@ import {
   loadAttachmentHandle,
   loadAttachments,
   newestSeq,
+  readChanges,
   previewsDir,
   receiveDeliveries,
   resolveDownloadPath,
@@ -80,6 +81,8 @@ import { loadConfig, saveConfig, type CurlewConfig } from '../config.ts';
 import { AccessBroker, type PromptUi } from '../access-broker.ts';
 import { withAllowRule } from '../access.ts';
 import { gioNotificationPrompt } from '../lib/access-notifications.ts';
+import { gioNoticeSink, type NoticeSink } from '../lib/message-notifications.ts';
+import { newNoticeState, planNotices } from '../lib/message-notices.ts';
 import { contactNameFromIndex } from '../lib/contact-name.ts';
 import type { Capability } from '../grants.ts';
 import { configPath } from '@curlew/store';
@@ -147,6 +150,12 @@ export interface DaemonParams {
   publishSend?: typeof publishDaemonSend | null;
   /** How an agent access prompt is shown; injected by tests, which have no notification server. */
   accessPrompt?: PromptUi;
+  /**
+   * Where a notification for a new chat message goes; `null` shows none. Absent means the desktop
+   * for the user's own index and nothing for any other, so a test's synthetic messages never
+   * reach a real notification server.
+   */
+  noticeSink?: NoticeSink | null;
   /** Short only in tests: how long a prompt waits for an answer. */
   accessTimeoutMs?: number;
 }
@@ -582,12 +591,32 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   } catch {
     // A busy index is looked at again by the next poll.
   }
+  const notices =
+    params.noticeSink !== undefined
+      ? params.noticeSink
+      : params.dbPath === undefined
+        ? gioNoticeSink()
+        : null;
+  const noticeState = newNoticeState();
+  const noticeConfigPath = params.configPath ?? configPath();
+  const notify = (after: number | null): void => {
+    if (!notices) return;
+    try {
+      const mode = loadConfig(noticeConfigPath).ui.notifications;
+      for (const notice of planNotices(db, readChanges(db, after ?? 0).changes, mode, noticeState))
+        notices.show(notice);
+    } catch (err) {
+      log(`curlew-daemon: a notification could not be planned: ${errText(err)}`);
+    }
+  };
   const announce = (): void => {
     try {
       const newest = newestSeq(db);
       if (newest === null || newest === lastSeq) return;
+      const previous = lastSeq;
       lastSeq = newest;
       sendService?.emitChanged(newest);
+      notify(previous);
     } catch {
       // A busy index is looked at again by the next poll.
     }
@@ -825,6 +854,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     };
   } finally {
     clearInterval(changeWatch);
+    notices?.close();
     // Give the name up before the sessions are gone: a caller that arrives after this gets
     // "no daemon" and takes its own direct path, which is true from here on.
     sendService?.close();
