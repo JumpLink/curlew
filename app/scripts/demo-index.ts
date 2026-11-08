@@ -11,15 +11,54 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { deflateSync } from 'node:zlib';
 
+/** A harbour at dusk: sky, sun, sea and a lighthouse, drawn pixel by pixel. */
+function harbourScene(width: number, height: number): Buffer {
+  const horizon = Math.round(height * 0.62);
+  const towerX = Math.round(width * 0.68);
+  return demoPng(width, height, (x, y) => {
+    const mix = (a: number[], b: number[], t: number): [number, number, number] => [
+      Math.round(a[0]! + (b[0]! - a[0]!) * t),
+      Math.round(a[1]! + (b[1]! - a[1]!) * t),
+      Math.round(a[2]! + (b[2]! - a[2]!) * t),
+    ];
+    const lean = (y - horizon) / (height * 0.5);
+    const half = 9 + Math.round(((y - horizon + 120) / 120) * 4);
+    if (y < horizon && Math.abs(x - towerX) <= half && y > horizon - 120 && y < horizon + 4) {
+      return Math.floor((y - (horizon - 120)) / 24) % 2 === 0 ? [236, 236, 240] : [196, 64, 56];
+    }
+    if (y < horizon && y >= horizon - 132 && y < horizon - 120 && Math.abs(x - towerX) <= 12)
+      return [60, 60, 70];
+    if (y < horizon) {
+      const sun = Math.hypot(x - width * 0.3, y - horizon * 0.8);
+      if (sun < 26) return [255, 224, 150];
+      return mix([88, 112, 178], [250, 176, 120], y / horizon);
+    }
+    const ripple = Math.sin(x / 9 + y / 3) * 6 * Math.max(lean, 0.1);
+    const base = mix([234, 150, 118], [26, 52, 98], Math.min(1, lean * 1.6));
+    return [base[0] + ripple, base[1] + ripple, base[2] + ripple].map((v) =>
+      Math.max(0, Math.min(255, Math.round(v))),
+    ) as [number, number, number];
+  });
+}
+
 /** A small RGB gradient PNG, made here so the demo needs no file or network. */
-function demoPng(width: number, height: number): Buffer {
+function demoPng(
+  width: number,
+  height: number,
+  pixel: (x: number, y: number) => [number, number, number] = (x, y) => [
+    Math.round((x / width) * 200) + 30,
+    Math.round((y / height) * 160) + 70,
+    90 + (((x >> 5) + (y >> 5)) % 2) * 60,
+  ],
+): Buffer {
   const raw = Buffer.alloc((width * 3 + 1) * height);
   for (let y = 0; y < height; y++) {
     const row = y * (width * 3 + 1);
     for (let x = 0; x < width; x++) {
-      raw[row + 1 + x * 3] = Math.round((x / width) * 200) + 30;
-      raw[row + 2 + x * 3] = Math.round((y / height) * 160) + 70;
-      raw[row + 3 + x * 3] = 90 + (((x >> 5) + (y >> 5)) % 2) * 60;
+      const [r, g, b] = pixel(x, y);
+      raw[row + 1 + x * 3] = r;
+      raw[row + 2 + x * 3] = g;
+      raw[row + 3 + x * 3] = b;
     }
   }
   const chunk = (type: string, data: Buffer): Buffer => {
@@ -76,6 +115,7 @@ const ACCOUNTS: Array<[id: string, identity: string]> = [
   ['xmpp-demo1', 'robin@chat.example.org'],
   ['signal-demo1', 'Robin (Signal)'],
   ['matrix-demo1', '@robin:example.org'],
+  ['telegram-demo1', 'Robin (Telegram)'],
   ['whatsapp-demo1', 'Robin (WhatsApp)'],
 ];
 
@@ -102,6 +142,7 @@ const CONVERSATIONS: Row[] = [
   ['c11', 'mail', 'mail-demo1', 'direct', 'Monitoring Alerts', 60 * 200, 0],
   ['c13', 'matrix', 'matrix-demo1', 'group', 'Release planning', 25, 0],
   ['c14', 'matrix', 'matrix-demo1', 'group', 'Security team', 35, 0],
+  ['c16', 'telegram', 'telegram-demo1', 'direct', 'Alex Weber', 3, 0],
   ['c15', 'whatsapp', 'whatsapp-demo1', 'direct', 'Robin', 7, 0],
   ['c12', 'signal', 'signal-0b8e1c2a-1111-4222-8333-444455556666', 'direct', '', 5, 0],
 ];
@@ -148,6 +189,7 @@ try {
     ['c15', 'p-robin-wa', 'Robin', 'whatsapp', '4915100000000@s.whatsapp.net'],
     ['c5', 'p-jo', 'Jo Klein', 'jid', 'jo@chat.example.org'],
     ['c1', 'p-alex', 'Alex Weber', 'signal', '1f0c6a52-2222-4333-8444-555566667777'],
+    ['c16', 'p-alex', 'Alex Weber', 'telegram', '424242'],
     ['c2', 'p-mia', 'Mia Schulz', 'matrix', '@mia:example.org'],
     ['c2', 'p-noah', 'Noah Braun', 'matrix', '@noah:example.org'],
   ]) {
@@ -159,6 +201,7 @@ try {
 
   const PEOPLE = new Map([
     ['p-sam', ['p-sam', 'Sam Fischer', 'email', 'sam@example.org']],
+    ['p-alex', ['p-alex', 'Alex Weber', 'signal', '1f0c6a52-2222-4333-8444-555566667777']],
     ['p-jo', ['p-jo', 'Jo Klein', 'jid', 'jo@chat.example.org']],
     ['p-mia', ['p-mia', 'Mia Schulz', 'matrix', '@mia:example.org']],
     ['p-noah', ['p-noah', 'Noah Braun', 'matrix', '@noah:example.org']],
@@ -182,6 +225,12 @@ try {
     ['c2', true, 100, 'Looks great, thanks!', null],
     ['c2', false, 30, 'Can we ship it with the next release?', null],
     ['c2', false, 18, 'Noah, what do you think?', null],
+    ['c1', false, 60 * 5, 'Are you coming to the harbour on Sunday?', null],
+    ['c1', true, 60 * 5 - 2, 'Yes, I would love to.', null],
+    ['c1', false, 60 * 4, 'Great! I will send you the route.', null],
+    ['c16', false, 6, 'Here is the route, it is a nice walk.', null],
+    ['c16', true, 5, 'Perfect, thank you!', null],
+    ['c16', false, 3, 'See you at ten at the lighthouse.', null],
     ['c15', true, 9, 'Remember: passport renewal appointment', null],
     ['c15', true, 7, 'https://example.org/forms/passport', null],
     ['c14', false, 35, 'Rotating the keys on Friday.', null],
@@ -209,13 +258,15 @@ try {
       ? null
       : conversationId === 'c3'
         ? 'p-sam'
-        : conversationId === 'c14'
-          ? 'p-mia'
-          : conversationId === 'c2'
-            ? text.startsWith('Can')
-              ? 'p-noah'
-              : 'p-mia'
-            : 'p-jo';
+        : conversationId === 'c1' || conversationId === 'c16'
+          ? 'p-alex'
+          : conversationId === 'c14'
+            ? 'p-mia'
+            : conversationId === 'c2'
+              ? text.startsWith('Can')
+                ? 'p-noah'
+                : 'p-mia'
+              : 'p-jo';
     const at = new Date(now - minutesAgo * 60_000).toISOString();
     const mail = backend === 'mail';
     const n = i + 1;
@@ -285,6 +336,40 @@ try {
     const cache = join(dir, 'previews', createHash('sha256').update(key).digest('hex'));
     mkdirSync(cache, { recursive: true });
     writeFileSync(join(cache, 'garden-beds.png'), png);
+  }
+
+  // A picture in a Telegram chat, cached where a finished download would sit.
+  {
+    const n = 600;
+    const at = new Date(now - 4 * 60_000).toISOString();
+    message.run(
+      `m${n}`,
+      'c16',
+      'telegram',
+      'telegram-demo1',
+      'p-alex',
+      0,
+      at,
+      null,
+      `r${n}`,
+      '',
+      0,
+      null,
+      null,
+      n,
+    );
+    db.prepare(
+      'UPDATE conversation_messages SET sender_name = ?, sender_kind = ?, sender_address = ?, has_attachments = 1 WHERE id = ?',
+    ).run('Alex Weber', 'telegram', '424242', `m${n}`);
+    const png = harbourScene(480, 320);
+    db.prepare(
+      `INSERT OR REPLACE INTO message_attachments (message_id, idx, filename, mime_type, size, kind, width, height, handle)
+       VALUES (?, 0, 'harbour.png', 'image/png', ?, 'image', 480, 320, 'demo-handle')`,
+    ).run(`m${n}`, png.length);
+    const key = ['telegram-demo1', '', '', `r${n}`, '0'].join('\u0000');
+    const cache = join(dir, 'previews', createHash('sha256').update(key).digest('hex'));
+    mkdirSync(cache, { recursive: true });
+    writeFileSync(join(cache, 'harbour.png'), png);
   }
 
   // A long mail conversation (130 messages over several days, some with multi-paragraph bodies)

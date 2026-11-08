@@ -908,11 +908,14 @@ shows a window). The sidebar is one read-only list of every conversation from th
 whatever the messenger, in collapsible sections *People* and *Groups*. Each row shows an avatar with
 a small protocol badge, the title (bold while unread), the protocol and account, and a grey unread
 count. Filter chips narrow it by protocol (and by account, once a protocol with several is
-chosen); the search button filters by name. Reading and writing a conversation is not built yet.
-At 720 sp and narrower the window collapses to one pane, down to 360 px wide. The layout rules and
+chosen); the search button filters by name. One person with several messengers is one row and
+one chat, whichever protocol a message came by. Pictures show in the bubble; other files open from
+a tile. At 720 sp and narrower the window collapses to one pane, down to 360 px wide. The layout rules and
 their role models are in [`docs/design/ui.md`](docs/design/ui.md).
 
-![The conversation list](docs/screenshots/conversations.png)
+![A conversation with a person who writes on two messengers](docs/screenshots/conversations.png)
+
+![The same conversation at 360 px wide](docs/screenshots/conversation-narrow.png)
 
 **Agent access** is not a main area: it opens from the primary menu as a dialog. It lists the
 rules grouped by account, with `Name (address)` where the index knows the contact and *Whole
