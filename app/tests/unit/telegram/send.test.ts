@@ -6,10 +6,15 @@ import { join } from 'node:path';
 import type { AccountPrompter, BackendContext, SendPermit } from '@curlew/protocol';
 import { isSendBackend } from '@curlew/protocol';
 import { chatConversationId, getConversation } from '@curlew/store';
-import { TELEGRAM_MAX_MESSAGE_CHARS, TELEGRAM_MANIFEST, TelegramBackend } from '@curlew/telegram';
+import {
+  TELEGRAM_MAX_CAPTION_CHARS,
+  TELEGRAM_MAX_MESSAGE_CHARS,
+  TELEGRAM_MANIFEST,
+  TelegramBackend,
+} from '@curlew/telegram';
 
 import { openIndex } from '../../../src/core/actions/index.ts';
-import { sendAsAgent } from '../../../src/core/actions/send.ts';
+import { sendAsAgent, sendMessage } from '../../../src/core/actions/send.ts';
 import { fakeFactory } from './fake-client.ts';
 
 // Synthetic only: a fake client, a temporary directory per case, no session of anyone's.
@@ -73,12 +78,13 @@ async function refused(promise: Promise<unknown>): Promise<boolean> {
 
 export default async () => {
   await describe('Telegram sending', async () => {
-    await it('is a send backend, plain text only', async () => {
+    await it('is a send backend that can attach files', async () => {
       await withRig(granted, async ({ backend }) => {
         expect(isSendBackend(backend)).toBe(true);
         expect(TELEGRAM_MANIFEST.name).toBe('telegram');
         const sender = await backend.openSender(ACCOUNT, { account: ACCOUNT, addresses: ['1001'] });
         expect(sender.features.markdown).toBe(false);
+        expect(sender.features.attachments).toBe(true);
         expect(sender.sendImage === undefined).toBe(true);
         await sender.close();
       });
@@ -147,12 +153,116 @@ export default async () => {
       });
     });
 
+    await it('sends a picked file from the window: a photo with the text as its caption', async () => {
+      await withRig({}, async (rig) => {
+        const photo = join(rig.dir, 'cat.png');
+        writeFileSync(photo, new Uint8Array([1, 2, 3, 4]));
+        const out = await sendMessage({
+          accountId: ACCOUNT,
+          to: '1001',
+          text: 'Look',
+          attachments: [photo],
+          frontend: 'window',
+          dbPath: join(rig.dir, 'index.db'),
+          configPath: rig.configPath,
+          writeLogPath: join(rig.dir, 'writes.log'),
+          backend: rig.backend,
+        });
+        const client = rig.fake.clients[0];
+        expect(client.files.length).toBe(1);
+        expect(client.files[0].fileName).toBe('cat.png');
+        expect(client.files[0].size).toBe(4);
+        expect(client.files[0].asPhoto).toBe(true);
+        expect(client.files[0].caption).toBe('Look');
+        expect(client.sent.length).toBe(0);
+        expect(out.attachments?.[0]?.filename).toBe('cat.png');
+        // The log names the file and its size, never its bytes.
+        const line = JSON.parse(readFileSync(join(rig.dir, 'writes.log'), 'utf8').trim());
+        expect(line.attachments[0].filename).toBe('cat.png');
+        expect(line.attachments[0].size).toBe(4);
+      });
+    });
+
+    await it('sends a file without text as a document, and a long text after the file', async () => {
+      await withRig({}, async (rig) => {
+        const doc = join(rig.dir, 'notes.pdf');
+        writeFileSync(doc, new Uint8Array(10));
+        const base = {
+          accountId: ACCOUNT,
+          to: '1001',
+          attachments: [doc],
+          frontend: 'window' as const,
+          dbPath: join(rig.dir, 'index.db'),
+          configPath: rig.configPath,
+          writeLogPath: join(rig.dir, 'writes.log'),
+          backend: rig.backend,
+        };
+        await sendMessage(base);
+        const first = rig.fake.clients[0];
+        expect(first.files[0].asPhoto).toBe(false);
+        expect(first.files[0].caption === undefined).toBe(true);
+        expect(first.sent.length).toBe(0);
+
+        await sendMessage({ ...base, text: 'x'.repeat(TELEGRAM_MAX_CAPTION_CHARS + 1) });
+        const second = rig.fake.clients[1];
+        expect(second.files[0].caption === undefined).toBe(true);
+        expect(second.sent.length).toBe(1);
+        expect(second.calls.indexOf('sendFile:1001') < second.calls.indexOf('sendText:1001')).toBe(true);
+      });
+    });
+
+    await it('refuses a bad file before a byte is sent', async () => {
+      await withRig({}, async (rig) => {
+        const base = {
+          accountId: ACCOUNT,
+          to: '1001',
+          text: 'x',
+          frontend: 'window' as const,
+          dbPath: join(rig.dir, 'index.db'),
+          configPath: rig.configPath,
+          writeLogPath: join(rig.dir, 'writes.log'),
+          backend: rig.backend,
+        };
+        expect(await refused(sendMessage({ ...base, attachments: ['relative.png'] }))).toBe(true);
+        expect(await refused(sendMessage({ ...base, attachments: [join(rig.dir, 'missing.png')] }))).toBe(
+          true,
+        );
+        expect(await refused(sendMessage({ ...base, attachments: [rig.dir] }))).toBe(true);
+        for (const client of rig.fake.clients) {
+          expect(client.files.length).toBe(0);
+          expect(client.sent.length).toBe(0);
+        }
+      });
+    });
+
+    await it('takes no attachment from an agent, even with a grant', async () => {
+      await withRig(granted, async (rig) => {
+        const file = join(rig.dir, 'secret.txt');
+        writeFileSync(file, 'x');
+        const attempt = sendAsAgent({
+          accountId: ACCOUNT,
+          to: '1001',
+          text: 'x',
+          attachments: [file],
+          frontend: 'cli',
+          dbPath: join(rig.dir, 'index.db'),
+          configPath: rig.configPath,
+          writeLogPath: join(rig.dir, 'writes.log'),
+          backend: rig.backend,
+        });
+        expect(await refused(attempt)).toBe(true);
+        expect(rig.fake.clients.length).toBe(0);
+      });
+    });
+
     await it('keeps the read session unable to send', async () => {
       await withRig(granted, async ({ backend, fake }) => {
         const session = await backend.connect(ACCOUNT);
         expect('sendText' in session).toBe(false);
+        expect('sendFile' in session).toBe(false);
         expect('send' in session).toBe(false);
         expect('sendText' in (session as unknown as { api: object }).api).toBe(false);
+        expect('sendFile' in (session as unknown as { api: object }).api).toBe(false);
         expect(fake.clients[0].sent.length).toBe(0);
         await session.close();
       });

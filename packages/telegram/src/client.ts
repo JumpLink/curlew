@@ -7,7 +7,7 @@
  */
 
 import { _, fmt } from '@curlew/protocol';
-import { FileLocation, type ITelegramStorageProvider, type RpcCallMiddleware } from '@mtcute/core';
+import { FileLocation, InputMedia, type ITelegramStorageProvider, type RpcCallMiddleware } from '@mtcute/core';
 import { MemoryStorage, networkMiddlewares, TelegramClient, WebPlatform } from '@mtcute/web';
 import type { LoginPrompts, TelegramApi, TelegramClientHandle, TelegramLive, TgUser } from './api.ts';
 import type { TelegramCredentials } from './credentials.ts';
@@ -156,6 +156,17 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
       return { media, chunks: client.downloadAsIterable(media) };
     },
     sendText: (chatId, text) => client.sendText(chatId, text),
+    sendFile: (chatId, file) =>
+      client.sendMedia(
+        chatId,
+        file.asPhoto
+          ? InputMedia.photo(file.bytes, { caption: file.caption })
+          : InputMedia.document(file.bytes, {
+              fileName: file.fileName,
+              fileMime: file.contentType,
+              caption: file.caption,
+            }),
+      ),
     ...(live === true ? { live: mtcuteLive(client) } : {}),
     destroy: () => client.destroy(),
     connect: () => client.connect(),

@@ -333,14 +333,18 @@ export async function sendThrough(
       }
       plan.push({ kind: 'image', value: request.imageUrl });
     }
+    const attachments = request.attachments ?? [];
+    // Files without a text are a message of their own: the sender gets an empty text with them.
+    if (plan.length === 0 && attachments.length > 0) plan.push({ kind: 'text', value: '' });
     if (plan.length === 0) throw new Error(_('nothing to send: the text is empty after rendering'));
     for (const step of plan) if (step.kind === 'image') step.value = validateImageUrl(step.value);
-    const attachments = request.attachments ?? [];
     if (attachments.length > 0 && !sender.features.attachments) {
       throw new Error(fmt(_('{backend} cannot send attachments'), { backend: backendName }));
     }
 
-    for (const step of plan)
+    // The files travel with the FIRST text only: a long text split in parts must not send them twice.
+    const firstText = plan.findIndex((step) => step.kind === 'text');
+    for (const [index, step] of plan.entries())
       steps.push({
         sent:
           step.kind === 'text'
@@ -351,10 +355,13 @@ export async function sendThrough(
                 ...(request.emailChat ? { emailChat: true } : {}),
                 ...(request.inReplyTo ? { inReplyTo: request.inReplyTo } : {}),
                 ...(request.references ? { references: request.references } : {}),
-                ...(attachments.length === 0 ? {} : { attachments: attachments.map((path) => ({ path })) }),
+                ...(attachments.length === 0 || index !== firstText
+                  ? {}
+                  : { attachments: attachments.map((path) => ({ path })) }),
               })
             : await sender.sendImage!(request.to, step.value),
-        body: step.value,
+        // What the local echo shows: with no text, the names of the files.
+        body: step.value === '' ? attachments.map((path) => basename(path)).join(', ') : step.value,
       });
   } catch (error) {
     // The typed refusal carries a reason, not a sentence. Turned into one here, where the
@@ -422,6 +429,15 @@ export async function sendAsAgent(params: SendParams): Promise<SendResult> {
       fmt(_('no account {account} — `curlew accounts list` shows them'), { account: params.accountId }),
     );
   }
+  // A chat backend's attachment is a path on the person's disk that an agent names (ADR 0010 §4):
+  // until the access rules can say "this agent may attach files" (AP4.6), only mail takes them.
+  if ((params.attachments ?? []).length > 0 && found.backend.manifest.name !== 'mail') {
+    throw new Error(
+      fmt(_('{backend} takes no attachments from an agent — pick the file in the Curlew window'), {
+        backend: found.backend.manifest.name,
+      }),
+    );
+  }
   const gate = agentGate(config, { frontend: params.frontend === 'mcp' ? 'mcp' : 'cli', ...params.agent });
   const accessReason = await requireAccess(gate, {
     account: params.accountId,
@@ -452,8 +468,8 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
     throw new Error(fmt(_('{backend} cannot send'), { backend: backend.manifest.name }));
 
   const text = params.text !== undefined && params.text.trim().length > 0 ? params.text : undefined;
-  if (text === undefined && params.imageUrl === undefined)
-    throw new Error(_('nothing to send: give text, an image URL or both'));
+  if (text === undefined && params.imageUrl === undefined && (params.attachments ?? []).length === 0)
+    throw new Error(_('nothing to send: give text, an image URL or an attachment'));
   if (params.subject !== undefined && !backend.manifest.capabilities.subject) {
     throw new Error(fmt(_('{backend} messages carry no subject'), { backend: backend.manifest.name }));
   }

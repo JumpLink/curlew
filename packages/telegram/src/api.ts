@@ -162,8 +162,17 @@ export interface LoginPrompts {
   notify(message: string): void;
 }
 
+/** A file to upload: its bytes, name and type. */
+export interface TgOutgoingFile {
+  readonly bytes: Uint8Array;
+  readonly fileName: string;
+  readonly contentType: string;
+  readonly caption?: string;
+  readonly asPhoto: boolean;
+}
+
 /**
- * A full client: the read API plus connecting, logging in and — the one write — `sendText`. What a
+ * A full client: the read API plus connecting, logging in and — the writes — `sendText` and `sendFile`. What a
  * `ClientFactory` returns.
  *
  * `sendText` lives here and NOT on `TelegramApi` on purpose: `TelegramBackend.connect()` wraps the
@@ -174,6 +183,11 @@ export interface LoginPrompts {
 export interface TelegramClientHandle extends TelegramApi {
   /** Send ONE plain-text message to the chat (a marked id, as in `TgPeer.id`); returns it as sent. */
   sendText(chatId: number, text: string): Promise<TgMessage>;
+  /**
+   * Send ONE file, optionally with a caption. `asPhoto` sends a picture as a photo (Telegram
+   * recompresses it, as every chat app does) instead of as a document.
+   */
+  sendFile(chatId: number, file: TgOutgoingFile): Promise<TgMessage>;
   connect(): Promise<void>;
   /** Present only on a client made with `live: true`. */
   readonly live?: TelegramLive;
