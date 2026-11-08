@@ -82,6 +82,7 @@ import windowAccounts from './unit/window/accounts-model.test.ts';
 import windowConversationList from './unit/window/conversation-list-model.test.ts';
 import windowAttachment from './unit/window/attachment-model.test.ts';
 import windowConversation from './unit/window/conversation-model.test.ts';
+import windowComposerFiles from './unit/window/composer-files-model.test.ts';
 import encryption from './unit/core/encryption.test.ts';
 import capabilities from './unit/core/capabilities.test.ts';
 import send from './unit/core/send.test.ts';
@@ -187,6 +188,7 @@ run({
   accountToggle,
   windowConversationList,
   windowConversation,
+  windowComposerFiles,
   windowAttachment,
   encryption,
   send,

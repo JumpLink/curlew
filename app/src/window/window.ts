@@ -17,7 +17,13 @@ import { loadConversationEntries } from './conversation-list-store.ts';
 import type { ListEntry } from './conversation-list-model.ts';
 import { createConversationList } from './conversation-list.ts';
 import { composeMailReply } from './conversation-model.ts';
-import { loadConversationMessages, loadMailReplyTarget, loadOlderMessages } from './conversation-store.ts';
+import {
+  attachingBackends,
+  loadConversationMessages,
+  loadMailReplyTarget,
+  loadOlderMessages,
+} from './conversation-store.ts';
+import { pickedNames } from './composer-files-model.ts';
 import { clearPreviews } from './attachment-store.ts';
 import { createConversationView } from './conversation-view.ts';
 import { createMediaViewer } from './media-viewer.ts';
@@ -90,7 +96,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   let currentEntry: ListEntry | null = null;
   let currentMessages: ConversationMessage[] = [];
   const conversation = createConversationView(
-    async (text, choice) => {
+    async (text, choice, files) => {
       const entry = currentEntry;
       if (!entry) throw new Error(_('This conversation has no recipient address.'));
       // The carrier's own last message: a mail reply must not thread onto a Signal note.
@@ -105,6 +111,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
         to: choice.target,
         text,
         frontend: 'window',
+        ...(files.length > 0 ? { attachments: files.map((f) => f.path) } : {}),
         ...mail,
       });
       return {
@@ -124,9 +131,10 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
         classification: 'conversational',
         classificationReason: 'self',
         ref: { accountId: choice.accountId, backend: choice.backend },
-        bodyText: text,
+        bodyText: text || pickedNames(files),
       };
     },
+    (backend) => attachingBackends().has(backend),
     (entry, oldest) => loadOlderMessages(entry, oldest),
     (source, kind) => viewer.open(source, kind),
   );

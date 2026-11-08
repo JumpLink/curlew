@@ -42,6 +42,8 @@ import { attachmentList, type AttachmentHandlers } from './attachment-view.ts';
 import { shownAttachments, type AttachmentKind } from './attachment-model.ts';
 import type { AttachmentSource } from './attachment-store.ts';
 import { fadedOverlay } from './fade-bin.ts';
+import { createComposerFiles } from './composer-files.ts';
+import type { PickedFile } from './composer-files-model.ts';
 
 export interface ConversationView {
   page: Adw.NavigationPage;
@@ -63,7 +65,8 @@ interface Built {
 }
 
 export function createConversationView(
-  onSend: (text: string, choice: ProtocolChoice) => Promise<ConversationMessage>,
+  onSend: (text: string, choice: ProtocolChoice, files: PickedFile[]) => Promise<ConversationMessage>,
+  canAttach: (backend: string) => boolean,
   loadOlder: (entry: ListEntry, oldest: MessageCursor) => ShownMessage[],
   openMedia: (source: AttachmentSource, kind: AttachmentKind) => void,
 ): ConversationView {
@@ -73,6 +76,7 @@ export function createConversationView(
   let accountLabels = new Map<string, string>();
   let selectedChoice: ProtocolChoice | null = null;
   let sending = false;
+  let composerBlocked = false;
   let generation = 0;
   const built = new Map<string, Built>();
   // Paging state. `ready` is false until the first page is built and scrolled to the end;
@@ -117,8 +121,17 @@ export function createConversationView(
   hint.add_css_class('caption');
   content.append(scroller);
   content.append(hint);
-  content.append(composer);
   const overlay = new Adw.ToastOverlay({ child: content });
+  const files = createComposerFiles({
+    parent: () => (page.get_root() as Gtk.Window | null) ?? null,
+    toast: (text) => overlay.add_toast(new Adw.Toast({ title: text, timeout: 4 })),
+    onChange: () => {},
+    dropOn: content,
+    pasteInto: input,
+  });
+  composer.prepend(files.button);
+  content.append(files.strip);
+  content.append(composer);
   const toolbar = new Adw.ToolbarView();
   toolbar.add_top_bar(header);
   toolbar.set_content(overlay);
@@ -231,6 +244,21 @@ export function createConversationView(
     }
   };
 
+  // The paperclip follows the carrier: files picked for one that takes none would be lost silently.
+  const updateAttachable = (): void => {
+    const on = selectedChoice !== null && !composerBlocked && canAttach(selectedChoice.backend);
+    if (files.setAttachable(on) > 0) {
+      overlay.add_toast(
+        new Adw.Toast({
+          title: fmt(_('{protocol} cannot send files; the attached files were removed'), {
+            protocol: protocolLabel(selectedChoice?.backend ?? ''),
+          }),
+          timeout: 6,
+        }),
+      );
+    }
+  };
+
   const selectChoice = (choice: ProtocolChoice): void => {
     selectedChoice = choice;
     picker.icon_name = choice.icon;
@@ -240,6 +268,7 @@ export function createConversationView(
       [fmt(_('Send via {protocol}'), { protocol: protocolLabel(choice.backend) })],
     );
     updateSelectedIcon();
+    updateAttachable();
   };
 
   const rebuildPicker = (choices: ProtocolChoice[]): void => {
@@ -558,11 +587,14 @@ export function createConversationView(
 
   const submit = () => {
     const text = input.get_text().trim();
-    if (!text || sending || !entry || !selectedChoice) return;
+    const picked = files.files();
+    if ((!text && picked.length === 0) || sending || !entry || !selectedChoice) return;
     sending = true;
     input.set_sensitive(false);
     send.set_sensitive(false);
-    void onSend(text, selectedChoice)
+    // An upload takes a while: the button shows that something is happening.
+    send.set_child(new Adw.Spinner());
+    void onSend(text, selectedChoice, picked)
       .then((message) => {
         const previous = messages[messages.length - 1] ?? null;
         const previousDay = dayOf(previous ?? message);
@@ -579,22 +611,26 @@ export function createConversationView(
         // The person's own message starts no sender run, and the next one from another starts its own.
         addRow(message, undefined, undefined, run, divider, day !== '' && day !== previousDay, -1);
         input.set_text('');
+        files.clear();
         scrollToEnd();
       })
       .catch((err: unknown) => {
-        overlay.add_toast(
-          new Adw.Toast({
-            title: fmt(_('Message not sent: {error}'), {
-              error: err instanceof Error ? err.message : String(err),
-            }),
-            timeout: 6,
+        // The text and the files stay where they are, so "Retry" sends the same message again.
+        const toast = new Adw.Toast({
+          title: fmt(_('Message not sent: {error}'), {
+            error: err instanceof Error ? err.message : String(err),
           }),
-        );
+          buttonLabel: _('Retry'),
+          timeout: 10,
+        });
+        toast.connect('button-clicked', submit);
+        overlay.add_toast(toast);
       })
       .finally(() => {
         sending = false;
         input.set_sensitive(true);
         send.set_sensitive(true);
+        send.set_icon_name('mail-send-symbolic');
         input.grab_focus();
       });
   };
@@ -624,7 +660,9 @@ export function createConversationView(
       hint.set_visible(sendable && roomLine !== null);
       input.set_sensitive(blocked === null);
       send.set_sensitive(blocked === null);
+      composerBlocked = blocked !== null;
       input.set_text('');
+      files.clear();
       if (choices.length > 1) {
         selectedChoice = defaultProtocolChoice(messages, choices);
         rebuildPicker(choices);
@@ -637,6 +675,7 @@ export function createConversationView(
         picker.set_visible(false);
       }
       if (selectedChoice) selectChoice(selectedChoice);
+      else updateAttachable();
       const subjects = subjectLabels(messages);
       const starts = dayStarts(messages);
       const senders = senderRunStarts(messages, nextEntry.kind === 'group');
