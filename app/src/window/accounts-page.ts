@@ -21,7 +21,7 @@ export interface AccountsPage {
   showError(message: string): void;
 }
 
-function statusLabel(status: AccountStatus): string {
+export function accountStatusLabel(status: AccountStatus): string {
   switch (status) {
     case 'connected':
       return _('Connected');
@@ -55,12 +55,12 @@ export function openGoaSettings(onError: (err: Error) => void): void {
   }
 }
 
-function buildRow(row: AccountRow, daemonPresent: boolean): Adw.ActionRow {
+function buildRow(row: AccountRow, daemonPresent: boolean, onOpen: (() => void) | null): Adw.ActionRow {
   const widget = new Adw.ActionRow({
     title: row.label,
     subtitle: row.detail ?? '',
     useMarkup: false,
-    activatable: false,
+    activatable: onOpen !== null,
   });
   widget.add_prefix(
     new Adw.Avatar({
@@ -75,11 +75,15 @@ function buildRow(row: AccountRow, daemonPresent: boolean): Adw.ActionRow {
   if (row.status && daemonPresent) {
     widget.add_suffix(
       new Gtk.Label({
-        label: statusLabel(row.status),
+        label: accountStatusLabel(row.status),
         cssClasses: ['caption', STATUS_CLASS[row.status]],
         valign: Gtk.Align.CENTER,
       }),
     );
+  }
+  if (onOpen) {
+    widget.add_suffix(new Gtk.Image({ iconName: 'go-next-symbolic' }));
+    widget.connect('activated', onOpen);
   }
   return widget;
 }
@@ -94,6 +98,7 @@ function buildGroup(
   group: ProtocolGroup,
   daemonPresent: boolean,
   onError: (err: Error) => void,
+  onOpenAccount: (group: ProtocolGroup, row: AccountRow) => void,
 ): Adw.PreferencesGroup {
   const prefGroup = new Adw.PreferencesGroup({ title: group.label });
 
@@ -115,12 +120,19 @@ function buildGroup(
   } else if (group.rows.length === 0) {
     prefGroup.add(buildMessageRow(_('No accounts yet'), null, null));
   } else {
-    for (const row of group.rows) prefGroup.add(buildRow(row, daemonPresent));
+    for (const row of group.rows) {
+      // A mail account is managed in GNOME Settings, so it has no page of its own here.
+      prefGroup.add(buildRow(row, daemonPresent, group.isGoa ? null : () => onOpenAccount(group, row)));
+    }
   }
   return prefGroup;
 }
 
-export function createAccountsPage(onError: (err: Error) => void, onAdd: () => void): AccountsPage {
+export function createAccountsPage(
+  onError: (err: Error) => void,
+  onAdd: () => void,
+  onOpenAccount: (group: ProtocolGroup, row: AccountRow, daemonPresent: boolean) => void,
+): AccountsPage {
   const preferencesPage = new Adw.PreferencesPage();
   const loading = new Adw.Spinner({
     halign: Gtk.Align.CENTER,
@@ -194,7 +206,9 @@ export function createAccountsPage(onError: (err: Error) => void, onAdd: () => v
       clearGroups();
       banner.set_revealed(!state.daemonPresent);
       for (const group of state.groups) {
-        const widget = buildGroup(group, state.daemonPresent, onError);
+        const widget = buildGroup(group, state.daemonPresent, onError, (g, row) =>
+          onOpenAccount(g, row, state.daemonPresent),
+        );
         shown.push(widget);
         preferencesPage.add(widget);
       }

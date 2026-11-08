@@ -16,7 +16,7 @@
  */
 
 import { DatabaseSync } from 'node:sqlite';
-import { chmodSync, closeSync, existsSync, openSync } from 'node:fs';
+import { chmodSync, closeSync, existsSync, openSync, rmSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { INDEX_BUSY_TIMEOUT_MS, insertMany, placeholders, withTransaction } from './db.ts';
 import { ensurePrivateDir } from './download.ts';
@@ -199,5 +199,18 @@ export class SecretStore {
 
   close(): void {
     this.db.close();
+  }
+}
+
+/**
+ * Delete an account's secret file with its SQLite companions, and any `extra` file that belongs to
+ * the same account. Throws when the account file does not exist, so "remove" never reports
+ * success for an account that was not there. The `-wal` and `-shm` names are covered too: the
+ * store opens without WAL, but a file restored from another tool may carry them.
+ */
+export function removeSecretFiles(path: string, extra: readonly string[] = []): void {
+  if (!existsSync(path)) throw new Error(`no such account file: ${path}`);
+  for (const file of [path, `${path}-journal`, `${path}-wal`, `${path}-shm`, ...extra]) {
+    rmSync(file, { force: true });
   }
 }

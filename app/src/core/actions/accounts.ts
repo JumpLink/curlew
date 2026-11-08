@@ -15,6 +15,7 @@ import type {
   GnomeAccount,
   GnomeCheckResult,
 } from '@curlew/protocol';
+import { isAccountRemoverBackend } from '@curlew/protocol';
 import { configPath } from '@curlew/store';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
@@ -62,4 +63,29 @@ export async function accountsAdd(
     );
   }
   return { backend: name, account: await backend.addAccount(prompter, options) };
+}
+
+/**
+ * Unlink a chat account from this machine: its stored login goes, the messages already indexed
+ * stay. Interactive use only — the CLI and MCP do not expose it, because an agent must not be
+ * able to cut a person's session. The account stays linked on the service's side.
+ */
+export async function accountRemove(
+  name: string,
+  accountId: string,
+  path = configPath(),
+): Promise<{ backend: string; account: string }> {
+  const config = loadConfig(path);
+  const backend = builtinRegistry().create(config, name, backendContext(name, config));
+  if (!isAccountRemoverBackend(backend)) {
+    throw new Error(
+      `${name} accounts are not removed in curlew — ${
+        backend.kind === 'mailbox'
+          ? 'remove them in GNOME Settings → Online Accounts'
+          : 'this backend has no stored login'
+      }`,
+    );
+  }
+  await backend.removeAccount(accountId);
+  return { backend: name, account: accountId };
 }

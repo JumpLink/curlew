@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-08 07:27+0100\n"
+"POT-Creation-Date: 2026-11-08 07:38+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1427,66 +1427,98 @@ msgstr ""
 msgid "Curlew"
 msgstr ""
 
-#: app/src/window/account-add.ts:147
+#: app/src/window/account-add.ts:137
 msgid "Please read this first"
 msgstr ""
 
-#: app/src/window/account-add.ts:152
+#: app/src/window/account-add.ts:142
 msgid "Accept and Continue"
 msgstr ""
 
-#: app/src/window/account-add.ts:189
+#: app/src/window/account-add.ts:179
 msgid "Continue"
 msgstr ""
 
-#: app/src/window/account-add.ts:212
+#: app/src/window/account-add.ts:202
 msgid "Adding account…"
 msgstr ""
 
-#: app/src/window/account-add.ts:220
+#: app/src/window/account-add.ts:210
 msgid "Try Again"
 msgstr ""
 
-#: app/src/window/account-add.ts:224
+#: app/src/window/account-add.ts:214
 msgid "Could not add the account"
 msgstr ""
 
-#: app/src/window/account-add.ts:235
+#: app/src/window/account-add.ts:225
 msgid "Connecting…"
 msgstr ""
 
-#: app/src/window/account-add.ts:259
+#: app/src/window/account-add.ts:249
 msgid "Asks you to accept terms first"
 msgstr ""
 
-#: app/src/window/account-add.ts:274
+#: app/src/window/account-add.ts:264
 msgid "Chats"
 msgstr ""
 
-#: app/src/window/account-add.ts:275
+#: app/src/window/account-add.ts:265
 msgid ""
 "Signal, WhatsApp and Telegram link this computer as another device of your "
 "account."
 msgstr ""
 
-#: app/src/window/account-add.ts:287
+#: app/src/window/account-add.ts:277
 msgid "Mail, calendar and contacts"
 msgstr ""
 
-#: app/src/window/account-add.ts:289
+#: app/src/window/account-add.ts:279
 msgid "GNOME Online Accounts"
 msgstr ""
 
-#: app/src/window/account-add.ts:290
+#: app/src/window/account-add.ts:280
 msgid "Mail accounts are added in GNOME Settings"
 msgstr ""
 
-#: app/src/window/account-add.ts:306 app/src/window/accounts-page.ts:141
-#: app/src/window/accounts-page.ts:162
+#: app/src/window/account-add.ts:296 app/src/window/accounts-page.ts:153
+#: app/src/window/accounts-page.ts:174
 msgid "Add Account"
 msgstr ""
 
-#: app/src/window/accounts-dialog.ts:43 app/src/window/accounts-page.ts:169
+#: app/src/window/account-detail.ts:59 app/src/window/agent-access-page.ts:216
+msgid "Account"
+msgstr ""
+
+#: app/src/window/account-detail.ts:63
+msgid "Status"
+msgstr ""
+
+#: app/src/window/account-detail.ts:70
+msgid "Remove Account…"
+msgstr ""
+
+#: app/src/window/account-remove-model.ts:20
+msgid "Remove {account}?"
+msgstr ""
+
+#: app/src/window/account-remove-model.ts:23
+msgid ""
+"Curlew will forget the login for this account and stop syncing it. Messages "
+"already on this computer stay. The account stays linked on {protocol} until "
+"you remove this device there."
+msgstr ""
+
+#: app/src/window/account-remove-model.ts:27
+#: app/src/window/agent-access-page.ts:232
+msgid "Cancel"
+msgstr ""
+
+#: app/src/window/account-remove-model.ts:28
+msgid "Remove Account"
+msgstr ""
+
+#: app/src/window/accounts-dialog.ts:58 app/src/window/accounts-page.ts:181
 #: app/src/window/window.ts:75
 msgid "Accounts"
 msgstr ""
@@ -1520,35 +1552,35 @@ msgstr ""
 msgid "Daemon not running"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:104
+#: app/src/window/accounts-page.ts:109
 msgid "Manage…"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:105
+#: app/src/window/accounts-page.ts:110
 msgid "Open GNOME Settings → Online Accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:114
+#: app/src/window/accounts-page.ts:119
 msgid "Could not load accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:116
+#: app/src/window/accounts-page.ts:121
 msgid "No accounts yet"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:133
+#: app/src/window/accounts-page.ts:145
 msgid "Accounts could not be loaded"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:137
+#: app/src/window/accounts-page.ts:149
 msgid "No accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:138
+#: app/src/window/accounts-page.ts:150
 msgid "Add a chat account, or add a mail account in GNOME Settings."
 msgstr ""
 
-#: app/src/window/accounts-page.ts:155
+#: app/src/window/accounts-page.ts:167
 msgid "The background service is not running, so chat accounts cannot connect."
 msgstr ""
 
@@ -1635,20 +1667,12 @@ msgstr ""
 msgid "Add a rule"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:216
-msgid "Account"
-msgstr ""
-
 #: app/src/window/agent-access-page.ts:221
 msgid "Account id"
 msgstr ""
 
 #: app/src/window/agent-access-page.ts:224
 msgid "Contact address (empty = the whole account)"
-msgstr ""
-
-#: app/src/window/agent-access-page.ts:232
-msgid "Cancel"
 msgstr ""
 
 #: app/src/window/agent-access-page.ts:234
@@ -2007,15 +2031,15 @@ msgstr ""
 msgid "Password"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:110
+#: packages/matrix/src/backend.ts:116
 msgid "no Matrix account {account} — {hint}"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:117
+#: packages/matrix/src/backend.ts:123
 msgid "the Matrix account file {account} is incomplete — {hint}"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:165
+#: packages/matrix/src/backend.ts:171
 msgid "the Matrix account {account} is not usable ({reason}) — {hint}"
 msgstr ""
 
@@ -2096,11 +2120,11 @@ msgid ""
 "{announced}"
 msgstr ""
 
-#: packages/signal/src/backend.ts:110 packages/signal/src/backend.ts:167
+#: packages/signal/src/backend.ts:116 packages/signal/src/backend.ts:173
 msgid "no Signal session for {account} — {hint}"
 msgstr ""
 
-#: packages/signal/src/backend.ts:174
+#: packages/signal/src/backend.ts:180
 msgid "the Signal session {account} was never linked — {hint}"
 msgstr ""
 
@@ -2293,11 +2317,11 @@ msgstr ""
 msgid "Two-step verification password"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:185
+#: packages/telegram/src/backend.ts:191
 msgid "no Telegram session for {account} — {hint}"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:211
+#: packages/telegram/src/backend.ts:217
 msgid "the Telegram session {account} is not usable ({reason}) — {hint}"
 msgstr ""
 
@@ -2424,19 +2448,19 @@ msgstr ""
 msgid "the WhatsApp attachment does not match its announced checksum"
 msgstr ""
 
-#: packages/whatsapp/src/backend.ts:134
+#: packages/whatsapp/src/backend.ts:140
 msgid "no WhatsApp account {account}"
 msgstr ""
 
-#: packages/whatsapp/src/backend.ts:156
+#: packages/whatsapp/src/backend.ts:162
 msgid "no WhatsApp session for {account} — {hint}"
 msgstr ""
 
-#: packages/whatsapp/src/backend.ts:166
+#: packages/whatsapp/src/backend.ts:172
 msgid "the WhatsApp session {account} was never linked — {hint}"
 msgstr ""
 
-#: packages/whatsapp/src/backend.ts:271
+#: packages/whatsapp/src/backend.ts:277
 msgid "the WhatsApp connection for {account} is not open — nothing was sent"
 msgstr ""
 

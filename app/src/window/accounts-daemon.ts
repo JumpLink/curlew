@@ -6,6 +6,7 @@
 import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 
+import { UNIT_NAME } from '../core/actions/setup-unit.ts';
 import {
   DAEMON_BUS_NAME,
   DAEMON_INTERFACE,
@@ -20,6 +21,15 @@ const GET_ACCOUNTS_TIMEOUT_MS = 10_000;
 export interface AccountsDaemonSource {
   /** Follow the daemon and call `onChange` whenever the account list may have changed. */
   start(onChange: (state: AccountsDaemonState) => void): () => void;
+}
+
+/** The daemon reads its account list once at start, so a change to it takes effect on a restart. */
+export function restartDaemonIfRunning(): void {
+  try {
+    Gio.Subprocess.new(['systemctl', '--user', 'try-restart', UNIT_NAME], Gio.SubprocessFlags.NONE);
+  } catch {
+    // No systemd user session: the next start of the daemon reads the new account list.
+  }
 }
 
 function entryMap(accounts: DaemonAccountEntry[]): Map<string, DaemonAccountEntry> {

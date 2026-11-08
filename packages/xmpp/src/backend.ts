@@ -15,7 +15,7 @@ import type {
   MessageSender,
   SendBackend,
 } from '@curlew/protocol';
-import { SecretStore } from '@curlew/store';
+import { removeSecretFiles, SecretStore } from '@curlew/store';
 import {
   accountPath,
   caFileSetting,
@@ -80,6 +80,12 @@ export class XmppBackend implements ChatBackend, SendBackend {
 
   async listAccounts(): Promise<BackendAccount[]> {
     return listAccounts(this.context.secretsDir);
+  }
+
+  /** Unlink: the stored session goes, the indexed messages stay. */
+  async removeAccount(accountId: string): Promise<void> {
+    const path = accountPath(this.context.secretsDir, accountId);
+    removeSecretFiles(path);
   }
 
   /**

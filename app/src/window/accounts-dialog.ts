@@ -10,6 +10,7 @@ import { configPath } from '@curlew/store';
 
 import { buildProtocolGroups, type AccountsDaemonState, type AccountsPageState } from './accounts-model.ts';
 import { pushAddAccountPage } from './account-add.ts';
+import { pushAccountPage } from './account-detail.ts';
 import { createAccountsPage, openGoaSettings } from './accounts-page.ts';
 import { gioAccountsDaemonSource } from './accounts-daemon.ts';
 import { loadAccountsState } from './accounts-store.ts';
@@ -25,15 +26,29 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
   const path = configPath();
   const overlay = new Adw.ToastOverlay();
   const onError = (err: Error) => overlay.add_toast(new Adw.Toast({ title: err.message, timeout: 4 }));
-  const page: ReturnType<typeof createAccountsPage> = createAccountsPage(onError, () =>
-    pushAddAccountPage({
-      navigation: page.navigation,
-      root: page.root,
-      path,
-      onError,
-      onAdded: () => void reload(),
-      openGoaSettings: () => openGoaSettings(onError),
-    }),
+  const page: ReturnType<typeof createAccountsPage> = createAccountsPage(
+    onError,
+    () =>
+      pushAddAccountPage({
+        navigation: page.navigation,
+        root: page.root,
+        path,
+        onError,
+        onAdded: () => void reload(),
+        openGoaSettings: () => openGoaSettings(onError),
+      }),
+    (group, row, daemonPresent) =>
+      pushAccountPage({
+        navigation: page.navigation,
+        root: page.root,
+        parent: () => page.widget,
+        path,
+        backend: group.backend,
+        row,
+        daemonPresent,
+        onError,
+        onRemoved: () => void reload(),
+      }),
   );
 
   // The page is a navigation view with its own header bar, so the next pages get a back button.

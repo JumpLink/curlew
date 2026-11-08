@@ -15,7 +15,7 @@ import type {
   SendBackend,
   SendPermit,
 } from '@curlew/protocol';
-import { SecretStore } from '@curlew/store';
+import { removeSecretFiles, SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
 import type { MatrixApi, MatrixLoginPrompts } from './api.ts';
 import {
@@ -87,6 +87,12 @@ export class MatrixBackend implements ChatBackend, SendBackend {
 
   async listAccounts(): Promise<BackendAccount[]> {
     return listAccounts(this.context.secretsDir);
+  }
+
+  /** Unlink: the stored session goes, the indexed messages stay. */
+  async removeAccount(accountId: string): Promise<void> {
+    const path = accountPath(this.context.secretsDir, accountId);
+    removeSecretFiles(path);
   }
 
   /** The account's own user id (a room is never self; see `isOwnUserId`). */
