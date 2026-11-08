@@ -82,6 +82,7 @@ import accountToggle from './unit/core/account-toggle.test.ts';
 import peopleMergeTest from './unit/core/people-merge.test.ts';
 import windowAccounts from './unit/window/accounts-model.test.ts';
 import windowConversationList from './unit/window/conversation-list-model.test.ts';
+import windowCandidates from './unit/window/merge-candidates-model.test.ts';
 import windowSelection from './unit/window/selection-model.test.ts';
 import windowAttachment from './unit/window/attachment-model.test.ts';
 import windowConversation from './unit/window/conversation-model.test.ts';
@@ -193,6 +194,7 @@ run({
   peopleMergeTest,
   windowConversationList,
   windowSelection,
+  windowCandidates,
   windowConversation,
   windowComposerFiles,
   windowAttachment,

@@ -38,3 +38,12 @@ export function peopleUnmerge(ids: readonly string[], path = configPath()): void
   config.mergedPeople = withoutMerge(config.mergedPeople, ids);
   saveConfig(config, path);
 }
+
+/** Remember that the person skipped this set, so the assistant does not ask again. */
+export function peopleDecline(ids: readonly string[], path = configPath()): void {
+  const config = loadConfig(path);
+  const key = [...ids].sort().join('\u0000');
+  if (config.declinedMerges.some((set) => [...set].sort().join('\u0000') === key)) return;
+  config.declinedMerges = [...config.declinedMerges, [...ids]];
+  saveConfig(config, path);
+}
