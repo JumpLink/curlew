@@ -97,6 +97,28 @@ export interface BackendAccount {
    * recognise the chat with oneself. Never a key, a token or a password; absent when unknown.
    */
   address?: string;
+  /**
+   * The person switched this account off: it stays linked but is not synced. Only set by a
+   * `listAccounts({ includeDisabled: true })`; every other listing leaves such an account out.
+   */
+  disabled?: boolean;
+}
+
+export interface ListAccountsOptions {
+  /** Also list switched-off accounts, each marked `disabled`. For the Accounts page only. */
+  includeDisabled?: boolean;
+}
+
+/** Apply the context's switched-off accounts to a backend's full list. */
+export function visibleAccounts(
+  context: Pick<BackendContext, 'disabledAccounts'>,
+  accounts: BackendAccount[],
+  options: ListAccountsOptions = {},
+): BackendAccount[] {
+  const off = new Set(context.disabledAccounts ?? []);
+  if (off.size === 0) return accounts;
+  if (!options.includeDisabled) return accounts.filter((a) => !off.has(a.id));
+  return accounts.map((a) => (off.has(a.id) ? { ...a, disabled: true } : a));
 }
 
 /**
@@ -109,7 +131,12 @@ export interface MessageBackend {
   readonly manifest: BackendManifest;
   /** Which sync driver this backend implements. The engine switches on it, never on the name. */
   readonly kind: string;
-  listAccounts(): Promise<BackendAccount[]>;
+  /**
+   * The accounts to sync and send from. An account the person switched off (see
+   * `BackendContext.disabledAccounts`) is left out, so no consumer — sync, daemon, send — can
+   * forget to skip it; the Accounts page asks with `includeDisabled` to show it.
+   */
+  listAccounts(options?: ListAccountsOptions): Promise<BackendAccount[]>;
   /**
    * Add an account interactively — for networks whose accounts live in curlew rather than in
    * the desktop (mail accounts are GNOME Online Accounts and do not implement this). The
@@ -194,6 +221,11 @@ export interface BackendContext {
    * treats the two differently (`secret` vs `derived`).
    */
   secretsDir: string;
+  /**
+   * Ids of this backend's accounts the person switched off (`config.disabledAccounts`). Absent
+   * means none. A backend applies it in `listAccounts` through `visibleAccounts`.
+   */
+  disabledAccounts?: readonly string[];
 }
 
 // ── the chat driver ─────────────────────────────────────────────────────

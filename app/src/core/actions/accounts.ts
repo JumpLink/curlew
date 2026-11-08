@@ -14,12 +14,13 @@ import type {
   BackendAccount,
   GnomeAccount,
   GnomeCheckResult,
+  ListAccountsOptions,
 } from '@curlew/protocol';
 import { isAccountRemoverBackend } from '@curlew/protocol';
 import { configPath } from '@curlew/store';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
-import { loadConfig } from '../config.ts';
+import { loadConfig, saveConfig } from '../config.ts';
 
 /** List configured GNOME Online Accounts and their capabilities. No credentials. */
 export async function accountsList(): Promise<GnomeAccount[]> {
@@ -35,10 +36,29 @@ export async function accountsCheck(): Promise<GnomeCheckResult> {
 export async function backendAccountsList(
   name: string,
   path = configPath(),
+  options: ListAccountsOptions = {},
 ): Promise<{ backend: string; accounts: BackendAccount[] }> {
   const config = loadConfig(path);
   const backend = builtinRegistry().create(config, name, backendContext(name, config));
-  return { backend: name, accounts: await backend.listAccounts() };
+  return { backend: name, accounts: await backend.listAccounts(options) };
+}
+
+/**
+ * Switch a chat account on or off. Off keeps it linked and keeps its messages; the daemon and
+ * `curlew sync` then skip it. Interactive use only, like removal: an agent must not be able to
+ * silence an account.
+ */
+export function accountSetEnabled(
+  name: string,
+  accountId: string,
+  enabled: boolean,
+  path = configPath(),
+): void {
+  const config = loadConfig(path);
+  const key = `${name}/${accountId}`;
+  const rest = config.disabledAccounts.filter((k) => k !== key);
+  config.disabledAccounts = enabled ? rest : [...rest, key];
+  saveConfig(config, path);
 }
 
 /**

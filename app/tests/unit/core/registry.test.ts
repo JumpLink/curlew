@@ -56,6 +56,7 @@ export default async () => {
           grants: [],
           agentAccess: { askWithoutRule: true, rules: [] },
           encryption: {},
+          disabledAccounts: [],
           unknown: {},
         }).length,
       ).toBe(0);
@@ -66,6 +67,7 @@ export default async () => {
         grants: [],
         agentAccess: { askWithoutRule: true, rules: [] },
         encryption: {},
+        disabledAccounts: [],
         unknown: {},
       };
       expect(registry.enabled(off).length).toBe(0);
@@ -101,6 +103,7 @@ export default async () => {
         grants: [],
         agentAccess: { askWithoutRule: true, rules: [] },
         encryption: {},
+        disabledAccounts: [],
         unknown: {},
       };
       expect(registry.enabled(config).length).toBe(0);
@@ -179,6 +182,7 @@ export default async () => {
             grants: [],
             agentAccess: { askWithoutRule: true, rules: [] },
             encryption: {},
+            disabledAccounts: [],
             unknown: {},
           },
           path,

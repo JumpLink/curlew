@@ -48,6 +48,7 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
         daemonPresent,
         onError,
         onRemoved: () => void reload(),
+        onChanged: () => void reload(),
       }),
   );
 

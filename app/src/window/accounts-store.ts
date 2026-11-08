@@ -34,7 +34,7 @@ export async function loadAccountsState(path = configPath()): Promise<AccountsLo
   );
 
   const chatPromises = chatBackends.map((backend) =>
-    backendAccountsList(backend.name, path).then(
+    backendAccountsList(backend.name, path, { includeDisabled: true }).then(
       (result): { backend: string; accounts: BackendAccount[]; error?: string } => ({
         backend: backend.name,
         accounts: result.accounts,

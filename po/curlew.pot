@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-08 07:38+0100\n"
+"POT-Creation-Date: 2026-11-08 07:50+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1481,20 +1481,30 @@ msgstr ""
 msgid "Mail accounts are added in GNOME Settings"
 msgstr ""
 
-#: app/src/window/account-add.ts:296 app/src/window/accounts-page.ts:153
-#: app/src/window/accounts-page.ts:174
+#: app/src/window/account-add.ts:296 app/src/window/accounts-page.ts:156
+#: app/src/window/accounts-page.ts:177
 msgid "Add Account"
 msgstr ""
 
-#: app/src/window/account-detail.ts:59 app/src/window/agent-access-page.ts:216
+#: app/src/window/account-detail.ts:63 app/src/window/agent-access-page.ts:216
 msgid "Account"
 msgstr ""
 
-#: app/src/window/account-detail.ts:63
+#: app/src/window/account-detail.ts:67
 msgid "Status"
 msgstr ""
 
-#: app/src/window/account-detail.ts:70
+#: app/src/window/account-detail.ts:73
+msgid ""
+"Off keeps the account linked and its messages here, but Curlew stops syncing "
+"it."
+msgstr ""
+
+#: app/src/window/account-detail.ts:75
+msgid "Sync this account"
+msgstr ""
+
+#: app/src/window/account-detail.ts:95
 msgid "Remove Account…"
 msgstr ""
 
@@ -1518,21 +1528,21 @@ msgstr ""
 msgid "Remove Account"
 msgstr ""
 
-#: app/src/window/accounts-dialog.ts:58 app/src/window/accounts-page.ts:181
+#: app/src/window/accounts-dialog.ts:59 app/src/window/accounts-page.ts:184
 #: app/src/window/window.ts:75
 msgid "Accounts"
 msgstr ""
 
-#: app/src/window/accounts-model.ts:74
+#: app/src/window/accounts-model.ts:75
 #: app/src/window/conversation-list-model.ts:77
 msgid "Mail"
 msgstr ""
 
-#: app/src/window/accounts-model.ts:75
+#: app/src/window/accounts-model.ts:76
 msgid "Calendar"
 msgstr ""
 
-#: app/src/window/accounts-model.ts:76
+#: app/src/window/accounts-model.ts:77
 msgid "Contacts"
 msgstr ""
 
@@ -1552,35 +1562,39 @@ msgstr ""
 msgid "Daemon not running"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:109
+#: app/src/window/accounts-page.ts:35
+msgid "Off"
+msgstr ""
+
+#: app/src/window/accounts-page.ts:112
 msgid "Manage…"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:110
+#: app/src/window/accounts-page.ts:113
 msgid "Open GNOME Settings → Online Accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:119
+#: app/src/window/accounts-page.ts:122
 msgid "Could not load accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:121
+#: app/src/window/accounts-page.ts:124
 msgid "No accounts yet"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:145
+#: app/src/window/accounts-page.ts:148
 msgid "Accounts could not be loaded"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:149
+#: app/src/window/accounts-page.ts:152
 msgid "No accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:150
+#: app/src/window/accounts-page.ts:153
 msgid "Add a chat account, or add a mail account in GNOME Settings."
 msgstr ""
 
-#: app/src/window/accounts-page.ts:167
+#: app/src/window/accounts-page.ts:170
 msgid "The background service is not running, so chat accounts cannot connect."
 msgstr ""
 
@@ -2015,31 +2029,31 @@ msgid ""
 "{announced}"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:57
+#: packages/matrix/src/backend.ts:58
 msgid "log in again with `curlew accounts add matrix`"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:62
+#: packages/matrix/src/backend.ts:63
 msgid "Homeserver (URL like https://matrix.example.org, or the server name)"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:63
+#: packages/matrix/src/backend.ts:64
 msgid "Matrix user (@name:example.org)"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:64 packages/xmpp/src/backend.ts:50
+#: packages/matrix/src/backend.ts:65 packages/xmpp/src/backend.ts:51
 msgid "Password"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:116
+#: packages/matrix/src/backend.ts:117
 msgid "no Matrix account {account} — {hint}"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:123
+#: packages/matrix/src/backend.ts:124
 msgid "the Matrix account file {account} is incomplete — {hint}"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:171
+#: packages/matrix/src/backend.ts:172
 msgid "the Matrix account {account} is not usable ({reason}) — {hint}"
 msgstr ""
 
@@ -2120,11 +2134,11 @@ msgid ""
 "{announced}"
 msgstr ""
 
-#: packages/signal/src/backend.ts:116 packages/signal/src/backend.ts:173
+#: packages/signal/src/backend.ts:117 packages/signal/src/backend.ts:174
 msgid "no Signal session for {account} — {hint}"
 msgstr ""
 
-#: packages/signal/src/backend.ts:180
+#: packages/signal/src/backend.ts:181
 msgid "the Signal session {account} was never linked — {hint}"
 msgstr ""
 
@@ -2285,11 +2299,11 @@ msgid ""
 "{announced}"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:39
+#: packages/telegram/src/backend.ts:41
 msgid "log in again with `curlew accounts add telegram`"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:53
+#: packages/telegram/src/backend.ts:55
 msgid ""
 "Telegram live updates are unavailable in this build: the follow will not "
 "wake on new messages"
@@ -2297,31 +2311,31 @@ msgstr ""
 
 #. TRANSLATORS: `api_id` and `api_hash` are Telegram's own field names — do not translate them,
 #. the user has to recognise them on my.telegram.org.
-#: packages/telegram/src/backend.ts:80
+#: packages/telegram/src/backend.ts:82
 msgid "api_id of your Telegram app (from my.telegram.org)"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:81
+#: packages/telegram/src/backend.ts:83
 msgid "api_hash of that app"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:82
+#: packages/telegram/src/backend.ts:84
 msgid "Phone number of the Telegram account (international, e.g. +49…)"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:83
+#: packages/telegram/src/backend.ts:85
 msgid "Login code Telegram sent you"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:84
+#: packages/telegram/src/backend.ts:86
 msgid "Two-step verification password"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:191
+#: packages/telegram/src/backend.ts:193
 msgid "no Telegram session for {account} — {hint}"
 msgstr ""
 
-#: packages/telegram/src/backend.ts:217
+#: packages/telegram/src/backend.ts:219
 msgid "the Telegram session {account} is not usable ({reason}) — {hint}"
 msgstr ""
 
@@ -2448,19 +2462,19 @@ msgstr ""
 msgid "the WhatsApp attachment does not match its announced checksum"
 msgstr ""
 
-#: packages/whatsapp/src/backend.ts:140
+#: packages/whatsapp/src/backend.ts:141
 msgid "no WhatsApp account {account}"
 msgstr ""
 
-#: packages/whatsapp/src/backend.ts:162
+#: packages/whatsapp/src/backend.ts:163
 msgid "no WhatsApp session for {account} — {hint}"
 msgstr ""
 
-#: packages/whatsapp/src/backend.ts:172
+#: packages/whatsapp/src/backend.ts:173
 msgid "the WhatsApp session {account} was never linked — {hint}"
 msgstr ""
 
-#: packages/whatsapp/src/backend.ts:277
+#: packages/whatsapp/src/backend.ts:278
 msgid "the WhatsApp connection for {account} is not open — nothing was sent"
 msgstr ""
 
@@ -2629,11 +2643,11 @@ msgstr ""
 msgid "the encrypted attachment could not be verified"
 msgstr ""
 
-#: packages/xmpp/src/backend.ts:49
+#: packages/xmpp/src/backend.ts:50
 msgid "XMPP address (name@example.org)"
 msgstr ""
 
-#: packages/xmpp/src/backend.ts:52
+#: packages/xmpp/src/backend.ts:53
 msgid ""
 "Server address — empty to discover it (e.g. xmpps://xmpp.example.org:5223, "
 "wss://…)"

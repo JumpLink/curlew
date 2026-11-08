@@ -9,6 +9,8 @@ import {
   type AttachmentFetcher,
   type AccountPrompter,
   type BackendAccount,
+  type ListAccountsOptions,
+  visibleAccounts,
   type BackendContext,
   type ChatBackend,
   type ChatSession,
@@ -121,8 +123,8 @@ export class TelegramBackend implements ChatBackend, SendBackend {
     this.embedded = embedded;
   }
 
-  async listAccounts(): Promise<BackendAccount[]> {
-    return listSessionAccounts(this.context.secretsDir);
+  async listAccounts(options?: ListAccountsOptions): Promise<BackendAccount[]> {
+    return visibleAccounts(this.context, listSessionAccounts(this.context.secretsDir), options);
   }
 
   /** Unlink: the stored session goes, the indexed messages stay. */

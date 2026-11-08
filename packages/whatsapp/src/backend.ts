@@ -11,11 +11,12 @@
  * or a ban wave makes that necessary.
  */
 
-import { _, fmt } from '@curlew/protocol';
+import { _, fmt, visibleAccounts } from '@curlew/protocol';
 import type {
   AccountPrompter,
   AttachmentFetcher,
   BackendAccount,
+  ListAccountsOptions,
   BackendContext,
   DeliveryBackend,
   DeliveryConnectOptions,
@@ -100,8 +101,8 @@ export class WhatsAppBackend implements DeliveryBackend, SendBackend {
     this.options = options;
   }
 
-  async listAccounts(): Promise<BackendAccount[]> {
-    return listSessionAccounts(this.context.secretsDir);
+  async listAccounts(options?: ListAccountsOptions): Promise<BackendAccount[]> {
+    return visibleAccounts(this.context, listSessionAccounts(this.context.secretsDir), options);
   }
 
   /** Unlink: the stored session goes, the indexed messages stay. */

@@ -7,7 +7,7 @@ import Adw from 'gi://Adw?version=1';
 import Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 
-import { accountRemove } from '../core/actions/accounts.ts';
+import { accountRemove, accountSetEnabled } from '../core/actions/accounts.ts';
 import { removeAccountCopy } from './account-remove-model.ts';
 import { restartDaemonIfRunning } from './accounts-daemon.ts';
 import type { AccountRow } from './accounts-model.ts';
@@ -26,6 +26,10 @@ export interface AccountDetailDeps {
   onError(err: Error): void;
   /** The account was removed: the caller reloads its list. */
   onRemoved(): void;
+  /** The account was switched on or off: the caller reloads its list. */
+  onChanged(): void;
+  /** The switch to run; the real one unless a probe substitutes it. */
+  setEnabled?(backend: string, accountId: string, enabled: boolean): void;
   /** The removal to run; the real one unless a probe substitutes it. */
   remove?(backend: string, accountId: string): Promise<unknown>;
 }
@@ -58,12 +62,33 @@ export function pushAccountPage(deps: AccountDetailDeps): void {
   if (row.detail) {
     details.add(new Adw.ActionRow({ title: _('Account'), subtitle: row.detail, useMarkup: false }));
   }
-  if (row.status && deps.daemonPresent) {
+  if (row.status && row.status !== 'disabled' && deps.daemonPresent) {
     details.add(
       new Adw.ActionRow({ title: _('Status'), subtitle: accountStatusLabel(row.status), useMarkup: false }),
     );
   }
   page.add(details);
+
+  const sync = new Adw.PreferencesGroup({
+    description: _('Off keeps the account linked and its messages here, but Curlew stops syncing it.'),
+  });
+  const enabled = new Adw.SwitchRow({ title: _('Sync this account'), active: row.status !== 'disabled' });
+  enabled.connect('notify::active', () => {
+    try {
+      (deps.setEnabled ?? ((b, id, on) => accountSetEnabled(b, id, on, deps.path)))(
+        deps.backend,
+        row.id,
+        enabled.get_active(),
+      );
+    } catch (err) {
+      deps.onError(err instanceof Error ? err : new Error(String(err)));
+      return;
+    }
+    restartDaemonIfRunning();
+    deps.onChanged();
+  });
+  sync.add(enabled);
+  page.add(sync);
 
   const danger = new Adw.PreferencesGroup();
   const removeButton = new Gtk.Button({

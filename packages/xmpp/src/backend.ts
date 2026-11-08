@@ -3,11 +3,12 @@
  * through the registry.
  */
 
-import { _, fmt } from '@curlew/protocol';
+import { _, fmt, visibleAccounts } from '@curlew/protocol';
 import type {
   AccountPrompter,
   AttachmentFetcher,
   BackendAccount,
+  ListAccountsOptions,
   BackendContext,
   ChatBackend,
   ChatConnectOptions,
@@ -78,8 +79,8 @@ export class XmppBackend implements ChatBackend, SendBackend {
     this.attachmentFetch = attachmentFetch;
   }
 
-  async listAccounts(): Promise<BackendAccount[]> {
-    return listAccounts(this.context.secretsDir);
+  async listAccounts(options?: ListAccountsOptions): Promise<BackendAccount[]> {
+    return visibleAccounts(this.context, listAccounts(this.context.secretsDir), options);
   }
 
   /** Unlink: the stored session goes, the indexed messages stay. */

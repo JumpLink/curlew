@@ -41,7 +41,7 @@ export async function loadAccountLabels(
     backends.map(async (name) => {
       try {
         const listed = await Promise.race([
-          backendAccountsList(name, configFile),
+          backendAccountsList(name, configFile, { includeDisabled: true }),
           new Promise<never>((_resolve, reject) =>
             setTimeout(() => reject(new Error('timeout')), ACCOUNTS_TIMEOUT_MS),
           ),
