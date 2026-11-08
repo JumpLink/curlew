@@ -25,6 +25,16 @@ export const MESSAGES = {
   },
   imageTooLong: (max: number) => fmt(_('the image URL is longer than {max} characters'), { max }),
   tooLong: (max: number) => fmt(_('the text is longer than {max} characters'), { max }),
+  noUploadService: (domain: string) =>
+    fmt(_('{domain} offers no file upload (XEP-0363), so no file can be sent through it'), { domain }),
+  uploadTooLarge: (file: string, max: number) =>
+    fmt(_('{file} is larger than the {max} bytes the server accepts'), { file, max: String(max) }),
+  uploadRefused: (file: string, reason: string) =>
+    fmt(_('the server refused the file {file} ({reason})'), { file, reason }),
+  uploadBadSlot: (file: string) =>
+    fmt(_('the server answered a slot for {file} that curlew will not use'), { file }),
+  encryptionLost: (to: string) =>
+    fmt(_('nothing was sent: {to} stopped offering encryption while the file was uploading'), { to }),
   noAccount: (id: string) => fmt(_('no XMPP account {id} — `curlew accounts list` shows them'), { id }),
   /**
    * The plaintext `<body>` of an encrypted message, for a client that cannot read OMEMO.

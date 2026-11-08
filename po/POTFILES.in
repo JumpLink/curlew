@@ -288,4 +288,5 @@ packages/xmpp/src/sender.ts
 packages/xmpp/src/session.ts
 packages/xmpp/src/stanza.ts
 packages/xmpp/src/transport.ts
+packages/xmpp/src/upload.ts
 packages/xmpp/src/xmpp-js.d.ts

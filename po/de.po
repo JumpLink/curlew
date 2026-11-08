@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-08 11:59+0100\n"
+"POT-Creation-Date: 2026-11-08 12:08+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2434,7 +2434,9 @@ msgstr "der Homeserver hat die Datei {file} abgewiesen ({reason})"
 
 #: packages/matrix/src/send.ts:195
 msgid "the homeserver accepted the file {file} but returned no media URI"
-msgstr "der Homeserver hat die Datei {file} angenommen, aber keine Medien-URI zurückgegeben"
+msgstr ""
+"der Homeserver hat die Datei {file} angenommen, aber keine Medien-URI "
+"zurückgegeben"
 
 #: packages/matrix/src/send.ts:253
 msgid ""
@@ -3176,11 +3178,34 @@ msgstr "Die Bild-URL ist länger als {max} Zeichen"
 msgid "the text is longer than {max} characters"
 msgstr "Der Text ist länger als {max} Zeichen"
 
-#: packages/xmpp/src/messages.ts:28
+#: packages/xmpp/src/messages.ts:29
+msgid ""
+"{domain} offers no file upload (XEP-0363), so no file can be sent through it"
+msgstr "{domain} bietet keinen Datei-Upload (XEP-0363) an, darüber lässt sich keine Datei senden"
+
+#: packages/xmpp/src/messages.ts:31
+msgid "{file} is larger than the {max} bytes the server accepts"
+msgstr "{file} ist größer als die {max} Bytes, die der Server annimmt"
+
+#: packages/xmpp/src/messages.ts:33
+msgid "the server refused the file {file} ({reason})"
+msgstr "der Server hat die Datei {file} abgewiesen ({reason})"
+
+#: packages/xmpp/src/messages.ts:35
+msgid "the server answered a slot for {file} that curlew will not use"
+msgstr "der Server hat für {file} einen Upload-Platz angeboten, den Curlew nicht verwendet"
+
+#: packages/xmpp/src/messages.ts:37
+msgid ""
+"nothing was sent: {to} stopped offering encryption while the file was "
+"uploading"
+msgstr "nichts wurde gesendet: {to} bietet keine Verschlüsselung mehr an, während die Datei hochgeladen wurde"
+
+#: packages/xmpp/src/messages.ts:38
 msgid "no XMPP account {id} — `curlew accounts list` shows them"
 msgstr "Kein XMPP-Konto {id} — `curlew accounts list` zeigt sie an"
 
-#: packages/xmpp/src/messages.ts:42
+#: packages/xmpp/src/messages.ts:52
 msgid ""
 "nothing was sent: {to} uses OMEMO and their device list could not be read — "
 "try again when the server answers"
@@ -3188,7 +3213,7 @@ msgstr ""
 "Es wurde nichts gesendet: {to} nutzt OMEMO und die Geräteliste konnte nicht "
 "gelesen werden — versuche es erneut, wenn der Server antwortet"
 
-#: packages/xmpp/src/messages.ts:49
+#: packages/xmpp/src/messages.ts:59
 msgid ""
 "nothing was sent: no device of {to} may be encrypted to — `curlew omemo "
 "devices` shows them, `curlew omemo trust` decides"
@@ -3196,7 +3221,7 @@ msgstr ""
 "Es wurde nichts gesendet: An kein Gerät von {to} darf verschlüsselt werden — "
 "`curlew omemo devices` zeigt sie an, `curlew omemo trust` entscheidet"
 
-#: packages/xmpp/src/messages.ts:56
+#: packages/xmpp/src/messages.ts:66
 msgid ""
 "nothing was sent: no device of {to} has published keys to encrypt with — "
 "their client has to come online once"
@@ -3204,7 +3229,7 @@ msgstr ""
 "Es wurde nichts gesendet: Kein Gerät von {to} hat Schlüssel zum "
 "Verschlüsseln veröffentlicht — der Client muss einmal online kommen"
 
-#: packages/xmpp/src/messages.ts:63
+#: packages/xmpp/src/messages.ts:73
 msgid ""
 "nothing was sent: a device of {to} published a new OMEMO key — compare it "
 "with them, then `curlew omemo trust` decides"
@@ -3213,7 +3238,7 @@ msgstr ""
 "veröffentlicht — vergleiche ihn mit ihnen, dann entscheidet `curlew omemo "
 "trust`"
 
-#: packages/xmpp/src/messages.ts:70
+#: packages/xmpp/src/messages.ts:80
 msgid ""
 "nothing was sent: {to} has no OMEMO devices and encryption is required for "
 "them — remove them from config.encryption to allow plain text"
@@ -3222,7 +3247,7 @@ msgstr ""
 "Verschlüsselung verlangt — entferne sie aus config.encryption, um Klartext "
 "zu erlauben"
 
-#: packages/xmpp/src/messages.ts:85
+#: packages/xmpp/src/messages.ts:95
 msgid ""
 "{jid} is now using a different OMEMO key: {printed}. Compare it with them "
 "out of band — `curlew omemo trust` decides."
@@ -3230,20 +3255,20 @@ msgstr ""
 "{jid} verwendet jetzt einen anderen OMEMO-Schlüssel: {printed}. Vergleiche "
 "ihn auf anderem Weg mit ihnen — `curlew omemo trust` entscheidet."
 
-#: packages/xmpp/src/messages.ts:92
+#: packages/xmpp/src/messages.ts:102
 msgid ""
 "that is not an OMEMO fingerprint: expected 64 hex characters, in any grouping"
 msgstr ""
 "Das ist kein OMEMO-Fingerabdruck: erwartet werden 64 Hex-Zeichen, in "
 "beliebiger Gruppierung"
 
-#: packages/xmpp/src/messages.ts:96
+#: packages/xmpp/src/messages.ts:106
 msgid "that is not the fingerprint you passed — nothing changed"
 msgstr ""
 "Das ist nicht der Fingerabdruck, den du angegeben hast — nichts wurde "
 "geändert"
 
-#: packages/xmpp/src/messages.ts:99
+#: packages/xmpp/src/messages.ts:109
 msgid ""
 "no device of {jid} carries that fingerprint — `curlew omemo devices` lists "
 "them"
@@ -3251,7 +3276,7 @@ msgstr ""
 "Kein Gerät von {jid} trägt diesen Fingerabdruck — `curlew omemo devices` "
 "listet sie auf"
 
-#: packages/xmpp/src/messages.ts:102
+#: packages/xmpp/src/messages.ts:112
 msgid ""
 "{count} devices of {jid} carry that fingerprint, so it does not name one — "
 "nothing changed"

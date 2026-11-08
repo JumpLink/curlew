@@ -189,6 +189,7 @@ export class XmppBackend implements ChatBackend, SendBackend {
     return new GrantedXmppSession(link, permit, undefined, {
       decrypt: omemo.decrypt,
       encrypt: (to, text) => omemo.encrypt(to, text),
+      encrypts: (to) => omemo.encrypts(to),
       close: () => store.close(),
     });
   }

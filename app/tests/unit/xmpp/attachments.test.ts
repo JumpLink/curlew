@@ -129,9 +129,9 @@ async function withBackend<T>(
 
 export default async () => {
   await describe('XMPP attachments', async () => {
-    await it('claims reading but not sending in its manifest', async () => {
+    await it('claims reading and sending in its manifest', async () => {
       expect(XMPP_MANIFEST.capabilities.attachmentsRead).toBe(true);
-      expect(XMPP_MANIFEST.capabilities.attachments).toBe(false);
+      expect(XMPP_MANIFEST.capabilities.attachments).toBe(true);
     });
 
     await it('accepts https and well-formed aesgcm links', async () => {
