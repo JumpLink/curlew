@@ -5,16 +5,18 @@
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>AGPL-3.0-or-later</project_license>
   <name>Curlew</name>
-  <summary>Mail and chat for agents</summary>
-  <summary xml:lang="de">Mail und Chat für Agenten</summary>
+  <summary>Chats across messengers</summary>
+  <summary xml:lang="de">Chats über alle Messenger</summary>
   <developer id="eu.jumplink">
     <name>Pascal Garber</name>
   </developer>
   <description>
-    <p>Curlew gives AI agents access to your mail, calendar, contacts and chats, and lets you decide what they may read and send.</p>
-    <p xml:lang="de">Curlew gibt KI-Agenten Zugriff auf deine Mails, deinen Kalender, deine Kontakte und Chats, und du bestimmst, was sie lesen und senden dürfen.</p>
-    <p>The window lists the access rules per account and contact. Each rule allows, asks about or denies reading and sending. Your own commands are never restricted.</p>
-    <p xml:lang="de">Das Fenster listet die Zugriffsregeln pro Konto und Kontakt. Jede Regel erlaubt, erfragt oder verweigert Lesen und Senden. Deine eigenen Befehle werden nie eingeschränkt.</p>
+    <p>Curlew brings your mail and your chats from Telegram, Signal, WhatsApp, Matrix and XMPP into one list, with one conversation per person, however they reach you.</p>
+    <p xml:lang="de">Curlew bringt deine Mails und deine Chats von Telegram, Signal, WhatsApp, Matrix und XMPP in eine Liste, mit einer Unterhaltung pro Person, auf welchem Weg sie dich auch erreicht.</p>
+    <p>Reply from the same window, send and open pictures, voice messages and files, and choose which messenger a person is reached through.</p>
+    <p xml:lang="de">Antworte im selben Fenster, sende und öffne Bilder, Sprachnachrichten und Dateien, und wähle, über welchen Messenger eine Person erreicht wird.</p>
+    <p>AI assistants can work with your messages too, but only as far as you allow: each rule per account and contact allows, asks about or denies reading and sending. Your own actions are never restricted.</p>
+    <p xml:lang="de">KI-Assistenten können ebenfalls mit deinen Nachrichten arbeiten, aber nur so weit, wie du es erlaubst: Jede Regel pro Konto und Kontakt erlaubt, erfragt oder verweigert Lesen und Senden. Deine eigenen Aktionen werden nie eingeschränkt.</p>
   </description>
   <url type="homepage">https://github.com/JumpLink/curlew</url>
   <url type="vcs-browser">https://github.com/JumpLink/curlew</url>
@@ -26,13 +28,19 @@
   <content_rating type="oars-1.1"/>
   <categories>
     <category>Network</category>
+    <category>Chat</category>
+    <category>InstantMessaging</category>
     <category>Email</category>
   </categories>
   <keywords>
-    <keyword>mail</keyword>
     <keyword>chat</keyword>
+    <keyword>messenger</keyword>
+    <keyword>mail</keyword>
+    <keyword>Telegram</keyword>
+    <keyword>Signal</keyword>
+    <keyword>Matrix</keyword>
+    <keyword>XMPP</keyword>
     <keyword>agent</keyword>
-    <keyword>MCP</keyword>
   </keywords>
   <screenshots>
     <screenshot type="default">
