@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-08 15:39+0100\n"
+"POT-Creation-Date: 2026-11-08 16:04+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -110,7 +110,7 @@ msgid ""
 msgstr ""
 
 #: app/src/core/actions/chat-attachment.ts:139
-#: app/src/core/actions/daemon.ts:420
+#: app/src/core/actions/daemon.ts:429
 msgid "the attachment was not found in the index"
 msgstr ""
 
@@ -126,11 +126,11 @@ msgstr ""
 msgid "{backend} cannot fetch attachments"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:338
+#: app/src/core/actions/daemon.ts:347
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:360
+#: app/src/core/actions/daemon.ts:369
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
@@ -797,6 +797,37 @@ msgid ""
 "the running curlew daemon did not answer the attachment fetch ({reason})"
 msgstr ""
 
+#: app/src/core/lib/message-notices.ts:46
+msgid "Sent an attachment"
+msgstr ""
+
+#: app/src/core/lib/message-notices.ts:46
+#: app/src/core/lib/message-notices.ts:88
+#: app/src/core/lib/message-notices.ts:98
+msgid "New message"
+msgstr ""
+
+#: app/src/core/lib/message-notices.ts:97
+msgid "{name} wrote a message"
+msgstr ""
+
+#: app/src/core/lib/message-notices.ts:99
+msgid "{n} new message"
+msgid_plural "{n} new messages"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/core/lib/message-notices.ts:111
+msgid "{n} more chat has new messages"
+msgid_plural "{n} more chats have new messages"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/core/lib/message-notifications.ts:118
+#: app/src/window/attachment-view.ts:90
+msgid "Open"
+msgstr ""
+
 #: app/src/frontends/cli/accounts.ts:22
 msgid ""
 "List accounts (GNOME Online Accounts by default) or log in to a chat backend"
@@ -1429,7 +1460,7 @@ msgid "curlew window takes no arguments."
 msgstr ""
 
 #: app/src/window/about.ts:14 app/src/window/conversation-view.ts:93
-#: app/src/window/window.ts:57 app/src/window/window.ts:72
+#: app/src/window/window.ts:58 app/src/window/window.ts:73
 msgid "Curlew"
 msgstr ""
 
@@ -1541,7 +1572,7 @@ msgid "Could not start the background service. Run “curlew setup” first."
 msgstr ""
 
 #: app/src/window/accounts-dialog.ts:60 app/src/window/accounts-page.ts:187
-#: app/src/window/window.ts:85
+#: app/src/window/window.ts:86
 msgid "Accounts"
 msgstr ""
 
@@ -1574,7 +1605,7 @@ msgstr ""
 msgid "Daemon not running"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:35
+#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:24
 msgid "Off"
 msgstr ""
 
@@ -1614,7 +1645,7 @@ msgstr ""
 msgid "Start"
 msgstr ""
 
-#: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:88
+#: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:89
 msgid "Agent access"
 msgstr ""
 
@@ -1738,10 +1769,6 @@ msgstr ""
 
 #: app/src/window/attachment-view.ts:90
 msgid "Play"
-msgstr ""
-
-#: app/src/window/attachment-view.ts:90
-msgid "Open"
 msgstr ""
 
 #: app/src/window/attachment-view.ts:95 app/src/window/media-viewer.ts:47
@@ -2076,7 +2103,27 @@ msgid ""
 "Show ordinary email threads beside conversations started by a chat messenger"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:26 app/src/window/window.ts:87
+#: app/src/window/preferences-dialog.ts:22
+msgid "Message notifications"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:23
+msgid "What a desktop notification for a new chat message shows"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:24
+msgid "Sender and text"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:24
+msgid "Sender only"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:27
+msgid "Notifications"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:36 app/src/window/window.ts:88
 msgid "Preferences"
 msgstr ""
 
@@ -2086,31 +2133,31 @@ msgid_plural "{count} selected"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/window.ts:51
+#: app/src/window/window.ts:52
 msgid "Select a conversation"
 msgstr ""
 
-#: app/src/window/window.ts:52
+#: app/src/window/window.ts:53
 msgid "Pick a conversation from the list."
 msgstr ""
 
-#: app/src/window/window.ts:86
+#: app/src/window/window.ts:87
 msgid "Merge contacts…"
 msgstr ""
 
-#: app/src/window/window.ts:90
+#: app/src/window/window.ts:91
 msgid "About Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:91
+#: app/src/window/window.ts:92
 msgid "Quit"
 msgstr ""
 
-#: app/src/window/window.ts:106
+#: app/src/window/window.ts:107
 msgid "This conversation has no recipient address."
 msgstr ""
 
-#: app/src/window/window.ts:215
+#: app/src/window/window.ts:216
 msgid "No contacts to merge"
 msgstr ""
 

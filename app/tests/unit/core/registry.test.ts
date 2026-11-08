@@ -51,7 +51,7 @@ export default async () => {
       expect(
         registry.enabled({
           backends: {},
-          ui: { showAllEmails: true },
+          ui: { showAllEmails: true, notifications: 'preview' as const },
           senders: {},
           grants: [],
           agentAccess: { askWithoutRule: true, rules: [] },
@@ -65,7 +65,7 @@ export default async () => {
       ).toBe(0);
       const off = {
         backends: { mail: { enabled: false } },
-        ui: { showAllEmails: true },
+        ui: { showAllEmails: true, notifications: 'preview' as const },
         senders: {},
         grants: [],
         agentAccess: { askWithoutRule: true, rules: [] },
@@ -104,7 +104,7 @@ export default async () => {
       const registry = new BackendRegistry([plugin('chat', { terms: TERMS })]);
       const config = {
         backends: { chat: { enabled: true } },
-        ui: { showAllEmails: true },
+        ui: { showAllEmails: true, notifications: 'preview' as const },
         senders: {},
         grants: [],
         agentAccess: { askWithoutRule: true, rules: [] },
@@ -186,7 +186,7 @@ export default async () => {
         saveConfig(
           {
             backends: { mail: { enabled: false } },
-            ui: { showAllEmails: true },
+            ui: { showAllEmails: true, notifications: 'preview' as const },
             senders: {},
             grants: [],
             agentAccess: { askWithoutRule: true, rules: [] },

@@ -42,6 +42,8 @@ app/src/core/lib/daemon-watch-client.gjs.ts
 app/src/core/lib/daemon-watch.ts
 app/src/core/lib/date.ts
 app/src/core/lib/i18n.ts
+app/src/core/lib/message-notices.ts
+app/src/core/lib/message-notifications.ts
 app/src/core/markdown.ts
 app/src/core/runtime.ts
 app/src/core/write-log.ts

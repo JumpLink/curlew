@@ -102,6 +102,7 @@ import qrImage from './unit/window/qr-image.test.ts';
 import notifyQr from './unit/protocol/notify-qr.test.ts';
 import daemonFetch from './unit/core/daemon-fetch.test.ts';
 import chatAttachment from './unit/core/chat-attachment.test.ts';
+import messageNotices from './unit/core/message-notices.test.ts';
 import follow from './unit/core/follow.test.ts';
 import deliveries from './unit/core/deliveries.test.ts';
 import setup from './unit/core/setup.test.ts';
@@ -211,6 +212,7 @@ run({
   qrImage,
   notifyQr,
   chatAttachment,
+  messageNotices,
   watch,
   follow,
   deliveries,

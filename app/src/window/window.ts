@@ -6,6 +6,7 @@
 
 import Adw from 'gi://Adw?version=1';
 import Gio from 'gi://Gio?version=2.0';
+import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 import type { ConversationMessage } from '@curlew/protocol';
@@ -223,11 +224,21 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   };
   refresh();
   if (options.protocol) sidebar.chooseProtocol(options.protocol);
-  const open = options.open;
-  if (open) {
-    const entry = loadConversationEntries().find((e) => e.id === open || e.conversationIds.includes(open));
+  // A notification, or the screenshot hook, names a chat by its conversation id or its row id.
+  const openConversation = (id: string): void => {
+    const entry = loadConversationEntries().find((e) => e.id === id || e.conversationIds.includes(id));
     if (entry) select(entry);
-  }
+  };
+  const openAction = new Gio.SimpleAction({
+    name: 'open-conversation',
+    parameterType: GLib.VariantType.new('s'),
+  });
+  openAction.connect('activate', (_a, parameter) => {
+    if (parameter) openConversation(parameter.get_string()[0]);
+    window.present();
+  });
+  window.add_action(openAction);
+  if (options.open) openConversation(options.open);
   // The index changes as the daemon syncs; coming back to the window is the cheap moment to look.
   window.connect('notify::is-active', () => {
     if (window.is_active) refresh();

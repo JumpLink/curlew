@@ -10,6 +10,13 @@
 
 ### Added
 
+- Desktop notifications for new chat messages. The daemon notifies for an incoming, unread
+  message of a chat (never mail) that arrived after it started, so catching up on a backlog is
+  silent. One notification per chat, replaced as more messages come; more than four chats in one
+  poll fold into one summary. Clicking it opens the window at that chat. *Preferences* has a
+  *Message notifications* row (sender and text, sender only, off), stored as
+  `config.ui.notifications`. Design: `docs/design/notifications.md`.
+
 - `curlew window` is a chat client. A conversation opens as bubbles with paging, day separators,
   the sender in groups and a composer that sends through the daemon or the backend. One person
   who writes on several messengers is one row and one chat; the composer and the header menu pick

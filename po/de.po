@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-08 15:39+0100\n"
+"POT-Creation-Date: 2026-11-08 16:04+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -138,7 +138,7 @@ msgstr ""
 "eine Regel wie {rule} zu config.agentAccess.rules hinzu"
 
 #: app/src/core/actions/chat-attachment.ts:139
-#: app/src/core/actions/daemon.ts:420
+#: app/src/core/actions/daemon.ts:429
 msgid "the attachment was not found in the index"
 msgstr "Der Anhang wurde im Index nicht gefunden"
 
@@ -154,13 +154,13 @@ msgstr "Kein Konto {account} für {backend}"
 msgid "{backend} cannot fetch attachments"
 msgstr "{backend} kann keine Anhänge abrufen"
 
-#: app/src/core/actions/daemon.ts:338
+#: app/src/core/actions/daemon.ts:347
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 "{capability} ist nicht die Berechtigung, unter der {backend} sendet — es "
 "wurde nichts gesendet"
 
-#: app/src/core/actions/daemon.ts:360
+#: app/src/core/actions/daemon.ts:369
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
@@ -247,7 +247,9 @@ msgstr "Kein Konto {account} — `curlew accounts list` zeigt sie an"
 #: app/src/core/actions/send.ts:476
 msgid ""
 "this person is pinned to {pinned}: a message through {backend} is refused"
-msgstr "Diese Person ist auf {pinned} festgelegt: eine Nachricht über {backend} wird abgelehnt"
+msgstr ""
+"Diese Person ist auf {pinned} festgelegt: eine Nachricht über {backend} wird "
+"abgelehnt"
 
 #: app/src/core/actions/send.ts:497
 msgid "{backend} cannot send"
@@ -952,6 +954,37 @@ msgid ""
 "the running curlew daemon did not answer the attachment fetch ({reason})"
 msgstr ""
 "Der laufende curlew-Daemon hat den Anhangsabruf nicht beantwortet ({reason})"
+
+#: app/src/core/lib/message-notices.ts:46
+msgid "Sent an attachment"
+msgstr "Hat einen Anhang gesendet"
+
+#: app/src/core/lib/message-notices.ts:46
+#: app/src/core/lib/message-notices.ts:88
+#: app/src/core/lib/message-notices.ts:98
+msgid "New message"
+msgstr "Neue Nachricht"
+
+#: app/src/core/lib/message-notices.ts:97
+msgid "{name} wrote a message"
+msgstr "{name} hat eine Nachricht geschrieben"
+
+#: app/src/core/lib/message-notices.ts:99
+msgid "{n} new message"
+msgid_plural "{n} new messages"
+msgstr[0] "{n} neue Nachricht"
+msgstr[1] "{n} neue Nachrichten"
+
+#: app/src/core/lib/message-notices.ts:111
+msgid "{n} more chat has new messages"
+msgid_plural "{n} more chats have new messages"
+msgstr[0] "{n} weiterer Chat hat neue Nachrichten"
+msgstr[1] "{n} weitere Chats haben neue Nachrichten"
+
+#: app/src/core/lib/message-notifications.ts:118
+#: app/src/window/attachment-view.ts:90
+msgid "Open"
+msgstr "Öffnen"
 
 #: app/src/frontends/cli/accounts.ts:22
 msgid ""
@@ -1674,7 +1707,7 @@ msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
 #: app/src/window/about.ts:14 app/src/window/conversation-view.ts:93
-#: app/src/window/window.ts:57 app/src/window/window.ts:72
+#: app/src/window/window.ts:58 app/src/window/window.ts:73
 msgid "Curlew"
 msgstr "Curlew"
 
@@ -1796,7 +1829,7 @@ msgstr ""
 "aus."
 
 #: app/src/window/accounts-dialog.ts:60 app/src/window/accounts-page.ts:187
-#: app/src/window/window.ts:85
+#: app/src/window/window.ts:86
 msgid "Accounts"
 msgstr "Konten"
 
@@ -1829,7 +1862,7 @@ msgstr "Offline"
 msgid "Daemon not running"
 msgstr "Daemon läuft nicht"
 
-#: app/src/window/accounts-page.ts:35
+#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:24
 msgid "Off"
 msgstr "Aus"
 
@@ -1872,7 +1905,7 @@ msgstr ""
 msgid "Start"
 msgstr "Starten"
 
-#: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:88
+#: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:89
 msgid "Agent access"
 msgstr "Agentenzugriff"
 
@@ -2007,10 +2040,6 @@ msgstr "Regel hinzufügen"
 #: app/src/window/attachment-view.ts:90
 msgid "Play"
 msgstr "Abspielen"
-
-#: app/src/window/attachment-view.ts:90
-msgid "Open"
-msgstr "Öffnen"
 
 #: app/src/window/attachment-view.ts:95 app/src/window/media-viewer.ts:47
 msgid "Save as…"
@@ -2351,7 +2380,27 @@ msgstr ""
 "Gewöhnliche E-Mail-Verläufe neben Unterhaltungen aus einem Chat-Messenger "
 "anzeigen"
 
-#: app/src/window/preferences-dialog.ts:26 app/src/window/window.ts:87
+#: app/src/window/preferences-dialog.ts:22
+msgid "Message notifications"
+msgstr "Benachrichtigungen für Nachrichten"
+
+#: app/src/window/preferences-dialog.ts:23
+msgid "What a desktop notification for a new chat message shows"
+msgstr "Was eine Desktop-Benachrichtigung über eine neue Chat-Nachricht zeigt"
+
+#: app/src/window/preferences-dialog.ts:24
+msgid "Sender and text"
+msgstr "Absender und Text"
+
+#: app/src/window/preferences-dialog.ts:24
+msgid "Sender only"
+msgstr "Nur Absender"
+
+#: app/src/window/preferences-dialog.ts:27
+msgid "Notifications"
+msgstr "Benachrichtigungen"
+
+#: app/src/window/preferences-dialog.ts:36 app/src/window/window.ts:88
 msgid "Preferences"
 msgstr "Einstellungen"
 
@@ -2361,31 +2410,31 @@ msgid_plural "{count} selected"
 msgstr[0] "{count} ausgewählt"
 msgstr[1] "{count} ausgewählt"
 
-#: app/src/window/window.ts:51
+#: app/src/window/window.ts:52
 msgid "Select a conversation"
 msgstr "Unterhaltung auswählen"
 
-#: app/src/window/window.ts:52
+#: app/src/window/window.ts:53
 msgid "Pick a conversation from the list."
 msgstr "Wähle eine Unterhaltung aus der Liste."
 
-#: app/src/window/window.ts:86
+#: app/src/window/window.ts:87
 msgid "Merge contacts…"
 msgstr "Kontakte zusammenführen…"
 
-#: app/src/window/window.ts:90
+#: app/src/window/window.ts:91
 msgid "About Curlew"
 msgstr "Über Curlew"
 
-#: app/src/window/window.ts:91
+#: app/src/window/window.ts:92
 msgid "Quit"
 msgstr "Beenden"
 
-#: app/src/window/window.ts:106
+#: app/src/window/window.ts:107
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:215
+#: app/src/window/window.ts:216
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 
@@ -3403,9 +3452,6 @@ msgstr ""
 
 #~ msgid "Loading…"
 #~ msgstr "Wird geladen…"
-
-#~ msgid "Contains attachments"
-#~ msgstr "Enthält Anhänge"
 
 #~ msgid ""
 #~ "sending to {target} is not granted — add a grant like {grant} to the "

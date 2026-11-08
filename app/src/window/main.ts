@@ -4,6 +4,7 @@
  */
 
 import Gdk from 'gi://Gdk?version=4.0';
+import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import system from 'system';
@@ -44,6 +45,13 @@ const application = new AdwaitaApp({
       protocol: process.env.CURLEW_WINDOW_FILTER || undefined,
       open: process.env.CURLEW_WINDOW_OPEN || undefined,
     });
+    // A notification opens a chat over the bus: `app.open-conversation` hands the id to the window.
+    const open = new Gio.SimpleAction({
+      name: 'open-conversation',
+      parameterType: GLib.VariantType.new('s'),
+    });
+    open.connect('activate', (_a, parameter) => window.activate_action('open-conversation', parameter));
+    app.add_action(open);
     // A smoke hook for screenshots and CI: the process ends itself. An environment variable and
     // not a flag, because GApplication rejects options it does not know.
     const quitAfter = Number(process.env.CURLEW_WINDOW_QUIT_AFTER_MS);

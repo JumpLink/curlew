@@ -33,6 +33,8 @@ export interface BackendConfig {
 export interface UiConfig {
   /** Show ordinary mail threads beside messages carrying `Chat-Version: 1.0`. */
   showAllEmails: boolean;
+  /** What a desktop notification for a new chat message shows: its text, only who wrote, or nothing. */
+  notifications: 'preview' | 'sender' | 'off';
 }
 
 export interface CurlewConfig {
@@ -108,7 +110,7 @@ const KNOWN_KEYS = [
 export function defaultConfig(): CurlewConfig {
   return {
     backends: { mail: { enabled: true } },
-    ui: { showAllEmails: true },
+    ui: { showAllEmails: true, notifications: 'preview' },
     senders: {},
     grants: [],
     agentAccess: defaultAgentAccess(),
@@ -169,7 +171,10 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   }
   const showAllEmails = (rawUi as Record<string, unknown>).showAllEmails ?? true;
   if (typeof showAllEmails !== 'boolean') throw new Error('config.ui.showAllEmails must be true or false');
-  const ui = { showAllEmails };
+  const notifications = (rawUi as Record<string, unknown>).notifications ?? 'preview';
+  if (notifications !== 'preview' && notifications !== 'sender' && notifications !== 'off')
+    throw new Error('config.ui.notifications must be "preview", "sender" or "off"');
+  const ui: UiConfig = { showAllEmails, notifications };
 
   const senders: Record<string, Classification> = {};
   const rawSenders = obj.senders ?? {};
