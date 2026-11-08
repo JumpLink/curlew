@@ -740,6 +740,34 @@ function loadVerdicts(db: IndexDatabase, conversationIds: string[]): Map<string,
 }
 
 /**
+ * The directory participants a send target belongs to: whoever holds the address (an e-mail
+ * address in any case), plus the participant a chat peer of this account resolved to. Empty when
+ * the index does not know the target; callers treat that as "not a known person".
+ */
+export function participantIdsOfTarget(
+  db: IndexDatabase,
+  backend: string,
+  accountId: string,
+  target: string,
+): string[] {
+  const values = [...new Set([target, target.toLowerCase()])];
+  const ids = new Set<string>();
+  for (const value of values) {
+    const owners = db
+      .prepare(`SELECT participant_id FROM participant_addresses WHERE value = ?`)
+      .all(value) as Array<{ participant_id: unknown }>;
+    for (const row of owners) ids.add(String(row.participant_id));
+    const linked = db
+      .prepare(
+        `SELECT participant_id FROM chat_peer_links WHERE backend = ? AND account_id = ? AND peer_id = ?`,
+      )
+      .all(backend, accountId, value) as Array<{ participant_id: unknown }>;
+    for (const row of linked) ids.add(String(row.participant_id));
+  }
+  return [...ids].sort();
+}
+
+/**
  * The address values of every participant in the conversation a message belongs to.
  *
  * This is what the read-access gate needs for `message_save_attachment`: a contact whose

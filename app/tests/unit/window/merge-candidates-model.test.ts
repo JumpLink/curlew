@@ -24,6 +24,7 @@ const person = (id: string, title: string, over: Partial<ListEntry> = {}): ListE
   members: [],
   personIds: [id],
   manual: false,
+  pin: null,
   ...over,
 });
 

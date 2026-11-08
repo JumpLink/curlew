@@ -6,9 +6,12 @@ import { join } from 'node:path';
 import {
   peopleDecline,
   peopleMerge,
+  peoplePin,
+  pinFor,
   peopleUnmerge,
   withMerge,
   withoutMerge,
+  withPin,
 } from '../../../src/core/actions/people.ts';
 import { defaultConfig, loadConfig, parseConfig, saveConfig } from '../../../src/core/config.ts';
 
@@ -69,6 +72,33 @@ export default async () => {
         peopleDecline(['p-a', 'p-b'], path);
         expect(loadConfig(path).declinedMerges).toStrictEqual([['p-b', 'p-a']]);
         expect(() => parseConfig('{"declinedMerges": [[1]]}')).toThrow(/declinedMerges/);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('finds the pin of a person through the merged group, smallest id first', async () => {
+      const groups = [['p-a', 'p-b']];
+      expect(pinFor(groups, { 'p-b': 'signal' }, ['p-a'])).toBe('signal');
+      expect(pinFor(groups, { 'p-a': 'xmpp', 'p-b': 'signal' }, ['p-b'])).toBe('xmpp');
+      expect(pinFor(groups, { 'p-b': 'signal' }, ['p-z'])).toBe(null);
+      expect(pinFor([], {}, [])).toBe(null);
+    });
+
+    await it('pins every id of a person and releases them together', async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-people-'));
+      try {
+        const path = join(dir, 'config.json');
+        saveConfig(defaultConfig(), path);
+        peoplePin(['p-a', 'p-b'], 'signal', path);
+        expect(loadConfig(path).pins).toStrictEqual({ 'p-a': 'signal', 'p-b': 'signal' });
+        peoplePin(['p-a'], 'telegram', path);
+        expect(loadConfig(path).pins).toStrictEqual({ 'p-a': 'telegram', 'p-b': 'signal' });
+        peoplePin(['p-a', 'p-b'], null, path);
+        expect(loadConfig(path).pins).toStrictEqual({});
+        expect(withPin({ x: 'mail' }, ['y'], 'xmpp')).toStrictEqual({ x: 'mail', y: 'xmpp' });
+        expect(() => parseConfig('{"pins": {"p": 3}}')).toThrow(/pins/);
+        expect(() => parseConfig('{"pins": []}')).toThrow(/pins/);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }

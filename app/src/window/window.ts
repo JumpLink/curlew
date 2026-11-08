@@ -18,7 +18,7 @@ import type { ListEntry } from './conversation-list-model.ts';
 import { loadConfig } from '../core/config.ts';
 import { candidateSets } from './merge-candidates-model.ts';
 import { presentMergeAssistant } from './merge-assistant.ts';
-import { peopleDecline, peopleMerge, peopleUnmerge } from '../core/actions/people.ts';
+import { peopleDecline, peopleMerge, peoplePin, peopleUnmerge } from '../core/actions/people.ts';
 import { createConversationList } from './conversation-list.ts';
 import { composeMailReply } from './conversation-model.ts';
 import {
@@ -142,6 +142,13 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     (backend) => attachingBackends().has(backend),
     (entry, oldest) => loadOlderMessages(entry, oldest),
     (source, kind) => viewer.open(source, kind),
+    (entry, backend) => {
+      peoplePin(entry.personIds, backend);
+      refresh();
+      // The rebuilt row replaces this one; open it again so the header and composer follow the pin.
+      const again = shown.find((e) => e.id === entry.id);
+      if (again) select(again);
+    },
   );
   const select = (entry: ListEntry) => {
     currentEntry = entry;

@@ -9,6 +9,7 @@ import {
   mailReplyTarget,
   migrate,
   openIndexDb,
+  participantIdsOfTarget,
   rebuildConversations,
   SCHEMA_VERSION,
   syncIndex,
@@ -542,6 +543,25 @@ export default async () => {
           value: string;
         };
         expect(version.value).toBe(String(SCHEMA_VERSION));
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('resolves a send target to the participants that hold or link it', async () => {
+      const db = freshDb();
+      try {
+        db.exec(`INSERT INTO participant_addresses (participant_id, kind, value) VALUES
+          ('p-ana', 'email', 'ana@example.org'), ('p-ana', 'phone', '+10000000001'),
+          ('p-bo', 'jid', 'bo@example.org')`);
+        db.exec(`INSERT INTO chat_peer_links (backend, account_id, peer_id, participant_id) VALUES
+          ('telegram', 'telegram-1', '1001', 'p-ana'), ('telegram', 'telegram-2', '1001', 'p-bo')`);
+        expect(participantIdsOfTarget(db, 'mail', 'mail-1', 'Ana@Example.org')).toStrictEqual(['p-ana']);
+        expect(participantIdsOfTarget(db, 'signal', 'signal-1', '+10000000001')).toStrictEqual(['p-ana']);
+        expect(participantIdsOfTarget(db, 'telegram', 'telegram-1', '1001')).toStrictEqual(['p-ana']);
+        expect(participantIdsOfTarget(db, 'telegram', 'telegram-2', '1001')).toStrictEqual(['p-bo']);
+        expect(participantIdsOfTarget(db, 'telegram', 'telegram-3', '1001')).toStrictEqual([]);
+        expect(participantIdsOfTarget(db, 'xmpp', 'xmpp-1', 'nobody@example.org')).toStrictEqual([]);
       } finally {
         db.close();
       }

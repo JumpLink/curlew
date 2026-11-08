@@ -16,6 +16,7 @@ import {
   protocolChoices,
   protocolIcon,
   protocolLabel,
+  routeOptions,
   roomHint,
   selfAddressOf,
   shortTime,
@@ -63,6 +64,7 @@ const entry = (over: Partial<ListEntry> & { id: string }): ListEntry => ({
   members: [],
   personIds: [],
   manual: false,
+  pin: null,
   ...over,
 });
 
@@ -108,6 +110,81 @@ export default async () => {
         expect(merged.members.length).toBe(2);
         expect(merged.manual).toBe(false);
         expect(merged.personIds).toStrictEqual(['p-ana']);
+      });
+
+      it('routes a pinned row through the pinned protocol only', () => {
+        const chats = [
+          chat('c1', 'telegram', 'telegram-1', 'p-ana', '2026-01-01T10:00:00Z', 1),
+          chat('c2', 'signal', 'signal-9', 'p-ana', '2026-01-02T10:00:00Z', 2),
+        ].map((c) => ({
+          ...c,
+          participants: [
+            { ...c.participants[0]!, addresses: [{ kind: c.backend, value: `${c.backend}-id` }] },
+          ],
+        })) as Conversation[];
+        const auto = toEntries(chats)[0]!;
+        expect(auto.pin).toBe(null);
+        expect(protocolChoices(auto).length).toBe(2);
+        const pinned = toEntries(chats, true, new Map(), new Map(), [], { 'p-ana': 'telegram' })[0]!;
+        expect(pinned.pin).toBe('telegram');
+        expect(pinned.backend).toBe('telegram');
+        expect(pinned.lastMessageAt).toBe('2026-01-02T10:00:00Z');
+        expect(protocolChoices(pinned).map((c) => c.backend)).toStrictEqual(['telegram']);
+        expect(singleChoice(pinned)?.backend).toBe('telegram');
+        expect(canSend(pinned)).toBe(true);
+        expect(entryProtocolSubtitle(pinned)).toBe('Only via Telegram');
+      });
+
+      it('lets the smallest id win a pin conflict and ignores a pin on a single chat', () => {
+        const list = mergePeople(
+          [
+            entry({ id: 'a', personIds: ['p-b'], backend: 'signal', lastMessageAt: '2026-01-01T00:00:00Z' }),
+            entry({ id: 'b', personIds: ['p-a'], backend: 'xmpp', lastMessageAt: '2026-01-02T00:00:00Z' }),
+            entry({ id: 'c', personIds: ['p-z'], backend: 'xmpp' }),
+          ],
+          [['p-a', 'p-b']],
+          { 'p-a': 'xmpp', 'p-b': 'signal', 'p-z': 'signal' },
+        );
+        expect(list.find((e) => e.id === 'person:p-a')!.pin).toBe('xmpp');
+        expect(list.find((e) => e.id === 'c')!.pin).toBe(null);
+      });
+
+      it('says why a pinned row without an address cannot send', () => {
+        const pinned = entry({
+          id: 'person:p-a',
+          pin: 'signal',
+          members: [
+            entry({ id: 'x', backend: 'telegram', target: 'u1' }),
+            entry({ id: 'y', backend: 'xmpp' }),
+          ],
+        });
+        expect(protocolChoices(pinned)).toStrictEqual([]);
+        expect(singleChoice(pinned)).toBe(null);
+        expect(canSend(pinned)).toBe(true);
+        expect(composerBlock(pinned)).toBe('Only via Signal, which has no address for this person');
+      });
+
+      it('offers automatic and each addressable protocol in the route menu', () => {
+        const row = entry({
+          id: 'person:p-a',
+          personIds: ['p-a'],
+          members: [
+            entry({ id: 'x', backend: 'telegram', target: 'u1' }),
+            entry({ id: 'y', backend: 'signal', target: '+10000000001' }),
+            entry({ id: 'z', backend: 'mail' }),
+          ],
+        });
+        const open = routeOptions(row);
+        expect(open.map((o) => o.backend)).toStrictEqual([null, 'signal', 'telegram']);
+        expect(open.map((o) => o.active)).toStrictEqual([true, false, false]);
+        expect(routeOptions({ ...row, pin: 'telegram' }).map((o) => o.active)).toStrictEqual([
+          false,
+          false,
+          true,
+        ]);
+        expect(routeOptions({ ...row, pin: 'mail' }).map((o) => o.backend)).toContain('mail');
+        expect(routeOptions({ ...row, members: [], personIds: [] })).toStrictEqual([]);
+        expect(routeOptions({ ...row, personIds: [] })).toStrictEqual([]);
       });
 
       it('leaves one chat alone and never merges a group or the note to self', () => {

@@ -47,3 +47,40 @@ export function peopleDecline(ids: readonly string[], path = configPath()): void
   config.declinedMerges = [...config.declinedMerges, [...ids]];
   saveConfig(config, path);
 }
+
+/**
+ * The backend a send to these participants is pinned to, or null. A pin binds the whole merged
+ * group the participants belong to, whichever of its ids carries it; on a conflict the smallest
+ * id wins, as in the list.
+ */
+export function pinFor(
+  groups: Groups,
+  pins: Readonly<Record<string, string>>,
+  participantIds: readonly string[],
+): string | null {
+  const people = new Set(participantIds);
+  for (const group of groups) if (group.some((id) => people.has(id))) for (const id of group) people.add(id);
+  const pinned = [...people].sort().find((id) => pins[id] !== undefined);
+  return pinned === undefined ? null : pins[pinned]!;
+}
+
+/** The pins with every id of `ids` set to `backend`, or cleared when it is null. */
+export function withPin(
+  pins: Readonly<Record<string, string>>,
+  ids: readonly string[],
+  backend: string | null,
+): Record<string, string> {
+  const out = { ...pins };
+  for (const id of ids) {
+    if (backend === null) delete out[id];
+    else out[id] = backend;
+  }
+  return out;
+}
+
+/** Pin a person to one protocol, or release the pin with null. Interactive use only. */
+export function peoplePin(ids: readonly string[], backend: string | null, path = configPath()): void {
+  const config = loadConfig(path);
+  config.pins = withPin(config.pins, ids, backend);
+  saveConfig(config, path);
+}

@@ -23,6 +23,7 @@ const entry = (over: Partial<ListEntry> & { id: string }): ListEntry => ({
   members: [],
   personIds: [],
   manual: false,
+  pin: null,
   ...over,
 });
 

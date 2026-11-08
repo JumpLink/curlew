@@ -374,9 +374,18 @@ export default async () => {
         logText: () => string;
       }) => Promise<void>,
       extraConfig: Record<string, unknown> = {},
+      seed?: (db: ReturnType<typeof openIndex>) => void,
     ) => {
       const dir = mkdtempSync(join(tmpdir(), 'curlew-adr8-'));
       try {
+        if (seed) {
+          const db = openIndex(join(dir, 'index.db'));
+          try {
+            seed(db);
+          } finally {
+            db.close();
+          }
+        }
         const configPath = join(dir, 'config.json');
         writeFileSync(configPath, JSON.stringify({ grants, ...extraConfig }));
         const sent: Array<[string, string, string]> = [];
@@ -432,6 +441,51 @@ export default async () => {
         expect(sent[0][0]).toBe(OWNER);
         expect(logged()).toBe(true);
       });
+    });
+
+    await it('keeps an agent to the protocol a person is pinned to', async () => {
+      const seed = (db: ReturnType<typeof openIndex>) =>
+        db.exec(
+          `INSERT INTO participant_addresses (participant_id, kind, value) VALUES ('p-owner', 'jid', '${OWNER}')`,
+        );
+      await world(
+        GRANTS,
+        async ({ agent, sent, logged }) => {
+          await expect(agent(OWNER)).rejects.toThrow(/pinned to signal/);
+          expect(sent.length).toBe(0);
+          expect(logged()).toBe(false);
+        },
+        { pins: { 'p-owner': 'signal' } },
+        seed,
+      );
+      await world(
+        GRANTS,
+        async ({ agent, person, sent }) => {
+          await agent(OWNER);
+          expect(sent.length).toBe(1);
+          await person(OWNER);
+          expect(sent.length).toBe(2);
+        },
+        { pins: { 'p-owner': 'xmpp' } },
+        seed,
+      );
+      // A pin on another id of a merged group binds the whole group; an unknown target is not pinned.
+      await world(
+        GRANTS,
+        async ({ agent }) => {
+          await expect(agent(OWNER)).rejects.toThrow(/pinned to signal/);
+        },
+        { mergedPeople: [['p-a', 'p-owner']], pins: { 'p-a': 'signal' } },
+        seed,
+      );
+      await world(
+        GRANTS,
+        async ({ agent, sent }) => {
+          await agent(OWNER);
+          expect(sent.length).toBe(1);
+        },
+        { pins: { 'p-owner': 'signal' } },
+      );
     });
 
     await it('puts a chat file to the person even where a rule allows the send', async () => {
