@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-08 07:50+0100\n"
+"POT-Creation-Date: 2026-11-08 09:20+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1481,8 +1481,8 @@ msgstr ""
 msgid "Mail accounts are added in GNOME Settings"
 msgstr ""
 
-#: app/src/window/account-add.ts:296 app/src/window/accounts-page.ts:156
-#: app/src/window/accounts-page.ts:177
+#: app/src/window/account-add.ts:296 app/src/window/accounts-page.ts:157
+#: app/src/window/accounts-page.ts:180
 msgid "Add Account"
 msgstr ""
 
@@ -1528,7 +1528,11 @@ msgstr ""
 msgid "Remove Account"
 msgstr ""
 
-#: app/src/window/accounts-dialog.ts:59 app/src/window/accounts-page.ts:184
+#: app/src/window/accounts-daemon.ts:53 app/src/window/accounts-daemon.ts:57
+msgid "Could not start the background service. Run “curlew setup” first."
+msgstr ""
+
+#: app/src/window/accounts-dialog.ts:60 app/src/window/accounts-page.ts:187
 #: app/src/window/window.ts:75
 msgid "Accounts"
 msgstr ""
@@ -1582,20 +1586,24 @@ msgstr ""
 msgid "No accounts yet"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:148
+#: app/src/window/accounts-page.ts:149
 msgid "Accounts could not be loaded"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:152
+#: app/src/window/accounts-page.ts:153
 msgid "No accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:153
+#: app/src/window/accounts-page.ts:154
 msgid "Add a chat account, or add a mail account in GNOME Settings."
 msgstr ""
 
-#: app/src/window/accounts-page.ts:170
+#: app/src/window/accounts-page.ts:171
 msgid "The background service is not running, so chat accounts cannot connect."
+msgstr ""
+
+#: app/src/window/accounts-page.ts:172
+msgid "Start"
 msgstr ""
 
 #: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:77

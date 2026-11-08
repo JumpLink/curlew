@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-08 07:50+0100\n"
+"POT-Creation-Date: 2026-11-08 09:20+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1726,8 +1726,8 @@ msgstr "GNOME-Online-Konten"
 msgid "Mail accounts are added in GNOME Settings"
 msgstr "E-Mail-Konten werden in den GNOME-Einstellungen hinzugefügt"
 
-#: app/src/window/account-add.ts:296 app/src/window/accounts-page.ts:156
-#: app/src/window/accounts-page.ts:177
+#: app/src/window/account-add.ts:296 app/src/window/accounts-page.ts:157
+#: app/src/window/accounts-page.ts:180
 msgid "Add Account"
 msgstr "Konto hinzufügen"
 
@@ -1743,7 +1743,9 @@ msgstr "Status"
 msgid ""
 "Off keeps the account linked and its messages here, but Curlew stops syncing "
 "it."
-msgstr "Aus lässt das Konto verknüpft und seine Nachrichten hier, aber Curlew synchronisiert es nicht mehr."
+msgstr ""
+"Aus lässt das Konto verknüpft und seine Nachrichten hier, aber Curlew "
+"synchronisiert es nicht mehr."
 
 #: app/src/window/account-detail.ts:75
 msgid "Sync this account"
@@ -1777,7 +1779,11 @@ msgstr "Abbrechen"
 msgid "Remove Account"
 msgstr "Konto entfernen"
 
-#: app/src/window/accounts-dialog.ts:59 app/src/window/accounts-page.ts:184
+#: app/src/window/accounts-daemon.ts:53 app/src/window/accounts-daemon.ts:57
+msgid "Could not start the background service. Run “curlew setup” first."
+msgstr "Der Hintergrunddienst ließ sich nicht starten. Führe zuerst „curlew setup“ aus."
+
+#: app/src/window/accounts-dialog.ts:60 app/src/window/accounts-page.ts:187
 #: app/src/window/window.ts:75
 msgid "Accounts"
 msgstr "Konten"
@@ -1831,24 +1837,28 @@ msgstr "Konten konnten nicht geladen werden"
 msgid "No accounts yet"
 msgstr "Noch keine Konten"
 
-#: app/src/window/accounts-page.ts:148
+#: app/src/window/accounts-page.ts:149
 msgid "Accounts could not be loaded"
 msgstr "Konten konnten nicht geladen werden"
 
-#: app/src/window/accounts-page.ts:152
+#: app/src/window/accounts-page.ts:153
 msgid "No accounts"
 msgstr "Keine Konten"
 
-#: app/src/window/accounts-page.ts:153
+#: app/src/window/accounts-page.ts:154
 msgid "Add a chat account, or add a mail account in GNOME Settings."
 msgstr ""
 "Füge ein Chat-Konto hinzu oder ein E-Mail-Konto in den GNOME-Einstellungen."
 
-#: app/src/window/accounts-page.ts:170
+#: app/src/window/accounts-page.ts:171
 msgid "The background service is not running, so chat accounts cannot connect."
 msgstr ""
 "Der Hintergrunddienst läuft nicht, daher können sich Chat-Konten nicht "
 "verbinden."
+
+#: app/src/window/accounts-page.ts:172
+msgid "Start"
+msgstr "Starten"
 
 #: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:77
 msgid "Agent access"
