@@ -15,6 +15,7 @@ import { presentAccounts } from './accounts-dialog.ts';
 import { presentAgentAccess } from './agent-access-dialog.ts';
 import { loadConversationEntries } from './conversation-list-store.ts';
 import type { ListEntry } from './conversation-list-model.ts';
+import { peopleMerge, peopleUnmerge } from '../core/actions/people.ts';
 import { createConversationList } from './conversation-list.ts';
 import { composeMailReply } from './conversation-model.ts';
 import {
@@ -145,7 +146,16 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     split.set_content(conversation.page);
     split.set_show_content(true);
   };
-  const sidebar = createConversationList(menu, select, () => presentAccounts(window));
+  const sidebar = createConversationList(menu, select, () => presentAccounts(window), {
+    merge: (ids) => {
+      peopleMerge(ids);
+      refresh();
+    },
+    unmerge: (ids) => {
+      peopleUnmerge(ids);
+      refresh();
+    },
+  });
   split.set_sidebar(sidebar.page);
   split.set_content(placeholder());
 
