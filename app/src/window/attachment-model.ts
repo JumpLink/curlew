@@ -90,8 +90,12 @@ export function tileAction(kind: AttachmentKind): 'view' | 'open' {
   return kind === 'video' ? 'view' : 'open';
 }
 
+/**
+ * A picture in a bubble is laid out with a size request, which is a minimum: a wider one would keep
+ * the window from going narrower. 280 px plus the bubble's margins fits a 360 px phone screen.
+ */
 export const BUBBLE_MAX_IMAGE_HEIGHT = 300;
-export const BUBBLE_MAX_IMAGE_WIDTH = 420;
+export const BUBBLE_MAX_IMAGE_WIDTH = 280;
 
 export interface Size {
   width: number;

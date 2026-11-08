@@ -139,14 +139,14 @@ export default async () => {
       expect(boundedSize({ width: 100, height: 50 })).toStrictEqual({ width: 100, height: 50 });
     });
 
-    await it('bounds the height and keeps the ratio', async () => {
-      expect(boundedSize({ width: 600, height: 600 })).toStrictEqual({ width: 300, height: 300 });
+    await it('bounds the box and keeps the ratio', async () => {
+      expect(boundedSize({ width: 600, height: 600 })).toStrictEqual({ width: 280, height: 280 });
       expect(boundedSize({ width: 1000, height: 100 }, 400, 300)).toStrictEqual({ width: 400, height: 40 });
     });
 
     await it('never collapses to zero and falls back for a bad size', async () => {
       expect(boundedSize({ width: 100000, height: 1 }, 400, 300).height).toBe(1);
-      expect(boundedSize({ width: 0, height: 0 })).toStrictEqual({ width: 420, height: 150 });
+      expect(boundedSize({ width: 0, height: 0 })).toStrictEqual({ width: 280, height: 150 });
     });
   });
 
