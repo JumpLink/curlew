@@ -2,12 +2,12 @@
 Type=Application
 Name=Curlew
 Name[de]=Curlew
-Comment=Agent access rules for mail and chat
-Comment[de]=Regeln für den Agentenzugriff auf Mail und Chat
+Comment=Chats across messengers
+Comment[de]=Chats über alle Messenger
 Exec=curlew window
 Icon=eu.jumplink.curlew
 Terminal=false
-Categories=Network;Email;GTK;
-Keywords=mail;chat;agent;MCP;access;
+Categories=Network;Chat;InstantMessaging;Email;GTK;
+Keywords=chat;messenger;mail;Telegram;Signal;Matrix;XMPP;agent;
 StartupNotify=true
 StartupWMClass=eu.jumplink.curlew
