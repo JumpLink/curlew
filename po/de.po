@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-08 09:35+0100\n"
+"POT-Creation-Date: 2026-11-08 11:40+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -248,7 +248,9 @@ msgstr "Kein Konto {account} — `curlew accounts list` zeigt sie an"
 msgid ""
 "{backend} takes no attachments from an agent — pick the file in the Curlew "
 "window"
-msgstr "{backend} nimmt von einem Agenten keine Anhänge an — wähle die Datei im Curlew-Fenster"
+msgstr ""
+"{backend} nimmt von einem Agenten keine Anhänge an — wähle die Datei im "
+"Curlew-Fenster"
 
 #: app/src/core/actions/send.ts:468
 msgid "{backend} cannot send"
@@ -1671,8 +1673,8 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:87
-#: app/src/window/window.ts:47 app/src/window/window.ts:62
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:91
+#: app/src/window/window.ts:53 app/src/window/window.ts:68
 msgid "Curlew"
 msgstr "Curlew"
 
@@ -1792,7 +1794,7 @@ msgstr ""
 "aus."
 
 #: app/src/window/accounts-dialog.ts:60 app/src/window/accounts-page.ts:187
-#: app/src/window/window.ts:75
+#: app/src/window/window.ts:81
 msgid "Accounts"
 msgstr "Konten"
 
@@ -1868,7 +1870,7 @@ msgstr ""
 msgid "Start"
 msgstr "Starten"
 
-#: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:77
+#: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:83
 msgid "Agent access"
 msgstr "Agentenzugriff"
 
@@ -2029,6 +2031,30 @@ msgid_plural "and {n} more attachments"
 msgstr[0] "und {n} weiterer Anhang"
 msgstr[1] "und {n} weitere Anhänge"
 
+#: app/src/window/composer-files.ts:73
+msgid "Remove {file}"
+msgstr "{file} entfernen"
+
+#: app/src/window/composer-files.ts:89
+msgid "Attach a file"
+msgstr "Datei anhängen"
+
+#: app/src/window/composer-files.ts:134
+msgid "At most {max} files per message"
+msgstr "Höchstens {max} Dateien pro Nachricht"
+
+#: app/src/window/composer-files.ts:147
+msgid "{file} is not a file that can be attached"
+msgstr "{file} lässt sich nicht anhängen"
+
+#: app/src/window/composer-files.ts:155
+msgid "Attach files"
+msgstr "Dateien anhängen"
+
+#: app/src/window/composer-files.ts:182
+msgid "The picture could not be saved"
+msgstr "Das Bild konnte nicht gespeichert werden"
+
 #: app/src/window/conversation-list-model.ts:78
 msgid "XMPP"
 msgstr "XMPP"
@@ -2136,7 +2162,7 @@ msgid "Conversations"
 msgstr "Unterhaltungen"
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:577
+#: app/src/window/conversation-view.ts:609
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -2164,33 +2190,41 @@ msgstr "Audio"
 msgid "File"
 msgstr "Datei"
 
-#: app/src/window/conversation-view.ts:96
+#: app/src/window/conversation-view.ts:100
 msgid "Write a message"
 msgstr "Nachricht schreiben"
 
-#: app/src/window/conversation-view.ts:107
+#: app/src/window/conversation-view.ts:111
 msgid "Send message"
 msgstr "Nachricht senden"
 
-#: app/src/window/conversation-view.ts:125
+#: app/src/window/conversation-view.ts:138
 msgid "Conversation"
 msgstr "Unterhaltung"
 
-#: app/src/window/conversation-view.ts:240
+#: app/src/window/conversation-view.ts:253
+msgid "{protocol} cannot send files; the attached files were removed"
+msgstr "{protocol} kann keine Dateien senden; die angehängten Dateien wurden entfernt"
+
+#: app/src/window/conversation-view.ts:268
 msgid "Send via {protocol}"
 msgstr "Senden über {protocol}"
 
-#: app/src/window/conversation-view.ts:313
+#: app/src/window/conversation-view.ts:342
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:482
+#: app/src/window/conversation-view.ts:511
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:587
+#: app/src/window/conversation-view.ts:620
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
+
+#: app/src/window/conversation-view.ts:623
+msgid "Retry"
+msgstr "Erneut versuchen"
 
 #: app/src/window/fade-bin.ts:148
 msgid "Show more"
@@ -2235,27 +2269,27 @@ msgstr ""
 "Gewöhnliche E-Mail-Verläufe neben Unterhaltungen aus einem Chat-Messenger "
 "anzeigen"
 
-#: app/src/window/preferences-dialog.ts:26 app/src/window/window.ts:76
+#: app/src/window/preferences-dialog.ts:26 app/src/window/window.ts:82
 msgid "Preferences"
 msgstr "Einstellungen"
 
-#: app/src/window/window.ts:41
+#: app/src/window/window.ts:47
 msgid "Select a conversation"
 msgstr "Unterhaltung auswählen"
 
-#: app/src/window/window.ts:42
+#: app/src/window/window.ts:48
 msgid "Pick a conversation from the list."
 msgstr "Wähle eine Unterhaltung aus der Liste."
 
-#: app/src/window/window.ts:79
+#: app/src/window/window.ts:85
 msgid "About Curlew"
 msgstr "Über Curlew"
 
-#: app/src/window/window.ts:80
+#: app/src/window/window.ts:86
 msgid "Quit"
 msgstr "Beenden"
 
-#: app/src/window/window.ts:95
+#: app/src/window/window.ts:101
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
@@ -2808,7 +2842,21 @@ msgid ""
 "default; it sends a plain-text message only to a chat you granted with "
 "`telegram.send`; a file goes out only when you pick it in the window, and "
 "curlew never edits or deletes. It keeps the session key on this machine only."
-msgstr "curlew spricht als Drittanbieter-Client (mtcute) über die offizielle MTProto-API mit Telegram. Telegram verlangt von jedem Client API-Zugangsdaten (api_id und api_hash). Ein paketierter Build KANN ein Paar mitbringen, das sein Distributor beigesteuert hat — dann braucht die Anmeldung nur deine Telefonnummer und den Code; curlew selbst liefert keines, und du kannst immer eigene verwenden: erstelle sie für DICH SELBST auf my.telegram.org und starte `curlew accounts add telegram --own-credentials` (oder setze sie in der Umgebung). Sie werden bei der Sitzung aufbewahrt. Die Nutzung unterliegt den API-Nutzungsbedingungen von Telegram; ein Konto, das die API missbraucht, kann von Telegram eingeschränkt oder gesperrt werden. curlew liest standardmäßig; es sendet eine Nur-Text-Nachricht nur an einen Chat, den du mit `telegram.send` freigegeben hast; eine Datei geht nur raus, wenn du sie im Fenster auswählst, und curlew bearbeitet oder löscht nie. Den Sitzungsschlüssel behält es ausschließlich auf diesem Rechner."
+msgstr ""
+"curlew spricht als Drittanbieter-Client (mtcute) über die offizielle MTProto-"
+"API mit Telegram. Telegram verlangt von jedem Client API-Zugangsdaten "
+"(api_id und api_hash). Ein paketierter Build KANN ein Paar mitbringen, das "
+"sein Distributor beigesteuert hat — dann braucht die Anmeldung nur deine "
+"Telefonnummer und den Code; curlew selbst liefert keines, und du kannst "
+"immer eigene verwenden: erstelle sie für DICH SELBST auf my.telegram.org und "
+"starte `curlew accounts add telegram --own-credentials` (oder setze sie in "
+"der Umgebung). Sie werden bei der Sitzung aufbewahrt. Die Nutzung unterliegt "
+"den API-Nutzungsbedingungen von Telegram; ein Konto, das die API "
+"missbraucht, kann von Telegram eingeschränkt oder gesperrt werden. curlew "
+"liest standardmäßig; es sendet eine Nur-Text-Nachricht nur an einen Chat, "
+"den du mit `telegram.send` freigegeben hast; eine Datei geht nur raus, wenn "
+"du sie im Fenster auswählst, und curlew bearbeitet oder löscht nie. Den "
+"Sitzungsschlüssel behält es ausschließlich auf diesem Rechner."
 
 #: packages/telegram/src/sender.ts:74
 msgid ""

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-08 09:35+0100\n"
+"POT-Creation-Date: 2026-11-08 11:40+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1428,8 +1428,8 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr ""
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:87
-#: app/src/window/window.ts:47 app/src/window/window.ts:62
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:91
+#: app/src/window/window.ts:53 app/src/window/window.ts:68
 msgid "Curlew"
 msgstr ""
 
@@ -1539,7 +1539,7 @@ msgid "Could not start the background service. Run “curlew setup” first."
 msgstr ""
 
 #: app/src/window/accounts-dialog.ts:60 app/src/window/accounts-page.ts:187
-#: app/src/window/window.ts:75
+#: app/src/window/window.ts:81
 msgid "Accounts"
 msgstr ""
 
@@ -1612,7 +1612,7 @@ msgstr ""
 msgid "Start"
 msgstr ""
 
-#: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:77
+#: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:83
 msgid "Agent access"
 msgstr ""
 
@@ -1763,6 +1763,30 @@ msgid_plural "and {n} more attachments"
 msgstr[0] ""
 msgstr[1] ""
 
+#: app/src/window/composer-files.ts:73
+msgid "Remove {file}"
+msgstr ""
+
+#: app/src/window/composer-files.ts:89
+msgid "Attach a file"
+msgstr ""
+
+#: app/src/window/composer-files.ts:134
+msgid "At most {max} files per message"
+msgstr ""
+
+#: app/src/window/composer-files.ts:147
+msgid "{file} is not a file that can be attached"
+msgstr ""
+
+#: app/src/window/composer-files.ts:155
+msgid "Attach files"
+msgstr ""
+
+#: app/src/window/composer-files.ts:182
+msgid "The picture could not be saved"
+msgstr ""
+
 #: app/src/window/conversation-list-model.ts:78
 msgid "XMPP"
 msgstr ""
@@ -1868,7 +1892,7 @@ msgid "Conversations"
 msgstr ""
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:577
+#: app/src/window/conversation-view.ts:609
 msgid "Continuing via {protocol}"
 msgstr ""
 
@@ -1896,32 +1920,40 @@ msgstr ""
 msgid "File"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:96
+#: app/src/window/conversation-view.ts:100
 msgid "Write a message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:107
+#: app/src/window/conversation-view.ts:111
 msgid "Send message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:125
+#: app/src/window/conversation-view.ts:138
 msgid "Conversation"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:240
+#: app/src/window/conversation-view.ts:253
+msgid "{protocol} cannot send files; the attached files were removed"
+msgstr ""
+
+#: app/src/window/conversation-view.ts:268
 msgid "Send via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:313
+#: app/src/window/conversation-view.ts:342
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:482
+#: app/src/window/conversation-view.ts:511
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:587
+#: app/src/window/conversation-view.ts:620
 msgid "Message not sent: {error}"
+msgstr ""
+
+#: app/src/window/conversation-view.ts:623
+msgid "Retry"
 msgstr ""
 
 #: app/src/window/fade-bin.ts:148
@@ -1965,27 +1997,27 @@ msgid ""
 "Show ordinary email threads beside conversations started by a chat messenger"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:26 app/src/window/window.ts:76
+#: app/src/window/preferences-dialog.ts:26 app/src/window/window.ts:82
 msgid "Preferences"
 msgstr ""
 
-#: app/src/window/window.ts:41
+#: app/src/window/window.ts:47
 msgid "Select a conversation"
 msgstr ""
 
-#: app/src/window/window.ts:42
+#: app/src/window/window.ts:48
 msgid "Pick a conversation from the list."
 msgstr ""
 
-#: app/src/window/window.ts:79
+#: app/src/window/window.ts:85
 msgid "About Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:80
+#: app/src/window/window.ts:86
 msgid "Quit"
 msgstr ""
 
-#: app/src/window/window.ts:95
+#: app/src/window/window.ts:101
 msgid "This conversation has no recipient address."
 msgstr ""
 

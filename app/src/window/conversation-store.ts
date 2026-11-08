@@ -31,6 +31,15 @@ export function loadConversationMessages(
   return loadPage(entry, undefined, dbPath, cfgPath);
 }
 
+/** The backends whose manifest says they can send a file: only those get a paperclip. */
+export function attachingBackends(cfgPath = configPath()): Set<string> {
+  return new Set(
+    backendsList(cfgPath)
+      .backends.filter((status) => status.capabilities.attachments)
+      .map((status) => status.name),
+  );
+}
+
 /** The page of messages just before `oldest`, the oldest one on screen. */
 export function loadOlderMessages(
   entry: ListEntry,
