@@ -75,6 +75,12 @@ export interface CurlewConfig {
    */
   declinedMerges: string[][];
   /**
+   * People the person pinned to one protocol: participant id to backend. A pin routes the
+   * conversation list and binds agents too, so a message to that person never leaves through
+   * another network. Local, like a merge.
+   */
+  pins: Record<string, string>;
+  /**
    * Top-level keys this build does not know, carried through unchanged so a build that does not
    * know a key cannot drop it on save (ADR 0004).
    */
@@ -91,6 +97,7 @@ const KNOWN_KEYS = [
   'disabledAccounts',
   'mergedPeople',
   'declinedMerges',
+  'pins',
 ];
 
 /**
@@ -109,6 +116,7 @@ export function defaultConfig(): CurlewConfig {
     disabledAccounts: [],
     mergedPeople: [],
     declinedMerges: [],
+    pins: {},
     unknown: {},
   };
 }
@@ -185,6 +193,7 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   const disabledAccounts = parseDisabledAccounts(obj.disabledAccounts);
   const mergedPeople = parseIdGroups(obj.mergedPeople, 'mergedPeople');
   const declinedMerges = parseIdGroups(obj.declinedMerges, 'declinedMerges');
+  const pins = parsePins(obj.pins);
 
   const unknown: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
@@ -201,8 +210,21 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     disabledAccounts,
     mergedPeople,
     declinedMerges,
+    pins,
     unknown,
   };
+}
+
+function parsePins(raw: unknown): Record<string, string> {
+  if (raw === undefined) return {};
+  const bad = () => new Error('config.pins must map participant ids to a backend name');
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw bad();
+  const out: Record<string, string> = {};
+  for (const [id, backend] of Object.entries(raw as Record<string, unknown>)) {
+    if (id === '' || typeof backend !== 'string' || backend === '') throw bad();
+    out[id] = backend;
+  }
+  return out;
 }
 
 function parseIdGroups(raw: unknown, key: string): string[][] {
@@ -262,6 +284,7 @@ export function saveConfig(config: CurlewConfig, path = configPath()): void {
     disabledAccounts,
     mergedPeople,
     declinedMerges,
+    pins,
     ...known
   } = config;
   const writtenRules = agentAccess.rules.filter((rule) => !rule.migrated);
@@ -277,6 +300,7 @@ export function saveConfig(config: CurlewConfig, path = configPath()): void {
     ...(disabledAccounts.length > 0 ? { disabledAccounts } : {}),
     ...(mergedPeople.length > 0 ? { mergedPeople } : {}),
     ...(declinedMerges.length > 0 ? { declinedMerges } : {}),
+    ...(Object.keys(pins).length > 0 ? { pins } : {}),
   };
   writeFileSync(part, `${JSON.stringify(out, null, 2)}\n`, { mode: 0o600 });
   chmodSync(part, 0o600);

@@ -39,6 +39,11 @@ export interface ListEntry {
   personIds: string[];
   /** True when the person joined people the address book does not own together (a manual merge). */
   manual: boolean;
+  /**
+   * The backend the person pinned this merged row to, or null for automatic routing. Only a row
+   * that joins several chats can be pinned; the composer, the picker and agents follow it.
+   */
+  pin: string | null;
 }
 
 /**
@@ -46,6 +51,9 @@ export interface ListEntry {
  * machine; the address book is never written.
  */
 export type PersonMerges = ReadonlyArray<ReadonlyArray<string>>;
+
+/** Participant id to the backend that person is pinned to. Local to this machine. */
+export type PersonPins = Readonly<Record<string, string>>;
 
 /** One carrier the composer can send a merged row through. */
 export interface ProtocolChoice {
@@ -252,6 +260,7 @@ export function toEntry(
     members: [],
     personIds: personOf(conversation, identity) === null ? [] : [personOf(conversation, identity)!],
     manual: false,
+    pin: null,
   };
 }
 
@@ -270,11 +279,17 @@ function personOf(conversation: Conversation, identity?: string): string | null 
  * homeserver again right before the send.
  */
 export function composerBlock(entry: ListEntry): string | null {
+  if (entry.pin !== null && protocolChoices(entry).length === 0) {
+    return fmt(_('Only via {protocol}, which has no address for this person'), {
+      protocol: protocolLabel(entry.pin),
+    });
+  }
   return entry.room?.encrypted === true ? _('Encrypted rooms are not supported yet') : null;
 }
 
 /** True when the composer has at least one carrier it can send through. */
 export function canSend(entry: ListEntry): boolean {
+  if (entry.pin !== null) return true;
   if (entry.target !== null) return true;
   return entry.members.some((m) => m.target !== null);
 }
@@ -282,7 +297,7 @@ export function canSend(entry: ListEntry): boolean {
 /** The carriers a merged row can send through; empty for a non-merged row. */
 export function protocolChoices(entry: ListEntry): ProtocolChoice[] {
   return entry.members
-    .filter((m) => m.target !== null)
+    .filter((m) => m.target !== null && (entry.pin === null || m.backend === entry.pin))
     .map((m) => ({
       backend: m.backend,
       accountId: m.accountId,
@@ -294,6 +309,7 @@ export function protocolChoices(entry: ListEntry): ProtocolChoice[] {
 
 /** The single carrier for a non-merged row, or the only member of a merged one. */
 export function singleChoice(entry: ListEntry): ProtocolChoice | null {
+  if (entry.pin !== null) return protocolChoices(entry)[0] ?? null;
   const source = entry.members.length === 1 ? entry.members[0]! : entry;
   if (source.target === null) return null;
   return {
@@ -305,12 +321,38 @@ export function singleChoice(entry: ListEntry): ProtocolChoice | null {
   };
 }
 
+/** One line of the route menu: "Automatic" (backend null) or one protocol the row can pin to. */
+export interface RouteOption {
+  backend: string | null;
+  label: string;
+  active: boolean;
+}
+
+/**
+ * What the route menu of a merged person offers: automatic routing, then each protocol that has a
+ * known address, in label order. Empty for a row that is not a merged person: nothing to pin.
+ */
+export function routeOptions(entry: ListEntry): RouteOption[] {
+  if (entry.members.length < 2 || entry.personIds.length === 0) return [];
+  const backends = new Set(entry.members.filter((m) => m.target !== null).map((m) => m.backend));
+  if (entry.pin !== null) backends.add(entry.pin);
+  const pins = [...backends]
+    .map((backend) => ({
+      backend,
+      label: fmt(_('Only via {protocol}'), { protocol: protocolLabel(backend) }),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label))
+    .map((option) => ({ ...option, active: entry.pin === option.backend }));
+  return [{ backend: null, label: _('Automatic'), active: entry.pin === null }, ...pins];
+}
+
 /**
  * The subtitle under a merged "Note to self" header: the protocols it can send through, each once,
  * in a fixed order. An ordinary row keeps the single protocol label.
  */
 export function entryProtocolSubtitle(entry: ListEntry): string {
   if (entry.members.length === 0) return protocolLabel(entry.backend);
+  if (entry.pin !== null) return fmt(_('Only via {protocol}'), { protocol: protocolLabel(entry.pin) });
   const labels = [...new Set(entry.members.map((m) => protocolLabel(m.backend)))].sort();
   return labels.join(' · ');
 }
@@ -348,14 +390,25 @@ export function roomHint(entry: ListEntry): string | null {
 const NOTE_TO_SELF_ID = 'note-to-self';
 
 /** One row that stands for several: the newest member decides the badge, time and preview. */
-function mergeEntries(id: string, title: string, members: ListEntry[], manual = false): ListEntry {
-  const newest = members.reduce((a, b) => ((a.lastMessageAt ?? '') >= (b.lastMessageAt ?? '') ? a : b));
+function mergeEntries(
+  id: string,
+  title: string,
+  members: ListEntry[],
+  manual = false,
+  pin: string | null = null,
+): ListEntry {
+  const newestOf = (list: ListEntry[]) =>
+    list.reduce((a, b) => ((a.lastMessageAt ?? '') >= (b.lastMessageAt ?? '') ? a : b));
+  const newest = newestOf(members);
+  // A pinned row shows the pinned network's badge; the time stays the real latest activity.
+  const pinned = pin === null ? [] : members.filter((m) => m.backend === pin);
+  const badge = pinned.length > 0 ? newestOf(pinned) : newest;
   return {
     id,
     conversationIds: members.flatMap((m) => m.conversationIds),
     title,
-    backend: newest.backend,
-    accountId: newest.accountId,
+    backend: badge.backend,
+    accountId: badge.accountId,
     kind: 'direct',
     unread: members.reduce((sum, m) => sum + m.unread, 0),
     lastMessageAt: newest.lastMessageAt,
@@ -365,6 +418,7 @@ function mergeEntries(id: string, title: string, members: ListEntry[], manual = 
     members,
     personIds: [...new Set(members.flatMap((m) => m.personIds))],
     manual,
+    pin,
   };
 }
 
@@ -373,7 +427,11 @@ function mergeEntries(id: string, title: string, members: ListEntry[], manual = 
  * the same directory participant (what the address book positively owns) or two participants the
  * person merged by hand. Canonical conversations stay untouched: their ids travel with the row.
  */
-export function mergePeople(entries: ListEntry[], merges: PersonMerges = []): ListEntry[] {
+export function mergePeople(
+  entries: ListEntry[],
+  merges: PersonMerges = [],
+  pins: PersonPins = {},
+): ListEntry[] {
   const parent = new Map<string, string>();
   const find = (id: string): string => {
     const up = parent.get(id);
@@ -412,7 +470,15 @@ export function mergePeople(entries: ListEntry[], merges: PersonMerges = []): Li
       if (bucket[0] !== entry) return null;
       const people = [...new Set(bucket.flatMap((m) => m.personIds))].sort();
       const newest = bucket.reduce((a, b) => ((a.lastMessageAt ?? '') >= (b.lastMessageAt ?? '') ? a : b));
-      return mergeEntries(`person:${people[0]}`, newest.title, bucket, people.length > 1);
+      // Any id of the row may carry the pin; on a conflict the smallest id wins.
+      const pinId = people.find((id) => pins[id] !== undefined);
+      return mergeEntries(
+        `person:${people[0]}`,
+        newest.title,
+        bucket,
+        people.length > 1,
+        pinId === undefined ? null : pins[pinId]!,
+      );
     })
     .filter((entry): entry is ListEntry => entry !== null);
 }
@@ -432,6 +498,7 @@ export function toEntries(
   identities: ReadonlyMap<string, string> = new Map(),
   rooms: ReadonlyMap<string, RoomFacts> = new Map(),
   merges: PersonMerges = [],
+  pins: PersonPins = {},
 ): ListEntry[] {
   const entries: ListEntry[] = [];
   const mailContacts = new Map<string, ListEntry>();
@@ -463,7 +530,7 @@ export function toEntries(
     if ((entry.lastMessageAt ?? '') > (existing.lastMessageAt ?? ''))
       existing.lastMessageAt = entry.lastMessageAt;
   }
-  const people = mergePeople(entries, merges);
+  const people = mergePeople(entries, merges, pins);
   if (selfEntries.length > 0) people.push(mergeSelfEntries(selfEntries));
   return people;
 }

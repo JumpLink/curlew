@@ -3,9 +3,10 @@
 The rules for one person across many protocols. A design note in the language of
 `docs/design/ui.md`; it extends "Main window: one combined list" and "Profile view: per
 person". **Built so far: one row per person (participants the address book owns, plus manual
-merges kept in `config.mergedPeople`), the selection mode with Merge and Separate, and the
+merges kept in `config.mergedPeople`), the selection mode with Merge and Separate, the
 merge assistant (a banner and "Merge contacts…" in the menu; skipped sets in
-`config.declinedMerges`). Pinning and the rest are still concept.** Each phase lands as its own ADR
+`config.declinedMerges`), and pinning (a menu in the conversation header; `config.pins`).
+The rest is still concept.** Each phase lands as its own ADR
 amendment, following the repo's rules (grouping is presentation, the store stays
 backend-free, strings through gettext).
 
@@ -141,8 +142,9 @@ What stays per-protocol, always:
    (de "Automatisch"): the composer follows the last message. "Only via Signal" (de
    "Nur über Signal") pins the person to one carrier: no picker, the row's badge shows
    the pin, and a send the pinned protocol cannot carry fails rather than detours. The
-   setting lives in the profile view beside the ways to reach them, in the config — user
-   decisions never live in the index.
+   setting is a menu in the conversation header of a merged person (a profile view does not
+   exist yet), in the config (`pins`: participant id to backend, written under every id of the
+   row; on a conflict the smallest id wins) — user decisions never live in the index.
 
 ## Note to self
 
@@ -170,7 +172,9 @@ address; a mail thread with oneself stays an ordinary mail thread — fail close
   never widens with a merge: `<backend>.send` names its `<account>/<address>` pair, and
   a merged person's OTHER protocol is a different pair, refused unless granted too. A pin
   binds agents as well — a send to a pinned person via another protocol is refused,
-  naming the pin; the person's current intent beats an older blanket grant (ADR 0009).
+  naming the pin; the person's current intent beats an older blanket grant (ADR 0009). The
+  check resolves the send target through the index (a participant's address, or the
+  participant a chat peer links to); a target the index does not know counts as not pinned.
   MCP output stays English.
 
 ## Open questions

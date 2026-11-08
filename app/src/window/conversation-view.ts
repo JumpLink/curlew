@@ -15,6 +15,7 @@ import {
   entryProtocolSubtitle,
   initials,
   protocolChoices,
+  routeOptions,
   protocolIcon,
   protocolLabel,
   roomHint,
@@ -69,6 +70,7 @@ export function createConversationView(
   canAttach: (backend: string) => boolean,
   loadOlder: (entry: ListEntry, oldest: MessageCursor) => ShownMessage[],
   openMedia: (source: AttachmentSource, kind: AttachmentKind) => void,
+  onRoute: (entry: ListEntry, backend: string | null) => void,
 ): ConversationView {
   let entry: ListEntry | null = null;
   // The array is the caller's: a sent message is pushed onto it, an older page spliced in front.
@@ -91,6 +93,20 @@ export function createConversationView(
   const title = new Adw.WindowTitle({ title: _('Curlew') });
   const header = new Adw.HeaderBar();
   header.set_title_widget(title);
+  // Pinning a merged person to one protocol; hidden for every other row.
+  const route = new Gtk.MenuButton({
+    iconName: 'view-more-symbolic',
+    tooltipText: _('Choose how to reach this person'),
+    visible: false,
+  });
+  const routeBox = new Gtk.Box({
+    orientation: Gtk.Orientation.VERTICAL,
+    spacing: 2,
+    marginTop: 6,
+    marginBottom: 6,
+  });
+  route.set_popover(new Gtk.Popover({ autohide: true, child: routeBox }));
+  header.pack_end(route);
   const history = new Gtk.ListBox({ selectionMode: Gtk.SelectionMode.NONE });
   history.add_css_class('navigation-sidebar');
   const scroller = new Gtk.ScrolledWindow({ hscrollbarPolicy: Gtk.PolicyType.NEVER, vexpand: true });
@@ -269,6 +285,36 @@ export function createConversationView(
     );
     updateSelectedIcon();
     updateAttachable();
+  };
+
+  const rebuildRoute = (shownEntry: ListEntry): void => {
+    let child = routeBox.get_first_child();
+    while (child) {
+      const next = child.get_next_sibling();
+      routeBox.remove(child);
+      child = next;
+    }
+    const options = routeOptions(shownEntry);
+    route.set_visible(options.length > 0);
+    let group: Gtk.CheckButton | null = null;
+    for (const option of options) {
+      const button = new Gtk.CheckButton({
+        label: option.label,
+        active: option.active,
+        marginStart: 12,
+        marginEnd: 12,
+        marginTop: 4,
+        marginBottom: 4,
+      });
+      if (group) button.set_group(group);
+      else group = button;
+      button.connect('toggled', () => {
+        if (!button.get_active() || option.active) return;
+        route.popdown();
+        onRoute(shownEntry, option.backend);
+      });
+      routeBox.append(button);
+    }
   };
 
   const rebuildPicker = (choices: ProtocolChoice[]): void => {
@@ -641,6 +687,7 @@ export function createConversationView(
     page,
     show(nextEntry, nextMessages, nextLabels) {
       entry = nextEntry;
+      rebuildRoute(nextEntry);
       messages = nextMessages;
       accountLabels = nextLabels;
       title.set_title(nextEntry.title);

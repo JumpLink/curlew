@@ -231,6 +231,7 @@ export default async () => {
             disabledAccounts: [],
             mergedPeople: [],
             declinedMerges: [],
+            pins: {},
             unknown: {},
           })
           .find((e) => e.name === 'signal');

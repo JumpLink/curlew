@@ -48,6 +48,8 @@ import {
   chatConversationId,
   configPath,
   indexDbPath,
+  openIndexDb,
+  participantIdsOfTarget,
   recordSentChatMessage,
   releaseReceiveLease,
   takeReceiveLease,
@@ -71,10 +73,12 @@ import type { Capability, Grant } from '../grants.ts';
 import { DAEMON_WIRE_VERSION, type DaemonSendRequest } from '../lib/daemon-bus.ts';
 import { type DaemonSendClient, gioDaemonSendClient } from '../lib/daemon-send-client.ts';
 import { MAX_CHUNK_CHARS, renderForXmpp, type MessageFormat } from '../markdown.ts';
+import { pinFor } from './people.ts';
 import { appendWriteLog, type WriteFrontend } from '../write-log.ts';
 import { openIndex } from './index-sync.ts';
 import { requireEncryptionFor } from './omemo.ts';
 import { _, fmt } from '@curlew/protocol';
+import { existsSync } from 'node:fs';
 import { basename } from 'node:path';
 
 /** The chat send capability, still the one the daemon follows accounts under. */
@@ -429,6 +433,7 @@ export async function sendAsAgent(params: SendParams): Promise<SendResult> {
       fmt(_('no account {account} — `curlew accounts list` shows them'), { account: params.accountId }),
     );
   }
+  await refuseOutsidePin(config, found.backend.manifest.name, params);
   // A chat backend's attachment is a path on the person's disk that an agent names (ADR 0010 §4):
   // there it is always put to the person, whatever the rules say. Mail keeps its established rule.
   const confirmFiles = (params.attachments ?? []).length > 0 && found.backend.manifest.name !== 'mail';
@@ -445,6 +450,35 @@ export async function sendAsAgent(params: SendParams): Promise<SendResult> {
       : { attachments: params.attachments.map((p) => basename(p)) }),
   });
   return sendMessage({ ...params, backend: found.backend, accessReason });
+}
+
+/**
+ * A person pinned to one protocol is reachable by an agent through that protocol only. The target
+ * is resolved through the index; one it does not know counts as unpinned (see docs/design/contacts.md).
+ */
+async function refuseOutsidePin(config: CurlewConfig, backend: string, params: SendParams): Promise<void> {
+  if (Object.keys(config.pins).length === 0) return;
+  const dbPath = params.dbPath ?? indexDbPath();
+  if (!existsSync(dbPath)) return;
+  const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
+  let pin: string | null;
+  try {
+    pin = pinFor(
+      config.mergedPeople,
+      config.pins,
+      participantIdsOfTarget(db, backend, params.accountId, params.to),
+    );
+  } finally {
+    db.close();
+  }
+  if (pin !== null && pin !== backend) {
+    throw new Error(
+      fmt(_('this person is pinned to {pinned}: a message through {backend} is refused'), {
+        pinned: pin,
+        backend,
+      }),
+    );
+  }
 }
 
 /** Send from an enabled account on the person's behalf: no grant is checked (ADR 0008). */

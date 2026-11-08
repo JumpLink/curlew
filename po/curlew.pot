@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-08 15:18+0100\n"
+"POT-Creation-Date: 2026-11-08 15:39+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -165,13 +165,13 @@ msgid ""
 "config.agentAccess.rules"
 msgstr ""
 
-#: app/src/core/actions/send.ts:175 app/src/core/actions/send.ts:188
+#: app/src/core/actions/send.ts:179 app/src/core/actions/send.ts:192
 msgid ""
 "the message index is busy, so curlew cannot tell whether {account} is in use "
 "elsewhere — nothing was sent; try again in a moment"
 msgstr ""
 
-#: app/src/core/actions/send.ts:194
+#: app/src/core/actions/send.ts:198
 msgid ""
 "{account} is being received by {holder} right now, {backend} cannot send and "
 "receive at the same time, and that process did not take the send over — "
@@ -179,39 +179,44 @@ msgid ""
 "from your phone"
 msgstr ""
 
-#: app/src/core/actions/send.ts:329
+#: app/src/core/actions/send.ts:333
 msgid "{backend} cannot send an image — give text and leave image_url out"
 msgstr ""
 
-#: app/src/core/actions/send.ts:339
+#: app/src/core/actions/send.ts:343
 msgid "nothing to send: the text is empty after rendering"
 msgstr ""
 
-#: app/src/core/actions/send.ts:342 app/src/core/actions/send.ts:477
+#: app/src/core/actions/send.ts:346 app/src/core/actions/send.ts:511
 msgid "{backend} cannot send attachments"
 msgstr ""
 
-#: app/src/core/actions/send.ts:429 app/src/core/actions/send.ts:456
+#: app/src/core/actions/send.ts:433 app/src/core/actions/send.ts:490
 msgid "no account {account} — `curlew accounts list` shows them"
 msgstr ""
 
-#: app/src/core/actions/send.ts:463
+#: app/src/core/actions/send.ts:476
+msgid ""
+"this person is pinned to {pinned}: a message through {backend} is refused"
+msgstr ""
+
+#: app/src/core/actions/send.ts:497
 msgid "{backend} cannot send"
 msgstr ""
 
-#: app/src/core/actions/send.ts:467
+#: app/src/core/actions/send.ts:501
 msgid "nothing to send: give text, an image URL or an attachment"
 msgstr ""
 
-#: app/src/core/actions/send.ts:469
+#: app/src/core/actions/send.ts:503
 msgid "{backend} messages carry no subject"
 msgstr ""
 
-#: app/src/core/actions/send.ts:472
+#: app/src/core/actions/send.ts:506
 msgid "{backend} cannot send email chat headers"
 msgstr ""
 
-#: app/src/core/actions/send.ts:482
+#: app/src/core/actions/send.ts:516
 msgid "{backend} cannot send attachments through the daemon"
 msgstr ""
 
@@ -1423,7 +1428,7 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr ""
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:91
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:93
 #: app/src/window/window.ts:57 app/src/window/window.ts:72
 msgid "Curlew"
 msgstr ""
@@ -1541,7 +1546,7 @@ msgid "Accounts"
 msgstr ""
 
 #: app/src/window/accounts-model.ts:75
-#: app/src/window/conversation-list-model.ts:90
+#: app/src/window/conversation-list-model.ts:98
 msgid "Mail"
 msgstr ""
 
@@ -1784,60 +1789,73 @@ msgstr ""
 msgid "The picture could not be saved"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:91
+#: app/src/window/conversation-list-model.ts:99
 msgid "XMPP"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:92
+#: app/src/window/conversation-list-model.ts:100
 msgid "Signal"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:93
+#: app/src/window/conversation-list-model.ts:101
 msgid "Matrix"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:94
+#: app/src/window/conversation-list-model.ts:102
 msgid "Telegram"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:95
+#: app/src/window/conversation-list-model.ts:103
 msgid "WhatsApp"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:127
+#: app/src/window/conversation-list-model.ts:135
 msgid "Yesterday"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:195
-#: app/src/window/conversation-list-model.ts:422
+#: app/src/window/conversation-list-model.ts:203
+#: app/src/window/conversation-list-model.ts:488
 msgid "Note to self"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:203
+#: app/src/window/conversation-list-model.ts:211
 msgid "Unnamed conversation"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:273
+#: app/src/window/conversation-list-model.ts:283
+msgid "Only via {protocol}, which has no address for this person"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:287
 msgid "Encrypted rooms are not supported yet"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:343
+#: app/src/window/conversation-list-model.ts:342
+#: app/src/window/conversation-list-model.ts:355
+msgid "Only via {protocol}"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:346
+msgid "Automatic"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:385
 msgid "Public room · {count} member"
 msgid_plural "Public room · {count} members"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-list-model.ts:344
+#: app/src/window/conversation-list-model.ts:386
 msgid "Room · {count} member"
 msgid_plural "Room · {count} members"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-list-model.ts:512
+#: app/src/window/conversation-list-model.ts:579
 msgid "People"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:513
+#: app/src/window/conversation-list-model.ts:580
 msgid "Groups"
 msgstr ""
 
@@ -1919,7 +1937,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:609
+#: app/src/window/conversation-view.ts:655
 msgid "Continuing via {protocol}"
 msgstr ""
 
@@ -1947,39 +1965,43 @@ msgstr ""
 msgid "File"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:100
+#: app/src/window/conversation-view.ts:99
+msgid "Choose how to reach this person"
+msgstr ""
+
+#: app/src/window/conversation-view.ts:116
 msgid "Write a message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:111
+#: app/src/window/conversation-view.ts:127
 msgid "Send message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:138
+#: app/src/window/conversation-view.ts:154
 msgid "Conversation"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:253
+#: app/src/window/conversation-view.ts:269
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:268
+#: app/src/window/conversation-view.ts:284
 msgid "Send via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:342
+#: app/src/window/conversation-view.ts:388
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:511
+#: app/src/window/conversation-view.ts:557
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:620
+#: app/src/window/conversation-view.ts:666
 msgid "Message not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:623
+#: app/src/window/conversation-view.ts:669
 msgid "Retry"
 msgstr ""
 
@@ -2088,7 +2110,7 @@ msgstr ""
 msgid "This conversation has no recipient address."
 msgstr ""
 
-#: app/src/window/window.ts:208
+#: app/src/window/window.ts:215
 msgid "No contacts to merge"
 msgstr ""
 
