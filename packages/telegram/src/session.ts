@@ -51,6 +51,7 @@ function page(
 }
 
 export class TelegramChatSession implements ChatSession {
+  readonly rewindable = true;
   private readonly api: TelegramApi;
 
   constructor(api: TelegramApi) {

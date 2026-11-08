@@ -422,6 +422,12 @@ export interface ChatSession {
    * request on the next run.
    */
   probeRetracted?(chatRemoteId: string, remoteIds: readonly string[]): Promise<string[]>;
+  /**
+   * True when `fetchHistory(chat, afterSeq, n)` can start at ANY stored seq, without a cursor the
+   * network handed out earlier. The engine then walks old messages again to describe the
+   * attachments the index did not keep when they were first synced (ADR 0010).
+   */
+  readonly rewindable?: boolean;
   close(): Promise<void>;
 }
 

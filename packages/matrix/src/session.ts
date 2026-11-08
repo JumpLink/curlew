@@ -50,6 +50,7 @@ interface Walk {
 }
 
 export class MatrixChatSession implements ChatSession {
+  readonly rewindable = true;
   private readonly api: MatrixApi;
   private readonly walks = new Map<string, Walk>();
   private readonly ledgerStore: UndecryptableLedger;

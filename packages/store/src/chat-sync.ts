@@ -43,6 +43,7 @@ import type {
   ClassificationReason,
 } from '@curlew/protocol';
 import type { IndexDatabase } from './db.ts';
+import { backfillAttachments } from './chat-backfill.ts';
 import { appendChanges } from './changes.ts';
 import { conversationTotalsSql } from './conversation-totals.ts';
 import { insertMany, placeholders, seqColumn, type SqlValue, withTransaction } from './db.ts';
@@ -847,6 +848,14 @@ async function syncAccount(
   } finally {
     // Whatever was fetched before a failure is written: its cursors cover exactly it.
     writeBatch(db, batch);
+    // After the write, so what this run stored is described too; not after a rate limit.
+    if (result.rateLimited === null) {
+      try {
+        await backfillAttachments(db, session, name, account.id, (err) => recordChatError(result, err));
+      } catch (err) {
+        recordChatError(result, err);
+      }
+    }
     try {
       await session.close();
     } catch (err) {
