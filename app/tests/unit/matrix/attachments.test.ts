@@ -109,9 +109,9 @@ const fetchWith = async (
 
 export default async () => {
   await describe('Matrix attachments', async () => {
-    await it('claims reading but not sending in its manifest', async () => {
+    await it('claims reading and sending in its manifest', async () => {
       expect(MATRIX_MANIFEST.capabilities.attachmentsRead).toBe(true);
-      expect(MATRIX_MANIFEST.capabilities.attachments).toBe(false);
+      expect(MATRIX_MANIFEST.capabilities.attachments).toBe(true);
     });
 
     await it('maps a file, an image, a voice note and a sticker with their facts', async () => {

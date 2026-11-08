@@ -45,6 +45,7 @@ interface Call {
 interface FakeHttp {
   fetch: typeof globalThis.fetch;
   calls: Call[];
+  uploads: Uint8Array[];
   puts(): Call[];
   gets(): Call[];
 }
@@ -57,6 +58,7 @@ interface FakeHttp {
  */
 function fakeHttp(options: { encrypted?: readonly string[]; stateStatus?: number } = {}): FakeHttp {
   const calls: Call[] = [];
+  const uploads: Uint8Array[] = [];
   const encrypted = new Set(options.encrypted ?? []);
   // A real homeserver gives every accepted event its own id; two messages that shared one would
   // be one row in the index, which is what a reused id would quietly test instead.
@@ -75,6 +77,12 @@ function fakeHttp(options: { encrypted?: readonly string[]; stateStatus?: number
             status: 404,
           });
     }
+    if (method === 'POST' && path === '/_matrix/media/v3/upload') {
+      uploads.push(init?.body as Uint8Array);
+      return new Response(JSON.stringify({ content_uri: `mxc://example.org/up${uploads.length}` }), {
+        status: 200,
+      });
+    }
     if (method === 'PUT' && path.includes('/send/')) {
       accepted += 1;
       return new Response(JSON.stringify({ event_id: `$sent${accepted}:example.org` }), { status: 200 });
@@ -84,6 +92,7 @@ function fakeHttp(options: { encrypted?: readonly string[]; stateStatus?: number
   return {
     fetch,
     calls,
+    uploads,
     puts: () => calls.filter((c) => c.method === 'PUT'),
     gets: () => calls.filter((c) => c.method === 'GET'),
   };
@@ -163,12 +172,13 @@ async function reasonOf(promise: Promise<unknown>): Promise<string> {
 
 export default async () => {
   await describe('Matrix sending', async () => {
-    await it('is a send backend, plain text only', async () => {
+    await it('is a send backend, markdown off, files on', async () => {
       await withRig(granted, async ({ backend, accountId, http }) => {
         expect(isSendBackend(backend)).toBe(true);
         expect(MATRIX_MANIFEST.name).toBe('matrix');
         const sender = await backend.openSender(accountId, { account: accountId, addresses: [ROOM] });
         expect(sender.features.markdown).toBe(false);
+        expect(sender.features.attachments).toBe(true);
         expect(sender.sendImage === undefined).toBe(true);
         await sender.close();
         // Opening a sender talks to nobody: no sync, no crypto store, not even a request.
@@ -277,6 +287,100 @@ export default async () => {
           db.close();
         }
       });
+    });
+
+    await it('uploads a file and posts it as m.file, the text as its caption', async () => {
+      await withRig(granted, async (rig) => {
+        const file = join(rig.dir, 'report.pdf');
+        writeFileSync(file, 'pdf bytes');
+        const out = await sendAsAgent({
+          accountId: rig.accountId,
+          to: ROOM,
+          text: 'Hier der Bericht',
+          attachments: [file],
+          frontend: 'cli',
+          dbPath: join(rig.dir, 'index.db'),
+          configPath: rig.configPath,
+          writeLogPath: join(rig.dir, 'writes.log'),
+          backend: rig.backend,
+        }).catch((err: Error) => err);
+        // An agent may not attach to a chat yet (ADR 0010, AP4.6): the sender itself is tested below.
+        expect(out instanceof Error).toBe(true);
+        expect(rig.http.uploads.length).toBe(0);
+
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [ROOM],
+        });
+        const sent = await sender.send({ to: ROOM, text: 'Hier der Bericht', attachments: [{ path: file }] });
+        await sender.close();
+        expect(sent.attachments?.[0].filename).toBe('report.pdf');
+        expect(rig.http.uploads.length).toBe(1);
+        expect(new TextDecoder().decode(rig.http.uploads[0])).toBe('pdf bytes');
+        const upload = rig.http.calls.find((c) => c.method === 'POST')!;
+        expect(new URL(upload.url).searchParams.get('filename')).toBe('report.pdf');
+        const event = JSON.parse(rig.http.puts()[0].body!);
+        expect(event.msgtype).toBe('m.file');
+        expect(event.body).toBe('Hier der Bericht');
+        expect(event.filename).toBe('report.pdf');
+        expect(event.url).toBe('mxc://example.org/up1');
+        expect(event.info.mimetype).toBe('application/pdf');
+        expect(event.info.size).toBe(9);
+      });
+    });
+
+    await it('sends a picture as m.image, one event per file, caption on the first only', async () => {
+      await withRig(granted, async (rig) => {
+        const a = join(rig.dir, 'a.png');
+        const b = join(rig.dir, 'b.txt');
+        writeFileSync(a, 'png');
+        writeFileSync(b, 'txt');
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [ROOM],
+        });
+        await sender.send({ to: ROOM, text: 'Zwei Dateien', attachments: [{ path: a }, { path: b }] });
+        await sender.send({ to: ROOM, text: '', attachments: [{ path: b }] });
+        await sender.close();
+        const events = rig.http.puts().map((c) => JSON.parse(c.body!));
+        expect(events.map((e) => e.msgtype).join()).toBe('m.image,m.file,m.file');
+        expect(events[0].body).toBe('Zwei Dateien');
+        expect(events[1].body).toBe('b.txt');
+        expect(events[2].body).toBe('b.txt');
+        expect(rig.http.uploads.length).toBe(3);
+      });
+    });
+
+    await it('refuses a file in an encrypted room before uploading anything', async () => {
+      await withRig(
+        granted,
+        async (rig) => {
+          const file = join(rig.dir, 'a.txt');
+          writeFileSync(file, 'x');
+          const sender = await rig.backend.openSender(rig.accountId, {
+            account: rig.accountId,
+            addresses: [ROOM],
+          });
+          const reason = await reasonOf(sender.send({ to: ROOM, text: '', attachments: [{ path: file }] }));
+          await sender.close();
+          expect(reason.includes('end-to-end encrypted')).toBe(true);
+          expect(rig.http.uploads.length).toBe(0);
+        },
+        { encrypted: [ROOM] },
+      );
+    });
+
+    await it('allows the media upload only for a sender, never for the read session', async () => {
+      const upload = `${HOMESERVER}/_matrix/media/v3/upload?filename=a.txt`;
+      expect(sendRefusal('POST', upload, [ROOM])).toBe(null);
+      expect(sendRefusal('POST', `${HOMESERVER}/_matrix/media/v3/create`, [ROOM]) !== null).toBe(true);
+      const sent: string[] = [];
+      const inner = (async (input: string | URL | Request) => {
+        sent.push(String(input));
+        return new Response('{}');
+      }) as typeof globalThis.fetch;
+      expect(await refused(readOnlyFetch(inner)(upload, { method: 'POST' }))).toBe(true);
+      expect(sent.length).toBe(0);
     });
 
     await it('refuses an encrypted room and sends nothing into it', async () => {

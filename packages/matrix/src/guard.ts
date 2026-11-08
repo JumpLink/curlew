@@ -21,7 +21,7 @@
  * Sending is NOT on that allowlist and never becomes so: `readOnlyFetch` refuses the send PUT,
  * for every room, whatever the grants say. A granted send uses `sendFetch` instead — a SECOND
  * wrapper, built per permit in `openSender`, that allows exactly `PUT …/send/m.room.message/…`
- * for exactly the room ids that permit names and falls back to `refusal` for everything else.
+ * (and the media upload that precedes a file) for exactly the room ids that permit names and falls back to `refusal` for everything else.
  * Two consequences worth the duplication: the sync client, which is the only thing matrix-js-sdk
  * ever touches, has no reachable send endpoint at all; and because the rule names the event type
  * `m.room.message` literally, even a granted handle cannot PUT an `m.room.encrypted` — the
@@ -63,6 +63,9 @@ export function refusal(method: string, url: string): string | null {
 /** The one endpoint a send uses: `PUT /rooms/{roomId}/send/m.room.message/{txnId}`. */
 const SEND = new RegExp(String.raw`${CLIENT}/rooms/([^/]+)/send/m\.room\.message/[^/]+$`);
 
+/** The media upload: `POST /_matrix/media/v3/upload`, outside the `/client/` tree. */
+const UPLOAD = /^\/_matrix\/media\/(?:v3|r0|v1)\/upload$/;
+
 /**
  * Why a request is refused for a sender permitted to write to `rooms`, or null when it may go out.
  *
@@ -71,6 +74,15 @@ const SEND = new RegExp(String.raw`${CLIENT}/rooms/([^/]+)/send/m\.room\.message
  * caller already knows which address it asked for, and a refusal is not a place to put room ids.
  */
 export function sendRefusal(method: string, url: string, rooms: readonly string[]): string | null {
+  if (method.toUpperCase() === 'POST') {
+    try {
+      // A file is uploaded to the media repository first; the upload names no room, the event
+      // that uses it does and is checked below.
+      if (UPLOAD.test(new URL(url).pathname)) return null;
+    } catch {
+      return `not a URL: ${url}`;
+    }
+  }
   if (method.toUpperCase() === 'PUT') {
     let parsed: URL;
     try {
