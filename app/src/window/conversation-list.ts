@@ -7,6 +7,7 @@
  */
 
 import Adw from 'gi://Adw?version=1';
+import Gdk from 'gi://Gdk?version=4.0';
 import GLib from 'gi://GLib?version=2.0';
 import GObject from 'gi://GObject?version=2.0';
 import type Gio from 'gi://Gio?version=2.0';
@@ -29,6 +30,13 @@ import {
   unreadText,
   unreadTier,
 } from './conversation-list-model.ts';
+import { mergeSummary, prunePicks, selectionTitle, selectionTools, togglePick } from './selection-model.ts';
+
+/** What the selection mode's bottom bar does; the window writes the config and refreshes. */
+export interface PeopleTools {
+  merge(personIds: string[]): void;
+  unmerge(personIds: string[]): void;
+}
 
 export interface ConversationList {
   page: Adw.NavigationPage;
@@ -78,7 +86,18 @@ function badgedAvatar(entry: ListEntry): Gtk.Widget {
   return overlay;
 }
 
-function entryRow(entry: ListEntry, accountLabels: Map<string, string>): Gtk.ListBoxRow {
+interface EntryRow {
+  row: Gtk.ListBoxRow;
+  /** The check circle of the selection mode; hidden outside it. */
+  check: Gtk.CheckButton;
+}
+
+function entryRow(
+  entry: ListEntry,
+  accountLabels: Map<string, string>,
+  picking: boolean,
+  picked: boolean,
+): EntryRow {
   const title = new Gtk.Label({ label: entry.title, xalign: 0, ellipsize: 3, hexpand: true });
   // Bold while unread; the HIG's own style class, so dark mode and accents stay Adwaita's.
   if (unreadTier(entry) === 'count') title.add_css_class('heading');
@@ -122,11 +141,15 @@ function entryRow(entry: ListEntry, accountLabels: Map<string, string>): Gtk.Lis
     marginStart: 12,
     marginEnd: 12,
   });
+  // The row itself takes the click; the circle only shows the state (Adwaita's round check).
+  const check = new Gtk.CheckButton({ active: picked, visible: picking, canTarget: false, focusable: false });
+  check.add_css_class('selection-mode');
+  box.append(check);
   box.append(badgedAvatar(entry));
   box.append(text);
   const row = new Gtk.ListBoxRow();
   row.set_child(box);
-  return row;
+  return { row, check };
 }
 
 function sectionRow(section: Section, collapsed: boolean): Gtk.ListBoxRow {
@@ -153,6 +176,7 @@ export function createConversationList(
   menu: Gio.Menu,
   onSelect: (entry: ListEntry) => void,
   onAddAccount: () => void,
+  people: PeopleTools,
 ): ConversationList {
   let entries: ListEntry[] = [];
   let labels = new Map<string, string>();
@@ -162,6 +186,9 @@ export function createConversationList(
   const accounts = new Map<string, Set<string>>();
   let query = '';
   const refs = new Map<Gtk.ListBoxRow, RowRef>();
+  const checks = new Map<string, { row: Gtk.ListBoxRow; check: Gtk.CheckButton }>();
+  let picking = false;
+  const picked = new Set<string>();
 
   const list = new Gtk.ListBox({ selectionMode: Gtk.SelectionMode.SINGLE });
   list.add_css_class('navigation-sidebar');
@@ -289,6 +316,7 @@ export function createConversationList(
   function rebuild(): void {
     list.remove_all();
     refs.clear();
+    checks.clear();
     const sections = buildSections(entries, filter());
     if (sections.length === 0) {
       const none = entries.length === 0;
@@ -310,10 +338,11 @@ export function createConversationList(
       list.append(header);
       if (isCollapsed) continue;
       for (const entry of section.entries) {
-        const row = entryRow(entry, labels);
+        const { row, check } = entryRow(entry, labels, picking, picked.has(entry.id));
         refs.set(row, { kind: 'entry', entry });
+        checks.set(entry.id, { row, check });
         list.append(row);
-        if (entry.id === selectedId) list.select_row(row);
+        if (!picking && entry.id === selectedId) list.select_row(row);
       }
     }
   }
@@ -325,6 +354,10 @@ export function createConversationList(
       if (collapsed.has(ref.id)) collapsed.delete(ref.id);
       else collapsed.add(ref.id);
       rebuild();
+      return;
+    }
+    if (picking) {
+      pick(ref.entry);
       return;
     }
     selectedId = ref.entry.id;
@@ -343,12 +376,122 @@ export function createConversationList(
   header.pack_start(filterButton);
   header.pack_end(new Gtk.MenuButton({ iconName: 'open-menu-symbolic', menuModel: menu, primary: true }));
 
+  // Selection mode swaps the whole header for one that only counts and cancels (Files, Fractal).
+  const pickTitle = new Adw.WindowTitle({ title: '' });
+  const pickHeader = new Adw.HeaderBar({ showEndTitleButtons: false, titleWidget: pickTitle });
+  const cancel = new Gtk.Button({ label: _('Cancel') });
+  pickHeader.pack_start(cancel);
+  const bars = new Gtk.Stack({ vhomogeneous: false });
+  bars.add_named(header, 'normal');
+  bars.add_named(pickHeader, 'picking');
+
+  const mergeButton = new Gtk.Button({ label: _('Merge') });
+  mergeButton.add_css_class('suggested-action');
+  const unmergeButton = new Gtk.Button({ label: _('Separate') });
+  const tools = new Gtk.Box({ spacing: 12, halign: Gtk.Align.CENTER });
+  tools.append(unmergeButton);
+  tools.append(mergeButton);
+  const actions = new Gtk.ActionBar();
+  actions.set_center_widget(tools);
+
+  const picks = (): ListEntry[] => entries.filter((entry) => picked.has(entry.id));
+  const refreshTools = () => {
+    const state = selectionTools(picks());
+    pickTitle.set_title(selectionTitle(picked.size));
+    mergeButton.set_sensitive(state.canMerge);
+    unmergeButton.set_visible(state.canUnmerge);
+  };
+  const setPicking = (on: boolean) => {
+    picking = on;
+    if (!on) picked.clear();
+    // Single selection marks the open conversation; a selection mode has no such mark.
+    list.set_selection_mode(on ? Gtk.SelectionMode.NONE : Gtk.SelectionMode.SINGLE);
+    for (const [id, { row, check }] of checks) {
+      check.set_visible(on);
+      check.set_active(picked.has(id));
+      if (!on && id === selectedId) list.select_row(row);
+    }
+    bars.set_visible_child_name(on ? 'picking' : 'normal');
+    toolbar.set_reveal_bottom_bars(on);
+    refreshTools();
+  };
+  function pick(entry: ListEntry): void {
+    togglePick(picked, entry.id);
+    const shown = checks.get(entry.id);
+    if (shown) shown.check.set_active(picked.has(entry.id));
+    refreshTools();
+  }
+  const rowAt = (y: number): ListEntry | null => {
+    const ref = refs.get(list.get_row_at_y(Math.round(y)) as Gtk.ListBoxRow);
+    return ref?.kind === 'entry' ? ref.entry : null;
+  };
+  cancel.connect('clicked', () => setPicking(false));
+
+  // Long press (touch), right click and Ctrl+click (pointer) start the mode on the row they hit.
+  // Claiming the sequence keeps the list's own click from activating the same row afterwards.
+  const longPress = new Gtk.GestureLongPress({ propagationPhase: Gtk.PropagationPhase.CAPTURE });
+  longPress.connect('pressed', (gesture: Gtk.GestureLongPress, _x: number, y: number) => {
+    const entry = rowAt(y);
+    if (!entry || picking) return;
+    gesture.set_state(Gtk.EventSequenceState.CLAIMED);
+    setPicking(true);
+    pick(entry);
+  });
+  const click = new Gtk.GestureClick({ button: 0, propagationPhase: Gtk.PropagationPhase.CAPTURE });
+  click.connect('pressed', (gesture: Gtk.GestureClick, _n: number, _x: number, y: number) => {
+    const entry = rowAt(y);
+    if (!entry) return;
+    const ctrl = (gesture.get_current_event_state() & Gdk.ModifierType.CONTROL_MASK) !== 0;
+    const button = gesture.get_current_button();
+    if (button !== Gdk.BUTTON_SECONDARY && !(button === Gdk.BUTTON_PRIMARY && ctrl)) return;
+    gesture.set_state(Gtk.EventSequenceState.CLAIMED);
+    if (!picking) setPicking(true);
+    pick(entry);
+  });
+  list.add_controller(longPress);
+  list.add_controller(click);
+  const keys = new Gtk.EventControllerKey({ propagationPhase: Gtk.PropagationPhase.CAPTURE });
+  keys.connect('key-pressed', (_c: Gtk.EventControllerKey, keyval: number) => {
+    if (!picking || keyval !== Gdk.KEY_Escape) return false;
+    setPicking(false);
+    return true;
+  });
+
+  mergeButton.connect('clicked', () => {
+    const chosen = picks();
+    const state = selectionTools(chosen);
+    if (!state.canMerge) return;
+    const dialog = new Adw.AlertDialog({
+      heading: _('Merge these people?'),
+      body: `${mergeSummary(chosen).join('\n')}\n\n${_('Their chats become one conversation. Nothing is deleted, and you can separate them again.')}`,
+    });
+    dialog.add_response('cancel', _('Cancel'));
+    dialog.add_response('merge', _('Merge'));
+    dialog.set_response_appearance('merge', Adw.ResponseAppearance.SUGGESTED);
+    dialog.set_default_response('merge');
+    dialog.set_close_response('cancel');
+    dialog.connect('response', (_d: Adw.AlertDialog, response: string) => {
+      if (response !== 'merge') return;
+      setPicking(false);
+      people.merge(state.personIds);
+    });
+    dialog.present(page);
+  });
+  unmergeButton.connect('clicked', () => {
+    const state = selectionTools(picks());
+    setPicking(false);
+    people.unmerge(state.personIds);
+  });
+
   const toolbar = new Adw.ToolbarView();
-  toolbar.add_top_bar(header);
+  toolbar.add_top_bar(bars);
   toolbar.add_top_bar(searchBar);
+  toolbar.add_bottom_bar(actions);
+  toolbar.set_reveal_bottom_bars(false);
   toolbar.set_content(stack);
   const page = new Adw.NavigationPage({ title: _('Conversations'), tag: 'list' });
   page.set_child(toolbar);
+  page.add_controller(keys);
   searchBar.set_key_capture_widget(page);
 
   return {
@@ -361,8 +504,10 @@ export function createConversationList(
       for (const [backend, chosen] of accounts)
         for (const key of chosen)
           if (!entries.some((e) => e.backend === backend && e.accountId === key)) chosen.delete(key);
+      prunePicks(picked, entries);
       rebuildFilters();
       rebuild();
+      if (picking) refreshTools();
     },
     chooseProtocol(backend) {
       if (!entries.some((e) => e.backend === backend)) return;

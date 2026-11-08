@@ -2,7 +2,9 @@
 
 The rules for one person across many protocols. A design note in the language of
 `docs/design/ui.md`; it extends "Main window: one combined list" and "Profile view: per
-person". **Concept only — nothing here is built.** Each phase lands as its own ADR
+person". **Built so far: one row per person (participants the address book owns, plus manual
+merges kept in `config.mergedPeople`) and the selection mode with Merge and Separate.
+The merge assistant, pinning and the rest are still concept.** Each phase lands as its own ADR
 amendment, following the repo's rules (grouping is presentation, the store stays
 backend-free, strings through gettext).
 
