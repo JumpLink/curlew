@@ -73,9 +73,9 @@ German uses informal "du", matching the sibling projects.
 | Setup assistant ([`setup.ts`](../app/src/core/actions/setup.ts)) | every step title, prompt, note and the follow-up list; the state words of `stateWord` |
 | Signal, WhatsApp, Matrix, XMPP | login and link flows, prompts, session errors and re-link hints |
 | Backend registry, `send`, `omemo`, `index-sync` actions | the refusals and errors that reach a user |
-| Window ([`app/src/window/`](../app/src/window/)) | the conversation list (sections, filter popover, empty states), the conversation view (composer, attachment tiles and viewer, send errors), the Preferences and Agent access dialogs, the primary menu |
+| Window ([`app/src/window/`](../app/src/window/)) | the conversation list (sections, filter popover, empty states), the conversation view (composer, attachment tiles and viewer, send errors), people rows, merge and pin menus, the Accounts dialog, the Preferences and Agent access dialogs, the primary menu |
 
-500 msgids. Covered by `app/tests/unit/core/i18n.test.ts`: a German locale yields German, a
+621 msgids. Covered by `app/tests/unit/core/i18n.test.ts`: a German locale yields German, a
 language we do not ship falls back to English, `LC_ALL=C` wins over `LANGUAGE`, and a wired
 Telegram error comes out German once the catalogue is installed.
 
