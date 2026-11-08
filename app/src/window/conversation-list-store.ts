@@ -39,12 +39,13 @@ export function loadConversationEntries(dbPath = indexDbPath(), cfgPath = config
   try {
     const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
     try {
-      const { senders, ui } = loadConfig(cfgPath);
+      const { senders, ui, mergedPeople } = loadConfig(cfgPath);
       return toEntries(
         listConversations(db, { limit: LIST_LIMIT, overrides: senders }),
         ui.showAllEmails,
         accountIdentities(db),
         listChatRooms(db, 'matrix'),
+        mergedPeople,
       );
     } finally {
       db.close();

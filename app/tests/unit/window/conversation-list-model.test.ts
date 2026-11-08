@@ -12,6 +12,7 @@ import {
   initials,
   listSubtitle,
   matches,
+  mergePeople,
   protocolChoices,
   protocolIcon,
   protocolLabel,
@@ -60,6 +61,8 @@ const entry = (over: Partial<ListEntry> & { id: string }): ListEntry => ({
   emailChat: false,
   room: null,
   members: [],
+  personIds: [],
+  manual: false,
   ...over,
 });
 
@@ -67,6 +70,114 @@ const ids = (list: ListEntry[]): string[] => list.map((e) => e.id);
 
 export default async () => {
   describe('conversation list model', () => {
+    describe('people across networks', () => {
+      const person = (id: string, name: string) => ({
+        id,
+        displayName: name,
+        addresses: [],
+        contactUid: null,
+      });
+      const chat = (
+        id: string,
+        backend: string,
+        accountId: string,
+        personId: string,
+        at: string,
+        unread = 0,
+      ) =>
+        conversation({
+          id,
+          backend,
+          accountId,
+          lastMessageAt: at,
+          unreadCount: unread,
+          participants: [person(personId, 'Ana Example')],
+        });
+
+      it('merges the chats of one participant into one row, newest member first', () => {
+        const list = toEntries([
+          chat('c1', 'telegram', 'telegram-1', 'p-ana', '2026-01-01T10:00:00Z', 1),
+          chat('c2', 'signal', 'signal-9', 'p-ana', '2026-01-02T10:00:00Z', 2),
+          chat('c3', 'signal', 'signal-9', 'p-bo', '2026-01-03T10:00:00Z'),
+        ]);
+        expect(list.length).toBe(2);
+        const merged = list.find((e) => e.id === 'person:p-ana')!;
+        expect(merged.backend).toBe('signal');
+        expect(merged.unread).toBe(3);
+        expect(merged.conversationIds).toStrictEqual(['c1', 'c2']);
+        expect(merged.members.length).toBe(2);
+        expect(merged.manual).toBe(false);
+        expect(merged.personIds).toStrictEqual(['p-ana']);
+      });
+
+      it('leaves one chat alone and never merges a group or the note to self', () => {
+        const list = toEntries([
+          chat('c1', 'telegram', 'telegram-1', 'p-ana', '2026-01-01T10:00:00Z'),
+          conversation({
+            id: 'g1',
+            kind: 'group',
+            participants: [person('p-ana', 'Ana Example'), person('p-bo', 'Bo')],
+          }),
+        ]);
+        expect(ids(list).sort()).toStrictEqual(['c1', 'g1']);
+        expect(list.find((e) => e.id === 'g1')!.personIds).toStrictEqual([]);
+      });
+
+      it('joins two participants the person merged by hand, in either order', () => {
+        const chats = [
+          chat('c1', 'telegram', 'telegram-1', 'p-ana', '2026-01-01T10:00:00Z'),
+          chat('c2', 'xmpp', 'xmpp-1', 'p-anna', '2026-01-02T10:00:00Z'),
+        ];
+        for (const merges of [[['p-ana', 'p-anna']], [['p-anna', 'p-ana']]]) {
+          const list = toEntries(chats, true, new Map(), new Map(), merges);
+          expect(list.length).toBe(1);
+          expect(list[0]!.id).toBe('person:p-ana');
+          expect(list[0]!.manual).toBe(true);
+          expect(list[0]!.personIds).toStrictEqual(['p-ana', 'p-anna']);
+        }
+      });
+
+      it('ignores a merge naming people that are not in the list', () => {
+        const list = toEntries(
+          [chat('c1', 'telegram', 'telegram-1', 'p-ana', '2026-01-01T10:00:00Z')],
+          true,
+          new Map(),
+          new Map(),
+          [['p-ana', 'p-gone']],
+        );
+        expect(list.length).toBe(1);
+        expect(list[0]!.manual).toBe(false);
+      });
+
+      it('chains merges through a shared person', () => {
+        const list = mergePeople(
+          [
+            entry({ id: 'a', personIds: ['p1'], lastMessageAt: '2026-01-01T00:00:00Z' }),
+            entry({ id: 'b', personIds: ['p2'], lastMessageAt: '2026-01-02T00:00:00Z' }),
+            entry({ id: 'c', personIds: ['p3'], lastMessageAt: '2026-01-03T00:00:00Z' }),
+          ],
+          [
+            ['p1', 'p2'],
+            ['p2', 'p3'],
+          ],
+        );
+        expect(list.length).toBe(1);
+        expect(list[0]!.conversationIds).toStrictEqual(['a', 'b', 'c']);
+      });
+
+      it('keeps a merged row while one of its carriers passes the protocol filter', () => {
+        const [merged] = toEntries([
+          chat('c1', 'telegram', 'telegram-1', 'p-ana', '2026-01-02T10:00:00Z'),
+          chat('c2', 'signal', 'signal-9', 'p-ana', '2026-01-01T10:00:00Z'),
+        ]);
+        const only = (backend: string) => ({ ...NO_FILTER, backends: new Set([backend]) });
+        expect(matches(merged!, only('signal'))).toBe(true);
+        expect(matches(merged!, only('telegram'))).toBe(true);
+        expect(matches(merged!, only('matrix'))).toBe(false);
+        expect(backendChoices([merged!])).toStrictEqual(['signal', 'telegram']);
+      });
+    });
+
     it('has a distinct badge icon per protocol', () => {
       const icons = ['mail', 'xmpp', 'signal', 'matrix', 'telegram', 'whatsapp'].map(protocolIcon);
       expect(new Set(icons).size).toBe(6);

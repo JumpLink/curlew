@@ -229,6 +229,7 @@ export default async () => {
             agentAccess: { askWithoutRule: true, rules: [] },
             encryption: {},
             disabledAccounts: [],
+            mergedPeople: [],
             unknown: {},
           })
           .find((e) => e.name === 'signal');

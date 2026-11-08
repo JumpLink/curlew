@@ -57,6 +57,7 @@ export default async () => {
           agentAccess: { askWithoutRule: true, rules: [] },
           encryption: {},
           disabledAccounts: [],
+          mergedPeople: [],
           unknown: {},
         }).length,
       ).toBe(0);
@@ -68,6 +69,7 @@ export default async () => {
         agentAccess: { askWithoutRule: true, rules: [] },
         encryption: {},
         disabledAccounts: [],
+        mergedPeople: [],
         unknown: {},
       };
       expect(registry.enabled(off).length).toBe(0);
@@ -104,6 +106,7 @@ export default async () => {
         agentAccess: { askWithoutRule: true, rules: [] },
         encryption: {},
         disabledAccounts: [],
+        mergedPeople: [],
         unknown: {},
       };
       expect(registry.enabled(config).length).toBe(0);
@@ -183,6 +186,7 @@ export default async () => {
             agentAccess: { askWithoutRule: true, rules: [] },
             encryption: {},
             disabledAccounts: [],
+            mergedPeople: [],
             unknown: {},
           },
           path,

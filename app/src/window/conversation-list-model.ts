@@ -32,7 +32,20 @@ export interface ListEntry {
    * carries every self-chat backend here; non-merged rows keep an empty array.
    */
   members: ListEntry[];
+  /**
+   * The directory participants this row stands for: one for a direct chat with one other person,
+   * every person of a merged row, none for a group or a note to self.
+   */
+  personIds: string[];
+  /** True when the person joined people the address book does not own together (a manual merge). */
+  manual: boolean;
 }
+
+/**
+ * Groups of people the person merged by hand, each a list of participant ids. Local to this
+ * machine; the address book is never written.
+ */
+export type PersonMerges = ReadonlyArray<ReadonlyArray<string>>;
 
 /** One carrier the composer can send a merged row through. */
 export interface ProtocolChoice {
@@ -237,7 +250,16 @@ export function toEntry(
     emailChat: conversation.emailChat,
     room: conversation.backend === 'matrix' ? room : null,
     members: [],
+    personIds: personOf(conversation, identity) === null ? [] : [personOf(conversation, identity)!],
+    manual: false,
   };
+}
+
+/** The one other person of a direct chat, when the chat is not the note to self. */
+function personOf(conversation: Conversation, identity?: string): string | null {
+  if (conversation.kind !== 'direct' || conversation.participants.length !== 1) return null;
+  if (selfAddressOf(conversation, identity) !== null) return null;
+  return conversation.participants[0]!.id;
 }
 
 /**
@@ -325,23 +347,79 @@ export function roomHint(entry: ListEntry): string | null {
 /** Stable id for the merged "Note to self" row. */
 const NOTE_TO_SELF_ID = 'note-to-self';
 
-/** Merge every self-chat into one row, newest message picking the visible protocol. */
-function mergeSelfEntries(members: ListEntry[]): ListEntry {
+/** One row that stands for several: the newest member decides the badge, time and preview. */
+function mergeEntries(id: string, title: string, members: ListEntry[], manual = false): ListEntry {
   const newest = members.reduce((a, b) => ((a.lastMessageAt ?? '') >= (b.lastMessageAt ?? '') ? a : b));
   return {
-    id: NOTE_TO_SELF_ID,
+    id,
     conversationIds: members.flatMap((m) => m.conversationIds),
-    title: _('Note to self'),
+    title,
     backend: newest.backend,
     accountId: newest.accountId,
     kind: 'direct',
     unread: members.reduce((sum, m) => sum + m.unread, 0),
     lastMessageAt: newest.lastMessageAt,
     target: null,
-    emailChat: false,
+    emailChat: members.some((m) => m.emailChat),
     room: null,
     members,
+    personIds: [...new Set(members.flatMap((m) => m.personIds))],
+    manual,
   };
+}
+
+/**
+ * Rows of the same person become ONE row, whichever networks they came in on. Same person means
+ * the same directory participant (what the address book positively owns) or two participants the
+ * person merged by hand. Canonical conversations stay untouched: their ids travel with the row.
+ */
+export function mergePeople(entries: ListEntry[], merges: PersonMerges = []): ListEntry[] {
+  const parent = new Map<string, string>();
+  const find = (id: string): string => {
+    const up = parent.get(id);
+    if (up === undefined || up === id) return id;
+    const root = find(up);
+    parent.set(id, root);
+    return root;
+  };
+  for (const group of merges) {
+    const [first, ...others] = group;
+    if (first === undefined) continue;
+    for (const other of others) parent.set(find(other), find(first));
+  }
+  const buckets = new Map<string, ListEntry[]>();
+  const out: ListEntry[] = [];
+  for (const entry of entries) {
+    const person = entry.personIds[0];
+    if (person === undefined) {
+      out.push(entry);
+      continue;
+    }
+    const key = find(person);
+    const bucket = buckets.get(key);
+    if (bucket) bucket.push(entry);
+    else {
+      buckets.set(key, [entry]);
+      // The bucket's row takes the place of its first entry, so the order of the list is kept.
+      out.push(entry);
+    }
+  }
+  return out
+    .map((entry) => {
+      const person = entry.personIds[0];
+      const bucket = person === undefined ? undefined : buckets.get(find(person));
+      if (!bucket || bucket.length < 2) return entry;
+      if (bucket[0] !== entry) return null;
+      const people = [...new Set(bucket.flatMap((m) => m.personIds))].sort();
+      const newest = bucket.reduce((a, b) => ((a.lastMessageAt ?? '') >= (b.lastMessageAt ?? '') ? a : b));
+      return mergeEntries(`person:${people[0]}`, newest.title, bucket, people.length > 1);
+    })
+    .filter((entry): entry is ListEntry => entry !== null);
+}
+
+/** Merge every self-chat into one row, newest message picking the visible protocol. */
+function mergeSelfEntries(members: ListEntry[]): ListEntry {
+  return mergeEntries(NOTE_TO_SELF_ID, _('Note to self'), members);
 }
 
 /**
@@ -353,6 +431,7 @@ export function toEntries(
   showAllEmails = true,
   identities: ReadonlyMap<string, string> = new Map(),
   rooms: ReadonlyMap<string, RoomFacts> = new Map(),
+  merges: PersonMerges = [],
 ): ListEntry[] {
   const entries: ListEntry[] = [];
   const mailContacts = new Map<string, ListEntry>();
@@ -384,8 +463,9 @@ export function toEntries(
     if ((entry.lastMessageAt ?? '') > (existing.lastMessageAt ?? ''))
       existing.lastMessageAt = entry.lastMessageAt;
   }
-  if (selfEntries.length > 0) entries.push(mergeSelfEntries(selfEntries));
-  return entries;
+  const people = mergePeople(entries, merges);
+  if (selfEntries.length > 0) people.push(mergeSelfEntries(selfEntries));
+  return people;
 }
 
 /**
@@ -400,13 +480,19 @@ export const unreadTier = (entry: ListEntry): UnreadTier => (entry.unread > 0 ? 
 /** "99+" rather than a number that stretches the row. */
 export const unreadText = (count: number): string => (count > 99 ? '99+' : String(count));
 
+/** The rows that carry the chat: the members of a merged row, else the row itself. */
+const carriers = (entry: ListEntry): ListEntry[] => (entry.members.length > 0 ? entry.members : [entry]);
+
 export function matches(entry: ListEntry, filter: ListFilter): boolean {
-  if (filter.backends.size > 0 && !filter.backends.has(entry.backend)) return false;
-  // Accounts narrow only within their own protocol, and only while that protocol is chosen.
-  const own = filter.backends.has(entry.backend) ? filter.accounts.get(entry.backend) : undefined;
-  if (own !== undefined && own.size > 0 && !own.has(entry.accountId)) return false;
   const query = filter.query.trim().toLowerCase();
-  return query === '' || entry.title.toLowerCase().includes(query);
+  if (query !== '' && !entry.title.toLowerCase().includes(query)) return false;
+  // A merged row stays while any of its carriers passes the protocol and account filter.
+  return carriers(entry).some((carrier) => {
+    if (filter.backends.size > 0 && !filter.backends.has(carrier.backend)) return false;
+    // Accounts narrow only within their own protocol, and only while that protocol is chosen.
+    const own = filter.backends.has(carrier.backend) ? filter.accounts.get(carrier.backend) : undefined;
+    return own === undefined || own.size === 0 || own.has(carrier.accountId);
+  });
 }
 
 /** Newest first; an undated conversation sinks; the id keeps ties stable. */
@@ -436,7 +522,7 @@ export function buildSections(entries: ListEntry[], filter: ListFilter = NO_FILT
 
 /** Protocols present in the list, for the filter chips; one chip is no filter, so it is not offered. */
 export function backendChoices(entries: ListEntry[]): string[] {
-  const found = [...new Set(entries.map((entry) => entry.backend))].sort();
+  const found = [...new Set(entries.flatMap(carriers).map((entry) => entry.backend))].sort();
   return found.length > 1 ? found : [];
 }
 
@@ -453,7 +539,12 @@ export function accountChoices(entries: ListEntry[], backends: ReadonlySet<strin
   const groups: AccountGroup[] = [];
   for (const backend of [...backends].sort()) {
     const accounts = [
-      ...new Set(entries.filter((entry) => entry.backend === backend).map((entry) => entry.accountId)),
+      ...new Set(
+        entries
+          .flatMap(carriers)
+          .filter((entry) => entry.backend === backend)
+          .map((entry) => entry.accountId),
+      ),
     ].sort();
     if (accounts.length > 1) groups.push({ backend, accounts });
   }

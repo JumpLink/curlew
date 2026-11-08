@@ -65,13 +65,27 @@ export interface CurlewConfig {
    */
   disabledAccounts: string[];
   /**
+   * People the person merged into one by hand: each group lists directory participant ids.
+   * Presentation only and local — the address book is never written, no message is rewritten.
+   */
+  mergedPeople: string[][];
+  /**
    * Top-level keys this build does not know, carried through unchanged so a build that does not
    * know a key cannot drop it on save (ADR 0004).
    */
   unknown: Record<string, unknown>;
 }
 
-const KNOWN_KEYS = ['backends', 'ui', 'senders', 'grants', 'agentAccess', 'encryption', 'disabledAccounts'];
+const KNOWN_KEYS = [
+  'backends',
+  'ui',
+  'senders',
+  'grants',
+  'agentAccess',
+  'encryption',
+  'disabledAccounts',
+  'mergedPeople',
+];
 
 /**
  * What an absent config file means. Mail is enabled by THIS default, not by a special case in
@@ -87,6 +101,7 @@ export function defaultConfig(): CurlewConfig {
     agentAccess: defaultAgentAccess(),
     encryption: {},
     disabledAccounts: [],
+    mergedPeople: [],
     unknown: {},
   };
 }
@@ -161,13 +176,24 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   const agentAccess = access.policy;
   const encryption = parseEncryption(obj.encryption);
   const disabledAccounts = parseDisabledAccounts(obj.disabledAccounts);
+  const mergedPeople = parseMergedPeople(obj.mergedPeople);
 
   const unknown: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
     if (!KNOWN_KEYS.includes(key)) unknown[key] = value;
   }
 
-  return { backends, ui, senders, grants, agentAccess, encryption, disabledAccounts, unknown };
+  return { backends, ui, senders, grants, agentAccess, encryption, disabledAccounts, mergedPeople, unknown };
+}
+
+function parseMergedPeople(raw: unknown): string[][] {
+  if (raw === undefined) return [];
+  const bad = () => new Error('config.mergedPeople must be a list of lists of participant ids');
+  if (!Array.isArray(raw)) throw bad();
+  return raw.map((group) => {
+    if (!Array.isArray(group) || group.some((id) => typeof id !== 'string' || id === '')) throw bad();
+    return [...new Set(group as string[])];
+  });
 }
 
 function parseDisabledAccounts(raw: unknown): string[] {
@@ -209,7 +235,7 @@ export function loadConfig(path = configPath()): CurlewConfig {
 export function saveConfig(config: CurlewConfig, path = configPath()): void {
   ensurePrivateDir(dirname(path));
   const part = `${path}.part`;
-  const { unknown, grants, agentAccess, encryption, disabledAccounts, ...known } = config;
+  const { unknown, grants, agentAccess, encryption, disabledAccounts, mergedPeople, ...known } = config;
   const writtenRules = agentAccess.rules.filter((rule) => !rule.migrated);
   const carried = Object.fromEntries(Object.entries(unknown).filter(([key]) => !KNOWN_KEYS.includes(key)));
   const out = {
@@ -221,6 +247,7 @@ export function saveConfig(config: CurlewConfig, path = configPath()): void {
       : {}),
     ...(Object.keys(encryption).length > 0 ? { encryption } : {}),
     ...(disabledAccounts.length > 0 ? { disabledAccounts } : {}),
+    ...(mergedPeople.length > 0 ? { mergedPeople } : {}),
   };
   writeFileSync(part, `${JSON.stringify(out, null, 2)}\n`, { mode: 0o600 });
   chmodSync(part, 0o600);
