@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-08 12:08+0100\n"
+"POT-Creation-Date: 2026-11-08 12:32+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -12,7 +12,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app/src/core/access.ts:116
+#: app/src/core/access.ts:121
 msgid ""
 "sending to {target} is refused — no agentAccess rule covers it and "
 "config.agentAccess.askWithoutRule is false; add a rule like {rule} to "
@@ -22,7 +22,7 @@ msgstr ""
 "config.agentAccess.askWithoutRule ist false; füge eine Regel wie {rule} zu "
 "config.agentAccess.rules hinzu"
 
-#: app/src/core/access.ts:122
+#: app/src/core/access.ts:127
 msgid ""
 "reading messages of {target} is refused — no agentAccess rule covers it and "
 "config.agentAccess.askWithoutRule is false; add a rule like {rule} to "
@@ -32,7 +32,7 @@ msgstr ""
 "Regel deckt es ab und config.agentAccess.askWithoutRule ist false; füge eine "
 "Regel wie {rule} zu config.agentAccess.rules hinzu"
 
-#: app/src/core/access.ts:133
+#: app/src/core/access.ts:138
 msgid ""
 "sending to {target} is denied by config.agentAccess.rules — change the rule "
 "to allow it, for example {rule}"
@@ -40,7 +40,7 @@ msgstr ""
 "Senden an {target} wird von config.agentAccess.rules verweigert — ändere die "
 "Regel, um es zu erlauben, zum Beispiel {rule}"
 
-#: app/src/core/access.ts:139
+#: app/src/core/access.ts:144
 msgid ""
 "reading messages of {target} is denied by config.agentAccess.rules — change "
 "the rule to allow it, for example {rule}"
@@ -48,16 +48,16 @@ msgstr ""
 "Das Lesen von Nachrichten von {target} wird von config.agentAccess.rules "
 "verweigert — ändere die Regel, um es zu erlauben, zum Beispiel {rule}"
 
-#: app/src/core/access.ts:154
+#: app/src/core/access.ts:159
 msgid "sending to {target} was declined in the prompt"
 msgstr "Senden an {target} wurde in der Rückfrage abgelehnt"
 
-#: app/src/core/access.ts:155
+#: app/src/core/access.ts:160
 msgid "reading messages of {target} was declined in the prompt"
 msgstr ""
 "Das Lesen von Nachrichten von {target} wurde in der Rückfrage abgelehnt"
 
-#: app/src/core/access.ts:163
+#: app/src/core/access.ts:168
 msgid ""
 "sending to {target} was declined earlier in this session — it is not asked "
 "again; add a rule like {rule} to allow it"
@@ -65,7 +65,7 @@ msgstr ""
 "Senden an {target} wurde früher in dieser Sitzung abgelehnt — es wird nicht "
 "erneut gefragt; füge eine Regel wie {rule} hinzu, um es zu erlauben"
 
-#: app/src/core/access.ts:169
+#: app/src/core/access.ts:174
 msgid ""
 "reading messages of {target} was declined earlier in this session — it is "
 "not asked again; add a rule like {rule} to allow it"
@@ -74,14 +74,14 @@ msgstr ""
 "abgelehnt — es wird nicht erneut gefragt; füge eine Regel wie {rule} hinzu, "
 "um es zu erlauben"
 
-#: app/src/core/access.ts:178
+#: app/src/core/access.ts:183
 msgid ""
 "sending to {target} was refused — nobody answered the prompt within 2 minutes"
 msgstr ""
 "Senden an {target} wurde abgelehnt — niemand hat die Rückfrage innerhalb von "
 "2 Minuten beantwortet"
 
-#: app/src/core/access.ts:180
+#: app/src/core/access.ts:185
 msgid ""
 "reading messages of {target} was refused — nobody answered the prompt within "
 "2 minutes"
@@ -89,17 +89,17 @@ msgstr ""
 "Das Lesen von Nachrichten von {target} wurde abgelehnt — niemand hat die "
 "Rückfrage innerhalb von 2 Minuten beantwortet"
 
-#: app/src/core/access.ts:188
+#: app/src/core/access.ts:193
 msgid "sending to {target} was refused — the prompt was dismissed"
 msgstr "Senden an {target} wurde abgelehnt — die Rückfrage wurde verworfen"
 
-#: app/src/core/access.ts:189
+#: app/src/core/access.ts:194
 msgid "reading messages of {target} was refused — the prompt was dismissed"
 msgstr ""
 "Das Lesen von Nachrichten von {target} wurde abgelehnt — die Rückfrage wurde "
 "verworfen"
 
-#: app/src/core/access.ts:197
+#: app/src/core/access.ts:202
 msgid ""
 "sending to {target} was refused — the prompt could not be shown (no "
 "notification service); add a rule like {rule} to config.agentAccess.rules"
@@ -108,7 +108,7 @@ msgstr ""
 "werden (kein Benachrichtigungsdienst); füge eine Regel wie {rule} zu "
 "config.agentAccess.rules hinzu"
 
-#: app/src/core/access.ts:203
+#: app/src/core/access.ts:208
 msgid ""
 "reading messages of {target} was refused — the prompt could not be shown (no "
 "notification service); add a rule like {rule} to config.agentAccess.rules"
@@ -117,7 +117,7 @@ msgstr ""
 "konnte nicht angezeigt werden (kein Benachrichtigungsdienst); füge eine "
 "Regel wie {rule} zu config.agentAccess.rules hinzu"
 
-#: app/src/core/access.ts:220
+#: app/src/core/access.ts:225
 msgid ""
 "sending to {target} needs approval, but `curlew daemon` is not running, so "
 "nobody can be asked — start it, or add a rule like {rule} to "
@@ -127,7 +127,7 @@ msgstr ""
 "also kann niemand gefragt werden — starte ihn oder füge eine Regel wie "
 "{rule} zu config.agentAccess.rules hinzu"
 
-#: app/src/core/access.ts:226
+#: app/src/core/access.ts:231
 msgid ""
 "reading messages of {target} needs approval, but `curlew daemon` is not "
 "running, so nobody can be asked — start it, or add a rule like {rule} to "
@@ -236,39 +236,31 @@ msgstr "{backend} kann kein Bild senden — gib Text an und lass image_url weg"
 msgid "nothing to send: the text is empty after rendering"
 msgstr "Nichts zu senden: Der Text ist nach dem Rendern leer"
 
-#: app/src/core/actions/send.ts:342 app/src/core/actions/send.ts:482
+#: app/src/core/actions/send.ts:342 app/src/core/actions/send.ts:477
 msgid "{backend} cannot send attachments"
 msgstr "{backend} kann keine Anhänge senden"
 
-#: app/src/core/actions/send.ts:429 app/src/core/actions/send.ts:461
+#: app/src/core/actions/send.ts:429 app/src/core/actions/send.ts:456
 msgid "no account {account} — `curlew accounts list` shows them"
 msgstr "Kein Konto {account} — `curlew accounts list` zeigt sie an"
 
-#: app/src/core/actions/send.ts:436
-msgid ""
-"{backend} takes no attachments from an agent — pick the file in the Curlew "
-"window"
-msgstr ""
-"{backend} nimmt von einem Agenten keine Anhänge an — wähle die Datei im "
-"Curlew-Fenster"
-
-#: app/src/core/actions/send.ts:468
+#: app/src/core/actions/send.ts:463
 msgid "{backend} cannot send"
 msgstr "{backend} kann nicht senden"
 
-#: app/src/core/actions/send.ts:472
+#: app/src/core/actions/send.ts:467
 msgid "nothing to send: give text, an image URL or an attachment"
 msgstr "Nichts zu senden: Gib Text, eine Bild-URL oder einen Anhang an"
 
-#: app/src/core/actions/send.ts:474
+#: app/src/core/actions/send.ts:469
 msgid "{backend} messages carry no subject"
 msgstr "Nachrichten von {backend} haben keinen Betreff"
 
-#: app/src/core/actions/send.ts:477
+#: app/src/core/actions/send.ts:472
 msgid "{backend} cannot send email chat headers"
 msgstr "{backend} kann keine E-Mail-Chat-Kopfzeilen senden"
 
-#: app/src/core/actions/send.ts:487
+#: app/src/core/actions/send.ts:482
 msgid "{backend} cannot send attachments through the daemon"
 msgstr "{backend} kann Anhänge nicht über den Daemon senden"
 
@@ -1561,8 +1553,9 @@ msgid "Mail only: the subject line"
 msgstr "Nur E-Mail: die Betreffzeile"
 
 #: app/src/frontends/cli/send.ts:37
-msgid "Mail only: absolute path of a file to attach (repeatable)"
-msgstr "Nur E-Mail: absoluter Pfad einer anzuhängenden Datei (wiederholbar)"
+msgid ""
+"Absolute path of a file to send (repeatable; mail, Telegram, Matrix, XMPP)"
+msgstr "Absoluter Pfad einer zu sendenden Datei (wiederholbar; E-Mail, Telegram, Matrix, XMPP)"
 
 #: app/src/frontends/cli/send.ts:42
 msgid "Account id from `curlew accounts list`"
@@ -3181,7 +3174,9 @@ msgstr "Der Text ist länger als {max} Zeichen"
 #: packages/xmpp/src/messages.ts:29
 msgid ""
 "{domain} offers no file upload (XEP-0363), so no file can be sent through it"
-msgstr "{domain} bietet keinen Datei-Upload (XEP-0363) an, darüber lässt sich keine Datei senden"
+msgstr ""
+"{domain} bietet keinen Datei-Upload (XEP-0363) an, darüber lässt sich keine "
+"Datei senden"
 
 #: packages/xmpp/src/messages.ts:31
 msgid "{file} is larger than the {max} bytes the server accepts"
@@ -3193,13 +3188,17 @@ msgstr "der Server hat die Datei {file} abgewiesen ({reason})"
 
 #: packages/xmpp/src/messages.ts:35
 msgid "the server answered a slot for {file} that curlew will not use"
-msgstr "der Server hat für {file} einen Upload-Platz angeboten, den Curlew nicht verwendet"
+msgstr ""
+"der Server hat für {file} einen Upload-Platz angeboten, den Curlew nicht "
+"verwendet"
 
 #: packages/xmpp/src/messages.ts:37
 msgid ""
 "nothing was sent: {to} stopped offering encryption while the file was "
 "uploading"
-msgstr "nichts wurde gesendet: {to} bietet keine Verschlüsselung mehr an, während die Datei hochgeladen wurde"
+msgstr ""
+"nichts wurde gesendet: {to} bietet keine Verschlüsselung mehr an, während "
+"die Datei hochgeladen wurde"
 
 #: packages/xmpp/src/messages.ts:38
 msgid "no XMPP account {id} — `curlew accounts list` shows them"
@@ -3283,6 +3282,16 @@ msgid ""
 msgstr ""
 "{count} Geräte von {jid} tragen diesen Fingerabdruck, er benennt also keines "
 "— nichts wurde geändert"
+
+#~ msgid ""
+#~ "{backend} takes no attachments from an agent — pick the file in the "
+#~ "Curlew window"
+#~ msgstr ""
+#~ "{backend} nimmt von einem Agenten keine Anhänge an — wähle die Datei im "
+#~ "Curlew-Fenster"
+
+#~ msgid "Mail only: absolute path of a file to attach (repeatable)"
+#~ msgstr "Nur E-Mail: absoluter Pfad einer anzuhängenden Datei (wiederholbar)"
 
 #~ msgid "Enable a backend in Preferences to add accounts here."
 #~ msgstr ""

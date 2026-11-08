@@ -34,7 +34,7 @@ export const sendCommand: CommandModule = {
         type: 'string',
         array: true,
         nargs: 1,
-        describe: _('Mail only: absolute path of a file to attach (repeatable)'),
+        describe: _('Absolute path of a file to send (repeatable; mail, Telegram, Matrix, XMPP)'),
       })
       .option('account', {
         type: 'string',

@@ -111,12 +111,18 @@ interface AttachmentFetcher {
 - **The window** sends attachments from every enabled account (ADR 0008 §1). The file dialog,
   paste or drop is the person's act; no grant, no path check beyond "an absolute regular file the
   person chose".
-- **Agents** (MCP, `curlew send --attach`): the grant rules of ADR 0008 §2 apply, plus a **new
-  capability per backend, `<backend>.attach`, off unless named**. `<backend>.send` stays text only.
+- **Agents** (MCP, `curlew send --attach`): the access rules of ADR 0009 apply, plus one rule of
+  this ADR: **a file to a chat is always put to the person**, whatever the rules say. A
+  `<backend>.attach` capability was planned here; ADR 0009 replaced grants with rules, so there is
+  no per-capability switch to flip, and "off unless named" became "asked every time". An `allow`
+  rule, a migrated grant and a session grant all stop short of a file: `requireAccess` passes
+  `confirmFiles` and the daemon's `AccessBroker` prompts for any request that names files. The
+  prompt shows the file names, never the paths.
   Reason: `SendingAttachment.path` is an absolute path on the person's disk. An agent that may send
-  a text to a friend must not thereby be able to send them `~/.ssh/id_ed25519`. Mail already
-  carries attachments under `mail.send` (ADR 0004, amendment 2026-11-05); that stays, and its path
-  rules are the model: absolute, regular file, size-capped, name and size logged.
+  a text to a friend must not thereby be able to send them `~/.ssh/id_ed25519`.
+  Mail already carries attachments under its write rule (ADR 0004, amendment 2026-11-05); that
+  stays for now, and its path rules are the model: absolute, regular file, size-capped, name and
+  size logged. The same question is open for mail and is tracked, not decided here.
 - A message to the person's own address (ADR 0008 §2) still needs no grant, with or without an
   attachment.
 - **Receiving by agents follows ADR 0009.** `message_save_attachment` (the chat counterpart of

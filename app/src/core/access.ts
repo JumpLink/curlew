@@ -81,6 +81,11 @@ export interface AccessTarget {
   self?: boolean;
   preview?: string;
   attachments?: string[];
+  /**
+   * The files are read off the person's disk by a path the agent named, so no rule and no session
+   * grant stands in for a yes: only the person's own address passes without asking.
+   */
+  confirmFiles?: boolean;
 }
 
 const PREVIEW_CHARS = 80;
@@ -245,7 +250,10 @@ export async function requireAccess(gate: AccessGate, target: AccessTarget): Pro
     kind: target.kind,
     self: target.self,
   });
-  if (resolution.mode === 'allow') return resolution.reason === 'default' ? 'rule' : resolution.reason;
+  const needsYes = target.confirmFiles === true && resolution.reason !== 'self';
+  if (resolution.mode === 'allow' && !needsYes) {
+    return resolution.reason === 'default' ? 'rule' : resolution.reason;
+  }
   if (resolution.mode === 'deny') throw deniedByPolicy(target, resolution.reason === 'default');
 
   let reply: AccessReply | null;

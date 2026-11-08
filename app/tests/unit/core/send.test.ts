@@ -20,7 +20,7 @@ import xml from '@xmpp/xml';
 import { permitFor, recordDelivered, sendAsAgent, sendMessage } from '../../../src/core/actions/send.ts';
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
 import { waitReply } from '../../../src/core/actions/wait-reply.ts';
-import type { AccessPort, AccessReply } from '../../../src/core/access.ts';
+import type { AccessAsk, AccessPort, AccessReply } from '../../../src/core/access.ts';
 import { appendWriteLog } from '../../../src/core/write-log.ts';
 import { registerSendTools } from '../../../src/frontends/mcp/tools/send.ts';
 import { freshDb } from '../store/fixtures.ts';
@@ -432,6 +432,56 @@ export default async () => {
         expect(sent[0][0]).toBe(OWNER);
         expect(logged()).toBe(true);
       });
+    });
+
+    await it('puts a chat file to the person even where a rule allows the send', async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-adr8-files-'));
+      try {
+        const configPath = join(dir, 'config.json');
+        writeFileSync(configPath, JSON.stringify({ grants: GRANTS }));
+        const file = join(dir, 'notes.txt');
+        writeFileSync(file, 'x');
+        const sent: Array<[string, string, string]> = [];
+        const backend = {
+          manifest: XMPP_MANIFEST,
+          listAccounts: async () => [ACCOUNT_INFO],
+          isSelfAddress: async (_id: string, to: string) => isOwnBareJid(ACCOUNT_INFO.identity, to),
+          openSender: async (_id: string, permit: ReturnType<typeof permitFor>) =>
+            new XmppSender(new GrantedXmppSession(fakeLink(sent), permit)),
+        } as unknown as XmppBackend;
+        const asked: AccessAsk[] = [];
+        const port = (reply: AccessReply | null): AccessPort => ({
+          request: async (ask) => {
+            asked.push(ask);
+            return reply;
+          },
+        });
+        const call = (to: string, access: AccessPort) =>
+          sendAsAgent({
+            accountId: ACCOUNT,
+            to,
+            text: 'see file',
+            attachments: [file],
+            frontend: 'cli',
+            agent: { port: access },
+            dbPath: join(dir, 'index.db'),
+            configPath,
+            writeLogPath: join(dir, 'write.log'),
+            backend,
+          });
+        // The migrated rule allows text to OWNER; with a file it still asks, naming the file only.
+        await expect(call(OWNER, port({ allowed: false, reason: 'denied' }))).rejects.toThrow(
+          /declined in the prompt/,
+        );
+        expect(asked.length).toBe(1);
+        expect((asked[0].attachments ?? []).join()).toBe('notes.txt');
+        expect(sent.length).toBe(0);
+        // The account's own address needs no yes.
+        await expect(call(ACCOUNT_INFO.identity, port(null))).rejects.toThrow(/no upload/);
+        expect(asked.length).toBe(1);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
     });
 
     await it("always lets an agent send to the account's own address", async () => {
