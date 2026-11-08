@@ -31,6 +31,7 @@ import storeThreads from './unit/store/threads.test.ts';
 import storeConversations from './unit/store/conversations.test.ts';
 import storeConversationTotals from './unit/store/conversation-totals.test.ts';
 import storeChatSync from './unit/store/chat-sync.test.ts';
+import storeChatBackfill from './unit/store/chat-backfill.test.ts';
 import storeDeliverySync from './unit/store/delivery-sync.test.ts';
 import storeDeliveryFollow from './unit/store/delivery-follow.test.ts';
 import storeReceiveLease from './unit/store/receive-lease.test.ts';
@@ -145,6 +146,7 @@ run({
   storeConversations,
   storeConversationTotals,
   storeChatSync,
+  storeChatBackfill,
   storeDeliverySync,
   storeDeliveryFollow,
   storeReceiveLease,

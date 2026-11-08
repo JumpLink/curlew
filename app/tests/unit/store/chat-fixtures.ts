@@ -126,6 +126,8 @@ export class FakeChatBackend implements ChatBackend {
    * one a test gets unless it says otherwise.
    */
   canProbe = false;
+  /** Set true for a network whose history can be walked from any stored seq (backfill of attachments). */
+  rewindable = false;
   connectError: Error | null = null;
   /** Thrown by `listChats` — a rate limit while listing, or a network that answers nothing. */
   listChatsError: Error | null = null;
@@ -199,6 +201,7 @@ export class FakeChatBackend implements ChatBackend {
         this.closed++;
       },
     };
+    if (this.rewindable) (session as { rewindable?: boolean }).rewindable = true;
     // A network that can be asked about a message by id answers only for the ids the engine
     // named — like `messages.getMessages`, which reports an empty slot per asked id.
     if (this.canProbe) {

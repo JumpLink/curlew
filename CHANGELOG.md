@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Fixed
+
+- Pictures and files of chat messages synced before 0.2 showed only a blank *Attachment* tile.
+  The sync now walks the history of Telegram and Matrix chats again, ten chats and five pages
+  per chat per run, and writes only the attachment descriptors; messages, read state and edits
+  stay as they are. A message the network no longer shows with an attachment keeps the plain
+  tile without a download.
+
 ### Changed
 
 - `curlew window`: the filter chips are pills that fill with the accent colour while on, and the
