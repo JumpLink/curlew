@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-09 20:31+0100\n"
+"POT-Creation-Date: 2026-11-09 20:49+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -885,8 +885,8 @@ msgstr ""
 
 #: app/src/frontends/cli/backends.ts:53
 msgid ""
-"Nothing was changed. To accept and enable: curlew backends enable {name} --"
-"accept-terms"
+"Nothing was changed. To accept this risk for your account and enable: curlew "
+"backends enable {name} --accept-terms"
 msgstr ""
 
 #: app/src/frontends/cli/backends.ts:66
@@ -1468,57 +1468,61 @@ msgstr ""
 msgid "Please read this first"
 msgstr ""
 
-#: app/src/window/account-add.ts:142
+#: app/src/window/account-add.ts:143
+msgid "I understand and accept the risk for my account"
+msgstr ""
+
+#: app/src/window/account-add.ts:146
 msgid "Accept and Continue"
 msgstr ""
 
-#: app/src/window/account-add.ts:179
+#: app/src/window/account-add.ts:187
 msgid "Continue"
 msgstr ""
 
-#: app/src/window/account-add.ts:202
+#: app/src/window/account-add.ts:210
 msgid "Adding account…"
 msgstr ""
 
-#: app/src/window/account-add.ts:210
+#: app/src/window/account-add.ts:218
 msgid "Try Again"
 msgstr ""
 
-#: app/src/window/account-add.ts:214
+#: app/src/window/account-add.ts:222
 msgid "Could not add the account"
 msgstr ""
 
-#: app/src/window/account-add.ts:225
+#: app/src/window/account-add.ts:233
 msgid "Connecting…"
 msgstr ""
 
-#: app/src/window/account-add.ts:249
+#: app/src/window/account-add.ts:257
 msgid "Asks you to accept terms first"
 msgstr ""
 
-#: app/src/window/account-add.ts:264
+#: app/src/window/account-add.ts:272
 msgid "Chats"
 msgstr ""
 
-#: app/src/window/account-add.ts:265
+#: app/src/window/account-add.ts:273
 msgid ""
 "Signal, WhatsApp and Telegram link this computer as another device of your "
 "account."
 msgstr ""
 
-#: app/src/window/account-add.ts:277
+#: app/src/window/account-add.ts:285
 msgid "Mail, calendar and contacts"
 msgstr ""
 
-#: app/src/window/account-add.ts:279
+#: app/src/window/account-add.ts:287
 msgid "GNOME Online Accounts"
 msgstr ""
 
-#: app/src/window/account-add.ts:280
+#: app/src/window/account-add.ts:288
 msgid "Mail accounts are added in GNOME Settings"
 msgstr ""
 
-#: app/src/window/account-add.ts:296 app/src/window/accounts-page.ts:157
+#: app/src/window/account-add.ts:304 app/src/window/accounts-page.ts:157
 #: app/src/window/accounts-page.ts:180
 msgid "Add Account"
 msgstr ""

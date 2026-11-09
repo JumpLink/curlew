@@ -50,7 +50,7 @@ export const backendsCommand: CommandModule = {
                   '',
                   fmt(
                     _(
-                      'Nothing was changed. To accept and enable: curlew backends enable {name} --accept-terms',
+                      'Nothing was changed. To accept this risk for your account and enable: curlew backends enable {name} --accept-terms',
                     ),
                     { name: result.name },
                   ),

@@ -139,7 +139,14 @@ class LoginPage {
     if (terms.url) {
       box.append(new Gtk.LinkButton({ uri: terms.url, label: terms.url, halign: Gtk.Align.START }));
     }
+    const risk = new Gtk.CheckButton({
+      label: _('I understand and accept the risk for my account'),
+      halign: Gtk.Align.CENTER,
+    });
     const accept = pillButton(_('Accept and Continue'));
+    // Reading the notice is not accepting it: the button stays off until the box is ticked.
+    accept.set_sensitive(false);
+    risk.connect('toggled', () => accept.set_sensitive(risk.get_active()));
     accept.connect('clicked', () => {
       try {
         backendsEnable(this.protocol.backend, { acceptTerms: true, path: this.deps.path });
@@ -149,6 +156,7 @@ class LoginPage {
       }
       void this.run();
     });
+    box.append(risk);
     box.append(accept);
     this.show(scrolled(box));
   }

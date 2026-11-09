@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-09 20:31+0100\n"
+"POT-Creation-Date: 2026-11-09 20:49+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1051,11 +1051,11 @@ msgstr "{name} hat Nutzungsbedingungen, die du noch nicht akzeptiert hast:"
 
 #: app/src/frontends/cli/backends.ts:53
 msgid ""
-"Nothing was changed. To accept and enable: curlew backends enable {name} --"
-"accept-terms"
+"Nothing was changed. To accept this risk for your account and enable: curlew "
+"backends enable {name} --accept-terms"
 msgstr ""
-"Es wurde nichts geändert. Zum Akzeptieren und Aktivieren: curlew backends "
-"enable {name} --accept-terms"
+"Es wurde nichts geändert. Um dieses Risiko für Ihr Konto zu akzeptieren und "
+"zu aktivieren: curlew backends enable {name} --accept-terms"
 
 #: app/src/frontends/cli/backends.ts:66
 msgid "Disable a backend (its accepted terms stay recorded)"
@@ -1715,39 +1715,43 @@ msgstr "Curlew"
 msgid "Please read this first"
 msgstr "Bitte zuerst lesen"
 
-#: app/src/window/account-add.ts:142
+#: app/src/window/account-add.ts:143
+msgid "I understand and accept the risk for my account"
+msgstr "Ich verstehe das Risiko für mein Konto und nehme es in Kauf"
+
+#: app/src/window/account-add.ts:146
 msgid "Accept and Continue"
 msgstr "Zustimmen und fortfahren"
 
-#: app/src/window/account-add.ts:179
+#: app/src/window/account-add.ts:187
 msgid "Continue"
 msgstr "Weiter"
 
-#: app/src/window/account-add.ts:202
+#: app/src/window/account-add.ts:210
 msgid "Adding account…"
 msgstr "Konto wird hinzugefügt …"
 
-#: app/src/window/account-add.ts:210
+#: app/src/window/account-add.ts:218
 msgid "Try Again"
 msgstr "Erneut versuchen"
 
-#: app/src/window/account-add.ts:214
+#: app/src/window/account-add.ts:222
 msgid "Could not add the account"
 msgstr "Konto konnte nicht hinzugefügt werden"
 
-#: app/src/window/account-add.ts:225
+#: app/src/window/account-add.ts:233
 msgid "Connecting…"
 msgstr "Verbindung wird hergestellt …"
 
-#: app/src/window/account-add.ts:249
+#: app/src/window/account-add.ts:257
 msgid "Asks you to accept terms first"
 msgstr "Verlangt zuerst deine Zustimmung zu den Bedingungen"
 
-#: app/src/window/account-add.ts:264
+#: app/src/window/account-add.ts:272
 msgid "Chats"
 msgstr "Chats"
 
-#: app/src/window/account-add.ts:265
+#: app/src/window/account-add.ts:273
 msgid ""
 "Signal, WhatsApp and Telegram link this computer as another device of your "
 "account."
@@ -1755,19 +1759,19 @@ msgstr ""
 "Signal, WhatsApp und Telegram verknüpfen diesen Computer als weiteres Gerät "
 "deines Kontos."
 
-#: app/src/window/account-add.ts:277
+#: app/src/window/account-add.ts:285
 msgid "Mail, calendar and contacts"
 msgstr "E-Mail, Kalender und Kontakte"
 
-#: app/src/window/account-add.ts:279
+#: app/src/window/account-add.ts:287
 msgid "GNOME Online Accounts"
 msgstr "GNOME-Online-Konten"
 
-#: app/src/window/account-add.ts:280
+#: app/src/window/account-add.ts:288
 msgid "Mail accounts are added in GNOME Settings"
 msgstr "E-Mail-Konten werden in den GNOME-Einstellungen hinzugefügt"
 
-#: app/src/window/account-add.ts:296 app/src/window/accounts-page.ts:157
+#: app/src/window/account-add.ts:304 app/src/window/accounts-page.ts:157
 #: app/src/window/accounts-page.ts:180
 msgid "Add Account"
 msgstr "Konto hinzufügen"
@@ -2038,8 +2042,8 @@ msgid ""
 "Off: an agent that sends files is always asked first, even where a rule "
 "allows sending"
 msgstr ""
-"Aus: Ein Agent, der Dateien sendet, wird immer zuerst gefragt, auch wenn eine "
-"Regel das Senden erlaubt"
+"Aus: Ein Agent, der Dateien sendet, wird immer zuerst gefragt, auch wenn "
+"eine Regel das Senden erlaubt"
 
 #: app/src/window/agent-access-page.ts:332
 msgid "No rules yet"
