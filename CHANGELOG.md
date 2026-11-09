@@ -20,6 +20,8 @@
 - An agent that sends files is asked first on mail as well, not only on chats. The new switch
   *Send files without asking* (`agentAccess.sendFilesUnasked`, off by default) on the *Agent
   access* page lets an `allow` rule send files unasked, for mail and chats alike.
+- Setting up a network with a terms notice (WhatsApp, Signal, Telegram) asks you to tick *I
+  understand and accept the risk for my account* before *Accept and Continue* is enabled.
 
 ### Added
 
