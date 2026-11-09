@@ -231,6 +231,15 @@ export interface WaSentMessage {
   messageTimestamp?: WaNumber;
 }
 
+/** A file for `sendFile`: the bytes are read already. */
+export interface WaOutgoingFile {
+  bytes: Uint8Array;
+  fileName: string;
+  mimeType: string;
+  /** Shown under a picture, a video or a document; an audio message has none. */
+  caption?: string;
+}
+
 /**
  * A socket that may ALSO send — the only shape in curlew with a send method.
  *
@@ -248,6 +257,8 @@ export interface WaSendSocketHandle {
    */
   ready(): Promise<void>;
   sendText(jid: string, text: string): Promise<WaSentMessage>;
+  /** One file; Baileys encrypts it and uploads it to WhatsApp's media servers. */
+  sendFile(jid: string, file: WaOutgoingFile): Promise<WaSentMessage>;
   /** Close without logging out, exactly like `WaSocketHandle.end`. */
   end(): void;
 }

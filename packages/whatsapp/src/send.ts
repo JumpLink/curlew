@@ -17,7 +17,8 @@
  *
  * - **groups and broadcasts.** A group message needs the sender-key fan-out over a member list
  *   this package does not keep, and a status update is not a chat. Refused by address.
- * - **attachments, captions, reactions, edits, quotes.** The body is the message.
+ * - **reactions, edits, quotes.** The body is the message, with files if the caller attached any:
+ *   one message per file, the text as the caption of the first.
  * - **splitting.** Past `WHATSAPP_MAX_MESSAGE_BYTES` the text is refused, never cut.
  * - **a retry request after the handle closed.** See `getMessage` in `client.ts`.
  *
@@ -43,7 +44,9 @@ import type {
   SenderFeatures,
   SentMessage,
 } from '@curlew/protocol';
-import type { WaEventMap, WaSendSocketHandle } from './api.ts';
+import { inspectSendFiles } from '@curlew/store';
+import { readFileSync } from 'node:fs';
+import type { WaEventMap, WaSendSocketHandle, WaSentMessage } from './api.ts';
 import { SERVER_ACK, toNumber } from './api.ts';
 import { subscribeMapped } from './events.ts';
 import { chatKindOf, parseJid, sendableJid } from './jid.ts';
@@ -59,6 +62,18 @@ import { remoteMessageId, type WhatsAppMapper } from './map.ts';
  * of 65,536 characters with an umlaut in it is over the limit either way round.
  */
 export const WHATSAPP_MAX_MESSAGE_BYTES = 65_536;
+
+/**
+ * Per file. WhatsApp takes 100 MB as a document, but Baileys holds the bytes in memory while it
+ * encrypts and uploads them, so curlew stops lower.
+ */
+export const WHATSAPP_MAX_FILE_BYTES = 64_000_000;
+
+/** One message holds one file; several files are several messages. */
+export const WHATSAPP_MAX_FILES = 10;
+
+/** WhatsApp's limit for the caption of a file. A longer text follows as its own message. */
+export const WHATSAPP_MAX_CAPTION_CHARS = 1024;
 
 /** How long a send waits for WhatsApp's `SERVER_ACK` before it answers with a warning. */
 const DEFAULT_ACK_MS = 15_000;
@@ -95,7 +110,7 @@ export class WhatsAppSender implements MessageSender {
    * WhatsApp's body is plain text. Its clients render `*bold*` and `_italic_` in it, which is not
    * curlew's chat Markdown and not something this path promises to translate.
    */
-  readonly features: SenderFeatures = { markdown: false, attachments: false };
+  readonly features: SenderFeatures = { markdown: false, attachments: true };
   private readonly socket: WaSendSocketHandle;
   private readonly mapper: WhatsAppMapper;
   private readonly journal: EventJournal | null;
@@ -134,6 +149,10 @@ export class WhatsAppSender implements MessageSender {
 
   async send(message: SendingMessage): Promise<SentMessage> {
     const to = this.recipient(message.to);
+    const files = inspectSendFiles(message.attachments ?? [], {
+      perFile: WHATSAPP_MAX_FILE_BYTES,
+      count: WHATSAPP_MAX_FILES,
+    });
     const bytes = UTF8.encode(message.text).length;
     if (bytes > WHATSAPP_MAX_MESSAGE_BYTES) {
       throw new Error(
@@ -158,7 +177,60 @@ export class WhatsAppSender implements MessageSender {
     }
     // Baileys' `sendNode` throws `Connection Closed` while the WebSocket is not open yet.
     await this.socket.ready();
-    const sent = await this.socket.sendText(to, message.text);
+    if (files.length > 0) return this.sendFiles(to, message, files);
+    return this.finish(message, to, await this.socket.sendText(to, message.text), []);
+  }
+
+  /**
+   * The files, one message each, the caption on the first. A text too long for a caption follows
+   * as its own message. The result is the first message; the rest reach the index with the echo.
+   */
+  private async sendFiles(
+    to: string,
+    message: SendingMessage,
+    files: ReturnType<typeof inspectSendFiles>,
+  ): Promise<SentMessage> {
+    const text = message.text.trim().length === 0 ? undefined : message.text;
+    const caption = text !== undefined && text.length <= WHATSAPP_MAX_CAPTION_CHARS ? text : undefined;
+    let first: WaSentMessage | undefined;
+    for (const [index, file] of files.entries()) {
+      try {
+        const sent = await this.socket.sendFile(to, {
+          bytes: readFileSync(file.realPath),
+          fileName: file.filename,
+          mimeType: file.contentType,
+          ...(index === 0 && caption !== undefined ? { caption } : {}),
+        });
+        first ??= sent;
+      } catch (error) {
+        if (index === 0) throw error;
+        throw new Error(
+          fmt(_('{sent} of {total} files were sent, then {file} failed: {reason}'), {
+            sent: String(index),
+            total: String(files.length),
+            file: file.filename,
+            reason: reasonOf(error),
+          }),
+          { cause: error },
+        );
+      }
+    }
+    if (text !== undefined && caption === undefined) await this.socket.sendText(to, text);
+    return this.finish(
+      message,
+      to,
+      first!,
+      files.map((file) => ({ filename: file.filename, size: file.size })),
+    );
+  }
+
+  /** What every send ends in: the id, the confirmation, and the result a caller records. */
+  private async finish(
+    message: SendingMessage,
+    to: string,
+    sent: WaSentMessage,
+    attachments: Array<{ filename: string; size: number }>,
+  ): Promise<SentMessage> {
     const id = sent.key.id;
     if (!id) {
       throw new Error(
@@ -202,6 +274,7 @@ export class WhatsAppSender implements MessageSender {
       // chat is filed under the LID, and the echo belongs in the chat a caller can read.
       chatRemoteId: this.mapper.resolver.chatId(sent.key.remoteJid, sent.key.remoteJidAlt) ?? to,
       encrypted: true,
+      ...(attachments.length === 0 ? {} : { attachments }),
       ...(warnings.length === 0 ? {} : { warning: warnings.join('; ') }),
     };
   }

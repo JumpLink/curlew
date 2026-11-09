@@ -35,6 +35,7 @@
  */
 
 import { _, fmt } from '@curlew/protocol';
+import { Buffer } from 'node:buffer';
 import { downloadContentFromMessage, makeWASocket, type proto } from 'baileys';
 import type { WaMediaDownloader, WaSendSocketHandle, WaSocketHandle } from './api.ts';
 import { disconnectReason } from './api.ts';
@@ -178,6 +179,27 @@ export const createBaileysConnection: ConnectionFactory = ({ auth, fullHistory =
         // only when the field is `undefined`, and that would fetch a URL found in the message
         // text over plain HTTP from this machine. `null` is the documented way to say no preview.
         const sent = await sock.sendMessage(jid, { text, linkPreview: null });
+        if (!sent) throw new Error(_('WhatsApp did not take the message — nothing was sent'));
+        if (sent.key.id && sent.message) outgoing.set(sent.key.id, sent.message);
+        return sent;
+      },
+      sendFile: async (jid, file) => {
+        // Pictures and videos go as such, everything else as a document that keeps its name.
+        // `linkPreview: null` as for a text: a caption with a URL must not fetch it from here.
+        const bytes = Buffer.from(file.bytes.buffer, file.bytes.byteOffset, file.bytes.byteLength);
+        const caption = file.caption === undefined ? {} : { caption: file.caption };
+        const content =
+          file.mimeType === 'image/jpeg' || file.mimeType === 'image/png'
+            ? { image: bytes, mimetype: file.mimeType, ...caption }
+            : file.mimeType === 'video/mp4'
+              ? { video: bytes, mimetype: file.mimeType, ...caption }
+              : {
+                  document: bytes,
+                  mimetype: file.mimeType,
+                  fileName: file.fileName,
+                  ...caption,
+                };
+        const sent = await sock.sendMessage(jid, { ...content, linkPreview: null });
         if (!sent) throw new Error(_('WhatsApp did not take the message — nothing was sent'));
         if (sent.key.id && sent.message) outgoing.set(sent.key.id, sent.message);
         return sent;

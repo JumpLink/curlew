@@ -7,10 +7,10 @@
  * `sendPresenceUpdate`, `chatModify`, `groupCreate`, `logout`, …). So this package draws the line
  * one level up, in `api.ts`: the receive path is handed `WaSocketHandle`, which has `ev`,
  * `requestPairingCode` and `end` and no way to write at all, and a granted send is handed
- * `WaSendSocketHandle`, whose single write is `sendText(jid, text)`. Nothing widens either shape
+ * `WaSendSocketHandle`, whose only writes are `sendText(jid, text)` and `sendFile(jid, file)`. Nothing widens either shape
  * at runtime, and a test asserts the receive handle has no send-capable method.
  *
- * What is left to gate is therefore one argument: WHICH chat that one text may go into. That is
+ * What is left to gate is therefore one argument: WHICH chat a text or a file may go into. That is
  * this file — fail-closed, per permit, over the already-normalized JID:
  *
  * - a JID a permit names → through;
@@ -22,11 +22,12 @@
  * so its reasons are terse and in English — reaching them is a defect, not a user path.
  */
 
-import type { WaSendSocketHandle, WaSentMessage } from './api.ts';
+import type { WaOutgoingFile, WaSendSocketHandle, WaSentMessage } from './api.ts';
 import { sendableJid } from './jid.ts';
 
-/** The one write a granted sender has. */
+/** The writes a granted sender has. */
 export type WaSendText = (jid: string, text: string) => Promise<WaSentMessage>;
+export type WaSendFile = (jid: string, file: WaOutgoingFile) => Promise<WaSentMessage>;
 
 /**
  * Why a sender permitted to write to `recipients` may not write to `jid`, or null when it may.
@@ -59,6 +60,16 @@ export function guardedSendText(send: WaSendText, recipients: readonly string[])
   };
 }
 
+/** `guardedSendText` for a file: the same permit, the same refusal. */
+export function guardedSendFile(send: WaSendFile, recipients: readonly string[]): WaSendFile {
+  const permitted = recipients.map((address) => sendableJid(address)).filter((jid) => jid !== null);
+  return async (jid, file) => {
+    const reason = sendRefusal(jid, permitted);
+    if (reason) throw new SendViolation(reason);
+    return send(jid, file);
+  };
+}
+
 /** The gate around a whole handle: the only thing `openSender` hands to `WhatsAppSender`. */
 export function guardedSendSocket(
   socket: WaSendSocketHandle,
@@ -69,6 +80,7 @@ export function guardedSendSocket(
     ev: socket.ev,
     ready: () => socket.ready(),
     sendText,
+    sendFile: guardedSendFile((jid, file) => socket.sendFile(jid, file), recipients),
     end: () => socket.end(),
   };
 }

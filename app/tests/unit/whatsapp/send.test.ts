@@ -17,6 +17,7 @@ import {
   sendRefusal,
   SendViolation,
   WHATSAPP_MANIFEST,
+  WHATSAPP_MAX_CAPTION_CHARS,
   WHATSAPP_MAX_MESSAGE_BYTES,
   WhatsAppBackend,
 } from '@curlew/whatsapp';
@@ -170,8 +171,9 @@ export default async () => {
 
         const permit: SendPermit = { account: rig.accountId, addresses: [ANNA_LID] };
         const sender = await rig.backend.openSender(rig.accountId, permit);
-        // WhatsApp's body is plain text, and this path sends nothing but a body.
+        // WhatsApp's body is plain text; files are the one thing it carries besides.
         expect(sender.features.markdown).toBe(false);
+        expect(sender.features.attachments).toBe(true);
         expect(sender.sendImage === undefined).toBe(true);
         await sender.close();
 
@@ -224,6 +226,88 @@ export default async () => {
       expect(bare.sent.length).toBe(0);
       await gated.sendText(ANNA_LID, 'Hallo');
       expect(bare.sent.map((s) => s.jid).join()).toBe(ANNA_LID);
+
+      // A file passes the same gate.
+      const file = { bytes: new Uint8Array([1]), fileName: 'a.pdf', mimeType: 'application/pdf' };
+      let fileViolation: unknown = null;
+      try {
+        await gated.sendFile(BEN_LID, file);
+      } catch (err) {
+        fileViolation = err;
+      }
+      expect(fileViolation instanceof SendViolation).toBe(true);
+      expect(bare.files.length).toBe(0);
+      await gated.sendFile(ANNA_LID, file);
+      expect(bare.files.map((f) => f.jid).join()).toBe(ANNA_LID);
+    });
+
+    await it('sends files one message each, with the text as the caption of the first', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const photo = join(rig.dir, 'photo.png');
+        const doc = join(rig.dir, 'notes.pdf');
+        writeFileSync(photo, new Uint8Array([1, 2, 3]));
+        writeFileSync(doc, new Uint8Array([4, 5]));
+        const permit: SendPermit = { account: rig.accountId, addresses: [ANNA_LID] };
+        const sender = await rig.backend.openSender(rig.accountId, permit);
+        try {
+          const result = await sender.send({
+            to: ANNA_LID,
+            text: 'Hier',
+            attachments: [{ path: photo }, { path: doc }],
+          });
+          const [socket] = rig.senders;
+          expect(socket.sent.length).toBe(0);
+          expect(socket.files.map((f) => f.file.fileName).join()).toBe('photo.png,notes.pdf');
+          expect(socket.files.map((f) => f.file.mimeType).join()).toBe('image/png,application/pdf');
+          expect(socket.files[0].file.caption).toBe('Hier');
+          expect(socket.files[1].file.caption === undefined).toBe(true);
+          expect(socket.files[0].file.bytes.length).toBe(3);
+          expect(result.attachments?.map((a) => `${a.filename}:${a.size}`).join()).toBe(
+            'photo.png:3,notes.pdf:2',
+          );
+          expect(result.warning === undefined).toBe(true);
+        } finally {
+          await sender.close();
+        }
+      });
+    });
+
+    await it('sends a text too long for a caption as a message of its own', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const doc = join(rig.dir, 'notes.pdf');
+        writeFileSync(doc, new Uint8Array([4]));
+        const long = 'x'.repeat(WHATSAPP_MAX_CAPTION_CHARS + 1);
+        const permit: SendPermit = { account: rig.accountId, addresses: [ANNA_LID] };
+        const sender = await rig.backend.openSender(rig.accountId, permit);
+        try {
+          await sender.send({ to: ANNA_LID, text: long, attachments: [{ path: doc }] });
+          const [socket] = rig.senders;
+          expect(socket.files[0].file.caption === undefined).toBe(true);
+          expect(socket.sent.map((s) => s.text.length).join()).toBe(String(long.length));
+        } finally {
+          await sender.close();
+        }
+      });
+    });
+
+    await it('refuses a file it cannot send before anything goes out', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const permit: SendPermit = { account: rig.accountId, addresses: [ANNA_LID] };
+        const sender = await rig.backend.openSender(rig.accountId, permit);
+        try {
+          const reason = await reasonOf(
+            sender.send({ to: ANNA_LID, text: 'Hier', attachments: [{ path: join(rig.dir, 'gone.pdf') }] }),
+          );
+          expect(reason.includes('cannot be read')).toBe(true);
+          expect(
+            await reasonOf(sender.send({ to: ANNA_LID, text: '', attachments: [{ path: 'rel.pdf' }] })),
+          ).toMatch(/not an absolute path/);
+          expect(rig.senders[0].files.length).toBe(0);
+          expect(rig.senders[0].sent.length).toBe(0);
+        } finally {
+          await sender.close();
+        }
+      });
     });
 
     await it('refuses without a whatsapp.send grant, before anything is opened', async () => {

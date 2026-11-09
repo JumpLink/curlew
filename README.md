@@ -569,7 +569,10 @@ exactly as `curlew conversations list` shows it — a full JID, `<digits>@lid` o
 `{ "capability": "whatsapp.send", "target": "whatsapp-2084.../1348...@lid" }`. A bare phone
 number is refused, and so is a `<user>:3@…` device address: both leave open which chat is
 meant, and the grant has to name the string you read back. A text over 65536 UTF-8 bytes is
-refused rather than split, and there is no Markdown, no image and no reaction. Groups and
+refused rather than split, and there is no Markdown and no reaction. Files go along as `--attach`
+(up to 10, 64 MB each): one message per file, pictures and MP4 videos as such, everything else as
+a document under its file name, and a text up to 1024 characters becomes the caption of the
+first. An agent is always asked before it sends files. Groups and
 status updates are refused — a group message needs a member list curlew does not keep. The
 sent message is stored in the index as your own message and replaced by WhatsApp's own copy
 when it comes back.
