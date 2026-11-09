@@ -5,8 +5,10 @@ import {
   attachmentKind,
   AUTO_FETCH_VIDEO_MAX_BYTES,
   boundedSize,
+  durationLabel,
   effectiveMime,
   INLINE_IMAGE_MAX_BYTES,
+  isGridMedia,
   isOpenable,
   previewKey,
   shouldAutoFetch,
@@ -152,6 +154,30 @@ export default async () => {
       expect(showsPoster({ filename: 'clip.mp4', mimeType: 'video/mp4', section: '2', size: 1000 })).toBe(
         false,
       );
+    });
+  });
+
+  await describe('durationLabel', async () => {
+    await it('writes minutes and seconds, hours only when needed', async () => {
+      expect(durationLabel(18_000)).toBe('0:18');
+      expect(durationLabel(61_400)).toBe('1:01');
+      expect(durationLabel(3_725_000)).toBe('1:02:05');
+    });
+
+    await it('is empty without a usable length', async () => {
+      expect(durationLabel(null)).toBe('');
+      expect(durationLabel(undefined)).toBe('');
+      expect(durationLabel(0)).toBe('');
+      expect(durationLabel(Number.NaN)).toBe('');
+    });
+  });
+
+  await describe('isGridMedia', async () => {
+    await it('takes openable pictures and videos only', async () => {
+      expect(isGridMedia(part({}))).toBe(true);
+      expect(isGridMedia(part({ mimeType: 'video/mp4', filename: 'a.mp4' }))).toBe(true);
+      expect(isGridMedia(part({ mimeType: 'application/pdf', filename: 'a.pdf' }))).toBe(false);
+      expect(isGridMedia({ filename: 'x.png', mimeType: 'image/png' })).toBe(false);
     });
   });
 
