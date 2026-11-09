@@ -77,6 +77,17 @@ export function shouldAutoFetch(info: AttachmentInfo): boolean {
   );
 }
 
+/** A chat video is fetched on its own, to show its first frame, only up to this size (ADR 0010). */
+export const AUTO_FETCH_VIDEO_MAX_BYTES = 8_000_000;
+
+/** Whether the bubble shows a video's first frame (true) or a tile (false). */
+export function showsPoster(info: AttachmentInfo): boolean {
+  if (!isOpenable(info) || attachmentKind(info) !== 'video') return false;
+  // Showing the frame means fetching the whole video unasked: only a chat part of known, small size.
+  if (info.section !== undefined && info.section !== '') return false;
+  return info.size !== null && info.size !== undefined && info.size <= AUTO_FETCH_VIDEO_MAX_BYTES;
+}
+
 /** Whether the bubble shows the picture itself (true) or a tile (false). */
 export function showsInline(info: AttachmentInfo): boolean {
   if (!isOpenable(info) || attachmentKind(info) !== 'image') return false;

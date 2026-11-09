@@ -17,6 +17,7 @@ import type { MessageRef } from '@curlew/protocol';
 import { ensurePrivateDir, previewsDir } from '@curlew/store';
 
 import { chatSaveAttachment } from '../core/actions/chat-attachment.ts';
+import { ATTACHMENT_BYTES } from '../core/actions/limits.ts';
 import { mailSaveAttachment } from '../core/actions/mail.ts';
 import { previewKey } from './attachment-model.ts';
 import type { AttachmentInfo } from './conversation-model.ts';
@@ -48,7 +49,12 @@ function cachedFile(dir: string): string | null {
   }
 }
 
-/** The local path of the part's bytes: the cached copy, else one fetch shared by every caller. */
+/**
+ * The local path of the part's bytes: the cached copy, else one fetch shared by every caller.
+ * Anything the window fetches was asked for by a person or is small enough to show unasked, so the
+ * cap is the highest one the actions allow, not the 25 MB default meant for an agent: a phone video
+ * is often bigger than that.
+ */
 export function fetchAttachment(source: AttachmentSource, root = previewsDir()): Promise<string> {
   const { ref, info } = source;
   const dir = partDir(source, root);
@@ -67,11 +73,13 @@ export function fetchAttachment(source: AttachmentSource, root = previewsDir()):
             ...(ref.folder ? { folder: ref.folder } : {}),
             section: info.section,
             directory: dir,
+            maxBytes: ATTACHMENT_BYTES.max,
           })
         : await chatSaveAttachment({
             ref,
             index: info.index as number,
             directory: dir,
+            maxBytes: ATTACHMENT_BYTES.max,
           });
     return saved.path;
   })().finally(() => inFlight.delete(dir));
@@ -116,6 +124,47 @@ export function loadTexture(path: string, max?: { width: number; height: number 
         GdkPixbuf.Pixbuf.new_from_stream_at_scale_async(stream, max.width, max.height, true, null, decoded);
       else GdkPixbuf.Pixbuf.new_from_stream_async(stream, null, decoded);
     });
+  });
+}
+
+/** How long a video may take to show its first frame before the bubble keeps its tile. */
+const POSTER_TIMEOUT_MS = 10_000;
+
+/**
+ * The first frame of a video as a paintable, taken through GTK's own media backend so every
+ * format the desktop plays has a poster. The stream is closed again: a bubble holds a picture,
+ * not a running pipeline. Rejects when the file does not decode or shows nothing in time.
+ */
+export function loadPoster(path: string): Promise<Gdk.Paintable> {
+  return new Promise((resolve, reject) => {
+    const media = Gtk.MediaFile.new_for_filename(path);
+    let finished = false;
+    const finish = (err: Error | null, frame: Gdk.Paintable | null) => {
+      if (finished) return;
+      finished = true;
+      GLib.source_remove(timer);
+      media.clear();
+      if (err || !frame) reject(err ?? new Error('the video shows no picture'));
+      else resolve(frame);
+    };
+    const timer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, POSTER_TIMEOUT_MS, () => {
+      finish(new Error('the video did not show a picture in time'), null);
+      return GLib.SOURCE_REMOVE;
+    });
+    let framed = false;
+    const ready = () => {
+      const failure = media.error;
+      if (failure) return finish(new Error(failure.message), null);
+      // Prepared says the stream is known; a drawn frame says there is something to show.
+      if (media.prepared && framed) finish(null, media.get_current_image());
+    };
+    media.connect('notify::prepared', ready);
+    media.connect('notify::error', ready);
+    media.connect('invalidate-contents', () => {
+      framed = true;
+      ready();
+    });
+    ready();
   });
 }
 

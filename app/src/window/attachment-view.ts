@@ -1,6 +1,7 @@
 /** The attachments of one bubble: a picture for an image, a tile with name, size and buttons for the rest. */
 
 import Adw from 'gi://Adw?version=1';
+import Gdk from 'gi://Gdk?version=4.0';
 import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
@@ -17,12 +18,14 @@ import {
   effectiveMime,
   isOpenable,
   showsInline,
+  showsPoster,
   tileAction,
 } from './attachment-model.ts';
 import {
   type AttachmentSource,
   failureText,
   fetchAttachment,
+  loadPoster,
   loadTexture,
   openWithDesktop,
   saveCopyAs,
@@ -152,8 +155,23 @@ function genericTile(): Gtk.Widget {
   return box;
 }
 
-/** A picture that loads when it is near the screen; a failed load becomes the tile. */
-function picture(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Widget {
+/** What an inline preview paints: the picture, or a video's first frame, and its natural size. */
+interface Painted {
+  paintable: Gdk.Paintable;
+  width: number;
+  height: number;
+}
+
+/**
+ * A preview that loads when it is near the screen and opens the viewer when pressed; a failed load
+ * becomes the tile. A video's carries a play symbol so it is not mistaken for a picture.
+ */
+function inlinePreview(
+  source: AttachmentSource,
+  handlers: AttachmentHandlers,
+  kind: AttachmentKind,
+  paint: (path: string, scale: number) => Promise<Painted>,
+): Gtk.Widget {
   const slot = new Gtk.Box({ halign: Gtk.Align.START });
   const frame = new Gtk.Overlay({ halign: Gtk.Align.START, overflow: Gtk.Overflow.HIDDEN });
   frame.add_css_class('card');
@@ -175,8 +193,30 @@ function picture(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Wi
   });
   frame.set_child(button);
   frame.add_overlay(spinner);
+  if (kind === 'video') {
+    // Not a flat button's own icon: it must sit over the frame and let the click through.
+    const play = new Gtk.Box({
+      halign: Gtk.Align.CENTER,
+      valign: Gtk.Align.CENTER,
+      widthRequest: 48,
+      heightRequest: 48,
+      canTarget: false,
+    });
+    play.add_css_class('osd');
+    play.add_css_class('circular');
+    play.append(
+      new Gtk.Image({
+        iconName: 'media-playback-start-symbolic',
+        pixelSize: 24,
+        hexpand: true,
+        halign: Gtk.Align.CENTER,
+        valign: Gtk.Align.CENTER,
+      }),
+    );
+    frame.add_overlay(play);
+  }
   slot.append(frame);
-  button.connect('clicked', () => handlers.view(source, 'image'));
+  button.connect('clicked', () => handlers.view(source, kind));
 
   const fail = () => {
     slot.remove(frame);
@@ -187,20 +227,12 @@ function picture(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Wi
     // The box the bubble gives a picture, in the pixels the texture is decoded at.
     const scale = frame.get_scale_factor();
     void fetchAttachment(source)
-      .then((path) =>
-        loadTexture(path, {
-          width: BUBBLE_MAX_IMAGE_WIDTH * scale,
-          height: BUBBLE_MAX_IMAGE_HEIGHT * scale,
-        }),
-      )
-      .then((texture) => {
+      .then((path) => paint(path, scale))
+      .then((painted) => {
         // The bubble left the window while the picture decoded; there is nothing to paint into.
         if (frame.get_root() === null) return;
-        const size = boundedSize({
-          width: texture.get_width() / scale,
-          height: texture.get_height() / scale,
-        });
-        image.set_paintable(texture);
+        const size = boundedSize({ width: painted.width / scale, height: painted.height / scale });
+        image.set_paintable(painted.paintable);
         image.set_size_request(size.width, size.height);
         spinner.set_visible(false);
       })
@@ -211,6 +243,23 @@ function picture(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Wi
   };
   handlers.whenVisible(frame, load);
   return slot;
+}
+
+function picture(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Widget {
+  return inlinePreview(source, handlers, 'image', async (path, scale) => {
+    const texture = await loadTexture(path, {
+      width: BUBBLE_MAX_IMAGE_WIDTH * scale,
+      height: BUBBLE_MAX_IMAGE_HEIGHT * scale,
+    });
+    return { paintable: texture, width: texture.get_width(), height: texture.get_height() };
+  });
+}
+
+function poster(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Widget {
+  return inlinePreview(source, handlers, 'video', async (path) => {
+    const frame = await loadPoster(path);
+    return { paintable: frame, width: frame.get_intrinsic_width(), height: frame.get_intrinsic_height() };
+  });
 }
 
 /** The attachments of a message, stacked; `more` names the ones left out. */
@@ -224,7 +273,13 @@ export function attachmentList(
   const list = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 6 });
   for (const info of shown) {
     const source = { ref, info };
-    list.append(showsInline(info) ? picture(source, handlers) : tile(source, handlers));
+    list.append(
+      showsInline(info)
+        ? picture(source, handlers)
+        : showsPoster(info)
+          ? poster(source, handlers)
+          : tile(source, handlers),
+    );
   }
   if (generic) list.append(genericTile());
   if (more > 0) {

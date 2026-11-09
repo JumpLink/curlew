@@ -6,10 +6,33 @@
  */
 
 import { migrate, openIndexDb } from '@curlew/store';
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { deflateSync } from 'node:zlib';
+
+/** Three seconds of ffmpeg's test pattern as MP4, or null when ffmpeg is not installed. */
+function demoClip(dir: string): Buffer | null {
+  const out = join(dir, 'clip.mp4');
+  const run = spawnSync(
+    'ffmpeg',
+    [
+      '-loglevel',
+      'error',
+      '-y',
+      '-f',
+      'lavfi',
+      '-i',
+      'testsrc=duration=3:size=320x240:rate=15',
+      '-pix_fmt',
+      'yuv420p',
+      out,
+    ],
+    { stdio: 'ignore' },
+  );
+  return run.status === 0 ? readFileSync(out) : null;
+}
 
 /** A harbour at dusk: sky, sun, sea and a lighthouse, drawn pixel by pixel. */
 function harbourScene(width: number, height: number): Buffer {
@@ -370,6 +393,42 @@ try {
     const cache = join(dir, 'previews', createHash('sha256').update(key).digest('hex'));
     mkdirSync(cache, { recursive: true });
     writeFileSync(join(cache, 'harbour.png'), png);
+  }
+
+  // A short clip in the same chat, cached like the picture. Needs ffmpeg; without it the demo has none.
+  {
+    const clip = demoClip(dir);
+    if (clip) {
+      const n = 601;
+      const at = new Date(now - 2 * 60_000).toISOString();
+      message.run(
+        `m${n}`,
+        'c16',
+        'telegram',
+        'telegram-demo1',
+        'p-alex',
+        0,
+        at,
+        null,
+        `r${n}`,
+        '',
+        0,
+        null,
+        null,
+        n,
+      );
+      db.prepare(
+        'UPDATE conversation_messages SET sender_name = ?, sender_kind = ?, sender_address = ?, has_attachments = 1 WHERE id = ?',
+      ).run('Alex Weber', 'telegram', '424242', `m${n}`);
+      db.prepare(
+        `INSERT OR REPLACE INTO message_attachments (message_id, idx, filename, mime_type, size, kind, width, height, duration_ms, handle)
+         VALUES (?, 0, 'harbour.mp4', 'video/mp4', ?, 'video', 320, 240, 3000, 'demo-handle')`,
+      ).run(`m${n}`, clip.length);
+      const key = ['telegram-demo1', '', '', `r${n}`, '0'].join('\u0000');
+      const cache = join(dir, 'previews', createHash('sha256').update(key).digest('hex'));
+      mkdirSync(cache, { recursive: true });
+      writeFileSync(join(cache, 'harbour.mp4'), clip);
+    }
   }
 
   // A long mail conversation (130 messages over several days, some with multi-paragraph bodies)

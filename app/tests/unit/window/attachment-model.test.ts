@@ -3,6 +3,7 @@ import type { AttachmentKind } from '../../../src/window/attachment-model.ts';
 
 import {
   attachmentKind,
+  AUTO_FETCH_VIDEO_MAX_BYTES,
   boundedSize,
   effectiveMime,
   INLINE_IMAGE_MAX_BYTES,
@@ -10,6 +11,7 @@ import {
   previewKey,
   shouldAutoFetch,
   showsInline,
+  showsPoster,
   shownAttachments,
   tileAction,
 } from '../../../src/window/attachment-model.ts';
@@ -122,6 +124,34 @@ export default async () => {
       expect(showsInline(part({ size: INLINE_IMAGE_MAX_BYTES + 1 }))).toBe(false);
       expect(showsInline(part({ mimeType: 'application/pdf', filename: 'a.pdf' }))).toBe(false);
       expect(showsInline({ filename: 'x.png', mimeType: 'image/png' })).toBe(false);
+    });
+  });
+
+  await describe('showsPoster', async () => {
+    const clip = {
+      filename: 'clip.mp4',
+      mimeType: 'video/mp4',
+      index: 0,
+      fetchable: true,
+      backendCanFetch: true,
+    };
+
+    await it('shows the first frame of a small chat video', async () => {
+      expect(showsPoster({ ...clip, size: 1_000_000 })).toBe(true);
+      expect(showsPoster({ ...clip, size: AUTO_FETCH_VIDEO_MAX_BYTES })).toBe(true);
+    });
+
+    await it('keeps the tile for big, unsized, unfetchable and non-video parts', async () => {
+      expect(showsPoster({ ...clip, size: AUTO_FETCH_VIDEO_MAX_BYTES + 1 })).toBe(false);
+      expect(showsPoster({ ...clip, size: null })).toBe(false);
+      expect(showsPoster({ ...clip, size: 1000, fetchable: false })).toBe(false);
+      expect(showsPoster({ ...clip, size: 1000, mimeType: 'image/png', filename: 'a.png' })).toBe(false);
+    });
+
+    await it('never fetches a mail video unasked', async () => {
+      expect(showsPoster({ filename: 'clip.mp4', mimeType: 'video/mp4', section: '2', size: 1000 })).toBe(
+        false,
+      );
     });
   });
 
