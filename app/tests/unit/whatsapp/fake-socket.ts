@@ -9,6 +9,7 @@ import type {
   WaMessage,
   WaMessageContent,
   WaMessageKey,
+  WaOutgoingFile,
   WaSendSocketHandle,
   WaSentMessage,
   WaSocketHandle,
@@ -119,6 +120,8 @@ export class FakeSendSocket extends FakeEvents implements WaSendSocketHandle {
   readonly options: SocketOptions;
   /** Every text that got through the gate, in order. */
   readonly sent: Array<{ jid: string; text: string; id: string; seconds: number }> = [];
+  /** Every file that got through the gate, in order — the bytes as text, for easy asserts. */
+  readonly files: Array<{ jid: string; file: WaOutgoingFile; id: string }> = [];
   /** Confirm each send with `SERVER_ACK`. Off drives the ack timeout. */
   ack = true;
   /** Echo the sent message back, as a real connection does for its own writes. */
@@ -157,6 +160,22 @@ export class FakeSendSocket extends FakeEvents implements WaSendSocketHandle {
   }
 
   async sendText(jid: string, text: string): Promise<WaSentMessage> {
+    return this.deliver(jid, { conversation: text }, (id, seconds) => {
+      this.sent.push({ jid, text, id, seconds });
+    });
+  }
+
+  async sendFile(jid: string, file: WaOutgoingFile): Promise<WaSentMessage> {
+    return this.deliver(jid, { conversation: file.caption ?? '' }, (id) => {
+      this.files.push({ jid, file, id });
+    });
+  }
+
+  private deliver(
+    jid: string,
+    message: WaMessageContent,
+    record: (id: string, seconds: number) => void,
+  ): WaSentMessage {
     if (this.failWith) {
       const error = this.failWith;
       this.failWith = null;
@@ -167,14 +186,14 @@ export class FakeSendSocket extends FakeEvents implements WaSendSocketHandle {
     const n = nextSend++;
     const id = `WA${n}`;
     const seconds = 1_767_270_000 + n;
-    this.sent.push({ jid, text, id, seconds });
+    record(id, seconds);
     const key = this.keyFor?.(jid, id) ?? { remoteJid: jid, fromMe: true, id };
     // Baileys emits both of these after `sendMessage` resolved, through `process.nextTick`.
     queueMicrotask(() => {
       if (this.echo) {
         this.bus.emit('messages.upsert', {
           type: 'append',
-          messages: [{ key, message: { conversation: text }, messageTimestamp: seconds }],
+          messages: [{ key, message, messageTimestamp: seconds }],
         });
       }
       if (this.ack) this.bus.emit('messages.update', [{ key, update: { status: SERVER_ACK } }]);
@@ -250,6 +269,7 @@ export class FakeConnection implements WaConnection {
       ev: this.handle.ev,
       ready: () => send.ready(),
       sendText: (jid, body) => send.sendText(jid, body),
+      sendFile: (jid, file) => send.sendFile(jid, file),
       end: () => {
         this.sendViewEnds++;
       },

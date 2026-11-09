@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@gjsify/unit';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 
 import type {
   BackendAccount,
@@ -17,7 +17,11 @@ import { getConversation, takeReceiveLease } from '@curlew/store';
 import { createDaemonSendHandler, sessionKey } from '../../../src/core/actions/daemon.ts';
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
 import { sendMessage } from '../../../src/core/actions/send.ts';
-import { DAEMON_WIRE_VERSION, type DaemonSendRequest } from '../../../src/core/lib/daemon-bus.ts';
+import {
+  DAEMON_WIRE_VERSION,
+  type DaemonSendRequest,
+  parseDaemonSendRequest,
+} from '../../../src/core/lib/daemon-bus.ts';
 import type { DaemonSendClient } from '../../../src/core/lib/daemon-send-client.ts';
 
 /**
@@ -95,6 +99,9 @@ class FakeSender implements MessageSender {
       sentAt: '2026-10-30T12:00:00.000Z',
       chatRemoteId: message.to,
       encrypted: true,
+      ...(message.attachments === undefined
+        ? {}
+        : { attachments: message.attachments.map((a) => ({ filename: basename(a.path), size: 1 })) }),
     };
   }
 
@@ -448,6 +455,36 @@ export default async () => {
       // The send's own handle is closed; the session the daemon receives on is not.
       expect(sender.closed).toBe(1);
       expect(session.permits[0].addresses.join()).toBe(PEER);
+    });
+
+    await it('hands the attachment paths to the sender and reports what it sent', async () => {
+      const sender = new FakeSender('daemon');
+      sender.features.attachments = true;
+      const sessions = new Map([[sessionKey(BACKEND, ACCOUNT), heldSession(sender)]]);
+      const reply = await handlerFor(sessions)(request({ attachments: ['/tmp/a.pdf', '/tmp/b.png'] }));
+      expect(reply.kind).toBe('sent');
+      expect(sender.sent[0].attachments?.map((a) => a.path).join()).toBe('/tmp/a.pdf,/tmp/b.png');
+      if (reply.kind !== 'sent') return;
+      expect(reply.steps[0].sent.attachments?.map((a) => a.filename).join()).toBe('a.pdf,b.png');
+    });
+
+    await it('refuses attachments for a sender that cannot carry them', async () => {
+      const sender = new FakeSender('daemon');
+      const sessions = new Map([[sessionKey(BACKEND, ACCOUNT), heldSession(sender)]]);
+      const reply = await handlerFor(sessions)(request({ attachments: ['/tmp/a.pdf'] }));
+      expect(reply.kind).toBe('failed');
+      expect(sender.sent.length).toBe(0);
+    });
+
+    await it('rejects a request whose attachments are not a list of paths', async () => {
+      const bad = JSON.stringify({ ...request(), attachments: [1] });
+      let message = '';
+      try {
+        parseDaemonSendRequest(bad);
+      } catch (err) {
+        message = (err as Error).message;
+      }
+      expect(message).toMatch(/attachments/);
     });
 
     await it('is not-followed for an account it does not hold', async () => {

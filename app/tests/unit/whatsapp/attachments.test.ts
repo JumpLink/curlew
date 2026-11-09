@@ -97,9 +97,9 @@ async function withBackend<T>(
 
 export default async () => {
   await describe('WhatsApp attachments', async () => {
-    await it('claims reading but not sending in its manifest', async () => {
+    await it('claims reading and sending in its manifest', async () => {
       expect(WHATSAPP_MANIFEST.capabilities.attachmentsRead).toBe(true);
-      expect(WHATSAPP_MANIFEST.capabilities.attachments).toBe(false);
+      expect(WHATSAPP_MANIFEST.capabilities.attachments).toBe(true);
     });
 
     await it('maps images, videos, voice notes, documents and stickers with their facts', async () => {

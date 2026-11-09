@@ -511,12 +511,6 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
     if (!backend.manifest.capabilities.attachments) {
       throw new Error(fmt(_('{backend} cannot send attachments'), { backend: backend.manifest.name }));
     }
-    // A backend that sends over the daemon's bus has no attachment on the wire: refused, not dropped.
-    if (backend.manifest.sendSharesReceiveState) {
-      throw new Error(
-        fmt(_('{backend} cannot send attachments through the daemon'), { backend: backend.manifest.name }),
-      );
-    }
   }
   // Validated before anything is sent, so a bad URL cannot leave the text half-delivered.
   const imageUrl = params.imageUrl === undefined ? undefined : validateImageUrl(params.imageUrl);

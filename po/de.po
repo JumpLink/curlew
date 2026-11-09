@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-09 20:49+0100\n"
+"POT-Creation-Date: 2026-11-09 21:02+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -138,7 +138,7 @@ msgstr ""
 "eine Regel wie {rule} zu config.agentAccess.rules hinzu"
 
 #: app/src/core/actions/chat-attachment.ts:139
-#: app/src/core/actions/daemon.ts:429
+#: app/src/core/actions/daemon.ts:432
 msgid "the attachment was not found in the index"
 msgstr "Der Anhang wurde im Index nicht gefunden"
 
@@ -266,10 +266,6 @@ msgstr "Nachrichten von {backend} haben keinen Betreff"
 #: app/src/core/actions/send.ts:507
 msgid "{backend} cannot send email chat headers"
 msgstr "{backend} kann keine E-Mail-Chat-Kopfzeilen senden"
-
-#: app/src/core/actions/send.ts:517
-msgid "{backend} cannot send attachments through the daemon"
-msgstr "{backend} kann Anhänge nicht über den Daemon senden"
 
 #: app/src/core/actions/setup.ts:224
 msgid "Link Signal"
@@ -887,7 +883,7 @@ msgstr ""
 "Der laufende curlew-Daemon hat die Zugriffsrückfrage nicht beantwortet "
 "({reason})"
 
-#: app/src/core/lib/daemon-bus.ts:185
+#: app/src/core/lib/daemon-bus.ts:188
 msgid ""
 "the running curlew daemon speaks send protocol {theirs} and this curlew "
 "speaks {ours} — nothing was sent; restart it with `systemctl --user restart "
@@ -897,7 +893,7 @@ msgstr ""
 "spricht {ours} — es wurde nichts gesendet; starte ihn mit `systemctl --user "
 "restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:222
+#: app/src/core/lib/daemon-bus.ts:225
 msgid ""
 "the caller speaks send protocol {theirs} and this curlew daemon speaks "
 "{ours} — nothing was sent; restart it with `systemctl --user restart curlew-"
@@ -907,7 +903,7 @@ msgstr ""
 "{ours} — es wurde nichts gesendet; starte ihn mit `systemctl --user restart "
 "curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:274
+#: app/src/core/lib/daemon-bus.ts:281
 msgid ""
 "the caller speaks attachment protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -915,7 +911,7 @@ msgstr ""
 "Der Aufrufer spricht Anhangsprotokoll {theirs}, dieser curlew-Daemon spricht "
 "{ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:303
+#: app/src/core/lib/daemon-bus.ts:310
 msgid ""
 "the running curlew daemon speaks attachment protocol {theirs} and this "
 "curlew speaks {ours} — restart it with `systemctl --user restart curlew-"
@@ -924,7 +920,7 @@ msgstr ""
 "Der laufende curlew-Daemon spricht Anhangsprotokoll {theirs}, dieses curlew "
 "spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:368
+#: app/src/core/lib/daemon-bus.ts:375
 msgid ""
 "the caller speaks access protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -932,7 +928,7 @@ msgstr ""
 "Der Aufrufer spricht Zugriffsprotokoll {theirs}, dieser curlew-Daemon "
 "spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:405
+#: app/src/core/lib/daemon-bus.ts:412
 msgid ""
 "the running curlew daemon speaks access protocol {theirs} and this curlew "
 "speaks {ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -2481,7 +2477,7 @@ msgstr "die Anhänge zusammen überschreiten {max} Bytes"
 
 #: packages/imap/src/send.ts:62 packages/matrix/src/send.ts:235
 #: packages/signal/src/send.ts:275 packages/telegram/src/sender.ts:57
-#: packages/whatsapp/src/send.ts:250
+#: packages/whatsapp/src/send.ts:323
 msgid "sending to {address} is not granted for account {account}"
 msgstr "Das Senden an {address} ist für Konto {account} nicht freigegeben"
 
@@ -3080,11 +3076,11 @@ msgstr ""
 "Die WhatsApp-Verbindung für {account} ist nicht offen — es wurde nichts "
 "gesendet"
 
-#: packages/whatsapp/src/client.ts:151
+#: packages/whatsapp/src/client.ts:152
 msgid "the WhatsApp connection closed: {reason}"
 msgstr "Die WhatsApp-Verbindung wurde geschlossen: {reason}"
 
-#: packages/whatsapp/src/client.ts:181
+#: packages/whatsapp/src/client.ts:182 packages/whatsapp/src/client.ts:203
 msgid "WhatsApp did not take the message — nothing was sent"
 msgstr "WhatsApp hat die Nachricht nicht angenommen — es wurde nichts gesendet"
 
@@ -3148,7 +3144,7 @@ msgstr "verknüpfe es mit `curlew accounts add whatsapp` neu"
 msgid "WhatsApp logged this device out ({reason}) — {hint}"
 msgstr "WhatsApp hat dieses Gerät abgemeldet ({reason}) — {hint}"
 
-#: packages/whatsapp/src/send.ts:140
+#: packages/whatsapp/src/send.ts:159
 msgid ""
 "a WhatsApp message holds at most {max} bytes of text, this one has {bytes} — "
 "shorten it"
@@ -3156,7 +3152,7 @@ msgstr ""
 "Eine WhatsApp-Nachricht fasst höchstens {max} Byte Text, diese hat {bytes} — "
 "kürze sie"
 
-#: packages/whatsapp/src/send.ts:153
+#: packages/whatsapp/src/send.ts:172
 msgid ""
 "a message that arrived while curlew was connected could not be written down "
 "({reason}) — nothing was sent"
@@ -3164,7 +3160,11 @@ msgstr ""
 "Eine Nachricht, die eintraf, während curlew verbunden war, konnte nicht "
 "festgehalten werden ({reason}) — es wurde nichts gesendet"
 
-#: packages/whatsapp/src/send.ts:166
+#: packages/whatsapp/src/send.ts:208
+msgid "{sent} of {total} files were sent, then {file} failed: {reason}"
+msgstr "{sent} von {total} Dateien wurden gesendet, dann scheiterte {file}: {reason}"
+
+#: packages/whatsapp/src/send.ts:238
 msgid ""
 "WhatsApp returned no id for the message — it may have been sent; look at the "
 "chat before sending it again"
@@ -3172,7 +3172,7 @@ msgstr ""
 "WhatsApp hat keine ID für die Nachricht zurückgegeben — sie wurde "
 "möglicherweise gesendet; sieh in den Chat, bevor du sie erneut sendest"
 
-#: packages/whatsapp/src/send.ts:177
+#: packages/whatsapp/src/send.ts:249
 msgid ""
 "WhatsApp did not confirm the message within {seconds} s — it was handed "
 "over, but look at the chat before sending it again"
@@ -3180,7 +3180,7 @@ msgstr ""
 "WhatsApp hat die Nachricht nicht innerhalb von {seconds} s bestätigt — sie "
 "wurde übergeben, aber sieh in den Chat, bevor du sie erneut sendest"
 
-#: packages/whatsapp/src/send.ts:187
+#: packages/whatsapp/src/send.ts:259
 msgid ""
 "the message was sent, but a message that arrived at the same time could not "
 "be written down ({reason}) — it may be missing from the chat"
@@ -3189,7 +3189,7 @@ msgstr ""
 "konnte nicht festgehalten werden ({reason}) — sie fehlt möglicherweise im "
 "Chat"
 
-#: packages/whatsapp/src/send.ts:234
+#: packages/whatsapp/src/send.ts:307
 msgid ""
 "curlew does not send status updates or broadcasts — send a message to a "
 "person instead"
@@ -3197,7 +3197,7 @@ msgstr ""
 "curlew sendet keine Statusmeldungen oder Broadcasts — sende stattdessen eine "
 "Nachricht an eine Person"
 
-#: packages/whatsapp/src/send.ts:240
+#: packages/whatsapp/src/send.ts:313
 msgid ""
 "curlew cannot send to a WhatsApp group: a group message is encrypted for "
 "every member, and curlew keeps no member list to do that with — send it from "
@@ -3207,7 +3207,7 @@ msgstr ""
 "für jedes Mitglied verschlüsselt, und curlew führt dafür keine "
 "Mitgliederliste — sende sie aus WhatsApp"
 
-#: packages/whatsapp/src/send.ts:264
+#: packages/whatsapp/src/send.ts:337
 msgid ""
 "{address} names one device of a person, not the person — drop the `:"
 "<device>` and use the id `conversations_list` shows for the chat"
@@ -3215,7 +3215,7 @@ msgstr ""
 "{address} benennt ein Gerät einer Person, nicht die Person — lass das `:"
 "<device>` weg und nimm die ID, die `conversations_list` für den Chat anzeigt"
 
-#: packages/whatsapp/src/send.ts:272
+#: packages/whatsapp/src/send.ts:345
 msgid ""
 "{address} is a phone number, not a WhatsApp chat id — a chat is filed under "
 "the LID whenever curlew knows one, so use the id `conversations_list` shows "
@@ -3225,7 +3225,7 @@ msgstr ""
 "unter der LID geführt, sobald curlew eine kennt, nimm also die ID, die "
 "`conversations_list` für den Chat anzeigt"
 
-#: packages/whatsapp/src/send.ts:279
+#: packages/whatsapp/src/send.ts:352
 msgid ""
 "{address} is not a WhatsApp chat id — use the id `conversations_list` shows "
 "for the chat (`<digits>@lid` or `<digits>@s.whatsapp.net`)"
@@ -3451,6 +3451,9 @@ msgid ""
 msgstr ""
 "{count} Geräte von {jid} tragen diesen Fingerabdruck, er benennt also keines "
 "— nichts wurde geändert"
+
+#~ msgid "{backend} cannot send attachments through the daemon"
+#~ msgstr "{backend} kann Anhänge nicht über den Daemon senden"
 
 #~ msgid ""
 #~ "{backend} takes no attachments from an agent — pick the file in the "

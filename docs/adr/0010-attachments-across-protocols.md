@@ -179,6 +179,15 @@ interface AttachmentFetcher {
 - **Auto-download everything under a size limit**: a read receipt by another name and a data bill
   on a phone; only small pictures on screen are fetched automatically.
 
+## Amendment 2026-11-09 — WhatsApp sends files, daemon wire version 3
+
+WhatsApp sends files through the same gated send socket as its text (`WaSendSocketHandle.sendFile`,
+behind the same per-permit gate), one message per file, the text as the caption of the first. The
+daemon's `Send` request grows `attachments` (absolute paths: the daemon is the same user and the
+sender re-checks every one) and its answer reports what was sent, so the wire version is 3 and the
+old refusal "cannot send attachments through the daemon" is gone. Signal keeps `attachments: false`
+until its own upload exists (AP4.5).
+
 ## Work packages
 
 AP1.3 (window reads the descriptor), AP2.1–2.5 (receive per backend), AP4.0 (composer), AP4.1–4.5

@@ -68,7 +68,7 @@ export const DAEMON_FETCH_TIMEOUT_MS = 120_000;
 export const DAEMON_SEND_TIMEOUT_MS = 120_000;
 
 /** The wire version. Bump it when a field stops being optional or changes meaning. */
-export const DAEMON_WIRE_VERSION = 2;
+export const DAEMON_WIRE_VERSION = 3;
 
 /**
  * One send, as the calling process asks for it.
@@ -87,6 +87,8 @@ export interface DaemonSendRequest {
   text?: string;
   imageUrl?: string;
   subject?: string;
+  /** Absolute paths on the caller's disk; the daemon (the same user) checks and reads them. */
+  attachments?: string[];
   format?: 'plain' | 'markdown';
 }
 
@@ -99,6 +101,7 @@ export interface DaemonSendStep {
     chatRemoteId?: string;
     encrypted?: boolean;
     warning?: string;
+    attachments?: Array<{ filename: string; size: number }>;
   };
   body: string;
 }
@@ -228,6 +231,10 @@ export function parseDaemonSendRequest(json: string): DaemonSendRequest {
   for (const field of ['backend', 'account', 'capability', 'to'] as const) {
     if (typeof request[field] !== 'string' || request[field] === '')
       throw new Error(`the send request has no ${field}`);
+  }
+  const files = request.attachments;
+  if (files !== undefined && (!Array.isArray(files) || files.some((path) => typeof path !== 'string'))) {
+    throw new Error('the send request has attachments that are not a list of paths');
   }
   return request as DaemonSendRequest;
 }

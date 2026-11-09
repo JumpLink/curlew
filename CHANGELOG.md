@@ -25,6 +25,9 @@
 
 ### Added
 
+- WhatsApp sends files: `curlew send --attach` and the window's attach button work on WhatsApp
+  chats, up to 10 files of 64 MB, one message each, the text as the caption of the first. The
+  daemon wire version is 3, so restart the window and the daemon together.
 - A chat video up to 8 MB shows its first frame in the bubble with a play symbol; pressing it opens the viewer.
 - Two or more pictures and videos of one message form a grid in the bubble, and a video shows its length.
 - Telegram albums (several pictures and videos sent together) show as one bubble with a grid; older

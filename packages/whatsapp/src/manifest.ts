@@ -27,9 +27,8 @@ export const WHATSAPP_MANIFEST: BackendManifest = {
     e2ee: true,
     subject: false,
     folders: false,
-    // Receiving only: `openAttachments` downloads and decrypts a file a person tapped. Sending a
-    // file is not built, so `attachments` stays false.
-    attachments: false,
+    // `openAttachments` downloads and decrypts a file a person tapped; the sender uploads one.
+    attachments: true,
     attachmentsRead: true,
   },
   // No server archive: a message is gone from WhatsApp's servers once a device acknowledged it.
@@ -44,7 +43,7 @@ export const WHATSAPP_MANIFEST: BackendManifest = {
   sendSharesReceiveState: true,
   terms: {
     summary:
-      "curlew connects to WhatsApp as a linked device through Baileys, an UNOFFICIAL reimplementation of the WhatsApp Web protocol. It is not an official WhatsApp client, and using it violates WhatsApp's Terms of Service: WhatsApp can ban the account — your phone number — temporarily or for good, and does so with accounts it sees using unofficial clients. Enable this only if you accept that risk for this number. curlew reads your messages, and writes only where you granted it: it sends a plain-text message into a chat a `whatsapp.send` grant names, and nothing else — no read receipts, no typing indicator, no online presence, no files sent (it does acknowledge delivery, as every linked device must). It downloads a received file only when you open it, from WhatsApp's media servers, and WhatsApp keeps those for a limited time. WhatsApp keeps no server archive, so what curlew receives exists only in its local index, and WhatsApp unlinks a device that has not connected for about 14 days.",
+      "curlew connects to WhatsApp as a linked device through Baileys, an UNOFFICIAL reimplementation of the WhatsApp Web protocol. It is not an official WhatsApp client, and using it violates WhatsApp's Terms of Service: WhatsApp can ban the account — your phone number — temporarily or for good, and does so with accounts it sees using unofficial clients. Enable this only if you accept that risk for this number. curlew reads your messages, and writes only where you granted it: it sends a message, with files if you attach them, into a 1:1 chat a `whatsapp.send` grant names, and nothing else — no read receipts, no typing indicator, no online presence (it does acknowledge delivery, as every linked device must). It downloads a received file only when you open it, from WhatsApp's media servers, and WhatsApp keeps those for a limited time. WhatsApp keeps no server archive, so what curlew receives exists only in its local index, and WhatsApp unlinks a device that has not connected for about 14 days.",
     url: 'https://www.whatsapp.com/legal/terms-of-service',
   },
 };
