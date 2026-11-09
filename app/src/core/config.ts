@@ -298,8 +298,14 @@ export function saveConfig(config: CurlewConfig, path = configPath()): void {
     ...carried,
     ...known,
     ...(grants.length > 0 ? { grants } : {}),
-    ...(writtenRules.length > 0 || !agentAccess.askWithoutRule
-      ? { agentAccess: { askWithoutRule: agentAccess.askWithoutRule, rules: writtenRules } }
+    ...(writtenRules.length > 0 || !agentAccess.askWithoutRule || agentAccess.sendFilesUnasked
+      ? {
+          agentAccess: {
+            askWithoutRule: agentAccess.askWithoutRule,
+            ...(agentAccess.sendFilesUnasked ? { sendFilesUnasked: true } : {}),
+            rules: writtenRules,
+          },
+        }
       : {}),
     ...(Object.keys(encryption).length > 0 ? { encryption } : {}),
     ...(disabledAccounts.length > 0 ? { disabledAccounts } : {}),

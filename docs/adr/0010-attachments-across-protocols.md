@@ -120,9 +120,12 @@ interface AttachmentFetcher {
   prompt shows the file names, never the paths.
   Reason: `SendingAttachment.path` is an absolute path on the person's disk. An agent that may send
   a text to a friend must not thereby be able to send them `~/.ssh/id_ed25519`.
-  Mail already carries attachments under its write rule (ADR 0004, amendment 2026-11-05); that
-  stays for now, and its path rules are the model: absolute, regular file, size-capped, name and
-  size logged. The same question is open for mail and is tracked, not decided here.
+  **Amendment 2026-11-09:** mail follows the same rule, so an agent behaves the same on every
+  protocol. The path rules stay the model: absolute, regular file, size-capped, name and size
+  logged. One switch, `config.agentAccess.sendFilesUnasked` (default off, a switch row on the
+  agent-access page), lets an `allow` rule send files without the question, for mail and chats
+  alike; it never turns a `deny` or an `ask` into an `allow`, and a session grant skips the
+  question only while it is on.
 - A message to the person's own address (ADR 0008 §2) still needs no grant, with or without an
   attachment.
 - **Receiving by agents follows ADR 0009.** `message_save_attachment` (the chat counterpart of

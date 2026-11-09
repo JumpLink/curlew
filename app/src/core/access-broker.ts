@@ -85,8 +85,9 @@ export class AccessBroker {
       temporary: { grants: this.grants, session: ask.session, now: this.now() },
     });
     // A request with files reaches here only when the caller found no reason to skip the question
-    // (`confirmFiles`), so a session grant must not skip it either.
-    const withFiles = (ask.attachments ?? []).length > 0;
+    // (`confirmFiles`), so a session grant must not skip it either, unless the person allowed files
+    // unasked.
+    const withFiles = (ask.attachments ?? []).length > 0 && this.options.policy().sendFilesUnasked !== true;
     if (resolution.mode === 'allow' && !withFiles) {
       return {
         allowed: true,

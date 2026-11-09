@@ -24,6 +24,7 @@ import {
   removeRule,
   ruleTitle,
   setAskWithoutRule,
+  setSendFilesUnasked,
   setMode,
 } from './agent-access-model.ts';
 
@@ -34,6 +35,7 @@ export interface KnownAccount {
 
 export interface PageState {
   askWithoutRule: boolean;
+  sendFilesUnasked: boolean;
   groups: AccountView[];
   /** Accounts the enabled backends report, for the add dialog's picker. */
   accounts: KnownAccount[];
@@ -307,6 +309,16 @@ export function createAgentAccessPage(
         apply(setAskWithoutRule(ask.get_active()));
       });
       general.add(ask);
+      const files = new Adw.SwitchRow({
+        title: _('Send files without asking'),
+        subtitle: _('Off: an agent that sends files is always asked first, even where a rule allows sending'),
+        active: state.sendFilesUnasked,
+      });
+      files.connect('notify::active', () => {
+        if (filling) return;
+        apply(setSendFilesUnasked(files.get_active()));
+      });
+      general.add(files);
       add(general);
 
       for (const account of state.groups) {

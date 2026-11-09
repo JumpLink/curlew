@@ -44,11 +44,16 @@ function fakeUi(script: PromptChoice[] = []) {
   return { ui, shown, answer: (choice: PromptChoice) => open.shift()?.(choice), aborts: () => aborts };
 }
 
-function rig(script: PromptChoice[] = [], rules: PolicyRule[] = [], timeoutMs = 60_000) {
+function rig(
+  script: PromptChoice[] = [],
+  rules: PolicyRule[] = [],
+  timeoutMs = 60_000,
+  extra: Partial<AgentAccessPolicy> = {},
+) {
   const fake = fakeUi(script);
   const rulesAdded: AccessAsk[] = [];
   const state = { clock: 1_000, failAddRule: false };
-  const policy: AgentAccessPolicy = { askWithoutRule: true, rules };
+  const policy: AgentAccessPolicy = { askWithoutRule: true, rules, ...extra };
   const broker = new AccessBroker({
     ui: fake.ui,
     policy: () => policy,
@@ -93,6 +98,19 @@ export default async () => {
       expect(granted.shown.length).toBe(1);
       await granted.broker.request(ask({ attachments: ['a.pdf'] }));
       expect(granted.shown.length).toBe(2);
+    });
+
+    await it('lets files through under a rule or a session grant once the person allowed that', async () => {
+      const ruled = rig([], [{ account: ACC, contact: FRIEND, write: 'allow' }], 60_000, {
+        sendFilesUnasked: true,
+      });
+      const reply = await ruled.broker.request(ask({ attachments: ['a.pdf'] }));
+      expect(JSON.stringify(reply)).toBe('{"allowed":true,"reason":"rule"}');
+      expect(ruled.shown.length).toBe(0);
+      // It never turns an ask into an allow: with no rule the question is still put.
+      const unruled = rig(['once'], [], 60_000, { sendFilesUnasked: true });
+      await unruled.broker.request(ask({ attachments: ['a.pdf'] }));
+      expect(unruled.shown.length).toBe(1);
     });
 
     await it('ask → once: allowed, and the next request asks again', async () => {

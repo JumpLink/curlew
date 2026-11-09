@@ -296,6 +296,14 @@ export default async () => {
       same(parsed({}), { askWithoutRule: true, rules: [] });
     });
 
+    await it('keeps sendFilesUnasked only when it is on, and rejects a non-boolean', async () => {
+      same(parsed({ sendFilesUnasked: false }), { askWithoutRule: true, rules: [] });
+      same(parsed({ sendFilesUnasked: true }), { askWithoutRule: true, sendFilesUnasked: true, rules: [] });
+      expect(errorsOf({ sendFilesUnasked: 'yes' }).join()).toContain(
+        'sendFilesUnasked must be true or false',
+      );
+    });
+
     await it('parses the ADR example', async () => {
       const p = parsed({
         askWithoutRule: true,

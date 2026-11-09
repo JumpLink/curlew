@@ -36,6 +36,11 @@ export interface PolicyRule extends AccessRule {
 export interface AgentAccessPolicy {
   /** `true` (default): a request no rule covers is `ask`. `false`: it is `deny`. */
   askWithoutRule: boolean;
+  /**
+   * `true`: a write that an `allow` rule covers also sends files without asking, for mail and
+   * chats alike. Absent or `false` (default): a send that names files is always put to the person.
+   */
+  sendFilesUnasked?: boolean;
   rules: PolicyRule[];
 }
 
@@ -86,7 +91,7 @@ export function defaultAgentAccess(): AgentAccessPolicy {
 
 const WILDCARD = /[*?]/;
 const RULE_KEYS = ['account', 'contact', 'read', 'write'];
-const POLICY_KEYS = ['askWithoutRule', 'rules'];
+const POLICY_KEYS = ['askWithoutRule', 'sendFilesUnasked', 'rules'];
 
 function scopeKey(account: string, contact: string | undefined): string {
   return JSON.stringify([account, contact ?? null]);
@@ -112,6 +117,7 @@ export function parseAgentAccess(raw: unknown, legacyGrants: readonly Grant[] = 
   const errors: string[] = [];
   const explicit: PolicyRule[] = [];
   let askWithoutRule = true;
+  let sendFilesUnasked = false;
 
   if (raw !== undefined) {
     if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
@@ -124,6 +130,10 @@ export function parseAgentAccess(raw: unknown, legacyGrants: readonly Grant[] = 
     if (policy.askWithoutRule !== undefined) {
       if (typeof policy.askWithoutRule === 'boolean') askWithoutRule = policy.askWithoutRule;
       else errors.push('config.agentAccess.askWithoutRule must be true or false');
+    }
+    if (policy.sendFilesUnasked !== undefined) {
+      if (typeof policy.sendFilesUnasked === 'boolean') sendFilesUnasked = policy.sendFilesUnasked;
+      else errors.push('config.agentAccess.sendFilesUnasked must be true or false');
     }
     if (policy.rules !== undefined) {
       if (!Array.isArray(policy.rules)) {
@@ -164,7 +174,14 @@ export function parseAgentAccess(raw: unknown, legacyGrants: readonly Grant[] = 
     migrated.push({ account, contact, read: 'allow', write: 'allow', migrated: true });
   }
 
-  return { ok: true, policy: { askWithoutRule, rules: [...explicit, ...migrated] } };
+  return {
+    ok: true,
+    policy: {
+      askWithoutRule,
+      ...(sendFilesUnasked ? { sendFilesUnasked } : {}),
+      rules: [...explicit, ...migrated],
+    },
+  };
 }
 
 function parseRule(entry: unknown, index: number, errors: string[]): PolicyRule | undefined {

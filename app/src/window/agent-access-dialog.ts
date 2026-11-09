@@ -82,7 +82,12 @@ export function presentAgentAccess(parent: Gtk.Window | null): void {
         try {
           const groups = groupByAccount(state.policy, labels, names.nameOf);
           const accounts = [...labels].map(([id, label]) => ({ id, label }));
-          page.show({ askWithoutRule: state.policy.askWithoutRule, groups, accounts });
+          page.show({
+            askWithoutRule: state.policy.askWithoutRule,
+            sendFilesUnasked: state.policy.sendFilesUnasked === true,
+            groups,
+            accounts,
+          });
         } finally {
           names.close();
         }

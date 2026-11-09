@@ -124,13 +124,21 @@ export function ruleTitle(rule: RuleView, wholeAccountLabel: string): string {
 /** Check the part of a policy that is written to the file: everything but the migrated rules. */
 function checked(policy: AgentAccessPolicy): EditResult {
   const explicit = policy.rules.filter((rule) => !rule.migrated);
-  const parsed = parseAgentAccess({ askWithoutRule: policy.askWithoutRule, rules: explicit });
+  const parsed = parseAgentAccess({
+    askWithoutRule: policy.askWithoutRule,
+    ...(policy.sendFilesUnasked ? { sendFilesUnasked: true } : {}),
+    rules: explicit,
+  });
   if (!parsed.ok) return { ok: false, error: 'invalid', detail: parsed.errors.join('; ') };
   return { ok: true, policy };
 }
 
 export function setAskWithoutRule(value: boolean): PolicyEdit {
   return (policy) => checked({ ...policy, askWithoutRule: value });
+}
+
+export function setSendFilesUnasked(value: boolean): PolicyEdit {
+  return (policy) => checked({ ...policy, sendFilesUnasked: value });
 }
 
 /**

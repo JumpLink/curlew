@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-08 16:04+0100\n"
+"POT-Creation-Date: 2026-11-09 20:31+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -236,38 +236,38 @@ msgstr "{backend} kann kein Bild senden — gib Text an und lass image_url weg"
 msgid "nothing to send: the text is empty after rendering"
 msgstr "Nichts zu senden: Der Text ist nach dem Rendern leer"
 
-#: app/src/core/actions/send.ts:346 app/src/core/actions/send.ts:511
+#: app/src/core/actions/send.ts:346 app/src/core/actions/send.ts:512
 msgid "{backend} cannot send attachments"
 msgstr "{backend} kann keine Anhänge senden"
 
-#: app/src/core/actions/send.ts:433 app/src/core/actions/send.ts:490
+#: app/src/core/actions/send.ts:433 app/src/core/actions/send.ts:491
 msgid "no account {account} — `curlew accounts list` shows them"
 msgstr "Kein Konto {account} — `curlew accounts list` zeigt sie an"
 
-#: app/src/core/actions/send.ts:476
+#: app/src/core/actions/send.ts:477
 msgid ""
 "this person is pinned to {pinned}: a message through {backend} is refused"
 msgstr ""
 "Diese Person ist auf {pinned} festgelegt: eine Nachricht über {backend} wird "
 "abgelehnt"
 
-#: app/src/core/actions/send.ts:497
+#: app/src/core/actions/send.ts:498
 msgid "{backend} cannot send"
 msgstr "{backend} kann nicht senden"
 
-#: app/src/core/actions/send.ts:501
+#: app/src/core/actions/send.ts:502
 msgid "nothing to send: give text, an image URL or an attachment"
 msgstr "Nichts zu senden: Gib Text, eine Bild-URL oder einen Anhang an"
 
-#: app/src/core/actions/send.ts:503
+#: app/src/core/actions/send.ts:504
 msgid "{backend} messages carry no subject"
 msgstr "Nachrichten von {backend} haben keinen Betreff"
 
-#: app/src/core/actions/send.ts:506
+#: app/src/core/actions/send.ts:507
 msgid "{backend} cannot send email chat headers"
 msgstr "{backend} kann keine E-Mail-Chat-Kopfzeilen senden"
 
-#: app/src/core/actions/send.ts:516
+#: app/src/core/actions/send.ts:517
 msgid "{backend} cannot send attachments through the daemon"
 msgstr "{backend} kann Anhänge nicht über den Daemon senden"
 
@@ -877,7 +877,7 @@ msgid "Always"
 msgstr "Immer"
 
 #: app/src/core/lib/access-notifications.ts:64
-#: app/src/window/agent-access-page.ts:56
+#: app/src/window/agent-access-page.ts:58
 msgid "Deny"
 msgstr "Verweigern"
 
@@ -982,7 +982,7 @@ msgstr[0] "{n} weiterer Chat hat neue Nachrichten"
 msgstr[1] "{n} weitere Chats haben neue Nachrichten"
 
 #: app/src/core/lib/message-notifications.ts:118
-#: app/src/window/attachment-view.ts:90
+#: app/src/window/attachment-view.ts:96
 msgid "Open"
 msgstr "Öffnen"
 
@@ -1706,7 +1706,7 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:93
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:95
 #: app/src/window/window.ts:58 app/src/window/window.ts:73
 msgid "Curlew"
 msgstr "Curlew"
@@ -1772,7 +1772,7 @@ msgstr "E-Mail-Konten werden in den GNOME-Einstellungen hinzugefügt"
 msgid "Add Account"
 msgstr "Konto hinzufügen"
 
-#: app/src/window/account-detail.ts:63 app/src/window/agent-access-page.ts:216
+#: app/src/window/account-detail.ts:63 app/src/window/agent-access-page.ts:218
 msgid "Account"
 msgstr "Konto"
 
@@ -1812,7 +1812,7 @@ msgstr ""
 "entfernst."
 
 #: app/src/window/account-remove-model.ts:27
-#: app/src/window/agent-access-page.ts:232
+#: app/src/window/agent-access-page.ts:234
 #: app/src/window/conversation-list.ts:386
 #: app/src/window/conversation-list.ts:472
 msgid "Cancel"
@@ -1905,42 +1905,42 @@ msgstr ""
 msgid "Start"
 msgstr "Starten"
 
-#: app/src/window/agent-access-dialog.ts:115 app/src/window/window.ts:89
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:89
 msgid "Agent access"
 msgstr "Agentenzugriff"
 
-#: app/src/window/agent-access-page.ts:52
+#: app/src/window/agent-access-page.ts:54
 msgid "Allow"
 msgstr "Erlauben"
 
-#: app/src/window/agent-access-page.ts:54
+#: app/src/window/agent-access-page.ts:56
 msgid "Ask"
 msgstr "Nachfragen"
 
-#: app/src/window/agent-access-page.ts:58
+#: app/src/window/agent-access-page.ts:60
 msgid "Not set"
 msgstr "Offen"
 
-#: app/src/window/agent-access-page.ts:65
+#: app/src/window/agent-access-page.ts:67
 msgid ""
 "A conversation an agent may write to is one it may read. Allow reading first."
 msgstr ""
 "Eine Unterhaltung, in die ein Agent schreiben darf, darf er auch lesen. "
 "Erlaube zuerst das Lesen."
 
-#: app/src/window/agent-access-page.ts:67
+#: app/src/window/agent-access-page.ts:69
 msgid "A rule needs a mode for reading or for writing."
 msgstr "Eine Regel braucht einen Modus für das Lesen oder das Schreiben."
 
-#: app/src/window/agent-access-page.ts:69
+#: app/src/window/agent-access-page.ts:71
 msgid "There is already a rule for this account and contact."
 msgstr "Für dieses Konto und diesen Kontakt gibt es bereits eine Regel."
 
-#: app/src/window/agent-access-page.ts:71
+#: app/src/window/agent-access-page.ts:73
 msgid "That rule is gone — the list was updated."
 msgstr "Diese Regel gibt es nicht mehr — die Liste wurde aktualisiert."
 
-#: app/src/window/agent-access-page.ts:73
+#: app/src/window/agent-access-page.ts:75
 msgid ""
 "This rule comes from an old send grant. Change a mode to make it a rule of "
 "its own."
@@ -1948,31 +1948,31 @@ msgstr ""
 "Diese Regel stammt aus einer alten Sendefreigabe. Ändere einen Modus, damit "
 "sie zu einer eigenen Regel wird."
 
-#: app/src/window/agent-access-page.ts:75
+#: app/src/window/agent-access-page.ts:77
 msgid "That rule is not valid: {detail}"
 msgstr "Diese Regel ist ungültig: {detail}"
 
-#: app/src/window/agent-access-page.ts:75
+#: app/src/window/agent-access-page.ts:77
 msgid "That rule is not valid."
 msgstr "Diese Regel ist ungültig."
 
-#: app/src/window/agent-access-page.ts:80
+#: app/src/window/agent-access-page.ts:82
 msgid "Read: {read} · Write: {write}"
 msgstr "Lesen: {read} · Schreiben: {write}"
 
-#: app/src/window/agent-access-page.ts:166
+#: app/src/window/agent-access-page.ts:168
 msgid "Whole account"
 msgstr "Ganzes Konto"
 
-#: app/src/window/agent-access-page.ts:179
+#: app/src/window/agent-access-page.ts:181
 msgid "Remove this rule"
 msgstr "Diese Regel entfernen"
 
-#: app/src/window/agent-access-page.ts:188
+#: app/src/window/agent-access-page.ts:190
 msgid "From an old send grant"
 msgstr "Aus einer alten Sendefreigabe"
 
-#: app/src/window/agent-access-page.ts:190
+#: app/src/window/agent-access-page.ts:192
 msgid ""
 "Changing a mode makes this a rule of its own. The grant stays in your "
 "configuration, and removing the rule brings this one back."
@@ -1981,37 +1981,37 @@ msgstr ""
 "bleibt in deiner Konfiguration, und wenn du die Regel entfernst, kommt diese "
 "wieder zurück."
 
-#: app/src/window/agent-access-page.ts:197
-#: app/src/window/agent-access-page.ts:225
+#: app/src/window/agent-access-page.ts:199
+#: app/src/window/agent-access-page.ts:227
 msgid "Read messages"
 msgstr "Nachrichten lesen"
 
-#: app/src/window/agent-access-page.ts:197
-#: app/src/window/agent-access-page.ts:226
+#: app/src/window/agent-access-page.ts:199
+#: app/src/window/agent-access-page.ts:228
 msgid "Send messages"
 msgstr "Nachrichten senden"
 
-#: app/src/window/agent-access-page.ts:209
+#: app/src/window/agent-access-page.ts:211
 msgid "Add a rule"
 msgstr "Regel hinzufügen"
 
-#: app/src/window/agent-access-page.ts:221
+#: app/src/window/agent-access-page.ts:223
 msgid "Account id"
 msgstr "Konto-ID"
 
-#: app/src/window/agent-access-page.ts:224
+#: app/src/window/agent-access-page.ts:226
 msgid "Contact address (empty = the whole account)"
 msgstr "Kontaktadresse (leer = ganzes Konto)"
 
-#: app/src/window/agent-access-page.ts:234
+#: app/src/window/agent-access-page.ts:236
 msgid "Add"
 msgstr "Hinzufügen"
 
-#: app/src/window/agent-access-page.ts:285
+#: app/src/window/agent-access-page.ts:287
 msgid "The configuration could not be read"
 msgstr "Die Konfiguration konnte nicht gelesen werden"
 
-#: app/src/window/agent-access-page.ts:297
+#: app/src/window/agent-access-page.ts:299
 msgid ""
 "Your own commands and this window are never restricted, and your own "
 "addresses are always allowed. These rules decide what an AI agent may read "
@@ -2021,42 +2021,54 @@ msgstr ""
 "eigenen Adressen sind immer erlaubt. Diese Regeln bestimmen, was ein KI-"
 "Agent lesen und senden darf."
 
-#: app/src/window/agent-access-page.ts:301
+#: app/src/window/agent-access-page.ts:303
 msgid "Ask when no rule applies"
 msgstr "Nachfragen, wenn keine Regel greift"
 
-#: app/src/window/agent-access-page.ts:302
+#: app/src/window/agent-access-page.ts:304
 msgid "Off: an agent request without a rule is refused without asking"
 msgstr "Aus: Eine Agentenanfrage ohne Regel wird ohne Nachfrage abgelehnt"
 
-#: app/src/window/agent-access-page.ts:320
+#: app/src/window/agent-access-page.ts:313
+msgid "Send files without asking"
+msgstr "Dateien ohne Nachfrage senden"
+
+#: app/src/window/agent-access-page.ts:314
+msgid ""
+"Off: an agent that sends files is always asked first, even where a rule "
+"allows sending"
+msgstr ""
+"Aus: Ein Agent, der Dateien sendet, wird immer zuerst gefragt, auch wenn eine "
+"Regel das Senden erlaubt"
+
+#: app/src/window/agent-access-page.ts:332
 msgid "No rules yet"
 msgstr "Noch keine Regeln"
 
-#: app/src/window/agent-access-page.ts:325
+#: app/src/window/agent-access-page.ts:337
 msgid "Add rule"
 msgstr "Regel hinzufügen"
 
-#: app/src/window/attachment-view.ts:90
+#: app/src/window/attachment-view.ts:96
 msgid "Play"
 msgstr "Abspielen"
 
-#: app/src/window/attachment-view.ts:95 app/src/window/media-viewer.ts:47
+#: app/src/window/attachment-view.ts:101 app/src/window/media-viewer.ts:47
 msgid "Save as…"
 msgstr "Speichern unter…"
 
-#: app/src/window/attachment-view.ts:113
+#: app/src/window/attachment-view.ts:119
 msgid "Could not fetch the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
-#: app/src/window/attachment-view.ts:136 app/src/window/attachment-view.ts:145
-#: app/src/window/conversation-model.ts:249
-#: app/src/window/conversation-model.ts:254
+#: app/src/window/attachment-view.ts:142 app/src/window/attachment-view.ts:151
+#: app/src/window/conversation-model.ts:251
+#: app/src/window/conversation-model.ts:256
 msgid "Attachment"
 msgstr "Anhang"
 
-#: app/src/window/attachment-view.ts:232
-#: app/src/window/conversation-model.ts:257
+#: app/src/window/attachment-view.ts:366
+#: app/src/window/conversation-model.ts:259
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] "und {n} weiterer Anhang"
@@ -2238,7 +2250,7 @@ msgstr[0] "{count} mögliches Duplikat"
 msgstr[1] "{count} mögliche Duplikate"
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:655
+#: app/src/window/conversation-view.ts:660
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -2246,64 +2258,64 @@ msgstr "Weiter über {protocol}"
 msgid "Unknown sender"
 msgstr "Unbekannter Absender"
 
-#: app/src/window/conversation-model.ts:240
+#: app/src/window/conversation-model.ts:242
 msgid "{kind}: {name}"
 msgstr "{kind}: {name}"
 
-#: app/src/window/conversation-model.ts:245
+#: app/src/window/conversation-model.ts:247
 msgid "Image"
 msgstr "Bild"
 
-#: app/src/window/conversation-model.ts:246
+#: app/src/window/conversation-model.ts:248
 msgid "Video"
 msgstr "Video"
 
-#: app/src/window/conversation-model.ts:247
+#: app/src/window/conversation-model.ts:249
 msgid "Audio"
 msgstr "Audio"
 
-#: app/src/window/conversation-model.ts:248
+#: app/src/window/conversation-model.ts:250
 msgid "File"
 msgstr "Datei"
 
-#: app/src/window/conversation-view.ts:99
+#: app/src/window/conversation-view.ts:101
 msgid "Choose how to reach this person"
 msgstr "Erreichbarkeit dieser Person wählen"
 
-#: app/src/window/conversation-view.ts:116
+#: app/src/window/conversation-view.ts:118
 msgid "Write a message"
 msgstr "Nachricht schreiben"
 
-#: app/src/window/conversation-view.ts:127
+#: app/src/window/conversation-view.ts:129
 msgid "Send message"
 msgstr "Nachricht senden"
 
-#: app/src/window/conversation-view.ts:154
+#: app/src/window/conversation-view.ts:156
 msgid "Conversation"
 msgstr "Unterhaltung"
 
-#: app/src/window/conversation-view.ts:269
+#: app/src/window/conversation-view.ts:271
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 "{protocol} kann keine Dateien senden; die angehängten Dateien wurden entfernt"
 
-#: app/src/window/conversation-view.ts:284
+#: app/src/window/conversation-view.ts:286
 msgid "Send via {protocol}"
 msgstr "Senden über {protocol}"
 
-#: app/src/window/conversation-view.ts:388
+#: app/src/window/conversation-view.ts:390
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:557
+#: app/src/window/conversation-view.ts:562
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:666
+#: app/src/window/conversation-view.ts:671
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:669
+#: app/src/window/conversation-view.ts:674
 msgid "Retry"
 msgstr "Erneut versuchen"
 
