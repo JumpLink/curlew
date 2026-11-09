@@ -322,6 +322,11 @@ export interface ChatMessage {
   /** The thread or forum topic, when the network has them. */
   threadRemoteId: string | null;
   /**
+   * What ties the messages of one album together (Telegram's grouped id): consecutive messages of
+   * one sender that share it are shown as one block. Absent when the network has no such thing.
+   */
+  groupId?: string | null;
+  /**
    * The id the SENDER gave the message (XMPP's origin-id), when the network exposes it. The
    * engine uses it to recognise the archive's copy of a message curlew itself sent and to drop
    * the local one written at send time.
@@ -428,6 +433,11 @@ export interface ChatSession {
    * attachments the index did not keep when they were first synced (ADR 0010).
    */
   readonly rewindable?: boolean;
+  /**
+   * True when its messages can carry a `groupId` (an album). The engine then also walks messages
+   * that already have descriptors, once, to fill the album in for what was stored before.
+   */
+  readonly groupsMedia?: boolean;
   close(): Promise<void>;
 }
 

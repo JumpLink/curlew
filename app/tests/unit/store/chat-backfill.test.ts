@@ -5,6 +5,7 @@ import {
   BACKFILL_CHATS,
   BACKFILL_PAGES,
   chatConversationId,
+  getRecentMessages,
   loadAttachments,
   syncChats,
 } from '@curlew/store';
@@ -55,6 +56,18 @@ const MESSAGE_ROWS = `SELECT id, body, has_attachments, edited_at, remote_seq FR
 
 function describeRows(db: ReturnType<typeof freshDb>): number {
   return Number((db.prepare('SELECT COUNT(*) AS n FROM message_attachments').get() as { n: number }).n);
+}
+
+function groupIds(db: ReturnType<typeof freshDb>, chatId: string): Array<string | null> {
+  const id = chatConversationId('telegram', ACCOUNT, chatId);
+  return getRecentMessages(db, [id], { limit: 100 }).map((m) => m.groupId ?? null);
+}
+
+function rawGroups(db: ReturnType<typeof freshDb>): Array<string | null> {
+  const rows = db.prepare('SELECT group_id FROM conversation_messages ORDER BY remote_seq').all() as Array<{
+    group_id: string | null;
+  }>;
+  return rows.map((r) => r.group_id);
 }
 
 export default async () => {
@@ -182,6 +195,88 @@ export default async () => {
         expect(loadAttachments(db, ref('3001', count)).length).toBe(0);
         await syncChats(db, backend, NOW);
         expect(loadAttachments(db, ref('3001', count)).length).toBe(1);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('fills in the album of old messages, with and without descriptors', async () => {
+      const db = freshDb();
+      try {
+        const backend = backendWith('1001', false);
+        await syncChats(db, backend, NOW);
+        // As stored before v15: the column was not there, so it is NULL.
+        db.exec('UPDATE conversation_messages SET group_id = NULL');
+        expect(rawGroups(db)).toStrictEqual([null, null, null, null]);
+
+        const chat = backend.chats.get('1001')!;
+        chat.messages[1].attachments = [PHOTO];
+        chat.messages[1].groupId = 'album-1';
+        chat.messages[3].attachments = [PHOTO];
+        chat.messages[3].groupId = 'album-1';
+        backend.rewindable = true;
+        backend.groupsMedia = true;
+        await syncChats(db, backend, NOW);
+
+        // Only a message with an attachment can be an album part: the others are not looked at.
+        expect(rawGroups(db)).toStrictEqual([null, 'album-1', null, 'album-1']);
+        expect(groupIds(db, '1001')).toStrictEqual([null, 'album-1', null, 'album-1']);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('leaves a described message its descriptors and asks nothing once its album is known', async () => {
+      const db = freshDb();
+      try {
+        const backend = backendWith('1001', true);
+        backend.rewindable = true;
+        await syncChats(db, backend, NOW);
+        db.exec('UPDATE conversation_messages SET group_id = NULL');
+        backend.groupsMedia = true;
+        backend.chats.get('1001')!.messages[3].groupId = 'album-2';
+        const described = describeRows(db);
+        await syncChats(db, backend, NOW);
+        expect(describeRows(db)).toBe(described);
+        expect(rawGroups(db)).toStrictEqual([null, '', null, 'album-2']);
+
+        const calls = backend.calls.length;
+        await syncChats(db, backend, NOW);
+        expect(backend.calls.length).toBe(calls);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('does not look for albums on a network that has none', async () => {
+      const db = freshDb();
+      try {
+        const backend = backendWith('1001', true);
+        backend.rewindable = true;
+        await syncChats(db, backend, NOW);
+        db.exec('UPDATE conversation_messages SET group_id = NULL');
+        const calls = backend.calls.length;
+        await syncChats(db, backend, NOW);
+        expect(backend.calls.length).toBe(calls);
+        expect(rawGroups(db)).toStrictEqual([null, null, null, null]);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('stores the album id of a freshly synced message', async () => {
+      const db = freshDb();
+      try {
+        const backend = new FakeChatBackend();
+        backend.addChat({ remoteId: '1001', kind: 'direct', title: 'Anna Example', members: [ANNA] });
+        backend.post(
+          '1001',
+          chatMessage('1001', 1, ANNA, null, { hasAttachments: true, groupId: 'album-3' }),
+          chatMessage('1001', 2, ANNA, 'Hallo'),
+        );
+        await syncChats(db, backend, NOW);
+        expect(rawGroups(db)).toStrictEqual(['album-3', '']);
+        expect(groupIds(db, '1001')).toStrictEqual(['album-3', null]);
       } finally {
         db.close();
       }

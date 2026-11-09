@@ -269,6 +269,8 @@ export interface ConversationMessage {
   /** The reply's target as its sender wrote it — matches the id a message was sent with. */
   replyToClientId?: string | null;
   threadRemoteId?: string | null;
+  /** The album this message belongs to (chat backends that group media), shared by its messages. */
+  groupId?: string | null;
   readByPeer?: boolean;
   /** A notice's text (presentation `notice`) — always present for a notice, bodies or not. */
   notice?: string | null;

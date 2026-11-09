@@ -1,6 +1,6 @@
 # Media grid and silent video preview
 
-Status: piece 1 and the duration badge built; Telegram albums and the silent preview open (S6). Reference: Telegram groups several photos and videos sent together into one
+Status: piece 1, the duration badge and Telegram albums built; the silent preview open (S6). Reference: Telegram groups several photos and videos sent together into one
 bubble with a grid; a single video plays silently, in a loop, while it is on screen, with a
 duration badge. Neither exists in curlew yet: today every attachment is its own full-width row.
 
@@ -36,16 +36,22 @@ own width; pressing it opens the viewer.
 
 Telegram sends an album as separate messages that share a `groupedId`. The index needs it:
 
-- `TgMessage.groupedId: string | null` from mtcute's `Message.groupedId`.
+- `TgMessage.groupedIdUnique: string | null` from mtcute's `Message.groupedIdUnique` (unique across chats).
 - `ChatMessage.groupId` in the protocol, `conversation_messages.group_id TEXT` (schema 15, the
   backfill and the regular sync both write it).
-- The conversation model folds consecutive messages of one sender with the same `group_id` into
-  one display entry: the grid of all their parts, the caption of the one message that has text,
-  the time and status of the last. Reply, delete and copy act on the message under the press;
+- The conversation model folds consecutive messages of one sender and conversation with the same
+  non-empty `group_id` into one display entry (`foldAlbums`): the grid of all their parts, each
+  tagged with the message it came from, the caption of the one message that has text, the read
+  receipt of the last. The FIRST message stands for the entry, so its id and time stay the cursor
+  older pages are read before; the album's earlier parts would otherwise load again as rows.
+  There is no time rule: the group id is unique per album. Reply, delete and copy act on the message under the press;
   that comes with the quote/reaction work (S7).
 
-Old rows have no `group_id`; the backfill fills it in for Telegram and Matrix chats as it fills
-descriptors. Until then they stay separate rows, which is today's behaviour.
+`group_id` NULL means "not looked at", `''` "looked, no album"; readers treat both as none. The
+regular sync writes `''` for a message without a group. Old rows are NULL: the backfill fills them
+in for a network that declares `ChatSession.groupsMedia` (Telegram), also for messages that already
+have descriptors. Until then they stay separate rows. Only messages with an attachment are looked
+at. Known edge: an album cut by a page boundary shows as two rows until the other page loads.
 
 ### 3. Duration badge and silent preview
 
@@ -70,8 +76,8 @@ viewer (swiping left and right through an album) — wanted, but its own step af
 
 - `gridLayout`: rectangles for 1 to 10 parts, with portrait, landscape and unsized parts; sums of
   widths equal the row width; no cell below a minimum size.
-- Folding: same group and sender fold, a gap in time or another sender does not, a message with
-  text keeps its caption, the fold's time is the last one.
+- Folding: same group and sender fold, another sender, group or conversation does not, a message
+  with text keeps its caption, the fold's id is the first one's.
 - Store: `group_id` round trip, backfill fills it, schema 14 to 15.
 - Screenshot: the demo index gets a four-part album and a three-part Signal message, English and
   German captions as before.

@@ -970,7 +970,7 @@ export function getRecentMessages(
 const MESSAGE_COLUMNS = `id, conversation_id, backend, account_id, presentation, sender_participant_id, sender_name,
               sender_kind, sender_address, from_self, sent_at, subject, seen, has_attachments,
               classification, classification_reason, folder_path, uid, remote_id, email_chat, ${seqColumn('remote_seq')}, body,
-              edited_at, reply_to_remote_id, thread_remote_id, reply_to_client_id, peer_read`;
+              edited_at, reply_to_remote_id, thread_remote_id, reply_to_client_id, group_id, peer_read`;
 
 function toMessage(
   db: IndexDatabase,
@@ -1017,6 +1017,7 @@ function toMessage(
     message.replyToRemoteId = str(r.reply_to_remote_id);
     message.replyToClientId = str(r.reply_to_client_id);
     message.threadRemoteId = str(r.thread_remote_id);
+    message.groupId = str(r.group_id) || null;
     if (message.fromSelf) message.readByPeer = Number(r.peer_read) === 1;
   }
   // A notice is what the network said about the chat: shown with or without bodies.

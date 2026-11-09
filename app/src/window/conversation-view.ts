@@ -30,6 +30,8 @@ import {
   dayOf,
   dayStarts,
   defaultProtocolChoice,
+  foldAlbums,
+  MAX_ALBUM_PARTS,
   newOlder,
   PAGE_SIZE,
   protocolDividers,
@@ -389,7 +391,10 @@ export function createConversationView(
       (message.bodyTruncated ? ' …' : '');
     // What is listed below the text stands for the attachments itself; the placeholder line is
     // only for a message whose parts the index does not know.
-    const { shown, more } = shownAttachments(message.attachments);
+    const { shown, more } = shownAttachments(
+      message.attachments,
+      message.groupId ? MAX_ALBUM_PARTS : undefined,
+    );
     const listed = shown.length > 0;
     const generic = message.hasAttachments && !listed;
     if (listed || generic) bubble.append(attachmentList(message.ref, shown, more, handlers, generic));
@@ -548,7 +553,7 @@ export function createConversationView(
       try {
         const page = loadOlder(shownEntry, cursorOf(oldest));
         exhausted = page.length < PAGE_SIZE;
-        fresh = newOlder(messages, page);
+        fresh = foldAlbums(newOlder(messages, page));
       } catch (err) {
         // Not retried until the conversation is opened again, or it would loop on every scroll.
         exhausted = true;
@@ -688,7 +693,7 @@ export function createConversationView(
     show(nextEntry, nextMessages, nextLabels) {
       entry = nextEntry;
       rebuildRoute(nextEntry);
-      messages = nextMessages;
+      messages = foldAlbums(nextMessages);
       accountLabels = nextLabels;
       title.set_title(nextEntry.title);
       title.set_subtitle(entryProtocolSubtitle(nextEntry));

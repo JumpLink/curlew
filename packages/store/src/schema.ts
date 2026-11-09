@@ -22,7 +22,7 @@
 import { type IndexDatabase, withTransaction } from './db.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 
-export const SCHEMA_VERSION = 14;
+export const SCHEMA_VERSION = 15;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -397,6 +397,9 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
        handle TEXT,
        PRIMARY KEY (message_id, idx))`,
   ],
+  // v15: the album a chat message belongs to (Telegram's grouped id). NULL = not looked at yet,
+  // '' = looked, not part of one; a reader treats both as "no album".
+  15: [{ table: 'conversation_messages', column: 'group_id', type: 'TEXT' }],
 };
 
 function columnsOf(db: IndexDatabase, table: string): Set<string> {

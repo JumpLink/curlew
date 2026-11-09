@@ -9,6 +9,7 @@ import {
   cursorOf,
   dayStarts,
   defaultProtocolChoice,
+  foldAlbums,
   newOlder,
   protocolDividers,
   protocolRunStarts,
@@ -16,6 +17,7 @@ import {
   senderName,
   senderRunStarts,
   subjectLabels,
+  type ShownMessage,
 } from '../../../src/window/conversation-model.ts';
 
 function message(over: Partial<ConversationMessage> & { id: string }): ConversationMessage {
@@ -243,6 +245,64 @@ export default async () => {
         mimeType: 'text/plain',
       }));
       expect(attachmentLines(many).slice(2)).toStrictEqual(['File: f2.txt', 'and 2 more attachments']);
+    });
+
+    await describe('foldAlbums', async () => {
+      const part = (id: string, over: Partial<ShownMessage> = {}): ShownMessage =>
+        message({
+          id,
+          backend: 'telegram',
+          presentation: 'bubble',
+          senderId: 'anna',
+          sentAt: `2026-08-01T10:00:0${id.length}Z`,
+          hasAttachments: true,
+          groupId: 'album-1',
+          ref: { accountId: 'a', backend: 'telegram', remoteId: `1/${id}` },
+          attachments: [{ filename: `${id}.jpg`, mimeType: 'image/jpeg', index: 0 }],
+          ...over,
+        }) as ShownMessage;
+
+      await it('folds consecutive messages of one sender and album into the first', async () => {
+        const folded = foldAlbums([part('m1'), part('m2'), part('m3')]);
+        expect(folded.length).toBe(1);
+        expect(folded[0].id).toBe('m1');
+        expect(folded[0].sentAt).toBe('2026-08-01T10:00:02Z');
+        expect(folded[0].attachments!.map((a) => a.filename)).toStrictEqual(['m1.jpg', 'm2.jpg', 'm3.jpg']);
+      });
+
+      await it('tags every part with the message it came from', async () => {
+        const [album] = foldAlbums([part('m1'), part('m2')]);
+        expect(album.attachments!.map((a) => a.ref?.remoteId)).toStrictEqual(['1/m1', '1/m2']);
+      });
+
+      await it('takes the caption from the part that has one', async () => {
+        const [album] = foldAlbums([part('m1'), part('m2', { bodyText: 'Urlaub' }), part('m3')]);
+        expect(album.bodyText).toBe('Urlaub');
+      });
+
+      await it('is seen only when every part is, and reads the receipt off the last', async () => {
+        const [album] = foldAlbums([part('m1'), part('m2', { seen: false, readByPeer: true })]);
+        expect(album.seen).toBe(false);
+        expect(album.readByPeer).toBe(true);
+      });
+
+      await it('does not fold another sender, another album or a message in between', async () => {
+        expect(foldAlbums([part('m1'), part('m2', { senderId: 'ben' })]).length).toBe(2);
+        expect(foldAlbums([part('m1'), part('m2', { groupId: 'album-2' })]).length).toBe(2);
+        expect(foldAlbums([part('m1'), part('m2', { groupId: null }), part('m3')]).length).toBe(3);
+        expect(foldAlbums([part('m1'), part('m2', { conversationId: 'other' })]).length).toBe(2);
+      });
+
+      await it('leaves messages without an album untouched', async () => {
+        const plain = [
+          part('m1', { groupId: null }),
+          part('m2', { groupId: '' }),
+          part('m3', { groupId: undefined }),
+        ];
+        const folded = foldAlbums(plain);
+        expect(folded.length).toBe(3);
+        expect(folded[0]).toBe(plain[0]);
+      });
     });
   });
 };

@@ -22,6 +22,8 @@
 
 - A chat video up to 8 MB shows its first frame in the bubble with a play symbol; pressing it opens the viewer.
 - Two or more pictures and videos of one message form a grid in the bubble, and a video shows its length.
+- Telegram albums (several pictures and videos sent together) show as one bubble with a grid; older
+  messages are grouped as the attachment backfill reaches them.
 - Desktop notifications for new chat messages. The daemon notifies for an incoming, unread
   message of a chat (never mail) that arrived after it started, so catching up on a backlog is
   silent. One notification per chat, replaced as more messages come; more than four chats in one

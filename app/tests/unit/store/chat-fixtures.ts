@@ -128,6 +128,8 @@ export class FakeChatBackend implements ChatBackend {
   canProbe = false;
   /** Set true for a network whose history can be walked from any stored seq (backfill of attachments). */
   rewindable = false;
+  /** Set true for a network whose messages can carry an album id (`groupId`). */
+  groupsMedia = false;
   connectError: Error | null = null;
   /** Thrown by `listChats` — a rate limit while listing, or a network that answers nothing. */
   listChatsError: Error | null = null;
@@ -202,6 +204,7 @@ export class FakeChatBackend implements ChatBackend {
       },
     };
     if (this.rewindable) (session as { rewindable?: boolean }).rewindable = true;
+    if (this.groupsMedia) (session as { groupsMedia?: boolean }).groupsMedia = true;
     // A network that can be asked about a message by id answers only for the ids the engine
     // named — like `messages.getMessages`, which reports an empty slot per asked id.
     if (this.canProbe) {
