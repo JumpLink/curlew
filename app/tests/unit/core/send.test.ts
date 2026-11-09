@@ -538,6 +538,52 @@ export default async () => {
       }
     });
 
+    await it('asks for a mail attachment too, and skips the question when files are allowed unasked', async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-files-rule-'));
+      try {
+        const file = join(dir, 'notes.txt');
+        writeFileSync(file, 'x');
+        const asked: AccessAsk[] = [];
+        const port: AccessPort = {
+          request: async (ask) => {
+            asked.push(ask);
+            return { allowed: false, reason: 'denied' };
+          },
+        };
+        const call = (configPath: string) =>
+          sendAsAgent({
+            accountId: ACCOUNT,
+            to: OWNER,
+            text: 'see file',
+            attachments: [file],
+            frontend: 'cli',
+            agent: { port },
+            dbPath: join(dir, 'index.db'),
+            configPath,
+            writeLogPath: join(dir, 'write.log'),
+            backend: {
+              manifest: { ...XMPP_MANIFEST, name: 'mail' },
+              listAccounts: async () => [ACCOUNT_INFO],
+              isSelfAddress: async () => false,
+              openSender: async () => {
+                throw new Error('sender reached');
+              },
+            } as unknown as XmppBackend,
+          });
+        const strict = join(dir, 'strict.json');
+        writeFileSync(strict, JSON.stringify({ grants: GRANTS }));
+        await expect(call(strict)).rejects.toThrow(/declined in the prompt/);
+        expect(asked.length).toBe(1);
+
+        const loose = join(dir, 'loose.json');
+        writeFileSync(loose, JSON.stringify({ grants: GRANTS, agentAccess: { sendFilesUnasked: true } }));
+        await expect(call(loose)).rejects.toThrow(/sender reached/);
+        expect(asked.length).toBe(1);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
     await it("always lets an agent send to the account's own address", async () => {
       await world([], async ({ agent, sent, logged }) => {
         await agent(ACCOUNT_INFO.identity);

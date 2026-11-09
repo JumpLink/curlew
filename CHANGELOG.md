@@ -17,6 +17,9 @@
 - `curlew window`: the filter chips are pills that fill with the accent colour while on, and the
   protocol badge sits on a solid circle at the avatar's rim, so it is legible and no longer covers
   the initials. gjsify 0.64.19.
+- An agent that sends files is asked first on mail as well, not only on chats. The new switch
+  *Send files without asking* (`agentAccess.sendFilesUnasked`, off by default) on the *Agent
+  access* page lets an `allow` rule send files unasked, for mail and chats alike.
 
 ### Added
 

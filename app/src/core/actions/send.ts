@@ -434,9 +434,10 @@ export async function sendAsAgent(params: SendParams): Promise<SendResult> {
     );
   }
   await refuseOutsidePin(config, found.backend.manifest.name, params);
-  // A chat backend's attachment is a path on the person's disk that an agent names (ADR 0010 §4):
-  // there it is always put to the person, whatever the rules say. Mail keeps its established rule.
-  const confirmFiles = (params.attachments ?? []).length > 0 && found.backend.manifest.name !== 'mail';
+  // An attachment is a path on the person's disk that an agent names (ADR 0010 §4): for mail and
+  // chats alike it is put to the person whatever the rules say, unless the person switched
+  // `agentAccess.sendFilesUnasked` on.
+  const confirmFiles = (params.attachments ?? []).length > 0 && config.agentAccess.sendFilesUnasked !== true;
   const gate = agentGate(config, { frontend: params.frontend === 'mcp' ? 'mcp' : 'cli', ...params.agent });
   const accessReason = await requireAccess(gate, {
     account: params.accountId,
