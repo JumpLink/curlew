@@ -9,6 +9,8 @@
   per chat per run, and writes only the attachment descriptors; messages, read state and edits
   stay as they are. A message the network no longer shows with an attachment keeps the plain
   tile without a download.
+- Opening a video or file from a chat or mail bubble no longer stops at 25 MB; the window may
+  fetch up to 100 MB, since a phone video is often bigger than the limit meant for agents.
 
 ### Changed
 
@@ -17,6 +19,8 @@
   the initials. gjsify 0.64.19.
 
 ### Added
+
+- A chat video up to 8 MB shows its first frame in the bubble with a play symbol; pressing it opens the viewer.
 
 - Desktop notifications for new chat messages. The daemon notifies for an incoming, unread
   message of a chat (never mail) that arrived after it started, so catching up on a backlog is
