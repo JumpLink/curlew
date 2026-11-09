@@ -86,6 +86,7 @@ import windowConversationList from './unit/window/conversation-list-model.test.t
 import windowCandidates from './unit/window/merge-candidates-model.test.ts';
 import windowSelection from './unit/window/selection-model.test.ts';
 import windowAttachment from './unit/window/attachment-model.test.ts';
+import windowMediaGrid from './unit/window/media-grid-model.test.ts';
 import windowConversation from './unit/window/conversation-model.test.ts';
 import windowComposerFiles from './unit/window/composer-files-model.test.ts';
 import encryption from './unit/core/encryption.test.ts';
@@ -201,6 +202,7 @@ run({
   windowConversation,
   windowComposerFiles,
   windowAttachment,
+  windowMediaGrid,
   encryption,
   send,
   selfAddress,

@@ -15,7 +15,9 @@ import {
   boundedSize,
   BUBBLE_MAX_IMAGE_HEIGHT,
   BUBBLE_MAX_IMAGE_WIDTH,
+  durationLabel,
   effectiveMime,
+  isGridMedia,
   isOpenable,
   showsInline,
   showsPoster,
@@ -31,6 +33,7 @@ import {
   saveCopyAs,
 } from './attachment-store.ts';
 import { attachmentLine, type AttachmentInfo } from './conversation-model.ts';
+import { type GridCell, gridLayout, MAX_GRID_CELLS } from './media-grid-model.ts';
 
 export interface AttachmentHandlers {
   /** Opens the viewer on an image or a video. */
@@ -164,22 +167,26 @@ interface Painted {
 
 /**
  * A preview that loads when it is near the screen and opens the viewer when pressed; a failed load
- * becomes the tile. A video's carries a play symbol so it is not mistaken for a picture.
+ * becomes the tile. A video's carries a play symbol so it is not mistaken for a picture, and its
+ * length. In a grid (`cell`) it has the cell's fixed size, crops to fill it, and a failed load
+ * leaves the cell dark with the symbol: a tile would not fit. `paint` null shows only that dark
+ * cell, for a part too big to fetch unasked.
  */
 function inlinePreview(
   source: AttachmentSource,
   handlers: AttachmentHandlers,
   kind: AttachmentKind,
-  paint: (path: string, scale: number) => Promise<Painted>,
+  paint: ((path: string, scale: number) => Promise<Painted>) | null,
+  cell: GridCell | null = null,
 ): Gtk.Widget {
   const slot = new Gtk.Box({ halign: Gtk.Align.START });
   const frame = new Gtk.Overlay({ halign: Gtk.Align.START, overflow: Gtk.Overflow.HIDDEN });
-  frame.add_css_class('card');
+  if (!cell) frame.add_css_class('card');
   const image = new Gtk.Picture({
-    contentFit: Gtk.ContentFit.SCALE_DOWN,
+    contentFit: cell ? Gtk.ContentFit.COVER : Gtk.ContentFit.SCALE_DOWN,
     canShrink: true,
-    widthRequest: PLACEHOLDER.width,
-    heightRequest: PLACEHOLDER.height,
+    widthRequest: cell?.width ?? PLACEHOLDER.width,
+    heightRequest: cell?.height ?? PLACEHOLDER.height,
   });
   const button = new Gtk.Button({ child: image, tooltipText: attachmentName(source.info) });
   button.add_css_class('flat');
@@ -193,36 +200,51 @@ function inlinePreview(
   });
   frame.set_child(button);
   frame.add_overlay(spinner);
-  if (kind === 'video') {
-    // Not a flat button's own icon: it must sit over the frame and let the click through.
-    const play = new Gtk.Box({
+  const symbol = (iconName: string): Gtk.Widget => {
+    // A button only for its round OSD look: it sits over the frame and lets the press through.
+    const badge = new Gtk.Button({
+      iconName,
       halign: Gtk.Align.CENTER,
       valign: Gtk.Align.CENTER,
-      widthRequest: 48,
-      heightRequest: 48,
       canTarget: false,
+      canFocus: false,
     });
-    play.add_css_class('osd');
-    play.add_css_class('circular');
-    play.append(
-      new Gtk.Image({
-        iconName: 'media-playback-start-symbolic',
-        pixelSize: 24,
-        hexpand: true,
-        halign: Gtk.Align.CENTER,
-        valign: Gtk.Align.CENTER,
-      }),
-    );
-    frame.add_overlay(play);
+    badge.add_css_class('osd');
+    badge.add_css_class('circular');
+    return badge;
+  };
+  if (kind === 'video') {
+    frame.add_overlay(symbol('media-playback-start-symbolic'));
+    const length = durationLabel(source.info.durationMs);
+    if (length) {
+      const badge = new Gtk.Label({
+        label: length,
+        halign: Gtk.Align.START,
+        valign: Gtk.Align.START,
+        marginStart: 6,
+        marginTop: 6,
+        canTarget: false,
+      });
+      badge.add_css_class('osd');
+      badge.add_css_class('caption');
+      badge.add_css_class('numeric');
+      frame.add_overlay(badge);
+    }
   }
   slot.append(frame);
   button.connect('clicked', () => handlers.view(source, kind));
 
   const fail = () => {
+    spinner.set_visible(false);
+    if (cell) {
+      image.set_paintable(null);
+      return;
+    }
     slot.remove(frame);
     slot.append(tile(source, handlers));
   };
   const load = (): void => {
+    if (!paint) return;
     spinner.set_visible(true);
     // The box the bubble gives a picture, in the pixels the texture is decoded at.
     const scale = frame.get_scale_factor();
@@ -231,9 +253,11 @@ function inlinePreview(
       .then((painted) => {
         // The bubble left the window while the picture decoded; there is nothing to paint into.
         if (frame.get_root() === null) return;
-        const size = boundedSize({ width: painted.width / scale, height: painted.height / scale });
         image.set_paintable(painted.paintable);
-        image.set_size_request(size.width, size.height);
+        if (!cell) {
+          const size = boundedSize({ width: painted.width / scale, height: painted.height / scale });
+          image.set_size_request(size.width, size.height);
+        }
         spinner.set_visible(false);
       })
       .catch(() => {
@@ -241,25 +265,71 @@ function inlinePreview(
         fail();
       });
   };
-  handlers.whenVisible(frame, load);
+  if (paint) handlers.whenVisible(frame, load);
   return slot;
 }
 
-function picture(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Widget {
-  return inlinePreview(source, handlers, 'image', async (path, scale) => {
-    const texture = await loadTexture(path, {
-      width: BUBBLE_MAX_IMAGE_WIDTH * scale,
-      height: BUBBLE_MAX_IMAGE_HEIGHT * scale,
-    });
-    return { paintable: texture, width: texture.get_width(), height: texture.get_height() };
-  });
+function picture(
+  source: AttachmentSource,
+  handlers: AttachmentHandlers,
+  cell: GridCell | null = null,
+): Gtk.Widget {
+  const box = {
+    width: cell?.width ?? BUBBLE_MAX_IMAGE_WIDTH,
+    height: cell?.height ?? BUBBLE_MAX_IMAGE_HEIGHT,
+  };
+  return inlinePreview(
+    source,
+    handlers,
+    'image',
+    async (path, scale) => {
+      const texture = await loadTexture(path, { width: box.width * scale, height: box.height * scale });
+      return { paintable: texture, width: texture.get_width(), height: texture.get_height() };
+    },
+    cell,
+  );
 }
 
-function poster(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Widget {
-  return inlinePreview(source, handlers, 'video', async (path) => {
-    const frame = await loadPoster(path);
-    return { paintable: frame, width: frame.get_intrinsic_width(), height: frame.get_intrinsic_height() };
+function poster(
+  source: AttachmentSource,
+  handlers: AttachmentHandlers,
+  cell: GridCell | null = null,
+): Gtk.Widget {
+  return inlinePreview(
+    source,
+    handlers,
+    'video',
+    async (path) => {
+      const frame = await loadPoster(path);
+      return { paintable: frame, width: frame.get_intrinsic_width(), height: frame.get_intrinsic_height() };
+    },
+    cell,
+  );
+}
+
+/** One cell of the grid: the picture or first frame when it may load unasked, else the dark cell. */
+function gridCell(source: AttachmentSource, handlers: AttachmentHandlers, cell: GridCell): Gtk.Widget {
+  const { info } = source;
+  if (showsInline(info)) return picture(source, handlers, cell);
+  if (showsPoster(info)) return poster(source, handlers, cell);
+  return inlinePreview(source, handlers, attachmentKind(info), null, cell);
+}
+
+/** A message's pictures and videos as one block (docs/design/media-grid.md). */
+function mediaGrid(
+  ref: MessageRef,
+  media: readonly AttachmentInfo[],
+  handlers: AttachmentHandlers,
+): Gtk.Widget {
+  const layout = gridLayout(media, BUBBLE_MAX_IMAGE_WIDTH);
+  const fixed = new Gtk.Fixed({ halign: Gtk.Align.START, overflow: Gtk.Overflow.HIDDEN });
+  fixed.add_css_class('card');
+  fixed.set_size_request(layout.width, layout.height);
+  layout.cells.forEach((cell, i) => {
+    const info = media[i] as AttachmentInfo;
+    fixed.put(gridCell({ ref, info }, handlers, cell), cell.x, cell.y);
   });
+  return fixed;
 }
 
 /** The attachments of a message, stacked; `more` names the ones left out. */
@@ -271,7 +341,16 @@ export function attachmentList(
   generic = false,
 ): Gtk.Box {
   const list = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 6 });
+  // Two or more pictures and videos form a grid; one keeps its own shape. The rest stay tiles.
+  const media = shown.filter(isGridMedia).slice(0, MAX_GRID_CELLS);
+  const gridded = media.length > 1 ? new Set(media) : new Set<AttachmentInfo>();
+  let placed = false;
   for (const info of shown) {
+    if (gridded.has(info)) {
+      if (!placed) list.append(mediaGrid(ref, media, handlers));
+      placed = true;
+      continue;
+    }
     const source = { ref, info };
     list.append(
       showsInline(info)

@@ -431,6 +431,48 @@ try {
     }
   }
 
+  // Four pictures sent together, in the same chat: the grid.
+  {
+    const n = 602;
+    const at = new Date(now - 60_000).toISOString();
+    message.run(
+      `m${n}`,
+      'c16',
+      'telegram',
+      'telegram-demo1',
+      'p-alex',
+      0,
+      at,
+      null,
+      `r${n}`,
+      '',
+      0,
+      null,
+      null,
+      n,
+    );
+    db.prepare(
+      'UPDATE conversation_messages SET sender_name = ?, sender_kind = ?, sender_address = ?, has_attachments = 1 WHERE id = ?',
+    ).run('Alex Weber', 'telegram', '424242', `m${n}`);
+    const sizes: [number, number][] = [
+      [480, 320],
+      [320, 480],
+      [480, 320],
+      [480, 360],
+    ];
+    sizes.forEach(([width, height], idx) => {
+      const png = harbourScene(width, height);
+      db.prepare(
+        `INSERT OR REPLACE INTO message_attachments (message_id, idx, filename, mime_type, size, kind, width, height, handle)
+         VALUES (?, ?, ?, 'image/png', ?, 'image', ?, ?, 'demo-handle')`,
+      ).run(`m${n}`, idx, `harbour-${idx + 1}.png`, png.length, width, height);
+      const key = ['telegram-demo1', '', '', `r${n}`, String(idx)].join('\u0000');
+      const cache = join(dir, 'previews', createHash('sha256').update(key).digest('hex'));
+      mkdirSync(cache, { recursive: true });
+      writeFileSync(join(cache, `harbour-${idx + 1}.png`), png);
+    });
+  }
+
   // A long mail conversation (130 messages over several days, some with multi-paragraph bodies)
   // for the paging and the faded long body of the conversation view.
   participant.run('p-alerts', 'Monitoring Alerts');

@@ -153,3 +153,19 @@ export function previewKey(
   const segment = section !== undefined && section !== '' ? section : String(index ?? '');
   return [ref.accountId, ref.folder ?? '', ref.uid ?? '', ref.remoteId ?? '', segment].join('\u0000');
 }
+
+/** A length as `m:ss`, or `h:mm:ss` from an hour on; empty when the index has none. */
+export function durationLabel(ms: number | null | undefined): string {
+  if (ms === null || ms === undefined || !Number.isFinite(ms) || ms <= 0) return '';
+  const total = Math.round(ms / 1000);
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = String(total % 60).padStart(2, '0');
+  return hours > 0 ? `${hours}:${String(minutes).padStart(2, '0')}:${seconds}` : `${minutes}:${seconds}`;
+}
+
+/** Whether a part belongs in a message's picture grid: a picture or a video that can be opened. */
+export function isGridMedia(info: AttachmentInfo): boolean {
+  const kind = attachmentKind(info);
+  return (kind === 'image' || kind === 'video') && isOpenable(info);
+}
