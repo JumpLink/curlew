@@ -1,6 +1,6 @@
 /** Presentation rules for reading a conversation as a chat, without changing mail threading. */
 
-import type { ConversationMessage } from '@curlew/protocol';
+import type { ConversationMessage, MessageRef } from '@curlew/protocol';
 import { _, fmt, _n } from '@curlew/protocol';
 import { normalizeSubject, type MessageCursor } from '@curlew/store';
 
@@ -217,6 +217,8 @@ export interface AttachmentInfo {
   width?: number | null;
   height?: number | null;
   durationMs?: number | null;
+  /** The message the part belongs to, when that is not the bubble's own: a folded album. */
+  ref?: MessageRef;
   /** IMAP section (mail only): the key to fetch the bytes with. */
   section?: string;
   /** True when the chat backend has a non-empty handle for this attachment (ADR 0010). */
@@ -256,4 +258,50 @@ export function attachmentLines(attachments: readonly AttachmentInfo[] | undefin
   const more = attachments.length - lines.length;
   if (more > 0) lines.push(fmt(_n('and {n} more attachment', 'and {n} more attachments', more), { n: more }));
   return lines;
+}
+
+/** The most parts a Telegram album has: a folded bubble lists all of them. */
+export const MAX_ALBUM_PARTS = 10;
+
+function sameAlbum(a: ShownMessage, b: ShownMessage): boolean {
+  return (
+    !!a.groupId &&
+    a.groupId === b.groupId &&
+    a.conversationId === b.conversationId &&
+    a.fromSelf === b.fromSelf &&
+    senderKey(a) === senderKey(b)
+  );
+}
+
+function withRefs(message: ShownMessage): AttachmentInfo[] {
+  return (message.attachments ?? []).map((info) => ({ ...info, ref: info.ref ?? message.ref }));
+}
+
+/**
+ * The messages of one album (consecutive, one sender, one `groupId`) as a single entry: the FIRST
+ * message stands for it, so its id and time stay the cursor older pages are read before; it carries
+ * every part with the message it came from, the delivery status of the last, and the caption is the
+ * text of whichever part had one. Nothing else is merged and a message without a group is untouched.
+ */
+export function foldAlbums(messages: readonly ShownMessage[]): ShownMessage[] {
+  const folded: ShownMessage[] = [];
+  for (const message of messages) {
+    const previous = folded[folded.length - 1];
+    if (!previous || !sameAlbum(previous, message)) {
+      folded.push(message);
+      continue;
+    }
+    const captioned = message.bodyText?.trim() ? message : previous;
+    folded[folded.length - 1] = {
+      ...previous,
+      seen: previous.seen && message.seen,
+      hasAttachments: previous.hasAttachments || message.hasAttachments,
+      attachments: [...withRefs(previous), ...withRefs(message)],
+      bodyText: captioned.bodyText,
+      bodyTruncated: captioned.bodyTruncated,
+      editedAt: message.editedAt ?? previous.editedAt,
+      readByPeer: message.readByPeer,
+    };
+  }
+  return folded;
 }

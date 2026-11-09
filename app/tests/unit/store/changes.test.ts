@@ -121,7 +121,7 @@ export default async () => {
           value: string;
         };
         expect(version.value).toBe(String(SCHEMA_VERSION));
-        expect(SCHEMA_VERSION).toBe(14);
+        expect(SCHEMA_VERSION).toBe(15);
         const kept = db.prepare('SELECT body FROM conversation_messages WHERE id = ?').get('m-1') as {
           body: string;
         };

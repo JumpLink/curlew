@@ -153,5 +153,6 @@ export function toChatMessage(message: TgMessage): ChatMessage | null {
     replyToRemoteId: reply?.id ? remoteMessageId(chatId, reply.id) : null,
     threadRemoteId:
       message.isTopicMessage && reply?.threadId ? remoteMessageId(chatId, reply.threadId) : null,
+    groupId: message.groupedIdUnique ?? null,
   };
 }

@@ -74,6 +74,8 @@ export interface TgMessage {
   readonly media: TgMedia | null;
   readonly replyToMessage: TgRepliedMessage | null;
   readonly isTopicMessage: boolean;
+  /** Shared by the messages of one album; null for a message that is not part of one. */
+  readonly groupedIdUnique?: string | null;
 }
 
 export interface TgDialog {

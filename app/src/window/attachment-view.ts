@@ -1,7 +1,7 @@
 /** The attachments of one bubble: a picture for an image, a tile with name, size and buttons for the rest. */
 
 import Adw from 'gi://Adw?version=1';
-import Gdk from 'gi://Gdk?version=4.0';
+import type Gdk from 'gi://Gdk?version=4.0';
 import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
@@ -327,7 +327,7 @@ function mediaGrid(
   fixed.set_size_request(layout.width, layout.height);
   layout.cells.forEach((cell, i) => {
     const info = media[i] as AttachmentInfo;
-    fixed.put(gridCell({ ref, info }, handlers, cell), cell.x, cell.y);
+    fixed.put(gridCell({ ref: info.ref ?? ref, info }, handlers, cell), cell.x, cell.y);
   });
   return fixed;
 }
@@ -351,7 +351,7 @@ export function attachmentList(
       placed = true;
       continue;
     }
-    const source = { ref, info };
+    const source = { ref: info.ref ?? ref, info };
     list.append(
       showsInline(info)
         ? picture(source, handlers)
