@@ -42,7 +42,7 @@ export interface UnitPaths {
 /**
  * Is this directory one of `gjsify run`'s throwaway shim dirs (`<tmpdir>/gjsify-shim-XXXX`)?
  * `gjsify run` puts one in front of PATH for its children and exports it as `GJSIFY_SHIM_DIR`; it
- * vanishes with the run, and a user unit's `PrivateTmp=true` could not see it anyway.
+ * vanishes with the run, so a unit that points into it breaks after the next reboot.
  */
 export function isGjsifyShimDir(dir: string, shimDir?: string): boolean {
   if (shimDir !== undefined && shimDir !== '' && dir === shimDir) return true;
@@ -93,7 +93,8 @@ Restart=on-failure
 RestartPreventExitStatus=2
 RestartSec=30
 NoNewPrivileges=true
-PrivateTmp=true
+# No PrivateTmp: a send names files by path (curlew send --attach /tmp/report.pdf) and the
+# daemon, not the caller, reads them. A private /tmp made every file there "cannot be read".
 
 [Install]
 WantedBy=default.target
