@@ -24,6 +24,7 @@
  * the index counts unread per chat, and a wrong guess would mark unseen messages read.
  */
 
+import { _ } from '@curlew/protocol';
 import type { AttachmentKind, ChatAttachment, ChatMessage, ChatPeer, DeliveryEvent } from '@curlew/protocol';
 import {
   type AttachmentPointer,
@@ -32,6 +33,7 @@ import {
   type DataMessage,
   DataMessageFlags,
   isAci,
+  normalizeServiceId,
   ReceiptType,
   type SyncMessage,
 } from './schema.ts';
@@ -41,6 +43,17 @@ export const GROUP_PREFIX = 'group:';
 
 export function messageRemoteId(authorAci: string, sentTimestamp: number): string {
   return `${authorAci}:${sentTimestamp}`;
+}
+
+/** The author and the sent timestamp a remote id is made of, or a throw for anything else. */
+export function parseMessageRemoteId(remoteId: string): { authorAci: string; sentTimestamp: number } {
+  const split = remoteId.lastIndexOf(':');
+  const authorAci = normalizeServiceId(remoteId.slice(0, split));
+  const sentTimestamp = Number(remoteId.slice(split + 1));
+  if (split < 0 || authorAci === null || !isAci(authorAci) || !Number.isSafeInteger(sentTimestamp)) {
+    throw new Error(_('this message has no Signal id to reply to'));
+  }
+  return { authorAci, sentTimestamp };
 }
 
 export function peerOf(

@@ -633,6 +633,58 @@ export default async () => {
       });
     });
 
+    await it('quotes the message it answers, in the copies and in the transcript', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [ALICE_ACI],
+        });
+        expect(sender.features.replies).toBe(true);
+        try {
+          await sender.send({
+            to: ALICE_ACI,
+            text: 'Antwort',
+            replyTo: { remoteId: `${ALICE_ACI.toUpperCase()}:1700000000123` },
+          });
+        } finally {
+          await sender.close();
+        }
+        expect(rig.server.delivered.length).toBe(4);
+        const quotes = [
+          ...rig.server.delivered.slice(0, 2).map((copy) => copy.content.dataMessage?.quote),
+          ...rig.server.delivered.slice(2).map((copy) => copy.content.syncMessage?.sent?.message?.quote),
+        ];
+        for (const quote of quotes) {
+          expect(quote?.id).toBe(1700000000123);
+          expect(quote?.authorAci).toBe(ALICE_ACI);
+        }
+      });
+    });
+
+    await it('refuses a reply to something without a Signal id, sending nothing', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [ALICE_ACI],
+        });
+        try {
+          for (const remoteId of [
+            '12345',
+            'not-an-aci:1700000000123',
+            `${ALICE_ACI}:abc`,
+            `PNI:${ALICE_ACI}:1`,
+          ]) {
+            expect(
+              await refused(sender.send({ to: ALICE_ACI, text: 'Antwort', replyTo: { remoteId } })),
+            ).toBe(true);
+          }
+        } finally {
+          await sender.close();
+        }
+        expect(rig.server.delivered.length).toBe(0);
+      });
+    });
+
     await it('refuses a message over the byte limit instead of splitting it', async () => {
       await withRig(GRANTED, async (rig) => {
         // Measured in bytes, not characters: two bytes per 'ä' is one byte over the limit.

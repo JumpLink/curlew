@@ -15,7 +15,9 @@
  *   `GET /v1/certificate/delivery`; nothing in this package fetches or stores one. A message
  *   therefore goes out identified — which changes nothing the recipient sees, and nothing the
  *   server does not already know: its socket is authenticated as this device.
- * - **attachments, styles, quotes, reactions, edits.** The body is the message.
+ * - **attachments, styles, reactions, edits.** The body is the message. A reply is a `quote` of
+ *   the message it answers: its sent timestamp and its author's ACI, which is what a Signal
+ *   remote id is made of.
  * - **splitting.** Past `SIGNAL_MAX_MESSAGE_BYTES` Signal sends the text as a long-message
  *   attachment; curlew sends no attachments, so a longer text is refused, never cut.
  *
@@ -40,7 +42,7 @@ import {
 import type * as Core from '@signalapp/libsignal-client';
 import type { ChatFetch, ChatResponseLike } from './guard.ts';
 import type { SignalLib } from './lib.ts';
-import { GROUP_PREFIX, messageRemoteId } from './map.ts';
+import { GROUP_PREFIX, messageRemoteId, parseMessageRemoteId } from './map.ts';
 import { basicAuth, JSON_TYPE, jsonBody } from './net.ts';
 import { type DeviceAccount, fromBase64, NS, type SignalProtocolStore, toBase64 } from './protocol-store.ts';
 import { ProtoWriter } from './proto.ts';
@@ -66,7 +68,9 @@ export const SIGNAL_MAX_MESSAGE_BYTES = 2048;
  */
 const F = {
   content: { dataMessage: 1, syncMessage: 2 },
-  data: { body: 1, timestamp: 7 },
+  data: { body: 1, quote: 8, timestamp: 7 },
+  /** `DataMessage.Quote`; the author goes out in both forms, like the destination of a transcript. */
+  quote: { id: 1, authorAci: 5, authorAciBinary: 8 },
   sync: { sent: 1 },
   sent: {
     timestamp: 2,
@@ -154,7 +158,7 @@ export class SignalSender implements MessageSender {
   readonly features: SenderFeatures = {
     markdown: false,
     attachments: false,
-    replies: false,
+    replies: true,
   };
   private readonly lib: SignalLib;
   private readonly store: SignalProtocolStore;
@@ -197,6 +201,16 @@ export class SignalSender implements MessageSender {
     const dataMessage = new ProtoWriter()
       .string(F.data.body, message.text)
       .uint(F.data.timestamp, timestamp);
+    if (message.replyTo) {
+      const quoted = parseMessageRemoteId(message.replyTo.remoteId);
+      dataMessage.message(
+        F.data.quote,
+        new ProtoWriter()
+          .uint(F.quote.id, quoted.sentTimestamp)
+          .string(F.quote.authorAci, quoted.authorAci)
+          .bytes(F.quote.authorAciBinary, uuidToBytes(quoted.authorAci)),
+      );
+    }
 
     // The recipient first: a transcript on the phone for a message the recipient never got would
     // show the user something that does not exist.
