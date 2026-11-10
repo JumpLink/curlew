@@ -102,11 +102,10 @@ export interface Flushable {
 
 /**
  * Why nothing of a decrypted content could be mapped, or null when it was understood — or when it
- * is content curlew deliberately does not show (typing, a disappearing-messages timer, a
- * reaction): those are dropped on purpose, not kept.
+ * is content curlew deliberately does not show (typing, a disappearing-messages timer): those are dropped on purpose, not kept.
  *
  * Only what this build does not UNDERSTAND counts: a field a newer Signal added. A field it knows
- * but ignores (a reaction next to a body) is no loss, and a content whose body was mapped is in
+ * but ignores (a sticker next to a body) is no loss, and a content whose body was mapped is in
  * the index whatever else it carries.
  */
 function unmappedReason(result: Decrypted, mappedEvents: number): string | null {

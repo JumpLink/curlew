@@ -167,7 +167,13 @@ export interface DataMessage {
   /** Display names of shared contact cards. */
   contacts: string[];
   sticker: boolean;
-  reaction: boolean;
+  /** An emoji reaction to the message its author and sent timestamp name; `remove` takes it back. */
+  reaction: {
+    emoji: string | null;
+    remove: boolean;
+    targetAuthorAci: string | null;
+    targetSentTimestamp: number | null;
+  } | null;
   /** A delete-for-everyone of the sender's own earlier message, by its sent timestamp. */
   deleteTarget: number | null;
   /** A group admin's delete: the author and sent timestamp of the removed message. */
@@ -205,6 +211,7 @@ const KNOWN_DATA_FIELDS = new Set([
 export function decodeDataMessage(f: Fields): DataMessage {
   const group = messageField(f, 15);
   const quote = messageField(f, 8);
+  const reaction = messageField(f, 16);
   const del = messageField(f, 17);
   const admin = messageField(f, 29);
   const poll = messageField(f, 24);
@@ -225,7 +232,14 @@ export function decodeDataMessage(f: Fields): DataMessage {
     quote: quote ? { id: numberField(quote, 1), authorAci: serviceId(quote, 5, 8) } : null,
     contacts: repeatedMessages(f, 9).map(contactCardName),
     sticker: messageField(f, 11) !== null,
-    reaction: messageField(f, 16) !== null,
+    reaction: reaction
+      ? {
+          emoji: stringField(reaction, 1),
+          remove: boolField(reaction, 2) ?? false,
+          targetAuthorAci: serviceId(reaction, 4, 6),
+          targetSentTimestamp: numberField(reaction, 5),
+        }
+      : null,
     deleteTarget: del ? numberField(del, 1) : null,
     adminDelete: admin
       ? {
@@ -394,7 +408,7 @@ export interface DataMessageInput {
     width?: number;
     height?: number;
   }>;
-  reaction?: boolean;
+  reaction?: { emoji: string; remove?: boolean; targetAuthorAci: string; targetSentTimestamp: number };
   flags?: number;
 }
 
@@ -420,7 +434,16 @@ export function encodeDataMessage(d: DataMessageInput): ProtoWriter {
   w.uint(7, d.timestamp);
   if (d.quote) w.message(8, new ProtoWriter().uint(1, d.quote.id).string(5, d.quote.authorAci));
   if (d.groupMasterKey) w.message(15, new ProtoWriter().bytes(1, d.groupMasterKey).uint(2, 1));
-  if (d.reaction) w.message(16, new ProtoWriter().string(1, '👍'));
+  if (d.reaction) {
+    w.message(
+      16,
+      new ProtoWriter()
+        .string(1, d.reaction.emoji)
+        .bool(2, d.reaction.remove)
+        .string(4, d.reaction.targetAuthorAci)
+        .uint(5, d.reaction.targetSentTimestamp),
+    );
+  }
   if (d.deleteTarget !== undefined) w.message(17, new ProtoWriter().uint(1, d.deleteTarget));
   return w;
 }
