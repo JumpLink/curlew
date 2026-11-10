@@ -36,10 +36,12 @@ import {
   PAGE_SIZE,
   protocolDividers,
   protocolRunStarts,
+  quoteOf,
   senderRunStarts,
   type ShownMessage,
   subjectLabels,
   type ProtocolRun,
+  type Quote,
 } from './conversation-model.ts';
 import { attachmentList, type AttachmentHandlers } from './attachment-view.ts';
 import type { AlbumItem } from './media-viewer.ts';
@@ -362,6 +364,35 @@ export function createConversationView(
     }
   };
 
+  // The message a reply points at: a bar, the author and a short excerpt, in theme colours only.
+  const quoteBlock = (quote: Quote): Gtk.Widget => {
+    const text = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, hexpand: true });
+    const author = new Gtk.Label({ label: quote.author, xalign: 0, ellipsize: Pango.EllipsizeMode.END });
+    author.add_css_class('caption-heading');
+    text.append(author);
+    const excerpt = new Gtk.Label({
+      label: quote.excerpt,
+      xalign: 0,
+      lines: 2,
+      wrap: true,
+      wrapMode: Pango.WrapMode.WORD_CHAR,
+      ellipsize: Pango.EllipsizeMode.END,
+      maxWidthChars: 40,
+    });
+    excerpt.add_css_class('caption');
+    excerpt.add_css_class('dim-label');
+    text.append(excerpt);
+    const block = new Gtk.Box({ spacing: 8 });
+    const bar = new Gtk.Separator({ orientation: Gtk.Orientation.VERTICAL });
+    block.append(bar);
+    block.append(text);
+    block.update_property(
+      [Gtk.AccessibleProperty.LABEL],
+      [fmt(_('Reply to {author}: {excerpt}'), { author: quote.author, excerpt: quote.excerpt })],
+    );
+    return block;
+  };
+
   // Builds the rows of one message; `position` is where the first goes in the list, -1 for the end.
   const addRow = (
     message: ShownMessage,
@@ -387,6 +418,8 @@ export function createConversationView(
     if (senderBox) bubble.append(senderBox);
     const heading = subject ? subjectHeading(subject) : null;
     if (heading) bubble.append(heading);
+    const quote = quoteOf(message, messages);
+    if (quote) bubble.append(quoteBlock(quote));
     const written = message.bodyText?.trim() || message.notice;
     const full =
       (written ||

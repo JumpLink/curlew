@@ -11,6 +11,7 @@ import {
   defaultProtocolChoice,
   foldAlbums,
   newOlder,
+  quoteOf,
   protocolDividers,
   protocolRunStarts,
   replySubject,
@@ -303,6 +304,39 @@ export default async () => {
         expect(folded.length).toBe(3);
         expect(folded[0]).toBe(plain[0]);
       });
+    });
+  });
+
+  await describe('quoteOf', async () => {
+    const chat = (over: Partial<ShownMessage> & { id: string }): ShownMessage =>
+      message({ backend: 'matrix', ...over, ref: { accountId: 'a', backend: 'matrix', remoteId: over.id } });
+
+    await it('names the author and the first line of the quoted text', async () => {
+      const first = chat({ id: 'r1', senderName: 'Alex', bodyText: '\n  Treffen wir uns?\nUm acht.' });
+      const reply = chat({ id: 'r2', replyToRemoteId: 'r1', bodyText: 'Gern' });
+      expect(quoteOf(reply, [first, reply])).toStrictEqual({ author: 'Alex', excerpt: 'Treffen wir uns?' });
+    });
+
+    await it('calls the person\'s own message "You" and clips a long excerpt', async () => {
+      const first = chat({ id: 'r1', fromSelf: true, bodyText: 'x'.repeat(300) });
+      const reply = chat({ id: 'r2', replyToRemoteId: 'r1' });
+      const quote = quoteOf(reply, [first, reply]);
+      expect(quote?.author).toBe('You');
+      expect(quote?.excerpt.length).toBe(140);
+      expect(quote?.excerpt.endsWith('…')).toBe(true);
+    });
+
+    await it('falls back to the attachment line and to nothing', async () => {
+      const first = chat({
+        id: 'r1',
+        senderName: 'Alex',
+        hasAttachments: true,
+        attachments: [{ filename: 'plan.pdf' } as never],
+      });
+      const reply = chat({ id: 'r2', replyToRemoteId: 'r1' });
+      expect(quoteOf(reply, [first, reply])?.excerpt).toContain('plan.pdf');
+      expect(quoteOf(reply, [reply])).toBe(null);
+      expect(quoteOf(chat({ id: 'r3' }), [first])).toBe(null);
     });
   });
 };
