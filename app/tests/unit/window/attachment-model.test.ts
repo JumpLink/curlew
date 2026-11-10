@@ -9,6 +9,7 @@ import {
   effectiveMime,
   INLINE_IMAGE_MAX_BYTES,
   isGridMedia,
+  leadsWithMedia,
   isOpenable,
   playbackFraction,
   playbackLabel,
@@ -181,6 +182,17 @@ export default async () => {
       expect(isGridMedia(part({ mimeType: 'video/mp4', filename: 'a.mp4' }))).toBe(true);
       expect(isGridMedia(part({ mimeType: 'application/pdf', filename: 'a.pdf' }))).toBe(false);
       expect(isGridMedia({ filename: 'x.png', mimeType: 'image/png' })).toBe(false);
+    });
+  });
+
+  await describe('leadsWithMedia', async () => {
+    await it('is true for a picture, a poster or a grid in front, false for tiles and nothing', async () => {
+      const picture = part({});
+      expect(leadsWithMedia([])).toBe(false);
+      expect(leadsWithMedia([picture])).toBe(true);
+      expect(leadsWithMedia([picture, part({ mimeType: 'application/pdf', filename: 'a.pdf' })])).toBe(true);
+      expect(leadsWithMedia([part({ mimeType: 'application/pdf', filename: 'a.pdf' }), picture])).toBe(false);
+      expect(leadsWithMedia([part({ mimeType: 'audio/ogg', filename: 'a.ogg' })])).toBe(false);
     });
   });
 

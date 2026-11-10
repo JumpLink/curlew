@@ -6,6 +6,7 @@
 
 import Adw from 'gi://Adw?version=1';
 import Gdk from 'gi://Gdk?version=4.0';
+import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import GObject from 'gi://GObject?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
@@ -51,14 +52,27 @@ export function createMediaViewer(
   header.set_title_widget(heading);
   const back = new Gtk.Button({ iconName: 'go-previous-symbolic', tooltipText: _('Back') });
   const fullscreen = new Gtk.Button({ iconName: 'view-fullscreen-symbolic', tooltipText: _('Fullscreen') });
-  const copy = new Gtk.Button({ iconName: 'edit-copy-symbolic', tooltipText: _('Copy image') });
-  const save = new Gtk.Button({ iconName: 'document-save-symbolic', tooltipText: _('Save as…') });
-  const openWith = new Gtk.Button({ iconName: 'document-open-symbolic', tooltipText: _('Open with…') });
+  // Copy, save and open-with sit in one menu, as in Fractal: three more buttons would crowd the bar at 360 px.
+  const actions = new Gio.SimpleActionGroup();
+  const copy = new Gio.SimpleAction({ name: 'copy', enabled: false });
+  const save = new Gio.SimpleAction({ name: 'save', enabled: false });
+  const openWith = new Gio.SimpleAction({ name: 'open-with', enabled: false });
+  for (const action of [copy, save, openWith]) actions.add_action(action);
+  toolbar.insert_action_group('viewer', actions);
+  const menu = new Gio.Menu();
+  menu.append(_('Copy image'), 'viewer.copy');
+  menu.append(_('Save as…'), 'viewer.save');
+  menu.append(_('Open with…'), 'viewer.open-with');
+  const more = new Gtk.MenuButton({
+    iconName: 'view-more-symbolic',
+    tooltipText: _('Attachment Actions'),
+    menuModel: menu,
+    primary: true,
+  });
+  more.update_property([Gtk.AccessibleProperty.LABEL], [_('Attachment Actions')]);
   header.pack_start(back);
+  header.pack_end(more);
   header.pack_end(fullscreen);
-  header.pack_end(save);
-  header.pack_end(openWith);
-  header.pack_end(copy);
   toolbar.add_top_bar(header);
 
   const stack = new Gtk.Stack();
@@ -182,10 +196,10 @@ export function createMediaViewer(
 
   back.connect('clicked', close);
   fullscreen.connect('clicked', toggleFullscreen);
-  save.connect('clicked', savePart);
-  openWith.connect('clicked', openPart);
+  save.connect('activate', savePart);
+  openWith.connect('activate', openPart);
   retry.connect('clicked', () => show());
-  copy.connect('clicked', copyImage);
+  copy.connect('activate', copyImage);
 
   // In fullscreen the bar is out of the way; a click on the media brings it back.
   const click = new Gtk.GestureClick();
@@ -206,10 +220,9 @@ export function createMediaViewer(
     heading.set_subtitle(position);
     previous.set_visible(albumStep(index, items.length, -1) !== null);
     next.set_visible(albumStep(index, items.length, 1) !== null);
-    copy.set_visible(kind === 'image');
-    save.set_sensitive(false);
-    openWith.set_sensitive(false);
-    copy.set_sensitive(false);
+    save.set_enabled(false);
+    openWith.set_enabled(false);
+    copy.set_enabled(false);
     clearVideo();
     picture.set_paintable(null);
     picture.update_property(
@@ -221,8 +234,8 @@ export function createMediaViewer(
       .then(async (path) => {
         if (mine !== run || !current || toolbar.get_root() === null) return;
         current.path = path;
-        save.set_sensitive(true);
-        openWith.set_sensitive(true);
+        save.set_enabled(true);
+        openWith.set_enabled(true);
         if (kind === 'video') {
           const video = new Gtk.Video({ autoplay: true, hexpand: true, vexpand: true });
           video.set_filename(path);
@@ -234,7 +247,7 @@ export function createMediaViewer(
           if (mine !== run || !current || toolbar.get_root() === null) return;
           current.texture = texture;
           picture.set_paintable(texture);
-          copy.set_sensitive(true);
+          copy.set_enabled(true);
           stack.set_visible_child_name('image');
         }
         // The next picture is likely wanted next; a video is not fetched unasked.

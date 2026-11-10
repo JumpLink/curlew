@@ -170,6 +170,17 @@ export function isGridMedia(info: AttachmentInfo): boolean {
   return (kind === 'image' || kind === 'video') && isOpenable(info);
 }
 
+/**
+ * Whether the first of a message's attachments is a picture block (a picture, a poster or a grid)
+ * rather than a tile. Such a block runs to the bubble's edges, so the bubble gives it no padding.
+ */
+export function leadsWithMedia(shown: readonly AttachmentInfo[]): boolean {
+  const first = shown[0];
+  if (!first) return false;
+  if (showsInline(first) || showsPoster(first)) return true;
+  return isGridMedia(first) && shown.filter(isGridMedia).length > 1;
+}
+
 /** Whether the bubble shows a player (true) or a tile (false): a voice note or audio that can be fetched. */
 export function showsPlayer(info: AttachmentInfo): boolean {
   const kind = attachmentKind(info);

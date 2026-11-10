@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 20:35+0100\n"
+"POT-Creation-Date: 2026-11-10 20:56+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1005,7 +1005,7 @@ msgstr[0] "{n} weiterer Chat hat neue Nachrichten"
 msgstr[1] "{n} weitere Chats haben neue Nachrichten"
 
 #: app/src/core/lib/message-notifications.ts:118
-#: app/src/window/attachment-view.ts:102
+#: app/src/window/attachment-view.ts:103
 msgid "Open"
 msgstr "Öffnen"
 
@@ -1755,7 +1755,7 @@ msgstr "Weiter"
 msgid "Adding account…"
 msgstr "Konto wird hinzugefügt …"
 
-#: app/src/window/account-add.ts:218 app/src/window/media-viewer.ts:90
+#: app/src/window/account-add.ts:218 app/src/window/media-viewer.ts:104
 msgid "Try Again"
 msgstr "Erneut versuchen"
 
@@ -1843,7 +1843,7 @@ msgstr ""
 #: app/src/window/agent-access-page.ts:234
 #: app/src/window/conversation-list.ts:386
 #: app/src/window/conversation-list.ts:472
-#: app/src/window/conversation-view.ts:595
+#: app/src/window/conversation-view.ts:609
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -2078,35 +2078,35 @@ msgstr "Noch keine Regeln"
 msgid "Add rule"
 msgstr "Regel hinzufügen"
 
-#: app/src/window/attachment-view.ts:102
+#: app/src/window/attachment-view.ts:103
 msgid "Play"
 msgstr "Abspielen"
 
-#: app/src/window/attachment-view.ts:107 app/src/window/audio-player.ts:56
-#: app/src/window/media-viewer.ts:55
+#: app/src/window/attachment-view.ts:108 app/src/window/audio-player.ts:56
+#: app/src/window/media-viewer.ts:64
 msgid "Save as…"
 msgstr "Speichern unter…"
 
-#: app/src/window/attachment-view.ts:125 app/src/window/audio-player.ts:133
+#: app/src/window/attachment-view.ts:126 app/src/window/audio-player.ts:133
 #: app/src/window/audio-player.ts:160
 msgid "Could not fetch the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
-#: app/src/window/attachment-view.ts:148 app/src/window/attachment-view.ts:157
+#: app/src/window/attachment-view.ts:149 app/src/window/attachment-view.ts:158
 #: app/src/window/conversation-model.ts:251
 #: app/src/window/conversation-model.ts:256
 msgid "Attachment"
 msgstr "Anhang"
 
-#: app/src/window/attachment-view.ts:221 app/src/window/media-viewer.ts:217
+#: app/src/window/attachment-view.ts:230 app/src/window/media-viewer.ts:230
 msgid "Video: {name}"
 msgstr "Video: {name}"
 
-#: app/src/window/attachment-view.ts:221 app/src/window/media-viewer.ts:217
+#: app/src/window/attachment-view.ts:230 app/src/window/media-viewer.ts:230
 msgid "Image: {name}"
 msgstr "Bild: {name}"
 
-#: app/src/window/attachment-view.ts:439
+#: app/src/window/attachment-view.ts:466
 #: app/src/window/conversation-model.ts:259
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
@@ -2315,7 +2315,7 @@ msgstr[0] "{count} mögliches Duplikat"
 msgstr[1] "{count} mögliche Duplikate"
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:1140
+#: app/src/window/conversation-view.ts:1153
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -2351,7 +2351,7 @@ msgstr[1] "Du und {count} weitere Personen"
 
 #: app/src/window/conversation-model.ts:292
 #: app/src/window/conversation-model.ts:305
-#: app/src/window/conversation-view.ts:579
+#: app/src/window/conversation-view.ts:593
 msgid "You"
 msgstr "Du"
 
@@ -2366,7 +2366,7 @@ msgid "Choose how to reach this person"
 msgstr "Erreichbarkeit dieser Person wählen"
 
 #: app/src/window/conversation-view.ts:158
-#: app/src/window/conversation-view.ts:374
+#: app/src/window/conversation-view.ts:388
 msgid "Write a message"
 msgstr "Nachricht schreiben"
 
@@ -2386,90 +2386,90 @@ msgstr "Bearbeiten abbrechen"
 msgid "Conversation"
 msgstr "Unterhaltung"
 
-#: app/src/window/conversation-view.ts:340
+#: app/src/window/conversation-view.ts:354
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 "{protocol} kann keine Dateien senden; die angehängten Dateien wurden entfernt"
 
-#: app/src/window/conversation-view.ts:392
+#: app/src/window/conversation-view.ts:406
 msgid "Send via {protocol}"
 msgstr "Senden über {protocol}"
 
-#: app/src/window/conversation-view.ts:495
+#: app/src/window/conversation-view.ts:509
 msgid "Show the quoted message"
 msgstr "Zitierte Nachricht anzeigen"
 
-#: app/src/window/conversation-view.ts:502
-#: app/src/window/conversation-view.ts:525
+#: app/src/window/conversation-view.ts:516
+#: app/src/window/conversation-view.ts:539
 msgid "Reply to {author}: {excerpt}"
 msgstr "Antwort auf {author}: {excerpt}"
 
-#: app/src/window/conversation-view.ts:550
+#: app/src/window/conversation-view.ts:564
 msgid "Reaction not sent: {error}"
 msgstr "Reaktion nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:578
+#: app/src/window/conversation-view.ts:592
 msgid "Edit message"
 msgstr "Nachricht bearbeiten"
 
-#: app/src/window/conversation-view.ts:582
+#: app/src/window/conversation-view.ts:596
 msgid "Editing your message: {excerpt}"
 msgstr "Eigene Nachricht bearbeiten: {excerpt}"
 
-#: app/src/window/conversation-view.ts:590
+#: app/src/window/conversation-view.ts:604
 msgid "Delete message?"
 msgstr "Nachricht löschen?"
 
-#: app/src/window/conversation-view.ts:591
+#: app/src/window/conversation-view.ts:605
 msgid "This will remove the message for everyone in the chat."
 msgstr "Dadurch wird die Nachricht für alle im Chat entfernt."
 
-#: app/src/window/conversation-view.ts:596
+#: app/src/window/conversation-view.ts:610
 msgid "Delete for everyone"
 msgstr "Für alle löschen"
 
-#: app/src/window/conversation-view.ts:613
+#: app/src/window/conversation-view.ts:627
 msgid "Message not deleted: {error}"
 msgstr "Nachricht nicht gelöscht: {error}"
 
-#: app/src/window/conversation-view.ts:665
+#: app/src/window/conversation-view.ts:679
 msgid "Reply"
 msgstr "Antworten"
 
-#: app/src/window/conversation-view.ts:666
+#: app/src/window/conversation-view.ts:680
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: app/src/window/conversation-view.ts:667
+#: app/src/window/conversation-view.ts:681
 msgid "Delete"
 msgstr "Löschen"
 
-#: app/src/window/conversation-view.ts:668
+#: app/src/window/conversation-view.ts:682
 msgid "Copy"
 msgstr "Kopieren"
 
-#: app/src/window/conversation-view.ts:786
+#: app/src/window/conversation-view.ts:795
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:826
-#: app/src/window/conversation-view.ts:950
+#: app/src/window/conversation-view.ts:837
+#: app/src/window/conversation-view.ts:963
 msgid "edited"
 msgstr "bearbeitet"
 
-#: app/src/window/conversation-view.ts:1004
+#: app/src/window/conversation-view.ts:1017
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:1105
+#: app/src/window/conversation-view.ts:1118
 msgid "Message not edited: {error}"
 msgstr "Nachricht nicht bearbeitet: {error}"
 
-#: app/src/window/conversation-view.ts:1152
+#: app/src/window/conversation-view.ts:1165
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:1155
+#: app/src/window/conversation-view.ts:1168
 msgid "Retry"
 msgstr "Erneut versuchen"
 
@@ -2477,47 +2477,51 @@ msgstr "Erneut versuchen"
 msgid "Show more"
 msgstr "Mehr anzeigen"
 
-#: app/src/window/media-viewer.ts:52
+#: app/src/window/media-viewer.ts:53
 msgid "Back"
 msgstr "Zurück"
 
-#: app/src/window/media-viewer.ts:53 app/src/window/media-viewer.ts:287
+#: app/src/window/media-viewer.ts:54 app/src/window/media-viewer.ts:300
 msgid "Fullscreen"
 msgstr "Vollbild"
 
-#: app/src/window/media-viewer.ts:54
+#: app/src/window/media-viewer.ts:63
 msgid "Copy image"
 msgstr "Bild kopieren"
 
-#: app/src/window/media-viewer.ts:56
+#: app/src/window/media-viewer.ts:65
 msgid "Open with…"
 msgstr "Öffnen mit…"
 
-#: app/src/window/media-viewer.ts:88
+#: app/src/window/media-viewer.ts:68 app/src/window/media-viewer.ts:72
+msgid "Attachment Actions"
+msgstr "Anhangsaktionen"
+
+#: app/src/window/media-viewer.ts:102
 msgid "Could not load the attachment"
 msgstr "Der Anhang konnte nicht geladen werden"
 
-#: app/src/window/media-viewer.ts:110
+#: app/src/window/media-viewer.ts:124
 msgid "Previous"
 msgstr "Zurück"
 
-#: app/src/window/media-viewer.ts:111
+#: app/src/window/media-viewer.ts:125
 msgid "Next"
 msgstr "Weiter"
 
-#: app/src/window/media-viewer.ts:161
+#: app/src/window/media-viewer.ts:175
 msgid "Could not save the attachment: {error}"
 msgstr "Der Anhang konnte nicht gespeichert werden: {error}"
 
-#: app/src/window/media-viewer.ts:169
+#: app/src/window/media-viewer.ts:183
 msgid "Could not open the attachment: {error}"
 msgstr "Der Anhang konnte nicht geöffnet werden: {error}"
 
-#: app/src/window/media-viewer.ts:180
+#: app/src/window/media-viewer.ts:194
 msgid "Image copied"
 msgstr "Bild kopiert"
 
-#: app/src/window/media-viewer.ts:287
+#: app/src/window/media-viewer.ts:300
 msgid "Leave fullscreen"
 msgstr "Vollbild beenden"
 
@@ -3318,7 +3322,8 @@ msgstr "WhatsApp hat die Reaktion nicht angenommen — es wurde nichts gesendet"
 
 #: packages/whatsapp/src/client.ts:232
 msgid "WhatsApp did not take the edit — nothing was sent"
-msgstr "WhatsApp hat die Bearbeitung nicht angenommen — es wurde nichts gesendet"
+msgstr ""
+"WhatsApp hat die Bearbeitung nicht angenommen — es wurde nichts gesendet"
 
 #: packages/whatsapp/src/client.ts:237
 msgid "WhatsApp did not take the deletion — nothing was sent"
