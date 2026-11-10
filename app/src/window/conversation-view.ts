@@ -496,6 +496,8 @@ export function createConversationView(
     const text = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, hexpand: true });
     const name = new Gtk.Label({ label: author, xalign: 0, ellipsize: Pango.EllipsizeMode.END });
     name.add_css_class('caption-heading');
+    // The author in the accent colour, as Fractal and Telegram tint a quote.
+    name.add_css_class('accent');
     text.append(name);
     const line = new Gtk.Label({
       label: excerpt,
