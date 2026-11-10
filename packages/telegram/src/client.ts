@@ -160,6 +160,10 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
     sendReaction: async (chatId, messageId, emoji) => {
       await client.sendReaction({ chatId, message: messageId, emoji });
     },
+    editMessage: async (chatId, messageId, text) => {
+      await client.editMessage({ chatId, message: messageId, text });
+    },
+    deleteMessage: (chatId, messageId) => client.deleteMessagesById(chatId, [messageId], { revoke: true }),
     sendFile: (chatId, file) =>
       client.sendMedia(
         chatId,

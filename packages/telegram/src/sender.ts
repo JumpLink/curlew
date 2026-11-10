@@ -12,6 +12,9 @@ import {
   _,
   fmt,
   type MessageSender,
+  type ReplyTarget,
+  type SendingDeletion,
+  type SendingEdit,
   type SendingMessage,
   type SendingReaction,
   type SendPermit,
@@ -57,8 +60,8 @@ export class TelegramSender implements MessageSender {
     attachments: true,
     replies: true,
     reactions: true,
-    edits: false,
-    deletes: false,
+    edits: true,
+    deletes: true,
   };
   private readonly client: TelegramClientHandle;
   private readonly permit: SendPermit;
@@ -117,6 +120,36 @@ export class TelegramSender implements MessageSender {
     const chatId = this.chatId(reaction.to);
     const emoji = reaction.emoji === null ? null : reaction.emoji.replaceAll('\uFE0F', '');
     await this.client.sendReaction(chatId, replyNumber(chatId, reaction.target.remoteId), emoji);
+  }
+
+  /** The message number of a message of the person's own, or a refusal before anything is sent. */
+  private ownNumber(chatId: number, target: ReplyTarget): number {
+    const number = replyNumber(chatId, target.remoteId);
+    if (target.fromSelf !== true) {
+      throw new Error(_('only your own messages can be changed — nothing was sent'));
+    }
+    return number;
+  }
+
+  /** Replaces the text of one of the person's own messages. */
+  async edit(edit: SendingEdit): Promise<void> {
+    const chatId = this.chatId(edit.to);
+    const number = this.ownNumber(chatId, edit.target);
+    if (edit.text.length > TELEGRAM_MAX_MESSAGE_CHARS) {
+      throw new Error(
+        fmt(_('a Telegram message holds at most {max} characters, this one has {length} — shorten it'), {
+          max: String(TELEGRAM_MAX_MESSAGE_CHARS),
+          length: String(edit.text.length),
+        }),
+      );
+    }
+    await this.client.editMessage(chatId, number, edit.text);
+  }
+
+  /** Deletes one of the person's own messages for everyone. */
+  async delete(deletion: SendingDeletion): Promise<void> {
+    const chatId = this.chatId(deletion.to);
+    await this.client.deleteMessage(chatId, this.ownNumber(chatId, deletion.target));
   }
 
   /**

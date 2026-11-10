@@ -21,7 +21,8 @@ const DELIVERED_CAPABILITIES: ReadonlyArray<{
   {
     backend: 'telegram',
     manifest: BUILTIN_PLUGINS.find((p) => p.manifest.name === 'telegram')!.manifest,
-    trueFlags: 'edits,reactions,threads,readReceipts,groups,attachments,attachmentsRead,replies',
+    trueFlags:
+      'edits,reactions,editsOwn,deletesOwn,threads,readReceipts,groups,attachments,attachmentsRead,replies',
   },
   {
     backend: 'signal',

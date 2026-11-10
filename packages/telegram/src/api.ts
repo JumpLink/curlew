@@ -209,6 +209,10 @@ export interface TelegramClientHandle extends TelegramApi {
   sendFile(chatId: number, file: TgOutgoingFile): Promise<TgMessage>;
   /** The person's reaction to message `messageId` of the chat, replacing an earlier one; null takes it back. */
   sendReaction(chatId: number, messageId: number, emoji: string | null): Promise<void>;
+  /** Replace the text of the person's own message `messageId` of the chat. */
+  editMessage(chatId: number, messageId: number, text: string): Promise<void>;
+  /** Delete the person's own message `messageId` of the chat for everyone (revoke). */
+  deleteMessage(chatId: number, messageId: number): Promise<void>;
   connect(): Promise<void>;
   /** Present only on a client made with `live: true`. */
   readonly live?: TelegramLive;
