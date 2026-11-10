@@ -15,6 +15,7 @@
 
 ### Changed
 
+- The cache of fetched attachment previews is capped at 1 GiB while the window runs; the least recently fetched parts are dropped first and a tap fetches one again. It used to grow until the window was restarted.
 - `curlew window`: the filter chips are pills that fill with the accent colour while on, and the
   protocol badge sits on a solid circle at the avatar's rim, so it is legible and no longer covers
   the initials. gjsify 0.64.19.
