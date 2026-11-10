@@ -51,6 +51,36 @@ function count(db: ReturnType<typeof freshDb>, sql: string, ...params: string[])
 
 export default async () => {
   await describe('syncChats', async () => {
+    await it('stores reactions of an archive network, several per person, and takes them back by event id', async () => {
+      const db = freshDb();
+      try {
+        const backend = telegramFixture();
+        backend.reactions.set('1001', [
+          { remoteId: '1001/1', reactor: '1001', emoji: '👍', eventId: 'e1' },
+          { remoteId: '1001/1', reactor: '1001', emoji: '❤️', eventId: 'e2' },
+          { remoteId: '1001/1', reactor: null, emoji: '👍', eventId: 'e3' },
+          { remoteId: '1001/99', reactor: '1001', emoji: '🎉' },
+        ]);
+        await syncChats(db, backend, { now: AT('2026-08-06T12:00:00Z') });
+        rebuildConversations(db);
+        const chips = () =>
+          (getConversation(db, DIRECT)?.messages[0].reactions ?? [])
+            .map((r) => `${r.emoji}${r.count}${r.own ? '*' : ''}`)
+            .join(',');
+        expect(chips()).toBe('👍2*,❤️1');
+        backend.reactions.set('1001', []);
+        backend.retractedReactions = ['e1'];
+        await syncChats(db, backend, { now: AT('2026-08-06T12:05:00Z'), fullScan: true });
+        expect(chips()).toBe('❤️1,👍1*');
+        backend.reactions.set('1001', [{ remoteId: '1001/1', reactor: '1001', emoji: null, replace: true }]);
+        backend.retractedReactions = [];
+        await syncChats(db, backend, { now: AT('2026-08-06T12:10:00Z'), fullScan: true });
+        expect(chips()).toBe('👍1*');
+      } finally {
+        db.close();
+      }
+    });
+
     await it('writes every chat as a conversation of bubbles, with the network ids', async () => {
       const db = freshDb();
       try {

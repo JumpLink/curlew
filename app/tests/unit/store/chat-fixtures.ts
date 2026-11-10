@@ -6,6 +6,7 @@ import type {
   ChatInfo,
   ChatMessage,
   ChatPeer,
+  ChatReaction,
   ChatSession,
 } from '@curlew/protocol';
 
@@ -131,6 +132,9 @@ export class FakeChatBackend implements ChatBackend {
   rewindable = false;
   /** Set true for a network whose messages can carry an album id (`groupId`). */
   groupsMedia = false;
+  /** Reactions every page of a chat carries, and the event ids it reports taken back. */
+  readonly reactions = new Map<string, ChatReaction[]>();
+  retractedReactions: string[] = [];
   connectError: Error | null = null;
   /** Thrown by `listChats` — a rate limit while listing, or a network that answers nothing. */
   listChatsError: Error | null = null;
@@ -198,6 +202,8 @@ export class FakeChatBackend implements ChatBackend {
           lowestSeq: slice[0]?.seq ?? null,
           exhausted: afterSeq === null || slice.length < limit,
           reachedStart: afterSeq === null ? slice.length === all.length : false,
+          reactions: this.reactions.get(chatId) ?? [],
+          retractedReactions: this.retractedReactions,
         };
       },
       close: async (): Promise<void> => {
