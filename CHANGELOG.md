@@ -27,6 +27,7 @@
 
 ### Added
 
+- A reply shows the message it answers above its text: the author and a short excerpt. Needs the quoted message to be on the page already; older targets are not looked up yet.
 - The media viewer has an *Open with…* button that lets you pick the application, and its error page a *Try Again* button.
 - The media viewer steps through the other pictures and videos of the same message: arrows over the edges, left/right keys and a swipe, with the position (2 / 4) under the title. Pictures and videos in a bubble carry an accessible label with their name.
 - Voice messages and audio files in a chat bubble play in place: a play/pause button, a seek bar and the position out of the length. The part is fetched on the first press, only one plays at a time, and a bubble that leaves the window stops its sound. The buttons carry labels for screen readers.

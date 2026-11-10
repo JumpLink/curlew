@@ -260,6 +260,32 @@ export function attachmentLines(attachments: readonly AttachmentInfo[] | undefin
   return lines;
 }
 
+/** The most characters of a quoted message the quote block shows. */
+export const QUOTE_MAX_CHARS = 140;
+
+export interface Quote {
+  author: string;
+  excerpt: string;
+}
+
+/**
+ * The message `message` replies to, as the quote block shows it, or null when it replies to
+ * nothing or the target is not among the `loaded` messages.
+ */
+export function quoteOf(message: ShownMessage, loaded: readonly ShownMessage[]): Quote | null {
+  const target = message.replyToRemoteId;
+  if (!target) return null;
+  const quoted = loaded.find((candidate) => candidate.ref.remoteId === target && candidate.id !== message.id);
+  if (!quoted) return null;
+  const line = quoted.bodyText
+    ?.split('\n')
+    .map((text) => text.trim())
+    .find((text) => text !== '');
+  const text = line ?? (quoted.hasAttachments ? attachmentLines(quoted.attachments)[0] : '') ?? '';
+  const excerpt = text.length > QUOTE_MAX_CHARS ? `${text.slice(0, QUOTE_MAX_CHARS - 1).trimEnd()}…` : text;
+  return { author: quoted.fromSelf ? _('You') : senderName(quoted), excerpt };
+}
+
 /** The most parts a Telegram album has: a folded bubble lists all of them. */
 export const MAX_ALBUM_PARTS = 10;
 

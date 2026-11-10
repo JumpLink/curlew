@@ -343,6 +343,15 @@ try {
     }
     if (!text) db.prepare(`UPDATE conversation_messages SET has_attachments = 1 WHERE id = ?`).run(`m${n}`);
   });
+  // "Perfect, thank you!" answers the route, so the window has a quote to show.
+  {
+    const asked = HISTORY.findIndex(([, , , text]) => text.startsWith('Here is the route'));
+    const answer = HISTORY.findIndex(([, , , text]) => text === 'Perfect, thank you!');
+    db.prepare('UPDATE conversation_messages SET reply_to_remote_id = ? WHERE id = ?').run(
+      `r${asked + 1}`,
+      `m${answer + 1}`,
+    );
+  }
 
   // A mail with a picture and a PDF. The bytes are not in the index, so the picture is written where
   // a finished download would sit (run the window with CURLEW_PREVIEWS_DIR=<dir>/previews).

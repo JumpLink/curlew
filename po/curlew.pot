@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 11:23+0100\n"
+"POT-Creation-Date: 2026-11-10 11:40+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1456,7 +1456,7 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr ""
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:97
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:99
 #: app/src/window/window.ts:58 app/src/window/window.ts:73
 msgid "Curlew"
 msgstr ""
@@ -2005,7 +2005,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:663
+#: app/src/window/conversation-view.ts:696
 msgid "Continuing via {protocol}"
 msgstr ""
 
@@ -2033,43 +2033,51 @@ msgstr ""
 msgid "File"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:103
+#: app/src/window/conversation-model.ts:286
+msgid "You"
+msgstr ""
+
+#: app/src/window/conversation-view.ts:105
 msgid "Choose how to reach this person"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:120
+#: app/src/window/conversation-view.ts:122
 msgid "Write a message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:131
+#: app/src/window/conversation-view.ts:133
 msgid "Send message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:158
+#: app/src/window/conversation-view.ts:160
 msgid "Conversation"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:274
+#: app/src/window/conversation-view.ts:276
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:289
+#: app/src/window/conversation-view.ts:291
 msgid "Send via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:393
+#: app/src/window/conversation-view.ts:391
+msgid "Reply to {author}: {excerpt}"
+msgstr ""
+
+#: app/src/window/conversation-view.ts:426
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:565
+#: app/src/window/conversation-view.ts:598
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:674
+#: app/src/window/conversation-view.ts:707
 msgid "Message not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:677
+#: app/src/window/conversation-view.ts:710
 msgid "Retry"
 msgstr ""
 
