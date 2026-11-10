@@ -4,6 +4,7 @@ import type { SendPermit } from '@curlew/protocol';
 import {
   chatMessage,
   encryptedChatMessage,
+  reactionMessage,
   type EncryptedStanza,
   GrantedXmppSession,
   type GrantedOmemo,
@@ -22,6 +23,7 @@ interface Sent {
   to: string;
   body?: string;
   reply?: { id: string; author: string };
+  reaction?: { target: string; emojis: readonly string[] };
   encrypted: boolean;
 }
 
@@ -35,6 +37,9 @@ function fakeLink(sent: Sent[]): XmppLink {
     close: async () => {},
     sendChat: async (to, _id, body, _oob, reply) => {
       sent.push({ to, body, ...(reply ? { reply } : {}), encrypted: false });
+    },
+    sendReaction: async (to, _id, target, emojis) => {
+      sent.push({ to, reaction: { target, emojis }, encrypted: false });
     },
     sendEncrypted: async (to, _id, _stanza, _fallback, reply) => {
       sent.push({ to, ...(reply ? { reply } : {}), encrypted: true });
@@ -120,6 +125,43 @@ export default async () => {
       });
       expect(sent[0].encrypted).toBe(true);
       expect(sent[0].reply?.id).toBe('c');
+    });
+
+    await it('builds a XEP-0444 reaction with the whole set, empty to take it back', async () => {
+      const set = reactionMessage({ to: PEER, id: 'r1', target: 'their-id', emojis: ['👍'] });
+      const reactions = set.getChild('reactions', 'urn:xmpp:reactions:0');
+      expect(reactions?.attrs.id).toBe('their-id');
+      expect(reactions?.getChildren('reaction').map((r) => r.text())).toStrictEqual(['👍']);
+      const none = reactionMessage({ to: PEER, id: 'r2', target: 'their-id', emojis: [] });
+      expect(none.getChild('reactions', 'urn:xmpp:reactions:0')?.getChildren('reaction').length).toBe(0);
+    });
+
+    await it('reacts by the sender-given id, and takes the reaction back with an empty set', async () => {
+      const sent: Sent[] = [];
+      const sender = senderOf(sent);
+      expect(sender.features.reactions).toBe(true);
+      await sender.react!({ to: PEER, target: { remoteId: 'archive-9', clientId: 'their-id' }, emoji: '🎉' });
+      await sender.react!({
+        to: PEER,
+        target: { remoteId: 'archive-9', clientId: 'their-id' },
+        emoji: null,
+        previous: '🎉',
+      });
+      expect(sent[0].reaction).toStrictEqual({ target: 'their-id', emojis: ['🎉'] });
+      expect(sent[1].reaction).toStrictEqual({ target: 'their-id', emojis: [] });
+    });
+
+    await it('refuses a reaction without the sender-given id and one in an encrypted chat', async () => {
+      const sent: Sent[] = [];
+      const noId = await failure(
+        senderOf(sent).react!({ to: PEER, target: { remoteId: 'archive-9' }, emoji: '👍' }),
+      );
+      expect(noId?.includes('no XMPP id')).toBe(true);
+      const sealed = await failure(
+        senderOf(sent, true).react!({ to: PEER, target: { remoteId: 'a', clientId: 'c' }, emoji: '👍' }),
+      );
+      expect(sealed?.includes('unencrypted')).toBe(true);
+      expect(sent.length).toBe(0);
     });
 
     await it('refuses a target without the sender-given id, sending nothing', async () => {

@@ -466,6 +466,24 @@ export function chatMessage(spec: ChatMessageSpec) {
   );
 }
 
+/**
+ * XEP-0444: the person's whole set of emoji for the message `target`, replacing any earlier set;
+ * an empty set takes them all back. The `store` hint makes the server archive it, so the
+ * person's other clients and the next sync see it.
+ */
+export function reactionMessage(spec: { to: string; id: string; target: string; emojis: readonly string[] }) {
+  return xml(
+    'message',
+    { type: 'chat', to: spec.to, id: spec.id },
+    xml(
+      'reactions',
+      { xmlns: NS.reactions, id: spec.target },
+      ...spec.emojis.map((emoji) => xml('reaction', {}, emoji)),
+    ),
+    xml('store', { xmlns: NS.hints }),
+  );
+}
+
 /** Message Carbons (XEP-0280): copies of the account's other clients' traffic, to this session. */
 export const carbonsEnable = () => xml('enable', { xmlns: NS.carbons });
 

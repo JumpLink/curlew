@@ -20,6 +20,12 @@ export const MESSAGES = {
   get replyNoId() {
     return _('this message has no XMPP id to reply to — a full scan of the chat adds it');
   },
+  get reactNoId() {
+    return _('this message has no XMPP id to react to — a full scan of the chat adds it');
+  },
+  get reactNotEncrypted() {
+    return _('a reaction goes out unencrypted and this chat is end-to-end encrypted — nothing was sent');
+  },
   get replyNeedsText() {
     return _('a reply needs a text; files alone cannot carry one');
   },
