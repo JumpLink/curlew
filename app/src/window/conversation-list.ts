@@ -114,10 +114,11 @@ function entryRow(
   titleLine.append(title);
   titleLine.append(time);
 
-  // The protocol is the badge on the avatar, not text. There is no stored preview of the last
-  // message yet (docs/design/ui.md), so the line names the account.
+  // The protocol is the badge on the avatar, not text. The line shows the newest message; a row
+  // with none yet names the account instead, which otherwise only the tooltip of the row carries.
+  const account = listSubtitle(entry, accountLabels);
   const subtitle = new Gtk.Label({
-    label: listSubtitle(entry, accountLabels),
+    label: entry.preview ?? account,
     xalign: 0,
     ellipsize: 3,
     hexpand: true,
@@ -155,6 +156,7 @@ function entryRow(
   box.append(text);
   const row = new Gtk.ListBoxRow();
   row.set_child(box);
+  if (entry.preview !== undefined) row.set_tooltip_text(account);
   return { row, check };
 }
 

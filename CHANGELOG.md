@@ -28,6 +28,7 @@
 
 ### Added
 
+- Each conversation in the list shows its newest message under the name, like Fractal and Telegram: *You: …* for your own, the sender in a group, the subject for mail. The account moves into the row's tooltip
 - A *New conversation* button above the list opens your address book: pick a contact with an XMPP or mail address and write the first message, on the most trusted protocol they can be reached on. A contact you already talk to opens that conversation instead. Signal, WhatsApp and Telegram follow once a phone number can be resolved to an account
 - A first mail to someone no longer gets the subject *Re: Chat*
 - A person with no history starts on the most trusted protocol they can be reached on: XMPP and Matrix, then Signal, Telegram, WhatsApp; mail only when it is the sole way

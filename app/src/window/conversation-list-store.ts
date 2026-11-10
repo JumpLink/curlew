@@ -8,6 +8,7 @@ import {
   configPath,
   type IndexDatabase,
   indexDbPath,
+  latestMessagePreviews,
   listChatRooms,
   listConversations,
   openIndexDb,
@@ -15,7 +16,7 @@ import {
 import { existsSync } from 'node:fs';
 
 import { loadConfig } from '../core/config.ts';
-import { type ListEntry, toEntries } from './conversation-list-model.ts';
+import { type ListEntry, toEntries, withPreviews } from './conversation-list-model.ts';
 
 const LIST_LIMIT = 500;
 
@@ -40,13 +41,22 @@ export function loadConversationEntries(dbPath = indexDbPath(), cfgPath = config
     const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
     try {
       const { senders, ui, mergedPeople, pins } = loadConfig(cfgPath);
-      return toEntries(
+      const entries = toEntries(
         listConversations(db, { limit: LIST_LIMIT, overrides: senders }),
         ui.showAllEmails,
         accountIdentities(db),
         listChatRooms(db, 'matrix'),
         mergedPeople,
         pins,
+      );
+      // The text of the newest message is read here and kept on the row: the `Conversation` the
+      // agents get stays free of other people's words.
+      return withPreviews(
+        entries,
+        latestMessagePreviews(
+          db,
+          entries.flatMap((e) => e.conversationIds),
+        ),
       );
     } finally {
       db.close();

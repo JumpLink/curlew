@@ -44,6 +44,11 @@ export interface ListEntry {
    * that joins several chats can be pinned; the composer, the picker and agents follow it.
    */
   pin: string | null;
+  /**
+   * The line under the title: the newest message, ready to show. Absent until the window has read
+   * it from the index; it is never part of `Conversation`, so agents do not get it.
+   */
+  preview?: string;
 }
 
 /**
@@ -384,6 +389,55 @@ export function listSubtitle(entry: ListEntry, accountLabels: ReadonlyMap<string
     ...new Set(entry.members.map((m) => accountLabels.get(m.accountId) ?? protocolLabel(m.backend))),
   ].sort();
   return labels.join(' · ');
+}
+
+/** What the store knows about a conversation's newest message; `MessagePreview` fits this. */
+export interface PreviewSource {
+  sentAt: string | null;
+  fromSelf: boolean;
+  body: string | null;
+  subject: string | null;
+  hasAttachments: boolean;
+  senderName: string | null;
+}
+
+const PREVIEW_CHARS = 120;
+
+const oneLine = (text: string | null): string =>
+  (text ?? '')
+    .split('\n')
+    .map((line) => line.replace(/\s+/g, ' ').trim())
+    .find((line) => line !== '') ?? '';
+
+/**
+ * The preview line of a row: the first non-blank line of the text, else the mail subject, else a
+ * note that there is an attachment. Your own messages say "You", a group's say who wrote them.
+ */
+export function previewText(source: PreviewSource, group: boolean): string {
+  let text = oneLine(source.body) || oneLine(source.subject);
+  if (text === '' && source.hasAttachments) text = _('Attachment');
+  if (text === '') return '';
+  if (text.length > PREVIEW_CHARS) text = `${text.slice(0, PREVIEW_CHARS - 1).trimEnd()}…`;
+  if (source.fromSelf) return fmt(_('You: {text}'), { text });
+  const name = source.senderName?.trim();
+  return group && name ? fmt(_('{name}: {text}'), { name, text }) : text;
+}
+
+/** The rows with their preview set from the newest message among the conversations each stands for. */
+export function withPreviews(
+  entries: readonly ListEntry[],
+  previews: ReadonlyMap<string, PreviewSource>,
+): ListEntry[] {
+  return entries.map((entry) => {
+    let newest: PreviewSource | null = null;
+    for (const id of entry.conversationIds) {
+      const candidate = previews.get(id);
+      if (candidate && (newest === null || (candidate.sentAt ?? '') > (newest.sentAt ?? '')))
+        newest = candidate;
+    }
+    const text = newest === null ? '' : previewText(newest, entry.kind !== 'direct');
+    return text === '' ? entry : { ...entry, preview: text };
+  });
 }
 
 /**

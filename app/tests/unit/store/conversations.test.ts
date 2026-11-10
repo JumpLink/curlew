@@ -4,6 +4,7 @@ import type { AutomationHeaders, ContactDTO } from '@curlew/protocol';
 import {
   getConversation,
   getRecentMessages,
+  latestMessagePreviews,
   listConversations,
   mailAttachments,
   mailReplyTarget,
@@ -623,6 +624,73 @@ export default async () => {
           body: string | null;
         };
         expect(row.body).toBe('old');
+      } finally {
+        db.close();
+      }
+    });
+  });
+
+  await describe('latestMessagePreviews', async () => {
+    function put(
+      db: ReturnType<typeof freshDb>,
+      id: string,
+      conversation: string,
+      sentAt: string,
+      over: {
+        body?: string | null;
+        fromSelf?: number;
+        subject?: string | null;
+        files?: number;
+        name?: string | null;
+      } = {},
+    ): void {
+      db.prepare(
+        `INSERT INTO conversation_messages (
+           id, conversation_id, backend, account_id, presentation, sender_name,
+           from_self, sent_at, subject, seen, has_attachments, classification, classification_reason, body)
+         VALUES (?, ?, 'signal', 'signal-1', 'bubble', ?, ?, ?, ?, 1, ?, 'conversational', 'known-contact', ?)`,
+      ).run(
+        id,
+        conversation,
+        over.name ?? null,
+        over.fromSelf ?? 0,
+        sentAt,
+        over.subject ?? null,
+        over.files ?? 0,
+        over.body ?? null,
+      );
+    }
+
+    await it('returns the newest message of each conversation and skips empty ones', async () => {
+      const db = freshDb();
+      try {
+        put(db, 'a1', 'c1', '2026-01-01T10:00:00Z', { body: 'older' });
+        put(db, 'a2', 'c1', '2026-01-02T10:00:00Z', { body: 'newer', fromSelf: 1 });
+        put(db, 'b1', 'c2', '2026-01-01T09:00:00Z', { body: 'hi', name: 'Bo' });
+        const found = latestMessagePreviews(db, ['c1', 'c2', 'c3']);
+        expect([...found.keys()].sort()).toStrictEqual(['c1', 'c2']);
+        expect(found.get('c1')?.body).toBe('newer');
+        expect(found.get('c1')?.fromSelf).toBe(true);
+        expect(found.get('c2')?.senderName).toBe('Bo');
+        expect(found.get('c2')?.fromSelf).toBe(false);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('cuts a long body in SQL and carries subject and attachment flag', async () => {
+      const db = freshDb();
+      try {
+        put(db, 'a1', 'c1', '2026-01-01T10:00:00Z', {
+          body: 'x'.repeat(1000),
+          subject: 'Re: Plan',
+          files: 1,
+        });
+        const preview = latestMessagePreviews(db, ['c1']).get('c1')!;
+        expect(preview.body?.length).toBe(300);
+        expect(preview.subject).toBe('Re: Plan');
+        expect(preview.hasAttachments).toBe(true);
+        expect(latestMessagePreviews(db, [])).toStrictEqual(new Map());
       } finally {
         db.close();
       }

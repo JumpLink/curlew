@@ -884,6 +884,58 @@ export function listConversations(db: IndexDatabase, query: ConversationQuery = 
   return hydrate(db, rows, overrides);
 }
 
+/**
+ * The newest message of a conversation, reduced to what a list row shows. This is for the window
+ * only: it carries a body, so it never goes into `Conversation` or any agent-facing DTO.
+ */
+export interface MessagePreview {
+  conversationId: string;
+  sentAt: string | null;
+  fromSelf: boolean;
+  /** The start of a chat body, cut in SQL; null for mail, whose body lives in the full-text index. */
+  body: string | null;
+  subject: string | null;
+  hasAttachments: boolean;
+  senderName: string | null;
+}
+
+const PREVIEW_BODY_CHARS = 300;
+const PREVIEW_CHUNK = 400;
+
+/** The newest message of each given conversation; a conversation with none is left out. */
+export function latestMessagePreviews(
+  db: IndexDatabase,
+  conversationIds: readonly string[],
+): Map<string, MessagePreview> {
+  const found = new Map<string, MessagePreview>();
+  for (let i = 0; i < conversationIds.length; i += PREVIEW_CHUNK) {
+    const chunk = conversationIds.slice(i, i + PREVIEW_CHUNK);
+    const rows = db
+      .prepare(
+        `SELECT m.conversation_id, m.sent_at, m.from_self, substr(m.body, 1, ${PREVIEW_BODY_CHARS}) AS body,
+                m.subject, m.has_attachments, m.sender_name
+           FROM conversation_messages m
+          WHERE m.conversation_id IN (${chunk.map(() => '?').join(',')})
+            AND m.id = (SELECT n.id FROM conversation_messages n
+                         WHERE n.conversation_id = m.conversation_id
+                         ORDER BY n.sent_at DESC, n.id DESC LIMIT 1)`,
+      )
+      .all(...chunk) as Array<Record<string, unknown>>;
+    for (const r of rows) {
+      found.set(String(r.conversation_id), {
+        conversationId: String(r.conversation_id),
+        sentAt: str(r.sent_at),
+        fromSelf: Number(r.from_self) === 1,
+        body: str(r.body),
+        subject: str(r.subject),
+        hasAttachments: Number(r.has_attachments) === 1,
+        senderName: str(r.sender_name),
+      });
+    }
+  }
+  return found;
+}
+
 export interface ConversationDetailOptions {
   /** Include each message's plain-text body. Off by default: bodies are other people's words. */
   includeBodies?: boolean;
