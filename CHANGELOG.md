@@ -27,6 +27,7 @@
 
 ### Added
 
+- Pressing the quote above a reply scrolls to the message it answers.
 - A reply shows the message it answers above its text: the author and a short excerpt. Needs the quoted message to be on the page already; older targets are not looked up yet.
 - The media viewer has an *Open with…* button that lets you pick the application, and its error page a *Try Again* button.
 - The media viewer steps through the other pictures and videos of the same message: arrows over the edges, left/right keys and a swipe, with the position (2 / 4) under the title. Pictures and videos in a bubble carry an accessible label with their name.

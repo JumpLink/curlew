@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 11:40+0100\n"
+"POT-Creation-Date: 2026-11-10 12:02+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2005,7 +2005,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:696
+#: app/src/window/conversation-view.ts:713
 msgid "Continuing via {protocol}"
 msgstr ""
 
@@ -2033,7 +2033,7 @@ msgstr ""
 msgid "File"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:286
+#: app/src/window/conversation-model.ts:288
 msgid "You"
 msgstr ""
 
@@ -2061,23 +2061,27 @@ msgstr ""
 msgid "Send via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:391
+#: app/src/window/conversation-view.ts:390
+msgid "Show the quoted message"
+msgstr ""
+
+#: app/src/window/conversation-view.ts:397
 msgid "Reply to {author}: {excerpt}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:426
+#: app/src/window/conversation-view.ts:443
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:598
+#: app/src/window/conversation-view.ts:615
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:707
+#: app/src/window/conversation-view.ts:724
 msgid "Message not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:710
+#: app/src/window/conversation-view.ts:727
 msgid "Retry"
 msgstr ""
 

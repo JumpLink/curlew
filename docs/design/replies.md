@@ -25,10 +25,12 @@ The block is a left bar, the author in `caption-heading`, the excerpt in `captio
 most, using theme colours only (a `Gtk.Box` with the `card`-free `dim-label` look, no custom CSS
 for structure). It is not interactive in this piece; jumping to the quoted message is piece 2.
 
-### 2. Jump to the quote, fetch an older target
+### 2. Jump to the quote
 
-Pressing the block scrolls to the quoted row and flashes it; when the target is older than the
-loaded page, load pages until it appears or give up after a bounded number.
+Pressing the block scrolls to the quoted row and centres it (built). A click gesture, not a
+button: a button's padding would indent the quote against the text. A target older than the loaded
+page is not looked up yet, so such a reply shows no quote at all; resolving it needs a lookup by
+remote id in the store, then the same jump after loading pages.
 
 ### 3. Send a reply
 
