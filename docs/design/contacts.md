@@ -215,3 +215,30 @@ the first string — "Notiz an mich", "Über Telegram gesendet", "Weiter über T
 
 Phases 1–4 exist. Starting a conversation with a contact who has no conversation yet does
 not; it is specified in the next section once built.
+
+## Starting a conversation with a contact
+
+The sidebar header has a *New conversation* button (`chat-message-new-symbolic`). It opens an
+`Adw.Dialog` with a search field over the address book and one row per contact that can be
+written to; the subtitle names the protocols (`XMPP · Mail`, most trusted first).
+
+- **Which addresses count.** Only those a first message can go to without asking the network:
+  an XMPP address (`IMPP:xmpp:` / `X-JABBER`) through an XMPP account, a mail address through a
+  mail account. A phone number does not, because Signal, WhatsApp and Telegram each resolve it
+  to an account of their own first, and an address book has no Matrix field. A contact with
+  none of the usable addresses is not listed. Phones join in once that lookup exists.
+- **Accounts.** The accounts the window already shows (a row or a member of one), so a
+  disabled account never offers a route. One route per account, using the contact's first
+  address for that protocol.
+- **Already talking.** A contact whose address a direct row (or a merged row's member) already
+  writes to opens that row; a draft would only duplicate it.
+- **The draft.** Otherwise a synthetic row (`new:<uid>`, no conversation id) opens with an
+  empty timeline and the usual composer. Its picker lists the routes and defaults to the
+  most trusted one (open question 1). The first send goes through the normal path; the real
+  conversation appears in the list when the index has it. A first mail is a new message
+  (`Chat: …`), not a `Re:`.
+- **Address book size.** The picker asks for up to 1000 contacts, not the 100 an agent gets;
+  typing asks the address book again, so a match beyond that still shows.
+
+Open: whether a draft that was never sent should stay in the list (it does not now), and
+Matrix once an address book can carry a Matrix id.

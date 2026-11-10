@@ -43,7 +43,8 @@ export function composeMailReply(
     ...new Set([...(target?.references ?? []), ...(target?.messageId ? [target.messageId] : [])]),
   ];
   return {
-    subject: parent?.emailChat ? chatSubject(text) : replySubject(parent?.subject ?? null),
+    // No earlier mail on this carrier means a first message, not a reply to anything.
+    subject: parent === null || parent.emailChat ? chatSubject(text) : replySubject(parent.subject),
     emailChat: true,
     ...(target?.messageId ? { inReplyTo: target.messageId } : {}),
     ...(references.length > 0 ? { references } : {}),

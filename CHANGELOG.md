@@ -28,6 +28,8 @@
 
 ### Added
 
+- A *New conversation* button above the list opens your address book: pick a contact with an XMPP or mail address and write the first message, on the most trusted protocol they can be reached on. A contact you already talk to opens that conversation instead. Signal, WhatsApp and Telegram follow once a phone number can be resolved to an account
+- A first mail to someone no longer gets the subject *Re: Chat*
 - A person with no history starts on the most trusted protocol they can be reached on: XMPP and Matrix, then Signal, Telegram, WhatsApp; mail only when it is the sole way
 - Your own messages show a check mark once the other side has read them, on the networks that report it. In a quote the author is tinted with the accent colour.
 - Links in chat messages are clickable, and a little Markdown is styled: `**bold**`, `*italic*`, `~~strike~~` and `` `code` ``. A link shows its own address; text that does not match stays as typed.

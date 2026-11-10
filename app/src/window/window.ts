@@ -39,9 +39,12 @@ import { pickedNames } from './composer-files-model.ts';
 import { clearPreviews } from './attachment-store.ts';
 import { createConversationView } from './conversation-view.ts';
 import { createMediaViewer } from './media-viewer.ts';
+import { presentNewConversation } from './new-conversation.ts';
+import { draftEntry, existingEntry, routeAccounts } from './new-conversation-model.ts';
 import { presentPreferences } from './preferences-dialog.ts';
 import { loadAgentAccess } from './agent-access-store.ts';
 import { reactToMessage } from '../core/actions/react.ts';
+import { contactsForPicker } from '../core/actions/contacts.ts';
 import { sendMessage } from '../core/actions/send.ts';
 import { editMessage } from '../core/actions/edit.ts';
 import { deleteMessage } from '../core/actions/delete.ts';
@@ -210,6 +213,26 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     split.set_content(conversation.page);
     split.set_show_content(true);
   };
+  // A contact with no conversation opens as a draft row; the index gets the real one with the first send.
+  const selectDraft = (entry: ListEntry) => {
+    currentEntry = entry;
+    currentMessages = [];
+    conversation.show(entry, currentMessages, labels);
+    split.set_content(conversation.page);
+    split.set_show_content(true);
+  };
+  const startConversation = () => {
+    const routes = routeAccounts(shown);
+    presentNewConversation(window, routes, contactsForPicker, (contact) => {
+      const existing = existingEntry(shown, contact);
+      if (existing) {
+        select(existing);
+        return;
+      }
+      const draft = draftEntry(contact, routes);
+      if (draft) selectDraft(draft);
+    });
+  };
   const sidebar = createConversationList(menu, select, () => presentAccounts(window), {
     merge: (ids) => {
       peopleMerge(ids);
@@ -220,6 +243,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
       refresh();
     },
     review: () => review(),
+    compose: () => startConversation(),
   });
   split.set_sidebar(sidebar.page);
   split.set_content(placeholder());

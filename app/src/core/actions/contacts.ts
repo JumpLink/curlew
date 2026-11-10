@@ -10,3 +10,10 @@ import { capLimit, CONTACT_LIMIT } from './limits.ts';
 export async function contactsSearch(options: SearchContactsOptions = {}): Promise<ContactDTO[]> {
   return searchContacts({ ...options, limit: capLimit(options.limit, CONTACT_LIMIT) });
 }
+
+/** What the window's contact picker asks: a person scrolling a list, not an agent, so a larger cap. */
+const PICKER_LIMIT = 1000;
+
+export async function contactsForPicker(query = ''): Promise<ContactDTO[]> {
+  return searchContacts({ query, limit: PICKER_LIMIT });
+}

@@ -38,6 +38,8 @@ export interface PeopleTools {
   unmerge(personIds: string[]): void;
   /** Open the merge assistant, from the banner. */
   review(): void;
+  /** Open the picker for a conversation with someone who has none yet. */
+  compose(): void;
 }
 
 export interface ConversationList {
@@ -376,6 +378,12 @@ export function createConversationList(
   searchToggle.set_tooltip_text(_('Search'));
   searchToggle.bind_property('active', searchBar, 'search-mode-enabled', GObject.BindingFlags.BIDIRECTIONAL);
   const header = new Adw.HeaderBar();
+  const composeButton = new Gtk.Button({
+    iconName: 'chat-message-new-symbolic',
+    tooltipText: _('New conversation'),
+  });
+  composeButton.connect('clicked', () => people.compose());
+  header.pack_start(composeButton);
   header.pack_start(searchToggle);
   header.pack_start(filterButton);
   header.pack_end(new Gtk.MenuButton({ iconName: 'open-menu-symbolic', menuModel: menu, primary: true }));
