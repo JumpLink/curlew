@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 13:34+0100\n"
+"POT-Creation-Date: 2026-11-10 14:09+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1707,7 +1707,7 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:111
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:112
 #: app/src/window/window.ts:59 app/src/window/window.ts:74
 msgid "Curlew"
 msgstr "Curlew"
@@ -2291,7 +2291,7 @@ msgstr[0] "{count} mögliches Duplikat"
 msgstr[1] "{count} mögliche Duplikate"
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:830
+#: app/src/window/conversation-view.ts:864
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -2319,69 +2319,82 @@ msgstr "Audio"
 msgid "File"
 msgstr "Datei"
 
-#: app/src/window/conversation-model.ts:293
+#: app/src/window/conversation-model.ts:291
+msgid "You and {count} other"
+msgid_plural "You and {count} others"
+msgstr[0] "Du und {count} weitere Person"
+msgstr[1] "Du und {count} weitere Personen"
+
+#: app/src/window/conversation-model.ts:292
+#: app/src/window/conversation-model.ts:305
 msgid "You"
 msgstr "Du"
 
-#: app/src/window/conversation-view.ts:117
+#: app/src/window/conversation-model.ts:293
+msgid "{count} person"
+msgid_plural "{count} people"
+msgstr[0] "{count} Person"
+msgstr[1] "{count} Personen"
+
+#: app/src/window/conversation-view.ts:118
 msgid "Choose how to reach this person"
 msgstr "Erreichbarkeit dieser Person wählen"
 
-#: app/src/window/conversation-view.ts:134
+#: app/src/window/conversation-view.ts:135
 msgid "Write a message"
 msgstr "Nachricht schreiben"
 
-#: app/src/window/conversation-view.ts:145
+#: app/src/window/conversation-view.ts:146
 msgid "Send message"
 msgstr "Nachricht senden"
 
-#: app/src/window/conversation-view.ts:157
+#: app/src/window/conversation-view.ts:158
 msgid "Cancel reply"
 msgstr "Antwort abbrechen"
 
-#: app/src/window/conversation-view.ts:186
+#: app/src/window/conversation-view.ts:187
 msgid "Conversation"
 msgstr "Unterhaltung"
 
-#: app/src/window/conversation-view.ts:302
+#: app/src/window/conversation-view.ts:303
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 "{protocol} kann keine Dateien senden; die angehängten Dateien wurden entfernt"
 
-#: app/src/window/conversation-view.ts:336
+#: app/src/window/conversation-view.ts:337
 msgid "Send via {protocol}"
 msgstr "Senden über {protocol}"
 
-#: app/src/window/conversation-view.ts:439
+#: app/src/window/conversation-view.ts:440
 msgid "Show the quoted message"
 msgstr "Zitierte Nachricht anzeigen"
 
-#: app/src/window/conversation-view.ts:446
-#: app/src/window/conversation-view.ts:469
+#: app/src/window/conversation-view.ts:447
+#: app/src/window/conversation-view.ts:470
 msgid "Reply to {author}: {excerpt}"
 msgstr "Antwort auf {author}: {excerpt}"
 
-#: app/src/window/conversation-view.ts:496
+#: app/src/window/conversation-view.ts:497
 msgid "Reply"
 msgstr "Antworten"
 
-#: app/src/window/conversation-view.ts:497
+#: app/src/window/conversation-view.ts:498
 msgid "Copy"
 msgstr "Kopieren"
 
-#: app/src/window/conversation-view.ts:559
+#: app/src/window/conversation-view.ts:592
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:731
+#: app/src/window/conversation-view.ts:765
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:842
+#: app/src/window/conversation-view.ts:876
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:845
+#: app/src/window/conversation-view.ts:879
 msgid "Retry"
 msgstr "Erneut versuchen"
 
@@ -2824,7 +2837,7 @@ msgstr "diese Nachricht hat keine Signal-Kennung, auf die man antworten kann"
 msgid "link it again with `curlew accounts add signal`"
 msgstr "verknüpfe es mit `curlew accounts add signal` neu"
 
-#: packages/signal/src/receiver.ts:339
+#: packages/signal/src/receiver.ts:338
 msgid "Signal no longer knows this device (it was unlinked) — {hint}"
 msgstr "Signal kennt dieses Gerät nicht mehr (es wurde entkoppelt) — {hint}"
 

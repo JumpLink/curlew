@@ -1251,9 +1251,34 @@ export default async () => {
       expect(mapper.map(sync, { ...ctx, senderAci: OWN_ACI }).events.length).toBe(2);
     });
 
-    await it('drops reactions and housekeeping, keeps a file with its name', async () => {
-      const reaction = decodeContent(encodeContent({ dataMessage: { reaction: true, timestamp: 1 } }));
-      expect(mapper.map(reaction, ctx).events.length).toBe(0);
+    await it('maps a reaction to the message it names, and its removal', async () => {
+      const react = (reaction: { emoji: string; remove?: boolean }, senderAci = ctx.senderAci) =>
+        mapper.map(
+          decodeContent(
+            encodeContent({
+              dataMessage: {
+                reaction: { ...reaction, targetAuthorAci: CAROL_ACI, targetSentTimestamp: 77 },
+                timestamp: 1,
+              },
+            }),
+          ),
+          { ...ctx, senderAci },
+        ).events;
+      expect(react({ emoji: '👍' })).toStrictEqual([
+        {
+          type: 'reaction',
+          chatRemoteId: ctx.senderAci,
+          remoteId: `${CAROL_ACI}:77`,
+          reactor: ctx.senderAci,
+          emoji: '👍',
+        },
+      ]);
+      expect(react({ emoji: '👍', remove: true })[0]).toMatchObject({ emoji: null });
+      // The user's own reaction, from another device, has no reactor name.
+      expect(react({ emoji: '❤️' }, OWN_ACI)[0]).toMatchObject({ reactor: null });
+    });
+
+    await it('drops housekeeping, keeps a file with its name', async () => {
       const profileKeyUpdate = decodeContent(encodeContent({ dataMessage: { flags: 4, timestamp: 1 } }));
       expect(mapper.map(profileKeyUpdate, ctx).events.length).toBe(0);
       const file = mapper.map(

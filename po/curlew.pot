@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 13:34+0100\n"
+"POT-Creation-Date: 2026-11-10 14:09+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1460,7 +1460,7 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr ""
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:111
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:112
 #: app/src/window/window.ts:59 app/src/window/window.ts:74
 msgid "Curlew"
 msgstr ""
@@ -2015,7 +2015,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:830
+#: app/src/window/conversation-view.ts:864
 msgid "Continuing via {protocol}"
 msgstr ""
 
@@ -2043,68 +2043,81 @@ msgstr ""
 msgid "File"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:293
+#: app/src/window/conversation-model.ts:291
+msgid "You and {count} other"
+msgid_plural "You and {count} others"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/window/conversation-model.ts:292
+#: app/src/window/conversation-model.ts:305
 msgid "You"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:117
+#: app/src/window/conversation-model.ts:293
+msgid "{count} person"
+msgid_plural "{count} people"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/window/conversation-view.ts:118
 msgid "Choose how to reach this person"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:134
+#: app/src/window/conversation-view.ts:135
 msgid "Write a message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:145
+#: app/src/window/conversation-view.ts:146
 msgid "Send message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:157
+#: app/src/window/conversation-view.ts:158
 msgid "Cancel reply"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:186
+#: app/src/window/conversation-view.ts:187
 msgid "Conversation"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:302
+#: app/src/window/conversation-view.ts:303
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:336
+#: app/src/window/conversation-view.ts:337
 msgid "Send via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:439
+#: app/src/window/conversation-view.ts:440
 msgid "Show the quoted message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:446
-#: app/src/window/conversation-view.ts:469
+#: app/src/window/conversation-view.ts:447
+#: app/src/window/conversation-view.ts:470
 msgid "Reply to {author}: {excerpt}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:496
+#: app/src/window/conversation-view.ts:497
 msgid "Reply"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:497
+#: app/src/window/conversation-view.ts:498
 msgid "Copy"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:559
+#: app/src/window/conversation-view.ts:592
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:731
+#: app/src/window/conversation-view.ts:765
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:842
+#: app/src/window/conversation-view.ts:876
 msgid "Message not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:845
+#: app/src/window/conversation-view.ts:879
 msgid "Retry"
 msgstr ""
 
@@ -2505,7 +2518,7 @@ msgstr ""
 msgid "link it again with `curlew accounts add signal`"
 msgstr ""
 
-#: packages/signal/src/receiver.ts:339
+#: packages/signal/src/receiver.ts:338
 msgid "Signal no longer knows this device (it was unlinked) — {hint}"
 msgstr ""
 

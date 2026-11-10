@@ -12,6 +12,7 @@ import {
   foldAlbums,
   newOlder,
   quoteOf,
+  reactionChip,
   protocolDividers,
   protocolRunStarts,
   replyDraftOf,
@@ -305,6 +306,25 @@ export default async () => {
         expect(folded.length).toBe(3);
         expect(folded[0]).toBe(plain[0]);
       });
+    });
+  });
+
+  await describe('reactionChip', async () => {
+    await it('counts only when more than one person gave the emoji', async () => {
+      expect(reactionChip({ emoji: '👍', count: 1, own: false })).toStrictEqual({
+        text: '👍',
+        tooltip: '1 person',
+      });
+      expect(reactionChip({ emoji: '👍', count: 3, own: false })).toStrictEqual({
+        text: '👍 3',
+        tooltip: '3 people',
+      });
+    });
+
+    await it('says "You" for the own reaction', async () => {
+      expect(reactionChip({ emoji: '❤️', count: 1, own: true }).tooltip).toBe('You');
+      expect(reactionChip({ emoji: '❤️', count: 3, own: true }).tooltip).toBe('You and 2 others');
+      expect(reactionChip({ emoji: '❤️', count: 2, own: true }).tooltip).toBe('You and 1 other');
     });
   });
 

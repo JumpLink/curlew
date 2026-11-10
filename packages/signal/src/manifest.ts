@@ -15,7 +15,7 @@ export const SIGNAL_MANIFEST: BackendManifest = {
   // writes only a plain-text message into a chat `signal.send` names.
   capabilities: {
     edits: true,
-    // The network has reactions; map.ts drops them in mapDataMessage.
+    // The network has reactions; curlew shows the ones it receives but cannot send one yet.
     reactions: false,
     // Quoted replies (sent as `quote`), no threads.
     threads: false,

@@ -13,9 +13,9 @@
  * no chat at all, so it is mapped without one and resolved by the message.
  *
  * What is kept: what people wrote (text, a caption, a file name, a poll's question, a shared
- * contact's name), that a file came with it, the message it quotes, edits, deletes for everyone,
+ * contact's name), that a file came with it, the message it quotes, reactions, edits, deletes for everyone,
  * the user's own messages sent from the phone (sent transcripts), deletions the user made on the
- * phone, and read receipts for the user's messages. What is dropped: reactions, stories and
+ * phone, and read receipts for the user's messages. What is dropped: stories and
  * replies to them, typing, calls, payments, gift badges, group-call notices, poll votes, pins,
  * timer and profile-key updates, session resets — and every sync message that did not come from
  * the user's own account (only the user's devices may speak for the user).
@@ -389,7 +389,21 @@ export class SignalMapper {
       }
       return;
     }
-    if (data.reaction || data.special) return;
+    if (data.reaction) {
+      const { emoji, remove, targetAuthorAci, targetSentTimestamp } = data.reaction;
+      // A reaction names its target by author and sent timestamp, like a quote does.
+      if (targetAuthorAci && targetSentTimestamp !== null && (remove || emoji)) {
+        events.push({
+          type: 'reaction',
+          chatRemoteId: chat.id,
+          remoteId: messageRemoteId(targetAuthorAci, targetSentTimestamp),
+          reactor: fromSelf ? null : peerOf(authorAci).remoteId,
+          emoji: remove ? null : emoji,
+        });
+      }
+      return;
+    }
+    if (data.special) return;
     const housekeeping =
       data.flags &
       (DataMessageFlags.END_SESSION |
