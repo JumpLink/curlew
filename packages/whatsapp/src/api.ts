@@ -224,6 +224,16 @@ export interface WaSocketHandle {
   end(): void;
 }
 
+/**
+ * The message a text answers. WhatsApp's quote carries the quoted content itself, which the
+ * receiving clients show above the reply, so the text travels with the id.
+ */
+export interface WaQuote {
+  id: string;
+  fromMe: boolean;
+  text: string;
+}
+
 /** What `sendMessage` hands back, reduced to what the send path reads off it. */
 export interface WaSentMessage {
   key: WaMessageKey;
@@ -256,7 +266,7 @@ export interface WaSendSocketHandle {
    * `Connection Closed` while the WebSocket is not open yet, so every send waits for this.
    */
   ready(): Promise<void>;
-  sendText(jid: string, text: string): Promise<WaSentMessage>;
+  sendText(jid: string, text: string, quote?: WaQuote): Promise<WaSentMessage>;
   /** One file; Baileys encrypts it and uploads it to WhatsApp's media servers. */
   sendFile(jid: string, file: WaOutgoingFile): Promise<WaSentMessage>;
   /** Close without logging out, exactly like `WaSocketHandle.end`. */

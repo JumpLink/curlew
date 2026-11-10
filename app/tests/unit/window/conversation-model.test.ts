@@ -360,7 +360,7 @@ export default async () => {
         choices,
         can,
       );
-      expect(draft?.target).toStrictEqual({ remoteId: '$1' });
+      expect(draft?.target).toStrictEqual({ remoteId: '$1', text: 'Treffen wir uns?' });
       expect(draft?.choice).toBe(choices[0]);
       expect(draft?.author).toBe('Alex');
       expect(draft?.excerpt).toBe('Treffen wir uns?');
@@ -375,7 +375,16 @@ export default async () => {
         remoteId: '$5',
         clientId: 'mine',
         fromSelf: true,
+        text: 'Ja',
       });
+    });
+
+    await it('carries what the message said, trimmed and capped, for networks that quote content', async () => {
+      const long = chat({ id: '$6', bodyText: `  ${'x'.repeat(800)}  ` });
+      expect(replyDraftOf(long, choices, can)?.target.text?.length).toBe(500);
+      expect(replyDraftOf(chat({ id: '$7', bodyText: '  ' }), choices, can)?.target.text === undefined).toBe(
+        true,
+      );
     });
 
     await it('offers nothing for a backend that cannot reply, a message without a network id or a foreign account', async () => {

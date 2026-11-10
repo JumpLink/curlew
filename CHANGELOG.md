@@ -27,6 +27,7 @@
 
 ### Added
 
+- WhatsApp chats can send a reply too: the message goes out quoting the one it answers.
 - Signal chats can send a reply too: the message goes out as a quote of the one it answers.
 - XMPP chats can send a reply too (XEP-0461). Messages synced before this version need a full scan of the chat first.
 - Long press or right click on a bubble opens *Reply* and *Copy*. A reply shows a bar above the composer and goes out as an answer on Matrix and Telegram; the other networks hide the entry until they can send replies. The daemon speaks wire version 4 now: restart it with `systemctl --user restart curlew-daemon` after the update.

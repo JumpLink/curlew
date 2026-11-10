@@ -174,11 +174,22 @@ export const createBaileysConnection: ConnectionFactory = ({ auth, fullHistory =
         // Opened and then dropped: `opened` is already resolved, so only this reports it.
         if (closed) throw closed;
       },
-      sendText: async (jid, text) => {
+      sendText: async (jid, text, quote) => {
         // `linkPreview: null`. `generateWAMessageContent` calls `generateLinkPreviewIfRequired`
         // only when the field is `undefined`, and that would fetch a URL found in the message
         // text over plain HTTP from this machine. `null` is the documented way to say no preview.
-        const sent = await sock.sendMessage(jid, { text, linkPreview: null });
+        const sent = await sock.sendMessage(
+          jid,
+          { text, linkPreview: null },
+          quote
+            ? {
+                quoted: {
+                  key: { remoteJid: jid, fromMe: quote.fromMe, id: quote.id },
+                  message: { conversation: quote.text },
+                },
+              }
+            : undefined,
+        );
         if (!sent) throw new Error(_('WhatsApp did not take the message — nothing was sent'));
         if (sent.key.id && sent.message) outgoing.set(sent.key.id, sent.message);
         return sent;

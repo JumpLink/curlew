@@ -516,13 +516,14 @@ export default async () => {
     });
 
     await it('carries the sender-given id and the author flag of a reply, and rejects bad ones', async () => {
-      const replyTo = { remoteId: 'm1', clientId: 'c1', fromSelf: true };
+      const replyTo = { remoteId: 'm1', clientId: 'c1', fromSelf: true, text: 'Hi' };
       expect(parseDaemonSendRequest(JSON.stringify({ ...request(), replyTo })).replyTo).toStrictEqual(
         replyTo,
       );
       for (const bad of [
         { remoteId: 'm1', clientId: 5 },
         { remoteId: 'm1', fromSelf: 'yes' },
+        { remoteId: 'm1', text: 5 },
       ]) {
         let message = '';
         try {

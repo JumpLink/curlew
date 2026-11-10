@@ -45,7 +45,7 @@ hides the entry. Built in two steps: the backends first, then the window.
 | Telegram | mtcute `replyTo` message number of the same chat (`<chat>/<number>`); a target of another chat is refused; first file only | built |
 | XMPP | XEP-0461 `<reply to id>` outside the OMEMO payload; `id` is the sender-given id (`conversation_messages.client_id`, schema v16), `to` the author's JID; a reply to a row without `client_id` is refused until a full scan of the chat adds it; files alone cannot carry a reply | built |
 | Signal | `DataMessage.quote` with the sent timestamp and the author's ACI (both string and binary form), in the recipient copies and the transcript; no quoted text; direct chats only | built |
-| WhatsApp | `contextInfo.quotedMessage` with key and content | to do |
+| WhatsApp | `quoted` with the key (id, `fromMe`) and the content (`conversation`), which the window passes as `ReplyTarget.text` (first 500 characters); direct chats only; a reply cannot carry files | built |
 | Mail | threads through `inReplyTo`/`References` already, outside this flag | — |
 
 Matrix needs no fallback text: the spec dropped reply fallbacks in v1.13.

@@ -293,6 +293,9 @@ function describeQuoted(quoted: ShownMessage): Omit<Quote, 'id'> {
   return { author: quoted.fromSelf ? _('You') : senderName(quoted), excerpt };
 }
 
+/** How much of the answered message a reply carries for networks that quote its content. */
+const REPLY_TEXT_MAX_CHARS = 500;
+
 /** The message a composer is about to answer, and the carrier that answer must go through. */
 export interface ReplyDraft<C extends { backend: string; accountId: string }> {
   /** What `SendingMessage.replyTo` carries: the network's id of the message and, where held, the sender's own. */
@@ -317,10 +320,12 @@ export function replyDraftOf<C extends { backend: string; accountId: string }>(
   const choice = choices.find((c) => c.backend === message.backend && c.accountId === message.ref.accountId);
   if (!choice) return null;
   const clientId = message.clientId ?? undefined;
+  const text = message.bodyText?.trim().slice(0, REPLY_TEXT_MAX_CHARS);
   const target: ReplyTarget = {
     remoteId,
     ...(clientId ? { clientId } : {}),
     ...(message.fromSelf ? { fromSelf: true } : {}),
+    ...(text ? { text } : {}),
   };
   return { target, choice, ...describeQuoted(message) };
 }

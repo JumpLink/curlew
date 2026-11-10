@@ -90,7 +90,7 @@ export interface DaemonSendRequest {
   /** Absolute paths on the caller's disk; the daemon (the same user) checks and reads them. */
   attachments?: string[];
   /** Chat: the message this one answers. Added in v4, so an older daemon is refused rather than dropping the link. */
-  replyTo?: { remoteId: string; clientId?: string; fromSelf?: boolean };
+  replyTo?: { remoteId: string; clientId?: string; fromSelf?: boolean; text?: string };
   format?: 'plain' | 'markdown';
 }
 
@@ -238,16 +238,17 @@ export function parseDaemonSendRequest(json: string): DaemonSendRequest {
   if (files !== undefined && (!Array.isArray(files) || files.some((path) => typeof path !== 'string'))) {
     throw new Error('the send request has attachments that are not a list of paths');
   }
-  const replyTo = request.replyTo as { remoteId?: unknown; clientId?: unknown; fromSelf?: unknown } | undefined;
+  const replyTo = request.replyTo as { remoteId?: unknown; clientId?: unknown; fromSelf?: unknown; text?: unknown } | undefined;
   if (replyTo !== undefined && (typeof replyTo !== 'object' || replyTo === null || typeof replyTo.remoteId !== 'string' || replyTo.remoteId === '')) {
     throw new Error('the send request has a replyTo without a remoteId');
   }
   if (
     replyTo !== undefined &&
     ((replyTo.clientId !== undefined && typeof replyTo.clientId !== 'string') ||
-      (replyTo.fromSelf !== undefined && typeof replyTo.fromSelf !== 'boolean'))
+      (replyTo.fromSelf !== undefined && typeof replyTo.fromSelf !== 'boolean') ||
+      (replyTo.text !== undefined && typeof replyTo.text !== 'string'))
   ) {
-    throw new Error('the send request has a replyTo with a malformed clientId or fromSelf');
+    throw new Error('the send request has a replyTo with a malformed clientId, fromSelf or text');
   }
   return request as DaemonSendRequest;
 }
