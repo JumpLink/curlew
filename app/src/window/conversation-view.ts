@@ -854,6 +854,14 @@ export function createConversationView(
       meta.append(edited);
     }
     meta.append(time);
+    // Only where the network reports it; "sent" and "delivered" would be guesses, so they show nothing.
+    if (message.fromSelf && message.readByPeer) {
+      const read = new Gtk.Image({ iconName: 'object-select-symbolic', pixelSize: 12 });
+      read.add_css_class('accent');
+      read.set_tooltip_text(_('Read'));
+      read.update_property([Gtk.AccessibleProperty.LABEL], [_('Read')]);
+      meta.append(read);
+    }
     bubble.append(padded(meta));
     padTop(bubble);
 

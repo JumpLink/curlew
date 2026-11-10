@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 20:56+0100\n"
+"POT-Creation-Date: 2026-11-10 23:00+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1483,7 +1483,7 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr ""
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:135
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:147
 #: app/src/window/window.ts:68 app/src/window/window.ts:83
 msgid "Curlew"
 msgstr ""
@@ -1588,7 +1588,7 @@ msgstr ""
 #: app/src/window/agent-access-page.ts:234
 #: app/src/window/conversation-list.ts:386
 #: app/src/window/conversation-list.ts:472
-#: app/src/window/conversation-view.ts:609
+#: app/src/window/conversation-view.ts:623
 msgid "Cancel"
 msgstr ""
 
@@ -2039,7 +2039,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:1153
+#: app/src/window/conversation-view.ts:1175
 msgid "Continuing via {protocol}"
 msgstr ""
 
@@ -2075,7 +2075,7 @@ msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:292
 #: app/src/window/conversation-model.ts:305
-#: app/src/window/conversation-view.ts:593
+#: app/src/window/conversation-view.ts:607
 msgid "You"
 msgstr ""
 
@@ -2085,114 +2085,119 @@ msgid_plural "{count} people"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-view.ts:141
+#: app/src/window/conversation-view.ts:153
 msgid "Choose how to reach this person"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:158
-#: app/src/window/conversation-view.ts:388
+#: app/src/window/conversation-view.ts:170
+#: app/src/window/conversation-view.ts:400
 msgid "Write a message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:169
+#: app/src/window/conversation-view.ts:181
 msgid "Send message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:181
+#: app/src/window/conversation-view.ts:193
 msgid "Cancel reply"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:194
+#: app/src/window/conversation-view.ts:206
 msgid "Cancel editing"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:224
+#: app/src/window/conversation-view.ts:236
 msgid "Conversation"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:354
+#: app/src/window/conversation-view.ts:366
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:406
+#: app/src/window/conversation-view.ts:418
 msgid "Send via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:509
+#: app/src/window/conversation-view.ts:523
 msgid "Show the quoted message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:516
-#: app/src/window/conversation-view.ts:539
+#: app/src/window/conversation-view.ts:530
+#: app/src/window/conversation-view.ts:553
 msgid "Reply to {author}: {excerpt}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:564
+#: app/src/window/conversation-view.ts:578
 msgid "Reaction not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:592
+#: app/src/window/conversation-view.ts:606
 msgid "Edit message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:596
+#: app/src/window/conversation-view.ts:610
 msgid "Editing your message: {excerpt}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:604
+#: app/src/window/conversation-view.ts:618
 msgid "Delete message?"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:605
+#: app/src/window/conversation-view.ts:619
 msgid "This will remove the message for everyone in the chat."
 msgstr ""
 
-#: app/src/window/conversation-view.ts:610
+#: app/src/window/conversation-view.ts:624
 msgid "Delete for everyone"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:627
+#: app/src/window/conversation-view.ts:641
 msgid "Message not deleted: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:679
+#: app/src/window/conversation-view.ts:693
 msgid "Reply"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:680
+#: app/src/window/conversation-view.ts:694
 msgid "Edit"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:681
+#: app/src/window/conversation-view.ts:695
 msgid "Delete"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:682
+#: app/src/window/conversation-view.ts:696
 msgid "Copy"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:795
+#: app/src/window/conversation-view.ts:809
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:837
-#: app/src/window/conversation-view.ts:963
+#: app/src/window/conversation-view.ts:851
+#: app/src/window/conversation-view.ts:985
 msgid "edited"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1017
+#: app/src/window/conversation-view.ts:861
+#: app/src/window/conversation-view.ts:862
+msgid "Read"
+msgstr ""
+
+#: app/src/window/conversation-view.ts:1039
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1118
+#: app/src/window/conversation-view.ts:1140
 msgid "Message not edited: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1165
+#: app/src/window/conversation-view.ts:1187
 msgid "Message not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1168
+#: app/src/window/conversation-view.ts:1190
 msgid "Retry"
 msgstr ""
 
