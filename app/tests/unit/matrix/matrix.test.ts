@@ -316,6 +316,24 @@ export default async () => {
       expect(mapped.edits[0].senderRemoteId).toBe(ANNA);
     });
 
+    await it('maps reactions with their event ids, several per person, and drops a redacted one', async () => {
+      const target = text(ANNA, T0, 'Salat?');
+      const react = (sender: string, ts: number, key: string) =>
+        event('m.reaction', sender, ts, {
+          'm.relates_to': { rel_type: 'm.annotation', event_id: target.eventId, key },
+        });
+      const up = react(BEN, T0 + 1, '👍');
+      const mine = react(ME, T0 + 2, '❤️');
+      const taken = react(BEN, T0 + 3, '🎉');
+      const mapped = mapEvents([target, up, mine, taken, redaction(BEN, T0 + 4, taken.eventId)], ME, NAMES);
+      expect(mapped.messages.length).toBe(1);
+      expect(mapped.reactions).toStrictEqual([
+        { remoteId: target.eventId, reactor: BEN, emoji: '👍', eventId: up.eventId },
+        { remoteId: target.eventId, reactor: null, emoji: '❤️', eventId: mine.eventId },
+      ]);
+      expect(mapped.retractedReactions).toStrictEqual([taken.eventId]);
+    });
+
     await it('removes a redacted message from the page and reports it', async () => {
       const gone = text(ANNA, T0, 'versehentlich');
       const mapped = mapEvents([gone, redaction(ANNA, T0 + 5, gone.eventId)], ME, NAMES);

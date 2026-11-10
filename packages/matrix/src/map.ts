@@ -16,6 +16,7 @@ import type {
   AttachmentKind,
   ChatAttachment,
   ChatEdit,
+  ChatReaction,
   ChatInfo,
   ChatMessage,
   ChatPeer,
@@ -211,6 +212,16 @@ export function editOf(event: MxEvent): { target: string; text: string | null } 
   return { target, text: messageText(fresh as Content, false) };
 }
 
+/** A reaction: an `m.annotation` of a message, whose key is the emoji. */
+export function reactionOf(event: MxEvent): { target: string; emoji: string } | null {
+  if (event.type !== 'm.reaction' || event.redacted || event.undecryptable !== null) return null;
+  const rel = relatesTo(event.content);
+  if (rel?.rel_type !== 'm.annotation') return null;
+  const target = str(rel.event_id);
+  const emoji = str(rel.key);
+  return target && emoji ? { target, emoji } : null;
+}
+
 /** The event a redaction removes, or null when the event is not a redaction. */
 export function redactionTarget(event: MxEvent): string | null {
   if (event.type !== 'm.room.redaction') return null;
@@ -219,7 +230,7 @@ export function redactionTarget(event: MxEvent): string | null {
 
 /**
  * One event as a chat message, or null for everything that is not something a person wrote:
- * state (joins, names, power levels), reactions, redactions, edits (applied to their target
+ * state (joins, names, power levels), reactions (see {@link reactionOf}), redactions, edits (applied to their target
  * instead), and an event whose content the server already stripped.
  */
 export function toChatMessage(
@@ -272,6 +283,10 @@ export interface MappedEvents {
   edits: ChatEdit[];
   /** Messages the network reports removed (redacted). */
   retracted: string[];
+  /** Reactions (`m.annotation`) in the page, oldest first, with the event that carries each. */
+  reactions: ChatReaction[];
+  /** Every redacted event id: a reaction stored under one is taken back. */
+  retractedReactions: string[];
 }
 
 /**
@@ -288,10 +303,21 @@ export function mapEvents(
   const byId = new Map<string, { message: ChatMessage; sender: string }>();
   const edits = new Map<string, ChatEdit>();
   const deleted: string[] = [];
+  const reactions: ChatReaction[] = [];
   for (const event of events) {
     const removed = redactionTarget(event);
     if (removed) {
       deleted.push(removed);
+      continue;
+    }
+    const reaction = reactionOf(event);
+    if (reaction) {
+      reactions.push({
+        remoteId: reaction.target,
+        reactor: event.sender === selfUserId ? null : event.sender,
+        emoji: reaction.emoji,
+        eventId: event.eventId,
+      });
       continue;
     }
     const edit = editOf(event);
@@ -329,5 +355,7 @@ export function mapEvents(
     messages: messages.filter((m) => !gone.has(m.remoteId)),
     edits: [...edits.values()].filter((e) => !gone.has(e.remoteId)),
     retracted: deleted,
+    reactions: reactions.filter((r) => !gone.has(r.eventId ?? '')),
+    retractedReactions: deleted,
   };
 }
