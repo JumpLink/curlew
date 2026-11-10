@@ -222,6 +222,21 @@ export const createBaileysConnection: ConnectionFactory = ({ auth, fullHistory =
         if (!sent) throw new Error(_('WhatsApp did not take the reaction — nothing was sent'));
         return sent;
       },
+      editMessage: async (jid, id, text) => {
+        // `linkPreview: null` as for a text: an edited URL must not fetch a preview from here.
+        const sent = await sock.sendMessage(jid, {
+          text,
+          edit: { remoteJid: jid, fromMe: true, id },
+          linkPreview: null,
+        });
+        if (!sent) throw new Error(_('WhatsApp did not take the edit — nothing was sent'));
+        return sent;
+      },
+      deleteMessage: async (jid, id) => {
+        const sent = await sock.sendMessage(jid, { delete: { remoteJid: jid, fromMe: true, id } });
+        if (!sent) throw new Error(_('WhatsApp did not take the deletion — nothing was sent'));
+        return sent;
+      },
       // See `WaConnection.openSend`: the connection's owner closes it, never a send view.
       end: () => {},
     }),

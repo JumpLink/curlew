@@ -39,6 +39,9 @@ import { _, fmt } from '@curlew/protocol';
 import type {
   DeliveryEvent,
   MessageSender,
+  ReplyTarget,
+  SendingDeletion,
+  SendingEdit,
   SendingMessage,
   SendingReaction,
   SendPermit,
@@ -116,8 +119,8 @@ export class WhatsAppSender implements MessageSender {
     attachments: true,
     replies: true,
     reactions: true,
-    edits: false,
-    deletes: false,
+    edits: true,
+    deletes: true,
   };
   private readonly socket: WaSendSocketHandle;
   private readonly mapper: WhatsAppMapper;
@@ -155,9 +158,55 @@ export class WhatsAppSender implements MessageSender {
           });
   }
 
+  /** The id of a message of the person's own, or a refusal before anything is sent. */
+  private ownId(target: ReplyTarget): string {
+    if (target.fromSelf !== true) {
+      throw new Error(_('only your own messages can be changed — nothing was sent'));
+    }
+    return target.remoteId;
+  }
+
+  /** Replaces the text of one of the person's own messages of a direct chat. */
+  async edit(edit: SendingEdit): Promise<void> {
+    const to = this.recipient(edit.to);
+    const id = this.ownId(edit.target);
+    const bytes = UTF8.encode(edit.text).length;
+    if (bytes > WHATSAPP_MAX_MESSAGE_BYTES) {
+      throw new Error(
+        fmt(_('a WhatsApp message holds at most {max} bytes of text, this one has {bytes} — shorten it'), {
+          max: String(WHATSAPP_MAX_MESSAGE_BYTES),
+          bytes: String(bytes),
+        }),
+      );
+    }
+    this.requireJournal();
+    await this.socket.ready();
+    await this.socket.editMessage(to, id, edit.text);
+  }
+
+  /** Deletes one of the person's own messages of a direct chat for everyone. */
+  async delete(deletion: SendingDeletion): Promise<void> {
+    const to = this.recipient(deletion.to);
+    const id = this.ownId(deletion.target);
+    this.requireJournal();
+    await this.socket.ready();
+    await this.socket.deleteMessage(to, id);
+  }
+
   async react(reaction: SendingReaction): Promise<void> {
     const to = this.recipient(reaction.to);
     if (reaction.emoji === '') throw new Error(_('a reaction needs an emoji, or null to take it back'));
+    this.requireJournal();
+    await this.socket.ready();
+    await this.socket.sendReaction(to, {
+      id: reaction.target.remoteId,
+      fromMe: reaction.target.fromSelf === true,
+      emoji: reaction.emoji ?? '',
+    });
+  }
+
+  /** Nothing is sent while a received message is unaccounted for (see `send`). */
+  private requireJournal(): void {
     if (this.journalError !== null) {
       throw new Error(
         fmt(
@@ -168,12 +217,6 @@ export class WhatsAppSender implements MessageSender {
         ),
       );
     }
-    await this.socket.ready();
-    await this.socket.sendReaction(to, {
-      id: reaction.target.remoteId,
-      fromMe: reaction.target.fromSelf === true,
-      emoji: reaction.emoji ?? '',
-    });
   }
 
   async send(message: SendingMessage): Promise<SentMessage> {

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 20:30+0100\n"
+"POT-Creation-Date: 2026-11-10 20:35+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2380,7 +2380,7 @@ msgstr ""
 
 #: packages/imap/src/send.ts:69 packages/matrix/src/send.ts:354
 #: packages/signal/src/send.ts:405 packages/telegram/src/sender.ts:80
-#: packages/whatsapp/src/send.ts:360
+#: packages/whatsapp/src/send.ts:403
 msgid "sending to {address} is not granted for account {account}"
 msgstr ""
 
@@ -2514,7 +2514,8 @@ msgid ""
 msgstr ""
 
 #: packages/matrix/src/send.ts:483 packages/signal/src/send.ts:215
-#: packages/telegram/src/sender.ts:129 packages/xmpp/src/messages.ts:36
+#: packages/telegram/src/sender.ts:129 packages/whatsapp/src/send.ts:164
+#: packages/xmpp/src/messages.ts:36
 msgid "only your own messages can be changed — nothing was sent"
 msgstr ""
 
@@ -2918,6 +2919,14 @@ msgstr ""
 msgid "WhatsApp did not take the reaction — nothing was sent"
 msgstr ""
 
+#: packages/whatsapp/src/client.ts:232
+msgid "WhatsApp did not take the edit — nothing was sent"
+msgstr ""
+
+#: packages/whatsapp/src/client.ts:237
+msgid "WhatsApp did not take the deletion — nothing was sent"
+msgstr ""
+
 #: packages/whatsapp/src/login.ts:43
 msgid ""
 "the phone number must be international, with country code (e.g. +49 151 …)"
@@ -2964,75 +2973,75 @@ msgstr ""
 msgid "WhatsApp logged this device out ({reason}) — {hint}"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:160
-msgid "a reaction needs an emoji, or null to take it back"
-msgstr ""
-
-#: packages/whatsapp/src/send.ts:165 packages/whatsapp/src/send.ts:201
-msgid ""
-"a message that arrived while curlew was connected could not be written down "
-"({reason}) — nothing was sent"
-msgstr ""
-
-#: packages/whatsapp/src/send.ts:188
+#: packages/whatsapp/src/send.ts:176 packages/whatsapp/src/send.ts:231
 msgid ""
 "a WhatsApp message holds at most {max} bytes of text, this one has {bytes} — "
 "shorten it"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:210
+#: packages/whatsapp/src/send.ts:198
+msgid "a reaction needs an emoji, or null to take it back"
+msgstr ""
+
+#: packages/whatsapp/src/send.ts:214 packages/whatsapp/src/send.ts:244
+msgid ""
+"a message that arrived while curlew was connected could not be written down "
+"({reason}) — nothing was sent"
+msgstr ""
+
+#: packages/whatsapp/src/send.ts:253
 msgid "a reply to a WhatsApp message cannot carry files"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:245
+#: packages/whatsapp/src/send.ts:288
 msgid "{sent} of {total} files were sent, then {file} failed: {reason}"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:275
+#: packages/whatsapp/src/send.ts:318
 msgid ""
 "WhatsApp returned no id for the message — it may have been sent; look at the "
 "chat before sending it again"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:286
+#: packages/whatsapp/src/send.ts:329
 msgid ""
 "WhatsApp did not confirm the message within {seconds} s — it was handed "
 "over, but look at the chat before sending it again"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:296
+#: packages/whatsapp/src/send.ts:339
 msgid ""
 "the message was sent, but a message that arrived at the same time could not "
 "be written down ({reason}) — it may be missing from the chat"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:344
+#: packages/whatsapp/src/send.ts:387
 msgid ""
 "curlew does not send status updates or broadcasts — send a message to a "
 "person instead"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:350
+#: packages/whatsapp/src/send.ts:393
 msgid ""
 "curlew cannot send to a WhatsApp group: a group message is encrypted for "
 "every member, and curlew keeps no member list to do that with — send it from "
 "WhatsApp"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:374
+#: packages/whatsapp/src/send.ts:417
 msgid ""
 "{address} names one device of a person, not the person — drop the `:"
 "<device>` and use the id `conversations_list` shows for the chat"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:382
+#: packages/whatsapp/src/send.ts:425
 msgid ""
 "{address} is a phone number, not a WhatsApp chat id — a chat is filed under "
 "the LID whenever curlew knows one, so use the id `conversations_list` shows "
 "for the chat"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:389
+#: packages/whatsapp/src/send.ts:432
 msgid ""
 "{address} is not a WhatsApp chat id — use the id `conversations_list` shows "
 "for the chat (`<digits>@lid` or `<digits>@s.whatsapp.net`)"

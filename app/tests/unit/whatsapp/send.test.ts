@@ -356,6 +356,39 @@ export default async () => {
       });
     });
 
+    await it('edits and deletes the persons own message by its key, and gates the rest', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const permit: SendPermit = { account: rig.accountId, addresses: [ANNA_LID] };
+        const sender = await rig.backend.openSender(rig.accountId, permit);
+        expect(sender.features.edits).toBe(true);
+        expect(sender.features.deletes).toBe(true);
+        const mine = { remoteId: 'WAMSG1', fromSelf: true };
+        try {
+          await sender.edit?.({ to: ANNA_LID, target: mine, text: 'Fixed' });
+          await sender.delete?.({ to: ANNA_LID, target: mine });
+          const [socket] = rig.senders;
+          expect(socket.edited).toStrictEqual([{ jid: ANNA_LID, id: 'WAMSG1', text: 'Fixed' }]);
+          expect(socket.deleted).toStrictEqual([{ jid: ANNA_LID, id: 'WAMSG1' }]);
+          const theirs = { remoteId: 'WAMSG2', fromSelf: false };
+          for (const attempt of [
+            sender.edit?.({ to: ANNA_LID, target: theirs, text: 'x' }),
+            sender.delete?.({ to: ANNA_LID, target: { remoteId: 'WAMSG2' } }),
+            sender.edit?.({ to: BEN_LID, target: mine, text: 'x' }),
+            sender.delete?.({ to: BEN_LID, target: mine }),
+            sender.edit?.({ to: GROUP, target: mine, text: 'x' }),
+            sender.delete?.({ to: GROUP, target: mine }),
+            sender.edit?.({ to: ANNA_LID, target: mine, text: 'x'.repeat(70_000) }),
+          ]) {
+            expect((await reasonOf(attempt as Promise<unknown>)).length > 0).toBe(true);
+          }
+          expect(socket.edited.length).toBe(1);
+          expect(socket.deleted.length).toBe(1);
+        } finally {
+          await sender.close();
+        }
+      });
+    });
+
     await it('refuses a reply that carries files, sending nothing', async () => {
       await withRig(GRANTED, async (rig) => {
         const doc = join(rig.dir, 'notes.pdf');

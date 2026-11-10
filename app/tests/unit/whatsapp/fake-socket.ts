@@ -126,6 +126,9 @@ export class FakeSendSocket extends FakeEvents implements WaSendSocketHandle {
   readonly files: Array<{ jid: string; file: WaOutgoingFile; id: string }> = [];
   /** Every reaction that got through the gate, in order. */
   readonly reactions: Array<{ jid: string; reaction: WaReaction; id: string }> = [];
+  /** Every edit and deletion that got through the gate. Neither echoes: the fake has no protocol message. */
+  readonly edited: Array<{ jid: string; id: string; text: string }> = [];
+  readonly deleted: Array<{ jid: string; id: string }> = [];
   /** Confirm each send with `SERVER_ACK`. Off drives the ack timeout. */
   ack = true;
   /** Echo the sent message back, as a real connection does for its own writes. */
@@ -182,6 +185,16 @@ export class FakeSendSocket extends FakeEvents implements WaSendSocketHandle {
         this.reactions.push({ jid, reaction, id });
       },
     );
+  }
+
+  async editMessage(jid: string, id: string, text: string): Promise<WaSentMessage> {
+    this.edited.push({ jid, id, text });
+    return { key: { remoteJid: jid, fromMe: true, id } };
+  }
+
+  async deleteMessage(jid: string, id: string): Promise<WaSentMessage> {
+    this.deleted.push({ jid, id });
+    return { key: { remoteJid: jid, fromMe: true, id } };
   }
 
   async sendFile(jid: string, file: WaOutgoingFile): Promise<WaSentMessage> {
@@ -290,6 +303,8 @@ export class FakeConnection implements WaConnection {
       sendText: (jid, body, quote) => send.sendText(jid, body, quote),
       sendFile: (jid, file) => send.sendFile(jid, file),
       sendReaction: (jid, reaction) => send.sendReaction(jid, reaction),
+      editMessage: (jid, id, text) => send.editMessage(jid, id, text),
+      deleteMessage: (jid, id) => send.deleteMessage(jid, id),
       end: () => {
         this.sendViewEnds++;
       },

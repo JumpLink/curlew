@@ -279,6 +279,10 @@ export interface WaSendSocketHandle {
   sendFile(jid: string, file: WaOutgoingFile): Promise<WaSentMessage>;
   /** One reaction on a message of the chat; WhatsApp keeps one per person, an empty emoji removes it. */
   sendReaction(jid: string, reaction: WaReaction): Promise<WaSentMessage>;
+  /** Replace the text of the person's own message `id` of the chat. */
+  editMessage(jid: string, id: string, text: string): Promise<WaSentMessage>;
+  /** Delete the person's own message `id` of the chat for everyone (revoke). */
+  deleteMessage(jid: string, id: string): Promise<WaSentMessage>;
   /** Close without logging out, exactly like `WaSocketHandle.end`. */
   end(): void;
 }
