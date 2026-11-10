@@ -371,6 +371,27 @@ export interface ChatHistoryPage {
    * index. A message retracted inside the same page is simply not in `messages`.
    */
   retracted?: string[];
+  /** Reactions this page brings to messages in the chat, stored or in the page. Applied in order. */
+  reactions?: ChatReaction[];
+  /** Reactions taken back, by the `eventId` they were stored with (Matrix redacts the annotation). */
+  retractedReactions?: string[];
+}
+
+/** One person's reaction to a message of an archive network. */
+export interface ChatReaction {
+  /** The message reacted to, by remote id. Dropped when the message is not stored. */
+  remoteId: string;
+  /** The reacting peer's `remoteId`, or null for the user. */
+  reactor: string | null;
+  /** Null only with `replace`: the person's set of reactions to the message is now empty. */
+  emoji: string | null;
+  /** The network's id of the reaction itself, kept when it can be taken back by that id. */
+  eventId?: string;
+  /**
+   * The person's earlier reactions to this message are dropped first: a network that publishes
+   * the whole set at once (XMPP) puts this on the first reaction of the set.
+   */
+  replace?: boolean;
 }
 
 /** A correction of a message synced earlier: its new text replaces the stored one. */

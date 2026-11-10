@@ -34,6 +34,7 @@ import type {
   ChatAttachment,
   ChatBackend,
   ChatEdit,
+  ChatReaction,
   ChatHistoryPage,
   ChatInfo,
   ChatMessage,
@@ -225,6 +226,10 @@ class ChatBatch {
    * names its sender, that sender twice (see `ChatEdit.senderRemoteId`; '' is the user).
    */
   readonly edits: SqlValue[][] = [];
+  /** Reactions in the order the network reported them, as `[conversationId, reaction]`. */
+  readonly reactions: Array<[string, ChatReaction]> = [];
+  /** Event ids of reactions the network reports taken back. */
+  readonly retractedReactions: string[] = [];
   /** Messages stored by an earlier run that the network reports retracted: row ids. */
   readonly retracted: string[] = [];
   /**
@@ -260,6 +265,11 @@ class ChatBatch {
     const row: SqlValue[] = [edit.text, edit.editedAt, conversationId, edit.remoteId];
     if (edit.senderRemoteId !== undefined) row.push(edit.senderRemoteId ?? '', edit.senderRemoteId ?? '');
     this.edits.push(row);
+  }
+
+  reaction(conversationId: string, reaction: ChatReaction): void {
+    this.changed.add(conversationId);
+    this.reactions.push([conversationId, reaction]);
   }
 
   peer(peer: ChatPeer): void {
@@ -412,6 +422,7 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
   deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, batch.deletedMessages);
   if (batch.deletedMessages.length > 0) {
     deleteIn(db, (p) => `DELETE FROM message_attachments WHERE message_id IN (${p})`, batch.deletedMessages);
+    deleteIn(db, (p) => `DELETE FROM message_reactions WHERE message_id IN (${p})`, batch.deletedMessages);
   }
   for (const table of [
     'conversation_messages',
@@ -424,6 +435,10 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
   if (batch.deletedConversations.length > 0) {
     db.prepare(
       `DELETE FROM message_attachments WHERE message_id IN
+         (SELECT id FROM conversation_messages WHERE conversation_id IN (${placeholders(batch.deletedConversations.length)}))`,
+    ).run(...batch.deletedConversations);
+    db.prepare(
+      `DELETE FROM message_reactions WHERE message_id IN
          (SELECT id FROM conversation_messages WHERE conversation_id IN (${placeholders(batch.deletedConversations.length)}))`,
     ).run(...batch.deletedConversations);
   }
@@ -482,6 +497,19 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
   deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, batch.retracted);
   if (batch.retracted.length > 0) {
     deleteIn(db, (p) => `DELETE FROM message_attachments WHERE message_id IN (${p})`, batch.retracted);
+    deleteIn(db, (p) => `DELETE FROM message_reactions WHERE message_id IN (${p})`, batch.retracted);
+  }
+  deleteIn(db, (p) => `DELETE FROM message_reactions WHERE event_id IN (${p})`, batch.retractedReactions);
+  for (const [conversationId, r] of batch.reactions) {
+    const messageId = stableId('m-', conversationId, r.remoteId);
+    const reactor = r.reactor ?? '';
+    if (r.replace) db.prepare('DELETE FROM message_reactions WHERE message_id = ? AND reactor = ?').run(messageId, reactor);
+    if (r.emoji === null) continue;
+    // Only a message that is stored (or written just above): a reaction to an unknown one is dropped.
+    db.prepare(
+      `INSERT OR REPLACE INTO message_reactions (message_id, reactor, emoji, event_id)
+       SELECT ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM conversation_messages WHERE id = ?)`,
+    ).run(messageId, reactor, r.emoji, r.eventId ?? null, messageId);
   }
   // Read state and the conversation aggregates, set-based: two executions per account however
   // many chats changed. `seen` for the user's own messages is always 1; for the others it is
@@ -664,6 +692,8 @@ async function syncAccount(
       let lastCursor = cursor?.lastCursor ?? null;
       const collect = (page: ChatHistoryPage): void => {
         for (const edit of page.edits ?? []) batch.edit(conversationId, edit);
+        for (const reaction of page.reactions ?? []) batch.reaction(conversationId, reaction);
+        batch.retractedReactions.push(...(page.retractedReactions ?? []));
         for (const remoteId of page.retracted ?? []) batch.retract(conversationId, remoteId);
         result.removed += page.retracted?.length ?? 0;
       };
