@@ -76,6 +76,12 @@ export default async () => {
         backend.retractedReactions = [];
         await syncChats(db, backend, { now: AT('2026-08-06T12:10:00Z'), fullScan: true });
         expect(chips()).toBe('👍1*');
+        backend.reactions.set('1001', [
+          { remoteId: '1001/1', reactor: 'telegram:🎉:1', emoji: '🎉', replaceAll: true },
+          { remoteId: '1001/1', reactor: 'telegram:🎉:2', emoji: '🎉' },
+        ]);
+        await syncChats(db, backend, { now: AT('2026-08-06T12:15:00Z'), fullScan: true });
+        expect(chips()).toBe('🎉2');
       } finally {
         db.close();
       }

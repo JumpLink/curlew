@@ -43,6 +43,7 @@ import {
   telegramMiddlewares,
   toChatInfo,
   toChatMessage,
+  toChatReactions,
 } from '@curlew/telegram';
 import { conversationsList, conversationsShow, openIndex } from '../../../src/core/actions/index.ts';
 import { telegramFixture } from '../store/chat-fixtures.ts';
@@ -196,6 +197,30 @@ export default async () => {
       const anonymous = toChatMessage(tgMessage(ORGA, 22, BEN, 'anon', { sender: { type: 'anonymous' } }));
       expect(anonymous?.sender).toBe(null);
       expect(anonymous?.fromSelf).toBe(false);
+    });
+
+    await it('turns reaction counts into placeholder reactors, the own one first, and skips custom and paid', async () => {
+      const count = (emoji: unknown, n: number, order: number | null = null, isPaid = false) => ({
+        emoji,
+        count: n,
+        order,
+        isPaid,
+      });
+      const reactions = toChatReactions(
+        tgMessage(ANNA, 8, ANNA, 'hi', {
+          reactions: {
+            reactions: [count('👍', 3, 1), count('❤️', 1), count(123n, 5), count('⭐', 2, null, true)],
+          },
+        }),
+      );
+      expect(reactions.map((r) => `${r.reactor}:${r.emoji}${r.replaceAll ? '!' : ''}`)).toStrictEqual([
+        'null:👍!',
+        'telegram:👍:1:👍',
+        'telegram:👍:2:👍',
+        'telegram:❤️:1:❤️',
+      ]);
+      expect(reactions[0].remoteId).toBe(`${ANNA.id}/8`);
+      expect(toChatReactions(tgMessage(ANNA, 9, ANNA, 'none')).length).toBe(0);
     });
 
     await it('never lists a phone number as the account identity', async () => {

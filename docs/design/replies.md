@@ -61,7 +61,7 @@ its network id, so it shows its quote and can be answered too.
 
 ### 4. Reactions
 
-Status: store, Signal, WhatsApp, Matrix and XMPP receive and the window chips built; Telegram and sending are open.
+Status: store, all five receive paths and the window chips built; sending is open.
 Reference: Fractal and Flare show reactions as small emoji chips under the bubble,
 with a count when more than one person used the same emoji; the person's own chip is tinted.
 
@@ -102,6 +102,10 @@ reaction there is part of the page, not a change event:
 - Telegram reports counts per emoji and no reactors. It stores them under a synthetic reactor
   `telegram:<emoji>:<n>` per slot, and the chip shows the count without a "You" state unless the
   API flags the emoji as chosen.
+  Built: the first reaction of a message carries `replaceAll`, because a page reports the whole
+  state of the message, and one emoji keeps at most 100 placeholder rows. Custom and paid reactions
+  are skipped. A page holds only messages newer than the cursor, so a reaction that arrives later
+  on an already synced message shows up only when a full scan re-reads it.
 
 Order: widen the key (schema v18), `ChatPage.reactions` plus the write phase, then Matrix, XMPP,
 Telegram, one PR each.

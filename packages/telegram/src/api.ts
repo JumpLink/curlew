@@ -61,6 +61,16 @@ export interface TgMediaDownload {
   readonly chunks: AsyncIterable<Uint8Array>;
 }
 
+/** One emoji of a message's reactions: how many people used it, and whether the account is one. */
+export interface TgReactionCount {
+  /** A plain emoji is a string; a custom emoji is an id, which curlew does not show. */
+  readonly emoji: unknown;
+  readonly isPaid: boolean;
+  readonly count: number;
+  /** Set when the account itself reacted with this emoji. */
+  readonly order: number | null;
+}
+
 export interface TgMessage {
   readonly id: number;
   readonly date: Date;
@@ -76,6 +86,8 @@ export interface TgMessage {
   readonly isTopicMessage: boolean;
   /** Shared by the messages of one album; null for a message that is not part of one. */
   readonly groupedIdUnique?: string | null;
+  /** Telegram reports counts per emoji, and in most chats no reactors. */
+  readonly reactions?: { readonly reactions: ReadonlyArray<TgReactionCount> } | null;
 }
 
 export interface TgDialog {

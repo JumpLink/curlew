@@ -21,8 +21,7 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
     // re-reads the window and rewrites the row. Asserted end to end in telegram.test.ts
     // ("delivers an edited message") so this cannot outlive the mechanism.
     edits: true,
-    // The network has reactions (`messages.getMessagesReactions`), but curlew does not read them:
-    // there is no reaction field in `ChatMessage` to put them in. False is the honest answer.
+    // Reactions are read (counts per emoji, see map.ts) but cannot be sent yet, so false.
     reactions: false,
     // Forum topics in supergroups only (map.ts sets `threadRemoteId` for topic messages). A plain
     // reply chain is `replyToRemoteId`, not a thread.

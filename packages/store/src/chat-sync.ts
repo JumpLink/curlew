@@ -503,7 +503,10 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
   for (const [conversationId, r] of batch.reactions) {
     const messageId = stableId('m-', conversationId, r.remoteId);
     const reactor = r.reactor ?? '';
-    if (r.replace) db.prepare('DELETE FROM message_reactions WHERE message_id = ? AND reactor = ?').run(messageId, reactor);
+    if (r.replaceAll) db.prepare('DELETE FROM message_reactions WHERE message_id = ?').run(messageId);
+    else if (r.replace) {
+      db.prepare('DELETE FROM message_reactions WHERE message_id = ? AND reactor = ?').run(messageId, reactor);
+    }
     if (r.emoji === null) continue;
     // Only a message that is stored (or written just above): a reaction to an unknown one is dropped.
     db.prepare(
