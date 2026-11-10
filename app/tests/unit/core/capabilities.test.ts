@@ -32,7 +32,8 @@ const DELIVERED_CAPABILITIES: ReadonlyArray<{
   {
     backend: 'whatsapp',
     manifest: BUILTIN_PLUGINS.find((p) => p.manifest.name === 'whatsapp')!.manifest,
-    trueFlags: 'edits,reactions,readReceipts,groups,e2ee,attachments,attachmentsRead,replies',
+    trueFlags:
+      'edits,reactions,editsOwn,deletesOwn,readReceipts,groups,e2ee,attachments,attachmentsRead,replies',
   },
   {
     backend: 'xmpp',

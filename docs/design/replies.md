@@ -1,6 +1,6 @@
 # Replies, quotes and reactions
 
-Status: pieces 1 to 4 (quote, jump, send a reply, reactions) built; piece 5 (edit and delete) is specified. Reference: Fractal, Flare and Telegram show
+Status: pieces 1 to 5 (quote, jump, send a reply, reactions, edit and delete) built. Reference: Fractal, Flare and Telegram show
 the message a reply points at as a small block above the reply's text. The index already stores
 the pointer (`reply_to_remote_id`, `reply_to_client_id`) for Telegram, Matrix, XMPP, Signal and
 WhatsApp, and nothing in the window reads it.
@@ -125,7 +125,7 @@ chip takes it back), then Matrix (`m.annotation`, removal needs the own event id
 
 ### 5. Edit and delete
 
-Status: window built; senders follow. The receive
+Status: window and the senders of all five networks built. The receive
 side exists for all five networks (`ChatEdit`, `retracted`, the `edit` and `delete` delivery
 changes), so this piece is only sending, and only of the person's own messages.
 

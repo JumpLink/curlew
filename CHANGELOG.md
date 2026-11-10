@@ -28,6 +28,7 @@
 
 ### Added
 
+- WhatsApp direct chats can edit and delete your own messages from the window: *Edit* on a text message, *Delete* for everyone on any of yours. Groups stay read-only.
 - Signal direct chats can edit and delete your own messages from the window: *Edit* on a text message, *Delete* for everyone on any of yours. Groups stay read-only.
 - XMPP chats can edit and delete your own messages from the window (XEP-0308 corrections, XEP-0424 retractions). An end-to-end encrypted chat refuses both, since they go out unencrypted.
 - Telegram chats can edit and delete your own messages from the window: *Edit* on a text message, *Delete* for everyone on any of yours.

@@ -7,7 +7,7 @@
  * `sendPresenceUpdate`, `chatModify`, `groupCreate`, `logout`, …). So this package draws the line
  * one level up, in `api.ts`: the receive path is handed `WaSocketHandle`, which has `ev`,
  * `requestPairingCode` and `end` and no way to write at all, and a granted send is handed
- * `WaSendSocketHandle`, whose only writes are `sendText`, `sendFile` and `sendReaction`, each taking a `jid`. Nothing widens either shape
+ * `WaSendSocketHandle`, whose only writes are `sendText`, `sendFile`, `sendReaction`, `editMessage` and `deleteMessage`, each taking a `jid`. Nothing widens either shape
  * at runtime, and a test asserts the receive handle has no send-capable method.
  *
  * What is left to gate is therefore one argument: WHICH chat a text or a file may go into. That is
@@ -29,6 +29,8 @@ import { sendableJid } from './jid.ts';
 export type WaSendText = (jid: string, text: string, quote?: WaQuote) => Promise<WaSentMessage>;
 export type WaSendFile = (jid: string, file: WaOutgoingFile) => Promise<WaSentMessage>;
 export type WaSendReaction = (jid: string, reaction: WaReaction) => Promise<WaSentMessage>;
+export type WaSendEdit = (jid: string, id: string, text: string) => Promise<WaSentMessage>;
+export type WaSendDelete = (jid: string, id: string) => Promise<WaSentMessage>;
 
 /**
  * Why a sender permitted to write to `recipients` may not write to `jid`, or null when it may.
@@ -71,6 +73,26 @@ export function guardedSendReaction(send: WaSendReaction, recipients: readonly s
   };
 }
 
+/** `guardedSendText` for an edit of the person's own message: the same permit, the same refusal. */
+export function guardedSendEdit(send: WaSendEdit, recipients: readonly string[]): WaSendEdit {
+  const permitted = recipients.map((address) => sendableJid(address)).filter((jid) => jid !== null);
+  return async (jid, id, text) => {
+    const reason = sendRefusal(jid, permitted);
+    if (reason) throw new SendViolation(reason);
+    return send(jid, id, text);
+  };
+}
+
+/** `guardedSendText` for a deletion of the person's own message: the same permit, the same refusal. */
+export function guardedSendDelete(send: WaSendDelete, recipients: readonly string[]): WaSendDelete {
+  const permitted = recipients.map((address) => sendableJid(address)).filter((jid) => jid !== null);
+  return async (jid, id) => {
+    const reason = sendRefusal(jid, permitted);
+    if (reason) throw new SendViolation(reason);
+    return send(jid, id);
+  };
+}
+
 /** `guardedSendText` for a file: the same permit, the same refusal. */
 export function guardedSendFile(send: WaSendFile, recipients: readonly string[]): WaSendFile {
   const permitted = recipients.map((address) => sendableJid(address)).filter((jid) => jid !== null);
@@ -93,6 +115,8 @@ export function guardedSendSocket(
     sendText,
     sendFile: guardedSendFile((jid, file) => socket.sendFile(jid, file), recipients),
     sendReaction: guardedSendReaction((jid, reaction) => socket.sendReaction(jid, reaction), recipients),
+    editMessage: guardedSendEdit((jid, id, text) => socket.editMessage(jid, id, text), recipients),
+    deleteMessage: guardedSendDelete((jid, id) => socket.deleteMessage(jid, id), recipients),
     end: () => socket.end(),
   };
 }
