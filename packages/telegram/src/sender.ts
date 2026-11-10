@@ -37,9 +37,25 @@ export const TELEGRAM_MAX_FILES = 10;
 /** Telegram refuses a photo over 10 MB; such a picture goes as a document. */
 const PHOTO_MAX_BYTES = 10_000_000;
 
+/**
+ * The message number in a reply target (`<chat>/<number>`, as `remoteMessageId` writes it). A target
+ * in another chat is refused: Telegram would answer a message of the wrong conversation.
+ */
+function replyNumber(chatId: number, remoteId: string): number {
+  const match = /^(-?\d+)\/(\d+)$/.exec(remoteId);
+  if (!match || Number(match[1]) !== chatId) {
+    throw new Error(fmt(_('{id} is not a message of this Telegram chat — nothing was sent'), { id: remoteId }));
+  }
+  return Number(match[2]);
+}
+
 export class TelegramSender implements MessageSender {
   /** Telegram's own formatting is not curlew's chat Markdown: the body goes out as typed. */
-  readonly features: SenderFeatures = { markdown: false, attachments: true };
+  readonly features: SenderFeatures = {
+    markdown: false,
+    attachments: true,
+    replies: true,
+  };
   private readonly client: TelegramClientHandle;
   private readonly permit: SendPermit;
   private readonly onClose: () => Promise<void>;
@@ -77,8 +93,9 @@ export class TelegramSender implements MessageSender {
         }),
       );
     }
-    if (files.length > 0) return this.sendFiles(chatId, message, files);
-    const sent = await this.client.sendText(chatId, message.text);
+    const replyTo = message.replyTo && replyNumber(chatId, message.replyTo.remoteId);
+    if (files.length > 0) return this.sendFiles(chatId, message, files, replyTo);
+    const sent = await this.client.sendText(chatId, message.text, replyTo);
     return {
       target: message.to,
       id: remoteMessageId(chatId, sent.id),
@@ -95,6 +112,7 @@ export class TelegramSender implements MessageSender {
     chatId: number,
     message: SendingMessage,
     files: ReturnType<typeof inspectSendFiles>,
+    replyTo: number | undefined,
   ): Promise<SentMessage> {
     const text = message.text.trim().length === 0 ? undefined : message.text;
     const caption = text !== undefined && text.length <= TELEGRAM_MAX_CAPTION_CHARS ? text : undefined;
@@ -108,6 +126,7 @@ export class TelegramSender implements MessageSender {
           (file.contentType === 'image/jpeg' || file.contentType === 'image/png') &&
           file.size <= PHOTO_MAX_BYTES,
         ...(index === 0 && caption !== undefined ? { caption } : {}),
+        ...(index === 0 && replyTo !== undefined ? { replyTo } : {}),
       });
       first ??= sent;
     }

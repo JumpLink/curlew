@@ -171,6 +171,8 @@ export interface TgOutgoingFile {
   readonly contentType: string;
   readonly caption?: string;
   readonly asPhoto: boolean;
+  /** The id of a message in the same chat this one answers. */
+  readonly replyTo?: number;
 }
 
 /**
@@ -183,8 +185,11 @@ export interface TgOutgoingFile {
  * full handle, and only behind a `SendPermit` (ADR 0004).
  */
 export interface TelegramClientHandle extends TelegramApi {
-  /** Send ONE plain-text message to the chat (a marked id, as in `TgPeer.id`); returns it as sent. */
-  sendText(chatId: number, text: string): Promise<TgMessage>;
+  /**
+   * Send ONE plain-text message to the chat (a marked id, as in `TgPeer.id`); returns it as sent.
+   * `replyTo` is the id of a message in that chat the new one answers.
+   */
+  sendText(chatId: number, text: string, replyTo?: number): Promise<TgMessage>;
   /**
    * Send ONE file, optionally with a caption. `asPhoto` sends a picture as a photo (Telegram
    * recompresses it, as every chat app does) instead of as a document.

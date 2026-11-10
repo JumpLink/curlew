@@ -757,6 +757,11 @@ export interface SenderFeatures {
   markdown: boolean;
   /** The sender can attach files (`SendingMessage.attachments`); one that cannot is never handed any. */
   attachments: boolean;
+  /**
+   * The sender can answer one message (`SendingMessage.replyTo`); one that cannot is never handed a
+   * target, and a frontend hides its reply entry. Mail threads through `inReplyTo` instead.
+   */
+  replies: boolean;
 }
 
 /** A file to send with a message, by absolute path. Only the sender that claims `attachments` reads it. */
@@ -764,10 +769,18 @@ export interface SendingAttachment {
   path: string;
 }
 
+/** The message a reply answers. Grows with the protocols that need more than the id (Signal, WhatsApp). */
+export interface ReplyTarget {
+  /** The network's id of the message, as the index holds it (`ChatMessage.remoteId`). */
+  remoteId: string;
+}
+
 /** One message handed to a sender. */
 export interface SendingMessage {
   to: string;
   text: string;
+  /** Only when the sender's `features.replies` is true (chat): the message this one answers. */
+  replyTo?: ReplyTarget;
   /** Only when the backend's manifest claims `capabilities.subject` (mail). */
   subject?: string;
   /** Only when the sender's `features.attachments` is true (mail). */

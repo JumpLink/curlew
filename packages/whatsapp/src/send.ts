@@ -110,7 +110,11 @@ export class WhatsAppSender implements MessageSender {
    * WhatsApp's body is plain text. Its clients render `*bold*` and `_italic_` in it, which is not
    * curlew's chat Markdown and not something this path promises to translate.
    */
-  readonly features: SenderFeatures = { markdown: false, attachments: true };
+  readonly features: SenderFeatures = {
+    markdown: false,
+    attachments: true,
+    replies: false,
+  };
   private readonly socket: WaSendSocketHandle;
   private readonly mapper: WhatsAppMapper;
   private readonly journal: EventJournal | null;

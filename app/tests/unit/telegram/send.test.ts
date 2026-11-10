@@ -153,6 +153,43 @@ export default async () => {
       });
     });
 
+    await it('answers a message of the same chat, on the text and on the first file only', async () => {
+      await withRig(granted, async (rig) => {
+        const permit: SendPermit = { account: ACCOUNT, addresses: ['1001'] };
+        const sender = await rig.backend.openSender(ACCOUNT, permit);
+        expect(sender.features.replies).toBe(true);
+        await sender.send({ to: '1001', text: 'Gern', replyTo: { remoteId: '1001/7' } });
+        await sender.send({ to: '1001', text: 'Ohne' });
+        const photo = join(rig.dir, 'cat.png');
+        writeFileSync(photo, new Uint8Array([1, 2, 3, 4]));
+        const other = join(rig.dir, 'dog.png');
+        writeFileSync(other, new Uint8Array([5, 6, 7, 8]));
+        await sender.send({
+          to: '1001',
+          text: '',
+          replyTo: { remoteId: '1001/7' },
+          attachments: [{ path: photo }, { path: other }],
+        });
+        const client = rig.fake.clients[0];
+        expect(client.sent[0].replyTo).toBe(7);
+        expect(client.sent[1].replyTo === undefined).toBe(true);
+        expect(client.files[0].replyTo).toBe(7);
+        expect(client.files[1].replyTo === undefined).toBe(true);
+        await sender.close();
+      });
+    });
+
+    await it('refuses a reply to a message of another chat or of no chat', async () => {
+      await withRig(granted, async (rig) => {
+        const sender = await rig.backend.openSender(ACCOUNT, { account: ACCOUNT, addresses: ['1001'] });
+        for (const remoteId of ['1002/7', '7', 'x/7']) {
+          expect(await refused(sender.send({ to: '1001', text: 'Hi', replyTo: { remoteId } }))).toBe(true);
+        }
+        expect(rig.fake.clients[0].sent.length).toBe(0);
+        await sender.close();
+      });
+    });
+
     await it('sends a picked file from the window: a photo with the text as its caption', async () => {
       await withRig({}, async (rig) => {
         const photo = join(rig.dir, 'cat.png');

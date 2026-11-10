@@ -329,6 +329,52 @@ export default async () => {
       });
     });
 
+    await it('answers a message with m.in_reply_to, on a text and on the first file only', async () => {
+      await withRig(granted, async (rig) => {
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [ROOM],
+        });
+        expect(sender.features.replies).toBe(true);
+        const replyTo = { remoteId: '$asked:example.org' };
+        await sender.send({ to: ROOM, text: 'Gern', replyTo });
+        expect(JSON.parse(rig.http.puts()[0].body!)).toStrictEqual({
+          msgtype: 'm.text',
+          body: 'Gern',
+          'm.relates_to': { 'm.in_reply_to': { event_id: '$asked:example.org' } },
+        });
+
+        const a = join(rig.dir, 'a.txt');
+        const b = join(rig.dir, 'b.txt');
+        writeFileSync(a, 'a');
+        writeFileSync(b, 'b');
+        await sender.send({ to: ROOM, text: '', replyTo, attachments: [{ path: a }, { path: b }] });
+        const events = rig.http
+          .puts()
+          .slice(1)
+          .map((put) => JSON.parse(put.body!));
+        expect(events.length).toBe(2);
+        expect(events[0]['m.relates_to']['m.in_reply_to'].event_id).toBe('$asked:example.org');
+        expect('m.relates_to' in events[1]).toBe(false);
+
+        await sender.send({ to: ROOM, text: 'Plain' });
+        expect('m.relates_to' in JSON.parse(rig.http.puts()[3].body!)).toBe(false);
+        await sender.close();
+      });
+    });
+
+    await it('refuses a reply target that is not an event id, before anything is sent', async () => {
+      await withRig(granted, async (rig) => {
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [ROOM],
+        });
+        expect(await refused(sender.send({ to: ROOM, text: 'Hi', replyTo: { remoteId: 'm5' } }))).toBe(true);
+        expect(rig.http.puts().length).toBe(0);
+        await sender.close();
+      });
+    });
+
     await it('sends a picture as m.image, one event per file, caption on the first only', async () => {
       await withRig(granted, async (rig) => {
         const a = join(rig.dir, 'a.png');

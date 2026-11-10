@@ -35,8 +35,20 @@ remote id in the store, then the same jump after loading pages.
 ### 3. Send a reply
 
 A "Reply" action on a bubble (long press on touch, context menu on a pointer) sets a reply bar
-over the composer. The send path carries `replyTo` to the backend; backends that cannot reply
-ignore the bar and the menu entry is hidden. Needs a spec for each protocol's wire shape.
+over the composer. The send path carries `SendingMessage.replyTo` (`{ remoteId }`) to the backend.
+A sender that cannot reply has `features.replies = false` and is never handed a target; the window
+hides the entry. Built in two steps: the backends first, then the window.
+
+| Protocol | Wire shape | State |
+|---|---|---|
+| Matrix | `m.relates_to` → `m.in_reply_to` → `event_id` on the `m.room.message`; on the first file only | built |
+| Telegram | mtcute `replyTo` message number of the same chat (`<chat>/<number>`); a target of another chat is refused; first file only | built |
+| XMPP | XEP-0461 `<reply to id>` | to do |
+| Signal | `quote` in the data message (timestamp, author, text) | to do |
+| WhatsApp | `contextInfo.quotedMessage` with key and content | to do |
+| Mail | threads through `inReplyTo`/`References` already, outside this flag | — |
+
+Matrix needs no fallback text: the spec dropped reply fallbacks in v1.13.
 
 ### 4. Reactions, then edit and delete
 

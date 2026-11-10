@@ -151,7 +151,11 @@ export class SignalSender implements MessageSender {
    * Signal's body is plain text. It does carry styling, as ranges in a second field
    * (`BodyRange`), which is not curlew's chat Markdown and not what this path sends.
    */
-  readonly features: SenderFeatures = { markdown: false, attachments: false };
+  readonly features: SenderFeatures = {
+    markdown: false,
+    attachments: false,
+    replies: false,
+  };
   private readonly lib: SignalLib;
   private readonly store: SignalProtocolStore;
   private readonly account: DeviceAccount;

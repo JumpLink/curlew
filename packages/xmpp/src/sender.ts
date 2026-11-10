@@ -33,7 +33,11 @@ export const XMPP_MAX_FILES = 10;
 
 export class XmppSender implements MessageSender {
   /** Long texts are rendered as XEP-0393 and split (see `core/markdown.ts`). */
-  readonly features: SenderFeatures = { markdown: true, attachments: true };
+  readonly features: SenderFeatures = {
+    markdown: true,
+    attachments: true,
+    replies: false,
+  };
   private readonly session: GrantedXmppSession;
 
   constructor(session: GrantedXmppSession) {
