@@ -27,4 +27,5 @@ Agent- and contributor-facing docs for the curlew repo. The hard rules that load
 - [`design/ui.md`](design/ui.md) — window layout, role models, responsive rules
 - [`design/contacts.md`](design/contacts.md) — merging one person across messengers
 - [`design/replies.md`](design/replies.md) — quotes, replies, reactions, edit and delete
+- [`design/signal-groups.md`](design/signal-groups.md) — fetching Signal group names from the Groups v2 service (proposal)
 - [`references/index.md`](references/index.md) — the `refs/` shallow reference repos
