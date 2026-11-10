@@ -163,6 +163,8 @@ export class SignalSender implements MessageSender {
     attachments: false,
     replies: true,
     reactions: true,
+    edits: false,
+    deletes: false,
   };
   private readonly lib: SignalLib;
   private readonly store: SignalProtocolStore;

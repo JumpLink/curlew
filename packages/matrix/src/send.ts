@@ -317,6 +317,8 @@ export class MatrixSender implements MessageSender {
     attachments: true,
     replies: true,
     reactions: true,
+    edits: false,
+    deletes: false,
   };
   private readonly api: MatrixSendApi;
   private readonly permit: SendPermit;

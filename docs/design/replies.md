@@ -125,9 +125,9 @@ chip takes it back), then Matrix (`m.annotation`, removal needs the own event id
 
 ### 5. Edit and delete
 
-Status: spec, not built. The receive side exists for all five networks (`ChatEdit`, `retracted`,
-the `edit` and `delete` delivery changes), so this piece is only sending, and only of the
-person's own messages.
+Status: spec; plumbing built (protocol, wire v6, actions); window and senders follow. The receive
+side exists for all five networks (`ChatEdit`, `retracted`, the `edit` and `delete` delivery
+changes), so this piece is only sending, and only of the person's own messages.
 
 **What each network takes.** Limits are the networks' own and change; the sender relays the
 network's refusal as the reason, and the window offers the action from the message's age only

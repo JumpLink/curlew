@@ -57,6 +57,8 @@ export class TelegramSender implements MessageSender {
     attachments: true,
     replies: true,
     reactions: true,
+    edits: false,
+    deletes: false,
   };
   private readonly client: TelegramClientHandle;
   private readonly permit: SendPermit;

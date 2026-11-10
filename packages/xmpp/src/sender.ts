@@ -46,6 +46,8 @@ export class XmppSender implements MessageSender {
     attachments: true,
     replies: true,
     reactions: true,
+    edits: false,
+    deletes: false,
   };
   private readonly session: GrantedXmppSession;
 

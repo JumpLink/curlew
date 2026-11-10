@@ -8,7 +8,9 @@ app/src/core/actions/chat-attachment.ts
 app/src/core/actions/contacts.ts
 app/src/core/actions/conversations.ts
 app/src/core/actions/daemon.ts
+app/src/core/actions/delete.ts
 app/src/core/actions/deliveries.ts
+app/src/core/actions/edit.ts
 app/src/core/actions/follow.ts
 app/src/core/actions/index-sync.ts
 app/src/core/actions/index.ts

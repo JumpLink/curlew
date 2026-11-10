@@ -68,7 +68,7 @@ export const DAEMON_FETCH_TIMEOUT_MS = 120_000;
 export const DAEMON_SEND_TIMEOUT_MS = 120_000;
 
 /** The wire version. Bump it when a field stops being optional or changes meaning. */
-export const DAEMON_WIRE_VERSION = 5;
+export const DAEMON_WIRE_VERSION = 6;
 
 /**
  * One send, as the calling process asks for it.
@@ -96,6 +96,15 @@ export interface DaemonSendRequest {
     target: { remoteId: string; clientId?: string; fromSelf?: boolean; text?: string };
     emoji: string | null;
     previous?: string;
+  };
+  /** Chat: edit one of the person's own messages instead of sending text. Added in v6. */
+  edit?: {
+    target: { remoteId: string; clientId?: string; fromSelf?: boolean; text?: string };
+    text: string;
+  };
+  /** Chat: delete one of the person's own messages instead of sending text. Added in v6. */
+  delete?: {
+    target: { remoteId: string; clientId?: string; fromSelf?: boolean; text?: string };
   };
   format?: 'plain' | 'markdown';
 }
@@ -257,6 +266,39 @@ export function parseDaemonSendRequest(json: string): DaemonSendRequest {
     }
     if (request.text !== undefined || request.imageUrl !== undefined || request.attachments !== undefined || request.replyTo !== undefined) {
       throw new Error('the send request mixes a reaction with a message');
+    }
+  }
+  const edit = request.edit as { target?: unknown; text?: unknown } | undefined;
+  if (edit !== undefined) {
+    if (typeof edit !== 'object' || edit === null) throw new Error('the send request has a malformed edit');
+    checkMessageTarget('edit target', edit.target ?? null);
+    if (typeof edit.text !== 'string' || edit.text === '') {
+      throw new Error('the send request has an edit without text');
+    }
+    if (
+      request.text !== undefined ||
+      request.imageUrl !== undefined ||
+      request.attachments !== undefined ||
+      request.replyTo !== undefined ||
+      request.reaction !== undefined ||
+      request.delete !== undefined
+    ) {
+      throw new Error('the send request mixes an edit with another send');
+    }
+  }
+  const deletion = request.delete as { target?: unknown } | undefined;
+  if (deletion !== undefined) {
+    if (typeof deletion !== 'object' || deletion === null) throw new Error('the send request has a malformed deletion');
+    checkMessageTarget('deletion target', deletion.target ?? null);
+    if (
+      request.text !== undefined ||
+      request.imageUrl !== undefined ||
+      request.attachments !== undefined ||
+      request.replyTo !== undefined ||
+      request.reaction !== undefined ||
+      request.edit !== undefined
+    ) {
+      throw new Error('the send request mixes a deletion with another send');
     }
   }
   return request as DaemonSendRequest;
