@@ -13,6 +13,7 @@ import {
   fmt,
   type MessageSender,
   type SendingMessage,
+  type SendingReaction,
   type SendPermit,
   type SenderFeatures,
   type SentMessage,
@@ -55,7 +56,7 @@ export class TelegramSender implements MessageSender {
     markdown: false,
     attachments: true,
     replies: true,
-    reactions: false,
+    reactions: true,
   };
   private readonly client: TelegramClientHandle;
   private readonly permit: SendPermit;
@@ -103,6 +104,17 @@ export class TelegramSender implements MessageSender {
       sentAt: sent.date.toISOString(),
       chatRemoteId: String(chatId),
     };
+  }
+
+  /**
+   * The person's emoji on a message, replacing their earlier one (Telegram keeps one per person
+   * outside Premium); `null` takes it back. Telegram names its reactions without the emoji
+   * variation selector (`❤`), so it is dropped before the call.
+   */
+  async react(reaction: SendingReaction): Promise<void> {
+    const chatId = this.chatId(reaction.to);
+    const emoji = reaction.emoji === null ? null : reaction.emoji.replaceAll('\uFE0F', '');
+    await this.client.sendReaction(chatId, replyNumber(chatId, reaction.target.remoteId), emoji);
   }
 
   /**

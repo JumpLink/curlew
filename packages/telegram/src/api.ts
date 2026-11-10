@@ -207,6 +207,8 @@ export interface TelegramClientHandle extends TelegramApi {
    * recompresses it, as every chat app does) instead of as a document.
    */
   sendFile(chatId: number, file: TgOutgoingFile): Promise<TgMessage>;
+  /** The person's reaction to message `messageId` of the chat, replacing an earlier one; null takes it back. */
+  sendReaction(chatId: number, messageId: number, emoji: string | null): Promise<void>;
   connect(): Promise<void>;
   /** Present only on a client made with `live: true`. */
   readonly live?: TelegramLive;

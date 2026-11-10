@@ -21,8 +21,8 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
     // re-reads the window and rewrites the row. Asserted end to end in telegram.test.ts
     // ("delivers an edited message") so this cannot outlive the mechanism.
     edits: true,
-    // Reactions are read (counts per emoji, see map.ts) but cannot be sent yet, so false.
-    reactions: false,
+    // Reactions are read (counts per emoji, see map.ts) and sent (one per person).
+    reactions: true,
     // Forum topics in supergroups only (map.ts sets `threadRemoteId` for topic messages). A plain
     // reply chain is `replyToRemoteId`, not a thread.
     threads: true,

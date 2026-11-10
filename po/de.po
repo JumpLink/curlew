@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 17:35+0100\n"
+"POT-Creation-Date: 2026-11-10 17:52+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2592,7 +2592,7 @@ msgid "the attachments together exceed {max} bytes"
 msgstr "die Anhänge zusammen überschreiten {max} Bytes"
 
 #: packages/imap/src/send.ts:67 packages/matrix/src/send.ts:335
-#: packages/signal/src/send.ts:333 packages/telegram/src/sender.ts:74
+#: packages/signal/src/send.ts:333 packages/telegram/src/sender.ts:75
 #: packages/whatsapp/src/send.ts:358
 msgid "sending to {address} is not granted for account {account}"
 msgstr "Das Senden an {address} ist für Konto {account} nicht freigegeben"
@@ -3039,7 +3039,7 @@ msgstr "keine Telegram-Sitzung für {account} — {hint}"
 msgid "the Telegram session {account} is not usable ({reason}) — {hint}"
 msgstr "die Telegram-Sitzung {account} ist nicht nutzbar ({reason}) — {hint}"
 
-#: packages/telegram/src/client.ts:182
+#: packages/telegram/src/client.ts:185
 msgid ""
 "Telegram asks for an email login setup first — finish it in an official app"
 msgstr ""
@@ -3048,15 +3048,15 @@ msgstr ""
 
 #. TRANSLATORS: {channel} is Telegram's own word for the route it used ("sms", "app", …),
 #. and arrives untranslated from the server.
-#: packages/telegram/src/client.ts:186
+#: packages/telegram/src/client.ts:189
 msgid "Telegram sent the login code via {channel}."
 msgstr "Telegram hat den Anmeldecode über {channel} geschickt."
 
-#: packages/telegram/src/client.ts:190
+#: packages/telegram/src/client.ts:193
 msgid "That code was not accepted — try again."
 msgstr "Dieser Code wurde nicht akzeptiert — versuche es noch einmal."
 
-#: packages/telegram/src/client.ts:190
+#: packages/telegram/src/client.ts:193
 msgid "Wrong password — try again."
 msgstr "Falsches Passwort — versuche es noch einmal."
 
@@ -3171,12 +3171,12 @@ msgstr ""
 "Rückfrage bestätigst, und curlew bearbeitet oder löscht nie. Den "
 "Sitzungsschlüssel behält es ausschließlich auf diesem Rechner."
 
-#: packages/telegram/src/sender.ts:47
+#: packages/telegram/src/sender.ts:48
 msgid "{id} is not a message of this Telegram chat — nothing was sent"
 msgstr ""
 "{id} ist keine Nachricht dieses Telegram-Chats – es wurde nichts gesendet"
 
-#: packages/telegram/src/sender.ts:91
+#: packages/telegram/src/sender.ts:92
 msgid ""
 "a Telegram message holds at most {max} characters, this one has {length} — "
 "shorten it"
