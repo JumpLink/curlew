@@ -234,10 +234,10 @@ export function saveCopyAs(parent: Gtk.Window | null, path: string, suggestedNam
   });
 }
 
-/** Hands the file to the desktop's default application. */
-export function openWithDesktop(parent: Gtk.Window | null, path: string): Promise<void> {
+/** Hands the file to the desktop's default application; `ask` lets the person pick another one. */
+export function openWithDesktop(parent: Gtk.Window | null, path: string, ask = false): Promise<void> {
   return new Promise((resolve, reject) => {
-    const launcher = new Gtk.FileLauncher({ file: Gio.File.new_for_path(path) });
+    const launcher = new Gtk.FileLauncher({ file: Gio.File.new_for_path(path), alwaysAsk: ask });
     launcher.launch(parent, null, (_source, result) => {
       try {
         launcher.launch_finish(result);
