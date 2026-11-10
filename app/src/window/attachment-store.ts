@@ -6,8 +6,8 @@
  */
 
 import { createHash } from 'node:crypto';
-import { readdirSync, rmSync, unlinkSync } from 'node:fs';
-import { join } from 'node:path';
+import { readdirSync, rmSync, statSync, unlinkSync } from 'node:fs';
+import { basename, join } from 'node:path';
 import Gdk from 'gi://Gdk?version=4.0';
 import GdkPixbuf from 'gi://GdkPixbuf?version=2.0';
 import Gio from 'gi://Gio?version=2.0';
@@ -20,6 +20,7 @@ import { chatSaveAttachment } from '../core/actions/chat-attachment.ts';
 import { ATTACHMENT_BYTES } from '../core/actions/limits.ts';
 import { mailSaveAttachment } from '../core/actions/mail.ts';
 import { previewKey } from './attachment-model.ts';
+import { type CachedPart, pickEvictions, PREVIEW_CACHE_MAX_BYTES } from './preview-cache-model.ts';
 import type { AttachmentInfo } from './conversation-model.ts';
 
 /** One fetchable part of one mail message. */
@@ -39,6 +40,45 @@ function partDir(source: AttachmentSource, root: string): string {
   const key = previewKey(source.ref, source.info.section ?? '', source.info.index);
   // Not GLib's checksum: it reads a C string and stops at the NUL that separates the key's fields.
   return join(root, createHash('sha256').update(key).digest('hex'));
+}
+
+/** What the part directories under `root` hold; `pasted` is not a cache, it holds files not sent yet. */
+function cachedParts(root: string): CachedPart[] {
+  const parts: CachedPart[] = [];
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    if (!entry.isDirectory() || entry.name === 'pasted') continue;
+    let bytes = 0;
+    let modified = 0;
+    for (const name of readdirSync(join(root, entry.name))) {
+      const stat = statSync(join(root, entry.name, name));
+      bytes += stat.size;
+      modified = Math.max(modified, stat.mtimeMs);
+    }
+    parts.push({ name: entry.name, bytes, modified });
+  }
+  return parts;
+}
+
+/**
+ * Keeps the cache under its cap by dropping the least recently fetched parts. A part still
+ * playing survives its file being unlinked, and a bubble that shows its picture holds it in
+ * memory; one more tap fetches a dropped part again. Best effort: the cache is not state.
+ */
+export function trimPreviews(
+  root = previewsDir(),
+  keep: readonly string[] = [],
+  cap = PREVIEW_CACHE_MAX_BYTES,
+): void {
+  try {
+    for (const name of pickEvictions(cachedParts(root), cap, [
+      ...keep,
+      ...[...inFlight.keys()].map((d) => basename(d)),
+    ])) {
+      rmSync(join(root, name), { recursive: true, force: true });
+    }
+  } catch {
+    // The cache is only a convenience; a failed sweep leaves it larger, not broken.
+  }
 }
 
 function cachedFile(dir: string): string | null {
@@ -81,6 +121,7 @@ export function fetchAttachment(source: AttachmentSource, root = previewsDir()):
             directory: dir,
             maxBytes: ATTACHMENT_BYTES.max,
           });
+    trimPreviews(root, [basename(dir)]);
     return saved.path;
   })().finally(() => inFlight.delete(dir));
   inFlight.set(dir, fetching);
