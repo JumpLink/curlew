@@ -936,6 +936,48 @@ export function latestMessagePreviews(
   return found;
 }
 
+/** A chat message that contains the searched text, as one line around the match. */
+export interface TextHit {
+  conversationId: string;
+  sentAt: string | null;
+  snippet: string;
+}
+
+const HIT_LEAD_CHARS = 30;
+const HIT_CHARS = 150;
+const HIT_SCAN_LIMIT = 1000;
+
+/**
+ * The newest message per conversation whose body or subject contains `text`, newest first. SQLite
+ * folds only ASCII case, so "ä" does not match "Ä"; mail bodies are not here (they are in the
+ * full-text index), only mail subjects. Window-only, like `latestMessagePreviews`.
+ */
+export function searchMessageText(db: IndexDatabase, text: string): TextHit[] {
+  const needle = text.trim();
+  if (needle === '') return [];
+  const pattern = `%${needle.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  const rows = db
+    .prepare(
+      `SELECT conversation_id, sent_at, subject,
+              substr(body, max(1, instr(lower(body), lower(?)) - ${HIT_LEAD_CHARS}), ${HIT_CHARS}) AS around
+         FROM conversation_messages
+        WHERE body LIKE ? ESCAPE '\\' OR subject LIKE ? ESCAPE '\\'
+        ORDER BY sent_at DESC, id DESC LIMIT ${HIT_SCAN_LIMIT}`,
+    )
+    .all(needle, pattern, pattern) as Array<Record<string, unknown>>;
+  const lower = needle.toLowerCase();
+  const hits = new Map<string, TextHit>();
+  for (const r of rows) {
+    const id = String(r.conversation_id);
+    if (hits.has(id)) continue;
+    const around = str(r.around);
+    const snippet = around !== null && around.toLowerCase().includes(lower) ? around : str(r.subject);
+    if (snippet === null) continue;
+    hits.set(id, { conversationId: id, sentAt: str(r.sent_at), snippet });
+  }
+  return [...hits.values()];
+}
+
 export interface ConversationDetailOptions {
   /** Include each message's plain-text body. Off by default: bodies are other people's words. */
   includeBodies?: boolean;

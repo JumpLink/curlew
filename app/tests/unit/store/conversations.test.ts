@@ -13,6 +13,7 @@ import {
   participantIdsOfTarget,
   rebuildConversations,
   SCHEMA_VERSION,
+  searchMessageText,
   setMessageText,
   syncIndex,
 } from '@curlew/store';
@@ -691,6 +692,56 @@ export default async () => {
         expect(preview.subject).toBe('Re: Plan');
         expect(preview.hasAttachments).toBe(true);
         expect(latestMessagePreviews(db, [])).toStrictEqual(new Map());
+      } finally {
+        db.close();
+      }
+    });
+  });
+
+  await describe('searchMessageText', async () => {
+    function put(
+      db: ReturnType<typeof freshDb>,
+      id: string,
+      conversation: string,
+      sentAt: string,
+      body: string | null,
+      subject: string | null = null,
+    ): void {
+      db.prepare(
+        `INSERT INTO conversation_messages (
+           id, conversation_id, backend, account_id, presentation,
+           from_self, sent_at, subject, seen, has_attachments, classification, classification_reason, body)
+         VALUES (?, ?, 'signal', 'signal-1', 'bubble', 0, ?, ?, 1, 0, 'conversational', 'known-contact', ?)`,
+      ).run(id, conversation, sentAt, subject, body);
+    }
+
+    await it('finds the newest matching message per conversation, case-insensitively', async () => {
+      const db = freshDb();
+      try {
+        put(db, 'a1', 'c1', '2026-01-01T10:00:00Z', 'Meet at the Station');
+        put(db, 'a2', 'c1', '2026-01-02T10:00:00Z', 'the station again');
+        put(db, 'b1', 'c2', '2026-01-03T10:00:00Z', 'nothing here');
+        put(db, 'd1', 'c3', '2026-01-04T10:00:00Z', null, 'Train STATION times');
+        const hits = searchMessageText(db, 'station');
+        expect(hits.map((h) => h.conversationId)).toStrictEqual(['c3', 'c1']);
+        expect(hits[1]?.snippet).toBe('the station again');
+        expect(hits[0]?.snippet).toBe('Train STATION times');
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('cuts a snippet around the match and treats % and _ literally', async () => {
+      const db = freshDb();
+      try {
+        put(db, 'a1', 'c1', '2026-01-01T10:00:00Z', `${'x'.repeat(200)} needle ${'y'.repeat(200)}`);
+        put(db, 'a2', 'c2', '2026-01-01T11:00:00Z', 'discount of 50% today');
+        const [hit] = searchMessageText(db, 'needle');
+        expect(hit?.snippet.includes('needle')).toBe(true);
+        expect(hit?.snippet.length).toBeLessThanOrEqual(150);
+        expect(searchMessageText(db, '50%').map((h) => h.conversationId)).toStrictEqual(['c2']);
+        expect(searchMessageText(db, '5_%')).toStrictEqual([]);
+        expect(searchMessageText(db, '  ')).toStrictEqual([]);
       } finally {
         db.close();
       }

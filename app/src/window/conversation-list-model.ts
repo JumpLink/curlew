@@ -95,7 +95,15 @@ export interface ListFilter {
    */
   accounts: ReadonlyMap<string, ReadonlySet<string>>;
   query: string;
+  /**
+   * Conversation id → a line of message text that contains the query. A conversation in here
+   * passes the query even when its title does not, and its row shows the line.
+   */
+  hits?: ReadonlyMap<string, string>;
 }
+
+/** Shorter queries are matched against titles only: one letter would hit nearly every message. */
+export const MIN_TEXT_QUERY = 2;
 
 export const NO_FILTER: ListFilter = { backends: new Set(), accounts: new Map(), query: '' };
 
@@ -618,9 +626,17 @@ export const unreadText = (count: number): string => (count > 99 ? '99+' : Strin
 /** The rows that carry the chat: the members of a merged row, else the row itself. */
 const carriers = (entry: ListEntry): ListEntry[] => (entry.members.length > 0 ? entry.members : [entry]);
 
+const hitOf = (entry: ListEntry, filter: ListFilter): string | undefined => {
+  for (const id of entry.conversationIds) {
+    const line = filter.hits?.get(id);
+    if (line !== undefined) return line;
+  }
+  return undefined;
+};
+
 export function matches(entry: ListEntry, filter: ListFilter): boolean {
   const query = filter.query.trim().toLowerCase();
-  if (query !== '' && !entry.title.toLowerCase().includes(query)) return false;
+  if (query !== '' && !entry.title.toLowerCase().includes(query) && !hitOf(entry, filter)) return false;
   // A merged row stays while any of its carriers passes the protocol and account filter.
   return carriers(entry).some((carrier) => {
     if (filter.backends.size > 0 && !filter.backends.has(carrier.backend)) return false;
@@ -642,7 +658,15 @@ function newestFirst(a: ListEntry, b: ListEntry): number {
 
 /** The sections that have something in them, people first. */
 export function buildSections(entries: ListEntry[], filter: ListFilter = NO_FILTER): Section[] {
-  const shown = entries.filter((entry) => matches(entry, filter)).sort(newestFirst);
+  // While searching, a row whose messages matched shows the matching line instead of the newest one.
+  const searching = filter.query.trim() !== '';
+  const shown = entries
+    .filter((entry) => matches(entry, filter))
+    .map((entry) => {
+      const line = searching ? hitOf(entry, filter) : undefined;
+      return line === undefined ? entry : { ...entry, preview: oneLine(line) };
+    })
+    .sort(newestFirst);
   const defs: Array<{ id: SectionId; title: string; kind: Conversation['kind'] }> = [
     { id: 'people', title: _('People'), kind: 'direct' },
     { id: 'groups', title: _('Groups'), kind: 'group' },

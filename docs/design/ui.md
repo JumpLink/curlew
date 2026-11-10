@@ -117,6 +117,12 @@ Not built, future work: the **accent count** and the **dot**. The index keeps on
 per conversation; a mention and activity-without-count need the backends to store that state in
 the index first. Until then only the grey tier exists.
 
+**Search** matches the title, and from two characters on also the text of chat messages and the
+subject of mail (`searchMessageText`, a `LIKE` over `conversation_messages`, newest match per
+conversation). A row that matched by text shows the matching line instead of the newest message.
+Known limits: SQLite folds only ASCII case ("ä" does not find "Ä"), and mail bodies live in the
+full-text index and are not searched here; a merged chat-and-mail search is contacts.md question 6.
+
 The preview is read from `conversation_messages` by the window alone (`latestMessagePreviews`, the
 first 300 characters of the newest body) and kept on the `ListEntry`; the `Conversation` DTO that
 agents get stays free of bodies. Mail keeps its body in the full-text index, so a mail row shows the

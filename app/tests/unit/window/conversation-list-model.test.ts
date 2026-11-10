@@ -3,6 +3,8 @@ import type { Conversation } from '@curlew/protocol';
 
 import {
   type ListEntry,
+  type ListFilter,
+  MIN_TEXT_QUERY,
   NO_FILTER,
   accountChoices,
   canSend,
@@ -705,6 +707,45 @@ export default async () => {
     it('subtitles an ordinary row with its protocol', () => {
       expect(entryProtocolSubtitle(entry({ id: 'a', backend: 'matrix' }))).toBe('Matrix');
       expect(entryProtocolSubtitle(entry({ id: 'b', backend: 'future' }))).toBe('future');
+    });
+
+    describe('searching message text', () => {
+      const rows = [
+        entry({ id: 'a', title: 'Alex', conversationIds: ['c1'] }),
+        entry({ id: 'b', title: 'Bo', conversationIds: ['c2', 'c3'], preview: 'newest' }),
+        entry({ id: 'c', title: 'Cy', conversationIds: ['c4'] }),
+      ];
+      const hits = new Map([
+        ['c1', '…meet at the station…'],
+        ['c3', 'station is closed\n today'],
+      ]);
+      const search = (query: string, over: Partial<ListFilter> = {}) =>
+        buildSections(rows, { ...NO_FILTER, query, hits, ...over }).flatMap((s) => s.entries);
+
+      it('keeps rows whose messages matched even if the title does not', () => {
+        expect(
+          search('station')
+            .map((e) => e.id)
+            .sort(),
+        ).toStrictEqual(['a', 'b']);
+        expect(search('bo', { hits: new Map() }).map((e) => e.id)).toStrictEqual(['b']);
+      });
+
+      it('shows the matching line on the row, on one line, only while searching', () => {
+        const found = search('station');
+        expect(found.find((e) => e.id === 'a')?.preview).toBe('…meet at the station…');
+        expect(found.find((e) => e.id === 'b')?.preview).toBe('station is closed');
+        expect(search('')[0]?.preview).toBeUndefined();
+        expect(rows[1]?.preview).toBe('newest');
+      });
+
+      it('still honours the protocol filter', () => {
+        expect(search('station', { backends: new Set(['mail']) })).toStrictEqual([]);
+      });
+
+      it('asks for at least two characters', () => {
+        expect(MIN_TEXT_QUERY).toBe(2);
+      });
     });
 
     describe('last-message preview', () => {
