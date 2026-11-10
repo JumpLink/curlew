@@ -705,6 +705,65 @@ export default async () => {
       });
     });
 
+    await it('edits and deletes with an EditMessage and a Delete, own messages only', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [ALICE_ACI],
+        });
+        expect(sender.features.edits).toBe(true);
+        expect(sender.features.deletes).toBe(true);
+        const mine = { remoteId: `${OWN_ACI}:1700000000456`, fromSelf: true };
+        try {
+          await sender.edit?.({ to: ALICE_ACI, target: mine, text: 'Fixed' });
+          const edited = rig.server.delivered;
+          expect(edited.length).toBe(4);
+          const edits = [
+            ...edited.slice(0, 2).map((copy) => copy.content.editMessage),
+            ...edited.slice(2).map((copy) => copy.content.syncMessage?.sent?.editMessage),
+          ];
+          for (const edit of edits) {
+            expect(edit?.targetSentTimestamp).toBe(1700000000456);
+            expect(edit?.dataMessage?.body).toBe('Fixed');
+            expect((edit?.dataMessage?.timestamp ?? 0) > 1700000000456).toBe(true);
+          }
+          // An edit is no new message: nothing goes out as a plain data message.
+          expect(edited[0].content.dataMessage ?? null).toBe(null);
+
+          await sender.delete?.({ to: ALICE_ACI, target: mine });
+          const deleted = rig.server.delivered.slice(4);
+          expect(deleted.length).toBe(4);
+          const datas = [
+            ...deleted.slice(0, 2).map((copy) => copy.content.dataMessage),
+            ...deleted.slice(2).map((copy) => copy.content.syncMessage?.sent?.message),
+          ];
+          for (const data of datas) {
+            expect(data?.deleteTarget).toBe(1700000000456);
+            expect(data?.body ?? null).toBe(null);
+          }
+
+          // Someone else's message, an id without a Signal id and an overlong text change nothing.
+          const before = rig.server.delivered.length;
+          const theirs = { remoteId: `${ALICE_ACI}:1700000000123`, fromSelf: false };
+          const claimed = { remoteId: `${ALICE_ACI}:1700000000123`, fromSelf: true };
+          for (const attempt of [
+            sender.edit?.({ to: ALICE_ACI, target: theirs, text: 'x' }),
+            sender.delete?.({ to: ALICE_ACI, target: theirs }),
+            sender.edit?.({ to: ALICE_ACI, target: claimed, text: 'x' }),
+            sender.delete?.({ to: ALICE_ACI, target: claimed }),
+            sender.edit?.({ to: ALICE_ACI, target: { remoteId: '12345', fromSelf: true }, text: 'x' }),
+            sender.edit?.({ to: ALICE_ACI, target: mine, text: 'x'.repeat(2049) }),
+            sender.delete?.({ to: 'group:abcdef', target: mine }),
+          ]) {
+            expect((await reasonOf(attempt as Promise<unknown>)).length > 0).toBe(true);
+          }
+          expect(rig.server.delivered.length).toBe(before);
+        } finally {
+          await sender.close();
+        }
+      });
+    });
+
     await it('refuses a reply to something without a Signal id, sending nothing', async () => {
       await withRig(GRANTED, async (rig) => {
         const sender = await rig.backend.openSender(rig.accountId, {
