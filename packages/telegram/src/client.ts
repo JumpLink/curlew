@@ -157,6 +157,9 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
     },
     sendText: (chatId, text, replyTo) =>
       client.sendText(chatId, text, replyTo === undefined ? undefined : { replyTo }),
+    sendReaction: async (chatId, messageId, emoji) => {
+      await client.sendReaction({ chatId, message: messageId, emoji });
+    },
     sendFile: (chatId, file) =>
       client.sendMedia(
         chatId,

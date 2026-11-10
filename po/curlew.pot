@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 17:35+0100\n"
+"POT-Creation-Date: 2026-11-10 17:52+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2313,7 +2313,7 @@ msgid "the attachments together exceed {max} bytes"
 msgstr ""
 
 #: packages/imap/src/send.ts:67 packages/matrix/src/send.ts:335
-#: packages/signal/src/send.ts:333 packages/telegram/src/sender.ts:74
+#: packages/signal/src/send.ts:333 packages/telegram/src/sender.ts:75
 #: packages/whatsapp/src/send.ts:358
 msgid "sending to {address} is not granted for account {account}"
 msgstr ""
@@ -2686,22 +2686,22 @@ msgstr ""
 msgid "the Telegram session {account} is not usable ({reason}) — {hint}"
 msgstr ""
 
-#: packages/telegram/src/client.ts:182
+#: packages/telegram/src/client.ts:185
 msgid ""
 "Telegram asks for an email login setup first — finish it in an official app"
 msgstr ""
 
 #. TRANSLATORS: {channel} is Telegram's own word for the route it used ("sms", "app", …),
 #. and arrives untranslated from the server.
-#: packages/telegram/src/client.ts:186
+#: packages/telegram/src/client.ts:189
 msgid "Telegram sent the login code via {channel}."
 msgstr ""
 
-#: packages/telegram/src/client.ts:190
+#: packages/telegram/src/client.ts:193
 msgid "That code was not accepted — try again."
 msgstr ""
 
-#: packages/telegram/src/client.ts:190
+#: packages/telegram/src/client.ts:193
 msgid "Wrong password — try again."
 msgstr ""
 
@@ -2784,11 +2784,11 @@ msgid ""
 "deletes. It keeps the session key on this machine only."
 msgstr ""
 
-#: packages/telegram/src/sender.ts:47
+#: packages/telegram/src/sender.ts:48
 msgid "{id} is not a message of this Telegram chat — nothing was sent"
 msgstr ""
 
-#: packages/telegram/src/sender.ts:91
+#: packages/telegram/src/sender.ts:92
 msgid ""
 "a Telegram message holds at most {max} characters, this one has {length} — "
 "shorten it"

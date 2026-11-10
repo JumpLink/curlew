@@ -236,6 +236,14 @@ export class FakeClient implements TelegramClientHandle {
     return tgMessage(chat, this.nextSentId++, 'me', text);
   }
 
+  /** Every `sendReaction` call, in order. */
+  readonly reactions: Array<{ chatId: number; messageId: number; emoji: string | null }> = [];
+
+  async sendReaction(chatId: number, messageId: number, emoji: string | null): Promise<void> {
+    this.calls.push(`sendReaction:${chatId}`);
+    this.reactions.push({ chatId, messageId, emoji });
+  }
+
   /** Every `sendFile` call, in order: the name, size and caption — the bytes are not kept. */
   readonly files: Array<{
     chatId: number;

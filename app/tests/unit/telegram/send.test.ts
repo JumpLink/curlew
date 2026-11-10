@@ -179,6 +179,27 @@ export default async () => {
       });
     });
 
+    await it('reacts to a message of the chat, without the variation selector, and takes it back', async () => {
+      await withRig(granted, async (rig) => {
+        const sender = await rig.backend.openSender(ACCOUNT, { account: ACCOUNT, addresses: ['1001'] });
+        expect(sender.features.reactions).toBe(true);
+        await sender.react!({ to: '1001', target: { remoteId: '1001/7' }, emoji: '❤️' });
+        await sender.react!({ to: '1001', target: { remoteId: '1001/7' }, emoji: null, previous: '❤️' });
+        expect(rig.fake.clients[0].reactions).toStrictEqual([
+          { chatId: 1001, messageId: 7, emoji: '❤' },
+          { chatId: 1001, messageId: 7, emoji: null },
+        ]);
+        for (const [to, remoteId] of [
+          ['1001', '1002/7'],
+          ['1002', '1002/7'],
+        ]) {
+          expect(await refused(sender.react!({ to, target: { remoteId }, emoji: '👍' }))).toBe(true);
+        }
+        expect(rig.fake.clients[0].reactions.length).toBe(2);
+        await sender.close();
+      });
+    });
+
     await it('refuses a reply to a message of another chat or of no chat', async () => {
       await withRig(granted, async (rig) => {
         const sender = await rig.backend.openSender(ACCOUNT, { account: ACCOUNT, addresses: ['1001'] });
