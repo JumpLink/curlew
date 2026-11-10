@@ -59,10 +59,39 @@ inside one network), and picking another carrier drops the reply. The bubble men
 and "Copy"; Copy stays so touch users keep a way to copy text. The sent message is echoed with
 its network id, so it shows its quote and can be answered too.
 
-### 4. Reactions, then edit and delete
+### 4. Reactions
 
-Separate specs; reactions need an index table (`message_reactions`), edit and delete need the
-server-archive and delivery-only differences written down first.
+Status: spec. Reference: Fractal and Flare show reactions as small emoji chips under the bubble,
+with a count when more than one person used the same emoji; the person's own chip is tinted.
+
+**Store.** Schema v17 adds `message_reactions (message_id, reactor, emoji, reacted_at)` with
+primary key `(message_id, reactor)`: Signal and WhatsApp allow one reaction per person and
+message, and a new one replaces the old. `reactor` is the same peer id `sender_peer_id` holds;
+the person's own reaction uses the empty string. Matrix and Telegram allow several emoji per
+person; they widen the key to `(message_id, reactor, emoji)` in their own step, and a replace
+rule stays in the mapper (`replace: true`), not in the store.
+
+**Change event.** One new `DeliveryChange`: `{ type: 'reaction'; chatRemoteId; remoteId;
+reactor: string | null; emoji: string | null }`, where `reactor` is null for the person and a
+null `emoji` removes the reaction. Like an edit it applies to a stored message, or to one
+earlier in the same batch, and is dropped when the target is unknown. A deleted message drops its
+reactions with it.
+
+**Receive**, one backend per step: Signal (`DataMessage.reaction`: emoji, `remove`, target author
+and sent timestamp; today `map.ts` drops it), WhatsApp (`reactionMessage` with the target key and
+text, empty text = remove), then Matrix (`m.annotation`), Telegram (reaction counts per message,
+which carry no reactor names, so only the chips and the count) and XMPP (XEP-0444). Until a
+backend maps them its `capabilities.reactions` stays false.
+
+**Window.** The page query loads the reactions of the visible messages in one second query. The
+bubble shows one chip per emoji with a count (own tinted via `accent` style classes, no custom
+CSS), wrapping in a `Gtk.FlowBox` under the text. Sending is a later step: an emoji row in the
+bubble menu, `SenderFeatures.reactions`, and the daemon wire.
+
+### 5. Edit and delete
+
+Separate specs; edit and delete need the server-archive and delivery-only differences written
+down first.
 
 ## Out of scope
 
