@@ -1,6 +1,6 @@
 # Replies, quotes and reactions
 
-Status: pieces 1 to 3 (quote, jump, send a reply for Matrix, Telegram and Signal) built. Reference: Fractal, Flare and Telegram show
+Status: pieces 1 to 4 (quote, jump, send a reply, reactions) built; piece 5 (edit and delete) is specified. Reference: Fractal, Flare and Telegram show
 the message a reply points at as a small block above the reply's text. The index already stores
 the pointer (`reply_to_remote_id`, `reply_to_client_id`) for Telegram, Matrix, XMPP, Signal and
 WhatsApp, and nothing in the window reads it.
@@ -125,8 +125,52 @@ chip takes it back), then Matrix (`m.annotation`, removal needs the own event id
 
 ### 5. Edit and delete
 
-Separate specs; edit and delete need the server-archive and delivery-only differences written
-down first.
+Status: spec, not built. The receive side exists for all five networks (`ChatEdit`, `retracted`,
+the `edit` and `delete` delivery changes), so this piece is only sending, and only of the
+person's own messages.
+
+**What each network takes.** Limits are the networks' own and change; the sender relays the
+network's refusal as the reason, and the window offers the action from the message's age only
+where a limit is firm enough to be worth hiding it for. Check each against the network when its
+PR is written.
+
+| Network | Edit | Delete (for everyone) |
+|---|---|---|
+| Matrix | `m.room.message` with `m.new_content` and an `m.replace` relation to the original event | redaction of the event (`PUT …/redact/{event}/{txn}`; the guard already allows it for permitted rooms) |
+| XMPP | XEP-0308 `<replace id>` with the original's sender-given id, 1:1 chats | XEP-0424 `<retract id>` plus a fallback body, 1:1 chats |
+| Telegram | `editMessage` | `deleteMessages` with revoke |
+| Signal | `EditMessage` over the target's sent timestamp, direct chats | `DataMessage.Delete`, direct chats |
+| WhatsApp | an edit key on the original, direct chats | a revoke of the original, direct chats |
+
+Encrypted Matrix rooms and OMEMO chats are refused as for sending (nothing goes out in the
+clear). Only text messages are edited; an attachment keeps its file. Signal and WhatsApp groups
+stay refused.
+
+**Protocol.** `SenderFeatures.edits` and `SenderFeatures.deletes`; `MessageSender.edit?(edit)` and
+`MessageSender.delete?(deletion)` are present exactly then. `SendingEdit` is
+`{to, target: ReplyTarget, text}`, `SendingDeletion` is `{to, target: ReplyTarget}`. The target
+must be the person's own message (`fromSelf`); the sender refuses any other. Both ride the
+daemon's `Send` method as `edit?` / `delete?` next to `reaction?` (the wire grows by a version, as
+v5 did for reactions) and never mix with text, files or a reply target. Like a reaction, neither
+logs a message nor indexes anything itself: the window writes the local echo, and the network's
+copy comes back through the receive path. `capabilities.edits` is already read as "can receive";
+the window learns what a sender can do from `sender.features`, through a helper like
+`reactingBackends()`, so the manifest flag needs no second meaning.
+
+**Window.**
+- An own message's bubble menu gets *Edit* (text messages only) and *Delete*; no other message
+  does, and a blocked composer blocks both.
+- *Edit* puts the text into the composer under an edit bar (the reply bar's twin: pencil icon,
+  the original's excerpt, a cancel button). Send replaces the message; the bubble shows the new
+  text with the edited mark at once (`setMessageText` local echo) and the sync echo confirms it.
+- *Delete* asks first with an `AdwAlertDialog` (*Delete message?*, *Delete for everyone* as the
+  destructive response, *Cancel*); the bubble goes at once and comes back with an error toast if
+  the network refuses.
+- Nothing is offered for a network whose sender lacks the feature (hidden, not greyed out).
+
+**Order.** Plumbing (protocol, wire, `actions/edit.ts` and `actions/delete.ts` next to `react.ts`),
+then the window, then the senders one PR each: Matrix, Telegram, XMPP, Signal, WhatsApp.
+Agents get no edit or delete tool, so ADR 0008 needs no new grant.
 
 ## Out of scope
 
