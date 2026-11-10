@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-09 21:45+0100\n"
+"POT-Creation-Date: 2026-11-10 09:08+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -978,7 +978,7 @@ msgstr[0] "{n} weiterer Chat hat neue Nachrichten"
 msgstr[1] "{n} weitere Chats haben neue Nachrichten"
 
 #: app/src/core/lib/message-notifications.ts:118
-#: app/src/window/attachment-view.ts:99
+#: app/src/window/attachment-view.ts:101
 msgid "Open"
 msgstr "Öffnen"
 
@@ -2050,30 +2050,52 @@ msgstr "Noch keine Regeln"
 msgid "Add rule"
 msgstr "Regel hinzufügen"
 
-#: app/src/window/attachment-view.ts:99
+#: app/src/window/attachment-view.ts:101
 msgid "Play"
 msgstr "Abspielen"
 
-#: app/src/window/attachment-view.ts:104 app/src/window/media-viewer.ts:47
+#: app/src/window/attachment-view.ts:106 app/src/window/audio-player.ts:55
+#: app/src/window/media-viewer.ts:47
 msgid "Save as…"
 msgstr "Speichern unter…"
 
-#: app/src/window/attachment-view.ts:122
+#: app/src/window/attachment-view.ts:124 app/src/window/audio-player.ts:132
+#: app/src/window/audio-player.ts:159
 msgid "Could not fetch the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
-#: app/src/window/attachment-view.ts:145 app/src/window/attachment-view.ts:154
+#: app/src/window/attachment-view.ts:147 app/src/window/attachment-view.ts:156
 #: app/src/window/conversation-model.ts:251
 #: app/src/window/conversation-model.ts:256
 msgid "Attachment"
 msgstr "Anhang"
 
-#: app/src/window/attachment-view.ts:414
+#: app/src/window/attachment-view.ts:418
 #: app/src/window/conversation-model.ts:259
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] "und {n} weiterer Anhang"
 msgstr[1] "und {n} weitere Anhänge"
+
+#: app/src/window/audio-player.ts:27
+msgid "Play voice message"
+msgstr "Sprachnachricht abspielen"
+
+#: app/src/window/audio-player.ts:27
+msgid "Play {name}"
+msgstr "{name} abspielen"
+
+#: app/src/window/audio-player.ts:44
+msgid "Position"
+msgstr "Position"
+
+#: app/src/window/audio-player.ts:84
+msgid "Pause"
+msgstr "Pause"
+
+#: app/src/window/audio-player.ts:105
+msgid "Could not play the attachment: {error}"
+msgstr "Der Anhang konnte nicht abgespielt werden: {error}"
 
 #: app/src/window/composer-files.ts:73
 msgid "Remove {file}"

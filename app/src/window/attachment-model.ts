@@ -169,3 +169,22 @@ export function isGridMedia(info: AttachmentInfo): boolean {
   const kind = attachmentKind(info);
   return (kind === 'image' || kind === 'video') && isOpenable(info);
 }
+
+/** Whether the bubble shows a player (true) or a tile (false): a voice note or audio that can be fetched. */
+export function showsPlayer(info: AttachmentInfo): boolean {
+  const kind = attachmentKind(info);
+  return (kind === 'voice' || kind === 'audio') && isOpenable(info);
+}
+
+/** The player's time text: where it is and how long the whole is, e.g. `0:07 / 0:31`; only the position if the length is unknown. */
+export function playbackLabel(positionMs: number, totalMs: number | null | undefined): string {
+  const position = durationLabel(positionMs) || '0:00';
+  const total = durationLabel(totalMs);
+  return total ? `${position} / ${total}` : position;
+}
+
+/** Where a seek bar sits, 0 to 1, for a position in a whole of known length; 0 when the length is unknown. */
+export function playbackFraction(positionMs: number, totalMs: number | null | undefined): number {
+  if (!totalMs || !Number.isFinite(totalMs) || totalMs <= 0) return 0;
+  return Math.min(1, Math.max(0, positionMs / totalMs));
+}

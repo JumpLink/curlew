@@ -26,6 +26,7 @@
 
 ### Added
 
+- Voice messages and audio files in a chat bubble play in place: a play/pause button, a seek bar and the position out of the length. The part is fetched on the first press, only one plays at a time, and a bubble that leaves the window stops its sound. The buttons carry labels for screen readers.
 - A single video in a chat plays muted and in a loop while it is on screen, one at a time and only while the window has focus. The new switch *Play videos silently in chats* under Preferences turns it off; it starts off when the system asks for fewer animations.
 - WhatsApp sends files: `curlew send --attach` and the window's attach button work on WhatsApp
   chats, up to 10 files of 64 MB, one message each, the text as the caption of the first. The
