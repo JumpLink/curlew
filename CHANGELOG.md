@@ -28,6 +28,7 @@
 
 ### Added
 
+- Matrix rooms without encryption can edit and delete your own messages from the window: the bubble menu on a text message offers *Edit*, and *Delete* removes any of your messages for everyone. Encrypted rooms refuse both.
 - Telegram chats can send reactions: your emoji replaces your earlier one, and taking it back clears it.
 - XMPP chats can send reactions: your emoji replaces your earlier one, and taking it back clears it. An end-to-end encrypted chat refuses them, since a reaction cannot be encrypted.
 - Matrix rooms without encryption can send reactions too: a new emoji replaces your earlier one on that message, and taking it back redacts it.

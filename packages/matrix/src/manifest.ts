@@ -20,8 +20,9 @@ export const MATRIX_MANIFEST: BackendManifest = {
     edits: true,
     // `m.annotation` relations, received and sent (a removal is a redaction).
     reactions: true,
-    editsOwn: false,
-    deletesOwn: false,
+    // Sent too: an `m.replace` event to edit, a redaction to delete.
+    editsOwn: true,
+    deletesOwn: true,
     // `m.thread` relations (and reply chains everywhere).
     threads: true,
     // `m.read` receipts, for both sides.

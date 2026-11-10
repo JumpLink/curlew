@@ -41,7 +41,8 @@ const DELIVERED_CAPABILITIES: ReadonlyArray<{
   {
     backend: 'matrix',
     manifest: BUILTIN_PLUGINS.find((p) => p.manifest.name === 'matrix')!.manifest,
-    trueFlags: 'edits,reactions,threads,readReceipts,groups,e2ee,attachments,attachmentsRead,replies',
+    trueFlags:
+      'edits,reactions,editsOwn,deletesOwn,threads,readReceipts,groups,e2ee,attachments,attachmentsRead,replies',
   },
 ];
 

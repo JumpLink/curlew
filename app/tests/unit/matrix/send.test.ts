@@ -431,6 +431,72 @@ export default async () => {
       );
     });
 
+    await it('edits with an m.replace and deletes by redaction, own messages only', async () => {
+      const mine = { remoteId: '$m:example.org', fromSelf: true };
+      await withRig(granted, async (rig) => {
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [ROOM],
+        });
+        expect(sender.features.edits).toBe(true);
+        expect(sender.features.deletes).toBe(true);
+        await sender.edit!({ to: ROOM, target: mine, text: 'Fixed' });
+        expect(JSON.parse(rig.http.puts()[0].body!)).toStrictEqual({
+          msgtype: 'm.text',
+          body: '* Fixed',
+          'm.new_content': { msgtype: 'm.text', body: 'Fixed' },
+          'm.relates_to': { rel_type: 'm.replace', event_id: '$m:example.org' },
+        });
+        expect(rig.http.puts()[0].url).toContain('/send/m.room.message/');
+        await sender.delete!({ to: ROOM, target: mine });
+        const gone = rig.http.puts()[1];
+        expect(decodeURIComponent(new URL(gone.url).pathname.split('/redact/')[1].split('/')[0])).toBe(
+          '$m:example.org',
+        );
+        // Someone else's message, a non-event id, a foreign room and an overlong text change nothing.
+        const theirs = { remoteId: '$m:example.org', fromSelf: false };
+        for (const attempt of [
+          sender.edit!({ to: ROOM, target: theirs, text: 'x' }),
+          sender.delete!({ to: ROOM, target: theirs }),
+          sender.edit!({ to: ROOM, target: { remoteId: 'nope', fromSelf: true }, text: 'x' }),
+          sender.delete!({ to: ROOM, target: { remoteId: 'nope', fromSelf: true } }),
+          sender.edit!({ to: OTHER, target: mine, text: 'x' }),
+          sender.delete!({ to: OTHER, target: mine }),
+          sender.edit!({ to: ROOM, target: mine, text: 'x'.repeat(32_001) }),
+        ]) {
+          await attempt.then(
+            () => expect('sent').toBe('refused'),
+            () => {},
+          );
+        }
+        expect(rig.http.puts().length).toBe(2);
+        await sender.close();
+      });
+    });
+
+    await it('refuses to edit or delete in an encrypted room', async () => {
+      await withRig(
+        granted,
+        async (rig) => {
+          const sender = await rig.backend.openSender(rig.accountId, {
+            account: rig.accountId,
+            addresses: [ROOM],
+          });
+          const mine = { remoteId: '$m:example.org', fromSelf: true };
+          await sender.edit!({ to: ROOM, target: mine, text: 'x' }).then(
+            () => expect('sent').toBe('refused'),
+            () => {},
+          );
+          await sender.delete!({ to: ROOM, target: mine }).then(
+            () => expect('sent').toBe('refused'),
+            () => {},
+          );
+          expect(rig.http.puts().length).toBe(0);
+        },
+        { encrypted: [ROOM] },
+      );
+    });
+
     await it('answers a message with m.in_reply_to, on a text and on the first file only', async () => {
       await withRig(granted, async (rig) => {
         const sender = await rig.backend.openSender(rig.accountId, {
