@@ -12,6 +12,8 @@ import {
   initials,
   listSubtitle,
   matches,
+  previewText,
+  withPreviews,
   mergePeople,
   protocolChoices,
   protocolIcon,
@@ -703,6 +705,58 @@ export default async () => {
     it('subtitles an ordinary row with its protocol', () => {
       expect(entryProtocolSubtitle(entry({ id: 'a', backend: 'matrix' }))).toBe('Matrix');
       expect(entryProtocolSubtitle(entry({ id: 'b', backend: 'future' }))).toBe('future');
+    });
+
+    describe('last-message preview', () => {
+      const source = (over: Partial<Parameters<typeof previewText>[0]> = {}) => ({
+        sentAt: '2026-01-01T10:00:00Z',
+        fromSelf: false,
+        body: null,
+        subject: null,
+        hasAttachments: false,
+        senderName: null,
+        ...over,
+      });
+
+      it('shows the first non-blank line, collapsed, and cuts a long one', () => {
+        expect(previewText(source({ body: '\n  Hello   there \nsecond' }), false)).toBe('Hello there');
+        const cut = previewText(source({ body: 'word '.repeat(60) }), false);
+        expect(cut.length).toBe(120);
+        expect(cut.endsWith('…')).toBe(true);
+      });
+
+      it('falls back to the mail subject, then to an attachment note, then to nothing', () => {
+        expect(previewText(source({ subject: 'Invoice' }), false)).toBe('Invoice');
+        expect(previewText(source({ body: ' ', hasAttachments: true }), false)).toBe('Attachment');
+        expect(previewText(source({ body: 'See file', hasAttachments: true }), false)).toBe('See file');
+        expect(previewText(source(), false)).toBe('');
+      });
+
+      it('prefixes your own messages, and the sender in a group only', () => {
+        expect(previewText(source({ body: 'Hi', fromSelf: true }), false)).toBe('You: Hi');
+        expect(previewText(source({ body: 'Hi', fromSelf: true }), true)).toBe('You: Hi');
+        expect(previewText(source({ body: 'Hi', senderName: 'Bo' }), true)).toBe('Bo: Hi');
+        expect(previewText(source({ body: 'Hi', senderName: 'Bo' }), false)).toBe('Hi');
+        expect(previewText(source({ body: 'Hi', senderName: ' ' }), true)).toBe('Hi');
+      });
+
+      it('picks the newest message among the conversations a row stands for', () => {
+        const rows = [
+          entry({ id: 'p', conversationIds: ['c1', 'c2'] }),
+          entry({ id: 'q', conversationIds: ['c3'], kind: 'group' }),
+          entry({ id: 'r', conversationIds: ['c4'] }),
+        ];
+        const found = withPreviews(
+          rows,
+          new Map([
+            ['c1', source({ body: 'old', sentAt: '2026-01-01T10:00:00Z' })],
+            ['c2', source({ body: 'new', sentAt: '2026-01-02T10:00:00Z' })],
+            ['c3', source({ body: 'Hi', senderName: 'Bo' })],
+          ]),
+        );
+        expect(found.map((e) => e.preview)).toStrictEqual(['new', 'Bo: Hi', undefined]);
+        expect(rows[0]?.preview).toBeUndefined();
+      });
     });
 
     it('lists the account label for an ordinary row, never the raw account id', () => {

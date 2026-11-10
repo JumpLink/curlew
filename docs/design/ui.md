@@ -99,8 +99,9 @@ All contacts, channels and groups of every messenger in **one** list.
   like a messenger beside the mail client.
 - Row: avatar with protocol badge (the protocol is shown ONLY there, never as text), title with a
   short time right-aligned, a subtitle line with the unread marker at its end. The subtitle is a
-  one-line preview of the last message (Fractal, Flare) once the index stores one; until then it
-  names the account.
+  one-line preview of the newest message (Fractal, Flare): the first non-blank line, "You: …"
+  for your own, "Name: …" in a group, the subject for mail, "Attachment" for a file alone. A row
+  with no message yet names the account; with a preview, the account moves to the row's tooltip.
 - Unread has three tiers: an **accent count** (a mention), a **grey count** (unread), a **dot**
   (activity without a count); the title is bold while unread.
 - Future: grouping one person across messengers by hand. A separate ADR; the leaning is that
@@ -116,9 +117,10 @@ Not built, future work: the **accent count** and the **dot**. The index keeps on
 per conversation; a mention and activity-without-count need the backends to store that state in
 the index first. Until then only the grey tier exists.
 
-Also not built: the **last-message preview**. The index keeps the time (`last_message_at`, shown) but
-no preview text on the conversation row; chat bodies sit in `conversation_messages` and mail bodies
-only in the FTS table, so a preview needs a per-conversation column filled at sync time.
+The preview is read from `conversation_messages` by the window alone (`latestMessagePreviews`, the
+first 300 characters of the newest body) and kept on the `ListEntry`; the `Conversation` DTO that
+agents get stays free of bodies. Mail keeps its body in the full-text index, so a mail row shows the
+subject. Not built: per-type labels ("Photo", "Voice message") instead of "Attachment".
 
 Protocol badges are 16 px themed Adwaita symbolic icons on a solid 22 px circle (the `card` style class: it contrasts in light and dark mode) that hangs on the avatar's lower-right rim so the initials stay readable; one distinct icon per protocol (mail:
 envelope, XMPP: server, Signal: shield, Matrix: globe of nodes, Telegram: paper plane, WhatsApp:
