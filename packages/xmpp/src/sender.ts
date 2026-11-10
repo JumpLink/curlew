@@ -13,6 +13,8 @@ import type {
   ReplyTarget,
   SenderFeatures,
   SendingMessage,
+  SendingDeletion,
+  SendingEdit,
   SendingReaction,
   SentMessage,
 } from '@curlew/protocol';
@@ -46,8 +48,8 @@ export class XmppSender implements MessageSender {
     attachments: true,
     replies: true,
     reactions: true,
-    edits: false,
-    deletes: false,
+    edits: true,
+    deletes: true,
   };
   private readonly session: GrantedXmppSession;
 
@@ -95,6 +97,21 @@ export class XmppSender implements MessageSender {
   async react(reaction: SendingReaction): Promise<void> {
     if (!reaction.target.clientId) throw new Error(MESSAGES.reactNoId);
     await this.session.react(reaction.to, reaction.target.clientId, reaction.emoji);
+  }
+
+  /** Names the message by the id its sender gave it, like a reaction. */
+  async edit(edit: SendingEdit): Promise<void> {
+    await this.session.correct(edit.to, this.ownId(edit.target), edit.text);
+  }
+
+  async delete(deletion: SendingDeletion): Promise<void> {
+    await this.session.retract(deletion.to, this.ownId(deletion.target));
+  }
+
+  private ownId(target: ReplyTarget): string {
+    if (target.fromSelf !== true) throw new Error(MESSAGES.changeNotOwn);
+    if (!target.clientId) throw new Error(MESSAGES.changeNoId);
+    return target.clientId;
   }
 
   async sendImage(to: string, url: string): Promise<SentMessage> {

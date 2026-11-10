@@ -4,7 +4,9 @@ import type { SendPermit } from '@curlew/protocol';
 import {
   chatMessage,
   encryptedChatMessage,
+  correctionMessage,
   reactionMessage,
+  retractionMessage,
   type EncryptedStanza,
   GrantedXmppSession,
   type GrantedOmemo,
@@ -24,6 +26,8 @@ interface Sent {
   body?: string;
   reply?: { id: string; author: string };
   reaction?: { target: string; emojis: readonly string[] };
+  correction?: { target: string; body: string };
+  retraction?: { target: string };
   encrypted: boolean;
 }
 
@@ -40,6 +44,12 @@ function fakeLink(sent: Sent[]): XmppLink {
     },
     sendReaction: async (to, _id, target, emojis) => {
       sent.push({ to, reaction: { target, emojis }, encrypted: false });
+    },
+    sendCorrection: async (to, _id, target, body) => {
+      sent.push({ to, correction: { target, body }, encrypted: false });
+    },
+    sendRetraction: async (to, _id, target) => {
+      sent.push({ to, retraction: { target }, encrypted: false });
     },
     sendEncrypted: async (to, _id, _stanza, _fallback, reply) => {
       sent.push({ to, ...(reply ? { reply } : {}), encrypted: true });
@@ -161,6 +171,54 @@ export default async () => {
         senderOf(sent, true).react!({ to: PEER, target: { remoteId: 'a', clientId: 'c' }, emoji: '👍' }),
       );
       expect(sealed?.includes('unencrypted')).toBe(true);
+      expect(sent.length).toBe(0);
+    });
+
+    await it('builds a XEP-0308 correction and a XEP-0424 retraction naming the original', async () => {
+      const fix = correctionMessage({ to: PEER, id: 'c1', target: 'my-id', body: 'Fixed' });
+      expect(fix.getChild('replace', 'urn:xmpp:message-correct:0')?.attrs.id).toBe('my-id');
+      expect(fix.getChildText('body')).toBe('Fixed');
+      expect(fix.getChild('origin-id', 'urn:xmpp:sid:0')?.attrs.id).toBe('c1');
+      const gone = retractionMessage({ to: PEER, id: 'r1', target: 'my-id' });
+      expect(gone.getChild('retract', 'urn:xmpp:message-retract:1')?.attrs.id).toBe('my-id');
+      expect(gone.getChild('fallback', 'urn:xmpp:fallback:0')?.attrs.for).toBe('urn:xmpp:message-retract:1');
+      expect(gone.getChild('store', 'urn:xmpp:hints') !== undefined).toBe(true);
+    });
+
+    await it('edits and deletes by the sender-given id, own messages only', async () => {
+      const sent: Sent[] = [];
+      const sender = senderOf(sent);
+      expect(sender.features.edits).toBe(true);
+      expect(sender.features.deletes).toBe(true);
+      const mine = { remoteId: 'archive-9', clientId: 'my-id', fromSelf: true };
+      await sender.edit!({ to: PEER, target: mine, text: 'Fixed' });
+      await sender.delete!({ to: PEER, target: mine });
+      expect(sent[0].correction).toStrictEqual({ target: 'my-id', body: 'Fixed' });
+      expect(sent[1].retraction).toStrictEqual({ target: 'my-id' });
+      const theirs = { remoteId: 'a', clientId: 'their-id', fromSelf: false };
+      const noId = { remoteId: 'a', fromSelf: true };
+      for (const attempt of [
+        sender.edit!({ to: PEER, target: theirs, text: 'x' }),
+        sender.delete!({ to: PEER, target: theirs }),
+        sender.edit!({ to: PEER, target: noId, text: 'x' }),
+        sender.delete!({ to: PEER, target: noId }),
+        sender.edit!({ to: PEER, target: mine, text: '  ' }),
+        sender.edit!({ to: PEER, target: mine, text: 'x'.repeat(8001) }),
+        sender.edit!({ to: 'bob@example.org', target: mine, text: 'x' }),
+      ]) {
+        expect((await failure(attempt)) !== null).toBe(true);
+      }
+      expect(sent.length).toBe(2);
+    });
+
+    await it('refuses to edit or delete in an encrypted chat', async () => {
+      const sent: Sent[] = [];
+      const sender = senderOf(sent, true);
+      const mine = { remoteId: 'a', clientId: 'c', fromSelf: true };
+      expect(
+        (await failure(sender.edit!({ to: PEER, target: mine, text: 'x' })))?.includes('unencrypted'),
+      ).toBe(true);
+      expect((await failure(sender.delete!({ to: PEER, target: mine })))?.includes('unencrypted')).toBe(true);
       expect(sent.length).toBe(0);
     });
 

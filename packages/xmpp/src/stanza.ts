@@ -484,6 +484,39 @@ export function reactionMessage(spec: { to: string; id: string; target: string; 
   );
 }
 
+/**
+ * XEP-0308: a correction of the person's own message `target` (the id its sender gave it, i.e.
+ * its origin id) with the new body. A message of its own, so it carries the same envelope as any
+ * chat message and comes back through the archive like one.
+ */
+export function correctionMessage(spec: { to: string; id: string; target: string; body: string }) {
+  return xml(
+    'message',
+    { type: 'chat', to: spec.to, id: spec.id },
+    xml('body', {}, spec.body),
+    xml('replace', { xmlns: NS.correct, id: spec.target }),
+    ...chatEnvelope(spec.id),
+  );
+}
+
+/**
+ * XEP-0424: the person takes back their own message `target` (its origin id) for everyone. The
+ * fallback body is for a client that does not know retraction; it goes over the wire as written,
+ * so it is English and never translated.
+ */
+export const RETRACT_FALLBACK = 'This person attempted to retract a previous message, but it is unsupported by your client.';
+
+export function retractionMessage(spec: { to: string; id: string; target: string }) {
+  return xml(
+    'message',
+    { type: 'chat', to: spec.to, id: spec.id },
+    xml('retract', { xmlns: NS.retract, id: spec.target }),
+    xml('fallback', { xmlns: NS.fallback, for: NS.retract }),
+    xml('body', {}, RETRACT_FALLBACK),
+    xml('store', { xmlns: NS.hints }),
+  );
+}
+
 /** Message Carbons (XEP-0280): copies of the account's other clients' traffic, to this session. */
 export const carbonsEnable = () => xml('enable', { xmlns: NS.carbons });
 

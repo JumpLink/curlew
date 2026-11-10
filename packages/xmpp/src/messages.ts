@@ -26,6 +26,15 @@ export const MESSAGES = {
   get reactNotEncrypted() {
     return _('a reaction goes out unencrypted and this chat is end-to-end encrypted — nothing was sent');
   },
+  get changeNoId() {
+    return _('this message has no XMPP id to change — a full scan of the chat adds it');
+  },
+  get changeNotEncrypted() {
+    return _('an edit or a deletion goes out unencrypted and this chat is end-to-end encrypted — nothing was sent');
+  },
+  get changeNotOwn() {
+    return _('only your own messages can be changed — nothing was sent');
+  },
   get replyNeedsText() {
     return _('a reply needs a text; files alone cannot carry one');
   },
