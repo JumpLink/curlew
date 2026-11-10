@@ -236,6 +236,20 @@ export class FakeClient implements TelegramClientHandle {
     return tgMessage(chat, this.nextSentId++, 'me', text);
   }
 
+  /** Every `editMessage` and `deleteMessage` call, in order. */
+  readonly edited: Array<{ chatId: number; messageId: number; text: string }> = [];
+  readonly deleted: Array<{ chatId: number; messageId: number }> = [];
+
+  async editMessage(chatId: number, messageId: number, text: string): Promise<void> {
+    this.calls.push(`editMessage:${chatId}`);
+    this.edited.push({ chatId, messageId, text });
+  }
+
+  async deleteMessage(chatId: number, messageId: number): Promise<void> {
+    this.calls.push(`deleteMessage:${chatId}`);
+    this.deleted.push({ chatId, messageId });
+  }
+
   /** Every `sendReaction` call, in order. */
   readonly reactions: Array<{ chatId: number; messageId: number; emoji: string | null }> = [];
 

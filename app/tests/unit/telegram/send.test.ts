@@ -179,6 +179,32 @@ export default async () => {
       });
     });
 
+    await it('edits and deletes the persons own message, and nothing else', async () => {
+      await withRig(granted, async (rig) => {
+        const sender = await rig.backend.openSender(ACCOUNT, { account: ACCOUNT, addresses: ['1001'] });
+        expect(sender.features.edits).toBe(true);
+        expect(sender.features.deletes).toBe(true);
+        const mine = { remoteId: '1001/7', fromSelf: true };
+        await sender.edit!({ to: '1001', target: mine, text: 'Fixed' });
+        await sender.delete!({ to: '1001', target: mine });
+        const client = rig.fake.clients[0];
+        expect(client.edited).toStrictEqual([{ chatId: 1001, messageId: 7, text: 'Fixed' }]);
+        expect(client.deleted).toStrictEqual([{ chatId: 1001, messageId: 7 }]);
+        for (const attempt of [
+          sender.edit!({ to: '1001', target: { remoteId: '1001/7', fromSelf: false }, text: 'x' }),
+          sender.delete!({ to: '1001', target: { remoteId: '1001/7' } }),
+          sender.edit!({ to: '1001', target: { remoteId: '1002/7', fromSelf: true }, text: 'x' }),
+          sender.delete!({ to: '1002', target: { remoteId: '1002/7', fromSelf: true } }),
+          sender.edit!({ to: '1001', target: mine, text: 'x'.repeat(4097) }),
+        ]) {
+          expect(await refused(attempt)).toBe(true);
+        }
+        expect(client.edited.length).toBe(1);
+        expect(client.deleted.length).toBe(1);
+        await sender.close();
+      });
+    });
+
     await it('reacts to a message of the chat, without the variation selector, and takes it back', async () => {
       await withRig(granted, async (rig) => {
         const sender = await rig.backend.openSender(ACCOUNT, { account: ACCOUNT, addresses: ['1001'] });
