@@ -9,6 +9,7 @@ import {
   cursorOf,
   dayStarts,
   defaultProtocolChoice,
+  trustRank,
   deleteHandleOf,
   editHandleOf,
   foldAlbums,
@@ -203,13 +204,33 @@ export default async () => {
         { backend: 'signal', accountId: 'signal-1', target: 'aci-1', label: 'Signal', icon: '' },
         { backend: 'xmpp', accountId: 'xmpp-1', target: 'x', label: 'XMPP', icon: '' },
       ];
-      expect(defaultProtocolChoice([], choices)).toBe(choices[0]);
       const m = (id: string, backend: string, accountId = 'a') =>
         message({ id, backend, presentation: 'bubble', ref: { accountId, backend } });
       expect(defaultProtocolChoice([m('a', 'xmpp', 'xmpp-1')], choices)).toBe(choices[1]);
       expect(defaultProtocolChoice([m('a', 'xmpp', 'xmpp-2')], choices)).toBe(choices[1]);
       expect(defaultProtocolChoice([m('a', 'signal', 'signal-1')], choices)).toBe(choices[0]);
-      expect(defaultProtocolChoice([m('a', 'mail')], choices)).toBe(choices[0]);
+      expect(defaultProtocolChoice([m('a', 'mail')], choices)).toBe(choices[1]);
+    });
+
+    await it('starts a first contact on the most trusted protocol', async () => {
+      const choice = (backend: string) => ({
+        backend,
+        accountId: `${backend}-1`,
+        target: 't',
+        label: backend,
+        icon: '',
+      });
+      const ranked = ['whatsapp', 'telegram', 'signal', 'xmpp', 'matrix'].map(choice);
+      expect(defaultProtocolChoice([], ranked)?.backend).toBe('xmpp');
+      expect(defaultProtocolChoice([], ranked.slice(0, 3))?.backend).toBe('signal');
+      expect(defaultProtocolChoice([], ranked.slice(0, 2))?.backend).toBe('telegram');
+      // Equal rank keeps the list order.
+      expect(defaultProtocolChoice([], [choice('matrix'), choice('xmpp')])?.backend).toBe('matrix');
+      // Mail is never picked over a chat protocol, but is still picked when it is all there is.
+      expect(defaultProtocolChoice([], [choice('mail'), choice('whatsapp')])?.backend).toBe('whatsapp');
+      expect(defaultProtocolChoice([], [choice('mail')])?.backend).toBe('mail');
+      expect(trustRank('xmpp')).toBe(trustRank('matrix'));
+      expect(trustRank('mail')).toBeGreaterThan(trustRank('whatsapp'));
     });
 
     await it('keeps sender runs right when an older page is prepended', async () => {

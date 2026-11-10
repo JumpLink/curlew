@@ -179,8 +179,11 @@ address; a mail thread with oneself stays an ordinary mail thread — fail close
 
 ## Open questions
 
-1. **First contact default**: a merged person with no history — which carrier does
-   "Automatic" pick? (Leaning: the protocol the row was opened or searched from.)
+1. ~~First contact default~~ — decided: a merged person with no history gets the most
+   trusted protocol they can be reached on. Order, most to least trusted: XMPP = Matrix >
+   Signal > Telegram > WhatsApp. Mail ranks after all of them, so it is picked only when it
+   is the only way. The picker still switches; once there is a history, the carrier of the
+   last message wins as before (`trustRank`, `defaultProtocolChoice`).
 2. **Read state**: opening a merged timeline — does it clear unread on every protocol
    shown, or only where the person actually scrolled? (Leaning: only what was shown.)
 3. ~~View vs carrier~~ — decided: the picker sets the carrier only; the timeline always
@@ -210,5 +213,5 @@ the first string — "Notiz an mich", "Über Telegram gesendet", "Weiter über T
 
 ## Not built
 
-All of it. This note decides direction only; no row, timeline, picker, pin or merge
-exists in the app today.
+Phases 1–4 exist. Starting a conversation with a contact who has no conversation yet does
+not; it is specified in the next section once built.
