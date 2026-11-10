@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 09:08+0100\n"
+"POT-Creation-Date: 2026-11-10 11:02+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -978,7 +978,7 @@ msgstr[0] "{n} weiterer Chat hat neue Nachrichten"
 msgstr[1] "{n} weitere Chats haben neue Nachrichten"
 
 #: app/src/core/lib/message-notifications.ts:118
-#: app/src/window/attachment-view.ts:101
+#: app/src/window/attachment-view.ts:102
 msgid "Open"
 msgstr "Öffnen"
 
@@ -1703,7 +1703,7 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:96
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:97
 #: app/src/window/window.ts:58 app/src/window/window.ts:73
 msgid "Curlew"
 msgstr "Curlew"
@@ -2050,27 +2050,35 @@ msgstr "Noch keine Regeln"
 msgid "Add rule"
 msgstr "Regel hinzufügen"
 
-#: app/src/window/attachment-view.ts:101
+#: app/src/window/attachment-view.ts:102
 msgid "Play"
 msgstr "Abspielen"
 
-#: app/src/window/attachment-view.ts:106 app/src/window/audio-player.ts:55
-#: app/src/window/media-viewer.ts:47
+#: app/src/window/attachment-view.ts:107 app/src/window/audio-player.ts:56
+#: app/src/window/media-viewer.ts:54
 msgid "Save as…"
 msgstr "Speichern unter…"
 
-#: app/src/window/attachment-view.ts:124 app/src/window/audio-player.ts:132
-#: app/src/window/audio-player.ts:159
+#: app/src/window/attachment-view.ts:125 app/src/window/audio-player.ts:133
+#: app/src/window/audio-player.ts:160
 msgid "Could not fetch the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
-#: app/src/window/attachment-view.ts:147 app/src/window/attachment-view.ts:156
+#: app/src/window/attachment-view.ts:148 app/src/window/attachment-view.ts:157
 #: app/src/window/conversation-model.ts:251
 #: app/src/window/conversation-model.ts:256
 msgid "Attachment"
 msgstr "Anhang"
 
-#: app/src/window/attachment-view.ts:418
+#: app/src/window/attachment-view.ts:221 app/src/window/media-viewer.ts:200
+msgid "Video: {name}"
+msgstr "Video: {name}"
+
+#: app/src/window/attachment-view.ts:221 app/src/window/media-viewer.ts:200
+msgid "Image: {name}"
+msgstr "Bild: {name}"
+
+#: app/src/window/attachment-view.ts:439
 #: app/src/window/conversation-model.ts:259
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
@@ -2085,15 +2093,15 @@ msgstr "Sprachnachricht abspielen"
 msgid "Play {name}"
 msgstr "{name} abspielen"
 
-#: app/src/window/audio-player.ts:44
+#: app/src/window/audio-player.ts:45
 msgid "Position"
 msgstr "Position"
 
-#: app/src/window/audio-player.ts:84
+#: app/src/window/audio-player.ts:85
 msgid "Pause"
 msgstr "Pause"
 
-#: app/src/window/audio-player.ts:105
+#: app/src/window/audio-player.ts:106
 msgid "Could not play the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgespielt werden: {error}"
 
@@ -2273,7 +2281,7 @@ msgstr[0] "{count} mögliches Duplikat"
 msgstr[1] "{count} mögliche Duplikate"
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:662
+#: app/src/window/conversation-view.ts:663
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -2301,44 +2309,44 @@ msgstr "Audio"
 msgid "File"
 msgstr "Datei"
 
-#: app/src/window/conversation-view.ts:102
+#: app/src/window/conversation-view.ts:103
 msgid "Choose how to reach this person"
 msgstr "Erreichbarkeit dieser Person wählen"
 
-#: app/src/window/conversation-view.ts:119
+#: app/src/window/conversation-view.ts:120
 msgid "Write a message"
 msgstr "Nachricht schreiben"
 
-#: app/src/window/conversation-view.ts:130
+#: app/src/window/conversation-view.ts:131
 msgid "Send message"
 msgstr "Nachricht senden"
 
-#: app/src/window/conversation-view.ts:157
+#: app/src/window/conversation-view.ts:158
 msgid "Conversation"
 msgstr "Unterhaltung"
 
-#: app/src/window/conversation-view.ts:273
+#: app/src/window/conversation-view.ts:274
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 "{protocol} kann keine Dateien senden; die angehängten Dateien wurden entfernt"
 
-#: app/src/window/conversation-view.ts:288
+#: app/src/window/conversation-view.ts:289
 msgid "Send via {protocol}"
 msgstr "Senden über {protocol}"
 
-#: app/src/window/conversation-view.ts:392
+#: app/src/window/conversation-view.ts:393
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:564
+#: app/src/window/conversation-view.ts:565
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:673
+#: app/src/window/conversation-view.ts:674
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:676
+#: app/src/window/conversation-view.ts:677
 msgid "Retry"
 msgstr "Erneut versuchen"
 
@@ -2346,31 +2354,39 @@ msgstr "Erneut versuchen"
 msgid "Show more"
 msgstr "Mehr anzeigen"
 
-#: app/src/window/media-viewer.ts:44
+#: app/src/window/media-viewer.ts:51
 msgid "Back"
 msgstr "Zurück"
 
-#: app/src/window/media-viewer.ts:45 app/src/window/media-viewer.ts:199
+#: app/src/window/media-viewer.ts:52 app/src/window/media-viewer.ts:269
 msgid "Fullscreen"
 msgstr "Vollbild"
 
-#: app/src/window/media-viewer.ts:46
+#: app/src/window/media-viewer.ts:53
 msgid "Copy image"
 msgstr "Bild kopieren"
 
-#: app/src/window/media-viewer.ts:78
+#: app/src/window/media-viewer.ts:85
 msgid "Could not load the attachment"
 msgstr "Der Anhang konnte nicht geladen werden"
 
-#: app/src/window/media-viewer.ts:124
+#: app/src/window/media-viewer.ts:104
+msgid "Previous"
+msgstr "Zurück"
+
+#: app/src/window/media-viewer.ts:105
+msgid "Next"
+msgstr "Weiter"
+
+#: app/src/window/media-viewer.ts:155
 msgid "Could not save the attachment: {error}"
 msgstr "Der Anhang konnte nicht gespeichert werden: {error}"
 
-#: app/src/window/media-viewer.ts:135
+#: app/src/window/media-viewer.ts:166
 msgid "Image copied"
 msgstr "Bild kopiert"
 
-#: app/src/window/media-viewer.ts:199
+#: app/src/window/media-viewer.ts:269
 msgid "Leave fullscreen"
 msgstr "Vollbild beenden"
 

@@ -42,6 +42,7 @@ import {
   type ProtocolRun,
 } from './conversation-model.ts';
 import { attachmentList, type AttachmentHandlers } from './attachment-view.ts';
+import type { AlbumItem } from './media-viewer.ts';
 import { createSilentVideoHost } from './video-preview.ts';
 import { shownAttachments, type AttachmentKind } from './attachment-model.ts';
 import type { AttachmentSource } from './attachment-store.ts';
@@ -72,7 +73,7 @@ export function createConversationView(
   onSend: (text: string, choice: ProtocolChoice, files: PickedFile[]) => Promise<ConversationMessage>,
   canAttach: (backend: string) => boolean,
   loadOlder: (entry: ListEntry, oldest: MessageCursor) => ShownMessage[],
-  openMedia: (source: AttachmentSource, kind: AttachmentKind) => void,
+  openMedia: (source: AttachmentSource, kind: AttachmentKind, album?: readonly AlbumItem[]) => void,
   onRoute: (entry: ListEntry, backend: string | null) => void,
 ): ConversationView {
   let entry: ListEntry | null = null;
