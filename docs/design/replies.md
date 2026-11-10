@@ -89,6 +89,23 @@ bubble shows one chip per emoji with a count (own tinted via `accent` style clas
 CSS), wrapping in a `Gtk.FlowBox` under the text. Sending is a later step: an emoji row in the
 bubble menu, `SenderFeatures.reactions`, and the daemon wire.
 
+**Archive networks (Matrix, Telegram, XMPP).** They reach the store through `chat-sync.ts`, so a
+reaction there is part of the page, not a change event:
+
+- `ChatPage` gets `reactions?: ChatReaction[]` (`{ remoteId, reactor, emoji, eventId? }`) and the
+  write phase applies them after the messages, dropping a reaction whose message is not stored.
+- Matrix lets one person leave several emoji and XEP-0444 lists a person's full set per message,
+  so the primary key widens to `(message_id, reactor, emoji)`. A delivery `reaction` change from
+  Signal or WhatsApp then replaces the reactor's whole set for that message.
+- Matrix takes a reaction back by redacting the annotation event, so `message_reactions` gets an
+  optional `event_id` column; an archive page that redacts an annotation removes the row by it.
+- Telegram reports counts per emoji and no reactors. It stores them under a synthetic reactor
+  `telegram:<emoji>:<n>` per slot, and the chip shows the count without a "You" state unless the
+  API flags the emoji as chosen.
+
+Order: widen the key (schema v18), `ChatPage.reactions` plus the write phase, then Matrix, XMPP,
+Telegram, one PR each.
+
 ### 5. Edit and delete
 
 Separate specs; edit and delete need the server-archive and delivery-only differences written
