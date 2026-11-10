@@ -158,6 +158,25 @@ export class GrantedXmppSession {
   }
 
   /**
+   * Replaces the text of one of the person's own messages of a 1:1 chat (XEP-0308). An OMEMO chat
+   * refuses: the correction would carry the new text in the clear next to messages that are not.
+   */
+  async correct(to: string, targetId: string, text: string): Promise<void> {
+    const chatJid = this.recipient(to);
+    if (text.trim().length === 0) throw new Error(MESSAGES.emptyText);
+    if (text.length > MAX_TEXT_CHARS) throw new Error(MESSAGES.tooLong(MAX_TEXT_CHARS));
+    if (await this.omemo?.encrypts(chatJid)) throw new Error(MESSAGES.changeNotEncrypted);
+    await this.link.sendCorrection(chatJid, this.newId(), targetId, text);
+  }
+
+  /** Takes one of the person's own messages of a 1:1 chat back for everyone (XEP-0424); not in an OMEMO chat. */
+  async retract(to: string, targetId: string): Promise<void> {
+    const chatJid = this.recipient(to);
+    if (await this.omemo?.encrypts(chatJid)) throw new Error(MESSAGES.changeNotEncrypted);
+    await this.link.sendRetraction(chatJid, this.newId(), targetId);
+  }
+
+  /**
    * Send one image as its own message: body = the URL, plus an XEP-0066 `<x xmlns='jabber:x:oob'>`
    * carrying the same URL. Same permit check and same encryption rule as `send`.
    *

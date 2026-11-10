@@ -37,7 +37,7 @@ const DELIVERED_CAPABILITIES: ReadonlyArray<{
   {
     backend: 'xmpp',
     manifest: BUILTIN_PLUGINS.find((p) => p.manifest.name === 'xmpp')!.manifest,
-    trueFlags: 'edits,reactions,groups,attachments,attachmentsRead,replies',
+    trueFlags: 'edits,reactions,editsOwn,deletesOwn,groups,attachments,attachmentsRead,replies',
   },
   {
     backend: 'matrix',

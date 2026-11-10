@@ -28,6 +28,7 @@
 
 ### Added
 
+- XMPP chats can edit and delete your own messages from the window (XEP-0308 corrections, XEP-0424 retractions). An end-to-end encrypted chat refuses both, since they go out unencrypted.
 - Telegram chats can edit and delete your own messages from the window: *Edit* on a text message, *Delete* for everyone on any of yours.
 - Matrix rooms without encryption can edit and delete your own messages from the window: the bubble menu on a text message offers *Edit*, and *Delete* removes any of your messages for everyone. Encrypted rooms refuse both.
 - Telegram chats can send reactions: your emoji replaces your earlier one, and taking it back clears it.

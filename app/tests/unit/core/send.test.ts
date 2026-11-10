@@ -48,6 +48,8 @@ function fakeLink(
       if (oobUrl !== undefined) oob.push(oobUrl);
     },
     sendReaction: async () => {},
+    sendCorrection: async () => {},
+    sendRetraction: async () => {},
     sendEncrypted: async (to, id, stanza, fallback) => {
       sent.push([to, id, fallback ?? '']);
       encrypted.push(stanza);

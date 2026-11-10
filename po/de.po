@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 20:00+0100\n"
+"POT-Creation-Date: 2026-11-10 20:15+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2813,6 +2813,7 @@ msgstr ""
 "kürze sie"
 
 #: packages/matrix/src/send.ts:483 packages/telegram/src/sender.ts:129
+#: packages/xmpp/src/messages.ts:36
 msgid "only your own messages can be changed — nothing was sent"
 msgstr ""
 "nur eigene Nachrichten können geändert werden — es wurde nichts gesendet"
@@ -3583,51 +3584,61 @@ msgstr ""
 "verschlüsselt — es wurde nichts gesendet"
 
 #: packages/xmpp/src/messages.ts:30
+msgid "this message has no XMPP id to change — a full scan of the chat adds it"
+msgstr "diese Nachricht hat keine XMPP-Kennung, die sich ändern lässt — ein vollständiger Scan des Chats ergänzt sie"
+
+#: packages/xmpp/src/messages.ts:33
+msgid ""
+"an edit or a deletion goes out unencrypted and this chat is end-to-end "
+"encrypted — nothing was sent"
+msgstr "eine Bearbeitung oder Löschung geht unverschlüsselt hinaus, und dieser Chat ist Ende-zu-Ende-verschlüsselt — es wurde nichts gesendet"
+
+#: packages/xmpp/src/messages.ts:39
 msgid "a reply needs a text; files alone cannot carry one"
 msgstr ""
 "eine Antwort braucht einen Text; Dateien allein können sie nicht tragen"
 
-#: packages/xmpp/src/messages.ts:33
+#: packages/xmpp/src/messages.ts:42
 msgid "there is nothing to send: the text is empty"
 msgstr "Es gibt nichts zu senden: Der Text ist leer"
 
-#: packages/xmpp/src/messages.ts:36
+#: packages/xmpp/src/messages.ts:45
 msgid ""
 "the image URL must be a valid https:// URL without credentials or spaces"
 msgstr ""
 "Die Bild-URL muss eine gültige https://-URL ohne Zugangsdaten und "
 "Leerzeichen sein"
 
-#: packages/xmpp/src/messages.ts:38
+#: packages/xmpp/src/messages.ts:47
 msgid "the image URL is longer than {max} characters"
 msgstr "Die Bild-URL ist länger als {max} Zeichen"
 
-#: packages/xmpp/src/messages.ts:39
+#: packages/xmpp/src/messages.ts:48
 msgid "the text is longer than {max} characters"
 msgstr "Der Text ist länger als {max} Zeichen"
 
-#: packages/xmpp/src/messages.ts:41
+#: packages/xmpp/src/messages.ts:50
 msgid ""
 "{domain} offers no file upload (XEP-0363), so no file can be sent through it"
 msgstr ""
 "{domain} bietet keinen Datei-Upload (XEP-0363) an, darüber lässt sich keine "
 "Datei senden"
 
-#: packages/xmpp/src/messages.ts:43
+#: packages/xmpp/src/messages.ts:52
 msgid "{file} is larger than the {max} bytes the server accepts"
 msgstr "{file} ist größer als die {max} Bytes, die der Server annimmt"
 
-#: packages/xmpp/src/messages.ts:45
+#: packages/xmpp/src/messages.ts:54
 msgid "the server refused the file {file} ({reason})"
 msgstr "der Server hat die Datei {file} abgewiesen ({reason})"
 
-#: packages/xmpp/src/messages.ts:47
+#: packages/xmpp/src/messages.ts:56
 msgid "the server answered a slot for {file} that curlew will not use"
 msgstr ""
 "der Server hat für {file} einen Upload-Platz angeboten, den Curlew nicht "
 "verwendet"
 
-#: packages/xmpp/src/messages.ts:49
+#: packages/xmpp/src/messages.ts:58
 msgid ""
 "nothing was sent: {to} stopped offering encryption while the file was "
 "uploading"
@@ -3635,11 +3646,11 @@ msgstr ""
 "nichts wurde gesendet: {to} bietet keine Verschlüsselung mehr an, während "
 "die Datei hochgeladen wurde"
 
-#: packages/xmpp/src/messages.ts:50
+#: packages/xmpp/src/messages.ts:59
 msgid "no XMPP account {id} — `curlew accounts list` shows them"
 msgstr "Kein XMPP-Konto {id} — `curlew accounts list` zeigt sie an"
 
-#: packages/xmpp/src/messages.ts:64
+#: packages/xmpp/src/messages.ts:73
 msgid ""
 "nothing was sent: {to} uses OMEMO and their device list could not be read — "
 "try again when the server answers"
@@ -3647,7 +3658,7 @@ msgstr ""
 "Es wurde nichts gesendet: {to} nutzt OMEMO und die Geräteliste konnte nicht "
 "gelesen werden — versuche es erneut, wenn der Server antwortet"
 
-#: packages/xmpp/src/messages.ts:71
+#: packages/xmpp/src/messages.ts:80
 msgid ""
 "nothing was sent: no device of {to} may be encrypted to — `curlew omemo "
 "devices` shows them, `curlew omemo trust` decides"
@@ -3655,7 +3666,7 @@ msgstr ""
 "Es wurde nichts gesendet: An kein Gerät von {to} darf verschlüsselt werden — "
 "`curlew omemo devices` zeigt sie an, `curlew omemo trust` entscheidet"
 
-#: packages/xmpp/src/messages.ts:78
+#: packages/xmpp/src/messages.ts:87
 msgid ""
 "nothing was sent: no device of {to} has published keys to encrypt with — "
 "their client has to come online once"
@@ -3663,7 +3674,7 @@ msgstr ""
 "Es wurde nichts gesendet: Kein Gerät von {to} hat Schlüssel zum "
 "Verschlüsseln veröffentlicht — der Client muss einmal online kommen"
 
-#: packages/xmpp/src/messages.ts:85
+#: packages/xmpp/src/messages.ts:94
 msgid ""
 "nothing was sent: a device of {to} published a new OMEMO key — compare it "
 "with them, then `curlew omemo trust` decides"
@@ -3672,7 +3683,7 @@ msgstr ""
 "veröffentlicht — vergleiche ihn mit ihnen, dann entscheidet `curlew omemo "
 "trust`"
 
-#: packages/xmpp/src/messages.ts:92
+#: packages/xmpp/src/messages.ts:101
 msgid ""
 "nothing was sent: {to} has no OMEMO devices and encryption is required for "
 "them — remove them from config.encryption to allow plain text"
@@ -3681,7 +3692,7 @@ msgstr ""
 "Verschlüsselung verlangt — entferne sie aus config.encryption, um Klartext "
 "zu erlauben"
 
-#: packages/xmpp/src/messages.ts:107
+#: packages/xmpp/src/messages.ts:116
 msgid ""
 "{jid} is now using a different OMEMO key: {printed}. Compare it with them "
 "out of band — `curlew omemo trust` decides."
@@ -3689,20 +3700,20 @@ msgstr ""
 "{jid} verwendet jetzt einen anderen OMEMO-Schlüssel: {printed}. Vergleiche "
 "ihn auf anderem Weg mit ihnen — `curlew omemo trust` entscheidet."
 
-#: packages/xmpp/src/messages.ts:114
+#: packages/xmpp/src/messages.ts:123
 msgid ""
 "that is not an OMEMO fingerprint: expected 64 hex characters, in any grouping"
 msgstr ""
 "Das ist kein OMEMO-Fingerabdruck: erwartet werden 64 Hex-Zeichen, in "
 "beliebiger Gruppierung"
 
-#: packages/xmpp/src/messages.ts:118
+#: packages/xmpp/src/messages.ts:127
 msgid "that is not the fingerprint you passed — nothing changed"
 msgstr ""
 "Das ist nicht der Fingerabdruck, den du angegeben hast — nichts wurde "
 "geändert"
 
-#: packages/xmpp/src/messages.ts:121
+#: packages/xmpp/src/messages.ts:130
 msgid ""
 "no device of {jid} carries that fingerprint — `curlew omemo devices` lists "
 "them"
@@ -3710,7 +3721,7 @@ msgstr ""
 "Kein Gerät von {jid} trägt diesen Fingerabdruck — `curlew omemo devices` "
 "listet sie auf"
 
-#: packages/xmpp/src/messages.ts:124
+#: packages/xmpp/src/messages.ts:133
 msgid ""
 "{count} devices of {jid} carry that fingerprint, so it does not name one — "
 "nothing changed"
