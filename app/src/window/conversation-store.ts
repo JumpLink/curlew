@@ -9,6 +9,7 @@ import {
   loadAttachments,
   mailReplyTarget,
   openIndexDb,
+  setOwnReaction,
   type MailReplyTarget,
 } from '@curlew/store';
 
@@ -47,6 +48,25 @@ export function replyingBackends(cfgPath = configPath()): Set<string> {
       .backends.filter((status) => status.capabilities.replies)
       .map((status) => status.name),
   );
+}
+
+/** The backends that can send a reaction: only those get the emoji row. */
+export function reactingBackends(cfgPath = configPath()): Set<string> {
+  return new Set(
+    backendsList(cfgPath)
+      .backends.filter((status) => status.capabilities.reactions)
+      .map((status) => status.name),
+  );
+}
+
+/** Keeps the person's reaction in the index, so reopening the chat shows it before any sync does. */
+export function recordOwnReaction(messageId: string, emoji: string | null, dbPath = indexDbPath()): void {
+  const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
+  try {
+    setOwnReaction(db, messageId, emoji);
+  } finally {
+    db.close();
+  }
 }
 
 /** The page of messages just before `oldest`, the oldest one on screen. */

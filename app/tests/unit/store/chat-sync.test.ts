@@ -12,6 +12,7 @@ import {
   loadAttachmentHandle,
   loadAttachments,
   rebuildConversations,
+  setOwnReaction,
   recordSentChatMessage,
   releaseReceiveLease,
   syncChats,
@@ -82,6 +83,30 @@ export default async () => {
         ]);
         await syncChats(db, backend, { now: AT('2026-08-06T12:15:00Z'), fullScan: true });
         expect(chips()).toBe('🎉2');
+      } finally {
+        db.close();
+      }
+    });
+
+    await it("keeps the person's own reaction after sending: one at a time, gone when taken back", async () => {
+      const db = freshDb();
+      try {
+        const backend = telegramFixture();
+        backend.reactions.set('1001', [{ remoteId: '1001/1', reactor: '1001', emoji: '👍' }]);
+        await syncChats(db, backend, { now: AT('2026-08-06T12:00:00Z') });
+        rebuildConversations(db);
+        const message = getConversation(db, DIRECT)?.messages[0];
+        const id = message?.id ?? '';
+        const chips = () =>
+          (getConversation(db, DIRECT)?.messages[0].reactions ?? [])
+            .map((r) => `${r.emoji}${r.count}${r.own ? '*' : ''}`)
+            .join(',');
+        setOwnReaction(db, id, '👍');
+        expect(chips()).toBe('👍2*');
+        setOwnReaction(db, id, '❤️');
+        expect(chips()).toBe('👍1,❤️1*');
+        setOwnReaction(db, id, null);
+        expect(chips()).toBe('👍1');
       } finally {
         db.close();
       }

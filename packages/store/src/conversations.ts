@@ -995,6 +995,19 @@ function attachReactions(db: IndexDatabase, messages: ConversationMessage[]): vo
   }
 }
 
+/**
+ * Records the person's own reaction on a message once the network took it: their rows go, and
+ * `emoji` (when not null) becomes the one. The network's own echo, if any, lands on the same key.
+ */
+export function setOwnReaction(db: IndexDatabase, messageId: string, emoji: string | null): void {
+  db.prepare("DELETE FROM message_reactions WHERE message_id = ? AND reactor = ''").run(messageId);
+  if (emoji === null) return;
+  db.prepare("INSERT OR REPLACE INTO message_reactions (message_id, reactor, emoji) VALUES (?, '', ?)").run(
+    messageId,
+    emoji,
+  );
+}
+
 const MESSAGE_COLUMNS = `id, conversation_id, backend, account_id, presentation, sender_participant_id, sender_name,
               sender_kind, sender_address, from_self, sent_at, subject, seen, has_attachments,
               classification, classification_reason, folder_path, uid, remote_id, email_chat, ${seqColumn('remote_seq')}, body,

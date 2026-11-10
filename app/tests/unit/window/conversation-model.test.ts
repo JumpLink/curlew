@@ -12,6 +12,7 @@ import {
   foldAlbums,
   newOlder,
   quoteOf,
+  reactHandleOf,
   reactionChip,
   protocolDividers,
   protocolRunStarts,
@@ -20,6 +21,8 @@ import {
   senderName,
   senderRunStarts,
   subjectLabels,
+  toggleOwnReaction,
+  withOwnReaction,
   type ShownMessage,
 } from '../../../src/window/conversation-model.ts';
 
@@ -420,6 +423,48 @@ export default async () => {
       const other = chat({ id: '$4' });
       other.ref = { accountId: 'b', backend: 'matrix', remoteId: '$4' };
       expect(replyDraftOf(other, choices, can)).toBe(null);
+    });
+  });
+
+  await describe('reacting', async () => {
+    const chips = (r: Array<{ emoji: string; count: number; own: boolean }>) =>
+      r.map((c) => `${c.emoji}${c.count}${c.own ? '*' : ''}`).join(',');
+
+    await it('names the carrier a reaction goes through, like a reply', async () => {
+      const choices = [{ backend: 'signal', accountId: 's' }];
+      const signal = message({
+        id: 'x',
+        backend: 'signal',
+        clientId: null,
+        ref: { accountId: 's', backend: 'signal', remoteId: 's1:99' },
+      });
+      const handle = reactHandleOf(signal, choices, (b) => b === 'signal');
+      expect(handle?.target).toStrictEqual({ remoteId: 's1:99' });
+      expect(handle?.choice).toBe(choices[0]);
+      expect(reactHandleOf(signal, choices, () => false)).toBe(null);
+    });
+
+    await it('takes the own emoji back on a second tap and replaces it on another', async () => {
+      const shown = [
+        { emoji: '👍', count: 2, own: true },
+        { emoji: '❤️', count: 1, own: false },
+      ];
+      expect(toggleOwnReaction(shown, '👍')).toStrictEqual({ emoji: null, previous: '👍' });
+      expect(toggleOwnReaction(shown, '❤️')).toStrictEqual({ emoji: '❤️' });
+      expect(toggleOwnReaction(undefined, '🙏')).toStrictEqual({ emoji: '🙏' });
+    });
+
+    await it("shows the person's reaction at once: one at a time, counts kept for the others", async () => {
+      const shown = [
+        { emoji: '👍', count: 2, own: true },
+        { emoji: '❤️', count: 1, own: false },
+      ];
+      expect(chips(withOwnReaction(shown, '❤️'))).toBe('👍1,❤️2*');
+      expect(chips(withOwnReaction(shown, '🙏'))).toBe('👍1,❤️1,🙏1*');
+      expect(chips(withOwnReaction(shown, null))).toBe('👍1,❤️1');
+      expect(chips(withOwnReaction([{ emoji: '👍', count: 1, own: true }], null))).toBe('');
+      expect(chips(withOwnReaction(undefined, '👍'))).toBe('👍1*');
+      expect(shown[0].count).toBe(2);
     });
   });
 };

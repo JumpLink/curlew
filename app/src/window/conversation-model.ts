@@ -317,18 +317,24 @@ export interface ReplyDraft<C extends { backend: string; accountId: string }> {
   excerpt: string;
 }
 
+/** The network id of a message and the carrier it travels on; what a reply or a reaction points at. */
+export interface MessageHandle<C extends { backend: string; accountId: string }> {
+  target: ReplyTarget;
+  choice: C;
+}
+
 /**
- * What answering `message` would be, or null when it cannot be answered: its backend does not
- * reply, the index holds no network id for it, or the conversation has no carrier on that account.
- * A reply is a link inside one network, so it always goes out through the message's own carrier.
+ * The message's own carrier among `choices`, or null when `can` says its backend cannot do it,
+ * the index holds no network id for it, or the conversation has no carrier on that account.
+ * A reply or a reaction is a link inside one network, so it always goes out through that carrier.
  */
-export function replyDraftOf<C extends { backend: string; accountId: string }>(
+function handleOf<C extends { backend: string; accountId: string }>(
   message: ShownMessage,
   choices: readonly C[],
-  canReply: (backend: string) => boolean,
-): ReplyDraft<C> | null {
+  can: (backend: string) => boolean,
+): MessageHandle<C> | null {
   const remoteId = message.ref.remoteId;
-  if (!remoteId || !canReply(message.backend)) return null;
+  if (!remoteId || !can(message.backend)) return null;
   const choice = choices.find((c) => c.backend === message.backend && c.accountId === message.ref.accountId);
   if (!choice) return null;
   const clientId = message.clientId ?? undefined;
@@ -339,7 +345,60 @@ export function replyDraftOf<C extends { backend: string; accountId: string }>(
     ...(message.fromSelf ? { fromSelf: true } : {}),
     ...(text ? { text } : {}),
   };
-  return { target, choice, ...describeQuoted(message) };
+  return { target, choice };
+}
+
+/** What answering `message` would be, or null when it cannot be answered (see `handleOf`). */
+export function replyDraftOf<C extends { backend: string; accountId: string }>(
+  message: ShownMessage,
+  choices: readonly C[],
+  canReply: (backend: string) => boolean,
+): ReplyDraft<C> | null {
+  const handle = handleOf(message, choices, canReply);
+  return handle ? { ...handle, ...describeQuoted(message) } : null;
+}
+
+/** What reacting to `message` would go through, or null when it cannot be reacted to (see `handleOf`). */
+export function reactHandleOf<C extends { backend: string; accountId: string }>(
+  message: ShownMessage,
+  choices: readonly C[],
+  canReact: (backend: string) => boolean,
+): MessageHandle<C> | null {
+  return handleOf(message, choices, canReact);
+}
+
+/** The emoji the bubble menu offers first. */
+export const QUICK_REACTIONS: readonly string[] = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+
+/** What the person's reaction becomes: an emoji, or none (`previous` names the one taken back). */
+export interface ReactionChange {
+  emoji: string | null;
+  previous?: string;
+}
+
+/** Tapping the emoji the person already gave takes it back; any other replaces their reaction. */
+export function toggleOwnReaction(
+  reactions: readonly MessageReaction[] | undefined,
+  emoji: string,
+): ReactionChange {
+  const own = reactions?.find((r) => r.own)?.emoji;
+  return own === emoji ? { emoji: null, previous: emoji } : { emoji };
+}
+
+/** The chips after the person's reaction became `emoji` (or none): what the window shows before the index is read again. */
+export function withOwnReaction(
+  reactions: readonly MessageReaction[] | undefined,
+  emoji: string | null,
+): MessageReaction[] {
+  const rest: MessageReaction[] = [];
+  for (const r of reactions ?? []) {
+    if (!r.own) rest.push(r);
+    else if (r.count > 1) rest.push({ ...r, count: r.count - 1, own: false });
+  }
+  if (emoji === null) return rest;
+  const same = rest.findIndex((r) => r.emoji === emoji);
+  if (same === -1) return [...rest, { emoji, count: 1, own: true }];
+  return rest.map((r, i) => (i === same ? { ...r, count: r.count + 1, own: true } : r));
 }
 
 /** The most parts a Telegram album has: a folded bubble lists all of them. */

@@ -37,14 +37,20 @@ import {
   PAGE_SIZE,
   protocolDividers,
   protocolRunStarts,
+  QUICK_REACTIONS,
   quoteOf,
+  reactHandleOf,
   reactionChip,
   replyDraftOf,
   senderRunStarts,
   type ShownMessage,
   subjectLabels,
+  toggleOwnReaction,
+  withOwnReaction,
   type ProtocolRun,
   type Quote,
+  type MessageHandle,
+  type ReactionChange,
   type ReplyDraft,
 } from './conversation-model.ts';
 import { attachmentList, type AttachmentHandlers } from './attachment-view.ts';
@@ -84,6 +90,12 @@ export function createConversationView(
   ) => Promise<ConversationMessage>,
   canAttach: (backend: string) => boolean,
   canReply: (backend: string) => boolean,
+  canReact: (backend: string) => boolean,
+  onReact: (
+    message: ShownMessage,
+    handle: MessageHandle<ProtocolChoice>,
+    change: ReactionChange,
+  ) => Promise<void>,
   loadOlder: (entry: ListEntry, oldest: MessageCursor) => ShownMessage[],
   openMedia: (source: AttachmentSource, kind: AttachmentKind, album?: readonly AlbumItem[]) => void,
   onRoute: (entry: ListEntry, backend: string | null) => void,
@@ -473,17 +485,63 @@ export function createConversationView(
     input.grab_focus();
   };
 
-  // "Reply" and "Copy" for one bubble. Long press (touch) and right click (pointer) open it; both
-  // run before the selectable text, which would otherwise keep the press for itself.
-  const attachBubbleActions = (card: Gtk.Box, message: ShownMessage): void => {
+  // One reaction at a time per message: a second tap while the first is on its way would race it.
+  const reacting = new Set<string>();
+  const react = (
+    message: ShownMessage,
+    handle: MessageHandle<ProtocolChoice>,
+    emoji: string,
+    showReactions: () => void,
+  ): void => {
+    if (reacting.has(message.id)) return;
+    reacting.add(message.id);
+    const change = toggleOwnReaction(message.reactions, emoji);
+    onReact(message, handle, change)
+      .then(() => {
+        message.reactions = withOwnReaction(message.reactions, change.emoji);
+        showReactions();
+      })
+      .catch((err: unknown) => {
+        overlay.add_toast(
+          new Adw.Toast({
+            title: fmt(_('Reaction not sent: {error}'), {
+              error: err instanceof Error ? err.message : String(err),
+            }),
+            timeout: 6,
+          }),
+        );
+      })
+      .finally(() => reacting.delete(message.id));
+  };
+
+  // The emoji row, "Reply" and "Copy" for one bubble. Long press (touch) and right click (pointer)
+  // open it; both run before the selectable text, which would otherwise keep the press for itself.
+  const attachBubbleActions = (card: Gtk.Box, message: ShownMessage, showReactions: () => void): void => {
     const open = (gesture: Gtk.Gesture, x: number, y: number): void => {
-      const draft =
-        composer.get_visible() && !composerBlocked ? replyDraftOf(message, carriers, canReply) : null;
+      const usable = composer.get_visible() && !composerBlocked;
+      const draft = usable ? replyDraftOf(message, carriers, canReply) : null;
+      const handle = usable ? reactHandleOf(message, carriers, canReact) : null;
       const text = message.bodyText?.trim() ?? '';
-      if (!draft && !text) return;
+      if (!draft && !handle && !text) return;
       gesture.set_state(Gtk.EventSequenceState.CLAIMED);
       const box = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
       const popover = new Gtk.Popover({ autohide: true, hasArrow: false, child: box });
+      if (handle) {
+        const emojis = new Gtk.Box({ spacing: 2, halign: Gtk.Align.CENTER });
+        const own = message.reactions?.find((r) => r.own)?.emoji;
+        for (const emoji of QUICK_REACTIONS) {
+          const button = new Gtk.Button({ label: emoji });
+          button.add_css_class('flat');
+          if (emoji === own) button.add_css_class('accent');
+          button.update_property([Gtk.AccessibleProperty.LABEL], [emoji]);
+          button.connect('clicked', () => {
+            popover.popdown();
+            react(message, handle, emoji, showReactions);
+          });
+          emojis.append(button);
+        }
+        box.append(emojis);
+      }
       const entryButton = (label: string, action: () => void): void => {
         const button = new Gtk.Button({ label });
         button.add_css_class('flat');
@@ -527,7 +585,11 @@ export function createConversationView(
   };
 
   // The emoji under a bubble, wrapping; the person's own is tinted with the accent colour.
-  const reactionRow = (reactions: readonly MessageReaction[]): Gtk.Widget => {
+  const reactionRow = (
+    message: ShownMessage,
+    reactions: readonly MessageReaction[],
+    showReactions: () => void,
+  ): Gtk.Widget => {
     const flow = new Gtk.FlowBox({
       selectionMode: Gtk.SelectionMode.NONE,
       homogeneous: false,
@@ -553,6 +615,15 @@ export function createConversationView(
       frame.append(chip);
       frame.set_tooltip_text(tooltip);
       frame.update_property([Gtk.AccessibleProperty.LABEL], [`${reaction.emoji}, ${tooltip}`]);
+      // Tapping a chip gives that emoji too, or takes the person's own back.
+      const tap = new Gtk.GestureClick({ button: Gdk.BUTTON_PRIMARY });
+      tap.connect('released', () => {
+        const handle =
+          composer.get_visible() && !composerBlocked ? reactHandleOf(message, carriers, canReact) : null;
+        if (handle) react(message, handle, reaction.emoji, showReactions);
+      });
+      frame.add_controller(tap);
+      if (reactHandleOf(message, carriers, canReact)) frame.set_cursor_from_name('pointer');
       flow.append(frame);
     }
     return flow;
@@ -579,7 +650,17 @@ export function createConversationView(
       marginBottom: 8,
     });
     card.append(bubble);
-    attachBubbleActions(card, message);
+    // Holds the chips; rebuilt in place when the person's own reaction changes.
+    const reactions = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
+    const showReactions = (): void => {
+      for (let child = reactions.get_first_child(); child; child = reactions.get_first_child()) {
+        reactions.remove(child);
+      }
+      const chips = message.reactions ?? [];
+      reactions.set_visible(chips.length > 0);
+      if (chips.length > 0) reactions.append(reactionRow(message, chips, showReactions));
+    };
+    attachBubbleActions(card, message, showReactions);
     const senderBox = sender !== undefined ? senderHeading(sender) : null;
     if (senderBox) bubble.append(senderBox);
     const heading = subject ? subjectHeading(subject) : null;
@@ -613,7 +694,8 @@ export function createConversationView(
       });
       bubble.append(fadedOverlay(body, preview.clipped, () => body.set_label(full)));
     }
-    if (message.reactions && message.reactions.length > 0) bubble.append(reactionRow(message.reactions));
+    showReactions();
+    bubble.append(reactions);
     const time = new Gtk.Label({ label: shortTime(message.sentAt), xalign: 1 });
     time.add_css_class('caption');
     time.add_css_class('dim-label');

@@ -24,6 +24,8 @@ import { createConversationList } from './conversation-list.ts';
 import { composeMailReply } from './conversation-model.ts';
 import {
   attachingBackends,
+  reactingBackends,
+  recordOwnReaction,
   replyingBackends,
   loadConversationMessages,
   loadMailReplyTarget,
@@ -35,6 +37,7 @@ import { createConversationView } from './conversation-view.ts';
 import { createMediaViewer } from './media-viewer.ts';
 import { presentPreferences } from './preferences-dialog.ts';
 import { loadAgentAccess } from './agent-access-store.ts';
+import { reactToMessage } from '../core/actions/react.ts';
 import { sendMessage } from '../core/actions/send.ts';
 import { configPath } from '@curlew/store';
 
@@ -151,6 +154,18 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     },
     (backend) => attachingBackends().has(backend),
     (backend) => replyingBackends().has(backend),
+    (backend) => reactingBackends().has(backend),
+    async (message, handle, change) => {
+      await reactToMessage({
+        accountId: handle.choice.accountId,
+        to: handle.choice.target,
+        target: handle.target,
+        emoji: change.emoji,
+        ...(change.previous === undefined ? {} : { previous: change.previous }),
+        frontend: 'window',
+      });
+      recordOwnReaction(message.id, change.emoji);
+    },
     (entry, oldest) => loadOlderMessages(entry, oldest),
     (source, kind, album) => viewer.open(source, kind, album),
     (entry, backend) => {

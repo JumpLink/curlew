@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 16:43+0100\n"
+"POT-Creation-Date: 2026-11-10 16:55+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1712,8 +1712,8 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:112
-#: app/src/window/window.ts:59 app/src/window/window.ts:74
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:124
+#: app/src/window/window.ts:62 app/src/window/window.ts:77
 msgid "Curlew"
 msgstr "Curlew"
 
@@ -1839,7 +1839,7 @@ msgstr ""
 "aus."
 
 #: app/src/window/accounts-dialog.ts:60 app/src/window/accounts-page.ts:187
-#: app/src/window/window.ts:87
+#: app/src/window/window.ts:90
 msgid "Accounts"
 msgstr "Konten"
 
@@ -1915,7 +1915,7 @@ msgstr ""
 msgid "Start"
 msgstr "Starten"
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:90
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:93
 msgid "Agent access"
 msgstr "Agentenzugriff"
 
@@ -2296,7 +2296,7 @@ msgstr[0] "{count} mögliches Duplikat"
 msgstr[1] "{count} mögliche Duplikate"
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:864
+#: app/src/window/conversation-view.ts:946
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -2341,65 +2341,69 @@ msgid_plural "{count} people"
 msgstr[0] "{count} Person"
 msgstr[1] "{count} Personen"
 
-#: app/src/window/conversation-view.ts:118
+#: app/src/window/conversation-view.ts:130
 msgid "Choose how to reach this person"
 msgstr "Erreichbarkeit dieser Person wählen"
 
-#: app/src/window/conversation-view.ts:135
+#: app/src/window/conversation-view.ts:147
 msgid "Write a message"
 msgstr "Nachricht schreiben"
 
-#: app/src/window/conversation-view.ts:146
+#: app/src/window/conversation-view.ts:158
 msgid "Send message"
 msgstr "Nachricht senden"
 
-#: app/src/window/conversation-view.ts:158
+#: app/src/window/conversation-view.ts:170
 msgid "Cancel reply"
 msgstr "Antwort abbrechen"
 
-#: app/src/window/conversation-view.ts:187
+#: app/src/window/conversation-view.ts:199
 msgid "Conversation"
 msgstr "Unterhaltung"
 
-#: app/src/window/conversation-view.ts:303
+#: app/src/window/conversation-view.ts:315
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 "{protocol} kann keine Dateien senden; die angehängten Dateien wurden entfernt"
 
-#: app/src/window/conversation-view.ts:337
+#: app/src/window/conversation-view.ts:349
 msgid "Send via {protocol}"
 msgstr "Senden über {protocol}"
 
-#: app/src/window/conversation-view.ts:440
+#: app/src/window/conversation-view.ts:452
 msgid "Show the quoted message"
 msgstr "Zitierte Nachricht anzeigen"
 
-#: app/src/window/conversation-view.ts:447
-#: app/src/window/conversation-view.ts:470
+#: app/src/window/conversation-view.ts:459
+#: app/src/window/conversation-view.ts:482
 msgid "Reply to {author}: {excerpt}"
 msgstr "Antwort auf {author}: {excerpt}"
 
-#: app/src/window/conversation-view.ts:497
+#: app/src/window/conversation-view.ts:507
+msgid "Reaction not sent: {error}"
+msgstr "Reaktion nicht gesendet: {error}"
+
+#: app/src/window/conversation-view.ts:555
 msgid "Reply"
 msgstr "Antworten"
 
-#: app/src/window/conversation-view.ts:498
+#: app/src/window/conversation-view.ts:556
 msgid "Copy"
 msgstr "Kopieren"
 
-#: app/src/window/conversation-view.ts:592
+#: app/src/window/conversation-view.ts:673
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:765
+#: app/src/window/conversation-view.ts:847
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:876
+#: app/src/window/conversation-view.ts:958
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:879
+#: app/src/window/conversation-view.ts:961
 msgid "Retry"
 msgstr "Erneut versuchen"
 
@@ -2524,7 +2528,7 @@ msgstr "Ein Video in einer Unterhaltung läuft stumm, solange es im Bild ist"
 msgid "Media"
 msgstr "Medien"
 
-#: app/src/window/preferences-dialog.ts:49 app/src/window/window.ts:89
+#: app/src/window/preferences-dialog.ts:49 app/src/window/window.ts:92
 msgid "Preferences"
 msgstr "Einstellungen"
 
@@ -2534,31 +2538,31 @@ msgid_plural "{count} selected"
 msgstr[0] "{count} ausgewählt"
 msgstr[1] "{count} ausgewählt"
 
-#: app/src/window/window.ts:53
+#: app/src/window/window.ts:56
 msgid "Select a conversation"
 msgstr "Unterhaltung auswählen"
 
-#: app/src/window/window.ts:54
+#: app/src/window/window.ts:57
 msgid "Pick a conversation from the list."
 msgstr "Wähle eine Unterhaltung aus der Liste."
 
-#: app/src/window/window.ts:88
+#: app/src/window/window.ts:91
 msgid "Merge contacts…"
 msgstr "Kontakte zusammenführen…"
 
-#: app/src/window/window.ts:92
+#: app/src/window/window.ts:95
 msgid "About Curlew"
 msgstr "Über Curlew"
 
-#: app/src/window/window.ts:93
+#: app/src/window/window.ts:96
 msgid "Quit"
 msgstr "Beenden"
 
-#: app/src/window/window.ts:108
+#: app/src/window/window.ts:111
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:226
+#: app/src/window/window.ts:241
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 
@@ -2852,7 +2856,8 @@ msgstr "Signal hat {what} mit etwas beantwortet, das kein JSON ist"
 
 #: packages/signal/src/send.ts:197
 msgid "Signal needs the emoji being taken back — nothing was sent"
-msgstr "Signal braucht das Emoji, das zurückgenommen wird — es wurde nichts gesendet"
+msgstr ""
+"Signal braucht das Emoji, das zurückgenommen wird — es wurde nichts gesendet"
 
 #: packages/signal/src/send.ts:220
 msgid ""
