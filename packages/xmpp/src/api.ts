@@ -63,6 +63,8 @@ export interface XmppApi {
 export interface XmppLink extends XmppApi {
   /** Send a stanza built by `chatMessage`. Resolves when it is written to the stream. */
   sendChat(to: string, id: string, body: string, oobUrl?: string, reply?: ReplyRef): Promise<void>;
+  /** Send a reaction built by `reactionMessage`: the whole set of emoji for the message `target`. */
+  sendReaction(to: string, id: string, target: string, emojis: readonly string[]): Promise<void>;
   /**
    * The same for an OMEMO message (`encryptedChatMessage`). `fallback` is the plaintext body
    * clients without OMEMO show — a notice that something arrived, never the message.

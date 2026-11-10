@@ -170,6 +170,7 @@ function quietLink(): XmppLink {
     mam: async () => ({ entries: [], complete: true }),
     close: async () => {},
     sendChat: async () => {},
+    sendReaction: async () => {},
     sendEncrypted: async () => {},
     uploadSlot: async () => {
       throw new Error('no upload in this fake');

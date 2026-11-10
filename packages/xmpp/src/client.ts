@@ -56,6 +56,7 @@ import {
   bookmarksQuery,
   carbonsEnable,
   chatMessage,
+  reactionMessage,
   discoInfoQuery,
   domainOf,
   followPresence,
@@ -238,6 +239,10 @@ class XmppConnection implements XmppLink {
 
   async sendChat(to: string, id: string, body: string, oobUrl?: string, reply?: ReplyRef) {
     await this.entity.send(chatMessage({ to, id, body, oobUrl, ...(reply ? { reply } : {}) }));
+  }
+
+  async sendReaction(to: string, id: string, target: string, emojis: readonly string[]) {
+    await this.entity.send(reactionMessage({ to, id, target, emojis }));
   }
 
   async sendEncrypted(

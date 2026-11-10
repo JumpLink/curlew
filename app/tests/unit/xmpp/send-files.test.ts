@@ -58,6 +58,7 @@ function fakeLink(log: Log): XmppLink {
     sendChat: async (to, id, body, oob) => {
       log.sent.push({ to, id, body, ...(oob === undefined ? {} : { oob }) });
     },
+    sendReaction: async () => {},
     sendEncrypted: async (to, _id, _stanza, fallback) => {
       log.encrypted.push({ to, ...(fallback === undefined ? {} : { fallback }) });
     },

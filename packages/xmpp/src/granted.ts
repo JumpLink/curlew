@@ -147,6 +147,17 @@ export class GrantedXmppSession {
   }
 
   /**
+   * The person's emoji on a message of a 1:1 chat, replacing their earlier set; `null` takes it
+   * back. A reaction cannot be encrypted (XEP-0444 has no payload for it), so an OMEMO chat
+   * refuses it rather than put the emoji in the clear next to messages that are not.
+   */
+  async react(to: string, targetId: string, emoji: string | null): Promise<void> {
+    const chatJid = this.recipient(to);
+    if (await this.omemo?.encrypts(chatJid)) throw new Error(MESSAGES.reactNotEncrypted);
+    await this.link.sendReaction(chatJid, this.newId(), targetId, emoji === null ? [] : [emoji]);
+  }
+
+  /**
    * Send one image as its own message: body = the URL, plus an XEP-0066 `<x xmlns='jabber:x:oob'>`
    * carrying the same URL. Same permit check and same encryption rule as `send`.
    *

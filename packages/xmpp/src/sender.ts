@@ -8,7 +8,14 @@
 
 import { readFileSync } from 'node:fs';
 
-import type { MessageSender, ReplyTarget, SenderFeatures, SendingMessage, SentMessage } from '@curlew/protocol';
+import type {
+  MessageSender,
+  ReplyTarget,
+  SenderFeatures,
+  SendingMessage,
+  SendingReaction,
+  SentMessage,
+} from '@curlew/protocol';
 import { inspectSendFiles } from '@curlew/store';
 import type { GrantedXmppSession, SentChat } from './granted.ts';
 import { MESSAGES } from './messages.ts';
@@ -38,7 +45,7 @@ export class XmppSender implements MessageSender {
     markdown: true,
     attachments: true,
     replies: true,
-    reactions: false,
+    reactions: true,
   };
   private readonly session: GrantedXmppSession;
 
@@ -80,6 +87,12 @@ export class XmppSender implements MessageSender {
   private answers(target: ReplyTarget): { id: string; fromSelf: boolean } {
     if (!target.clientId) throw new Error(MESSAGES.replyNoId);
     return { id: target.clientId, fromSelf: target.fromSelf === true };
+  }
+
+  /** Names the message by the id its sender gave it, like a reply; the archive's id is no use to the peer. */
+  async react(reaction: SendingReaction): Promise<void> {
+    if (!reaction.target.clientId) throw new Error(MESSAGES.reactNoId);
+    await this.session.react(reaction.to, reaction.target.clientId, reaction.emoji);
   }
 
   async sendImage(to: string, url: string): Promise<SentMessage> {

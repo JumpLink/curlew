@@ -28,6 +28,7 @@
 
 ### Added
 
+- XMPP chats can send reactions: your emoji replaces your earlier one, and taking it back clears it. An end-to-end encrypted chat refuses them, since a reaction cannot be encrypted.
 - Matrix rooms without encryption can send reactions too: a new emoji replaces your earlier one on that message, and taking it back redacts it.
 - Reactions from the window: the bubble menu (long press, right click) offers an emoji row, and a tap on a chip gives that emoji or takes your own back. Signal and WhatsApp direct chats can send them; the other networks follow.
 - The daemon and its callers can now carry a reaction (send protocol 5). Nothing sends one yet; after updating, restart the daemon with `systemctl --user restart curlew-daemon`.

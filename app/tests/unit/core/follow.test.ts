@@ -23,6 +23,7 @@ function fakeLink(onClose: () => void = () => {}, onArrival?: (fire: () => void)
     mam: async () => ({ entries: [], complete: true }),
     close: async () => onClose(),
     sendChat: async () => {},
+    sendReaction: async () => {},
     sendEncrypted: async () => {},
     uploadSlot: async () => {
       throw new Error('no upload in this fake');
