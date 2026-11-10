@@ -495,6 +495,13 @@ try {
       const cache = join(dir, 'previews', createHash('sha256').update(key).digest('hex'));
       mkdirSync(cache, { recursive: true });
       writeFileSync(join(cache, 'voice-note.ogg'), voice);
+      // The voice note gets a few reactions, one of them the person's own.
+      const react = db.prepare(
+        'INSERT OR REPLACE INTO message_reactions (message_id, reactor, emoji) VALUES (?, ?, ?)',
+      );
+      react.run(`m${n}`, 'p-alex', '👍');
+      react.run(`m${n}`, '', '👍');
+      react.run(`m${n}`, 'p-sam', '❤️');
     }
   }
 

@@ -1,6 +1,6 @@
 /** Presentation rules for reading a conversation as a chat, without changing mail threading. */
 
-import type { ConversationMessage, MessageRef, ReplyTarget } from '@curlew/protocol';
+import type { ConversationMessage, MessageReaction, MessageRef, ReplyTarget } from '@curlew/protocol';
 import { _, fmt, _n } from '@curlew/protocol';
 import { normalizeSubject, type MessageCursor } from '@curlew/store';
 
@@ -280,6 +280,18 @@ export function quoteOf(message: ShownMessage, loaded: readonly ShownMessage[]):
   const quoted = loaded.find((candidate) => candidate.ref.remoteId === target && candidate.id !== message.id);
   if (!quoted) return null;
   return { id: quoted.id, ...describeQuoted(quoted) };
+}
+
+/** What a reaction chip shows (the count only when more than one person gave it) and says to a screen reader. */
+export function reactionChip(reaction: MessageReaction): { text: string; tooltip: string } {
+  const text = reaction.count > 1 ? `${reaction.emoji} ${reaction.count}` : reaction.emoji;
+  const others = reaction.count - (reaction.own ? 1 : 0);
+  const tooltip = reaction.own
+    ? others > 0
+      ? fmt(_n('You and {count} other', 'You and {count} others', others), { count: others })
+      : _('You')
+    : fmt(_n('{count} person', '{count} people', reaction.count), { count: reaction.count });
+  return { text, tooltip };
 }
 
 /** Who wrote a message and the first line of it, as a quote or the reply bar names it. */

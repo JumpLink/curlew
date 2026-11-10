@@ -6,7 +6,7 @@ import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import Pango from 'gi://Pango?version=1.0';
 import { _, fmt } from '@curlew/protocol';
-import type { ConversationMessage, ReplyTarget } from '@curlew/protocol';
+import type { ConversationMessage, MessageReaction, ReplyTarget } from '@curlew/protocol';
 import type { MessageCursor } from '@curlew/store';
 
 import type { ListEntry } from './conversation-list-model.ts';
@@ -38,6 +38,7 @@ import {
   protocolDividers,
   protocolRunStarts,
   quoteOf,
+  reactionChip,
   replyDraftOf,
   senderRunStarts,
   type ShownMessage,
@@ -525,6 +526,38 @@ export function createConversationView(
     card.add_controller(click);
   };
 
+  // The emoji under a bubble, wrapping; the person's own is tinted with the accent colour.
+  const reactionRow = (reactions: readonly MessageReaction[]): Gtk.Widget => {
+    const flow = new Gtk.FlowBox({
+      selectionMode: Gtk.SelectionMode.NONE,
+      homogeneous: false,
+      minChildrenPerLine: 1,
+      maxChildrenPerLine: 20,
+      columnSpacing: 4,
+      rowSpacing: 4,
+      halign: Gtk.Align.START,
+    });
+    for (const reaction of reactions) {
+      const { text, tooltip } = reactionChip(reaction);
+      const chip = new Gtk.Label({
+        label: text,
+        marginStart: 8,
+        marginEnd: 8,
+        marginTop: 2,
+        marginBottom: 2,
+      });
+      chip.add_css_class('caption');
+      if (reaction.own) chip.add_css_class('accent');
+      const frame = new Gtk.Box();
+      frame.add_css_class('card');
+      frame.append(chip);
+      frame.set_tooltip_text(tooltip);
+      frame.update_property([Gtk.AccessibleProperty.LABEL], [`${reaction.emoji}, ${tooltip}`]);
+      flow.append(frame);
+    }
+    return flow;
+  };
+
   // Builds the rows of one message; `position` is where the first goes in the list, -1 for the end.
   const addRow = (
     message: ShownMessage,
@@ -580,6 +613,7 @@ export function createConversationView(
       });
       bubble.append(fadedOverlay(body, preview.clipped, () => body.set_label(full)));
     }
+    if (message.reactions && message.reactions.length > 0) bubble.append(reactionRow(message.reactions));
     const time = new Gtk.Label({ label: shortTime(message.sentAt), xalign: 1 });
     time.add_css_class('caption');
     time.add_css_class('dim-label');
