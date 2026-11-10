@@ -28,7 +28,7 @@
 
 ### Added
 
-- Reactions that arrive on a chat message show as small emoji chips under it, with a count when several people gave the same one. Signal delivers them for now.
+- Reactions that arrive on a chat message show as small emoji chips under it, with a count when several people gave the same one. Signal and WhatsApp deliver them for now.
 - WhatsApp chats can send a reply too: the message goes out quoting the one it answers.
 - Signal chats can send a reply too: the message goes out as a quote of the one it answers.
 - XMPP chats can send a reply too (XEP-0461). Messages synced before this version need a full scan of the chat first.

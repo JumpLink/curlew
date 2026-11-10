@@ -107,7 +107,8 @@ export interface WaMessageContent {
   pollCreationMessageV2?: { name?: string | null } | null;
   pollCreationMessageV3?: { name?: string | null } | null;
   protocolMessage?: WaProtocolMessage | null;
-  reactionMessage?: unknown;
+  /** An emoji reaction to the message `key` names; an empty `text` takes it back. */
+  reactionMessage?: { key?: WaMessageKey | null; text?: string | null } | null;
   // Wrappers around the actual content.
   ephemeralMessage?: { message?: WaMessageContent | null } | null;
   viewOnceMessage?: { message?: WaMessageContent | null } | null;
