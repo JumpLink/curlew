@@ -60,8 +60,11 @@ export function refusal(method: string, url: string): string | null {
   return `${verb} ${path} is not on curlew's read-only allowlist`;
 }
 
-/** The one endpoint a send uses: `PUT /rooms/{roomId}/send/m.room.message/{txnId}`. */
-const SEND = new RegExp(String.raw`${CLIENT}/rooms/([^/]+)/send/m\.room\.message/[^/]+$`);
+/** The endpoint a send uses: `PUT /rooms/{roomId}/send/m.room.message/{txnId}`, or `m.reaction` for a reaction. */
+const SEND = new RegExp(String.raw`${CLIENT}/rooms/([^/]+)/send/m\.(?:room\.message|reaction)/[^/]+$`);
+
+/** Taking a reaction back: `PUT /rooms/{roomId}/redact/{eventId}/{txnId}`. */
+const REDACT = new RegExp(String.raw`${CLIENT}/rooms/([^/]+)/redact/[^/]+/[^/]+$`);
 
 /** The media upload: `POST /_matrix/media/v3/upload`, outside the `/client/` tree. */
 const UPLOAD = /^\/_matrix\/media\/(?:v3|r0|v1)\/upload$/;
@@ -90,7 +93,7 @@ export function sendRefusal(method: string, url: string, rooms: readonly string[
     } catch {
       return `not a URL: ${url}`;
     }
-    const match = SEND.exec(parsed.pathname);
+    const match = SEND.exec(parsed.pathname) ?? REDACT.exec(parsed.pathname);
     if (match) {
       return rooms.includes(decodeURIComponent(match[1]))
         ? null

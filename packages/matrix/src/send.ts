@@ -23,6 +23,7 @@ import {
   fmt,
   type MessageSender,
   type SendingMessage,
+  type SendingReaction,
   type SendPermit,
   type SenderFeatures,
   type SentMessage,
@@ -68,6 +69,8 @@ export interface MatrixSendSession {
   /** Base URL without a trailing slash, as the account file holds it. */
   homeserver: string;
   accessToken: string;
+  /** The account's own Matrix id: which reactions in a room are the person's. */
+  userId: string;
   /** Already wrapped in `sendFetch` for the permitted rooms by whoever opened the sender. */
   fetch: typeof globalThis.fetch;
 }
@@ -102,7 +105,22 @@ export interface MatrixSendApi {
   uploadFile(bytes: Uint8Array, contentType: string, filename: string): Promise<string>;
   /** PUT one `m.image` or `m.file` event for an uploaded file. */
   sendFile(roomId: string, file: FileEvent, txnId: string): Promise<string>;
+  /** PUT one `m.reaction` (an `m.annotation` with `key`) on `eventId`; resolves with its event id. */
+  sendReaction(roomId: string, eventId: string, key: string, txnId: string): Promise<string>;
+  /** The person's own reactions on `eventId`, as the homeserver holds them (redacted ones are not listed). */
+  ownReactions(roomId: string, eventId: string): Promise<OwnReaction[]>;
+  /** Redact one event, which takes a reaction back. */
+  redact(roomId: string, eventId: string, txnId: string): Promise<void>;
 }
+
+/** One reaction of the person: the event that carries it and its emoji. */
+export interface OwnReaction {
+  eventId: string;
+  key: string;
+}
+
+/** How many pages of reactions (100 each) are read to find the person's own. */
+const RELATION_PAGES = 5;
 
 /** The homeserver's `errcode`, or null when the body is not a Matrix error. */
 async function errcodeOf(response: Response): Promise<string | null> {
@@ -136,8 +154,13 @@ export function matrixSendApi(session: MatrixSendSession): MatrixSendApi {
   const base = session.homeserver.replace(/\/+$/, '');
   const room = (roomId: string): string => `${base}${V3}/rooms/${encodeURIComponent(roomId)}`;
   const auth = { Authorization: `Bearer ${session.accessToken}` };
-  const putEvent = async (roomId: string, content: object, txnId: string): Promise<string> => {
-    const response = await session.fetch(`${room(roomId)}/send/m.room.message/${encodeURIComponent(txnId)}`, {
+  const putEvent = async (
+    roomId: string,
+    content: object,
+    txnId: string,
+    type = 'm.room.message',
+  ): Promise<string> => {
+    const response = await session.fetch(`${room(roomId)}/send/${type}/${encodeURIComponent(txnId)}`, {
       method: 'PUT',
       headers: { ...auth, 'Content-Type': 'application/json' },
       body: JSON.stringify(content),
@@ -181,6 +204,68 @@ export function matrixSendApi(session: MatrixSendSession): MatrixSendApi {
     },
     async sendText(roomId, text, txnId, replyTo) {
       return putEvent(roomId, { msgtype: 'm.text', body: text, ...relation(replyTo) }, txnId);
+    },
+    async sendReaction(roomId, eventId, key, txnId) {
+      return putEvent(
+        roomId,
+        { 'm.relates_to': { rel_type: 'm.annotation', event_id: eventId, key } },
+        txnId,
+        'm.reaction',
+      );
+    },
+    async ownReactions(roomId, eventId) {
+      const found: OwnReaction[] = [];
+      let from: string | undefined;
+      for (let page = 0; page < RELATION_PAGES; page += 1) {
+        const query = `limit=100${from === undefined ? '' : `&from=${encodeURIComponent(from)}`}`;
+        const response = await session.fetch(
+          `${base}/_matrix/client/v1/rooms/${encodeURIComponent(roomId)}/relations/${encodeURIComponent(eventId)}/m.annotation/m.reaction?${query}`,
+          { method: 'GET', headers: auth },
+        );
+        if (!response.ok) {
+          const errcode = await errcodeOf(response);
+          throw new Error(
+            fmt(_('the homeserver did not list the reactions in {room} ({reason}) — nothing was sent'), {
+              room: roomId,
+              reason: reasonOf(response, errcode),
+            }),
+          );
+        }
+        const body = (await response.json()) as { chunk?: unknown; next_batch?: unknown };
+        for (const item of Array.isArray(body.chunk) ? body.chunk : []) {
+          const event = item as {
+            event_id?: unknown;
+            sender?: unknown;
+            content?: { 'm.relates_to'?: { key?: unknown } };
+          };
+          const key = event.content?.['m.relates_to']?.key;
+          if (event.sender === session.userId && typeof event.event_id === 'string' && typeof key === 'string') {
+            found.push({ eventId: event.event_id, key });
+          }
+        }
+        if (typeof body.next_batch !== 'string' || body.next_batch.length === 0) break;
+        from = body.next_batch;
+      }
+      return found;
+    },
+    async redact(roomId, eventId, txnId) {
+      const response = await session.fetch(
+        `${room(roomId)}/redact/${encodeURIComponent(eventId)}/${encodeURIComponent(txnId)}`,
+        {
+          method: 'PUT',
+          headers: { ...auth, 'Content-Type': 'application/json' },
+          body: '{}',
+        },
+      );
+      if (!response.ok) {
+        const errcode = await errcodeOf(response);
+        throw new Error(
+          fmt(_('the homeserver did not take the reaction back in {room} ({reason})'), {
+            room: roomId,
+            reason: reasonOf(response, errcode),
+          }),
+        );
+      }
     },
     async uploadFile(bytes, contentType, filename) {
       const response = await session.fetch(`${base}${UPLOAD}?filename=${encodeURIComponent(filename)}`, {
@@ -231,7 +316,7 @@ export class MatrixSender implements MessageSender {
     markdown: false,
     attachments: true,
     replies: true,
-    reactions: false,
+    reactions: true,
   };
   private readonly api: MatrixSendApi;
   private readonly permit: SendPermit;
@@ -256,6 +341,25 @@ export class MatrixSender implements MessageSender {
     return to;
   }
 
+  /**
+   * Refuses an encrypted room. Before the PUT, and the reason this build refuses rather than falls
+   * back: an encrypted room is one the people in it believe nobody else can read. A cleartext event
+   * there is readable by the server forever and shows up as a broken one in every client. This
+   * build cannot encrypt (no Megolm session here), so the only honest answer is no.
+   */
+  private async requireClear(roomId: string): Promise<void> {
+    if (await this.api.isEncrypted(roomId)) {
+      throw new Error(
+        fmt(
+          _(
+            '{room} is end-to-end encrypted and curlew cannot send encrypted messages yet — nothing was sent, send it from a Matrix client',
+          ),
+          { room: roomId },
+        ),
+      );
+    }
+  }
+
   async send(message: SendingMessage): Promise<SentMessage> {
     const roomId = this.roomId(message.to);
     const files = inspectSendFiles(message.attachments ?? [], {
@@ -275,20 +379,7 @@ export class MatrixSender implements MessageSender {
         }),
       );
     }
-    // Before the PUT, and the reason this build refuses rather than falls back: an encrypted room
-    // is one the people in it believe nobody else can read. A cleartext `m.room.message` there is
-    // readable by the server forever and shows up as a broken message in every client. This
-    // build cannot encrypt (no Megolm session here), so the only honest answer is no.
-    if (await this.api.isEncrypted(roomId)) {
-      throw new Error(
-        fmt(
-          _(
-            '{room} is end-to-end encrypted and curlew cannot send encrypted messages yet — nothing was sent, send it from a Matrix client',
-          ),
-          { room: roomId },
-        ),
-      );
-    }
+    await this.requireClear(roomId);
     if (files.length > 0) return this.sendFiles(roomId, message, files);
     const eventId = await this.api.sendText(roomId, message.text, nextTxnId(), replyTo);
     return {
@@ -338,6 +429,30 @@ export class MatrixSender implements MessageSender {
       encrypted: false,
       attachments: files.map((f) => ({ filename: f.filename, size: f.size })),
     };
+  }
+
+  /**
+   * The person's emoji on a message, replacing their earlier one: Matrix lets one person leave
+   * several, so the others are redacted first, and giving an emoji already there sends nothing.
+   * Taking it back redacts the reaction events that carry it (all of the person's, when `previous`
+   * is not named). The homeserver's own list says which events those are.
+   */
+  async react(reaction: SendingReaction): Promise<void> {
+    const roomId = this.roomId(reaction.to);
+    const target = reaction.target.remoteId;
+    if (!EVENT_ID.test(target)) {
+      throw new Error(fmt(_('{id} is not a Matrix event id — nothing was sent'), { id: target }));
+    }
+    await this.requireClear(roomId);
+    const own = await this.api.ownReactions(roomId, target);
+    const keep = reaction.emoji;
+    for (const mine of own) {
+      const gone = keep === null ? reaction.previous === undefined || mine.key === reaction.previous : mine.key !== keep;
+      if (gone) await this.api.redact(roomId, mine.eventId, nextTxnId());
+    }
+    if (keep !== null && !own.some((mine) => mine.key === keep)) {
+      await this.api.sendReaction(roomId, target, keep, nextTxnId());
+    }
   }
 
   async close(): Promise<void> {

@@ -28,6 +28,7 @@
 
 ### Added
 
+- Matrix rooms without encryption can send reactions too: a new emoji replaces your earlier one on that message, and taking it back redacts it.
 - Reactions from the window: the bubble menu (long press, right click) offers an emoji row, and a tap on a chip gives that emoji or takes your own back. Signal and WhatsApp direct chats can send them; the other networks follow.
 - The daemon and its callers can now carry a reaction (send protocol 5). Nothing sends one yet; after updating, restart the daemon with `systemctl --user restart curlew-daemon`.
 - Reactions that arrive on a chat message show as small emoji chips under it, with a count when several people gave the same one. Signal, WhatsApp, Matrix, XMPP and Telegram (as counts) deliver them for now.

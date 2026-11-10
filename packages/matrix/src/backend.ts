@@ -139,6 +139,7 @@ export class MatrixBackend implements ChatBackend, SendBackend {
     const api = matrixSendApi({
       homeserver: record.homeserver,
       accessToken,
+      userId: record.userId,
       fetch: sendFetch(this.httpFetch, permit.addresses),
     });
     return new MatrixSender(api, permit, async () => {

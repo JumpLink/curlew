@@ -18,8 +18,8 @@ export const MATRIX_MANIFEST: BackendManifest = {
   capabilities: {
     // `m.replace` relations.
     edits: true,
-    // `m.annotation` relations; received and shown, but no send path yet, so false.
-    reactions: false,
+    // `m.annotation` relations, received and sent (a removal is a redaction).
+    reactions: true,
     // `m.thread` relations (and reply chains everywhere).
     threads: true,
     // `m.read` receipts, for both sides.
