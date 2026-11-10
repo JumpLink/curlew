@@ -118,19 +118,48 @@ export function protocolDividers(messages: readonly ConversationMessage[]): Map<
   return dividers;
 }
 
-/** The carrier of the last message, sent or received; null when the timeline is empty. */
+/**
+ * How far a protocol is trusted to carry a first message, lowest first: the open, federated
+ * networks, then the closed ones whose operators we trust less. XMPP and Matrix share a rank.
+ * A protocol not listed (mail) ranks after all of them, so it is never picked while a chat
+ * protocol is on offer.
+ */
+const TRUST_RANK: Readonly<Record<string, number>> = {
+  xmpp: 0,
+  matrix: 0,
+  signal: 1,
+  telegram: 2,
+  whatsapp: 3,
+};
+
+export function trustRank(backend: string): number {
+  return TRUST_RANK[backend] ?? Object.keys(TRUST_RANK).length;
+}
+
+/** The most trusted choice; the first of equals keeps the list order. */
+export function mostTrustedChoice(choices: readonly ProtocolChoice[]): ProtocolChoice | null {
+  let best: ProtocolChoice | null = null;
+  for (const choice of choices) {
+    if (best === null || trustRank(choice.backend) < trustRank(best.backend)) best = choice;
+  }
+  return best;
+}
+
+/**
+ * The carrier of the last message, sent or received. With no history, or no choice for that
+ * carrier any more, the most trusted protocol the person can be reached on.
+ */
 export function defaultProtocolChoice(
   messages: readonly ConversationMessage[],
   choices: ProtocolChoice[],
 ): ProtocolChoice | null {
   if (choices.length === 0) return null;
   const last = messages[messages.length - 1];
-  if (!last) return choices[0] ?? null;
+  if (!last) return mostTrustedChoice(choices);
   return (
     choices.find((c) => c.backend === last.backend && c.accountId === last.ref.accountId) ??
     choices.find((c) => c.backend === last.backend) ??
-    choices[0] ??
-    null
+    mostTrustedChoice(choices)
   );
 }
 

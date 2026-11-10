@@ -28,6 +28,7 @@
 
 ### Added
 
+- A person with no history starts on the most trusted protocol they can be reached on: XMPP and Matrix, then Signal, Telegram, WhatsApp; mail only when it is the sole way
 - Your own messages show a check mark once the other side has read them, on the networks that report it. In a quote the author is tinted with the accent colour.
 - Links in chat messages are clickable, and a little Markdown is styled: `**bold**`, `*italic*`, `~~strike~~` and `` `code` ``. A link shows its own address; text that does not match stays as typed.
 - Pictures and videos in a chat run to the edge of their bubble, like in Fractal and Telegram, instead of sitting in a frame; copy, save and open-with moved into one menu in the viewer.
