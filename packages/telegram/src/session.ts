@@ -8,7 +8,7 @@
 import { ChatRateLimitedError } from '@curlew/protocol';
 import type { ChatHistoryPage, ChatInfo, ChatSession } from '@curlew/protocol';
 import type { TelegramApi, TgMessage } from './api.ts';
-import { toChatInfo, toChatMessage } from './map.ts';
+import { toChatInfo, toChatMessage, toChatReactions } from './map.ts';
 
 // Telegram returns at most 100 messages per `getHistory`, whatever the `limit` asked for
 // (core.telegram.org/api/offsets). The sync engine's window is 200, so one call never fills it.
@@ -43,6 +43,7 @@ function page(
   const ordered = [...fresh].sort((a, b) => a.id - b.id);
   return {
     messages: ordered.map(toChatMessage).filter((m) => m !== null),
+    reactions: ordered.flatMap(toChatReactions),
     highestSeq: ordered.length > 0 ? ordered[ordered.length - 1].id : null,
     lowestSeq: ordered.length > 0 ? ordered[0].id : null,
     exhausted,

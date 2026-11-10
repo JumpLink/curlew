@@ -392,6 +392,11 @@ export interface ChatReaction {
    * the whole set at once (XMPP) puts this on the first reaction of the set.
    */
   replace?: boolean;
+  /**
+   * Every reaction to the message is dropped first, whoever left it: a network that reports only
+   * the current state of the message (Telegram's counts) puts this on the first reaction of it.
+   */
+  replaceAll?: boolean;
 }
 
 /** A correction of a message synced earlier: its new text replaces the stored one. */

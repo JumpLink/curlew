@@ -11,6 +11,7 @@ import type {
   ChatInfo,
   ChatMessage,
   ChatPeer,
+  ChatReaction,
   ParticipantAddress,
 } from '@curlew/protocol';
 import { normalizeAddress } from '@curlew/protocol';
@@ -127,6 +128,29 @@ export function toChatInfo(dialog: TgDialog): ChatInfo {
  */
 export function remoteMessageId(chatId: number | string, messageId: number): string {
   return `${chatId}/${messageId}`;
+}
+
+/** Most reaction rows kept for one emoji of one message: a channel post can have thousands. */
+const MAX_REACTORS_PER_EMOJI = 100;
+
+/**
+ * The reactions of a message. Telegram reports counts, not people, so each person beyond the
+ * account itself becomes a placeholder reactor `telegram:<emoji>:<n>`; the store counts rows.
+ * The first reaction replaces everything stored for the message, since this is its whole state.
+ */
+export function toChatReactions(message: TgMessage): ChatReaction[] {
+  if (message.isService) return [];
+  const remoteId = remoteMessageId(message.chat.id, message.id);
+  const out: ChatReaction[] = [];
+  for (const { emoji, isPaid, count, order } of message.reactions?.reactions ?? []) {
+    if (typeof emoji !== 'string' || emoji === '' || isPaid) continue;
+    const own = order !== null;
+    if (own) out.push({ remoteId, reactor: null, emoji });
+    const others = Math.min(count - (own ? 1 : 0), MAX_REACTORS_PER_EMOJI);
+    for (let n = 1; n <= others; n++) out.push({ remoteId, reactor: `telegram:${emoji}:${n}`, emoji });
+  }
+  if (out.length > 0) out[0] = { ...out[0], replaceAll: true };
+  return out;
 }
 
 /** One message, or null for a service notice (joins, pins, title changes). */
