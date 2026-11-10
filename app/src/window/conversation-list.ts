@@ -18,6 +18,7 @@ import {
   type ListEntry,
   type ListFilter,
   type Section,
+  MIN_TEXT_QUERY,
   accountChoices,
   dropDeselectedAccounts,
   backendChoices,
@@ -40,6 +41,8 @@ export interface PeopleTools {
   review(): void;
   /** Open the picker for a conversation with someone who has none yet. */
   compose(): void;
+  /** Conversation id → a line of message text that contains `text`; read from the index. */
+  searchText(text: string): ReadonlyMap<string, string>;
 }
 
 export interface ConversationList {
@@ -193,6 +196,7 @@ export function createConversationList(
   const backends = new Set<string>();
   const accounts = new Map<string, Set<string>>();
   let query = '';
+  let hits: ReadonlyMap<string, string> = new Map();
   const refs = new Map<Gtk.ListBoxRow, RowRef>();
   const checks = new Map<string, { row: Gtk.ListBoxRow; check: Gtk.CheckButton }>();
   let picking = false;
@@ -243,7 +247,7 @@ export function createConversationList(
     else filterButton.remove_css_class('suggested-action');
   };
 
-  const filter = (): ListFilter => ({ backends, accounts, query });
+  const filter = (): ListFilter => ({ backends, accounts, query, hits });
 
   function makeToggle(label: string, set: Set<string>, key: string): Gtk.ToggleButton {
     const button = new Gtk.ToggleButton({ label, active: set.has(key) });
@@ -373,6 +377,7 @@ export function createConversationList(
   });
   search.connect('search-changed', () => {
     query = search.get_text();
+    hits = query.trim().length >= MIN_TEXT_QUERY ? people.searchText(query.trim()) : new Map();
     rebuild();
   });
 

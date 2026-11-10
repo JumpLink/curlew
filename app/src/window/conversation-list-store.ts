@@ -12,6 +12,7 @@ import {
   listChatRooms,
   listConversations,
   openIndexDb,
+  searchMessageText,
 } from '@curlew/store';
 import { existsSync } from 'node:fs';
 
@@ -63,5 +64,20 @@ export function loadConversationEntries(dbPath = indexDbPath(), cfgPath = config
     }
   } catch {
     return [];
+  }
+}
+
+/** Conversation id → a line of message text around the match; empty on no index or a failed read. */
+export function searchConversationText(text: string, dbPath = indexDbPath()): Map<string, string> {
+  if (!existsSync(dbPath)) return new Map();
+  try {
+    const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
+    try {
+      return new Map(searchMessageText(db, text).map((hit) => [hit.conversationId, hit.snippet]));
+    } finally {
+      db.close();
+    }
+  } catch {
+    return new Map();
   }
 }

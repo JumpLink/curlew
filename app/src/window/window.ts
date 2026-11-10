@@ -14,7 +14,7 @@ import type { ConversationMessage } from '@curlew/protocol';
 import { indexAccountLabels, loadAccountLabels } from './account-labels.ts';
 import { presentAccounts } from './accounts-dialog.ts';
 import { presentAgentAccess } from './agent-access-dialog.ts';
-import { loadConversationEntries } from './conversation-list-store.ts';
+import { loadConversationEntries, searchConversationText } from './conversation-list-store.ts';
 import type { ListEntry } from './conversation-list-model.ts';
 import { loadConfig } from '../core/config.ts';
 import { candidateSets } from './merge-candidates-model.ts';
@@ -244,6 +244,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     },
     review: () => review(),
     compose: () => startConversation(),
+    searchText: (text) => searchConversationText(text),
   });
   split.set_sidebar(sidebar.page);
   split.set_content(placeholder());
