@@ -23,6 +23,8 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
     edits: true,
     // Reactions are read (counts per emoji, see map.ts) and sent (one per person).
     reactions: true,
+    editsOwn: false,
+    deletesOwn: false,
     // Forum topics in supergroups only (map.ts sets `threadRemoteId` for topic messages). A plain
     // reply chain is `replyToRemoteId`, not a thread.
     threads: true,

@@ -39,6 +39,10 @@ export function storeTierFor(model: SyncModel): 'derived' | 'state' {
 export interface BackendCapabilities {
   edits: boolean;
   reactions: boolean;
+  /** Can send an edit of the person's own message (a sender with `features.edits`). */
+  editsOwn: boolean;
+  /** Can delete the person's own message for everyone (a sender with `features.deletes`). */
+  deletesOwn: boolean;
   threads: boolean;
   readReceipts: boolean;
   groups: boolean;
@@ -58,6 +62,8 @@ export interface BackendCapabilities {
 export const CAPABILITY_NAMES: ReadonlyArray<keyof BackendCapabilities> = [
   'edits',
   'reactions',
+  'editsOwn',
+  'deletesOwn',
   'threads',
   'readReceipts',
   'groups',

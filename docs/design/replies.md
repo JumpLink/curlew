@@ -125,7 +125,7 @@ chip takes it back), then Matrix (`m.annotation`, removal needs the own event id
 
 ### 5. Edit and delete
 
-Status: spec; plumbing built (protocol, wire v6, actions); window and senders follow. The receive
+Status: window built; senders follow. The receive
 side exists for all five networks (`ChatEdit`, `retracted`, the `edit` and `delete` delivery
 changes), so this piece is only sending, and only of the person's own messages.
 
@@ -154,8 +154,9 @@ daemon's `Send` method as `edit?` / `delete?` next to `reaction?` (the wire grow
 v5 did for reactions) and never mix with text, files or a reply target. Like a reaction, neither
 logs a message nor indexes anything itself: the window writes the local echo, and the network's
 copy comes back through the receive path. `capabilities.edits` is already read as "can receive";
-the window learns what a sender can do from `sender.features`, through a helper like
-`reactingBackends()`, so the manifest flag needs no second meaning.
+the window learns what a sender can do from `sender.features`, through the manifest flags
+`capabilities.editsOwn` and `capabilities.deletesOwn` (set with the sender's features), so
+`capabilities.edits` keeps meaning "can receive".
 
 **Window.**
 - An own message's bubble menu gets *Edit* (text messages only) and *Delete*; no other message

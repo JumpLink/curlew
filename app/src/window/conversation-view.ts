@@ -31,6 +31,8 @@ import {
   dayOf,
   dayStarts,
   defaultProtocolChoice,
+  deleteHandleOf,
+  editHandleOf,
   foldAlbums,
   MAX_ALBUM_PARTS,
   newOlder,
@@ -74,11 +76,14 @@ interface Built {
   row: Gtk.ListBoxRow;
   bubble: Gtk.Box;
   meta: Gtk.Box;
+  reactions: Gtk.Box;
   separator: Gtk.ListBoxRow | null;
   protocolDivider: Gtk.ListBoxRow | null;
   subject: Gtk.Label | null;
   sender: Gtk.Box | null;
   badge: Gtk.Image | null;
+  body: Gtk.Label | null;
+  edited: Gtk.Label | null;
 }
 
 export function createConversationView(
@@ -96,6 +101,10 @@ export function createConversationView(
     handle: MessageHandle<ProtocolChoice>,
     change: ReactionChange,
   ) => Promise<void>,
+  canEdit: (backend: string) => boolean,
+  canDelete: (backend: string) => boolean,
+  onEdit: (message: ShownMessage, handle: MessageHandle<ProtocolChoice>, text: string) => Promise<void>,
+  onDelete: (message: ShownMessage, handle: MessageHandle<ProtocolChoice>) => Promise<void>,
   loadOlder: (entry: ListEntry, oldest: MessageCursor) => ShownMessage[],
   openMedia: (source: AttachmentSource, kind: AttachmentKind, album?: readonly AlbumItem[]) => void,
   onRoute: (entry: ListEntry, backend: string | null) => void,
@@ -108,6 +117,8 @@ export function createConversationView(
   // Every carrier the open conversation can send through; a reply is offered only on one of them.
   let carriers: ProtocolChoice[] = [];
   let reply: ReplyDraft<ProtocolChoice> | null = null;
+  let edit: { message: ShownMessage; originalText: string; handle: MessageHandle<ProtocolChoice> } | null =
+    null;
   let sending = false;
   let composerBlocked = false;
   let generation = 0;
@@ -175,6 +186,19 @@ export function createConversationView(
   replyBar.append(replySlot);
   replyBar.append(replyClose);
 
+  // The bar shown while editing one of the person's own messages.
+  const editBar = new Gtk.Box({ spacing: 6, marginStart: 12, marginEnd: 6, marginTop: 6, visible: false });
+  const editSlot = new Gtk.Box({ hexpand: true });
+  const editClose = new Gtk.Button({
+    iconName: 'window-close-symbolic',
+    tooltipText: _('Cancel editing'),
+    valign: Gtk.Align.CENTER,
+  });
+  editClose.add_css_class('flat');
+  editClose.add_css_class('circular');
+  editBar.append(editSlot);
+  editBar.append(editClose);
+
   const content = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
   const hint = new Gtk.Label({ xalign: 0, marginStart: 12, marginEnd: 12, marginTop: 4, visible: false });
   hint.add_css_class('dim-label');
@@ -192,6 +216,7 @@ export function createConversationView(
   composer.prepend(files.button);
   content.append(files.strip);
   content.append(replyBar);
+  content.append(editBar);
   content.append(composer);
   const toolbar = new Adw.ToolbarView();
   toolbar.add_top_bar(header);
@@ -338,9 +363,27 @@ export function createConversationView(
     input.grab_focus();
   });
 
+  const clearEdit = (): void => {
+    edit = null;
+    editBar.set_visible(false);
+    let child = editSlot.get_first_child();
+    while (child) {
+      editSlot.remove(child);
+      child = editSlot.get_first_child();
+    }
+    input.set_placeholder_text(_('Write a message'));
+  };
+  editClose.connect('clicked', () => {
+    clearEdit();
+    input.set_text('');
+    input.grab_focus();
+  });
+
   const selectChoice = (choice: ProtocolChoice): void => {
     // A reply is a link inside one network: another carrier cannot send it.
     if (reply && !sameCarrier(reply.choice, choice)) clearReply();
+    // Editing is tied to one carrier too.
+    if (edit && !sameCarrier(edit.handle.choice, choice)) clearEdit();
     selectedChoice = choice;
     picker.icon_name = choice.icon;
     picker.set_tooltip_text(protocolLabel(choice.backend));
@@ -514,15 +557,82 @@ export function createConversationView(
       .finally(() => reacting.delete(message.id));
   };
 
-  // The emoji row, "Reply" and "Copy" for one bubble. Long press (touch) and right click (pointer)
-  // open it; both run before the selectable text, which would otherwise keep the press for itself.
+  const removeMessage = (message: ShownMessage): void => {
+    const one = built.get(message.id);
+    if (!one) return;
+    if (one.separator) history.remove(one.separator);
+    if (one.protocolDivider) history.remove(one.protocolDivider);
+    history.remove(one.row);
+    built.delete(message.id);
+    const index = messages.findIndex((m) => m.id === message.id);
+    if (index !== -1) messages.splice(index, 1);
+  };
+
+  const startEdit = (message: ShownMessage, handle: MessageHandle<ProtocolChoice>): void => {
+    selectChoice(handle.choice);
+    clearReply();
+    clearEdit();
+    const text = message.bodyText ?? '';
+    edit = { message, originalText: text, handle };
+    input.set_text(text);
+    input.set_placeholder_text(_('Edit message'));
+    editSlot.append(quoteLine(_('You'), text, 1));
+    editBar.update_property(
+      [Gtk.AccessibleProperty.LABEL],
+      [fmt(_('Editing your message: {excerpt}'), { excerpt: text })],
+    );
+    editBar.set_visible(true);
+    input.grab_focus();
+  };
+
+  const confirmDelete = (message: ShownMessage, handle: MessageHandle<ProtocolChoice>): void => {
+    const dialog = new Adw.AlertDialog({
+      heading: _('Delete message?'),
+      body: _('This will remove the message for everyone in the chat.'),
+      closeResponse: 'cancel',
+      defaultResponse: 'delete',
+    });
+    dialog.add_response('cancel', _('Cancel'));
+    dialog.add_response('delete', _('Delete for everyone'));
+    dialog.set_response_appearance('delete', Adw.ResponseAppearance.DESTRUCTIVE);
+    dialog.connect('response', (_dlg, response) => {
+      if (response !== 'delete') return;
+      const builtMsg = built.get(message.id);
+      if (!builtMsg) return;
+      builtMsg.row.set_visible(false);
+      builtMsg.separator?.set_visible(false);
+      builtMsg.protocolDivider?.set_visible(false);
+      onDelete(message, handle)
+        .then(() => removeMessage(message))
+        .catch((err: unknown) => {
+          builtMsg.row.set_visible(true);
+          builtMsg.separator?.set_visible(true);
+          builtMsg.protocolDivider?.set_visible(true);
+          overlay.add_toast(
+            new Adw.Toast({
+              title: fmt(_('Message not deleted: {error}'), {
+                error: err instanceof Error ? err.message : String(err),
+              }),
+              timeout: 6,
+            }),
+          );
+        });
+    });
+    const root = page.get_root() as Gtk.Window | null;
+    dialog.present(root);
+  };
+
+  // The emoji row, "Reply", "Edit", "Delete" and "Copy" for one bubble. Long press (touch) and right
+  // click (pointer) open it; both run before the selectable text, which would otherwise keep the press.
   const attachBubbleActions = (card: Gtk.Box, message: ShownMessage, showReactions: () => void): void => {
     const open = (gesture: Gtk.Gesture, x: number, y: number): void => {
       const usable = composer.get_visible() && !composerBlocked;
       const draft = usable ? replyDraftOf(message, carriers, canReply) : null;
       const handle = usable ? reactHandleOf(message, carriers, canReact) : null;
+      const editHandle = usable ? editHandleOf(message, carriers, canEdit) : null;
+      const deleteHandle = usable ? deleteHandleOf(message, carriers, canDelete) : null;
       const text = message.bodyText?.trim() ?? '';
-      if (!draft && !handle && !text) return;
+      if (!draft && !handle && !editHandle && !deleteHandle && !text) return;
       gesture.set_state(Gtk.EventSequenceState.CLAIMED);
       const box = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
       const popover = new Gtk.Popover({ autohide: true, hasArrow: false, child: box });
@@ -553,6 +663,8 @@ export function createConversationView(
         box.append(button);
       };
       if (draft) entryButton(_('Reply'), () => startReply(draft));
+      if (editHandle) entryButton(_('Edit'), () => startEdit(message, editHandle));
+      if (deleteHandle) entryButton(_('Delete'), () => confirmDelete(message, deleteHandle));
       if (text) entryButton(_('Copy'), () => card.get_clipboard().set(text));
       popover.set_parent(card);
       const spot = new Gdk.Rectangle({ x: Math.round(x), y: Math.round(y), width: 1, height: 1 });
@@ -652,6 +764,7 @@ export function createConversationView(
     card.append(bubble);
     // Holds the chips; rebuilt in place when the person's own reaction changes.
     const reactions = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
+    reactions.add_css_class('reactions');
     const showReactions = (): void => {
       for (let child = reactions.get_first_child(); child; child = reactions.get_first_child()) {
         reactions.remove(child);
@@ -681,9 +794,10 @@ export function createConversationView(
     const listed = shown.length > 0;
     const generic = message.hasAttachments && !listed;
     if (listed || generic) bubble.append(attachmentList(message.ref, shown, more, handlers, generic));
+    let body: Gtk.Label | null = null;
     if (written || (!listed && !generic)) {
       const preview = bubbleText(full);
-      const body = new Gtk.Label({
+      const label = new Gtk.Label({
         label: preview.clipped ? `${preview.text} …` : preview.text,
         xalign: 0,
         wrap: true,
@@ -692,7 +806,8 @@ export function createConversationView(
         selectable: true,
         maxWidthChars: 56,
       });
-      bubble.append(fadedOverlay(body, preview.clipped, () => body.set_label(full)));
+      body = label;
+      bubble.append(fadedOverlay(label, preview.clipped, () => label.set_label(full)));
     }
     showReactions();
     bubble.append(reactions);
@@ -705,6 +820,13 @@ export function createConversationView(
       badge = new Gtk.Image({ iconName: protocolIcon(run.backend), pixelSize: 12 });
       badge.set_tooltip_text(protocolLabel(run.backend));
       meta.append(badge);
+    }
+    let edited: Gtk.Label | null = null;
+    if (message.editedAt) {
+      edited = new Gtk.Label({ label: _('edited'), xalign: 1 });
+      edited.add_css_class('caption');
+      edited.add_css_class('dim-label');
+      meta.append(edited);
     }
     meta.append(time);
     bubble.append(meta);
@@ -736,11 +858,14 @@ export function createConversationView(
       row,
       bubble,
       meta,
+      reactions,
       badge,
       separator,
       protocolDivider,
       subject: heading,
       sender: senderBox,
+      body,
+      edited,
     });
   };
 
@@ -795,6 +920,38 @@ export function createConversationView(
     } else if (!one.subject && subject) {
       one.subject = subjectHeading(subject);
       one.bubble.prepend(one.subject);
+    }
+  };
+
+  const updateBubbleText = (message: ShownMessage): void => {
+    const one = built.get(message.id);
+    if (!one) return;
+    const text = message.bodyText?.trim() ?? '';
+    if (one.body) {
+      // Remove the old faded overlay; rebuilding it refreshes the "Show more" button state.
+      const oldOverlay = one.body.get_parent()?.get_parent();
+      if (oldOverlay) one.bubble.remove(oldOverlay);
+    }
+    const preview = bubbleText(text);
+    const body = new Gtk.Label({
+      label: preview.clipped ? `${preview.text} …` : preview.text,
+      xalign: 0,
+      wrap: true,
+      wrapMode: Pango.WrapMode.WORD_CHAR,
+      selectable: true,
+      maxWidthChars: 56,
+    });
+    one.bubble.insert_before(
+      fadedOverlay(body, preview.clipped, () => body.set_label(text)),
+      one.reactions,
+    );
+    one.body = body;
+    if (message.editedAt && !one.edited) {
+      const edited = new Gtk.Label({ label: _('edited'), xalign: 1 });
+      edited.add_css_class('caption');
+      edited.add_css_class('dim-label');
+      one.meta.insert_child_after(edited, one.badge);
+      one.edited = edited;
     }
   };
 
@@ -924,6 +1081,43 @@ export function createConversationView(
   const submit = () => {
     const text = input.get_text().trim();
     const picked = files.files();
+    if (edit) {
+      if (!text || sending) return;
+      sending = true;
+      input.set_sensitive(false);
+      send.set_sensitive(false);
+      send.set_child(new Adw.Spinner());
+      const { message, originalText, handle } = edit;
+      const next = { ...message, bodyText: text, editedAt: new Date().toISOString() };
+      updateBubbleText(next);
+      clearEdit();
+      void onEdit(next, handle, text)
+        .then(() => {
+          message.bodyText = text;
+          message.editedAt = next.editedAt;
+          input.set_text('');
+        })
+        .catch((err: unknown) => {
+          updateBubbleText({ ...message, bodyText: originalText });
+          input.set_text(text);
+          overlay.add_toast(
+            new Adw.Toast({
+              title: fmt(_('Message not edited: {error}'), {
+                error: err instanceof Error ? err.message : String(err),
+              }),
+              timeout: 6,
+            }),
+          );
+        })
+        .finally(() => {
+          sending = false;
+          input.set_sensitive(true);
+          send.set_sensitive(true);
+          send.set_icon_name('mail-send-symbolic');
+          input.grab_focus();
+        });
+      return;
+    }
     if ((!text && picked.length === 0) || sending || !entry || !selectedChoice) return;
     sending = true;
     input.set_sensitive(false);
@@ -1003,6 +1197,7 @@ export function createConversationView(
       input.set_text('');
       files.clear();
       clearReply();
+      clearEdit();
       if (choices.length > 1) {
         selectedChoice = defaultProtocolChoice(messages, choices);
         rebuildPicker(choices);

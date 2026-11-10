@@ -12,6 +12,7 @@ import {
   participantIdsOfTarget,
   rebuildConversations,
   SCHEMA_VERSION,
+  setMessageText,
   syncIndex,
 } from '@curlew/store';
 import { AT, FakeBackend, freshDb, message } from './fixtures.ts';
@@ -562,6 +563,66 @@ export default async () => {
         expect(participantIdsOfTarget(db, 'telegram', 'telegram-2', '1001')).toStrictEqual(['p-bo']);
         expect(participantIdsOfTarget(db, 'telegram', 'telegram-3', '1001')).toStrictEqual([]);
         expect(participantIdsOfTarget(db, 'xmpp', 'xmpp-1', 'nobody@example.org')).toStrictEqual([]);
+      } finally {
+        db.close();
+      }
+    });
+  });
+
+  await describe('setMessageText', async () => {
+    function insert(
+      db: ReturnType<typeof freshDb>,
+      id: string,
+      remoteSeq: number | null = 1,
+      body: string | null = null,
+    ): void {
+      db.prepare(
+        `INSERT INTO conversation_messages (
+           id, conversation_id, backend, account_id, presentation,
+           from_self, seen, has_attachments, classification, classification_reason,
+           remote_seq, body, edited_at)
+         VALUES (?, ?, 'signal', 'signal-1', 'bubble',
+           1, 1, 0, 'conversational', 'known-contact', ?, ?, ?)`,
+      ).run(id, 'conv-1', remoteSeq, body, null);
+    }
+
+    await it('updates a chat message body and records the edit time', async () => {
+      const db = freshDb();
+      try {
+        insert(db, 'm-1', 1, 'old');
+        expect(setMessageText(db, 'm-1', 'new')).toBe(true);
+        const row = db
+          .prepare('SELECT body, edited_at FROM conversation_messages WHERE id = ?')
+          .get('m-1') as {
+          body: string | null;
+          edited_at: string | null;
+        };
+        expect(row.body).toBe('new');
+        expect(typeof row.edited_at).toBe('string');
+        expect(row.edited_at!.length).toBeGreaterThan(0);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('returns false when the message does not exist', async () => {
+      const db = freshDb();
+      try {
+        expect(setMessageText(db, 'missing', 'x')).toBe(false);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('returns false for a mail-style message without remote_seq', async () => {
+      const db = freshDb();
+      try {
+        insert(db, 'm-2', null, 'old');
+        expect(setMessageText(db, 'm-2', 'new')).toBe(false);
+        const row = db.prepare('SELECT body FROM conversation_messages WHERE id = ?').get('m-2') as {
+          body: string | null;
+        };
+        expect(row.body).toBe('old');
       } finally {
         db.close();
       }

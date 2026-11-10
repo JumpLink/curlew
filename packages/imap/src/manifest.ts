@@ -15,6 +15,8 @@ export const MAIL_MANIFEST: BackendManifest = {
   capabilities: {
     edits: false,
     reactions: false,
+    editsOwn: false,
+    deletesOwn: false,
     threads: true,
     readReceipts: false,
     groups: true,
