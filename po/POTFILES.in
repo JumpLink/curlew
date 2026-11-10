@@ -118,6 +118,8 @@ app/src/window/media-grid-model.ts
 app/src/window/media-viewer.ts
 app/src/window/merge-assistant.ts
 app/src/window/merge-candidates-model.ts
+app/src/window/new-conversation-model.ts
+app/src/window/new-conversation.ts
 app/src/window/preferences-dialog.ts
 app/src/window/preview-cache-model.ts
 app/src/window/qr-image.ts

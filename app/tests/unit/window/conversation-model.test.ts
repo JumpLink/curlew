@@ -63,6 +63,8 @@ export default async () => {
       expect(composeMailReply(message({ id: 'a', subject: 'Frage' }), null, 'Hallo').subject).toBe(
         'Re: Frage',
       );
+      // A first mail to this person is no reply, even though a Signal note comes before it.
+      expect(composeMailReply(null, null, 'Hallo').subject).toBe('Chat: Hallo');
     });
 
     await it('threads onto the parent Message-ID without duplicating References', async () => {
