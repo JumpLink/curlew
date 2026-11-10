@@ -89,6 +89,7 @@ import windowSelection from './unit/window/selection-model.test.ts';
 import windowAttachment from './unit/window/attachment-model.test.ts';
 import windowMediaGrid from './unit/window/media-grid-model.test.ts';
 import windowPreviewCache from './unit/window/preview-cache-model.test.ts';
+import windowRichText from './unit/window/rich-text-model.test.ts';
 import windowViewer from './unit/window/viewer-model.test.ts';
 import windowVideoPreview from './unit/window/video-preview-model.test.ts';
 import windowConversation from './unit/window/conversation-model.test.ts';
@@ -209,6 +210,7 @@ run({
   windowAttachment,
   windowMediaGrid,
   windowPreviewCache,
+  windowRichText,
   windowViewer,
   windowVideoPreview,
   encryption,

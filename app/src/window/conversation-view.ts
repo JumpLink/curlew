@@ -59,6 +59,7 @@ import { attachmentList, type AttachmentHandlers } from './attachment-view.ts';
 import type { AlbumItem } from './media-viewer.ts';
 import { createSilentVideoHost } from './video-preview.ts';
 import { leadsWithMedia, shownAttachments, type AttachmentKind } from './attachment-model.ts';
+import { hasRichText, richMarkup } from './rich-text-model.ts';
 import type { AttachmentSource } from './attachment-store.ts';
 import { fadedOverlay } from './fade-bin.ts';
 import { createComposerFiles } from './composer-files.ts';
@@ -70,6 +71,17 @@ export interface ConversationView {
 }
 
 const ROWS_PER_TURN = 8;
+
+// Sets a bubble's text: links and light Markdown as markup, anything else as it came. The markup
+// is well-formed by construction (every character is escaped, every tag closed), and it can use
+// `<a>`, which `Pango.parse_markup` does not know, so it is not pre-checked.
+function setBodyText(label: Gtk.Label, text: string): void {
+  if (hasRichText(text)) label.set_markup(richMarkup(text));
+  else {
+    label.set_use_markup(false);
+    label.set_label(text);
+  }
+}
 
 /** What is built for one message, kept so a later page can correct its day separator and subject. */
 interface Built {
@@ -809,7 +821,6 @@ export function createConversationView(
     if (written || (!listed && !generic)) {
       const preview = bubbleText(full);
       const label = new Gtk.Label({
-        label: preview.clipped ? `${preview.text} …` : preview.text,
         xalign: 0,
         wrap: true,
         // A long URL has no word break and would widen the bubble past the window.
@@ -817,8 +828,9 @@ export function createConversationView(
         selectable: true,
         maxWidthChars: textWidth,
       });
+      setBodyText(label, preview.clipped ? `${preview.text} …` : preview.text);
       body = label;
-      bubble.append(padded(fadedOverlay(label, preview.clipped, () => label.set_label(full))));
+      bubble.append(padded(fadedOverlay(label, preview.clipped, () => setBodyText(label, full))));
     }
     showReactions();
     bubble.append(padded(reactions));
@@ -947,15 +959,15 @@ export function createConversationView(
     }
     const preview = bubbleText(text);
     const body = new Gtk.Label({
-      label: preview.clipped ? `${preview.text} …` : preview.text,
       xalign: 0,
       wrap: true,
       wrapMode: Pango.WrapMode.WORD_CHAR,
       selectable: true,
       maxWidthChars: 56,
     });
+    setBodyText(body, preview.clipped ? `${preview.text} …` : preview.text);
     one.bubble.insert_before(
-      padded(fadedOverlay(body, preview.clipped, () => body.set_label(text))),
+      padded(fadedOverlay(body, preview.clipped, () => setBodyText(body, text))),
       one.reactions,
     );
     one.body = body;

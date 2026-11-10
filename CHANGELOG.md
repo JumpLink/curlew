@@ -28,6 +28,7 @@
 
 ### Added
 
+- Links in chat messages are clickable, and a little Markdown is styled: `**bold**`, `*italic*`, `~~strike~~` and `` `code` ``. A link shows its own address; text that does not match stays as typed.
 - Pictures and videos in a chat run to the edge of their bubble, like in Fractal and Telegram, instead of sitting in a frame; copy, save and open-with moved into one menu in the viewer.
 - WhatsApp direct chats can edit and delete your own messages from the window: *Edit* on a text message, *Delete* for everyone on any of yours. Groups stay read-only.
 - Signal direct chats can edit and delete your own messages from the window: *Edit* on a text message, *Delete* for everyone on any of yours. Groups stay read-only.
