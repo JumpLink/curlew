@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 11:40+0100\n"
+"POT-Creation-Date: 2026-11-10 12:02+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2281,7 +2281,7 @@ msgstr[0] "{count} mögliches Duplikat"
 msgstr[1] "{count} mögliche Duplikate"
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:696
+#: app/src/window/conversation-view.ts:713
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -2309,7 +2309,7 @@ msgstr "Audio"
 msgid "File"
 msgstr "Datei"
 
-#: app/src/window/conversation-model.ts:286
+#: app/src/window/conversation-model.ts:288
 msgid "You"
 msgstr "Du"
 
@@ -2338,23 +2338,27 @@ msgstr ""
 msgid "Send via {protocol}"
 msgstr "Senden über {protocol}"
 
-#: app/src/window/conversation-view.ts:391
+#: app/src/window/conversation-view.ts:390
+msgid "Show the quoted message"
+msgstr "Zitierte Nachricht anzeigen"
+
+#: app/src/window/conversation-view.ts:397
 msgid "Reply to {author}: {excerpt}"
 msgstr "Antwort auf {author}: {excerpt}"
 
-#: app/src/window/conversation-view.ts:426
+#: app/src/window/conversation-view.ts:443
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:598
+#: app/src/window/conversation-view.ts:615
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:707
+#: app/src/window/conversation-view.ts:724
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:710
+#: app/src/window/conversation-view.ts:727
 msgid "Retry"
 msgstr "Erneut versuchen"
 

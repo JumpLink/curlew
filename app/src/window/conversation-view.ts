@@ -386,11 +386,28 @@ export function createConversationView(
     const bar = new Gtk.Separator({ orientation: Gtk.Orientation.VERTICAL });
     block.append(bar);
     block.append(text);
+    // A button would indent the quote by its padding; a click on the block does the same.
+    block.set_tooltip_text(_('Show the quoted message'));
+    block.set_cursor_from_name('pointer');
+    const click = new Gtk.GestureClick();
+    click.connect('released', () => scrollToMessage(quote.id));
+    block.add_controller(click);
     block.update_property(
       [Gtk.AccessibleProperty.LABEL],
       [fmt(_('Reply to {author}: {excerpt}'), { author: quote.author, excerpt: quote.excerpt })],
     );
     return block;
+  };
+
+  // Brings a message that is on the page to the middle of the view; the history stays put when
+  // the person scrolls on, so this never turns the scroll-to-end off by itself.
+  const scrollToMessage = (id: string) => {
+    const target = built.get(id)?.row;
+    if (!target) return;
+    const { y, height } = target.get_allocation();
+    const middle = y + height / 2 - adjustment.get_page_size() / 2;
+    const top = Math.max(0, Math.min(middle, adjustment.get_upper() - adjustment.get_page_size()));
+    adjustment.set_value(top);
   };
 
   // Builds the rows of one message; `position` is where the first goes in the list, -1 for the end.

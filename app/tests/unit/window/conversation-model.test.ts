@@ -314,7 +314,11 @@ export default async () => {
     await it('names the author and the first line of the quoted text', async () => {
       const first = chat({ id: 'r1', senderName: 'Alex', bodyText: '\n  Treffen wir uns?\nUm acht.' });
       const reply = chat({ id: 'r2', replyToRemoteId: 'r1', bodyText: 'Gern' });
-      expect(quoteOf(reply, [first, reply])).toStrictEqual({ author: 'Alex', excerpt: 'Treffen wir uns?' });
+      expect(quoteOf(reply, [first, reply])).toStrictEqual({
+        id: 'r1',
+        author: 'Alex',
+        excerpt: 'Treffen wir uns?',
+      });
     });
 
     await it('calls the person\'s own message "You" and clips a long excerpt', async () => {

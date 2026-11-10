@@ -264,6 +264,8 @@ export function attachmentLines(attachments: readonly AttachmentInfo[] | undefin
 export const QUOTE_MAX_CHARS = 140;
 
 export interface Quote {
+  /** The quoted message's id, so the block can jump to it. */
+  id: string;
   author: string;
   excerpt: string;
 }
@@ -283,7 +285,7 @@ export function quoteOf(message: ShownMessage, loaded: readonly ShownMessage[]):
     .find((text) => text !== '');
   const text = line ?? (quoted.hasAttachments ? attachmentLines(quoted.attachments)[0] : '') ?? '';
   const excerpt = text.length > QUOTE_MAX_CHARS ? `${text.slice(0, QUOTE_MAX_CHARS - 1).trimEnd()}…` : text;
-  return { author: quoted.fromSelf ? _('You') : senderName(quoted), excerpt };
+  return { id: quoted.id, author: quoted.fromSelf ? _('You') : senderName(quoted), excerpt };
 }
 
 /** The most parts a Telegram album has: a folded bubble lists all of them. */
