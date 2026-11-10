@@ -6,6 +6,8 @@ import { _ } from '@curlew/protocol';
 import { configPath } from '@curlew/store';
 
 import { loadConfig, saveConfig } from '../core/config.ts';
+import { silentVideosOn } from './video-preview-model.ts';
+import { refreshSilentVideos } from './video-preview.ts';
 
 export function presentPreferences(parent: Gtk.Window | null, onChanged: () => void): void {
   const path = configPath();
@@ -26,14 +28,25 @@ export function presentPreferences(parent: Gtk.Window | null, onChanged: () => v
   });
   const notifyGroup = new Adw.PreferencesGroup({ title: _('Notifications') });
   notifyGroup.add(notifications);
+  const videos = new Adw.SwitchRow({
+    title: _('Play videos silently in chats'),
+    subtitle: _('A video in a conversation plays muted while it is on screen'),
+    active: silentVideosOn(
+      loadConfig(path).ui.playVideosSilently,
+      Gtk.Settings.get_default()?.gtk_enable_animations ?? true,
+    ),
+  });
+  const mediaGroup = new Adw.PreferencesGroup({ title: _('Media') });
+  mediaGroup.add(videos);
   const page = new Adw.PreferencesPage();
   page.add(group);
+  page.add(mediaGroup);
   page.add(notifyGroup);
   const toolbar = new Adw.ToolbarView();
   toolbar.add_top_bar(new Adw.HeaderBar());
   toolbar.set_content(page);
   overlay.set_child(toolbar);
-  const dialog = new Adw.Dialog({ title: _('Preferences'), contentWidth: 520, contentHeight: 440 });
+  const dialog = new Adw.Dialog({ title: _('Preferences'), contentWidth: 520, contentHeight: 520 });
   dialog.set_child(overlay);
 
   row.connect('notify::active', () => {
@@ -42,6 +55,18 @@ export function presentPreferences(parent: Gtk.Window | null, onChanged: () => v
       config.ui.showAllEmails = row.get_active();
       saveConfig(config, path);
       onChanged();
+    } catch (err) {
+      overlay.add_toast(
+        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
+      );
+    }
+  });
+  videos.connect('notify::active', () => {
+    try {
+      const config = loadConfig(path);
+      config.ui.playVideosSilently = videos.get_active();
+      saveConfig(config, path);
+      refreshSilentVideos();
     } catch (err) {
       overlay.add_toast(
         new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),

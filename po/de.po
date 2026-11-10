@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-09 21:25+0100\n"
+"POT-Creation-Date: 2026-11-09 21:45+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -978,7 +978,7 @@ msgstr[0] "{n} weiterer Chat hat neue Nachrichten"
 msgstr[1] "{n} weitere Chats haben neue Nachrichten"
 
 #: app/src/core/lib/message-notifications.ts:118
-#: app/src/window/attachment-view.ts:96
+#: app/src/window/attachment-view.ts:99
 msgid "Open"
 msgstr "Öffnen"
 
@@ -1703,7 +1703,7 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:95
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:96
 #: app/src/window/window.ts:58 app/src/window/window.ts:73
 msgid "Curlew"
 msgstr "Curlew"
@@ -1863,7 +1863,7 @@ msgstr "Offline"
 msgid "Daemon not running"
 msgstr "Daemon läuft nicht"
 
-#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:24
+#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:26
 msgid "Off"
 msgstr "Aus"
 
@@ -2050,25 +2050,25 @@ msgstr "Noch keine Regeln"
 msgid "Add rule"
 msgstr "Regel hinzufügen"
 
-#: app/src/window/attachment-view.ts:96
+#: app/src/window/attachment-view.ts:99
 msgid "Play"
 msgstr "Abspielen"
 
-#: app/src/window/attachment-view.ts:101 app/src/window/media-viewer.ts:47
+#: app/src/window/attachment-view.ts:104 app/src/window/media-viewer.ts:47
 msgid "Save as…"
 msgstr "Speichern unter…"
 
-#: app/src/window/attachment-view.ts:119
+#: app/src/window/attachment-view.ts:122
 msgid "Could not fetch the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
-#: app/src/window/attachment-view.ts:142 app/src/window/attachment-view.ts:151
+#: app/src/window/attachment-view.ts:145 app/src/window/attachment-view.ts:154
 #: app/src/window/conversation-model.ts:251
 #: app/src/window/conversation-model.ts:256
 msgid "Attachment"
 msgstr "Anhang"
 
-#: app/src/window/attachment-view.ts:366
+#: app/src/window/attachment-view.ts:414
 #: app/src/window/conversation-model.ts:259
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
@@ -2240,7 +2240,7 @@ msgid "Review"
 msgstr "Prüfen"
 
 #: app/src/window/conversation-list.ts:503
-#: app/src/window/preferences-dialog.ts:18
+#: app/src/window/preferences-dialog.ts:20
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
@@ -2251,7 +2251,7 @@ msgstr[0] "{count} mögliches Duplikat"
 msgstr[1] "{count} mögliche Duplikate"
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:660
+#: app/src/window/conversation-view.ts:662
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -2279,44 +2279,44 @@ msgstr "Audio"
 msgid "File"
 msgstr "Datei"
 
-#: app/src/window/conversation-view.ts:101
+#: app/src/window/conversation-view.ts:102
 msgid "Choose how to reach this person"
 msgstr "Erreichbarkeit dieser Person wählen"
 
-#: app/src/window/conversation-view.ts:118
+#: app/src/window/conversation-view.ts:119
 msgid "Write a message"
 msgstr "Nachricht schreiben"
 
-#: app/src/window/conversation-view.ts:129
+#: app/src/window/conversation-view.ts:130
 msgid "Send message"
 msgstr "Nachricht senden"
 
-#: app/src/window/conversation-view.ts:156
+#: app/src/window/conversation-view.ts:157
 msgid "Conversation"
 msgstr "Unterhaltung"
 
-#: app/src/window/conversation-view.ts:271
+#: app/src/window/conversation-view.ts:273
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 "{protocol} kann keine Dateien senden; die angehängten Dateien wurden entfernt"
 
-#: app/src/window/conversation-view.ts:286
+#: app/src/window/conversation-view.ts:288
 msgid "Send via {protocol}"
 msgstr "Senden über {protocol}"
 
-#: app/src/window/conversation-view.ts:390
+#: app/src/window/conversation-view.ts:392
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:562
+#: app/src/window/conversation-view.ts:564
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:671
+#: app/src/window/conversation-view.ts:673
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:674
+#: app/src/window/conversation-view.ts:676
 msgid "Retry"
 msgstr "Erneut versuchen"
 
@@ -2382,38 +2382,50 @@ msgstr "Diese Personen haben ähnliche Namen. Sind sie dieselbe Person?"
 msgid "Skip"
 msgstr "Überspringen"
 
-#: app/src/window/preferences-dialog.ts:14
+#: app/src/window/preferences-dialog.ts:16
 msgid "Show all emails"
 msgstr "Alle E-Mails anzeigen"
 
-#: app/src/window/preferences-dialog.ts:15
+#: app/src/window/preferences-dialog.ts:17
 msgid ""
 "Show ordinary email threads beside conversations started by a chat messenger"
 msgstr ""
 "Gewöhnliche E-Mail-Verläufe neben Unterhaltungen aus einem Chat-Messenger "
 "anzeigen"
 
-#: app/src/window/preferences-dialog.ts:22
+#: app/src/window/preferences-dialog.ts:24
 msgid "Message notifications"
 msgstr "Benachrichtigungen für Nachrichten"
 
-#: app/src/window/preferences-dialog.ts:23
+#: app/src/window/preferences-dialog.ts:25
 msgid "What a desktop notification for a new chat message shows"
 msgstr "Was eine Desktop-Benachrichtigung über eine neue Chat-Nachricht zeigt"
 
-#: app/src/window/preferences-dialog.ts:24
+#: app/src/window/preferences-dialog.ts:26
 msgid "Sender and text"
 msgstr "Absender und Text"
 
-#: app/src/window/preferences-dialog.ts:24
+#: app/src/window/preferences-dialog.ts:26
 msgid "Sender only"
 msgstr "Nur Absender"
 
-#: app/src/window/preferences-dialog.ts:27
+#: app/src/window/preferences-dialog.ts:29
 msgid "Notifications"
 msgstr "Benachrichtigungen"
 
-#: app/src/window/preferences-dialog.ts:36 app/src/window/window.ts:88
+#: app/src/window/preferences-dialog.ts:32
+msgid "Play videos silently in chats"
+msgstr "Videos in Chats stumm abspielen"
+
+#: app/src/window/preferences-dialog.ts:33
+msgid "A video in a conversation plays muted while it is on screen"
+msgstr "Ein Video in einer Unterhaltung läuft stumm, solange es im Bild ist"
+
+#: app/src/window/preferences-dialog.ts:39
+msgid "Media"
+msgstr "Medien"
+
+#: app/src/window/preferences-dialog.ts:49 app/src/window/window.ts:88
 msgid "Preferences"
 msgstr "Einstellungen"
 

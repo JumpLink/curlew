@@ -42,6 +42,7 @@ import {
   type ProtocolRun,
 } from './conversation-model.ts';
 import { attachmentList, type AttachmentHandlers } from './attachment-view.ts';
+import { createSilentVideoHost } from './video-preview.ts';
 import { shownAttachments, type AttachmentKind } from './attachment-model.ts';
 import type { AttachmentSource } from './attachment-store.ts';
 import { fadedOverlay } from './fade-bin.ts';
@@ -195,6 +196,7 @@ export function createConversationView(
   const handlers: AttachmentHandlers = {
     view: openMedia,
     toast: (title) => overlay.add_toast(new Adw.Toast({ title, timeout: 6 })),
+    silentVideo: createSilentVideoHost(scroller),
     whenVisible: (widget, load) => {
       waiting.push({ widget, load });
       schedulePass();
