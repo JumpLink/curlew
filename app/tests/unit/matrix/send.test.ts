@@ -50,13 +50,20 @@ interface FakeHttp {
   gets(): Call[];
 }
 
+interface FakeHttpOptions {
+  encrypted?: readonly string[];
+  stateStatus?: number;
+  /** The reactions each event has, as `[eventId, sender, emoji]`, in the order the homeserver lists them. */
+  reactions?: Record<string, ReadonlyArray<readonly [string, string, string]>>;
+}
+
 /**
  * A homeserver that answers the two requests a send makes: the encryption-state read and the PUT.
  *
  * `encrypted` names the rooms that have `m.room.encryption` state; `stateStatus` makes the state
  * read fail with something that is neither "encrypted" nor "not found".
  */
-function fakeHttp(options: { encrypted?: readonly string[]; stateStatus?: number } = {}): FakeHttp {
+function fakeHttp(options: FakeHttpOptions = {}): FakeHttp {
   const calls: Call[] = [];
   const uploads: Uint8Array[] = [];
   const encrypted = new Set(options.encrypted ?? []);
@@ -82,6 +89,18 @@ function fakeHttp(options: { encrypted?: readonly string[]; stateStatus?: number
       return new Response(JSON.stringify({ content_uri: `mxc://example.org/up${uploads.length}` }), {
         status: 200,
       });
+    }
+    const relations = new RegExp(
+      `^/_matrix/client/v1/rooms/[^/]+/relations/([^/]+)/m\\.annotation/m\\.reaction$`,
+    ).exec(path);
+    if (method === 'GET' && relations) {
+      const chunk = (options.reactions?.[decodeURIComponent(relations[1])] ?? []).map(
+        ([event_id, sender, key]) => ({ event_id, sender, content: { 'm.relates_to': { key } } }),
+      );
+      return new Response(JSON.stringify({ chunk }), { status: 200 });
+    }
+    if (method === 'PUT' && path.includes('/redact/')) {
+      return new Response(JSON.stringify({ event_id: '$redaction:example.org' }), { status: 200 });
     }
     if (method === 'PUT' && path.includes('/send/')) {
       accepted += 1;
@@ -116,7 +135,7 @@ const granted = (accountId: string) => ({
 async function withRig<T>(
   config: (accountId: string) => unknown,
   body: (rig: Rig) => Promise<T>,
-  options: { encrypted?: readonly string[]; stateStatus?: number } = {},
+  options: FakeHttpOptions = {},
 ): Promise<T> {
   const dir = mkdtempSync(join(tmpdir(), 'curlew-matrix-send-'));
   try {
@@ -219,9 +238,15 @@ export default async () => {
         expect(
           sendRefusal('POST', `${HS}/rooms/${encodeRoom(ROOM)}/receipt/m.read/$e`, [ROOM]) !== null,
         ).toBe(true);
-        expect(sendRefusal('PUT', `${HS}/rooms/${encodeRoom(ROOM)}/redact/$e/t1`, [ROOM]) !== null).toBe(
+        // A reaction and its redaction are writes too, for the permit's room only.
+        expect(sendRefusal('PUT', `${HS}/rooms/${encodeRoom(ROOM)}/send/m.reaction/t1`, [ROOM])).toBe(null);
+        expect(sendRefusal('PUT', `${HS}/rooms/${encodeRoom(ROOM)}/redact/$e/t1`, [ROOM])).toBe(null);
+        expect(sendRefusal('PUT', `${HS}/rooms/${encodeRoom(OTHER)}/redact/$e/t1`, [ROOM]) !== null).toBe(
           true,
         );
+        expect(
+          sendRefusal('PUT', `${HS}/rooms/${encodeRoom(ROOM)}/send/m.room.encrypted/t1`, [ROOM]) !== null,
+        ).toBe(true);
       });
     });
 
@@ -327,6 +352,83 @@ export default async () => {
         expect(event.info.mimetype).toBe('application/pdf');
         expect(event.info.size).toBe(9);
       });
+    });
+
+    await it('reacts with an m.annotation, replaces an earlier emoji and takes it back by redaction', async () => {
+      const asks = {
+        reactions: {
+          '$m:example.org': [
+            ['$old:example.org', ME, '👍'],
+            ['$other:example.org', ANNA, '❤️'],
+          ],
+        },
+      } as const;
+      const opened = (rig: Rig) =>
+        rig.backend.openSender(rig.accountId, { account: rig.accountId, addresses: [ROOM] });
+      const target = { remoteId: '$m:example.org' };
+      const redacted = (rig: Rig) =>
+        rig.http
+          .puts()
+          .filter((c) => c.url.includes('/redact/'))
+          .map((c) => decodeURIComponent(new URL(c.url).pathname.split('/redact/')[1].split('/')[0]));
+      const reacted = (rig: Rig) =>
+        rig.http
+          .puts()
+          .filter((c) => c.url.includes('/send/m.reaction/'))
+          .map((c) => JSON.parse(c.body!));
+
+      await withRig(granted, async (rig) => {
+        const sender = await opened(rig);
+        expect(sender.features.reactions).toBe(true);
+        await sender.react!({ to: ROOM, target, emoji: '🎉' });
+        expect(reacted(rig)).toStrictEqual([
+          { 'm.relates_to': { rel_type: 'm.annotation', event_id: '$m:example.org', key: '🎉' } },
+        ]);
+        expect(redacted(rig)).toStrictEqual([]);
+      });
+      await withRig(
+        granted,
+        async (rig) => {
+          const sender = await opened(rig);
+          // One emoji at a time: the earlier one of the person goes, the other person's stays.
+          await sender.react!({ to: ROOM, target, emoji: '🎉' });
+          expect(redacted(rig)).toStrictEqual(['$old:example.org']);
+          expect(reacted(rig).length).toBe(1);
+          // The same emoji again changes nothing.
+          await sender.react!({ to: ROOM, target, emoji: '👍' });
+          expect(reacted(rig).length).toBe(1);
+          // Taking it back redacts the person's own event, never the other person's.
+          await sender.react!({ to: ROOM, target, emoji: null, previous: '👍' });
+          expect(redacted(rig)).toStrictEqual(['$old:example.org', '$old:example.org']);
+        },
+        asks,
+      );
+    });
+
+    await it('refuses a reaction in an encrypted or foreign room and to something that is no event', async () => {
+      await withRig(
+        granted,
+        async (rig) => {
+          const sender = await rig.backend.openSender(rig.accountId, {
+            account: rig.accountId,
+            addresses: [ROOM],
+          });
+          await sender.react!({ to: ROOM, target: { remoteId: '$m:example.org' }, emoji: '👍' }).then(
+            () => expect('sent').toBe('refused'),
+            () => {},
+          );
+          await sender.react!({ to: OTHER, target: { remoteId: '$m:example.org' }, emoji: '👍' }).then(
+            () => expect('sent').toBe('refused'),
+            () => {},
+          );
+          await sender.react!({ to: ROOM, target: { remoteId: 'not-an-event' }, emoji: '👍' }).then(
+            () => expect('sent').toBe('refused'),
+            () => {},
+          );
+          expect(rig.http.puts().length).toBe(0);
+        },
+        { encrypted: [ROOM] },
+      );
     });
 
     await it('answers a message with m.in_reply_to, on a text and on the first file only', async () => {

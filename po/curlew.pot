@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 17:10+0100\n"
+"POT-Creation-Date: 2026-11-10 17:13+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2312,7 +2312,7 @@ msgstr ""
 msgid "the attachments together exceed {max} bytes"
 msgstr ""
 
-#: packages/imap/src/send.ts:67 packages/matrix/src/send.ts:250
+#: packages/imap/src/send.ts:67 packages/matrix/src/send.ts:335
 #: packages/signal/src/send.ts:333 packages/telegram/src/sender.ts:74
 #: packages/whatsapp/src/send.ts:358
 msgid "sending to {address} is not granted for account {account}"
@@ -2366,7 +2366,7 @@ msgstr ""
 msgid "the Matrix account file {account} is incomplete — {hint}"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:172
+#: packages/matrix/src/backend.ts:173
 msgid "the Matrix account {account} is not usable ({reason}) — {hint}"
 msgstr ""
 
@@ -2398,42 +2398,52 @@ msgid_plural "matrix: {n} events not decryptable"
 msgstr[0] ""
 msgstr[1] ""
 
-#: packages/matrix/src/send.ts:148
+#: packages/matrix/src/send.ts:171
 msgid "the homeserver refused the message to {room} ({reason})"
 msgstr ""
 
-#: packages/matrix/src/send.ts:157
+#: packages/matrix/src/send.ts:180
 msgid "the homeserver accepted the message to {room} but returned no event id"
 msgstr ""
 
-#: packages/matrix/src/send.ts:176
+#: packages/matrix/src/send.ts:199
 msgid ""
 "the homeserver did not say whether {room} is encrypted ({reason}) — nothing "
 "was sent"
 msgstr ""
 
-#: packages/matrix/src/send.ts:195
+#: packages/matrix/src/send.ts:228
+msgid ""
+"the homeserver did not list the reactions in {room} ({reason}) — nothing was "
+"sent"
+msgstr ""
+
+#: packages/matrix/src/send.ts:263
+msgid "the homeserver did not take the reaction back in {room} ({reason})"
+msgstr ""
+
+#: packages/matrix/src/send.ts:280
 msgid "the homeserver refused the file {file} ({reason})"
 msgstr ""
 
-#: packages/matrix/src/send.ts:204
+#: packages/matrix/src/send.ts:289
 msgid "the homeserver accepted the file {file} but returned no media URI"
 msgstr ""
 
-#: packages/matrix/src/send.ts:267
-msgid "{id} is not a Matrix event id — nothing was sent"
-msgstr ""
-
-#: packages/matrix/src/send.ts:272
-msgid ""
-"a Matrix message holds at most {max} bytes of text, this one has {bytes} — "
-"shorten it"
-msgstr ""
-
-#: packages/matrix/src/send.ts:286
+#: packages/matrix/src/send.ts:355
 msgid ""
 "{room} is end-to-end encrypted and curlew cannot send encrypted messages yet "
 "— nothing was sent, send it from a Matrix client"
+msgstr ""
+
+#: packages/matrix/src/send.ts:371 packages/matrix/src/send.ts:444
+msgid "{id} is not a Matrix event id — nothing was sent"
+msgstr ""
+
+#: packages/matrix/src/send.ts:376
+msgid ""
+"a Matrix message holds at most {max} bytes of text, this one has {bytes} — "
+"shorten it"
 msgstr ""
 
 #: packages/signal/src/attachments.ts:37

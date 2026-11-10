@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 16:55+0100\n"
+"POT-Creation-Date: 2026-11-10 17:13+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2591,7 +2591,7 @@ msgstr "Anhang {path} hat {size} Bytes, erlaubt sind höchstens {max} pro Datei"
 msgid "the attachments together exceed {max} bytes"
 msgstr "die Anhänge zusammen überschreiten {max} Bytes"
 
-#: packages/imap/src/send.ts:67 packages/matrix/src/send.ts:250
+#: packages/imap/src/send.ts:67 packages/matrix/src/send.ts:335
 #: packages/signal/src/send.ts:333 packages/telegram/src/sender.ts:74
 #: packages/whatsapp/src/send.ts:358
 msgid "sending to {address} is not granted for account {account}"
@@ -2647,7 +2647,7 @@ msgstr "Kein Matrix-Konto {account} — {hint}"
 msgid "the Matrix account file {account} is incomplete — {hint}"
 msgstr "Die Matrix-Kontodatei {account} ist unvollständig — {hint}"
 
-#: packages/matrix/src/backend.ts:172
+#: packages/matrix/src/backend.ts:173
 msgid "the Matrix account {account} is not usable ({reason}) — {hint}"
 msgstr "Das Matrix-Konto {account} ist nicht nutzbar ({reason}) — {hint}"
 
@@ -2682,17 +2682,17 @@ msgid_plural "matrix: {n} events not decryptable"
 msgstr[0] "matrix: {n} Ereignis nicht entschlüsselbar"
 msgstr[1] "matrix: {n} Ereignisse nicht entschlüsselbar"
 
-#: packages/matrix/src/send.ts:148
+#: packages/matrix/src/send.ts:171
 msgid "the homeserver refused the message to {room} ({reason})"
 msgstr "Der Homeserver hat die Nachricht an {room} abgewiesen ({reason})"
 
-#: packages/matrix/src/send.ts:157
+#: packages/matrix/src/send.ts:180
 msgid "the homeserver accepted the message to {room} but returned no event id"
 msgstr ""
 "Der Homeserver hat die Nachricht an {room} angenommen, aber keine Event-ID "
 "zurückgegeben"
 
-#: packages/matrix/src/send.ts:176
+#: packages/matrix/src/send.ts:199
 msgid ""
 "the homeserver did not say whether {room} is encrypted ({reason}) — nothing "
 "was sent"
@@ -2700,31 +2700,29 @@ msgstr ""
 "Der Homeserver hat nicht mitgeteilt, ob {room} verschlüsselt ist ({reason}) "
 "— es wurde nichts gesendet"
 
-#: packages/matrix/src/send.ts:195
+#: packages/matrix/src/send.ts:228
+msgid ""
+"the homeserver did not list the reactions in {room} ({reason}) — nothing was "
+"sent"
+msgstr ""
+"Der Homeserver hat die Reaktionen in {room} nicht aufgelistet ({reason}) — "
+"es wurde nichts gesendet"
+
+#: packages/matrix/src/send.ts:263
+msgid "the homeserver did not take the reaction back in {room} ({reason})"
+msgstr "Der Homeserver hat die Reaktion in {room} nicht zurückgenommen ({reason})"
+
+#: packages/matrix/src/send.ts:280
 msgid "the homeserver refused the file {file} ({reason})"
 msgstr "der Homeserver hat die Datei {file} abgewiesen ({reason})"
 
-#: packages/matrix/src/send.ts:204
+#: packages/matrix/src/send.ts:289
 msgid "the homeserver accepted the file {file} but returned no media URI"
 msgstr ""
 "der Homeserver hat die Datei {file} angenommen, aber keine Medien-URI "
 "zurückgegeben"
 
-#: packages/matrix/src/send.ts:267
-msgid "{id} is not a Matrix event id — nothing was sent"
-msgstr ""
-"{id} ist keine Matrix-Event-ID – es wurde nichts gesendet{capability} ist "
-"nicht die Berechtigung, unter der {backend} sendet — es wurde nichts gesendet"
-
-#: packages/matrix/src/send.ts:272
-msgid ""
-"a Matrix message holds at most {max} bytes of text, this one has {bytes} — "
-"shorten it"
-msgstr ""
-"Eine Matrix-Nachricht fasst höchstens {max} Byte Text, diese hat {bytes} — "
-"kürze sie"
-
-#: packages/matrix/src/send.ts:286
+#: packages/matrix/src/send.ts:355
 msgid ""
 "{room} is end-to-end encrypted and curlew cannot send encrypted messages yet "
 "— nothing was sent, send it from a Matrix client"
@@ -2732,6 +2730,20 @@ msgstr ""
 "{room} ist Ende-zu-Ende-verschlüsselt und curlew kann noch keine "
 "verschlüsselten Nachrichten senden — es wurde nichts gesendet, sende sie aus "
 "einem Matrix-Client"
+
+#: packages/matrix/src/send.ts:371 packages/matrix/src/send.ts:444
+msgid "{id} is not a Matrix event id — nothing was sent"
+msgstr ""
+"{id} ist keine Matrix-Event-ID – es wurde nichts gesendet{capability} ist "
+"nicht die Berechtigung, unter der {backend} sendet — es wurde nichts gesendet"
+
+#: packages/matrix/src/send.ts:376
+msgid ""
+"a Matrix message holds at most {max} bytes of text, this one has {bytes} — "
+"shorten it"
+msgstr ""
+"Eine Matrix-Nachricht fasst höchstens {max} Byte Text, diese hat {bytes} — "
+"kürze sie"
 
 #: packages/signal/src/attachments.ts:37
 msgid "Signal did not deliver the file ({reason})"
