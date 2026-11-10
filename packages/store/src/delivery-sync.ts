@@ -292,6 +292,11 @@ class DeliveryBatch {
     { text: string | null; editedAt: string | null; conversationId: string }
   >();
   readonly peerRead = new Set<string>();
+  /** The last reaction of each person to each message, keyed `<row id>\0<reactor>`; a null emoji takes it back. */
+  readonly reactions = new Map<
+    string,
+    { messageId: string; chatRemoteId: string; reactor: string; emoji: string | null }
+  >();
   /**
    * Messages read that no chat was named for — a Signal receipt carries sent timestamps only
    * (`refs/signal-desktop/protos/SignalService.proto:451`), so the remote ids are what locate
@@ -439,10 +444,23 @@ class DeliveryBatch {
         this.edited++;
         return;
       }
+      case 'reaction': {
+        const messageId = this.rowId(event.chatRemoteId, event.remoteId);
+        if (this.deletedMessages.has(messageId)) return;
+        const reactor = event.reactor ?? '';
+        this.reactions.set(`${messageId}\0${reactor}`, {
+          messageId,
+          chatRemoteId: event.chatRemoteId,
+          reactor,
+          emoji: event.emoji,
+        });
+        return;
+      }
       case 'delete': {
         const id = this.rowId(event.chatRemoteId, event.remoteId);
         if (this.messages.delete(id)) this.added--;
         this.edits.delete(id);
+        for (const [key, reaction] of this.reactions) if (reaction.messageId === id) this.reactions.delete(key);
         this.deletedMessages.add(id);
         this.removed++;
         if (this.state.chats.has(event.chatRemoteId)) this.touchedChats.add(event.chatRemoteId);
@@ -675,6 +693,24 @@ function mergeChat(db: IndexDatabase, batch: DeliveryBatch, from: string, into: 
         ] as SqlValue[],
     ),
   );
+  const reactions = db
+    .prepare(
+      `SELECT m.remote_id, r.reactor, r.emoji FROM message_reactions r
+         JOIN conversation_messages m ON m.id = r.message_id
+        WHERE m.conversation_id = ?`,
+    )
+    .all(conv(from)) as Array<{ remote_id: unknown; reactor: unknown; emoji: unknown }>;
+  insertMany(
+    db,
+    'INSERT OR REPLACE INTO message_reactions (message_id, reactor, emoji)',
+    reactions.map(
+      (r) =>
+        [deliveredMessageId(backend, accountId, into, String(r.remote_id)), r.reactor, r.emoji] as SqlValue[],
+    ),
+  );
+  db.prepare(
+    `DELETE FROM message_reactions WHERE message_id IN (SELECT id FROM conversation_messages WHERE conversation_id = ?)`,
+  ).run(conv(from));
   db.prepare('DELETE FROM conversation_messages WHERE conversation_id = ?').run(conv(from));
   db.prepare(
     `INSERT OR REPLACE INTO chat_members (conversation_id, backend, account_id, peer_id)
@@ -743,10 +779,15 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
     runIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, [...batch.deletedMessages]);
     if (batch.deletedMessages.size > 0) {
       runIn(db, (p) => `DELETE FROM message_attachments WHERE message_id IN (${p})`, [...batch.deletedMessages]);
+      runIn(db, (p) => `DELETE FROM message_reactions WHERE message_id IN (${p})`, [...batch.deletedMessages]);
     }
     const cleared = [...batch.clearedChats, ...batch.deletedChats].map(conv);
     runIn(db, (p) => `DELETE FROM conversation_messages WHERE conversation_id IN (${p})`, cleared);
     if (cleared.length > 0) {
+      db.prepare(
+        `DELETE FROM message_reactions WHERE message_id IN
+           (SELECT id FROM conversation_messages WHERE conversation_id IN (${placeholders(cleared.length)}))`,
+      ).run(...cleared);
       db.prepare(
         `DELETE FROM message_attachments WHERE message_id IN
            (SELECT id FROM conversation_messages WHERE conversation_id IN (${placeholders(cleared.length)}))`,
@@ -798,6 +839,17 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
         edit.editedAt,
         id,
       );
+    }
+    for (const { messageId, reactor, emoji } of batch.reactions.values()) {
+      if (emoji === null) {
+        db.prepare('DELETE FROM message_reactions WHERE message_id = ? AND reactor = ?').run(messageId, reactor);
+        continue;
+      }
+      // Only a message that is stored (or written just above): a reaction to an unknown one is dropped.
+      db.prepare(
+        `INSERT OR REPLACE INTO message_reactions (message_id, reactor, emoji)
+         SELECT ?, ?, ? WHERE EXISTS (SELECT 1 FROM conversation_messages WHERE id = ?)`,
+      ).run(messageId, reactor, emoji, messageId);
     }
     runIn(db, (p) => `UPDATE conversation_messages SET peer_read = 1 WHERE from_self = 1 AND id IN (${p})`, [
       ...batch.peerRead,
@@ -875,6 +927,7 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
       changed.add(conv(id));
     }
     for (const edit of batch.edits.values()) changed.add(edit.conversationId);
+    for (const reaction of batch.reactions.values()) changed.add(conv(reaction.chatRemoteId));
     appendChanges(db, [
       ...[...changed].map((conversationId) => ({
         kind: 'messages' as const,
