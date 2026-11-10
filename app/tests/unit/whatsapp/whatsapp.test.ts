@@ -207,6 +207,20 @@ export default async () => {
       expect(mapper.message(waMessage('status@broadcast', 'ST', 3, text('story')), false).length).toBe(0);
     });
 
+    await it('turns a reaction into a reaction event for the message it names, and its removal', async () => {
+      const mapper = new WhatsAppMapper();
+      const react = (emoji: string, fromMe = false) =>
+        mapper.message(
+          waMessage(ANNA_LID, 'R1', 7, { reactionMessage: { key: { id: 'A1' }, text: emoji } }, { fromMe }),
+          false,
+        );
+      const [added] = react('👍');
+      expect(added).toMatchObject({ type: 'reaction', chatRemoteId: ANNA_LID, remoteId: 'A1', emoji: '👍' });
+      expect(typeof (added as { reactor: unknown }).reactor).toBe('string');
+      expect(react('')[0]).toMatchObject({ emoji: null });
+      expect(react('❤️', true)[0]).toMatchObject({ reactor: null, emoji: '❤️' });
+    });
+
     await it('turns revokes and edits into delete and edit events for the message they name', async () => {
       const mapper = new WhatsAppMapper();
       const [revoke] = mapper.message(

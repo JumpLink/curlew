@@ -5,13 +5,13 @@
  * here is tested against synthetic events on both runtimes.
  *
  * What is kept: what a person wrote (text, captions, a poll's question, a shared contact's or
- * place's name), that a file came with it, the reply it answers, edits and deletions, who read
- * what. What is dropped: notices (joins, "this message was deleted" placeholders), reactions,
+ * place's name), that a file came with it, the reply it answers, reactions, edits and deletions,
+ * who read what. What is dropped: notices (joins, "this message was deleted" placeholders),
  * protocol housekeeping, and status updates (`status@broadcast`: other people's stories).
  */
 
 import { Buffer } from 'node:buffer';
-import type { AttachmentKind, ChatAttachment, ChatMessage, DeliveryEvent } from '@curlew/protocol';
+import type { AttachmentKind, ChatAttachment, ChatInfo, ChatMessage, ChatPeer, DeliveryEvent } from '@curlew/protocol';
 import type {
   WaChat,
   WaContact,
@@ -238,6 +238,13 @@ export class WhatsAppMapper {
     return this.resolver.chatId(key.remoteJid, key.remoteJidAlt);
   }
 
+  /** The person a message from someone else came from: the chat's peer, or the group member. */
+  private senderOf(raw: WaMessage, kind: ChatInfo['kind']): ChatPeer | null {
+    const key = raw.key;
+    if (kind === 'direct') return this.resolver.peer(key.remoteJid, key.remoteJidAlt, raw.pushName ?? null);
+    return key.participant ? this.resolver.peer(key.participant, key.participantAlt, raw.pushName ?? null) : null;
+  }
+
   /**
    * One message as the events it amounts to: a `message`, or an `edit` / `delete` when it is a
    * protocol message about another one, or nothing.
@@ -271,19 +278,30 @@ export class WhatsAppMapper {
       return [];
     }
     if (raw.messageStubType) return [];
+    const kind = chatKindOf(chatJid);
+    const fromSelf = key.fromMe === true;
+    const reaction = content?.reactionMessage;
+    if (reaction) {
+      const target = reaction.key?.id;
+      if (!target) return [];
+      const reactor = fromSelf ? null : this.senderOf(raw, kind);
+      return [
+        {
+          type: 'reaction',
+          chatRemoteId: chatId,
+          remoteId: remoteMessageId(target),
+          reactor: fromSelf ? null : (reactor?.remoteId ?? null),
+          emoji: reaction.text?.trim() ? reaction.text : null,
+        },
+      ];
+    }
     const extracted = extractContent(content);
     if (!extracted) return [];
     const attachments = extractAttachments(content);
 
-    const kind = chatKindOf(chatJid);
-    const fromSelf = key.fromMe === true;
     const sender = fromSelf
       ? null
-      : kind === 'direct'
-        ? this.resolver.peer(key.remoteJid, key.remoteJidAlt, raw.pushName ?? null)
-        : key.participant
-          ? this.resolver.peer(key.participant, key.participantAlt, raw.pushName ?? null)
-          : null;
+      : this.senderOf(raw, kind);
     const seconds = toNumber(raw.messageTimestamp);
     const message: ChatMessage = {
       remoteId: remoteMessageId(key.id),
