@@ -17,8 +17,9 @@ export const SIGNAL_MANIFEST: BackendManifest = {
     edits: true,
     // Reactions are read and sent (direct chats; curlew sends to no group).
     reactions: true,
-    editsOwn: false,
-    deletesOwn: false,
+    // Sent too: an `EditMessage`, and a `DataMessage.Delete` (direct chats).
+    editsOwn: true,
+    deletesOwn: true,
     // Quoted replies (sent as `quote`), no threads.
     threads: false,
     readReceipts: true,

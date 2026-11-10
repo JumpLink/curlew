@@ -27,7 +27,7 @@ const DELIVERED_CAPABILITIES: ReadonlyArray<{
   {
     backend: 'signal',
     manifest: BUILTIN_PLUGINS.find((p) => p.manifest.name === 'signal')!.manifest,
-    trueFlags: 'edits,reactions,readReceipts,groups,e2ee,attachmentsRead,replies',
+    trueFlags: 'edits,reactions,editsOwn,deletesOwn,readReceipts,groups,e2ee,attachmentsRead,replies',
   },
   {
     backend: 'whatsapp',

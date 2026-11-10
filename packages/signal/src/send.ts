@@ -34,6 +34,9 @@ import {
   _,
   fmt,
   type MessageSender,
+  type ReplyTarget,
+  type SendingDeletion,
+  type SendingEdit,
   type SendingMessage,
   type SendingReaction,
   type SendPermit,
@@ -68,8 +71,12 @@ export const SIGNAL_MAX_MESSAGE_BYTES = 2048;
  * zero there would make every message curlew sends look like a timer change on the next sync.
  */
 const F = {
-  content: { dataMessage: 1, syncMessage: 2 },
-  data: { body: 1, quote: 8, timestamp: 7, reaction: 16 },
+  content: { dataMessage: 1, syncMessage: 2, editMessage: 11 },
+  data: { body: 1, quote: 8, timestamp: 7, reaction: 16, delete: 17 },
+  /** `EditMessage`: the sent timestamp of the message being replaced, and its new `DataMessage`. */
+  edit: { targetSentTimestamp: 1, dataMessage: 2 },
+  /** `DataMessage.Delete`: the sent timestamp of the message being deleted for everyone. */
+  delete: { targetSentTimestamp: 1 },
   /** `DataMessage.Quote`; the author goes out in both forms, like the destination of a transcript. */
   quote: { id: 1, authorAci: 5, authorAciBinary: 8 },
   /** `DataMessage.Reaction`; the target author goes out in both forms, like a quote's. */
@@ -78,6 +85,7 @@ const F = {
   sent: {
     timestamp: 2,
     message: 3,
+    editMessage: 10,
     /** Deprecated string form. Written next to field 12: an older phone reads only this one. */
     destinationServiceId: 7,
     destinationServiceIdBinary: 12,
@@ -163,8 +171,8 @@ export class SignalSender implements MessageSender {
     attachments: false,
     replies: true,
     reactions: true,
-    edits: false,
-    deletes: false,
+    edits: true,
+    deletes: true,
   };
   private readonly lib: SignalLib;
   private readonly store: SignalProtocolStore;
@@ -190,6 +198,52 @@ export class SignalSender implements MessageSender {
 
   react(reaction: SendingReaction): Promise<void> {
     return this.exclusive(() => this.reactNow(reaction));
+  }
+
+  edit(edit: SendingEdit): Promise<void> {
+    return this.exclusive(() => this.editNow(edit));
+  }
+
+  delete(deletion: SendingDeletion): Promise<void> {
+    return this.exclusive(() => this.deleteNow(deletion));
+  }
+
+  /** The sent timestamp of a message of the person's own, or a refusal before anything is sent. */
+  private ownTimestamp(target: ReplyTarget): number {
+    const { authorAci, sentTimestamp } = parseMessageRemoteId(target.remoteId);
+    if (target.fromSelf !== true || authorAci !== this.account.aci) {
+      throw new Error(_('only your own messages can be changed — nothing was sent'));
+    }
+    return sentTimestamp;
+  }
+
+  /** An `EditMessage`: the new text under a timestamp of its own, naming the message it replaces. */
+  private async editNow(edit: SendingEdit): Promise<void> {
+    const aci = this.recipient(edit.to);
+    const target = this.ownTimestamp(edit.target);
+    const bytes = UTF8.encode(edit.text).length;
+    if (bytes > SIGNAL_MAX_MESSAGE_BYTES) {
+      throw new Error(
+        fmt(_('a Signal message holds at most {max} bytes of text, this one has {bytes} — shorten it'), {
+          max: String(SIGNAL_MAX_MESSAGE_BYTES),
+          bytes: String(bytes),
+        }),
+      );
+    }
+    const timestamp = Date.now();
+    const dataMessage = new ProtoWriter().string(F.data.body, edit.text).uint(F.data.timestamp, timestamp);
+    await this.transmit(aci, dataMessage, timestamp, target);
+  }
+
+  /** A `DataMessage` whose `delete` names the message taken back for everyone. */
+  private async deleteNow(deletion: SendingDeletion): Promise<void> {
+    const aci = this.recipient(deletion.to);
+    const target = this.ownTimestamp(deletion.target);
+    const timestamp = Date.now();
+    const dataMessage = new ProtoWriter()
+      .uint(F.data.timestamp, timestamp)
+      .message(F.data.delete, new ProtoWriter().uint(F.delete.targetSentTimestamp, target));
+    await this.transmit(aci, dataMessage, timestamp);
   }
 
   private async reactNow(reaction: SendingReaction): Promise<void> {
@@ -261,19 +315,35 @@ export class SignalSender implements MessageSender {
   /**
    * Deliver one `DataMessage` to the recipient and, as a transcript, to this account's other
    * devices. Returns the gap in a sentence when the recipient has it but the transcript failed.
+   *
+   * With `editOf`, the message goes out as an `EditMessage` replacing the one sent at that
+   * timestamp, in the copies (`Content`) and in the transcript (`Sent`) alike.
    */
-  private async transmit(aci: string, dataMessage: ProtoWriter, timestamp: number): Promise<string | undefined> {
+  private async transmit(
+    aci: string,
+    dataMessage: ProtoWriter,
+    timestamp: number,
+    editOf?: number,
+  ): Promise<string | undefined> {
     const own = aci === this.account.aci;
+    const edit =
+      editOf === undefined
+        ? undefined
+        : new ProtoWriter()
+            .uint(F.edit.targetSentTimestamp, editOf)
+            .message(F.edit.dataMessage, dataMessage);
     // The recipient first: a transcript on the phone for a message the recipient never got would
     // show the user something that does not exist.
     if (!own) {
-      const content = new ProtoWriter().message(F.content.dataMessage, dataMessage).finish();
+      const content = new ProtoWriter()
+        .message(edit ? F.content.editMessage : F.content.dataMessage, edit ?? dataMessage)
+        .finish();
       await this.deliver(aci, content, timestamp);
     }
 
     const sent = new ProtoWriter()
       .uint(F.sent.timestamp, timestamp)
-      .message(F.sent.message, dataMessage)
+      .message(edit ? F.sent.editMessage : F.sent.message, edit ?? dataMessage)
       .string(F.sent.destinationServiceId, aci)
       .bytes(F.sent.destinationServiceIdBinary, uuidToBytes(aci));
     const transcript = new ProtoWriter()
