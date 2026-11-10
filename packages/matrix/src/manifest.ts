@@ -18,7 +18,7 @@ export const MATRIX_MANIFEST: BackendManifest = {
   capabilities: {
     // `m.replace` relations.
     edits: true,
-    // `m.annotation` relations; map.ts drops them in toChatMessage.
+    // `m.annotation` relations; received and shown, but no send path yet, so false.
     reactions: false,
     // `m.thread` relations (and reply chains everywhere).
     threads: true,

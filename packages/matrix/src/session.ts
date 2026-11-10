@@ -198,6 +198,8 @@ export class MatrixChatSession implements ChatSession {
       messages: mapped.messages,
       edits: mapped.edits,
       retracted: mapped.retracted,
+      reactions: mapped.reactions,
+      retractedReactions: mapped.retractedReactions,
       highestSeq: Math.max(...taken.map((e) => seqOf(e.ts))),
       lowestSeq: Math.min(...taken.map((e) => seqOf(e.ts))),
       exhausted,
@@ -238,6 +240,8 @@ export class MatrixChatSession implements ChatSession {
       messages: mapped.messages,
       edits: mapped.edits,
       retracted: mapped.retracted,
+      reactions: mapped.reactions,
+      retractedReactions: mapped.retractedReactions,
       highestSeq: Math.max(...covered.map((e) => seqOf(e.ts))),
       // Unless the page reaches the room's start, an older, unfetched event may share the lowest
       // millisecond; the range that proves a deletion therefore starts one above it.
