@@ -18,6 +18,7 @@ app/src/core/actions/message-access.ts
 app/src/core/actions/messaging.ts
 app/src/core/actions/omemo.ts
 app/src/core/actions/people.ts
+app/src/core/actions/react.ts
 app/src/core/actions/search-access.ts
 app/src/core/actions/send.ts
 app/src/core/actions/setup-host.ts

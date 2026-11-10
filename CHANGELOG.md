@@ -28,6 +28,7 @@
 
 ### Added
 
+- The daemon and its callers can now carry a reaction (send protocol 5). Nothing sends one yet; after updating, restart the daemon with `systemctl --user restart curlew-daemon`.
 - Reactions that arrive on a chat message show as small emoji chips under it, with a count when several people gave the same one. Signal, WhatsApp, Matrix, XMPP and Telegram (as counts) deliver them for now.
 - WhatsApp chats can send a reply too: the message goes out quoting the one it answers.
 - Signal chats can send a reply too: the message goes out as a quote of the one it answers.

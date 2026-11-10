@@ -10,12 +10,14 @@ import type {
   MessageSender,
   SendPermit,
   SendingMessage,
+  SendingReaction,
   SentMessage,
 } from '@curlew/protocol';
 import { PLUGIN_API_VERSION } from '@curlew/protocol';
 import { getConversation, takeReceiveLease } from '@curlew/store';
 import { createDaemonSendHandler, sessionKey } from '../../../src/core/actions/daemon.ts';
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
+import { reactToMessage } from '../../../src/core/actions/react.ts';
 import { sendMessage } from '../../../src/core/actions/send.ts';
 import {
   DAEMON_WIRE_VERSION,
@@ -82,8 +84,9 @@ const MANIFEST: BackendManifest = {
 
 /** A sender that records what it was given and never touches a network. */
 class FakeSender implements MessageSender {
-  readonly features = { markdown: false, attachments: false, replies: false };
+  readonly features = { markdown: false, attachments: false, replies: false, reactions: false };
   readonly sent: SendingMessage[] = [];
+  readonly reacted: SendingReaction[] = [];
   closed = 0;
 
   constructor(
@@ -106,18 +109,23 @@ class FakeSender implements MessageSender {
     };
   }
 
+  async react(reaction: SendingReaction): Promise<void> {
+    if (this.fail !== undefined) throw new Error(this.fail);
+    this.reacted.push(reaction);
+  }
+
   async close(): Promise<void> {
     this.closed++;
   }
 }
 
 /** The caller's backend: it can open a sender of its own, which is the direct path. */
-function callerBackend(sender: FakeSender, openFailure?: string) {
+function callerBackend(sender: FakeSender, openFailure?: string, manifest: BackendManifest = MANIFEST) {
   const opened: SendPermit[] = [];
   return {
     opened,
     backend: {
-      manifest: MANIFEST,
+      manifest,
       kind: 'delivery' as const,
       listAccounts: async (): Promise<BackendAccount[]> => [ACCOUNT_INFO],
       openSender: async (_id: string, permit: SendPermit): Promise<MessageSender> => {
@@ -427,6 +435,74 @@ export default async () => {
     });
   });
 
+  await describe('reacting to a message', async () => {
+    const REACTING: BackendManifest = {
+      ...MANIFEST,
+      capabilities: { ...MANIFEST.capabilities, reactions: true },
+    };
+    const target = { remoteId: 'm1', fromSelf: true };
+    const react = (world: World, backend: unknown, daemon: DaemonSendClient, emoji: string | null = '👍') =>
+      reactToMessage({
+        accountId: ACCOUNT,
+        to: PEER,
+        target,
+        emoji,
+        frontend: 'window',
+        dbPath: world.dbPath,
+        configPath: world.configPath,
+        writeLogPath: world.writeLogPath,
+        backend: backend as never,
+        daemon,
+      });
+
+    await it('goes to the daemon first and opens no sender of its own', async () => {
+      await withWorld({ grants: GRANTS }, async (world) => {
+        const sender = new FakeSender('own');
+        sender.features.reactions = true;
+        const { backend, opened } = callerBackend(sender, undefined, REACTING);
+        const { client, asked } = fakeClient({
+          v: DAEMON_WIRE_VERSION,
+          kind: 'sent',
+          markdown: false,
+          steps: [],
+        });
+        await react(world, backend, client);
+        expect(asked.length).toBe(1);
+        expect(asked[0].reaction).toStrictEqual({ target, emoji: '👍' });
+        expect(asked[0].text === undefined).toBe(true);
+        expect(opened.length).toBe(0);
+        expect(world.logLines().length).toBe(1);
+        expect(world.logLines()[0]).toMatch(/reaction:m1/);
+      });
+    });
+
+    await it('falls back to its own sender when no daemon holds the account', async () => {
+      await withWorld({ grants: GRANTS }, async (world) => {
+        const sender = new FakeSender('own');
+        sender.features.reactions = true;
+        const { backend, opened } = callerBackend(sender, undefined, REACTING);
+        const { client } = fakeClient(null);
+        await react(world, backend, client, null);
+        expect(opened.length).toBe(1);
+        expect(sender.reacted).toStrictEqual([{ to: PEER, target, emoji: null }]);
+        expect(sender.closed).toBe(1);
+        expect(world.logLines().length).toBe(1);
+      });
+    });
+
+    await it('refuses a backend whose manifest cannot send a reaction, and logs nothing', async () => {
+      await withWorld({ grants: GRANTS }, async (world) => {
+        const sender = new FakeSender('own');
+        const { backend, opened } = callerBackend(sender);
+        const { client, asked } = fakeClient(null);
+        await expect(react(world, backend, client)).rejects.toThrow(/cannot send a reaction/);
+        expect(asked.length).toBe(0);
+        expect(opened.length).toBe(0);
+        expect(world.logLines().length).toBe(0);
+      });
+    });
+  });
+
   await describe('the daemon answering a send', async () => {
     const lines: string[] = [];
     const log = (line: string) => lines.push(line);
@@ -532,6 +608,66 @@ export default async () => {
           message = (err as Error).message;
         }
         expect(message).toMatch(/replyTo/);
+      }
+    });
+
+    await it('reacts through a sender that can react, and answers with no steps', async () => {
+      const sender = new FakeSender('daemon');
+      sender.features.reactions = true;
+      const sessions = new Map([[sessionKey(BACKEND, ACCOUNT), heldSession(sender)]]);
+      const target = { remoteId: 'm1', fromSelf: true };
+      const reply = await handlerFor(sessions)(
+        request({ text: undefined, reaction: { target, emoji: '👍' } }),
+      );
+      expect(reply.kind).toBe('sent');
+      if (reply.kind === 'sent') expect(reply.steps.length).toBe(0);
+      expect(sender.sent.length).toBe(0);
+      expect(sender.reacted).toStrictEqual([{ to: PEER, target, emoji: '👍' }]);
+      expect(sender.closed).toBe(1);
+      const taken = await handlerFor(sessions)(
+        request({ text: undefined, reaction: { target, emoji: null } }),
+      );
+      expect(taken.kind).toBe('sent');
+      expect(sender.reacted[1].emoji).toBe(null);
+    });
+
+    await it('refuses a reaction for a sender that cannot react, and sends nothing', async () => {
+      const sender = new FakeSender('daemon');
+      const sessions = new Map([[sessionKey(BACKEND, ACCOUNT), heldSession(sender)]]);
+      const reply = await handlerFor(sessions)(
+        request({ text: undefined, reaction: { target: { remoteId: 'm1' }, emoji: '👍' } }),
+      );
+      expect(reply.kind).toBe('failed');
+      if (reply.kind === 'failed') expect(reply.message).toMatch(/cannot send a reaction/);
+      expect(sender.reacted.length).toBe(0);
+    });
+
+    await it('parses a reaction and rejects a malformed one or one mixed with a message', async () => {
+      const bare = (over: object) => JSON.stringify({ ...request({ text: undefined }), ...over });
+      const reaction = { target: { remoteId: 'm1', fromSelf: false }, emoji: '❤️' };
+      expect(parseDaemonSendRequest(bare({ reaction })).reaction).toStrictEqual(reaction);
+      expect(parseDaemonSendRequest(bare({ reaction: { ...reaction, emoji: null } })).reaction?.emoji).toBe(
+        null,
+      );
+      const bad: object[] = [
+        { reaction: 'x' },
+        { reaction: { emoji: '👍' } },
+        { reaction: { target: {}, emoji: '👍' } },
+        { reaction: { target: { remoteId: 'm1' }, emoji: '' } },
+        { reaction: { target: { remoteId: 'm1' }, emoji: 5 } },
+        { reaction: { target: { remoteId: 'm1' } } },
+        { reaction, text: 'hi' },
+        { reaction, attachments: [] },
+        { reaction, replyTo: { remoteId: 'm2' } },
+      ];
+      for (const over of bad) {
+        let message = '';
+        try {
+          parseDaemonSendRequest(bare(over));
+        } catch (err) {
+          message = (err as Error).message;
+        }
+        expect(message).toMatch(/reaction/);
       }
     });
 

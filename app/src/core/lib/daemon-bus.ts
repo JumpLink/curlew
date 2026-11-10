@@ -68,7 +68,7 @@ export const DAEMON_FETCH_TIMEOUT_MS = 120_000;
 export const DAEMON_SEND_TIMEOUT_MS = 120_000;
 
 /** The wire version. Bump it when a field stops being optional or changes meaning. */
-export const DAEMON_WIRE_VERSION = 4;
+export const DAEMON_WIRE_VERSION = 5;
 
 /**
  * One send, as the calling process asks for it.
@@ -91,6 +91,8 @@ export interface DaemonSendRequest {
   attachments?: string[];
   /** Chat: the message this one answers. Added in v4, so an older daemon is refused rather than dropping the link. */
   replyTo?: { remoteId: string; clientId?: string; fromSelf?: boolean; text?: string };
+  /** Chat: react to this message instead of sending text. Added in v5, so an older daemon is refused. */
+  reaction?: { target: { remoteId: string; clientId?: string; fromSelf?: boolean; text?: string }; emoji: string | null };
   format?: 'plain' | 'markdown';
 }
 
@@ -238,19 +240,35 @@ export function parseDaemonSendRequest(json: string): DaemonSendRequest {
   if (files !== undefined && (!Array.isArray(files) || files.some((path) => typeof path !== 'string'))) {
     throw new Error('the send request has attachments that are not a list of paths');
   }
-  const replyTo = request.replyTo as { remoteId?: unknown; clientId?: unknown; fromSelf?: unknown; text?: unknown } | undefined;
-  if (replyTo !== undefined && (typeof replyTo !== 'object' || replyTo === null || typeof replyTo.remoteId !== 'string' || replyTo.remoteId === '')) {
-    throw new Error('the send request has a replyTo without a remoteId');
-  }
-  if (
-    replyTo !== undefined &&
-    ((replyTo.clientId !== undefined && typeof replyTo.clientId !== 'string') ||
-      (replyTo.fromSelf !== undefined && typeof replyTo.fromSelf !== 'boolean') ||
-      (replyTo.text !== undefined && typeof replyTo.text !== 'string'))
-  ) {
-    throw new Error('the send request has a replyTo with a malformed clientId, fromSelf or text');
+  checkMessageTarget('replyTo', request.replyTo);
+  const reaction = request.reaction as { target?: unknown; emoji?: unknown } | undefined;
+  if (reaction !== undefined) {
+    if (typeof reaction !== 'object' || reaction === null) throw new Error('the send request has a malformed reaction');
+    checkMessageTarget('reaction target', reaction.target ?? null);
+    if (reaction.emoji !== null && (typeof reaction.emoji !== 'string' || reaction.emoji === '')) {
+      throw new Error('the send request has a reaction whose emoji is neither text nor null');
+    }
+    if (request.text !== undefined || request.imageUrl !== undefined || request.attachments !== undefined || request.replyTo !== undefined) {
+      throw new Error('the send request mixes a reaction with a message');
+    }
   }
   return request as DaemonSendRequest;
+}
+
+/** The message a reply or a reaction points at: an id, and a few optional hints of the right type. */
+function checkMessageTarget(what: string, value: unknown): void {
+  if (value === undefined) return;
+  const target = value as { remoteId?: unknown; clientId?: unknown; fromSelf?: unknown; text?: unknown } | null;
+  if (typeof target !== 'object' || target === null || typeof target.remoteId !== 'string' || target.remoteId === '') {
+    throw new Error(`the send request has a ${what} without a remoteId`);
+  }
+  if (
+    (target.clientId !== undefined && typeof target.clientId !== 'string') ||
+    (target.fromSelf !== undefined && typeof target.fromSelf !== 'boolean') ||
+    (target.text !== undefined && typeof target.text !== 'string')
+  ) {
+    throw new Error(`the send request has a ${what} with a malformed clientId, fromSelf or text`);
+  }
 }
 
 /** One attachment fetch, as the calling process asks for it. */

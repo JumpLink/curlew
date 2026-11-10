@@ -50,6 +50,7 @@ export class MailSender implements MessageSender {
     markdown: false,
     attachments: true,
     replies: false,
+    reactions: false,
   };
   private readonly target: SmtpTarget;
   private readonly permit: SendPermit;

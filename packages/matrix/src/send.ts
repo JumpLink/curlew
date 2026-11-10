@@ -231,6 +231,7 @@ export class MatrixSender implements MessageSender {
     markdown: false,
     attachments: true,
     replies: true,
+    reactions: false,
   };
   private readonly api: MatrixSendApi;
   private readonly permit: SendPermit;
