@@ -3,6 +3,7 @@
 import type { ConversationMessage } from '@curlew/protocol';
 import {
   configPath,
+  getMessagesByRemoteId,
   getRecentMessages,
   type MessageCursor,
   indexDbPath,
@@ -118,11 +119,50 @@ export function loadOlderMessages(
   return loadPage(entry, oldest, dbPath, cfgPath);
 }
 
+/**
+ * The messages that `remoteIds` name in this conversation: what a reply quotes when the quoted
+ * message is older than the page on screen.
+ */
+export function loadQuotedMessages(
+  entry: ListEntry,
+  remoteIds: readonly string[],
+  dbPath = indexDbPath(),
+  cfgPath = configPath(),
+): ShownMessage[] {
+  return read(dbPath, cfgPath, (db, overrides) =>
+    getMessagesByRemoteId(db, entry.conversationIds, remoteIds, {
+      includeBodies: true,
+      maxBodyChars: BODY_LIMIT,
+      overrides,
+    }),
+  );
+}
+
 function loadPage(
   entry: ListEntry,
   before: MessageCursor | undefined,
   dbPath: string,
   cfgPath: string,
+): ShownMessage[] {
+  return read(dbPath, cfgPath, (db, overrides) =>
+    getRecentMessages(db, entry.conversationIds, {
+      limit: PAGE_SIZE,
+      ...(before ? { before } : {}),
+      includeBodies: true,
+      maxBodyChars: BODY_LIMIT,
+      overrides,
+    }),
+  );
+}
+
+/** Reads messages with `fetch` and gives each its attachment parts. */
+function read(
+  dbPath: string,
+  cfgPath: string,
+  fetch: (
+    db: ReturnType<typeof openIndexDb>,
+    overrides: ReturnType<typeof loadConfig>['senders'],
+  ) => ShownMessage[],
 ): ShownMessage[] {
   const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
   try {
@@ -130,13 +170,7 @@ function loadPage(
     const canFetch = new Map(
       backendsList(cfgPath).backends.map((status) => [status.name, status.capabilities.attachmentsRead]),
     );
-    const page: ShownMessage[] = getRecentMessages(db, entry.conversationIds, {
-      limit: PAGE_SIZE,
-      ...(before ? { before } : {}),
-      includeBodies: true,
-      maxBodyChars: BODY_LIMIT,
-      overrides: senders,
-    });
+    const page = fetch(db, senders);
     // The parts are metadata only; the bytes are fetched when the person looks at them.
     for (const message of page) {
       if (!message.hasAttachments || message.notice) continue;

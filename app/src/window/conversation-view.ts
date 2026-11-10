@@ -118,6 +118,7 @@ export function createConversationView(
   onEdit: (message: ShownMessage, handle: MessageHandle<ProtocolChoice>, text: string) => Promise<void>,
   onDelete: (message: ShownMessage, handle: MessageHandle<ProtocolChoice>) => Promise<void>,
   loadOlder: (entry: ListEntry, oldest: MessageCursor) => ShownMessage[],
+  loadQuoted: (entry: ListEntry, remoteIds: readonly string[]) => ShownMessage[],
   openMedia: (source: AttachmentSource, kind: AttachmentKind, album?: readonly AlbumItem[]) => void,
   onRoute: (entry: ListEntry, backend: string | null) => void,
 ): ConversationView {
@@ -143,6 +144,10 @@ export function createConversationView(
   let prepending = false;
   let lastUpper = 0;
   let spinner: Gtk.ListBoxRow | null = null;
+  // Messages that replies quote but that are older than the pages loaded so far, by network id: a
+  // quote shows them, and a click on it pages back until the real row exists.
+  const quoteTargets = new Map<string, ShownMessage>();
+  let jumpTo: string | null = null;
 
   const title = new Adw.WindowTitle({ title: _('Curlew') });
   const header = new Adw.HeaderBar();
@@ -536,7 +541,16 @@ export function createConversationView(
   // the person scrolls on, so this never turns the scroll-to-end off by itself.
   const scrollToMessage = (id: string) => {
     const target = built.get(id)?.row;
-    if (!target) return;
+    if (!target) {
+      // Older than what is loaded: page back until it arrives (see `finish` in loadPage).
+      if (!exhausted) {
+        jumpTo = id;
+        loadPage();
+      } else {
+        overlay.add_toast(new Adw.Toast({ title: _('The quoted message is no longer in the history') }));
+      }
+      return;
+    }
     const { y, height } = target.get_allocation();
     const middle = y + height / 2 - adjustment.get_page_size() / 2;
     const top = Math.max(0, Math.min(middle, adjustment.get_upper() - adjustment.get_page_size()));
@@ -801,7 +815,7 @@ export function createConversationView(
     if (senderBox) bubble.append(senderBox);
     const heading = subject ? subjectHeading(subject) : null;
     if (heading) bubble.append(heading);
-    const quote = quoteOf(message, messages);
+    const quote = quoteOf(message, messages) ?? quoteOf(message, [...quoteTargets.values()]);
     if (quote) bubble.append(padded(quoteBlock(quote)));
     const written = message.bodyText?.trim() || message.notice;
     const full =
@@ -990,6 +1004,28 @@ export function createConversationView(
     }
   };
 
+  // Replies in `page` whose quoted message is in none of the `loaded` ones: read it from the index.
+  const resolveQuotes = (
+    forEntry: ListEntry,
+    page: readonly ShownMessage[],
+    loaded: readonly ShownMessage[],
+  ) => {
+    const have = new Set(loaded.map((message) => message.ref.remoteId));
+    const wanted = new Set<string>();
+    for (const message of page) {
+      const target = message.replyToRemoteId;
+      if (target && !have.has(target) && !quoteTargets.has(target)) wanted.add(target);
+    }
+    if (wanted.size === 0) return;
+    try {
+      for (const target of loadQuoted(forEntry, [...wanted])) {
+        if (target.ref.remoteId) quoteTargets.set(target.ref.remoteId, target);
+      }
+    } catch {
+      // The quote just stays out; opening the chat does not depend on it.
+    }
+  };
+
   const nearTop = () => adjustment.get_value() < adjustment.get_page_size() * 2;
 
   const loadPage = () => {
@@ -1019,6 +1055,16 @@ export function createConversationView(
       loading = false;
       afterLayout(run, () => {
         prepending = false;
+        const wanted = jumpTo;
+        if (wanted !== null) {
+          if (built.has(wanted) || exhausted) {
+            jumpTo = null;
+            scrollToMessage(wanted);
+            return;
+          }
+          loadPage();
+          return;
+        }
         if (nearTop()) loadPage();
       });
     };
@@ -1031,6 +1077,7 @@ export function createConversationView(
         const page = loadOlder(shownEntry, cursorOf(oldest));
         exhausted = page.length < PAGE_SIZE;
         fresh = foldAlbums(newOlder(messages, page));
+        resolveQuotes(shownEntry, fresh, messages);
       } catch (err) {
         // Not retried until the conversation is opened again, or it would loop on every scroll.
         exhausted = true;
@@ -1253,10 +1300,13 @@ export function createConversationView(
       const runs = protocolRunStarts(messages);
       const dividers = protocolDividers(messages);
       const shown = [...messages];
+      quoteTargets.clear();
+      jumpTo = null;
+      resolveQuotes(nextEntry, shown, shown);
       const run = ++generation;
       // A newer show() ends every older build and page load; their callbacks see the new generation.
       ready = false;
-      exhausted = shown.length < PAGE_SIZE;
+      exhausted = nextMessages.length < PAGE_SIZE;
       loading = false;
       prepending = false;
       spinner = null;
