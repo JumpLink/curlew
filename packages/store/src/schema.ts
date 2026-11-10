@@ -22,7 +22,7 @@
 import { type IndexDatabase, withTransaction } from './db.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 
-export const SCHEMA_VERSION = 17;
+export const SCHEMA_VERSION = 18;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -410,6 +410,21 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
        reactor TEXT NOT NULL,
        emoji TEXT NOT NULL,
        PRIMARY KEY (message_id, reactor))`,
+  ],
+  // v18: Matrix and XMPP let one person leave several emoji, so the emoji joins the key; Matrix takes
+  // a reaction back by redacting its event, whose id `event_id` keeps. Delivery networks replace the
+  // whole set of a reactor in the writer, not through the key.
+  18: [
+    `CREATE TABLE message_reactions_v18 (
+       message_id TEXT NOT NULL,
+       reactor TEXT NOT NULL,
+       emoji TEXT NOT NULL,
+       event_id TEXT,
+       PRIMARY KEY (message_id, reactor, emoji))`,
+    `INSERT INTO message_reactions_v18 (message_id, reactor, emoji)
+       SELECT message_id, reactor, emoji FROM message_reactions ORDER BY rowid`,
+    `DROP TABLE message_reactions`,
+    `ALTER TABLE message_reactions_v18 RENAME TO message_reactions`,
   ],
 };
 

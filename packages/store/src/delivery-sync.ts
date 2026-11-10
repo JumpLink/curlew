@@ -841,10 +841,9 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
       );
     }
     for (const { messageId, reactor, emoji } of batch.reactions.values()) {
-      if (emoji === null) {
-        db.prepare('DELETE FROM message_reactions WHERE message_id = ? AND reactor = ?').run(messageId, reactor);
-        continue;
-      }
+      // One reaction per person: the new one replaces whatever the reactor had before.
+      db.prepare('DELETE FROM message_reactions WHERE message_id = ? AND reactor = ?').run(messageId, reactor);
+      if (emoji === null) continue;
       // Only a message that is stored (or written just above): a reaction to an unknown one is dropped.
       db.prepare(
         `INSERT OR REPLACE INTO message_reactions (message_id, reactor, emoji)

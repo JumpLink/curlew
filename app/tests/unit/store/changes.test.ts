@@ -121,7 +121,7 @@ export default async () => {
           value: string;
         };
         expect(version.value).toBe(String(SCHEMA_VERSION));
-        expect(SCHEMA_VERSION).toBe(17);
+        expect(SCHEMA_VERSION).toBe(18);
         const kept = db.prepare('SELECT body FROM conversation_messages WHERE id = ?').get('m-1') as {
           body: string;
         };
@@ -153,6 +153,31 @@ export default async () => {
           `INSERT INTO chat_cursors (conversation_id, backend, account_id, chat_id, kind, room_public)
            VALUES ('c-1', 'matrix', 'acc-1', '!r:example.org', 'group', 1)`,
         ).run();
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('migrates a v17 index to v18, keeping the reactions and letting one person have several emoji', async () => {
+      const db = freshDb();
+      try {
+        db.exec('DROP TABLE message_reactions');
+        db.exec(
+          `CREATE TABLE message_reactions (message_id TEXT NOT NULL, reactor TEXT NOT NULL, emoji TEXT NOT NULL,
+             PRIMARY KEY (message_id, reactor))`,
+        );
+        db.prepare(
+          `INSERT INTO message_reactions (message_id, reactor, emoji) VALUES ('m1', '', '👍')`,
+        ).run();
+        db.prepare(`UPDATE schema_meta SET value = '17' WHERE key = 'schema_version'`).run();
+        expect(() => migrate(db)).not.toThrow();
+        db.prepare(
+          `INSERT INTO message_reactions (message_id, reactor, emoji) VALUES ('m1', '', '❤️')`,
+        ).run();
+        const rows = db.prepare('SELECT emoji FROM message_reactions ORDER BY rowid').all() as Array<{
+          emoji: string;
+        }>;
+        expect(rows.map((r) => r.emoji)).toStrictEqual(['👍', '❤️']);
       } finally {
         db.close();
       }
