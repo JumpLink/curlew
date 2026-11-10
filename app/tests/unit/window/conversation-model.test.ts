@@ -9,6 +9,8 @@ import {
   cursorOf,
   dayStarts,
   defaultProtocolChoice,
+  deleteHandleOf,
+  editHandleOf,
   foldAlbums,
   newOlder,
   quoteOf,
@@ -465,6 +467,75 @@ export default async () => {
       expect(chips(withOwnReaction([{ emoji: '👍', count: 1, own: true }], null))).toBe('');
       expect(chips(withOwnReaction(undefined, '👍'))).toBe('👍1*');
       expect(shown[0].count).toBe(2);
+    });
+  });
+
+  await describe('editing and deleting', async () => {
+    const choices = [
+      { backend: 'signal', accountId: 's' },
+      { backend: 'matrix', accountId: 'm' },
+    ];
+    const chat = (over: Partial<ShownMessage> & { id: string }): ShownMessage =>
+      message({
+        backend: 'signal',
+        presentation: 'bubble',
+        ...over,
+        ref: { accountId: 's', backend: 'signal', remoteId: over.id },
+      });
+
+    await it("offers an edit handle only for the person's own messages on a capable backend", async () => {
+      const own = chat({ id: 'x', fromSelf: true, bodyText: 'Hi' });
+      const handle = editHandleOf(own, choices, (b) => b === 'signal');
+      expect(handle?.target).toStrictEqual({ remoteId: 'x', fromSelf: true, text: 'Hi' });
+      expect(handle?.choice).toBe(choices[0]);
+      expect(editHandleOf(chat({ id: 'y', fromSelf: false }), choices, () => true)).toBe(null);
+      expect(editHandleOf(own, choices, () => false)).toBe(null);
+    });
+
+    await it('offers no edit for a message with a file or without text', async () => {
+      const withFile = chat({ id: 'x', fromSelf: true, hasAttachments: true });
+      expect(editHandleOf(withFile, choices, () => true)).toBe(null);
+      expect(editHandleOf(chat({ id: 'x', fromSelf: true, bodyText: '  ' }), choices, () => true)).toBe(null);
+      expect(deleteHandleOf(withFile, choices, () => true)?.target.remoteId).toBe('x');
+    });
+
+    await it('edit handle carries the client id and trimmed text, like a reply', async () => {
+      const own = chat({ id: 'x', fromSelf: true, clientId: 'mine', bodyText: '  Hello world  ' });
+      expect(editHandleOf(own, choices, () => true)?.target).toStrictEqual({
+        remoteId: 'x',
+        clientId: 'mine',
+        fromSelf: true,
+        text: 'Hello world',
+      });
+    });
+
+    await it('edit handle needs a remote id and a matching carrier choice', async () => {
+      const noRemote = message({
+        id: 'z',
+        backend: 'signal',
+        presentation: 'bubble',
+        fromSelf: true,
+        ref: { accountId: 's', backend: 'signal' },
+      });
+      expect(editHandleOf(noRemote, choices, () => true)).toBe(null);
+      const wrongAccount = message({
+        id: 'x',
+        backend: 'signal',
+        presentation: 'bubble',
+        fromSelf: true,
+        ref: { accountId: 'other', backend: 'signal', remoteId: 'x' },
+      });
+      expect(editHandleOf(wrongAccount, choices, () => true)).toBe(null);
+    });
+
+    await it('delete handle mirrors the edit handle rules', async () => {
+      const own = chat({ id: 'x', fromSelf: true });
+      expect(deleteHandleOf(own, choices, (b) => b === 'signal')?.target).toStrictEqual({
+        remoteId: 'x',
+        fromSelf: true,
+      });
+      expect(deleteHandleOf(chat({ id: 'y', fromSelf: false }), choices, () => true)).toBe(null);
+      expect(deleteHandleOf(own, choices, () => false)).toBe(null);
     });
   });
 };

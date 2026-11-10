@@ -1008,6 +1008,17 @@ export function setOwnReaction(db: IndexDatabase, messageId: string, emoji: stri
   );
 }
 
+/**
+ * Updates a chat message's body and edited timestamp. Returns true when the row existed and was
+ * changed; false when the id was not a chat message (mail bodies live in the FTS table).
+ */
+export function setMessageText(db: IndexDatabase, messageId: string, text: string): boolean {
+  const result = db
+    .prepare("UPDATE conversation_messages SET body = ?, edited_at = ? WHERE id = ? AND remote_seq IS NOT NULL")
+    .run(text, new Date().toISOString(), messageId);
+  return result.changes > 0;
+}
+
 const MESSAGE_COLUMNS = `id, conversation_id, backend, account_id, presentation, sender_participant_id, sender_name,
               sender_kind, sender_address, from_self, sent_at, subject, seen, has_attachments,
               classification, classification_reason, folder_path, uid, remote_id, email_chat, ${seqColumn('remote_seq')}, body,

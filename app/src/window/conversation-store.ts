@@ -9,6 +9,7 @@ import {
   loadAttachments,
   mailReplyTarget,
   openIndexDb,
+  setMessageText,
   setOwnReaction,
   type MailReplyTarget,
 } from '@curlew/store';
@@ -59,11 +60,49 @@ export function reactingBackends(cfgPath = configPath()): Set<string> {
   );
 }
 
+/** The backends whose manifest says they can edit one of the person's own messages. */
+export function editingBackends(cfgPath = configPath()): Set<string> {
+  return new Set(
+    backendsList(cfgPath)
+      .backends.filter((status) => status.capabilities.editsOwn)
+      .map((status) => status.name),
+  );
+}
+
+/** The backends whose manifest says they can delete one of the person's own messages. */
+export function deletingBackends(cfgPath = configPath()): Set<string> {
+  return new Set(
+    backendsList(cfgPath)
+      .backends.filter((status) => status.capabilities.deletesOwn)
+      .map((status) => status.name),
+  );
+}
+
 /** Keeps the person's reaction in the index, so reopening the chat shows it before any sync does. */
 export function recordOwnReaction(messageId: string, emoji: string | null, dbPath = indexDbPath()): void {
   const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
   try {
     setOwnReaction(db, messageId, emoji);
+  } finally {
+    db.close();
+  }
+}
+
+/** Updates a chat message's text in the index, used as a local echo of the person's own edit. */
+export function recordOwnEdit(messageId: string, text: string, dbPath = indexDbPath()): void {
+  const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
+  try {
+    setMessageText(db, messageId, text);
+  } finally {
+    db.close();
+  }
+}
+
+/** Removes a chat message from the index, used as a local echo of the person's own deletion. */
+export function recordOwnDeletion(messageId: string, dbPath = indexDbPath()): void {
+  const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
+  try {
+    db.prepare('DELETE FROM conversation_messages WHERE id = ? AND remote_seq IS NOT NULL').run(messageId);
   } finally {
     db.close();
   }

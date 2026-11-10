@@ -17,6 +17,8 @@ export const XMPP_MANIFEST: BackendManifest = {
     edits: true,
     // Message reactions (XEP-0444), received and sent (1:1 chats without OMEMO).
     reactions: true,
+    editsOwn: false,
+    deletesOwn: false,
     // XMPP has `<thread/>`, but no client shows threads; claiming them would promise a view
     // nobody fills.
     threads: false,

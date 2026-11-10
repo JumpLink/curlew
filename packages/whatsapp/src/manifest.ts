@@ -18,6 +18,8 @@ export const WHATSAPP_MANIFEST: BackendManifest = {
     edits: true,
     // Reactions are read and sent (direct chats; curlew sends to no group).
     reactions: true,
+    editsOwn: false,
+    deletesOwn: false,
     // Replies, but no threads or topics.
     threads: false,
     // Delivered/read/played receipts, per message.

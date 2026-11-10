@@ -27,6 +27,10 @@ import {
   reactingBackends,
   recordOwnReaction,
   replyingBackends,
+  editingBackends,
+  deletingBackends,
+  recordOwnEdit,
+  recordOwnDeletion,
   loadConversationMessages,
   loadMailReplyTarget,
   loadOlderMessages,
@@ -39,6 +43,8 @@ import { presentPreferences } from './preferences-dialog.ts';
 import { loadAgentAccess } from './agent-access-store.ts';
 import { reactToMessage } from '../core/actions/react.ts';
 import { sendMessage } from '../core/actions/send.ts';
+import { editMessage } from '../core/actions/edit.ts';
+import { deleteMessage } from '../core/actions/delete.ts';
 import { configPath } from '@curlew/store';
 
 const COLLAPSE_AT = 'max-width: 720sp';
@@ -165,6 +171,27 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
         frontend: 'window',
       });
       recordOwnReaction(message.id, change.emoji);
+    },
+    (backend) => editingBackends().has(backend),
+    (backend) => deletingBackends().has(backend),
+    async (message, handle, text) => {
+      await editMessage({
+        accountId: handle.choice.accountId,
+        to: handle.choice.target,
+        target: handle.target,
+        text,
+        frontend: 'window',
+      });
+      recordOwnEdit(message.id, text);
+    },
+    async (message, handle) => {
+      await deleteMessage({
+        accountId: handle.choice.accountId,
+        to: handle.choice.target,
+        target: handle.target,
+        frontend: 'window',
+      });
+      recordOwnDeletion(message.id);
     },
     (entry, oldest) => loadOlderMessages(entry, oldest),
     (source, kind, album) => viewer.open(source, kind, album),

@@ -367,6 +367,27 @@ export function reactHandleOf<C extends { backend: string; accountId: string }>(
   return handleOf(message, choices, canReact);
 }
 
+/** What editing `message` would go through, or null when it cannot be edited (see `handleOf`). */
+export function editHandleOf<C extends { backend: string; accountId: string }>(
+  message: ShownMessage,
+  choices: readonly C[],
+  canEdit: (backend: string) => boolean,
+): MessageHandle<C> | null {
+  // Only text is edited: a message with a file keeps its file.
+  return message.fromSelf && !message.hasAttachments && message.bodyText?.trim()
+    ? handleOf(message, choices, canEdit)
+    : null;
+}
+
+/** What deleting `message` would go through, or null when it cannot be deleted (see `handleOf`). */
+export function deleteHandleOf<C extends { backend: string; accountId: string }>(
+  message: ShownMessage,
+  choices: readonly C[],
+  canDelete: (backend: string) => boolean,
+): MessageHandle<C> | null {
+  return message.fromSelf ? handleOf(message, choices, canDelete) : null;
+}
+
 /** The emoji the bubble menu offers first. */
 export const QUICK_REACTIONS: readonly string[] = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 

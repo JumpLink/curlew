@@ -77,6 +77,8 @@ const MANIFEST: BackendManifest = {
     attachments: false,
     attachmentsRead: false,
     replies: false,
+    editsOwn: false,
+    deletesOwn: false,
   },
   syncModel: 'delivery-only',
   native: false,
