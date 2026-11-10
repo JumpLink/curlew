@@ -167,7 +167,7 @@ export interface SendResult {
  * It is taken here and not in the backend because the lease lives in the index, which a backend
  * does not reach: `@curlew/store` must never import a backend, and a backend never opens the index.
  */
-function holdReceiveLease(dbPath: string, backend: string, accountId: string): { release(): void } {
+export function holdReceiveLease(dbPath: string, backend: string, accountId: string): { release(): void } {
   const holder = `send-${process.pid}`;
   const db = openIndex(dbPath);
   let take: LeaseTake;
@@ -393,7 +393,7 @@ export async function sendThrough(
  * a failure from the daemon is NOT null — it is the answer, and it is raised here as the sentence
  * the daemon put in it.
  */
-async function routeThroughDaemon(
+export async function routeThroughDaemon(
   client: DaemonSendClient,
   request: DaemonSendRequest,
 ): Promise<SendOutcome | null> {

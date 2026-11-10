@@ -38,6 +38,7 @@ export class XmppSender implements MessageSender {
     markdown: true,
     attachments: true,
     replies: true,
+    reactions: false,
   };
   private readonly session: GrantedXmppSession;
 

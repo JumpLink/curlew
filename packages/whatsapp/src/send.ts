@@ -114,6 +114,7 @@ export class WhatsAppSender implements MessageSender {
     markdown: false,
     attachments: true,
     replies: true,
+    reactions: false,
   };
   private readonly socket: WaSendSocketHandle;
   private readonly mapper: WhatsAppMapper;

@@ -110,6 +110,19 @@ reaction there is part of the page, not a change event:
 Order: widen the key (schema v18), `ChatPage.reactions` plus the write phase, then Matrix, XMPP,
 Telegram, one PR each.
 
+**Sending.** `SenderFeatures.reactions` says a sender can react; `MessageSender.react(reaction)` is
+present exactly then. A `SendingReaction` is `{to, target: ReplyTarget, emoji | null}`: a new emoji
+replaces the person's earlier one on networks with one reaction per person, `null` takes it back.
+The window calls `reactToMessage` (`actions/react.ts`), which asks the daemon first and else opens
+a sender, like a send, but logs no message and indexes nothing: the echo is the window's own
+store write, and the network's copy comes back through the receive path. The wire grows to v5 with
+`DaemonSendRequest.reaction`, answered with `kind: 'sent'` and no steps; a request mixing a
+reaction with text, an image, files or a reply target is refused. `capabilities.reactions` in the
+manifest is read as "can send" for the window and stays false per backend until its sender exists.
+Signal and WhatsApp groups are refused for sending, so reactions there are direct chats only.
+Order: plumbing, Signal and WhatsApp senders, the UI (emoji row in the bubble menu, tapping the own
+chip takes it back), then Matrix (`m.annotation`, removal needs the own event id), XMPP, Telegram.
+
 ### 5. Edit and delete
 
 Separate specs; edit and delete need the server-archive and delivery-only differences written

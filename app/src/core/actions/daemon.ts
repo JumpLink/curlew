@@ -96,6 +96,7 @@ import {
 } from '../lib/daemon-send-service.ts';
 import { followAccount, type FollowResult } from './follow.ts';
 import { openIndex, rebuildWithAddressBook } from './index-sync.ts';
+import { reactThrough } from './react.ts';
 import { sendThrough } from './send.ts';
 
 /** How often a running daemon looks whether another process moved the journal (ADR 0007 §2). */
@@ -372,6 +373,11 @@ export function createDaemonSendHandler(options: DaemonSendHandlerOptions): Daem
       };
     }
     try {
+      if (request.reaction !== undefined) {
+        await reactThrough(sender, { to: request.to, ...request.reaction }, request.backend);
+        log(`curlew-daemon: reacted for ${who} on its open connection`);
+        return { v: DAEMON_WIRE_VERSION, kind: 'sent', markdown: false, steps: [] };
+      }
       const outcome = await sendThrough(
         sender,
         {
