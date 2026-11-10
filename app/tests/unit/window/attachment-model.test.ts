@@ -10,9 +10,12 @@ import {
   INLINE_IMAGE_MAX_BYTES,
   isGridMedia,
   isOpenable,
+  playbackFraction,
+  playbackLabel,
   previewKey,
   shouldAutoFetch,
   showsInline,
+  showsPlayer,
   showsPoster,
   shownAttachments,
   tileAction,
@@ -248,6 +251,31 @@ export default async () => {
       expect(previewKey(ref, '', 0)).toBe(previewKey({ ...ref }, '', 0));
       expect(previewKey(ref, '', 0) === previewKey(ref, '', 1)).toBe(false);
       expect(previewKey(ref, '', 0) === previewKey({ ...ref, remoteId: 'msg-43' }, '', 0)).toBe(false);
+    });
+  });
+  await describe('the player', async () => {
+    await it('shows a player for fetchable voice notes and audio, not for other parts', async () => {
+      const chat = { section: '', fetchable: true, backendCanFetch: true } as const;
+      expect(showsPlayer(part({ kind: 'voice', ...chat }) as never)).toBe(true);
+      expect(showsPlayer(part({ filename: 'song.mp3', mimeType: 'audio/mpeg', ...chat }) as never)).toBe(
+        true,
+      );
+      expect(showsPlayer(part({ kind: 'voice', section: '' }) as never)).toBe(false);
+      expect(showsPlayer(part({ kind: 'video', ...chat }) as never)).toBe(false);
+    });
+
+    await it('writes position and length', async () => {
+      expect(playbackLabel(7_000, 31_000)).toBe('0:07 / 0:31');
+      expect(playbackLabel(0, 31_000)).toBe('0:00 / 0:31');
+      expect(playbackLabel(7_000, null)).toBe('0:07');
+    });
+
+    await it('keeps the seek fraction between 0 and 1', async () => {
+      expect(playbackFraction(15_000, 30_000)).toBe(0.5);
+      expect(playbackFraction(40_000, 30_000)).toBe(1);
+      expect(playbackFraction(-5, 30_000)).toBe(0);
+      expect(playbackFraction(5_000, null)).toBe(0);
+      expect(playbackFraction(5_000, 0)).toBe(0);
     });
   });
 };

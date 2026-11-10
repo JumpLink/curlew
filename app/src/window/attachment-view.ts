@@ -9,6 +9,7 @@ import Pango from 'gi://Pango?version=1.0';
 import { _, fmt, _n } from '@curlew/protocol';
 import type { MessageRef } from '@curlew/protocol';
 
+import { audioPlayer } from './audio-player.ts';
 import {
   type AttachmentKind,
   attachmentKind,
@@ -20,6 +21,7 @@ import {
   isGridMedia,
   isOpenable,
   showsInline,
+  showsPlayer,
   showsPoster,
   tileAction,
 } from './attachment-model.ts';
@@ -405,7 +407,9 @@ export function attachmentList(
         ? picture(source, handlers)
         : showsPoster(info)
           ? poster(source, handlers)
-          : tile(source, handlers),
+          : showsPlayer(info)
+            ? audioPlayer(source, handlers.toast)
+            : tile(source, handlers),
     );
   }
   if (generic) list.append(genericTile());

@@ -34,6 +34,28 @@ function demoClip(dir: string): Buffer | null {
   return run.status === 0 ? readFileSync(out) : null;
 }
 
+/** Seven seconds of a sine tone as Ogg Opus, or null when ffmpeg or its Opus encoder is missing. */
+function demoVoice(dir: string): Buffer | null {
+  const out = join(dir, 'voice.ogg');
+  const run = spawnSync(
+    'ffmpeg',
+    [
+      '-loglevel',
+      'error',
+      '-y',
+      '-f',
+      'lavfi',
+      '-i',
+      'sine=frequency=330:duration=7',
+      '-c:a',
+      'libopus',
+      out,
+    ],
+    { stdio: 'ignore' },
+  );
+  return run.status === 0 ? readFileSync(out) : null;
+}
+
 /** A harbour at dusk: sky, sun, sea and a lighthouse, drawn pixel by pixel. */
 function harbourScene(width: number, height: number): Buffer {
   const horizon = Math.round(height * 0.62);
@@ -428,6 +450,42 @@ try {
       const cache = join(dir, 'previews', createHash('sha256').update(key).digest('hex'));
       mkdirSync(cache, { recursive: true });
       writeFileSync(join(cache, 'harbour.mp4'), clip);
+    }
+  }
+
+  // A voice note in the same chat; the player shows its length and plays the cached tone.
+  {
+    const voice = demoVoice(dir);
+    if (voice) {
+      const n = 610;
+      const at = new Date(now - 90_000).toISOString();
+      message.run(
+        `m${n}`,
+        'c16',
+        'telegram',
+        'telegram-demo1',
+        'p-alex',
+        0,
+        at,
+        null,
+        `r${n}`,
+        '',
+        0,
+        null,
+        null,
+        n,
+      );
+      db.prepare(
+        'UPDATE conversation_messages SET sender_name = ?, sender_kind = ?, sender_address = ?, has_attachments = 1 WHERE id = ?',
+      ).run('Alex Weber', 'telegram', '424242', `m${n}`);
+      db.prepare(
+        `INSERT OR REPLACE INTO message_attachments (message_id, idx, filename, mime_type, size, kind, duration_ms, handle)
+         VALUES (?, 0, 'voice-note.ogg', 'audio/ogg', ?, 'voice', 7000, 'demo-handle')`,
+      ).run(`m${n}`, voice.length);
+      const key = ['telegram-demo1', '', '', `r${n}`, '0'].join('\u0000');
+      const cache = join(dir, 'previews', createHash('sha256').update(key).digest('hex'));
+      mkdirSync(cache, { recursive: true });
+      writeFileSync(join(cache, 'voice-note.ogg'), voice);
     }
   }
 
