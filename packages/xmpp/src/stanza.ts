@@ -397,6 +397,22 @@ export interface ChatMessageSpec {
   body: string;
   /** An https URL to attach as an out-of-band reference (XEP-0066): clients show it inline. */
   oobUrl?: string;
+  /** The message this one answers (XEP-0461). */
+  reply?: ReplyRef;
+}
+
+/** XEP-0461: the id the answered message was sent with, and the JID of its author. */
+export interface ReplyRef {
+  id: string;
+  author: string;
+}
+
+/**
+ * The `<reply/>` element. It stays outside an OMEMO payload (the peer's client reads it before it
+ * decrypts), so the server sees that a reply happened and to which id — never what was said.
+ */
+export function replyElement(reply: ReplyRef) {
+  return xml('reply', { xmlns: NS.reply, to: reply.author, id: reply.id });
 }
 
 /**
@@ -431,6 +447,7 @@ export function chatMessage(spec: ChatMessageSpec) {
     { type: 'chat', to: spec.to, id: spec.id },
     xml('body', {}, spec.body),
     ...(spec.oobUrl ? [xml('x', { xmlns: NS.oob }, xml('url', {}, spec.oobUrl))] : []),
+    ...(spec.reply ? [replyElement(spec.reply)] : []),
     ...chatEnvelope(spec.id),
   );
 }

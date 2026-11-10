@@ -8,9 +8,10 @@
 
 import { readFileSync } from 'node:fs';
 
-import type { MessageSender, SenderFeatures, SendingMessage, SentMessage } from '@curlew/protocol';
+import type { MessageSender, ReplyTarget, SenderFeatures, SendingMessage, SentMessage } from '@curlew/protocol';
 import { inspectSendFiles } from '@curlew/store';
 import type { GrantedXmppSession, SentChat } from './granted.ts';
+import { MESSAGES } from './messages.ts';
 
 function sent(sentChat: SentChat): SentMessage {
   return {
@@ -36,7 +37,7 @@ export class XmppSender implements MessageSender {
   readonly features: SenderFeatures = {
     markdown: true,
     attachments: true,
-    replies: false,
+    replies: true,
   };
   private readonly session: GrantedXmppSession;
 
@@ -54,7 +55,11 @@ export class XmppSender implements MessageSender {
       perFile: XMPP_MAX_FILE_BYTES,
       count: XMPP_MAX_FILES,
     });
-    if (files.length === 0) return sent(await this.session.send(message.to, message.text));
+    const answers = message.replyTo && this.answers(message.replyTo);
+    if (answers && files.length > 0 && message.text.trim().length === 0) {
+      throw new Error(MESSAGES.replyNeedsText);
+    }
+    if (files.length === 0) return sent(await this.session.send(message.to, message.text, undefined, answers));
     let first: SentMessage | undefined;
     for (const file of files) {
       const out = sent(
@@ -66,8 +71,14 @@ export class XmppSender implements MessageSender {
       );
       first ??= { ...out, attachments: files.map((f) => ({ filename: f.filename, size: f.size })) };
     }
-    if (message.text.trim().length > 0) await this.session.send(message.to, message.text);
+    if (message.text.trim().length > 0) await this.session.send(message.to, message.text, undefined, answers);
     return first!;
+  }
+
+  /** The id a reply names is the one the sender gave the message; the archive's id is no use to the peer. */
+  private answers(target: ReplyTarget): { id: string; fromSelf: boolean } {
+    if (!target.clientId) throw new Error(MESSAGES.replyNoId);
+    return { id: target.clientId, fromSelf: target.fromSelf === true };
   }
 
   async sendImage(to: string, url: string): Promise<SentMessage> {

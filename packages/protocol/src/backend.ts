@@ -769,10 +769,17 @@ export interface SendingAttachment {
   path: string;
 }
 
-/** The message a reply answers. Grows with the protocols that need more than the id (Signal, WhatsApp). */
+/** The message a reply answers. Grows with the protocols that need more than the id (WhatsApp). */
 export interface ReplyTarget {
   /** The network's id of the message, as the index holds it (`ChatMessage.remoteId`). */
   remoteId: string;
+  /**
+   * The id its sender gave it (`ChatMessage.clientId`), for a network whose reply names that
+   * rather than the archive's id (XMPP). Absent when the index does not hold one.
+   */
+  clientId?: string;
+  /** Whether the person wrote the message themselves: the author a reply names (XMPP). */
+  fromSelf?: boolean;
 }
 
 /** One message handed to a sender. */

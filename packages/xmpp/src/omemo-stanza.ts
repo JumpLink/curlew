@@ -26,7 +26,7 @@ import {
   type DeviceId,
   type PublishedPreKey,
 } from '@curlew/omemo';
-import { chatEnvelope, NS, type XmlElement } from './stanza.ts';
+import { chatEnvelope, NS, type ReplyRef, replyElement, type XmlElement } from './stanza.ts';
 
 /** The PEP node every device of an account publishes its device id into. */
 export const DEVICE_LIST_NODE = `${NS.omemoLegacy}.devicelist`;
@@ -320,6 +320,8 @@ export interface EncryptedMessageSpec {
    * message with no content to announce (see {@link omemoHeartbeat}).
    */
   fallback?: string;
+  /** The message this one answers (XEP-0461), outside the payload. */
+  reply?: ReplyRef;
 }
 
 /**
@@ -336,6 +338,7 @@ export function encryptedChatMessage(spec: EncryptedMessageSpec) {
     { type: 'chat', to: spec.to, id: spec.id },
     ...(spec.fallback === undefined ? [] : [xml('body', {}, spec.fallback)]),
     encryptedElement(spec.encrypted),
+    ...(spec.reply ? [replyElement(spec.reply)] : []),
     xml('encryption', { xmlns: NS.eme, namespace: NS.omemoLegacy, name: 'OMEMO' }),
     ...chatEnvelope(spec.id),
   );

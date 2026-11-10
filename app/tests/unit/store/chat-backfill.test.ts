@@ -226,6 +226,20 @@ export default async () => {
       }
     });
 
+    await it('keeps the id the sender gave a message, for a reply to name', async () => {
+      const db = freshDb();
+      try {
+        const backend = backendWith('1001', false);
+        backend.chats.get('1001')!.messages[0].clientId = 'origin-1';
+        await syncChats(db, backend, NOW);
+        const id = chatConversationId('telegram', ACCOUNT, '1001');
+        const shown = getRecentMessages(db, [id], { limit: 100 });
+        expect(shown.map((m) => m.clientId ?? null)).toStrictEqual(['origin-1', null, null, null]);
+      } finally {
+        db.close();
+      }
+    });
+
     await it('leaves a described message its descriptors and asks nothing once its album is known', async () => {
       const db = freshDb();
       try {

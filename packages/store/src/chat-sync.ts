@@ -443,7 +443,7 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
     `INSERT OR REPLACE INTO conversation_messages
        (id, conversation_id, backend, account_id, presentation, sender_name, sender_kind,
         sender_address, from_self, sent_at, has_attachments, classification, classification_reason,
-        remote_id, body, remote_seq, sender_peer_id, edited_at, reply_to_remote_id, thread_remote_id, reply_to_client_id, group_id)`,
+        remote_id, body, remote_seq, sender_peer_id, edited_at, reply_to_remote_id, thread_remote_id, reply_to_client_id, group_id, client_id)`,
     batch.messages,
   );
   insertMany(
@@ -572,6 +572,7 @@ function messageRow(
     m.replyToClientId ?? null,
     // '' = this message was looked at and is no album member (see the v15 upgrade).
     m.groupId ?? '',
+    m.clientId ?? null,
   ];
 }
 

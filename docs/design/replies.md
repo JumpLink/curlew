@@ -43,7 +43,7 @@ hides the entry. Built in two steps: the backends first, then the window.
 |---|---|---|
 | Matrix | `m.relates_to` → `m.in_reply_to` → `event_id` on the `m.room.message`; on the first file only | built |
 | Telegram | mtcute `replyTo` message number of the same chat (`<chat>/<number>`); a target of another chat is refused; first file only | built |
-| XMPP | XEP-0461 `<reply to id>` | to do |
+| XMPP | XEP-0461 `<reply to id>` outside the OMEMO payload; `id` is the sender-given id (`conversation_messages.client_id`, schema v16), `to` the author's JID; a reply to a row without `client_id` is refused until a full scan of the chat adds it; files alone cannot carry a reply | built |
 | Signal | `DataMessage.quote` with the sent timestamp and the author's ACI (both string and binary form), in the recipient copies and the transcript; no quoted text; direct chats only | built |
 | WhatsApp | `contextInfo.quotedMessage` with key and content | to do |
 | Mail | threads through `inReplyTo`/`References` already, outside this flag | — |

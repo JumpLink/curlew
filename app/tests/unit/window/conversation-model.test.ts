@@ -360,13 +360,22 @@ export default async () => {
         choices,
         can,
       );
-      expect(draft?.remoteId).toBe('$1');
+      expect(draft?.target).toStrictEqual({ remoteId: '$1' });
       expect(draft?.choice).toBe(choices[0]);
       expect(draft?.author).toBe('Alex');
       expect(draft?.excerpt).toBe('Treffen wir uns?');
       expect(replyDraftOf(chat({ id: '$2', fromSelf: true, bodyText: 'Ja' }), choices, can)?.author).toBe(
         'You',
       );
+    });
+
+    await it('carries the sender-given id and whether the person wrote the message', async () => {
+      const own = chat({ id: '$5', fromSelf: true, clientId: 'mine', bodyText: 'Ja' });
+      expect(replyDraftOf(own, choices, can)?.target).toStrictEqual({
+        remoteId: '$5',
+        clientId: 'mine',
+        fromSelf: true,
+      });
     });
 
     await it('offers nothing for a backend that cannot reply, a message without a network id or a foreign account', async () => {

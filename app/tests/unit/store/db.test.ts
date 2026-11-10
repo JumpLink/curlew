@@ -155,7 +155,6 @@ export default async () => {
 
         migrate(db);
 
-        expect(SCHEMA_VERSION).toBe(15);
         const after = db
           .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'message_attachments'")
           .get() as { name: string };
@@ -183,6 +182,21 @@ export default async () => {
           value: string;
         };
         expect(Number(version.value)).toBe(SCHEMA_VERSION);
+      });
+    });
+
+    await it('adds conversation_messages.client_id when migrating from v15 to v16', async () => {
+      withDb((db) => {
+        migrate(db);
+        db.exec('ALTER TABLE conversation_messages DROP COLUMN client_id');
+        db.prepare("INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('schema_version', '15')").run();
+
+        migrate(db);
+
+        const columns = (
+          db.prepare('PRAGMA table_info(conversation_messages)').all() as Array<{ name: string }>
+        ).map((c) => c.name);
+        expect(columns.includes('client_id')).toBe(true);
       });
     });
 
