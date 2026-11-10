@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 13:18+0100\n"
+"POT-Creation-Date: 2026-11-10 13:34+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2158,48 +2158,54 @@ msgid "Yesterday"
 msgstr "Gestern"
 
 #: app/src/window/conversation-list-model.ts:203
-#: app/src/window/conversation-list-model.ts:488
+#: app/src/window/conversation-list-model.ts:502
 msgid "Note to self"
 msgstr "Notiz an mich"
 
-#: app/src/window/conversation-list-model.ts:211
+#: app/src/window/conversation-list-model.ts:221
+msgid "Unnamed group · {count} member"
+msgid_plural "Unnamed group · {count} members"
+msgstr[0] "Unbenannte Gruppe · {count} Mitglied"
+msgstr[1] "Unbenannte Gruppe · {count} Mitglieder"
+
+#: app/src/window/conversation-list-model.ts:225
 msgid "Unnamed conversation"
 msgstr "Unbenannte Unterhaltung"
 
-#: app/src/window/conversation-list-model.ts:283
+#: app/src/window/conversation-list-model.ts:297
 msgid "Only via {protocol}, which has no address for this person"
 msgstr "Nur über {protocol}, das keine Adresse für diese Person hat"
 
-#: app/src/window/conversation-list-model.ts:287
+#: app/src/window/conversation-list-model.ts:301
 msgid "Encrypted rooms are not supported yet"
 msgstr "Verschlüsselte Räume werden noch nicht unterstützt"
 
-#: app/src/window/conversation-list-model.ts:342
-#: app/src/window/conversation-list-model.ts:355
+#: app/src/window/conversation-list-model.ts:356
+#: app/src/window/conversation-list-model.ts:369
 msgid "Only via {protocol}"
 msgstr "Nur über {protocol}"
 
-#: app/src/window/conversation-list-model.ts:346
+#: app/src/window/conversation-list-model.ts:360
 msgid "Automatic"
 msgstr "Automatisch"
 
-#: app/src/window/conversation-list-model.ts:385
+#: app/src/window/conversation-list-model.ts:399
 msgid "Public room · {count} member"
 msgid_plural "Public room · {count} members"
 msgstr[0] "Öffentlicher Raum · {count} Mitglied"
 msgstr[1] "Öffentlicher Raum · {count} Mitglieder"
 
-#: app/src/window/conversation-list-model.ts:386
+#: app/src/window/conversation-list-model.ts:400
 msgid "Room · {count} member"
 msgid_plural "Room · {count} members"
 msgstr[0] "Raum · {count} Mitglied"
 msgstr[1] "Raum · {count} Mitglieder"
 
-#: app/src/window/conversation-list-model.ts:579
+#: app/src/window/conversation-list-model.ts:593
 msgid "People"
 msgstr "Personen"
 
-#: app/src/window/conversation-list-model.ts:580
+#: app/src/window/conversation-list-model.ts:594
 msgid "Groups"
 msgstr "Gruppen"
 
@@ -3434,7 +3440,8 @@ msgstr ""
 
 #: packages/xmpp/src/messages.ts:24
 msgid "a reply needs a text; files alone cannot carry one"
-msgstr "eine Antwort braucht einen Text; Dateien allein können sie nicht tragen"
+msgstr ""
+"eine Antwort braucht einen Text; Dateien allein können sie nicht tragen"
 
 #: packages/xmpp/src/messages.ts:27
 msgid "there is nothing to send: the text is empty"
