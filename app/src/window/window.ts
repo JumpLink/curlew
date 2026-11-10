@@ -24,6 +24,7 @@ import { createConversationList } from './conversation-list.ts';
 import { composeMailReply } from './conversation-model.ts';
 import {
   attachingBackends,
+  replyingBackends,
   loadConversationMessages,
   loadMailReplyTarget,
   loadOlderMessages,
@@ -102,7 +103,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   let currentEntry: ListEntry | null = null;
   let currentMessages: ConversationMessage[] = [];
   const conversation = createConversationView(
-    async (text, choice, files) => {
+    async (text, choice, files, replyTo) => {
       const entry = currentEntry;
       if (!entry) throw new Error(_('This conversation has no recipient address.'));
       // The carrier's own last message: a mail reply must not thread onto a Signal note.
@@ -118,6 +119,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
         text,
         frontend: 'window',
         ...(files.length > 0 ? { attachments: files.map((f) => f.path) } : {}),
+        ...(replyTo ? { replyTo } : {}),
         ...mail,
       });
       return {
@@ -136,11 +138,18 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
         emailChat: mail !== null,
         classification: 'conversational',
         classificationReason: 'self',
-        ref: { accountId: choice.accountId, backend: choice.backend },
+        // A chat network's id for the message is what the next reply to it points at.
+        ref: {
+          accountId: choice.accountId,
+          backend: choice.backend,
+          ...(mail === null ? { remoteId: result.originId } : {}),
+        },
+        ...(replyTo ? { replyToRemoteId: replyTo.remoteId } : {}),
         bodyText: text || pickedNames(files),
       };
     },
     (backend) => attachingBackends().has(backend),
+    (backend) => replyingBackends().has(backend),
     (entry, oldest) => loadOlderMessages(entry, oldest),
     (source, kind, album) => viewer.open(source, kind, album),
     (entry, backend) => {

@@ -43,6 +43,7 @@ const CAPABILITIES: BackendCapabilities = {
   folders: false,
   attachments: false,
   attachmentsRead: true,
+  replies: false,
 };
 
 function fakeSession(): ChatSession {

@@ -51,6 +51,8 @@ export interface BackendCapabilities {
   attachments: boolean;
   /** The backend can fetch received attachments back from the network. */
   attachmentsRead: boolean;
+  /** Messages can be sent as an answer to one message (`SendingMessage.replyTo`). */
+  replies: boolean;
 }
 
 export const CAPABILITY_NAMES: ReadonlyArray<keyof BackendCapabilities> = [
@@ -64,6 +66,7 @@ export const CAPABILITY_NAMES: ReadonlyArray<keyof BackendCapabilities> = [
   'folders',
   'attachments',
   'attachmentsRead',
+  'replies',
 ];
 
 /** The kinds of address a participant can be reached at. */

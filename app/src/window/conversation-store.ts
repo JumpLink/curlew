@@ -40,6 +40,15 @@ export function attachingBackends(cfgPath = configPath()): Set<string> {
   );
 }
 
+/** The backends whose sender can answer one message: only those get a "Reply" entry. */
+export function replyingBackends(cfgPath = configPath()): Set<string> {
+  return new Set(
+    backendsList(cfgPath)
+      .backends.filter((status) => status.capabilities.replies)
+      .map((status) => status.name),
+  );
+}
+
 /** The page of messages just before `oldest`, the oldest one on screen. */
 export function loadOlderMessages(
   entry: ListEntry,

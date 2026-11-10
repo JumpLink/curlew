@@ -30,6 +30,7 @@ export const WHATSAPP_MANIFEST: BackendManifest = {
     // `openAttachments` downloads and decrypts a file a person tapped; the sender uploads one.
     attachments: true,
     attachmentsRead: true,
+    replies: false,
   },
   // No server archive: a message is gone from WhatsApp's servers once a device acknowledged it.
   // What curlew stores is the only copy (`state`); the auth state is `secret`.

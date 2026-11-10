@@ -1,6 +1,6 @@
 # Replies, quotes and reactions
 
-Status: piece 1 (show the quoted message) built. Reference: Fractal, Flare and Telegram show
+Status: pieces 1 to 3 (quote, jump, send a reply for Matrix and Telegram) built. Reference: Fractal, Flare and Telegram show
 the message a reply points at as a small block above the reply's text. The index already stores
 the pointer (`reply_to_remote_id`, `reply_to_client_id`) for Telegram, Matrix, XMPP, Signal and
 WhatsApp, and nothing in the window reads it.
@@ -49,6 +49,15 @@ hides the entry. Built in two steps: the backends first, then the window.
 | Mail | threads through `inReplyTo`/`References` already, outside this flag | — |
 
 Matrix needs no fallback text: the spec dropped reply fallbacks in v1.13.
+
+The window part (built): `replyTo` travels through `SendParams`, `SendRequest` and the daemon
+request (`DAEMON_WIRE_VERSION` 4, so an older daemon is refused with a restart hint rather than
+dropping the link). The window needs to know whether a backend replies without opening a sender,
+so the manifest carries `capabilities.replies` beside `features.replies`; the sender flag stays
+the runtime gate. A reply always goes through the carrier of the message it answers (a link is
+inside one network), and picking another carrier drops the reply. The bubble menu offers "Reply"
+and "Copy"; Copy stays so touch users keep a way to copy text. The sent message is echoed with
+its network id, so it shows its quote and can be answered too.
 
 ### 4. Reactions, then edit and delete
 

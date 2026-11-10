@@ -34,6 +34,7 @@ export const MATRIX_MANIFEST: BackendManifest = {
     // tapped, and a send uploads one to the media repository and posts it as `m.image`/`m.file`.
     attachments: true,
     attachmentsRead: true,
+    replies: true,
   },
   // The homeserver keeps the room history: the index is rebuildable (`derived`). The crypto
   // store (the device's Olm account and the room keys it received) is not — it is `secret`,
