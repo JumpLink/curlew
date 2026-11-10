@@ -321,6 +321,41 @@ export default async () => {
       });
     });
 
+    await it('reacts to a message by its key, takes the reaction back, and gates the chat', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const permit: SendPermit = { account: rig.accountId, addresses: [ANNA_LID] };
+        const sender = await rig.backend.openSender(rig.accountId, permit);
+        expect(sender.features.reactions).toBe(true);
+        try {
+          await sender.react?.({ to: ANNA_LID, target: { remoteId: 'WAMSG1' }, emoji: '👍' });
+          await sender.react?.({ to: ANNA_LID, target: { remoteId: 'WAMSG2', fromSelf: true }, emoji: null });
+          const [socket] = rig.senders;
+          expect(socket.reactions.map((r) => r.reaction)).toStrictEqual([
+            { id: 'WAMSG1', fromMe: false, emoji: '👍' },
+            { id: 'WAMSG2', fromMe: true, emoji: '' },
+          ]);
+          expect(socket.sent.length + socket.files.length).toBe(0);
+          expect(
+            (
+              await reasonOf(
+                sender.react?.({ to: BEN_LID, target: { remoteId: 'x' }, emoji: '👍' }) as Promise<unknown>,
+              )
+            ).includes('is not granted'),
+          ).toBe(true);
+          expect(
+            (
+              await reasonOf(
+                sender.react?.({ to: GROUP, target: { remoteId: 'x' }, emoji: '👍' }) as Promise<unknown>,
+              )
+            ).includes('group'),
+          ).toBe(true);
+          expect(socket.reactions.length).toBe(2);
+        } finally {
+          await sender.close();
+        }
+      });
+    });
+
     await it('refuses a reply that carries files, sending nothing', async () => {
       await withRig(GRANTED, async (rig) => {
         const doc = join(rig.dir, 'notes.pdf');

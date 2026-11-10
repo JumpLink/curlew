@@ -25,6 +25,8 @@ export interface ReactParams {
   target: ReplyTarget;
   /** The emoji to react with; null takes the person's reaction back. */
   emoji: string | null;
+  /** With `emoji: null`: the emoji being taken back (see `SendingReaction.previous`). */
+  previous?: string;
   frontend: WriteFrontend;
   dbPath?: string;
   configPath?: string;
@@ -38,7 +40,7 @@ export interface ReactParams {
 /** Put one reaction on the wire through an open handle. Shared by the direct path and the daemon. */
 export async function reactThrough(
   sender: MessageSender,
-  request: { to: string; target: ReplyTarget; emoji: string | null },
+  request: { to: string; target: ReplyTarget; emoji: string | null; previous?: string },
   backendName: string,
 ): Promise<void> {
   if (!sender.features.reactions || sender.react === undefined) {
@@ -63,7 +65,12 @@ export async function reactToMessage(params: ReactParams): Promise<void> {
   }
   const capability = `${backend.manifest.name}.send` as Capability;
   const permit: SendPermit = { account: params.accountId, addresses: [params.to] };
-  const request = { to: params.to, target: params.target, emoji: params.emoji };
+  const request = {
+    to: params.to,
+    target: params.target,
+    emoji: params.emoji,
+    ...(params.previous === undefined ? {} : { previous: params.previous }),
+  };
 
   const routed = backend.manifest.sendSharesReceiveState
     ? await routeThroughDaemon(params.daemon ?? gioDaemonSendClient(), {
@@ -72,7 +79,11 @@ export async function reactToMessage(params: ReactParams): Promise<void> {
         account: params.accountId,
         capability,
         to: params.to,
-        reaction: { target: params.target, emoji: params.emoji },
+        reaction: {
+          target: params.target,
+          emoji: params.emoji,
+          ...(request.previous === undefined ? {} : { previous: request.previous }),
+        },
       })
     : null;
   if (routed === null) {

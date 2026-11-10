@@ -661,6 +661,50 @@ export default async () => {
       });
     });
 
+    await it('reacts in the copies and in the transcript, and names the emoji it takes back', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [ALICE_ACI],
+        });
+        expect(sender.features.reactions).toBe(true);
+        const target = { remoteId: `${ALICE_ACI.toUpperCase()}:1700000000123` };
+        try {
+          await sender.react?.({ to: ALICE_ACI, target, emoji: '👍' });
+          const first = rig.server.delivered.length;
+          expect(first).toBe(4);
+          const reactions = [
+            ...rig.server.delivered.slice(0, 2).map((copy) => copy.content.dataMessage),
+            ...rig.server.delivered.slice(2).map((copy) => copy.content.syncMessage?.sent?.message),
+          ].map((data) => data?.reaction);
+          for (const reaction of reactions) {
+            expect(reaction?.emoji).toBe('👍');
+            expect(reaction?.remove).toBe(false);
+            expect(reaction?.targetAuthorAci).toBe(ALICE_ACI);
+            expect(reaction?.targetSentTimestamp).toBe(1700000000123);
+          }
+          // A reaction is no text message: it carries no body.
+          expect(rig.server.delivered[0].content.dataMessage?.body ?? null).toBe(null);
+
+          await sender.react?.({ to: ALICE_ACI, target, emoji: null, previous: '👍' });
+          const removal = rig.server.delivered[first].content.dataMessage?.reaction;
+          expect(removal?.emoji).toBe('👍');
+          expect(removal?.remove).toBe(true);
+
+          // Signal drops a removal that does not name the emoji, so curlew refuses to send one.
+          const before = rig.server.delivered.length;
+          expect(
+            (
+              await reasonOf(sender.react?.({ to: ALICE_ACI, target, emoji: null }) as Promise<unknown>)
+            ).includes('needs the emoji'),
+          ).toBe(true);
+          expect(rig.server.delivered.length).toBe(before);
+        } finally {
+          await sender.close();
+        }
+      });
+    });
+
     await it('refuses a reply to something without a Signal id, sending nothing', async () => {
       await withRig(GRANTED, async (rig) => {
         const sender = await rig.backend.openSender(rig.accountId, {

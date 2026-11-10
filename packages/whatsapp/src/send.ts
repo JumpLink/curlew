@@ -40,6 +40,7 @@ import type {
   DeliveryEvent,
   MessageSender,
   SendingMessage,
+  SendingReaction,
   SendPermit,
   SenderFeatures,
   SentMessage,
@@ -114,7 +115,7 @@ export class WhatsAppSender implements MessageSender {
     markdown: false,
     attachments: true,
     replies: true,
-    reactions: false,
+    reactions: true,
   };
   private readonly socket: WaSendSocketHandle;
   private readonly mapper: WhatsAppMapper;
@@ -150,6 +151,27 @@ export class WhatsAppSender implements MessageSender {
         : subscribeMapped(this.socket.ev, this.mapper, {
             events: (mapped) => this.record(mapped),
           });
+  }
+
+  async react(reaction: SendingReaction): Promise<void> {
+    const to = this.recipient(reaction.to);
+    if (reaction.emoji === '') throw new Error(_('a reaction needs an emoji, or null to take it back'));
+    if (this.journalError !== null) {
+      throw new Error(
+        fmt(
+          _(
+            'a message that arrived while curlew was connected could not be written down ({reason}) — nothing was sent',
+          ),
+          { reason: this.journalError },
+        ),
+      );
+    }
+    await this.socket.ready();
+    await this.socket.sendReaction(to, {
+      id: reaction.target.remoteId,
+      fromMe: reaction.target.fromSelf === true,
+      emoji: reaction.emoji ?? '',
+    });
   }
 
   async send(message: SendingMessage): Promise<SentMessage> {

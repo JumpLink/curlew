@@ -16,8 +16,8 @@ export const WHATSAPP_MANIFEST: BackendManifest = {
   // reads, so none of this is a promise that curlew can SEND it.
   capabilities: {
     edits: true,
-    // The network has reactions; curlew shows the ones it receives but cannot send one yet.
-    reactions: false,
+    // Reactions are read and sent (direct chats; curlew sends to no group).
+    reactions: true,
     // Replies, but no threads or topics.
     threads: false,
     // Delivered/read/played receipts, per message.
