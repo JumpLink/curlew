@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- A Signal group whose name is not known yet no longer shows its members' IDs as the title; it reads *Unnamed group · 5 members*.
 - Files under `/tmp` could not be sent through the daemon ("cannot be read"), because its unit gave it a private `/tmp`. The unit no longer does; `curlew setup` writes the new one, an existing unit needs the line `PrivateTmp=true` removed.
 - Pictures and files of chat messages synced before 0.2 showed only a blank *Attachment* tile.
   The sync now walks the history of Telegram and Matrix chats again, ten chats and five pages

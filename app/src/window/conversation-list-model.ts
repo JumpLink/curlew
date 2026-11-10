@@ -208,6 +208,20 @@ export function entryTitle(conversation: Conversation, identity?: string): strin
   if (conversation.kind === 'direct' && names.length > 0) return names.join(', ');
   const stored = conversation.title?.trim();
   if (stored) return stored;
+  // A Signal member without a profile name is only an opaque ID; a list of those says nothing.
+  const opaque = conversation.participants.filter(
+    (p) => !p.displayName?.trim() && p.addresses[0]?.kind === 'signal',
+  );
+  if (conversation.kind === 'group' && opaque.length > 0) {
+    const named = conversation.participants.length - opaque.length;
+    if (named > 0)
+      return conversation.participants
+        .flatMap((p) => (p.displayName?.trim() ? [p.displayName.trim()] : []))
+        .join(', ');
+    return fmt(_n('Unnamed group · {count} member', 'Unnamed group · {count} members', opaque.length), {
+      count: opaque.length,
+    });
+  }
   return names.length > 0 ? names.join(', ') : _('Unnamed conversation');
 }
 

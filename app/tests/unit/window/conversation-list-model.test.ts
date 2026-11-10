@@ -341,6 +341,23 @@ export default async () => {
       expect(entryTitle(conversation({ id: 'c' }))).toBe('Unnamed conversation');
     });
 
+    it('does not list opaque Signal IDs as the name of an untitled group', () => {
+      const member = (id: string, displayName: string | null) => ({
+        id,
+        displayName,
+        addresses: [{ kind: 'signal' as const, value: `${id}-aci` }],
+        contactUid: null,
+      });
+      const group = (participants: ReturnType<typeof member>[], title: string | null = null) =>
+        conversation({ id: 'g', kind: 'group', title, participants } as Partial<Conversation> & {
+          id: string;
+        });
+      expect(entryTitle(group([member('a', null), member('b', null)]))).toBe('Unnamed group · 2 members');
+      expect(entryTitle(group([member('a', null)]))).toBe('Unnamed group · 1 member');
+      expect(entryTitle(group([member('a', 'Anna Example'), member('b', null)]))).toBe('Anna Example');
+      expect(entryTitle(group([member('a', null)], 'Team'))).toBe('Team');
+    });
+
     it('clamps a negative unread count and tiers by it', () => {
       expect(toEntry(conversation({ id: 'a', unreadCount: -3 })).unread).toBe(0);
     });

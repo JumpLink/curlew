@@ -1886,48 +1886,54 @@ msgid "Yesterday"
 msgstr ""
 
 #: app/src/window/conversation-list-model.ts:203
-#: app/src/window/conversation-list-model.ts:488
+#: app/src/window/conversation-list-model.ts:502
 msgid "Note to self"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:211
+#: app/src/window/conversation-list-model.ts:221
+msgid "Unnamed group · {count} member"
+msgid_plural "Unnamed group · {count} members"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/window/conversation-list-model.ts:225
 msgid "Unnamed conversation"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:283
+#: app/src/window/conversation-list-model.ts:297
 msgid "Only via {protocol}, which has no address for this person"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:287
+#: app/src/window/conversation-list-model.ts:301
 msgid "Encrypted rooms are not supported yet"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:342
-#: app/src/window/conversation-list-model.ts:355
+#: app/src/window/conversation-list-model.ts:356
+#: app/src/window/conversation-list-model.ts:369
 msgid "Only via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:346
+#: app/src/window/conversation-list-model.ts:360
 msgid "Automatic"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:385
+#: app/src/window/conversation-list-model.ts:399
 msgid "Public room · {count} member"
 msgid_plural "Public room · {count} members"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-list-model.ts:386
+#: app/src/window/conversation-list-model.ts:400
 msgid "Room · {count} member"
 msgid_plural "Room · {count} members"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-list-model.ts:579
+#: app/src/window/conversation-list-model.ts:593
 msgid "People"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:580
+#: app/src/window/conversation-list-model.ts:594
 msgid "Groups"
 msgstr ""
 
