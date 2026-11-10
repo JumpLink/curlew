@@ -245,6 +245,14 @@ export interface MessageRef {
 }
 
 /** One message inside a conversation. No body unless the caller asked for one. */
+/** The people who reacted to a message with one emoji. */
+export interface MessageReaction {
+  emoji: string;
+  count: number;
+  /** The user is one of them. */
+  own: boolean;
+}
+
 export interface ConversationMessage {
   id: string;
   conversationId: string;
@@ -277,6 +285,8 @@ export interface ConversationMessage {
   /** The album this message belongs to (chat backends that group media), shared by its messages. */
   groupId?: string | null;
   readByPeer?: boolean;
+  /** Chat backends only: the reactions under the message, in the order they were first given. */
+  reactions?: MessageReaction[];
   /** A notice's text (presentation `notice`) — always present for a notice, bodies or not. */
   notice?: string | null;
   /** Mail only: this message itself carries `Chat-Version: 1.0`. */

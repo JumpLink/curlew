@@ -917,7 +917,9 @@ export function getConversation(
     )
     .all(...(options.since ? [id, options.since] : [id])) as Array<Record<string, unknown>>;
 
-  return { conversation, messages: rows.map((r) => toMessage(db, r, options, overrides)) };
+  const messages = rows.map((r) => toMessage(db, r, options, overrides));
+  attachReactions(db, messages);
+  return { conversation, messages };
 }
 
 /** Where a page of history ends: the oldest message already shown. */
@@ -964,7 +966,33 @@ export function getRecentMessages(
         ORDER BY sent_at DESC, id DESC LIMIT ?`,
     )
     .all(...ids, ...cursor, options.limit) as Array<Record<string, unknown>>;
-  return rows.reverse().map((r) => toMessage(db, r, options, options.overrides ?? {}));
+  const messages = rows.reverse().map((r) => toMessage(db, r, options, options.overrides ?? {}));
+  attachReactions(db, messages);
+  return messages;
+}
+
+/** Fills `reactions` on the chat messages among `messages`, one query for all of them. */
+function attachReactions(db: IndexDatabase, messages: ConversationMessage[]): void {
+  const chat = messages.filter((m) => m.editedAt !== undefined);
+  if (chat.length === 0) return;
+  const byId = new Map(chat.map((m) => [m.id, m]));
+  const ids = [...byId.keys()];
+  const CHUNK = 500;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const slice = ids.slice(i, i + CHUNK);
+    const rows = db
+      .prepare(
+        `SELECT message_id, emoji, COUNT(*) AS n, MAX(reactor = '') AS own, MIN(rowid) AS first
+           FROM message_reactions WHERE message_id IN (${placeholders(slice.length)})
+          GROUP BY message_id, emoji ORDER BY first`,
+      )
+      .all(...slice) as Array<{ message_id: unknown; emoji: unknown; n: unknown; own: unknown }>;
+    for (const r of rows) {
+      const message = byId.get(String(r.message_id));
+      if (!message) continue;
+      (message.reactions ??= []).push({ emoji: String(r.emoji), count: Number(r.n), own: Number(r.own) === 1 });
+    }
+  }
 }
 
 const MESSAGE_COLUMNS = `id, conversation_id, backend, account_id, presentation, sender_participant_id, sender_name,

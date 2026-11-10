@@ -578,6 +578,12 @@ export type DeliveryEvent =
   /** A message was deleted (revoked for everyone, or deleted for the user on another device). */
   | { type: 'delete'; chatRemoteId: string; remoteId: string }
   /**
+   * Someone reacted to a message with an emoji; a null `emoji` takes the reaction back. A person
+   * has one reaction per message, so a new one replaces the old. `reactor` is the network's
+   * peer id, or null for the user. Applies to a stored message only (like an edit).
+   */
+  | { type: 'reaction'; chatRemoteId: string; remoteId: string; reactor: string | null; emoji: string | null }
+  /**
    * The other side read these messages of the user.
    *
    * `chatRemoteId` is null when the network does not say which chat it is about: a Signal

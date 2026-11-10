@@ -22,7 +22,7 @@
 import { type IndexDatabase, withTransaction } from './db.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 
-export const SCHEMA_VERSION = 16;
+export const SCHEMA_VERSION = 17;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -403,6 +403,14 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
   // v16: the id the sender gave a chat message (XMPP's origin-id), which a reply to it names.
   // NULL for rows synced before; a full scan of the chat fills it in.
   16: [{ table: 'conversation_messages', column: 'client_id', type: 'TEXT' }],
+  // v17: what people reacted to a message with. One row per person and message ('' = the user).
+  17: [
+    `CREATE TABLE IF NOT EXISTS message_reactions (
+       message_id TEXT NOT NULL,
+       reactor TEXT NOT NULL,
+       emoji TEXT NOT NULL,
+       PRIMARY KEY (message_id, reactor))`,
+  ],
 };
 
 function columnsOf(db: IndexDatabase, table: string): Set<string> {

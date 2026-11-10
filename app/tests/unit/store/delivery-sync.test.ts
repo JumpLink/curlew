@@ -278,6 +278,56 @@ export default async () => {
       }
     });
 
+    await it('keeps one reaction per person and message, and drops it with the message', async () => {
+      const db = freshDb();
+      try {
+        const react = (remoteId: string, reactor: string | null, emoji: string | null): DeliveryEvent => ({
+          type: 'reaction',
+          chatRemoteId: 'd-anna',
+          remoteId,
+          reactor,
+          emoji,
+        });
+        await receiveDeliveries(
+          db,
+          fakeBackend([
+            [
+              incoming('d-anna', msg('d-anna/1', 1, 'eins')),
+              incoming('d-anna', msg('d-anna/2', 2, 'zwei')),
+              react('d-anna/1', 'anna', '👍'),
+              react('d-anna/1', null, '👍'),
+              react('d-anna/1', 'ben', '❤️'),
+              react('d-anna/2', 'anna', '🎉'),
+              // A reaction to a message never stored changes nothing.
+              react('d-anna/99', 'anna', '👍'),
+            ],
+          ]),
+        );
+        const reactionsOf = () =>
+          getConversation(db, conv('d-anna'))?.messages.map((m) =>
+            (m.reactions ?? []).map((r) => `${r.emoji}${r.count}${r.own ? '*' : ''}`).join(','),
+          );
+        expect(reactionsOf()).toStrictEqual(['👍2*,❤️1', '🎉1']);
+        await receiveDeliveries(
+          db,
+          fakeBackend([
+            [
+              // A new reaction replaces the person's old one; null takes one back.
+              react('d-anna/1', 'anna', '😂'),
+              react('d-anna/1', 'ben', null),
+              { type: 'delete', chatRemoteId: 'd-anna', remoteId: 'd-anna/2' },
+              react('d-anna/2', 'anna', '🎉'),
+            ],
+          ]),
+        );
+        expect(reactionsOf()).toStrictEqual(['👍1*,😂1']);
+        const left = db.prepare('SELECT COUNT(*) AS n FROM message_reactions').get() as { n: number };
+        expect(Number(left.n)).toBe(2);
+      } finally {
+        db.close();
+      }
+    });
+
     await it('mirrors read state: read on another device, and read by the other side', async () => {
       const db = freshDb();
       try {
