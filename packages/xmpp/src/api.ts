@@ -9,7 +9,7 @@
  */
 
 import type { EncryptedStanza } from './omemo-stanza.ts';
-import type { ArchivedEntry, Bookmark, RosterItem, XmlElement } from './stanza.ts';
+import type { ArchivedEntry, Bookmark, ReplyRef, RosterItem, XmlElement } from './stanza.ts';
 import type { SlotRequest, UploadBody, UploadSlot } from './upload.ts';
 
 export interface MamQuery {
@@ -62,7 +62,7 @@ export interface XmppApi {
  */
 export interface XmppLink extends XmppApi {
   /** Send a stanza built by `chatMessage`. Resolves when it is written to the stream. */
-  sendChat(to: string, id: string, body: string, oobUrl?: string): Promise<void>;
+  sendChat(to: string, id: string, body: string, oobUrl?: string, reply?: ReplyRef): Promise<void>;
   /**
    * The same for an OMEMO message (`encryptedChatMessage`). `fallback` is the plaintext body
    * clients without OMEMO show — a notice that something arrived, never the message.
@@ -71,7 +71,13 @@ export interface XmppLink extends XmppApi {
    * things: a caller that has an `EncryptedStanza` has no body to pass, and a caller that has a
    * body must not be able to send it by accident once encryption was asked for.
    */
-  sendEncrypted(to: string, id: string, encrypted: EncryptedStanza, fallback?: string): Promise<void>;
+  sendEncrypted(
+    to: string,
+    id: string,
+    encrypted: EncryptedStanza,
+    fallback?: string,
+    reply?: ReplyRef,
+  ): Promise<void>;
   /**
    * Ask the account's upload service (XEP-0363) for a slot. Throws with the reason when the
    * server offers none, the file is over its limit, or it answers a slot curlew will not use.

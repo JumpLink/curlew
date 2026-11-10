@@ -1,6 +1,6 @@
 /** Presentation rules for reading a conversation as a chat, without changing mail threading. */
 
-import type { ConversationMessage, MessageRef } from '@curlew/protocol';
+import type { ConversationMessage, MessageRef, ReplyTarget } from '@curlew/protocol';
 import { _, fmt, _n } from '@curlew/protocol';
 import { normalizeSubject, type MessageCursor } from '@curlew/store';
 
@@ -295,8 +295,8 @@ function describeQuoted(quoted: ShownMessage): Omit<Quote, 'id'> {
 
 /** The message a composer is about to answer, and the carrier that answer must go through. */
 export interface ReplyDraft<C extends { backend: string; accountId: string }> {
-  /** The network's id of the message, what `SendingMessage.replyTo` carries. */
-  remoteId: string;
+  /** What `SendingMessage.replyTo` carries: the network's id of the message and, where held, the sender's own. */
+  target: ReplyTarget;
   choice: C;
   author: string;
   excerpt: string;
@@ -316,7 +316,13 @@ export function replyDraftOf<C extends { backend: string; accountId: string }>(
   if (!remoteId || !canReply(message.backend)) return null;
   const choice = choices.find((c) => c.backend === message.backend && c.accountId === message.ref.accountId);
   if (!choice) return null;
-  return { remoteId, choice, ...describeQuoted(message) };
+  const clientId = message.clientId ?? undefined;
+  const target: ReplyTarget = {
+    remoteId,
+    ...(clientId ? { clientId } : {}),
+    ...(message.fromSelf ? { fromSelf: true } : {}),
+  };
+  return { target, choice, ...describeQuoted(message) };
 }
 
 /** The most parts a Telegram album has: a folded bubble lists all of them. */

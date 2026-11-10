@@ -144,6 +144,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
           backend: choice.backend,
           ...(mail === null ? { remoteId: result.originId } : {}),
         },
+        ...(mail === null ? { clientId: result.originId } : {}),
         ...(replyTo ? { replyToRemoteId: replyTo.remoteId } : {}),
         bodyText: text || pickedNames(files),
       };

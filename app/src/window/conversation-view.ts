@@ -814,8 +814,7 @@ export function createConversationView(
     send.set_sensitive(false);
     // An upload takes a while: the button shows that something is happening.
     send.set_child(new Adw.Spinner());
-    const replyTo =
-      reply && sameCarrier(reply.choice, selectedChoice) ? { remoteId: reply.remoteId } : undefined;
+    const replyTo = reply && sameCarrier(reply.choice, selectedChoice) ? reply.target : undefined;
     void onSend(text, selectedChoice, picked, replyTo)
       .then((message) => {
         const previous = messages[messages.length - 1] ?? null;

@@ -17,6 +17,12 @@ export const MESSAGES = {
     ),
   notBare: (to: string) =>
     fmt(_('{to} is not a bare XMPP address — expected name@example.org'), { to: JSON.stringify(to) }),
+  get replyNoId() {
+    return _('this message has no XMPP id to reply to — a full scan of the chat adds it');
+  },
+  get replyNeedsText() {
+    return _('a reply needs a text; files alone cannot carry one');
+  },
   get emptyText() {
     return _('there is nothing to send: the text is empty');
   },

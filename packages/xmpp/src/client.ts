@@ -69,6 +69,7 @@ import {
   parseLegacyBookmarks,
   parseMamResult,
   parseRoster,
+  type ReplyRef,
   rosterQuery,
 } from './stanza.ts';
 import {
@@ -235,13 +236,25 @@ class XmppConnection implements XmppLink {
     }, PING_IDLE_MS);
   }
 
-  async sendChat(to: string, id: string, body: string, oobUrl?: string) {
-    await this.entity.send(chatMessage({ to, id, body, oobUrl }));
+  async sendChat(to: string, id: string, body: string, oobUrl?: string, reply?: ReplyRef) {
+    await this.entity.send(chatMessage({ to, id, body, oobUrl, ...(reply ? { reply } : {}) }));
   }
 
-  async sendEncrypted(to: string, id: string, encrypted: EncryptedStanza, fallback?: string) {
+  async sendEncrypted(
+    to: string,
+    id: string,
+    encrypted: EncryptedStanza,
+    fallback?: string,
+    reply?: ReplyRef,
+  ) {
     await this.entity.send(
-      encryptedChatMessage({ to, id, encrypted, ...(fallback === undefined ? {} : { fallback }) }),
+      encryptedChatMessage({
+        to,
+        id,
+        encrypted,
+        ...(fallback === undefined ? {} : { fallback }),
+        ...(reply ? { reply } : {}),
+      }),
     );
   }
 

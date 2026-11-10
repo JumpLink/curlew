@@ -515,6 +515,25 @@ export default async () => {
       ).toBe('m1');
     });
 
+    await it('carries the sender-given id and the author flag of a reply, and rejects bad ones', async () => {
+      const replyTo = { remoteId: 'm1', clientId: 'c1', fromSelf: true };
+      expect(parseDaemonSendRequest(JSON.stringify({ ...request(), replyTo })).replyTo).toStrictEqual(
+        replyTo,
+      );
+      for (const bad of [
+        { remoteId: 'm1', clientId: 5 },
+        { remoteId: 'm1', fromSelf: 'yes' },
+      ]) {
+        let message = '';
+        try {
+          parseDaemonSendRequest(JSON.stringify({ ...request(), replyTo: bad }));
+        } catch (err) {
+          message = (err as Error).message;
+        }
+        expect(message).toMatch(/replyTo/);
+      }
+    });
+
     await it('rejects a request whose attachments are not a list of paths', async () => {
       const bad = JSON.stringify({ ...request(), attachments: [1] });
       let message = '';

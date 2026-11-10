@@ -271,6 +271,8 @@ export interface ConversationMessage {
   replyToRemoteId?: string | null;
   /** The reply's target as its sender wrote it — matches the id a message was sent with. */
   replyToClientId?: string | null;
+  /** The id the sender gave the message (XMPP's origin-id): what a reply to it names there. */
+  clientId?: string | null;
   threadRemoteId?: string | null;
   /** The album this message belongs to (chat backends that group media), shared by its messages. */
   groupId?: string | null;

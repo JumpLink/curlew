@@ -33,7 +33,7 @@ export const XMPP_MANIFEST: BackendManifest = {
     // to the server's HTTP File Upload service and sends the link.
     attachments: true,
     attachmentsRead: true,
-    replies: false,
+    replies: true,
   },
   // With MAM (XEP-0313) the server keeps the history: the index is rebuildable (`derived`).
   // A server WITHOUT MAM leaves nothing to read — curlew says so at connect and does not

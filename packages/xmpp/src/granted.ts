@@ -16,6 +16,7 @@ import type { XmppApi, XmppLink } from './api.ts';
 import { readOnly } from './client.ts';
 import { MESSAGES } from './messages.ts';
 import type { EncryptedStanza } from './omemo-stanza.ts';
+import { bareJid } from './stanza.ts';
 import { type DecryptEntries, XmppChatSession } from './session.ts';
 import { checkedSlotUrl } from './upload.ts';
 
@@ -127,14 +128,21 @@ export class GrantedXmppSession {
    * There is no third outcome. Either the message goes out encrypted, or it goes out to a peer
    * who has no OMEMO at all, or nothing is sent and the caller hears why (§7).
    */
-  async send(to: string, text: string, now: () => Date = () => new Date()): Promise<SentChat> {
+  async send(
+    to: string,
+    text: string,
+    now: () => Date = () => new Date(),
+    answers?: { id: string; fromSelf: boolean },
+  ): Promise<SentChat> {
     const chatJid = this.recipient(to);
     if (text.trim().length === 0) throw new Error(MESSAGES.emptyText);
     if (text.length > MAX_TEXT_CHARS) throw new Error(MESSAGES.tooLong(MAX_TEXT_CHARS));
     const originId = this.newId();
+    // XEP-0461 names the author of the answered message: the person, or the one this chat is with.
+    const reply = answers && { id: answers.id, author: answers.fromSelf ? bareJid(this.link.jid) : chatJid };
     const encrypted = await this.omemo?.encrypt(chatJid, text);
-    if (encrypted) await this.link.sendEncrypted(chatJid, originId, encrypted, MESSAGES.omemoFallback);
-    else await this.link.sendChat(chatJid, originId, text);
+    if (encrypted) await this.link.sendEncrypted(chatJid, originId, encrypted, MESSAGES.omemoFallback, reply);
+    else await this.link.sendChat(chatJid, originId, text, undefined, reply);
     return { chatJid, originId, sentAt: now().toISOString(), encrypted: Boolean(encrypted) };
   }
 
