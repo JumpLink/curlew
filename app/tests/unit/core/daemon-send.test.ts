@@ -70,6 +70,7 @@ const MANIFEST: BackendManifest = {
     folders: false,
     attachments: false,
     attachmentsRead: false,
+    replies: false,
   },
   syncModel: 'delivery-only',
   native: false,
@@ -474,6 +475,44 @@ export default async () => {
       const reply = await handlerFor(sessions)(request({ attachments: ['/tmp/a.pdf'] }));
       expect(reply.kind).toBe('failed');
       expect(sender.sent.length).toBe(0);
+    });
+
+    await it('hands the reply target to a sender that can reply, on the first text only', async () => {
+      const sender = new FakeSender('daemon');
+      sender.features.replies = true;
+      const sessions = new Map([[sessionKey(BACKEND, ACCOUNT), heldSession(sender)]]);
+      const replyTo = { remoteId: '$asked:example.org' };
+      const reply = await handlerFor(sessions)(request({ replyTo }));
+      expect(reply.kind).toBe('sent');
+      expect(sender.sent[0].replyTo).toStrictEqual(replyTo);
+      const plain = await handlerFor(sessions)(request());
+      expect(plain.kind).toBe('sent');
+      expect(sender.sent[1].replyTo === undefined).toBe(true);
+    });
+
+    await it('refuses a reply for a sender that cannot reply, and sends nothing', async () => {
+      const sender = new FakeSender('daemon');
+      const sessions = new Map([[sessionKey(BACKEND, ACCOUNT), heldSession(sender)]]);
+      const reply = await handlerFor(sessions)(request({ replyTo: { remoteId: 'x' } }));
+      expect(reply.kind).toBe('failed');
+      if (reply.kind === 'failed') expect(reply.message).toMatch(/cannot send a reply/);
+      expect(sender.sent.length).toBe(0);
+    });
+
+    await it('rejects a request whose replyTo has no remote id', async () => {
+      for (const replyTo of [{}, { remoteId: '' }, { remoteId: 5 }, 'x']) {
+        let message = '';
+        try {
+          parseDaemonSendRequest(JSON.stringify({ ...request(), replyTo }));
+        } catch (err) {
+          message = (err as Error).message;
+        }
+        expect(message).toMatch(/replyTo/);
+      }
+      expect(
+        parseDaemonSendRequest(JSON.stringify({ ...request(), replyTo: { remoteId: 'm1' } })).replyTo
+          ?.remoteId,
+      ).toBe('m1');
     });
 
     await it('rejects a request whose attachments are not a list of paths', async () => {

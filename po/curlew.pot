@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 12:20+0100\n"
+"POT-Creation-Date: 2026-11-10 12:40+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -110,7 +110,7 @@ msgid ""
 msgstr ""
 
 #: app/src/core/actions/chat-attachment.ts:139
-#: app/src/core/actions/daemon.ts:432
+#: app/src/core/actions/daemon.ts:433
 msgid "the attachment was not found in the index"
 msgstr ""
 
@@ -165,13 +165,13 @@ msgid ""
 "config.agentAccess.rules"
 msgstr ""
 
-#: app/src/core/actions/send.ts:179 app/src/core/actions/send.ts:192
+#: app/src/core/actions/send.ts:181 app/src/core/actions/send.ts:194
 msgid ""
 "the message index is busy, so curlew cannot tell whether {account} is in use "
 "elsewhere — nothing was sent; try again in a moment"
 msgstr ""
 
-#: app/src/core/actions/send.ts:198
+#: app/src/core/actions/send.ts:200
 msgid ""
 "{account} is being received by {holder} right now, {backend} cannot send and "
 "receive at the same time, and that process did not take the send over — "
@@ -179,40 +179,44 @@ msgid ""
 "from your phone"
 msgstr ""
 
-#: app/src/core/actions/send.ts:333
+#: app/src/core/actions/send.ts:336
 msgid "{backend} cannot send an image — give text and leave image_url out"
 msgstr ""
 
-#: app/src/core/actions/send.ts:343
+#: app/src/core/actions/send.ts:346
 msgid "nothing to send: the text is empty after rendering"
 msgstr ""
 
-#: app/src/core/actions/send.ts:346 app/src/core/actions/send.ts:512
+#: app/src/core/actions/send.ts:349 app/src/core/actions/send.ts:521
 msgid "{backend} cannot send attachments"
 msgstr ""
 
-#: app/src/core/actions/send.ts:433 app/src/core/actions/send.ts:491
+#: app/src/core/actions/send.ts:353
+msgid "{backend} cannot send a reply"
+msgstr ""
+
+#: app/src/core/actions/send.ts:442 app/src/core/actions/send.ts:500
 msgid "no account {account} — `curlew accounts list` shows them"
 msgstr ""
 
-#: app/src/core/actions/send.ts:477
+#: app/src/core/actions/send.ts:486
 msgid ""
 "this person is pinned to {pinned}: a message through {backend} is refused"
 msgstr ""
 
-#: app/src/core/actions/send.ts:498
+#: app/src/core/actions/send.ts:507
 msgid "{backend} cannot send"
 msgstr ""
 
-#: app/src/core/actions/send.ts:502
+#: app/src/core/actions/send.ts:511
 msgid "nothing to send: give text, an image URL or an attachment"
 msgstr ""
 
-#: app/src/core/actions/send.ts:504
+#: app/src/core/actions/send.ts:513
 msgid "{backend} messages carry no subject"
 msgstr ""
 
-#: app/src/core/actions/send.ts:507
+#: app/src/core/actions/send.ts:516
 msgid "{backend} cannot send email chat headers"
 msgstr ""
 
@@ -743,40 +747,40 @@ msgstr ""
 msgid "the running curlew daemon did not answer the access prompt ({reason})"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:188
+#: app/src/core/lib/daemon-bus.ts:190
 msgid ""
 "the running curlew daemon speaks send protocol {theirs} and this curlew "
 "speaks {ours} — nothing was sent; restart it with `systemctl --user restart "
 "curlew-daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:225
+#: app/src/core/lib/daemon-bus.ts:227
 msgid ""
 "the caller speaks send protocol {theirs} and this curlew daemon speaks "
 "{ours} — nothing was sent; restart it with `systemctl --user restart curlew-"
 "daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:281
+#: app/src/core/lib/daemon-bus.ts:287
 msgid ""
 "the caller speaks attachment protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:310
+#: app/src/core/lib/daemon-bus.ts:316
 msgid ""
 "the running curlew daemon speaks attachment protocol {theirs} and this "
 "curlew speaks {ours} — restart it with `systemctl --user restart curlew-"
 "daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:375
+#: app/src/core/lib/daemon-bus.ts:381
 msgid ""
 "the caller speaks access protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:412
+#: app/src/core/lib/daemon-bus.ts:418
 msgid ""
 "the running curlew daemon speaks access protocol {theirs} and this curlew "
 "speaks {ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -1456,8 +1460,8 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr ""
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:99
-#: app/src/window/window.ts:58 app/src/window/window.ts:73
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:111
+#: app/src/window/window.ts:59 app/src/window/window.ts:74
 msgid "Curlew"
 msgstr ""
 
@@ -1573,7 +1577,7 @@ msgid "Could not start the background service. Run “curlew setup” first."
 msgstr ""
 
 #: app/src/window/accounts-dialog.ts:60 app/src/window/accounts-page.ts:187
-#: app/src/window/window.ts:86
+#: app/src/window/window.ts:87
 msgid "Accounts"
 msgstr ""
 
@@ -1646,7 +1650,7 @@ msgstr ""
 msgid "Start"
 msgstr ""
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:89
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:90
 msgid "Agent access"
 msgstr ""
 
@@ -2005,7 +2009,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:713
+#: app/src/window/conversation-view.ts:831
 msgid "Continuing via {protocol}"
 msgstr ""
 
@@ -2033,55 +2037,68 @@ msgstr ""
 msgid "File"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:288
+#: app/src/window/conversation-model.ts:293
 msgid "You"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:105
+#: app/src/window/conversation-view.ts:117
 msgid "Choose how to reach this person"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:122
+#: app/src/window/conversation-view.ts:134
 msgid "Write a message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:133
+#: app/src/window/conversation-view.ts:145
 msgid "Send message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:160
+#: app/src/window/conversation-view.ts:157
+msgid "Cancel reply"
+msgstr ""
+
+#: app/src/window/conversation-view.ts:186
 msgid "Conversation"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:276
+#: app/src/window/conversation-view.ts:302
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:291
+#: app/src/window/conversation-view.ts:336
 msgid "Send via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:390
+#: app/src/window/conversation-view.ts:439
 msgid "Show the quoted message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:397
+#: app/src/window/conversation-view.ts:446
+#: app/src/window/conversation-view.ts:469
 msgid "Reply to {author}: {excerpt}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:443
+#: app/src/window/conversation-view.ts:496
+msgid "Reply"
+msgstr ""
+
+#: app/src/window/conversation-view.ts:497
+msgid "Copy"
+msgstr ""
+
+#: app/src/window/conversation-view.ts:559
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:615
+#: app/src/window/conversation-view.ts:731
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:724
+#: app/src/window/conversation-view.ts:843
 msgid "Message not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:727
+#: app/src/window/conversation-view.ts:846
 msgid "Retry"
 msgstr ""
 
@@ -2204,7 +2221,7 @@ msgstr ""
 msgid "Media"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:49 app/src/window/window.ts:88
+#: app/src/window/preferences-dialog.ts:49 app/src/window/window.ts:89
 msgid "Preferences"
 msgstr ""
 
@@ -2214,31 +2231,31 @@ msgid_plural "{count} selected"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/window.ts:52
+#: app/src/window/window.ts:53
 msgid "Select a conversation"
 msgstr ""
 
-#: app/src/window/window.ts:53
+#: app/src/window/window.ts:54
 msgid "Pick a conversation from the list."
 msgstr ""
 
-#: app/src/window/window.ts:87
+#: app/src/window/window.ts:88
 msgid "Merge contacts…"
 msgstr ""
 
-#: app/src/window/window.ts:91
+#: app/src/window/window.ts:92
 msgid "About Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:92
+#: app/src/window/window.ts:93
 msgid "Quit"
 msgstr ""
 
-#: app/src/window/window.ts:107
+#: app/src/window/window.ts:108
 msgid "This conversation has no recipient address."
 msgstr ""
 
-#: app/src/window/window.ts:216
+#: app/src/window/window.ts:225
 msgid "No contacts to merge"
 msgstr ""
 
@@ -2704,7 +2721,7 @@ msgid ""
 "again."
 msgstr ""
 
-#: packages/telegram/src/manifest.ts:55
+#: packages/telegram/src/manifest.ts:56
 msgid ""
 "curlew talks to Telegram through the official MTProto API as a third-party "
 "client (mtcute). Telegram requires every client to use API credentials "

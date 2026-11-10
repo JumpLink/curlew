@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 12:20+0100\n"
+"POT-Creation-Date: 2026-11-10 12:40+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -138,7 +138,7 @@ msgstr ""
 "eine Regel wie {rule} zu config.agentAccess.rules hinzu"
 
 #: app/src/core/actions/chat-attachment.ts:139
-#: app/src/core/actions/daemon.ts:432
+#: app/src/core/actions/daemon.ts:433
 msgid "the attachment was not found in the index"
 msgstr "Der Anhang wurde im Index nicht gefunden"
 
@@ -207,7 +207,7 @@ msgstr ""
 "mit include_bodies oder mail_get_message), um gefragt zu werden, oder füge "
 "eine Leseregel zu config.agentAccess.rules hinzu"
 
-#: app/src/core/actions/send.ts:179 app/src/core/actions/send.ts:192
+#: app/src/core/actions/send.ts:181 app/src/core/actions/send.ts:194
 msgid ""
 "the message index is busy, so curlew cannot tell whether {account} is in use "
 "elsewhere — nothing was sent; try again in a moment"
@@ -216,7 +216,7 @@ msgstr ""
 "{account} anderswo in Benutzung ist — es wurde nichts gesendet; versuche es "
 "gleich noch einmal"
 
-#: app/src/core/actions/send.ts:198
+#: app/src/core/actions/send.ts:200
 msgid ""
 "{account} is being received by {holder} right now, {backend} cannot send and "
 "receive at the same time, and that process did not take the send over — "
@@ -228,42 +228,46 @@ msgstr ""
 "übernommen — es wurde nichts gesendet; beende ihn (`curlew daemon stop`) und "
 "sende erneut, oder sende von deinem Telefon"
 
-#: app/src/core/actions/send.ts:333
+#: app/src/core/actions/send.ts:336
 msgid "{backend} cannot send an image — give text and leave image_url out"
 msgstr "{backend} kann kein Bild senden — gib Text an und lass image_url weg"
 
-#: app/src/core/actions/send.ts:343
+#: app/src/core/actions/send.ts:346
 msgid "nothing to send: the text is empty after rendering"
 msgstr "Nichts zu senden: Der Text ist nach dem Rendern leer"
 
-#: app/src/core/actions/send.ts:346 app/src/core/actions/send.ts:512
+#: app/src/core/actions/send.ts:349 app/src/core/actions/send.ts:521
 msgid "{backend} cannot send attachments"
 msgstr "{backend} kann keine Anhänge senden"
 
-#: app/src/core/actions/send.ts:433 app/src/core/actions/send.ts:491
+#: app/src/core/actions/send.ts:353
+msgid "{backend} cannot send a reply"
+msgstr "{backend} kann keine Antwort senden"
+
+#: app/src/core/actions/send.ts:442 app/src/core/actions/send.ts:500
 msgid "no account {account} — `curlew accounts list` shows them"
 msgstr "Kein Konto {account} — `curlew accounts list` zeigt sie an"
 
-#: app/src/core/actions/send.ts:477
+#: app/src/core/actions/send.ts:486
 msgid ""
 "this person is pinned to {pinned}: a message through {backend} is refused"
 msgstr ""
 "Diese Person ist auf {pinned} festgelegt: eine Nachricht über {backend} wird "
 "abgelehnt"
 
-#: app/src/core/actions/send.ts:498
+#: app/src/core/actions/send.ts:507
 msgid "{backend} cannot send"
 msgstr "{backend} kann nicht senden"
 
-#: app/src/core/actions/send.ts:502
+#: app/src/core/actions/send.ts:511
 msgid "nothing to send: give text, an image URL or an attachment"
 msgstr "Nichts zu senden: Gib Text, eine Bild-URL oder einen Anhang an"
 
-#: app/src/core/actions/send.ts:504
+#: app/src/core/actions/send.ts:513
 msgid "{backend} messages carry no subject"
 msgstr "Nachrichten von {backend} haben keinen Betreff"
 
-#: app/src/core/actions/send.ts:507
+#: app/src/core/actions/send.ts:516
 msgid "{backend} cannot send email chat headers"
 msgstr "{backend} kann keine E-Mail-Chat-Kopfzeilen senden"
 
@@ -883,7 +887,7 @@ msgstr ""
 "Der laufende curlew-Daemon hat die Zugriffsrückfrage nicht beantwortet "
 "({reason})"
 
-#: app/src/core/lib/daemon-bus.ts:188
+#: app/src/core/lib/daemon-bus.ts:190
 msgid ""
 "the running curlew daemon speaks send protocol {theirs} and this curlew "
 "speaks {ours} — nothing was sent; restart it with `systemctl --user restart "
@@ -893,7 +897,7 @@ msgstr ""
 "spricht {ours} — es wurde nichts gesendet; starte ihn mit `systemctl --user "
 "restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:225
+#: app/src/core/lib/daemon-bus.ts:227
 msgid ""
 "the caller speaks send protocol {theirs} and this curlew daemon speaks "
 "{ours} — nothing was sent; restart it with `systemctl --user restart curlew-"
@@ -903,7 +907,7 @@ msgstr ""
 "{ours} — es wurde nichts gesendet; starte ihn mit `systemctl --user restart "
 "curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:281
+#: app/src/core/lib/daemon-bus.ts:287
 msgid ""
 "the caller speaks attachment protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -911,7 +915,7 @@ msgstr ""
 "Der Aufrufer spricht Anhangsprotokoll {theirs}, dieser curlew-Daemon spricht "
 "{ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:310
+#: app/src/core/lib/daemon-bus.ts:316
 msgid ""
 "the running curlew daemon speaks attachment protocol {theirs} and this "
 "curlew speaks {ours} — restart it with `systemctl --user restart curlew-"
@@ -920,7 +924,7 @@ msgstr ""
 "Der laufende curlew-Daemon spricht Anhangsprotokoll {theirs}, dieses curlew "
 "spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:375
+#: app/src/core/lib/daemon-bus.ts:381
 msgid ""
 "the caller speaks access protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -928,7 +932,7 @@ msgstr ""
 "Der Aufrufer spricht Zugriffsprotokoll {theirs}, dieser curlew-Daemon "
 "spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:412
+#: app/src/core/lib/daemon-bus.ts:418
 msgid ""
 "the running curlew daemon speaks access protocol {theirs} and this curlew "
 "speaks {ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -1703,8 +1707,8 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:99
-#: app/src/window/window.ts:58 app/src/window/window.ts:73
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:111
+#: app/src/window/window.ts:59 app/src/window/window.ts:74
 msgid "Curlew"
 msgstr "Curlew"
 
@@ -1830,7 +1834,7 @@ msgstr ""
 "aus."
 
 #: app/src/window/accounts-dialog.ts:60 app/src/window/accounts-page.ts:187
-#: app/src/window/window.ts:86
+#: app/src/window/window.ts:87
 msgid "Accounts"
 msgstr "Konten"
 
@@ -1906,7 +1910,7 @@ msgstr ""
 msgid "Start"
 msgstr "Starten"
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:89
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:90
 msgid "Agent access"
 msgstr "Agentenzugriff"
 
@@ -2281,7 +2285,7 @@ msgstr[0] "{count} mögliches Duplikat"
 msgstr[1] "{count} mögliche Duplikate"
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:713
+#: app/src/window/conversation-view.ts:831
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -2309,56 +2313,69 @@ msgstr "Audio"
 msgid "File"
 msgstr "Datei"
 
-#: app/src/window/conversation-model.ts:288
+#: app/src/window/conversation-model.ts:293
 msgid "You"
 msgstr "Du"
 
-#: app/src/window/conversation-view.ts:105
+#: app/src/window/conversation-view.ts:117
 msgid "Choose how to reach this person"
 msgstr "Erreichbarkeit dieser Person wählen"
 
-#: app/src/window/conversation-view.ts:122
+#: app/src/window/conversation-view.ts:134
 msgid "Write a message"
 msgstr "Nachricht schreiben"
 
-#: app/src/window/conversation-view.ts:133
+#: app/src/window/conversation-view.ts:145
 msgid "Send message"
 msgstr "Nachricht senden"
 
-#: app/src/window/conversation-view.ts:160
+#: app/src/window/conversation-view.ts:157
+msgid "Cancel reply"
+msgstr "Antwort abbrechen"
+
+#: app/src/window/conversation-view.ts:186
 msgid "Conversation"
 msgstr "Unterhaltung"
 
-#: app/src/window/conversation-view.ts:276
+#: app/src/window/conversation-view.ts:302
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 "{protocol} kann keine Dateien senden; die angehängten Dateien wurden entfernt"
 
-#: app/src/window/conversation-view.ts:291
+#: app/src/window/conversation-view.ts:336
 msgid "Send via {protocol}"
 msgstr "Senden über {protocol}"
 
-#: app/src/window/conversation-view.ts:390
+#: app/src/window/conversation-view.ts:439
 msgid "Show the quoted message"
 msgstr "Zitierte Nachricht anzeigen"
 
-#: app/src/window/conversation-view.ts:397
+#: app/src/window/conversation-view.ts:446
+#: app/src/window/conversation-view.ts:469
 msgid "Reply to {author}: {excerpt}"
 msgstr "Antwort auf {author}: {excerpt}"
 
-#: app/src/window/conversation-view.ts:443
+#: app/src/window/conversation-view.ts:496
+msgid "Reply"
+msgstr "Antworten"
+
+#: app/src/window/conversation-view.ts:497
+msgid "Copy"
+msgstr "Kopieren"
+
+#: app/src/window/conversation-view.ts:559
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:615
+#: app/src/window/conversation-view.ts:731
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:724
+#: app/src/window/conversation-view.ts:843
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:727
+#: app/src/window/conversation-view.ts:846
 msgid "Retry"
 msgstr "Erneut versuchen"
 
@@ -2483,7 +2500,7 @@ msgstr "Ein Video in einer Unterhaltung läuft stumm, solange es im Bild ist"
 msgid "Media"
 msgstr "Medien"
 
-#: app/src/window/preferences-dialog.ts:49 app/src/window/window.ts:88
+#: app/src/window/preferences-dialog.ts:49 app/src/window/window.ts:89
 msgid "Preferences"
 msgstr "Einstellungen"
 
@@ -2493,31 +2510,31 @@ msgid_plural "{count} selected"
 msgstr[0] "{count} ausgewählt"
 msgstr[1] "{count} ausgewählt"
 
-#: app/src/window/window.ts:52
+#: app/src/window/window.ts:53
 msgid "Select a conversation"
 msgstr "Unterhaltung auswählen"
 
-#: app/src/window/window.ts:53
+#: app/src/window/window.ts:54
 msgid "Pick a conversation from the list."
 msgstr "Wähle eine Unterhaltung aus der Liste."
 
-#: app/src/window/window.ts:87
+#: app/src/window/window.ts:88
 msgid "Merge contacts…"
 msgstr "Kontakte zusammenführen…"
 
-#: app/src/window/window.ts:91
+#: app/src/window/window.ts:92
 msgid "About Curlew"
 msgstr "Über Curlew"
 
-#: app/src/window/window.ts:92
+#: app/src/window/window.ts:93
 msgid "Quit"
 msgstr "Beenden"
 
-#: app/src/window/window.ts:107
+#: app/src/window/window.ts:108
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:216
+#: app/src/window/window.ts:225
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 
@@ -2667,9 +2684,9 @@ msgstr ""
 
 #: packages/matrix/src/send.ts:266
 msgid "{id} is not a Matrix event id — nothing was sent"
-msgstr "{id} ist keine Matrix-Event-ID – es wurde nichts gesendet"
-"{capability} ist nicht die Berechtigung, unter der {backend} sendet — es "
-"wurde nichts gesendet"
+msgstr ""
+"{id} ist keine Matrix-Event-ID – es wurde nichts gesendet{capability} ist "
+"nicht die Berechtigung, unter der {backend} sendet — es wurde nichts gesendet"
 
 #: packages/matrix/src/send.ts:271
 msgid ""
@@ -3072,7 +3089,7 @@ msgstr ""
 "Datei unter {pending} liegen und wird NICHT gelöscht. Verschiebe sie nach "
 "{target}, oder lösche sie und melde dich neu an."
 
-#: packages/telegram/src/manifest.ts:55
+#: packages/telegram/src/manifest.ts:56
 msgid ""
 "curlew talks to Telegram through the official MTProto API as a third-party "
 "client (mtcute). Telegram requires every client to use API credentials "
@@ -3106,7 +3123,8 @@ msgstr ""
 
 #: packages/telegram/src/sender.ts:47
 msgid "{id} is not a message of this Telegram chat — nothing was sent"
-msgstr "{id} ist keine Nachricht dieses Telegram-Chats – es wurde nichts gesendet"
+msgstr ""
+"{id} ist keine Nachricht dieses Telegram-Chats – es wurde nichts gesendet"
 
 #: packages/telegram/src/sender.ts:90
 msgid ""

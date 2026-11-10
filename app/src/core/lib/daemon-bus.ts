@@ -68,7 +68,7 @@ export const DAEMON_FETCH_TIMEOUT_MS = 120_000;
 export const DAEMON_SEND_TIMEOUT_MS = 120_000;
 
 /** The wire version. Bump it when a field stops being optional or changes meaning. */
-export const DAEMON_WIRE_VERSION = 3;
+export const DAEMON_WIRE_VERSION = 4;
 
 /**
  * One send, as the calling process asks for it.
@@ -89,6 +89,8 @@ export interface DaemonSendRequest {
   subject?: string;
   /** Absolute paths on the caller's disk; the daemon (the same user) checks and reads them. */
   attachments?: string[];
+  /** Chat: the message this one answers. Added in v4, so an older daemon is refused rather than dropping the link. */
+  replyTo?: { remoteId: string };
   format?: 'plain' | 'markdown';
 }
 
@@ -235,6 +237,10 @@ export function parseDaemonSendRequest(json: string): DaemonSendRequest {
   const files = request.attachments;
   if (files !== undefined && (!Array.isArray(files) || files.some((path) => typeof path !== 'string'))) {
     throw new Error('the send request has attachments that are not a list of paths');
+  }
+  const replyTo = request.replyTo as { remoteId?: unknown } | undefined;
+  if (replyTo !== undefined && (typeof replyTo !== 'object' || replyTo === null || typeof replyTo.remoteId !== 'string' || replyTo.remoteId === '')) {
+    throw new Error('the send request has a replyTo without a remoteId');
   }
   return request as DaemonSendRequest;
 }

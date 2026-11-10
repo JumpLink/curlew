@@ -21,7 +21,7 @@ const DELIVERED_CAPABILITIES: ReadonlyArray<{
   {
     backend: 'telegram',
     manifest: BUILTIN_PLUGINS.find((p) => p.manifest.name === 'telegram')!.manifest,
-    trueFlags: 'edits,threads,readReceipts,groups,attachments,attachmentsRead',
+    trueFlags: 'edits,threads,readReceipts,groups,attachments,attachmentsRead,replies',
   },
   {
     backend: 'signal',
@@ -41,7 +41,7 @@ const DELIVERED_CAPABILITIES: ReadonlyArray<{
   {
     backend: 'matrix',
     manifest: BUILTIN_PLUGINS.find((p) => p.manifest.name === 'matrix')!.manifest,
-    trueFlags: 'edits,threads,readReceipts,groups,e2ee,attachments,attachmentsRead',
+    trueFlags: 'edits,threads,readReceipts,groups,e2ee,attachments,attachmentsRead,replies',
   },
 ];
 

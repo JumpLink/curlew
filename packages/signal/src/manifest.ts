@@ -29,6 +29,7 @@ export const SIGNAL_MANIFEST: BackendManifest = {
     // file is not built, so `attachments` stays false.
     attachments: false,
     attachmentsRead: true,
+    replies: false,
   },
   // Signal keeps no server archive: the queue is emptied once a device acknowledged a message,
   // so what curlew stores is the only copy (`state`); the protocol stores are `secret`.

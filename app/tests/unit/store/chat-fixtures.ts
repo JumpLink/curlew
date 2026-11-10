@@ -98,6 +98,7 @@ export const FAKE_CHAT_MANIFEST: BackendManifest = {
     folders: false,
     attachments: true,
     attachmentsRead: false,
+    replies: false,
   },
   syncModel: 'server-archive',
   native: false,

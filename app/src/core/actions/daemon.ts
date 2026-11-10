@@ -382,6 +382,7 @@ export function createDaemonSendHandler(options: DaemonSendHandlerOptions): Daem
           ...(request.attachments === undefined || request.attachments.length === 0
             ? {}
             : { attachments: request.attachments }),
+          ...(request.replyTo === undefined ? {} : { replyTo: request.replyTo }),
           ...(request.format === undefined ? {} : { format: request.format }),
         },
         request.backend,

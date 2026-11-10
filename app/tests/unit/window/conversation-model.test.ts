@@ -14,6 +14,7 @@ import {
   quoteOf,
   protocolDividers,
   protocolRunStarts,
+  replyDraftOf,
   replySubject,
   senderName,
   senderRunStarts,
@@ -341,6 +342,46 @@ export default async () => {
       expect(quoteOf(reply, [first, reply])?.excerpt).toContain('plan.pdf');
       expect(quoteOf(reply, [reply])).toBe(null);
       expect(quoteOf(chat({ id: 'r3' }), [first])).toBe(null);
+    });
+  });
+
+  await describe('replyDraftOf', async () => {
+    const chat = (over: Partial<ShownMessage> & { id: string }): ShownMessage =>
+      message({ backend: 'matrix', ...over, ref: { accountId: 'a', backend: 'matrix', remoteId: over.id } });
+    const choices = [
+      { backend: 'matrix', accountId: 'a' },
+      { backend: 'signal', accountId: 's' },
+    ];
+    const can = (backend: string) => backend === 'matrix';
+
+    await it('names the message and the carrier it must go through', async () => {
+      const draft = replyDraftOf(
+        chat({ id: '$1', senderName: 'Alex', bodyText: 'Treffen wir uns?' }),
+        choices,
+        can,
+      );
+      expect(draft?.remoteId).toBe('$1');
+      expect(draft?.choice).toBe(choices[0]);
+      expect(draft?.author).toBe('Alex');
+      expect(draft?.excerpt).toBe('Treffen wir uns?');
+      expect(replyDraftOf(chat({ id: '$2', fromSelf: true, bodyText: 'Ja' }), choices, can)?.author).toBe(
+        'You',
+      );
+    });
+
+    await it('offers nothing for a backend that cannot reply, a message without a network id or a foreign account', async () => {
+      const signal = message({
+        id: 'x',
+        backend: 'signal',
+        ref: { accountId: 's', backend: 'signal', remoteId: 'x' },
+      });
+      expect(replyDraftOf(signal, choices, can)).toBe(null);
+      const bare = chat({ id: '$3' });
+      bare.ref = { accountId: 'a', backend: 'matrix' };
+      expect(replyDraftOf(bare, choices, can)).toBe(null);
+      const other = chat({ id: '$4' });
+      other.ref = { accountId: 'b', backend: 'matrix', remoteId: '$4' };
+      expect(replyDraftOf(other, choices, can)).toBe(null);
     });
   });
 };

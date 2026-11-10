@@ -77,7 +77,7 @@ import { pinFor } from './people.ts';
 import { appendWriteLog, type WriteFrontend } from '../write-log.ts';
 import { openIndex } from './index-sync.ts';
 import { requireEncryptionFor } from './omemo.ts';
-import { _, fmt } from '@curlew/protocol';
+import { _, fmt, type ReplyTarget } from '@curlew/protocol';
 import { existsSync } from 'node:fs';
 import { basename } from 'node:path';
 
@@ -100,6 +100,8 @@ export interface SendParams {
   emailChat?: boolean;
   inReplyTo?: string;
   references?: string[];
+  /** Chat: the message this one answers. A backend whose sender cannot reply refuses it. */
+  replyTo?: ReplyTarget;
   /** `plain` (default) sends `text` as is; `markdown` renders it per chat protocol and splits long texts. */
   format?: MessageFormat;
   frontend: WriteFrontend;
@@ -286,6 +288,7 @@ export interface SendRequest {
   emailChat?: boolean;
   inReplyTo?: string;
   references?: string[];
+  replyTo?: ReplyTarget;
   format?: MessageFormat;
 }
 
@@ -346,7 +349,12 @@ export async function sendThrough(
       throw new Error(fmt(_('{backend} cannot send attachments'), { backend: backendName }));
     }
 
-    // The files travel with the FIRST text only: a long text split in parts must not send them twice.
+    if (request.replyTo !== undefined && !sender.features.replies) {
+      throw new Error(fmt(_('{backend} cannot send a reply'), { backend: backendName }));
+    }
+
+    // The files and the reply link travel with the FIRST text only: a long text split in parts must
+    // not send them twice.
     const firstText = plan.findIndex((step) => step.kind === 'text');
     for (const [index, step] of plan.entries())
       steps.push({
@@ -359,6 +367,7 @@ export async function sendThrough(
                 ...(request.emailChat ? { emailChat: true } : {}),
                 ...(request.inReplyTo ? { inReplyTo: request.inReplyTo } : {}),
                 ...(request.references ? { references: request.references } : {}),
+                ...(request.replyTo === undefined || index !== firstText ? {} : { replyTo: request.replyTo }),
                 ...(attachments.length === 0 || index !== firstText
                   ? {}
                   : { attachments: attachments.map((path) => ({ path })) }),
@@ -525,6 +534,7 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
     ...(params.emailChat ? { emailChat: true } : {}),
     ...(params.inReplyTo ? { inReplyTo: params.inReplyTo } : {}),
     ...(params.references ? { references: params.references } : {}),
+    ...(params.replyTo === undefined ? {} : { replyTo: params.replyTo }),
     ...(attachments.length === 0 ? {} : { attachments }),
     ...(params.format === undefined ? {} : { format: params.format }),
   };

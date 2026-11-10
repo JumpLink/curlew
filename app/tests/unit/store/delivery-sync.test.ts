@@ -57,6 +57,7 @@ function fakeBackend(
         folders: false,
         attachments: true,
         attachmentsRead: false,
+        replies: false,
       },
       syncModel: 'delivery-only',
       native: false,

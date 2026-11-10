@@ -23,6 +23,7 @@ export const MAIL_MANIFEST: BackendManifest = {
     folders: true,
     attachments: true,
     attachmentsRead: false,
+    replies: false,
   },
   syncModel: 'server-archive',
   native: false,

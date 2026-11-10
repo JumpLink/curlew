@@ -1,11 +1,12 @@
 /** The conversation pane: mail and messenger history as bubbles, with a small chat composer. */
 
 import Adw from 'gi://Adw?version=1';
+import Gdk from 'gi://Gdk?version=4.0';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import Pango from 'gi://Pango?version=1.0';
 import { _, fmt } from '@curlew/protocol';
-import type { ConversationMessage } from '@curlew/protocol';
+import type { ConversationMessage, ReplyTarget } from '@curlew/protocol';
 import type { MessageCursor } from '@curlew/store';
 
 import type { ListEntry } from './conversation-list-model.ts';
@@ -37,11 +38,13 @@ import {
   protocolDividers,
   protocolRunStarts,
   quoteOf,
+  replyDraftOf,
   senderRunStarts,
   type ShownMessage,
   subjectLabels,
   type ProtocolRun,
   type Quote,
+  type ReplyDraft,
 } from './conversation-model.ts';
 import { attachmentList, type AttachmentHandlers } from './attachment-view.ts';
 import type { AlbumItem } from './media-viewer.ts';
@@ -72,8 +75,14 @@ interface Built {
 }
 
 export function createConversationView(
-  onSend: (text: string, choice: ProtocolChoice, files: PickedFile[]) => Promise<ConversationMessage>,
+  onSend: (
+    text: string,
+    choice: ProtocolChoice,
+    files: PickedFile[],
+    replyTo?: ReplyTarget,
+  ) => Promise<ConversationMessage>,
   canAttach: (backend: string) => boolean,
+  canReply: (backend: string) => boolean,
   loadOlder: (entry: ListEntry, oldest: MessageCursor) => ShownMessage[],
   openMedia: (source: AttachmentSource, kind: AttachmentKind, album?: readonly AlbumItem[]) => void,
   onRoute: (entry: ListEntry, backend: string | null) => void,
@@ -83,6 +92,9 @@ export function createConversationView(
   let messages: ShownMessage[] = [];
   let accountLabels = new Map<string, string>();
   let selectedChoice: ProtocolChoice | null = null;
+  // Every carrier the open conversation can send through; a reply is offered only on one of them.
+  let carriers: ProtocolChoice[] = [];
+  let reply: ReplyDraft<ProtocolChoice> | null = null;
   let sending = false;
   let composerBlocked = false;
   let generation = 0;
@@ -137,6 +149,19 @@ export function createConversationView(
   composer.append(picker);
   composer.append(send);
 
+  // What the next message answers: the quote's look, one line, and a way to drop it again.
+  const replyBar = new Gtk.Box({ spacing: 6, marginStart: 12, marginEnd: 6, marginTop: 6, visible: false });
+  const replySlot = new Gtk.Box({ hexpand: true });
+  const replyClose = new Gtk.Button({
+    iconName: 'window-close-symbolic',
+    tooltipText: _('Cancel reply'),
+    valign: Gtk.Align.CENTER,
+  });
+  replyClose.add_css_class('flat');
+  replyClose.add_css_class('circular');
+  replyBar.append(replySlot);
+  replyBar.append(replyClose);
+
   const content = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
   const hint = new Gtk.Label({ xalign: 0, marginStart: 12, marginEnd: 12, marginTop: 4, visible: false });
   hint.add_css_class('dim-label');
@@ -153,6 +178,7 @@ export function createConversationView(
   });
   composer.prepend(files.button);
   content.append(files.strip);
+  content.append(replyBar);
   content.append(composer);
   const toolbar = new Adw.ToolbarView();
   toolbar.add_top_bar(header);
@@ -282,7 +308,26 @@ export function createConversationView(
     }
   };
 
+  const sameCarrier = (a: ProtocolChoice, b: ProtocolChoice): boolean =>
+    a.backend === b.backend && a.accountId === b.accountId;
+
+  const clearReply = (): void => {
+    reply = null;
+    replyBar.set_visible(false);
+    let child = replySlot.get_first_child();
+    while (child) {
+      replySlot.remove(child);
+      child = replySlot.get_first_child();
+    }
+  };
+  replyClose.connect('clicked', () => {
+    clearReply();
+    input.grab_focus();
+  });
+
   const selectChoice = (choice: ProtocolChoice): void => {
+    // A reply is a link inside one network: another carrier cannot send it.
+    if (reply && !sameCarrier(reply.choice, choice)) clearReply();
     selectedChoice = choice;
     picker.icon_name = choice.icon;
     picker.set_tooltip_text(protocolLabel(choice.backend));
@@ -365,27 +410,31 @@ export function createConversationView(
   };
 
   // The message a reply points at: a bar, the author and a short excerpt, in theme colours only.
-  const quoteBlock = (quote: Quote): Gtk.Widget => {
+  const quoteLine = (author: string, excerpt: string, lines: number): Gtk.Box => {
     const text = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, hexpand: true });
-    const author = new Gtk.Label({ label: quote.author, xalign: 0, ellipsize: Pango.EllipsizeMode.END });
-    author.add_css_class('caption-heading');
-    text.append(author);
-    const excerpt = new Gtk.Label({
-      label: quote.excerpt,
+    const name = new Gtk.Label({ label: author, xalign: 0, ellipsize: Pango.EllipsizeMode.END });
+    name.add_css_class('caption-heading');
+    text.append(name);
+    const line = new Gtk.Label({
+      label: excerpt,
       xalign: 0,
-      lines: 2,
+      lines,
       wrap: true,
       wrapMode: Pango.WrapMode.WORD_CHAR,
       ellipsize: Pango.EllipsizeMode.END,
       maxWidthChars: 40,
     });
-    excerpt.add_css_class('caption');
-    excerpt.add_css_class('dim-label');
-    text.append(excerpt);
+    line.add_css_class('caption');
+    line.add_css_class('dim-label');
+    text.append(line);
     const block = new Gtk.Box({ spacing: 8 });
-    const bar = new Gtk.Separator({ orientation: Gtk.Orientation.VERTICAL });
-    block.append(bar);
+    block.append(new Gtk.Separator({ orientation: Gtk.Orientation.VERTICAL }));
     block.append(text);
+    return block;
+  };
+
+  const quoteBlock = (quote: Quote): Gtk.Widget => {
+    const block = quoteLine(quote.author, quote.excerpt, 2);
     // A button would indent the quote by its padding; a click on the block does the same.
     block.set_tooltip_text(_('Show the quoted message'));
     block.set_cursor_from_name('pointer');
@@ -410,6 +459,72 @@ export function createConversationView(
     adjustment.set_value(top);
   };
 
+  const startReply = (draft: ReplyDraft<ProtocolChoice>): void => {
+    selectChoice(draft.choice);
+    clearReply();
+    reply = draft;
+    replySlot.append(quoteLine(draft.author, draft.excerpt, 1));
+    replyBar.update_property(
+      [Gtk.AccessibleProperty.LABEL],
+      [fmt(_('Reply to {author}: {excerpt}'), { author: draft.author, excerpt: draft.excerpt })],
+    );
+    replyBar.set_visible(true);
+    input.grab_focus();
+  };
+
+  // "Reply" and "Copy" for one bubble. Long press (touch) and right click (pointer) open it; both
+  // run before the selectable text, which would otherwise keep the press for itself.
+  const attachBubbleActions = (card: Gtk.Box, message: ShownMessage): void => {
+    const open = (gesture: Gtk.Gesture, x: number, y: number): void => {
+      const draft =
+        composer.get_visible() && !composerBlocked ? replyDraftOf(message, carriers, canReply) : null;
+      const text = message.bodyText?.trim() ?? '';
+      if (!draft && !text) return;
+      gesture.set_state(Gtk.EventSequenceState.CLAIMED);
+      const box = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
+      const popover = new Gtk.Popover({ autohide: true, hasArrow: false, child: box });
+      const entryButton = (label: string, action: () => void): void => {
+        const button = new Gtk.Button({ label });
+        button.add_css_class('flat');
+        (button.get_child() as Gtk.Label).set_xalign(0);
+        button.connect('clicked', () => {
+          popover.popdown();
+          action();
+        });
+        box.append(button);
+      };
+      if (draft) entryButton(_('Reply'), () => startReply(draft));
+      if (text) entryButton(_('Copy'), () => card.get_clipboard().set(text));
+      popover.set_parent(card);
+      const spot = new Gdk.Rectangle({ x: Math.round(x), y: Math.round(y), width: 1, height: 1 });
+      popover.set_pointing_to(spot);
+      // The popover belongs to the card: it goes before the card does, after its own click is handled.
+      popover.connect('closed', () => {
+        GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+          popover.unparent();
+          return GLib.SOURCE_REMOVE;
+        });
+      });
+      popover.popup();
+    };
+    const longPress = new Gtk.GestureLongPress({
+      touchOnly: true,
+      propagationPhase: Gtk.PropagationPhase.CAPTURE,
+    });
+    longPress.connect('pressed', (gesture: Gtk.GestureLongPress, x: number, y: number) =>
+      open(gesture, x, y),
+    );
+    const click = new Gtk.GestureClick({
+      button: Gdk.BUTTON_SECONDARY,
+      propagationPhase: Gtk.PropagationPhase.CAPTURE,
+    });
+    click.connect('pressed', (gesture: Gtk.GestureClick, _n: number, x: number, y: number) =>
+      open(gesture, x, y),
+    );
+    card.add_controller(longPress);
+    card.add_controller(click);
+  };
+
   // Builds the rows of one message; `position` is where the first goes in the list, -1 for the end.
   const addRow = (
     message: ShownMessage,
@@ -431,6 +546,7 @@ export function createConversationView(
       marginBottom: 8,
     });
     card.append(bubble);
+    attachBubbleActions(card, message);
     const senderBox = sender !== undefined ? senderHeading(sender) : null;
     if (senderBox) bubble.append(senderBox);
     const heading = subject ? subjectHeading(subject) : null;
@@ -698,7 +814,9 @@ export function createConversationView(
     send.set_sensitive(false);
     // An upload takes a while: the button shows that something is happening.
     send.set_child(new Adw.Spinner());
-    void onSend(text, selectedChoice, picked)
+    const replyTo =
+      reply && sameCarrier(reply.choice, selectedChoice) ? { remoteId: reply.remoteId } : undefined;
+    void onSend(text, selectedChoice, picked, replyTo)
       .then((message) => {
         const previous = messages[messages.length - 1] ?? null;
         const previousDay = dayOf(previous ?? message);
@@ -716,6 +834,7 @@ export function createConversationView(
         addRow(message, undefined, undefined, run, divider, day !== '' && day !== previousDay, -1);
         input.set_text('');
         files.clear();
+        clearReply();
         scrollToEnd();
       })
       .catch((err: unknown) => {
@@ -768,6 +887,7 @@ export function createConversationView(
       composerBlocked = blocked !== null;
       input.set_text('');
       files.clear();
+      clearReply();
       if (choices.length > 1) {
         selectedChoice = defaultProtocolChoice(messages, choices);
         rebuildPicker(choices);
@@ -779,6 +899,7 @@ export function createConversationView(
         selectedChoice = null;
         picker.set_visible(false);
       }
+      carriers = choices.length > 0 ? choices : only ? [only] : [];
       if (selectedChoice) selectChoice(selectedChoice);
       else updateAttachable();
       const subjects = subjectLabels(messages);

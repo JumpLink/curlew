@@ -279,13 +279,44 @@ export function quoteOf(message: ShownMessage, loaded: readonly ShownMessage[]):
   if (!target) return null;
   const quoted = loaded.find((candidate) => candidate.ref.remoteId === target && candidate.id !== message.id);
   if (!quoted) return null;
+  return { id: quoted.id, ...describeQuoted(quoted) };
+}
+
+/** Who wrote a message and the first line of it, as a quote or the reply bar names it. */
+function describeQuoted(quoted: ShownMessage): Omit<Quote, 'id'> {
   const line = quoted.bodyText
     ?.split('\n')
     .map((text) => text.trim())
     .find((text) => text !== '');
   const text = line ?? (quoted.hasAttachments ? attachmentLines(quoted.attachments)[0] : '') ?? '';
   const excerpt = text.length > QUOTE_MAX_CHARS ? `${text.slice(0, QUOTE_MAX_CHARS - 1).trimEnd()}…` : text;
-  return { id: quoted.id, author: quoted.fromSelf ? _('You') : senderName(quoted), excerpt };
+  return { author: quoted.fromSelf ? _('You') : senderName(quoted), excerpt };
+}
+
+/** The message a composer is about to answer, and the carrier that answer must go through. */
+export interface ReplyDraft<C extends { backend: string; accountId: string }> {
+  /** The network's id of the message, what `SendingMessage.replyTo` carries. */
+  remoteId: string;
+  choice: C;
+  author: string;
+  excerpt: string;
+}
+
+/**
+ * What answering `message` would be, or null when it cannot be answered: its backend does not
+ * reply, the index holds no network id for it, or the conversation has no carrier on that account.
+ * A reply is a link inside one network, so it always goes out through the message's own carrier.
+ */
+export function replyDraftOf<C extends { backend: string; accountId: string }>(
+  message: ShownMessage,
+  choices: readonly C[],
+  canReply: (backend: string) => boolean,
+): ReplyDraft<C> | null {
+  const remoteId = message.ref.remoteId;
+  if (!remoteId || !canReply(message.backend)) return null;
+  const choice = choices.find((c) => c.backend === message.backend && c.accountId === message.ref.accountId);
+  if (!choice) return null;
+  return { remoteId, choice, ...describeQuoted(message) };
 }
 
 /** The most parts a Telegram album has: a folded bubble lists all of them. */
