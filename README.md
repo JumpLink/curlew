@@ -971,10 +971,12 @@ working account source. Closing that gap — a platform-native credential
 and sync layer for macOS/Windows — is open work, not a bug in these
 packages.
 
-No Flatpak: GOA talks to the session bus directly, and a Flatpak sandbox
-cannot reach it without a portal this project does not implement, so a
-Flatpak build would silently ship with every account unavailable rather
-than failing loudly.
+No Flatpak yet. GOA talks to the session bus directly, and no portal covers
+online accounts, so a Flatpak build needs the one declared hole
+`--talk-name=org.gnome.OnlineAccounts` (as Geary has) or ships chat only. The
+rest of the app is being brought to the same-code-inside-and-outside-a-sandbox
+rule of gjsify ADR 0138 in the order set out in
+[ADR 0011](docs/adr/0011-same-app-inside-and-outside-a-sandbox.md).
 
 ### Embedding a Telegram api pair (packagers)
 
