@@ -245,6 +245,7 @@ async function identityNotice(
     originId: null,
     replaceId: null,
     replyToId: null,
+    reactions: null,
     retract: null,
     tombstone: false,
     attachmentUrls: [],

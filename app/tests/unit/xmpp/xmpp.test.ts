@@ -392,6 +392,39 @@ export default async () => {
       expect(page.retracted?.length).toBe(0);
     });
 
+    await it('maps XEP-0444 reactions: the whole set replaces, an empty one clears, also via the lookback', async () => {
+      const react = (id: string, n: number, from: string, target: string, emojis: string[]) =>
+        entry({
+          id,
+          at: at(n),
+          from,
+          to: from === ANNA ? ME : ANNA,
+          extra: `<reactions xmlns="${NS.reactions}" id="${target}">${emojis.map((e) => `<reaction>${e}</reaction>`).join('')}</reactions>`,
+        });
+      const older = [entry({ id: 'a1', at: at(1), from: ANNA, body: 'Salat?', stanzaId: 's1' })];
+      const entries = [
+        react('a2', 2, ANNA, 's1', ['👍', '❤️', '👍']),
+        react('a3', 3, `${ME}/x`, 's1', ['🎉']),
+        react('a4', 4, ANNA, 's1', []),
+        react('a5', 5, ANNA, 'unknown', ['👍']),
+      ];
+      expect(entries[0].reactions).toStrictEqual({ id: 's1', emojis: ['👍', '❤️'] });
+      expect(unresolvedReferences(direct, entries).join()).toBe('s1,unknown');
+      const page = buildPage(
+        direct,
+        entries,
+        { afterSeq: Date.parse(at(1)), exhausted: true, reachedStart: false },
+        older,
+      );
+      expect(page.messages.length).toBe(0);
+      expect(page.reactions).toStrictEqual([
+        { remoteId: 'a1', reactor: ANNA, emoji: '👍', replace: true },
+        { remoteId: 'a1', reactor: ANNA, emoji: '❤️' },
+        { remoteId: 'a1', reactor: null, emoji: '🎉', replace: true },
+        { remoteId: 'a1', reactor: ANNA, emoji: null, replace: true },
+      ]);
+    });
+
     await it('turns references to older messages into edits and retractions, via the lookback', async () => {
       const older = [
         entry({ id: 'a1', at: at(1), from: ANNA, body: 'alt', stanzaId: 's1' }),
