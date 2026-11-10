@@ -17,7 +17,7 @@ export const SIGNAL_MANIFEST: BackendManifest = {
     edits: true,
     // The network has reactions; map.ts drops them in mapDataMessage.
     reactions: false,
-    // Quoted replies, no threads.
+    // Quoted replies (sent as `quote`), no threads.
     threads: false,
     readReceipts: true,
     groups: true,
@@ -29,7 +29,7 @@ export const SIGNAL_MANIFEST: BackendManifest = {
     // file is not built, so `attachments` stays false.
     attachments: false,
     attachmentsRead: true,
-    replies: false,
+    replies: true,
   },
   // Signal keeps no server archive: the queue is emptied once a device acknowledged a message,
   // so what curlew stores is the only copy (`state`); the protocol stores are `secret`.

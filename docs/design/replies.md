@@ -1,6 +1,6 @@
 # Replies, quotes and reactions
 
-Status: pieces 1 to 3 (quote, jump, send a reply for Matrix and Telegram) built. Reference: Fractal, Flare and Telegram show
+Status: pieces 1 to 3 (quote, jump, send a reply for Matrix, Telegram and Signal) built. Reference: Fractal, Flare and Telegram show
 the message a reply points at as a small block above the reply's text. The index already stores
 the pointer (`reply_to_remote_id`, `reply_to_client_id`) for Telegram, Matrix, XMPP, Signal and
 WhatsApp, and nothing in the window reads it.
@@ -44,7 +44,7 @@ hides the entry. Built in two steps: the backends first, then the window.
 | Matrix | `m.relates_to` → `m.in_reply_to` → `event_id` on the `m.room.message`; on the first file only | built |
 | Telegram | mtcute `replyTo` message number of the same chat (`<chat>/<number>`); a target of another chat is refused; first file only | built |
 | XMPP | XEP-0461 `<reply to id>` | to do |
-| Signal | `quote` in the data message (timestamp, author, text) | to do |
+| Signal | `DataMessage.quote` with the sent timestamp and the author's ACI (both string and binary form), in the recipient copies and the transcript; no quoted text; direct chats only | built |
 | WhatsApp | `contextInfo.quotedMessage` with key and content | to do |
 | Mail | threads through `inReplyTo`/`References` already, outside this flag | — |
 

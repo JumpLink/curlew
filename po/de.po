@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 12:40+0100\n"
+"POT-Creation-Date: 2026-11-10 12:56+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2564,7 +2564,7 @@ msgid "the attachments together exceed {max} bytes"
 msgstr "die Anhänge zusammen überschreiten {max} Bytes"
 
 #: packages/imap/src/send.ts:66 packages/matrix/src/send.ts:249
-#: packages/signal/src/send.ts:279 packages/telegram/src/sender.ts:73
+#: packages/signal/src/send.ts:293 packages/telegram/src/sender.ts:73
 #: packages/whatsapp/src/send.ts:327
 msgid "sending to {address} is not granted for account {account}"
 msgstr "Das Senden an {address} ist für Konto {account} nicht freigegeben"
@@ -2810,6 +2810,10 @@ msgstr ""
 "Eingegangenes nur bis zum Empfang vor, und das Telefon sendet die "
 "Kontaktliste von selbst."
 
+#: packages/signal/src/map.ts:54
+msgid "this message has no Signal id to reply to"
+msgstr "diese Nachricht hat keine Signal-Kennung, auf die man antworten kann"
+
 #: packages/signal/src/receiver.ts:63
 msgid "link it again with `curlew accounts add signal`"
 msgstr "verknüpfe es mit `curlew accounts add signal` neu"
@@ -2818,11 +2822,11 @@ msgstr "verknüpfe es mit `curlew accounts add signal` neu"
 msgid "Signal no longer knows this device (it was unlinked) — {hint}"
 msgstr "Signal kennt dieses Gerät nicht mehr (es wurde entkoppelt) — {hint}"
 
-#: packages/signal/src/send.ts:145
+#: packages/signal/src/send.ts:149
 msgid "Signal answered {what} with something that is not JSON"
 msgstr "Signal hat {what} mit etwas beantwortet, das kein JSON ist"
 
-#: packages/signal/src/send.ts:186
+#: packages/signal/src/send.ts:190
 msgid ""
 "a Signal message holds at most {max} bytes of text, this one has {bytes} — "
 "shorten it"
@@ -2830,7 +2834,7 @@ msgstr ""
 "Eine Signal-Nachricht fasst höchstens {max} Byte Text, diese hat {bytes} — "
 "kürze sie"
 
-#: packages/signal/src/send.ts:228
+#: packages/signal/src/send.ts:242
 msgid ""
 "the message was delivered, but this account's other devices were not told "
 "about it ({reason}) — it will not appear on the phone"
@@ -2838,7 +2842,7 @@ msgstr ""
 "Die Nachricht wurde zugestellt, aber die anderen Geräte dieses Kontos haben "
 "nichts davon erfahren ({reason}) — auf dem Telefon erscheint sie nicht"
 
-#: packages/signal/src/send.ts:236
+#: packages/signal/src/send.ts:250
 msgid ""
 "a note to self is stored on this account's other devices, and this account "
 "has none — nothing was sent"
@@ -2846,7 +2850,7 @@ msgstr ""
 "Eine Notiz an dich selbst wird auf den anderen Geräten dieses Kontos "
 "gespeichert, und dieses Konto hat keine — es wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:262
+#: packages/signal/src/send.ts:276
 msgid ""
 "curlew cannot send to a Signal group: a group message needs the member list "
 "and credentials from Signal's storage service, which curlew does not sync — "
@@ -2856,7 +2860,7 @@ msgstr ""
 "braucht die Mitgliederliste und Zugangsdaten aus Signals Storage Service, "
 "den curlew nicht synchronisiert — sende sie aus einem Signal-Client"
 
-#: packages/signal/src/send.ts:271
+#: packages/signal/src/send.ts:285
 msgid ""
 "{address} is not a Signal account id — use the id `conversations_list` shows "
 "for the chat, not a phone number"
@@ -2864,7 +2868,7 @@ msgstr ""
 "{address} ist keine Signal-Konto-ID — nimm die ID, die `conversations_list` "
 "für den Chat anzeigt, keine Telefonnummer"
 
-#: packages/signal/src/send.ts:330
+#: packages/signal/src/send.ts:344
 msgid ""
 "Signal kept disagreeing about the recipient's devices — nothing was sent; "
 "try again, or send it from a Signal client"
@@ -2872,7 +2876,7 @@ msgstr ""
 "Signal war sich über die Geräte des Empfängers dauerhaft uneinig — es wurde "
 "nichts gesendet; versuche es erneut oder sende aus einem Signal-Client"
 
-#: packages/signal/src/send.ts:339
+#: packages/signal/src/send.ts:353
 msgid ""
 "Signal refused this device (unauthorized) — nothing was sent; the device may "
 "be unlinked"
@@ -2880,33 +2884,33 @@ msgstr ""
 "Signal hat dieses Gerät abgewiesen (nicht autorisiert) — es wurde nichts "
 "gesendet; das Gerät ist möglicherweise entkoppelt"
 
-#: packages/signal/src/send.ts:343
+#: packages/signal/src/send.ts:357
 msgid "Signal wants a rate-limit challenge answered — nothing was sent"
 msgstr ""
 "Signal verlangt die Antwort auf eine Ratenbegrenzungs-Abfrage — es wurde "
 "nichts gesendet"
 
-#: packages/signal/src/send.ts:346
+#: packages/signal/src/send.ts:360
 msgid "Signal refused the message ({status}) — nothing was sent"
 msgstr ""
 "Signal hat die Nachricht abgelehnt ({status}) — es wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:438
+#: packages/signal/src/send.ts:452
 msgid "Signal has no account {address} — nothing was sent"
 msgstr "Signal kennt kein Konto {address} — es wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:443
+#: packages/signal/src/send.ts:457
 msgid ""
 "Signal did not hand over the keys for {address} ({status}) — nothing was sent"
 msgstr ""
 "Signal hat die Schlüssel für {address} nicht herausgegeben ({status}) — es "
 "wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:461
+#: packages/signal/src/send.ts:475
 msgid "Signal lists no device for {address} — nothing was sent"
 msgstr "Signal führt kein Gerät für {address} — es wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:481
+#: packages/signal/src/send.ts:495
 msgid ""
 "a device of {address} publishes no usable keys, so curlew cannot start a "
 "session with it — nothing was sent"
@@ -2914,7 +2918,7 @@ msgstr ""
 "Ein Gerät von {address} veröffentlicht keine brauchbaren Schlüssel, also "
 "kann curlew keine Sitzung damit beginnen — es wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:527
+#: packages/signal/src/send.ts:541
 msgid ""
 "the safety number of {address} changed — nothing was sent; check it with "
 "them, then send again to accept the new one"
@@ -2923,7 +2927,7 @@ msgstr ""
 "gesendet; prüfe sie gemeinsam mit der Person und sende dann erneut, um die "
 "neue zu akzeptieren"
 
-#: packages/signal/src/send.ts:553
+#: packages/signal/src/send.ts:567
 msgid ""
 "Signal reported a device mismatch ({status}) without naming a device — "
 "nothing was sent"
