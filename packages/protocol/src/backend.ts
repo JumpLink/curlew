@@ -799,6 +799,16 @@ export interface SenderFeatures {
    * and a frontend hides its emoji row.
    */
   reactions: boolean;
+  /**
+   * The sender can edit one of the person's own messages (`MessageSender.edit`); one that cannot is
+   * never asked to, and a frontend hides its edit entry.
+   */
+  edits: boolean;
+  /**
+   * The sender can delete one of the person's own messages (`MessageSender.delete`); one that cannot
+   * is never asked to, and a frontend hides its delete entry.
+   */
+  deletes: boolean;
 }
 
 /** A file to send with a message, by absolute path. Only the sender that claims `attachments` reads it. */
@@ -851,6 +861,22 @@ export interface SendingReaction {
   previous?: string;
 }
 
+/** One edit handed to a sender: the person's new text for one of their own messages in the chat `to`. */
+export interface SendingEdit {
+  to: string;
+  /** The message being edited; it must be the person's own (`fromSelf: true`). */
+  target: ReplyTarget;
+  /** The new text for the message. */
+  text: string;
+}
+
+/** One deletion handed to a sender: the person's own message in the chat `to`. */
+export interface SendingDeletion {
+  to: string;
+  /** The message being deleted; it must be the person's own (`fromSelf: true`). */
+  target: ReplyTarget;
+}
+
 /** What a send returned. `id` is the network's own id and what the write log records (ADR 0004 §7). */
 export interface SentMessage {
   /** The address it went to, exactly as the permit spelled it. */
@@ -886,6 +912,10 @@ export interface MessageSender {
   sendImage?(to: string, url: string): Promise<SentMessage>;
   /** Present exactly when `features.reactions` is true. */
   react?(reaction: SendingReaction): Promise<void>;
+  /** Present exactly when `features.edits` is true. */
+  edit?(edit: SendingEdit): Promise<void>;
+  /** Present exactly when `features.deletes` is true. */
+  delete?(deletion: SendingDeletion): Promise<void>;
   close(): Promise<void>;
 }
 

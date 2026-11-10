@@ -51,6 +51,8 @@ export class MailSender implements MessageSender {
     attachments: true,
     replies: false,
     reactions: false,
+    edits: false,
+    deletes: false,
   };
   private readonly target: SmtpTarget;
   private readonly permit: SendPermit;

@@ -9,6 +9,8 @@ import type {
   DeliverySession,
   MessageSender,
   SendPermit,
+  SendingDeletion,
+  SendingEdit,
   SendingMessage,
   SendingReaction,
   SentMessage,
@@ -16,6 +18,8 @@ import type {
 import { PLUGIN_API_VERSION } from '@curlew/protocol';
 import { getConversation, takeReceiveLease } from '@curlew/store';
 import { createDaemonSendHandler, sessionKey } from '../../../src/core/actions/daemon.ts';
+import { deleteMessage } from '../../../src/core/actions/delete.ts';
+import { editMessage } from '../../../src/core/actions/edit.ts';
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
 import { reactToMessage } from '../../../src/core/actions/react.ts';
 import { sendMessage } from '../../../src/core/actions/send.ts';
@@ -84,9 +88,18 @@ const MANIFEST: BackendManifest = {
 
 /** A sender that records what it was given and never touches a network. */
 class FakeSender implements MessageSender {
-  readonly features = { markdown: false, attachments: false, replies: false, reactions: false };
+  readonly features = {
+    markdown: false,
+    attachments: false,
+    replies: false,
+    reactions: false,
+    edits: false,
+    deletes: false,
+  };
   readonly sent: SendingMessage[] = [];
   readonly reacted: SendingReaction[] = [];
+  readonly edited: SendingEdit[] = [];
+  readonly deleted: SendingDeletion[] = [];
   closed = 0;
 
   constructor(
@@ -112,6 +125,16 @@ class FakeSender implements MessageSender {
   async react(reaction: SendingReaction): Promise<void> {
     if (this.fail !== undefined) throw new Error(this.fail);
     this.reacted.push(reaction);
+  }
+
+  async edit(edit: SendingEdit): Promise<void> {
+    if (this.fail !== undefined) throw new Error(this.fail);
+    this.edited.push(edit);
+  }
+
+  async delete(deletion: SendingDeletion): Promise<void> {
+    if (this.fail !== undefined) throw new Error(this.fail);
+    this.deleted.push(deletion);
   }
 
   async close(): Promise<void> {
@@ -503,6 +526,188 @@ export default async () => {
     });
   });
 
+  await describe('editing a message', async () => {
+    const target = { remoteId: 'm1', fromSelf: true };
+    const edit = (world: World, backend: unknown, daemon: DaemonSendClient, text: string = 'fixed') =>
+      editMessage({
+        accountId: ACCOUNT,
+        to: PEER,
+        target,
+        text,
+        frontend: 'window',
+        dbPath: world.dbPath,
+        configPath: world.configPath,
+        writeLogPath: world.writeLogPath,
+        backend: backend as never,
+        daemon,
+      });
+
+    await it('goes to the daemon first and opens no sender of its own', async () => {
+      await withWorld({ grants: GRANTS }, async (world) => {
+        const sender = new FakeSender('own');
+        sender.features.edits = true;
+        const { backend, opened } = callerBackend(sender);
+        const { client, asked } = fakeClient({
+          v: DAEMON_WIRE_VERSION,
+          kind: 'sent',
+          markdown: false,
+          steps: [],
+        });
+        await edit(world, backend, client);
+        expect(asked.length).toBe(1);
+        expect(asked[0].edit).toStrictEqual({ target, text: 'fixed' });
+        expect(asked[0].text === undefined).toBe(true);
+        expect(opened.length).toBe(0);
+        expect(world.logLines().length).toBe(1);
+        expect(world.logLines()[0]).toMatch(/edit:m1/);
+      });
+    });
+
+    await it('falls back to its own sender when no daemon holds the account', async () => {
+      await withWorld({ grants: GRANTS }, async (world) => {
+        const sender = new FakeSender('own');
+        sender.features.edits = true;
+        const { backend, opened } = callerBackend(sender);
+        const { client } = fakeClient(null);
+        await edit(world, backend, client);
+        expect(opened.length).toBe(1);
+        expect(sender.edited).toStrictEqual([{ to: PEER, target, text: 'fixed' }]);
+        expect(sender.closed).toBe(1);
+        expect(world.logLines().length).toBe(1);
+      });
+    });
+
+    await it('refuses a target that is not the persons own, and logs nothing', async () => {
+      await withWorld({ grants: GRANTS }, async (world) => {
+        const sender = new FakeSender('own');
+        sender.features.edits = true;
+        const { backend, opened } = callerBackend(sender);
+        const { client, asked } = fakeClient(null);
+        await expect(
+          editMessage({
+            accountId: ACCOUNT,
+            to: PEER,
+            target: { remoteId: 'm1', fromSelf: false },
+            text: 'fixed',
+            frontend: 'window',
+            dbPath: world.dbPath,
+            configPath: world.configPath,
+            writeLogPath: world.writeLogPath,
+            backend: backend as never,
+            daemon: client,
+          }),
+        ).rejects.toThrow(/only your own messages can be edited/);
+        // The daemon is asked first; only after it says it does not hold the account does the
+        // direct path open a sender and refuse.
+        expect(asked.length).toBe(1);
+        expect(opened.length).toBe(1);
+        expect(world.logLines().length).toBe(0);
+      });
+    });
+
+    await it('refuses a sender that cannot edit, and logs nothing', async () => {
+      await withWorld({ grants: GRANTS }, async (world) => {
+        const sender = new FakeSender('own');
+        const { backend, opened } = callerBackend(sender);
+        const { client, asked } = fakeClient(null);
+        await expect(edit(world, backend, client)).rejects.toThrow(/cannot edit a message/);
+        expect(asked.length).toBe(1);
+        expect(opened.length).toBe(1);
+        expect(world.logLines().length).toBe(0);
+      });
+    });
+  });
+
+  await describe('deleting a message', async () => {
+    const target = { remoteId: 'm1', fromSelf: true };
+    const del = (world: World, backend: unknown, daemon: DaemonSendClient) =>
+      deleteMessage({
+        accountId: ACCOUNT,
+        to: PEER,
+        target,
+        frontend: 'window',
+        dbPath: world.dbPath,
+        configPath: world.configPath,
+        writeLogPath: world.writeLogPath,
+        backend: backend as never,
+        daemon,
+      });
+
+    await it('goes to the daemon first and opens no sender of its own', async () => {
+      await withWorld({ grants: GRANTS }, async (world) => {
+        const sender = new FakeSender('own');
+        sender.features.deletes = true;
+        const { backend, opened } = callerBackend(sender);
+        const { client, asked } = fakeClient({
+          v: DAEMON_WIRE_VERSION,
+          kind: 'sent',
+          markdown: false,
+          steps: [],
+        });
+        await del(world, backend, client);
+        expect(asked.length).toBe(1);
+        expect(asked[0].delete).toStrictEqual({ target });
+        expect(asked[0].text === undefined).toBe(true);
+        expect(opened.length).toBe(0);
+        expect(world.logLines().length).toBe(1);
+        expect(world.logLines()[0]).toMatch(/delete:m1/);
+      });
+    });
+
+    await it('falls back to its own sender when no daemon holds the account', async () => {
+      await withWorld({ grants: GRANTS }, async (world) => {
+        const sender = new FakeSender('own');
+        sender.features.deletes = true;
+        const { backend, opened } = callerBackend(sender);
+        const { client } = fakeClient(null);
+        await del(world, backend, client);
+        expect(opened.length).toBe(1);
+        expect(sender.deleted).toStrictEqual([{ to: PEER, target }]);
+        expect(sender.closed).toBe(1);
+        expect(world.logLines().length).toBe(1);
+      });
+    });
+
+    await it('refuses a target that is not the persons own, and logs nothing', async () => {
+      await withWorld({ grants: GRANTS }, async (world) => {
+        const sender = new FakeSender('own');
+        sender.features.deletes = true;
+        const { backend, opened } = callerBackend(sender);
+        const { client, asked } = fakeClient(null);
+        await expect(
+          deleteMessage({
+            accountId: ACCOUNT,
+            to: PEER,
+            target: { remoteId: 'm1', fromSelf: false },
+            frontend: 'window',
+            dbPath: world.dbPath,
+            configPath: world.configPath,
+            writeLogPath: world.writeLogPath,
+            backend: backend as never,
+            daemon: client,
+          }),
+        ).rejects.toThrow(/only your own messages can be deleted/);
+        // The daemon is asked first; only after it says it does not hold the account does the
+        // direct path open a sender and refuse.
+        expect(asked.length).toBe(1);
+        expect(opened.length).toBe(1);
+        expect(world.logLines().length).toBe(0);
+      });
+    });
+
+    await it('refuses a sender that cannot delete, and logs nothing', async () => {
+      await withWorld({ grants: GRANTS }, async (world) => {
+        const sender = new FakeSender('own');
+        const { backend, opened } = callerBackend(sender);
+        const { client, asked } = fakeClient(null);
+        await expect(del(world, backend, client)).rejects.toThrow(/cannot delete a message/);
+        expect(asked.length).toBe(1);
+        expect(opened.length).toBe(1);
+        expect(world.logLines().length).toBe(0);
+      });
+    });
+  });
+
   await describe('the daemon answering a send', async () => {
     const lines: string[] = [];
     const log = (line: string) => lines.push(line);
@@ -674,6 +879,133 @@ export default async () => {
           message = (err as Error).message;
         }
         expect(message).toMatch(/reaction/);
+      }
+    });
+
+    await it('edits through a sender that can edit, and answers with no steps', async () => {
+      const sender = new FakeSender('daemon');
+      sender.features.edits = true;
+      const sessions = new Map([[sessionKey(BACKEND, ACCOUNT), heldSession(sender)]]);
+      const target = { remoteId: 'm1', fromSelf: true };
+      const reply = await handlerFor(sessions)(request({ text: undefined, edit: { target, text: 'fixed' } }));
+      expect(reply.kind).toBe('sent');
+      if (reply.kind === 'sent') expect(reply.steps.length).toBe(0);
+      expect(sender.sent.length).toBe(0);
+      expect(sender.edited).toStrictEqual([{ to: PEER, target, text: 'fixed' }]);
+      expect(sender.closed).toBe(1);
+    });
+
+    await it('refuses an edit for a sender that cannot edit, and sends nothing', async () => {
+      const sender = new FakeSender('daemon');
+      const sessions = new Map([[sessionKey(BACKEND, ACCOUNT), heldSession(sender)]]);
+      const reply = await handlerFor(sessions)(
+        request({ text: undefined, edit: { target: { remoteId: 'm1' }, text: 'fixed' } }),
+      );
+      expect(reply.kind).toBe('failed');
+      if (reply.kind === 'failed') expect(reply.message).toMatch(/cannot edit a message/);
+      expect(sender.edited.length).toBe(0);
+    });
+
+    await it('refuses an edit of a message that is not the persons own', async () => {
+      const sender = new FakeSender('daemon');
+      sender.features.edits = true;
+      const sessions = new Map([[sessionKey(BACKEND, ACCOUNT), heldSession(sender)]]);
+      const reply = await handlerFor(sessions)(
+        request({ text: undefined, edit: { target: { remoteId: 'm1', fromSelf: false }, text: 'fixed' } }),
+      );
+      expect(reply.kind).toBe('failed');
+      if (reply.kind === 'failed') expect(reply.message).toMatch(/only your own messages can be edited/);
+      expect(sender.edited.length).toBe(0);
+    });
+
+    await it('parses an edit and rejects a malformed one or one mixed with another send', async () => {
+      const bare = (over: object) => JSON.stringify({ ...request({ text: undefined }), ...over });
+      const edit = { target: { remoteId: 'm1', fromSelf: false }, text: 'fixed' };
+      expect(parseDaemonSendRequest(bare({ edit })).edit).toStrictEqual(edit);
+      const bad: object[] = [
+        { edit: 'x' },
+        { edit: { text: 'fixed' } },
+        { edit: { target: {}, text: 'fixed' } },
+        { edit: { target: { remoteId: 'm1' }, text: '' } },
+        { edit: { target: { remoteId: 'm1' }, text: 5 } },
+        { edit: { target: { remoteId: 'm1' } } },
+        { edit, text: 'hi' },
+        { edit, attachments: [] },
+        { edit, replyTo: { remoteId: 'm2' } },
+        { edit, reaction: { target: { remoteId: 'm2' }, emoji: '👍' } },
+        { edit, delete: { target: { remoteId: 'm2' } } },
+      ];
+      for (const over of bad) {
+        let message = '';
+        try {
+          parseDaemonSendRequest(bare(over));
+        } catch (err) {
+          message = (err as Error).message;
+        }
+        expect(message).toMatch(/edit/);
+      }
+    });
+
+    await it('deletes through a sender that can delete, and answers with no steps', async () => {
+      const sender = new FakeSender('daemon');
+      sender.features.deletes = true;
+      const sessions = new Map([[sessionKey(BACKEND, ACCOUNT), heldSession(sender)]]);
+      const target = { remoteId: 'm1', fromSelf: true };
+      const reply = await handlerFor(sessions)(request({ text: undefined, delete: { target } }));
+      expect(reply.kind).toBe('sent');
+      if (reply.kind === 'sent') expect(reply.steps.length).toBe(0);
+      expect(sender.sent.length).toBe(0);
+      expect(sender.deleted).toStrictEqual([{ to: PEER, target }]);
+      expect(sender.closed).toBe(1);
+    });
+
+    await it('refuses a deletion for a sender that cannot delete, and sends nothing', async () => {
+      const sender = new FakeSender('daemon');
+      const sessions = new Map([[sessionKey(BACKEND, ACCOUNT), heldSession(sender)]]);
+      const reply = await handlerFor(sessions)(
+        request({ text: undefined, delete: { target: { remoteId: 'm1' } } }),
+      );
+      expect(reply.kind).toBe('failed');
+      if (reply.kind === 'failed') expect(reply.message).toMatch(/cannot delete a message/);
+      expect(sender.deleted.length).toBe(0);
+    });
+
+    await it('refuses a deletion of a message that is not the persons own', async () => {
+      const sender = new FakeSender('daemon');
+      sender.features.deletes = true;
+      const sessions = new Map([[sessionKey(BACKEND, ACCOUNT), heldSession(sender)]]);
+      const reply = await handlerFor(sessions)(
+        request({ text: undefined, delete: { target: { remoteId: 'm1', fromSelf: false } } }),
+      );
+      expect(reply.kind).toBe('failed');
+      if (reply.kind === 'failed') expect(reply.message).toMatch(/only your own messages can be deleted/);
+      expect(sender.deleted.length).toBe(0);
+    });
+
+    await it('parses a deletion and rejects a malformed one or one mixed with another send', async () => {
+      const bare = (over: object) => JSON.stringify({ ...request({ text: undefined }), ...over });
+      const deletion = { target: { remoteId: 'm1', fromSelf: false } };
+      expect(parseDaemonSendRequest(bare({ delete: deletion })).delete).toStrictEqual(deletion);
+      const bad: object[] = [
+        { delete: 'x' },
+        { delete: {} },
+        { delete: { target: {} } },
+        { delete: deletion, text: 'hi' },
+        { delete: deletion, attachments: [] },
+        { delete: deletion, replyTo: { remoteId: 'm2' } },
+        { delete: deletion, reaction: { target: { remoteId: 'm2' }, emoji: '👍' } },
+        { delete: deletion, edit: { target: { remoteId: 'm2' }, text: 'fixed' } },
+      ];
+      for (const over of bad) {
+        let message = '';
+        try {
+          parseDaemonSendRequest(bare(over));
+        } catch (err) {
+          message = (err as Error).message;
+        }
+        // Mixing a deletion with an edit is reported as an edit conflict because the edit check
+        // runs first; every other bad case names the deletion.
+        expect(message).toMatch(/edit|delet/);
       }
     });
 

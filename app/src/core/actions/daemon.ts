@@ -96,6 +96,8 @@ import {
 } from '../lib/daemon-send-service.ts';
 import { followAccount, type FollowResult } from './follow.ts';
 import { openIndex, rebuildWithAddressBook } from './index-sync.ts';
+import { deleteThrough } from './delete.ts';
+import { editThrough } from './edit.ts';
 import { reactThrough } from './react.ts';
 import { sendThrough } from './send.ts';
 
@@ -373,6 +375,16 @@ export function createDaemonSendHandler(options: DaemonSendHandlerOptions): Daem
       };
     }
     try {
+      if (request.edit !== undefined) {
+        await editThrough(sender, { to: request.to, ...request.edit }, request.backend);
+        log(`curlew-daemon: edited for ${who} on its open connection`);
+        return { v: DAEMON_WIRE_VERSION, kind: 'sent', markdown: false, steps: [] };
+      }
+      if (request.delete !== undefined) {
+        await deleteThrough(sender, { to: request.to, ...request.delete }, request.backend);
+        log(`curlew-daemon: deleted for ${who} on its open connection`);
+        return { v: DAEMON_WIRE_VERSION, kind: 'sent', markdown: false, steps: [] };
+      }
       if (request.reaction !== undefined) {
         await reactThrough(sender, { to: request.to, ...request.reaction }, request.backend);
         log(`curlew-daemon: reacted for ${who} on its open connection`);
