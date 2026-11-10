@@ -61,7 +61,7 @@ its network id, so it shows its quote and can be answered too.
 
 ### 4. Reactions
 
-Status: store, Signal, WhatsApp and Matrix receive and the window chips built; Telegram, XMPP and sending are open.
+Status: store, Signal, WhatsApp, Matrix and XMPP receive and the window chips built; Telegram and sending are open.
 Reference: Fractal and Flare show reactions as small emoji chips under the bubble,
 with a count when more than one person used the same emoji; the person's own chip is tinted.
 

@@ -16,6 +16,7 @@
 
 import type {
   ChatEdit,
+  ChatReaction,
   ChatHistoryPage,
   ChatInfo,
   ChatMessage,
@@ -157,7 +158,7 @@ export function hasUnnamedQuote(context: ChatContext, entry: ArchivedEntry): boo
 /** References an entry makes that the page itself cannot resolve — what a lookback must find. */
 export function unresolvedReferences(context: ChatContext, entries: readonly ArchivedEntry[]): string[] {
   const known = new Set(entries.flatMap((e) => referenceKeys(context, e)));
-  const wanted = entries.flatMap((e) => [e.replaceId, e.retract?.id ?? null, e.replyToId]);
+  const wanted = entries.flatMap((e) => [e.replaceId, e.retract?.id ?? null, e.replyToId, e.reactions?.id ?? null]);
   return [...new Set(wanted.filter((id): id is string => id !== null && !known.has(id)))];
 }
 
@@ -232,6 +233,7 @@ export function buildPage(
   const messages = new Map<string, ChatMessage>();
   const edits = new Map<string, ChatEdit>();
   const retracted = new Set<string>();
+  const reactions: ChatReaction[] = [];
 
   const byReference = new Map<string, ArchivedEntry>();
   for (const entry of [...lookback, ...entries]) {
@@ -261,6 +263,25 @@ export function buildPage(
       if (!byModerator && authorKey(context, entry) !== authorKey(context, original)) return;
       if (!messages.delete(original.archiveId)) retracted.add(original.archiveId);
       edits.delete(original.archiveId);
+      return;
+    }
+    if (entry.reactions) {
+      const original = target(entry.reactions.id, entry);
+      const fromSelf = isFromSelf(context, entry);
+      const reactor = fromSelf ? null : (senderOf(context, entry)?.remoteId ?? undefined);
+      if (!original || reactor === undefined) return;
+      // The element lists the person's whole set, so it replaces whatever they had before.
+      if (entry.reactions.emojis.length === 0) {
+        reactions.push({ remoteId: original.archiveId, reactor, emoji: null, replace: true });
+      }
+      entry.reactions.emojis.forEach((emoji, i) => {
+        reactions.push({
+          remoteId: original.archiveId,
+          reactor,
+          emoji,
+          ...(i === 0 ? { replace: true } : {}),
+        });
+      });
       return;
     }
     if (entry.replaceId) {
@@ -324,5 +345,6 @@ export function buildPage(
     highestCursor: last >= 0 ? encodeCursor(entries[last]) : null,
     edits: [...edits.values()],
     retracted: [...retracted],
+    reactions,
   };
 }

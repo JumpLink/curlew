@@ -66,6 +66,7 @@ async function archived(
     tombstone: false,
     attachmentUrls: [],
     replyToId: null,
+    reactions: null,
     encrypted: true,
     omemo: {
       version: 'legacy',

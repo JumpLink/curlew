@@ -43,6 +43,7 @@ export const NS = {
   sid: 'urn:xmpp:sid:0',
   oob: 'jabber:x:oob',
   reply: 'urn:xmpp:reply:0',
+  reactions: 'urn:xmpp:reactions:0',
   fallback: 'urn:xmpp:fallback:0',
   mucUser: 'http://jabber.org/protocol/muc#user',
   omemoLegacy: 'eu.siacs.conversations.axolotl',
@@ -240,6 +241,8 @@ export interface ArchivedEntry {
   attachmentUrls: string[];
   /** XEP-0461: the id of the message this one replies to. */
   replyToId: string | null;
+  /** XEP-0444: the message reacted to and the person's whole set of emoji for it (may be empty). */
+  reactions: { id: string; emojis: string[] } | null;
   /** OMEMO / OpenPGP payload: the body is only the sender's fallback text. */
   encrypted: boolean;
   /**
@@ -299,6 +302,16 @@ export function leadingQuote(body: string | null): { quoted: string; rest: strin
     .map((l) => l.replace(/^> ?/, ''))
     .join('\n');
   return { quoted, rest };
+}
+
+function reactionsOf(message: XmlElement): ArchivedEntry['reactions'] {
+  const element = message.getChild('reactions', NS.reactions);
+  if (!element?.attrs.id) return null;
+  const emojis = element
+    .getChildren('reaction')
+    .map((r) => r.text().trim())
+    .filter((e) => e.length > 0);
+  return { id: element.attrs.id, emojis: [...new Set(emojis)] };
 }
 
 function retractOf(message: XmlElement): ArchivedEntry['retract'] {
@@ -370,6 +383,7 @@ export function parseMamResult(
     tombstone: isTombstone(message),
     attachmentUrls: oob,
     replyToId: message.getChild('reply', NS.reply)?.attrs.id ?? null,
+    reactions: reactionsOf(message),
     encrypted:
       omemo !== null ||
       message.getChild('openpgp', NS.openpgp) !== undefined ||
