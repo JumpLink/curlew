@@ -1,6 +1,6 @@
 # Media grid and silent video preview
 
-Status: piece 1, the duration badge and Telegram albums built; the silent preview open (S6). Reference: Telegram groups several photos and videos sent together into one
+Status: pieces 1 to 3 built (duration badge, Telegram albums, silent preview). Reference: Telegram groups several photos and videos sent together into one
 bubble with a grid; a single video plays silently, in a loop, while it is on screen, with a
 duration badge. Neither exists in curlew yet: today every attachment is its own full-width row.
 
@@ -60,7 +60,8 @@ at. Known edge: an album cut by a page boundary shows as two rows until the othe
 - Silent preview: a video cell that is the only visible part of a bubble and whose file is
   already in the preview cache (so already fetched for the poster) plays muted and looped while
   it is at least half on screen, and stops when it leaves the screen or the window loses focus.
-  A small speaker-off symbol sits next to the badge; pressing the cell opens the viewer with
+  A small speaker-off symbol sits top right (the duration badge is top left) and the play symbol
+  hides while it runs; pressing the cell opens the viewer with
   sound. One preview at a time per window (the one nearest the middle), so a long chat does not
   decode ten streams.
 - A setting under Preferences: *Play videos silently in chats* (on by default on the desktop,

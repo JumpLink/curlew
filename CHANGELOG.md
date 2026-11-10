@@ -26,6 +26,7 @@
 
 ### Added
 
+- A single video in a chat plays muted and in a loop while it is on screen, one at a time and only while the window has focus. The new switch *Play videos silently in chats* under Preferences turns it off; it starts off when the system asks for fewer animations.
 - WhatsApp sends files: `curlew send --attach` and the window's attach button work on WhatsApp
   chats, up to 10 files of 64 MB, one message each, the text as the caption of the first. The
   daemon wire version is 3, so restart the window and the daemon together.

@@ -35,6 +35,8 @@ export interface UiConfig {
   showAllEmails: boolean;
   /** What a desktop notification for a new chat message shows: its text, only who wrote, or nothing. */
   notifications: 'preview' | 'sender' | 'off';
+  /** A single video in a chat plays muted and looped while on screen. Unset: on, unless the system asks for fewer animations. */
+  playVideosSilently?: boolean;
 }
 
 export interface CurlewConfig {
@@ -174,7 +176,14 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   const notifications = (rawUi as Record<string, unknown>).notifications ?? 'preview';
   if (notifications !== 'preview' && notifications !== 'sender' && notifications !== 'off')
     throw new Error('config.ui.notifications must be "preview", "sender" or "off"');
-  const ui: UiConfig = { showAllEmails, notifications };
+  const playVideosSilently = (rawUi as Record<string, unknown>).playVideosSilently;
+  if (playVideosSilently !== undefined && typeof playVideosSilently !== 'boolean')
+    throw new Error('config.ui.playVideosSilently must be true or false');
+  const ui: UiConfig = {
+    showAllEmails,
+    notifications,
+    ...(playVideosSilently === undefined ? {} : { playVideosSilently }),
+  };
 
   const senders: Record<string, Classification> = {};
   const rawSenders = obj.senders ?? {};

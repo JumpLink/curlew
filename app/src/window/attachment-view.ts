@@ -34,6 +34,7 @@ import {
 } from './attachment-store.ts';
 import { attachmentLine, type AttachmentInfo } from './conversation-model.ts';
 import { type GridCell, gridLayout, MAX_GRID_CELLS } from './media-grid-model.ts';
+import type { SilentVideoHost } from './video-preview.ts';
 
 export interface AttachmentHandlers {
   /** Opens the viewer on an image or a video. */
@@ -41,6 +42,8 @@ export interface AttachmentHandlers {
   toast(text: string): void;
   /** Starts `load` once `widget` is near the visible part of the history. */
   whenVisible(widget: Gtk.Widget, load: () => void): void;
+  /** Where a lone video's silent preview signs up; absent, videos stay a still frame. */
+  silentVideo?: SilentVideoHost;
 }
 
 const PLACEHOLDER = { width: 240, height: 160 };
@@ -165,6 +168,24 @@ interface Painted {
   height: number;
 }
 
+/** A round OSD symbol over a preview. A button only for its look: it lets the press through. */
+function osdSymbol(iconName: string, halign: Gtk.Align, valign: Gtk.Align): Gtk.Widget {
+  const badge = new Gtk.Button({ iconName, halign, valign, canTarget: false, canFocus: false });
+  badge.add_css_class('osd');
+  badge.add_css_class('circular');
+  return badge;
+}
+
+/** What a preview hands over once its picture is on screen, for a silent video to take over. */
+interface PaintedPreview {
+  path: string;
+  image: Gtk.Picture;
+  frame: Gtk.Overlay;
+  /** The play symbol of a video, which a running preview hides. */
+  playSymbol: Gtk.Widget | null;
+  paintable: Gdk.Paintable;
+}
+
 /**
  * A preview that loads when it is near the screen and opens the viewer when pressed; a failed load
  * becomes the tile. A video's carries a play symbol so it is not mistaken for a picture, and its
@@ -178,6 +199,7 @@ function inlinePreview(
   kind: AttachmentKind,
   paint: ((path: string, scale: number) => Promise<Painted>) | null,
   cell: GridCell | null = null,
+  painted: ((shown: PaintedPreview) => void) | null = null,
 ): Gtk.Widget {
   const slot = new Gtk.Box({ halign: Gtk.Align.START });
   const frame = new Gtk.Overlay({ halign: Gtk.Align.START, overflow: Gtk.Overflow.HIDDEN });
@@ -200,21 +222,10 @@ function inlinePreview(
   });
   frame.set_child(button);
   frame.add_overlay(spinner);
-  const symbol = (iconName: string): Gtk.Widget => {
-    // A button only for its round OSD look: it sits over the frame and lets the press through.
-    const badge = new Gtk.Button({
-      iconName,
-      halign: Gtk.Align.CENTER,
-      valign: Gtk.Align.CENTER,
-      canTarget: false,
-      canFocus: false,
-    });
-    badge.add_css_class('osd');
-    badge.add_css_class('circular');
-    return badge;
-  };
+  let playSymbol: Gtk.Widget | null = null;
   if (kind === 'video') {
-    frame.add_overlay(symbol('media-playback-start-symbolic'));
+    playSymbol = osdSymbol('media-playback-start-symbolic', Gtk.Align.CENTER, Gtk.Align.CENTER);
+    frame.add_overlay(playSymbol);
     const length = durationLabel(source.info.durationMs);
     if (length) {
       const badge = new Gtk.Label({
@@ -249,16 +260,17 @@ function inlinePreview(
     // The box the bubble gives a picture, in the pixels the texture is decoded at.
     const scale = frame.get_scale_factor();
     void fetchAttachment(source)
-      .then((path) => paint(path, scale))
-      .then((painted) => {
+      .then((path) => paint(path, scale).then((shown) => ({ path, shown })))
+      .then(({ path, shown }) => {
         // The bubble left the window while the picture decoded; there is nothing to paint into.
         if (frame.get_root() === null) return;
-        image.set_paintable(painted.paintable);
+        image.set_paintable(shown.paintable);
         if (!cell) {
-          const size = boundedSize({ width: painted.width / scale, height: painted.height / scale });
+          const size = boundedSize({ width: shown.width / scale, height: shown.height / scale });
           image.set_size_request(size.width, size.height);
         }
         spinner.set_visible(false);
+        painted?.({ path, image, frame, playSymbol, paintable: shown.paintable });
       })
       .catch(() => {
         if (frame.get_root() === null) return;
@@ -304,7 +316,43 @@ function poster(
       return { paintable: frame, width: frame.get_intrinsic_width(), height: frame.get_intrinsic_height() };
     },
     cell,
+    cell || !handlers.silentVideo ? null : (shown) => silentPreview(handlers.silentVideo!, shown),
   );
+}
+
+/**
+ * A lone video's silent preview: muted, looped, with a speaker-off symbol over it. It plays only
+ * while the host says so, and goes back to its still frame when it stops.
+ */
+function silentPreview(host: SilentVideoHost, shown: PaintedPreview): void {
+  const muted = osdSymbol('audio-volume-muted-symbolic', Gtk.Align.END, Gtk.Align.START);
+  muted.set_margin_end(6);
+  muted.set_margin_top(6);
+  muted.set_visible(false);
+  shown.frame.add_overlay(muted);
+  let media: Gtk.MediaFile | null = null;
+  host.register({
+    widget: shown.frame,
+    start: () => {
+      media = Gtk.MediaFile.new_for_filename(shown.path);
+      media.set_muted(true);
+      media.set_loop(true);
+      shown.image.set_paintable(media);
+      muted.set_visible(true);
+      shown.playSymbol?.set_visible(false);
+      media.play();
+    },
+    stop: () => {
+      muted.set_visible(false);
+      shown.playSymbol?.set_visible(true);
+      if (media) {
+        media.pause();
+        media.clear();
+        media = null;
+      }
+      shown.image.set_paintable(shown.paintable);
+    },
+  });
 }
 
 /** One cell of the grid: the picture or first frame when it may load unasked, else the dark cell. */

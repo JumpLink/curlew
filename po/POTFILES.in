@@ -117,6 +117,8 @@ app/src/window/merge-candidates-model.ts
 app/src/window/preferences-dialog.ts
 app/src/window/qr-image.ts
 app/src/window/selection-model.ts
+app/src/window/video-preview-model.ts
+app/src/window/video-preview.ts
 app/src/window/watch.ts
 app/src/window/window.ts
 packages/gnome/src/calendar.gjs.ts
