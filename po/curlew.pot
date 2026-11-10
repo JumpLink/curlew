@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 11:02+0100\n"
+"POT-Creation-Date: 2026-11-10 11:23+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1481,7 +1481,7 @@ msgstr ""
 msgid "Adding account…"
 msgstr ""
 
-#: app/src/window/account-add.ts:218
+#: app/src/window/account-add.ts:218 app/src/window/media-viewer.ts:90
 msgid "Try Again"
 msgstr ""
 
@@ -1783,7 +1783,7 @@ msgid "Play"
 msgstr ""
 
 #: app/src/window/attachment-view.ts:107 app/src/window/audio-player.ts:56
-#: app/src/window/media-viewer.ts:54
+#: app/src/window/media-viewer.ts:55
 msgid "Save as…"
 msgstr ""
 
@@ -1798,11 +1798,11 @@ msgstr ""
 msgid "Attachment"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:221 app/src/window/media-viewer.ts:200
+#: app/src/window/attachment-view.ts:221 app/src/window/media-viewer.ts:217
 msgid "Video: {name}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:221 app/src/window/media-viewer.ts:200
+#: app/src/window/attachment-view.ts:221 app/src/window/media-viewer.ts:217
 msgid "Image: {name}"
 msgstr ""
 
@@ -2077,39 +2077,47 @@ msgstr ""
 msgid "Show more"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:51
+#: app/src/window/media-viewer.ts:52
 msgid "Back"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:52 app/src/window/media-viewer.ts:269
+#: app/src/window/media-viewer.ts:53 app/src/window/media-viewer.ts:287
 msgid "Fullscreen"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:53
+#: app/src/window/media-viewer.ts:54
 msgid "Copy image"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:85
+#: app/src/window/media-viewer.ts:56
+msgid "Open with…"
+msgstr ""
+
+#: app/src/window/media-viewer.ts:88
 msgid "Could not load the attachment"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:104
+#: app/src/window/media-viewer.ts:110
 msgid "Previous"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:105
+#: app/src/window/media-viewer.ts:111
 msgid "Next"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:155
+#: app/src/window/media-viewer.ts:161
 msgid "Could not save the attachment: {error}"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:166
+#: app/src/window/media-viewer.ts:169
+msgid "Could not open the attachment: {error}"
+msgstr ""
+
+#: app/src/window/media-viewer.ts:180
 msgid "Image copied"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:269
+#: app/src/window/media-viewer.ts:287
 msgid "Leave fullscreen"
 msgstr ""
 

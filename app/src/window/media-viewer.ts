@@ -17,6 +17,7 @@ import {
   failureText,
   fetchAttachment,
   loadTexture,
+  openWithDesktop,
   saveCopyAs,
 } from './attachment-store.ts';
 import { attachmentName } from './attachment-view.ts';
@@ -52,9 +53,11 @@ export function createMediaViewer(
   const fullscreen = new Gtk.Button({ iconName: 'view-fullscreen-symbolic', tooltipText: _('Fullscreen') });
   const copy = new Gtk.Button({ iconName: 'edit-copy-symbolic', tooltipText: _('Copy image') });
   const save = new Gtk.Button({ iconName: 'document-save-symbolic', tooltipText: _('Save as…') });
+  const openWith = new Gtk.Button({ iconName: 'document-open-symbolic', tooltipText: _('Open with…') });
   header.pack_start(back);
   header.pack_end(fullscreen);
   header.pack_end(save);
+  header.pack_end(openWith);
   header.pack_end(copy);
   toolbar.add_top_bar(header);
 
@@ -84,6 +87,9 @@ export function createMediaViewer(
     iconName: 'image-missing-symbolic',
     title: _('Could not load the attachment'),
   });
+  const retry = new Gtk.Button({ label: _('Try Again'), halign: Gtk.Align.CENTER });
+  retry.add_css_class('pill');
+  failed.set_child(retry);
   stack.add_named(failed, 'error');
   // Previous and next sit over the media's edges, as in Fractal; a swipe does the same on a touch screen.
   const arrow = (iconName: string, tooltip: string, halign: Gtk.Align): Gtk.Button => {
@@ -156,6 +162,14 @@ export function createMediaViewer(
     );
   };
 
+  const openPart = () => {
+    const shown = current;
+    if (!shown?.path) return;
+    openWithDesktop(window, shown.path, true).catch((err: unknown) =>
+      toast(fmt(_('Could not open the attachment: {error}'), { error: failureText(err) })),
+    );
+  };
+
   const copyImage = () => {
     const texture = current?.texture;
     if (!texture) return;
@@ -169,6 +183,8 @@ export function createMediaViewer(
   back.connect('clicked', close);
   fullscreen.connect('clicked', toggleFullscreen);
   save.connect('clicked', savePart);
+  openWith.connect('clicked', openPart);
+  retry.connect('clicked', () => show());
   copy.connect('clicked', copyImage);
 
   // In fullscreen the bar is out of the way; a click on the media brings it back.
@@ -192,6 +208,7 @@ export function createMediaViewer(
     next.set_visible(albumStep(index, items.length, 1) !== null);
     copy.set_visible(kind === 'image');
     save.set_sensitive(false);
+    openWith.set_sensitive(false);
     copy.set_sensitive(false);
     clearVideo();
     picture.set_paintable(null);
@@ -205,6 +222,7 @@ export function createMediaViewer(
         if (mine !== run || !current || toolbar.get_root() === null) return;
         current.path = path;
         save.set_sensitive(true);
+        openWith.set_sensitive(true);
         if (kind === 'video') {
           const video = new Gtk.Video({ autoplay: true, hexpand: true, vexpand: true });
           video.set_filename(path);

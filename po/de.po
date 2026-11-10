@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 11:02+0100\n"
+"POT-Creation-Date: 2026-11-10 11:23+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1728,7 +1728,7 @@ msgstr "Weiter"
 msgid "Adding account…"
 msgstr "Konto wird hinzugefügt …"
 
-#: app/src/window/account-add.ts:218
+#: app/src/window/account-add.ts:218 app/src/window/media-viewer.ts:90
 msgid "Try Again"
 msgstr "Erneut versuchen"
 
@@ -2055,7 +2055,7 @@ msgid "Play"
 msgstr "Abspielen"
 
 #: app/src/window/attachment-view.ts:107 app/src/window/audio-player.ts:56
-#: app/src/window/media-viewer.ts:54
+#: app/src/window/media-viewer.ts:55
 msgid "Save as…"
 msgstr "Speichern unter…"
 
@@ -2070,11 +2070,11 @@ msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 msgid "Attachment"
 msgstr "Anhang"
 
-#: app/src/window/attachment-view.ts:221 app/src/window/media-viewer.ts:200
+#: app/src/window/attachment-view.ts:221 app/src/window/media-viewer.ts:217
 msgid "Video: {name}"
 msgstr "Video: {name}"
 
-#: app/src/window/attachment-view.ts:221 app/src/window/media-viewer.ts:200
+#: app/src/window/attachment-view.ts:221 app/src/window/media-viewer.ts:217
 msgid "Image: {name}"
 msgstr "Bild: {name}"
 
@@ -2354,39 +2354,47 @@ msgstr "Erneut versuchen"
 msgid "Show more"
 msgstr "Mehr anzeigen"
 
-#: app/src/window/media-viewer.ts:51
+#: app/src/window/media-viewer.ts:52
 msgid "Back"
 msgstr "Zurück"
 
-#: app/src/window/media-viewer.ts:52 app/src/window/media-viewer.ts:269
+#: app/src/window/media-viewer.ts:53 app/src/window/media-viewer.ts:287
 msgid "Fullscreen"
 msgstr "Vollbild"
 
-#: app/src/window/media-viewer.ts:53
+#: app/src/window/media-viewer.ts:54
 msgid "Copy image"
 msgstr "Bild kopieren"
 
-#: app/src/window/media-viewer.ts:85
+#: app/src/window/media-viewer.ts:56
+msgid "Open with…"
+msgstr "Öffnen mit…"
+
+#: app/src/window/media-viewer.ts:88
 msgid "Could not load the attachment"
 msgstr "Der Anhang konnte nicht geladen werden"
 
-#: app/src/window/media-viewer.ts:104
+#: app/src/window/media-viewer.ts:110
 msgid "Previous"
 msgstr "Zurück"
 
-#: app/src/window/media-viewer.ts:105
+#: app/src/window/media-viewer.ts:111
 msgid "Next"
 msgstr "Weiter"
 
-#: app/src/window/media-viewer.ts:155
+#: app/src/window/media-viewer.ts:161
 msgid "Could not save the attachment: {error}"
 msgstr "Der Anhang konnte nicht gespeichert werden: {error}"
 
-#: app/src/window/media-viewer.ts:166
+#: app/src/window/media-viewer.ts:169
+msgid "Could not open the attachment: {error}"
+msgstr "Der Anhang konnte nicht geöffnet werden: {error}"
+
+#: app/src/window/media-viewer.ts:180
 msgid "Image copied"
 msgstr "Bild kopiert"
 
-#: app/src/window/media-viewer.ts:269
+#: app/src/window/media-viewer.ts:287
 msgid "Leave fullscreen"
 msgstr "Vollbild beenden"
 
