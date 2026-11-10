@@ -35,6 +35,7 @@ import {
   fmt,
   type MessageSender,
   type SendingMessage,
+  type SendingReaction,
   type SendPermit,
   type SenderFeatures,
   type SentMessage,
@@ -68,9 +69,11 @@ export const SIGNAL_MAX_MESSAGE_BYTES = 2048;
  */
 const F = {
   content: { dataMessage: 1, syncMessage: 2 },
-  data: { body: 1, quote: 8, timestamp: 7 },
+  data: { body: 1, quote: 8, timestamp: 7, reaction: 16 },
   /** `DataMessage.Quote`; the author goes out in both forms, like the destination of a transcript. */
   quote: { id: 1, authorAci: 5, authorAciBinary: 8 },
+  /** `DataMessage.Reaction`; the target author goes out in both forms, like a quote's. */
+  reaction: { emoji: 1, remove: 2, targetAuthorAci: 4, targetSentTimestamp: 5, targetAuthorAciBinary: 6 },
   sync: { sent: 1 },
   sent: {
     timestamp: 2,
@@ -130,7 +133,7 @@ export interface SignalSendSession {
    * receiver, and passes its queue: the fence belongs around the send as a whole, so it sits here
    * rather than at one call site, where the next method added would walk straight past it.
    */
-  exclusive?: (send: () => Promise<SentMessage>) => Promise<SentMessage>;
+  exclusive?: <T>(send: () => Promise<T>) => Promise<T>;
 }
 
 /** A status, never the response body: that can quote the message or name other people. */
@@ -159,7 +162,7 @@ export class SignalSender implements MessageSender {
     markdown: false,
     attachments: false,
     replies: true,
-    reactions: false,
+    reactions: true,
   };
   private readonly lib: SignalLib;
   private readonly store: SignalProtocolStore;
@@ -167,7 +170,7 @@ export class SignalSender implements MessageSender {
   private readonly fetch: ChatFetch;
   private readonly permit: SendPermit;
   private readonly onClose: () => Promise<void>;
-  private readonly exclusive: (send: () => Promise<SentMessage>) => Promise<SentMessage>;
+  private readonly exclusive: <T>(send: () => Promise<T>) => Promise<T>;
 
   constructor(session: SignalSendSession, permit: SendPermit) {
     this.lib = session.lib;
@@ -181,6 +184,32 @@ export class SignalSender implements MessageSender {
 
   send(message: SendingMessage): Promise<SentMessage> {
     return this.exclusive(() => this.sendNow(message));
+  }
+
+  react(reaction: SendingReaction): Promise<void> {
+    return this.exclusive(() => this.reactNow(reaction));
+  }
+
+  private async reactNow(reaction: SendingReaction): Promise<void> {
+    const aci = this.recipient(reaction.to);
+    const emoji = reaction.emoji ?? reaction.previous;
+    if (emoji === undefined) {
+      throw new Error(_('Signal needs the emoji being taken back — nothing was sent'));
+    }
+    const target = parseMessageRemoteId(reaction.target.remoteId);
+    const timestamp = Date.now();
+    const dataMessage = new ProtoWriter()
+      .uint(F.data.timestamp, timestamp)
+      .message(
+        F.data.reaction,
+        new ProtoWriter()
+          .string(F.reaction.emoji, emoji)
+          .bool(F.reaction.remove, reaction.emoji === null ? true : null)
+          .string(F.reaction.targetAuthorAci, target.authorAci)
+          .uint(F.reaction.targetSentTimestamp, target.sentTimestamp)
+          .bytes(F.reaction.targetAuthorAciBinary, uuidToBytes(target.authorAci)),
+      );
+    await this.transmit(aci, dataMessage, timestamp);
   }
 
   private async sendNow(message: SendingMessage): Promise<SentMessage> {
@@ -213,6 +242,26 @@ export class SignalSender implements MessageSender {
       );
     }
 
+    const warning = await this.transmit(aci, dataMessage, timestamp);
+
+    return {
+      target: message.to,
+      // What the receive path uses as the remote id of our own messages, so the transcript that
+      // comes back replaces curlew's local echo instead of adding a second copy.
+      id: messageRemoteId(this.account.aci, timestamp),
+      sentAt: new Date(timestamp).toISOString(),
+      chatRemoteId: aci,
+      encrypted: true,
+      ...(warning === undefined ? {} : { warning }),
+    };
+  }
+
+  /**
+   * Deliver one `DataMessage` to the recipient and, as a transcript, to this account's other
+   * devices. Returns the gap in a sentence when the recipient has it but the transcript failed.
+   */
+  private async transmit(aci: string, dataMessage: ProtoWriter, timestamp: number): Promise<string | undefined> {
+    const own = aci === this.account.aci;
     // The recipient first: a transcript on the phone for a message the recipient never got would
     // show the user something that does not exist.
     if (!own) {
@@ -252,17 +301,7 @@ export class SignalSender implements MessageSender {
         ),
       );
     }
-
-    return {
-      target: message.to,
-      // What the receive path uses as the remote id of our own messages, so the transcript that
-      // comes back replaces curlew's local echo instead of adding a second copy.
-      id: messageRemoteId(this.account.aci, timestamp),
-      sentAt: new Date(timestamp).toISOString(),
-      chatRemoteId: aci,
-      encrypted: true,
-      ...(warning === undefined ? {} : { warning }),
-    };
+    return warning;
   }
 
   async close(): Promise<void> {

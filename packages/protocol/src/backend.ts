@@ -844,6 +844,11 @@ export interface SendingReaction {
   target: ReplyTarget;
   /** What the person now reacts with, replacing an earlier reaction of theirs; null takes it back. */
   emoji: string | null;
+  /**
+   * With `emoji: null`: the emoji being taken back. Signal names it on the wire and drops a removal
+   * without one; networks that remove by author ignore it.
+   */
+  previous?: string;
 }
 
 /** What a send returned. `id` is the network's own id and what the write log records (ADR 0004 §7). */

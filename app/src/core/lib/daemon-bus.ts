@@ -92,7 +92,11 @@ export interface DaemonSendRequest {
   /** Chat: the message this one answers. Added in v4, so an older daemon is refused rather than dropping the link. */
   replyTo?: { remoteId: string; clientId?: string; fromSelf?: boolean; text?: string };
   /** Chat: react to this message instead of sending text. Added in v5, so an older daemon is refused. */
-  reaction?: { target: { remoteId: string; clientId?: string; fromSelf?: boolean; text?: string }; emoji: string | null };
+  reaction?: {
+    target: { remoteId: string; clientId?: string; fromSelf?: boolean; text?: string };
+    emoji: string | null;
+    previous?: string;
+  };
   format?: 'plain' | 'markdown';
 }
 
@@ -241,12 +245,15 @@ export function parseDaemonSendRequest(json: string): DaemonSendRequest {
     throw new Error('the send request has attachments that are not a list of paths');
   }
   checkMessageTarget('replyTo', request.replyTo);
-  const reaction = request.reaction as { target?: unknown; emoji?: unknown } | undefined;
+  const reaction = request.reaction as { target?: unknown; emoji?: unknown; previous?: unknown } | undefined;
   if (reaction !== undefined) {
     if (typeof reaction !== 'object' || reaction === null) throw new Error('the send request has a malformed reaction');
     checkMessageTarget('reaction target', reaction.target ?? null);
     if (reaction.emoji !== null && (typeof reaction.emoji !== 'string' || reaction.emoji === '')) {
       throw new Error('the send request has a reaction whose emoji is neither text nor null');
+    }
+    if (reaction.previous !== undefined && (typeof reaction.previous !== 'string' || reaction.previous === '')) {
+      throw new Error('the send request has a reaction whose previous emoji is not text');
     }
     if (request.text !== undefined || request.imageUrl !== undefined || request.attachments !== undefined || request.replyTo !== undefined) {
       throw new Error('the send request mixes a reaction with a message');

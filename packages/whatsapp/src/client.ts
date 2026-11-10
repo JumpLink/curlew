@@ -215,6 +215,13 @@ export const createBaileysConnection: ConnectionFactory = ({ auth, fullHistory =
         if (sent.key.id && sent.message) outgoing.set(sent.key.id, sent.message);
         return sent;
       },
+      sendReaction: async (jid, reaction) => {
+        const sent = await sock.sendMessage(jid, {
+          react: { text: reaction.emoji, key: { remoteJid: jid, fromMe: reaction.fromMe, id: reaction.id } },
+        });
+        if (!sent) throw new Error(_('WhatsApp did not take the reaction — nothing was sent'));
+        return sent;
+      },
       // See `WaConnection.openSend`: the connection's owner closes it, never a send view.
       end: () => {},
     }),

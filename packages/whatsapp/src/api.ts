@@ -235,6 +235,13 @@ export interface WaQuote {
   text: string;
 }
 
+/** The message a reaction is on, as WhatsApp keys it; `emoji` empty takes the reaction back. */
+export interface WaReaction {
+  id: string;
+  fromMe: boolean;
+  emoji: string;
+}
+
 /** What `sendMessage` hands back, reduced to what the send path reads off it. */
 export interface WaSentMessage {
   key: WaMessageKey;
@@ -270,6 +277,8 @@ export interface WaSendSocketHandle {
   sendText(jid: string, text: string, quote?: WaQuote): Promise<WaSentMessage>;
   /** One file; Baileys encrypts it and uploads it to WhatsApp's media servers. */
   sendFile(jid: string, file: WaOutgoingFile): Promise<WaSentMessage>;
+  /** One reaction on a message of the chat; WhatsApp keeps one per person, an empty emoji removes it. */
+  sendReaction(jid: string, reaction: WaReaction): Promise<WaSentMessage>;
   /** Close without logging out, exactly like `WaSocketHandle.end`. */
   end(): void;
 }

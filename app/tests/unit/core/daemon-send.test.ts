@@ -649,6 +649,10 @@ export default async () => {
       expect(parseDaemonSendRequest(bare({ reaction: { ...reaction, emoji: null } })).reaction?.emoji).toBe(
         null,
       );
+      expect(
+        parseDaemonSendRequest(bare({ reaction: { ...reaction, emoji: null, previous: '👍' } })).reaction
+          ?.previous,
+      ).toBe('👍');
       const bad: object[] = [
         { reaction: 'x' },
         { reaction: { emoji: '👍' } },
@@ -656,6 +660,8 @@ export default async () => {
         { reaction: { target: { remoteId: 'm1' }, emoji: '' } },
         { reaction: { target: { remoteId: 'm1' }, emoji: 5 } },
         { reaction: { target: { remoteId: 'm1' } } },
+        { reaction: { ...reaction, emoji: null, previous: '' } },
+        { reaction: { ...reaction, emoji: null, previous: 5 } },
         { reaction, text: 'hi' },
         { reaction, attachments: [] },
         { reaction, replyTo: { remoteId: 'm2' } },
