@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 13:18+0100\n"
+"POT-Creation-Date: 2026-11-10 13:34+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -761,26 +761,26 @@ msgid ""
 "daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:294
+#: app/src/core/lib/daemon-bus.ts:295
 msgid ""
 "the caller speaks attachment protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:323
+#: app/src/core/lib/daemon-bus.ts:324
 msgid ""
 "the running curlew daemon speaks attachment protocol {theirs} and this "
 "curlew speaks {ours} — restart it with `systemctl --user restart curlew-"
 "daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:388
+#: app/src/core/lib/daemon-bus.ts:389
 msgid ""
 "the caller speaks access protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:425
+#: app/src/core/lib/daemon-bus.ts:426
 msgid ""
 "the running curlew daemon speaks access protocol {theirs} and this curlew "
 "speaks {ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -2286,7 +2286,7 @@ msgstr ""
 
 #: packages/imap/src/send.ts:66 packages/matrix/src/send.ts:249
 #: packages/signal/src/send.ts:293 packages/telegram/src/sender.ts:73
-#: packages/whatsapp/src/send.ts:327
+#: packages/whatsapp/src/send.ts:335
 msgid "sending to {address} is not granted for account {account}"
 msgstr ""
 
@@ -2792,7 +2792,7 @@ msgstr ""
 msgid "the WhatsApp connection closed: {reason}"
 msgstr ""
 
-#: packages/whatsapp/src/client.ts:182 packages/whatsapp/src/client.ts:203
+#: packages/whatsapp/src/client.ts:193 packages/whatsapp/src/client.ts:214
 msgid "WhatsApp did not take the message — nothing was sent"
 msgstr ""
 
@@ -2854,55 +2854,59 @@ msgid ""
 "({reason}) — nothing was sent"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:212
+#: packages/whatsapp/src/send.ts:185
+msgid "a reply to a WhatsApp message cannot carry files"
+msgstr ""
+
+#: packages/whatsapp/src/send.ts:220
 msgid "{sent} of {total} files were sent, then {file} failed: {reason}"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:242
+#: packages/whatsapp/src/send.ts:250
 msgid ""
 "WhatsApp returned no id for the message — it may have been sent; look at the "
 "chat before sending it again"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:253
+#: packages/whatsapp/src/send.ts:261
 msgid ""
 "WhatsApp did not confirm the message within {seconds} s — it was handed "
 "over, but look at the chat before sending it again"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:263
+#: packages/whatsapp/src/send.ts:271
 msgid ""
 "the message was sent, but a message that arrived at the same time could not "
 "be written down ({reason}) — it may be missing from the chat"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:311
+#: packages/whatsapp/src/send.ts:319
 msgid ""
 "curlew does not send status updates or broadcasts — send a message to a "
 "person instead"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:317
+#: packages/whatsapp/src/send.ts:325
 msgid ""
 "curlew cannot send to a WhatsApp group: a group message is encrypted for "
 "every member, and curlew keeps no member list to do that with — send it from "
 "WhatsApp"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:341
+#: packages/whatsapp/src/send.ts:349
 msgid ""
 "{address} names one device of a person, not the person — drop the `:"
 "<device>` and use the id `conversations_list` shows for the chat"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:349
+#: packages/whatsapp/src/send.ts:357
 msgid ""
 "{address} is a phone number, not a WhatsApp chat id — a chat is filed under "
 "the LID whenever curlew knows one, so use the id `conversations_list` shows "
 "for the chat"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:356
+#: packages/whatsapp/src/send.ts:364
 msgid ""
 "{address} is not a WhatsApp chat id — use the id `conversations_list` shows "
 "for the chat (`<digits>@lid` or `<digits>@s.whatsapp.net`)"

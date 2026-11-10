@@ -22,11 +22,11 @@
  * so its reasons are terse and in English — reaching them is a defect, not a user path.
  */
 
-import type { WaOutgoingFile, WaSendSocketHandle, WaSentMessage } from './api.ts';
+import type { WaOutgoingFile, WaQuote, WaSendSocketHandle, WaSentMessage } from './api.ts';
 import { sendableJid } from './jid.ts';
 
 /** The writes a granted sender has. */
-export type WaSendText = (jid: string, text: string) => Promise<WaSentMessage>;
+export type WaSendText = (jid: string, text: string, quote?: WaQuote) => Promise<WaSentMessage>;
 export type WaSendFile = (jid: string, file: WaOutgoingFile) => Promise<WaSentMessage>;
 
 /**
@@ -53,10 +53,10 @@ export class SendViolation extends Error {
  */
 export function guardedSendText(send: WaSendText, recipients: readonly string[]): WaSendText {
   const permitted = recipients.map((address) => sendableJid(address)).filter((jid) => jid !== null);
-  return async (jid, text) => {
+  return async (jid, text, quote) => {
     const reason = sendRefusal(jid, permitted);
     if (reason) throw new SendViolation(reason);
-    return send(jid, text);
+    return send(jid, text, quote);
   };
 }
 
@@ -75,7 +75,7 @@ export function guardedSendSocket(
   socket: WaSendSocketHandle,
   recipients: readonly string[],
 ): WaSendSocketHandle {
-  const sendText = guardedSendText((jid, text) => socket.sendText(jid, text), recipients);
+  const sendText = guardedSendText((jid, text, quote) => socket.sendText(jid, text, quote), recipients);
   return {
     ev: socket.ev,
     ready: () => socket.ready(),

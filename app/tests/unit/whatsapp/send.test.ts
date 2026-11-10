@@ -290,6 +290,60 @@ export default async () => {
       });
     });
 
+    await it('quotes the message it answers, with its id, author and content', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const permit: SendPermit = { account: rig.accountId, addresses: [ANNA_LID] };
+        const sender = await rig.backend.openSender(rig.accountId, permit);
+        expect(sender.features.replies).toBe(true);
+        try {
+          await sender.send({
+            to: ANNA_LID,
+            text: 'Antwort',
+            replyTo: { remoteId: 'WAMSG1', text: 'Treffen wir uns?' },
+          });
+          await sender.send({
+            to: ANNA_LID,
+            text: 'Nochmal',
+            replyTo: { remoteId: 'WAMSG2', fromSelf: true },
+          });
+          await sender.send({ to: ANNA_LID, text: 'Ohne' });
+          const [socket] = rig.senders;
+          expect(socket.sent[0].quote).toStrictEqual({
+            id: 'WAMSG1',
+            fromMe: false,
+            text: 'Treffen wir uns?',
+          });
+          expect(socket.sent[1].quote).toStrictEqual({ id: 'WAMSG2', fromMe: true, text: '' });
+          expect(socket.sent[2].quote === undefined).toBe(true);
+        } finally {
+          await sender.close();
+        }
+      });
+    });
+
+    await it('refuses a reply that carries files, sending nothing', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const doc = join(rig.dir, 'notes.pdf');
+        writeFileSync(doc, new Uint8Array([4]));
+        const permit: SendPermit = { account: rig.accountId, addresses: [ANNA_LID] };
+        const sender = await rig.backend.openSender(rig.accountId, permit);
+        try {
+          const reason = await reasonOf(
+            sender.send({
+              to: ANNA_LID,
+              text: 'Hier',
+              attachments: [{ path: doc }],
+              replyTo: { remoteId: 'WAMSG1' },
+            }),
+          );
+          expect(reason.includes('cannot carry files')).toBe(true);
+          expect(rig.senders[0].files.length + rig.senders[0].sent.length).toBe(0);
+        } finally {
+          await sender.close();
+        }
+      });
+    });
+
     await it('refuses a file it cannot send before anything goes out', async () => {
       await withRig(GRANTED, async (rig) => {
         const permit: SendPermit = { account: rig.accountId, addresses: [ANNA_LID] };

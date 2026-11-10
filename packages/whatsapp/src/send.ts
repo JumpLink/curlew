@@ -113,7 +113,7 @@ export class WhatsAppSender implements MessageSender {
   readonly features: SenderFeatures = {
     markdown: false,
     attachments: true,
-    replies: false,
+    replies: true,
   };
   private readonly socket: WaSendSocketHandle;
   private readonly mapper: WhatsAppMapper;
@@ -181,8 +181,16 @@ export class WhatsAppSender implements MessageSender {
     }
     // Baileys' `sendNode` throws `Connection Closed` while the WebSocket is not open yet.
     await this.socket.ready();
-    if (files.length > 0) return this.sendFiles(to, message, files);
-    return this.finish(message, to, await this.socket.sendText(to, message.text), []);
+    if (files.length > 0) {
+      if (message.replyTo) throw new Error(_('a reply to a WhatsApp message cannot carry files'));
+      return this.sendFiles(to, message, files);
+    }
+    const quote = message.replyTo && {
+      id: message.replyTo.remoteId,
+      fromMe: message.replyTo.fromSelf === true,
+      text: message.replyTo.text ?? '',
+    };
+    return this.finish(message, to, await this.socket.sendText(to, message.text, quote), []);
   }
 
   /**

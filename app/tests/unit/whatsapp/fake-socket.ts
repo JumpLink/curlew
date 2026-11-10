@@ -10,6 +10,7 @@ import type {
   WaMessageContent,
   WaMessageKey,
   WaOutgoingFile,
+  WaQuote,
   WaSendSocketHandle,
   WaSentMessage,
   WaSocketHandle,
@@ -119,7 +120,7 @@ export class FakeSendSocket extends FakeEvents implements WaSendSocketHandle {
   ended = false;
   readonly options: SocketOptions;
   /** Every text that got through the gate, in order. */
-  readonly sent: Array<{ jid: string; text: string; id: string; seconds: number }> = [];
+  readonly sent: Array<{ jid: string; text: string; id: string; seconds: number; quote?: WaQuote }> = [];
   /** Every file that got through the gate, in order — the bytes as text, for easy asserts. */
   readonly files: Array<{ jid: string; file: WaOutgoingFile; id: string }> = [];
   /** Confirm each send with `SERVER_ACK`. Off drives the ack timeout. */
@@ -159,9 +160,9 @@ export class FakeSendSocket extends FakeEvents implements WaSendSocketHandle {
     if (this.openError) throw this.openError;
   }
 
-  async sendText(jid: string, text: string): Promise<WaSentMessage> {
+  async sendText(jid: string, text: string, quote?: WaQuote): Promise<WaSentMessage> {
     return this.deliver(jid, { conversation: text }, (id, seconds) => {
-      this.sent.push({ jid, text, id, seconds });
+      this.sent.push({ jid, text, id, seconds, ...(quote ? { quote } : {}) });
     });
   }
 
@@ -268,7 +269,7 @@ export class FakeConnection implements WaConnection {
     return {
       ev: this.handle.ev,
       ready: () => send.ready(),
-      sendText: (jid, body) => send.sendText(jid, body),
+      sendText: (jid, body, quote) => send.sendText(jid, body, quote),
       sendFile: (jid, file) => send.sendFile(jid, file),
       end: () => {
         this.sendViewEnds++;
