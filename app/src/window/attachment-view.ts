@@ -1,7 +1,7 @@
 /** The attachments of one bubble: a picture for an image, a tile with name, size and buttons for the rest. */
 
 import Adw from 'gi://Adw?version=1';
-import type Gdk from 'gi://Gdk?version=4.0';
+import Gdk from 'gi://Gdk?version=4.0';
 import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
@@ -21,6 +21,7 @@ import {
   effectiveMime,
   isGridMedia,
   isOpenable,
+  leadsWithMedia,
   showsInline,
   showsPlayer,
   showsPoster,
@@ -205,23 +206,29 @@ function inlinePreview(
   painted: ((shown: PaintedPreview) => void) | null = null,
   album?: readonly AlbumItem[],
 ): Gtk.Widget {
-  const slot = new Gtk.Box({ halign: Gtk.Align.START });
-  const frame = new Gtk.Overlay({ halign: Gtk.Align.START, overflow: Gtk.Overflow.HIDDEN });
-  if (!cell) frame.add_css_class('card');
+  // A lone picture fills the bubble's width (the bubble hugs its widest part); a grid cell has its size.
+  const slot = new Gtk.Box({ halign: cell ? Gtk.Align.START : Gtk.Align.FILL, hexpand: !cell });
+  // Not a `Gtk.Button`: its padding would leave a rim around a picture that runs to the bubble's edge.
+  const frame = new Gtk.Overlay({
+    halign: cell ? Gtk.Align.START : Gtk.Align.FILL,
+    hexpand: !cell,
+    overflow: Gtk.Overflow.HIDDEN,
+    focusable: true,
+    accessibleRole: Gtk.AccessibleRole.BUTTON,
+  });
+  frame.set_cursor_from_name('pointer');
   const image = new Gtk.Picture({
-    contentFit: cell ? Gtk.ContentFit.COVER : Gtk.ContentFit.SCALE_DOWN,
+    contentFit: Gtk.ContentFit.COVER,
     canShrink: true,
     widthRequest: cell?.width ?? PLACEHOLDER.width,
     heightRequest: cell?.height ?? PLACEHOLDER.height,
   });
   const name = attachmentName(source.info);
-  const button = new Gtk.Button({ child: image, tooltipText: name });
-  button.update_property(
+  frame.set_tooltip_text(name);
+  frame.update_property(
     [Gtk.AccessibleProperty.LABEL],
     [kind === 'video' ? fmt(_('Video: {name}'), { name }) : fmt(_('Image: {name}'), { name })],
   );
-  button.add_css_class('flat');
-  button.add_css_class('image-button');
   const spinner = new Adw.Spinner({
     halign: Gtk.Align.CENTER,
     valign: Gtk.Align.CENTER,
@@ -229,7 +236,7 @@ function inlinePreview(
     heightRequest: 32,
     visible: false,
   });
-  frame.set_child(button);
+  frame.set_child(image);
   frame.add_overlay(spinner);
   let playSymbol: Gtk.Widget | null = null;
   if (kind === 'video') {
@@ -252,7 +259,17 @@ function inlinePreview(
     }
   }
   slot.append(frame);
-  button.connect('clicked', () => handlers.view(source, kind, album));
+  const open = () => handlers.view(source, kind, album);
+  const tap = new Gtk.GestureClick({ button: 1 });
+  tap.connect('released', open);
+  frame.add_controller(tap);
+  const keys = new Gtk.EventControllerKey();
+  keys.connect('key-pressed', (_controller, keyval) => {
+    if (keyval !== Gdk.KEY_Return && keyval !== Gdk.KEY_KP_Enter && keyval !== Gdk.KEY_space) return false;
+    open();
+    return true;
+  });
+  frame.add_controller(keys);
 
   const fail = () => {
     spinner.set_visible(false);
@@ -261,7 +278,10 @@ function inlinePreview(
       return;
     }
     slot.remove(frame);
-    slot.append(tile(source, handlers));
+    const fallback = tile(source, handlers);
+    fallback.set_margin_start(12);
+    fallback.set_margin_end(12);
+    slot.append(fallback);
   };
   const load = (): void => {
     if (!paint) return;
@@ -390,7 +410,6 @@ function mediaGrid(
 ): Gtk.Widget {
   const layout = gridLayout(media, BUBBLE_MAX_IMAGE_WIDTH);
   const fixed = new Gtk.Fixed({ halign: Gtk.Align.START, overflow: Gtk.Overflow.HIDDEN });
-  fixed.add_css_class('card');
   fixed.set_size_request(layout.width, layout.height);
   const album: AlbumItem[] = media.map((info) => ({
     source: { ref: info.ref ?? ref, info },
@@ -412,6 +431,14 @@ export function attachmentList(
   generic = false,
 ): Gtk.Box {
   const list = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 6 });
+  // A picture block in front runs to the bubble's edges; the rest keeps the bubble's side padding.
+  const bleeds = leadsWithMedia(shown);
+  if (bleeds) list.add_css_class('bleeds');
+  const inset = <T extends Gtk.Widget>(widget: T): T => {
+    widget.set_margin_start(12);
+    widget.set_margin_end(12);
+    return widget;
+  };
   // Two or more pictures and videos form a grid; one keeps its own shape. The rest stay tiles.
   const media = shown.filter(isGridMedia).slice(0, MAX_GRID_CELLS);
   const gridded = media.length > 1 ? new Set(media) : new Set<AttachmentInfo>();
@@ -429,11 +456,11 @@ export function attachmentList(
         : showsPoster(info)
           ? poster(source, handlers)
           : showsPlayer(info)
-            ? audioPlayer(source, handlers.toast)
-            : tile(source, handlers),
+            ? inset(audioPlayer(source, handlers.toast))
+            : inset(tile(source, handlers)),
     );
   }
-  if (generic) list.append(genericTile());
+  if (generic) list.append(inset(genericTile()));
   if (more > 0) {
     const rest = new Gtk.Label({
       label: fmt(_n('and {n} more attachment', 'and {n} more attachments', more), { n: more }),
@@ -441,7 +468,7 @@ export function attachmentList(
     });
     rest.add_css_class('caption');
     rest.add_css_class('dim-label');
-    list.append(rest);
+    list.append(inset(rest));
   }
   return list;
 }

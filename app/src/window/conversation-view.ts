@@ -58,7 +58,7 @@ import {
 import { attachmentList, type AttachmentHandlers } from './attachment-view.ts';
 import type { AlbumItem } from './media-viewer.ts';
 import { createSilentVideoHost } from './video-preview.ts';
-import { shownAttachments, type AttachmentKind } from './attachment-model.ts';
+import { leadsWithMedia, shownAttachments, type AttachmentKind } from './attachment-model.ts';
 import type { AttachmentSource } from './attachment-store.ts';
 import { fadedOverlay } from './fade-bin.ts';
 import { createComposerFiles } from './composer-files.ts';
@@ -307,15 +307,29 @@ export function createConversationView(
     return row;
   };
 
+  const padded = <T extends Gtk.Widget>(widget: T): T => {
+    widget.set_margin_start(12);
+    widget.set_margin_end(12);
+    return widget;
+  };
+
+  // The bubble's first part gets the top padding, unless it is a picture block that runs to the edge.
+  const padTop = (bubble: Gtk.Box): void => {
+    let index = 0;
+    for (let child = bubble.get_first_child(); child; child = child.get_next_sibling(), index++) {
+      child.set_margin_top(index === 0 && !child.has_css_class('bleeds') ? 8 : 0);
+    }
+  };
+
   const subjectHeading = (subject: string): Gtk.Label => {
-    const label = new Gtk.Label({ label: subject, xalign: 0, wrap: true });
+    const label = new Gtk.Label({ label: subject, xalign: 0, wrap: true, marginStart: 12, marginEnd: 12 });
     label.add_css_class('heading');
     return label;
   };
 
   // Who wrote the run of bubbles it opens: a small avatar with initials, like the list, and the name.
   const senderHeading = (name: string): Gtk.Box => {
-    const box = new Gtk.Box({ spacing: 6 });
+    const box = new Gtk.Box({ spacing: 6, marginStart: 12, marginEnd: 12 });
     box.append(new Adw.Avatar({ size: 20, text: name, showInitials: initials(name) !== '' }));
     const label = new Gtk.Label({ label: name, xalign: 0, ellipsize: Pango.EllipsizeMode.END });
     label.add_css_class('caption-heading');
@@ -751,16 +765,11 @@ export function createConversationView(
     startsDay: boolean,
     position: number,
   ) => {
-    const card = new Gtk.Box();
+    // Clips a picture block to the bubble's rounded corners.
+    const card = new Gtk.Box({ overflow: Gtk.Overflow.HIDDEN });
     card.add_css_class('card');
-    const bubble = new Gtk.Box({
-      orientation: Gtk.Orientation.VERTICAL,
-      spacing: 4,
-      marginStart: 12,
-      marginEnd: 12,
-      marginTop: 8,
-      marginBottom: 8,
-    });
+    // No padding of its own: text parts carry the side margins, a picture block runs to the edge.
+    const bubble = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 4, marginBottom: 8 });
     card.append(bubble);
     // Holds the chips; rebuilt in place when the person's own reaction changes.
     const reactions = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
@@ -779,7 +788,7 @@ export function createConversationView(
     const heading = subject ? subjectHeading(subject) : null;
     if (heading) bubble.append(heading);
     const quote = quoteOf(message, messages);
-    if (quote) bubble.append(quoteBlock(quote));
+    if (quote) bubble.append(padded(quoteBlock(quote)));
     const written = message.bodyText?.trim() || message.notice;
     const full =
       (written ||
@@ -794,6 +803,8 @@ export function createConversationView(
     const listed = shown.length > 0;
     const generic = message.hasAttachments && !listed;
     if (listed || generic) bubble.append(attachmentList(message.ref, shown, more, handlers, generic));
+    // Text under a picture wraps at the picture's width, so the bubble does not grow past it.
+    const textWidth = leadsWithMedia(shown) ? 30 : 56;
     let body: Gtk.Label | null = null;
     if (written || (!listed && !generic)) {
       const preview = bubbleText(full);
@@ -804,13 +815,13 @@ export function createConversationView(
         // A long URL has no word break and would widen the bubble past the window.
         wrapMode: Pango.WrapMode.WORD_CHAR,
         selectable: true,
-        maxWidthChars: 56,
+        maxWidthChars: textWidth,
       });
       body = label;
-      bubble.append(fadedOverlay(label, preview.clipped, () => label.set_label(full)));
+      bubble.append(padded(fadedOverlay(label, preview.clipped, () => label.set_label(full))));
     }
     showReactions();
-    bubble.append(reactions);
+    bubble.append(padded(reactions));
     const time = new Gtk.Label({ label: shortTime(message.sentAt), xalign: 1 });
     time.add_css_class('caption');
     time.add_css_class('dim-label');
@@ -829,7 +840,8 @@ export function createConversationView(
       meta.append(edited);
     }
     meta.append(time);
-    bubble.append(meta);
+    bubble.append(padded(meta));
+    padTop(bubble);
 
     const row = new Gtk.ListBoxRow({
       selectable: false,
@@ -921,6 +933,7 @@ export function createConversationView(
       one.subject = subjectHeading(subject);
       one.bubble.prepend(one.subject);
     }
+    padTop(one.bubble);
   };
 
   const updateBubbleText = (message: ShownMessage): void => {
@@ -942,7 +955,7 @@ export function createConversationView(
       maxWidthChars: 56,
     });
     one.bubble.insert_before(
-      fadedOverlay(body, preview.clipped, () => body.set_label(text)),
+      padded(fadedOverlay(body, preview.clipped, () => body.set_label(text))),
       one.reactions,
     );
     one.body = body;
