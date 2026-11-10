@@ -22,6 +22,8 @@ import {
   _,
   fmt,
   type MessageSender,
+  type SendingDeletion,
+  type SendingEdit,
   type SendingMessage,
   type SendingReaction,
   type SendPermit,
@@ -109,7 +111,9 @@ export interface MatrixSendApi {
   sendReaction(roomId: string, eventId: string, key: string, txnId: string): Promise<string>;
   /** The person's own reactions on `eventId`, as the homeserver holds them (redacted ones are not listed). */
   ownReactions(roomId: string, eventId: string): Promise<OwnReaction[]>;
-  /** Redact one event, which takes a reaction back. */
+  /** PUT an `m.replace` of `eventId` with the new `text`; resolves with the edit's event id. */
+  sendEdit(roomId: string, eventId: string, text: string, txnId: string): Promise<string>;
+  /** Redact one event: takes a reaction back, or deletes a message for everyone. */
   redact(roomId: string, eventId: string, txnId: string): Promise<void>;
 }
 
@@ -213,6 +217,19 @@ export function matrixSendApi(session: MatrixSendSession): MatrixSendApi {
         'm.reaction',
       );
     },
+    async sendEdit(roomId, eventId, text, txnId) {
+      return putEvent(
+        roomId,
+        {
+          msgtype: 'm.text',
+          // The fallback body for clients that do not know `m.replace`.
+          body: `* ${text}`,
+          'm.new_content': { msgtype: 'm.text', body: text },
+          'm.relates_to': { rel_type: 'm.replace', event_id: eventId },
+        },
+        txnId,
+      );
+    },
     async ownReactions(roomId, eventId) {
       const found: OwnReaction[] = [];
       let from: string | undefined;
@@ -260,7 +277,7 @@ export function matrixSendApi(session: MatrixSendSession): MatrixSendApi {
       if (!response.ok) {
         const errcode = await errcodeOf(response);
         throw new Error(
-          fmt(_('the homeserver did not take the reaction back in {room} ({reason})'), {
+          fmt(_('the homeserver did not redact the event in {room} ({reason})'), {
             room: roomId,
             reason: reasonOf(response, errcode),
           }),
@@ -317,8 +334,8 @@ export class MatrixSender implements MessageSender {
     attachments: true,
     replies: true,
     reactions: true,
-    edits: false,
-    deletes: false,
+    edits: true,
+    deletes: true,
   };
   private readonly api: MatrixSendApi;
   private readonly permit: SendPermit;
@@ -455,6 +472,36 @@ export class MatrixSender implements MessageSender {
     if (keep !== null && !own.some((mine) => mine.key === keep)) {
       await this.api.sendReaction(roomId, target, keep, nextTxnId());
     }
+  }
+
+  /** The event id of a message of the person's own, or a refusal before anything is sent. */
+  private ownEvent(target: { remoteId: string; fromSelf?: boolean }): string {
+    if (!EVENT_ID.test(target.remoteId)) {
+      throw new Error(fmt(_('{id} is not a Matrix event id — nothing was sent'), { id: target.remoteId }));
+    }
+    if (target.fromSelf !== true) {
+      throw new Error(_('only your own messages can be changed — nothing was sent'));
+    }
+    return target.remoteId;
+  }
+
+  /** Replaces the text of one of the person's own messages; the new content rides an `m.replace` event. */
+  async edit(edit: SendingEdit): Promise<void> {
+    const roomId = this.roomId(edit.to);
+    const eventId = this.ownEvent(edit.target);
+    if (UTF8.encode(edit.text).length > MATRIX_MAX_MESSAGE_BYTES) {
+      throw new Error(_('the edited text is too long for one Matrix message — nothing was sent'));
+    }
+    await this.requireClear(roomId);
+    await this.api.sendEdit(roomId, eventId, edit.text, nextTxnId());
+  }
+
+  /** Deletes one of the person's own messages for everyone, by redaction. */
+  async delete(deletion: SendingDeletion): Promise<void> {
+    const roomId = this.roomId(deletion.to);
+    const eventId = this.ownEvent(deletion.target);
+    await this.requireClear(roomId);
+    await this.api.redact(roomId, eventId, nextTxnId());
   }
 
   async close(): Promise<void> {
