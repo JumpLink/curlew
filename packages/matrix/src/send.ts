@@ -81,14 +81,23 @@ export interface FileEvent {
   size: number;
   contentType: string;
   caption?: string;
+  /** The event this one answers (`m.in_reply_to`). */
+  replyTo?: string;
 }
+
+/** An event id (`$…`), the only kind `m.in_reply_to` takes. */
+const EVENT_ID = /^\$\S+$/;
+
+/** The relation that makes an event a reply (client-server spec, rich replies). */
+const relation = (replyTo: string | undefined): object =>
+  replyTo === undefined ? {} : { 'm.relates_to': { 'm.in_reply_to': { event_id: replyTo } } };
 
 /** The requests a send makes. An interface so a test can answer them without HTTP. */
 export interface MatrixSendApi {
   /** Does the room have `m.room.encryption` state? Then nothing is sent. */
   isEncrypted(roomId: string): Promise<boolean>;
   /** PUT one `m.room.message`; resolves with the event id the homeserver assigned. */
-  sendText(roomId: string, text: string, txnId: string): Promise<string>;
+  sendText(roomId: string, text: string, txnId: string, replyTo?: string): Promise<string>;
   /** Upload the bytes to the media repository; resolves with the `mxc://` URI. */
   uploadFile(bytes: Uint8Array, contentType: string, filename: string): Promise<string>;
   /** PUT one `m.image` or `m.file` event for an uploaded file. */
@@ -170,8 +179,8 @@ export function matrixSendApi(session: MatrixSendSession): MatrixSendApi {
         }),
       );
     },
-    async sendText(roomId, text, txnId) {
-      return putEvent(roomId, { msgtype: 'm.text', body: text }, txnId);
+    async sendText(roomId, text, txnId, replyTo) {
+      return putEvent(roomId, { msgtype: 'm.text', body: text, ...relation(replyTo) }, txnId);
     },
     async uploadFile(bytes, contentType, filename) {
       const response = await session.fetch(`${base}${UPLOAD}?filename=${encodeURIComponent(filename)}`, {
@@ -208,6 +217,7 @@ export function matrixSendApi(session: MatrixSendSession): MatrixSendApi {
           filename: file.filename,
           url: file.url,
           info: { mimetype: file.contentType, size: file.size },
+          ...relation(file.replyTo),
         },
         txnId,
       );
@@ -217,7 +227,11 @@ export function matrixSendApi(session: MatrixSendSession): MatrixSendApi {
 
 export class MatrixSender implements MessageSender {
   /** Matrix formatting is HTML in a second field, not curlew's chat Markdown: the body goes out as typed. */
-  readonly features: SenderFeatures = { markdown: false, attachments: true };
+  readonly features: SenderFeatures = {
+    markdown: false,
+    attachments: true,
+    replies: true,
+  };
   private readonly api: MatrixSendApi;
   private readonly permit: SendPermit;
   private readonly onClose: () => Promise<void>;
@@ -247,6 +261,10 @@ export class MatrixSender implements MessageSender {
       perFile: MATRIX_MAX_FILE_BYTES,
       count: MATRIX_MAX_FILES,
     });
+    const replyTo = message.replyTo?.remoteId;
+    if (replyTo !== undefined && !EVENT_ID.test(replyTo)) {
+      throw new Error(fmt(_('{id} is not a Matrix event id — nothing was sent'), { id: replyTo }));
+    }
     const bytes = UTF8.encode(message.text).length;
     if (bytes > MATRIX_MAX_MESSAGE_BYTES) {
       throw new Error(
@@ -271,7 +289,7 @@ export class MatrixSender implements MessageSender {
       );
     }
     if (files.length > 0) return this.sendFiles(roomId, message, files);
-    const eventId = await this.api.sendText(roomId, message.text, nextTxnId());
+    const eventId = await this.api.sendText(roomId, message.text, nextTxnId(), replyTo);
     return {
       target: message.to,
       id: eventId,
@@ -305,6 +323,7 @@ export class MatrixSender implements MessageSender {
           size: file.size,
           contentType: file.contentType,
           ...(index === 0 && caption !== undefined ? { caption } : {}),
+          ...(index === 0 && message.replyTo !== undefined ? { replyTo: message.replyTo.remoteId } : {}),
         },
         nextTxnId(),
       );

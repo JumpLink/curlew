@@ -123,7 +123,7 @@ export class FakeClient implements TelegramClientHandle {
   readonly dialogsParams: Array<TgDialogsParams | undefined> = [];
   destroyed = 0;
   /** Every `sendText` call, in order. */
-  readonly sent: Array<{ chatId: number; text: string }> = [];
+  readonly sent: Array<{ chatId: number; text: string; replyTo?: number }> = [];
   private nextSentId = 9000;
   /** Present when the client was made with `live: true`; the test drives it with `arrive` and `end`. */
   readonly live?: TelegramLive;
@@ -229,9 +229,9 @@ export class FakeClient implements TelegramClientHandle {
     };
   }
 
-  async sendText(chatId: number, text: string): Promise<TgMessage> {
+  async sendText(chatId: number, text: string, replyTo?: number): Promise<TgMessage> {
     this.calls.push(`sendText:${chatId}`);
-    this.sent.push({ chatId, text });
+    this.sent.push({ chatId, text, ...(replyTo === undefined ? {} : { replyTo }) });
     const chat = (this.script.dialogs ?? []).find((d) => d.peer.id === chatId)?.peer ?? user(chatId, 'Peer');
     return tgMessage(chat, this.nextSentId++, 'me', text);
   }
@@ -243,6 +243,7 @@ export class FakeClient implements TelegramClientHandle {
     size: number;
     caption?: string;
     asPhoto: boolean;
+    replyTo?: number;
   }> = [];
 
   async sendFile(chatId: number, file: TgOutgoingFile): Promise<TgMessage> {
@@ -253,6 +254,7 @@ export class FakeClient implements TelegramClientHandle {
       size: file.bytes.byteLength,
       asPhoto: file.asPhoto,
       ...(file.caption === undefined ? {} : { caption: file.caption }),
+      ...(file.replyTo === undefined ? {} : { replyTo: file.replyTo }),
     });
     const chat = (this.script.dialogs ?? []).find((d) => d.peer.id === chatId)?.peer ?? user(chatId, 'Peer');
     return tgMessage(chat, this.nextSentId++, 'me', file.caption ?? '');

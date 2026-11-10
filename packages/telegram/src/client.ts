@@ -155,7 +155,8 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
       if (!media || !(media instanceof FileLocation)) return null;
       return { media, chunks: client.downloadAsIterable(media) };
     },
-    sendText: (chatId, text) => client.sendText(chatId, text),
+    sendText: (chatId, text, replyTo) =>
+      client.sendText(chatId, text, replyTo === undefined ? undefined : { replyTo }),
     sendFile: (chatId, file) =>
       client.sendMedia(
         chatId,
@@ -166,6 +167,7 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
               fileMime: file.contentType,
               caption: file.caption,
             }),
+        file.replyTo === undefined ? undefined : { replyTo: file.replyTo },
       ),
     ...(live === true ? { live: mtcuteLive(client) } : {}),
     destroy: () => client.destroy(),

@@ -27,6 +27,7 @@
 
 ### Added
 
+- Matrix and Telegram can send a message as a reply to another one; the window gets the reply bar in a later release.
 - Pressing the quote above a reply scrolls to the message it answers.
 - A reply shows the message it answers above its text: the author and a short excerpt. Needs the quoted message to be on the page already; older targets are not looked up yet.
 - The media viewer has an *Open with…* button that lets you pick the application, and its error page a *Try Again* button.

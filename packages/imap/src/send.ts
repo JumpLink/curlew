@@ -46,7 +46,11 @@ export function isOwnMailAddress(from: string, to: string): boolean {
 
 export class MailSender implements MessageSender {
   /** Mail bodies are plain text: no chat styling, no splitting. */
-  readonly features: SenderFeatures = { markdown: false, attachments: true };
+  readonly features: SenderFeatures = {
+    markdown: false,
+    attachments: true,
+    replies: false,
+  };
   private readonly target: SmtpTarget;
   private readonly permit: SendPermit;
 
