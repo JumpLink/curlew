@@ -1,6 +1,7 @@
 /**
  * The media viewer: an overlay over the whole window, not a window of its own (Fractal and Tuba do
- * the same). One image or video at a time; no carousel, zoom or opening animation yet.
+ * the same). One image or video at a time, with previous/next and a swipe through the other
+ * pictures and videos of the same message; no zoom or opening animation yet.
  */
 
 import Adw from 'gi://Adw?version=1';
@@ -8,7 +9,6 @@ import Gdk from 'gi://Gdk?version=4.0';
 import GLib from 'gi://GLib?version=2.0';
 import GObject from 'gi://GObject?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
-import Pango from 'gi://Pango?version=1.0';
 import { _, fmt } from '@curlew/protocol';
 
 import type { AttachmentKind } from './attachment-model.ts';
@@ -20,11 +20,19 @@ import {
   saveCopyAs,
 } from './attachment-store.ts';
 import { attachmentName } from './attachment-view.ts';
+import { albumPosition, albumStep, swipeStep } from './viewer-model.ts';
+
+/** One picture or video of a message, as the viewer steps through them. */
+export interface AlbumItem {
+  source: AttachmentSource;
+  kind: AttachmentKind;
+}
 
 export interface MediaViewer {
   /** Goes into a `Gtk.Overlay` over the window's content; hidden until `open`. */
   widget: Gtk.Widget;
-  open(source: AttachmentSource, kind: AttachmentKind): void;
+  /** Opens `source`; `album` (which contains it) lets the person move to the others. */
+  open(source: AttachmentSource, kind: AttachmentKind, album?: readonly AlbumItem[]): void;
   close(): void;
   /** Escape and F11 work wherever the focus is while the viewer shows. */
   install(window: Gtk.Window): void;
@@ -38,8 +46,7 @@ export function createMediaViewer(
   toolbar.add_css_class('background');
 
   const header = new Adw.HeaderBar({ showStartTitleButtons: false, showEndTitleButtons: false });
-  const heading = new Gtk.Label({ ellipsize: Pango.EllipsizeMode.END, singleLineMode: true });
-  heading.add_css_class('title');
+  const heading = new Adw.WindowTitle({ title: '', subtitle: '' });
   header.set_title_widget(heading);
   const back = new Gtk.Button({ iconName: 'go-previous-symbolic', tooltipText: _('Back') });
   const fullscreen = new Gtk.Button({ iconName: 'view-fullscreen-symbolic', tooltipText: _('Fullscreen') });
@@ -78,10 +85,33 @@ export function createMediaViewer(
     title: _('Could not load the attachment'),
   });
   stack.add_named(failed, 'error');
-  toolbar.set_content(stack);
+  // Previous and next sit over the media's edges, as in Fractal; a swipe does the same on a touch screen.
+  const arrow = (iconName: string, tooltip: string, halign: Gtk.Align): Gtk.Button => {
+    const button = new Gtk.Button({
+      iconName,
+      tooltipText: tooltip,
+      halign,
+      valign: Gtk.Align.CENTER,
+      marginStart: 12,
+      marginEnd: 12,
+      visible: false,
+    });
+    button.add_css_class('osd');
+    button.add_css_class('circular');
+    button.update_property([Gtk.AccessibleProperty.LABEL], [tooltip]);
+    return button;
+  };
+  const previous = arrow('go-previous-symbolic', _('Previous'), Gtk.Align.START);
+  const next = arrow('go-next-symbolic', _('Next'), Gtk.Align.END);
+  const stage = new Gtk.Overlay({ child: stack });
+  stage.add_overlay(previous);
+  stage.add_overlay(next);
+  toolbar.set_content(stage);
 
   let run = 0;
   let current: { source: AttachmentSource; path: string | null; texture: Gdk.Texture | null } | null = null;
+  let items: readonly AlbumItem[] = [];
+  let index = 0;
   let opener: Gtk.Widget | null = null;
   let window: Gtk.Window | null = null;
   let madeFullscreen = false;
@@ -101,6 +131,7 @@ export function createMediaViewer(
     clearVideo();
     picture.set_paintable(null);
     current = null;
+    items = [];
     if (madeFullscreen && window?.is_fullscreen()) window.unfullscreen();
     madeFullscreen = false;
     onShownChanged(false);
@@ -147,48 +178,87 @@ export function createMediaViewer(
   });
   stack.add_controller(click);
 
+  const show = () => {
+    const item = items[index];
+    if (!item) return;
+    const { source, kind } = item;
+    const mine = ++run;
+    current = { source, path: null, texture: null };
+    const name = attachmentName(source.info);
+    heading.set_title(name);
+    const position = albumPosition(index, items.length);
+    heading.set_subtitle(position);
+    previous.set_visible(albumStep(index, items.length, -1) !== null);
+    next.set_visible(albumStep(index, items.length, 1) !== null);
+    copy.set_visible(kind === 'image');
+    save.set_sensitive(false);
+    copy.set_sensitive(false);
+    clearVideo();
+    picture.set_paintable(null);
+    picture.update_property(
+      [Gtk.AccessibleProperty.LABEL],
+      [kind === 'video' ? fmt(_('Video: {name}'), { name }) : fmt(_('Image: {name}'), { name })],
+    );
+    stack.set_visible_child_name('loading');
+    void fetchAttachment(source)
+      .then(async (path) => {
+        if (mine !== run || !current || toolbar.get_root() === null) return;
+        current.path = path;
+        save.set_sensitive(true);
+        if (kind === 'video') {
+          const video = new Gtk.Video({ autoplay: true, hexpand: true, vexpand: true });
+          video.set_filename(path);
+          videoSlot.append(video);
+          stack.set_visible_child_name('video');
+        } else {
+          const texture = await loadTexture(path);
+          // `close()`, another `show()` or the window's end may have happened while the decoder worked.
+          if (mine !== run || !current || toolbar.get_root() === null) return;
+          current.texture = texture;
+          picture.set_paintable(texture);
+          copy.set_sensitive(true);
+          stack.set_visible_child_name('image');
+        }
+        // The next picture is likely wanted next; a video is not fetched unasked.
+        const after = items[index + 1];
+        if (after?.kind === 'image') void fetchAttachment(after.source).catch(() => undefined);
+      })
+      .catch((err: unknown) => {
+        if (mine !== run || toolbar.get_root() === null) return;
+        failed.set_description(failureText(err));
+        stack.set_visible_child_name('error');
+      });
+  };
+
+  const step = (delta: number): boolean => {
+    const to = albumStep(index, items.length, delta);
+    if (to === null) return false;
+    index = to;
+    show();
+    return true;
+  };
+  previous.connect('clicked', () => step(-1));
+  next.connect('clicked', () => step(1));
+
+  const swipe = new Gtk.GestureSwipe();
+  swipe.connect('swipe', (_gesture, vx, vy) => {
+    const delta = swipeStep(vx, vy);
+    if (delta !== 0) step(delta);
+  });
+  stack.add_controller(swipe);
+
   return {
     widget: toolbar,
-    open(source, kind) {
-      const mine = ++run;
+    open(source, kind, album) {
+      items = album && album.length > 1 ? album : [{ source, kind }];
+      const at = items.findIndex((item) => item.source.info === source.info);
+      index = at < 0 ? 0 : at;
+      if (at < 0) items = [{ source, kind }];
       opener = (toolbar.get_root() as Gtk.Window | null)?.get_focus() ?? null;
-      current = { source, path: null, texture: null };
-      heading.set_label(attachmentName(source.info));
-      copy.set_visible(kind === 'image');
-      save.set_sensitive(false);
-      copy.set_sensitive(false);
-      clearVideo();
-      picture.set_paintable(null);
-      stack.set_visible_child_name('loading');
       toolbar.set_visible(true);
       onShownChanged(true);
       toolbar.grab_focus();
-      void fetchAttachment(source)
-        .then(async (path) => {
-          if (mine !== run || !current || toolbar.get_root() === null) return;
-          current.path = path;
-          save.set_sensitive(true);
-          if (kind === 'video') {
-            const video = new Gtk.Video({ autoplay: true, hexpand: true, vexpand: true });
-            video.set_filename(path);
-            videoSlot.append(video);
-            stack.set_visible_child_name('video');
-          } else {
-            const texture = await loadTexture(path);
-            // `close()`, another `open()` or the window's end may have happened while the
-            // decoder worked.
-            if (mine !== run || !current || toolbar.get_root() === null) return;
-            current.texture = texture;
-            picture.set_paintable(texture);
-            copy.set_sensitive(true);
-            stack.set_visible_child_name('image');
-          }
-        })
-        .catch((err: unknown) => {
-          if (mine !== run || toolbar.get_root() === null) return;
-          failed.set_description(failureText(err));
-          stack.set_visible_child_name('error');
-        });
+      show();
     },
     close,
     install(target) {
@@ -206,6 +276,8 @@ export function createMediaViewer(
         const ctrl = (state & Gdk.ModifierType.CONTROL_MASK) !== 0;
         if (keyval === Gdk.KEY_Escape) close();
         else if (keyval === Gdk.KEY_F11) toggleFullscreen();
+        else if (keyval === Gdk.KEY_Left) step(toolbar.get_direction() === Gtk.TextDirection.RTL ? 1 : -1);
+        else if (keyval === Gdk.KEY_Right) step(toolbar.get_direction() === Gtk.TextDirection.RTL ? -1 : 1);
         else if (ctrl && (keyval === Gdk.KEY_s || keyval === Gdk.KEY_S)) savePart();
         else if (ctrl && (keyval === Gdk.KEY_c || keyval === Gdk.KEY_C)) copyImage();
         else return false;

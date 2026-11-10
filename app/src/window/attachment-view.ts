@@ -10,6 +10,7 @@ import { _, fmt, _n } from '@curlew/protocol';
 import type { MessageRef } from '@curlew/protocol';
 
 import { audioPlayer } from './audio-player.ts';
+import type { AlbumItem } from './media-viewer.ts';
 import {
   type AttachmentKind,
   attachmentKind,
@@ -39,8 +40,8 @@ import { type GridCell, gridLayout, MAX_GRID_CELLS } from './media-grid-model.ts
 import type { SilentVideoHost } from './video-preview.ts';
 
 export interface AttachmentHandlers {
-  /** Opens the viewer on an image or a video. */
-  view(source: AttachmentSource, kind: AttachmentKind): void;
+  /** Opens the viewer on an image or a video; `album` is the message's other pictures and videos. */
+  view(source: AttachmentSource, kind: AttachmentKind, album?: readonly AlbumItem[]): void;
   toast(text: string): void;
   /** Starts `load` once `widget` is near the visible part of the history. */
   whenVisible(widget: Gtk.Widget, load: () => void): void;
@@ -202,6 +203,7 @@ function inlinePreview(
   paint: ((path: string, scale: number) => Promise<Painted>) | null,
   cell: GridCell | null = null,
   painted: ((shown: PaintedPreview) => void) | null = null,
+  album?: readonly AlbumItem[],
 ): Gtk.Widget {
   const slot = new Gtk.Box({ halign: Gtk.Align.START });
   const frame = new Gtk.Overlay({ halign: Gtk.Align.START, overflow: Gtk.Overflow.HIDDEN });
@@ -212,7 +214,12 @@ function inlinePreview(
     widthRequest: cell?.width ?? PLACEHOLDER.width,
     heightRequest: cell?.height ?? PLACEHOLDER.height,
   });
-  const button = new Gtk.Button({ child: image, tooltipText: attachmentName(source.info) });
+  const name = attachmentName(source.info);
+  const button = new Gtk.Button({ child: image, tooltipText: name });
+  button.update_property(
+    [Gtk.AccessibleProperty.LABEL],
+    [kind === 'video' ? fmt(_('Video: {name}'), { name }) : fmt(_('Image: {name}'), { name })],
+  );
   button.add_css_class('flat');
   button.add_css_class('image-button');
   const spinner = new Adw.Spinner({
@@ -245,7 +252,7 @@ function inlinePreview(
     }
   }
   slot.append(frame);
-  button.connect('clicked', () => handlers.view(source, kind));
+  button.connect('clicked', () => handlers.view(source, kind, album));
 
   const fail = () => {
     spinner.set_visible(false);
@@ -287,6 +294,7 @@ function picture(
   source: AttachmentSource,
   handlers: AttachmentHandlers,
   cell: GridCell | null = null,
+  album?: readonly AlbumItem[],
 ): Gtk.Widget {
   const box = {
     width: cell?.width ?? BUBBLE_MAX_IMAGE_WIDTH,
@@ -301,6 +309,8 @@ function picture(
       return { paintable: texture, width: texture.get_width(), height: texture.get_height() };
     },
     cell,
+    null,
+    album,
   );
 }
 
@@ -308,6 +318,7 @@ function poster(
   source: AttachmentSource,
   handlers: AttachmentHandlers,
   cell: GridCell | null = null,
+  album?: readonly AlbumItem[],
 ): Gtk.Widget {
   return inlinePreview(
     source,
@@ -319,6 +330,7 @@ function poster(
     },
     cell,
     cell || !handlers.silentVideo ? null : (shown) => silentPreview(handlers.silentVideo!, shown),
+    album,
   );
 }
 
@@ -358,11 +370,16 @@ function silentPreview(host: SilentVideoHost, shown: PaintedPreview): void {
 }
 
 /** One cell of the grid: the picture or first frame when it may load unasked, else the dark cell. */
-function gridCell(source: AttachmentSource, handlers: AttachmentHandlers, cell: GridCell): Gtk.Widget {
+function gridCell(
+  source: AttachmentSource,
+  handlers: AttachmentHandlers,
+  cell: GridCell,
+  album: readonly AlbumItem[],
+): Gtk.Widget {
   const { info } = source;
-  if (showsInline(info)) return picture(source, handlers, cell);
-  if (showsPoster(info)) return poster(source, handlers, cell);
-  return inlinePreview(source, handlers, attachmentKind(info), null, cell);
+  if (showsInline(info)) return picture(source, handlers, cell, album);
+  if (showsPoster(info)) return poster(source, handlers, cell, album);
+  return inlinePreview(source, handlers, attachmentKind(info), null, cell, null, album);
 }
 
 /** A message's pictures and videos as one block (docs/design/media-grid.md). */
@@ -375,9 +392,13 @@ function mediaGrid(
   const fixed = new Gtk.Fixed({ halign: Gtk.Align.START, overflow: Gtk.Overflow.HIDDEN });
   fixed.add_css_class('card');
   fixed.set_size_request(layout.width, layout.height);
+  const album: AlbumItem[] = media.map((info) => ({
+    source: { ref: info.ref ?? ref, info },
+    kind: attachmentKind(info),
+  }));
   layout.cells.forEach((cell, i) => {
     const info = media[i] as AttachmentInfo;
-    fixed.put(gridCell({ ref: info.ref ?? ref, info }, handlers, cell), cell.x, cell.y);
+    fixed.put(gridCell({ ref: info.ref ?? ref, info }, handlers, cell, album), cell.x, cell.y);
   });
   return fixed;
 }

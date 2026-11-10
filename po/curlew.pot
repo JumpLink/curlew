@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-10 09:08+0100\n"
+"POT-Creation-Date: 2026-11-10 11:02+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -820,7 +820,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/core/lib/message-notifications.ts:118
-#: app/src/window/attachment-view.ts:101
+#: app/src/window/attachment-view.ts:102
 msgid "Open"
 msgstr ""
 
@@ -1456,7 +1456,7 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr ""
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:96
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:97
 #: app/src/window/window.ts:58 app/src/window/window.ts:73
 msgid "Curlew"
 msgstr ""
@@ -1778,27 +1778,35 @@ msgstr ""
 msgid "Add rule"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:101
+#: app/src/window/attachment-view.ts:102
 msgid "Play"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:106 app/src/window/audio-player.ts:55
-#: app/src/window/media-viewer.ts:47
+#: app/src/window/attachment-view.ts:107 app/src/window/audio-player.ts:56
+#: app/src/window/media-viewer.ts:54
 msgid "Save as…"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:124 app/src/window/audio-player.ts:132
-#: app/src/window/audio-player.ts:159
+#: app/src/window/attachment-view.ts:125 app/src/window/audio-player.ts:133
+#: app/src/window/audio-player.ts:160
 msgid "Could not fetch the attachment: {error}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:147 app/src/window/attachment-view.ts:156
+#: app/src/window/attachment-view.ts:148 app/src/window/attachment-view.ts:157
 #: app/src/window/conversation-model.ts:251
 #: app/src/window/conversation-model.ts:256
 msgid "Attachment"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:418
+#: app/src/window/attachment-view.ts:221 app/src/window/media-viewer.ts:200
+msgid "Video: {name}"
+msgstr ""
+
+#: app/src/window/attachment-view.ts:221 app/src/window/media-viewer.ts:200
+msgid "Image: {name}"
+msgstr ""
+
+#: app/src/window/attachment-view.ts:439
 #: app/src/window/conversation-model.ts:259
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
@@ -1813,15 +1821,15 @@ msgstr ""
 msgid "Play {name}"
 msgstr ""
 
-#: app/src/window/audio-player.ts:44
+#: app/src/window/audio-player.ts:45
 msgid "Position"
 msgstr ""
 
-#: app/src/window/audio-player.ts:84
+#: app/src/window/audio-player.ts:85
 msgid "Pause"
 msgstr ""
 
-#: app/src/window/audio-player.ts:105
+#: app/src/window/audio-player.ts:106
 msgid "Could not play the attachment: {error}"
 msgstr ""
 
@@ -1997,7 +2005,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:114
-#: app/src/window/conversation-view.ts:662
+#: app/src/window/conversation-view.ts:663
 msgid "Continuing via {protocol}"
 msgstr ""
 
@@ -2025,43 +2033,43 @@ msgstr ""
 msgid "File"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:102
+#: app/src/window/conversation-view.ts:103
 msgid "Choose how to reach this person"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:119
+#: app/src/window/conversation-view.ts:120
 msgid "Write a message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:130
+#: app/src/window/conversation-view.ts:131
 msgid "Send message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:157
+#: app/src/window/conversation-view.ts:158
 msgid "Conversation"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:273
+#: app/src/window/conversation-view.ts:274
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:288
+#: app/src/window/conversation-view.ts:289
 msgid "Send via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:392
+#: app/src/window/conversation-view.ts:393
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:564
+#: app/src/window/conversation-view.ts:565
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:673
+#: app/src/window/conversation-view.ts:674
 msgid "Message not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:676
+#: app/src/window/conversation-view.ts:677
 msgid "Retry"
 msgstr ""
 
@@ -2069,31 +2077,39 @@ msgstr ""
 msgid "Show more"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:44
+#: app/src/window/media-viewer.ts:51
 msgid "Back"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:45 app/src/window/media-viewer.ts:199
+#: app/src/window/media-viewer.ts:52 app/src/window/media-viewer.ts:269
 msgid "Fullscreen"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:46
+#: app/src/window/media-viewer.ts:53
 msgid "Copy image"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:78
+#: app/src/window/media-viewer.ts:85
 msgid "Could not load the attachment"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:124
+#: app/src/window/media-viewer.ts:104
+msgid "Previous"
+msgstr ""
+
+#: app/src/window/media-viewer.ts:105
+msgid "Next"
+msgstr ""
+
+#: app/src/window/media-viewer.ts:155
 msgid "Could not save the attachment: {error}"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:135
+#: app/src/window/media-viewer.ts:166
 msgid "Image copied"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:199
+#: app/src/window/media-viewer.ts:269
 msgid "Leave fullscreen"
 msgstr ""
 

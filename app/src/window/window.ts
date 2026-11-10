@@ -142,7 +142,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     },
     (backend) => attachingBackends().has(backend),
     (entry, oldest) => loadOlderMessages(entry, oldest),
-    (source, kind) => viewer.open(source, kind),
+    (source, kind, album) => viewer.open(source, kind, album),
     (entry, backend) => {
       peoplePin(entry.personIds, backend);
       refresh();
