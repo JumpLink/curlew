@@ -166,7 +166,9 @@ export class TelegramBackend implements ChatBackend, SendBackend {
       throw err;
     }
     return {
-      chatSession: () => new TelegramChatSession(api),
+      // Every catch-up closes the session it read through; that must not destroy the client that
+      // carries the update stream, or the follow goes deaf right after its first catch-up.
+      chatSession: () => new TelegramChatSession({ ...api, destroy: async () => {} }),
       onArrival: (listener) => live?.onArrival(listener) ?? (() => {}),
       onClosed: (listener) => live?.onClosed((end) => listener(end.reason, end.loggedOut)),
       close: () => api.destroy(),

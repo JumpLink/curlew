@@ -146,6 +146,8 @@ export default async () => {
         expect(clients.length).toBe(1);
         expect(clients[0].liveStarts).toBe(1);
         expect(clients[0].sent.length).toBe(0);
+        // The catch-up closed its session, but the client carrying the update stream stays up.
+        expect(clients[0].destroyed).toBe(0);
         clients[0].arrive();
         await until(() => logs.filter((l) => l.includes('catch-up wrote')).length >= 2);
         expect(logs.filter((l) => l.includes('catch-up wrote')).length >= 2).toBe(true);
