@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-11 22:48+0100\n"
+"POT-Creation-Date: 2026-11-11 23:15+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1791,7 +1791,7 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:154
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:155
 #: app/src/window/window.ts:72 app/src/window/window.ts:87
 msgid "Curlew"
 msgstr "Curlew"
@@ -1910,7 +1910,7 @@ msgstr ""
 #: app/src/window/agent-access-page.ts:234
 #: app/src/window/conversation-list.ts:401
 #: app/src/window/conversation-list.ts:487
-#: app/src/window/conversation-view.ts:639
+#: app/src/window/conversation-view.ts:644
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -1969,7 +1969,7 @@ msgstr "Offline"
 msgid "Daemon not running"
 msgstr "Daemon läuft nicht"
 
-#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:28
+#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:35
 msgid "Off"
 msgstr "Aus"
 
@@ -2395,7 +2395,7 @@ msgid "Review"
 msgstr "Prüfen"
 
 #: app/src/window/conversation-list.ts:518
-#: app/src/window/preferences-dialog.ts:22
+#: app/src/window/preferences-dialog.ts:29
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
@@ -2406,7 +2406,7 @@ msgstr[0] "{count} mögliches Duplikat"
 msgstr[1] "{count} mögliche Duplikate"
 
 #: app/src/window/conversation-model.ts:115
-#: app/src/window/conversation-view.ts:1233
+#: app/src/window/conversation-view.ts:1238
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -2442,7 +2442,7 @@ msgstr[1] "Du und {count} weitere Personen"
 
 #: app/src/window/conversation-model.ts:322
 #: app/src/window/conversation-model.ts:335
-#: app/src/window/conversation-view.ts:623
+#: app/src/window/conversation-view.ts:628
 msgid "You"
 msgstr "Du"
 
@@ -2452,124 +2452,124 @@ msgid_plural "{count} people"
 msgstr[0] "{count} Person"
 msgstr[1] "{count} Personen"
 
-#: app/src/window/conversation-view.ts:160
+#: app/src/window/conversation-view.ts:161
 msgid "Choose how to reach this person"
 msgstr "Erreichbarkeit dieser Person wählen"
 
-#: app/src/window/conversation-view.ts:177
-#: app/src/window/conversation-view.ts:407
+#: app/src/window/conversation-view.ts:182
+#: app/src/window/conversation-view.ts:412
 msgid "Write a message"
 msgstr "Nachricht schreiben"
 
-#: app/src/window/conversation-view.ts:188
+#: app/src/window/conversation-view.ts:193
 msgid "Send message"
 msgstr "Nachricht senden"
 
-#: app/src/window/conversation-view.ts:200
+#: app/src/window/conversation-view.ts:205
 msgid "Cancel reply"
 msgstr "Antwort abbrechen"
 
-#: app/src/window/conversation-view.ts:213
+#: app/src/window/conversation-view.ts:218
 msgid "Cancel editing"
 msgstr "Bearbeiten abbrechen"
 
-#: app/src/window/conversation-view.ts:243
+#: app/src/window/conversation-view.ts:248
 msgid "Conversation"
 msgstr "Unterhaltung"
 
-#: app/src/window/conversation-view.ts:373
+#: app/src/window/conversation-view.ts:378
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 "{protocol} kann keine Dateien senden; die angehängten Dateien wurden entfernt"
 
-#: app/src/window/conversation-view.ts:425
+#: app/src/window/conversation-view.ts:430
 msgid "Send via {protocol}"
 msgstr "Senden über {protocol}"
 
-#: app/src/window/conversation-view.ts:530
+#: app/src/window/conversation-view.ts:535
 msgid "Show the quoted message"
 msgstr "Zitierte Nachricht anzeigen"
 
-#: app/src/window/conversation-view.ts:537
-#: app/src/window/conversation-view.ts:569
+#: app/src/window/conversation-view.ts:542
+#: app/src/window/conversation-view.ts:574
 msgid "Reply to {author}: {excerpt}"
 msgstr "Antwort auf {author}: {excerpt}"
 
-#: app/src/window/conversation-view.ts:552
+#: app/src/window/conversation-view.ts:557
 msgid "The quoted message is no longer in the history"
 msgstr "Die zitierte Nachricht ist nicht mehr im Verlauf"
 
-#: app/src/window/conversation-view.ts:594
+#: app/src/window/conversation-view.ts:599
 msgid "Reaction not sent: {error}"
 msgstr "Reaktion nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:622
+#: app/src/window/conversation-view.ts:627
 msgid "Edit message"
 msgstr "Nachricht bearbeiten"
 
-#: app/src/window/conversation-view.ts:626
+#: app/src/window/conversation-view.ts:631
 msgid "Editing your message: {excerpt}"
 msgstr "Eigene Nachricht bearbeiten: {excerpt}"
 
-#: app/src/window/conversation-view.ts:634
+#: app/src/window/conversation-view.ts:639
 msgid "Delete message?"
 msgstr "Nachricht löschen?"
 
-#: app/src/window/conversation-view.ts:635
+#: app/src/window/conversation-view.ts:640
 msgid "This will remove the message for everyone in the chat."
 msgstr "Dadurch wird die Nachricht für alle im Chat entfernt."
 
-#: app/src/window/conversation-view.ts:640
+#: app/src/window/conversation-view.ts:645
 msgid "Delete for everyone"
 msgstr "Für alle löschen"
 
-#: app/src/window/conversation-view.ts:657
+#: app/src/window/conversation-view.ts:662
 msgid "Message not deleted: {error}"
 msgstr "Nachricht nicht gelöscht: {error}"
 
-#: app/src/window/conversation-view.ts:718
+#: app/src/window/conversation-view.ts:723
 msgid "Reply"
 msgstr "Antworten"
 
-#: app/src/window/conversation-view.ts:719
+#: app/src/window/conversation-view.ts:724
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: app/src/window/conversation-view.ts:720
+#: app/src/window/conversation-view.ts:725
 msgid "Delete"
 msgstr "Löschen"
 
-#: app/src/window/conversation-view.ts:721
+#: app/src/window/conversation-view.ts:726
 msgid "Copy"
 msgstr "Kopieren"
 
-#: app/src/window/conversation-view.ts:834
+#: app/src/window/conversation-view.ts:839
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:876
-#: app/src/window/conversation-view.ts:1010
+#: app/src/window/conversation-view.ts:881
+#: app/src/window/conversation-view.ts:1015
 msgid "edited"
 msgstr "bearbeitet"
 
-#: app/src/window/conversation-view.ts:886
-#: app/src/window/conversation-view.ts:887
+#: app/src/window/conversation-view.ts:891
+#: app/src/window/conversation-view.ts:892
 msgid "Read"
 msgstr "Gelesen"
 
-#: app/src/window/conversation-view.ts:1097
+#: app/src/window/conversation-view.ts:1102
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:1198
+#: app/src/window/conversation-view.ts:1203
 msgid "Message not edited: {error}"
 msgstr "Nachricht nicht bearbeitet: {error}"
 
-#: app/src/window/conversation-view.ts:1245
+#: app/src/window/conversation-view.ts:1250
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:1248
+#: app/src/window/conversation-view.ts:1253
 msgid "Retry"
 msgstr "Erneut versuchen"
 
@@ -2671,106 +2671,122 @@ msgstr "Kontakte suchen"
 msgid "The address book could not be read"
 msgstr "Das Adressbuch konnte nicht gelesen werden"
 
-#: app/src/window/preferences-dialog.ts:18
+#: app/src/window/preferences-dialog.ts:25
 msgid "Show all emails"
 msgstr "Alle E-Mails anzeigen"
 
-#: app/src/window/preferences-dialog.ts:19
+#: app/src/window/preferences-dialog.ts:26
 msgid ""
 "Show ordinary email threads beside conversations started by a chat messenger"
 msgstr ""
 "Gewöhnliche E-Mail-Verläufe neben Unterhaltungen aus einem Chat-Messenger "
 "anzeigen"
 
-#: app/src/window/preferences-dialog.ts:26
+#: app/src/window/preferences-dialog.ts:33
 msgid "Message notifications"
 msgstr "Benachrichtigungen für Nachrichten"
 
-#: app/src/window/preferences-dialog.ts:27
+#: app/src/window/preferences-dialog.ts:34
 msgid "What a desktop notification for a new chat message shows"
 msgstr "Was eine Desktop-Benachrichtigung über eine neue Chat-Nachricht zeigt"
 
-#: app/src/window/preferences-dialog.ts:28
+#: app/src/window/preferences-dialog.ts:35
 msgid "Sender and text"
 msgstr "Absender und Text"
 
-#: app/src/window/preferences-dialog.ts:28
+#: app/src/window/preferences-dialog.ts:35
 msgid "Sender only"
 msgstr "Nur Absender"
 
-#: app/src/window/preferences-dialog.ts:31
+#: app/src/window/preferences-dialog.ts:38
 msgid "Notifications"
 msgstr "Benachrichtigungen"
 
-#: app/src/window/preferences-dialog.ts:34
+#: app/src/window/preferences-dialog.ts:41
 msgid "Play videos silently in chats"
 msgstr "Videos in Chats stumm abspielen"
 
-#: app/src/window/preferences-dialog.ts:35
+#: app/src/window/preferences-dialog.ts:42
 msgid "A video in a conversation plays muted while it is on screen"
 msgstr "Ein Video in einer Unterhaltung läuft stumm, solange es im Bild ist"
 
-#: app/src/window/preferences-dialog.ts:41
+#: app/src/window/preferences-dialog.ts:48
 msgid "Media"
 msgstr "Medien"
 
-#: app/src/window/preferences-dialog.ts:44
+#: app/src/window/preferences-dialog.ts:51
 msgid "Curlew blue"
 msgstr "Curlew-Blau"
 
-#: app/src/window/preferences-dialog.ts:45
+#: app/src/window/preferences-dialog.ts:52
 msgid "Follow the system"
 msgstr "Dem System folgen"
 
-#: app/src/window/preferences-dialog.ts:46
+#: app/src/window/preferences-dialog.ts:53
 msgid "Blue"
 msgstr "Blau"
 
-#: app/src/window/preferences-dialog.ts:47
+#: app/src/window/preferences-dialog.ts:54
 msgid "Teal"
 msgstr "Petrol"
 
-#: app/src/window/preferences-dialog.ts:48
+#: app/src/window/preferences-dialog.ts:55
 msgid "Green"
 msgstr "Grün"
 
-#: app/src/window/preferences-dialog.ts:49
+#: app/src/window/preferences-dialog.ts:56
 msgid "Yellow"
 msgstr "Gelb"
 
-#: app/src/window/preferences-dialog.ts:50
+#: app/src/window/preferences-dialog.ts:57
 msgid "Orange"
 msgstr "Orange"
 
-#: app/src/window/preferences-dialog.ts:51
+#: app/src/window/preferences-dialog.ts:58
 msgid "Red"
 msgstr "Rot"
 
-#: app/src/window/preferences-dialog.ts:52
+#: app/src/window/preferences-dialog.ts:59
 msgid "Pink"
 msgstr "Rosa"
 
-#: app/src/window/preferences-dialog.ts:53
+#: app/src/window/preferences-dialog.ts:60
 msgid "Purple"
 msgstr "Violett"
 
-#: app/src/window/preferences-dialog.ts:54
+#: app/src/window/preferences-dialog.ts:61
 msgid "Slate"
 msgstr "Schiefergrau"
 
-#: app/src/window/preferences-dialog.ts:58
+#: app/src/window/preferences-dialog.ts:65
 msgid "Accent colour"
 msgstr "Akzentfarbe"
 
-#: app/src/window/preferences-dialog.ts:59
+#: app/src/window/preferences-dialog.ts:66
 msgid "Colours buttons, links and highlights"
 msgstr "Färbt Schaltflächen, Links und Hervorhebungen"
 
-#: app/src/window/preferences-dialog.ts:66
+#: app/src/window/preferences-dialog.ts:73
 msgid "Appearance"
 msgstr "Erscheinungsbild"
 
-#: app/src/window/preferences-dialog.ts:77 app/src/window/window.ts:102
+#: app/src/window/preferences-dialog.ts:75
+msgid "Doodles"
+msgstr "Kritzeleien"
+
+#: app/src/window/preferences-dialog.ts:75
+msgid "Plain"
+msgstr "Schlicht"
+
+#: app/src/window/preferences-dialog.ts:77
+msgid "Chat background"
+msgstr "Chat-Hintergrund"
+
+#: app/src/window/preferences-dialog.ts:78
+msgid "A quiet pattern behind the messages"
+msgstr "Ein dezentes Muster hinter den Nachrichten"
+
+#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:102
 msgid "Preferences"
 msgstr "Einstellungen"
 

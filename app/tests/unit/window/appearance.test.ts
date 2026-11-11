@@ -1,7 +1,12 @@
 import { describe, expect, it } from '@gjsify/unit';
 
 import { parseConfig } from '../../../src/core/config.ts';
-import { ACCENT_CHOICES, accentToImpose, isAccentChoice } from '../../../src/core/lib/appearance.ts';
+import {
+  ACCENT_CHOICES,
+  accentToImpose,
+  backgroundToShow,
+  isAccentChoice,
+} from '../../../src/core/lib/appearance.ts';
 
 export default async () => {
   await describe('the accent choice', async () => {
@@ -21,6 +26,12 @@ export default async () => {
       expect(isAccentChoice('magenta')).toBe(false);
     });
 
+    await it('shows the doodles unless the person chose otherwise', async () => {
+      expect(backgroundToShow(undefined)).toBe('doodles');
+      expect(backgroundToShow('nonsense')).toBe('doodles');
+      expect(backgroundToShow('none')).toBe('none');
+    });
+
     await it('is validated in the config', async () => {
       expect(parseConfig('{"backends":{}}').ui.accentColor).toBe(undefined);
       expect(parseConfig('{"backends":{},"ui":{"accentColor":"teal"}}').ui.accentColor).toBe('teal');
@@ -31,6 +42,14 @@ export default async () => {
         message = err instanceof Error ? err.message : String(err);
       }
       expect(/accentColor/.test(message)).toBe(true);
+      expect(parseConfig('{"backends":{},"ui":{"chatBackground":"none"}}').ui.chatBackground).toBe('none');
+      let bad = '';
+      try {
+        parseConfig('{"backends":{},"ui":{"chatBackground":"stripes"}}');
+      } catch (err) {
+        bad = err instanceof Error ? err.message : String(err);
+      }
+      expect(/chatBackground/.test(bad)).toBe(true);
     });
   });
 };
