@@ -175,10 +175,17 @@ export function toChatAttachments(data: DataMessage): ChatAttachment[] | undefin
   return out.length > 0 ? out : undefined;
 }
 
+/**
+ * A group message named its group: the chat id, the master key it carried, and the revision the
+ * sender saw. The key is what a group's name can be fetched with (`groups.ts`).
+ */
+export type GroupSeen = (chatId: string, masterKey: Uint8Array, revision: number | null) => void;
+
 export class SignalMapper {
   private readonly ownAci: string;
   private readonly ownPni: string | null;
   private readonly groupIdOf: (masterKey: Uint8Array) => Uint8Array;
+  private readonly onGroup: GroupSeen | null;
 
   /** `groupIdOf` derives a group's public id from its master key (libsignal zkgroup). */
   /**
@@ -190,10 +197,12 @@ export class SignalMapper {
     ownAci: string,
     groupIdOf: (masterKey: Uint8Array) => Uint8Array,
     ownPni: string | null = null,
+    onGroup: GroupSeen | null = null,
   ) {
     this.ownAci = ownAci;
     this.ownPni = ownPni;
     this.groupIdOf = groupIdOf;
+    this.onGroup = onGroup;
   }
 
   /**
@@ -225,8 +234,11 @@ export class SignalMapper {
     id: string;
     kind: 'direct' | 'group';
   } {
-    if (data?.groupMasterKey?.length)
-      return { id: this.groupChatId(this.groupIdOf(data.groupMasterKey)), kind: 'group' };
+    if (data?.groupMasterKey?.length) {
+      const id = this.groupChatId(this.groupIdOf(data.groupMasterKey));
+      this.onGroup?.(id, data.groupMasterKey, data.groupRevision ?? null);
+      return { id, kind: 'group' };
+    }
     if (fallback?.length) return { id: this.groupChatId(fallback), kind: 'group' };
     return { id: direct, kind: 'direct' };
   }

@@ -37,6 +37,8 @@ export const NS = {
   kyberUsed: 'signal.kyberused',
   identityChanged: 'signal.identitychanged',
   senderKey: 'signal.senderkey',
+  /** What was learnt about each group by chat id: its name and revision, never its key. */
+  groups: 'signal.groups',
 } as const;
 
 /** curlew's own namespace in the same file: which account this is, for `accounts list`. */

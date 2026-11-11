@@ -15,7 +15,7 @@
 
 import type * as Core from '@signalapp/libsignal-client';
 import type { ChatFetch } from './guard.ts';
-import { guardedFetch, sendFetch } from './guard.ts';
+import { groupsFetch, guardedFetch, sendFetch } from './guard.ts';
 import type { SignalLib } from './lib.ts';
 import type { DeviceAccount } from './protocol-store.ts';
 import type { ChatConnector } from './receiver.ts';
@@ -128,6 +128,38 @@ export async function sendChannel(
     });
     return { status: response.status, message: response.message, body: response.body };
   }, recipients);
+  return { fetch, close: () => connection.disconnect() };
+}
+
+/**
+ * The connection a group-name fetch reads its day's credentials on, behind the groups gate. Its
+ * own connection for the same reason `sendChannel` has one; the envelopes the server pushes down
+ * it are dropped unacknowledged, so the next sync still gets them.
+ */
+export async function groupsChannel(
+  net: Core.Net.Net,
+  account: DeviceAccount,
+): Promise<{ fetch: ChatFetch; close(): Promise<void> }> {
+  const connection = await net.connectAuthenticatedChat(
+    `${account.aci}.${account.deviceId}`,
+    account.password,
+    false,
+    {
+      onIncomingMessage: () => undefined,
+      onQueueEmpty: () => undefined,
+      onConnectionInterrupted: () => undefined,
+      onReceivedAlerts: () => undefined,
+    },
+  );
+  const fetch = groupsFetch(async (request) => {
+    const response = await connection.fetch({
+      verb: request.verb,
+      path: request.path,
+      headers: request.headers,
+      body: request.body as Uint8Array<ArrayBuffer> | undefined,
+    });
+    return { status: response.status, message: response.message, body: response.body };
+  });
   return { fetch, close: () => connection.disconnect() };
 }
 
