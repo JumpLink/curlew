@@ -93,6 +93,18 @@ jobs:
       - name: Build the CLI bundle
         run: gjsify workspace curlew-cli build
 
+      # The Flatpak job below packs THIS build rather than making its own: its container has no
+      # `msgfmt`, and `gjsify ship` refuses a locale directory without a `.mo`. Uploaded before
+      # the tests run, so the test bundles they write into `dist/` never travel with it.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bundle
+          path: |
+            app/dist/curlew.gjs.mjs
+            app/dist/window.gjs.mjs
+            app/dist/locale
+          retention-days: 1
+
       # Copies the bundle just built out of the tree and asks it to load libsignal from there.
       # It proves whether a built curlew is RELOCATABLE — right now it is not: `--app gjs`
       # bakes the ABSOLUTE prebuild path of the native addon into the bundle, so a build can only
@@ -127,10 +139,15 @@ jobs:
 
       # The CLI's own installable artifacts, out of the same bundle the tests above ran against.
       # `.deb` and `.rpm` only here — gjsify writes both itself and execs nothing for them, so this
-      # step needs no tool this job does not already install. Flatpak is deliberately absent (see
-      # the note in README.md's Releasing section): GOA talks to the session bus directly, which a
-      # Flatpak sandbox would not reach without a portal this project does not have, so a Flatpak
-      # build would silently ship with every account backend unavailable.
+      # step needs no tool this job does not already install. The Flatpak is the `flatpak` job
+      # below, in a container that carries `flatpak-builder` and the GNOME runtime (ADR 0011).
+      #
+      # `ship` stages every file in `dist/`, and the tests have just written their own bundles
+      # there (`test.*`, `*-dbus.gjs.mjs`) — they would ride along in the package. Only what the
+      # app runs is kept.
+      - name: Keep only the app bundles in dist
+        run: find app/dist -maxdepth 1 -type f ! -name curlew.gjs.mjs ! -name window.gjs.mjs -delete
+
       - name: Package the bridge (.deb + .rpm)
         working-directory: app
         run: gjsify ship linux --skip-build --target deb,rpm
@@ -224,4 +241,70 @@ jobs:
           path: |
             app/ship/out/*.zip
             app/ship/out/*.msi
+          compression-level: 0
+
+  # The same app inside a sandbox (ADR 0011). `gjsify ship --target flatpak` writes the manifest
+  # from `gjsify.ship.flatpak` in app/package.json and packs the staged bundle; the container is
+  # the one Flathub's own CI uses, with `flatpak-builder` and the GNOME runtime preinstalled.
+  # `--privileged` because flatpak-builder runs bubblewrap, which needs user namespaces.
+  flatpak:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: bundle
+          path: app/dist
+
+      - name: Cache gjsify tarball store
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/gjsify/tarballs
+          key: gjsify-tarballs-${{ hashFiles('gjsify-lock.json') }}
+          restore-keys: gjsify-tarballs-
+
+      - name: Bootstrap the gjsify CLI
+        run: |
+          VERSION=$(node -p "require('./app/package.json').devDependencies['@gjsify/cli']")
+          npm install -g "@gjsify/cli@$VERSION"
+
+      # The prebuilds `gjsify.ship.bundledTypelibs` names live in node_modules.
+      - name: Install dependencies (gjsify install --immutable)
+        run: gjsify install --immutable
+
+      - name: Package the Flatpak
+        working-directory: app
+        run: gjsify ship linux --skip-build --target flatpak
+
+      - name: Assert the bundle arrived
+        working-directory: app/ship/out
+        run: |
+          set -eu
+          ls -la
+          version=$(node -p "require('$GITHUB_WORKSPACE/app/package.json').version")
+          f="eu.jumplink.curlew-${version}-1.x86_64.flatpak"
+          if [ ! -s "$f" ]; then
+            echo "::error::missing or empty artifact: $f"
+            exit 1
+          fi
+
+      # What the build cannot show: the natives the bundle loads at run time are inside the
+      # sandbox. `conversations list` opens the index (SQLite) and starts the bridge stack; a
+      # missing typelib in the bundle fails here and nowhere earlier.
+      - name: Smoke test inside the sandbox
+        working-directory: app/ship/out
+        run: |
+          set -eu
+          flatpak install --system -y --noninteractive --bundle eu.jumplink.curlew-*.flatpak
+          flatpak run --command=curlew eu.jumplink.curlew conversations list
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ship-flatpak
+          path: app/ship/out/*.flatpak
           compression-level: 0

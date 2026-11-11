@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- `.deb` and `.rpm` no longer carry the test bundles that were left in `dist/` by the test run.
 - A chat whose newest page held a picture album stopped loading older messages after that page, because the album's pictures were counted as one message
 - A Signal group whose name is not known yet no longer shows its members' IDs as the title; it reads *Unnamed group · 5 members*.
 - Files under `/tmp` could not be sent through the daemon ("cannot be read"), because its unit gave it a private `/tmp`. A send now hands the daemon the opened files instead of their paths, so the daemon needs no access to them. Restart it after updating: `systemctl --user restart curlew-daemon`.
@@ -29,6 +30,7 @@
 
 ### Added
 
+- A Flatpak. CI builds it from the same bundle as the packages and starts it once inside the sandbox; it has network and display access and nothing else, so mail, contacts and calendar from GNOME Online Accounts stay a feature of the host build.
 - Inside a Flatpak the daemon's message notifications go through the Notification portal; outside nothing changes.
 - A reply to a message older than the loaded page shows its quote too, and a click on the quote loads the history back to that message
 - The list search also finds text inside chat messages and mail subjects (from two characters on); a matching conversation shows the line that matched

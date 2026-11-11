@@ -14,9 +14,8 @@ name: Release
 # darwin --arch arm64 --skip-build --target macos-app-zip` on that same container is the whole
 # difference — no second toolchain.
 #
-# No Flatpak job: GOA talks to the session bus directly, which a Flatpak sandbox would not reach
-# without a portal this project does not use, so a Flatpak build would silently ship with every
-# account backend unavailable rather than failing loudly. See README.md's Releasing section.
+# The Flatpak is built by ci.yml's `flatpak` job and ships as the `ship-flatpak` artifact. It has
+# no GOA hole, by decision: it is the chat client (docs/adr/0011-same-app-inside-and-outside-a-sandbox.md).
 on:
   push:
     tags: ['v*']
