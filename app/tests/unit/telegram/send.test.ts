@@ -226,6 +226,29 @@ export default async () => {
       });
     });
 
+    await it('says why Telegram refuses a reaction, and passes other errors on', async () => {
+      await withRig(granted, async (rig) => {
+        const sender = await rig.backend.openSender(ACCOUNT, { account: ACCOUNT, addresses: ['1001'] });
+        const react = () => sender.react!({ to: '1001', target: { remoteId: '1001/7' }, emoji: '❤️' });
+        const failure = async (): Promise<string> => {
+          try {
+            await react();
+          } catch (err) {
+            return (err as Error).message;
+          }
+          return '';
+        };
+        const client = rig.fake.clients[0];
+        client.reactionError = 'PREMIUM_ACCOUNT_REQUIRED';
+        expect((await failure()).includes('Premium')).toBe(true);
+        client.reactionError = 'REACTION_INVALID';
+        expect((await failure()).includes('does not allow')).toBe(true);
+        client.reactionError = 'SOMETHING_ELSE';
+        expect(await failure()).toBe('rpc');
+        await sender.close();
+      });
+    });
+
     await it('refuses a reply to a message of another chat or of no chat', async () => {
       await withRig(granted, async (rig) => {
         const sender = await rig.backend.openSender(ACCOUNT, { account: ACCOUNT, addresses: ['1001'] });

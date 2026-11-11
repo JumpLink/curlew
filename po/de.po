@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-11 10:02+0100\n"
+"POT-Creation-Date: 2026-11-11 18:23+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -141,30 +141,30 @@ msgstr ""
 msgid "systemctl --user {verb} exited {code}"
 msgstr "systemctl --user {verb} endete mit {code}"
 
-#: app/src/core/actions/chat-attachment.ts:139
-#: app/src/core/actions/daemon.ts:451
+#: app/src/core/actions/chat-attachment.ts:140
+#: app/src/core/actions/daemon.ts:452
 msgid "the attachment was not found in the index"
 msgstr "Der Anhang wurde im Index nicht gefunden"
 
-#: app/src/core/actions/chat-attachment.ts:142
+#: app/src/core/actions/chat-attachment.ts:143
 msgid "the attachment has no fetchable handle"
 msgstr "Der Anhang hat keinen abrufbaren Handle"
 
-#: app/src/core/actions/chat-attachment.ts:178
+#: app/src/core/actions/chat-attachment.ts:179
 msgid "no account {account} for {backend}"
 msgstr "Kein Konto {account} für {backend}"
 
-#: app/src/core/actions/chat-attachment.ts:185
+#: app/src/core/actions/chat-attachment.ts:186
 msgid "{backend} cannot fetch attachments"
 msgstr "{backend} kann keine Anhänge abrufen"
 
-#: app/src/core/actions/daemon.ts:350
+#: app/src/core/actions/daemon.ts:351
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 "{capability} ist nicht die Berechtigung, unter der {backend} sendet — es "
 "wurde nichts gesendet"
 
-#: app/src/core/actions/daemon.ts:372
+#: app/src/core/actions/daemon.ts:373
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
@@ -2870,31 +2870,31 @@ msgid ""
 msgstr ""
 "der Matrix-Anhang kam mit {actual} Bytes an, angekündigt waren {announced}"
 
-#: packages/matrix/src/backend.ts:58
+#: packages/matrix/src/backend.ts:59
 msgid "log in again with `curlew accounts add matrix`"
 msgstr "melde dich mit `curlew accounts add matrix` neu an"
 
-#: packages/matrix/src/backend.ts:63
+#: packages/matrix/src/backend.ts:64
 msgid "Homeserver (URL like https://matrix.example.org, or the server name)"
 msgstr "Homeserver (URL wie https://matrix.example.org oder der Servername)"
 
-#: packages/matrix/src/backend.ts:64
+#: packages/matrix/src/backend.ts:65
 msgid "Matrix user (@name:example.org)"
 msgstr "Matrix-Benutzer (@name:example.org)"
 
-#: packages/matrix/src/backend.ts:65 packages/xmpp/src/backend.ts:51
+#: packages/matrix/src/backend.ts:66 packages/xmpp/src/backend.ts:51
 msgid "Password"
 msgstr "Passwort"
 
-#: packages/matrix/src/backend.ts:117
+#: packages/matrix/src/backend.ts:138
 msgid "no Matrix account {account} — {hint}"
 msgstr "Kein Matrix-Konto {account} — {hint}"
 
-#: packages/matrix/src/backend.ts:124
+#: packages/matrix/src/backend.ts:145
 msgid "the Matrix account file {account} is incomplete — {hint}"
 msgstr "Die Matrix-Kontodatei {account} ist unvollständig — {hint}"
 
-#: packages/matrix/src/backend.ts:173
+#: packages/matrix/src/backend.ts:194
 msgid "the Matrix account {account} is not usable ({reason}) — {hint}"
 msgstr "Das Matrix-Konto {account} ist nicht nutzbar ({reason}) — {hint}"
 
@@ -2994,7 +2994,7 @@ msgstr ""
 "kürze sie"
 
 #: packages/matrix/src/send.ts:483 packages/signal/src/send.ts:215
-#: packages/telegram/src/sender.ts:129 packages/whatsapp/src/send.ts:164
+#: packages/telegram/src/sender.ts:141 packages/whatsapp/src/send.ts:164
 #: packages/xmpp/src/messages.ts:36
 msgid "only your own messages can be changed — nothing was sent"
 msgstr ""
@@ -3291,11 +3291,11 @@ msgstr "Anmeldecode, den Telegram geschickt hat"
 msgid "Two-step verification password"
 msgstr "Passwort der zweistufigen Bestätigung"
 
-#: packages/telegram/src/backend.ts:193
+#: packages/telegram/src/backend.ts:195
 msgid "no Telegram session for {account} — {hint}"
 msgstr "keine Telegram-Sitzung für {account} — {hint}"
 
-#: packages/telegram/src/backend.ts:219
+#: packages/telegram/src/backend.ts:221
 msgid "the Telegram session {account} is not usable ({reason}) — {hint}"
 msgstr "die Telegram-Sitzung {account} ist nicht nutzbar ({reason}) — {hint}"
 
@@ -3436,13 +3436,25 @@ msgid "{id} is not a message of this Telegram chat — nothing was sent"
 msgstr ""
 "{id} ist keine Nachricht dieses Telegram-Chats – es wurde nichts gesendet"
 
-#: packages/telegram/src/sender.ts:97 packages/telegram/src/sender.ts:140
+#: packages/telegram/src/sender.ts:97 packages/telegram/src/sender.ts:152
 msgid ""
 "a Telegram message holds at most {max} characters, this one has {length} — "
 "shorten it"
 msgstr ""
 "Eine Telegram-Nachricht fasst höchstens {max} Zeichen, diese hat {length} — "
 "kürze sie"
+
+#: packages/telegram/src/sender.ts:128
+msgid ""
+"Telegram allows reactions here only with Premium (for example in Saved "
+"Messages)"
+msgstr ""
+"Telegram erlaubt Reaktionen hier nur mit Premium (zum Beispiel in „Gespeicherte "
+"Nachrichten“)"
+
+#: packages/telegram/src/sender.ts:131
+msgid "this chat does not allow that reaction"
+msgstr "Dieser Chat erlaubt diese Reaktion nicht"
 
 #: packages/whatsapp/src/attachments.ts:39
 msgid ""

@@ -119,7 +119,19 @@ export class TelegramSender implements MessageSender {
   async react(reaction: SendingReaction): Promise<void> {
     const chatId = this.chatId(reaction.to);
     const emoji = reaction.emoji === null ? null : reaction.emoji.replaceAll('\uFE0F', '');
-    await this.client.sendReaction(chatId, replyNumber(chatId, reaction.target.remoteId), emoji);
+    try {
+      await this.client.sendReaction(chatId, replyNumber(chatId, reaction.target.remoteId), emoji);
+    } catch (err) {
+      // Read structurally, like the FLOOD_WAIT in session.ts: a fake client throws a plain object.
+      const text = (err as { text?: unknown } | null)?.text;
+      if (text === 'PREMIUM_ACCOUNT_REQUIRED') {
+        throw new Error(_('Telegram allows reactions here only with Premium (for example in Saved Messages)'));
+      }
+      if (text === 'REACTION_INVALID') {
+        throw new Error(_('this chat does not allow that reaction'));
+      }
+      throw err;
+    }
   }
 
   /** The message number of a message of the person's own, or a refusal before anything is sent. */

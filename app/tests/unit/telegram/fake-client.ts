@@ -253,8 +253,12 @@ export class FakeClient implements TelegramClientHandle {
   /** Every `sendReaction` call, in order. */
   readonly reactions: Array<{ chatId: number; messageId: number; emoji: string | null }> = [];
 
+  /** Set to make the next `sendReaction` fail the way an RPC error does: with a `text`. */
+  reactionError: string | null = null;
+
   async sendReaction(chatId: number, messageId: number, emoji: string | null): Promise<void> {
     this.calls.push(`sendReaction:${chatId}`);
+    if (this.reactionError !== null) throw Object.assign(new Error('rpc'), { text: this.reactionError });
     this.reactions.push({ chatId, messageId, emoji });
   }
 
