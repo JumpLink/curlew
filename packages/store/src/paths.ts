@@ -96,6 +96,18 @@ export function previewsDir(env: NodeJS.ProcessEnv = process.env): string {
   return join(cache && cache.startsWith('/') ? cache : join(homedir(), '.cache'), 'curlew', 'previews');
 }
 
+/**
+ * Where the daemon copies the files a send handed it as descriptors, one 0700 directory per call,
+ * removed when the call ends. The cache home and not `$XDG_RUNTIME_DIR`: that one is tmpfs, and a
+ * 60 MB video would sit in RAM.
+ */
+export function sendStagingDir(env: NodeJS.ProcessEnv = process.env): string {
+  const explicit = envValue(env, 'STAGING_DIR');
+  if (explicit) return explicit;
+  const cache = env.XDG_CACHE_HOME?.trim();
+  return join(cache && cache.startsWith('/') ? cache : join(homedir(), '.cache'), 'curlew', 'outgoing');
+}
+
 /** `$XDG_CONFIG_HOME`, or the spec's default. A relative value is ignored, as for the data home. */
 export function xdgConfigHome(env: NodeJS.ProcessEnv = process.env): string {
   const explicit = env.XDG_CONFIG_HOME?.trim();

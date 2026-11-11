@@ -4,6 +4,7 @@
     "@modelcontextprotocol/sdk@^1.30.0",
     "dotenv@^17.4.2",
     "yargs@^18.1.0",
+    "qrcode-generator@2.0.4",
     "zod@^4.4.3",
     "@gjsify/adwaita-app@0.64.22",
     "@gjsify/cli@0.64.22",
@@ -18,6 +19,7 @@
     "@girs/glib-2.0@^4.1.0",
     "@girs/gobject-2.0@^4.1.0",
     "@girs/gio-2.0@^4.1.0",
+    "@girs/giounix-2.0@^5.4.0",
     "@girs/goa-1.0@^4.1.0",
     "@girs/edataserver-1.2@^4.1.0",
     "@girs/ebook-1.2@^4.1.0",
@@ -43,7 +45,6 @@
     "loglevel@1.9.2",
     "matrix-js-sdk@42.4.0",
     "@gjsify/xeddsa@0.64.22",
-    "qrcode-generator@2.0.4",
     "nodemailer@10.0.15",
     "@mtcute/core@0.32.3",
     "@mtcute/web@0.32.3",
@@ -9662,9 +9663,9 @@
       "resolved": "https://registry.npmjs.org/cliui/-/cliui-9.0.1.tgz",
       "integrity": "sha512-k7ndgKhwoQveBL+/1tqGJYNz097I7WOvwbmmU2AR5+magtbjPWQTS1C5vzGkBC8Ym8UWRzfKUzUUqFLypY4Q+w==",
       "dependencies": {
-        "string-width": "^7.2.0",
+        "wrap-ansi": "^9.0.0",
         "strip-ansi": "^7.1.0",
-        "wrap-ansi": "^9.0.0"
+        "string-width": "^7.2.0"
       }
     },
     "node_modules/cliui/node_modules/string-width": {

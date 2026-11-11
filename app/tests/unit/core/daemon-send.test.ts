@@ -24,9 +24,12 @@ import { openIndex } from '../../../src/core/actions/index-sync.ts';
 import { reactToMessage } from '../../../src/core/actions/react.ts';
 import { sendMessage } from '../../../src/core/actions/send.ts';
 import {
+  DAEMON_MAX_FILES,
   DAEMON_WIRE_VERSION,
   type DaemonSendRequest,
-  parseDaemonSendRequest,
+  parseDaemonSendWire,
+  planFdFiles,
+  toDaemonWire,
 } from '../../../src/core/lib/daemon-bus.ts';
 import type { DaemonSendClient } from '../../../src/core/lib/daemon-send-client.ts';
 
@@ -786,23 +789,20 @@ export default async () => {
       for (const replyTo of [{}, { remoteId: '' }, { remoteId: 5 }, 'x']) {
         let message = '';
         try {
-          parseDaemonSendRequest(JSON.stringify({ ...request(), replyTo }));
+          parseDaemonSendWire(JSON.stringify({ ...request(), replyTo }));
         } catch (err) {
           message = (err as Error).message;
         }
         expect(message).toMatch(/replyTo/);
       }
       expect(
-        parseDaemonSendRequest(JSON.stringify({ ...request(), replyTo: { remoteId: 'm1' } })).replyTo
-          ?.remoteId,
+        parseDaemonSendWire(JSON.stringify({ ...request(), replyTo: { remoteId: 'm1' } })).replyTo?.remoteId,
       ).toBe('m1');
     });
 
     await it('carries the sender-given id and the author flag of a reply, and rejects bad ones', async () => {
       const replyTo = { remoteId: 'm1', clientId: 'c1', fromSelf: true, text: 'Hi' };
-      expect(parseDaemonSendRequest(JSON.stringify({ ...request(), replyTo })).replyTo).toStrictEqual(
-        replyTo,
-      );
+      expect(parseDaemonSendWire(JSON.stringify({ ...request(), replyTo })).replyTo).toStrictEqual(replyTo);
       for (const bad of [
         { remoteId: 'm1', clientId: 5 },
         { remoteId: 'm1', fromSelf: 'yes' },
@@ -810,7 +810,7 @@ export default async () => {
       ]) {
         let message = '';
         try {
-          parseDaemonSendRequest(JSON.stringify({ ...request(), replyTo: bad }));
+          parseDaemonSendWire(JSON.stringify({ ...request(), replyTo: bad }));
         } catch (err) {
           message = (err as Error).message;
         }
@@ -852,12 +852,12 @@ export default async () => {
     await it('parses a reaction and rejects a malformed one or one mixed with a message', async () => {
       const bare = (over: object) => JSON.stringify({ ...request({ text: undefined }), ...over });
       const reaction = { target: { remoteId: 'm1', fromSelf: false }, emoji: '❤️' };
-      expect(parseDaemonSendRequest(bare({ reaction })).reaction).toStrictEqual(reaction);
-      expect(parseDaemonSendRequest(bare({ reaction: { ...reaction, emoji: null } })).reaction?.emoji).toBe(
+      expect(parseDaemonSendWire(bare({ reaction })).reaction).toStrictEqual(reaction);
+      expect(parseDaemonSendWire(bare({ reaction: { ...reaction, emoji: null } })).reaction?.emoji).toBe(
         null,
       );
       expect(
-        parseDaemonSendRequest(bare({ reaction: { ...reaction, emoji: null, previous: '👍' } })).reaction
+        parseDaemonSendWire(bare({ reaction: { ...reaction, emoji: null, previous: '👍' } })).reaction
           ?.previous,
       ).toBe('👍');
       const bad: object[] = [
@@ -876,7 +876,7 @@ export default async () => {
       for (const over of bad) {
         let message = '';
         try {
-          parseDaemonSendRequest(bare(over));
+          parseDaemonSendWire(bare(over));
         } catch (err) {
           message = (err as Error).message;
         }
@@ -923,7 +923,7 @@ export default async () => {
     await it('parses an edit and rejects a malformed one or one mixed with another send', async () => {
       const bare = (over: object) => JSON.stringify({ ...request({ text: undefined }), ...over });
       const edit = { target: { remoteId: 'm1', fromSelf: false }, text: 'fixed' };
-      expect(parseDaemonSendRequest(bare({ edit })).edit).toStrictEqual(edit);
+      expect(parseDaemonSendWire(bare({ edit })).edit).toStrictEqual(edit);
       const bad: object[] = [
         { edit: 'x' },
         { edit: { text: 'fixed' } },
@@ -940,7 +940,7 @@ export default async () => {
       for (const over of bad) {
         let message = '';
         try {
-          parseDaemonSendRequest(bare(over));
+          parseDaemonSendWire(bare(over));
         } catch (err) {
           message = (err as Error).message;
         }
@@ -987,7 +987,7 @@ export default async () => {
     await it('parses a deletion and rejects a malformed one or one mixed with another send', async () => {
       const bare = (over: object) => JSON.stringify({ ...request({ text: undefined }), ...over });
       const deletion = { target: { remoteId: 'm1', fromSelf: false } };
-      expect(parseDaemonSendRequest(bare({ delete: deletion })).delete).toStrictEqual(deletion);
+      expect(parseDaemonSendWire(bare({ delete: deletion })).delete).toStrictEqual(deletion);
       const bad: object[] = [
         { delete: 'x' },
         { delete: {} },
@@ -1001,7 +1001,7 @@ export default async () => {
       for (const over of bad) {
         let message = '';
         try {
-          parseDaemonSendRequest(bare(over));
+          parseDaemonSendWire(bare(over));
         } catch (err) {
           message = (err as Error).message;
         }
@@ -1011,15 +1011,80 @@ export default async () => {
       }
     });
 
-    await it('rejects a request whose attachments are not a list of paths', async () => {
-      const bad = JSON.stringify({ ...request(), attachments: [1] });
-      let message = '';
-      try {
-        parseDaemonSendRequest(bad);
-      } catch (err) {
-        message = (err as Error).message;
+    await it('rejects a request whose attachments are not named descriptors', async () => {
+      // A bare path is what wire v6 carried: v7 takes none, whatever it looks like.
+      for (const attachments of [
+        [1],
+        ['/tmp/a.pdf'],
+        [{ name: 'a.pdf' }],
+        [{ name: 'a.pdf', handle: 0.5 }],
+      ]) {
+        const bad = JSON.stringify({ ...request(), attachments });
+        let message = '';
+        try {
+          parseDaemonSendWire(bad);
+        } catch (err) {
+          message = (err as Error).message;
+        }
+        expect(message).toMatch(/attachments/);
       }
-      expect(message).toMatch(/attachments/);
+    });
+
+    await it('turns paths into numbered descriptors named after the file', async () => {
+      const wire = toDaemonWire(request({ attachments: ['/tmp/a.pdf', '/home/x/b.png'] }));
+      expect(JSON.stringify(wire.attachments)).toBe(
+        JSON.stringify([
+          { name: 'a.pdf', handle: 0 },
+          { name: 'b.png', handle: 1 },
+        ]),
+      );
+      expect(parseDaemonSendWire(JSON.stringify(wire)).attachments?.length).toBe(2);
+      expect('attachments' in toDaemonWire(request())).toBe(false);
+    });
+
+    await it('plans one private file per descriptor and keeps the name to one path segment', async () => {
+      const plan = planFdFiles(
+        [
+          { name: 'a.pdf', handle: 1 },
+          { name: 'a.pdf', handle: 0 },
+          { name: '../../etc/passwd', handle: 2 },
+        ],
+        3,
+      );
+      expect(plan.map((p) => p.handle).join()).toBe('1,0,2');
+      // Two files of one name land in different directories; a hostile name loses its directories.
+      expect(plan[0].relativePath).toBe('0/a.pdf');
+      expect(plan[1].relativePath).toBe('1/a.pdf');
+      expect(plan[2].relativePath.startsWith('2/')).toBe(true);
+      expect(plan[2].relativePath.split('/').length).toBe(2);
+      expect(planFdFiles([], 0).length).toBe(0);
+    });
+
+    await it('refuses descriptors that do not match the files named', async () => {
+      const file = { name: 'a.pdf', handle: 0 };
+      const cases: Array<[string, Parameters<typeof planFdFiles>]> = [
+        ['a file without a descriptor', [[file], 0]],
+        ['a spare descriptor', [[], 1]],
+        ['a handle past the list', [[{ name: 'a', handle: 1 }], 1]],
+        ['a negative handle', [[{ name: 'a', handle: -1 }], 1]],
+        ['a handle used twice', [[file, { name: 'b', handle: 0 }], 2]],
+        [
+          'too many files',
+          [
+            Array.from({ length: DAEMON_MAX_FILES + 1 }, (_v, handle) => ({ name: 'a', handle })),
+            DAEMON_MAX_FILES + 1,
+          ],
+        ],
+      ];
+      for (const [label, args] of cases) {
+        let failed = false;
+        try {
+          planFdFiles(...args);
+        } catch {
+          failed = true;
+        }
+        expect(`${label}: ${failed}`).toBe(`${label}: true`);
+      }
     });
 
     await it('is not-followed for an account it does not hold', async () => {

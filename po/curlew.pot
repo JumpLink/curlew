@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-11 00:33+0100\n"
+"POT-Creation-Date: 2026-11-11 01:04+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -770,54 +770,70 @@ msgstr ""
 msgid "the running curlew daemon did not answer the access prompt ({reason})"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:205
+#: app/src/core/lib/daemon-bus.ts:231
 msgid ""
 "the running curlew daemon speaks send protocol {theirs} and this curlew "
 "speaks {ours} — nothing was sent; restart it with `systemctl --user restart "
 "curlew-daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:242
+#: app/src/core/lib/daemon-bus.ts:268
 msgid ""
 "the caller speaks send protocol {theirs} and this curlew daemon speaks "
 "{ours} — nothing was sent; restart it with `systemctl --user restart curlew-"
 "daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:362
+#: app/src/core/lib/daemon-bus.ts:438
 msgid ""
 "the caller speaks attachment protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:391
+#: app/src/core/lib/daemon-bus.ts:467
 msgid ""
 "the running curlew daemon speaks attachment protocol {theirs} and this "
 "curlew speaks {ours} — restart it with `systemctl --user restart curlew-"
 "daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:456
+#: app/src/core/lib/daemon-bus.ts:532
 msgid ""
 "the caller speaks access protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:493
+#: app/src/core/lib/daemon-bus.ts:569
 msgid ""
 "the running curlew daemon speaks access protocol {theirs} and this curlew "
 "speaks {ours} — restart it with `systemctl --user restart curlew-daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-send-client.ts:113
+#: app/src/core/lib/daemon-send-client.ts:104
+#: packages/imap/src/attachments.ts:101 packages/imap/src/attachments.ts:123
+#: packages/store/src/send-files.ts:99
+msgid "attachment {path} cannot be read"
+msgstr ""
+
+#: app/src/core/lib/daemon-send-client.ts:143
+msgid ""
+"the running curlew daemon does not understand this send — nothing was sent; "
+"restart it with `systemctl --user restart curlew-daemon`"
+msgstr ""
+
+#: app/src/core/lib/daemon-send-client.ts:152
 msgid ""
 "the running curlew daemon did not answer ({reason}); it may have sent the "
 "message — look at the chat before sending it again"
 msgstr ""
 
-#: app/src/core/lib/daemon-send-client.ts:154
+#: app/src/core/lib/daemon-send-client.ts:193
 msgid ""
 "the running curlew daemon did not answer the attachment fetch ({reason})"
+msgstr ""
+
+#: app/src/core/lib/daemon-send-service.ts:212
+msgid "the daemon could not take the attachments ({reason}) — nothing was sent"
 msgstr ""
 
 #: app/src/core/lib/message-notices.ts:46
@@ -2406,11 +2422,6 @@ msgstr ""
 
 #: packages/imap/src/attachments.ts:96 packages/store/src/send-files.ts:94
 msgid "attachment {path} is not a regular file"
-msgstr ""
-
-#: packages/imap/src/attachments.ts:101 packages/imap/src/attachments.ts:123
-#: packages/store/src/send-files.ts:99
-msgid "attachment {path} cannot be read"
 msgstr ""
 
 #: packages/imap/src/attachments.ts:105 packages/store/src/send-files.ts:103

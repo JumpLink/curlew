@@ -6,7 +6,7 @@
 
 - A chat whose newest page held a picture album stopped loading older messages after that page, because the album's pictures were counted as one message
 - A Signal group whose name is not known yet no longer shows its members' IDs as the title; it reads *Unnamed group · 5 members*.
-- Files under `/tmp` could not be sent through the daemon ("cannot be read"), because its unit gave it a private `/tmp`. The unit no longer does; `curlew setup` writes the new one, an existing unit needs the line `PrivateTmp=true` removed.
+- Files under `/tmp` could not be sent through the daemon ("cannot be read"), because its unit gave it a private `/tmp`. A send now hands the daemon the opened files instead of their paths, so the daemon needs no access to them. Restart it after updating: `systemctl --user restart curlew-daemon`.
 - Pictures and files of chat messages synced before 0.2 showed only a blank *Attachment* tile.
   The sync now walks the history of Telegram and Matrix chats again, ten chats and five pages
   per chat per run, and writes only the attachment descriptors; messages, read state and edits

@@ -46,11 +46,17 @@ supporting is **unchecked**.
 
 ### What this changes in the code, in order
 
-1. **File descriptors instead of paths on the send wire** (daemon wire v4). The caller (`--attach`
-   in the CLI, the window's composer, an agent's MCP call) opens the file and passes the descriptor;
-   the daemon reads from it. This replaces the `PrivateTmp` workaround of 2026-11-09 with the
+1. **File descriptors instead of paths on the send wire** (daemon wire v7, **done**). The caller
+   (`--attach` in the CLI, the window's composer, an agent's MCP call) opens the file and passes the
+   descriptor; the daemon reads from it. This replaces the `PrivateTmp` workaround of 2026-11-09 with the
    right fix, also works outside a sandbox, and keeps the guard that decides *whether* a file may
    leave: it moves to the caller's side of the fd, which is where the person's consent is known.
+   `Send` is `(sah)`: the request JSON, whose attachments are `{name, handle}`, and the fd list.
+   The daemon copies each descriptor (capped at the largest sender limit) into a 0700 directory
+   under `$XDG_CACHE_HOME/curlew/outgoing/` and runs the unchanged send plan on the copies, because
+   the senders take paths and `inspectSendFiles` should again check a regular file nobody can swap;
+   the directory is removed when the call ends. Progress events for large uploads are not part of
+   this step.
 2. **Notifications through `Gio.Application`.** The daemon registers an application id, so
    `Gio.Notification` goes through the portal in a sandbox and through the desktop's own service
    outside. A click arrives as an action on the application, which closes the two known gaps in
