@@ -12,6 +12,9 @@ import { AdwaitaApp, runApplication } from '@gjsify/adwaita-app';
 
 import { initI18n } from '../core/lib/i18n.ts';
 import { APP_ID, installAboutAction } from './about.ts';
+import { configPath } from '@curlew/store';
+import { loadConfig } from '../core/config.ts';
+import { applyAccent } from './appearance.ts';
 import { createWindow } from './window.ts';
 
 // This bundle carries its own copy of the gettext runtime, so the CLI bundle's catalogue is not
@@ -38,6 +41,12 @@ const application = new AdwaitaApp({
   applicationId: APP_ID,
   createWindow: (app) => {
     addSourceTreeIcons();
+    // A broken config must not stop the window from opening: it keeps Curlew's own accent.
+    try {
+      applyAccent(loadConfig(configPath()).ui.accentColor);
+    } catch {
+      applyAccent(undefined);
+    }
     installAboutAction(app);
     // `CURLEW_WINDOW_FILTER=<backend>` starts with that protocol filter switched on, and
     // `CURLEW_WINDOW_OPEN=<conversation id>` with that conversation open, for screenshots.

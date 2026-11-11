@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-11 18:55+0100\n"
+"POT-Creation-Date: 2026-11-11 22:48+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1704,7 +1704,7 @@ msgstr ""
 msgid "Daemon not running"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:26
+#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:28
 msgid "Off"
 msgstr ""
 
@@ -2112,7 +2112,7 @@ msgid "Review"
 msgstr ""
 
 #: app/src/window/conversation-list.ts:518
-#: app/src/window/preferences-dialog.ts:20
+#: app/src/window/preferences-dialog.ts:22
 msgid "Conversations"
 msgstr ""
 
@@ -2387,48 +2387,104 @@ msgstr ""
 msgid "The address book could not be read"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:16
+#: app/src/window/preferences-dialog.ts:18
 msgid "Show all emails"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:17
+#: app/src/window/preferences-dialog.ts:19
 msgid ""
 "Show ordinary email threads beside conversations started by a chat messenger"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:24
+#: app/src/window/preferences-dialog.ts:26
 msgid "Message notifications"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:25
+#: app/src/window/preferences-dialog.ts:27
 msgid "What a desktop notification for a new chat message shows"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:26
+#: app/src/window/preferences-dialog.ts:28
 msgid "Sender and text"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:26
+#: app/src/window/preferences-dialog.ts:28
 msgid "Sender only"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:29
+#: app/src/window/preferences-dialog.ts:31
 msgid "Notifications"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:32
+#: app/src/window/preferences-dialog.ts:34
 msgid "Play videos silently in chats"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:33
+#: app/src/window/preferences-dialog.ts:35
 msgid "A video in a conversation plays muted while it is on screen"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:39
+#: app/src/window/preferences-dialog.ts:41
 msgid "Media"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:49 app/src/window/window.ts:102
+#: app/src/window/preferences-dialog.ts:44
+msgid "Curlew blue"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:45
+msgid "Follow the system"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:46
+msgid "Blue"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:47
+msgid "Teal"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:48
+msgid "Green"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:49
+msgid "Yellow"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:50
+msgid "Orange"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:51
+msgid "Red"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:52
+msgid "Pink"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:53
+msgid "Purple"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:54
+msgid "Slate"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:58
+msgid "Accent colour"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:59
+msgid "Colours buttons, links and highlights"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:66
+msgid "Appearance"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:77 app/src/window/window.ts:102
 msgid "Preferences"
 msgstr ""
 
