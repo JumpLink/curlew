@@ -84,6 +84,7 @@ import {
   type UploadService,
   type UploadBody,
   type UploadSlot,
+  NS_UPLOAD,
   uploadSlotRequest,
 } from './upload.ts';
 
@@ -192,7 +193,8 @@ export async function pepRead(
 let queryCounter = 0;
 const nextId = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${(queryCounter++).toString(36)}`;
 
-class XmppConnection implements XmppLink {
+/** Exported for the tests, which hand it a fake entity and a fake `iqCaller`. */
+export class XmppConnection implements XmppLink {
   readonly jid: string;
   private readonly entity: Client;
   private readonly iq: ReturnType<typeof iqCaller>;
@@ -314,9 +316,14 @@ class XmppConnection implements XmppLink {
     if (service.maxBytes !== null && request.size > service.maxBytes) {
       throw new Error(MESSAGES.uploadTooLarge(request.filename, service.maxBytes));
     }
-    let answer: Element;
+    let answer: Element | undefined;
     try {
-      answer = await this.iq.get(uploadSlotRequest(request), service.jid, QUERY_TIMEOUT_MS);
+      // Not `iq.get`: it returns the child NAMED like the request (`request`), but the answer is a `slot`.
+      const result = await this.iq.request(
+        xml('iq', { type: 'get', to: service.jid }, uploadSlotRequest(request)),
+        QUERY_TIMEOUT_MS,
+      );
+      answer = result.getChild('slot', NS_UPLOAD);
     } catch (err) {
       throw new Error(MESSAGES.uploadRefused(request.filename, queryError(err).message));
     }

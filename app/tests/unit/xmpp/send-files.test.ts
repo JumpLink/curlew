@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import parse from '@xmpp/xml/lib/parse.js';
+import type { Element } from '@xmpp/xml';
 
 import { aesGcmDecrypt } from '@curlew/omemo';
 import type { SendPermit } from '@curlew/protocol';
@@ -19,6 +20,7 @@ import {
   type UploadSlot,
   uploadSlotRequest,
   XMPP_MAX_FILES,
+  XmppConnection,
   XmppSender,
   type XmppLink,
 } from '@curlew/xmpp';
@@ -157,6 +159,27 @@ export default async () => {
           .join(),
       ).toBe('Authorization,Cookie,Expires');
       expect(slot?.headers.Authorization).toBe('Basic c2VjcmV0');
+    });
+
+    await it('reads the slot out of the answer, which `iq.get` would drop', async () => {
+      // `@xmpp/iq` hands back the child NAMED like the request: `request` is asked, `slot` answers.
+      const caller = {
+        get: async (child: Element, to?: string) => {
+          if (child.attrs.xmlns === 'http://jabber.org/protocol/disco#items')
+            return parse(`<query xmlns='${child.attrs.xmlns}'/>`);
+          if (child.attrs.xmlns === 'http://jabber.org/protocol/disco#info') {
+            expect(to).toBe('example.org');
+            return parse(
+              `<query xmlns='${child.attrs.xmlns}'><feature var='urn:xmpp:http:upload:0'/></query>`,
+            );
+          }
+          return undefined;
+        },
+        request: async () => parse(`<iq type='result'>${SLOT_XML}</iq>`),
+      };
+      const link = new XmppConnection('me@example.org', { on: () => {} } as never, caller as never);
+      const slot = await link.uploadSlot({ filename: 'pic.png', size: 10, contentType: 'image/png' });
+      expect(slot.putUrl).toBe('https://upload.example.org/put/abc/pic.png');
     });
 
     await it('refuses a slot that is not https, carries credentials or points at a LAN host', async () => {
