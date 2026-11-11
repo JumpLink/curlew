@@ -33,8 +33,17 @@ import { FileJournal, journalPath } from './journal.ts';
 import { type SignalLib, loadSignalLib } from './lib.ts';
 import { type LinkNetwork, linkSignal } from './link.ts';
 import { SIGNAL_MANIFEST } from './manifest.ts';
+import { GroupNames, type GroupNameSource, GroupTitles } from './groups.ts';
 import { SignalMapper } from './map.ts';
-import { authenticatedChannel, createNet, isDelinked, linkChannel, liveConnector, sendChannel } from './net.ts';
+import {
+  authenticatedChannel,
+  createNet,
+  groupsChannel,
+  isDelinked,
+  linkChannel,
+  liveConnector,
+  sendChannel,
+} from './net.ts';
 import { fromBase64, type DeviceAccount, readSetAside, SignalProtocolStore } from './protocol-store.ts';
 import { openProvisioning } from './provisioning.ts';
 import { type ChatConnector, type ReceiverOptions, relinkHint, SignalReceiver } from './receiver.ts';
@@ -45,20 +54,25 @@ import { SignalSender } from './send.ts';
 export interface SignalSettings {
   /** The name the phone lists this device under. */
   deviceName: string;
+  /** Whether group names are fetched from Signal's group service (default on). */
+  groupNames: boolean;
 }
 
 export function parseSettings(settings: BackendContext['settings']): SignalSettings {
-  const unknown = Object.keys(settings).filter((k) => k !== 'deviceName');
+  const unknown = Object.keys(settings).filter((k) => k !== 'deviceName' && k !== 'groupNames');
   if (unknown.length > 0) {
     throw new Error(
-      `unknown setting(s) for signal: ${unknown.join(', ')} — the only one is deviceName; the keys live in the 0600 session file, never in the config`,
+      `unknown setting(s) for signal: ${unknown.join(', ')} — the only ones are deviceName and groupNames; the keys live in the 0600 session file, never in the config`,
     );
+  }
+  if (settings.groupNames !== undefined && typeof settings.groupNames !== 'boolean') {
+    throw new Error('backends.signal.settings.groupNames must be true or false');
   }
   const name = settings.deviceName;
   if (name !== undefined && (typeof name !== 'string' || !name.trim() || name.length > 50)) {
     throw new Error('backends.signal.settings.deviceName must be a name of 1–50 characters');
   }
-  return { deviceName: typeof name === 'string' ? name.trim() : 'curlew' };
+  return { deviceName: typeof name === 'string' ? name.trim() : 'curlew', groupNames: settings.groupNames !== false };
 }
 
 export interface SignalBackendOptions {
@@ -76,6 +90,11 @@ export interface SignalBackendOptions {
     account: DeviceAccount,
     recipients: readonly string[],
   ) => Promise<{ fetch: ChatFetch; close(): Promise<void> }>;
+  /**
+   * Where a group's name comes from — a test plays the group service. By default the real one:
+   * the day's credentials on a chat connection behind the groups gate, then the storage host.
+   */
+  groupNames?: (account: DeviceAccount, lib: SignalLib) => GroupNameSource;
   /** The contact-sync download, and the one a tapped attachment uses. */
   download?: AttachmentDownloader;
   /** Sealed-sender trust roots (serialized public keys); Signal's production roots by default. */
@@ -248,7 +267,7 @@ export class SignalBackend implements DeliveryBackend, SendBackend {
   }
 
   async connect(accountId: string, options: DeliveryConnectOptions): Promise<DeliverySession> {
-    parseSettings(this.context.settings);
+    const settings = parseSettings(this.context.settings);
     const lib = await this.lib();
     const { path, file, store, account } = await this.openSession(accountId, lib);
     let journal: FileJournal;
@@ -261,6 +280,9 @@ export class SignalBackend implements DeliveryBackend, SendBackend {
     const decryptor = new EnvelopeDecryptor(lib, store, {
       trustRoots: this.options.trustRoots ?? SIGNAL_TRUST_ROOTS_BASE64.map(fromBase64),
     });
+    // Declared before the mapper, assigned after the receiver: the mapper reports the groups it
+    // sees, and naming them writes through the receiver's fence.
+    let titles: GroupTitles | null = null;
     const mapper = new SignalMapper(
       account.aci,
       (masterKey) =>
@@ -273,6 +295,7 @@ export class SignalBackend implements DeliveryBackend, SendBackend {
       // Null on a session linked before the number was kept; the mapper then cannot recognise
       // our own number in a sent transcript, which is why it is stored at link time.
       store.pni(),
+      (chatId, masterKey, revision) => titles?.seen(chatId, masterKey, revision),
     );
     const connector = this.options.connector?.(account) ?? liveConnector(createNet(lib), account);
     const receiver = new SignalReceiver(connector, decryptor, mapper, store, {
@@ -282,10 +305,29 @@ export class SignalBackend implements DeliveryBackend, SendBackend {
       journal,
       download: this.options.download ?? httpsDownloader(),
     });
+    if (settings.groupNames) {
+      const source: GroupNameSource =
+        this.options.groupNames?.(account, lib) ??
+        (() => {
+          const net = createNet(lib);
+          return new GroupNames({ lib, account, openChannel: () => groupsChannel(net, account) }).nameOf;
+        })();
+      titles = new GroupTitles(store, source, (work) => receiver.exclusive(work));
+    }
     await receiver.start();
     return {
-      nextBatch: () => receiver.nextBatch(),
-      outcome: () => receiver.outcome(),
+      nextBatch: async () => {
+        const batch = await receiver.nextBatch();
+        // The batch is journaled before it gets here, so a slow group service delays its
+        // hand-over and cannot lose a message; every lookup is bounded (`GroupTitles`).
+        if (batch && titles) batch.push(...(await titles.resolve()));
+        return batch;
+      },
+      outcome: () => {
+        const outcome = receiver.outcome();
+        if (!titles?.problem) return outcome;
+        return { ...outcome, error: [outcome.error, titles.problem].filter(Boolean).join('; ') };
+      },
       /**
        * Send on THIS session's ratchet state, for the process that holds the receive lease — what
        * `curlew daemon` serves over the session bus (ADR 0004, amendment 2026-10-30).

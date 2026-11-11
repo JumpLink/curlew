@@ -367,9 +367,12 @@ What arrives: direct and group messages (sealed sender included), your own
 messages sent from the phone, edits, deletions (for everyone, and the ones you
 make on the phone), read receipts for your messages, and the contact list when
 the phone sends it (it does after linking and when contacts change; the
-download needs Node for now, see below). Groups appear without their name —
-Signal keeps group names encrypted on its group server, which curlew does not
-query. Reading a chat on the phone is not mirrored: messages arrive unread.
+download needs Node for now, see below). A group takes its name the next time a
+message arrives in it: Signal keeps group names encrypted on its group server,
+so curlew reads that one name (two read-only requests, to Signal's chat service
+and to `storage.signal.org`, for groups you already belong to) and keeps it in
+the session file. Set `backends.signal.settings.groupNames` to `false` to never
+ask; groups then stay *Unnamed group*. Reading a chat on the phone is not mirrored: messages arrive unread.
 Reactions, typing, calls and a disappearing-messages timer are read and dropped
 on purpose; they are settings, not messages.
 

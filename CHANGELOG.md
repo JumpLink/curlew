@@ -32,6 +32,7 @@
 
 ### Added
 
+- A Signal group shows its name. Curlew reads it from Signal's group service when a message arrives in the group (a read-only fetch for groups you belong to; `backends.signal.settings.groupNames: false` turns it off).
 - A mail account no longer needs GNOME Online Accounts. *Add Account → Mail* asks for an address and a password, finds the servers the way Thunderbird does (HTTPS only), asks for them only when nobody publishes them, and proves the login before it saves anything. The password lives in a file of its own (0600) and in no config, log or error. This is how mail works in the Flatpak. GNOME Online Accounts stay a shortcut where they exist.
 - A Flatpak. CI builds it from the same bundle as the packages and starts it once inside the sandbox; it has network and display access and nothing else, so mail, contacts and calendar from GNOME Online Accounts stay a feature of the host build.
 - Inside a Flatpak the daemon's message notifications go through the Notification portal; outside nothing changes.

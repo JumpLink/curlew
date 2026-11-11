@@ -197,6 +197,8 @@ function backendFor(
     download: async () => {
       throw new Error('no CDN in tests');
     },
+    // A test never reaches the group service; groups.test.ts plays it.
+    groupNames: () => async () => ({ title: null, revision: null }),
     ...extra,
     receiver: { maxMs: 5_000, commitEvery: 3, ...extra.receiver },
   });
@@ -1525,6 +1527,86 @@ export default async () => {
         expect(listConversations(db).length).toBe(3);
         const journal = journalPath(sessionPath(context(dir).secretsDir, ACCOUNT));
         expect(readFileSync(journal, 'utf8')).toBe('');
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('names a group from the group service, and keeps going when the service is down', async () => {
+      const dir = tempDir();
+      const db = freshDb();
+      try {
+        const phone = await link(dir);
+        const trust = new TrustRoot();
+        const alice = new Party(ALICE_ACI, 1, 11);
+        await introduceAll(dir, alice, phone.device);
+        const group = new GroupSender(new Uint8Array(32).fill(5));
+        const groupChat = `group:${btoa(String.fromCharCode(...groupIdOf(group.masterKey)))}`;
+        const named = async (key: Uint8Array) => {
+          expect(key.length).toBe(32);
+          return { title: 'Climbing Tuesday', revision: 3 };
+        };
+        const server = new FakeServer();
+        server.push(
+          await sealedEnvelope(
+            alice,
+            trust,
+            { senderKeyDistribution: await group.distribution(alice) },
+            3000,
+          ),
+          await group.envelope(
+            alice,
+            trust,
+            {
+              dataMessage: {
+                body: 'Wer kommt?',
+                timestamp: 3001,
+                groupMasterKey: group.masterKey,
+                groupRevision: 3,
+              },
+            },
+            3001,
+          ),
+        );
+        const result = await receiveDeliveries(
+          db,
+          backendFor(dir, server, trust, { groupNames: () => named }),
+        );
+        expect(result.accounts[0].error).toBe(null);
+        rebuildConversations(db);
+        expect(
+          getConversation(db, chatConversationId('signal', ACCOUNT, groupChat))?.conversation.title,
+        ).toBe('Climbing Tuesday');
+        expect(bodies(db, groupChat)).toBe('Wer kommt?');
+
+        const down = new FakeServer();
+        down.push(
+          await group.envelope(
+            alice,
+            trust,
+            {
+              dataMessage: {
+                body: 'Und morgen?',
+                timestamp: 3002,
+                groupMasterKey: group.masterKey,
+                groupRevision: 4,
+              },
+            },
+            3002,
+          ),
+        );
+        const failed = await receiveDeliveries(
+          db,
+          backendFor(dir, down, trust, {
+            groupNames: () => async () => {
+              throw new Error('offline');
+            },
+          }),
+        );
+        expect(failed.accounts[0].error ?? '').toContain('could not be fetched');
+        expect(down.acked.length).toBe(1);
+        rebuildConversations(db);
+        expect(bodies(db, groupChat)).toBe('Wer kommt?|Und morgen?');
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }

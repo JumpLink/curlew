@@ -20,8 +20,9 @@
  *
  * What a linked device does NOT have to send, and curlew therefore never sends: delivery and
  * read receipts, typing indicators, sync requests to the phone (contacts, groups, configuration),
- * retry requests for undecryptable messages (`DecryptionErrorMessage`), profile or group fetches,
- * signed pre-key rotation and one-time key refills. Widen this list only with a test naming the
+ * retry requests for undecryptable messages (`DecryptionErrorMessage`), profile fetches, signed
+ * pre-key rotation and one-time key refills. The one group fetch there is — a group's NAME — has its
+ * own gate at the bottom of this file and is not reachable from `link` or `sync` either. Widen this list only with a test naming the
  * request and a reason in this comment. A granted message send is not on it either: it never
  * becomes reachable from `link` or `sync`, only from a permit (see the send gate below).
  */
@@ -136,4 +137,60 @@ export function sendFetch(fetch: ChatFetch, recipients: readonly string[]): Chat
     if (reason) throw new SendViolation(reason);
     return fetch(request);
   };
+}
+
+// ── the groups gate ─────────────────────────────────────────────────────
+
+/**
+ * Naming a group takes exactly two reads, each behind its own gate and nothing else (the decision
+ * is `docs/design/signal-groups.md`):
+ *
+ * - `GET /v1/certificate/auth/group?…` on the authenticated chat connection: the day's group
+ *   credentials, which only this account can ask for. `groupsFetch` wraps that connection.
+ * - `GET /v2/groups` on `storage.signal.org`, authenticated by a presentation of that credential
+ *   for ONE group's public parameters, so the server answers for a group the account belongs to
+ *   and nobody else's. `storageRefusal` is checked before the request is made.
+ *
+ * Both are reads. Joining, changing or leaving a group, and a group's change log, stay unreachable.
+ * A fetch gets its OWN chat connection, so the receive session still has no `fetch` at all.
+ */
+
+const GROUP_CREDENTIALS = /^\/v1\/certificate\/auth\/group\?redemptionStartSeconds=\d+&redemptionEndSeconds=\d+(?:&v101=true&zkcCredential=true)?$/;
+
+/** Why a chat request is refused for the group-name gate, or null when it may go out. */
+export function groupsRefusal(request: ChatRequestLike): string | null {
+  const verb = request.verb.toUpperCase();
+  if (verb === 'GET' && GROUP_CREDENTIALS.test(request.path)) return null;
+  return `${verb} ${request.path.split('?')[0]} is not part of reading a group's name`;
+}
+
+export class GroupsViolation extends Error {
+  constructor(reason: string) {
+    super(`curlew refused to fetch a group: ${reason}`);
+    this.name = 'GroupsViolation';
+  }
+}
+
+/** Wrap a chat connection's `fetch` so only the group-credential read leaves it. */
+export function groupsFetch(fetch: ChatFetch): ChatFetch {
+  return async (request) => {
+    const reason = groupsRefusal(request);
+    if (reason) throw new GroupsViolation(reason);
+    return fetch(request);
+  };
+}
+
+/** The request the storage service is allowed to see: one `GET /v2/groups` to its own host. */
+export interface StorageRequestLike {
+  verb: string;
+  host: string;
+  path: string;
+}
+
+/** Why a storage request is refused, or null when it may go out. */
+export function storageRefusal(request: StorageRequestLike, storageHost: string): string | null {
+  const verb = request.verb.toUpperCase();
+  if (request.host.toLowerCase() !== storageHost.toLowerCase()) return 'a host that is not the storage service';
+  if (verb === 'GET' && request.path === '/v2/groups') return null;
+  return `${verb} ${request.path.split('?')[0]} is not part of reading a group's name`;
 }

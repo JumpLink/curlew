@@ -160,6 +160,8 @@ export interface DataMessage {
   attachments: AttachmentPointer[];
   /** The group's master key, for a group message. */
   groupMasterKey: Uint8Array | null;
+  /** The group's revision as the sender saw it. */
+  groupRevision?: number | null;
   flags: number;
   /** The sent timestamp the sender put in; the envelope's normally agrees. */
   timestamp: number | null;
@@ -227,6 +229,7 @@ export function decodeDataMessage(f: Fields): DataMessage {
     body: stringField(f, 1),
     attachments: repeatedMessages(f, 2).map(decodeAttachmentPointer),
     groupMasterKey: group ? bytesField(group, 1) : null,
+    groupRevision: group ? numberField(group, 2) : null,
     flags: numberField(f, 4) ?? 0,
     timestamp: numberField(f, 7),
     quote: quote ? { id: numberField(quote, 1), authorAci: serviceId(quote, 5, 8) } : null,
@@ -394,6 +397,7 @@ export interface DataMessageInput {
   body?: string;
   timestamp?: number;
   groupMasterKey?: Uint8Array;
+  groupRevision?: number;
   quote?: { id: number; authorAci: string };
   deleteTarget?: number;
   attachments?: Array<{
@@ -433,7 +437,7 @@ export function encodeDataMessage(d: DataMessageInput): ProtoWriter {
   w.uint(4, d.flags);
   w.uint(7, d.timestamp);
   if (d.quote) w.message(8, new ProtoWriter().uint(1, d.quote.id).string(5, d.quote.authorAci));
-  if (d.groupMasterKey) w.message(15, new ProtoWriter().bytes(1, d.groupMasterKey).uint(2, 1));
+  if (d.groupMasterKey) w.message(15, new ProtoWriter().bytes(1, d.groupMasterKey).uint(2, d.groupRevision ?? 1));
   if (d.reaction) {
     w.message(
       16,

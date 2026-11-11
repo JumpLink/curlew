@@ -44,6 +44,7 @@ import signal from './unit/signal/signal.test.ts';
 import signalSend from './unit/signal/send.test.ts';
 import signalAttachments from './unit/signal/attachments.test.ts';
 import signalStoreFence from './unit/signal/store-fence.test.ts';
+import signalGroups from './unit/signal/groups.test.ts';
 import whatsapp from './unit/whatsapp/whatsapp.test.ts';
 import whatsappSend from './unit/whatsapp/send.test.ts';
 import whatsappAttachments from './unit/whatsapp/attachments.test.ts';
@@ -169,6 +170,7 @@ run({
   signalSend,
   signalAttachments,
   signalStoreFence,
+  signalGroups,
   whatsapp,
   whatsappSend,
   whatsappAttachments,
