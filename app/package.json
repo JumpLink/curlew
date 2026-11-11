@@ -63,6 +63,14 @@
       "homepageUrl": "https://github.com/JumpLink/curlew",
       "bugtrackerUrl": "https://github.com/JumpLink/curlew/issues",
       "vcsBrowserUrl": "https://github.com/JumpLink/curlew",
+      "bundledTypelibs": [
+        "../node_modules/@gjsify/http-soup-bridge-linux-x64/prebuilds/linux-x64",
+        "../node_modules/@gjsify/napi-linux-x64/prebuilds/linux-x64",
+        "../node_modules/@gjsify/sab-native-linux-x64/prebuilds/linux-x64",
+        "../node_modules/@gjsify/sqlite-native-linux-x64/prebuilds/linux-x64",
+        "../node_modules/@gjsify/tls-native-linux-x64/prebuilds/linux-x64",
+        "../node_modules/@gjsify/http2-native-linux-x64/prebuilds/linux-x64"
+      ],
       "typelibPackages": {
         "EBook-1.2": {
           "deb": "gir1.2-ebook-1.2",
@@ -115,10 +123,7 @@
           "--share=ipc",
           "--socket=wayland",
           "--socket=fallback-x11",
-          "--device=dri",
-          "--talk-name=org.gnome.OnlineAccounts",
-          "--filesystem=xdg-config/curlew:create",
-          "--filesystem=xdg-data/curlew:create"
+          "--device=dri"
         ]
       }
     },

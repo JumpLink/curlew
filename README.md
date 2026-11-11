@@ -971,12 +971,17 @@ working account source. Closing that gap — a platform-native credential
 and sync layer for macOS/Windows — is open work, not a bug in these
 packages.
 
-No Flatpak yet. GOA talks to the session bus directly, and no portal covers
-online accounts, so a Flatpak build needs the one declared hole
-`--talk-name=org.gnome.OnlineAccounts` (as Geary has) or ships chat only. The
-rest of the app is being brought to the same-code-inside-and-outside-a-sandbox
-rule of gjsify ADR 0138 in the order set out in
-[ADR 0011](docs/adr/0011-same-app-inside-and-outside-a-sandbox.md).
+### Flatpak
+
+CI builds a Flatpak (`ship-flatpak` artifact, `gjsify ship linux --target flatpak`). It is the
+chat client: network, Wayland/X11 and nothing else, no `--talk-name=org.gnome.OnlineAccounts`
+and no home access, so Curlew's index lives in `~/.var/app/eu.jumplink.curlew/`. Mail in the
+sandbox is a chat transport with its own login, not a GOA account; contacts and calendar stay a
+feature of the host build until a portal covers them. The rest of the app is brought to the
+same-code-inside-and-outside-a-sandbox rule of gjsify ADR 0138 in the order set out in
+[ADR 0011](docs/adr/0011-same-app-inside-and-outside-a-sandbox.md). The manifest is generated
+from `gjsify.ship.flatpak` in `app/package.json`; Flathub itself needs offline npm sources
+(`gjsify flatpak sources`) and is not wired yet.
 
 ### Embedding a Telegram api pair (packagers)
 

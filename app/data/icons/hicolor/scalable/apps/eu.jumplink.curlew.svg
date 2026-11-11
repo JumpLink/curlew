@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
 <!--
   eu.jumplink.curlew — a calling curlew on a messenger bubble.
 
@@ -13,8 +15,6 @@
 
   Design: Pascal Garber, round 4 variant 5b. Keep the appearance as it is.
 -->
-<svg width="128" height="128" viewBox="0 0 128 128" version="1.1"
-     xmlns="http://www.w3.org/2000/svg">
   <defs>
     <!-- the bubble, exactly as Fractal and Flare draw it -->
     <path id="tail" fill-rule="evenodd"
