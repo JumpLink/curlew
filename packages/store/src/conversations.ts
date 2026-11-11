@@ -1065,6 +1065,36 @@ export function getRecentMessages(
   return messages;
 }
 
+/**
+ * The chat messages of `ids` whose network id is in `remoteIds`: what a reply quotes when the
+ * quoted message is older than the page on screen. Same shape as {@link getRecentMessages}.
+ */
+export function getMessagesByRemoteId(
+  db: IndexDatabase,
+  ids: readonly string[],
+  remoteIds: readonly string[],
+  options: Pick<RecentMessagesOptions, 'includeBodies' | 'maxBodyChars' | 'overrides'> = {},
+): ConversationMessage[] {
+  if (ids.length === 0 || remoteIds.length === 0) return [];
+  const found: ConversationMessage[] = [];
+  const CHUNK = 200;
+  for (let i = 0; i < remoteIds.length; i += CHUNK) {
+    const slice = remoteIds.slice(i, i + CHUNK);
+    const rows = db
+      .prepare(
+        `SELECT ${MESSAGE_COLUMNS}
+           FROM conversation_messages
+          WHERE conversation_id IN (${placeholders(ids.length)}) AND remote_seq IS NOT NULL
+            AND remote_id IN (${placeholders(slice.length)})
+          ORDER BY sent_at, id`,
+      )
+      .all(...ids, ...slice) as Array<Record<string, unknown>>;
+    found.push(...rows.map((r) => toMessage(db, r, options, options.overrides ?? {})));
+  }
+  attachReactions(db, found);
+  return found;
+}
+
 /** Fills `reactions` on the chat messages among `messages`, one query for all of them. */
 function attachReactions(db: IndexDatabase, messages: ConversationMessage[]): void {
   const chat = messages.filter((m) => m.editedAt !== undefined);

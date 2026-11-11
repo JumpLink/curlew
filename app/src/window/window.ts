@@ -34,6 +34,7 @@ import {
   loadConversationMessages,
   loadMailReplyTarget,
   loadOlderMessages,
+  loadQuotedMessages,
 } from './conversation-store.ts';
 import { pickedNames } from './composer-files-model.ts';
 import { clearPreviews } from './attachment-store.ts';
@@ -197,6 +198,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
       recordOwnDeletion(message.id);
     },
     (entry, oldest) => loadOlderMessages(entry, oldest),
+    (entry, remoteIds) => loadQuotedMessages(entry, remoteIds),
     (source, kind, album) => viewer.open(source, kind, album),
     (entry, backend) => {
       peoplePin(entry.personIds, backend);

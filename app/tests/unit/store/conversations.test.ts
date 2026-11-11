@@ -3,6 +3,7 @@ import { describe, expect, it } from '@gjsify/unit';
 import type { AutomationHeaders, ContactDTO } from '@curlew/protocol';
 import {
   getConversation,
+  getMessagesByRemoteId,
   getRecentMessages,
   latestMessagePreviews,
   listConversations,
@@ -742,6 +743,41 @@ export default async () => {
         expect(searchMessageText(db, '50%').map((h) => h.conversationId)).toStrictEqual(['c2']);
         expect(searchMessageText(db, '5_%')).toStrictEqual([]);
         expect(searchMessageText(db, '  ')).toStrictEqual([]);
+      } finally {
+        db.close();
+      }
+    });
+  });
+
+  await describe('getMessagesByRemoteId', async () => {
+    function put(
+      db: ReturnType<typeof freshDb>,
+      id: string,
+      conversation: string,
+      remoteId: string,
+      seq: number | null,
+    ): void {
+      db.prepare(
+        `INSERT INTO conversation_messages (
+           id, conversation_id, backend, account_id, presentation,
+           from_self, sent_at, seen, has_attachments, classification, classification_reason,
+           remote_id, remote_seq, body)
+         VALUES (?, ?, 'signal', 'signal-1', 'bubble', 0, '2026-01-01T10:00:00Z', 1, 0, 'conversational', 'known-contact', ?, ?, ?)`,
+      ).run(id, conversation, remoteId, seq, `text of ${id}`);
+    }
+
+    await it('finds chat messages by network id inside the given conversations only', async () => {
+      const db = freshDb();
+      try {
+        put(db, 'm1', 'c1', 'r1', 1);
+        put(db, 'm2', 'c1', 'r2', 2);
+        put(db, 'm3', 'c2', 'r1', 1);
+        put(db, 'm4', 'c1', 'r3', null);
+        const found = getMessagesByRemoteId(db, ['c1'], ['r1', 'r3', 'nope'], { includeBodies: true });
+        expect(found.map((m) => m.id)).toStrictEqual(['m1']);
+        expect(found[0]?.bodyText).toBe('text of m1');
+        expect(getMessagesByRemoteId(db, [], ['r1'])).toStrictEqual([]);
+        expect(getMessagesByRemoteId(db, ['c1'], [])).toStrictEqual([]);
       } finally {
         db.close();
       }

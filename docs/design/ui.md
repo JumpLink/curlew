@@ -168,6 +168,13 @@ oldest. The new rows go in front a few per idle turn, and every growth of `upper
 over everything shown, so the seam between two pages is corrected, not duplicated. A newer
 conversation cancels a running page load.
 
+**A quote reaches past the loaded pages.** A reply whose target is older than what is loaded is
+looked up by network id (`getMessagesByRemoteId`, chat rows only) as each page arrives, so the
+quote block shows even then. A click on it pages back, 50 at a time, until the real row is built
+and scrolls to it; if the history runs out first, a toast says the message is no longer there.
+`exhausted` counts the raw page, not the album-folded list: a page of 50 rows that folds to 47
+bubbles is still a full page.
+
 **A long body fades** (Tuba's "Show More"). `FadeBin` clamps its child to 300 px when it would be
 taller than 400 px and fades the last 125 px with a gradient alpha mask; a `pill opaque` "Show
 more" button over the foot lifts the clamp. A label is still laid out in full under a clamp, so
