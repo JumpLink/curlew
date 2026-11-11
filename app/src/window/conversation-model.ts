@@ -388,6 +388,33 @@ export function replyDraftOf<C extends { backend: string; accountId: string }>(
   return handle ? { ...handle, ...describeQuoted(message) } : null;
 }
 
+/**
+ * Whether a protocol takes reactions in this kind of chat. Telegram keeps Saved Messages for
+ * Premium tags and refuses an ordinary reaction there, so the emoji row is not offered.
+ */
+export function reactionsOfferedIn(backend: string, selfChat: boolean): boolean {
+  return !(backend === 'telegram' && selfChat);
+}
+
+/** How long Signal lets the person edit or delete for everyone a message they sent. */
+export const SIGNAL_CHANGE_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Whether editing or deleting `message` is still open to the person. Signal closes both a day
+ * after sending, except in the note to self; the time is the sender's, an unknown one is not
+ * guessed at. Other protocols set no window the client can see.
+ */
+export function changesOfferedFor(
+  backend: string,
+  message: Pick<ShownMessage, 'sentAt'>,
+  selfChat: boolean,
+  now: number,
+): boolean {
+  if (backend !== 'signal' || selfChat || !message.sentAt) return true;
+  const sent = Date.parse(message.sentAt);
+  return Number.isNaN(sent) || now - sent <= SIGNAL_CHANGE_WINDOW_MS;
+}
+
 /** What reacting to `message` would go through, or null when it cannot be reacted to (see `handleOf`). */
 export function reactHandleOf<C extends { backend: string; accountId: string }>(
   message: ShownMessage,

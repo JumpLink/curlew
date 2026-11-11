@@ -49,6 +49,8 @@ export interface ListEntry {
    * it from the index; it is never part of `Conversation`, so agents do not get it.
    */
   preview?: string;
+  /** True for the merged "Note to self" row: every chat in it is the person's own. */
+  self?: boolean;
 }
 
 /**
@@ -561,7 +563,7 @@ export function mergePeople(
 
 /** Merge every self-chat into one row, newest message picking the visible protocol. */
 function mergeSelfEntries(members: ListEntry[]): ListEntry {
-  return mergeEntries(NOTE_TO_SELF_ID, _('Note to self'), members);
+  return { ...mergeEntries(NOTE_TO_SELF_ID, _('Note to self'), members), self: true };
 }
 
 /**

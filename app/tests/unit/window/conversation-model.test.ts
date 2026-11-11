@@ -16,6 +16,8 @@ import {
   newOlder,
   quoteOf,
   reactHandleOf,
+  reactionsOfferedIn,
+  changesOfferedFor,
   reactionChip,
   protocolDividers,
   protocolRunStarts,
@@ -467,6 +469,23 @@ export default async () => {
       expect(handle?.target).toStrictEqual({ remoteId: 's1:99' });
       expect(handle?.choice).toBe(choices[0]);
       expect(reactHandleOf(signal, choices, () => false)).toBe(null);
+    });
+
+    await it('offers no reaction where the chat cannot take one', async () => {
+      expect(reactionsOfferedIn('telegram', true)).toBe(false);
+      expect(reactionsOfferedIn('telegram', false)).toBe(true);
+      expect(reactionsOfferedIn('signal', true)).toBe(true);
+    });
+
+    await it('closes edit and delete on Signal a day after sending, except in the note to self', async () => {
+      const sent = '2026-09-01T10:00:00Z';
+      const now = Date.parse(sent);
+      const hour = 60 * 60 * 1000;
+      expect(changesOfferedFor('signal', { sentAt: sent }, false, now + 23 * hour)).toBe(true);
+      expect(changesOfferedFor('signal', { sentAt: sent }, false, now + 25 * hour)).toBe(false);
+      expect(changesOfferedFor('signal', { sentAt: sent }, true, now + 25 * hour)).toBe(true);
+      expect(changesOfferedFor('signal', { sentAt: null }, false, now + 25 * hour)).toBe(true);
+      expect(changesOfferedFor('telegram', { sentAt: sent }, false, now + 99 * hour)).toBe(true);
     });
 
     await it('takes the own emoji back on a second tap and replaces it on another', async () => {

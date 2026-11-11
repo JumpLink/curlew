@@ -31,6 +31,7 @@ import {
   dayOf,
   dayStarts,
   defaultProtocolChoice,
+  changesOfferedFor,
   deleteHandleOf,
   editHandleOf,
   foldAlbums,
@@ -42,6 +43,7 @@ import {
   QUICK_REACTIONS,
   quoteOf,
   reactHandleOf,
+  reactionsOfferedIn,
   reactionChip,
   replyDraftOf,
   senderRunStarts,
@@ -664,15 +666,24 @@ export function createConversationView(
     dialog.present(root);
   };
 
+  // What the open chat allows beyond what a protocol can do: Saved Messages take no reaction,
+  // Signal closes edit and delete after a day. The entries are not shown rather than refused.
+  const reactable = (backend: string): boolean =>
+    canReact(backend) && reactionsOfferedIn(backend, entry?.self === true);
+  const changeable =
+    (can: (backend: string) => boolean, message: ShownMessage) =>
+    (backend: string): boolean =>
+      can(backend) && changesOfferedFor(backend, message, entry?.self === true, Date.now());
+
   // The emoji row, "Reply", "Edit", "Delete" and "Copy" for one bubble. Long press (touch) and right
   // click (pointer) open it; both run before the selectable text, which would otherwise keep the press.
   const attachBubbleActions = (card: Gtk.Box, message: ShownMessage, showReactions: () => void): void => {
     const open = (gesture: Gtk.Gesture, x: number, y: number): void => {
       const usable = composer.get_visible() && !composerBlocked;
       const draft = usable ? replyDraftOf(message, carriers, canReply) : null;
-      const handle = usable ? reactHandleOf(message, carriers, canReact) : null;
-      const editHandle = usable ? editHandleOf(message, carriers, canEdit) : null;
-      const deleteHandle = usable ? deleteHandleOf(message, carriers, canDelete) : null;
+      const handle = usable ? reactHandleOf(message, carriers, reactable) : null;
+      const editHandle = usable ? editHandleOf(message, carriers, changeable(canEdit, message)) : null;
+      const deleteHandle = usable ? deleteHandleOf(message, carriers, changeable(canDelete, message)) : null;
       const text = message.bodyText?.trim() ?? '';
       if (!draft && !handle && !editHandle && !deleteHandle && !text) return;
       gesture.set_state(Gtk.EventSequenceState.CLAIMED);
@@ -773,11 +784,11 @@ export function createConversationView(
       const tap = new Gtk.GestureClick({ button: Gdk.BUTTON_PRIMARY });
       tap.connect('released', () => {
         const handle =
-          composer.get_visible() && !composerBlocked ? reactHandleOf(message, carriers, canReact) : null;
+          composer.get_visible() && !composerBlocked ? reactHandleOf(message, carriers, reactable) : null;
         if (handle) react(message, handle, reaction.emoji, showReactions);
       });
       frame.add_controller(tap);
-      if (reactHandleOf(message, carriers, canReact)) frame.set_cursor_from_name('pointer');
+      if (reactHandleOf(message, carriers, reactable)) frame.set_cursor_from_name('pointer');
       flow.append(frame);
     }
     return flow;
