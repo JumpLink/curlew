@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Sending to Signal failed with "invalid signature detected", because the server's unpadded base64 lost its last byte when decoded.
 - `.deb` and `.rpm` no longer carry the test bundles that were left in `dist/` by the test run.
 - The `.deb` and `.rpm` are for x86_64 only now, because they carry the native libraries the app loads.
 - A chat whose newest page held a picture album stopped loading older messages after that page, because the album's pictures were counted as one message
