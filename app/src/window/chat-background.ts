@@ -9,7 +9,7 @@ import Gtk from 'gi://Gtk?version=4.0';
 import { backgroundToShow } from '../core/lib/appearance.ts';
 import { DOODLE_TILE, doodleTileSvg } from './chat-doodles.ts';
 
-const OPACITY = 0.07;
+const OPACITY = 0.1;
 
 const live = new Set<InstanceType<typeof ChatBackground>>();
 let shown = backgroundToShow(undefined);
@@ -44,7 +44,7 @@ export const ChatBackground = GObject.registerClass(
       const css = `rgb(${Math.round(color.red * 255)},${Math.round(color.green * 255)},${Math.round(color.blue * 255)})`;
       if (this.texture && css === this.textureColor) return this.texture;
       try {
-        const bytes = new TextEncoder().encode(doodleTileSvg(css));
+        const bytes = new TextEncoder().encode(doodleTileSvg(css, OPACITY));
         this.texture = Gdk.Texture.new_from_bytes(GLib.Bytes.new(bytes));
         this.textureColor = css;
       } catch {
@@ -61,10 +61,8 @@ export const ChatBackground = GObject.registerClass(
       const texture = this.tile(this.get_color());
       if (!texture) return;
       const tile = new Graphene.Rect().init(0, 0, DOODLE_TILE, DOODLE_TILE);
-      snapshot.push_opacity(OPACITY);
       snapshot.push_repeat(new Graphene.Rect().init(0, 0, width, height), tile);
       snapshot.append_texture(texture, tile);
-      snapshot.pop();
       snapshot.pop();
     }
   },

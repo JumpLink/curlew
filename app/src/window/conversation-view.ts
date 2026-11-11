@@ -178,8 +178,9 @@ export function createConversationView(
   backdrop.set_child(new ChatBackground());
   backdrop.add_overlay(scroller);
 
-  const composer = new Gtk.Box({ spacing: 6, marginStart: 12, marginEnd: 12, marginTop: 8, marginBottom: 8 });
+  const composer = new Gtk.Box({ spacing: 6, marginStart: 6, marginEnd: 6, marginTop: 6, marginBottom: 6 });
   const input = new Gtk.Entry({ placeholderText: _('Write a message'), hexpand: true });
+  input.add_css_class('flat');
   const picker = new Gtk.MenuButton({
     iconName: 'network-transmit-receive-symbolic',
     tooltipText: protocolLabel(''),
@@ -228,7 +229,6 @@ export function createConversationView(
   hint.add_css_class('dim-label');
   hint.add_css_class('caption');
   content.append(backdrop);
-  content.append(hint);
   const overlay = new Adw.ToastOverlay({ child: content });
   const files = createComposerFiles({
     parent: () => (page.get_root() as Gtk.Window | null) ?? null,
@@ -238,13 +238,31 @@ export function createConversationView(
     pasteInto: input,
   });
   composer.prepend(files.button);
-  content.append(files.strip);
-  content.append(replyBar);
-  content.append(editBar);
-  content.append(composer);
-  const toolbar = new Adw.ToolbarView();
+  // Everything the person types into rides in one bottom bar, so the history can run beneath it.
+  const compose = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
+  // Each part is a card of its own, so it stays legible over the messages scrolling beneath it.
+  const pill = new Gtk.Box({ marginStart: 12, marginEnd: 12, marginTop: 4, marginBottom: 8 });
+  pill.add_css_class('card');
+  pill.append(composer);
+  for (const part of [hint, files.strip, replyBar, editBar]) {
+    part.add_css_class('card');
+    part.set_margin_start(12);
+    part.set_margin_end(12);
+  }
+  compose.append(hint);
+  compose.append(files.strip);
+  compose.append(replyBar);
+  compose.append(editBar);
+  compose.append(pill);
+  const toolbar = new Adw.ToolbarView({ extendContentToBottomEdge: true });
   toolbar.add_top_bar(header);
+  toolbar.add_bottom_bar(compose);
   toolbar.set_content(overlay);
+  // The header stays solid, as in Telegram, so a message never runs under its title. The composer
+  // floats, so the last message must be able to scroll clear of it (ADR 0013).
+  toolbar.connect('notify::bottom-bar-height', () =>
+    history.set_margin_bottom(toolbar.get_bottom_bar_height()),
+  );
   const page = new Adw.NavigationPage({ title: _('Conversation'), tag: 'content' });
   page.set_child(toolbar);
 
