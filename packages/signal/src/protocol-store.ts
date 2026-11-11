@@ -193,7 +193,10 @@ export function toBase64(bytes: Uint8Array): string {
 }
 
 export function fromBase64(text: string): Uint8Array<ArrayBuffer> {
-  const binary = atob(text);
+  // fixed upstream in gjsify: atob drops the last byte of unpadded input (Signal sends signatures
+  // that way); remove this padding once curlew pins a gjsify with the atob fix.
+  const padded = text.length % 4 === 0 || text.includes('=') ? text : text + '='.repeat(4 - (text.length % 4));
+  const binary = atob(padded);
   const out = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) out[i] = binary.charCodeAt(i);
   return out;

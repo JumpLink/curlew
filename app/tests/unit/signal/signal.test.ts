@@ -210,6 +210,15 @@ function bodies(db: ReturnType<typeof freshDb>, chat: string): string {
 }
 
 export default async () => {
+  await describe('Signal base64', async () => {
+    await it('decodes input without padding in full', async () => {
+      // The server sends a 64-byte signature as 86 characters; GJS atob alone gives 63 bytes.
+      expect(fromBase64('A'.repeat(86)).length).toBe(64);
+      expect(fromBase64('QQ').length).toBe(1);
+      expect(fromBase64('QUI=').length).toBe(2);
+    });
+  });
+
   await describe('Signal manifest', async () => {
     await it('is a valid delivery-only, native manifest with a plain terms notice', async () => {
       expect(validateManifest(SIGNAL_MANIFEST).length).toBe(0);
