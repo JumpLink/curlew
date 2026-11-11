@@ -33,6 +33,7 @@ import { MatrixAttachments } from './attachments.ts';
 import { readOnlyFetch, sendFetch } from './guard.ts';
 import { loginMatrix } from './login.ts';
 import { reportUndecryptable } from './redact.ts';
+import { isRoomId, roomHoldsOnly } from './self-room.ts';
 import { MATRIX_MANIFEST } from './manifest.ts';
 import { matrixSendApi, MatrixSender } from './send.ts';
 import { MatrixChatSession } from './session.ts';
@@ -96,10 +97,30 @@ export class MatrixBackend implements ChatBackend, SendBackend {
     removeSecretFiles(path);
   }
 
-  /** The account's own user id (a room is never self; see `isOwnUserId`). */
+  /**
+   * The account's own user id, or a room only the account is in (a note-to-self room). The room
+   * case asks the homeserver for the members right now; anything short of a clear "only you" —
+   * an error, an invite pending, somebody else in it — is not self.
+   */
   async isSelfAddress(accountId: string, to: string): Promise<boolean> {
     const account = (await this.listAccounts()).find((a) => a.id === accountId);
-    return account !== undefined && isOwnUserId(account.identity, to);
+    if (account === undefined) return false;
+    if (isOwnUserId(account.identity, to)) return true;
+    if (!isRoomId(to)) return false;
+    try {
+      const { store, record, accessToken } = this.openAccount(accountId);
+      try {
+        return await roomHoldsOnly(
+          { homeserver: record.homeserver, accessToken, fetch: readOnlyFetch(this.httpFetch) },
+          record.userId,
+          to,
+        );
+      } finally {
+        store.close();
+      }
+    } catch {
+      return false;
+    }
   }
 
   /** Log in with homeserver, user and password; SSO-only servers are refused with the reason. */

@@ -73,8 +73,10 @@ function fakeHttp(options: FakeHttpOptions = {}): FakeHttp {
   const fetch = (async (input: string | URL | Request, init?: RequestInit) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     const method = (init?.method ?? 'GET').toUpperCase();
-    calls.push({ method, url, body: typeof init?.body === 'string' ? init.body : null });
     const path = new URL(url).pathname;
+    // Whether a room is a note-to-self room is asked before any grant; it is not part of a send.
+    if (method === 'GET' && path.endsWith('/members')) return new Response('{}', { status: 404 });
+    calls.push({ method, url, body: typeof init?.body === 'string' ? init.body : null });
     const state = new RegExp(`^${V3}/rooms/([^/]+)/state/m\\.room\\.encryption$`).exec(path);
     if (method === 'GET' && state) {
       if (options.stateStatus !== undefined) return new Response('{}', { status: options.stateStatus });

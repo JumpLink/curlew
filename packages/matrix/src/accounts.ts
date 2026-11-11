@@ -27,10 +27,9 @@ export function accountIdFor(userId: string): string {
 }
 
 /**
- * Whether `to` is the account's own Matrix user id. Only the id is recognised: a ROOM is not,
- * because telling a note-to-self room from a room with other people in it takes the member list
- * from the homeserver, and the answer can change after the check. A room that cannot be proven
- * to hold only the person is not self.
+ * Whether `to` is the account's own Matrix user id. A room is not decided here: telling a
+ * note-to-self room from one with other people takes the member list from the homeserver (see
+ * `roomHoldsOnly`), and the answer can change after the check.
  */
 export function isOwnUserId(identity: string, to: string): boolean {
   const own = identity.trim().toLowerCase();

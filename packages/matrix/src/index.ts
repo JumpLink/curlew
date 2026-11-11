@@ -13,5 +13,6 @@ export * from './session.ts';
 export * from './accounts.ts';
 export * from './client.ts';
 export * from './redact.ts';
+export * from './self-room.ts';
 export * from './login.ts';
 export * from './backend.ts';
