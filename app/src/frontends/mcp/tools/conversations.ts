@@ -64,7 +64,7 @@ export function registerConversationTools(server: McpServer): void {
     {
       title: 'Get One Conversation (offline)',
       description:
-        'One conversation from the local index with its messages, oldest first: sender, date, subject, presentation (bubble for chat, document for mail), classification with its reason, and a ref — for mail (account, folder, uid), which mail_get_message accepts for the full message; for chats the network message id (remoteId), plus edit time, reply and thread ids and, on your own messages, whether the other side has read them. Bodies are omitted unless include_bodies is true, and then capped per message. Bodies need `read` access (config.agentAccess): by a rule, or the person answers a prompt, which waits up to 2 minutes; without either the call is refused.',
+        'One conversation from the local index with its messages, oldest first: sender, date, subject, presentation (bubble for chat, document for mail), classification with its reason, and a ref — for mail (account, folder, uid), which mail_get_message accepts for the full message; for chats the network message id (remoteId), plus edit time, reply and thread ids and, on your own messages, whether the other side has read them. A chat message with attachments lists them (index, kind such as voice, image or file, mime type, size, duration, and whether message_save_attachment can fetch it; the filename only with include_bodies); you cannot listen to or see them until you save one and read the file. Bodies are omitted unless include_bodies is true, and then capped per message. Bodies need `read` access (config.agentAccess): by a rule, or the person answers a prompt, which waits up to 2 minutes; without either the call is refused.',
       inputSchema: {
         id: z.string().min(1).describe('Conversation id from conversations_list'),
         include_bodies: z.boolean().optional().describe('Include each message body (default false)'),
@@ -159,8 +159,12 @@ export function registerConversationTools(server: McpServer): void {
       inputSchema: {
         backend: z.string().min(1).describe('Backend name from the message ref (e.g. telegram, matrix)'),
         account_id: z.string().min(1).describe('Account id the message belongs to'),
-        remote_id: z.string().min(1).describe('Network message id from conversations_get'),
-        index: z.number().int().nonnegative().describe('Attachment index from conversations_get'),
+        remote_id: z.string().min(1).describe('Network message id (ref.remoteId) from conversations_get'),
+        index: z
+          .number()
+          .int()
+          .nonnegative()
+          .describe('Attachment index from the attachments list in conversations_get'),
         max_bytes: z
           .number()
           .int()

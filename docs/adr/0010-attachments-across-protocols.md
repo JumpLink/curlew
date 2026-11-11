@@ -131,6 +131,9 @@ interface AttachmentFetcher {
 - **Receiving by agents follows ADR 0009.** `message_save_attachment` (the chat counterpart of
   `mail_save_attachment`) calls `requireMessageRead` for the message first, so a contact whose read
   mode is `deny` or `ask` is exactly as closed for its pictures as for its text.
+  `conversations_get` lists a chat message's attachments (kind, mime type, size, duration, whether
+  they can be fetched) so an agent knows there is one to save; the filename is somebody's words and
+  follows the body gate, the backend handle never leaves the store.
 - Limits are checked **before** a send starts (sender-side, from the manifest) so a 90 MB video
   to a 2 GB-limit network and a 90 MB video to a 100 MB-limit one differ in the message shown, not
   in a half-finished upload.
