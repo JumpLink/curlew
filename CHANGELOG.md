@@ -4,6 +4,9 @@
 
 ### Fixed
 
+- The conversation list showed only the newest chats: mail threads shared its 500-row limit, so a few hundred newsletters pushed every Telegram contact and group but a handful out of the list. Chats are now listed whole and mail has its own limit.
+- A picture or file whose download stalls (a dead Telegram connection, say) no longer leaves its tile on a spinner for many minutes: after 45 seconds without a byte the tile offers a retry.
+
 - Telegram: a refused reaction now says why (Premium needed, for example in Saved Messages) instead of a bare RPC error.
 - A saved attachment the sender gave no name (a voice note) is named after its type, such as `voice-note-1.ogg`, instead of `attachment`.
 - An agent reading your own Saved Messages no longer gets an access prompt: a person with addresses on several networks counts as you when any of them is yours, and a chat with nobody else in it needs no approval.

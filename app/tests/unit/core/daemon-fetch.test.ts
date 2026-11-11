@@ -274,5 +274,52 @@ export default async () => {
         db.close();
       }
     });
+
+    await it('gives up on a fetch that stops delivering bytes, so the window can offer a retry', async () => {
+      const db = freshDb();
+      try {
+        seedMessage(db, CHAT_BACKEND, HANDLE);
+        let aborted = false;
+        const backend = fakeChatBackend({
+          fetchAttachment: (_account, _attachment, _sink, options) => {
+            options.signal?.addEventListener('abort', () => {
+              aborted = true;
+            });
+            return new Promise(() => {});
+          },
+        });
+        const fetchBackends = new Map([[sessionKey(CHAT_BACKEND, ACCOUNT), backend]]);
+        const handler = createDaemonFetchHandler({ db, fetchBackends, log, stallTimeoutMs: 20 });
+        const reply = await handler(fetchRequest());
+        expect(reply.kind).toBe('failed');
+        expect(reply.kind === 'failed' && /stalled/.test(reply.message)).toBe(true);
+        expect(aborted).toBe(true);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('does not cut off a slow fetch that keeps making progress', async () => {
+      const db = freshDb();
+      try {
+        seedMessage(db, CHAT_BACKEND, HANDLE);
+        const backend = fakeChatBackend({
+          fetchAttachment: async (_account, _attachment, sink) => {
+            for (let i = 0; i < 4; i++) {
+              await new Promise((r) => setTimeout(r, 15));
+              await sink.write(new Uint8Array([1, 2]));
+            }
+            sink.close();
+            return { mimeType: 'image/png', size: 8 };
+          },
+        });
+        const fetchBackends = new Map([[sessionKey(CHAT_BACKEND, ACCOUNT), backend]]);
+        const handler = createDaemonFetchHandler({ db, fetchBackends, log, stallTimeoutMs: 40 });
+        const reply = await handler(fetchRequest());
+        expect(reply.kind).toBe('fetched');
+      } finally {
+        db.close();
+      }
+    });
   });
 };
