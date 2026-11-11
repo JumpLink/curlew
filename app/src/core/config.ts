@@ -13,7 +13,7 @@
 import type { Classification } from '@curlew/protocol';
 import { normalizeAddress } from '@curlew/protocol';
 import { configPath, ensurePrivateDir } from '@curlew/store';
-import { ACCENT_CHOICES, isAccentChoice } from './lib/appearance.ts';
+import { ACCENT_CHOICES, BACKGROUND_CHOICES, isAccentChoice, isBackgroundChoice } from './lib/appearance.ts';
 import { type AgentAccessPolicy, defaultAgentAccess, parseAgentAccess } from './agent-access.ts';
 import { type Grant, type ParseGrantsOptions, parseGrants } from './grants.ts';
 import { chmodSync, existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
@@ -40,6 +40,8 @@ export interface UiConfig {
   playVideosSilently?: boolean;
   /** `default` (Curlew's blue), `system` (follow the desktop) or an Adwaita accent name. Unset: `default`. */
   accentColor?: string;
+  /** `doodles` or `none`. Unset: `doodles`. */
+  chatBackground?: string;
 }
 
 export interface CurlewConfig {
@@ -185,11 +187,18 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   const accentColor = (rawUi as Record<string, unknown>).accentColor;
   if (accentColor !== undefined && (typeof accentColor !== 'string' || !isAccentChoice(accentColor)))
     throw new Error(`config.ui.accentColor must be one of ${ACCENT_CHOICES.join(', ')}`);
+  const chatBackground = (rawUi as Record<string, unknown>).chatBackground;
+  if (
+    chatBackground !== undefined &&
+    (typeof chatBackground !== 'string' || !isBackgroundChoice(chatBackground))
+  )
+    throw new Error(`config.ui.chatBackground must be one of ${BACKGROUND_CHOICES.join(', ')}`);
   const ui: UiConfig = {
     showAllEmails,
     notifications,
     ...(playVideosSilently === undefined ? {} : { playVideosSilently }),
     ...(accentColor === undefined ? {} : { accentColor }),
+    ...(chatBackground === undefined ? {} : { chatBackground }),
   };
 
   const senders: Record<string, Classification> = {};

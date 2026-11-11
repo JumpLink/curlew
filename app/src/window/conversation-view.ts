@@ -58,6 +58,7 @@ import {
   type ReplyDraft,
 } from './conversation-model.ts';
 import { attachmentList, type AttachmentHandlers } from './attachment-view.ts';
+import { ChatBackground } from './chat-background.ts';
 import type { AlbumItem } from './media-viewer.ts';
 import { createSilentVideoHost } from './video-preview.ts';
 import { leadsWithMedia, shownAttachments, type AttachmentKind } from './attachment-model.ts';
@@ -172,6 +173,10 @@ export function createConversationView(
   history.add_css_class('navigation-sidebar');
   const scroller = new Gtk.ScrolledWindow({ hscrollbarPolicy: Gtk.PolicyType.NEVER, vexpand: true });
   scroller.set_child(history);
+  // The pattern sits under the messages and takes no clicks.
+  const backdrop = new Gtk.Overlay({ vexpand: true });
+  backdrop.set_child(new ChatBackground());
+  backdrop.add_overlay(scroller);
 
   const composer = new Gtk.Box({ spacing: 6, marginStart: 12, marginEnd: 12, marginTop: 8, marginBottom: 8 });
   const input = new Gtk.Entry({ placeholderText: _('Write a message'), hexpand: true });
@@ -222,7 +227,7 @@ export function createConversationView(
   const hint = new Gtk.Label({ xalign: 0, marginStart: 12, marginEnd: 12, marginTop: 4, visible: false });
   hint.add_css_class('dim-label');
   hint.add_css_class('caption');
-  content.append(scroller);
+  content.append(backdrop);
   content.append(hint);
   const overlay = new Adw.ToastOverlay({ child: content });
   const files = createComposerFiles({

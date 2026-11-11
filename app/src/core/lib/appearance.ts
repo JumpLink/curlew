@@ -17,3 +17,16 @@ export function accentToImpose(choice: string | undefined): AccentName | null {
   if (choice === 'system') return null;
   return (ACCENT_NAMES as readonly string[]).includes(choice ?? '') ? (choice as AccentName) : 'blue';
 }
+
+/** What lies behind the messages of a conversation: our own doodles, or nothing. */
+export const BACKGROUND_CHOICES = ['doodles', 'none'] as const;
+export type BackgroundChoice = (typeof BACKGROUND_CHOICES)[number];
+
+export function isBackgroundChoice(value: string): value is BackgroundChoice {
+  return (BACKGROUND_CHOICES as readonly string[]).includes(value);
+}
+
+/** An unset or unknown value is the default, the doodles. */
+export function backgroundToShow(choice: string | undefined): BackgroundChoice {
+  return choice !== undefined && isBackgroundChoice(choice) ? choice : 'doodles';
+}

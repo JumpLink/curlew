@@ -42,6 +42,7 @@
 
 ### Added
 
+- A quiet doodle pattern behind the messages of a conversation, drawn in the text colour at low opacity so it suits light and dark; switch it off under Appearance in the preferences. [ADR 0013](docs/adr/0013-appearance.md)
 - An Appearance group in the preferences with an accent colour: Curlew's own blue by default (it follows the system accent only on request), the nine Adwaita colours, or "follow the system". [ADR 0013](docs/adr/0013-appearance.md)
 - A Matrix room with only you in it counts as your own chat: sending to it needs no grant. The member list is asked from the homeserver each time, and anything unclear (an error, a pending invite, somebody else) counts as not yours.
 - `conversations_get` lists the attachments of a chat message (kind such as voice or image, size, duration, and whether `message_save_attachment` can fetch it), so an agent can find and save a voice note. The filename shows only with `include_bodies`.
