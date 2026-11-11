@@ -41,6 +41,7 @@
     "@gjsify/node-runtime-darwin-x64@0.64.22",
     "@gjsify/node-runtime-win32-x64@0.64.22",
     "@gjsify/node-gi@0.64.22",
+    "@gjsify/system-accounts@0.64.22",
     "@matrix-org/matrix-sdk-crypto-wasm@18.9.0",
     "loglevel@1.9.2",
     "matrix-js-sdk@42.4.0",
@@ -5932,6 +5933,100 @@
       "integrity": "sha512-SmXi0LDDX+jl9zi3WG/4E8JPgMwx091twmdbysJiSmocShSa6E79W5EEO+oPIg5nhhVJ+UPMWbiMDY2plTUx4w==",
       "dependencies": {
         "@gjsify/util": "^0.64.22"
+      }
+    },
+    "node_modules/@gjsify/system-accounts": {
+      "version": "0.64.22",
+      "resolved": "https://registry.npmjs.org/@gjsify/system-accounts/-/system-accounts-0.64.22.tgz",
+      "integrity": "sha512-MFxFn672AUvqU9hQGF5MXhZ4GFunj7K26TDvb2rxrQXbGZR0GtdwtHPlVrpcME11H1C8Ertyb1lk/ZA24X/V4w==",
+      "dependencies": {
+        "@girs/gjs": "5.4.0",
+        "@girs/gio-2.0": "5.4.0",
+        "@girs/goa-1.0": "5.4.0",
+        "@girs/glib-2.0": "5.4.0",
+        "@girs/gobject-2.0": "5.4.0"
+      }
+    },
+    "node_modules/@gjsify/system-accounts/node_modules/@girs/gio-2.0": {
+      "version": "5.4.0",
+      "resolved": "https://registry.npmjs.org/@girs/gio-2.0/-/gio-2.0-5.4.0.tgz",
+      "integrity": "sha512-g7ODsw46o9Svk0Htvyrwv6MSOYmoJZRh8ngcKhXhUkrr7pK9JHUK+DAxJuaadTzKw9Dstlvpk8VyAQcdYjeFXw==",
+      "dependencies": {
+        "@girs/gjs": "^5.4.0",
+        "@girs/glib-2.0": "^5.4.0",
+        "@girs/gmodule-2.0": "^5.4.0",
+        "@girs/gobject-2.0": "^5.4.0"
+      }
+    },
+    "node_modules/@gjsify/system-accounts/node_modules/@girs/gio-2.0/node_modules/@girs/gmodule-2.0": {
+      "version": "5.4.0",
+      "resolved": "https://registry.npmjs.org/@girs/gmodule-2.0/-/gmodule-2.0-5.4.0.tgz",
+      "integrity": "sha512-Ya7jQzPViSRyw5P/ElI/9ngVHt82f5Cin6JYW4EQ3DazT28EjgYsJpwRwA64yI7FAuLvIiyosIvErr+ZR/tzDA==",
+      "dependencies": {
+        "@girs/gjs": "^5.4.0",
+        "@girs/glib-2.0": "^5.4.0",
+        "@girs/gobject-2.0": "^5.4.0"
+      }
+    },
+    "node_modules/@gjsify/system-accounts/node_modules/@girs/gjs": {
+      "version": "5.4.0",
+      "resolved": "https://registry.npmjs.org/@girs/gjs/-/gjs-5.4.0.tgz",
+      "integrity": "sha512-b2/Gp/Gqf42VXmaFIT3q40Impf0X60N7mDPD8/nVlGBH9T+N53fGgqlefhV/TO8PHHZYKIsK4X8gUhdm4eybFw==",
+      "dependencies": {
+        "@girs/gio-2.0": "^5.4.0",
+        "@girs/glib-2.0": "^5.4.0",
+        "@girs/cairo-1.0": "^5.4.0",
+        "@girs/gobject-2.0": "^5.4.0"
+      }
+    },
+    "node_modules/@gjsify/system-accounts/node_modules/@girs/gjs/node_modules/@girs/cairo-1.0": {
+      "version": "5.4.0",
+      "resolved": "https://registry.npmjs.org/@girs/cairo-1.0/-/cairo-1.0-5.4.0.tgz",
+      "integrity": "sha512-mOKpec4JfREZfAn/v2N7cH9YRqRWgClK9bycxVnpkbhTMpnN26cX2p3OiOXEbAnTio2GivF2O72F2qMaiZHvPg==",
+      "dependencies": {
+        "@girs/gjs": "^5.4.0",
+        "@girs/glib-2.0": "^5.4.0",
+        "@girs/gobject-2.0": "^5.4.0"
+      }
+    },
+    "node_modules/@gjsify/system-accounts/node_modules/@girs/glib-2.0": {
+      "version": "5.4.0",
+      "resolved": "https://registry.npmjs.org/@girs/glib-2.0/-/glib-2.0-5.4.0.tgz",
+      "integrity": "sha512-8n+bsqZIAPivdrZrqc1m0IaE5TXOrV3UYigqHh95saJIDRQilzVahx2iJhd9Pp/CAYSYWY7Qgg9h6kV4ymY/Xw==",
+      "dependencies": {
+        "@girs/gjs": "^5.4.0",
+        "@girs/gobject-2.0": "^5.4.0"
+      }
+    },
+    "node_modules/@gjsify/system-accounts/node_modules/@girs/goa-1.0": {
+      "version": "5.4.0",
+      "resolved": "https://registry.npmjs.org/@girs/goa-1.0/-/goa-1.0-5.4.0.tgz",
+      "integrity": "sha512-UrO3HnewIpLhWuNtmazW2ynH51dE3wE4DtmdSH9fkJaVghJB5S9/1vISKQtqzU/xAgkvqNVYGEY8uGpk219Exw==",
+      "dependencies": {
+        "@girs/gjs": "^5.4.0",
+        "@girs/gio-2.0": "^5.4.0",
+        "@girs/glib-2.0": "^5.4.0",
+        "@girs/gmodule-2.0": "^5.4.0",
+        "@girs/gobject-2.0": "^5.4.0"
+      }
+    },
+    "node_modules/@gjsify/system-accounts/node_modules/@girs/goa-1.0/node_modules/@girs/gmodule-2.0": {
+      "version": "5.4.0",
+      "resolved": "https://registry.npmjs.org/@girs/gmodule-2.0/-/gmodule-2.0-5.4.0.tgz",
+      "integrity": "sha512-Ya7jQzPViSRyw5P/ElI/9ngVHt82f5Cin6JYW4EQ3DazT28EjgYsJpwRwA64yI7FAuLvIiyosIvErr+ZR/tzDA==",
+      "dependencies": {
+        "@girs/gjs": "^5.4.0",
+        "@girs/glib-2.0": "^5.4.0",
+        "@girs/gobject-2.0": "^5.4.0"
+      }
+    },
+    "node_modules/@gjsify/system-accounts/node_modules/@girs/gobject-2.0": {
+      "version": "5.4.0",
+      "resolved": "https://registry.npmjs.org/@girs/gobject-2.0/-/gobject-2.0-5.4.0.tgz",
+      "integrity": "sha512-aFCpQvl7zAQ6ZZmXpLjlnSlD2wLxWGQsqFYXHMjVEbbwxuADB/+fFkJEKBTVJBzJVxdJlQthe0s/uZ7d9bW6ig==",
+      "dependencies": {
+        "@girs/gjs": "^5.4.0",
+        "@girs/glib-2.0": "^5.4.0"
       }
     },
     "node_modules/@gjsify/tar": {

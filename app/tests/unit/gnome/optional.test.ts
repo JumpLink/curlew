@@ -9,7 +9,6 @@ import { optionalNamespace } from '../../../../packages/gnome/src/optional.ts';
 import { check, listAccounts } from '../../../../packages/gnome/src/goa.gjs.ts';
 import { searchContacts } from '../../../../packages/gnome/src/contacts.gjs.ts';
 import { listEvents } from '../../../../packages/gnome/src/calendar.gjs.ts';
-import { listMailTargets } from '../../../../packages/gnome/src/credentials.gjs.ts';
 import { goa } from '../../../../packages/gnome/src/libs.gjs.ts';
 
 async function rejection(promise: Promise<unknown>): Promise<unknown> {
@@ -69,7 +68,6 @@ export default async () => {
       expect(result.ok).toBe(false);
       expect(result.message).toContain('Goa typelib not available');
       expect((await rejection(listAccounts())) instanceof GnomeUnavailableError).toBe(true);
-      expect((await rejection(listMailTargets())) instanceof GnomeUnavailableError).toBe(true);
     });
 
     await it('reports contacts and calendar as unavailable without a registry', async () => {

@@ -7,3 +7,4 @@ export { ImapBackend } from './backend.gjs.ts';
 export { isOwnMailAddress, MailSender, openMailSender } from './send.ts';
 export { contentTypeFor, readAttachments } from './attachments.ts';
 export { MAIL_MANIFEST } from './manifest.ts';
+export { isOwnAccountId } from './own-accounts.ts';

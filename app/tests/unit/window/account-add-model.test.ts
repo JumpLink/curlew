@@ -2,7 +2,7 @@ import { describe, expect, it } from '@gjsify/unit';
 import type { BackendCapabilities } from '@curlew/protocol';
 
 import type { BackendStatus } from '../../../src/core/backends/registry.ts';
-import { addableProtocols, needsTerms } from '../../../src/window/account-add-model.ts';
+import { addableProtocols, mailProtocol, needsTerms } from '../../../src/window/account-add-model.ts';
 
 function status(name: string, over: Partial<BackendStatus> = {}): BackendStatus {
   return {
@@ -24,6 +24,13 @@ export default async () => {
     await it('leaves mail out and orders the chats the same way every time', async () => {
       const list = addableProtocols([status('xmpp'), status('mail'), status('whatsapp'), status('signal')]);
       expect(list.map((p) => p.backend)).toStrictEqual(['signal', 'whatsapp', 'xmpp']);
+    });
+
+    await it('offers mail apart, without terms, and only when the backend exists', async () => {
+      const mail = mailProtocol([status('xmpp'), status('mail')]);
+      expect(mail?.backend).toBe('mail');
+      expect(mail !== null && needsTerms(mail)).toBe(false);
+      expect(mailProtocol([status('xmpp')])).toBe(null);
     });
 
     await it('carries the terms until they are accepted', async () => {

@@ -2,8 +2,9 @@
  * Pure model for the Accounts dialog: what protocol groups exist, which accounts belong to each,
  * and what state the daemon reports for them. No GTK, no bus — both runtimes test this.
  *
- * Mail accounts are always sourced from GNOME Online Accounts (`accountsList`), never from the
- * mail backend's IMAP targets, so a GOA account is listed once and only once.
+ * Mail has two sources: GNOME Online Accounts (`accountsList`) and the accounts Curlew holds itself
+ * (ADR 0011). An address that is both is listed once, as the own account, because that is the one
+ * Curlew can remove.
  */
 
 import type { BackendAccount, GnomeAccount } from '@curlew/protocol';
@@ -25,6 +26,8 @@ export interface AccountRow {
   status: AccountStatus | null;
   /** ISO time the daemon entered this state, when it is known. */
   since?: string;
+  /** A GNOME Online Account: managed in GNOME Settings, so it has no page of its own here. */
+  isGoa?: boolean;
 }
 
 export interface ProtocolGroup {
@@ -33,7 +36,7 @@ export interface ProtocolGroup {
   icon: string;
   rows: AccountRow[];
   error?: string;
-  /** Accounts of this group are managed in GNOME Settings, so the group links there. */
+  /** The group lists GNOME Online Accounts, so it links to GNOME Settings. */
   isGoa: boolean;
 }
 
@@ -45,6 +48,8 @@ export interface AccountsPageState {
 export interface AccountsLoadState {
   backends: BackendStatus[];
   goaAccounts: { accounts: GnomeAccount[]; error?: string };
+  /** Mail accounts Curlew holds itself; absent when there are none. */
+  ownMailAccounts?: BackendAccount[];
   chatAccounts: { backend: string; accounts: BackendAccount[]; error?: string }[];
   labels: ReadonlyMap<string, string>;
 }
@@ -120,13 +125,32 @@ function makeRow(
   daemon: AccountsDaemonState,
   detail?: string,
   disabled = false,
+  isGoa = false,
 ): AccountRow {
-  if (disabled) return { id, label, detail, status: 'disabled' };
+  const base = isGoa ? { id, label, detail, isGoa } : { id, label, detail };
+  if (disabled) return { ...base, status: 'disabled' };
   const entry = lookupDaemon(daemon, backend, id);
   // The daemon holds live chat sessions only; a mail account has no state of its own to show.
-  if (backend === 'mail' && !entry) return { id, label, detail, status: null };
+  if (backend === 'mail' && !entry) return { ...base, status: null };
   const { status, since } = accountStatus(daemon.present, entry?.state, entry?.since);
-  return { id, label, detail, status, since };
+  return { ...base, status, since };
+}
+
+/** The mail rows: own accounts, then GNOME Online Accounts whose address is not already an own one. */
+function mailRows(load: AccountsLoadState, daemon: AccountsDaemonState): AccountRow[] {
+  const own = load.ownMailAccounts ?? [];
+  const ownAddresses = new Set(own.map((a) => a.identity.toLowerCase()));
+  const goa = load.goaAccounts.accounts
+    // A GOA account that only holds calendars or contacts has no mail to show here.
+    .filter((account) => account.capabilities.mail)
+    .filter((account) => !ownAddresses.has(account.identity.toLowerCase()))
+    .map((account) =>
+      makeRow(account.id, goaAccountLabel(account), 'mail', daemon, goaAccountDetail(account), false, true),
+    );
+  const mine = own.map((account) =>
+    makeRow(account.id, account.identity, 'mail', daemon, undefined, account.disabled === true),
+  );
+  return [...mine, ...goa].sort((a, b) => a.label.localeCompare(b.label));
 }
 
 /** Build the full page state from loaded accounts and live daemon state. */
@@ -136,15 +160,9 @@ export function buildProtocolGroups(load: AccountsLoadState, daemon: AccountsDae
       backend: 'mail',
       label: protocolLabel('mail'),
       icon: protocolIcon('mail'),
-      rows: load.goaAccounts.accounts
-        // A GOA account that only holds calendars or contacts has no mail to show here.
-        .filter((account) => account.capabilities.mail)
-        .map((account) =>
-          makeRow(account.id, goaAccountLabel(account), 'mail', daemon, goaAccountDetail(account)),
-        )
-        .sort((a, b) => a.label.localeCompare(b.label)),
+      rows: mailRows(load, daemon),
       error: load.goaAccounts.error,
-      isGoa: true,
+      isGoa: load.goaAccounts.accounts.some((account) => account.capabilities.mail),
     },
   ];
 

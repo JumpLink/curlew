@@ -63,7 +63,8 @@ export function accountSetEnabled(
 
 /**
  * Add an account to an ENABLED backend, interactively. Only backends that keep their own accounts
- * can: mail accounts are GNOME Online Accounts and are added in GNOME Settings.
+ * can; the mail backend does too (an address and a password), besides the GNOME Online Accounts it
+ * reads from the system.
  */
 export async function accountsAdd(
   name: string,
@@ -74,13 +75,7 @@ export async function accountsAdd(
   const config = loadConfig(path);
   const backend = builtinRegistry().create(config, name, backendContext(name, config));
   if (!backend.addAccount) {
-    throw new Error(
-      `${name} accounts are not added in curlew — ${
-        backend.kind === 'mailbox'
-          ? 'add them in GNOME Settings → Online Accounts'
-          : 'this backend has no login flow'
-      }`,
-    );
+    throw new Error(`${name} accounts are not added in curlew — this backend has no login flow`);
   }
   return { backend: name, account: await backend.addAccount(prompter, options) };
 }
@@ -98,13 +93,7 @@ export async function accountRemove(
   const config = loadConfig(path);
   const backend = builtinRegistry().create(config, name, backendContext(name, config));
   if (!isAccountRemoverBackend(backend)) {
-    throw new Error(
-      `${name} accounts are not removed in curlew — ${
-        backend.kind === 'mailbox'
-          ? 'remove them in GNOME Settings → Online Accounts'
-          : 'this backend has no stored login'
-      }`,
-    );
+    throw new Error(`${name} accounts are not removed in curlew — this backend has no stored login`);
   }
   await backend.removeAccount(accountId);
   return { backend: name, account: accountId };

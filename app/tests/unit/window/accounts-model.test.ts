@@ -196,6 +196,43 @@ export default async () => {
       expect(rows[0]!.detail).toBe('IMAP and SMTP · Mail');
     });
 
+    it('lists the accounts Curlew holds itself, and a GOA account of the same address once', () => {
+      const load: AccountsLoadState = {
+        backends: [backend('mail')],
+        goaAccounts: {
+          accounts: [
+            goaAccount({ id: 'goa-same', identity: 'Ada@Example.org', providerName: 'IMAP and SMTP' }),
+            goaAccount({ id: 'goa-other', identity: 'bob@example.org', providerName: 'IMAP and SMTP' }),
+          ],
+        },
+        ownMailAccounts: [
+          chatAccount({ id: 'mail-own', identity: 'ada@example.org' }),
+          chatAccount({ id: 'mail-off', identity: 'zed@example.org', disabled: true }),
+        ],
+        chatAccounts: [],
+        labels: new Map(),
+      };
+      const group = buildProtocolGroups(load, daemonState(true, new Map())).groups[0]!;
+      expect(group.rows.map((r) => r.id)).toStrictEqual(['mail-own', 'goa-other', 'mail-off']);
+      expect(group.rows.map((r) => r.isGoa === true)).toStrictEqual([false, true, false]);
+      expect(group.rows[2]!.status).toBe('disabled');
+      expect(group.rows[0]!.status).toBeNull();
+      expect(group.isGoa).toBe(true);
+    });
+
+    it('does not link to GNOME Settings when only own mail accounts exist', () => {
+      const load: AccountsLoadState = {
+        backends: [backend('mail')],
+        goaAccounts: { accounts: [] },
+        ownMailAccounts: [chatAccount({ id: 'mail-own', identity: 'ada@example.org' })],
+        chatAccounts: [],
+        labels: new Map(),
+      };
+      const group = buildProtocolGroups(load, daemonState(true, new Map())).groups[0]!;
+      expect(group.isGoa).toBe(false);
+      expect(group.rows.length).toBe(1);
+    });
+
     it('shows the address under a chat nickname only when they differ', () => {
       const load: AccountsLoadState = {
         backends: [backend('xmpp')],

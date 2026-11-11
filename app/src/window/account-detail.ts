@@ -72,6 +72,8 @@ export function pushAccountPage(deps: AccountDetailDeps): void {
   const sync = new Adw.PreferencesGroup({
     description: _('Off keeps the account linked and its messages here, but Curlew stops syncing it.'),
   });
+  // Mail is read on demand, not held by the daemon, so there is nothing to switch off.
+  sync.set_visible(deps.backend !== 'mail');
   const enabled = new Adw.SwitchRow({ title: _('Sync this account'), active: row.status !== 'disabled' });
   enabled.connect('notify::active', () => {
     try {

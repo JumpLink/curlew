@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-11 07:34+0100\n"
+"POT-Creation-Date: 2026-11-11 07:50+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1540,65 +1540,70 @@ msgstr ""
 msgid "Curlew"
 msgstr ""
 
-#: app/src/window/account-add.ts:137
+#: app/src/window/account-add.ts:138
 msgid "Please read this first"
 msgstr ""
 
-#: app/src/window/account-add.ts:143
+#: app/src/window/account-add.ts:144
 msgid "I understand and accept the risk for my account"
 msgstr ""
 
-#: app/src/window/account-add.ts:146
+#: app/src/window/account-add.ts:147
 msgid "Accept and Continue"
 msgstr ""
 
-#: app/src/window/account-add.ts:187
+#: app/src/window/account-add.ts:188
 msgid "Continue"
 msgstr ""
 
-#: app/src/window/account-add.ts:210
+#: app/src/window/account-add.ts:211
 msgid "Adding account…"
 msgstr ""
 
-#: app/src/window/account-add.ts:218 app/src/window/media-viewer.ts:104
+#: app/src/window/account-add.ts:219 app/src/window/media-viewer.ts:104
 msgid "Try Again"
 msgstr ""
 
-#: app/src/window/account-add.ts:222
+#: app/src/window/account-add.ts:223
 msgid "Could not add the account"
 msgstr ""
 
-#: app/src/window/account-add.ts:233
+#: app/src/window/account-add.ts:234
 msgid "Connecting…"
 msgstr ""
 
-#: app/src/window/account-add.ts:257
+#: app/src/window/account-add.ts:258
 msgid "Asks you to accept terms first"
 msgstr ""
 
-#: app/src/window/account-add.ts:272
+#: app/src/window/account-add.ts:275
 msgid "Chats"
 msgstr ""
 
-#: app/src/window/account-add.ts:273
+#: app/src/window/account-add.ts:276
 msgid ""
 "Signal, WhatsApp and Telegram link this computer as another device of your "
 "account."
 msgstr ""
 
-#: app/src/window/account-add.ts:285
-msgid "Mail, calendar and contacts"
+#: app/src/window/account-add.ts:288 app/src/window/accounts-model.ts:80
+#: app/src/window/conversation-list-model.ts:111
+msgid "Mail"
 msgstr ""
 
-#: app/src/window/account-add.ts:287
+#: app/src/window/account-add.ts:295
+msgid "Sign in with an address and a password"
+msgstr ""
+
+#: app/src/window/account-add.ts:301
 msgid "GNOME Online Accounts"
 msgstr ""
 
-#: app/src/window/account-add.ts:288
-msgid "Mail accounts are added in GNOME Settings"
+#: app/src/window/account-add.ts:302
+msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 
-#: app/src/window/account-add.ts:304 app/src/window/accounts-page.ts:157
+#: app/src/window/account-add.ts:319 app/src/window/accounts-page.ts:157
 #: app/src/window/accounts-page.ts:180
 msgid "Add Account"
 msgstr ""
@@ -1617,26 +1622,27 @@ msgid ""
 "it."
 msgstr ""
 
-#: app/src/window/account-detail.ts:75
+#: app/src/window/account-detail.ts:77
 msgid "Sync this account"
 msgstr ""
 
-#: app/src/window/account-detail.ts:95
+#: app/src/window/account-detail.ts:97
 msgid "Remove Account…"
 msgstr ""
 
 #: app/src/window/account-remove-model.ts:20
+#: app/src/window/account-remove-model.ts:30
 msgid "Remove {account}?"
 msgstr ""
 
-#: app/src/window/account-remove-model.ts:23
+#: app/src/window/account-remove-model.ts:22
 msgid ""
-"Curlew will forget the login for this account and stop syncing it. Messages "
-"already on this computer stay. The account stays linked on {protocol} until "
-"you remove this device there."
+"Curlew will forget the password for this account and stop reading its mail. "
+"Messages already on this computer stay, and nothing changes at your provider."
 msgstr ""
 
-#: app/src/window/account-remove-model.ts:27
+#: app/src/window/account-remove-model.ts:24
+#: app/src/window/account-remove-model.ts:37
 #: app/src/window/agent-access-page.ts:234
 #: app/src/window/conversation-list.ts:401
 #: app/src/window/conversation-list.ts:487
@@ -1644,29 +1650,32 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
-#: app/src/window/account-remove-model.ts:28
+#: app/src/window/account-remove-model.ts:25
+#: app/src/window/account-remove-model.ts:38
 msgid "Remove Account"
+msgstr ""
+
+#: app/src/window/account-remove-model.ts:33
+msgid ""
+"Curlew will forget the login for this account and stop syncing it. Messages "
+"already on this computer stay. The account stays linked on {protocol} until "
+"you remove this device there."
 msgstr ""
 
 #: app/src/window/accounts-daemon.ts:53 app/src/window/accounts-daemon.ts:57
 msgid "Could not start the background service. Run “curlew setup” first."
 msgstr ""
 
-#: app/src/window/accounts-dialog.ts:60 app/src/window/accounts-page.ts:187
+#: app/src/window/accounts-dialog.ts:61 app/src/window/accounts-page.ts:187
 #: app/src/window/window.ts:100
 msgid "Accounts"
 msgstr ""
 
-#: app/src/window/accounts-model.ts:75
-#: app/src/window/conversation-list-model.ts:111
-msgid "Mail"
-msgstr ""
-
-#: app/src/window/accounts-model.ts:76
+#: app/src/window/accounts-model.ts:81
 msgid "Calendar"
 msgstr ""
 
-#: app/src/window/accounts-model.ts:77
+#: app/src/window/accounts-model.ts:82
 msgid "Contacts"
 msgstr ""
 
@@ -1715,7 +1724,7 @@ msgid "No accounts"
 msgstr ""
 
 #: app/src/window/accounts-page.ts:154
-msgid "Add a chat account, or add a mail account in GNOME Settings."
+msgid "Add a chat account or a mail account."
 msgstr ""
 
 #: app/src/window/accounts-page.ts:171
@@ -2448,6 +2457,52 @@ msgstr ""
 msgid "No contacts to merge"
 msgstr ""
 
+#: packages/imap/src/add-account.ts:50
+msgid "That is not a server name — write it as host or host:port"
+msgstr ""
+
+#: packages/imap/src/add-account.ts:59
+msgid "Looking for the mail servers of {domain}…"
+msgstr ""
+
+#: packages/imap/src/add-account.ts:64
+msgid ""
+"This provider wants a browser sign-in, which Curlew cannot do yet — enter "
+"the servers and an app password"
+msgstr ""
+
+#: packages/imap/src/add-account.ts:65
+msgid "No settings published for this address — enter the servers"
+msgstr ""
+
+#: packages/imap/src/add-account.ts:67
+msgid "IMAP server (host or host:port, TLS on 993)"
+msgstr ""
+
+#: packages/imap/src/add-account.ts:68
+msgid "SMTP server (host or host:port, 465 or 587)"
+msgstr ""
+
+#: packages/imap/src/add-account.ts:81
+msgid "Email address (name@example.org)"
+msgstr ""
+
+#: packages/imap/src/add-account.ts:82
+msgid "Password (an app password if the provider offers them)"
+msgstr ""
+
+#: packages/imap/src/add-account.ts:83 packages/imap/src/own-accounts.ts:63
+msgid "the password is empty"
+msgstr ""
+
+#: packages/imap/src/add-account.ts:96
+msgid "Logging in to {host}…"
+msgstr ""
+
+#: packages/imap/src/add-account.ts:102
+msgid "could not log in to {host}: {reason}"
+msgstr ""
+
 #: packages/imap/src/attachments.ts:78
 msgid "at most {max} attachments per mail, this one has {count}"
 msgstr ""
@@ -2466,6 +2521,26 @@ msgstr ""
 
 #: packages/imap/src/attachments.ts:115
 msgid "the attachments together exceed {max} bytes"
+msgstr ""
+
+#: packages/imap/src/own-accounts.ts:42
+msgid "not an email address — expected name@example.org"
+msgstr ""
+
+#: packages/imap/src/own-accounts.ts:47
+msgid "not a mail account id: {account}"
+msgstr ""
+
+#: packages/imap/src/own-accounts.ts:53
+msgid "not a port: {port}"
+msgstr ""
+
+#: packages/imap/src/own-accounts.ts:62
+msgid "a server name is missing"
+msgstr ""
+
+#: packages/imap/src/own-accounts.ts:137
+msgid "the mail account {account} is incomplete — add it again"
 msgstr ""
 
 #: packages/imap/src/send.ts:69 packages/matrix/src/send.ts:354

@@ -120,7 +120,10 @@ supporting is **unchecked**.
 2. **GOA in a Flatpak: grant the hole or ship chat only?** Decided by the owner on 2026-11-11:
    chat only. Curlew is a messenger and chat client that can also chat over mail, like Delta
    Chat. The Flatpak gets no GOA hole. What follows: a mail account that does not come from GOA
-   (own IMAP/SMTP login, password in the `SecretStore`), tracked in its own issue.
+   (own IMAP/SMTP login, password in the `SecretStore`), built in #249: *Add Account → Mail*
+   discovers the servers over HTTPS the way Thunderbird does, tests the login and saves one
+   `SecretStore` file per account. The system's accounts are read through
+   `@gjsify/system-accounts` and are simply absent inside the sandbox.
 3. **Secrets at rest.** Encrypt the `SecretStore` files with a key from the Secret portal, or rely
    on the sandbox's private directory? Matters for backups and for #145 (encryption).
 4. **`attachmentsDir` and `XDG_DOWNLOAD_DIR`.** Where an agent's `message_save_attachment` writes

@@ -15,6 +15,16 @@ export interface RemoveAccountCopy {
 }
 
 export function removeAccountCopy(backend: string, accountLabel: string): RemoveAccountCopy {
+  if (backend === 'mail') {
+    return {
+      heading: fmt(_('Remove {account}?'), { account: accountLabel }),
+      body: _(
+        'Curlew will forget the password for this account and stop reading its mail. Messages already on this computer stay, and nothing changes at your provider.',
+      ),
+      cancel: _('Cancel'),
+      confirm: _('Remove Account'),
+    };
+  }
   const protocol = protocolLabel(backend);
   return {
     heading: fmt(_('Remove {account}?'), { account: accountLabel }),

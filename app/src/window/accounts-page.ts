@@ -105,8 +105,8 @@ function buildGroup(
 ): Adw.PreferencesGroup {
   const prefGroup = new Adw.PreferencesGroup({ title: group.label });
 
-  // One group answers everything about its protocol: the accounts, their state and, for mail,
-  // where to manage them.
+  // One group answers everything about its protocol: the accounts, their state and, for mail
+  // accounts from the system, where to manage them.
   if (group.isGoa) {
     const manage = new Gtk.Button({
       label: _('Manage…'),
@@ -124,8 +124,8 @@ function buildGroup(
     prefGroup.add(buildMessageRow(_('No accounts yet'), null, null));
   } else {
     for (const row of group.rows) {
-      // A mail account is managed in GNOME Settings, so it has no page of its own here.
-      prefGroup.add(buildRow(row, daemonPresent, group.isGoa ? null : () => onOpenAccount(group, row)));
+      // A GNOME Online Account is managed in GNOME Settings, so it has no page of its own here.
+      prefGroup.add(buildRow(row, daemonPresent, row.isGoa ? null : () => onOpenAccount(group, row)));
     }
   }
   return prefGroup;
@@ -151,7 +151,7 @@ export function createAccountsPage(
   const emptyPage = new Adw.StatusPage({
     iconName: 'user-info-symbolic',
     title: _('No accounts'),
-    description: _('Add a chat account, or add a mail account in GNOME Settings.'),
+    description: _('Add a chat account or a mail account.'),
   });
   const emptyAdd = new Gtk.Button({
     label: _('Add Account'),

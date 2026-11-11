@@ -108,5 +108,12 @@ export default async () => {
       expect(copy.body).toMatch(/Messages already on this computer stay/);
       expect(copy.body).toMatch(/Signal/);
     });
+
+    await it('does not promise a linked device for a mail account', async () => {
+      const copy = removeAccountCopy('mail', 'ada@example.org');
+      expect(copy.body).toMatch(/Messages already on this computer stay/);
+      expect(copy.body).toMatch(/password/);
+      expect(copy.body.includes('linked')).toBe(false);
+    });
   });
 };

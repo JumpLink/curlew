@@ -66,6 +66,10 @@ import matrixAttachments from './unit/matrix/attachments.test.ts';
 import smtpMessage from './unit/smtp/message.test.ts';
 import smtpSend from './unit/smtp/send.test.ts';
 import mailSend from './unit/mail/send.test.ts';
+import mailSystemTargets from './unit/mail/system-targets.test.ts';
+import mailAutoconfig from './unit/mail/autoconfig.test.ts';
+import mailOwnAccounts from './unit/mail/own-accounts.test.ts';
+import mailAddAccount from './unit/mail/add-account.test.ts';
 import telegramSend from './unit/telegram/send.test.ts';
 import telegramFollow from './unit/telegram/follow.test.ts';
 import telegramAttachments from './unit/telegram/attachments.test.ts';
@@ -187,6 +191,10 @@ run({
   smtpMessage,
   smtpSend,
   mailSend,
+  mailSystemTargets,
+  mailAutoconfig,
+  mailOwnAccounts,
+  mailAddAccount,
   telegramSend,
   telegramFollow,
   telegramAttachments,
