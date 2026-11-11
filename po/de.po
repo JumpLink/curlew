@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-11 01:04+0100\n"
+"POT-Creation-Date: 2026-11-11 07:34+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -136,6 +136,10 @@ msgstr ""
 "Das Lesen von Nachrichten von {target} braucht eine Freigabe, aber `curlew "
 "daemon` läuft nicht, also kann niemand gefragt werden — starte ihn oder füge "
 "eine Regel wie {rule} zu config.agentAccess.rules hinzu"
+
+#: app/src/core/actions/autostart.ts:32
+msgid "systemctl --user {verb} exited {code}"
+msgstr "systemctl --user {verb} endete mit {code}"
 
 #: app/src/core/actions/chat-attachment.ts:139
 #: app/src/core/actions/daemon.ts:451
@@ -294,23 +298,23 @@ msgstr "Nachrichten von {backend} haben keinen Betreff"
 msgid "{backend} cannot send email chat headers"
 msgstr "{backend} kann keine E-Mail-Chat-Kopfzeilen senden"
 
-#: app/src/core/actions/setup.ts:224
+#: app/src/core/actions/setup.ts:227
 msgid "Link Signal"
 msgstr "Signal verknüpfen"
 
-#: app/src/core/actions/setup.ts:225
+#: app/src/core/actions/setup.ts:228
 msgid "Signal → Settings → Linked devices → Link new device."
 msgstr "Signal → Einstellungen → Verknüpfte Geräte → Neues Gerät verknüpfen."
 
-#: app/src/core/actions/setup.ts:229
+#: app/src/core/actions/setup.ts:232
 msgid "Link WhatsApp (optional)"
 msgstr "WhatsApp verknüpfen (optional)"
 
-#: app/src/core/actions/setup.ts:230
+#: app/src/core/actions/setup.ts:233
 msgid "WhatsApp → Linked devices → Link a device."
 msgstr "WhatsApp → Verknüpfte Geräte → Gerät hinzufügen."
 
-#: app/src/core/actions/setup.ts:243
+#: app/src/core/actions/setup.ts:246
 msgid ""
 "The pairing code is a secret: it binds your account to this machine. Do not "
 "copy, paste or send it — it is shown here, it is scanned from here, and it "
@@ -320,15 +324,15 @@ msgstr ""
 "Kopiere, füge oder sende ihn nicht — er wird hier angezeigt, von hier "
 "gescannt und geht sonst nirgendwohin."
 
-#: app/src/core/actions/setup.ts:259
+#: app/src/core/actions/setup.ts:262
 msgid "GNOME Online Accounts: unavailable"
 msgstr "GNOME Online-Konten: nicht verfügbar"
 
-#: app/src/core/actions/setup.ts:275
+#: app/src/core/actions/setup.ts:278
 msgid "Readiness: bundle, tools, live check"
 msgstr "Bereitschaft: Bundle, Werkzeuge, Live-Prüfung"
 
-#: app/src/core/actions/setup.ts:295
+#: app/src/core/actions/setup.ts:298
 msgid ""
 "This walkthrough links your devices, builds the index and starts the "
 "receiving daemon as a systemd user unit. Stop at any time and re-run it — a "
@@ -339,11 +343,11 @@ msgstr ""
 "abbrechen und sie erneut starten — ein zweiter Lauf sagt, was schon erledigt "
 "ist."
 
-#: app/src/core/actions/setup.ts:302
+#: app/src/core/actions/setup.ts:305
 msgid "Checkout: {path}"
 msgstr "Checkout: {path}"
 
-#: app/src/core/actions/setup.ts:309
+#: app/src/core/actions/setup.ts:312
 msgid ""
 "gjsify is not on PATH, and both the bundle and the unit need it. Install it "
 "with `npm install -g @gjsify/cli`, then run this again."
@@ -352,11 +356,11 @@ msgstr ""
 "brauchen es. Installiere es mit `npm install -g @gjsify/cli` und starte dies "
 "dann erneut."
 
-#: app/src/core/actions/setup.ts:314
+#: app/src/core/actions/setup.ts:317
 msgid "gjsify: {path}"
 msgstr "gjsify: {path}"
 
-#: app/src/core/actions/setup.ts:319
+#: app/src/core/actions/setup.ts:322
 msgid ""
 "this process cannot name the bundle it is running from, and the unit needs "
 "that path. Run `curlew setup` from a built checkout, or from the installed "
@@ -366,7 +370,7 @@ msgstr ""
 "Einheit braucht diesen Pfad. Starte `curlew setup` aus einem gebauten "
 "Checkout oder über den installierten Befehl."
 
-#: app/src/core/actions/setup.ts:329
+#: app/src/core/actions/setup.ts:332
 msgid ""
 "no bundle at {path}. Build it with `gjsify workspace curlew-cli build`, then "
 "run this again — a command does not build itself."
@@ -374,11 +378,11 @@ msgstr ""
 "Kein Bundle unter {path}. Baue es mit `gjsify workspace curlew-cli build` "
 "und starte dies dann erneut — ein Befehl baut sich nicht selbst."
 
-#: app/src/core/actions/setup.ts:336
+#: app/src/core/actions/setup.ts:339
 msgid "Bundle: {path}"
 msgstr "Bundle: {path}"
 
-#: app/src/core/actions/setup.ts:338
+#: app/src/core/actions/setup.ts:341
 msgid ""
 "Published install: the installed command is used as it is. No checkout "
 "needed."
@@ -386,23 +390,23 @@ msgstr ""
 "Veröffentlichte Installation: Der installierte Befehl wird unverändert "
 "genutzt. Kein Checkout nötig."
 
-#: app/src/core/actions/setup.ts:340
+#: app/src/core/actions/setup.ts:343
 msgid "Live check (reads your online accounts, writes nothing):"
 msgstr "Live-Prüfung (liest deine Online-Konten, schreibt nichts):"
 
-#: app/src/core/actions/setup.ts:346
+#: app/src/core/actions/setup.ts:349
 msgid "  runtime: {runtime}"
 msgstr "  Laufzeit: {runtime}"
 
-#: app/src/core/actions/setup.ts:347
+#: app/src/core/actions/setup.ts:350
 msgid "  runtime: {runtime} — the GNOME backends need GJS"
 msgstr "  Laufzeit: {runtime} — die GNOME-Backends brauchen GJS"
 
-#: app/src/core/actions/setup.ts:352
+#: app/src/core/actions/setup.ts:355
 msgid "readiness"
 msgstr "Bereitschaft"
 
-#: app/src/core/actions/setup.ts:379
+#: app/src/core/actions/setup.ts:382
 msgid ""
 "{backend} no longer knows this device — the session file is still here, but "
 "the link is gone. Remove this machine's entry under Settings → Linked "
@@ -412,13 +416,13 @@ msgstr ""
 "aber die Verknüpfung ist weg. Entferne den Eintrag dieses Rechners unter "
 "Einstellungen → Verknüpfte Geräte auf dem Telefon und verknüpfe dann erneut."
 
-#: app/src/core/actions/setup.ts:388
+#: app/src/core/actions/setup.ts:391
 msgid "the {backend} link was dropped by the server — linking again is the fix"
 msgstr ""
 "Die {backend}-Verknüpfung wurde vom Server getrennt — erneut verknüpfen "
 "behebt das"
 
-#: app/src/core/actions/setup.ts:400
+#: app/src/core/actions/setup.ts:403
 msgid ""
 "A {backend} session from an earlier link is on this machine, but it has not "
 "been checked with {backend}. Run `curlew sync`: if {backend} still knows "
@@ -431,11 +435,11 @@ msgstr ""
 "Gerät auf dem Telefon entfernt, sagt der Sync das, und die Verknüpfung muss "
 "neu erfolgen."
 
-#: app/src/core/actions/setup.ts:408
+#: app/src/core/actions/setup.ts:411
 msgid "a session exists; its live state is unknown"
 msgstr "Eine Sitzung existiert; ihr aktueller Zustand ist unbekannt"
 
-#: app/src/core/actions/setup.ts:412
+#: app/src/core/actions/setup.ts:415
 msgid ""
 "curlew registers itself with your phone as a linked device. The QR code "
 "appears below, in this terminal."
@@ -443,33 +447,33 @@ msgstr ""
 "curlew meldet sich bei deinem Telefon als verknüpftes Gerät an. Der QR-Code "
 "erscheint unten in diesem Terminal."
 
-#: app/src/core/actions/setup.ts:416
+#: app/src/core/actions/setup.ts:419
 msgid "On the phone: {steps}"
 msgstr "Auf dem Telefon: {steps}"
 
-#: app/src/core/actions/setup.ts:418
+#: app/src/core/actions/setup.ts:421
 msgid "Link {backend} now?"
 msgstr "{backend} jetzt verknüpfen?"
 
-#: app/src/core/actions/setup.ts:419
+#: app/src/core/actions/setup.ts:422
 msgid "not linking {backend} now"
 msgstr "{backend} wird jetzt nicht verknüpft"
 
-#: app/src/core/actions/setup.ts:433
+#: app/src/core/actions/setup.ts:436
 msgid "{backend} reports no linked account yet"
 msgstr "{backend} meldet noch kein verknüpftes Konto"
 
-#: app/src/core/actions/setup.ts:438
+#: app/src/core/actions/setup.ts:441
 msgid "{count} {backend} account"
 msgid_plural "{count} {backend} accounts"
 msgstr[0] "{count} {backend}-Konto"
 msgstr[1] "{count} {backend}-Konten"
 
-#: app/src/core/actions/setup.ts:465
+#: app/src/core/actions/setup.ts:468
 msgid "Enable backends — read the terms first"
 msgstr "Backends aktivieren — erst die Bedingungen lesen"
 
-#: app/src/core/actions/setup.ts:477
+#: app/src/core/actions/setup.ts:480
 msgid ""
 "The daemon only receives what is enabled here. A first enable shows the "
 "terms the backend asks you to accept — read them yourself before you accept "
@@ -479,43 +483,43 @@ msgstr ""
 "werden die Bedingungen angezeigt, die das Backend von dir verlangt — lies "
 "sie selbst, bevor du zustimmst."
 
-#: app/src/core/actions/setup.ts:488
+#: app/src/core/actions/setup.ts:491
 msgid "{backend}: already enabled, terms accepted."
 msgstr "{backend}: bereits aktiviert, Bedingungen akzeptiert."
 
-#: app/src/core/actions/setup.ts:495
+#: app/src/core/actions/setup.ts:498
 msgid "{backend} asks you to accept these terms:"
 msgstr "{backend} verlangt, dass du diesen Bedingungen zustimmst:"
 
-#: app/src/core/actions/setup.ts:509
+#: app/src/core/actions/setup.ts:512
 msgid "Read the terms for {backend} and accept them?"
 msgstr "Bedingungen für {backend} gelesen und akzeptiert?"
 
-#: app/src/core/actions/setup.ts:511
+#: app/src/core/actions/setup.ts:514
 msgid "{backend} stays disabled."
 msgstr "{backend} bleibt deaktiviert."
 
-#: app/src/core/actions/setup.ts:516
+#: app/src/core/actions/setup.ts:519
 msgid "{backend}: enabled."
 msgstr "{backend}: aktiviert."
 
-#: app/src/core/actions/setup.ts:520
+#: app/src/core/actions/setup.ts:523
 msgid "{backend}: could not be enabled ({outcome})."
 msgstr "{backend}: konnte nicht aktiviert werden ({outcome})."
 
-#: app/src/core/actions/setup.ts:525
+#: app/src/core/actions/setup.ts:528
 msgid "no delivery backend is enabled — nothing to receive"
 msgstr "Kein Zustell-Backend ist aktiviert — nichts zu empfangen"
 
-#: app/src/core/actions/setup.ts:527
+#: app/src/core/actions/setup.ts:530
 msgid "backends enabled"
 msgstr "Backends aktiviert"
 
-#: app/src/core/actions/setup.ts:538
+#: app/src/core/actions/setup.ts:541
 msgid "Build the index"
 msgstr "Index aufbauen"
 
-#: app/src/core/actions/setup.ts:550
+#: app/src/core/actions/setup.ts:553
 msgid ""
 "curlew searches the local index, not the network, and `curlew sync` is the "
 "only thing that writes it — this stage IS that one call, not a second writer."
@@ -524,11 +528,11 @@ msgstr ""
 "sync` schreibt ihn — dieser Schritt IST genau dieser Aufruf, kein zweiter "
 "Schreiber."
 
-#: app/src/core/actions/setup.ts:554
+#: app/src/core/actions/setup.ts:557
 msgid "It reads the headers of your mail accounts, never a body."
 msgstr "Er liest die Kopfzeilen deiner Mail-Konten, nie einen Nachrichtentext."
 
-#: app/src/core/actions/setup.ts:560
+#: app/src/core/actions/setup.ts:563
 msgid "The index already holds {count} message; syncing again only updates it."
 msgid_plural ""
 "The index already holds {count} messages; syncing again only updates it."
@@ -539,49 +543,49 @@ msgstr[1] ""
 "Der Index enthält bereits {count} Nachrichten; ein erneuter Sync "
 "aktualisiert ihn nur."
 
-#: app/src/core/actions/setup.ts:568
+#: app/src/core/actions/setup.ts:571
 msgid "With many accounts this takes a few minutes."
 msgstr "Bei vielen Konten dauert das ein paar Minuten."
 
-#: app/src/core/actions/setup.ts:569
+#: app/src/core/actions/setup.ts:572
 msgid "Build the index now?"
 msgstr "Index jetzt aufbauen?"
 
-#: app/src/core/actions/setup.ts:570
+#: app/src/core/actions/setup.ts:573
 msgid "the index stays as it is"
 msgstr "Der Index bleibt, wie er ist"
 
-#: app/src/core/actions/setup.ts:575
+#: app/src/core/actions/setup.ts:578
 msgid "{messages}, {conversations}, from {backends}"
 msgstr "{messages}, {conversations}, aus {backends}"
 
-#: app/src/core/actions/setup.ts:576
+#: app/src/core/actions/setup.ts:579
 msgid "{n} message"
 msgid_plural "{n} messages"
 msgstr[0] "{n} Nachricht"
 msgstr[1] "{n} Nachrichten"
 
-#: app/src/core/actions/setup.ts:578
+#: app/src/core/actions/setup.ts:581
 msgid "{n} conversation"
 msgid_plural "{n} conversations"
 msgstr[0] "{n} Unterhaltung"
 msgstr[1] "{n} Unterhaltungen"
 
-#: app/src/core/actions/setup.ts:581
+#: app/src/core/actions/setup.ts:584
 msgid "no enabled backend"
 msgstr "kein aktiviertes Backend"
 
-#: app/src/core/actions/setup.ts:607
+#: app/src/core/actions/setup.ts:614
 msgid "The receiving daemon"
 msgstr "Der empfangende Daemon"
 
-#: app/src/core/actions/setup.ts:623
+#: app/src/core/actions/setup.ts:630
 msgid ""
 "no delivery backend is enabled — the daemon refuses to start without one"
 msgstr ""
 "Kein Zustell-Backend ist aktiviert — der Daemon startet ohne eines nicht"
 
-#: app/src/core/actions/setup.ts:628
+#: app/src/core/actions/setup.ts:635
 msgid ""
 "The daemon receives in the background without walking the index, and keeps "
 "going while you do nothing."
@@ -589,12 +593,12 @@ msgstr ""
 "Der Daemon empfängt im Hintergrund, ohne den Index zu durchlaufen, und läuft "
 "weiter, während du nichts tust."
 
-#: app/src/core/actions/setup.ts:632
+#: app/src/core/actions/setup.ts:639
 msgid "Receiving from {backends} for {seconds} seconds, then it stops itself."
 msgstr ""
 "Empfang von {backends} für {seconds} Sekunden, danach hält er sich selbst an."
 
-#: app/src/core/actions/setup.ts:638
+#: app/src/core/actions/setup.ts:645
 msgid ""
 "Expect one line per account as it connects — account ids, never phone "
 "numbers or message text."
@@ -602,15 +606,15 @@ msgstr ""
 "Erwarte eine Zeile pro Konto beim Verbinden — Konto-IDs, nie Telefonnummern "
 "oder Nachrichtentext."
 
-#: app/src/core/actions/setup.ts:640
+#: app/src/core/actions/setup.ts:647
 msgid "Run the daemon briefly now?"
 msgstr "Den Daemon jetzt kurz laufen lassen?"
 
-#: app/src/core/actions/setup.ts:641
+#: app/src/core/actions/setup.ts:648
 msgid "not started — the systemd unit is the real receiver"
 msgstr "Nicht gestartet — die systemd-Einheit ist der eigentliche Empfänger"
 
-#: app/src/core/actions/setup.ts:667
+#: app/src/core/actions/setup.ts:674
 msgid ""
 "{count} account received nothing — relink the device, then run `curlew setup "
 "--only daemon` again"
@@ -624,7 +628,7 @@ msgstr[1] ""
 "{count} Konten haben nichts empfangen — verknüpfe das Gerät neu und führe "
 "dann `curlew setup --only daemon` erneut aus"
 
-#: app/src/core/actions/setup.ts:679
+#: app/src/core/actions/setup.ts:686
 msgid "{count} message received, every loop closed, index closed cleanly"
 msgid_plural ""
 "{count} messages received, every loop closed, index closed cleanly"
@@ -634,97 +638,105 @@ msgstr[1] ""
 "{count} Nachrichten empfangen, jede Schleife beendet, Index sauber "
 "geschlossen"
 
-#: app/src/core/actions/setup.ts:701
+#: app/src/core/actions/setup.ts:708
 msgid "Install the systemd user unit"
 msgstr "systemd-Benutzereinheit installieren"
 
-#: app/src/core/actions/setup.ts:709
+#: app/src/core/actions/setup.ts:718
 msgid ""
 "This runs the daemon without a terminal, and starts it with your session."
 msgstr "Damit läuft der Daemon ohne Terminal und startet mit deiner Sitzung."
 
-#: app/src/core/actions/setup.ts:712
+#: app/src/core/actions/setup.ts:721
+msgid "Start the daemon with your session now?"
+msgstr "Den Daemon jetzt mit deiner Sitzung starten?"
+
+#: app/src/core/actions/setup.ts:722
+msgid "starting with the session was not turned on"
+msgstr "Das Starten mit der Sitzung wurde nicht eingeschaltet"
+
+#: app/src/core/actions/setup.ts:726
+msgid "the daemon starts with your session"
+msgstr "Der Daemon startet mit deiner Sitzung"
+
+#: app/src/core/actions/setup.ts:730
 msgid "Written: {path}"
 msgstr "Geschrieben: {path}"
 
-#: app/src/core/actions/setup.ts:722
+#: app/src/core/actions/setup.ts:740
 msgid "systemd-analyze --user verify exited {code}"
 msgstr "systemd-analyze --user verify endete mit {code}"
 
-#: app/src/core/actions/setup.ts:725
+#: app/src/core/actions/setup.ts:743
 msgid "systemd-analyze --user verify: exit 0, nothing to report."
 msgstr "systemd-analyze --user verify: Exit 0, nichts zu melden."
 
-#: app/src/core/actions/setup.ts:727
+#: app/src/core/actions/setup.ts:745
 msgid "{unit} is already enabled — leaving it as it is."
 msgstr "{unit} ist bereits aktiviert — bleibt unverändert."
 
-#: app/src/core/actions/setup.ts:728
+#: app/src/core/actions/setup.ts:746
 msgid "unit written, already enabled"
 msgstr "Einheit geschrieben, bereits aktiviert"
 
-#: app/src/core/actions/setup.ts:730
+#: app/src/core/actions/setup.ts:748
 msgid "Enable and start the unit now?"
 msgstr "Einheit jetzt aktivieren und starten?"
 
-#: app/src/core/actions/setup.ts:731
+#: app/src/core/actions/setup.ts:749
 msgid "the unit is written but not enabled"
 msgstr "Die Einheit ist geschrieben, aber nicht aktiviert"
 
-#: app/src/core/actions/setup.ts:738
-msgid "systemctl --user enable --now exited {code}"
-msgstr "systemctl --user enable --now endete mit {code}"
-
-#: app/src/core/actions/setup.ts:741
+#: app/src/core/actions/setup.ts:753
 msgid "{unit} is enabled and running."
 msgstr "{unit} ist aktiviert und läuft."
 
-#: app/src/core/actions/setup.ts:742
+#: app/src/core/actions/setup.ts:754
 msgid "When in doubt: journalctl --user -u curlew-daemon -f"
 msgstr "Im Zweifel: journalctl --user -u curlew-daemon -f"
 
-#: app/src/core/actions/setup.ts:744
+#: app/src/core/actions/setup.ts:756
 msgid "Without a session it still needs: loginctl enable-linger \"{user}\""
 msgstr "Ohne Sitzung braucht es noch: loginctl enable-linger \"{user}\""
 
-#: app/src/core/actions/setup.ts:748
+#: app/src/core/actions/setup.ts:760
 msgid "unit installed, enabled and started"
 msgstr "Einheit installiert, aktiviert und gestartet"
 
-#: app/src/core/actions/setup.ts:759
+#: app/src/core/actions/setup.ts:771
 msgid "Finish: what runs now, what is left"
 msgstr "Abschluss: Was jetzt läuft, was noch offen ist"
 
-#: app/src/core/actions/setup.ts:768
+#: app/src/core/actions/setup.ts:780
 msgid "What runs now:"
 msgstr "Was jetzt läuft:"
 
-#: app/src/core/actions/setup.ts:773 app/src/frontends/cli/colour.ts:42
+#: app/src/core/actions/setup.ts:785 app/src/frontends/cli/colour.ts:42
 msgid "done"
 msgstr "erledigt"
 
-#: app/src/core/actions/setup.ts:773 app/src/frontends/cli/colour.ts:43
+#: app/src/core/actions/setup.ts:785 app/src/frontends/cli/colour.ts:43
 msgid "skipped"
 msgstr "übersprungen"
 
-#: app/src/core/actions/setup.ts:773 app/src/frontends/cli/colour.ts:44
+#: app/src/core/actions/setup.ts:785 app/src/frontends/cli/colour.ts:44
 msgid "remaining"
 msgstr "offen"
 
-#: app/src/core/actions/setup.ts:778
+#: app/src/core/actions/setup.ts:790
 msgid "Keep going on your own:"
 msgstr "Mach selbst weiter:"
 
-#: app/src/core/actions/setup.ts:782 app/src/frontends/cli/setup.ts:114
-#: app/src/frontends/cli/setup.ts:155
+#: app/src/core/actions/setup.ts:794 app/src/frontends/cli/setup.ts:116
+#: app/src/frontends/cli/setup.ts:157
 msgid "Still to run:"
 msgstr "Noch auszuführen:"
 
-#: app/src/core/actions/setup.ts:787 app/src/frontends/cli/setup.ts:151
+#: app/src/core/actions/setup.ts:799 app/src/frontends/cli/setup.ts:153
 msgid "{done} of {total} stages done"
 msgstr "{done} von {total} Stufen erledigt"
 
-#: app/src/core/actions/setup.ts:806
+#: app/src/core/actions/setup.ts:818
 msgid ""
 "`{step}` is a step only the account holder can take: the provisioning "
 "payload is the secret that binds their account to this machine, and "
@@ -736,7 +748,7 @@ msgstr ""
 "und die Bedingungen eines Dritten zu akzeptieren ist eine Handlung in seinem "
 "Namen. Er muss ihn selbst in einem Terminal ausführen: `{command}`"
 
-#: app/src/core/actions/setup.ts:970
+#: app/src/core/actions/setup.ts:982
 msgid ""
 "Back up $XDG_DATA_HOME/curlew: with Signal or WhatsApp enabled the index is "
 "irreplaceable (those networks keep no archive), and the files under secrets/ "
@@ -747,7 +759,7 @@ msgstr ""
 "unter secrets/ sind Geheimnisse — sichere sie wie ein Passwort und teile sie "
 "nie."
 
-#: app/src/core/actions/setup.ts:975
+#: app/src/core/actions/setup.ts:987
 msgid ""
 "loginctl enable-linger \"$USER\" so the daemon also runs while you are "
 "logged out; that is what lets a user unit run at all without a session."
@@ -756,7 +768,7 @@ msgstr ""
 "abgemeldet bist; nur so kann eine Benutzereinheit überhaupt ohne Sitzung "
 "laufen."
 
-#: app/src/core/actions/setup.ts:979
+#: app/src/core/actions/setup.ts:991
 msgid ""
 "Check the daemon after a few days: `curlew deliveries`, or journalctl --user "
 "-u curlew-daemon. A unit sitting at exit 2 means every account was logged "
@@ -767,7 +779,7 @@ msgstr ""
 "abgemeldet — verknüpfe neu und führe dann systemctl --user restart curlew-"
 "daemon aus."
 
-#: app/src/core/actions/setup.ts:984
+#: app/src/core/actions/setup.ts:996
 msgid ""
 "End a linked device from the phone (Settings → Linked devices). Deleting the "
 "session file under secrets/ ends it on this machine."
@@ -776,7 +788,7 @@ msgstr ""
 "Geräte). Das Löschen der Sitzungsdatei unter secrets/ beendet es auf diesem "
 "Rechner."
 
-#: app/src/core/actions/setup.ts:988
+#: app/src/core/actions/setup.ts:1000
 msgid ""
 "A sync from a timer is the fallback for a machine where the daemon does not "
 "run — but not both at once: they take a lease on the same accounts."
@@ -785,7 +797,7 @@ msgstr ""
 "nicht läuft — aber nicht beides zugleich: Beide beanspruchen dieselben "
 "Konten."
 
-#: app/src/core/actions/setup.ts:992
+#: app/src/core/actions/setup.ts:1004
 msgid ""
 "Bump @gjsify/* to 0.53: it carries the long-lived-connection fix, and the "
 "three gjsify shims in the tree (addon-canary, download, the module-resolve "
@@ -795,7 +807,7 @@ msgstr ""
 "und die drei gjsify-Shims im Baum (addon-canary, download, der Module-"
 "Resolve-Workaround) entfallen damit."
 
-#: app/src/core/actions/setup.ts:996
+#: app/src/core/actions/setup.ts:1008
 msgid ""
 "An Adwaita UI drives these same setup steps with widgets instead of text — "
 "the reason the steps carry no yargs and no terminal."
@@ -803,13 +815,13 @@ msgstr ""
 "Eine Adwaita-Oberfläche steuert dieselben Einrichtungsschritte mit Widgets "
 "statt Text — deshalb enthalten die Schritte weder yargs noch ein Terminal."
 
-#: app/src/core/actions/setup.ts:1023
+#: app/src/core/actions/setup.ts:1035
 msgid "unknown setup stage: {stages} — one of {known}"
 msgid_plural "unknown setup stages: {stages} — one of {known}"
 msgstr[0] "Unbekannte Einrichtungsstufe: {stages} — eine von {known}"
 msgstr[1] "Unbekannte Einrichtungsstufen: {stages} — eine von {known}"
 
-#: app/src/core/actions/setup.ts:1099
+#: app/src/core/actions/setup.ts:1111
 msgid ""
 "neither a curlew checkout above this directory nor a `curlew` command on "
 "PATH. Clone the repo and run `gjsify install`, or install the published "
@@ -903,6 +915,30 @@ msgstr "Immer"
 #: app/src/window/agent-access-page.ts:58
 msgid "Deny"
 msgstr "Verweigern"
+
+#: app/src/core/lib/autostart-portal.ts:37
+msgid "no session bus"
+msgstr "kein Sitzungs-Bus"
+
+#: app/src/core/lib/autostart-portal.ts:63
+msgid "declined in the permission dialog"
+msgstr "im Berechtigungsdialog abgelehnt"
+
+#: app/src/core/lib/autostart-portal.ts:64
+msgid "the portal did not allow it"
+msgstr "Das Portal hat es nicht erlaubt"
+
+#: app/src/core/lib/autostart-portal.ts:69
+msgid "the portal did not answer"
+msgstr "Das Portal hat nicht geantwortet"
+
+#: app/src/core/lib/autostart-portal.ts:95
+msgid "no Background portal on this system"
+msgstr "Auf diesem System gibt es kein Hintergrund-Portal"
+
+#: app/src/core/lib/autostart-portal.ts:113
+msgid "Keep receiving messages while the window is closed"
+msgstr "Nachrichten weiter empfangen, während das Fenster geschlossen ist"
 
 #: app/src/core/lib/daemon-access-client.ts:78
 msgid "the running curlew daemon did not answer the access prompt ({reason})"
@@ -1024,7 +1060,7 @@ msgid_plural "{n} more chats have new messages"
 msgstr[0] "{n} weiterer Chat hat neue Nachrichten"
 msgstr[1] "{n} weitere Chats haben neue Nachrichten"
 
-#: app/src/core/lib/message-notifications.ts:118
+#: app/src/core/lib/message-notifications.ts:177
 #: app/src/window/attachment-view.ts:103
 msgid "Open"
 msgstr "Öffnen"
@@ -1649,7 +1685,7 @@ msgstr "Konto-ID aus `curlew accounts list`"
 msgid "Address exactly as the rule spells it (name@example.org)"
 msgstr "Reine Adresse genau so, wie die Regel sie schreibt (name@example.org)"
 
-#: app/src/frontends/cli/setup.ts:34
+#: app/src/frontends/cli/setup.ts:35
 msgid ""
 "Walk through putting curlew to work on this machine — link a device, accept "
 "the terms, build the index, install the systemd unit"
@@ -1657,65 +1693,65 @@ msgstr ""
 "Schritt für Schritt curlew auf diesem Rechner einrichten — Gerät koppeln, "
 "Bedingungen akzeptieren, Index aufbauen, systemd-Unit installieren"
 
-#: app/src/frontends/cli/setup.ts:42
+#: app/src/frontends/cli/setup.ts:43
 msgid "Run only these stages, by name (space- or comma-separated): {stages}"
 msgstr ""
 "Nur diese Stufen ausführen, nach Namen (durch Leerzeichen oder Komma "
 "getrennt): {stages}"
 
-#: app/src/frontends/cli/setup.ts:49
+#: app/src/frontends/cli/setup.ts:50
 msgid "Report what is done and what is left, without changing anything"
 msgstr "Berichten, was erledigt ist und was noch fehlt, ohne etwas zu ändern"
 
-#: app/src/frontends/cli/setup.ts:54
+#: app/src/frontends/cli/setup.ts:55
 msgid "Stop after the first stage that does not finish"
 msgstr "Nach der ersten Stufe anhalten, die nicht abgeschlossen wird"
 
-#: app/src/frontends/cli/setup.ts:121
+#: app/src/frontends/cli/setup.ts:123
 msgid "mode"
 msgstr "Modus"
 
-#: app/src/frontends/cli/setup.ts:122
+#: app/src/frontends/cli/setup.ts:124
 msgid "checkout"
 msgstr "Checkout"
 
-#: app/src/frontends/cli/setup.ts:123
+#: app/src/frontends/cli/setup.ts:125
 msgid "bundle"
 msgstr "Bundle"
 
-#: app/src/frontends/cli/setup.ts:123
+#: app/src/frontends/cli/setup.ts:125
 msgid "not found"
 msgstr "nicht gefunden"
 
-#: app/src/frontends/cli/setup.ts:124
+#: app/src/frontends/cli/setup.ts:126
 msgid "not on PATH"
 msgstr "nicht im PATH"
 
-#: app/src/frontends/cli/setup.ts:125
+#: app/src/frontends/cli/setup.ts:127
 msgid "config"
 msgstr "Konfiguration"
 
-#: app/src/frontends/cli/setup.ts:125
+#: app/src/frontends/cli/setup.ts:127
 msgid "(not written yet)"
 msgstr "(noch nicht geschrieben)"
 
-#: app/src/frontends/cli/setup.ts:126
+#: app/src/frontends/cli/setup.ts:128
 msgid "enabled backends"
 msgstr "aktive Backends"
 
-#: app/src/frontends/cli/setup.ts:126 packages/telegram/src/credentials.ts:181
+#: app/src/frontends/cli/setup.ts:128 packages/telegram/src/credentials.ts:181
 msgid "none"
 msgstr "keines"
 
-#: app/src/frontends/cli/setup.ts:131
+#: app/src/frontends/cli/setup.ts:133
 msgid "curlew setup — what is done and what is left"
 msgstr "curlew setup — was erledigt ist und was noch fehlt"
 
-#: app/src/frontends/cli/setup.ts:136
+#: app/src/frontends/cli/setup.ts:138
 msgid "(you only)"
 msgstr "(nur du)"
 
-#: app/src/frontends/cli/setup.ts:149
+#: app/src/frontends/cli/setup.ts:151
 msgid "{n} warning"
 msgid_plural "{n} warnings"
 msgstr[0] "{n} Warnung"

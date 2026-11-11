@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-11 01:04+0100\n"
+"POT-Creation-Date: 2026-11-11 07:34+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -107,6 +107,10 @@ msgid ""
 "reading messages of {target} needs approval, but `curlew daemon` is not "
 "running, so nobody can be asked — start it, or add a rule like {rule} to "
 "config.agentAccess.rules"
+msgstr ""
+
+#: app/src/core/actions/autostart.ts:32
+msgid "systemctl --user {verb} exited {code}"
 msgstr ""
 
 #: app/src/core/actions/chat-attachment.ts:139
@@ -243,109 +247,109 @@ msgstr ""
 msgid "{backend} cannot send email chat headers"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:224
+#: app/src/core/actions/setup.ts:227
 msgid "Link Signal"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:225
+#: app/src/core/actions/setup.ts:228
 msgid "Signal → Settings → Linked devices → Link new device."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:229
+#: app/src/core/actions/setup.ts:232
 msgid "Link WhatsApp (optional)"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:230
+#: app/src/core/actions/setup.ts:233
 msgid "WhatsApp → Linked devices → Link a device."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:243
+#: app/src/core/actions/setup.ts:246
 msgid ""
 "The pairing code is a secret: it binds your account to this machine. Do not "
 "copy, paste or send it — it is shown here, it is scanned from here, and it "
 "goes nowhere else."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:259
+#: app/src/core/actions/setup.ts:262
 msgid "GNOME Online Accounts: unavailable"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:275
+#: app/src/core/actions/setup.ts:278
 msgid "Readiness: bundle, tools, live check"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:295
+#: app/src/core/actions/setup.ts:298
 msgid ""
 "This walkthrough links your devices, builds the index and starts the "
 "receiving daemon as a systemd user unit. Stop at any time and re-run it — a "
 "second run says what is already done."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:302
+#: app/src/core/actions/setup.ts:305
 msgid "Checkout: {path}"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:309
+#: app/src/core/actions/setup.ts:312
 msgid ""
 "gjsify is not on PATH, and both the bundle and the unit need it. Install it "
 "with `npm install -g @gjsify/cli`, then run this again."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:314
+#: app/src/core/actions/setup.ts:317
 msgid "gjsify: {path}"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:319
+#: app/src/core/actions/setup.ts:322
 msgid ""
 "this process cannot name the bundle it is running from, and the unit needs "
 "that path. Run `curlew setup` from a built checkout, or from the installed "
 "command."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:329
+#: app/src/core/actions/setup.ts:332
 msgid ""
 "no bundle at {path}. Build it with `gjsify workspace curlew-cli build`, then "
 "run this again — a command does not build itself."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:336
+#: app/src/core/actions/setup.ts:339
 msgid "Bundle: {path}"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:338
+#: app/src/core/actions/setup.ts:341
 msgid ""
 "Published install: the installed command is used as it is. No checkout "
 "needed."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:340
+#: app/src/core/actions/setup.ts:343
 msgid "Live check (reads your online accounts, writes nothing):"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:346
+#: app/src/core/actions/setup.ts:349
 msgid "  runtime: {runtime}"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:347
+#: app/src/core/actions/setup.ts:350
 msgid "  runtime: {runtime} — the GNOME backends need GJS"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:352
+#: app/src/core/actions/setup.ts:355
 msgid "readiness"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:379
+#: app/src/core/actions/setup.ts:382
 msgid ""
 "{backend} no longer knows this device — the session file is still here, but "
 "the link is gone. Remove this machine's entry under Settings → Linked "
 "devices on the phone, then link again."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:388
+#: app/src/core/actions/setup.ts:391
 msgid "the {backend} link was dropped by the server — linking again is the fix"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:400
+#: app/src/core/actions/setup.ts:403
 msgid ""
 "A {backend} session from an earlier link is on this machine, but it has not "
 "been checked with {backend}. Run `curlew sync`: if {backend} still knows "
@@ -353,168 +357,168 @@ msgid ""
 "the sync says so and the link has to be done again."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:408
+#: app/src/core/actions/setup.ts:411
 msgid "a session exists; its live state is unknown"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:412
+#: app/src/core/actions/setup.ts:415
 msgid ""
 "curlew registers itself with your phone as a linked device. The QR code "
 "appears below, in this terminal."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:416
+#: app/src/core/actions/setup.ts:419
 msgid "On the phone: {steps}"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:418
+#: app/src/core/actions/setup.ts:421
 msgid "Link {backend} now?"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:419
+#: app/src/core/actions/setup.ts:422
 msgid "not linking {backend} now"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:433
+#: app/src/core/actions/setup.ts:436
 msgid "{backend} reports no linked account yet"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:438
+#: app/src/core/actions/setup.ts:441
 msgid "{count} {backend} account"
 msgid_plural "{count} {backend} accounts"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/core/actions/setup.ts:465
+#: app/src/core/actions/setup.ts:468
 msgid "Enable backends — read the terms first"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:477
+#: app/src/core/actions/setup.ts:480
 msgid ""
 "The daemon only receives what is enabled here. A first enable shows the "
 "terms the backend asks you to accept — read them yourself before you accept "
 "them."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:488
+#: app/src/core/actions/setup.ts:491
 msgid "{backend}: already enabled, terms accepted."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:495
+#: app/src/core/actions/setup.ts:498
 msgid "{backend} asks you to accept these terms:"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:509
+#: app/src/core/actions/setup.ts:512
 msgid "Read the terms for {backend} and accept them?"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:511
+#: app/src/core/actions/setup.ts:514
 msgid "{backend} stays disabled."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:516
+#: app/src/core/actions/setup.ts:519
 msgid "{backend}: enabled."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:520
+#: app/src/core/actions/setup.ts:523
 msgid "{backend}: could not be enabled ({outcome})."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:525
+#: app/src/core/actions/setup.ts:528
 msgid "no delivery backend is enabled — nothing to receive"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:527
+#: app/src/core/actions/setup.ts:530
 msgid "backends enabled"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:538
+#: app/src/core/actions/setup.ts:541
 msgid "Build the index"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:550
+#: app/src/core/actions/setup.ts:553
 msgid ""
 "curlew searches the local index, not the network, and `curlew sync` is the "
 "only thing that writes it — this stage IS that one call, not a second writer."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:554
+#: app/src/core/actions/setup.ts:557
 msgid "It reads the headers of your mail accounts, never a body."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:560
+#: app/src/core/actions/setup.ts:563
 msgid "The index already holds {count} message; syncing again only updates it."
 msgid_plural ""
 "The index already holds {count} messages; syncing again only updates it."
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/core/actions/setup.ts:568
+#: app/src/core/actions/setup.ts:571
 msgid "With many accounts this takes a few minutes."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:569
+#: app/src/core/actions/setup.ts:572
 msgid "Build the index now?"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:570
+#: app/src/core/actions/setup.ts:573
 msgid "the index stays as it is"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:575
+#: app/src/core/actions/setup.ts:578
 msgid "{messages}, {conversations}, from {backends}"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:576
+#: app/src/core/actions/setup.ts:579
 msgid "{n} message"
 msgid_plural "{n} messages"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/core/actions/setup.ts:578
+#: app/src/core/actions/setup.ts:581
 msgid "{n} conversation"
 msgid_plural "{n} conversations"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/core/actions/setup.ts:581
+#: app/src/core/actions/setup.ts:584
 msgid "no enabled backend"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:607
+#: app/src/core/actions/setup.ts:614
 msgid "The receiving daemon"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:623
+#: app/src/core/actions/setup.ts:630
 msgid ""
 "no delivery backend is enabled — the daemon refuses to start without one"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:628
+#: app/src/core/actions/setup.ts:635
 msgid ""
 "The daemon receives in the background without walking the index, and keeps "
 "going while you do nothing."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:632
+#: app/src/core/actions/setup.ts:639
 msgid "Receiving from {backends} for {seconds} seconds, then it stops itself."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:638
+#: app/src/core/actions/setup.ts:645
 msgid ""
 "Expect one line per account as it connects — account ids, never phone "
 "numbers or message text."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:640
+#: app/src/core/actions/setup.ts:647
 msgid "Run the daemon briefly now?"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:641
+#: app/src/core/actions/setup.ts:648
 msgid "not started — the systemd unit is the real receiver"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:667
+#: app/src/core/actions/setup.ts:674
 msgid ""
 "{count} account received nothing — relink the device, then run `curlew setup "
 "--only daemon` again"
@@ -524,104 +528,112 @@ msgid_plural ""
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/core/actions/setup.ts:679
+#: app/src/core/actions/setup.ts:686
 msgid "{count} message received, every loop closed, index closed cleanly"
 msgid_plural ""
 "{count} messages received, every loop closed, index closed cleanly"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/core/actions/setup.ts:701
+#: app/src/core/actions/setup.ts:708
 msgid "Install the systemd user unit"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:709
+#: app/src/core/actions/setup.ts:718
 msgid ""
 "This runs the daemon without a terminal, and starts it with your session."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:712
-msgid "Written: {path}"
+#: app/src/core/actions/setup.ts:721
+msgid "Start the daemon with your session now?"
 msgstr ""
 
 #: app/src/core/actions/setup.ts:722
-msgid "systemd-analyze --user verify exited {code}"
+msgid "starting with the session was not turned on"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:725
-msgid "systemd-analyze --user verify: exit 0, nothing to report."
-msgstr ""
-
-#: app/src/core/actions/setup.ts:727
-msgid "{unit} is already enabled — leaving it as it is."
-msgstr ""
-
-#: app/src/core/actions/setup.ts:728
-msgid "unit written, already enabled"
+#: app/src/core/actions/setup.ts:726
+msgid "the daemon starts with your session"
 msgstr ""
 
 #: app/src/core/actions/setup.ts:730
-msgid "Enable and start the unit now?"
+msgid "Written: {path}"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:731
-msgid "the unit is written but not enabled"
+#: app/src/core/actions/setup.ts:740
+msgid "systemd-analyze --user verify exited {code}"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:738
-msgid "systemctl --user enable --now exited {code}"
+#: app/src/core/actions/setup.ts:743
+msgid "systemd-analyze --user verify: exit 0, nothing to report."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:741
-msgid "{unit} is enabled and running."
+#: app/src/core/actions/setup.ts:745
+msgid "{unit} is already enabled — leaving it as it is."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:742
-msgid "When in doubt: journalctl --user -u curlew-daemon -f"
-msgstr ""
-
-#: app/src/core/actions/setup.ts:744
-msgid "Without a session it still needs: loginctl enable-linger \"{user}\""
+#: app/src/core/actions/setup.ts:746
+msgid "unit written, already enabled"
 msgstr ""
 
 #: app/src/core/actions/setup.ts:748
+msgid "Enable and start the unit now?"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:749
+msgid "the unit is written but not enabled"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:753
+msgid "{unit} is enabled and running."
+msgstr ""
+
+#: app/src/core/actions/setup.ts:754
+msgid "When in doubt: journalctl --user -u curlew-daemon -f"
+msgstr ""
+
+#: app/src/core/actions/setup.ts:756
+msgid "Without a session it still needs: loginctl enable-linger \"{user}\""
+msgstr ""
+
+#: app/src/core/actions/setup.ts:760
 msgid "unit installed, enabled and started"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:759
+#: app/src/core/actions/setup.ts:771
 msgid "Finish: what runs now, what is left"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:768
+#: app/src/core/actions/setup.ts:780
 msgid "What runs now:"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:773 app/src/frontends/cli/colour.ts:42
+#: app/src/core/actions/setup.ts:785 app/src/frontends/cli/colour.ts:42
 msgid "done"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:773 app/src/frontends/cli/colour.ts:43
+#: app/src/core/actions/setup.ts:785 app/src/frontends/cli/colour.ts:43
 msgid "skipped"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:773 app/src/frontends/cli/colour.ts:44
+#: app/src/core/actions/setup.ts:785 app/src/frontends/cli/colour.ts:44
 msgid "remaining"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:778
+#: app/src/core/actions/setup.ts:790
 msgid "Keep going on your own:"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:782 app/src/frontends/cli/setup.ts:114
-#: app/src/frontends/cli/setup.ts:155
+#: app/src/core/actions/setup.ts:794 app/src/frontends/cli/setup.ts:116
+#: app/src/frontends/cli/setup.ts:157
 msgid "Still to run:"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:787 app/src/frontends/cli/setup.ts:151
+#: app/src/core/actions/setup.ts:799 app/src/frontends/cli/setup.ts:153
 msgid "{done} of {total} stages done"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:806
+#: app/src/core/actions/setup.ts:818
 msgid ""
 "`{step}` is a step only the account holder can take: the provisioning "
 "payload is the secret that binds their account to this machine, and "
@@ -629,58 +641,58 @@ msgid ""
 "them, in a terminal: `{command}`"
 msgstr ""
 
-#: app/src/core/actions/setup.ts:970
+#: app/src/core/actions/setup.ts:982
 msgid ""
 "Back up $XDG_DATA_HOME/curlew: with Signal or WhatsApp enabled the index is "
 "irreplaceable (those networks keep no archive), and the files under secrets/ "
 "are secrets — back them up like a password, never share them."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:975
+#: app/src/core/actions/setup.ts:987
 msgid ""
 "loginctl enable-linger \"$USER\" so the daemon also runs while you are "
 "logged out; that is what lets a user unit run at all without a session."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:979
+#: app/src/core/actions/setup.ts:991
 msgid ""
 "Check the daemon after a few days: `curlew deliveries`, or journalctl --user "
 "-u curlew-daemon. A unit sitting at exit 2 means every account was logged "
 "out — relink, then systemctl --user restart curlew-daemon."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:984
+#: app/src/core/actions/setup.ts:996
 msgid ""
 "End a linked device from the phone (Settings → Linked devices). Deleting the "
 "session file under secrets/ ends it on this machine."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:988
+#: app/src/core/actions/setup.ts:1000
 msgid ""
 "A sync from a timer is the fallback for a machine where the daemon does not "
 "run — but not both at once: they take a lease on the same accounts."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:992
+#: app/src/core/actions/setup.ts:1004
 msgid ""
 "Bump @gjsify/* to 0.53: it carries the long-lived-connection fix, and the "
 "three gjsify shims in the tree (addon-canary, download, the module-resolve "
 "workaround) go away with it."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:996
+#: app/src/core/actions/setup.ts:1008
 msgid ""
 "An Adwaita UI drives these same setup steps with widgets instead of text — "
 "the reason the steps carry no yargs and no terminal."
 msgstr ""
 
-#: app/src/core/actions/setup.ts:1023
+#: app/src/core/actions/setup.ts:1035
 msgid "unknown setup stage: {stages} — one of {known}"
 msgid_plural "unknown setup stages: {stages} — one of {known}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/core/actions/setup.ts:1099
+#: app/src/core/actions/setup.ts:1111
 msgid ""
 "neither a curlew checkout above this directory nor a `curlew` command on "
 "PATH. Clone the repo and run `gjsify install`, or install the published "
@@ -764,6 +776,30 @@ msgstr ""
 #: app/src/core/lib/access-notifications.ts:64
 #: app/src/window/agent-access-page.ts:58
 msgid "Deny"
+msgstr ""
+
+#: app/src/core/lib/autostart-portal.ts:37
+msgid "no session bus"
+msgstr ""
+
+#: app/src/core/lib/autostart-portal.ts:63
+msgid "declined in the permission dialog"
+msgstr ""
+
+#: app/src/core/lib/autostart-portal.ts:64
+msgid "the portal did not allow it"
+msgstr ""
+
+#: app/src/core/lib/autostart-portal.ts:69
+msgid "the portal did not answer"
+msgstr ""
+
+#: app/src/core/lib/autostart-portal.ts:95
+msgid "no Background portal on this system"
+msgstr ""
+
+#: app/src/core/lib/autostart-portal.ts:113
+msgid "Keep receiving messages while the window is closed"
 msgstr ""
 
 #: app/src/core/lib/daemon-access-client.ts:78
@@ -862,7 +898,7 @@ msgid_plural "{n} more chats have new messages"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/core/lib/message-notifications.ts:118
+#: app/src/core/lib/message-notifications.ts:177
 #: app/src/window/attachment-view.ts:103
 msgid "Open"
 msgstr ""
@@ -1407,69 +1443,69 @@ msgstr ""
 msgid "Address exactly as the rule spells it (name@example.org)"
 msgstr ""
 
-#: app/src/frontends/cli/setup.ts:34
+#: app/src/frontends/cli/setup.ts:35
 msgid ""
 "Walk through putting curlew to work on this machine — link a device, accept "
 "the terms, build the index, install the systemd unit"
 msgstr ""
 
-#: app/src/frontends/cli/setup.ts:42
+#: app/src/frontends/cli/setup.ts:43
 msgid "Run only these stages, by name (space- or comma-separated): {stages}"
 msgstr ""
 
-#: app/src/frontends/cli/setup.ts:49
+#: app/src/frontends/cli/setup.ts:50
 msgid "Report what is done and what is left, without changing anything"
 msgstr ""
 
-#: app/src/frontends/cli/setup.ts:54
+#: app/src/frontends/cli/setup.ts:55
 msgid "Stop after the first stage that does not finish"
 msgstr ""
 
-#: app/src/frontends/cli/setup.ts:121
+#: app/src/frontends/cli/setup.ts:123
 msgid "mode"
 msgstr ""
 
-#: app/src/frontends/cli/setup.ts:122
+#: app/src/frontends/cli/setup.ts:124
 msgid "checkout"
 msgstr ""
 
-#: app/src/frontends/cli/setup.ts:123
+#: app/src/frontends/cli/setup.ts:125
 msgid "bundle"
 msgstr ""
 
-#: app/src/frontends/cli/setup.ts:123
+#: app/src/frontends/cli/setup.ts:125
 msgid "not found"
 msgstr ""
 
-#: app/src/frontends/cli/setup.ts:124
+#: app/src/frontends/cli/setup.ts:126
 msgid "not on PATH"
 msgstr ""
 
-#: app/src/frontends/cli/setup.ts:125
+#: app/src/frontends/cli/setup.ts:127
 msgid "config"
 msgstr ""
 
-#: app/src/frontends/cli/setup.ts:125
+#: app/src/frontends/cli/setup.ts:127
 msgid "(not written yet)"
 msgstr ""
 
-#: app/src/frontends/cli/setup.ts:126
+#: app/src/frontends/cli/setup.ts:128
 msgid "enabled backends"
 msgstr ""
 
-#: app/src/frontends/cli/setup.ts:126 packages/telegram/src/credentials.ts:181
+#: app/src/frontends/cli/setup.ts:128 packages/telegram/src/credentials.ts:181
 msgid "none"
 msgstr ""
 
-#: app/src/frontends/cli/setup.ts:131
+#: app/src/frontends/cli/setup.ts:133
 msgid "curlew setup — what is done and what is left"
 msgstr ""
 
-#: app/src/frontends/cli/setup.ts:136
+#: app/src/frontends/cli/setup.ts:138
 msgid "(you only)"
 msgstr ""
 
-#: app/src/frontends/cli/setup.ts:149
+#: app/src/frontends/cli/setup.ts:151
 msgid "{n} warning"
 msgid_plural "{n} warnings"
 msgstr[0] ""

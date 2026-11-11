@@ -2,6 +2,7 @@ app/src/core/access-broker.ts
 app/src/core/access.ts
 app/src/core/actions/access.ts
 app/src/core/actions/accounts.ts
+app/src/core/actions/autostart.ts
 app/src/core/actions/backends.ts
 app/src/core/actions/calendar.ts
 app/src/core/actions/chat-attachment.ts
@@ -35,6 +36,7 @@ app/src/core/backends/registry.ts
 app/src/core/config.ts
 app/src/core/grants.ts
 app/src/core/lib/access-notifications.ts
+app/src/core/lib/autostart-portal.ts
 app/src/core/lib/contact-name.ts
 app/src/core/lib/daemon-access-client.ts
 app/src/core/lib/daemon-accounts.ts
@@ -48,6 +50,7 @@ app/src/core/lib/date.ts
 app/src/core/lib/i18n.ts
 app/src/core/lib/message-notices.ts
 app/src/core/lib/message-notifications.ts
+app/src/core/lib/sandbox.ts
 app/src/core/markdown.ts
 app/src/core/runtime.ts
 app/src/core/write-log.ts

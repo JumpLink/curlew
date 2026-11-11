@@ -11,6 +11,7 @@ import GLib from 'gi://GLib?version=2.0';
 import Gio from 'gi://Gio?version=2.0';
 import { _ } from '@curlew/protocol';
 import type { Notice } from './message-notices.ts';
+import { inSandbox } from './sandbox.ts';
 
 const NOTIFICATIONS_NAME = 'org.freedesktop.Notifications';
 const NOTIFICATIONS_PATH = '/org/freedesktop/Notifications';
@@ -62,11 +63,6 @@ function launchWindow(conversationId: string): void {
   } catch {
     // No desktop entry installed: the notification still did its job.
   }
-}
-
-/** Flatpak marks its sandbox with this file and variable. */
-function inSandbox(): boolean {
-  return GLib.file_test('/.flatpak-info', GLib.FileTest.EXISTS) || GLib.getenv('FLATPAK_ID') !== null;
 }
 
 /**

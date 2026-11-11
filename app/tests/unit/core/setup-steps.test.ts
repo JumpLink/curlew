@@ -25,6 +25,8 @@ import {
   runSetup,
   setupStatus,
 } from '../../../src/core/actions/setup.ts';
+import type { Autostart } from '../../../src/core/actions/autostart.ts';
+import { systemdAutostart } from '../../../src/core/actions/autostart.ts';
 import type { SetupContext, SetupStepState } from '../../../src/core/actions/setup.ts';
 import { FAKE_PAIRING_PAYLOAD, SANDBOX, fakeContext, fakeHost, fakePrompter } from './setup-fakes.ts';
 
@@ -412,6 +414,54 @@ export default async function setupSteps(): Promise<void> {
       const off = fakeHost();
       off.commands.set('systemctl', { path: '/usr/bin/systemctl', code: 1, output: 'disabled' });
       expect(await probeStage('daemon', fakeContext({ host: off }))).toBe('remaining');
+    });
+  });
+
+  describe('autostart', () => {
+    it('the systemd driver enables with a reload first and reports an exit code as a reason', async () => {
+      const host = fakeHost();
+      host.commands.set('systemctl', { path: '/usr/bin/systemctl', code: 0, output: '' });
+      expect((await systemdAutostart(host).enable()).ok).toBe(true);
+      expect(host.calls.map((call) => call.argv.slice(2, 4).join(' '))).toStrictEqual([
+        'daemon-reload',
+        'enable --now',
+      ]);
+      const broken = fakeHost();
+      const result = await systemdAutostart(broken).disable();
+      expect(result.ok === false && result.reason.includes('exited 1')).toBe(true);
+    });
+
+    it('a driver without a unit file replaces the unit stage: nothing is written, nothing verified', async () => {
+      const asked: string[] = [];
+      const portal: Autostart = {
+        needsUnitFile: false,
+        status: async () => 'unknown',
+        enable: async () => {
+          asked.push('enable');
+          return { ok: true };
+        },
+        disable: async () => ({ ok: true }),
+      };
+      const host = fakeHost();
+      const ctx = { ...fakeContext({ host, prompter: fakePrompter([true]) }), autostart: portal };
+      expect(await probeStage('unit', ctx)).toBe('remaining');
+      const outcome = await stage('unit').run(ctx);
+      expect(outcome.status).toBe('done');
+      expect(asked).toStrictEqual(['enable']);
+      expect(host.files.size).toBe(0);
+      expect(host.calls.length).toBe(0);
+    });
+
+    it('a refusal by the driver fails the stage with its reason', async () => {
+      const portal: Autostart = {
+        needsUnitFile: false,
+        status: async () => 'unknown',
+        enable: async () => ({ ok: false, reason: 'declined' }),
+        disable: async () => ({ ok: true }),
+      };
+      const ctx = { ...fakeContext({ prompter: fakePrompter([true]) }), autostart: portal };
+      const outcome = await stage('unit').run(ctx);
+      expect(outcome.status === 'failed' && outcome.reason === 'declined').toBe(true);
     });
   });
 
