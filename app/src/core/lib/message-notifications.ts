@@ -1,5 +1,6 @@
 /**
- * The daemon's message notifications on the session bus (`org.freedesktop.Notifications`).
+ * The daemon's message notifications on the session bus: the desktop's own service
+ * (`org.freedesktop.Notifications`) outside a sandbox, the Notification portal inside one.
  *
  * Transport only: WHICH messages announce and what they say is `message-notices.ts`. One
  * notification per chat, replaced in place as more messages come, so a busy chat is one entry in
@@ -13,6 +14,9 @@ import type { Notice } from './message-notices.ts';
 
 const NOTIFICATIONS_NAME = 'org.freedesktop.Notifications';
 const NOTIFICATIONS_PATH = '/org/freedesktop/Notifications';
+const PORTAL_NAME = 'org.freedesktop.portal.Desktop';
+const PORTAL_PATH = '/org/freedesktop/portal/desktop';
+const PORTAL_NOTIFICATION = 'org.freedesktop.portal.Notification';
 const APP_ID = 'eu.jumplink.curlew';
 const APP_PATH = '/eu/jumplink/curlew';
 const OPEN_ACTION = 'open-conversation';
@@ -60,8 +64,67 @@ function launchWindow(conversationId: string): void {
   }
 }
 
-/** The sink on the session bus; with no bus or no notification service a notice is dropped. */
+/** Flatpak marks its sandbox with this file and variable. */
+function inSandbox(): boolean {
+  return GLib.file_test('/.flatpak-info', GLib.FileTest.EXISTS) || GLib.getenv('FLATPAK_ID') !== null;
+}
+
+/**
+ * The sink behind the Notification portal. The portal knows the app from the sandbox, not from
+ * what is sent, and reports a click to that application id: the window takes the
+ * `open-conversation` action itself, or the desktop entry starts one. The daemon forwards
+ * nothing, so it needs no action of its own. The same id replaces a chat's earlier notification.
+ */
+function portalNoticeSink(): NoticeSink {
+  let connection: Gio.DBusConnection | null = null;
+  try {
+    connection = Gio.bus_get_sync(Gio.BusType.SESSION, null);
+  } catch {
+    // Without a session bus there is nowhere to show anything.
+  }
+  return {
+    show: (notice) => {
+      connection?.call(
+        PORTAL_NAME,
+        PORTAL_PATH,
+        PORTAL_NOTIFICATION,
+        'AddNotification',
+        new GLib.Variant('(sa{sv})', [
+          notice.conversationId,
+          {
+            title: new GLib.Variant('s', notice.title),
+            body: new GLib.Variant('s', notice.body),
+            category: new GLib.Variant('s', 'im.received'),
+            'default-action': new GLib.Variant('s', OPEN_ACTION),
+            'default-action-target': new GLib.Variant('v', new GLib.Variant('s', notice.conversationId)),
+          },
+        ]),
+        null,
+        Gio.DBusCallFlags.NO_AUTO_START,
+        10_000,
+        null,
+        (_source, result) => {
+          try {
+            connection?.call_finish(result!);
+          } catch {
+            // No portal on this system.
+          }
+        },
+      );
+    },
+    close: () => {},
+  };
+}
+
+/**
+ * The sink for this run: the portal in a sandbox, the desktop's service outside. With no bus or
+ * no notification service a notice is dropped.
+ */
 export function gioNoticeSink(): NoticeSink {
+  return inSandbox() ? portalNoticeSink() : fdoNoticeSink();
+}
+
+function fdoNoticeSink(): NoticeSink {
   let connection: Gio.DBusConnection | null = null;
   try {
     connection = Gio.bus_get_sync(Gio.BusType.SESSION, null);

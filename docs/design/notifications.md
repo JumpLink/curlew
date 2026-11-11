@@ -19,11 +19,20 @@ become one "N more chats have new messages" summary.
 
 ## Transport
 
-`message-notifications.ts` talks to `org.freedesktop.Notifications`: one notification per chat,
+`message-notifications.ts` has two drivers behind one `NoticeSink`, chosen by whether the process
+runs in a sandbox (`/.flatpak-info`, `FLATPAK_ID`). The caller never knows which.
+
+Outside a sandbox it talks to `org.freedesktop.Notifications`: one notification per chat,
 replaced through `replaces_id`, hints `desktop-entry` and `category=im.received`, default action
 "Open". Clicking calls `org.freedesktop.Application.ActivateAction('open-conversation', [id])` on
 `eu.jumplink.curlew`; with no window running it launches the desktop entry with
 `CURLEW_WINDOW_OPEN=<id>`.
+
+Inside a sandbox it calls the Notification portal (`AddNotification`, the chat id as the
+notification id, so a busy chat is replaced in place). The portal reports a click to the application
+id, so the window takes `open-conversation` itself and the daemon forwards nothing. Both drivers are
+exercised against a fake service by `gjsify run test:notifications-dbus`; the portal one has not run
+inside a real Flatpak yet.
 
 The default sink exists only for the user's own index (`dbPath` unset); tests get none, so
 synthetic messages never reach a real server.
