@@ -232,7 +232,10 @@ export default async () => {
 
     await it('asks again the next day', async () => {
       const service = new FakeGroupService();
-      let now = Date.now();
+      // Anchor to the start of the current UTC day; otherwise a local run after 12:00 UTC
+      // advances the fake clock by 1.5 days onto the day *after* next, past libsignal's
+      // auth-credential redemption window (redemption_time - 1 day .. redemption_time + 2 days).
+      let now = Math.floor(Date.now() / (DAY * 1000)) * (DAY * 1000) + 1_000;
       const names = namesFor(service, () => now);
       const group = service.add('Daily');
       await names.nameOf(group.masterKey);
