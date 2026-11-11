@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- The Telegram follow no longer goes deaf after its first catch-up: the catch-up closed the client that carries the update stream, so voice notes and messages sent later arrived only after a restart.
+- Sending a file over XMPP failed at the upload slot, because the server's `slot` answer was read as if it were named like the request.
 - Sending to Signal failed with "invalid signature detected", because the server's unpadded base64 lost its last byte when decoded.
 - `.deb` and `.rpm` no longer carry the test bundles that were left in `dist/` by the test run.
 - The `.deb` and `.rpm` are for x86_64 only now, because they carry the native libraries the app loads.
