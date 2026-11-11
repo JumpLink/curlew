@@ -169,6 +169,26 @@ jobs:
             fi
           done
 
+      # The Flatpak's first half. `ship` renders the app icon into the sizes a Flatpak needs
+      # through `gjs`, which this job has and the Flatpak container (Freedesktop SDK) does not, so
+      # the payload is assembled here and only PACKED there (`--from-stage`, ADR 0024 § A2). It has
+      # to happen now: the macOS/Windows installs below swap the native prebuilds in
+      # `node_modules`, and the Linux ones are what the stage copies. Tarred because an artifact
+      # upload drops file modes, and the launcher has to stay executable.
+      - name: Stage the Flatpak payload
+        working-directory: app
+        run: gjsify ship linux --skip-build --stage --target flatpak
+
+      - name: Tar the Flatpak stage
+        run: tar -C app/ship -cf flatpak-stage.tar stage
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flatpak-stage
+          path: flatpak-stage.tar
+          retention-days: 1
+          compression-level: 0
+
       # The `.deb`/`.rpm` above are built from `build` (`build:gjs`), but `gjsify.ship.bundle.darwin`
       # and `.win32` point at `dist/curlew.node.mjs` — a bundle NOTHING above builds, and
       # `--skip-build` tells `ship` not to build it either. Measured on 0.54.0: without this step
@@ -243,9 +263,10 @@ jobs:
             app/ship/out/*.msi
           compression-level: 0
 
-  # The same app inside a sandbox (ADR 0011). `gjsify ship --target flatpak` writes the manifest
-  # from `gjsify.ship.flatpak` in app/package.json and packs the staged bundle; the container is
-  # the one Flathub's own CI uses, with `flatpak-builder` and the GNOME runtime preinstalled.
+  # The same app inside a sandbox (ADR 0011). The payload was staged in `build-and-test`; this job
+  # packs it. `gjsify ship --from-stage --target flatpak` writes the manifest from the settings
+  # the stage recorded (`gjsify.ship.flatpak` in app/package.json) and runs `flatpak-builder` in
+  # the container Flathub's own CI uses, which carries it and the GNOME runtime.
   # `--privileged` because flatpak-builder runs bubblewrap, which needs user namespaces.
   flatpak:
     needs: build-and-test
@@ -258,28 +279,20 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: bundle
-          path: app/dist
+          name: flatpak-stage
 
-      - name: Cache gjsify tarball store
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/gjsify/tarballs
-          key: gjsify-tarballs-${{ hashFiles('gjsify-lock.json') }}
-          restore-keys: gjsify-tarballs-
+      - name: Unpack the stage
+        run: mkdir -p app/ship && tar -C app/ship -xf flatpak-stage.tar
 
+      # `--from-stage` needs the CLI and nothing of the project: no install, no node_modules.
       - name: Bootstrap the gjsify CLI
         run: |
           VERSION=$(node -p "require('./app/package.json').devDependencies['@gjsify/cli']")
           npm install -g "@gjsify/cli@$VERSION"
 
-      # The prebuilds `gjsify.ship.bundledTypelibs` names live in node_modules.
-      - name: Install dependencies (gjsify install --immutable)
-        run: gjsify install --immutable
-
       - name: Package the Flatpak
         working-directory: app
-        run: gjsify ship linux --skip-build --target flatpak
+        run: gjsify ship --from-stage ship/stage --expect-target linux-x64 --target flatpak
 
       - name: Assert the bundle arrived
         working-directory: app/ship/out
