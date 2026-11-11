@@ -64,6 +64,7 @@ import type { DeliveryProgress, DeliverySyncResult, IndexDatabase, RebuildResult
 import {
   ensurePrivateDir,
   FileSink,
+  fallbackAttachmentName,
   loadAttachmentHandle,
   loadAttachments,
   newestSeq,
@@ -454,7 +455,7 @@ export function createDaemonFetchHandler(options: DaemonFetchHandlerOptions): Da
     const dir = ensurePrivateDir(previewDirFor(ref, request.index, previewsDir()));
     // A stale cached file would make `resolveDownloadPath` pick a colliding name, so clear first.
     for (const name of readdirSync(dir)) rmSync(join(dir, name), { recursive: true, force: true });
-    const path = resolveDownloadPath(dir, info.filename, 'attachment');
+    const path = resolveDownloadPath(dir, info.filename, fallbackAttachmentName(info));
     const sink = new FileSink(path);
     try {
       const fetcher = await backend.openAttachments(request.account);

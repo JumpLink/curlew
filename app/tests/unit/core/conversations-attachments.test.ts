@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import type { AccessPort } from '../../../src/core/access.ts';
+import { fallbackAttachmentName } from '@curlew/store';
 import { conversationsShow } from '../../../src/core/actions/conversations.ts';
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
 import { requireParticipantsRead } from '../../../src/core/actions/message-access.ts';
@@ -130,6 +131,18 @@ export default async () => {
       }
       expect(asked.length).toBe(1);
       expect(refused).toBe(true);
+    });
+  });
+
+  await describe('fallbackAttachmentName', async () => {
+    await it('names a voice note by its type', () => {
+      expect(fallbackAttachmentName({ kind: 'voice', mimeType: 'audio/ogg; codecs=opus', index: 0 })).toBe(
+        'voice-note-1.ogg',
+      );
+    });
+
+    await it('keeps a name without extension for an unknown type', () => {
+      expect(fallbackAttachmentName({ kind: 'file', mimeType: null, index: 2 })).toBe('attachment-3');
     });
   });
 };

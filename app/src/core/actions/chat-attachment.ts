@@ -23,6 +23,7 @@ import { configPath, indexDbPath } from '@curlew/store';
 import {
   attachmentsDir,
   ensurePrivateDir,
+  fallbackAttachmentName,
   FileSink,
   loadAttachmentHandle,
   loadAttachments,
@@ -186,7 +187,7 @@ export async function chatSaveAttachment(params: ChatSaveAttachmentParams): Prom
   }
 
   const directory = ensurePrivateDir(params.directory ?? attachmentsDir());
-  const filename = safeFileName(info.filename, `chat-${params.ref.backend}-${params.index}.bin`);
+  const filename = safeFileName(info.filename, fallbackAttachmentName(info));
   const path = resolveDownloadPath(directory, filename, 'attachment');
   const sink = new FileSink(path);
   try {
