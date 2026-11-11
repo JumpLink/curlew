@@ -37,6 +37,7 @@
 
 ### Added
 
+- A Matrix room with only you in it counts as your own chat: sending to it needs no grant. The member list is asked from the homeserver each time, and anything unclear (an error, a pending invite, somebody else) counts as not yours.
 - `conversations_get` lists the attachments of a chat message (kind such as voice or image, size, duration, and whether `message_save_attachment` can fetch it), so an agent can find and save a voice note. The filename shows only with `include_bodies`.
 - A Signal group shows its name. Curlew reads it from Signal's group service when a message arrives in the group (a read-only fetch for groups you belong to; `backends.signal.settings.groupNames: false` turns it off).
 - A mail account no longer needs GNOME Online Accounts. *Add Account → Mail* asks for an address and a password, finds the servers the way Thunderbird does (HTTPS only), asks for them only when nobody publishes them, and proves the login before it saves anything. The password lives in a file of its own (0600) and in no config, log or error. This is how mail works in the Flatpak. GNOME Online Accounts stay a shortcut where they exist.
