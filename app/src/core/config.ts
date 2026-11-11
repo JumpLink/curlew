@@ -13,6 +13,7 @@
 import type { Classification } from '@curlew/protocol';
 import { normalizeAddress } from '@curlew/protocol';
 import { configPath, ensurePrivateDir } from '@curlew/store';
+import { ACCENT_CHOICES, isAccentChoice } from './lib/appearance.ts';
 import { type AgentAccessPolicy, defaultAgentAccess, parseAgentAccess } from './agent-access.ts';
 import { type Grant, type ParseGrantsOptions, parseGrants } from './grants.ts';
 import { chmodSync, existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
@@ -37,6 +38,8 @@ export interface UiConfig {
   notifications: 'preview' | 'sender' | 'off';
   /** A single video in a chat plays muted and looped while on screen. Unset: on, unless the system asks for fewer animations. */
   playVideosSilently?: boolean;
+  /** `default` (Curlew's blue), `system` (follow the desktop) or an Adwaita accent name. Unset: `default`. */
+  accentColor?: string;
 }
 
 export interface CurlewConfig {
@@ -179,10 +182,14 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   const playVideosSilently = (rawUi as Record<string, unknown>).playVideosSilently;
   if (playVideosSilently !== undefined && typeof playVideosSilently !== 'boolean')
     throw new Error('config.ui.playVideosSilently must be true or false');
+  const accentColor = (rawUi as Record<string, unknown>).accentColor;
+  if (accentColor !== undefined && (typeof accentColor !== 'string' || !isAccentChoice(accentColor)))
+    throw new Error(`config.ui.accentColor must be one of ${ACCENT_CHOICES.join(', ')}`);
   const ui: UiConfig = {
     showAllEmails,
     notifications,
     ...(playVideosSilently === undefined ? {} : { playVideosSilently }),
+    ...(accentColor === undefined ? {} : { accentColor }),
   };
 
   const senders: Record<string, Classification> = {};

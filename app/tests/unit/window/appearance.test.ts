@@ -1,0 +1,36 @@
+import { describe, expect, it } from '@gjsify/unit';
+
+import { parseConfig } from '../../../src/core/config.ts';
+import { ACCENT_CHOICES, accentToImpose, isAccentChoice } from '../../../src/core/lib/appearance.ts';
+
+export default async () => {
+  await describe('the accent choice', async () => {
+    await it('is Curlew blue unless the person chose otherwise', async () => {
+      expect(accentToImpose(undefined)).toBe('blue');
+      expect(accentToImpose('default')).toBe('blue');
+      expect(accentToImpose('not-a-colour')).toBe('blue');
+      expect(accentToImpose('green')).toBe('green');
+    });
+
+    await it('leaves the desktop accent alone for "system"', async () => {
+      expect(accentToImpose('system')).toBe(null);
+    });
+
+    await it('knows every choice the preferences offer', async () => {
+      expect(ACCENT_CHOICES.every((choice) => isAccentChoice(choice))).toBe(true);
+      expect(isAccentChoice('magenta')).toBe(false);
+    });
+
+    await it('is validated in the config', async () => {
+      expect(parseConfig('{"backends":{}}').ui.accentColor).toBe(undefined);
+      expect(parseConfig('{"backends":{},"ui":{"accentColor":"teal"}}').ui.accentColor).toBe('teal');
+      let message = '';
+      try {
+        parseConfig('{"backends":{},"ui":{"accentColor":"magenta"}}');
+      } catch (err) {
+        message = err instanceof Error ? err.message : String(err);
+      }
+      expect(/accentColor/.test(message)).toBe(true);
+    });
+  });
+};
