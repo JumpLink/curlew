@@ -589,6 +589,7 @@ export default async () => {
       const note = list.find((e) => e.id === 'note-to-self');
       expect(note).not.toBe(undefined);
       expect(note!.title).toBe('Note to self');
+      expect(note!.self).toBe(true);
       expect(note!.backend).toBe('signal');
       expect(
         note!.members

@@ -25,6 +25,7 @@
 
 ### Changed
 
+- The message menu no longer offers what the chat cannot do: no reactions in Telegram's Saved Messages, and no edit or delete on Signal messages older than a day (the note to self is exempt).
 - Mail accounts of the system are read through `@gjsify/system-accounts` instead of Curlew's own GNOME Online Accounts code. A Flatpak without access to them now reports none instead of failing.
 - The cache of fetched attachment previews is capped at 1 GiB while the window runs; the least recently fetched parts are dropped first and a tap fetches one again. It used to grow until the window was restarted.
 - `curlew window`: the filter chips are pills that fill with the accent colour while on, and the
