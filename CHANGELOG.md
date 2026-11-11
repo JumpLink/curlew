@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- A saved attachment the sender gave no name (a voice note) is named after its type, such as `voice-note-1.ogg`, instead of `attachment`.
 - An agent reading your own Saved Messages no longer gets an access prompt: a person with addresses on several networks counts as you when any of them is yours, and a chat with nobody else in it needs no approval.
 - The Telegram follow no longer goes deaf after its first catch-up: the catch-up closed the client that carries the update stream, so voice notes and messages sent later arrived only after a restart.
 - Sending a file over XMPP failed at the upload slot, because the server's `slot` answer was read as if it were named like the request.

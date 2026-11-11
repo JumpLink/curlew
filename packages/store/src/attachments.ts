@@ -88,6 +88,33 @@ function chatAttachments(db: IndexDatabase, ref: MessageRef): AttachmentInfo[] {
   }));
 }
 
+const EXTENSIONS: Record<string, string> = {
+  'audio/ogg': 'ogg',
+  'audio/opus': 'opus',
+  'audio/mpeg': 'mp3',
+  'audio/mp4': 'm4a',
+  'audio/aac': 'aac',
+  'audio/wav': 'wav',
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+  'video/mp4': 'mp4',
+  'video/webm': 'webm',
+  'application/pdf': 'pdf',
+};
+
+/**
+ * A name for an attachment the sender gave none (a voice note has none), with an extension from
+ * its type so a tool that opens the file by name knows what it is.
+ */
+export function fallbackAttachmentName(info: Pick<AttachmentInfo, 'kind' | 'mimeType' | 'index'>): string {
+  const base = info.kind === 'voice' ? 'voice-note' : info.kind === 'file' ? 'attachment' : info.kind;
+  const mime = info.mimeType?.toLowerCase().split(';')[0]?.trim() ?? '';
+  const extension = EXTENSIONS[mime];
+  return `${base}-${info.index + 1}${extension ? `.${extension}` : ''}`;
+}
+
 function kindFromMime(filename: string | null, mimeType: string | null): AttachmentKind {
   const mime = mimeType?.toLowerCase().split(';')[0]?.trim() ?? '';
   if (mime.startsWith('image/')) return 'image';
