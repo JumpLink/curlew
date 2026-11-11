@@ -6,9 +6,16 @@
  * immediately and still never writes to the index.
  */
 
-import type { Classification, Conversation, ConversationMessage } from '@curlew/protocol';
+import type { AttachmentKind, Classification, Conversation, ConversationMessage } from '@curlew/protocol';
 import { normalizeAddress } from '@curlew/protocol';
-import { configPath, getConversation, indexDbPath, listConversations, syncStatus } from '@curlew/store';
+import {
+  configPath,
+  getConversation,
+  indexDbPath,
+  listConversations,
+  loadAttachments,
+  syncStatus,
+} from '@curlew/store';
 import { loadConfig, saveConfig } from '../config.ts';
 import type { AgentAccess } from './access.ts';
 import { requireParticipantsRead } from './message-access.ts';
@@ -63,9 +70,29 @@ export interface ConversationShowParams {
   configPath?: string;
 }
 
+/**
+ * What an agent learns about a chat message's attachment: the kind and size, never the opaque
+ * backend handle. The filename is somebody's words, so it follows the body gate.
+ */
+export interface ShownAttachment {
+  index: number;
+  kind: AttachmentKind;
+  mimeType: string | null;
+  size: number | null;
+  durationMs: number | null;
+  width: number | null;
+  height: number | null;
+  /** `message_save_attachment` can download it. */
+  fetchable: boolean;
+  filename?: string | null;
+}
+
+/** Chat messages list their attachments (mail has `mail_list_parts`). */
+export type ShownConversationMessage = ConversationMessage & { attachments?: ShownAttachment[] };
+
 export async function conversationsShow(params: ConversationShowParams): Promise<{
   conversation: Conversation;
-  messages: ConversationMessage[];
+  messages: ShownConversationMessage[];
 }> {
   const config = loadConfig(params.configPath ?? configPath());
   const { senders } = config;
@@ -88,7 +115,22 @@ export async function conversationsShow(params: ConversationShowParams): Promise
         conversation.participants.flatMap((p) => p.addresses.map((a) => a.value)),
       );
     }
-    return found;
+    const messages: ShownConversationMessage[] = found.messages.map((message) => {
+      if (!message.hasAttachments || message.ref.backend === 'mail') return message;
+      const attachments = loadAttachments(db, message.ref).map((a) => ({
+        index: a.index,
+        kind: a.kind,
+        mimeType: a.mimeType,
+        size: a.size,
+        durationMs: a.durationMs,
+        width: a.width,
+        height: a.height,
+        fetchable: a.fetchable,
+        ...(params.includeBodies ? { filename: a.filename } : {}),
+      }));
+      return attachments.length > 0 ? { ...message, attachments } : message;
+    });
+    return { conversation: found.conversation, messages };
   } finally {
     db.close();
   }
