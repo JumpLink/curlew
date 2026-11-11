@@ -214,6 +214,7 @@ packages/signal/src/constants.ts
 packages/signal/src/contacts.ts
 packages/signal/src/crypto.ts
 packages/signal/src/decrypt.ts
+packages/signal/src/groups.ts
 packages/signal/src/guard.ts
 packages/signal/src/index.ts
 packages/signal/src/journal.ts

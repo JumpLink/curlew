@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-11 07:50+0100\n"
+"POT-Creation-Date: 2026-11-11 10:02+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -937,6 +937,7 @@ msgid "no Background portal on this system"
 msgstr "Auf diesem System gibt es kein Hintergrund-Portal"
 
 #: app/src/core/lib/autostart-portal.ts:113
+#: app/src/window/accounts-daemon.ts:71
 msgid "Keep receiving messages while the window is closed"
 msgstr "Nachrichten weiter empfangen, während das Fenster geschlossen ist"
 
@@ -1854,7 +1855,8 @@ msgstr "GNOME-Online-Konten"
 
 #: app/src/window/account-add.ts:302
 msgid "Use an account you already set up in GNOME Settings"
-msgstr "Ein Konto verwenden, das du in den GNOME-Einstellungen eingerichtet hast"
+msgstr ""
+"Ein Konto verwenden, das du in den GNOME-Einstellungen eingerichtet hast"
 
 #: app/src/window/account-add.ts:319 app/src/window/accounts-page.ts:157
 #: app/src/window/accounts-page.ts:180
@@ -1891,8 +1893,13 @@ msgid "Remove {account}?"
 msgstr "{account} entfernen?"
 
 #: app/src/window/account-remove-model.ts:22
-msgid "Curlew will forget the password for this account and stop reading its mail. Messages already on this computer stay, and nothing changes at your provider."
-msgstr "Curlew vergisst das Passwort für dieses Konto und liest seine Mails nicht mehr. Nachrichten, die schon auf diesem Computer liegen, bleiben erhalten, und bei deinem Anbieter ändert sich nichts."
+msgid ""
+"Curlew will forget the password for this account and stop reading its mail. "
+"Messages already on this computer stay, and nothing changes at your provider."
+msgstr ""
+"Curlew vergisst das Passwort für dieses Konto und liest seine Mails nicht "
+"mehr. Nachrichten, die schon auf diesem Computer liegen, bleiben erhalten, "
+"und bei deinem Anbieter ändert sich nichts."
 
 #: app/src/window/account-remove-model.ts:24
 #: app/src/window/account-remove-model.ts:37
@@ -1919,11 +1926,15 @@ msgstr ""
 "Das Konto bleibt bei {protocol} verknüpft, bis du dieses Gerät dort "
 "entfernst."
 
-#: app/src/window/accounts-daemon.ts:53 app/src/window/accounts-daemon.ts:57
+#: app/src/window/accounts-daemon.ts:58 app/src/window/accounts-daemon.ts:62
 msgid "Could not start the background service. Run “curlew setup” first."
 msgstr ""
 "Der Hintergrunddienst ließ sich nicht starten. Führe zuerst „curlew setup“ "
 "aus."
+
+#: app/src/window/accounts-daemon.ts:74
+msgid "Could not start the background service: {reason}"
+msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
 #: app/src/window/accounts-dialog.ts:61 app/src/window/accounts-page.ts:187
 #: app/src/window/window.ts:100
@@ -2746,12 +2757,18 @@ msgid "Looking for the mail servers of {domain}…"
 msgstr "Suche die Mail-Server von {domain} …"
 
 #: packages/imap/src/add-account.ts:64
-msgid "This provider wants a browser sign-in, which Curlew cannot do yet — enter the servers and an app password"
-msgstr "Dieser Anbieter verlangt eine Anmeldung im Browser, die Curlew noch nicht kann — gib die Server und ein App-Passwort ein"
+msgid ""
+"This provider wants a browser sign-in, which Curlew cannot do yet — enter "
+"the servers and an app password"
+msgstr ""
+"Dieser Anbieter verlangt eine Anmeldung im Browser, die Curlew noch nicht "
+"kann — gib die Server und ein App-Passwort ein"
 
 #: packages/imap/src/add-account.ts:65
 msgid "No settings published for this address — enter the servers"
-msgstr "Für diese Adresse sind keine Einstellungen veröffentlicht — gib die Server ein"
+msgstr ""
+"Für diese Adresse sind keine Einstellungen veröffentlicht — gib die Server "
+"ein"
 
 #: packages/imap/src/add-account.ts:67
 msgid "IMAP server (host or host:port, TLS on 993)"
@@ -3013,11 +3030,11 @@ msgid ""
 msgstr ""
 "der Signal-Anhang kam mit {actual} Bytes an, angekündigt waren {announced}"
 
-#: packages/signal/src/backend.ts:117 packages/signal/src/backend.ts:174
+#: packages/signal/src/backend.ts:136 packages/signal/src/backend.ts:193
 msgid "no Signal session for {account} — {hint}"
 msgstr "Keine Signal-Sitzung für {account} — {hint}"
 
-#: packages/signal/src/backend.ts:181
+#: packages/signal/src/backend.ts:200
 msgid "the Signal session {account} was never linked — {hint}"
 msgstr "Die Signal-Sitzung {account} wurde nie verknüpft — {hint}"
 

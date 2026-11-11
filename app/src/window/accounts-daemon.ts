@@ -6,9 +6,11 @@
 import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 
-import { _ } from '@curlew/protocol';
+import { _, fmt } from '@curlew/protocol';
 
 import { UNIT_NAME } from '../core/actions/setup-unit.ts';
+import { portalAutostart } from '../core/lib/autostart-portal.ts';
+import { inSandbox } from '../core/lib/sandbox.ts';
 import {
   DAEMON_BUS_NAME,
   DAEMON_INTERFACE,
@@ -27,6 +29,8 @@ export interface AccountsDaemonSource {
 
 /** The daemon reads its account list once at start, so a change to it takes effect on a restart. */
 export function restartDaemonIfRunning(): void {
+  // A sandbox has no systemd: the Background portal starts the daemon at the next login.
+  if (inSandbox()) return;
   try {
     Gio.Subprocess.new(['systemctl', '--user', 'try-restart', UNIT_NAME], Gio.SubprocessFlags.NONE);
   } catch {
@@ -39,6 +43,7 @@ export function restartDaemonIfRunning(): void {
  * has not run `curlew setup`); on success the bus watch reports the daemon as present.
  */
 export function startDaemon(): Promise<void> {
+  if (inSandbox()) return startDaemonThroughPortal();
   return new Promise((resolve, reject) => {
     try {
       const process = Gio.Subprocess.new(
@@ -57,6 +62,16 @@ export function startDaemon(): Promise<void> {
       reject(new Error(_('Could not start the background service. Run “curlew setup” first.')));
     }
   });
+}
+
+/** Inside a Flatpak the capability is "keep receiving", granted by the Background portal. */
+async function startDaemonThroughPortal(): Promise<void> {
+  const result = await portalAutostart({
+    commandline: ['curlew', 'daemon'],
+    reason: _('Keep receiving messages while the window is closed'),
+  }).enable();
+  if (!result.ok)
+    throw new Error(fmt(_('Could not start the background service: {reason}'), { reason: result.reason }));
 }
 
 function entryMap(accounts: DaemonAccountEntry[]): Map<string, DaemonAccountEntry> {

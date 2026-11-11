@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-11 07:50+0100\n"
+"POT-Creation-Date: 2026-11-11 10:02+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -799,6 +799,7 @@ msgid "no Background portal on this system"
 msgstr ""
 
 #: app/src/core/lib/autostart-portal.ts:113
+#: app/src/window/accounts-daemon.ts:71
 msgid "Keep receiving messages while the window is closed"
 msgstr ""
 
@@ -1662,8 +1663,12 @@ msgid ""
 "you remove this device there."
 msgstr ""
 
-#: app/src/window/accounts-daemon.ts:53 app/src/window/accounts-daemon.ts:57
+#: app/src/window/accounts-daemon.ts:58 app/src/window/accounts-daemon.ts:62
 msgid "Could not start the background service. Run “curlew setup” first."
+msgstr ""
+
+#: app/src/window/accounts-daemon.ts:74
+msgid "Could not start the background service: {reason}"
 msgstr ""
 
 #: app/src/window/accounts-dialog.ts:61 app/src/window/accounts-page.ts:187
@@ -2711,11 +2716,11 @@ msgid ""
 "{announced}"
 msgstr ""
 
-#: packages/signal/src/backend.ts:117 packages/signal/src/backend.ts:174
+#: packages/signal/src/backend.ts:136 packages/signal/src/backend.ts:193
 msgid "no Signal session for {account} — {hint}"
 msgstr ""
 
-#: packages/signal/src/backend.ts:181
+#: packages/signal/src/backend.ts:200
 msgid "the Signal session {account} was never linked — {hint}"
 msgstr ""
 
