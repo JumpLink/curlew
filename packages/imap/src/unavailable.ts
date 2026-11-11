@@ -17,7 +17,10 @@
 import {
   type FetchPartInfo,
   type FetchPartOptions,
+  type AccountPrompter,
+  type BackendContext,
   type FolderDTO,
+  type ListAccountsOptions,
   type GetMessageOptions,
   GJS_REQUIRED_MESSAGE,
   GnomeUnavailableError,
@@ -63,7 +66,17 @@ export class ImapBackend {
   readonly manifest = MAIL_MANIFEST;
   readonly kind = 'mailbox' as const;
 
-  async listAccounts(): Promise<never> {
+  constructor(_context?: Pick<BackendContext, 'secretsDir' | 'disabledAccounts'>) {}
+
+  async listAccounts(_options?: ListAccountsOptions): Promise<never> {
+    throw new GnomeUnavailableError(GJS_REQUIRED_MESSAGE);
+  }
+
+  async addAccount(_prompter: AccountPrompter): Promise<never> {
+    throw new GnomeUnavailableError(GJS_REQUIRED_MESSAGE);
+  }
+
+  async removeAccount(_accountId: string): Promise<void> {
     throw new GnomeUnavailableError(GJS_REQUIRED_MESSAGE);
   }
 

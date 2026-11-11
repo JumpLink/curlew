@@ -139,7 +139,7 @@ export interface MessageBackend {
   listAccounts(options?: ListAccountsOptions): Promise<BackendAccount[]>;
   /**
    * Add an account interactively — for networks whose accounts live in curlew rather than in
-   * the desktop (mail accounts are GNOME Online Accounts and do not implement this). The
+   * the desktop (mail does too, besides the system accounts it reads). The
    * backend asks through `prompter` for whatever its login needs, and stores the resulting
    * session itself. Resolves with the new account; nothing secret is in it.
    */
@@ -152,7 +152,7 @@ export interface MessageBackend {
   /**
    * Unlink an account from this machine: delete the stored login or session. The messages already
    * indexed stay, and the account stays linked on the service's side — the person unlinks the
-   * device there. Optional: mail accounts live in GNOME Online Accounts and are removed there.
+   * device there. Optional: a system account (GNOME Online Accounts) is removed by the system, not by us.
    */
   removeAccount?(accountId: string): Promise<void>;
 }

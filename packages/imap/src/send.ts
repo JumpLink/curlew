@@ -3,12 +3,12 @@
  *
  * `@curlew/smtp` builds and sends the message; this file decides only what it is allowed to be —
  * which address, from which account, and that the address is one the permit names. The SMTP
- * target comes from GOA (`listSmtpTargets`), so there is no credential in the config, in a log,
- * in a DTO or in an error: the target hands out a thunk, and the password is read when the
- * connection is made.
+ * target comes from `resolveSmtpTargets` (own accounts, then the system's), so there is no
+ * credential in the config, in a log, in a DTO or in an error: the target hands out a thunk, and
+ * the password is read when the connection is made.
  *
  * Pure on purpose (no `gi://`): the sender is unit-tested against a loopback dummy server on
- * both runtimes, and GOA/EDS load on first use on both.
+ * both runtimes, and the system account store loads on first use on both.
  */
 
 import type {
@@ -19,19 +19,19 @@ import type {
   SentMessage,
   SmtpTarget,
 } from '@curlew/protocol';
-import { listSmtpTargets } from '@curlew/gnome';
 import { sendMessage, type SmtpAccount } from '@curlew/smtp';
 import { _, fmt } from '@curlew/protocol';
 import { readAttachments } from './attachments.ts';
+import { resolveSmtpTargets } from './targets.ts';
 
 /** `'none'` exists for a loopback dummy server; `@curlew/smtp` allows it on 127.0.0.1 only. */
-function smtpAccountFor(target: SmtpTarget): SmtpAccount {
+async function smtpAccountFor(target: SmtpTarget): Promise<SmtpAccount> {
   return {
     host: target.host,
     port: target.port,
     security: target.security,
     username: target.user,
-    auth: { kind: 'password', password: target.getPassword() },
+    auth: { kind: 'password', password: await target.getPassword() },
   };
 }
 
@@ -79,7 +79,7 @@ export class MailSender implements MessageSender {
     const to = this.address(message.to);
     // Read (and refused) before the connection exists; the content goes to `@curlew/smtp` only.
     const files = readAttachments(message.attachments ?? []);
-    const result = await sendMessage(smtpAccountFor(this.target), {
+    const result = await sendMessage(await smtpAccountFor(this.target), {
       from: this.target.from,
       to: [to],
       subject: message.subject ?? '',
@@ -111,13 +111,13 @@ export class MailSender implements MessageSender {
 
 /** The mail backend's `isSelfAddress`: the SMTP target knows the account's own address. */
 export async function isOwnAddressOf(accountId: string, to: string): Promise<boolean> {
-  const target = (await listSmtpTargets(accountId)).find((t) => t.accountId === accountId);
+  const target = (await resolveSmtpTargets(accountId)).find((t) => t.accountId === accountId);
   return target !== undefined && isOwnMailAddress(target.from, to);
 }
 
 /** Open the sender for one account. Reads no password until a message is actually sent. */
 export async function openMailSender(accountId: string, permit: SendPermit): Promise<MessageSender> {
-  const target = (await listSmtpTargets(accountId)).find((t) => t.accountId === accountId);
+  const target = (await resolveSmtpTargets(accountId)).find((t) => t.accountId === accountId);
   if (!target) {
     throw new Error(
       fmt(_('no mail account {account} with SMTP — `curlew accounts list` shows them'), {

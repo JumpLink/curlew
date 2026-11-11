@@ -10,7 +10,7 @@ import { type BackendManifest, PLUGIN_API_VERSION } from '@curlew/protocol';
 
 export const MAIL_MANIFEST: BackendManifest = {
   name: 'mail',
-  displayName: 'Mail (IMAP via GNOME Online Accounts)',
+  displayName: 'Mail (IMAP)',
   pluginApi: PLUGIN_API_VERSION,
   capabilities: {
     edits: false,
@@ -30,6 +30,6 @@ export const MAIL_MANIFEST: BackendManifest = {
   syncModel: 'server-archive',
   native: false,
   addressKinds: ['email'],
-  // Your own mailbox, through accounts you configured in GNOME Settings — nothing to warn about.
+  // Your own mailbox, with an account you added here or in GNOME Settings — nothing to warn about.
   terms: null,
 };

@@ -2,7 +2,7 @@ import { describe, expect, it, on } from '@gjsify/unit';
 
 import { GnomeError, GnomeUnavailableError } from '@curlew/protocol';
 import { goa } from '../../../packages/gnome/src/libs.gjs.ts';
-import { check, listAccounts, listEvents, listMailTargets, searchContacts } from '@curlew/gnome';
+import { check, listAccounts, listEvents, searchContacts } from '@curlew/gnome';
 import { getMessage, searchMail } from '@curlew/imap';
 import { runChecks } from '../../src/frontends/cli/check.ts';
 import { runtimeName } from '../../src/core/runtime.ts';
@@ -134,7 +134,6 @@ export default async () => {
         () => listAccounts(),
         () => searchContacts({ limit: 1 }),
         () => listEvents({ from: '2026-01-01', to: '2026-01-31', limit: 1 }),
-        () => listMailTargets(),
       ]) {
         try {
           const result = await call();

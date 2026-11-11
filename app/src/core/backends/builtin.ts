@@ -12,7 +12,7 @@ import { XMPP_MANIFEST, XmppBackend } from '@curlew/xmpp';
 import { BackendRegistry, type BackendPlugin } from './registry.ts';
 
 export const BUILTIN_PLUGINS: readonly BackendPlugin[] = [
-  { manifest: MAIL_MANIFEST, create: () => new ImapBackend() },
+  { manifest: MAIL_MANIFEST, create: (context) => new ImapBackend(context) },
   { manifest: TELEGRAM_MANIFEST, create: (context) => new TelegramBackend(context) },
   { manifest: WHATSAPP_MANIFEST, create: (context) => new WhatsAppBackend(context) },
   { manifest: XMPP_MANIFEST, create: (context) => new XmppBackend(context) },

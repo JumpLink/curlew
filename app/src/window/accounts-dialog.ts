@@ -13,6 +13,7 @@ import { pushAddAccountPage } from './account-add.ts';
 import { pushAccountPage } from './account-detail.ts';
 import { createAccountsPage, openGoaSettings } from './accounts-page.ts';
 import { gioAccountsDaemonSource, startDaemon } from './accounts-daemon.ts';
+import { inSandbox } from '../core/lib/sandbox.ts';
 import { loadAccountsState } from './accounts-store.ts';
 
 export interface AccountsDialogOptions {
@@ -83,7 +84,7 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
     }
     loading = true;
     try {
-      loadState = await loadAccountsState(path);
+      loadState = await loadAccountsState(path, { hostAccounts: !inSandbox() });
       if (!open) return;
       render();
     } catch (err) {

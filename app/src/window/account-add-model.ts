@@ -2,8 +2,8 @@
  * Pure model for adding an account from the window: which protocols can be added and what has
  * to be accepted first. No GTK, no bus — both runtimes test this.
  *
- * Mail is not here: its accounts are GNOME Online Accounts, added in GNOME Settings, so the page
- * links there instead of running a login.
+ * Mail is listed apart from the chats (`mailProtocol`): it asks for an address and a password
+ * rather than linking a device, and GNOME Settings stays a shortcut next to it, never the only way.
  */
 
 import type { TermsNotice } from '@curlew/protocol';
@@ -39,6 +39,19 @@ export function addableProtocols(backends: readonly BackendStatus[]): AddablePro
       enabled: b.enabled,
     }))
     .sort((a, b) => orderOf(a.backend) - orderOf(b.backend) || a.label.localeCompare(b.label));
+}
+
+/** Mail as something to add, or null when the mail backend is not installed. It has no terms. */
+export function mailProtocol(backends: readonly BackendStatus[]): AddableProtocol | null {
+  const mail = backends.find((b) => b.name === 'mail');
+  if (!mail) return null;
+  return {
+    backend: 'mail',
+    label: protocolLabel('mail'),
+    icon: protocolIcon('mail'),
+    terms: null,
+    enabled: mail.enabled,
+  };
 }
 
 /** Whether the person is shown terms before anything runs. */

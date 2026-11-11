@@ -7,7 +7,11 @@
  */
 
 import {
+  type AccountPrompter,
   type BackendAccount,
+  type BackendContext,
+  type ListAccountsOptions,
+  visibleAccounts,
   type BackendFlagState,
   type BackendMessage,
   type BackendSession,
@@ -35,8 +39,10 @@ import {
   tokenizeImapList,
   walkBodyStructure,
 } from '@curlew/protocol';
-import { listMailTargets } from '@curlew/gnome';
 import { ImapClient, type ImapResponse } from './client.gjs.ts';
+import { addMailAccount } from './add-account.ts';
+import { readOwnAccounts, removeOwnAccount, type OwnMailAccount } from './own-accounts.ts';
+import { mailSecretsDir, resolveMailTargets } from './targets.ts';
 import { MAIL_MANIFEST } from './manifest.ts';
 import { isOwnAddressOf, openMailSender } from './send.ts';
 
@@ -198,31 +204,77 @@ class ImapBackendSession implements BackendSession {
   }
 }
 
-/** The live IMAP backend, resolving accounts through GNOME Online Accounts. */
+/** One HTTPS GET for server discovery. Anything but a 200 is "nothing published here". */
+async function fetchText(url: string): Promise<string | null> {
+  const response = await fetch(url, { signal: AbortSignal.timeout(8_000), redirect: 'follow' });
+  return response.ok ? await response.text() : null;
+}
+
+/** Prove the server accepts the login before the account is saved. */
+async function testLogin(account: OwnMailAccount): Promise<void> {
+  const client = new ImapClient();
+  await client.connect({
+    accountId: 'login-test',
+    host: account.imap.host,
+    port: account.imap.port,
+    user: account.imap.user,
+    implicitTls: true,
+    getPassword: () => account.password,
+  });
+  try {
+    await client.login(account.imap.user, account.password);
+  } finally {
+    await client.logout().catch(() => {});
+  }
+}
+
+/** The live IMAP backend: the accounts Curlew holds itself, then those of the system (GNOME Online Accounts). */
 export class ImapBackend implements MailBackend, SendBackend {
   readonly manifest = MAIL_MANIFEST;
   readonly kind = 'mailbox' as const;
   private targets: MailTarget[] | null = null;
+  private readonly context: Pick<BackendContext, 'secretsDir' | 'disabledAccounts'>;
+
+  /** Without a context (the CLI's direct reads) the accounts live where the registry would put them. */
+  constructor(context?: Pick<BackendContext, 'secretsDir' | 'disabledAccounts'>) {
+    this.context = context ?? { secretsDir: mailSecretsDir() };
+  }
 
   private async allTargets(): Promise<MailTarget[]> {
-    if (!this.targets) this.targets = await listMailTargets();
+    if (!this.targets) this.targets = await resolveMailTargets(undefined, this.context.secretsDir);
     return this.targets;
   }
 
-  async listAccounts(): Promise<BackendAccount[]> {
-    return (await this.allTargets()).map((t) => ({
+  async listAccounts(options?: ListAccountsOptions): Promise<BackendAccount[]> {
+    const own = readOwnAccounts(this.context.secretsDir);
+    const accounts = (await this.allTargets()).map((t) => ({
       id: t.accountId,
-      identity: t.user,
+      // An own account is known by its address; the login name can differ from it.
+      identity: own.get(t.accountId)?.address ?? t.user,
       provider: 'imap_smtp',
     }));
+    return visibleAccounts(this.context, accounts, options);
+  }
+
+  /** Add an account Curlew holds itself: no GNOME Online Accounts needed, so it works in a Flatpak. */
+  async addAccount(prompter: AccountPrompter): Promise<BackendAccount> {
+    const account = await addMailAccount(this.context.secretsDir, prompter, { fetchText, testLogin });
+    this.targets = null;
+    return account;
+  }
+
+  /** Unlink an own account. A system account is the system's to remove, not ours. */
+  async removeAccount(accountId: string): Promise<void> {
+    removeOwnAccount(this.context.secretsDir, accountId);
+    this.targets = null;
   }
 
   async connect(accountId: string): Promise<BackendSession> {
     const target = (await this.allTargets()).find((t) => t.accountId === accountId);
-    if (!target) throw new Error(`no mail-capable GOA account with id ${accountId}`);
+    if (!target) throw new Error(`no mail account with id ${accountId}`);
     const client = new ImapClient();
     await client.connect(target);
-    await client.login(target.user, target.getPassword());
+    await client.login(target.user, await target.getPassword());
     return new ImapBackendSession(client);
   }
 

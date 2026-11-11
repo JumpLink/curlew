@@ -37,8 +37,8 @@ import {
   tokenizeImapList,
   walkBodyStructure,
 } from '@curlew/protocol';
-import { listMailTargets } from '@curlew/gnome';
 import { ImapClient, type ImapResponse } from './client.gjs.ts';
+import { resolveMailTargets } from './targets.ts';
 
 const DEFAULT_LIMIT = 25;
 const DEFAULT_MAX_BODY_CHARS = 50_000;
@@ -79,7 +79,7 @@ function toSummary(items: ImapValue[], folder: string, accountId: string): MailS
 }
 
 async function connectAndLogin(target: MailTarget): Promise<ImapClient> {
-  const password = target.getPassword();
+  const password = await target.getPassword();
   const client = new ImapClient();
   await client.connect(target);
   await client.login(target.user, password);
@@ -88,12 +88,12 @@ async function connectAndLogin(target: MailTarget): Promise<ImapClient> {
 
 /** Resolve the accounts to work on, with a message that says what to do about it if there are none. */
 async function requireTargets(accountId?: string): Promise<MailTarget[]> {
-  const targets = await listMailTargets(accountId);
+  const targets = await resolveMailTargets(accountId);
   if (targets.length === 0) {
     throw new GnomeError(
       accountId
-        ? `no mail-capable GOA account with id ${accountId}`
-        : 'no mail-capable GOA account configured (add an "Email" account in GNOME Settings → Online Accounts)',
+        ? `no mail account with id ${accountId}`
+        : 'no mail account configured (add one in the Accounts window, or an "Email" account in GNOME Settings → Online Accounts)',
     );
   }
   return targets;

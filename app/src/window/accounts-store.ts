@@ -1,10 +1,11 @@
 /**
  * Fetches the configured accounts for the Accounts dialog: enabled backends, their chat accounts,
- * GNOME Online Accounts, and the label map. Errors are captured per source so the dialog can show
+ * the mail accounts (Curlew's own and GNOME Online Accounts), and the label map. Errors are captured per source so the dialog can show
  * them inline rather than failing the whole page.
  */
 
-import type { BackendAccount, GnomeAccount } from '@curlew/protocol';
+import { GnomeUnavailableError, type BackendAccount, type GnomeAccount } from '@curlew/protocol';
+import { isOwnAccountId } from '@curlew/imap';
 import { configPath } from '@curlew/store';
 
 import { accountsList, backendAccountsList } from '../core/actions/accounts.ts';
@@ -21,17 +22,37 @@ export function enabledChatBackends(backends: BackendStatus[]): BackendStatus[] 
   return backends.filter((b) => b.enabled && b.name !== 'mail');
 }
 
-export async function loadAccountsState(path = configPath()): Promise<AccountsLoadState> {
+export interface LoadAccountsOptions {
+  /**
+   * Whether GNOME Online Accounts can exist at all. False in a Flatpak (ADR 0011): then their
+   * absence is the sandbox, not a failure, so no error row is shown for it.
+   */
+  hostAccounts?: boolean;
+}
+
+export async function loadAccountsState(
+  path = configPath(),
+  options: LoadAccountsOptions = {},
+): Promise<AccountsLoadState> {
   const { backends } = backendsList(path);
   const chatBackends = enabledChatBackends(backends);
+  const hostAccounts = options.hostAccounts ?? true;
 
   const goaAccountsPromise = accountsList().then(
     (accounts): { accounts: GnomeAccount[]; error?: string } => ({ accounts }),
-    (err: unknown): { accounts: GnomeAccount[]; error: string } => ({
-      accounts: [],
-      error: errorText(err),
-    }),
+    (err: unknown): { accounts: GnomeAccount[]; error?: string } =>
+      !hostAccounts || err instanceof GnomeUnavailableError
+        ? { accounts: [] }
+        : { accounts: [], error: errorText(err) },
   );
+
+  const mailEnabled = backends.some((b) => b.name === 'mail' && b.enabled);
+  const ownMailPromise = mailEnabled
+    ? backendAccountsList('mail', path, { includeDisabled: true }).then(
+        (result) => result.accounts,
+        () => [] as BackendAccount[],
+      )
+    : Promise.resolve([] as BackendAccount[]);
 
   const chatPromises = chatBackends.map((backend) =>
     backendAccountsList(backend.name, path, { includeDisabled: true }).then(
@@ -47,12 +68,18 @@ export async function loadAccountsState(path = configPath()): Promise<AccountsLo
     ),
   );
 
-  const [goaAccounts, ...chatAccounts] = await Promise.all([goaAccountsPromise, ...chatPromises]);
+  const [goaAccounts, mailAccounts, ...chatAccounts] = await Promise.all([
+    goaAccountsPromise,
+    ownMailPromise,
+    ...chatPromises,
+  ]);
+  // The mail backend lists both kinds; the ones GNOME Online Accounts already shows are not ours.
+  const ownMailAccounts = mailAccounts.filter((a) => isOwnAccountId(a.id));
 
   const labels = await loadAccountLabels(
     chatBackends.map((b) => b.name),
     path,
   ).catch(() => new Map<string, string>());
 
-  return { backends, goaAccounts, chatAccounts, labels };
+  return { backends, goaAccounts, ownMailAccounts, chatAccounts, labels };
 }

@@ -19,6 +19,7 @@
 
 ### Changed
 
+- Mail accounts of the system are read through `@gjsify/system-accounts` instead of Curlew's own GNOME Online Accounts code. A Flatpak without access to them now reports none instead of failing.
 - The cache of fetched attachment previews is capped at 1 GiB while the window runs; the least recently fetched parts are dropped first and a tap fetches one again. It used to grow until the window was restarted.
 - `curlew window`: the filter chips are pills that fill with the accent colour while on, and the
   protocol badge sits on a solid circle at the avatar's rim, so it is legible and no longer covers
@@ -31,6 +32,7 @@
 
 ### Added
 
+- A mail account no longer needs GNOME Online Accounts. *Add Account → Mail* asks for an address and a password, finds the servers the way Thunderbird does (HTTPS only), asks for them only when nobody publishes them, and proves the login before it saves anything. The password lives in a file of its own (0600) and in no config, log or error. This is how mail works in the Flatpak. GNOME Online Accounts stay a shortcut where they exist.
 - A Flatpak. CI builds it from the same bundle as the packages and starts it once inside the sandbox; it has network and display access and nothing else, so mail, contacts and calendar from GNOME Online Accounts stay a feature of the host build.
 - Inside a Flatpak the daemon's message notifications go through the Notification portal; outside nothing changes.
 - A reply to a message older than the loaded page shows its quote too, and a click on the quote loads the history back to that message

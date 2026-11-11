@@ -14,7 +14,8 @@ import { _ } from '@curlew/protocol';
 
 import { accountsAdd } from '../core/actions/accounts.ts';
 import { backendsEnable, backendsList } from '../core/actions/backends.ts';
-import { addableProtocols, needsTerms, type AddableProtocol } from './account-add-model.ts';
+import { addableProtocols, mailProtocol, needsTerms, type AddableProtocol } from './account-add-model.ts';
+import { inSandbox } from '../core/lib/sandbox.ts';
 import { restartDaemonIfRunning } from './accounts-daemon.ts';
 import { createSurfacePrompter, type PromptStep, type SurfacePrompter } from './account-prompter.ts';
 import { qrImage, qrScaleFor } from './qr-image.ts';
@@ -27,7 +28,7 @@ export interface AddAccountDeps {
   onError(err: Error): void;
   /** An account was added: the caller reloads its list. */
   onAdded(): void;
-  /** Open GNOME Settings → Online Accounts, where mail accounts are added. */
+  /** Open GNOME Settings → Online Accounts, where existing mail accounts are set up. */
   openGoaSettings(): void;
   /** The login to run; the real one unless a probe substitutes it. */
   login?(backend: string, prompter: SurfacePrompter): Promise<unknown>;
@@ -266,7 +267,9 @@ function protocolRow(protocol: AddableProtocol, onActivate: () => void): Adw.Act
 
 /** Push the list of protocols that can be added; choosing one pushes its login page. */
 export function pushAddAccountPage(deps: AddAccountDeps): void {
-  const protocols = addableProtocols(backendsList(deps.path).backends);
+  const { backends } = backendsList(deps.path);
+  const protocols = addableProtocols(backends);
+  const mailEntry = mailProtocol(backends);
 
   const chats = new Adw.PreferencesGroup({
     title: _('Chats'),
@@ -282,17 +285,29 @@ export function pushAddAccountPage(deps: AddAccountDeps): void {
     );
   }
 
-  const mail = new Adw.PreferencesGroup({ title: _('Mail, calendar and contacts') });
-  const goa = new Adw.ActionRow({
-    title: _('GNOME Online Accounts'),
-    subtitle: _('Mail accounts are added in GNOME Settings'),
-    activatable: true,
-    useMarkup: false,
-  });
-  goa.add_prefix(new Gtk.Image({ iconName: 'mail-unread-symbolic' }));
-  goa.add_suffix(new Gtk.Image({ iconName: 'adw-external-link-symbolic' }));
-  goa.connect('activated', () => deps.openGoaSettings());
-  mail.add(goa);
+  const mail = new Adw.PreferencesGroup({ title: _('Mail') });
+  if (mailEntry) {
+    const own = protocolRow(mailEntry, () => {
+      const login = new LoginPage(deps, mailEntry);
+      deps.navigation.push(login.page);
+      login.start();
+    });
+    own.set_subtitle(_('Sign in with an address and a password'));
+    mail.add(own);
+  }
+  // A Flatpak cannot see GNOME Online Accounts (ADR 0011), so the shortcut would lead nowhere.
+  if (!inSandbox()) {
+    const goa = new Adw.ActionRow({
+      title: _('GNOME Online Accounts'),
+      subtitle: _('Use an account you already set up in GNOME Settings'),
+      activatable: true,
+      useMarkup: false,
+    });
+    goa.add_prefix(new Gtk.Image({ iconName: 'avatar-default-symbolic' }));
+    goa.add_suffix(new Gtk.Image({ iconName: 'adw-external-link-symbolic' }));
+    goa.connect('activated', () => deps.openGoaSettings());
+    mail.add(goa);
+  }
 
   const content = new Adw.PreferencesPage();
   content.add(chats);

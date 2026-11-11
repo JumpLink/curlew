@@ -163,7 +163,7 @@ export class ImapClient {
 
   async login(user: string, password: string): Promise<void> {
     const r = await this.command(`LOGIN ${quoteImapString(user)} ${quoteImapString(password)}`);
-    if (!r.ok) throw new GnomeError('IMAP LOGIN failed (check credentials in GNOME Online Accounts)');
+    if (!r.ok) throw new GnomeError('IMAP LOGIN failed (check the password of the account)');
   }
 
   /**

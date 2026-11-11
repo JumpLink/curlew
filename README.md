@@ -10,10 +10,12 @@ Your GNOME mail, contacts and calendar — on the command line, and as an
 [MCP](https://modelcontextprotocol.io) server so an AI assistant can search your
 mailbox for you.
 
-Curlew reads the accounts you already configured in **GNOME Settings → Online
-Accounts**. There is nothing to log into and no password to store: credentials
-come from GNOME Online Accounts at runtime and are never written to disk, never
-logged, and never returned by any command.
+Curlew reads the mail accounts you already configured in **GNOME Settings → Online
+Accounts**: there is nothing to log into, and their credentials come from GNOME Online
+Accounts at runtime and are never written to disk. Where there are none — in a Flatpak, or
+on a machine without GNOME — you add a mail account in Curlew itself (*Add Account → Mail*):
+an address and a password, kept in one file readable only by you. Neither kind of password
+is ever logged or returned by any command.
 
 It runs on **GJS** (GNOME's JavaScript runtime) via
 [gjsify](https://github.com/gjsify/gjsify) — the same stack a GNOME desktop app
@@ -78,8 +80,9 @@ from one account, to one address, off by default
   that is groundwork for a macOS/Windows port, not a supported target yet. The IMAP mail
   transport is GJS-only, since it speaks IMAP over Gio TLS sockets. Without the GOA/EDS
   typelibs Curlew still starts: only the calls that need them fail, with a clear message.
-- An **Email (IMAP/SMTP)** account in GNOME Settings. Nextcloud/ownCloud accounts
-  expose files, calendar and contacts but no mail.
+- An **Email (IMAP/SMTP)** account: either one added in Curlew (*Add Account → Mail*) or an
+  *Email* account in GNOME Settings. Nextcloud/ownCloud accounts expose files, calendar and
+  contacts but no mail.
 - Implicit TLS (port 993). STARTTLS on port 143 is not implemented yet.
 
 ## Install and run
@@ -502,8 +505,8 @@ Every send is logged (time, grant, target, never the text) to
 
 `mail.send` sends one plain-text mail with an optional `--subject` (or
 `subject` in `send_message`) and optional file attachments. The recipient is the granted address and the
-sender is the account's own address from GNOME Online Accounts; the SMTP
-credentials come from GOA too and appear in no output, log or error. There is
+sender is the account's own address; the SMTP credentials come from the
+account (Curlew's own or GNOME Online Accounts) and appear in no output, log or error. There is
 no HTML, and a sent mail is not indexed as a conversation —
 the answer has `sentAt` and the message id, no `conversationId`:
 

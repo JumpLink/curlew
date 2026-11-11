@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-11 07:34+0100\n"
+"POT-Creation-Date: 2026-11-11 07:50+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1791,47 +1791,47 @@ msgstr "curlew window nimmt keine Argumente."
 msgid "Curlew"
 msgstr "Curlew"
 
-#: app/src/window/account-add.ts:137
+#: app/src/window/account-add.ts:138
 msgid "Please read this first"
 msgstr "Bitte zuerst lesen"
 
-#: app/src/window/account-add.ts:143
+#: app/src/window/account-add.ts:144
 msgid "I understand and accept the risk for my account"
 msgstr "Ich verstehe das Risiko für mein Konto und nehme es in Kauf"
 
-#: app/src/window/account-add.ts:146
+#: app/src/window/account-add.ts:147
 msgid "Accept and Continue"
 msgstr "Zustimmen und fortfahren"
 
-#: app/src/window/account-add.ts:187
+#: app/src/window/account-add.ts:188
 msgid "Continue"
 msgstr "Weiter"
 
-#: app/src/window/account-add.ts:210
+#: app/src/window/account-add.ts:211
 msgid "Adding account…"
 msgstr "Konto wird hinzugefügt …"
 
-#: app/src/window/account-add.ts:218 app/src/window/media-viewer.ts:104
+#: app/src/window/account-add.ts:219 app/src/window/media-viewer.ts:104
 msgid "Try Again"
 msgstr "Erneut versuchen"
 
-#: app/src/window/account-add.ts:222
+#: app/src/window/account-add.ts:223
 msgid "Could not add the account"
 msgstr "Konto konnte nicht hinzugefügt werden"
 
-#: app/src/window/account-add.ts:233
+#: app/src/window/account-add.ts:234
 msgid "Connecting…"
 msgstr "Verbindung wird hergestellt …"
 
-#: app/src/window/account-add.ts:257
+#: app/src/window/account-add.ts:258
 msgid "Asks you to accept terms first"
 msgstr "Verlangt zuerst deine Zustimmung zu den Bedingungen"
 
-#: app/src/window/account-add.ts:272
+#: app/src/window/account-add.ts:275
 msgid "Chats"
 msgstr "Chats"
 
-#: app/src/window/account-add.ts:273
+#: app/src/window/account-add.ts:276
 msgid ""
 "Signal, WhatsApp and Telegram link this computer as another device of your "
 "account."
@@ -1839,19 +1839,24 @@ msgstr ""
 "Signal, WhatsApp und Telegram verknüpfen diesen Computer als weiteres Gerät "
 "deines Kontos."
 
-#: app/src/window/account-add.ts:285
-msgid "Mail, calendar and contacts"
-msgstr "E-Mail, Kalender und Kontakte"
+#: app/src/window/account-add.ts:288 app/src/window/accounts-model.ts:80
+#: app/src/window/conversation-list-model.ts:111
+msgid "Mail"
+msgstr "E-Mail"
 
-#: app/src/window/account-add.ts:287
+#: app/src/window/account-add.ts:295
+msgid "Sign in with an address and a password"
+msgstr "Mit Adresse und Passwort anmelden"
+
+#: app/src/window/account-add.ts:301
 msgid "GNOME Online Accounts"
 msgstr "GNOME-Online-Konten"
 
-#: app/src/window/account-add.ts:288
-msgid "Mail accounts are added in GNOME Settings"
-msgstr "E-Mail-Konten werden in den GNOME-Einstellungen hinzugefügt"
+#: app/src/window/account-add.ts:302
+msgid "Use an account you already set up in GNOME Settings"
+msgstr "Ein Konto verwenden, das du in den GNOME-Einstellungen eingerichtet hast"
 
-#: app/src/window/account-add.ts:304 app/src/window/accounts-page.ts:157
+#: app/src/window/account-add.ts:319 app/src/window/accounts-page.ts:157
 #: app/src/window/accounts-page.ts:180
 msgid "Add Account"
 msgstr "Konto hinzufügen"
@@ -1872,19 +1877,38 @@ msgstr ""
 "Aus lässt das Konto verknüpft und seine Nachrichten hier, aber Curlew "
 "synchronisiert es nicht mehr."
 
-#: app/src/window/account-detail.ts:75
+#: app/src/window/account-detail.ts:77
 msgid "Sync this account"
 msgstr "Dieses Konto synchronisieren"
 
-#: app/src/window/account-detail.ts:95
+#: app/src/window/account-detail.ts:97
 msgid "Remove Account…"
 msgstr "Konto entfernen…"
 
 #: app/src/window/account-remove-model.ts:20
+#: app/src/window/account-remove-model.ts:30
 msgid "Remove {account}?"
 msgstr "{account} entfernen?"
 
-#: app/src/window/account-remove-model.ts:23
+#: app/src/window/account-remove-model.ts:22
+msgid "Curlew will forget the password for this account and stop reading its mail. Messages already on this computer stay, and nothing changes at your provider."
+msgstr "Curlew vergisst das Passwort für dieses Konto und liest seine Mails nicht mehr. Nachrichten, die schon auf diesem Computer liegen, bleiben erhalten, und bei deinem Anbieter ändert sich nichts."
+
+#: app/src/window/account-remove-model.ts:24
+#: app/src/window/account-remove-model.ts:37
+#: app/src/window/agent-access-page.ts:234
+#: app/src/window/conversation-list.ts:401
+#: app/src/window/conversation-list.ts:487
+#: app/src/window/conversation-view.ts:637
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: app/src/window/account-remove-model.ts:25
+#: app/src/window/account-remove-model.ts:38
+msgid "Remove Account"
+msgstr "Konto entfernen"
+
+#: app/src/window/account-remove-model.ts:33
 msgid ""
 "Curlew will forget the login for this account and stop syncing it. Messages "
 "already on this computer stay. The account stays linked on {protocol} until "
@@ -1895,39 +1919,22 @@ msgstr ""
 "Das Konto bleibt bei {protocol} verknüpft, bis du dieses Gerät dort "
 "entfernst."
 
-#: app/src/window/account-remove-model.ts:27
-#: app/src/window/agent-access-page.ts:234
-#: app/src/window/conversation-list.ts:401
-#: app/src/window/conversation-list.ts:487
-#: app/src/window/conversation-view.ts:637
-msgid "Cancel"
-msgstr "Abbrechen"
-
-#: app/src/window/account-remove-model.ts:28
-msgid "Remove Account"
-msgstr "Konto entfernen"
-
 #: app/src/window/accounts-daemon.ts:53 app/src/window/accounts-daemon.ts:57
 msgid "Could not start the background service. Run “curlew setup” first."
 msgstr ""
 "Der Hintergrunddienst ließ sich nicht starten. Führe zuerst „curlew setup“ "
 "aus."
 
-#: app/src/window/accounts-dialog.ts:60 app/src/window/accounts-page.ts:187
+#: app/src/window/accounts-dialog.ts:61 app/src/window/accounts-page.ts:187
 #: app/src/window/window.ts:100
 msgid "Accounts"
 msgstr "Konten"
 
-#: app/src/window/accounts-model.ts:75
-#: app/src/window/conversation-list-model.ts:111
-msgid "Mail"
-msgstr "E-Mail"
-
-#: app/src/window/accounts-model.ts:76
+#: app/src/window/accounts-model.ts:81
 msgid "Calendar"
 msgstr "Kalender"
 
-#: app/src/window/accounts-model.ts:77
+#: app/src/window/accounts-model.ts:82
 msgid "Contacts"
 msgstr "Kontakte"
 
@@ -1976,9 +1983,8 @@ msgid "No accounts"
 msgstr "Keine Konten"
 
 #: app/src/window/accounts-page.ts:154
-msgid "Add a chat account, or add a mail account in GNOME Settings."
-msgstr ""
-"Füge ein Chat-Konto hinzu oder ein E-Mail-Konto in den GNOME-Einstellungen."
+msgid "Add a chat account or a mail account."
+msgstr "Füge ein Chat-Konto oder ein E-Mail-Konto hinzu."
 
 #: app/src/window/accounts-page.ts:171
 msgid "The background service is not running, so chat accounts cannot connect."
@@ -2731,6 +2737,50 @@ msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 
+#: packages/imap/src/add-account.ts:50
+msgid "That is not a server name — write it as host or host:port"
+msgstr "Das ist kein Servername — schreibe ihn als Host oder Host:Port"
+
+#: packages/imap/src/add-account.ts:59
+msgid "Looking for the mail servers of {domain}…"
+msgstr "Suche die Mail-Server von {domain} …"
+
+#: packages/imap/src/add-account.ts:64
+msgid "This provider wants a browser sign-in, which Curlew cannot do yet — enter the servers and an app password"
+msgstr "Dieser Anbieter verlangt eine Anmeldung im Browser, die Curlew noch nicht kann — gib die Server und ein App-Passwort ein"
+
+#: packages/imap/src/add-account.ts:65
+msgid "No settings published for this address — enter the servers"
+msgstr "Für diese Adresse sind keine Einstellungen veröffentlicht — gib die Server ein"
+
+#: packages/imap/src/add-account.ts:67
+msgid "IMAP server (host or host:port, TLS on 993)"
+msgstr "IMAP-Server (Host oder Host:Port, TLS auf 993)"
+
+#: packages/imap/src/add-account.ts:68
+msgid "SMTP server (host or host:port, 465 or 587)"
+msgstr "SMTP-Server (Host oder Host:Port, 465 oder 587)"
+
+#: packages/imap/src/add-account.ts:81
+msgid "Email address (name@example.org)"
+msgstr "E-Mail-Adresse (name@example.org)"
+
+#: packages/imap/src/add-account.ts:82
+msgid "Password (an app password if the provider offers them)"
+msgstr "Passwort (ein App-Passwort, wenn der Anbieter welche anbietet)"
+
+#: packages/imap/src/add-account.ts:83 packages/imap/src/own-accounts.ts:63
+msgid "the password is empty"
+msgstr "Das Passwort ist leer"
+
+#: packages/imap/src/add-account.ts:96
+msgid "Logging in to {host}…"
+msgstr "Melde mich bei {host} an …"
+
+#: packages/imap/src/add-account.ts:102
+msgid "could not log in to {host}: {reason}"
+msgstr "Anmeldung bei {host} fehlgeschlagen: {reason}"
+
 #: packages/imap/src/attachments.ts:78
 msgid "at most {max} attachments per mail, this one has {count}"
 msgstr "höchstens {max} Anhänge pro E-Mail, diese hat {count}"
@@ -2750,6 +2800,26 @@ msgstr "Anhang {path} hat {size} Bytes, erlaubt sind höchstens {max} pro Datei"
 #: packages/imap/src/attachments.ts:115
 msgid "the attachments together exceed {max} bytes"
 msgstr "die Anhänge zusammen überschreiten {max} Bytes"
+
+#: packages/imap/src/own-accounts.ts:42
+msgid "not an email address — expected name@example.org"
+msgstr "Keine E-Mail-Adresse — erwartet wird name@example.org"
+
+#: packages/imap/src/own-accounts.ts:47
+msgid "not a mail account id: {account}"
+msgstr "Keine E-Mail-Konto-ID: {account}"
+
+#: packages/imap/src/own-accounts.ts:53
+msgid "not a port: {port}"
+msgstr "Kein Port: {port}"
+
+#: packages/imap/src/own-accounts.ts:62
+msgid "a server name is missing"
+msgstr "Ein Servername fehlt"
+
+#: packages/imap/src/own-accounts.ts:137
+msgid "the mail account {account} is incomplete — add it again"
+msgstr "Das E-Mail-Konto {account} ist unvollständig — füge es erneut hinzu"
 
 #: packages/imap/src/send.ts:69 packages/matrix/src/send.ts:354
 #: packages/signal/src/send.ts:405 packages/telegram/src/sender.ts:80
@@ -3836,6 +3906,9 @@ msgid ""
 msgstr ""
 "{count} Geräte von {jid} tragen diesen Fingerabdruck, er benennt also keines "
 "— nichts wurde geändert"
+
+#~ msgid "Mail, calendar and contacts"
+#~ msgstr "E-Mail, Kalender und Kontakte"
 
 #~ msgid "{backend} cannot send attachments through the daemon"
 #~ msgstr "{backend} kann Anhänge nicht über den Daemon senden"
