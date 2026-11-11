@@ -78,8 +78,8 @@ jobs:
           version="${TAG#v}"
           missing=0
           for f in \
-            "cli/curlew_${version}-1_all.deb" \
-            "cli/curlew-${version}-1.noarch.rpm" \
+            "cli/curlew_${version}-1_amd64.deb" \
+            "cli/curlew-${version}-1.x86_64.rpm" \
             "cli/curlew-${version}-1.macos.arm64.zip" \
             "cli/curlew-${version}-1.macos.x86_64.zip" \
             "cli/curlew-${version}-1.windows.x64.zip" \

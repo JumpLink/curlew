@@ -5,6 +5,7 @@
 ### Fixed
 
 - `.deb` and `.rpm` no longer carry the test bundles that were left in `dist/` by the test run.
+- The `.deb` and `.rpm` are for x86_64 only now, because they carry the native libraries the app loads.
 - A chat whose newest page held a picture album stopped loading older messages after that page, because the album's pictures were counted as one message
 - A Signal group whose name is not known yet no longer shows its members' IDs as the title; it reads *Unnamed group · 5 members*.
 - Files under `/tmp` could not be sent through the daemon ("cannot be read"), because its unit gave it a private `/tmp`. A send now hands the daemon the opened files instead of their paths, so the daemon needs no access to them. Restart it after updating: `systemctl --user restart curlew-daemon`.
