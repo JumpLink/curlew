@@ -19,7 +19,10 @@ import { existsSync } from 'node:fs';
 import { loadConfig } from '../core/config.ts';
 import { type ListEntry, toEntries, withPreviews } from './conversation-list-model.ts';
 
-const LIST_LIMIT = 500;
+// Mail is two orders of magnitude bigger than chat: one shared limit let 480 newsletters push every
+// chat but a handful out of the list. Chats are listed whole, mail by its own limit.
+const CHAT_LIMIT = 5000;
+const MAIL_LIMIT = 500;
 
 /**
  * Account id → the address the account is known by, for recognising the chat with oneself: the
@@ -43,7 +46,15 @@ export function loadConversationEntries(dbPath = indexDbPath(), cfgPath = config
     try {
       const { senders, ui, mergedPeople, pins } = loadConfig(cfgPath);
       const entries = toEntries(
-        listConversations(db, { limit: LIST_LIMIT, overrides: senders }),
+        [
+          ...listConversations(db, { limit: CHAT_LIMIT, excludeBackend: 'mail', overrides: senders }),
+          ...listConversations(db, {
+            limit: MAIL_LIMIT,
+            backend: 'mail',
+            emailChat: !ui.showAllEmails,
+            overrides: senders,
+          }),
+        ],
         ui.showAllEmails,
         accountIdentities(db),
         listChatRooms(db, 'matrix'),

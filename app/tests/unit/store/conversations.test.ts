@@ -340,6 +340,11 @@ export default async () => {
         const chat = all.find((c) => c.messageCount === 2);
         expect(chat?.emailChat).toBe(true);
         expect(all.find((c) => c.messageCount === 1)?.emailChat).toBe(false);
+        // The window asks for email chats alone so that newsletters cannot fill its limit.
+        expect(listConversations(db, { emailChat: true, limit: 1 }).map((c) => c.id)).toStrictEqual([
+          chat?.id,
+        ]);
+        expect(listConversations(db, { excludeBackend: 'mail' }).length).toBe(0);
         const found = getConversation(db, chat?.id ?? '');
         expect(found?.messages.map((m) => m.emailChat)).toStrictEqual([false, true]);
         const target = mailReplyTarget(db, found?.messages[1].ref ?? { accountId: '', backend: 'mail' });

@@ -47,6 +47,7 @@ import { createHash } from 'node:crypto';
 import { readdirSync, rmSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import {
+  type ByteSink,
   type ChatSession,
   type DeliverySession,
   type MessageBackend,
@@ -107,6 +108,13 @@ export const CHANGE_POLL_MS = 2_000;
 
 /** How long the conversations wait for the last written batch before they are rebuilt. */
 export const REBUILD_DEBOUNCE_MS = 30_000;
+
+/**
+ * How long an attachment fetch may go without a byte before the daemon gives up. A dead download
+ * connection otherwise leaves the window's tile on its spinner for as long as the protocol library
+ * takes to notice (mtcute: about 22 minutes).
+ */
+export const FETCH_STALL_MS = 45_000;
 
 export interface DaemonParams {
   /** The index to write; the default is the user's. `:memory:` is a test's. */
@@ -308,6 +316,8 @@ export interface DaemonFetchHandlerOptions {
     MessageBackend & { openAttachments: NonNullable<MessageBackend['openAttachments']> }
   >;
   log: (line: string) => void;
+  /** No-progress deadline of one fetch; `FETCH_STALL_MS` when unset. */
+  stallTimeoutMs?: number;
 }
 
 /** The directory the daemon keeps one attachment preview in; mirrors the window's `partDir`. */
@@ -419,6 +429,44 @@ export function createDaemonSendHandler(options: DaemonSendHandlerOptions): Daem
 }
 
 /**
+ * Run a fetch that must keep delivering bytes: every write re-arms the deadline, and when none
+ * arrives within `stallMs` the fetch is aborted and rejected, so the caller can show a retry.
+ */
+async function withStallDeadline<T>(
+  stallMs: number,
+  sink: ByteSink,
+  run: (guarded: ByteSink, signal: AbortSignal) => Promise<T>,
+): Promise<T> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let expire: (error: Error) => void = () => {};
+  const stalled = new Promise<never>((_resolve, reject) => {
+    expire = reject;
+  });
+  const arm = (): void => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      const error = new Error(_('the download stalled — try again'));
+      controller.abort(error);
+      expire(error);
+    }, stallMs);
+  };
+  const guarded: ByteSink = {
+    write: (chunk) => {
+      arm();
+      return sink.write(chunk);
+    },
+    close: () => sink.close(),
+  };
+  arm();
+  try {
+    return await Promise.race([run(guarded, controller.signal), stalled]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
  * Answer one `FetchAttachment` off the session bus (ADR 0010).
  *
  * Like `createDaemonSendHandler`, this is separate from the transport so it can be tested without
@@ -428,7 +476,7 @@ export function createDaemonSendHandler(options: DaemonSendHandlerOptions): Daem
  * cannot choose the directory, only receive what the daemon wrote.
  */
 export function createDaemonFetchHandler(options: DaemonFetchHandlerOptions): DaemonFetchHandler {
-  const { db, fetchBackends, log } = options;
+  const { db, fetchBackends, log, stallTimeoutMs = FETCH_STALL_MS } = options;
   return async (request) => {
     const who = sessionKey(request.backend, request.account);
     const backend = fetchBackends.get(who);
@@ -459,11 +507,13 @@ export function createDaemonFetchHandler(options: DaemonFetchHandlerOptions): Da
     const sink = new FileSink(path);
     try {
       const fetcher = await backend.openAttachments(request.account);
-      const result = await fetcher.fetchAttachment(
-        { backend: request.backend, accountId: request.account },
-        { kind: info.kind, handle },
-        sink,
-        { maxBytes: request.maxBytes },
+      const result = await withStallDeadline(stallTimeoutMs, sink, (guarded, signal) =>
+        fetcher.fetchAttachment(
+          { backend: request.backend, accountId: request.account },
+          { kind: info.kind, handle },
+          guarded,
+          { maxBytes: request.maxBytes, signal },
+        ),
       );
       sink.close();
       log(`curlew-daemon: fetched attachment for ${who} (${result.size} bytes)`);

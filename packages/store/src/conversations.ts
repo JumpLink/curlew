@@ -636,6 +636,10 @@ export interface ConversationQuery {
   peopleOnly?: boolean;
   accountId?: string;
   backend?: string;
+  /** Every protocol but this one: a window lists chats whole and mail by its own limit. */
+  excludeBackend?: string;
+  /** Only mail threads that are email chats (Chat-Version), so newsletters do not fill the limit. */
+  emailChat?: boolean;
   limit?: number;
   /** Per-sender corrections, keyed by normalized address. */
   overrides?: SenderOverrides;
@@ -872,6 +876,11 @@ export function listConversations(db: IndexDatabase, query: ConversationQuery = 
     where.push('backend = ?');
     params.push(query.backend);
   }
+  if (query.excludeBackend) {
+    where.push('backend <> ?');
+    params.push(query.excludeBackend);
+  }
+  if (query.emailChat) where.push('email_chat = 1');
   if (query.peopleOnly) {
     const clause = peopleOnlyClause(overrides);
     where.push(clause.sql);
