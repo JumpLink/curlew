@@ -66,9 +66,14 @@ supporting is **unchecked**.
    id, so the window handles the click). The access prompts in `access-notifications.ts` still use
    the raw service and need a portal driver with buttons next. The two gaps in
    `docs/design/notifications.md` are unchanged.
-3. **A launcher seam for "keep receiving".** `setup-unit.ts` becomes the Linux-outside-a-sandbox
-   driver of an interface `Autostart { status, enable, disable }`; a second driver calls the
-   Background portal. The seam is Curlew's own stand-in until gjsify's portal table
+3. **A launcher seam for "keep receiving"** (**done**). `core/actions/autostart.ts` defines
+   `Autostart { status, enable, disable }`; `systemdAutostart` is the Linux-outside-a-sandbox driver
+   (the unit file itself stays `setup-unit.ts`), `core/lib/autostart-portal.ts` calls the
+   Background portal (`RequestBackground`, answered on a Request object) and `autostartFor` picks
+   one. The portal has no query, so its `status()` is `unknown`. The setup stage `unit` runs the
+   driver; one without a unit file skips writing and verifying it. Not wired yet: the window's
+   `startDaemon` still calls `systemctl --user start`, and no settings switch exists. The seam is
+   Curlew's own stand-in until gjsify's portal table The seam is Curlew's own stand-in until gjsify's portal table
    (ADR 0101) grows a Background row; it moves there then.
 4. **Accounts stay behind `system-accounts`.** Curlew's mail, contact and calendar code asks the
    interface; `@curlew/gnome` is the Linux driver. In a Flatpak the manifest grants

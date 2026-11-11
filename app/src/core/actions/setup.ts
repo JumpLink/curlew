@@ -42,6 +42,7 @@ import { indexStatus, indexSync, openIndex } from './index-sync.ts';
 import { runtimeName } from '../runtime.ts';
 import type { CommandRunner } from './setup-host.ts';
 import { systemdUserUnitDir, writeFileEnsured } from './setup-host.ts';
+import { systemdAutostart, type Autostart } from './autostart.ts';
 import type { UnitPaths } from './setup-unit.ts';
 import { UNIT_NAME, renderUnit, unitFilePath, unitPathsFor } from './setup-unit.ts';
 
@@ -123,6 +124,8 @@ export interface SetupContext {
    * real `accountsCheck`.
    */
   checkAccounts?(): Promise<{ ok: boolean; message: string }>;
+  /** How the daemon starts with the session. Defaults to the systemd user unit. */
+  readonly autostart?: Autostart;
   /** Set by a step, read by later ones. */
   readonly done: Map<string, SetupOutcome>;
 }
@@ -600,6 +603,10 @@ function indexedMessages(ctx: SetupContext): number {
 /** How long the smoke run receives before it asks itself to stop. */
 export const SETUP_DAEMON_SMOKE_SECONDS = 30;
 
+function autostartOf(ctx: SetupContext): Autostart {
+  return ctx.autostart ?? systemdAutostart(ctx.host);
+}
+
 function daemonStep(): SetupStep {
   return {
     name: 'daemon',
@@ -610,7 +617,7 @@ function daemonStep(): SetupStep {
     async probe(ctx) {
       // A daemon is "set up" when the unit that runs it is enabled — that is what makes it
       // receive while nobody is watching, which is the entire point of it.
-      return ctx.host.run(['systemctl', '--user', 'is-enabled', UNIT_NAME]).code === 0 ? 'done' : 'remaining';
+      return (await autostartOf(ctx).status()) === 'enabled' ? 'done' : 'remaining';
     },
     async run(ctx) {
       const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
@@ -702,11 +709,22 @@ function unitStep(): SetupStep {
     },
     command: 'curlew setup --only unit',
     async probe(ctx) {
+      const autostart = autostartOf(ctx);
+      if (!autostart.needsUnitFile) return (await autostart.status()) === 'enabled' ? 'done' : 'remaining';
       return ctx.host.exists(unitFilePathFor(ctx)) ? 'done' : 'remaining';
     },
     async run(ctx) {
       const say = async (line: string): Promise<void> => ctx.prompter.notify(`  ${line}`);
       await say(_('This runs the daemon without a terminal, and starts it with your session.'));
+      const autostart = autostartOf(ctx);
+      if (!autostart.needsUnitFile) {
+        if (!(await ctx.prompter.confirm(_('Start the daemon with your session now?')))) {
+          return { status: 'skipped', reason: _('starting with the session was not turned on') };
+        }
+        const asked = await autostart.enable();
+        if (!asked.ok) return { status: 'failed', reason: asked.reason };
+        return { status: 'done', detail: _('the daemon starts with your session') };
+      }
       const target = unitFilePathFor(ctx);
       writeFileEnsured(ctx.host, target, renderUnit(unitPaths(ctx)));
       await say(fmt(_('Written: {path}'), { path: target }));
@@ -723,21 +741,15 @@ function unitStep(): SetupStep {
         };
       }
       await say(_('systemd-analyze --user verify: exit 0, nothing to report.'));
-      if (ctx.host.run(['systemctl', '--user', 'is-enabled', UNIT_NAME]).code === 0) {
+      if ((await autostart.status()) === 'enabled') {
         await say(fmt(_('{unit} is already enabled — leaving it as it is.'), { unit: UNIT_NAME }));
         return { status: 'done', detail: _('unit written, already enabled') };
       }
       if (!(await ctx.prompter.confirm(_('Enable and start the unit now?')))) {
         return { status: 'skipped', reason: _('the unit is written but not enabled') };
       }
-      ctx.host.run(['systemctl', '--user', 'daemon-reload']);
-      const enable = ctx.host.run(['systemctl', '--user', 'enable', '--now', UNIT_NAME]);
-      if (enable.code !== 0) {
-        return {
-          status: 'failed',
-          reason: fmt(_('systemctl --user enable --now exited {code}'), { code: enable.code }),
-        };
-      }
+      const enabled = await autostart.enable();
+      if (!enabled.ok) return { status: 'failed', reason: enabled.reason };
       await say(fmt(_('{unit} is enabled and running.'), { unit: UNIT_NAME }));
       await say(_('When in doubt: journalctl --user -u curlew-daemon -f'));
       await say(

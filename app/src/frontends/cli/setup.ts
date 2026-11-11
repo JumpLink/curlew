@@ -23,6 +23,7 @@ import { envValue } from '@curlew/store';
 import type { SetupContext } from '../../core/actions/setup.ts';
 import { SETUP_STEPS, defaultLink, detectSetup, runSetup, setupStatus } from '../../core/actions/setup.ts';
 import { nodeHost, setupConfigPath, setupIndexPath } from '../../core/actions/setup-host.ts';
+import { autostartFor } from '../../core/lib/autostart-portal.ts';
 import { terminalSetupPrompter } from './prompt.ts';
 import { bold, dim, stateWord, yellow } from './colour.ts';
 import { pickArgv } from './output.ts';
@@ -66,6 +67,7 @@ export const setupCommand: CommandModule = {
       host,
       configPath: envValue(process.env, 'CONFIG') ?? setupConfigPath(host),
       indexPath: setupIndexPath(host),
+      autostart: autostartFor(host),
       link: defaultLink,
       done: new Map(),
     };
