@@ -153,16 +153,16 @@ jobs:
         run: gjsify ship linux --skip-build --target deb,rpm
 
       # `ship` exits 0 after writing NOTHING when every target is filtered away, so each file is
-      # asserted by name rather than assumed. `all` and `noarch`, not `x86_64`: `isArchIndependent()`
-      # is true for a `kind: "cli"` tree of a JS bundle and a launcher, and apt/dnf both refuse a
-      # package whose architecture is not the machine's.
+      # asserted by name rather than assumed. `amd64` and `x86_64`, not `all`/`noarch`: the bundle
+      # carries the linux-x64 native prebuilds (`gjsify.ship.bundledTypelibs`), so the packages
+      # are for that architecture only, which is also what lets apt/dnf refuse them elsewhere.
       - name: Assert the two packages arrived
         working-directory: app/ship/out
         run: |
           set -eu
           ls -la
           version=$(node -p "require('$GITHUB_WORKSPACE/app/package.json').version")
-          for f in "curlew_${version}-1_all.deb" "curlew-${version}-1.noarch.rpm"; do
+          for f in "curlew_${version}-1_amd64.deb" "curlew-${version}-1.x86_64.rpm"; do
             if [ ! -s "$f" ]; then
               echo "::error::missing or empty artifact: $f"
               exit 1
