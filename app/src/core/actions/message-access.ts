@@ -62,16 +62,26 @@ export async function mailContacts(
  * Require read access to the bodies of a chat or room, for every participant but the account
  * itself. A room id may not be among the participants, so a rule written for a room's address may
  * not match here — the rules of its members do.
+ *
+ * A participant is one person with several addresses (the same human on Telegram and Signal).
+ * Pass those as one group: the group is the account itself when ANY of its addresses is, because
+ * a backend only recognises its own network's address of the person.
  */
 export async function requireParticipantsRead(
   config: CurlewConfig,
   agent: AgentAccess,
   account: string,
-  addresses: readonly string[],
+  participants: readonly (string | readonly string[])[],
 ): Promise<void> {
   const isSelfAddress = selfChecker(config, agent);
   const others: string[] = [];
-  for (const address of addresses) if (!(await isSelfAddress(account, address))) others.push(address);
+  for (const participant of participants) {
+    const addresses = typeof participant === 'string' ? [participant] : participant;
+    const own = await Promise.all(addresses.map((address) => isSelfAddress(account, address)));
+    if (!own.some(Boolean)) others.push(...addresses);
+  }
+  // Only the account owner is in it (Saved Messages, a room of one): nobody else's words to guard.
+  if (participants.length > 0 && others.length === 0) return;
   await requireAgentAccess(config, agent, account, others, 'read');
 }
 
