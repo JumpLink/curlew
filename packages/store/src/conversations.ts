@@ -768,13 +768,14 @@ export function participantIdsOfTarget(
 }
 
 /**
- * The address values of every participant in the conversation a message belongs to.
+ * The address values of every participant in the conversation a message belongs to, one list per
+ * participant (a person with several addresses stays together).
  *
  * This is what the read-access gate needs for `message_save_attachment`: a contact whose
  * conversation is closed may not be read through their pictures either. An unknown message
  * returns an empty list, which leaves the gate to refuse.
  */
-export function messageParticipantAddresses(db: IndexDatabase, ref: MessageRef): string[] {
+export function messageParticipantAddresses(db: IndexDatabase, ref: MessageRef): string[][] {
   const row = db
     .prepare(
       `SELECT conversation_id FROM conversation_messages
@@ -801,11 +802,13 @@ export function messageParticipantAddresses(db: IndexDatabase, ref: MessageRef):
   const ids = participantRows.map((r) => String(r.id));
   const addressRows = db
     .prepare(
-      `SELECT value FROM participant_addresses
+      `SELECT participant_id, value FROM participant_addresses
         WHERE participant_id IN (${placeholders(ids.length)})`,
     )
-    .all(...ids) as Array<{ value: unknown }>;
-  return addressRows.map((r) => String(r.value));
+    .all(...ids) as Array<{ participant_id: unknown; value: unknown }>;
+  return ids
+    .map((id) => addressRows.filter((r) => String(r.participant_id) === id).map((r) => String(r.value)))
+    .filter((addresses) => addresses.length > 0);
 }
 
 function presentationOf(value: unknown): ConversationMessage['presentation'] {

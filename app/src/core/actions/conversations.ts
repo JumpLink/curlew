@@ -112,7 +112,7 @@ export async function conversationsShow(params: ConversationShowParams): Promise
         config,
         params.agent,
         conversation.accountId,
-        conversation.participants.flatMap((p) => p.addresses.map((a) => a.value)),
+        conversation.participants.map((p) => p.addresses.map((a) => a.value)),
       );
     }
     const messages: ShownConversationMessage[] = found.messages.map((message) => {

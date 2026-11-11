@@ -3,8 +3,11 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import type { AccessPort } from '../../../src/core/access.ts';
 import { conversationsShow } from '../../../src/core/actions/conversations.ts';
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
+import { requireParticipantsRead } from '../../../src/core/actions/message-access.ts';
+import { defaultConfig } from '../../../src/core/config.ts';
 
 /** What an agent sees of a chat message's attachments: a descriptor, never the handle. */
 
@@ -87,6 +90,46 @@ export default async () => {
         const plain = shown.messages.find((m) => m.ref.remoteId === 'peer-1/2');
         expect(plain?.attachments).toBe(undefined);
       });
+    });
+  });
+
+  await describe('requireParticipantsRead', async () => {
+    const OWN_TELEGRAM = '99385315';
+    const OTHER_SIGNAL = 'a0a0a0a0-0000-4000-8000-000000000001';
+    const rig = () => {
+      const asked: unknown[] = [];
+      const port: AccessPort = {
+        request: async (ask) => {
+          asked.push(ask);
+          return null;
+        },
+      };
+      const agent = {
+        frontend: 'mcp' as const,
+        session: 's',
+        port,
+        // The Telegram backend knows only its own network's address of the account owner.
+        isSelf: async (_account: string, address: string) => address === OWN_TELEGRAM,
+      };
+      return { asked, agent };
+    };
+
+    await it('treats a person as the account itself when any of their addresses is', async () => {
+      const { asked, agent } = rig();
+      await requireParticipantsRead(defaultConfig(), agent, ACCOUNT, [[OWN_TELEGRAM, OTHER_SIGNAL]]);
+      expect(asked.length).toBe(0);
+    });
+
+    await it('still asks for another person, whatever the account owner is', async () => {
+      const { asked, agent } = rig();
+      let refused = false;
+      try {
+        await requireParticipantsRead(defaultConfig(), agent, ACCOUNT, [[OWN_TELEGRAM], [OTHER_SIGNAL]]);
+      } catch {
+        refused = true;
+      }
+      expect(asked.length).toBe(1);
+      expect(refused).toBe(true);
     });
   });
 };
