@@ -12,6 +12,7 @@
 
 import GLib from 'gi://GLib?version=2.0';
 import Gio from 'gi://Gio?version=2.0';
+import { _, fmt } from '@curlew/protocol';
 import {
   DAEMON_BUS_NAME,
   DAEMON_INTERFACE,
@@ -24,11 +25,15 @@ import {
   type DaemonFetchAttachmentReply,
   type DaemonFetchAttachmentRequest,
   type DaemonSendReply,
+  type DaemonFdPlan,
   type DaemonSendRequest,
+  type DaemonSendWire,
   parseDaemonAccessRequest,
   parseDaemonFetchAttachmentRequest,
-  parseDaemonSendRequest,
+  parseDaemonSendWire,
+  planFdFiles,
 } from './daemon-bus.ts';
+import { stageSendFiles } from './daemon-send-files.ts';
 import type { AccessReply } from '../access.ts';
 
 /** Answer one send. Never throws: every outcome is a reply, which is what the caller reads. */
@@ -172,22 +177,42 @@ export function publishDaemonSend(
       invocation.return_dbus_error('org.freedesktop.DBus.Error.UnknownMethod', `no method ${method}`);
       return;
     }
-    let request: DaemonSendRequest;
+    let wire: DaemonSendWire;
+    let plan: DaemonFdPlan[];
+    const fdList = invocation.get_message().get_unix_fd_list();
     try {
-      request = parseDaemonSendRequest((params.recursiveUnpack() as [string])[0]);
+      wire = parseDaemonSendWire((params.recursiveUnpack() as [string])[0]);
+      plan = planFdFiles(wire.attachments ?? [], fdList?.get_length() ?? 0);
     } catch (error) {
       // A malformed request is a defect in the caller or a version mismatch, which is what D-Bus
       // errors are for — a `refused` reply would read as "the user may not do this".
       invocation.return_dbus_error('org.freedesktop.DBus.Error.InvalidArgs', reasonOf(error));
       return;
     }
-    // The handler owns every outcome, so a throw out of it is a bug — reported as one, and never
-    // as a refusal the caller might read as "nothing was sent for a good reason".
-    handler(request).then(
-      (reply) => invocation.return_value(new GLib.Variant('(s)', [JSON.stringify(reply)])),
+    const reply = (value: DaemonSendReply): void =>
+      invocation.return_value(new GLib.Variant('(s)', [JSON.stringify(value)]));
+    stageSendFiles(fdList, plan).then(
+      (staged) => {
+        const { attachments: _wireFiles, ...rest } = wire;
+        const request: DaemonSendRequest = plan.length > 0 ? { ...rest, attachments: staged.paths } : rest;
+        // The handler owns every outcome, so a throw out of it is a bug — reported as one, and
+        // never as a refusal the caller might read as "nothing was sent for a good reason".
+        handler(request)
+          .then(reply, (error: unknown) => {
+            log(`curlew-daemon: the send handler threw — ${reasonOf(error)}`);
+            invocation.return_dbus_error('org.freedesktop.DBus.Error.Failed', reasonOf(error));
+          })
+          .finally(staged.cleanup);
+      },
       (error: unknown) => {
-        log(`curlew-daemon: the send handler threw — ${reasonOf(error)}`);
-        invocation.return_dbus_error('org.freedesktop.DBus.Error.Failed', reasonOf(error));
+        log(`curlew-daemon: could not take the attachments of a send — ${reasonOf(error)}`);
+        reply({
+          v: DAEMON_WIRE_VERSION,
+          kind: 'failed',
+          message: fmt(_('the daemon could not take the attachments ({reason}) — nothing was sent'), {
+            reason: reasonOf(error),
+          }),
+        });
       },
     );
   };

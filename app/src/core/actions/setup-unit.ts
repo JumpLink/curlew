@@ -93,8 +93,6 @@ Restart=on-failure
 RestartPreventExitStatus=2
 RestartSec=30
 NoNewPrivileges=true
-# No PrivateTmp: a send names files by path (curlew send --attach /tmp/report.pdf) and the
-# daemon, not the caller, reads them. A private /tmp made every file there "cannot be read".
 
 [Install]
 WantedBy=default.target

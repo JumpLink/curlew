@@ -14,10 +14,13 @@
 import GLib from 'gi://GLib?version=2.0';
 import Gio from 'gi://Gio?version=2.0';
 import { _, fmt } from '@curlew/protocol';
+import { inspectSendFiles } from '@curlew/store';
 import {
   DAEMON_BUS_NAME,
   DAEMON_FETCH_TIMEOUT_MS,
   DAEMON_INTERFACE,
+  DAEMON_MAX_FILES,
+  DAEMON_MAX_FILE_BYTES,
   DAEMON_OBJECT_PATH,
   DAEMON_SEND_TIMEOUT_MS,
   type DaemonFetchAttachmentReply,
@@ -26,6 +29,7 @@ import {
   type DaemonSendRequest,
   parseDaemonFetchAttachmentReply,
   parseDaemonSendReply,
+  toDaemonWire,
 } from './daemon-bus.ts';
 
 /** How a send reaches a daemon. Injected by tests; `gioDaemonSendClient` is the real one. */
@@ -63,6 +67,15 @@ function meansNoDaemon(error: unknown): boolean {
   return NO_DAEMON.some((name) => text.includes(name));
 }
 
+/**
+ * Whether the daemon refused the call's shape: a daemon from before wire v7 still exports `Send`
+ * as `(s)`, and the bus answers a `(sah)` call with `InvalidArgs` before the daemon sees it.
+ */
+function meansDaemonTooOld(error: unknown): boolean {
+  const text = error instanceof Error ? error.message : String(error);
+  return text.includes('org.freedesktop.DBus.Error.InvalidArgs');
+}
+
 function reasonOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
@@ -79,24 +92,43 @@ export function gioDaemonSendClient(): DaemonSendClient {
         // refuses on its own if some process really does hold the account.
         return null;
       }
+      // The files are checked and opened HERE, by the process the person ran: the daemon gets the
+      // descriptors and never a path it would have to trust or could not reach (ADR 0011).
+      const files = inspectSendFiles((request.attachments ?? []).map((path) => ({ path })), {
+        perFile: DAEMON_MAX_FILE_BYTES,
+        count: DAEMON_MAX_FILES,
+      });
+      const fdList = new Gio.UnixFDList();
+      for (const file of files) {
+        const fd = GLib.open(file.realPath, 0, 0);
+        if (fd < 0) throw new Error(fmt(_('attachment {path} cannot be read'), { path: file.path }));
+        try {
+          fdList.append(fd);
+        } finally {
+          GLib.close(fd);
+        }
+      }
+      const wire = toDaemonWire(request);
+      const handles = (wire.attachments ?? []).map((file) => file.handle);
       let json: string;
       try {
         json = await new Promise<string>((resolve, reject) => {
-          connection.call(
+          connection.call_with_unix_fd_list(
             DAEMON_BUS_NAME,
             DAEMON_OBJECT_PATH,
             DAEMON_INTERFACE,
             'Send',
-            new GLib.Variant('(s)', [JSON.stringify(request)]),
+            new GLib.Variant('(sah)', [JSON.stringify(wire), handles]),
             new GLib.VariantType('(s)'),
             // Never start a daemon for this: a send is not a reason to put a receiving process on
             // the machine, and "not running" is an answer this caller knows what to do with.
             Gio.DBusCallFlags.NO_AUTO_START,
             DAEMON_SEND_TIMEOUT_MS,
+            fdList,
             null,
             (_source, result) => {
               try {
-                resolve((connection.call_finish(result!).recursiveUnpack() as [string])[0]);
+                resolve((connection.call_with_unix_fd_list_finish(result!)[0].recursiveUnpack() as [string])[0]);
               } catch (error) {
                 reject(error as Error);
               }
@@ -105,6 +137,13 @@ export function gioDaemonSendClient(): DaemonSendClient {
         });
       } catch (error) {
         if (meansNoDaemon(error)) return null;
+        if (meansDaemonTooOld(error)) {
+          throw new Error(
+            _(
+              'the running curlew daemon does not understand this send — nothing was sent; restart it with `systemctl --user restart curlew-daemon`',
+            ),
+          );
+        }
         // The daemon is there and the call did not come back. It may have sent the message —
         // nothing may retry on its own from here.
         throw new Error(

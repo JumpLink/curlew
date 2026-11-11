@@ -20,7 +20,8 @@
  * sentence in it, because the caller has to tell those apart from "there is no daemon".
  */
 
-import { _, fmt } from '@curlew/protocol';
+import { basename } from 'node:path';
+import { _, fmt, safeFileName } from '@curlew/protocol';
 import type { AccessAsk, AccessReply } from '../access.ts';
 
 export const DAEMON_BUS_NAME = 'eu.jumplink.curlew.Daemon';
@@ -31,6 +32,7 @@ export const DAEMON_INTERFACE_XML = `<node>
   <interface name="${DAEMON_INTERFACE}">
     <method name="Send">
       <arg type="s" name="request_json" direction="in"/>
+      <arg type="ah" name="files" direction="in"/>
       <arg type="s" name="reply_json" direction="out"/>
     </method>
     <method name="FetchAttachment">
@@ -68,7 +70,15 @@ export const DAEMON_FETCH_TIMEOUT_MS = 120_000;
 export const DAEMON_SEND_TIMEOUT_MS = 120_000;
 
 /** The wire version. Bump it when a field stops being optional or changes meaning. */
-export const DAEMON_WIRE_VERSION = 6;
+export const DAEMON_WIRE_VERSION = 7;
+
+/**
+ * What the daemon accepts as attachments of one send. The largest per-file limit of any sender
+ * (WhatsApp) and the files-per-message limit they all share: the senders still apply their own,
+ * stricter ones to the copy; this one only stops a caller from filling the disk through the bus.
+ */
+export const DAEMON_MAX_FILE_BYTES = 64_000_000;
+export const DAEMON_MAX_FILES = 10;
 
 /**
  * One send, as the calling process asks for it.
@@ -87,7 +97,10 @@ export interface DaemonSendRequest {
   text?: string;
   imageUrl?: string;
   subject?: string;
-  /** Absolute paths on the caller's disk; the daemon (the same user) checks and reads them. */
+  /**
+   * Absolute paths. In the process that asks they are the caller's files; the daemon sees them as
+   * its own private copies of the files the caller handed over as descriptors (wire v7).
+   */
   attachments?: string[];
   /** Chat: the message this one answers. Added in v4, so an older daemon is refused rather than dropping the link. */
   replyTo?: { remoteId: string; clientId?: string; fromSelf?: boolean; text?: string };
@@ -108,6 +121,19 @@ export interface DaemonSendRequest {
   };
   format?: 'plain' | 'markdown';
 }
+
+/**
+ * One attachment on the wire: the base name the caller wants it sent under and the index of its
+ * descriptor in the call's fd list. A path never crosses the bus — the daemon would have to trust
+ * it, and a sandboxed daemon could not open it (ADR 0011).
+ */
+export interface DaemonWireFile {
+  name: string;
+  handle: number;
+}
+
+/** `DaemonSendRequest` as it travels: the same, with descriptors in place of paths. */
+export type DaemonSendWire = Omit<DaemonSendRequest, 'attachments'> & { attachments?: DaemonWireFile[] };
 
 /** One message the daemon got out, and the body it was sent with — what the caller logs and indexes. */
 export interface DaemonSendStep {
@@ -226,7 +252,7 @@ export function parseDaemonSendReply(json: string): DaemonSendReply {
 }
 
 /** Read a request off the wire, or throw — the daemon's side of the same check. */
-export function parseDaemonSendRequest(json: string): DaemonSendRequest {
+export function parseDaemonSendWire(json: string): DaemonSendWire {
   let value: unknown;
   try {
     value = JSON.parse(json);
@@ -234,7 +260,7 @@ export function parseDaemonSendRequest(json: string): DaemonSendRequest {
     throw new Error('the send request is not JSON', { cause: error });
   }
   if (typeof value !== 'object' || value === null) throw new Error('the send request is not an object');
-  const request = value as Partial<DaemonSendRequest>;
+  const request = value as Partial<DaemonSendWire>;
   if (request.v !== DAEMON_WIRE_VERSION) {
     throw new Error(
       fmt(
@@ -250,8 +276,18 @@ export function parseDaemonSendRequest(json: string): DaemonSendRequest {
       throw new Error(`the send request has no ${field}`);
   }
   const files = request.attachments;
-  if (files !== undefined && (!Array.isArray(files) || files.some((path) => typeof path !== 'string'))) {
-    throw new Error('the send request has attachments that are not a list of paths');
+  if (
+    files !== undefined &&
+    (!Array.isArray(files) ||
+      files.some(
+        (file) =>
+          typeof file !== 'object' ||
+          file === null ||
+          typeof file.name !== 'string' ||
+          !Number.isInteger(file.handle),
+      ))
+  ) {
+    throw new Error('the send request has attachments that are not a list of named descriptors');
   }
   checkMessageTarget('replyTo', request.replyTo);
   const reaction = request.reaction as { target?: unknown; emoji?: unknown; previous?: unknown } | undefined;
@@ -301,7 +337,47 @@ export function parseDaemonSendRequest(json: string): DaemonSendRequest {
       throw new Error('the send request mixes a deletion with another send');
     }
   }
-  return request as DaemonSendRequest;
+  return request as DaemonSendWire;
+}
+
+/** The wire form of a request whose attachments are `paths`, handles numbered in order. */
+export function toDaemonWire(request: DaemonSendRequest): DaemonSendWire {
+  const { attachments, ...rest } = request;
+  if (attachments === undefined) return rest;
+  return { ...rest, attachments: attachments.map((path, handle) => ({ name: basename(path), handle })) };
+}
+
+/** Where one received descriptor is to be copied to, relative to the call's private directory. */
+export interface DaemonFdPlan {
+  handle: number;
+  /** `<index>/<safe name>`: one directory per file, so two files of one name never collide. */
+  relativePath: string;
+}
+
+/**
+ * Check the descriptors a send brought against the files it names, and decide where each lands.
+ *
+ * Every descriptor is used exactly once: a spare one is a caller that thinks it handed over
+ * something the daemon would never read, and a repeated handle would send one file twice. The name
+ * is reduced to one path segment here, on the receiving side of the trust boundary, whatever the
+ * caller says.
+ */
+export function planFdFiles(files: readonly DaemonWireFile[], fdCount: number): DaemonFdPlan[] {
+  if (files.length > DAEMON_MAX_FILES) {
+    throw new Error(`the send request has ${files.length} attachments; at most ${DAEMON_MAX_FILES} are accepted`);
+  }
+  if (fdCount !== files.length) {
+    throw new Error(`the send request names ${files.length} attachments and carries ${fdCount} descriptors`);
+  }
+  const seen = new Set<number>();
+  return files.map((file, index) => {
+    if (file.handle < 0 || file.handle >= fdCount) {
+      throw new Error(`the send request has an attachment whose descriptor ${file.handle} is not in the call`);
+    }
+    if (seen.has(file.handle)) throw new Error(`the send request uses descriptor ${file.handle} twice`);
+    seen.add(file.handle);
+    return { handle: file.handle, relativePath: `${index}/${safeFileName(file.name)}` };
+  });
 }
 
 /** The message a reply or a reaction points at: an id, and a few optional hints of the right type. */
