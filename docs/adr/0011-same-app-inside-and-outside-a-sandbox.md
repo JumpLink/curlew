@@ -57,10 +57,15 @@ supporting is **unchecked**.
    the senders take paths and `inspectSendFiles` should again check a regular file nobody can swap;
    the directory is removed when the call ends. Progress events for large uploads are not part of
    this step.
-2. **Notifications through `Gio.Application`.** The daemon registers an application id, so
-   `Gio.Notification` goes through the portal in a sandbox and through the desktop's own service
-   outside. A click arrives as an action on the application, which closes the two known gaps in
-   `docs/design/notifications.md` (no focus knowledge, no `DBusActivatable`).
+2. **Notifications behind one `NoticeSink`** (**done**, differently than first planned). The first
+   plan was `Gio.Notification` through a `Gio.Application` in the daemon. That does not work: a
+   unique application would take `eu.jumplink.curlew` from the window, and a `NON_UNIQUE` one has no
+   D-Bus connection, so GLib's notification backends find no service (checked with a fake server).
+   Instead `message-notifications.ts` carries two drivers: the desktop's own service outside a
+   sandbox, the Notification portal inside one (`AddNotification`, activated through the application
+   id, so the window handles the click). The access prompts in `access-notifications.ts` still use
+   the raw service and need a portal driver with buttons next. The two gaps in
+   `docs/design/notifications.md` are unchanged.
 3. **A launcher seam for "keep receiving".** `setup-unit.ts` becomes the Linux-outside-a-sandbox
    driver of an interface `Autostart { status, enable, disable }`; a second driver calls the
    Background portal. The seam is Curlew's own stand-in until gjsify's portal table

@@ -29,6 +29,7 @@
 
 ### Added
 
+- Inside a Flatpak the daemon's message notifications go through the Notification portal; outside nothing changes.
 - A reply to a message older than the loaded page shows its quote too, and a click on the quote loads the history back to that message
 - The list search also finds text inside chat messages and mail subjects (from two characters on); a matching conversation shows the line that matched
 - Each conversation in the list shows its newest message under the name, like Fractal and Telegram: *You: …* for your own, the sender in a group, the subject for mail. The account moves into the row's tooltip
