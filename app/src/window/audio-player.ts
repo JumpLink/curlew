@@ -17,9 +17,19 @@ export function audioPlayer(source: AttachmentSource, toast: (text: string) => v
   const { info } = source;
   const name = info.filename ?? attachmentLine(info);
   const voice = attachmentKind(info) === 'voice';
-  const box = new Gtk.Box({ spacing: 8, marginStart: 8, marginEnd: 8, marginTop: 8, marginBottom: 8 });
+  // The card is the surface; the controls sit inside it with their own padding, not against its edge.
+  const box = new Gtk.Box({ marginStart: 8, marginEnd: 8, marginTop: 8, marginBottom: 8 });
   box.add_css_class('card');
   box.set_tooltip_text(name);
+  const content = new Gtk.Box({
+    spacing: 10,
+    hexpand: true,
+    marginStart: 10,
+    marginEnd: 8,
+    marginTop: 8,
+    marginBottom: 8,
+  });
+  box.append(content);
 
   const play = new Gtk.Button({ iconName: 'media-playback-start-symbolic', valign: Gtk.Align.CENTER });
   play.add_css_class('circular');
@@ -27,7 +37,7 @@ export function audioPlayer(source: AttachmentSource, toast: (text: string) => v
   const playLabel = voice ? _('Play voice message') : fmt(_('Play {name}'), { name });
   play.set_tooltip_text(playLabel);
   play.update_property([Gtk.AccessibleProperty.LABEL], [playLabel]);
-  box.append(play);
+  content.append(play);
 
   const middle = new Gtk.Box({
     orientation: Gtk.Orientation.VERTICAL,
@@ -49,7 +59,7 @@ export function audioPlayer(source: AttachmentSource, toast: (text: string) => v
   time.add_css_class('dim-label');
   time.add_css_class('numeric');
   middle.append(time);
-  box.append(middle);
+  content.append(middle);
 
   const save = new Gtk.Button({
     iconName: 'document-save-symbolic',
@@ -58,7 +68,7 @@ export function audioPlayer(source: AttachmentSource, toast: (text: string) => v
   });
   save.add_css_class('flat');
   save.add_css_class('circular');
-  box.append(save);
+  content.append(save);
 
   let media: Gtk.MediaFile | null = null;
   let fetching = false;

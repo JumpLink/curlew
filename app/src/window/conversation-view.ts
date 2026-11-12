@@ -10,7 +10,7 @@ import type { ConversationMessage, MessageReaction, ReplyTarget } from '@curlew/
 import type { MessageCursor } from '@curlew/store';
 
 import { hasContactPage } from './contact-page.ts';
-import { showPicture } from './contact-picture.ts';
+import { showPicture, showSenderPicture } from './contact-picture.ts';
 import type { ListEntry } from './conversation-list-model.ts';
 import {
   canSend,
@@ -394,9 +394,11 @@ export function createConversationView(
   };
 
   // Who wrote the run of bubbles it opens: a small avatar with initials, like the list, and the name.
-  const senderHeading = (name: string): Gtk.Box => {
+  const senderHeading = (name: string, message: ConversationMessage): Gtk.Box => {
     const box = new Gtk.Box({ spacing: 6, marginStart: 12, marginEnd: 12 });
-    box.append(new Adw.Avatar({ size: 20, text: name, showInitials: initials(name) !== '' }));
+    const avatar = new Adw.Avatar({ size: 20, text: name, showInitials: initials(name) !== '' });
+    if (entry) showSenderPicture(avatar, entry, message.senderAddress);
+    box.append(avatar);
     const label = new Gtk.Label({ label: name, xalign: 0, ellipsize: Pango.EllipsizeMode.END });
     label.add_css_class('caption-heading');
     label.add_css_class('accent');
@@ -873,7 +875,7 @@ export function createConversationView(
       if (chips.length > 0) reactions.append(reactionRow(message, chips, showReactions));
     };
     attachBubbleActions(card, message, showReactions);
-    const senderBox = sender !== undefined ? senderHeading(sender) : null;
+    const senderBox = sender !== undefined ? senderHeading(sender, message) : null;
     if (senderBox) bubble.append(senderBox);
     const heading = subject ? subjectHeading(subject) : null;
     if (heading) bubble.append(heading);
@@ -946,8 +948,9 @@ export function createConversationView(
       activatable: false,
       marginStart: 12,
       marginEnd: 12,
-      marginTop: 3,
-      marginBottom: 3,
+      // Close inside a run of one sender, apart where a new run opens with its name.
+      marginTop: senderBox ? 10 : 2,
+      marginBottom: 2,
     });
     // A long message stops short of the pane's full width on a wide window, so a line stays readable.
     const clamp = new Adw.Clamp({ maximumSize: 560, tighteningThreshold: 560, child: card });
@@ -1023,9 +1026,10 @@ export function createConversationView(
       one.bubble.remove(one.sender);
       one.sender = null;
     } else if (!one.sender && sender !== undefined) {
-      one.sender = senderHeading(sender);
+      one.sender = senderHeading(sender, message);
       one.bubble.prepend(one.sender);
     }
+    one.row.set_margin_top(one.sender ? 10 : 2);
     if (one.subject && !subject) {
       one.bubble.remove(one.subject);
       one.subject = null;

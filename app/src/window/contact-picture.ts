@@ -15,6 +15,13 @@ import { loadTexture } from './attachment-store.ts';
 import { avatarBackends, loadAvatar } from './avatar-store.ts';
 import { type ListEntry, pictureSource } from './conversation-list-model.ts';
 
+/** The address kind a network's profile pictures are asked for by; XMPP group senders are room nicknames. */
+const PICTURE_KIND: Readonly<Record<string, string>> = {
+  telegram: 'telegram',
+  matrix: 'matrix',
+  whatsapp: 'whatsapp',
+};
+
 /** The side of a saved picture, in pixels: sharp at 96 logical pixels on a 2x screen. */
 const SAVED_SIDE = 256;
 /** What the decoder scales a picked file down to while it loads, so a 12 MP photo stays cheap. */
@@ -39,6 +46,18 @@ export function showPicture(avatar: Adw.Avatar, entry: ListEntry): void {
     .catch(() => {
       // The file is gone or not a picture: the avatar keeps its fallback.
     });
+}
+
+/** The picture of one sender in a group chat, once there is one; initials until then. */
+export function showSenderPicture(
+  avatar: Adw.Avatar,
+  entry: ListEntry,
+  address: { kind: string; value: string } | null,
+): void {
+  if (address === null || PICTURE_KIND[entry.backend] !== address.kind) return;
+  loadAvatar({ backend: entry.backend, accountId: entry.accountId, target: address.value }, (texture) =>
+    avatar.set_custom_image(texture),
+  );
 }
 
 /**

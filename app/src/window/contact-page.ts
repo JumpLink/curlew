@@ -159,36 +159,43 @@ export function presentContactPage(
   };
 
   if (merged) {
-    const nameGroup = new Adw.PreferencesGroup({ title: _('Name') });
+    // The name is one pick of a few short strings: a combo row, so the page stays short.
+    const nameGroup = new Adw.PreferencesGroup();
+    const names = new Adw.ComboRow({
+      title: _('Name'),
+      subtitle: _('The newest chat decides'),
+      model: Gtk.StringList.new([
+        _('Automatic'),
+        ...members.map((part) => `${part.title} · ${protocolLabel(part.backend)}`),
+      ]),
+      selected: Math.max(0, members.findIndex((part) => part.id === choice.name) + 1),
+    });
+    names.connect('notify::selected', () => {
+      const part = members[names.get_selected() - 1];
+      apply({ name: part ? part.id : null });
+    });
+    nameGroup.add(names);
+    column.append(nameGroup);
+
     const pictureGroup = new Adw.PreferencesGroup({ title: _('Picture') });
     ownNote = hint(pictureGroup, () => choice.own !== undefined);
-    for (const [group, pick, current, withPicture] of [
-      [nameGroup, (id: string | null) => apply({ name: id }), choice.name, false],
-      [pictureGroup, (id: string | null) => apply({ picture: id }), choice.picture, true],
-    ] as const) {
-      const first = radioRow(
-        _('Automatic'),
-        _('The newest chat decides'),
-        null,
-        current === undefined,
-        null,
-        () => pick(null),
+    const first = radioRow(
+      _('Automatic'),
+      _('The newest chat decides'),
+      null,
+      choice.picture === undefined,
+      null,
+      () => apply({ picture: null }),
+    );
+    pictureGroup.add(first.row);
+    for (const part of members) {
+      const line = `${protocolLabel(part.backend)} · ${listSubtitle(part, labels)}`;
+      const row = radioRow(part.title, line, first.check, choice.picture === part.id, partAvatar(part), () =>
+        apply({ picture: part.id }),
       );
-      group.add(first.row);
-      for (const part of members) {
-        const line = `${protocolLabel(part.backend)} · ${listSubtitle(part, labels)}`;
-        const row = radioRow(
-          part.title,
-          line,
-          first.check,
-          current === part.id,
-          withPicture ? partAvatar(part) : null,
-          () => pick(part.id),
-        );
-        group.add(row.row);
-      }
-      column.append(group);
+      pictureGroup.add(row.row);
     }
+    column.append(pictureGroup);
   }
 
   if (merged && entry.manual) {
