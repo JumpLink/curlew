@@ -6,17 +6,28 @@ import { _ } from '@curlew/protocol';
 import { configPath } from '@curlew/store';
 
 import { loadConfig, saveConfig } from '../core/config.ts';
-import {
-  ACCENT_CHOICES,
-  type AccentChoice,
-  BACKGROUND_CHOICES,
-  backgroundToShow,
-  isAccentChoice,
-} from '../core/lib/appearance.ts';
-import { applyAccent } from './appearance.ts';
+import { BACKGROUND_CHOICES, backgroundToShow } from '../core/lib/appearance.ts';
+import { appearanceGroups, type AppearanceStore } from './appearance-rows.ts';
 import { applyChatBackground } from './chat-background.ts';
 import { silentVideosOn } from './video-preview-model.ts';
 import { refreshSilentVideos } from './video-preview.ts';
+
+function appearanceStore(path: string, overlay: Adw.ToastOverlay): AppearanceStore {
+  return {
+    read: () => loadConfig(path).ui,
+    write(change) {
+      try {
+        const config = loadConfig(path);
+        Object.assign(config.ui, change);
+        saveConfig(config, path);
+      } catch (err) {
+        overlay.add_toast(
+          new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
+        );
+      }
+    },
+  };
+}
 
 export function presentPreferences(parent: Gtk.Window | null, onChanged: () => void): void {
   const path = configPath();
@@ -47,31 +58,7 @@ export function presentPreferences(parent: Gtk.Window | null, onChanged: () => v
   });
   const mediaGroup = new Adw.PreferencesGroup({ title: _('Media') });
   mediaGroup.add(videos);
-  const accentLabels: Record<AccentChoice, string> = {
-    default: _('Curlew teal'),
-    system: _('Follow the system'),
-    blue: _('Blue'),
-    teal: _('Teal'),
-    green: _('Green'),
-    yellow: _('Yellow'),
-    orange: _('Orange'),
-    red: _('Red'),
-    pink: _('Pink'),
-    purple: _('Purple'),
-    slate: _('Slate'),
-  };
-  const savedAccent = loadConfig(path).ui.accentColor;
-  const accent = new Adw.ComboRow({
-    title: _('Accent colour'),
-    subtitle: _('Colours buttons, links and highlights'),
-    model: Gtk.StringList.new(ACCENT_CHOICES.map((choice) => accentLabels[choice])),
-    selected: Math.max(
-      0,
-      ACCENT_CHOICES.indexOf(savedAccent && isAccentChoice(savedAccent) ? savedAccent : 'default'),
-    ),
-  });
-  const appearanceGroup = new Adw.PreferencesGroup({ title: _('Appearance') });
-  appearanceGroup.add(accent);
+  const backgroundGroup = new Adw.PreferencesGroup();
   const backgroundLabels = { doodles: _('Doodles'), none: _('Plain') };
   const background = new Adw.ComboRow({
     title: _('Chat background'),
@@ -79,9 +66,10 @@ export function presentPreferences(parent: Gtk.Window | null, onChanged: () => v
     model: Gtk.StringList.new(BACKGROUND_CHOICES.map((choice) => backgroundLabels[choice])),
     selected: Math.max(0, BACKGROUND_CHOICES.indexOf(backgroundToShow(loadConfig(path).ui.chatBackground))),
   });
-  appearanceGroup.add(background);
+  backgroundGroup.add(background);
   const page = new Adw.PreferencesPage();
-  page.add(appearanceGroup);
+  for (const appearance of appearanceGroups(appearanceStore(path, overlay))) page.add(appearance);
+  page.add(backgroundGroup);
   page.add(group);
   page.add(mediaGroup);
   page.add(notifyGroup);
@@ -110,19 +98,6 @@ export function presentPreferences(parent: Gtk.Window | null, onChanged: () => v
       config.ui.playVideosSilently = videos.get_active();
       saveConfig(config, path);
       refreshSilentVideos();
-    } catch (err) {
-      overlay.add_toast(
-        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
-      );
-    }
-  });
-  accent.connect('notify::selected', () => {
-    try {
-      const config = loadConfig(path);
-      const chosen = ACCENT_CHOICES[accent.get_selected()] ?? 'default';
-      config.ui.accentColor = chosen;
-      saveConfig(config, path);
-      applyAccent(chosen);
     } catch (err) {
       overlay.add_toast(
         new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),

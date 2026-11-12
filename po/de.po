@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-12 06:02+0100\n"
+"POT-Creation-Date: 2026-11-12 07:16+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1969,7 +1969,7 @@ msgstr "Offline"
 msgid "Daemon not running"
 msgstr "Daemon läuft nicht"
 
-#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:35
+#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:46
 msgid "Off"
 msgstr "Aus"
 
@@ -2154,6 +2154,82 @@ msgstr "Noch keine Regeln"
 #: app/src/window/agent-access-page.ts:337
 msgid "Add rule"
 msgstr "Regel hinzufügen"
+
+#: app/src/window/appearance-rows.ts:117
+msgid "Blue"
+msgstr "Blau"
+
+#: app/src/window/appearance-rows.ts:118
+msgid "Teal"
+msgstr "Petrol"
+
+#: app/src/window/appearance-rows.ts:119
+msgid "Green"
+msgstr "Grün"
+
+#: app/src/window/appearance-rows.ts:120
+msgid "Yellow"
+msgstr "Gelb"
+
+#: app/src/window/appearance-rows.ts:121
+msgid "Orange"
+msgstr "Orange"
+
+#: app/src/window/appearance-rows.ts:122
+msgid "Red"
+msgstr "Rot"
+
+#: app/src/window/appearance-rows.ts:123
+msgid "Pink"
+msgstr "Rosa"
+
+#: app/src/window/appearance-rows.ts:124
+msgid "Purple"
+msgstr "Violett"
+
+#: app/src/window/appearance-rows.ts:125
+msgid "Slate"
+msgstr "Schiefergrau"
+
+#: app/src/window/appearance-rows.ts:129
+msgid "Follow the system style"
+msgstr "Dem Systemstil folgen"
+
+#: app/src/window/appearance-rows.ts:130
+msgid "Light style"
+msgstr "Heller Stil"
+
+#: app/src/window/appearance-rows.ts:131
+msgid "Dark style"
+msgstr "Dunkler Stil"
+
+#: app/src/window/appearance-rows.ts:133
+msgid "Style"
+msgstr "Stil"
+
+#: app/src/window/appearance-rows.ts:185
+msgid "Primary colour"
+msgstr "Primärfarbe"
+
+#: app/src/window/appearance-rows.ts:186
+msgid "Use a custom primary colour"
+msgstr "Benutzerdefinierte Primärfarbe verwenden"
+
+#: app/src/window/appearance-rows.ts:187
+msgid "Tints the window and its panels"
+msgstr "Färbt das Fenster und seine Flächen"
+
+#: app/src/window/appearance-rows.ts:194
+msgid "Accent colour"
+msgstr "Akzentfarbe"
+
+#: app/src/window/appearance-rows.ts:195
+msgid "Use a custom accent colour"
+msgstr "Benutzerdefinierte Akzentfarbe verwenden"
+
+#: app/src/window/appearance-rows.ts:196
+msgid "Colours buttons, links and your own messages"
+msgstr "Färbt Schaltflächen, Links und deine eigenen Nachrichten"
 
 #: app/src/window/attachment-view.ts:103
 msgid "Play"
@@ -2395,7 +2471,7 @@ msgid "Review"
 msgstr "Prüfen"
 
 #: app/src/window/conversation-list.ts:518
-#: app/src/window/preferences-dialog.ts:29
+#: app/src/window/preferences-dialog.ts:40
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
@@ -2671,122 +2747,66 @@ msgstr "Kontakte suchen"
 msgid "The address book could not be read"
 msgstr "Das Adressbuch konnte nicht gelesen werden"
 
-#: app/src/window/preferences-dialog.ts:25
+#: app/src/window/preferences-dialog.ts:36
 msgid "Show all emails"
 msgstr "Alle E-Mails anzeigen"
 
-#: app/src/window/preferences-dialog.ts:26
+#: app/src/window/preferences-dialog.ts:37
 msgid ""
 "Show ordinary email threads beside conversations started by a chat messenger"
 msgstr ""
 "Gewöhnliche E-Mail-Verläufe neben Unterhaltungen aus einem Chat-Messenger "
 "anzeigen"
 
-#: app/src/window/preferences-dialog.ts:33
+#: app/src/window/preferences-dialog.ts:44
 msgid "Message notifications"
 msgstr "Benachrichtigungen für Nachrichten"
 
-#: app/src/window/preferences-dialog.ts:34
+#: app/src/window/preferences-dialog.ts:45
 msgid "What a desktop notification for a new chat message shows"
 msgstr "Was eine Desktop-Benachrichtigung über eine neue Chat-Nachricht zeigt"
 
-#: app/src/window/preferences-dialog.ts:35
+#: app/src/window/preferences-dialog.ts:46
 msgid "Sender and text"
 msgstr "Absender und Text"
 
-#: app/src/window/preferences-dialog.ts:35
+#: app/src/window/preferences-dialog.ts:46
 msgid "Sender only"
 msgstr "Nur Absender"
 
-#: app/src/window/preferences-dialog.ts:38
+#: app/src/window/preferences-dialog.ts:49
 msgid "Notifications"
 msgstr "Benachrichtigungen"
 
-#: app/src/window/preferences-dialog.ts:41
+#: app/src/window/preferences-dialog.ts:52
 msgid "Play videos silently in chats"
 msgstr "Videos in Chats stumm abspielen"
 
-#: app/src/window/preferences-dialog.ts:42
+#: app/src/window/preferences-dialog.ts:53
 msgid "A video in a conversation plays muted while it is on screen"
 msgstr "Ein Video in einer Unterhaltung läuft stumm, solange es im Bild ist"
 
-#: app/src/window/preferences-dialog.ts:48
+#: app/src/window/preferences-dialog.ts:59
 msgid "Media"
 msgstr "Medien"
 
-#: app/src/window/preferences-dialog.ts:51
-msgid "Curlew teal"
-msgstr "Curlew-Türkis"
-
-#: app/src/window/preferences-dialog.ts:52
-msgid "Follow the system"
-msgstr "Dem System folgen"
-
-#: app/src/window/preferences-dialog.ts:53
-msgid "Blue"
-msgstr "Blau"
-
-#: app/src/window/preferences-dialog.ts:54
-msgid "Teal"
-msgstr "Petrol"
-
-#: app/src/window/preferences-dialog.ts:55
-msgid "Green"
-msgstr "Grün"
-
-#: app/src/window/preferences-dialog.ts:56
-msgid "Yellow"
-msgstr "Gelb"
-
-#: app/src/window/preferences-dialog.ts:57
-msgid "Orange"
-msgstr "Orange"
-
-#: app/src/window/preferences-dialog.ts:58
-msgid "Red"
-msgstr "Rot"
-
-#: app/src/window/preferences-dialog.ts:59
-msgid "Pink"
-msgstr "Rosa"
-
-#: app/src/window/preferences-dialog.ts:60
-msgid "Purple"
-msgstr "Violett"
-
-#: app/src/window/preferences-dialog.ts:61
-msgid "Slate"
-msgstr "Schiefergrau"
-
-#: app/src/window/preferences-dialog.ts:65
-msgid "Accent colour"
-msgstr "Akzentfarbe"
-
-#: app/src/window/preferences-dialog.ts:66
-msgid "Colours buttons, links and highlights"
-msgstr "Färbt Schaltflächen, Links und Hervorhebungen"
-
-#: app/src/window/preferences-dialog.ts:73
-msgid "Appearance"
-msgstr "Erscheinungsbild"
-
-#: app/src/window/preferences-dialog.ts:75
+#: app/src/window/preferences-dialog.ts:62
 msgid "Doodles"
 msgstr "Kritzeleien"
 
-#: app/src/window/preferences-dialog.ts:75
+#: app/src/window/preferences-dialog.ts:62
 msgid "Plain"
 msgstr "Schlicht"
 
-#: app/src/window/preferences-dialog.ts:77
+#: app/src/window/preferences-dialog.ts:64
 msgid "Chat background"
 msgstr "Chat-Hintergrund"
 
-#: app/src/window/preferences-dialog.ts:78
+#: app/src/window/preferences-dialog.ts:65
 msgid "A quiet pattern behind the messages"
 msgstr "Ein dezentes Muster hinter den Nachrichten"
 
-#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:102
+#: app/src/window/preferences-dialog.ts:80 app/src/window/window.ts:102
 msgid "Preferences"
 msgstr "Einstellungen"
 
@@ -4011,6 +4031,12 @@ msgid ""
 msgstr ""
 "{count} Geräte von {jid} tragen diesen Fingerabdruck, er benennt also keines "
 "— nichts wurde geändert"
+
+#~ msgid "Curlew teal"
+#~ msgstr "Curlew-Türkis"
+
+#~ msgid "Appearance"
+#~ msgstr "Erscheinungsbild"
 
 #~ msgid "Mail, calendar and contacts"
 #~ msgstr "E-Mail, Kalender und Kontakte"

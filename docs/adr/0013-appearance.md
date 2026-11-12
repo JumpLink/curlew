@@ -37,6 +37,15 @@ screen, where Telegram lets the history scroll under them.
    a `ThemeService` in `app/src/window/` owns the provider, as in Learn6502. German strings from the
    first commit.
 
+5. **Style, primary colour, accent colour (addendum).** The preferences follow Learn6502:
+   `ui.colorScheme` (`system`, `light`, `dark`, through `Adw.StyleManager`), `ui.primaryColor` and
+   `ui.accentColor`, each colour with an on/off switch and nine dots. The **primary colour** is a
+   quiet tint over the window, header, sidebar, popover, dialog and view surfaces, mixed from
+   libadwaita's own light and dark base colours (7 % and 12 %), so text contrast holds. It
+   defaults to blue; `system` (switch off) means no tint. The **accent colour** stays the Adwaita
+   accent (default teal, `system` = the desktop's). The two are separate on purpose: a blue tint
+   with a blue accent would leave own bubbles and buttons indistinguishable from the surface.
+
 ## Consequences
 
 - Three small PRs: accent and settings, background, floating bars. Each leaves the window working.

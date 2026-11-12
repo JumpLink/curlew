@@ -46,6 +46,7 @@
 
 ### Added
 
+- The preferences have a Style row (follow the system, light, dark) and a primary colour that tints the window, header, sidebar and dialogs; the accent colour joins it with the same colour dots and an on/off switch.
 - A quiet doodle pattern behind the messages of a conversation, drawn in the text colour at low opacity so it suits light and dark; switch it off under Appearance in the preferences. [ADR 0013](docs/adr/0013-appearance.md)
 - An Appearance group in the preferences with an accent colour: Curlew's own blue by default (it follows the system accent only on request), the nine Adwaita colours, or "follow the system". [ADR 0013](docs/adr/0013-appearance.md)
 - A Matrix room with only you in it counts as your own chat: sending to it needs no grant. The member list is asked from the homeserver each time, and anything unclear (an error, a pending invite, somebody else) counts as not yours.

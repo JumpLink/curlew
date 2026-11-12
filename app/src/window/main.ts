@@ -14,7 +14,7 @@ import { initI18n } from '../core/lib/i18n.ts';
 import { APP_ID, installAboutAction } from './about.ts';
 import { configPath } from '@curlew/store';
 import { loadConfig } from '../core/config.ts';
-import { applyAccent, installSurfaces } from './appearance.ts';
+import { applyAccent, applyColorScheme, applyPrimary, installSurfaces } from './appearance.ts';
 import { applyChatBackground } from './chat-background.ts';
 import { createWindow } from './window.ts';
 
@@ -46,9 +46,12 @@ const application = new AdwaitaApp({
     // A broken config must not stop the window from opening: it keeps Curlew's own accent.
     try {
       const ui = loadConfig(configPath()).ui;
+      applyColorScheme(ui.colorScheme);
+      applyPrimary(ui.primaryColor);
       applyAccent(ui.accentColor);
       applyChatBackground(ui.chatBackground);
     } catch {
+      applyPrimary(undefined);
       applyAccent(undefined);
       applyChatBackground(undefined);
     }
@@ -79,6 +82,11 @@ const application = new AdwaitaApp({
       GLib.idle_add(
         GLib.PRIORITY_DEFAULT,
         () => (window.activate_action('agent-access', null), GLib.SOURCE_REMOVE),
+      );
+    if (process.env.CURLEW_WINDOW_OPEN_PREFERENCES === '1')
+      GLib.idle_add(
+        GLib.PRIORITY_DEFAULT,
+        () => (window.activate_action('preferences', null), GLib.SOURCE_REMOVE),
       );
     return window;
   },

@@ -13,7 +13,14 @@
 import type { Classification } from '@curlew/protocol';
 import { normalizeAddress } from '@curlew/protocol';
 import { configPath, ensurePrivateDir } from '@curlew/store';
-import { ACCENT_CHOICES, BACKGROUND_CHOICES, isAccentChoice, isBackgroundChoice } from './lib/appearance.ts';
+import {
+  ACCENT_CHOICES,
+  BACKGROUND_CHOICES,
+  COLOR_SCHEMES,
+  isAccentChoice,
+  isBackgroundChoice,
+  isColorScheme,
+} from './lib/appearance.ts';
 import { type AgentAccessPolicy, defaultAgentAccess, parseAgentAccess } from './agent-access.ts';
 import { type Grant, type ParseGrantsOptions, parseGrants } from './grants.ts';
 import { chmodSync, existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
@@ -38,8 +45,12 @@ export interface UiConfig {
   notifications: 'preview' | 'sender' | 'off';
   /** A single video in a chat plays muted and looped while on screen. Unset: on, unless the system asks for fewer animations. */
   playVideosSilently?: boolean;
-  /** `default` (Curlew's blue), `system` (follow the desktop) or an Adwaita accent name. Unset: `default`. */
+  /** `default` (Curlew's teal), `system` (follow the desktop) or an Adwaita accent name. Unset: `default`. */
   accentColor?: string;
+  /** The tint of the window surfaces: `default` (blue), `system` (no tint) or an Adwaita colour name. Unset: `default`. */
+  primaryColor?: string;
+  /** `system`, `light` or `dark`. Unset: `system`. */
+  colorScheme?: string;
   /** `doodles` or `none`. Unset: `doodles`. */
   chatBackground?: string;
 }
@@ -187,6 +198,12 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   const accentColor = (rawUi as Record<string, unknown>).accentColor;
   if (accentColor !== undefined && (typeof accentColor !== 'string' || !isAccentChoice(accentColor)))
     throw new Error(`config.ui.accentColor must be one of ${ACCENT_CHOICES.join(', ')}`);
+  const primaryColor = (rawUi as Record<string, unknown>).primaryColor;
+  if (primaryColor !== undefined && (typeof primaryColor !== 'string' || !isAccentChoice(primaryColor)))
+    throw new Error(`config.ui.primaryColor must be one of ${ACCENT_CHOICES.join(', ')}`);
+  const colorScheme = (rawUi as Record<string, unknown>).colorScheme;
+  if (colorScheme !== undefined && (typeof colorScheme !== 'string' || !isColorScheme(colorScheme)))
+    throw new Error(`config.ui.colorScheme must be one of ${COLOR_SCHEMES.join(', ')}`);
   const chatBackground = (rawUi as Record<string, unknown>).chatBackground;
   if (
     chatBackground !== undefined &&
@@ -198,6 +215,8 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     notifications,
     ...(playVideosSilently === undefined ? {} : { playVideosSilently }),
     ...(accentColor === undefined ? {} : { accentColor }),
+    ...(primaryColor === undefined ? {} : { primaryColor }),
+    ...(colorScheme === undefined ? {} : { colorScheme }),
     ...(chatBackground === undefined ? {} : { chatBackground }),
   };
 
