@@ -3,6 +3,7 @@
 import Adw from 'gi://Adw?version=1';
 import Gdk from 'gi://Gdk?version=4.0';
 import GLib from 'gi://GLib?version=2.0';
+import GObject from 'gi://GObject?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import Pango from 'gi://Pango?version=1.0';
 import { _, fmt } from '@curlew/protocol';
@@ -263,20 +264,21 @@ export function createConversationView(
   // Everything the person types into rides in one bottom bar, so the history can run beneath it.
   const compose = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
   // Each part is a card of its own, so it stays legible over the messages scrolling beneath it.
-  const pill = new Gtk.Box({ marginStart: 12, marginEnd: 12, marginTop: 4, marginBottom: 8 });
+  const pill = new Gtk.Box({ marginStart: 12, marginEnd: 12, marginTop: 6, marginBottom: 8 });
   pill.add_css_class('card');
   pill.add_css_class('curlew-surface');
   pill.append(composer);
-  for (const part of [hint, files.strip, replyBar, editBar]) {
-    part.add_css_class('card');
-    part.add_css_class('curlew-surface');
-    part.set_margin_start(12);
-    part.set_margin_end(12);
-  }
-  compose.append(hint);
-  compose.append(files.strip);
-  compose.append(replyBar);
-  compose.append(editBar);
+  // The card is the surface and the part keeps its own margins as padding inside it.
+  const floating = (part: Gtk.Widget): Gtk.Box => {
+    const card = new Gtk.Box({ marginStart: 12, marginEnd: 12, marginTop: 4, visible: part.get_visible() });
+    card.add_css_class('card');
+    card.add_css_class('curlew-surface');
+    card.append(part);
+    part.bind_property('visible', card, 'visible', GObject.BindingFlags.SYNC_CREATE);
+    return card;
+  };
+  hint.set_margin_bottom(4);
+  for (const part of [hint, files.strip, replyBar, editBar]) compose.append(floating(part));
   compose.append(pill);
   const toolbar = new Adw.ToolbarView({ extendContentToBottomEdge: true });
   toolbar.add_top_bar(header);
@@ -356,11 +358,21 @@ export function createConversationView(
   };
 
   const daySeparator = (day: string): Gtk.ListBoxRow => {
-    const label = new Gtk.Label({ label: day, xalign: 0.5, marginTop: 12, marginBottom: 6 });
-    label.add_css_class('dim-label');
+    const label = new Gtk.Label({
+      label: day,
+      marginStart: 12,
+      marginEnd: 12,
+      marginTop: 3,
+      marginBottom: 3,
+    });
     label.add_css_class('caption');
+    // A pill of its own, so the date stays legible on the wallpaper.
+    const pill = new Gtk.Box({ halign: Gtk.Align.CENTER, marginTop: 12, marginBottom: 6 });
+    pill.add_css_class('card');
+    pill.add_css_class('curlew-surface');
+    pill.append(label);
     const row = new Gtk.ListBoxRow({ selectable: false, activatable: false });
-    row.set_child(label);
+    row.set_child(pill);
     return row;
   };
 
