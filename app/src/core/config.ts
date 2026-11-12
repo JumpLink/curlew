@@ -15,9 +15,12 @@ import { normalizeAddress } from '@curlew/protocol';
 import { configPath, ensurePrivateDir } from '@curlew/store';
 import {
   ACCENT_CHOICES,
+  type AccentName,
   BACKGROUND_CHOICES,
+  type BackgroundChoice,
   COLOR_SCHEMES,
   isAccentChoice,
+  isAccentName,
   isBackgroundChoice,
   isColorScheme,
 } from './lib/appearance.ts';
@@ -117,11 +120,15 @@ export interface CurlewConfig {
  * How one contact is shown. `name` and `picture` name one part of a merged contact by its
  * conversation id; `own` is the file name of a picture the person set, kept in the store's
  * contact-pictures directory. An own picture beats a chosen part, which beats the default.
+ * `primary`, `accent` and `background` give this one chat its own look (ADR 0013).
  */
 export interface ContactChoice {
   name?: string;
   picture?: string;
   own?: string;
+  primary?: AccentName;
+  accent?: AccentName;
+  background?: BackgroundChoice;
 }
 
 const KNOWN_KEYS = [
@@ -288,20 +295,31 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
 function parseContactChoices(raw: unknown): Record<string, ContactChoice> {
   if (raw === undefined) return {};
   const bad = () =>
-    new Error('config.contactChoices must map participant ids to {name?, picture?, own?} choices');
+    new Error(
+      'config.contactChoices must map participant ids to {name?, picture?, own?, primary?, accent?, background?} choices',
+    );
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw bad();
   const out: Record<string, ContactChoice> = {};
   for (const [id, value] of Object.entries(raw as Record<string, unknown>)) {
     if (id === '' || typeof value !== 'object' || value === null || Array.isArray(value)) throw bad();
-    const { name, picture, own } = value as Record<string, unknown>;
-    for (const part of [name, picture, own]) {
+    const { name, picture, own, primary, accent, background } = value as Record<string, unknown>;
+    for (const part of [name, picture, own, primary, accent, background]) {
       if (part !== undefined && (typeof part !== 'string' || part === '')) throw bad();
     }
     if (typeof own === 'string' && /[/\\]/.test(own)) throw bad();
+    for (const colour of [primary, accent]) {
+      if (colour !== undefined && !isAccentName(colour as string)) throw bad();
+    }
+    if (background !== undefined && !isBackgroundChoice(background as string)) {
+      throw bad();
+    }
     const choice: ContactChoice = {
       ...(name !== undefined ? { name: name as string } : {}),
       ...(picture !== undefined ? { picture: picture as string } : {}),
       ...(own !== undefined ? { own: own as string } : {}),
+      ...(primary !== undefined ? { primary: primary as AccentName } : {}),
+      ...(accent !== undefined ? { accent: accent as AccentName } : {}),
+      ...(background !== undefined ? { background: background as BackgroundChoice } : {}),
     };
     if (Object.keys(choice).length > 0) out[id] = choice;
   }

@@ -12,6 +12,15 @@ import { _, _n, fmt } from '@curlew/protocol';
 
 import type { ContactChoice } from '../core/config.ts';
 import type { ChoicePatch } from '../core/contact-choices.ts';
+import {
+  ACCENT_NAMES,
+  type AccentName,
+  BACKGROUND_CHOICES,
+  DESIGN_PACKS,
+  lookOfPack,
+  packOf,
+} from '../core/lib/appearance.ts';
+import { backgroundLabels, packLabels } from './appearance-rows.ts';
 import { deleteOwnPicture, saveOwnPicture, showPicture } from './contact-picture.ts';
 import {
   type ListEntry,
@@ -72,6 +81,79 @@ function partAvatar(part: ListEntry): Adw.Avatar {
   const avatar = new Adw.Avatar({ size: ROW_AVATAR_SIZE, text: part.title, showInitials: true });
   showPicture(avatar, part);
   return avatar;
+}
+
+/**
+ * The chat's own look: a design pack sets colours and pattern together, the two rows below it
+ * change one part. Every row starts with "Like the rest of the app", which clears its part.
+ */
+function lookGroup(choice: ContactChoice, apply: (patch: ChoicePatch) => void): Adw.PreferencesGroup {
+  const same = _('Like the rest of the app');
+  const colours: Record<AccentName, string> = {
+    blue: _('Blue'),
+    teal: _('Teal'),
+    green: _('Green'),
+    yellow: _('Yellow'),
+    orange: _('Orange'),
+    red: _('Red'),
+    pink: _('Pink'),
+    purple: _('Purple'),
+    slate: _('Slate'),
+  };
+  const packNames = packLabels();
+  const patterns = backgroundLabels();
+  const group = new Adw.PreferencesGroup({
+    title: _('Look'),
+    description: _('Give this chat its own colours and background'),
+  });
+  const designs = new Adw.ComboRow({
+    title: _('Design'),
+    model: Gtk.StringList.new([same, ...DESIGN_PACKS.map((pack) => packNames[pack.id] ?? pack.id)]),
+  });
+  const accents = new Adw.ComboRow({
+    title: _('Accent colour'),
+    model: Gtk.StringList.new([same, ...ACCENT_NAMES.map((name) => colours[name])]),
+  });
+  const backgrounds = new Adw.ComboRow({
+    title: _('Chat background'),
+    model: Gtk.StringList.new([same, ...BACKGROUND_CHOICES.map((name) => patterns[name])]),
+  });
+  let quiet = false;
+  // A pack is shown only while the chat's three parts are exactly that pack's; a mix of parts is
+  // none, so the row stays empty instead of naming a pack the chat does not wear.
+  const sync = (): void => {
+    quiet = true;
+    const pack = packOf(choice);
+    const own =
+      choice.primary !== undefined || choice.accent !== undefined || choice.background !== undefined;
+    designs.set_selected(pack ? DESIGN_PACKS.indexOf(pack) + 1 : own ? Gtk.INVALID_LIST_POSITION : 0);
+    accents.set_selected(choice.accent ? ACCENT_NAMES.indexOf(choice.accent) + 1 : 0);
+    backgrounds.set_selected(choice.background ? BACKGROUND_CHOICES.indexOf(choice.background) + 1 : 0);
+    quiet = false;
+  };
+  sync();
+  designs.connect('notify::selected', () => {
+    if (quiet) return;
+    const at = designs.get_selected();
+    if (at === Gtk.INVALID_LIST_POSITION) return;
+    const pack = DESIGN_PACKS[at - 1];
+    apply(pack ? lookOfPack(pack) : { primary: null, accent: null, background: null });
+    sync();
+  });
+  accents.connect('notify::selected', () => {
+    if (quiet) return;
+    apply({ accent: ACCENT_NAMES[accents.get_selected() - 1] ?? null });
+    sync();
+  });
+  backgrounds.connect('notify::selected', () => {
+    if (quiet) return;
+    apply({ background: BACKGROUND_CHOICES[backgrounds.get_selected() - 1] ?? null });
+    sync();
+  });
+  group.add(designs);
+  group.add(accents);
+  group.add(backgrounds);
+  return group;
 }
 
 export function presentContactPage(
@@ -149,11 +231,12 @@ export function presentContactPage(
   };
 
   const apply = (patch: ChoicePatch) => {
-    for (const field of ['name', 'picture', 'own'] as const) {
-      const value = patch[field];
+    const set = <K extends keyof ContactChoice>(field: K, value: ContactChoice[K] | null | undefined) => {
       if (value === null) delete choice[field];
       else if (value !== undefined) choice[field] = value;
-    }
+    };
+    for (const field of ['name', 'picture', 'own'] as const) set(field, patch[field]);
+    for (const field of ['primary', 'accent', 'background'] as const) set(field, patch[field]);
     tools.choose(ids, patch);
     refresh();
   };
@@ -197,6 +280,8 @@ export function presentContactPage(
     }
     column.append(pictureGroup);
   }
+
+  column.append(lookGroup(choice, apply));
 
   if (merged && entry.manual) {
     const group = new Adw.PreferencesGroup();

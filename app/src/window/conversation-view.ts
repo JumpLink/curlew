@@ -61,6 +61,7 @@ import {
   type ReplyDraft,
 } from './conversation-model.ts';
 import { attachmentList, type AttachmentHandlers } from './attachment-view.ts';
+import { type Look, lookClasses } from '../core/lib/appearance.ts';
 import { ChatBackground } from './chat-background.ts';
 import type { AlbumItem } from './media-viewer.ts';
 import { createSilentVideoHost } from './video-preview.ts';
@@ -75,6 +76,8 @@ import type { PickedFile } from './composer-files-model.ts';
 export interface ConversationView {
   page: Adw.NavigationPage;
   show(entry: ListEntry, messages: ShownMessage[], accountLabels: Map<string, string>): void;
+  /** Give the open chat its own colours and pattern; an empty look follows the app-wide setting. */
+  setLook(look: Look): void;
 }
 
 const ROWS_PER_TURN = 8;
@@ -189,7 +192,8 @@ export function createConversationView(
   scroller.set_child(history);
   // The pattern sits under the messages and takes no clicks.
   const backdrop = new Gtk.Overlay({ vexpand: true });
-  backdrop.set_child(new ChatBackground());
+  const pattern = new ChatBackground();
+  backdrop.set_child(pattern);
   backdrop.add_overlay(scroller);
   // A conversation with nothing in it says so, instead of showing the bare pattern like a failed load.
   const empty = new Adw.StatusPage({
@@ -871,9 +875,9 @@ export function createConversationView(
     // Clips a picture block to the bubble's rounded corners.
     const card = new Gtk.Box({ overflow: Gtk.Overflow.HIDDEN });
     card.add_css_class('card');
-    card.add_css_class('curlew-surface');
-    // The person's own messages take the accent colour, as in Telegram and WhatsApp (ADR 0013).
-    if (message.fromSelf) card.add_css_class('curlew-own');
+    // The person's own messages take the accent colour, as in Telegram and WhatsApp (ADR 0013); the
+    // others get the opaque surface, which a chat's own primary tint recolours.
+    card.add_css_class(message.fromSelf ? 'curlew-own' : 'curlew-surface');
     // No padding of its own: text parts carry the side margins, a picture block runs to the edge.
     const bubble = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 4, marginBottom: 8 });
     card.append(bubble);
@@ -1333,8 +1337,15 @@ export function createConversationView(
   send.connect('clicked', submit);
   input.onSubmit(submit);
 
+  let lookApplied: string[] = [];
   return {
     page,
+    setLook(look) {
+      for (const name of lookApplied) toolbar.remove_css_class(name);
+      lookApplied = lookClasses(look);
+      for (const name of lookApplied) toolbar.add_css_class(name);
+      pattern.setPattern(look.background ?? null);
+    },
     show(nextEntry, nextMessages, nextLabels) {
       entry = nextEntry;
       rebuildRoute(nextEntry);

@@ -9,12 +9,19 @@ import {
   ACCENT_NAMES,
   type AccentName,
   accentToImpose,
+  BACKGROUND_CHOICES,
+  type BackgroundChoice,
+  backgroundToShow,
   COLOR_SCHEMES,
   type ColorScheme,
+  DESIGN_PACKS,
+  type Look,
+  packOf,
   primaryToImpose,
   schemeToImpose,
 } from '../core/lib/appearance.ts';
 import { applyAccent, applyColorScheme, applyPrimary } from './appearance.ts';
+import { applyChatBackground } from './chat-background.ts';
 
 // Round swatches, as in Learn6502's selectors: the circle is the widget's own background, and the
 // checked one wears a ring in the accent colour. Colour only; the layout is plain GTK.
@@ -104,12 +111,35 @@ function swatches<K extends string>(
 const row = (child: Gtk.Widget): Gtk.ListBoxRow =>
   new Gtk.ListBoxRow({ activatable: false, selectable: false, child });
 
-export interface AppearanceStore {
-  read(): { colorScheme?: string; primaryColor?: string; accentColor?: string };
-  write(change: { colorScheme?: string; primaryColor?: string; accentColor?: string }): void;
+interface AppearanceSettings {
+  colorScheme?: string;
+  primaryColor?: string;
+  accentColor?: string;
+  chatBackground?: string;
 }
 
-/** The three groups: style, primary colour, accent colour. */
+export interface AppearanceStore {
+  read(): AppearanceSettings;
+  write(change: AppearanceSettings): void;
+}
+
+/** The names of the design packs, by id; a function so the strings are translated at run time. */
+export function packLabels(): Record<string, string> {
+  return {
+    curlew: _('Curlew'),
+    forest: _('Forest'),
+    dusk: _('Dusk'),
+    sunrise: _('Sunrise'),
+    rose: _('Rose'),
+    graphite: _('Graphite'),
+  };
+}
+
+export function backgroundLabels(): Record<BackgroundChoice, string> {
+  return { doodles: _('Doodles'), dots: _('Dots'), waves: _('Waves'), none: _('Plain') };
+}
+
+/** The groups: design pack, style, primary colour, accent colour, chat background. */
 export function appearanceGroups(store: AppearanceStore): Adw.PreferencesGroup[] {
   installSwatches();
   const saved = store.read();
@@ -152,10 +182,11 @@ export function appearanceGroups(store: AppearanceStore): Adw.PreferencesGroup[]
     fallback: AccentName,
     save: (value: string) => void,
     apply: (value: string) => void,
-  ): Adw.PreferencesGroup => {
+  ): { group: Adw.PreferencesGroup; set(name: AccentName): void } => {
     const group = new Adw.PreferencesGroup({ title, description: subtitle });
     const toggle = new Adw.SwitchRow({ title: switchTitle, active: current !== null });
     let chosen: AccentName = current ?? fallback;
+    let quiet = false;
     const dots = swatches(
       ACCENT_NAMES,
       (key) => colourLabels[key],
@@ -169,6 +200,7 @@ export function appearanceGroups(store: AppearanceStore): Adw.PreferencesGroup[]
     );
     dots.setSensitive(toggle.get_active());
     toggle.connect('notify::active', () => {
+      if (quiet) return;
       const on = toggle.get_active();
       dots.setSensitive(on);
       dots.select(chosen);
@@ -178,8 +210,45 @@ export function appearanceGroups(store: AppearanceStore): Adw.PreferencesGroup[]
     });
     group.add(toggle);
     group.add(row(dots.box));
-    return group;
+    return {
+      group,
+      // A design pack picks the colour for the person: show it without saving a second time.
+      set(name) {
+        quiet = true;
+        chosen = name;
+        toggle.set_active(true);
+        dots.setSensitive(true);
+        dots.select(name);
+        quiet = false;
+      },
+    };
   };
+
+  let primaryNow = primaryToImpose(saved.primaryColor);
+  let accentNow = accentToImpose(saved.accentColor);
+  let backgroundNow = backgroundToShow(saved.chatBackground);
+  const lookNow = (): Look => ({
+    ...(primaryNow ? { primary: primaryNow } : {}),
+    ...(accentNow ? { accent: accentNow } : {}),
+    background: backgroundNow,
+  });
+  let quiet = false;
+  const packNames = packLabels();
+  const designs = new Adw.ComboRow({
+    title: _('Design'),
+    subtitle: _('Colours and background chosen to go together'),
+    model: Gtk.StringList.new([_('Custom'), ...DESIGN_PACKS.map((pack) => packNames[pack.id] ?? pack.id)]),
+  });
+  // The row names the pack the three settings add up to, or "Custom" when they match none.
+  const syncPack = (): void => {
+    const pack = packOf(lookNow());
+    quiet = true;
+    designs.set_selected(pack ? DESIGN_PACKS.indexOf(pack) + 1 : 0);
+    quiet = false;
+  };
+  syncPack();
+  const design = new Adw.PreferencesGroup();
+  design.add(designs);
 
   const primary = colourGroup(
     _('Primary colour'),
@@ -187,7 +256,11 @@ export function appearanceGroups(store: AppearanceStore): Adw.PreferencesGroup[]
     _('Tints the window and its panels'),
     primaryToImpose(saved.primaryColor),
     'blue',
-    (value) => store.write({ primaryColor: value }),
+    (value) => {
+      primaryNow = primaryToImpose(value);
+      store.write({ primaryColor: value });
+      syncPack();
+    },
     applyPrimary,
   );
   const accent = colourGroup(
@@ -196,8 +269,46 @@ export function appearanceGroups(store: AppearanceStore): Adw.PreferencesGroup[]
     _('Colours buttons, links and your own messages'),
     accentToImpose(saved.accentColor),
     'teal',
-    (value) => store.write({ accentColor: value }),
+    (value) => {
+      accentNow = accentToImpose(value);
+      store.write({ accentColor: value });
+      syncPack();
+    },
     applyAccent,
   );
-  return [style, primary, accent];
+
+  const backgroundNames = backgroundLabels();
+  const background = new Adw.ComboRow({
+    title: _('Chat background'),
+    subtitle: _('A quiet pattern behind the messages'),
+    model: Gtk.StringList.new(BACKGROUND_CHOICES.map((choice) => backgroundNames[choice])),
+    selected: Math.max(0, BACKGROUND_CHOICES.indexOf(backgroundNow)),
+  });
+  background.connect('notify::selected', () => {
+    if (quiet) return;
+    backgroundNow = BACKGROUND_CHOICES[background.get_selected()] ?? 'doodles';
+    store.write({ chatBackground: backgroundNow });
+    applyChatBackground(backgroundNow);
+    syncPack();
+  });
+  const backgroundGroup = new Adw.PreferencesGroup();
+  backgroundGroup.add(background);
+
+  designs.connect('notify::selected', () => {
+    const pack = DESIGN_PACKS[designs.get_selected() - 1];
+    if (quiet || !pack) return;
+    primaryNow = pack.primary;
+    accentNow = pack.accent;
+    backgroundNow = pack.background;
+    store.write({ primaryColor: pack.primary, accentColor: pack.accent, chatBackground: pack.background });
+    applyPrimary(pack.primary);
+    applyAccent(pack.accent);
+    applyChatBackground(pack.background);
+    primary.set(pack.primary);
+    accent.set(pack.accent);
+    quiet = true;
+    background.set_selected(BACKGROUND_CHOICES.indexOf(pack.background));
+    quiet = false;
+  });
+  return [design, style, primary.group, accent.group, backgroundGroup];
 }

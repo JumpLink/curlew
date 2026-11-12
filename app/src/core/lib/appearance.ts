@@ -83,8 +83,8 @@ export function primaryCss(color: Rgb, dark: boolean): string {
     .join('\n');
 }
 
-/** What lies behind the messages of a conversation: our own doodles, or nothing. */
-export const BACKGROUND_CHOICES = ['doodles', 'none'] as const;
+/** What lies behind the messages of a conversation: one of our own quiet patterns, or nothing. */
+export const BACKGROUND_CHOICES = ['doodles', 'dots', 'waves', 'none'] as const;
 export type BackgroundChoice = (typeof BACKGROUND_CHOICES)[number];
 
 export function isBackgroundChoice(value: string): value is BackgroundChoice {
@@ -94,4 +94,85 @@ export function isBackgroundChoice(value: string): value is BackgroundChoice {
 /** An unset or unknown value is the default, the doodles. */
 export function backgroundToShow(choice: string | undefined): BackgroundChoice {
   return choice !== undefined && isBackgroundChoice(choice) ? choice : 'doodles';
+}
+
+/** A colour that can be chosen for one chat: an Adwaita accent name, never `default` or `system`. */
+export function isAccentName(value: string): value is AccentName {
+  return (ACCENT_NAMES as readonly string[]).includes(value);
+}
+
+/**
+ * How one chat differs from the rest of the app: a primary tint, an accent and a background, each
+ * optional. An absent part follows the app-wide setting.
+ */
+export interface Look {
+  primary?: AccentName;
+  accent?: AccentName;
+  background?: BackgroundChoice;
+}
+
+/** A ready-made look the person can pick for the whole app or for one chat. */
+export interface DesignPack {
+  id: string;
+  primary: AccentName;
+  accent: AccentName;
+  background: BackgroundChoice;
+}
+
+/** The first pack is what an untouched install looks like. */
+export const DESIGN_PACKS: readonly DesignPack[] = [
+  { id: 'curlew', primary: 'blue', accent: 'teal', background: 'doodles' },
+  { id: 'forest', primary: 'green', accent: 'green', background: 'dots' },
+  { id: 'dusk', primary: 'purple', accent: 'purple', background: 'waves' },
+  { id: 'sunrise', primary: 'orange', accent: 'orange', background: 'doodles' },
+  { id: 'rose', primary: 'pink', accent: 'pink', background: 'dots' },
+  { id: 'graphite', primary: 'slate', accent: 'slate', background: 'none' },
+];
+
+/** The pack whose three parts are exactly `look`, if any. */
+export function packOf(look: Look): DesignPack | null {
+  return (
+    DESIGN_PACKS.find(
+      (pack) =>
+        pack.primary === look.primary && pack.accent === look.accent && pack.background === look.background,
+    ) ?? null
+  );
+}
+
+/** The part of a pack a chat takes: all three, so choosing a pack replaces an earlier look. */
+export const lookOfPack = (pack: DesignPack): Look => ({
+  primary: pack.primary,
+  accent: pack.accent,
+  background: pack.background,
+});
+
+/** The CSS classes that carry a look on a chat's page: what `lookCss` writes rules for. */
+export function lookClasses(look: Look): string[] {
+  return [
+    ...(look.primary ? [`look-primary-${look.primary}`] : []),
+    ...(look.accent ? [`look-accent-${look.accent}`] : []),
+  ];
+}
+
+/**
+ * The rules that recolour one chat's page through the classes of `lookClasses`: own bubbles and the
+ * suggested-action button take the accent, the page, its header and the cards take the tint.
+ * `colors` holds each accent's RGB (0–255) as the desktop's palette defines it.
+ */
+export function lookCss(colors: Readonly<Record<AccentName, Rgb>>, dark: boolean): string {
+  const scheme = dark ? 'dark' : 'light';
+  const mix = (surface: keyof (typeof SURFACES)[typeof scheme], name: AccentName): string =>
+    mixHex(SURFACES[scheme][surface], colors[name], TINT[scheme]);
+  return ACCENT_NAMES.map((name) => {
+    const [r, g, b] = colors[name];
+    const accent = `rgb(${r},${g},${b})`;
+    return `.look-accent-${name} .curlew-own, .look-accent-${name} button.suggested-action {
+  background-image: none;
+  background-color: ${accent};
+  color: white;
+}
+toolbarview.look-primary-${name} { background-color: ${mix('window_bg_color', name)}; }
+.look-primary-${name} headerbar { background-color: ${mix('headerbar_bg_color', name)}; }
+.look-primary-${name} .curlew-surface { background-color: ${mix('window_bg_color', name)}; }`;
+  }).join('\n');
 }

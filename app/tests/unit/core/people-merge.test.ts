@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { choiceFor, withChoice } from '../../../src/core/contact-choices.ts';
+import { choiceFor, lookOf, withChoice } from '../../../src/core/contact-choices.ts';
 import {
   peopleChoose,
   peopleDecline,
@@ -131,6 +131,23 @@ export default async () => {
       expect(choices).toStrictEqual({ 'p-a': { name: 'c1' } });
       choices = withChoice(choices, ['p-a'], { name: null });
       expect(choices).toStrictEqual({});
+    });
+
+    await it("keeps a chat's look beside its picture and clears it with null", async () => {
+      let choices = withChoice({}, ['p-a'], {
+        own: 'x.png',
+        primary: 'green',
+        accent: 'pink',
+        background: 'dots',
+      });
+      expect(lookOf(choiceFor(choices, ['p-a'])?.choice)).toStrictEqual({
+        primary: 'green',
+        accent: 'pink',
+        background: 'dots',
+      });
+      choices = withChoice(choices, ['p-a'], { primary: null, accent: null, background: null });
+      expect(choices).toStrictEqual({ 'p-a': { own: 'x.png' } });
+      expect(lookOf(undefined)).toStrictEqual({});
     });
 
     await it('moves a choice to the new smallest id when people merge', async () => {

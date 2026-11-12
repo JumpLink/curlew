@@ -22,8 +22,29 @@ const MOTIFS = `
 <g transform="translate(172 204) rotate(-4)"><rect x="-15" y="-9" width="30" height="20" rx="3"/><circle cy="1" r="6"/><path d="M-6 -9 L-4 -13 H4 L6 -9"/></g>
 <g transform="translate(214 186) rotate(5)"><rect x="-17" y="-12" width="34" height="24" rx="4"/><path d="M-10 -3 L-4 2 L-10 7 M0 7 H9"/></g>`;
 
-/** The tile as SVG source with `color` (any CSS colour) as its one stroke colour, at `opacity`. */
-export function doodleTileSvg(color: string, opacity: number): string {
+// A staggered grid: every second row sits half a step to the side, so the tile repeats without a seam.
+const DOTS = Array.from({ length: 6 }, (_row, row) =>
+  Array.from(
+    { length: 6 },
+    (_col, col) => `<circle cx="${20 + col * 40 + (row % 2) * 20}" cy="${20 + row * 40}" r="3"/>`,
+  ).join(''),
+).join('');
+
+// Two wavelengths per tile and rows 40 apart: the curve starts and ends at the same height, so it joins.
+const WAVES = Array.from(
+  { length: 6 },
+  (_row, row) => `<path d="M0 ${20 + row * 40} q30 -14 60 0 t60 0 t60 0 t60 0"/>`,
+).join('');
+
+/** The tile as SVG source with `color` (any CSS colour) as its one colour, at `opacity`. */
+export function patternTileSvg(
+  pattern: 'doodles' | 'dots' | 'waves',
+  color: string,
+  opacity: number,
+): string {
   const size = DOODLE_TILE;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size * 2}" height="${size * 2}" viewBox="0 0 ${size} ${size}"><g fill="none" stroke="${color}" stroke-opacity="${opacity}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${MOTIFS}</g></svg>`;
+  const head = `<svg xmlns="http://www.w3.org/2000/svg" width="${size * 2}" height="${size * 2}" viewBox="0 0 ${size} ${size}">`;
+  if (pattern === 'dots') return `${head}<g fill="${color}" fill-opacity="${opacity}">${DOTS}</g></svg>`;
+  const body = pattern === 'waves' ? WAVES : MOTIFS;
+  return `${head}<g fill="none" stroke="${color}" stroke-opacity="${opacity}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${body}</g></svg>`;
 }

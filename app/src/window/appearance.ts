@@ -6,8 +6,10 @@ import Gtk from 'gi://Gtk?version=4.0';
 
 import {
   type AccentName,
+  ACCENT_NAMES,
   accentToImpose,
   type ColorScheme,
+  lookCss,
   primaryCss,
   primaryToImpose,
   schemeToImpose,
@@ -52,6 +54,25 @@ export function installSurfaces(): void {
   const surfaces = new Gtk.CssProvider();
   surfaces.load_from_string(SURFACE_CSS);
   Gtk.StyleContext.add_provider_for_display(display, surfaces, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+  installLooks(display);
+}
+
+// The rules a chat's own look switches on with a class; written for every colour once, and again
+// when the style flips between light and dark because the tint is mixed from the scheme's surfaces.
+function installLooks(display: Gdk.Display): void {
+  const looks = new Gtk.CssProvider();
+  const load = (): void => {
+    const colors = Object.fromEntries(
+      ACCENT_NAMES.map((name) => {
+        const c = Adw.accent_color_to_rgba(ACCENTS[name]);
+        return [name, [c.red * 255, c.green * 255, c.blue * 255] as const];
+      }),
+    ) as Record<AccentName, readonly [number, number, number]>;
+    looks.load_from_string(lookCss(colors, Adw.StyleManager.get_default().get_dark()));
+  };
+  load();
+  Adw.StyleManager.get_default().connect('notify::dark', load);
+  Gtk.StyleContext.add_provider_for_display(display, looks, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
 let provider: Gtk.CssProvider | null = null;

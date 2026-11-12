@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-12 16:24+0100\n"
+"POT-Creation-Date: 2026-11-12 19:15+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1791,8 +1791,9 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:158
-#: app/src/window/window.ts:80 app/src/window/window.ts:95
+#: app/src/window/about.ts:14 app/src/window/appearance-rows.ts:129
+#: app/src/window/conversation-view.ts:163 app/src/window/window.ts:80
+#: app/src/window/window.ts:95
 msgid "Curlew"
 msgstr "Curlew"
 
@@ -1910,7 +1911,7 @@ msgstr ""
 #: app/src/window/agent-access-page.ts:234
 #: app/src/window/conversation-list.ts:409
 #: app/src/window/conversation-list.ts:495
-#: app/src/window/conversation-view.ts:689
+#: app/src/window/conversation-view.ts:707
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -1969,7 +1970,7 @@ msgstr "Offline"
 msgid "Daemon not running"
 msgstr "Daemon läuft nicht"
 
-#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:46
+#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:44
 msgid "Off"
 msgstr "Aus"
 
@@ -2155,93 +2156,149 @@ msgstr "Noch keine Regeln"
 msgid "Add rule"
 msgstr "Regel hinzufügen"
 
-#: app/src/window/appearance-rows.ts:117
+#: app/src/window/appearance-rows.ts:130
+msgid "Forest"
+msgstr "Wald"
+
+#: app/src/window/appearance-rows.ts:131
+msgid "Dusk"
+msgstr "Dämmerung"
+
+#: app/src/window/appearance-rows.ts:132
+msgid "Sunrise"
+msgstr "Sonnenaufgang"
+
+#: app/src/window/appearance-rows.ts:133
+msgid "Rose"
+msgstr "Rosé"
+
+#: app/src/window/appearance-rows.ts:134
+msgid "Graphite"
+msgstr "Graphit"
+
+#: app/src/window/appearance-rows.ts:139
+msgid "Doodles"
+msgstr "Kritzeleien"
+
+#: app/src/window/appearance-rows.ts:139
+msgid "Dots"
+msgstr "Punkte"
+
+#: app/src/window/appearance-rows.ts:139
+msgid "Waves"
+msgstr "Wellen"
+
+#: app/src/window/appearance-rows.ts:139
+msgid "Plain"
+msgstr "Schlicht"
+
+#: app/src/window/appearance-rows.ts:147 app/src/window/contact-page.ts:93
 msgid "Blue"
 msgstr "Blau"
 
-#: app/src/window/appearance-rows.ts:118
+#: app/src/window/appearance-rows.ts:148 app/src/window/contact-page.ts:94
 msgid "Teal"
 msgstr "Petrol"
 
-#: app/src/window/appearance-rows.ts:119
+#: app/src/window/appearance-rows.ts:149 app/src/window/contact-page.ts:95
 msgid "Green"
 msgstr "Grün"
 
-#: app/src/window/appearance-rows.ts:120
+#: app/src/window/appearance-rows.ts:150 app/src/window/contact-page.ts:96
 msgid "Yellow"
 msgstr "Gelb"
 
-#: app/src/window/appearance-rows.ts:121
+#: app/src/window/appearance-rows.ts:151 app/src/window/contact-page.ts:97
 msgid "Orange"
 msgstr "Orange"
 
-#: app/src/window/appearance-rows.ts:122
+#: app/src/window/appearance-rows.ts:152 app/src/window/contact-page.ts:98
 msgid "Red"
 msgstr "Rot"
 
-#: app/src/window/appearance-rows.ts:123
+#: app/src/window/appearance-rows.ts:153 app/src/window/contact-page.ts:99
 msgid "Pink"
 msgstr "Rosa"
 
-#: app/src/window/appearance-rows.ts:124
+#: app/src/window/appearance-rows.ts:154 app/src/window/contact-page.ts:100
 msgid "Purple"
 msgstr "Violett"
 
-#: app/src/window/appearance-rows.ts:125
+#: app/src/window/appearance-rows.ts:155 app/src/window/contact-page.ts:101
 msgid "Slate"
 msgstr "Schiefergrau"
 
-#: app/src/window/appearance-rows.ts:129
+#: app/src/window/appearance-rows.ts:159
 msgid "Follow the system style"
 msgstr "Dem Systemstil folgen"
 
-#: app/src/window/appearance-rows.ts:130
+#: app/src/window/appearance-rows.ts:160
 msgid "Light style"
 msgstr "Heller Stil"
 
-#: app/src/window/appearance-rows.ts:131
+#: app/src/window/appearance-rows.ts:161
 msgid "Dark style"
 msgstr "Dunkler Stil"
 
-#: app/src/window/appearance-rows.ts:133
+#: app/src/window/appearance-rows.ts:163
 msgid "Style"
 msgstr "Stil"
 
-#: app/src/window/appearance-rows.ts:185
+#: app/src/window/appearance-rows.ts:238 app/src/window/contact-page.ts:110
+msgid "Design"
+msgstr "Design"
+
+#: app/src/window/appearance-rows.ts:239
+msgid "Colours and background chosen to go together"
+msgstr "Farben und Hintergrund, die zusammenpassen"
+
+#: app/src/window/appearance-rows.ts:240
+msgid "Custom"
+msgstr "Eigene"
+
+#: app/src/window/appearance-rows.ts:254
 msgid "Primary colour"
 msgstr "Primärfarbe"
 
-#: app/src/window/appearance-rows.ts:186
+#: app/src/window/appearance-rows.ts:255
 msgid "Use a custom primary colour"
 msgstr "Benutzerdefinierte Primärfarbe verwenden"
 
-#: app/src/window/appearance-rows.ts:187
+#: app/src/window/appearance-rows.ts:256
 msgid "Tints the window and its panels"
 msgstr "Färbt das Fenster und seine Flächen"
 
-#: app/src/window/appearance-rows.ts:194
+#: app/src/window/appearance-rows.ts:267 app/src/window/contact-page.ts:114
 msgid "Accent colour"
 msgstr "Akzentfarbe"
 
-#: app/src/window/appearance-rows.ts:195
+#: app/src/window/appearance-rows.ts:268
 msgid "Use a custom accent colour"
 msgstr "Benutzerdefinierte Akzentfarbe verwenden"
 
-#: app/src/window/appearance-rows.ts:196
+#: app/src/window/appearance-rows.ts:269
 msgid "Colours buttons, links and your own messages"
 msgstr "Färbt Schaltflächen, Links und deine eigenen Nachrichten"
+
+#: app/src/window/appearance-rows.ts:282 app/src/window/contact-page.ts:118
+msgid "Chat background"
+msgstr "Chat-Hintergrund"
+
+#: app/src/window/appearance-rows.ts:283
+msgid "A quiet pattern behind the messages"
+msgstr "Ein dezentes Muster hinter den Nachrichten"
 
 #: app/src/window/attachment-view.ts:103
 msgid "Play"
 msgstr "Abspielen"
 
-#: app/src/window/attachment-view.ts:108 app/src/window/audio-player.ts:66
+#: app/src/window/attachment-view.ts:108 app/src/window/audio-player.ts:67
 #: app/src/window/media-viewer.ts:64
 msgid "Save as…"
 msgstr "Speichern unter…"
 
-#: app/src/window/attachment-view.ts:126 app/src/window/audio-player.ts:143
-#: app/src/window/audio-player.ts:170
+#: app/src/window/attachment-view.ts:126 app/src/window/audio-player.ts:144
+#: app/src/window/audio-player.ts:171
 msgid "Could not fetch the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
@@ -2267,23 +2324,23 @@ msgid_plural "and {n} more attachments"
 msgstr[0] "und {n} weiterer Anhang"
 msgstr[1] "und {n} weitere Anhänge"
 
-#: app/src/window/audio-player.ts:37
+#: app/src/window/audio-player.ts:38
 msgid "Play voice message"
 msgstr "Sprachnachricht abspielen"
 
-#: app/src/window/audio-player.ts:37
+#: app/src/window/audio-player.ts:38
 msgid "Play {name}"
 msgstr "{name} abspielen"
 
-#: app/src/window/audio-player.ts:55
+#: app/src/window/audio-player.ts:56
 msgid "Position"
 msgstr "Position"
 
-#: app/src/window/audio-player.ts:95
+#: app/src/window/audio-player.ts:96
 msgid "Pause"
 msgstr "Pause"
 
-#: app/src/window/audio-player.ts:116
+#: app/src/window/audio-player.ts:117
 msgid "Could not play the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgespielt werden: {error}"
 
@@ -2311,62 +2368,74 @@ msgstr "Dateien anhängen"
 msgid "The picture could not be saved"
 msgstr "Das Bild konnte nicht gespeichert werden"
 
-#: app/src/window/contact-page.ts:90
+#: app/src/window/contact-page.ts:91
+msgid "Like the rest of the app"
+msgstr "Wie in der restlichen App"
+
+#: app/src/window/contact-page.ts:106
+msgid "Look"
+msgstr "Aussehen"
+
+#: app/src/window/contact-page.ts:107
+msgid "Give this chat its own colours and background"
+msgstr "Gib diesem Chat eigene Farben und einen eigenen Hintergrund"
+
+#: app/src/window/contact-page.ts:172
 msgid "Contact"
 msgstr "Kontakt"
 
-#: app/src/window/contact-page.ts:109
+#: app/src/window/contact-page.ts:191
 msgid "Combined from {count} chat"
 msgid_plural "Combined from {count} chats"
 msgstr[0] "Aus {count} Chat zusammengeführt"
 msgstr[1] "Aus {count} Chats zusammengeführt"
 
-#: app/src/window/contact-page.ts:117
+#: app/src/window/contact-page.ts:199
 msgid "Choose Picture…"
 msgstr "Bild wählen …"
 
-#: app/src/window/contact-page.ts:119
+#: app/src/window/contact-page.ts:201
 msgid "Remove Picture"
 msgstr "Bild entfernen"
 
-#: app/src/window/contact-page.ts:165
+#: app/src/window/contact-page.ts:248
 msgid "Name"
 msgstr "Name"
 
-#: app/src/window/contact-page.ts:166 app/src/window/contact-page.ts:184
+#: app/src/window/contact-page.ts:249 app/src/window/contact-page.ts:267
 msgid "The newest chat decides"
 msgstr "Der neueste Chat entscheidet"
 
-#: app/src/window/contact-page.ts:168 app/src/window/contact-page.ts:183
+#: app/src/window/contact-page.ts:251 app/src/window/contact-page.ts:266
 #: app/src/window/conversation-list-model.ts:383
 msgid "Automatic"
 msgstr "Automatisch"
 
-#: app/src/window/contact-page.ts:180
+#: app/src/window/contact-page.ts:263
 msgid "Picture"
 msgstr "Bild"
 
-#: app/src/window/contact-page.ts:204 app/src/window/conversation-list.ts:417
+#: app/src/window/contact-page.ts:289 app/src/window/conversation-list.ts:417
 msgid "Separate"
 msgstr "Trennen"
 
-#: app/src/window/contact-page.ts:205
+#: app/src/window/contact-page.ts:290
 msgid "Show these chats as separate people again"
 msgstr "Diese Chats wieder als getrennte Personen zeigen"
 
-#: app/src/window/contact-page.ts:219
+#: app/src/window/contact-page.ts:304
 msgid "Images"
 msgstr "Bilder"
 
-#: app/src/window/contact-page.ts:223
+#: app/src/window/contact-page.ts:308
 msgid "Choose a Picture"
 msgstr "Bild wählen"
 
-#: app/src/window/contact-page.ts:236
+#: app/src/window/contact-page.ts:321
 msgid "This file is not a picture"
 msgstr "Diese Datei ist kein Bild"
 
-#: app/src/window/contact-page.ts:267
+#: app/src/window/contact-page.ts:352
 msgid "Your own picture is shown instead"
 msgstr "Stattdessen wird dein eigenes Bild gezeigt"
 
@@ -2522,7 +2591,7 @@ msgid "Review"
 msgstr "Prüfen"
 
 #: app/src/window/conversation-list.ts:526
-#: app/src/window/preferences-dialog.ts:40
+#: app/src/window/preferences-dialog.ts:38
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
@@ -2533,7 +2602,7 @@ msgstr[0] "{count} mögliches Duplikat"
 msgstr[1] "{count} mögliche Duplikate"
 
 #: app/src/window/conversation-model.ts:115
-#: app/src/window/conversation-view.ts:1290
+#: app/src/window/conversation-view.ts:1308
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -2569,7 +2638,7 @@ msgstr[1] "Du und {count} weitere Personen"
 
 #: app/src/window/conversation-model.ts:322
 #: app/src/window/conversation-model.ts:335
-#: app/src/window/conversation-view.ts:673
+#: app/src/window/conversation-view.ts:691
 msgid "You"
 msgstr "Du"
 
@@ -2579,132 +2648,132 @@ msgid_plural "{count} people"
 msgstr[0] "{count} Person"
 msgstr[1] "{count} Personen"
 
-#: app/src/window/conversation-view.ts:164
+#: app/src/window/conversation-view.ts:169
 msgid "Choose how to reach this person"
 msgstr "Erreichbarkeit dieser Person wählen"
 
-#: app/src/window/conversation-view.ts:177
+#: app/src/window/conversation-view.ts:182
 msgid "Contact details"
 msgstr "Kontaktdetails"
 
-#: app/src/window/conversation-view.ts:195
+#: app/src/window/conversation-view.ts:201
 msgid "No messages yet"
 msgstr "Noch keine Nachrichten"
 
-#: app/src/window/conversation-view.ts:204
-#: app/src/window/conversation-view.ts:457
+#: app/src/window/conversation-view.ts:210
+#: app/src/window/conversation-view.ts:475
 msgid "Write a message"
 msgstr "Nachricht schreiben"
 
-#: app/src/window/conversation-view.ts:216
+#: app/src/window/conversation-view.ts:221
 msgid "Send message"
 msgstr "Nachricht senden"
 
-#: app/src/window/conversation-view.ts:228
+#: app/src/window/conversation-view.ts:233
 msgid "Cancel reply"
 msgstr "Antwort abbrechen"
 
-#: app/src/window/conversation-view.ts:241
+#: app/src/window/conversation-view.ts:246
 msgid "Cancel editing"
 msgstr "Bearbeiten abbrechen"
 
-#: app/src/window/conversation-view.ts:290
+#: app/src/window/conversation-view.ts:298
 msgid "Conversation"
 msgstr "Unterhaltung"
 
-#: app/src/window/conversation-view.ts:423
+#: app/src/window/conversation-view.ts:441
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 "{protocol} kann keine Dateien senden; die angehängten Dateien wurden entfernt"
 
-#: app/src/window/conversation-view.ts:475
+#: app/src/window/conversation-view.ts:493
 msgid "Send via {protocol}"
 msgstr "Senden über {protocol}"
 
-#: app/src/window/conversation-view.ts:580
+#: app/src/window/conversation-view.ts:598
 msgid "Show the quoted message"
 msgstr "Zitierte Nachricht anzeigen"
 
-#: app/src/window/conversation-view.ts:587
-#: app/src/window/conversation-view.ts:619
+#: app/src/window/conversation-view.ts:605
+#: app/src/window/conversation-view.ts:637
 msgid "Reply to {author}: {excerpt}"
 msgstr "Antwort auf {author}: {excerpt}"
 
-#: app/src/window/conversation-view.ts:602
+#: app/src/window/conversation-view.ts:620
 msgid "The quoted message is no longer in the history"
 msgstr "Die zitierte Nachricht ist nicht mehr im Verlauf"
 
-#: app/src/window/conversation-view.ts:644
+#: app/src/window/conversation-view.ts:662
 msgid "Reaction not sent: {error}"
 msgstr "Reaktion nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:672
+#: app/src/window/conversation-view.ts:690
 msgid "Edit message"
 msgstr "Nachricht bearbeiten"
 
-#: app/src/window/conversation-view.ts:676
+#: app/src/window/conversation-view.ts:694
 msgid "Editing your message: {excerpt}"
 msgstr "Eigene Nachricht bearbeiten: {excerpt}"
 
-#: app/src/window/conversation-view.ts:684
+#: app/src/window/conversation-view.ts:702
 msgid "Delete message?"
 msgstr "Nachricht löschen?"
 
-#: app/src/window/conversation-view.ts:685
+#: app/src/window/conversation-view.ts:703
 msgid "This will remove the message for everyone in the chat."
 msgstr "Dadurch wird die Nachricht für alle im Chat entfernt."
 
-#: app/src/window/conversation-view.ts:690
+#: app/src/window/conversation-view.ts:708
 msgid "Delete for everyone"
 msgstr "Für alle löschen"
 
-#: app/src/window/conversation-view.ts:707
+#: app/src/window/conversation-view.ts:725
 msgid "Message not deleted: {error}"
 msgstr "Nachricht nicht gelöscht: {error}"
 
-#: app/src/window/conversation-view.ts:768
+#: app/src/window/conversation-view.ts:786
 msgid "Reply"
 msgstr "Antworten"
 
-#: app/src/window/conversation-view.ts:769
+#: app/src/window/conversation-view.ts:787
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: app/src/window/conversation-view.ts:770
+#: app/src/window/conversation-view.ts:788
 msgid "Delete"
 msgstr "Löschen"
 
-#: app/src/window/conversation-view.ts:771
+#: app/src/window/conversation-view.ts:789
 msgid "Copy"
 msgstr "Kopieren"
 
-#: app/src/window/conversation-view.ts:887
+#: app/src/window/conversation-view.ts:905
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:929
-#: app/src/window/conversation-view.ts:1067
+#: app/src/window/conversation-view.ts:947
+#: app/src/window/conversation-view.ts:1085
 msgid "edited"
 msgstr "bearbeitet"
 
-#: app/src/window/conversation-view.ts:939
-#: app/src/window/conversation-view.ts:940
+#: app/src/window/conversation-view.ts:957
+#: app/src/window/conversation-view.ts:958
 msgid "Read"
 msgstr "Gelesen"
 
-#: app/src/window/conversation-view.ts:1154
+#: app/src/window/conversation-view.ts:1172
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:1255
+#: app/src/window/conversation-view.ts:1273
 msgid "Message not edited: {error}"
 msgstr "Nachricht nicht bearbeitet: {error}"
 
-#: app/src/window/conversation-view.ts:1302
+#: app/src/window/conversation-view.ts:1320
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:1305
+#: app/src/window/conversation-view.ts:1323
 msgid "Retry"
 msgstr "Erneut versuchen"
 
@@ -2806,66 +2875,50 @@ msgstr "Kontakte suchen"
 msgid "The address book could not be read"
 msgstr "Das Adressbuch konnte nicht gelesen werden"
 
-#: app/src/window/preferences-dialog.ts:36
+#: app/src/window/preferences-dialog.ts:34
 msgid "Show all emails"
 msgstr "Alle E-Mails anzeigen"
 
-#: app/src/window/preferences-dialog.ts:37
+#: app/src/window/preferences-dialog.ts:35
 msgid ""
 "Show ordinary email threads beside conversations started by a chat messenger"
 msgstr ""
 "Gewöhnliche E-Mail-Verläufe neben Unterhaltungen aus einem Chat-Messenger "
 "anzeigen"
 
-#: app/src/window/preferences-dialog.ts:44
+#: app/src/window/preferences-dialog.ts:42
 msgid "Message notifications"
 msgstr "Benachrichtigungen für Nachrichten"
 
-#: app/src/window/preferences-dialog.ts:45
+#: app/src/window/preferences-dialog.ts:43
 msgid "What a desktop notification for a new chat message shows"
 msgstr "Was eine Desktop-Benachrichtigung über eine neue Chat-Nachricht zeigt"
 
-#: app/src/window/preferences-dialog.ts:46
+#: app/src/window/preferences-dialog.ts:44
 msgid "Sender and text"
 msgstr "Absender und Text"
 
-#: app/src/window/preferences-dialog.ts:46
+#: app/src/window/preferences-dialog.ts:44
 msgid "Sender only"
 msgstr "Nur Absender"
 
-#: app/src/window/preferences-dialog.ts:49
+#: app/src/window/preferences-dialog.ts:47
 msgid "Notifications"
 msgstr "Benachrichtigungen"
 
-#: app/src/window/preferences-dialog.ts:52
+#: app/src/window/preferences-dialog.ts:50
 msgid "Play videos silently in chats"
 msgstr "Videos in Chats stumm abspielen"
 
-#: app/src/window/preferences-dialog.ts:53
+#: app/src/window/preferences-dialog.ts:51
 msgid "A video in a conversation plays muted while it is on screen"
 msgstr "Ein Video in einer Unterhaltung läuft stumm, solange es im Bild ist"
 
-#: app/src/window/preferences-dialog.ts:59
+#: app/src/window/preferences-dialog.ts:57
 msgid "Media"
 msgstr "Medien"
 
-#: app/src/window/preferences-dialog.ts:62
-msgid "Doodles"
-msgstr "Kritzeleien"
-
-#: app/src/window/preferences-dialog.ts:62
-msgid "Plain"
-msgstr "Schlicht"
-
-#: app/src/window/preferences-dialog.ts:64
-msgid "Chat background"
-msgstr "Chat-Hintergrund"
-
-#: app/src/window/preferences-dialog.ts:65
-msgid "A quiet pattern behind the messages"
-msgstr "Ein dezentes Muster hinter den Nachrichten"
-
-#: app/src/window/preferences-dialog.ts:80 app/src/window/window.ts:110
+#: app/src/window/preferences-dialog.ts:68 app/src/window/window.ts:110
 msgid "Preferences"
 msgstr "Einstellungen"
 
@@ -2899,7 +2952,7 @@ msgstr "Beenden"
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:328
+#: app/src/window/window.ts:330
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 

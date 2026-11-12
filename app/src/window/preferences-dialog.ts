@@ -6,9 +6,7 @@ import { _ } from '@curlew/protocol';
 import { configPath } from '@curlew/store';
 
 import { loadConfig, saveConfig } from '../core/config.ts';
-import { BACKGROUND_CHOICES, backgroundToShow } from '../core/lib/appearance.ts';
 import { appearanceGroups, type AppearanceStore } from './appearance-rows.ts';
-import { applyChatBackground } from './chat-background.ts';
 import { silentVideosOn } from './video-preview-model.ts';
 import { refreshSilentVideos } from './video-preview.ts';
 
@@ -58,18 +56,8 @@ export function presentPreferences(parent: Gtk.Window | null, onChanged: () => v
   });
   const mediaGroup = new Adw.PreferencesGroup({ title: _('Media') });
   mediaGroup.add(videos);
-  const backgroundGroup = new Adw.PreferencesGroup();
-  const backgroundLabels = { doodles: _('Doodles'), none: _('Plain') };
-  const background = new Adw.ComboRow({
-    title: _('Chat background'),
-    subtitle: _('A quiet pattern behind the messages'),
-    model: Gtk.StringList.new(BACKGROUND_CHOICES.map((choice) => backgroundLabels[choice])),
-    selected: Math.max(0, BACKGROUND_CHOICES.indexOf(backgroundToShow(loadConfig(path).ui.chatBackground))),
-  });
-  backgroundGroup.add(background);
   const page = new Adw.PreferencesPage();
   for (const appearance of appearanceGroups(appearanceStore(path, overlay))) page.add(appearance);
-  page.add(backgroundGroup);
   page.add(group);
   page.add(mediaGroup);
   page.add(notifyGroup);
@@ -98,19 +86,6 @@ export function presentPreferences(parent: Gtk.Window | null, onChanged: () => v
       config.ui.playVideosSilently = videos.get_active();
       saveConfig(config, path);
       refreshSilentVideos();
-    } catch (err) {
-      overlay.add_toast(
-        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
-      );
-    }
-  });
-  background.connect('notify::selected', () => {
-    try {
-      const config = loadConfig(path);
-      const chosen = BACKGROUND_CHOICES[background.get_selected()] ?? 'doodles';
-      config.ui.chatBackground = chosen;
-      saveConfig(config, path);
-      applyChatBackground(chosen);
     } catch (err) {
       overlay.add_toast(
         new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),

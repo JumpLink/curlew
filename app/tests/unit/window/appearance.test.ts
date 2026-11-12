@@ -4,9 +4,15 @@ import { parseConfig } from '../../../src/core/config.ts';
 import {
   ACCENT_CHOICES,
   accentToImpose,
+  ACCENT_NAMES,
   backgroundToShow,
+  DESIGN_PACKS,
   isAccentChoice,
+  lookClasses,
+  lookCss,
+  lookOfPack,
   mixHex,
+  packOf,
   primaryCss,
   primaryToImpose,
   schemeToImpose,
@@ -87,6 +93,54 @@ export default async () => {
         bad = err instanceof Error ? err.message : String(err);
       }
       expect(/chatBackground/.test(bad)).toBe(true);
+    });
+  });
+
+  await describe("a chat's own look", async () => {
+    await it('knows the pack its three parts add up to, and only then', async () => {
+      for (const pack of DESIGN_PACKS) expect(packOf(lookOfPack(pack))?.id).toBe(pack.id);
+      expect(packOf({ primary: 'blue', accent: 'teal' })).toBe(null);
+      expect(packOf({ primary: 'blue', accent: 'red', background: 'doodles' })).toBe(null);
+      expect(DESIGN_PACKS[0]?.id).toBe('curlew');
+    });
+
+    await it('turns a look into the classes its CSS rules hang on', async () => {
+      expect(lookClasses({})).toStrictEqual([]);
+      expect(lookClasses({ background: 'dots' })).toStrictEqual([]);
+      expect(lookClasses({ primary: 'green', accent: 'pink' })).toStrictEqual([
+        'look-primary-green',
+        'look-accent-pink',
+      ]);
+    });
+
+    await it('writes rules for every colour in both styles', async () => {
+      const colors = Object.fromEntries(ACCENT_NAMES.map((name) => [name, [10, 20, 30] as const]));
+      for (const dark of [false, true]) {
+        const css = lookCss(colors as Parameters<typeof lookCss>[0], dark);
+        for (const name of ACCENT_NAMES) {
+          expect(css.includes(`.look-accent-${name} .curlew-own`)).toBe(true);
+          expect(css.includes(`toolbarview.look-primary-${name}`)).toBe(true);
+        }
+      }
+    });
+
+    await it('is validated in the config', async () => {
+      const parse = (choice: string) =>
+        parseConfig(`{"backends":{},"contactChoices":{"p-a":${choice}}}`).contactChoices['p-a'];
+      expect(parse('{"primary":"green","accent":"pink","background":"waves"}')).toStrictEqual({
+        primary: 'green',
+        accent: 'pink',
+        background: 'waves',
+      });
+      for (const bad of ['{"accent":"system"}', '{"primary":"magenta"}', '{"background":"stripes"}']) {
+        let message = '';
+        try {
+          parse(bad);
+        } catch (err) {
+          message = err instanceof Error ? err.message : String(err);
+        }
+        expect(/contactChoices/.test(message)).toBe(true);
+      }
     });
   });
 };
