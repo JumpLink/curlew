@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-12 20:17+0100\n"
+"POT-Creation-Date: 2026-11-12 21:20+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1908,6 +1908,7 @@ msgstr ""
 
 #: app/src/window/account-remove-model.ts:24
 #: app/src/window/account-remove-model.ts:37
+#: app/src/window/account-remove-model.ts:71
 #: app/src/window/agent-access-page.ts:234
 #: app/src/window/conversation-list.ts:409
 #: app/src/window/conversation-list.ts:495
@@ -1930,6 +1931,38 @@ msgstr ""
 "mehr. Nachrichten, die schon auf diesem Computer liegen, bleiben erhalten. "
 "Das Konto bleibt bei {protocol} verknüpft, bis du dieses Gerät dort "
 "entfernst."
+
+#: app/src/window/account-remove-model.ts:59
+msgid "Also delete its messages on this computer"
+msgstr "Auch die Nachrichten auf diesem Computer löschen"
+
+#: app/src/window/account-remove-model.ts:60
+msgid "Delete all messages of {account}?"
+msgstr "Alle Nachrichten von {account} löschen?"
+
+#: app/src/window/account-remove-model.ts:64
+msgid ""
+"Curlew will delete every message, attachment and picture of this account "
+"from this computer. {protocol} does not send them again, so this is the only "
+"copy: they cannot be recovered."
+msgstr ""
+"Curlew löscht jede Nachricht, jeden Anhang und jedes Bild dieses Kontos von "
+"diesem Computer. {protocol} sendet sie nicht noch einmal, dies ist also die "
+"einzige Kopie: Sie lassen sich nicht wiederherstellen."
+
+#: app/src/window/account-remove-model.ts:69
+msgid ""
+"Curlew will delete every message, attachment and picture of this account "
+"from this computer. Nothing changes on the server, but Curlew cannot restore "
+"them without syncing again."
+msgstr ""
+"Curlew löscht jede Nachricht, jeden Anhang und jedes Bild dieses Kontos von "
+"diesem Computer. Auf dem Server ändert sich nichts, aber Curlew kann sie "
+"nicht wiederherstellen, ohne erneut zu synchronisieren."
+
+#: app/src/window/account-remove-model.ts:72
+msgid "Delete Messages and Remove"
+msgstr "Nachrichten löschen und entfernen"
 
 #: app/src/window/accounts-daemon.ts:58 app/src/window/accounts-daemon.ts:62
 msgid "Could not start the background service. Run “curlew setup” first."

@@ -252,6 +252,7 @@ packages/smtp/src/message.ts
 packages/smtp/src/transport.ts
 packages/smtp/src/types.ts
 packages/smtp/src/validate.ts
+packages/store/src/account-data.ts
 packages/store/src/attachments.ts
 packages/store/src/changes.ts
 packages/store/src/chat-backfill.ts

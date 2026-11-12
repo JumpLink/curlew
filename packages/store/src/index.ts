@@ -22,3 +22,4 @@ export * from './chat-backfill.ts';
 export * from './delivery-sync.ts';
 export * from './receive-lease.ts';
 export * from './changes.ts';
+export * from './account-data.ts';

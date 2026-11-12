@@ -38,3 +38,37 @@ export function removeAccountCopy(backend: string, accountLabel: string): Remove
     confirm: _('Remove Account'),
   };
 }
+
+/** Networks that push each message once: the index here is the only copy there will ever be. */
+const DELIVERY_ONLY = new Set(['signal', 'whatsapp']);
+
+export interface DeleteDataCopy {
+  /** The check button in the first confirmation. */
+  option: string;
+  heading: string;
+  body: string;
+  cancel: string;
+  confirm: string;
+}
+
+/** The words of the extra "also delete the messages" step, with its own confirmation. */
+export function deleteDataCopy(backend: string, accountLabel: string): DeleteDataCopy {
+  const only = DELIVERY_ONLY.has(backend);
+  const protocol = protocolLabel(backend);
+  return {
+    option: _('Also delete its messages on this computer'),
+    heading: fmt(_('Delete all messages of {account}?'), { account: accountLabel }),
+    body: only
+      ? fmt(
+          _(
+            'Curlew will delete every message, attachment and picture of this account from this computer. {protocol} does not send them again, so this is the only copy: they cannot be recovered.',
+          ),
+          { protocol },
+        )
+      : _(
+          'Curlew will delete every message, attachment and picture of this account from this computer. Nothing changes on the server, but Curlew cannot restore them without syncing again.',
+        ),
+    cancel: _('Cancel'),
+    confirm: _('Delete Messages and Remove'),
+  };
+}
