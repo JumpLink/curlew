@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { describe, expect, it } from '@gjsify/unit';
 import type { Conversation } from '@curlew/protocol';
 
@@ -362,6 +364,16 @@ export default async () => {
     it('has a distinct badge icon per protocol', () => {
       const icons = ['mail', 'xmpp', 'signal', 'matrix', 'telegram', 'whatsapp'].map(protocolIcon);
       expect(new Set(icons).size).toBe(6);
+    });
+
+    it('ships a file for every protocol icon, named in the mapping', () => {
+      let dir = process.cwd();
+      while (!existsSync(join(dir, 'app/data/icons')) && dirname(dir) !== dir) dir = dirname(dir);
+      for (const backend of ['mail', 'xmpp', 'signal', 'matrix', 'telegram', 'whatsapp']) {
+        const name = protocolIcon(backend);
+        expect(name).toBe(`curlew-protocol-${backend}`);
+        expect(existsSync(join(dir, 'app/data/icons/hicolor/scalable/apps', `${name}.svg`))).toBe(true);
+      }
     });
 
     it('targets a Matrix room by its room id, never without a room row', () => {
