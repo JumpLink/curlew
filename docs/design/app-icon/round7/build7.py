@@ -482,8 +482,8 @@ measure("v9-in-bubble-tilt", bill, 0.9)
 bd, bg = bubble(0.9, 4, 8)
 write("v10-head-crop-tilt",
       "V10 -- v8 with the head tilted slightly, as in v2: the tail of the bubble stays free.",
-      d + bd, bg + place(body + head, 1.2, 17, -3))
-measure("v10-head-crop-tilt", bill, 1.2)
+      d + bd, bg + place(body + head, 1.1, 27, 0))
+measure("v10-head-crop-tilt", bill, 1.1)
 
 # ====================================================================================== symbolic
 #
