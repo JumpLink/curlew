@@ -432,32 +432,58 @@ measure("v6-standing-on-bubble", bill, 0.56)
 d, body, head, bill = bird("front", level=2, feet=False,
                            bill_ctrl=[(51.5, 55), (65, 61), (77, 71), (83, 88)])
 bd, bg = bubble(1.0, 8, 24)
-# The belly runs on into the bubble's tail: the body is clipped to the face and the tail together.
+# The belly runs on into the bubble's tail, but never over the side wall: the body is clipped to
+# the face rect and the tail's face (the lip), so wall and rim stay in front of the feathers.
 # One path, not two shapes in the clipPath: renderers disagree on how those combine.
 bd += ('    <clipPath id="belly-clip"><path d="M24 24 H104 C112.835938 24 120 31.164062 120 40 V92 '
-       'C120 100.835938 112.835938 108 104 108 H58.824219 V112 '
-       'C57.011719 112 55.265625 112.691406 53.941406 113.933594 L40.417969 126.640625 '
-       'C38.964844 128.003906 36.839844 128.375 35.011719 127.585938 '
-       'C33.183594 126.792969 32 124.992188 32 123 V116 C32 113.789062 30.210938 112 28 112 '
-       'H24 V108 C15.164062 108 8 100.835938 8 92 V40 C8 31.164062 15.164062 24 24 24 Z"/>'
+       'C120 100.835938 112.835938 108 104 108 H58.824219 '
+       'C57.011719 108 55.265625 108.691406 53.941406 109.933594 L40.6 122.2 '
+       'C39.5 123.2 37.9 123.6 36.4 123 C35.1 122.3 34 120.8 34 119 V112 '
+       'C34 109.789062 32.210938 108 30 108 H24 '
+       'C15.164062 108 8 100.835938 8 92 V40 C8 31.164062 15.164062 24 24 24 Z"/>'
        '</clipPath>\n')
 write("v7-in-bubble",
       "V7 -- the bubble is the icon: the shared Fractal/Flare shape at full size in blue, the\n"
       "fluffed chick inside it with two equal eyes and the bill in front of the face. The body\n"
-      "is clipped to the bubble's face and its tail together, so the belly fills the tail.",
+      "is clipped to the bubble's face and the face of its tail, so the belly fills the tail and\\n"
+      "the side wall stays in front.",
       d + bd, bg + place(body, 0.9, 5, 24, clip="belly-clip") + place(head, 0.9, 5, 24))
 measure("v7-in-bubble", bill, 0.9)
 
 # =========================================================================================== v8
-d, body, head, bill = bird("front", level=1, feet=False,
+d, body, head, bill = bird("front", level=2, feet=False,
                            bill_ctrl=[(51.5, 55), (65, 61), (77, 71), (83, 88)])
-bd, bg = bubble(0.6, 58, 2)
+bd, bg = bubble(0.9, 4, 8)
 write("v8-head-crop",
-      "V8 -- head and fluff only, for 32 and 16 px: the head fills the tile, the chest runs off\n"
-      "the bottom edge, the bill at the largest scale the canvas holds, the blue bubble peeking\n"
-      "out behind the head.",
-      d + bd, bg + place(body + head, 1.5, -31, -8))
-measure("v8-head-crop", bill, 1.5)
+      "V8 -- head and fluff only, for 32 and 16 px: the fluffed head at the right, the chest\\n"
+      "running off the bottom edge, the short young bill, and the bubble behind it with its\\n"
+      "tail free at the lower left.",
+      d + bd, bg + place(body + head, 1.2, 24, -3))
+measure("v8-head-crop", bill, 1.2)
+
+# ================================================================================ v9, v10 (tilt)
+# The slight head tilt of v2, on the two fixed compositions.
+d, body, head, bill = bird("front", level=2, tilt=-9, feet=False,
+                           bill_ctrl=[(51.5, 55), (65, 61), (77, 71), (83, 88)])
+bd, bg = bubble(1.0, 8, 24)
+bd += ('    <clipPath id="belly-clip"><path d="M24 24 H104 C112.835938 24 120 31.164062 120 40 V92 '
+       'C120 100.835938 112.835938 108 104 108 H58.824219 '
+       'C57.011719 108 55.265625 108.691406 53.941406 109.933594 L40.6 122.2 '
+       'C39.5 123.2 37.9 123.6 36.4 123 C35.1 122.3 34 120.8 34 119 V112 '
+       'C34 109.789062 32.210938 108 30 108 H24 '
+       'C15.164062 108 8 100.835938 8 92 V40 C8 31.164062 15.164062 24 24 24 Z"/>'
+       '</clipPath>\n')
+write("v9-in-bubble-tilt",
+      "V9 -- v7 with the head tilted slightly, as in v2: the belly fills the tail, the wall\n"
+      "stays in front of the feathers.",
+      d + bd, bg + place(body, 0.9, 5, 24, clip="belly-clip") + place(head, 0.9, 5, 24))
+measure("v9-in-bubble-tilt", bill, 0.9)
+
+bd, bg = bubble(0.9, 4, 8)
+write("v10-head-crop-tilt",
+      "V10 -- v8 with the head tilted slightly, as in v2: the tail of the bubble stays free.",
+      d + bd, bg + place(body + head, 1.2, 17, -3))
+measure("v10-head-crop-tilt", bill, 1.2)
 
 # ====================================================================================== symbolic
 #

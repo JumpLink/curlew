@@ -2,7 +2,7 @@
 <!--
 V7 – the bubble is the icon: the shared Fractal/Flare shape at full size in blue, the
 fluffed chick inside it with two equal eyes and the bill in front of the face. The body
-is clipped to the bubble's face and its tail together, so the belly fills the tail.
+is clipped to the bubble's face and the face of its tail, so the belly fills the tail and\nthe side wall stays in front.
 -->
 <svg width="128" height="128" viewBox="0 0 128 128" version="1.1"
      xmlns="http://www.w3.org/2000/svg">
@@ -81,7 +81,7 @@ is clipped to the bubble's face and its tail together, so the belly fills the ta
              C120 100.835938 112.835938 108 104 108 H24
              C15.164062 108 8 100.835938 8 92 V40 C8 31.164062 15.164062 24 24 24 Z"/>
     <clipPath id="face-clip"><use href="#facerect"/></clipPath>
-    <clipPath id="belly-clip"><path d="M24 24 H104 C112.835938 24 120 31.164062 120 40 V92 C120 100.835938 112.835938 108 104 108 H58.824219 V112 C57.011719 112 55.265625 112.691406 53.941406 113.933594 L40.417969 126.640625 C38.964844 128.003906 36.839844 128.375 35.011719 127.585938 C33.183594 126.792969 32 124.992188 32 123 V116 C32 113.789062 30.210938 112 28 112 H24 V108 C15.164062 108 8 100.835938 8 92 V40 C8 31.164062 15.164062 24 24 24 Z"/></clipPath>
+    <clipPath id="belly-clip"><path d="M24 24 H104 C112.835938 24 120 31.164062 120 40 V92 C120 100.835938 112.835938 108 104 108 H58.824219 C57.011719 108 55.265625 108.691406 53.941406 109.933594 L40.6 122.2 C39.5 123.2 37.9 123.6 36.4 123 C35.1 122.3 34 120.8 34 119 V112 C34 109.789062 32.210938 108 30 108 H24 C15.164062 108 8 100.835938 8 92 V40 C8 31.164062 15.164062 24 24 24 Z"/></clipPath>
   </defs>
 
   <g transform="translate(0.00,0.00) scale(1.0)">
