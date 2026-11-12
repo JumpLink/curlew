@@ -241,3 +241,11 @@ which opens the first-run welcome screen (`app/src/window/welcome.ts`; pages lis
 `welcome-model.ts`; shown once, tracked by `ui.welcomeDone`). `CURLEW_NO_HOST_ACCOUNTS=1` hides the
 host's GNOME Online Accounts, so the Accounts dialog never shows real ones. The language comes from
 `LC_ALL`/`LANG`/`LANGUAGE`, which the script sets. A smaller `--size` cuts off the window shadow.
+
+## Chat backgrounds
+
+Every design pack has its own quiet tile behind the messages: Curlew the doodles, Forest leaves, trees
+and mushrooms, Dusk moon, stars, clouds and a penguin, Sunrise sun, palm, waves and a crab, Rose hearts,
+petals and flowers, Graphite plain geometry. Tiles are one colour at 10 % opacity, follow light/dark
+and the accent, and repeat seamlessly. The person can pick any pattern separately (preferences, or per
+chat). Mascot licences: ADR 0013, amendment of 2026-11-12.

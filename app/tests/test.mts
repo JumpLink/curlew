@@ -106,6 +106,7 @@ import windowPreviewCache from './unit/window/preview-cache-model.test.ts';
 import windowRichText from './unit/window/rich-text-model.test.ts';
 import windowViewer from './unit/window/viewer-model.test.ts';
 import windowAppearance from './unit/window/appearance.test.ts';
+import windowChatMotifs from './unit/window/chat-motifs.test.ts';
 import windowVideoPreview from './unit/window/video-preview-model.test.ts';
 import windowConversation from './unit/window/conversation-model.test.ts';
 import windowNewConversation from './unit/window/new-conversation-model.test.ts';
@@ -247,6 +248,7 @@ run({
   windowRichText,
   windowViewer,
   windowAppearance,
+  windowChatMotifs,
   windowVideoPreview,
   encryption,
   send,

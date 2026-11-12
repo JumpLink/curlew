@@ -7,7 +7,7 @@ import Graphene from 'gi://Graphene?version=1.0';
 import Gtk from 'gi://Gtk?version=4.0';
 
 import { type BackgroundChoice, backgroundToShow } from '../core/lib/appearance.ts';
-import { DOODLE_TILE, patternTileSvg } from './chat-doodles.ts';
+import { DOODLE_TILE, type PatternChoice, patternTileSvg } from './chat-doodles.ts';
 
 const OPACITY = 0.1;
 
@@ -47,7 +47,7 @@ export const ChatBackground = GObject.registerClass(
       this.queue_draw();
     }
 
-    private tile(pattern: 'doodles' | 'dots' | 'waves', color: Gdk.RGBA): Gdk.Texture | null {
+    private tile(pattern: PatternChoice, color: Gdk.RGBA): Gdk.Texture | null {
       const css = `rgb(${Math.round(color.red * 255)},${Math.round(color.green * 255)},${Math.round(color.blue * 255)})`;
       const key = `${pattern}/${css}`;
       if (this.texture && key === this.textureKey) return this.texture;

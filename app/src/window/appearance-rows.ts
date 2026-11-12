@@ -133,7 +133,17 @@ export function packLabels(): Record<string, string> {
 }
 
 export function backgroundLabels(): Record<BackgroundChoice, string> {
-  return { doodles: _('Doodles'), dots: _('Dots'), waves: _('Waves'), none: _('Plain') };
+  return {
+    doodles: _('Doodles'),
+    dots: _('Dots'),
+    waves: _('Waves'),
+    forest: _('Forest'),
+    dusk: _('Dusk'),
+    sunrise: _('Sunrise'),
+    rose: _('Rose'),
+    graphite: _('Graphite'),
+    none: _('Plain'),
+  };
 }
 
 /** The groups: design pack, style, primary colour, accent colour, chat background. */

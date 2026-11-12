@@ -84,7 +84,17 @@ export function primaryCss(color: Rgb, dark: boolean): string {
 }
 
 /** What lies behind the messages of a conversation: one of our own quiet patterns, or nothing. */
-export const BACKGROUND_CHOICES = ['doodles', 'dots', 'waves', 'none'] as const;
+export const BACKGROUND_CHOICES = [
+  'doodles',
+  'dots',
+  'waves',
+  'forest',
+  'dusk',
+  'sunrise',
+  'rose',
+  'graphite',
+  'none',
+] as const;
 export type BackgroundChoice = (typeof BACKGROUND_CHOICES)[number];
 
 export function isBackgroundChoice(value: string): value is BackgroundChoice {
@@ -122,11 +132,11 @@ export interface DesignPack {
 /** The first pack is what an untouched install looks like. */
 export const DESIGN_PACKS: readonly DesignPack[] = [
   { id: 'curlew', primary: 'blue', accent: 'teal', background: 'doodles' },
-  { id: 'forest', primary: 'green', accent: 'green', background: 'dots' },
-  { id: 'dusk', primary: 'purple', accent: 'purple', background: 'waves' },
-  { id: 'sunrise', primary: 'orange', accent: 'orange', background: 'doodles' },
-  { id: 'rose', primary: 'pink', accent: 'pink', background: 'dots' },
-  { id: 'graphite', primary: 'slate', accent: 'slate', background: 'none' },
+  { id: 'forest', primary: 'green', accent: 'green', background: 'forest' },
+  { id: 'dusk', primary: 'purple', accent: 'purple', background: 'dusk' },
+  { id: 'sunrise', primary: 'orange', accent: 'orange', background: 'sunrise' },
+  { id: 'rose', primary: 'pink', accent: 'pink', background: 'rose' },
+  { id: 'graphite', primary: 'slate', accent: 'slate', background: 'graphite' },
 ];
 
 /** The pack whose three parts are exactly `look`, if any. */
