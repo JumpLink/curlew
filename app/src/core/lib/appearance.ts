@@ -62,7 +62,7 @@ const SURFACES = {
 } as const;
 
 /** How much of the primary colour each scheme takes: quiet enough to keep text contrast. */
-const TINT = { light: 0.07, dark: 0.12 } as const;
+const TINT = { light: 0.2, dark: 0.26 } as const;
 
 const channel = (hex: string, at: number): number => Number.parseInt(hex.slice(1 + at * 2, 3 + at * 2), 16);
 
