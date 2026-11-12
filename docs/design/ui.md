@@ -218,22 +218,26 @@ overview and contact sheet: [`app-icon/README.md`](app-icon/README.md).
 
 Flathub's quality guidelines apply to every listing: English first screenshot, a German one
 tagged `xml:lang`, default settings, the window alone, at most 1000×700 logical, synthetic demo
-content (`example.org`), a one-sentence caption without a full stop. Shots are taken with
-`scripts/headless-run` against a temporary config and a temporary synthetic index, never the
-real ones.
+content (`example.org`), a one-sentence caption without a full stop.
+
+One script renders all of them, EN/DE × light/dark, against a private synthetic index and config
+in `/tmp/curlew-demo-shots` (never the real ones), under `scripts/headless-run`:
 
 ```bash
-rm -rf /tmp/curlew-demo && (cd app && node --experimental-strip-types scripts/demo-index.ts /tmp/curlew-demo)
-CURLEW_DB_PATH=/tmp/curlew-demo/index.db CURLEW_CONFIG=/tmp/curlew-demo/config.json \
-CURLEW_WINDOW_OPEN=c3 LC_ALL=en_US.UTF-8 LANGUAGE=en \
-  ../../scripts/headless-run --size 2600x1800 --scale 2 --window-shot /tmp/curlew-en.png -- \
-  gjsify run app/dist/curlew.gjs.mjs window
+dev/screenshots.sh --build            # all motifs → docs/screenshots/<motif>.<lang>.<scheme>.png
+dev/screenshots.sh --only accounts --lang de --scheme dark
+dev/screenshots.sh --check            # only verifies that every expected file exists
 ```
 
-`CURLEW_WINDOW_OPEN=<conversation id>` selects a conversation at start (`c3` is the email chat,
-`c5` an XMPP chat); `CURLEW_WINDOW_FILTER`, `CURLEW_WINDOW_SIZE` and
-`CURLEW_WINDOW_QUIT_AFTER_MS` are read in `app/src/window/main.ts` too; so is
-`CURLEW_WINDOW_OPEN_WELCOME=1`, which opens the first-run welcome screen
-(`app/src/window/welcome.ts`; pages listed in `welcome-model.ts`, where the Delta Chat and AI pages
-get added; shown once, tracked by `ui.welcomeDone`). A smaller `--size` cuts
-off the window shadow.
+Motifs: `conversations`, `conversation` (c1, Alex Weber), `conversation-narrow` and
+`conversations-narrow` (360×740), `contact`, `preferences`, `accounts`, `protocols`, `agent-access`.
+
+The window reads these environment variables (all in `app/src/window/main.ts`):
+`CURLEW_WINDOW_OPEN=<conversation id>` (`c3` is the email chat, `c5` an XMPP chat),
+`CURLEW_WINDOW_FILTER`, `CURLEW_WINDOW_SIZE=WxH`, `CURLEW_WINDOW_QUIT_AFTER_MS`,
+`CURLEW_WINDOW_OPEN_CONTACT=1`, `CURLEW_WINDOW_OPEN_PREFERENCES=1`, `CURLEW_WINDOW_OPEN_ACCESS=1`,
+`CURLEW_WINDOW_OPEN_ACCOUNTS=1`, `CURLEW_WINDOW_OPEN_PROTOCOLS=1` and `CURLEW_WINDOW_OPEN_WELCOME=1`,
+which opens the first-run welcome screen (`app/src/window/welcome.ts`; pages listed in
+`welcome-model.ts`; shown once, tracked by `ui.welcomeDone`). `CURLEW_NO_HOST_ACCOUNTS=1` hides the
+host's GNOME Online Accounts, so the Accounts dialog never shows real ones. The language comes from
+`LC_ALL`/`LANG`/`LANGUAGE`, which the script sets. A smaller `--size` cuts off the window shadow.

@@ -4,6 +4,7 @@
  */
 
 import Adw from 'gi://Adw?version=1';
+import GLib from 'gi://GLib?version=2.0';
 import type Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 import { configPath } from '@curlew/store';
@@ -22,6 +23,8 @@ export interface AccountsDialogOptions {
   width?: number;
   /** Height of the dialog content; defaults to 560. */
   height?: number;
+  /** Show the protocols page once the accounts are loaded (the screenshot hook `CURLEW_WINDOW_OPEN_PROTOCOLS`). */
+  openProtocols?: boolean;
 }
 
 export function presentAccounts(parent: Gtk.Window | null, options: AccountsDialogOptions = {}): void {
@@ -53,16 +56,17 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
         onChanged: () => void reload(),
       }),
     () => void startDaemon().catch((err: Error) => onError(err)),
-    () =>
-      pushProtocolsPage({
-        navigation: page.navigation,
-        path,
-        accountCounts: new Map((shown?.groups ?? []).map((group) => [group.backend, group.rows.length])),
-        onError,
-        onChanged: () => void reload(),
-        parent: () => page.widget,
-      }),
+    () => openProtocols(),
   );
+  const openProtocols = (): void =>
+    pushProtocolsPage({
+      navigation: page.navigation,
+      path,
+      accountCounts: new Map((shown?.groups ?? []).map((group) => [group.backend, group.rows.length])),
+      onError,
+      onChanged: () => void reload(),
+      parent: () => page.widget,
+    });
 
   // The page is a navigation view with its own header bar, so the next pages get a back button.
   overlay.set_child(page.widget);
@@ -124,4 +128,6 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
     stopDaemon();
   });
   dialog.present(parent);
+  if (options.openProtocols)
+    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => (openProtocols(), GLib.SOURCE_REMOVE));
 }

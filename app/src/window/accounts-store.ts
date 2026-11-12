@@ -38,7 +38,11 @@ export async function loadAccountsState(
   const chatBackends = enabledChatBackends(backends);
   const hostAccounts = options.hostAccounts ?? true;
 
-  const goaAccountsPromise = accountsList().then(
+  // `CURLEW_NO_HOST_ACCOUNTS=1` hides the host's GNOME Online Accounts, so a screenshot never shows
+  // the real ones (the screenshot script sets it).
+  const goaAccountsPromise = (
+    process.env.CURLEW_NO_HOST_ACCOUNTS === '1' ? Promise.resolve([] as GnomeAccount[]) : accountsList()
+  ).then(
     (accounts): { accounts: GnomeAccount[]; error?: string } => ({ accounts }),
     (err: unknown): { accounts: GnomeAccount[]; error?: string } =>
       !hostAccounts || err instanceof GnomeUnavailableError
