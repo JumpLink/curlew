@@ -25,6 +25,7 @@ import {
   roomHint,
   selfAddressOf,
   shortTime,
+  clockTime,
   singleChoice,
   targetOf,
   backendChoices,
@@ -424,6 +425,13 @@ export default async () => {
       expect(shortTime(new Date(2026, 9, 30, 12, 0).toISOString(), now)).toBe('2026-10-30');
       expect(shortTime(null, now)).toBe('');
       expect(shortTime('nonsense', now)).toBe('');
+    });
+
+    it('shows the clock time in a bubble whatever the day', () => {
+      expect(clockTime(new Date(2026, 10, 5, 9, 5).toISOString())).toBe('09:05');
+      expect(clockTime(new Date(2026, 9, 30, 23, 59).toISOString())).toBe('23:59');
+      expect(clockTime(null)).toBe('');
+      expect(clockTime('nonsense')).toBe('');
     });
 
     it('titles a conversation by stored title, then people, then a fallback', () => {

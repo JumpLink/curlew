@@ -158,6 +158,15 @@ export function shortTime(iso: string | null, now: Date = new Date()): string {
   return day(at) === day(yesterday) ? _('Yesterday') : day(at);
 }
 
+/** The clock time (`14:05`) of a message bubble: the day sits in the date pill, not in the bubble. */
+export function clockTime(iso: string | null): string {
+  if (!iso) return '';
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return '';
+  const two = (n: number) => String(n).padStart(2, '0');
+  return `${two(at.getHours())}:${two(at.getMinutes())}`;
+}
+
 /**
  * The account's own address when this conversation is the one the person writes to themselves
  * ("Note to self"), else null. Positive knowledge only, from what the index stores: a backend that
