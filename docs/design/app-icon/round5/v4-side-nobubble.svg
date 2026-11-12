@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+V4 – V3's bird alone: the longest, most legible version of the bill in the set.
+-->
+<svg width="128" height="128" viewBox="0 0 128 128" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="buff" x1="14" y1="14" x2="70" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8e8c8"/>
+      <stop offset="0.55" stop-color="#e2c091"/>
+      <stop offset="1" stop-color="#b0804f"/>
+    </linearGradient>
+    <linearGradient id="breast" x1="10" y1="56" x2="80" y2="124" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8e8c8"/>
+      <stop offset="0.55" stop-color="#e2c091"/>
+      <stop offset="1" stop-color="#b0804f"/>
+    </linearGradient>
+    <linearGradient id="wing" x1="8" y1="70" x2="60" y2="126" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#dcb988"/>
+      <stop offset="0.55" stop-color="#c49a68"/>
+      <stop offset="1" stop-color="#a0743f"/>
+    </linearGradient>
+    <radialGradient id="gloss" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="0.65" stop-color="#ffffff" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bill" x1="56.0" y1="40.0" x2="113.0" y2="102.0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7a5533"/>
+      <stop offset="0.45" stop-color="#4a3420"/>
+      <stop offset="1" stop-color="#33230f"/>
+    </linearGradient>
+    <path id="head" d="M70 44 C69 30 58 18 42 18 C26 18 13 29 13 43 C13 57 26 67 42 67 C56 67 68 57 70 44 Z"/>
+    <clipPath id="head-clip"><use href="#head"/></clipPath>
+  </defs>
+
+  <g transform="translate(0.0,0.0) translate(64,64) scale(1.0) translate(-64,-64)">
+  <!-- neck and breast, running off the bottom edge so the head reads as a crop; the
+       neck is narrower than the head, which is what gives the bird a jaw instead of a sock -->
+  <path fill="url(#breast)" d="M30 56 C19 80 15 104 18 128 L76 128 C70 104 66 80 60 56 Z"/>
+  <!-- the folded wing behind the breast: a rounded shoulder that falls away into the flank.
+       A straight-topped patch read as a second body edge standing beside the breast. -->
+  <path fill="url(#wing)" d="M26 78 C16 94 13 110 16 128 L46 128 C41 108 43 92 51 79
+                             C44 70 32 70 26 78 Z"/>
+  <g fill="#9a6c42" opacity="0.3">
+    <path d="M34 74 l3 1 l-4 16 l-3 -1 Z"/>
+    <path d="M46 76 l3 1 l-4 16 l-3 -1 Z"/>
+    <path d="M30 96 l3 1 l-4 16 l-3 -1 Z"/>
+    <path d="M44 98 l3 1 l-4 16 l-3 -1 Z"/>
+    <path d="M28 118 l3 1 l-3 10 l-3 -1 Z"/>
+    <path d="M42 120 l3 1 l-3 8 l-3 -1 Z"/>
+  </g>
+  <use href="#head" fill="url(#buff)"/>
+  <g clip-path="url(#head-clip)">
+    <!-- the dark crown, low enough on the head to actually show: the earlier cap
+         sat above the skull line and clipped away to nothing -->
+    <path fill="#7a5130" d="M4 46 C8 26 22 12 42 12 C62 12 76 22 80 34 C62 24 40 26 24 32 C14 36 7 41 4 46 Z"/>
+    <!-- the pale supercilium, running under the crown and over the eye -->
+    <path fill="#fbf0d8" opacity="0.5" d="M10 42 C26 30 56 27 76 33 L76 37 C56 31 27 34 12 48 Z"/>
+    <ellipse cx="34" cy="24" rx="16" ry="8" fill="url(#gloss)" opacity="0.55"/>
+  </g>
+  <!-- bill: one centreline, offset. 12.5 px at the base, tapering over the outer third -->
+  <path fill="url(#bill)" d="M56.69 33.79 L60.52 34.28 L64.24 34.88 L67.84 35.59 L71.33 36.43 L74.70 37.39 L77.95 38.48 L81.08 39.70 L84.09 41.06 L86.98 42.56 L89.73 44.21 L92.34 46.00 L94.81 47.94 L97.14 50.02 L99.31 52.25 L101.33 54.62 L103.18 57.13 L104.88 59.77 L106.42 62.55 L107.81 65.45 L109.04 68.48 L110.12 71.65 L111.05 74.94 L111.85 78.37 L112.50 81.93 L113.03 85.63 L113.42 89.48 L113.69 93.48 L113.83 97.63 L113.85 101.94 L112.15 102.06 L111.44 97.87 L110.64 93.88 L109.75 90.09 L108.76 86.51 L107.69 83.12 L106.52 79.93 L105.27 76.93 L103.94 74.12 L102.53 71.50 L101.04 69.05 L99.47 66.78 L97.84 64.68 L96.12 62.73 L94.33 60.93 L92.47 59.26 L90.53 57.72 L88.50 56.30 L86.38 54.99 L84.16 53.78 L81.83 52.66 L79.40 51.63 L76.84 50.68 L74.17 49.82 L71.36 49.04 L68.43 48.33 L65.36 47.69 L62.15 47.13 L58.80 46.64 L55.31 46.21 Z"/>
+  <path fill="#a8835c" opacity="0.75" d="M61.99 42.70 L65.22 43.26 L68.34 43.91 L71.34 44.64 L74.23 45.45 L77.00 46.36 L79.65 47.35 L82.19 48.44 L84.63 49.63 L86.95 50.91 L89.17 52.31 L91.29 53.81 L93.30 55.42 L95.22 57.15 L97.04 59.00 L98.76 60.97 L100.39 63.08 L101.92 65.32 L103.36 67.71 L104.70 70.23 L105.95 72.91 L103.78 73.80 L102.42 71.30 L100.99 68.97 L99.49 66.80 L97.92 64.78 L96.29 62.91 L94.59 61.17 L92.81 59.55 L90.97 58.06 L89.05 56.67 L87.04 55.39 L84.95 54.19 L82.77 53.09 L80.48 52.07 L78.09 51.13 L75.59 50.26 L72.97 49.47 L70.24 48.75 L67.38 48.10 L64.40 47.52 L61.29 47.00 Z"/>
+  <path fill="#2a1c10" d="M110.57 73.15 L111.30 75.95 L111.94 78.84 L112.49 81.83 L112.94 84.92 L113.30 88.11 L113.57 91.40 L113.75 94.81 L113.84 98.32 L113.85 101.94 L112.15 102.06 L111.57 98.53 L110.91 95.15 L110.19 91.91 L109.41 88.81 L108.57 85.85 L107.66 83.03 L106.69 80.35 L105.66 77.80 L104.57 75.39 Z"/>
+  <path fill="#ffffff" opacity="0.17" d="M60.55 38.38 L63.89 38.92 L67.13 39.54 L70.26 40.26 L73.29 41.08 L76.21 41.99 L79.02 43.00 L81.73 44.12 L84.32 45.34 L86.81 46.67 L89.19 48.11 L91.45 49.67 L93.61 51.34 L95.65 53.13 L97.58 55.04 L99.39 57.06 L101.08 59.21 L102.67 61.48 L104.13 63.87 L106.22 62.60 L104.78 60.02 L103.20 57.56 L101.49 55.21 L99.64 52.99 L97.66 50.88 L95.54 48.90 L93.29 47.05 L90.92 45.33 L88.43 43.73 L85.82 42.25 L83.09 40.91 L80.26 39.68 L77.32 38.57 L74.28 37.57 L71.13 36.69 L67.88 35.92 L64.53 35.24 L61.08 34.67 Z"/>
+    <circle cx="52" cy="35" r="6.4" fill="#241f31"/>
+    <circle cx="54.2" cy="32.8" r="2.0" fill="#ffffff" opacity="0.9"/>
+  </g>
+</svg>
