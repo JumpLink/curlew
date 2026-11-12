@@ -9,6 +9,7 @@ import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
+import { demoActive } from '../core/demo/active.ts';
 import type { ConversationMessage } from '@curlew/protocol';
 
 import { indexAccountLabels, loadAccountLabels } from './account-labels.ts';
@@ -314,6 +315,11 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   stage.add_overlay(viewer.widget);
   const toasts = new Adw.ToastOverlay({ child: stage });
   window.set_content(toasts);
+  // Demo data must never pass for a real inbox: say so once, then stay out of the way.
+  if (demoActive()) {
+    window.title = _('Curlew (demo)');
+    toasts.add_toast(new Adw.Toast({ title: _('Demo data — nothing here is real'), timeout: 5 }));
+  }
   viewer.install(window);
 
   const accounts = new Gio.SimpleAction({ name: 'accounts' });

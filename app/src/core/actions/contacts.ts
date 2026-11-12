@@ -4,6 +4,7 @@
 
 import { searchContacts } from '@curlew/gnome';
 import type { ContactDTO, SearchContactsOptions } from '@curlew/protocol';
+import { demoActive } from '../demo/active.ts';
 import { capLimit, CONTACT_LIMIT } from './limits.ts';
 
 /** Search contacts; caps the result count so a caller can't dump a whole address book. */
@@ -15,5 +16,6 @@ export async function contactsSearch(options: SearchContactsOptions = {}): Promi
 const PICKER_LIMIT = 1000;
 
 export async function contactsForPicker(query = ''): Promise<ContactDTO[]> {
+  if (demoActive()) return [];
   return searchContacts({ query, limit: PICKER_LIMIT });
 }

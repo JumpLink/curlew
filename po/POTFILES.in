@@ -35,6 +35,11 @@ app/src/core/backends/context.ts
 app/src/core/backends/registry.ts
 app/src/core/config.ts
 app/src/core/contact-choices.ts
+app/src/core/demo/accounts.ts
+app/src/core/demo/active.ts
+app/src/core/demo/generate.ts
+app/src/core/demo/index.ts
+app/src/core/demo/media.ts
 app/src/core/grants.ts
 app/src/core/lib/access-notifications.ts
 app/src/core/lib/appearance.ts
@@ -68,6 +73,7 @@ app/src/frontends/cli/contacts.ts
 app/src/frontends/cli/conversations.ts
 app/src/frontends/cli/daemon.ts
 app/src/frontends/cli/deliveries.ts
+app/src/frontends/cli/demo.ts
 app/src/frontends/cli/index-sync.ts
 app/src/frontends/cli/index.ts
 app/src/frontends/cli/mail.ts

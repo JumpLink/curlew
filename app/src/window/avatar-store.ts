@@ -10,6 +10,7 @@ import type Gdk from 'gi://Gdk?version=4.0';
 import GLib from 'gi://GLib?version=2.0';
 
 import { backendsList } from '../core/actions/backends.ts';
+import { demoActive } from '../core/demo/active.ts';
 import { avatarState } from '../core/lib/avatar-cache.ts';
 import { DAEMON_MAX_AVATAR_PEERS, DAEMON_WIRE_VERSION } from '../core/lib/daemon-bus.ts';
 import { gioDaemonSendClient } from '../core/lib/daemon-send-client.ts';
@@ -93,6 +94,10 @@ function schedule(): void {
 }
 
 async function flush(): Promise<void> {
+  if (demoActive()) {
+    pending.clear();
+    return;
+  }
   if (busy || failures >= MAX_FAILURES) return;
   const [id, group] = pending.entries().next().value ?? [];
   if (id === undefined || group === undefined) return;

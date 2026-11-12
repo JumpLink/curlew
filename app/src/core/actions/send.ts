@@ -67,6 +67,7 @@ import { isOmemoSendRefusedError, MESSAGES, validateImageUrl } from '@curlew/xmp
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig, type CurlewConfig } from '../config.ts';
+import { demoActive } from '../demo/active.ts';
 import { type AllowReason, previewOf, requireAccess } from '../access.ts';
 import { type AgentAccess, agentGate } from './access.ts';
 import type { Capability, Grant } from '../grants.ts';
@@ -493,6 +494,7 @@ async function refuseOutsidePin(config: CurlewConfig, backend: string, params: S
 
 /** Send from an enabled account on the person's behalf: no grant is checked (ADR 0008). */
 export async function sendMessage(params: SendParams): Promise<SendResult> {
+  if (demoActive()) throw new Error(_('Demo mode: nothing is sent.'));
   const config = loadConfig(params.configPath ?? configPath());
   const found = await findAccountBackend(config, params.accountId, params.backend);
   if (found === null) {

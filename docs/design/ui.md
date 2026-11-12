@@ -258,6 +258,10 @@ which opens the first-run welcome screen (`app/src/window/welcome.ts`; pages lis
 host's GNOME Online Accounts, so the Accounts dialog never shows real ones. The language comes from
 `LC_ALL`/`LANG`/`LANGUAGE`, which the script sets. A smaller `--size` cuts off the window shadow.
 
+For a quick look without the script, `CURLEW_DEMO=1 curlew window` (or `curlew demo`) opens the window on
+the same kind of synthetic data (`app/src/core/demo/`), generated into `CURLEW_DEMO_DIR` (default
+`$XDG_CACHE_HOME/curlew-demo`). A demo window is titled "Curlew (demo)" and shows a notice once.
+
 ## Chat backgrounds
 
 Every design pack has its own quiet tile behind the messages: Curlew the doodles, Forest leaves, trees

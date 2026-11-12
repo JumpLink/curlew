@@ -8,6 +8,8 @@ import GLib from 'gi://GLib?version=2.0';
 
 import { _, fmt } from '@curlew/protocol';
 
+import { demoActive } from '../core/demo/active.ts';
+import { DEMO_ACCOUNTS } from '../core/demo/accounts.ts';
 import { UNIT_NAME } from '../core/actions/setup-unit.ts';
 import { portalAutostart } from '../core/lib/autostart-portal.ts';
 import { inSandbox } from '../core/lib/sandbox.ts';
@@ -29,6 +31,7 @@ export interface AccountsDaemonSource {
 
 /** The daemon reads its account list once at start, so a change to it takes effect on a restart. */
 export function restartDaemonIfRunning(): void {
+  if (demoActive()) return;
   // A sandbox has no systemd: the Background portal starts the daemon at the next login.
   if (inSandbox()) return;
   try {
@@ -43,6 +46,7 @@ export function restartDaemonIfRunning(): void {
  * has not run `curlew setup`); on success the bus watch reports the daemon as present.
  */
 export function startDaemon(): Promise<void> {
+  if (demoActive()) return Promise.resolve();
   if (inSandbox()) return startDaemonThroughPortal();
   return new Promise((resolve, reject) => {
     try {
@@ -107,6 +111,20 @@ async function queryAccounts(connection: Gio.DBusConnection): Promise<DaemonAcco
 export function gioAccountsDaemonSource(): AccountsDaemonSource {
   return {
     start: (onChange) => {
+      if (demoActive()) {
+        // No daemon in demo mode: every made-up account shows as connected.
+        const since = new Date().toISOString();
+        const accounts = new Map<string, DaemonAccountEntry>();
+        for (const a of DEMO_ACCOUNTS)
+          accounts.set(`${a.provider}/${a.id}`, {
+            backend: a.provider,
+            accountId: a.id,
+            state: 'connected',
+            since,
+          });
+        onChange({ present: true, accounts });
+        return () => {};
+      }
       let connection: Gio.DBusConnection;
       try {
         connection = Gio.bus_get_sync(Gio.BusType.SESSION, null);

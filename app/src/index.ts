@@ -13,6 +13,7 @@ import {
   contactsCommand,
   conversationsCommand,
   daemonCommand,
+  demoCommand,
   deliveriesCommand,
   foldersCommand,
   indexCommand,
@@ -44,6 +45,16 @@ if (
   hideBin(process.argv).length === 1 &&
   hideBin(process.argv)[0] === 'window'
 ) {
+  await import(new URL('./window.gjs.mjs', import.meta.url).href);
+}
+
+// `curlew demo` is `CURLEW_DEMO=1 curlew window`, for the same reason.
+if (
+  typeof (globalThis as { imports?: unknown }).imports !== 'undefined' &&
+  hideBin(process.argv).length === 1 &&
+  hideBin(process.argv)[0] === 'demo'
+) {
+  process.env.CURLEW_DEMO = '1';
   await import(new URL('./window.gjs.mjs', import.meta.url).href);
 }
 
@@ -79,6 +90,7 @@ const parseArgs = () =>
     .command(setupCommand)
     .command(addonCanaryCommand)
     .command(windowCommand)
+    .command(demoCommand)
     .demandCommand(1, 'Please provide a command — `curlew --help` lists them all.')
     // Reject unknown commands instead of silently resolving — on GJS an unmatched command
     // would otherwise leave the main loop running forever (hang); on Node it would exit 0.

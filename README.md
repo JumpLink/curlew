@@ -828,6 +828,13 @@ does. Attachments
 are saved to your download directory. Both locations are overridable via
 `CURLEW_DATA_DIR`, `CURLEW_DB_PATH` and `CURLEW_ATTACHMENTS_DIR`.
 
+### Demo mode
+
+`CURLEW_DEMO=1 curlew window` (or `curlew demo`) opens the window on made-up data: no accounts, no
+network, nothing sent. The data is generated into `$XDG_CACHE_HOME/curlew-demo` (override with
+`CURLEW_DEMO_DIR`) when it is missing or from an older version, and your real index, config and
+accounts are not read. Every name and address is invented (`example.org`).
+
 Your decisions — enabled backends, accepted terms, per-sender classification —
 live in `$XDG_CONFIG_HOME/curlew/config.json` (mode `0600`, override with
 `CURLEW_CONFIG`). Unlike the index they cannot be rebuilt from a server, so
