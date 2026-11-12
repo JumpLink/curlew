@@ -15,6 +15,7 @@ import { showPicture, showSenderPicture } from './contact-picture.ts';
 import type { ListEntry } from './conversation-list-model.ts';
 import {
   canSend,
+  clockTime,
   composerBlock,
   entryProtocolSubtitle,
   initials,
@@ -23,7 +24,6 @@ import {
   protocolIcon,
   protocolLabel,
   roomHint,
-  shortTime,
   singleChoice,
   type ProtocolChoice,
 } from './conversation-list-model.ts';
@@ -932,7 +932,7 @@ export function createConversationView(
     }
     showReactions();
     bubble.append(padded(reactions));
-    const time = new Gtk.Label({ label: shortTime(message.sentAt), xalign: 1 });
+    const time = new Gtk.Label({ label: clockTime(message.sentAt), xalign: 1 });
     time.add_css_class('caption');
     time.add_css_class('dim-label');
     const meta = new Gtk.Box({ spacing: 6, halign: Gtk.Align.END });
