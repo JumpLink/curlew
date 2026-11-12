@@ -299,6 +299,22 @@ export default async () => {
       }
     });
 
+    await it('gives up on a connection that never comes up', async () => {
+      const db = freshDb();
+      try {
+        seedMessage(db, CHAT_BACKEND, HANDLE);
+        const backend = fakeChatBackend();
+        backend.openAttachments = () => new Promise(() => {});
+        const fetchBackends = new Map([[sessionKey(CHAT_BACKEND, ACCOUNT), backend]]);
+        const handler = createDaemonFetchHandler({ db, fetchBackends, log, stallTimeoutMs: 20 });
+        const reply = await handler(fetchRequest());
+        expect(reply.kind).toBe('failed');
+        expect(reply.kind === 'failed' && /stalled/.test(reply.message)).toBe(true);
+      } finally {
+        db.close();
+      }
+    });
+
     await it('does not cut off a slow fetch that keeps making progress', async () => {
       const db = freshDb();
       try {
