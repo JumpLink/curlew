@@ -65,6 +65,7 @@ import matrixFollow from './unit/matrix/follow.test.ts';
 import matrixRedact from './unit/matrix/redact.test.ts';
 import matrixAttachments from './unit/matrix/attachments.test.ts';
 import matrixSelfRoom from './unit/matrix/self-room.test.ts';
+import matrixAvatars from './unit/matrix/avatars.test.ts';
 import smtpMessage from './unit/smtp/message.test.ts';
 import smtpSend from './unit/smtp/send.test.ts';
 import mailSend from './unit/mail/send.test.ts';
@@ -197,6 +198,7 @@ run({
   matrixRedact,
   matrixAttachments,
   matrixSelfRoom,
+  matrixAvatars,
   smtpMessage,
   smtpSend,
   mailSend,

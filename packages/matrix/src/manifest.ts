@@ -37,6 +37,8 @@ export const MATRIX_MANIFEST: BackendManifest = {
     // tapped, and a send uploads one to the media repository and posts it as `m.image`/`m.file`.
     attachments: true,
     attachmentsRead: true,
+    // A room's or a direct chat's picture, as a thumbnail from the homeserver.
+    avatars: true,
     replies: true,
   },
   // The homeserver keeps the room history: the index is rebuildable (`derived`). The crypto
