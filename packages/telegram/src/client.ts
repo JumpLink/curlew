@@ -7,7 +7,7 @@
  */
 
 import { _, fmt } from '@curlew/protocol';
-import { FileLocation, InputMedia, type ITelegramStorageProvider, type RpcCallMiddleware } from '@mtcute/core';
+import { FileLocation, InputMedia, SessionConnection, type ITelegramStorageProvider, type RpcCallMiddleware } from '@mtcute/core';
 import { MemoryStorage, networkMiddlewares, TelegramClient, WebPlatform } from '@mtcute/web';
 import type { LoginPrompts, TelegramApi, TelegramClientHandle, TelegramLive, TgUser } from './api.ts';
 import type { TelegramCredentials } from './credentials.ts';
@@ -130,8 +130,37 @@ export function mtcuteLive(
   };
 }
 
+interface TimeoutCheck {
+  _session: { lastActivityTime: number };
+  _checkTimeouts(now: number): boolean;
+}
+
+/**
+ * Stops a fresh mtcute connection from timing out before it has heard anything.
+ *
+ * A session starts with `lastActivityTime = 0` and only a received message (or a usable
+ * connection) sets it. `_checkTimeouts` compares it to `performance.now()`, which is the age of
+ * the PROCESS: in the daemon, hours old, a connection still connecting on its first flush reads
+ * as silent for 135 s and is reset, again and again, so every download failed. A short-lived
+ * command never noticed because its clock was young. The idle clock starts at the first check.
+ * Idempotent; `proto` is injectable for the test only.
+ */
+export function startIdleClockOnFirstCheck(
+  proto: TimeoutCheck = SessionConnection.prototype as unknown as TimeoutCheck,
+): void {
+  const patched = proto as TimeoutCheck & { _curlewIdleClock?: true };
+  if (patched._curlewIdleClock) return;
+  const original = proto._checkTimeouts;
+  proto._checkTimeouts = function (this: TimeoutCheck, now: number): boolean {
+    if (this._session.lastActivityTime === 0) this._session.lastActivityTime = now;
+    return original.call(this, now);
+  };
+  patched._curlewIdleClock = true;
+}
+
 /** The one place mtcute's client is constructed. Updates are off unless `live`: sync only reads. */
 export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }) => {
+  startIdleClockOnFirstCheck();
   const client = new TelegramClient({
     apiId: credentials.apiId,
     apiHash: credentials.apiHash,

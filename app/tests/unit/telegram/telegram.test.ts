@@ -36,6 +36,7 @@ import {
   PENDING_STALE_MS,
   refuseConfigCredentials,
   SecretStoreStorage,
+  startIdleClockOnFirstCheck,
   sweepPendingSessions,
   TELEGRAM_MANIFEST,
   TelegramBackend,
@@ -242,6 +243,42 @@ export default async () => {
         return [];
       });
       expect(handed?.floodWaiter?.maxWait).toBe(60_000);
+    });
+  });
+
+  await describe('mtcute idle clock', async () => {
+    const proto = () => {
+      const check = {
+        _session: { lastActivityTime: 0 },
+        _checkTimeouts(now: number): boolean {
+          // mtcute's own comparison, with its 135 s idle limit.
+          return now - this._session.lastActivityTime > 135_000;
+        },
+      };
+      return check;
+    };
+
+    await it('does not time out a fresh connection in an old process', async () => {
+      const stock = proto();
+      expect(stock._checkTimeouts(4_000_000)).toBe(true);
+      const patched = proto();
+      startIdleClockOnFirstCheck(patched);
+      expect(patched._checkTimeouts(4_000_000)).toBe(false);
+    });
+
+    await it('still times out a connection that stays silent', async () => {
+      const patched = proto();
+      startIdleClockOnFirstCheck(patched);
+      patched._checkTimeouts(4_000_000);
+      expect(patched._checkTimeouts(4_000_000 + 136_000)).toBe(true);
+    });
+
+    await it('patches once', async () => {
+      const patched = proto();
+      startIdleClockOnFirstCheck(patched);
+      const once = patched._checkTimeouts;
+      startIdleClockOnFirstCheck(patched);
+      expect(patched._checkTimeouts).toBe(once);
     });
   });
 
