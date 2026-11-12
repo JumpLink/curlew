@@ -251,7 +251,7 @@ export function upsertMessages(
       `INSERT INTO messages
          (account_id, folder_path, uid, message_id, subject, sender, recipients, date, internal_date,
           size, seen, flagged, has_attachment, indexed_at, in_reply_to, thread_refs, from_json, to_json,
-          list_id, list_unsubscribe, auto_submitted, precedence, email_chat)`,
+          list_id, list_unsubscribe, auto_submitted, precedence, email_chat, encrypted)`,
       messages.map((message): SqlValue[] => [
         accountId,
         folderPath,
@@ -278,6 +278,7 @@ export function upsertMessages(
         message.automation.autoSubmitted,
         message.automation.precedence,
         message.emailChat ? 1 : 0,
+        message.encrypted ? 1 : 0,
       ]),
     );
 

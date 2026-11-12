@@ -5,6 +5,7 @@
 ### Fixed
 
 - A message bubble shows the time of day (14:05) again; for messages older than yesterday it showed the date, which the day separator already gives.
+- Delta Chat messages are encrypted, and the window showed every one of them as an empty bubble reading "No text body". It now says "Encrypted message: it cannot be shown here"; the index marks such mail when it syncs, and mail folders with email chats are fetched once more to learn it.
 - Removing an account can now also delete its messages, attachments and cached pictures from this computer. A second confirmation says so, and warns when the index is the only copy (Signal, WhatsApp). Without the check mark, nothing changes: only the login goes.
 - Telegram profile pictures of people now show in the list; only groups and channels did before.
 - Telegram pictures and files load again in the long-running daemon: a fresh connection no longer counts as silent for hours and gets reset in a loop (an mtcute quirk, worked around until it is fixed there).

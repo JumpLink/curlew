@@ -902,8 +902,11 @@ export function createConversationView(
     const written = message.bodyText?.trim() || message.notice;
     const full =
       (written ||
-        (message.hasAttachments ? attachmentLines(message.attachments).join('\n') : _('No text body'))) +
-      (message.bodyTruncated ? ' …' : '');
+        (message.hasAttachments
+          ? attachmentLines(message.attachments).join('\n')
+          : message.encrypted
+            ? _('Encrypted message: it cannot be shown here')
+            : _('No text body'))) + (message.bodyTruncated ? ' …' : '');
     // What is listed below the text stands for the attachments itself; the placeholder line is
     // only for a message whose parts the index does not know.
     const { shown, more } = shownAttachments(

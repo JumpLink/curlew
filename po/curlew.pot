@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 00:22+0100\n"
+"POT-Creation-Date: 2026-11-13 00:58+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2363,7 +2363,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:129
-#: app/src/window/conversation-view.ts:1308
+#: app/src/window/conversation-view.ts:1311
 msgid "Continuing via {protocol}"
 msgstr ""
 
@@ -2507,33 +2507,37 @@ msgstr ""
 msgid "Copy"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:905
+#: app/src/window/conversation-view.ts:908
+msgid "Encrypted message: it cannot be shown here"
+msgstr ""
+
+#: app/src/window/conversation-view.ts:909
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:947
-#: app/src/window/conversation-view.ts:1085
+#: app/src/window/conversation-view.ts:950
+#: app/src/window/conversation-view.ts:1088
 msgid "edited"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:957
-#: app/src/window/conversation-view.ts:958
+#: app/src/window/conversation-view.ts:960
+#: app/src/window/conversation-view.ts:961
 msgid "Read"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1172
+#: app/src/window/conversation-view.ts:1175
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1273
+#: app/src/window/conversation-view.ts:1276
 msgid "Message not edited: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1320
+#: app/src/window/conversation-view.ts:1323
 msgid "Message not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1323
+#: app/src/window/conversation-view.ts:1326
 msgid "Retry"
 msgstr ""
 

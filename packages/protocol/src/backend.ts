@@ -60,6 +60,8 @@ export interface BackendMessage {
   automation: AutomationHeaders;
   /** Delta Chat's open email-chat marker (`Chat-Version: 1.0`). */
   emailChat: boolean;
+  /** The body is encrypted (OpenPGP, S/MIME): there is no text to index, and the window says so. */
+  encrypted?: boolean;
 }
 
 /** Just the parts needed to detect a flag change or an expunge. */

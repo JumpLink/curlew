@@ -66,6 +66,7 @@ interface MailRow extends ThreadMember {
   autoSubmitted: string | null;
   precedence: string | null;
   emailChat: boolean;
+  encrypted: boolean;
 }
 
 function str(value: unknown): string | null {
@@ -91,7 +92,7 @@ function loadMailRows(db: IndexDatabase): MailRow[] {
     .prepare(
       `SELECT account_id, folder_path, uid, message_id, subject, sender, date, internal_date, seen,
               has_attachment, in_reply_to, thread_refs, from_json, to_json, list_id,
-              list_unsubscribe, auto_submitted, precedence, email_chat
+              list_unsubscribe, auto_submitted, precedence, email_chat, encrypted
          FROM messages ORDER BY id`,
     )
     .all() as Array<Record<string, unknown>>;
@@ -115,6 +116,7 @@ function loadMailRows(db: IndexDatabase): MailRow[] {
     autoSubmitted: str(r.auto_submitted),
     precedence: str(r.precedence),
     emailChat: Number(r.email_chat) === 1,
+    encrypted: Number(r.encrypted) === 1,
   }));
 }
 
@@ -339,6 +341,7 @@ const MAIL_MESSAGES: SyncedTable = {
     'folder_path',
     'uid',
     'email_chat',
+    'encrypted',
   ],
   key: [0],
 };
@@ -502,6 +505,7 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
         row.folderPath,
         row.uid,
         row.emailChat ? 1 : 0,
+        row.encrypted ? 1 : 0,
       ]);
     }
 
@@ -1159,7 +1163,7 @@ export function setMessageText(db: IndexDatabase, messageId: string, text: strin
 
 const MESSAGE_COLUMNS = `id, conversation_id, backend, account_id, presentation, sender_participant_id, sender_name,
               sender_kind, sender_address, from_self, sent_at, subject, seen, has_attachments,
-              classification, classification_reason, folder_path, uid, remote_id, email_chat, ${seqColumn('remote_seq')}, body,
+              classification, classification_reason, folder_path, uid, remote_id, email_chat, encrypted, ${seqColumn('remote_seq')}, body,
               edited_at, reply_to_remote_id, thread_remote_id, reply_to_client_id, group_id, client_id, peer_read`;
 
 function toMessage(
@@ -1189,6 +1193,7 @@ function toMessage(
     seen: Number(r.seen) === 1,
     hasAttachments: Number(r.has_attachments) === 1,
     emailChat: Number(r.email_chat) === 1,
+    ...(Number(r.encrypted) === 1 ? { encrypted: true } : {}),
     classification: forced ?? (String(r.classification) as Classification),
     classificationReason: forced ? 'override' : (String(r.classification_reason) as ClassificationReason),
     ref: {
