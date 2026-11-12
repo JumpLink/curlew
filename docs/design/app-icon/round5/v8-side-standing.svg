@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+V8 – the whole bird in profile on its long legs, the way a curlew is actually seen on a
+mudflat. The test is 32 px: a whole bird has to survive losing its legs.
+-->
+<svg width="128" height="128" viewBox="0 0 128 128" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="buff" x1="16" y1="48" x2="90" y2="104" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8e8c8"/>
+      <stop offset="0.55" stop-color="#e2c091"/>
+      <stop offset="1" stop-color="#b0804f"/>
+    </linearGradient>
+    <linearGradient id="neck" x1="56" y1="10" x2="92" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8e8c8"/>
+      <stop offset="0.55" stop-color="#e2c091"/>
+      <stop offset="1" stop-color="#b0804f"/>
+    </linearGradient>
+    <linearGradient id="wing" x1="18" y1="58" x2="84" y2="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#dcb988"/>
+      <stop offset="0.55" stop-color="#c49a68"/>
+      <stop offset="1" stop-color="#a0743f"/>
+    </linearGradient>
+    <radialGradient id="gloss" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="0.65" stop-color="#ffffff" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bill" x1="82.0" y1="26.0" x2="121.0" y2="84.0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7a5533"/>
+      <stop offset="0.45" stop-color="#4a3420"/>
+      <stop offset="1" stop-color="#33230f"/>
+    </linearGradient>
+    <path id="head" d="M94 27 C93 18 86 11 76 11 C65 11 57 18 57 28 C57 37 65 43 76 43 C87 43 94 36 94 27 Z"/>
+    <clipPath id="head-clip"><use href="#head"/></clipPath>
+    <ellipse id="standbody" cx="50" cy="74" rx="33" ry="23"/>
+    <clipPath id="body-clip"><use href="#standbody"/></clipPath>
+  </defs>
+
+  <g stroke="#8d94a0" stroke-width="5" stroke-linecap="round" fill="none">
+    <path d="M44 90 L40 114"/>
+    <path d="M60 90 L62 114"/>
+  </g>
+  <g stroke="#8d94a0" stroke-width="3.8" stroke-linecap="round" fill="none">
+    <path d="M40 114 L31 120"/>
+    <path d="M40 114 L45 121"/>
+    <path d="M62 114 L53 120"/>
+    <path d="M62 114 L67 121"/>
+  </g>
+  <!-- the short tail, pointing back and a little up: blunt, the way a wader's is. A pointed
+       one read as a fin stuck on the body. -->
+  <path fill="url(#wing)" d="M32 62 C22 57 13 55 7 58 C6 63 7 68 10 72 C17 76 25 78 32 79 Z"/>
+  <use href="#standbody" fill="url(#buff)"/>
+  <!-- the folded wing: a shallow crescent lying along the flank, its top edge following the
+       body's curve, so it reads as a folded wing and not as a dark blob dropped on the bird -->
+  <path fill="url(#wing)" opacity="0.78" d="M27 68 C42 59 62 61 74 72 C70 84 54 90 38 86
+                                            C29 83 24 76 27 68 Z"/>
+  <g clip-path="url(#body-clip)">
+    <ellipse cx="44" cy="60" rx="30" ry="14" fill="url(#gloss)"/>
+  </g>
+  <g fill="#9a6c42" opacity="0.22">
+    <path d="M36 70 l3 1 l-2 14 l-3 -1 Z"/>
+    <path d="M48 68 l3 1 l-2 16 l-3 -1 Z"/>
+    <path d="M60 70 l3 1 l-1 14 l-3 -1 Z"/>
+  </g>
+  <!-- neck: narrow where it leaves the body, widening into the head -->
+  <path fill="url(#neck)" d="M58 58 C56 44 60 30 72 26 L84 32 C76 38 72 46 72 62 Z"/>
+  <use href="#head" fill="url(#neck)"/>
+  <g clip-path="url(#head-clip)">
+    <path fill="#7a5130" d="M56 26 C60 14 68 7 77 7 C88 7 95 14 96 22 C82 12 64 15 56 26 Z"/>
+    <path fill="#fbf0d8" opacity="0.45" d="M58 30 C68 20 88 20 96 25 L96 28 C84 22 66 24 59 33 Z"/>
+  </g>
+  <!-- bill: one centreline, offset. 9 px at the base, tapering over the outer third -->
+  <path fill="url(#bill)" d="M82.85 21.58 L85.66 22.18 L88.38 22.90 L91.00 23.72 L93.54 24.65 L95.97 25.70 L98.31 26.86 L100.54 28.14 L102.67 29.54 L104.69 31.06 L106.60 32.69 L108.39 34.44 L110.07 36.30 L111.63 38.27 L113.07 40.35 L114.39 42.53 L115.59 44.81 L116.68 47.20 L117.65 49.68 L118.52 52.27 L119.27 54.96 L119.92 57.75 L120.47 60.64 L120.92 63.64 L121.28 66.74 L121.53 69.96 L121.70 73.29 L121.77 76.73 L121.75 80.30 L121.65 83.98 L120.35 84.02 L119.96 80.39 L119.50 76.91 L118.97 73.57 L118.37 70.38 L117.70 67.33 L116.96 64.43 L116.15 61.67 L115.27 59.05 L114.33 56.57 L113.32 54.23 L112.25 52.02 L111.11 49.95 L109.92 48.01 L108.66 46.19 L107.34 44.49 L105.96 42.91 L104.52 41.43 L103.02 40.06 L101.45 38.79 L99.81 37.61 L98.10 36.51 L96.30 35.49 L94.43 34.55 L92.46 33.69 L90.40 32.89 L88.24 32.17 L85.98 31.52 L83.62 30.94 L81.15 30.42 Z"/>
+  <path fill="#a8835c" opacity="0.75" d="M86.18 28.33 L88.50 28.99 L90.72 29.72 L92.85 30.54 L94.89 31.43 L96.85 32.40 L98.72 33.46 L100.51 34.60 L102.22 35.83 L103.84 37.15 L105.39 38.56 L106.87 40.07 L108.27 41.67 L109.59 43.37 L110.84 45.17 L112.02 47.08 L113.12 49.10 L114.15 51.22 L115.11 53.46 L115.99 55.81 L116.80 58.28 L115.16 58.74 L114.25 56.38 L113.29 54.15 L112.26 52.04 L111.17 50.05 L110.03 48.19 L108.84 46.43 L107.58 44.79 L106.28 43.25 L104.91 41.82 L103.49 40.48 L102.01 39.23 L100.47 38.06 L98.86 36.98 L97.18 35.97 L95.42 35.03 L93.59 34.17 L91.67 33.37 L89.66 32.64 L87.57 31.97 L85.38 31.36 Z"/>
+  <path fill="#2a1c10" d="M120.19 59.06 L120.62 61.52 L120.98 64.05 L121.27 66.66 L121.49 69.34 L121.65 72.11 L121.74 74.95 L121.78 77.88 L121.74 80.89 L121.65 83.98 L120.35 84.02 L120.03 80.97 L119.66 78.02 L119.24 75.18 L118.77 72.43 L118.25 69.79 L117.68 67.25 L117.06 64.81 L116.40 62.48 L115.68 60.24 Z"/>
+  <path fill="#ffffff" opacity="0.17" d="M85.42 25.13 L87.84 25.77 L90.18 26.49 L92.43 27.30 L94.60 28.19 L96.68 29.17 L98.68 30.25 L100.59 31.41 L102.42 32.67 L104.16 34.02 L105.81 35.46 L107.37 37.00 L108.85 38.63 L110.23 40.36 L111.54 42.17 L112.75 44.09 L113.88 46.09 L114.92 48.20 L115.88 50.40 L117.50 49.69 L116.59 47.38 L115.58 45.15 L114.47 43.01 L113.26 40.97 L111.94 39.01 L110.53 37.15 L109.01 35.38 L107.39 33.71 L105.67 32.13 L103.85 30.66 L101.93 29.29 L99.93 28.02 L97.83 26.85 L95.64 25.79 L93.37 24.82 L91.01 23.95 L88.57 23.18 L86.05 22.51 Z"/>
+    <circle cx="84" cy="26" r="5.2" fill="#241f31"/>
+    <circle cx="85.8" cy="24.2" r="1.6" fill="#ffffff" opacity="0.9"/>
+</svg>

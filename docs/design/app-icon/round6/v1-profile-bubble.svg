@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+V1 – the bird in profile, where the bill needs no excuse: an egg head lower left, the
+bill leaving the face level and bending down only in its outer third, the shared bubble
+shrunk to a badge at the upper right. Bill width at the root: a sixth of the head.
+-->
+<svg width="128" height="128" viewBox="0 0 128 128" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="buff" x1="20" y1="25" x2="70" y2="110" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fbeed6"/>
+      <stop offset="0.55" stop-color="#e6c597"/>
+      <stop offset="1" stop-color="#b8864f"/>
+    </linearGradient>
+    <linearGradient id="breast" x1="10" y1="56" x2="80" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fbeed6"/>
+      <stop offset="0.55" stop-color="#e6c597"/>
+      <stop offset="1" stop-color="#b8864f"/>
+    </linearGradient>
+    <linearGradient id="wing" x1="8" y1="70" x2="60" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#dcb988"/>
+      <stop offset="0.55" stop-color="#c49a68"/>
+      <stop offset="1" stop-color="#a0743f"/>
+    </linearGradient>
+    <radialGradient id="gloss" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.6"/>
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bill" x1="68.1" y1="48.0" x2="108.0" y2="86.0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6e4a2b"/>
+      <stop offset="0.5" stop-color="#432d18"/>
+      <stop offset="1" stop-color="#2b1c0d"/>
+    </linearGradient>
+    <path id="breast-shape" d="M28 58 C17 82 13 106 16 128 L74 128 C70 104 66 84 60 58 Z"/>
+    <path id="wing-shape" d="M24 82 C14 98 11 112 14 128 L44 128 C39 108 41 94 49 82 C42 73 30 73 24 82 Z"/>
+    <path id="head" d="M44.0 25.0 C57.3 25.0 67.0 36.7 67.0 46.0 C67.0 55.3 57.3 67.0 44.0 67.0 C31.3 67.0 21.0 57.6 21.0 46.0 C21.0 34.4 31.3 25.0 44.0 25.0 Z"/>
+    <clipPath id="head-clip"><use href="#head"/></clipPath>
+    <linearGradient id="face" x1="48" y1="100" x2="80" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff7800"/>
+      <stop offset="1" stop-color="#ffa348"/>
+    </linearGradient>
+    <linearGradient id="wall" x1="8" y1="70" x2="120" y2="70" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e66100"/>
+      <stop offset="0.0714286" stop-color="#ffa348"/>
+      <stop offset="0.142857" stop-color="#e66100"/>
+      <stop offset="0.857143" stop-color="#e66100"/>
+      <stop offset="0.928571" stop-color="#ffa348"/>
+      <stop offset="1" stop-color="#e66100"/>
+    </linearGradient>
+    <linearGradient id="fold" x1="31.462524" y1="114" x2="39" y2="114" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e66100"/>
+      <stop offset="0.469318" stop-color="#ffa348"/>
+      <stop offset="1" stop-color="#e66100"/>
+    </linearGradient>
+    <path id="tail" fill-rule="evenodd"
+          d="M24 100 V112 H28 C30.210938 112 32 113.789062 32 116 V123
+             C32 124.992188 33.183594 126.792969 35.011719 127.585938
+             C36.839844 128.375 38.964844 128.003906 40.417969 126.640625
+             L53.941406 113.933594 C55.265625 112.691406 57.011719 112 58.824219 112
+             H68 V100 Z"/>
+    <path id="lip" fill-rule="evenodd"
+          d="M24 106 V108 H28 C30.210938 108 32 109.789062 32 112 V119
+             C32 120.992188 33.183594 122.792969 35.011719 123.585938
+             C36.839844 124.375 38.964844 124.003906 40.417969 122.640625
+             L53.941406 109.933594 C55.265625 108.691406 57.011719 108 58.824219 108
+             H68 V106 Z"/>
+    <path id="wallrect"
+          d="M24 28 H104 C112.835938 28 120 35.164062 120 44 V96
+             C120 104.835938 112.835938 112 104 112 H24
+             C15.164062 112 8 104.835938 8 96 V44 C8 35.164062 15.164062 28 24 28 Z"/>
+    <path id="facerect"
+          d="M24 24 H104 C112.835938 24 120 31.164062 120 40 V92
+             C120 100.835938 112.835938 108 104 108 H24
+             C15.164062 108 8 100.835938 8 92 V40 C8 31.164062 15.164062 24 24 24 Z"/>
+    <clipPath id="face-clip"><use href="#facerect"/></clipPath>
+  </defs>
+
+  <g transform="translate(82.96,-7.12) scale(0.38)">
+  <use href="#tail" fill="url(#fold)"/>
+  <use href="#wallrect" fill="url(#wall)"/>
+  <use href="#facerect" fill="url(#face)"/>
+  <use href="#lip" fill="#ff7800"/>
+  </g>
+  <g transform="translate(-12,10) translate(64,64) scale(0.86) translate(-64,-64)">
+  <use href="#breast-shape" fill="none" stroke="#5e3d22" stroke-width="3.0" stroke-opacity="0.55" stroke-linejoin="round"/>
+  <use href="#breast-shape" fill="url(#breast)"/>
+  <use href="#wing-shape" fill="none" stroke="#5e3d22" stroke-width="2.4" stroke-opacity="0.35" stroke-linejoin="round"/>
+  <use href="#wing-shape" fill="url(#wing)"/>
+  <!-- bill: one centreline, offset; 7.4 px wide where it leaves the face, 61 px long -->
+  <path fill="url(#bill)" d="M60.40 43.22 L62.96 43.53 L65.46 43.87 L67.91 44.26 L70.30 44.68 L72.63 45.15 L74.90 45.67 L77.11 46.23 L79.26 46.84 L81.35 47.51 L83.38 48.23 L85.35 49.02 L87.24 49.87 L89.08 50.79 L90.84 51.78 L92.52 52.84 L94.14 53.97 L95.67 55.19 L97.13 56.48 L98.50 57.85 L99.79 59.30 L100.99 60.83 L102.10 62.45 L103.13 64.14 L104.06 65.92 L104.91 67.78 L105.66 69.73 L106.34 71.76 L106.92 73.88 L107.42 76.09 L107.84 78.40 L108.17 80.81 L108.43 83.32 L108.60 85.94 L107.40 86.06 L106.95 83.53 L106.43 81.12 L105.83 78.84 L105.17 76.69 L104.44 74.66 L103.65 72.75 L102.79 70.96 L101.88 69.28 L100.90 67.71 L99.87 66.25 L98.79 64.89 L97.64 63.62 L96.45 62.44 L95.20 61.34 L93.90 60.32 L92.54 59.38 L91.12 58.50 L89.64 57.68 L88.10 56.93 L86.50 56.23 L84.83 55.58 L83.10 54.98 L81.30 54.43 L79.43 53.92 L77.50 53.45 L75.50 53.01 L73.43 52.62 L71.29 52.25 L69.09 51.91 L66.81 51.60 L64.47 51.31 L62.07 51.04 L59.60 50.78 Z"/>
+  <path fill="#b8946c" opacity="0.55" d="M67.87 49.32 L70.03 49.65 L72.14 50.02 L74.18 50.41 L76.17 50.84 L78.10 51.31 L79.97 51.81 L81.79 52.35 L83.54 52.94 L85.24 53.57 L86.87 54.25 L88.45 54.99 L89.97 55.77 L91.43 56.61 L92.84 57.51 L94.18 58.47 L95.47 59.50 L96.70 60.60 L97.87 61.76 L98.98 63.00 L100.04 64.32 L101.03 65.72 L99.98 66.39 L98.96 65.09 L97.89 63.88 L96.78 62.75 L95.62 61.69 L94.41 60.71 L93.14 59.79 L91.83 58.93 L90.47 58.13 L89.05 57.38 L87.58 56.69 L86.05 56.05 L84.47 55.45 L82.82 54.89 L81.12 54.37 L79.35 53.89 L77.53 53.45 L75.64 53.04 L73.70 52.67 L71.69 52.32 L69.63 51.99 L67.50 51.69 Z"/>
+  <path fill="none" stroke="#1e130a" stroke-width="0.7" stroke-opacity="0.6" d="M67.90 49.13 L70.10 49.48 L72.25 49.86 L74.33 50.26 L76.35 50.71 L78.32 51.19 L80.22 51.71 L82.07 52.27 L83.85 52.88 L85.57 53.54 L87.23 54.25 L88.83 55.01 L90.37 55.83 L91.84 56.70 L93.26 57.64 L94.62 58.65 L95.91 59.72 L97.15 60.87 L98.32 62.08 L99.43 63.38 L100.49 64.76 L101.48 66.22 L102.41 67.78"/>
+  <path fill="#1e130a" d="M105.94 70.53 L106.48 72.23 L106.95 73.99 L107.36 75.81 L107.72 77.70 L108.03 79.65 L108.27 81.68 L108.46 83.77 L108.60 85.94 L107.40 86.06 L107.04 83.96 L106.62 81.95 L106.15 80.02 L105.64 78.18 L105.08 76.43 L104.48 74.76 L103.83 73.17 L103.14 71.66 Z"/>
+  <path fill="#ffffff" opacity="0.26" d="M68.24 46.94 L70.40 47.31 L72.51 47.71 L74.57 48.14 L76.57 48.61 L78.52 49.12 L80.42 49.67 L82.26 50.26 L84.04 50.91 L85.77 51.60 L87.44 52.34 L89.05 53.14 L90.60 53.99 L92.10 54.90 L93.53 55.87 L94.90 56.91 L96.21 58.01 L97.02 57.06 L95.69 55.88 L94.29 54.77 L92.83 53.72 L91.30 52.73 L89.72 51.81 L88.07 50.95 L86.36 50.15 L84.59 49.40 L82.77 48.71 L80.89 48.06 L78.96 47.46 L76.98 46.91 L74.94 46.41 L72.85 45.94 L70.71 45.51 L68.52 45.11 Z"/>
+  <use href="#head" fill="none" stroke="#5e3d22" stroke-width="3.0" stroke-opacity="0.55" stroke-linejoin="round"/>
+  <use href="#head" fill="url(#buff)"/>
+  <path fill="url(#buff)" d="M52.0 29.2 C65.2 34.2 63.6 42.9 68.6 44.4 L67.5 51.7 C62.5 53.2 65.2 57.5 52.0 62.8 Z"/>
+  <g clip-path="url(#head-clip)">
+    <path fill="#6b4428" d="M17.0 40.8 C30.2 15.6 60.1 16.6 71.0 35.5 C55.5 30.5 34.8 31.7 17.0 40.8 Z"/>
+    <path fill="#fdf4e2" opacity="0.55" d="M27.9 39.7 C39.4 33.0 55.5 31.3 71.0 35.9 L71.0 39.7 C55.5 35.1 39.4 35.9 27.9 39.7 Z"/>
+    <path fill="none" stroke="#6b4428" stroke-width="2.1" stroke-opacity="0.45" stroke-linecap="round" d="M65.8 45.6 Q60.1 43.9 61.4 42.6"/>
+    <ellipse cx="39" cy="34" rx="14" ry="7" fill="url(#gloss)" opacity="0.55"/>
+  </g>
+    <circle cx="53.7" cy="43.9" r="8.2" fill="#fdf4e2"/>
+    <circle cx="53.7" cy="43.9" r="6.7" fill="#241f31"/>
+    <circle cx="55.9" cy="41.5" r="2.4" fill="#ffffff" opacity="0.92"/>
+    <circle cx="51.6" cy="46.3" r="1.0" fill="#ffffff" opacity="0.45"/>
+  </g>
+</svg>

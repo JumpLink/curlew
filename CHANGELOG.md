@@ -35,6 +35,7 @@
 
 ### Changed
 
+- New app icon: a fluffy curlew chick in the messenger bubble, with a matching symbolic icon.
 - The message field grows with what is typed, up to five lines. Enter sends, Shift+Enter breaks the line.
 - The date separator is a pill of its own, the hints above the composer (room banner, reply, edit, attachments) have padding inside their cards, and the voice player stops at a readable width.
 - Group chats show the sender's profile picture next to the name (Telegram, Matrix, WhatsApp). Messages of one sender sit closer together than the first message of a new one, the section headers of the list are quieter, the voice player has padding inside its card, and the contact page picks the name from a combo row.

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+V2 – the same frontal chick with its head tilted, medium feathers: fluffed outlines but a
+plain breast. The bubble is bigger still and sits behind the bird like a backdrop.
+-->
+<svg width="128" height="128" viewBox="0 0 128 128" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="buff" x1="28" y1="20" x2="76" y2="70" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fbeed6"/>
+      <stop offset="0.55" stop-color="#e8c999"/>
+      <stop offset="1" stop-color="#b98850"/>
+    </linearGradient>
+    <linearGradient id="breast" x1="30" y1="64" x2="78" y2="116" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fbeed6"/>
+      <stop offset="0.55" stop-color="#e8c999"/>
+      <stop offset="1" stop-color="#b98850"/>
+    </linearGradient>
+    <linearGradient id="wing" x1="16" y1="62" x2="84" y2="116" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d9b583"/>
+      <stop offset="0.55" stop-color="#c0945f"/>
+      <stop offset="1" stop-color="#98693a"/>
+    </linearGradient>
+    <radialGradient id="gloss" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.6"/>
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bill" x1="51.5" y1="55.0" x2="94.0" y2="112.0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6e4a2b"/>
+      <stop offset="0.5" stop-color="#432d18"/>
+      <stop offset="1" stop-color="#2b1c0d"/>
+    </linearGradient>
+    <path id="bodyshape" d="M82.48 95.98 C83.48 100.51 79.77 105.61 77.46 103.92 C76.83 108.81 71.25 112.70 69.46 110.14 C67.17 115.00 60.29 117.22 59.35 113.96 C55.49 118.31 48.04 118.59 48.23 114.96 C43.07 118.29 35.88 116.58 37.30 113.05 C31.34 114.88 25.21 111.36 27.75 108.42 C21.68 108.46 17.28 103.51 20.61 101.57 C15.19 99.80 13.02 93.98 16.65 93.26 C12.60 89.94 12.87 83.91 16.31 84.38 C14.11 80.03 16.75 74.45 19.62 75.88 C19.46 71.15 24.16 66.60 26.22 68.71 C27.99 64.20 34.22 61.15 35.39 63.62 C38.77 59.82 45.86 58.58 46.15 61.17 C50.69 58.40 57.89 59.09 57.33 61.64 C62.57 60.09 69.12 62.64 67.71 64.95 C73.21 64.75 78.41 68.92 76.18 70.77 C81.49 71.98 84.76 77.34 81.80 78.45 C86.45 81.09 87.41 87.07 83.98 87.17 C87.48 91.11 85.99 97.06 82.48 95.98 Z"/>
+    <path id="breastshape" d="M75.48 91.00 C77.96 94.82 76.22 100.34 73.62 99.27 C74.14 103.68 70.19 108.16 68.31 106.27 C66.84 110.47 61.31 113.23 60.37 110.96 C57.24 114.20 51.00 114.86 51.00 112.60 C46.84 114.40 40.83 112.89 41.63 110.96 C37.18 111.10 32.29 107.67 33.69 106.27 C29.62 104.84 26.59 100.01 28.38 99.27 C25.25 96.51 24.52 91.00 26.52 91.00 C24.72 87.29 26.42 81.92 28.38 82.73 C28.16 78.51 32.06 74.09 33.69 75.73 C35.13 71.49 40.67 68.72 41.63 71.04 C44.65 67.37 51.00 66.70 51.00 69.40 C55.27 66.86 61.46 68.42 60.37 71.04 C65.31 70.10 70.37 73.67 68.31 75.73 C73.15 76.60 76.29 81.63 73.62 82.73 C77.52 85.30 78.28 91.00 75.48 91.00 Z"/>
+    <path id="headshape" d="M76.46 48.97 C78.03 53.76 74.82 59.60 72.39 57.97 C71.73 62.87 66.40 67.08 64.92 64.84 C62.24 68.99 55.64 70.96 55.17 68.54 C51.04 71.28 44.18 70.76 44.64 68.50 C39.79 69.50 33.68 66.57 34.92 64.74 C30.09 63.92 25.65 59.04 27.50 57.81 C23.33 55.35 21.22 49.23 23.50 48.79 C20.52 44.98 21.09 38.54 23.54 39.03 C22.15 34.31 25.35 28.52 27.61 30.03 C28.08 24.95 33.45 20.70 35.08 23.16 C37.48 18.40 44.23 16.38 44.83 19.46 C48.92 15.75 56.01 16.29 55.36 19.50 C60.59 17.48 66.93 20.52 65.08 23.26 C70.61 23.33 75.21 28.40 72.50 30.19 C77.37 32.33 79.54 38.62 76.50 39.21 C79.87 43.01 79.29 49.54 76.46 48.97 Z"/>
+    <path id="tuft" d="M40.00 20.50 C35.33 17.79 39.67 12.83 43.39 16.59 C43.46 11.22 51.52 10.57 51.00 15.63 C55.57 11.81 61.21 15.82 57.11 18.33 C62.33 18.80 61.46 24.25 57.11 22.67 C58.93 26.54 52.51 29.35 51.00 25.37 C48.42 29.34 41.45 27.66 43.39 24.41 C38.81 25.55 36.42 20.89 40.00 20.50 Z"/>
+    <clipPath id="body-clip"><use href="#bodyshape"/></clipPath>
+    <clipPath id="breast-clip"><use href="#breastshape"/></clipPath>
+    <clipPath id="head-clip"><use href="#headshape"/></clipPath>
+    <linearGradient id="face" x1="48" y1="100" x2="80" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3584e4"/>
+      <stop offset="1" stop-color="#78aeed"/>
+    </linearGradient>
+    <linearGradient id="wall" x1="8" y1="70" x2="120" y2="70" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1a5fb4"/>
+      <stop offset="0.0714286" stop-color="#78aeed"/>
+      <stop offset="0.142857" stop-color="#1a5fb4"/>
+      <stop offset="0.857143" stop-color="#1a5fb4"/>
+      <stop offset="0.928571" stop-color="#78aeed"/>
+      <stop offset="1" stop-color="#1a5fb4"/>
+    </linearGradient>
+    <linearGradient id="fold" x1="31.462524" y1="114" x2="39" y2="114" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1a5fb4"/>
+      <stop offset="0.469318" stop-color="#78aeed"/>
+      <stop offset="1" stop-color="#1a5fb4"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="64" y1="24" x2="64" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <path id="tail" fill-rule="evenodd"
+          d="M24 100 V112 H28 C30.210938 112 32 113.789062 32 116 V123
+             C32 124.992188 33.183594 126.792969 35.011719 127.585938
+             C36.839844 128.375 38.964844 128.003906 40.417969 126.640625
+             L53.941406 113.933594 C55.265625 112.691406 57.011719 112 58.824219 112
+             H68 V100 Z"/>
+    <path id="lip" fill-rule="evenodd"
+          d="M24 106 V108 H28 C30.210938 108 32 109.789062 32 112 V119
+             C32 120.992188 33.183594 122.792969 35.011719 123.585938
+             C36.839844 124.375 38.964844 124.003906 40.417969 122.640625
+             L53.941406 109.933594 C55.265625 108.691406 57.011719 108 58.824219 108
+             H68 V106 Z"/>
+    <path id="wallrect"
+          d="M24 28 H104 C112.835938 28 120 35.164062 120 44 V96
+             C120 104.835938 112.835938 112 104 112 H24
+             C15.164062 112 8 104.835938 8 96 V44 C8 35.164062 15.164062 28 24 28 Z"/>
+    <path id="facerect"
+          d="M24 24 H104 C112.835938 24 120 31.164062 120 40 V92
+             C120 100.835938 112.835938 108 104 108 H24
+             C15.164062 108 8 100.835938 8 92 V40 C8 31.164062 15.164062 24 24 24 Z"/>
+    <clipPath id="face-clip"><use href="#facerect"/></clipPath>
+  </defs>
+
+  <g transform="translate(23.60,-17.20) scale(0.8)">
+  <use href="#tail" fill="url(#fold)"/>
+  <use href="#wallrect" fill="url(#wall)"/>
+  <use href="#facerect" fill="url(#face)"/>
+  <rect x="14" y="27" width="100" height="30" rx="12" fill="url(#sheen)"/>
+  <use href="#lip" fill="#3584e4"/>
+  </g>
+  <g transform="translate(-8,12) scale(0.9)">
+  <path fill="none" stroke="#4d525c" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round" d="M38 109.0 V121.0 M38 115.0 L31.5 120.4 M38 115.0 L44.5 120.4"/>
+  <path fill="none" stroke="#8a909c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M38 109.0 V121.0 M38 115.0 L31.5 120.4 M38 115.0 L44.5 120.4"/>
+  <path fill="none" stroke="#4d525c" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round" d="M63 109.0 V121.0 M63 115.0 L56.5 120.4 M63 115.0 L69.5 120.4"/>
+  <path fill="none" stroke="#8a909c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M63 109.0 V121.0 M63 115.0 L56.5 120.4 M63 115.0 L69.5 120.4"/>
+  <use href="#bodyshape" fill="none" stroke="#5a3a20" stroke-width="2.8" stroke-opacity="0.6" stroke-linejoin="round"/>
+  <use href="#bodyshape" fill="url(#wing)"/>
+  <use href="#breastshape" fill="url(#breast)"/>
+  <g clip-path="url(#body-clip)">
+    <ellipse cx="44" cy="75" rx="26" ry="15" fill="url(#gloss)" opacity="0.8"/>
+  </g>
+  <g transform="rotate(-9 50 44)">
+  <use href="#tuft" fill="none" stroke="#5a3a20" stroke-width="2.4" stroke-opacity="0.6" stroke-linejoin="round"/>
+  <use href="#tuft" fill="#6b4428"/>
+  <use href="#headshape" fill="none" stroke="#5a3a20" stroke-width="2.8" stroke-opacity="0.6" stroke-linejoin="round"/>
+  <use href="#headshape" fill="url(#buff)"/>
+  <g clip-path="url(#head-clip)">
+    <path fill="#6b4428" d="M17 31.5 C29.8 5.2 70.2 5.2 83 31.5 C64.8 21.0 35.1 21.0 17 31.5 Z"/>
+    <path fill="#fdf4e2" opacity="0.8" d="M17 32.5 C35.1 21.5 64.8 21.5 83 32.5 L83 38.5 C64.8 27.0 35.1 27.0 17 38.5 Z"/>
+    <ellipse cx="45" cy="31" rx="17" ry="9" fill="url(#gloss)" opacity="0.5"/>
+  </g>
+  <circle cx="39.5" cy="47.0" r="8.9" fill="#fdf4e2"/>
+  <circle cx="39.5" cy="47.0" r="7.4" fill="#241f31"/>
+  <circle cx="42.0" cy="44.3" r="2.7" fill="#ffffff" opacity="0.94"/>
+  <circle cx="37.3" cy="49.7" r="1.2" fill="#ffffff" opacity="0.5"/>
+  <circle cx="59.5" cy="47.0" r="8.9" fill="#fdf4e2"/>
+  <circle cx="59.5" cy="47.0" r="7.4" fill="#241f31"/>
+  <circle cx="62.0" cy="44.3" r="2.7" fill="#ffffff" opacity="0.94"/>
+  <circle cx="57.3" cy="49.7" r="1.2" fill="#ffffff" opacity="0.5"/>
+  <!-- bill: 7.4 px wide where it leaves the face, 74 px long -->
+  <path fill="#fdf4e2" stroke="#fdf4e2" stroke-width="2.2" stroke-opacity="0.9" stroke-linejoin="round" d="M53.11 51.67 L54.69 52.47 L56.27 53.34 L57.87 54.27 L59.46 55.25 L61.06 56.30 L62.67 57.41 L64.26 58.58 L65.86 59.80 L67.44 61.10 L69.01 62.45 L70.57 63.86 L72.10 65.34 L73.62 66.89 L75.11 68.49 L76.57 70.17 L78.00 71.90 L79.40 73.71 L80.76 75.58 L82.08 77.51 L83.35 79.52 L84.58 81.59 L85.76 83.73 L86.89 85.93 L87.96 88.21 L88.98 90.56 L89.93 92.97 L90.82 95.46 L91.65 98.01 L92.40 100.64 L93.09 103.34 L93.70 106.11 L94.23 108.95 L94.69 111.87 L93.31 112.13 L92.60 109.31 L91.82 106.58 L90.97 103.94 L90.06 101.39 L89.09 98.92 L88.07 96.54 L86.99 94.24 L85.86 92.02 L84.68 89.88 L83.46 87.81 L82.20 85.83 L80.90 83.92 L79.57 82.08 L78.20 80.31 L76.81 78.62 L75.39 76.99 L73.95 75.43 L72.48 73.94 L71.00 72.51 L69.50 71.14 L67.99 69.83 L66.47 68.58 L64.94 67.39 L63.41 66.26 L61.88 65.18 L60.35 64.15 L58.82 63.18 L57.30 62.25 L55.78 61.38 L54.28 60.55 L52.80 59.77 L51.33 59.03 L49.89 58.33 Z"/>
+  <circle cx="51.50" cy="55.00" r="4.80" fill="#fdf4e2" opacity="0.9"/>
+  <circle cx="51.50" cy="55.00" r="3.70" fill="#6e4a2b"/>
+  <path fill="url(#bill)" d="M53.11 51.67 L54.69 52.47 L56.27 53.34 L57.87 54.27 L59.46 55.25 L61.06 56.30 L62.67 57.41 L64.26 58.58 L65.86 59.80 L67.44 61.10 L69.01 62.45 L70.57 63.86 L72.10 65.34 L73.62 66.89 L75.11 68.49 L76.57 70.17 L78.00 71.90 L79.40 73.71 L80.76 75.58 L82.08 77.51 L83.35 79.52 L84.58 81.59 L85.76 83.73 L86.89 85.93 L87.96 88.21 L88.98 90.56 L89.93 92.97 L90.82 95.46 L91.65 98.01 L92.40 100.64 L93.09 103.34 L93.70 106.11 L94.23 108.95 L94.69 111.87 L93.31 112.13 L92.60 109.31 L91.82 106.58 L90.97 103.94 L90.06 101.39 L89.09 98.92 L88.07 96.54 L86.99 94.24 L85.86 92.02 L84.68 89.88 L83.46 87.81 L82.20 85.83 L80.90 83.92 L79.57 82.08 L78.20 80.31 L76.81 78.62 L75.39 76.99 L73.95 75.43 L72.48 73.94 L71.00 72.51 L69.50 71.14 L67.99 69.83 L66.47 68.58 L64.94 67.39 L63.41 66.26 L61.88 65.18 L60.35 64.15 L58.82 63.18 L57.30 62.25 L55.78 61.38 L54.28 60.55 L52.80 59.77 L51.33 59.03 L49.89 58.33 Z"/>
+  <path fill="#b8946c" opacity="0.55" d="M50.94 56.17 L52.37 56.87 L53.81 57.62 L55.27 58.41 L56.75 59.25 L58.23 60.14 L59.72 61.08 L61.21 62.06 L62.71 63.10 L64.20 64.18 L65.69 65.32 L67.17 66.52 L68.64 67.77 L70.10 69.07 L71.55 70.43 L72.98 71.85 L74.39 73.33 L75.79 74.87 L77.15 76.47 L78.49 78.13 L79.80 79.86 L81.08 81.65 L82.32 83.50 L83.53 85.42 L84.70 87.41 L83.59 88.02 L82.38 86.10 L81.13 84.25 L79.86 82.46 L78.55 80.75 L77.21 79.10 L75.85 77.51 L74.47 75.99 L73.07 74.53 L71.65 73.12 L70.21 71.78 L68.77 70.49 L67.31 69.26 L65.84 68.08 L64.37 66.96 L62.89 65.88 L61.42 64.86 L59.94 63.89 L58.47 62.96 L57.01 62.09 L55.56 61.25 L54.11 60.46 L52.69 59.71 L51.28 59.00 L49.89 58.33 Z"/>
+  <path fill="none" stroke="#1e130a" stroke-width="0.7" stroke-opacity="0.6" d="M51.02 56.00 L52.47 56.72 L53.94 57.48 L55.43 58.29 L56.93 59.15 L58.44 60.06 L59.95 61.02 L61.47 62.03 L62.98 63.09 L64.50 64.20 L66.01 65.37 L67.51 66.60 L69.01 67.88 L70.49 69.22 L71.95 70.62 L73.40 72.08 L74.83 73.60 L76.23 75.19 L77.61 76.83 L78.96 78.54 L80.28 80.32 L81.56 82.16 L82.81 84.07 L84.02 86.05 L85.19 88.09 L86.31 90.21"/>
+  <path fill="#1e130a" d="M90.29 93.96 L91.01 96.02 L91.69 98.14 L92.31 100.31 L92.89 102.52 L93.42 104.78 L93.89 107.10 L94.32 109.46 L94.69 111.87 L93.31 112.13 L92.73 109.80 L92.10 107.53 L91.43 105.32 L90.71 103.17 L89.94 101.08 L89.14 99.04 L88.30 97.07 L87.43 95.15 Z"/>
+  <path fill="#ffffff" opacity="0.28" d="M51.98 54.00 L53.44 54.73 L54.92 55.51 L56.40 56.35 L57.89 57.23 L59.39 58.16 L60.90 59.14 L62.40 60.18 L63.90 61.26 L65.40 62.40 L66.89 63.60 L68.37 64.85 L69.84 66.15 L71.30 67.52 L72.74 68.94 L74.16 70.41 L75.55 71.95 L76.92 73.54 L78.27 75.20 L79.58 76.91 L80.56 76.16 L79.27 74.39 L77.93 72.68 L76.57 71.02 L75.18 69.43 L73.77 67.90 L72.33 66.42 L70.87 65.00 L69.39 63.64 L67.90 62.34 L66.40 61.09 L64.89 59.90 L63.37 58.77 L61.85 57.69 L60.33 56.66 L58.81 55.69 L57.29 54.77 L55.78 53.90 L54.28 53.09 L52.79 52.34 Z"/>
+  </g>
+  </g>
+</svg>

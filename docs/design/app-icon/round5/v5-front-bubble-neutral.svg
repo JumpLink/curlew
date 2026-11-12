@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+V5 – V1 with the bubble in light neutral instead of orange, so the bird's own buff and
+brown carry the icon and the bubble is only the badge that says messenger.
+-->
+<svg width="128" height="128" viewBox="0 0 128 128" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="buff" x1="32" y1="20" x2="92" y2="112" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8e8c8"/>
+      <stop offset="0.55" stop-color="#e2c091"/>
+      <stop offset="1" stop-color="#b0804f"/>
+    </linearGradient>
+    <linearGradient id="breast" x1="38" y1="46" x2="88" y2="106" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f8e8c8"/>
+      <stop offset="0.55" stop-color="#e2c091"/>
+      <stop offset="1" stop-color="#b0804f"/>
+    </linearGradient>
+    <linearGradient id="wing" x1="20" y1="52" x2="100" y2="106" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#dcb988"/>
+      <stop offset="0.55" stop-color="#c49a68"/>
+      <stop offset="1" stop-color="#a0743f"/>
+    </linearGradient>
+    <radialGradient id="gloss" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="0.65" stop-color="#ffffff" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bill" x1="57.0" y1="43.0" x2="90.0" y2="117.0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7a5533"/>
+      <stop offset="0.45" stop-color="#4a3420"/>
+      <stop offset="1" stop-color="#33230f"/>
+    </linearGradient>
+    <path id="bodyshape" d="M60 46 C86 46 98 67 98 86 C98 100 89 108 74 108 H46 C31 108 22 100 22 86 C22 67 34 46 60 46 Z"/>
+    <clipPath id="body-clip"><use href="#bodyshape"/></clipPath>
+    <linearGradient id="face" x1="48" y1="100" x2="80" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#deddda"/>
+      <stop offset="1" stop-color="#ffffff"/>
+    </linearGradient>
+    <linearGradient id="wall" x1="8" y1="70" x2="120" y2="70" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9a9996"/>
+      <stop offset="0.0714286" stop-color="#ffffff"/>
+      <stop offset="0.142857" stop-color="#9a9996"/>
+      <stop offset="0.857143" stop-color="#9a9996"/>
+      <stop offset="0.928571" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#9a9996"/>
+    </linearGradient>
+    <linearGradient id="fold" x1="31.462524" y1="114" x2="39" y2="114" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9a9996"/>
+      <stop offset="0.469318" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#9a9996"/>
+    </linearGradient>
+    <path id="tail" fill-rule="evenodd"
+          d="M24 100 V112 H28 C30.210938 112 32 113.789062 32 116 V123
+             C32 124.992188 33.183594 126.792969 35.011719 127.585938
+             C36.839844 128.375 38.964844 128.003906 40.417969 126.640625
+             L53.941406 113.933594 C55.265625 112.691406 57.011719 112 58.824219 112
+             H68 V100 Z"/>
+    <path id="lip" fill-rule="evenodd"
+          d="M24 106 V108 H28 C30.210938 108 32 109.789062 32 112 V119
+             C32 120.992188 33.183594 122.792969 35.011719 123.585938
+             C36.839844 124.375 38.964844 124.003906 40.417969 122.640625
+             L53.941406 109.933594 C55.265625 108.691406 57.011719 108 58.824219 108
+             H68 V106 Z"/>
+    <path id="wallrect"
+          d="M24 28 H104 C112.835938 28 120 35.164062 120 44 V96
+             C120 104.835938 112.835938 112 104 112 H24
+             C15.164062 112 8 104.835938 8 96 V44 C8 35.164062 15.164062 28 24 28 Z"/>
+    <path id="facerect"
+          d="M24 24 H104 C112.835938 24 120 31.164062 120 40 V92
+             C120 100.835938 112.835938 108 104 108 H24
+             C15.164062 108 8 100.835938 8 92 V40 C8 31.164062 15.164062 24 24 24 Z"/>
+    <clipPath id="face-clip"><use href="#facerect"/></clipPath>
+  </defs>
+
+  <g transform="translate(74.64,-7.08) scale(0.42)">
+  <use href="#tail" fill="url(#fold)"/>
+  <use href="#wallrect" fill="url(#wall)"/>
+  <use href="#facerect" fill="url(#face)"/>
+  <use href="#lip" fill="#deddda"/>
+  </g>
+  <g transform="translate(-7,6) translate(64,72.0) scale(0.86) translate(-64,-72)">
+  <g stroke="#8d94a0" stroke-width="5" stroke-linecap="round" fill="none">
+    <path d="M51 98 V112"/>
+    <path d="M69 98 V112"/>
+  </g>
+  <g stroke="#8d94a0" stroke-width="3.6" stroke-linecap="round" fill="none">
+    <path d="M51 112 L42 119"/>
+    <path d="M51 112 V120"/>
+    <path d="M51 112 L60 119"/>
+    <path d="M69 112 L60 119"/>
+    <path d="M69 112 V120"/>
+    <path d="M69 112 L78 119"/>
+  </g>
+  <!-- folded wings: the darker flanks a standing curlew shows either side of the breast -->
+  <use href="#bodyshape" fill="url(#wing)"/>
+  <path fill="url(#breast)" d="M60 53 C79 53 88 70 88 86 C88 97 81 103 70 103 H50
+                               C39 103 32 97 32 86 C32 70 41 53 60 53 Z"/>
+  <g fill="#9a6c42" opacity="0.34">
+    <path d="M40 68 l3 1 l-3 24 l-3 -1 Z"/>
+    <path d="M50 61 l3 1 l-3 34 l-3 -1 Z"/>
+    <path d="M69 61 l3 1 l-2 34 l-3 -1 Z"/>
+    <path d="M79 68 l3 1 l-1 22 l-3 -1 Z"/>
+  </g>
+  <!-- the top-lit sheen, clipped to the body: Pidgin's gloss, kept flat enough for GNOME -->
+  <g clip-path="url(#body-clip)">
+    <ellipse cx="54" cy="56" rx="32" ry="24" fill="url(#gloss)"/>
+  </g>
+  <!-- bill: one centreline, offset. 11.5 px at the base, tapering over the outer third -->
+  <path fill="none" stroke="#f8e8c8" stroke-width="3" stroke-opacity="0.5" stroke-linejoin="round" d="M60.62 38.53 L62.88 40.42 L65.10 42.37 L67.25 44.40 L69.33 46.48 L71.35 48.64 L73.30 50.86 L75.17 53.15 L76.97 55.50 L78.68 57.92 L80.31 60.40 L81.84 62.94 L83.29 65.55 L84.64 68.21 L85.89 70.93 L87.03 73.71 L88.07 76.53 L89.00 79.41 L89.82 82.34 L90.53 85.32 L91.11 88.34 L91.58 91.39 L91.93 94.49 L92.15 97.63 L92.25 100.79 L92.22 103.99 L92.06 107.22 L91.77 110.47 L91.35 113.75 L90.80 117.05 L89.20 116.95 L88.95 113.68 L88.61 110.49 L88.18 107.37 L87.66 104.33 L87.06 101.36 L86.38 98.47 L85.63 95.64 L84.80 92.88 L83.90 90.18 L82.94 87.55 L81.90 84.98 L80.80 82.47 L79.64 80.02 L78.41 77.62 L77.13 75.27 L75.78 72.98 L74.38 70.74 L72.92 68.54 L71.41 66.40 L69.84 64.30 L68.22 62.25 L66.54 60.24 L64.81 58.28 L63.03 56.36 L61.20 54.49 L59.32 52.67 L57.39 50.89 L55.41 49.15 L53.38 47.47 Z"/>
+  <path fill="url(#bill)" d="M60.62 38.53 L62.88 40.42 L65.10 42.37 L67.25 44.40 L69.33 46.48 L71.35 48.64 L73.30 50.86 L75.17 53.15 L76.97 55.50 L78.68 57.92 L80.31 60.40 L81.84 62.94 L83.29 65.55 L84.64 68.21 L85.89 70.93 L87.03 73.71 L88.07 76.53 L89.00 79.41 L89.82 82.34 L90.53 85.32 L91.11 88.34 L91.58 91.39 L91.93 94.49 L92.15 97.63 L92.25 100.79 L92.22 103.99 L92.06 107.22 L91.77 110.47 L91.35 113.75 L90.80 117.05 L89.20 116.95 L88.95 113.68 L88.61 110.49 L88.18 107.37 L87.66 104.33 L87.06 101.36 L86.38 98.47 L85.63 95.64 L84.80 92.88 L83.90 90.18 L82.94 87.55 L81.90 84.98 L80.80 82.47 L79.64 80.02 L78.41 77.62 L77.13 75.27 L75.78 72.98 L74.38 70.74 L72.92 68.54 L71.41 66.40 L69.84 64.30 L68.22 62.25 L66.54 60.24 L64.81 58.28 L63.03 56.36 L61.20 54.49 L59.32 52.67 L57.39 50.89 L55.41 49.15 L53.38 47.47 Z"/>
+  <path fill="#a8835c" opacity="0.75" d="M59.56 47.43 L61.49 49.20 L63.38 51.02 L65.21 52.89 L67.00 54.80 L68.72 56.77 L70.40 58.78 L72.01 60.84 L73.57 62.94 L75.07 65.10 L76.50 67.30 L77.88 69.55 L79.18 71.85 L80.42 74.20 L81.59 76.60 L82.70 79.04 L83.73 81.54 L84.68 84.08 L85.56 86.68 L86.37 89.32 L87.09 92.02 L84.70 92.55 L83.83 89.98 L82.90 87.46 L81.91 85.00 L80.86 82.60 L79.75 80.25 L78.59 77.95 L77.36 75.69 L76.09 73.49 L74.76 71.33 L73.38 69.22 L71.95 67.15 L70.47 65.13 L68.94 63.14 L67.36 61.20 L65.73 59.30 L64.05 57.45 L62.33 55.63 L60.55 53.86 L58.74 52.12 L56.88 50.43 Z"/>
+  <path fill="#2a1c10" d="M91.75 92.81 L92.00 95.42 L92.17 98.05 L92.24 100.71 L92.23 103.38 L92.13 106.08 L91.93 108.80 L91.65 111.53 L91.27 114.28 L90.80 117.05 L89.20 116.95 L89.00 114.21 L88.73 111.52 L88.40 108.88 L88.01 106.30 L87.55 103.76 L87.05 101.28 L86.48 98.85 L85.86 96.47 L85.19 94.14 Z"/>
+  <path fill="#ffffff" opacity="0.17" d="M60.80 43.56 L62.79 45.32 L64.73 47.14 L66.62 49.01 L68.45 50.94 L70.23 52.91 L71.95 54.94 L73.61 57.02 L75.20 59.15 L76.73 61.33 L78.20 63.56 L79.59 65.84 L80.91 68.17 L82.16 70.55 L83.34 72.98 L84.43 75.45 L85.45 77.97 L86.38 80.53 L87.23 83.14 L89.61 82.35 L88.84 79.62 L87.97 76.94 L87.01 74.30 L85.96 71.70 L84.81 69.16 L83.58 66.66 L82.27 64.21 L80.87 61.82 L79.40 59.48 L77.85 57.19 L76.22 54.96 L74.53 52.79 L72.77 50.67 L70.94 48.61 L69.05 46.61 L67.11 44.66 L65.11 42.77 L63.05 40.95 Z"/>
+  <g transform="rotate(-10 60 38)">
+    <!-- the same ellipse 3 px lower, a crescent of shade that lifts the head off the back -->
+    <ellipse cx="60" cy="39" rx="24" ry="22" fill="#8a5f3a" opacity="0.4"/>
+    <ellipse cx="60" cy="36" rx="24" ry="22" fill="url(#buff)"/>
+    <!-- dark crown with the pale central stripe a curlew has, and the supercilium
+         over each eye: the marks that still say curlew when the bill foreshortens -->
+    <path fill="#7a5130" d="M60 14 C74 14 83 23 84 36 C77 24 69 21 60 21 C51 21 43 24 36 36 C37 23 46 14 60 14 Z"/>
+    <path fill="#fbf0d8" opacity="0.38" d="M37 38 C42 29 51 25 60 25 C69 25 78 29 83 38 L81 41 C76 33 69 30 60 30 C51 30 44 33 39 41 Z"/>
+    <ellipse cx="56" cy="27" rx="15" ry="8" fill="url(#gloss)" opacity="0.5"/>
+    <circle cx="48" cy="38" r="6.2" fill="#241f31"/>
+    <circle cx="50.1" cy="35.9" r="1.9" fill="#ffffff" opacity="0.9"/>
+    <circle cx="69" cy="38" r="6.2" fill="#241f31"/>
+    <circle cx="71.1" cy="35.9" r="1.9" fill="#ffffff" opacity="0.9"/>
+  </g>
+  </g>
+</svg>

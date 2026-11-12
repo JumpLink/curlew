@@ -116,3 +116,92 @@ The bird views without a bubble are kept as illustrations for the README and the
 [`app/data/illustrations/`](../../../app/data/illustrations/README.md):
 
 ![Illustrations](final/illustrations.png)
+
+## Round 5 — the Pidgin idea in curlew: the bird itself, with the bubble as a badge
+
+![Round 5 overview](round5/overview.png)
+
+Pidgin's layout rather than Pidgin's art: the animal carries the icon and the message bubble is
+shrunk to a badge at the upper right, where its tail — the shared Fractal/Flare outline, copied
+from `round4/build.py` — points back at the bird. Both views are drawn from the same generator,
+`round5/build5.py`: the bill is a sampled cubic centreline with a tapering width profile, so the
+outline, the paler lower mandible, the dark tip and the gloss are all offsets of one curve and
+cannot drift apart. `round5/render5.sh` writes the overview at 128/64/32/16 px and
+`round5/details.png` at 256 px.
+
+| # | File | Idea |
+|---|---|---|
+| 1 | `v1-front-bubble.svg` | frontal bird, orange badge bubble, the bill crossing the breast and hanging free below |
+| 2 | `v2-front-nobubble.svg` | 1 alone, filling the canvas, so the bill gets the whole width |
+| 3 | `v3-side-bubble.svg` | profile, the sickle on the full diagonal, orange badge bubble |
+| 4 | `v4-side-nobubble.svg` | 3 alone: the longest and most legible bill in the set |
+| 5 | `v5-front-bubble-neutral.svg` | 1 with the bubble in light neutral, so the bird's buff carries the icon |
+| 6 | `v6-side-bubble-neutral.svg` | 3 with the neutral bubble |
+| 7 | `v7-front-quarter-red.svg` | the frontal bird turned further, bubble in the red of the shipped icon |
+| 8 | `v8-side-standing.svg` | the whole bird on its legs, the way a curlew is seen on a mudflat |
+| 9 | `v9-front-in-tile-red.svg` | the frontal bird inside the full-size bubble, continuity with the shipped icon |
+
+### Round 5b — the Adium idea: a chunky fluffy mascot with the bill as the hero shape
+
+Adium answers the same problem differently: the body is a soft chunky blob with a feathered
+fringe, and the beak is the one big saturated shape on it. Only the idea is taken — fringe,
+chunk, big eyes, bill as hero — not the duck's art or colours. `round5/build5b.py` imports
+`build5`, so one command rebuilds the whole folder; new here are `fluff()` (a closed path whose
+every segment is a feather tip leaning the same way), `scallops()` for the breast, and
+`hero_bill()`, which paints the same generated centreline louder: a pale rim, a hard highlight
+band, a wide pale lower mandible, a dark tip.
+
+Two things decided the geometry, both found by rendering and looking: the bill's centreline has
+to leave the face nearly **horizontal** and decurve only far out, or the sickle hangs off the jaw
+like a handle; and the **eyes must sit on the bill's side** of the head, because eyes pushed away
+from it turn the bill into something stuck on the back of the skull.
+
+| # | File | Idea |
+|---|---|---|
+| 10 | `v10-front-fluff-sickle.svg` | chunky fluffed bird, head turned, the bill swinging out to one side against the background |
+| 11 | `v11-front-fluff-bubble.svg` | 10 with the shared bubble shrunk to a badge at the upper right |
+| 12 | `v12-quarter-fluff-nobubble.svg` | the same bird at three quarters, one eye, the bill on the full diagonal |
+| 13 | `v13-quarter-fluff-bubble.svg` | 12 with the badge bubble, kept tight into the corner |
+| 14 | `v14-front-hero-bill.svg` | 10 with the bill painted like Adium's beak: rim, gloss, pale lower mandible, dark tip |
+| 15 | `v15-head-crop-arc.svg` | head, neck and chest cropped to fill the tile — the most bill per pixel, built for 32 px |
+| 16 | `v16-head-in-tile-red.svg` | the fluffed head on the shipped icon's red bubble tile, the bill breaking out over its edge |
+
+## Round 6 — a thin bill
+
+Round 5b's bill was far too thick. `round6/build6.py` keeps the fluffed mascot but draws the bill
+as a long, thin, downcurved band (root width at most about 0.17 of the head's diameter), the one
+feature everybody recognises on a curlew. Overview and details are in `round6/`.
+
+## Round 7 — the chick in the bubble
+
+![Round 7 overview](round7/overview.png)
+
+A young curlew has a shorter bill than an adult, which lets the bill stay thin and still fit
+inside a bubble. `round7/build7.py` draws all variants; `round7/render7.sh` writes the overview,
+the 256 px details and the symbolic strip with ImageMagick.
+
+Two mistakes took a round to find, both in the three-quarter pose (v3 to v6): the bill was drawn
+*behind* the face, and the far eye was drawn smaller to suggest depth. On a flat head that reads
+as one big and one small eye, not as perspective. The frontal pose (v1, v2, v7 to v10) has two
+equal eyes and the bill in front of the face.
+
+| # | File | Idea |
+|---|---|---|
+| 1 | `v1-front-full-fluff.svg` | the frontal chick on its own, full feathers |
+| 2 | `v2-front-tilt-medium.svg` | the same with a slight head tilt, medium feathers |
+| 3–6 | `v3`…`v6` | three-quarter poses, rejected (see above) |
+| 7 | `v7-in-bubble.svg` | the shared bubble at full size, the chick inside it, the belly running on into the tail |
+| 8 | `v8-head-crop.svg` | head and chest at the right, the bubble behind it with its tail free; built for 32 px |
+| 9 | `v9-in-bubble-tilt.svg` | **the shipped icon**: 7 with the head tilted slightly |
+| 10 | `v10-head-crop-tilt.svg` | 8 with the tilt |
+
+The body is clipped to the bubble's face and the face of its tail, never to its side wall: the
+wall and the rim stay in front of the feathers, and the belly continues inside the rim of the
+tail. The blue is Adwaita blue, Pascal's wish; full fluff is on the edge, medium is right. The
+full plumage of v1 turns to mush at 32 and 16 px, which is why the symbolic icon drops it.
+
+### Shipped
+
+- `app/data/icons/hicolor/scalable/apps/eu.jumplink.curlew.svg` is v9.
+- `app/data/icons/hicolor/symbolic/apps/eu.jumplink.curlew-symbolic.svg` is the head of the chick,
+  frontal, with the crown tuft, two punched-out eyes and the thin bill (`round7/symbolic.svg`).
