@@ -65,3 +65,25 @@ screen, where Telegram lets the history scroll under them.
 - Three small PRs: accent and settings, background, floating bars. Each leaves the window working.
 - Verified at 360 px and in dark mode before merging each.
 - The tile is generated art we own; adding mascots later needs a licence and source line per motif.
+
+## Amendment 2026-11-12: a pattern per design pack, and mascots
+
+Each pack now has its own tile (`forest`, `dusk`, `sunrise`, `rose`, `graphite`; `curlew` keeps the
+doodles). The background setting gains those five ids next to `doodles`, `dots`, `waves` and `none`,
+so old configs read as before. A pack's background is the matching id; the person can still pick any
+pattern. All tiles are thirteen own line drawings on the doodles' slots (`chat-motifs.ts`), one colour,
+no colour of their own, no traced or embedded artwork.
+
+The earlier "no mascots" stance is refined: we draw our own loose homages and keep only what the terms
+allow. Sources read on 2026-11-12:
+
+| Motif | Origin | Licence / terms | Decision |
+|---|---|---|---|
+| Penguin (dusk) | Tux by Larry Ewing, 1996 | Wikipedia quotes his terms: use and modification allowed if you acknowledge Larry Ewing and The GIMP when asked; his own page was unreachable (404) | Generic own-drawn round penguin, not a copy of Tux. Credit: Tux by Larry Ewing, made with the GIMP. |
+| Crab (sunrise) | Ferris, rustacean.net | CC0 (Karen Rustad Tölva waived all rights); the Rust logo itself is CC-BY plus trademark | Own-drawn crab in Ferris's spirit; no credit needed, we give one anyway. |
+| GNOME foot | GNOME Foundation | Trademark guidelines: no logos without written permission, "do not create your own logos to represent GNOME", do not alter marks | Dropped. A seashell stands in on the beach. |
+| TypeScript | Microsoft branding page | Logo not to be used in your own application or product | Dropped. |
+| GTK | gtk.org | Legal page unreachable (404), terms unverified | Dropped. |
+
+Everything else (leaves, trees, mushrooms, moon, stars, clouds, sun, palm, waves, hearts, petals,
+flowers, geometry) is generic imagery. Adding another mascot needs a row here first.

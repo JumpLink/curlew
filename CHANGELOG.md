@@ -62,6 +62,7 @@
 
 ### Added
 
+- Every design pack has its own chat background: leaves for Forest, moon and stars for Dusk, a beach for Sunrise, hearts for Rose, calm geometry for Graphite. Each can be chosen on its own too.
 - A welcome screen opens on the first start, when there is no account and it was not finished or skipped before: a short introduction, then a page to add accounts. *Welcome* in the main menu opens it again; `CURLEW_WINDOW_OPEN_WELCOME=1` opens it for screenshots. People who already have accounts never see it on their own.
 - Mail accounts send ordinary mail by default: the Delta Chat chat marker is added only when you switch on *Use for Delta Chat* on the account's page.
 - AI features can be switched off in the preferences (`ui.ai` in the config file), and are off for a new configuration. Off means `curlew mcp` refuses to start (and serves no tools), every agent request is denied, and the Agent access menu item is hidden. A configuration that already has agent rules or grants and no `ui.ai` keeps working as on.

@@ -1,7 +1,14 @@
 /**
  * The tile behind a conversation (ADR 0013): our own line drawings, one colour, drawn at a few
- * percent opacity. No mascot of another project is used, see the ADR for why.
+ * percent opacity. No official artwork of another project is used, see the ADR's licence table.
  */
+
+import type { BackgroundChoice } from '../core/lib/appearance.ts';
+import { type ThemedPattern, themedMotifs } from './chat-motifs.ts';
+
+/** Every choice that draws something. */
+export type PatternChoice = Exclude<BackgroundChoice, 'none'>;
+export type { ThemedPattern };
 
 /** Logical size of one tile; it is rendered at twice that and repeats in both directions. */
 export const DOODLE_TILE = 240;
@@ -37,14 +44,10 @@ const WAVES = Array.from(
 ).join('');
 
 /** The tile as SVG source with `color` (any CSS colour) as its one colour, at `opacity`. */
-export function patternTileSvg(
-  pattern: 'doodles' | 'dots' | 'waves',
-  color: string,
-  opacity: number,
-): string {
+export function patternTileSvg(pattern: PatternChoice, color: string, opacity: number): string {
   const size = DOODLE_TILE;
   const head = `<svg xmlns="http://www.w3.org/2000/svg" width="${size * 2}" height="${size * 2}" viewBox="0 0 ${size} ${size}">`;
   if (pattern === 'dots') return `${head}<g fill="${color}" fill-opacity="${opacity}">${DOTS}</g></svg>`;
-  const body = pattern === 'waves' ? WAVES : MOTIFS;
+  const body = pattern === 'waves' ? WAVES : pattern === 'doodles' ? MOTIFS : themedMotifs(pattern);
   return `${head}<g fill="none" stroke="${color}" stroke-opacity="${opacity}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${body}</g></svg>`;
 }
