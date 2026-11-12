@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-12 19:15+0100\n"
+"POT-Creation-Date: 2026-11-12 20:17+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1791,7 +1791,7 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
-#: app/src/window/about.ts:14 app/src/window/appearance-rows.ts:129
+#: app/src/window/about.ts:14 app/src/window/appearance-rows.ts:126
 #: app/src/window/conversation-view.ts:163 app/src/window/window.ts:80
 #: app/src/window/window.ts:95
 msgid "Curlew"
@@ -2156,91 +2156,91 @@ msgstr "Noch keine Regeln"
 msgid "Add rule"
 msgstr "Regel hinzufügen"
 
-#: app/src/window/appearance-rows.ts:130
+#: app/src/window/appearance-rows.ts:127
 msgid "Forest"
 msgstr "Wald"
 
-#: app/src/window/appearance-rows.ts:131
+#: app/src/window/appearance-rows.ts:128
 msgid "Dusk"
 msgstr "Dämmerung"
 
-#: app/src/window/appearance-rows.ts:132
+#: app/src/window/appearance-rows.ts:129
 msgid "Sunrise"
 msgstr "Sonnenaufgang"
 
-#: app/src/window/appearance-rows.ts:133
+#: app/src/window/appearance-rows.ts:130
 msgid "Rose"
 msgstr "Rosé"
 
-#: app/src/window/appearance-rows.ts:134
+#: app/src/window/appearance-rows.ts:131
 msgid "Graphite"
 msgstr "Graphit"
 
-#: app/src/window/appearance-rows.ts:139
+#: app/src/window/appearance-rows.ts:136
 msgid "Doodles"
 msgstr "Kritzeleien"
 
-#: app/src/window/appearance-rows.ts:139
+#: app/src/window/appearance-rows.ts:136
 msgid "Dots"
 msgstr "Punkte"
 
-#: app/src/window/appearance-rows.ts:139
+#: app/src/window/appearance-rows.ts:136
 msgid "Waves"
 msgstr "Wellen"
 
-#: app/src/window/appearance-rows.ts:139
+#: app/src/window/appearance-rows.ts:136
 msgid "Plain"
 msgstr "Schlicht"
 
-#: app/src/window/appearance-rows.ts:147 app/src/window/contact-page.ts:93
+#: app/src/window/appearance-rows.ts:144 app/src/window/contact-page.ts:93
 msgid "Blue"
 msgstr "Blau"
 
-#: app/src/window/appearance-rows.ts:148 app/src/window/contact-page.ts:94
+#: app/src/window/appearance-rows.ts:145 app/src/window/contact-page.ts:94
 msgid "Teal"
 msgstr "Petrol"
 
-#: app/src/window/appearance-rows.ts:149 app/src/window/contact-page.ts:95
+#: app/src/window/appearance-rows.ts:146 app/src/window/contact-page.ts:95
 msgid "Green"
 msgstr "Grün"
 
-#: app/src/window/appearance-rows.ts:150 app/src/window/contact-page.ts:96
+#: app/src/window/appearance-rows.ts:147 app/src/window/contact-page.ts:96
 msgid "Yellow"
 msgstr "Gelb"
 
-#: app/src/window/appearance-rows.ts:151 app/src/window/contact-page.ts:97
+#: app/src/window/appearance-rows.ts:148 app/src/window/contact-page.ts:97
 msgid "Orange"
 msgstr "Orange"
 
-#: app/src/window/appearance-rows.ts:152 app/src/window/contact-page.ts:98
+#: app/src/window/appearance-rows.ts:149 app/src/window/contact-page.ts:98
 msgid "Red"
 msgstr "Rot"
 
-#: app/src/window/appearance-rows.ts:153 app/src/window/contact-page.ts:99
+#: app/src/window/appearance-rows.ts:150 app/src/window/contact-page.ts:99
 msgid "Pink"
 msgstr "Rosa"
 
-#: app/src/window/appearance-rows.ts:154 app/src/window/contact-page.ts:100
+#: app/src/window/appearance-rows.ts:151 app/src/window/contact-page.ts:100
 msgid "Purple"
 msgstr "Violett"
 
-#: app/src/window/appearance-rows.ts:155 app/src/window/contact-page.ts:101
+#: app/src/window/appearance-rows.ts:152 app/src/window/contact-page.ts:101
 msgid "Slate"
 msgstr "Schiefergrau"
 
-#: app/src/window/appearance-rows.ts:159
-msgid "Follow the system style"
-msgstr "Dem Systemstil folgen"
+#: app/src/window/appearance-rows.ts:156
+msgid "System"
+msgstr "System"
+
+#: app/src/window/appearance-rows.ts:157
+msgid "Light"
+msgstr "Hell"
+
+#: app/src/window/appearance-rows.ts:158
+msgid "Dark"
+msgstr "Dunkel"
 
 #: app/src/window/appearance-rows.ts:160
-msgid "Light style"
-msgstr "Heller Stil"
-
-#: app/src/window/appearance-rows.ts:161
-msgid "Dark style"
-msgstr "Dunkler Stil"
-
-#: app/src/window/appearance-rows.ts:163
 msgid "Style"
 msgstr "Stil"
 
@@ -4152,6 +4152,12 @@ msgid ""
 msgstr ""
 "{count} Geräte von {jid} tragen diesen Fingerabdruck, er benennt also keines "
 "— nichts wurde geändert"
+
+#~ msgid "Follow the system style"
+#~ msgstr "Dem Systemstil folgen"
+
+#~ msgid "Dark style"
+#~ msgstr "Dunkler Stil"
 
 #~ msgid "Curlew teal"
 #~ msgstr "Curlew-Türkis"

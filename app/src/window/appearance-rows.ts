@@ -1,4 +1,4 @@
-/** The appearance groups of the preferences dialog (ADR 0013): style circles, primary and accent colour. */
+/** The appearance groups of the preferences dialog (ADR 0013): style toggles, primary and accent colour. */
 
 import Adw from 'gi://Adw?version=1';
 import Gdk from 'gi://Gdk?version=4.0';
@@ -15,6 +15,7 @@ import {
   COLOR_SCHEMES,
   type ColorScheme,
   DESIGN_PACKS,
+  isColorScheme,
   type Look,
   packOf,
   primaryToImpose,
@@ -45,10 +46,6 @@ const SWATCH_CSS = `
 }
 .curlew-swatch:checked { box-shadow: inset 0 0 0 3px @accent_bg_color; }
 .curlew-swatch:disabled { opacity: 0.5; }
-.curlew-swatch.style { min-width: 44px; min-height: 44px; }
-.curlew-swatch.follow { background-image: linear-gradient(to bottom right, #fafafb 49.99%, #222226 50.01%); }
-.curlew-swatch.light { background-color: #fafafb; }
-.curlew-swatch.dark { background-color: #222226; }
 ${ACCENT_NAMES.map((name) => `.curlew-swatch.${name} { background-color: var(--accent-${name}); }`).join('\n')}
 `;
 
@@ -156,22 +153,25 @@ export function appearanceGroups(store: AppearanceStore): Adw.PreferencesGroup[]
   };
 
   const schemeLabels: Record<ColorScheme, string> = {
-    system: _('Follow the system style'),
-    light: _('Light style'),
-    dark: _('Dark style'),
+    system: _('System'),
+    light: _('Light'),
+    dark: _('Dark'),
   };
   const style = new Adw.PreferencesGroup({ title: _('Style') });
-  const scheme = swatches(
-    COLOR_SCHEMES,
-    (key) => schemeLabels[key],
-    (key) => ['style', key === 'system' ? 'follow' : key],
-    schemeToImpose(saved.colorScheme),
-    (key) => {
-      store.write({ colorScheme: key });
-      applyColorScheme(key);
-    },
-  );
-  style.add(row(scheme.box));
+  // A segmented control, as in agent-access-page.ts: three fixed options, all visible at once.
+  const scheme = new Adw.ToggleGroup({ homogeneous: true, halign: Gtk.Align.CENTER });
+  for (const key of COLOR_SCHEMES) scheme.add(new Adw.Toggle({ name: key, label: schemeLabels[key] }));
+  scheme.set_active_name(schemeToImpose(saved.colorScheme));
+  scheme.connect('notify::active-name', () => {
+    const key = scheme.get_active_name();
+    if (!key || !isColorScheme(key)) return;
+    store.write({ colorScheme: key });
+    applyColorScheme(key);
+  });
+  const schemeBox = new Gtk.Box({ marginTop: 12, marginBottom: 12, marginStart: 12, marginEnd: 12 });
+  schemeBox.set_halign(Gtk.Align.CENTER);
+  schemeBox.append(scheme);
+  style.add(row(schemeBox));
 
   // A colour group: a switch for "use my own", dots to pick it; off hands the choice to the system.
   const colourGroup = (
