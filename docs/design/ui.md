@@ -230,14 +230,14 @@ dev/screenshots.sh --check            # only verifies that every expected file e
 ```
 
 Motifs: `conversations`, `conversation` (c1, Alex Weber), `conversation-narrow` and
-`conversations-narrow` (360×740), `contact`, `preferences`, `accounts`, `agent-access`.
+`conversations-narrow` (360×740), `contact`, `preferences`, `accounts`, `protocols`, `agent-access`.
 
 The window reads these environment variables (all in `app/src/window/main.ts`):
 `CURLEW_WINDOW_OPEN=<conversation id>` (`c3` is the email chat, `c5` an XMPP chat),
 `CURLEW_WINDOW_FILTER`, `CURLEW_WINDOW_SIZE=WxH`, `CURLEW_WINDOW_QUIT_AFTER_MS`,
 `CURLEW_WINDOW_OPEN_CONTACT=1`, `CURLEW_WINDOW_OPEN_PREFERENCES=1`, `CURLEW_WINDOW_OPEN_ACCESS=1`,
-`CURLEW_WINDOW_OPEN_ACCOUNTS=1` and `CURLEW_WINDOW_OPEN_WELCOME=1`, which opens the first-run welcome
-screen (`app/src/window/welcome.ts`; pages listed in `welcome-model.ts`; shown once, tracked by
-`ui.welcomeDone`). `CURLEW_NO_HOST_ACCOUNTS=1` hides the host's GNOME Online Accounts, so the
-Accounts dialog never shows real ones. The language comes from `LC_ALL`/`LANG`/`LANGUAGE`, which the
-script sets. A smaller `--size` cuts off the window shadow.
+`CURLEW_WINDOW_OPEN_ACCOUNTS=1`, `CURLEW_WINDOW_OPEN_PROTOCOLS=1` and `CURLEW_WINDOW_OPEN_WELCOME=1`,
+which opens the first-run welcome screen (`app/src/window/welcome.ts`; pages listed in
+`welcome-model.ts`; shown once, tracked by `ui.welcomeDone`). `CURLEW_NO_HOST_ACCOUNTS=1` hides the
+host's GNOME Online Accounts, so the Accounts dialog never shows real ones. The language comes from
+`LC_ALL`/`LANG`/`LANGUAGE`, which the script sets. A smaller `--size` cuts off the window shadow.

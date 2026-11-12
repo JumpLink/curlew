@@ -67,7 +67,6 @@
 - AI features can be switched off in the preferences (`ui.ai` in the config file), and are off for a new configuration. Off means `curlew mcp` refuses to start (and serves no tools), every agent request is denied, and the Agent access menu item is hidden. A configuration that already has agent rules or grants and no `ui.ai` keeps working as on.
 - Protocols can be switched on and off in the Accounts dialog (the gear button): an off protocol is not started by the background service and its chats leave the list, while accounts and history stay. Switching one on for the first time shows its terms.
 - `dev/screenshots.sh` renders every listing screenshot (EN/DE × light/dark) from a synthetic demo; the window gained `CURLEW_WINDOW_OPEN_ACCOUNTS`, `CURLEW_WINDOW_OPEN_WELCOME` (reserved) and `CURLEW_NO_HOST_ACCOUNTS` for it.
-
 - Design packs (Curlew, Forest, Dusk, Sunrise, Rose, Graphite) set the primary colour, accent colour and chat background together; the background now sits with the colours in the preferences and has two new patterns, dots and waves.
 - A chat can have its own colours and background: pick a design, an accent colour or a pattern on the contact page.
 - A contact page opens from the picture in a chat's header. A person combined from several chats sees which chats they are and picks whose name and picture to show, and any contact can get a picture of their own. None of this touches the address book.

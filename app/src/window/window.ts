@@ -307,6 +307,9 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
 
   const accounts = new Gio.SimpleAction({ name: 'accounts' });
   accounts.connect('activate', () => presentAccounts(window));
+  const protocols = new Gio.SimpleAction({ name: 'protocols' });
+  protocols.connect('activate', () => presentAccounts(window, { openProtocols: true }));
+  window.add_action(protocols);
   window.add_action(accounts);
   const mergeContacts = new Gio.SimpleAction({ name: 'merge-contacts' });
   mergeContacts.connect('activate', () => review());

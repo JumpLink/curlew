@@ -23,6 +23,7 @@ MOTIFS=(
   "contact|900x640|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_OPEN_CONTACT=1"
   "preferences|900x640|CURLEW_WINDOW_OPEN_PREFERENCES=1"
   "accounts|900x640|CURLEW_WINDOW_OPEN_ACCOUNTS=1"
+  "protocols|900x640|CURLEW_WINDOW_OPEN_PROTOCOLS=1"
   "agent-access|900x640|CURLEW_WINDOW_OPEN_ACCESS=1"
 )
 # `welcome` is a no-op hook until the welcome screen exists (CURLEW_WINDOW_OPEN_WELCOME=1), so it is
