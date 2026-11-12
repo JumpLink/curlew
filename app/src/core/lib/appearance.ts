@@ -4,7 +4,7 @@
 export const ACCENT_NAMES = ['blue', 'teal', 'green', 'yellow', 'orange', 'red', 'pink', 'purple', 'slate'] as const;
 export type AccentName = (typeof ACCENT_NAMES)[number];
 
-/** `default` is Curlew's own blue, `system` leaves the desktop's accent alone. */
+/** `default` is Curlew's own teal (distinct from the desktop's usual blue), `system` leaves the desktop's accent alone. */
 export const ACCENT_CHOICES = ['default', 'system', ...ACCENT_NAMES] as const;
 export type AccentChoice = (typeof ACCENT_CHOICES)[number];
 
@@ -15,7 +15,7 @@ export function isAccentChoice(value: string): value is AccentChoice {
 /** The accent to impose, or null when the desktop's own stays. An unset or unknown value is `default`. */
 export function accentToImpose(choice: string | undefined): AccentName | null {
   if (choice === 'system') return null;
-  return (ACCENT_NAMES as readonly string[]).includes(choice ?? '') ? (choice as AccentName) : 'blue';
+  return (ACCENT_NAMES as readonly string[]).includes(choice ?? '') ? (choice as AccentName) : 'teal';
 }
 
 /** What lies behind the messages of a conversation: our own doodles, or nothing. */

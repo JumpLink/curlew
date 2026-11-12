@@ -18,6 +18,30 @@ const ACCENTS: Record<AccentName, Adw.AccentColor> = {
   slate: Adw.AccentColor.SLATE,
 };
 
+// A `card` is translucent in dark mode, so the chat background shows through it. These two classes
+// lay the same tint over the window colour instead, and give the person's own messages the accent.
+const SURFACE_CSS = `
+.curlew-surface {
+  background-image: linear-gradient(@card_bg_color, @card_bg_color);
+  background-color: @window_bg_color;
+}
+.curlew-own {
+  background-image: none;
+  background-color: @accent_bg_color;
+  color: @accent_fg_color;
+}
+.curlew-own link { color: @accent_fg_color; }
+`;
+
+/** Install the opaque message surfaces once; they follow the accent through its named colours. */
+export function installSurfaces(): void {
+  const display = Gdk.Display.get_default();
+  if (!display) return;
+  const surfaces = new Gtk.CssProvider();
+  surfaces.load_from_string(SURFACE_CSS);
+  Gtk.StyleContext.add_provider_for_display(display, surfaces, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+}
+
 let provider: Gtk.CssProvider | null = null;
 let choice: string | undefined;
 let following = false;

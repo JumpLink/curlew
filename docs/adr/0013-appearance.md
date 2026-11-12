@@ -14,11 +14,14 @@ screen, where Telegram lets the history scroll under them.
 
 ## Decisions
 
-1. **Accent.** A setting `ui.accentColor`: `default` (Curlew's own blue), `system`, or one of the
+1. **Accent.** A setting `ui.accentColor`: `default` (Curlew's own teal), `system`, or one of the
    Adwaita accent names (`blue`, `teal`, `green`, `yellow`, `orange`, `red`, `pink`, `purple`,
-   `slate`). The default is Curlew's blue: it matches Signal, Telegram and WhatsApp, reads in light
-   and dark, and is calm. It is applied through `Adw.StyleManager` where libadwaita supports an
-   accent override, otherwise through the `@accent_*` colour variables, never per widget.
+   `slate`). The default is teal: GNOME's own default accent is blue, so a blue default would be
+   indistinguishable from "no choice", and teal sits apart from WhatsApp's green and Telegram's
+   purple while reading in light and dark. (It was blue until the own-bubble change.) It is applied
+   through the `@accent_*` colour variables, never per widget. The accent also fills the person's
+   own message bubbles, as in Telegram and WhatsApp; every message surface is opaque so the
+   background doodles never shine through.
 2. **Chat background.** A setting `ui.chatBackground`: `doodles` (the default) or `none`. The pattern is an SVG tile that carries no colour of its own: it is
    drawn in `currentColor` at a few percent opacity, so it follows light/dark and the accent.
    The motifs are our own line drawings (a curlew, an envelope, a paper plane, a gear, a terminal,

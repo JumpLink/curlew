@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-11 23:15+0100\n"
+"POT-Creation-Date: 2026-11-12 06:02+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1910,7 +1910,7 @@ msgstr ""
 #: app/src/window/agent-access-page.ts:234
 #: app/src/window/conversation-list.ts:401
 #: app/src/window/conversation-list.ts:487
-#: app/src/window/conversation-view.ts:644
+#: app/src/window/conversation-view.ts:664
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -2406,7 +2406,7 @@ msgstr[0] "{count} mögliches Duplikat"
 msgstr[1] "{count} mögliche Duplikate"
 
 #: app/src/window/conversation-model.ts:115
-#: app/src/window/conversation-view.ts:1238
+#: app/src/window/conversation-view.ts:1261
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -2442,7 +2442,7 @@ msgstr[1] "Du und {count} weitere Personen"
 
 #: app/src/window/conversation-model.ts:322
 #: app/src/window/conversation-model.ts:335
-#: app/src/window/conversation-view.ts:628
+#: app/src/window/conversation-view.ts:648
 msgid "You"
 msgstr "Du"
 
@@ -2457,119 +2457,119 @@ msgid "Choose how to reach this person"
 msgstr "Erreichbarkeit dieser Person wählen"
 
 #: app/src/window/conversation-view.ts:182
-#: app/src/window/conversation-view.ts:412
+#: app/src/window/conversation-view.ts:432
 msgid "Write a message"
 msgstr "Nachricht schreiben"
 
-#: app/src/window/conversation-view.ts:193
+#: app/src/window/conversation-view.ts:194
 msgid "Send message"
 msgstr "Nachricht senden"
 
-#: app/src/window/conversation-view.ts:205
+#: app/src/window/conversation-view.ts:206
 msgid "Cancel reply"
 msgstr "Antwort abbrechen"
 
-#: app/src/window/conversation-view.ts:218
+#: app/src/window/conversation-view.ts:219
 msgid "Cancel editing"
 msgstr "Bearbeiten abbrechen"
 
-#: app/src/window/conversation-view.ts:248
+#: app/src/window/conversation-view.ts:268
 msgid "Conversation"
 msgstr "Unterhaltung"
 
-#: app/src/window/conversation-view.ts:378
+#: app/src/window/conversation-view.ts:398
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 "{protocol} kann keine Dateien senden; die angehängten Dateien wurden entfernt"
 
-#: app/src/window/conversation-view.ts:430
+#: app/src/window/conversation-view.ts:450
 msgid "Send via {protocol}"
 msgstr "Senden über {protocol}"
 
-#: app/src/window/conversation-view.ts:535
+#: app/src/window/conversation-view.ts:555
 msgid "Show the quoted message"
 msgstr "Zitierte Nachricht anzeigen"
 
-#: app/src/window/conversation-view.ts:542
-#: app/src/window/conversation-view.ts:574
+#: app/src/window/conversation-view.ts:562
+#: app/src/window/conversation-view.ts:594
 msgid "Reply to {author}: {excerpt}"
 msgstr "Antwort auf {author}: {excerpt}"
 
-#: app/src/window/conversation-view.ts:557
+#: app/src/window/conversation-view.ts:577
 msgid "The quoted message is no longer in the history"
 msgstr "Die zitierte Nachricht ist nicht mehr im Verlauf"
 
-#: app/src/window/conversation-view.ts:599
+#: app/src/window/conversation-view.ts:619
 msgid "Reaction not sent: {error}"
 msgstr "Reaktion nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:627
+#: app/src/window/conversation-view.ts:647
 msgid "Edit message"
 msgstr "Nachricht bearbeiten"
 
-#: app/src/window/conversation-view.ts:631
+#: app/src/window/conversation-view.ts:651
 msgid "Editing your message: {excerpt}"
 msgstr "Eigene Nachricht bearbeiten: {excerpt}"
 
-#: app/src/window/conversation-view.ts:639
+#: app/src/window/conversation-view.ts:659
 msgid "Delete message?"
 msgstr "Nachricht löschen?"
 
-#: app/src/window/conversation-view.ts:640
+#: app/src/window/conversation-view.ts:660
 msgid "This will remove the message for everyone in the chat."
 msgstr "Dadurch wird die Nachricht für alle im Chat entfernt."
 
-#: app/src/window/conversation-view.ts:645
+#: app/src/window/conversation-view.ts:665
 msgid "Delete for everyone"
 msgstr "Für alle löschen"
 
-#: app/src/window/conversation-view.ts:662
+#: app/src/window/conversation-view.ts:682
 msgid "Message not deleted: {error}"
 msgstr "Nachricht nicht gelöscht: {error}"
 
-#: app/src/window/conversation-view.ts:723
+#: app/src/window/conversation-view.ts:743
 msgid "Reply"
 msgstr "Antworten"
 
-#: app/src/window/conversation-view.ts:724
+#: app/src/window/conversation-view.ts:744
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: app/src/window/conversation-view.ts:725
+#: app/src/window/conversation-view.ts:745
 msgid "Delete"
 msgstr "Löschen"
 
-#: app/src/window/conversation-view.ts:726
+#: app/src/window/conversation-view.ts:746
 msgid "Copy"
 msgstr "Kopieren"
 
-#: app/src/window/conversation-view.ts:839
+#: app/src/window/conversation-view.ts:862
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:881
-#: app/src/window/conversation-view.ts:1015
+#: app/src/window/conversation-view.ts:904
+#: app/src/window/conversation-view.ts:1038
 msgid "edited"
 msgstr "bearbeitet"
 
-#: app/src/window/conversation-view.ts:891
-#: app/src/window/conversation-view.ts:892
+#: app/src/window/conversation-view.ts:914
+#: app/src/window/conversation-view.ts:915
 msgid "Read"
 msgstr "Gelesen"
 
-#: app/src/window/conversation-view.ts:1102
+#: app/src/window/conversation-view.ts:1125
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:1203
+#: app/src/window/conversation-view.ts:1226
 msgid "Message not edited: {error}"
 msgstr "Nachricht nicht bearbeitet: {error}"
 
-#: app/src/window/conversation-view.ts:1250
+#: app/src/window/conversation-view.ts:1273
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:1253
+#: app/src/window/conversation-view.ts:1276
 msgid "Retry"
 msgstr "Erneut versuchen"
 
@@ -2715,8 +2715,8 @@ msgid "Media"
 msgstr "Medien"
 
 #: app/src/window/preferences-dialog.ts:51
-msgid "Curlew blue"
-msgstr "Curlew-Blau"
+msgid "Curlew teal"
+msgstr "Curlew-Türkis"
 
 #: app/src/window/preferences-dialog.ts:52
 msgid "Follow the system"

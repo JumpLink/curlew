@@ -28,6 +28,7 @@
 
 ### Changed
 
+- Message bubbles and the composer are opaque, so the background doodles no longer shine through, and your own messages use the accent colour. The default accent is now teal instead of blue.
 - The message box of a conversation floats over the history as a rounded card, like Telegram's, and the messages scroll beneath it. [ADR 0013](docs/adr/0013-appearance.md)
 - The message menu no longer offers what the chat cannot do: no reactions in Telegram's Saved Messages, and no edit or delete on Signal messages older than a day (the note to self is exempt).
 - Mail accounts of the system are read through `@gjsify/system-accounts` instead of Curlew's own GNOME Online Accounts code. A Flatpak without access to them now reports none instead of failing.

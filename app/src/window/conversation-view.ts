@@ -243,9 +243,11 @@ export function createConversationView(
   // Each part is a card of its own, so it stays legible over the messages scrolling beneath it.
   const pill = new Gtk.Box({ marginStart: 12, marginEnd: 12, marginTop: 4, marginBottom: 8 });
   pill.add_css_class('card');
+  pill.add_css_class('curlew-surface');
   pill.append(composer);
   for (const part of [hint, files.strip, replyBar, editBar]) {
     part.add_css_class('card');
+    part.add_css_class('curlew-surface');
     part.set_margin_start(12);
     part.set_margin_end(12);
   }
@@ -830,6 +832,9 @@ export function createConversationView(
     // Clips a picture block to the bubble's rounded corners.
     const card = new Gtk.Box({ overflow: Gtk.Overflow.HIDDEN });
     card.add_css_class('card');
+    card.add_css_class('curlew-surface');
+    // The person's own messages take the accent colour, as in Telegram and WhatsApp (ADR 0013).
+    if (message.fromSelf) card.add_css_class('curlew-own');
     // No padding of its own: text parts carry the side margins, a picture block runs to the edge.
     const bubble = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 4, marginBottom: 8 });
     card.append(bubble);

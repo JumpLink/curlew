@@ -14,7 +14,7 @@ import { initI18n } from '../core/lib/i18n.ts';
 import { APP_ID, installAboutAction } from './about.ts';
 import { configPath } from '@curlew/store';
 import { loadConfig } from '../core/config.ts';
-import { applyAccent } from './appearance.ts';
+import { applyAccent, installSurfaces } from './appearance.ts';
 import { applyChatBackground } from './chat-background.ts';
 import { createWindow } from './window.ts';
 
@@ -42,6 +42,7 @@ const application = new AdwaitaApp({
   applicationId: APP_ID,
   createWindow: (app) => {
     addSourceTreeIcons();
+    installSurfaces();
     // A broken config must not stop the window from opening: it keeps Curlew's own accent.
     try {
       const ui = loadConfig(configPath()).ui;
