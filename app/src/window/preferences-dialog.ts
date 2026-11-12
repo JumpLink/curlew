@@ -48,7 +48,7 @@ export function presentPreferences(parent: Gtk.Window | null, onChanged: () => v
   const mediaGroup = new Adw.PreferencesGroup({ title: _('Media') });
   mediaGroup.add(videos);
   const accentLabels: Record<AccentChoice, string> = {
-    default: _('Curlew blue'),
+    default: _('Curlew teal'),
     system: _('Follow the system'),
     blue: _('Blue'),
     teal: _('Teal'),

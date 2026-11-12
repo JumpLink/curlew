@@ -10,10 +10,11 @@ import {
 
 export default async () => {
   await describe('the accent choice', async () => {
-    await it('is Curlew blue unless the person chose otherwise', async () => {
-      expect(accentToImpose(undefined)).toBe('blue');
-      expect(accentToImpose('default')).toBe('blue');
-      expect(accentToImpose('not-a-colour')).toBe('blue');
+    await it('is Curlew teal unless the person chose otherwise', async () => {
+      expect(accentToImpose(undefined)).toBe('teal');
+      expect(accentToImpose('default')).toBe('teal');
+      expect(accentToImpose('not-a-colour')).toBe('teal');
+      expect(accentToImpose('blue')).toBe('blue');
       expect(accentToImpose('green')).toBe('green');
     });
 
