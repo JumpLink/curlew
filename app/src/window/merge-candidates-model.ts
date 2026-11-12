@@ -40,10 +40,17 @@ export function nameWords(name: string): string[] {
     .filter((word) => word !== '');
 }
 
-/** Whether two names are close enough to ask about; see the module comment for the line. */
-export function similarNames(a: string, b: string): boolean {
-  const x = nameWords(a);
-  const y = nameWords(b);
+/**
+ * Names a service hands out for a contact it no longer knows. Many different people carry one,
+ * so it says nothing about identity (Telegram's deleted accounts all read "Deleted Account").
+ */
+const PLACEHOLDER_NAMES = new Set(['deleted account', 'geloschtes konto', 'unknown', 'unbekannt']);
+
+/** A folded name that this many rows share is a placeholder, whatever it says: people are rarely that alike. */
+const CROWD = 3;
+
+/** Whether two names (already split by {@link nameWords}) are close enough; see the module comment. */
+function similarWords(x: readonly string[], y: readonly string[]): boolean {
   if (x.length < 2 || y.length < 2) return false;
   if (x.length === y.length && [...x].sort().join(' ') === [...y].sort().join(' ')) return true;
   const [first, last] = [x[0]!, x[x.length - 1]!];
@@ -53,18 +60,48 @@ export function similarNames(a: string, b: string): boolean {
   return initialOf(last, otherLast) || initialOf(otherLast, last);
 }
 
+/** Whether two names are close enough to ask about; see the module comment for the line. */
+export function similarNames(a: string, b: string): boolean {
+  return similarWords(nameWords(a), nameWords(b));
+}
+
 /**
  * The sets to ask about: people whose names are similar, chained (Ana Example ~ Ana E. ~ A.
  * Example is one set only where each link holds). Groups and the note to self never appear, a set
  * the person already declined is skipped, and a set that gained someone is a new set.
  */
 export function candidateSets(entries: readonly ListEntry[], declined: DeclinedSets = []): CandidateSet[] {
-  const people = entries.filter((entry) => entry.kind === 'direct' && entry.personIds.length > 0);
+  const named = entries
+    .filter((entry) => entry.kind === 'direct' && entry.personIds.length > 0)
+    .map((entry) => ({ entry, words: nameWords(entry.title) }))
+    .filter(({ words }) => words.length >= 2);
+  const folded = (words: readonly string[]) => [...words].sort().join(' ');
+  const crowd = new Map<string, number>();
+  for (const { words } of named) crowd.set(folded(words), (crowd.get(folded(words)) ?? 0) + 1);
+  const rows = named.filter(
+    ({ words }) => !PLACEHOLDER_NAMES.has(words.join(' ')) && (crowd.get(folded(words)) ?? 0) < CROWD,
+  );
+  const people = rows.map(({ entry }) => entry);
   const parent = people.map((_, i) => i);
   const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i]!)));
-  for (let i = 0; i < people.length; i++) {
-    for (let j = i + 1; j < people.length; j++) {
-      if (similarNames(people[i]!.title, people[j]!.title)) parent[find(j)] = find(i);
+  // Both similarity rules need a shared word (the same set, or the same first word), so only
+  // rows in one bucket are compared: the list holds thousands of rows and a full pairwise scan
+  // froze the window each time it was activated.
+  const buckets = new Map<string, number[]>();
+  rows.forEach(({ words }, i) => {
+    for (const key of new Set([`f:${words[0]}`, `s:${folded(words)}`])) {
+      const bucket = buckets.get(key);
+      if (bucket) bucket.push(i);
+      else buckets.set(key, [i]);
+    }
+  });
+  for (const members of buckets.values()) {
+    for (let a = 0; a < members.length; a++) {
+      for (let b = a + 1; b < members.length; b++) {
+        const i = members[a]!;
+        const j = members[b]!;
+        if (similarWords(rows[i]!.words, rows[j]!.words)) parent[find(j)] = find(i);
+      }
     }
   }
   const groups = new Map<number, ListEntry[]>();

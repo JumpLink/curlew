@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- The window no longer freezes when it is activated: the duplicate scan compared every pair of thousands of rows, and now compares only rows that share a word.
+- The merge assistant no longer offers deleted Telegram accounts (all named "Deleted Account") or any name that many contacts share as possible duplicates.
 - The conversation list showed only the newest chats: mail threads shared its 500-row limit, so a few hundred newsletters pushed every Telegram contact and group but a handful out of the list. Chats are now listed whole and mail has its own limit.
 - A picture or file whose download stalls (a dead Telegram connection, say) no longer leaves its tile on a spinner for many minutes: after 45 seconds without a byte the tile offers a retry.
 
