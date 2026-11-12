@@ -94,6 +94,24 @@ export default async () => {
       expect(none.decline).toStrictEqual(['p1', 'p2', 'p3']);
     });
 
+    it('never offers placeholder names such as deleted accounts', () => {
+      const deleted = ['p1', 'p2'].map((id) => person(id, 'Deleted Account', { backend: 'telegram' }));
+      expect(candidateSets(deleted).length).toBe(0);
+    });
+
+    it('treats a name shared by many rows as a placeholder', () => {
+      const crowd = ['p1', 'p2', 'p3'].map((id) => person(id, 'Ana Example'));
+      expect(candidateSets(crowd).length).toBe(0);
+      expect(candidateSets(crowd.slice(0, 2)).length).toBe(1);
+    });
+
+    it('scans thousands of rows quickly', () => {
+      const many = Array.from({ length: 6000 }, (_, i) => person(`p${i}`, `First${i} Last${i}`));
+      const started = Date.now();
+      expect(candidateSets(many).length).toBe(0);
+      expect(Date.now() - started < 2000).toBe(true);
+    });
+
     it('keeps one merged row as one person of a set', () => {
       const merged = person('p1', 'Ana Example', { personIds: ['p1', 'p9'], manual: true });
       const sets = candidateSets([merged, person('p2', 'Ana E.')]);
