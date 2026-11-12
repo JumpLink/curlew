@@ -18,6 +18,8 @@ import { trustRank } from './conversation-model.ts';
 export interface RouteAccount {
   backend: string;
   accountId: string;
+  /** A mail account opted into Delta Chat: a first message from it is an email chat. */
+  deltaChat?: boolean;
 }
 
 const ADDRESS_BACKENDS = ['xmpp', 'mail'] as const;
@@ -28,11 +30,18 @@ function addressesOf(contact: ContactDTO, backend: string): string[] {
 }
 
 /** The accounts the window already knows (rows and their members) that can send to a bare address. */
-export function routeAccounts(entries: readonly ListEntry[]): RouteAccount[] {
+export function routeAccounts(
+  entries: readonly ListEntry[],
+  deltaChatAccounts: readonly string[] = [],
+): RouteAccount[] {
   const seen = new Map<string, RouteAccount>();
   const visit = (e: ListEntry) => {
     if (!(ADDRESS_BACKENDS as readonly string[]).includes(e.backend)) return;
-    seen.set(`${e.backend}\u0000${e.accountId}`, { backend: e.backend, accountId: e.accountId });
+    seen.set(`${e.backend}\u0000${e.accountId}`, {
+      backend: e.backend,
+      accountId: e.accountId,
+      ...(e.backend === 'mail' && deltaChatAccounts.includes(e.accountId) ? { deltaChat: true } : {}),
+    });
   };
   for (const e of entries) {
     visit(e);
@@ -57,7 +66,7 @@ function routeMembers(contact: ContactDTO, accounts: readonly RouteAccount[]): L
       unread: 0,
       lastMessageAt: null,
       target,
-      emailChat: account.backend === 'mail',
+      emailChat: account.backend === 'mail' && account.deltaChat === true,
       room: null,
       members: [],
       personIds: [],

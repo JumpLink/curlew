@@ -90,6 +90,11 @@ export interface CurlewConfig {
    */
   disabledAccounts: string[];
   /**
+   * Ids of the mail accounts the person opted into Delta Chat: only their sent mail carries the
+   * `Chat-Version` marker. Absent or empty means every mail account sends ordinary mail.
+   */
+  deltaChatAccounts?: string[];
+  /**
    * People the person merged into one by hand: each group lists directory participant ids.
    * Presentation only and local — the address book is never written, no message is rewritten.
    */
@@ -141,6 +146,7 @@ const KNOWN_KEYS = [
   'agentAccess',
   'encryption',
   'disabledAccounts',
+  'deltaChatAccounts',
   'mergedPeople',
   'declinedMerges',
   'pins',
@@ -272,6 +278,7 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   const agentAccess = access.policy;
   const encryption = parseEncryption(obj.encryption);
   const disabledAccounts = parseDisabledAccounts(obj.disabledAccounts);
+  const deltaChatAccounts = parseDeltaChatAccounts(obj.deltaChatAccounts);
   const mergedPeople = parseIdGroups(obj.mergedPeople, 'mergedPeople');
   const declinedMerges = parseIdGroups(obj.declinedMerges, 'declinedMerges');
   const pins = parsePins(obj.pins);
@@ -290,12 +297,20 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     agentAccess,
     encryption,
     disabledAccounts,
+    ...(deltaChatAccounts.length > 0 ? { deltaChatAccounts } : {}),
     mergedPeople,
     declinedMerges,
     pins,
     contactChoices,
     unknown,
   };
+}
+
+function parseDeltaChatAccounts(raw: unknown): string[] {
+  if (raw === undefined) return [];
+  if (!Array.isArray(raw) || raw.some((v) => typeof v !== 'string' || v === ''))
+    throw new Error('config.deltaChatAccounts must be a list of mail account ids');
+  return [...new Set(raw as string[])];
 }
 
 function parseContactChoices(raw: unknown): Record<string, ContactChoice> {
@@ -399,6 +414,7 @@ export function saveConfig(config: CurlewConfig, path = configPath()): void {
     agentAccess,
     encryption,
     disabledAccounts,
+    deltaChatAccounts,
     mergedPeople,
     declinedMerges,
     pins,
@@ -422,6 +438,7 @@ export function saveConfig(config: CurlewConfig, path = configPath()): void {
       : {}),
     ...(Object.keys(encryption).length > 0 ? { encryption } : {}),
     ...(disabledAccounts.length > 0 ? { disabledAccounts } : {}),
+    ...(deltaChatAccounts && deltaChatAccounts.length > 0 ? { deltaChatAccounts } : {}),
     ...(mergedPeople.length > 0 ? { mergedPeople } : {}),
     ...(declinedMerges.length > 0 ? { declinedMerges } : {}),
     ...(Object.keys(pins).length > 0 ? { pins } : {}),

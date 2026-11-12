@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-12 22:41+0100\n"
+"POT-Creation-Date: 2026-11-12 22:57+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1541,8 +1541,8 @@ msgid "curlew window takes no arguments."
 msgstr ""
 
 #: app/src/window/about.ts:14 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:163 app/src/window/window.ts:84
-#: app/src/window/window.ts:99
+#: app/src/window/conversation-view.ts:163 app/src/window/window.ts:85
+#: app/src/window/window.ts:100
 msgid "Curlew"
 msgstr ""
 
@@ -1614,25 +1614,35 @@ msgstr ""
 msgid "Add Account"
 msgstr ""
 
-#: app/src/window/account-detail.ts:63 app/src/window/agent-access-page.ts:218
+#: app/src/window/account-detail.ts:70 app/src/window/agent-access-page.ts:218
 msgid "Account"
 msgstr ""
 
-#: app/src/window/account-detail.ts:67
+#: app/src/window/account-detail.ts:74
 msgid "Status"
 msgstr ""
 
-#: app/src/window/account-detail.ts:73
+#: app/src/window/account-detail.ts:80
 msgid ""
 "Off keeps the account linked and its messages here, but Curlew stops syncing "
 "it."
 msgstr ""
 
-#: app/src/window/account-detail.ts:77
+#: app/src/window/account-detail.ts:84
 msgid "Sync this account"
 msgstr ""
 
-#: app/src/window/account-detail.ts:97
+#: app/src/window/account-detail.ts:105
+msgid "Use for Delta Chat"
+msgstr ""
+
+#: app/src/window/account-detail.ts:107
+msgid ""
+"Messages from this account become email chats. People without Delta Chat see "
+"an ordinary email."
+msgstr ""
+
+#: app/src/window/account-detail.ts:126
 msgid "Remove Account…"
 msgstr ""
 
@@ -1704,7 +1714,7 @@ msgid "Could not start the background service: {reason}"
 msgstr ""
 
 #: app/src/window/accounts-dialog.ts:71 app/src/window/accounts-page.ts:194
-#: app/src/window/welcome.ts:104 app/src/window/window.ts:112
+#: app/src/window/welcome.ts:104 app/src/window/window.ts:113
 msgid "Accounts"
 msgstr ""
 
@@ -1777,7 +1787,7 @@ msgstr ""
 msgid "Protocols"
 msgstr ""
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:115
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:116
 msgid "Agent access"
 msgstr ""
 
@@ -2057,8 +2067,8 @@ msgstr ""
 
 #: app/src/window/attachment-view.ts:149 app/src/window/attachment-view.ts:158
 #: app/src/window/conversation-list-model.ts:436
-#: app/src/window/conversation-model.ts:281
-#: app/src/window/conversation-model.ts:286
+#: app/src/window/conversation-model.ts:295
+#: app/src/window/conversation-model.ts:300
 msgid "Attachment"
 msgstr ""
 
@@ -2071,7 +2081,7 @@ msgid "Image: {name}"
 msgstr ""
 
 #: app/src/window/attachment-view.ts:466
-#: app/src/window/conversation-model.ts:289
+#: app/src/window/conversation-model.ts:303
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] ""
@@ -2346,48 +2356,48 @@ msgid_plural "{count} possible duplicates"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-model.ts:115
+#: app/src/window/conversation-model.ts:129
 #: app/src/window/conversation-view.ts:1308
 msgid "Continuing via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:235
+#: app/src/window/conversation-model.ts:249
 msgid "Unknown sender"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:272
+#: app/src/window/conversation-model.ts:286
 msgid "{kind}: {name}"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:277
+#: app/src/window/conversation-model.ts:291
 msgid "Image"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:278
+#: app/src/window/conversation-model.ts:292
 msgid "Video"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:279
+#: app/src/window/conversation-model.ts:293
 msgid "Audio"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:280
+#: app/src/window/conversation-model.ts:294
 msgid "File"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:321
+#: app/src/window/conversation-model.ts:335
 msgid "You and {count} other"
 msgid_plural "You and {count} others"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-model.ts:322
-#: app/src/window/conversation-model.ts:335
+#: app/src/window/conversation-model.ts:336
+#: app/src/window/conversation-model.ts:349
 #: app/src/window/conversation-view.ts:691
 msgid "You"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:323
+#: app/src/window/conversation-model.ts:337
 msgid "{count} person"
 msgid_plural "{count} people"
 msgstr[0] ""
@@ -2603,11 +2613,11 @@ msgstr ""
 msgid "Skip"
 msgstr ""
 
-#: app/src/window/new-conversation-model.ts:127
+#: app/src/window/new-conversation-model.ts:136
 msgid "No contact fits the search"
 msgstr ""
 
-#: app/src/window/new-conversation-model.ts:127
+#: app/src/window/new-conversation-model.ts:136
 msgid "No contacts with an XMPP or mail address"
 msgstr ""
 
@@ -2660,7 +2670,7 @@ msgstr ""
 msgid "Media"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:68 app/src/window/window.ts:114
+#: app/src/window/preferences-dialog.ts:68 app/src/window/window.ts:115
 msgid "Preferences"
 msgstr ""
 
@@ -2685,7 +2695,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/window/welcome.ts:62 app/src/window/welcome.ts:81
-#: app/src/window/window.ts:116
+#: app/src/window/window.ts:117
 msgid "Welcome"
 msgstr ""
 
@@ -2707,31 +2717,31 @@ msgid ""
 "Sign in to a mail or chat account. You can add more later from the menu."
 msgstr ""
 
-#: app/src/window/window.ts:78
+#: app/src/window/window.ts:79
 msgid "Select a conversation"
 msgstr ""
 
-#: app/src/window/window.ts:79
+#: app/src/window/window.ts:80
 msgid "Pick a conversation from the list."
 msgstr ""
 
-#: app/src/window/window.ts:113
+#: app/src/window/window.ts:114
 msgid "Merge contacts…"
 msgstr ""
 
-#: app/src/window/window.ts:118
+#: app/src/window/window.ts:119
 msgid "About Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:119
+#: app/src/window/window.ts:120
 msgid "Quit"
 msgstr ""
 
-#: app/src/window/window.ts:156
+#: app/src/window/window.ts:157
 msgid "This conversation has no recipient address."
 msgstr ""
 
-#: app/src/window/window.ts:338
+#: app/src/window/window.ts:341
 msgid "No contacts to merge"
 msgstr ""
 

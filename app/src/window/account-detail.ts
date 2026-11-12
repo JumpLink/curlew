@@ -7,7 +7,12 @@ import Adw from 'gi://Adw?version=1';
 import Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 
-import { accountRemove, accountSetEnabled } from '../core/actions/accounts.ts';
+import {
+  accountRemove,
+  accountSetDeltaChat,
+  accountSetEnabled,
+  deltaChatEnabled,
+} from '../core/actions/accounts.ts';
 import { deleteDataCopy, removeAccountCopy } from './account-remove-model.ts';
 import { restartDaemonIfRunning } from './accounts-daemon.ts';
 import type { AccountRow } from './accounts-model.ts';
@@ -30,6 +35,8 @@ export interface AccountDetailDeps {
   onChanged(): void;
   /** The switch to run; the real one unless a probe substitutes it. */
   setEnabled?(backend: string, accountId: string, enabled: boolean): void;
+  /** The Delta Chat opt-in to store; the real one unless a probe substitutes it. */
+  setDeltaChat?(accountId: string, on: boolean): void;
   /** The removal to run; the real one unless a probe substitutes it. */
   remove?(backend: string, accountId: string, deleteData?: boolean): Promise<unknown>;
 }
@@ -91,6 +98,28 @@ export function pushAccountPage(deps: AccountDetailDeps): void {
   });
   sync.add(enabled);
   page.add(sync);
+
+  const chat = new Adw.PreferencesGroup();
+  chat.set_visible(deps.backend === 'mail');
+  const deltaChat = new Adw.SwitchRow({
+    title: _('Use for Delta Chat'),
+    subtitle: _(
+      'Messages from this account become email chats. People without Delta Chat see an ordinary email.',
+    ),
+    active: deps.backend === 'mail' && deltaChatEnabled(row.id, deps.path),
+  });
+  deltaChat.connect('notify::active', () => {
+    try {
+      (deps.setDeltaChat ?? ((id, on) => accountSetDeltaChat(id, on, deps.path)))(
+        row.id,
+        deltaChat.get_active(),
+      );
+    } catch (err) {
+      deps.onError(err instanceof Error ? err : new Error(String(err)));
+    }
+  });
+  chat.add(deltaChat);
+  page.add(chat);
 
   const danger = new Adw.PreferencesGroup();
   const removeButton = new Gtk.Button({
