@@ -33,6 +33,10 @@ const SURFACE_CSS = `
   background-image: linear-gradient(@card_bg_color, @card_bg_color), linear-gradient(@card_bg_color, @card_bg_color);
   background-color: @window_bg_color;
 }
+.curlew-input, .curlew-input text {
+  background: none;
+  color: inherit;
+}
 .curlew-own {
   background-image: none;
   background-color: @accent_bg_color;
