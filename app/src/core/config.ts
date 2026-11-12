@@ -56,6 +56,8 @@ export interface UiConfig {
   colorScheme?: string;
   /** `doodles` or `none`. Unset: `doodles`. */
   chatBackground?: string;
+  /** The first-run welcome screen was finished or skipped. Unset: not yet, so it may show. */
+  welcomeDone?: boolean;
 }
 
 export interface CurlewConfig {
@@ -236,6 +238,9 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     (typeof chatBackground !== 'string' || !isBackgroundChoice(chatBackground))
   )
     throw new Error(`config.ui.chatBackground must be one of ${BACKGROUND_CHOICES.join(', ')}`);
+  const welcomeDone = (rawUi as Record<string, unknown>).welcomeDone;
+  if (welcomeDone !== undefined && typeof welcomeDone !== 'boolean')
+    throw new Error('config.ui.welcomeDone must be true or false');
   const ui: UiConfig = {
     showAllEmails,
     notifications,
@@ -244,6 +249,7 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     ...(primaryColor === undefined ? {} : { primaryColor }),
     ...(colorScheme === undefined ? {} : { colorScheme }),
     ...(chatBackground === undefined ? {} : { chatBackground }),
+    ...(welcomeDone === undefined ? {} : { welcomeDone }),
   };
 
   const senders: Record<string, Classification> = {};

@@ -120,6 +120,7 @@ import daemonSend from './unit/core/daemon-send.test.ts';
 import accountPrompter from './unit/window/account-prompter.test.ts';
 import accountAddModel from './unit/window/account-add-model.test.ts';
 import qrImage from './unit/window/qr-image.test.ts';
+import windowWelcome from './unit/window/welcome-model.test.ts';
 import notifyQr from './unit/protocol/notify-qr.test.ts';
 import daemonFetch from './unit/core/daemon-fetch.test.ts';
 import daemonAvatars from './unit/core/daemon-avatars.test.ts';
@@ -255,6 +256,7 @@ run({
   accountPrompter,
   accountAddModel,
   qrImage,
+  windowWelcome,
   notifyQr,
   chatAttachment,
   conversationsAttachments,

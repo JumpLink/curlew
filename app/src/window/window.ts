@@ -51,6 +51,10 @@ import { createMediaViewer } from './media-viewer.ts';
 import { presentNewConversation } from './new-conversation.ts';
 import { draftEntry, existingEntry, routeAccounts } from './new-conversation-model.ts';
 import { presentPreferences } from './preferences-dialog.ts';
+import { presentWelcome } from './welcome.ts';
+import { countAccounts, shouldShowWelcome } from './welcome-model.ts';
+import { loadAccountsState } from './accounts-store.ts';
+import { inSandbox } from '../core/lib/sandbox.ts';
 import { loadAgentAccess } from './agent-access-store.ts';
 import { reactToMessage } from '../core/actions/react.ts';
 import { contactsForPicker } from '../core/actions/contacts.ts';
@@ -109,6 +113,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   menu.append(_('Merge contacts…'), 'win.merge-contacts');
   menu.append(_('Preferences'), 'win.preferences');
   menu.append(_('Agent access'), 'win.agent-access');
+  menu.append(_('Welcome'), 'win.welcome');
   const appSection = new Gio.Menu();
   appSection.append(_('About Curlew'), 'app.about');
   appSection.append(_('Quit'), 'app.quit');
@@ -313,6 +318,9 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     }),
   );
   window.add_action(preferences);
+  const welcome = new Gio.SimpleAction({ name: 'welcome' });
+  welcome.connect('activate', () => presentWelcome(window, () => refresh()));
+  window.add_action(welcome);
 
   let labels = indexAccountLabels();
   let labelled = false;
@@ -358,6 +366,17 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   });
   window.add_action(contactAction);
   if (options.open) openConversation(options.open);
+  // First start only: the flag says it was finished, and anybody with accounts is not new.
+  void (async () => {
+    try {
+      const path = configPath();
+      if (loadConfig(path).ui.welcomeDone === true) return;
+      const count = countAccounts(await loadAccountsState(path, { hostAccounts: !inSandbox() }));
+      if (shouldShowWelcome(loadConfig(path).ui.welcomeDone, count)) welcome.activate(null);
+    } catch {
+      // No welcome screen is better than a broken window.
+    }
+  })();
   // The index changes as the daemon syncs; coming back to the window is the cheap moment to look.
   window.connect('notify::is-active', () => {
     if (window.is_active && listStamp() !== stamp) refresh();
