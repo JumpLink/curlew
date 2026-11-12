@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Telegram profile pictures of people now show in the list; only groups and channels did before.
 - Telegram pictures and files load again in the long-running daemon: a fresh connection no longer counts as silent for hours and gets reset in a loop (an mtcute quirk, worked around until it is fixed there).
 - A picture whose Telegram connection never comes up now fails after the download deadline instead of showing its spinner for good, and the daemon log says why a fetch failed.
 - A long message folded behind "Show more" no longer leaves an empty stretch under it: the fold now keeps one height whatever the width, so a list row and its content agree.
@@ -34,6 +35,7 @@
 
 ### Changed
 
+- Sender names above grouped messages use the accent colour, and a message bubble stops at a readable width on a wide window.
 - The conversation view is calmer: "Show more" sits on its own line under a long message instead of covering its text, an empty conversation says so, bubbles are easier to tell apart from the background in dark mode, and the unread count in the list is bold in the accent colour.
 - The primary colour tints the window more strongly, so the blue no longer reads as another grey.
 - Message bubbles and the composer are opaque, so the background doodles no longer shine through, and your own messages use the accent colour. The default accent is now teal instead of blue.

@@ -185,9 +185,14 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
       return { media, chunks: client.downloadAsIterable(media) };
     },
     openAvatar: async (chatId) => {
-      // A chat we have no access hash for, or a deleted account, makes `getChat` throw: no picture.
-      const chat = await client.getChat(chatId).catch(() => null);
-      const photo = chat?.photo?.small;
+      // `getChat` only knows groups and channels and throws for a person, so a positive id (a user)
+      // goes through `getUsers`. A peer we have no access hash for, or a deleted account, throws
+      // either way: no picture.
+      const peer =
+        chatId > 0
+          ? await client.getUsers(chatId).then((users) => users[0] ?? null, () => null)
+          : await client.getChat(chatId).catch(() => null);
+      const photo = peer?.photo?.small;
       return photo ? client.downloadAsIterable(photo) : null;
     },
     sendText: (chatId, text, replyTo) =>
