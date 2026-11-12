@@ -53,6 +53,7 @@ function tempWorld(backends: string[] = ['signal', 'whatsapp']): {
       mergedPeople: [],
       declinedMerges: [],
       pins: {},
+      contactChoices: {},
       unknown: {},
     },
     configPath,

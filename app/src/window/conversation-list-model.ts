@@ -9,6 +9,9 @@
 import type { AddressKind, Conversation } from '@curlew/protocol';
 import { _, _n, fmt } from '@curlew/protocol';
 
+import type { ContactChoice } from '../core/config.ts';
+import { choiceFor, type ContactChoices } from '../core/contact-choices.ts';
+
 export type SectionId = 'people' | 'groups';
 
 /** A conversation reduced to what a row needs. */
@@ -51,6 +54,11 @@ export interface ListEntry {
   preview?: string;
   /** True for the merged "Note to self" row: every chat in it is the person's own. */
   self?: boolean;
+  /**
+   * The picture the person chose for this contact: a file of their own, or the picture of one
+   * part of a merged row (a member's `id`). Absent when they chose none.
+   */
+  picture?: { own: string } | { from: string };
 }
 
 /**
@@ -561,6 +569,52 @@ export function mergePeople(
     .filter((entry): entry is ListEntry => entry !== null);
 }
 
+/**
+ * Apply what the person chose for each contact: the name and picture of one part of a merged
+ * row, or a picture of their own. A choice that names a part the row no longer has is ignored.
+ */
+export function withChoices(entries: ListEntry[], choices: ContactChoices): ListEntry[] {
+  if (Object.keys(choices).length === 0) return entries;
+  return entries.map((entry) => {
+    const found = entry.personIds.length === 0 ? null : choiceFor(choices, entry.personIds);
+    return found ? { ...entry, ...looksOf(found.choice, carriers(entry)) } : entry;
+  });
+}
+
+/** What one choice changes on a row made of `parts`: the name and the picture, when it set them. */
+export function looksOf(
+  choice: ContactChoice,
+  parts: ListEntry[],
+): Partial<Pick<ListEntry, 'title' | 'picture'>> {
+  const named = parts.find((m) => m.id === choice.name);
+  const from = parts.find((m) => m.id === choice.picture);
+  const picture = choice.own !== undefined ? { own: choice.own } : from ? { from: from.id } : undefined;
+  return { ...(named ? { title: named.title } : {}), ...(picture ? { picture } : {}) };
+}
+
+/** Where a row's picture comes from: the person's own file, or one chat's profile picture. */
+export type PictureSource = { kind: 'own'; file: string } | { kind: 'chat'; entry: ListEntry };
+
+/**
+ * The picture a row shows. The person's own beats the part they chose; without a choice a single
+ * chat shows its own picture and a merged row the newest part whose network can serve one.
+ */
+export function pictureSource(
+  entry: ListEntry,
+  canFetch: (backend: string) => boolean,
+): PictureSource | null {
+  const picked = entry.picture;
+  if (picked && 'own' in picked) return { kind: 'own', file: picked.own };
+  const parts = carriers(entry);
+  const usable = (m: ListEntry) => m.target !== null && canFetch(m.backend);
+  const chosen = picked ? parts.find((m) => m.id === picked.from) : undefined;
+  if (chosen && usable(chosen)) return { kind: 'chat', entry: chosen };
+  const newest = [...parts]
+    .filter(usable)
+    .sort((a, b) => (b.lastMessageAt ?? '').localeCompare(a.lastMessageAt ?? ''))[0];
+  return newest ? { kind: 'chat', entry: newest } : null;
+}
+
 /** Merge every self-chat into one row, newest message picking the visible protocol. */
 function mergeSelfEntries(members: ListEntry[]): ListEntry {
   return { ...mergeEntries(NOTE_TO_SELF_ID, _('Note to self'), members), self: true };
@@ -577,6 +631,7 @@ export function toEntries(
   rooms: ReadonlyMap<string, RoomFacts> = new Map(),
   merges: PersonMerges = [],
   pins: PersonPins = {},
+  choices: ContactChoices = {},
 ): ListEntry[] {
   const entries: ListEntry[] = [];
   const mailContacts = new Map<string, ListEntry>();
@@ -608,7 +663,7 @@ export function toEntries(
     if ((entry.lastMessageAt ?? '') > (existing.lastMessageAt ?? ''))
       existing.lastMessageAt = entry.lastMessageAt;
   }
-  const people = mergePeople(entries, merges, pins);
+  const people = withChoices(mergePeople(entries, merges, pins), choices);
   if (selfEntries.length > 0) people.push(mergeSelfEntries(selfEntries));
   return people;
 }

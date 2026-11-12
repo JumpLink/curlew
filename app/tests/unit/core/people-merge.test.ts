@@ -3,7 +3,9 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { choiceFor, withChoice } from '../../../src/core/contact-choices.ts';
 import {
+  peopleChoose,
   peopleDecline,
   peopleMerge,
   peoplePin,
@@ -110,6 +112,48 @@ export default async () => {
       expect(parseConfig('{"mergedPeople": [["p-a", "p-a", "p-b"]]}').mergedPeople).toStrictEqual([
         ['p-a', 'p-b'],
       ]);
+    });
+  });
+
+  await describe('how a contact looks', async () => {
+    await it('stores a choice under the smallest id and finds it from any id of the set', async () => {
+      const choices = withChoice({}, ['p-b', 'p-a'], { name: 'c1', own: 'x.png' });
+      expect(choices).toStrictEqual({ 'p-a': { name: 'c1', own: 'x.png' } });
+      expect(choiceFor(choices, ['p-b', 'p-a'])?.key).toBe('p-a');
+      // The choice made for a single person still applies once that person is merged with others.
+      expect(choiceFor(choices, ['p-a', 'p-z'])?.choice.name).toBe('c1');
+      expect(choiceFor(choices, ['p-q'])).toBeNull();
+    });
+
+    await it('patches one field at a time and drops a choice that ends up empty', async () => {
+      let choices = withChoice({}, ['p-a'], { name: 'c1', picture: 'c2' });
+      choices = withChoice(choices, ['p-a'], { picture: null });
+      expect(choices).toStrictEqual({ 'p-a': { name: 'c1' } });
+      choices = withChoice(choices, ['p-a'], { name: null });
+      expect(choices).toStrictEqual({});
+    });
+
+    await it('moves a choice to the new smallest id when people merge', async () => {
+      const merged = withChoice({ 'p-b': { name: 'c1' } }, ['p-a', 'p-b'], { picture: 'c2' });
+      expect(merged).toStrictEqual({ 'p-a': { name: 'c1', picture: 'c2' } });
+    });
+
+    await it('writes, reads back and refuses malformed choices', async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-choices-'));
+      try {
+        const path = join(dir, 'config.json');
+        saveConfig(defaultConfig(), path);
+        peopleChoose(['p-a', 'p-b'], { name: 'c1', own: 'x.png' }, path);
+        expect(loadConfig(path).contactChoices).toStrictEqual({ 'p-a': { name: 'c1', own: 'x.png' } });
+        peopleChoose(['p-a', 'p-b'], { name: null, own: null }, path);
+        expect(loadConfig(path).contactChoices).toStrictEqual({});
+        expect(readFileSync(path, 'utf8')).not.toContain('contactChoices');
+        expect(() => parseConfig('{"contactChoices": []}')).toThrow(/contactChoices/);
+        expect(() => parseConfig('{"contactChoices": {"p": {"own": "../x.png"}}}')).toThrow(/contactChoices/);
+        expect(() => parseConfig('{"contactChoices": {"p": {"name": 3}}}')).toThrow(/contactChoices/);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
     });
   });
 };

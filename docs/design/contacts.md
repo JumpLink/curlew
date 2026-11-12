@@ -205,6 +205,12 @@ address; a mail thread with oneself stays an ordinary mail thread — fail close
   and from manual merges in selection mode; unmerge in the profile view.
 - **Phase 3**: the merge assistant.
 - **Phase 4**: pinning ("Automatic" / "Only via …").
+- **Phase 5**: the contact page — the chats a merged contact is made of, the choice of whose
+  name and picture to show, and an own picture for any contact. Local presentation in
+  `config.contactChoices`, keyed by the smallest participant id of the person set so a choice
+  survives a later merge; own pictures are 256 px squares in the data directory. Precedence:
+  own picture, then the chosen part, then the newest chat whose network can serve a picture.
+  No agent tool and no DTO carries a choice; the address book is never written.
 
 Every user-facing string above goes through gettext: English msgid, German catalogue from
 the first string — "Notiz an mich", "Über Telegram gesendet", "Weiter über Telegram",

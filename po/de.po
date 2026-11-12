@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-12 10:56+0100\n"
+"POT-Creation-Date: 2026-11-12 15:41+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1791,8 +1791,8 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
-#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:155
-#: app/src/window/window.ts:72 app/src/window/window.ts:87
+#: app/src/window/about.ts:14 app/src/window/conversation-view.ts:158
+#: app/src/window/window.ts:80 app/src/window/window.ts:95
 msgid "Curlew"
 msgstr "Curlew"
 
@@ -1845,7 +1845,7 @@ msgstr ""
 "deines Kontos."
 
 #: app/src/window/account-add.ts:288 app/src/window/accounts-model.ts:80
-#: app/src/window/conversation-list-model.ts:113
+#: app/src/window/conversation-list-model.ts:121
 msgid "Mail"
 msgstr "E-Mail"
 
@@ -1908,9 +1908,9 @@ msgstr ""
 #: app/src/window/account-remove-model.ts:24
 #: app/src/window/account-remove-model.ts:37
 #: app/src/window/agent-access-page.ts:234
-#: app/src/window/conversation-list.ts:409
-#: app/src/window/conversation-list.ts:495
-#: app/src/window/conversation-view.ts:674
+#: app/src/window/conversation-list.ts:404
+#: app/src/window/conversation-list.ts:490
+#: app/src/window/conversation-view.ts:687
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -1941,7 +1941,7 @@ msgid "Could not start the background service: {reason}"
 msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
 #: app/src/window/accounts-dialog.ts:61 app/src/window/accounts-page.ts:187
-#: app/src/window/window.ts:100
+#: app/src/window/window.ts:108
 msgid "Accounts"
 msgstr "Konten"
 
@@ -2011,7 +2011,7 @@ msgstr ""
 msgid "Start"
 msgstr "Starten"
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:103
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:111
 msgid "Agent access"
 msgstr "Agentenzugriff"
 
@@ -2246,7 +2246,7 @@ msgid "Could not fetch the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
 #: app/src/window/attachment-view.ts:149 app/src/window/attachment-view.ts:158
-#: app/src/window/conversation-list-model.ts:428
+#: app/src/window/conversation-list-model.ts:436
 #: app/src/window/conversation-model.ts:281
 #: app/src/window/conversation-model.ts:286
 msgid "Attachment"
@@ -2311,119 +2311,174 @@ msgstr "Dateien anhängen"
 msgid "The picture could not be saved"
 msgstr "Das Bild konnte nicht gespeichert werden"
 
-#: app/src/window/conversation-list-model.ts:114
+#: app/src/window/contact-page.ts:90
+msgid "Contact"
+msgstr "Kontakt"
+
+#: app/src/window/contact-page.ts:109
+msgid "Combined from {count} chat"
+msgid_plural "Combined from {count} chats"
+msgstr[0] "Aus {count} Chat zusammengeführt"
+msgstr[1] "Aus {count} Chats zusammengeführt"
+
+#: app/src/window/contact-page.ts:117
+msgid "Choose Picture…"
+msgstr "Bild wählen …"
+
+#: app/src/window/contact-page.ts:119
+msgid "Remove Picture"
+msgstr "Bild entfernen"
+
+#: app/src/window/contact-page.ts:162
+msgid "Name"
+msgstr "Name"
+
+#: app/src/window/contact-page.ts:163
+msgid "Picture"
+msgstr "Bild"
+
+#: app/src/window/contact-page.ts:170
+#: app/src/window/conversation-list-model.ts:383
+msgid "Automatic"
+msgstr "Automatisch"
+
+#: app/src/window/contact-page.ts:171
+msgid "The newest chat decides"
+msgstr "Der neueste Chat entscheidet"
+
+#: app/src/window/contact-page.ts:197 app/src/window/conversation-list.ts:412
+msgid "Separate"
+msgstr "Trennen"
+
+#: app/src/window/contact-page.ts:198
+msgid "Show these chats as separate people again"
+msgstr "Diese Chats wieder als getrennte Personen zeigen"
+
+#: app/src/window/contact-page.ts:212
+msgid "Images"
+msgstr "Bilder"
+
+#: app/src/window/contact-page.ts:216
+msgid "Choose a Picture"
+msgstr "Bild wählen"
+
+#: app/src/window/contact-page.ts:229
+msgid "This file is not a picture"
+msgstr "Diese Datei ist kein Bild"
+
+#: app/src/window/contact-page.ts:260
+msgid "Your own picture is shown instead"
+msgstr "Stattdessen wird dein eigenes Bild gezeigt"
+
+#: app/src/window/conversation-list-model.ts:122
 msgid "XMPP"
 msgstr "XMPP"
 
-#: app/src/window/conversation-list-model.ts:115
+#: app/src/window/conversation-list-model.ts:123
 msgid "Signal"
 msgstr "Signal"
 
-#: app/src/window/conversation-list-model.ts:116
+#: app/src/window/conversation-list-model.ts:124
 msgid "Matrix"
 msgstr "Matrix"
 
-#: app/src/window/conversation-list-model.ts:117
+#: app/src/window/conversation-list-model.ts:125
 msgid "Telegram"
 msgstr "Telegram"
 
-#: app/src/window/conversation-list-model.ts:118
+#: app/src/window/conversation-list-model.ts:126
 msgid "WhatsApp"
 msgstr "WhatsApp"
 
-#: app/src/window/conversation-list-model.ts:150
+#: app/src/window/conversation-list-model.ts:158
 msgid "Yesterday"
 msgstr "Gestern"
 
-#: app/src/window/conversation-list-model.ts:218
-#: app/src/window/conversation-list-model.ts:566
+#: app/src/window/conversation-list-model.ts:226
+#: app/src/window/conversation-list-model.ts:620
 msgid "Note to self"
 msgstr "Notiz an mich"
 
-#: app/src/window/conversation-list-model.ts:236
+#: app/src/window/conversation-list-model.ts:244
 msgid "Unnamed group · {count} member"
 msgid_plural "Unnamed group · {count} members"
 msgstr[0] "Unbenannte Gruppe · {count} Mitglied"
 msgstr[1] "Unbenannte Gruppe · {count} Mitglieder"
 
-#: app/src/window/conversation-list-model.ts:240
+#: app/src/window/conversation-list-model.ts:248
 msgid "Unnamed conversation"
 msgstr "Unbenannte Unterhaltung"
 
-#: app/src/window/conversation-list-model.ts:312
+#: app/src/window/conversation-list-model.ts:320
 msgid "Only via {protocol}, which has no address for this person"
 msgstr "Nur über {protocol}, das keine Adresse für diese Person hat"
 
-#: app/src/window/conversation-list-model.ts:316
+#: app/src/window/conversation-list-model.ts:324
 msgid "Encrypted rooms are not supported yet"
 msgstr "Verschlüsselte Räume werden noch nicht unterstützt"
 
-#: app/src/window/conversation-list-model.ts:371
-#: app/src/window/conversation-list-model.ts:384
+#: app/src/window/conversation-list-model.ts:379
+#: app/src/window/conversation-list-model.ts:392
 msgid "Only via {protocol}"
 msgstr "Nur über {protocol}"
 
-#: app/src/window/conversation-list-model.ts:375
-msgid "Automatic"
-msgstr "Automatisch"
-
-#: app/src/window/conversation-list-model.ts:431
+#: app/src/window/conversation-list-model.ts:439
 msgid "You: {text}"
 msgstr "Du: {text}"
 
-#: app/src/window/conversation-list-model.ts:433
+#: app/src/window/conversation-list-model.ts:441
 msgid "{name}: {text}"
 msgstr "{name}: {text}"
 
-#: app/src/window/conversation-list-model.ts:463
+#: app/src/window/conversation-list-model.ts:471
 msgid "Public room · {count} member"
 msgid_plural "Public room · {count} members"
 msgstr[0] "Öffentlicher Raum · {count} Mitglied"
 msgstr[1] "Öffentlicher Raum · {count} Mitglieder"
 
-#: app/src/window/conversation-list-model.ts:464
+#: app/src/window/conversation-list-model.ts:472
 msgid "Room · {count} member"
 msgid_plural "Room · {count} members"
 msgstr[0] "Raum · {count} Mitglied"
 msgstr[1] "Raum · {count} Mitglieder"
 
-#: app/src/window/conversation-list-model.ts:673
+#: app/src/window/conversation-list-model.ts:728
 msgid "People"
 msgstr "Personen"
 
-#: app/src/window/conversation-list-model.ts:674
+#: app/src/window/conversation-list-model.ts:729
 msgid "Groups"
 msgstr "Gruppen"
 
-#: app/src/window/conversation-list.ts:219
+#: app/src/window/conversation-list.ts:214
 msgid "Add an account"
 msgstr "Konto hinzufügen"
 
-#: app/src/window/conversation-list.ts:227
+#: app/src/window/conversation-list.ts:222
 msgid "Search conversations"
 msgstr "Unterhaltungen durchsuchen"
 
-#: app/src/window/conversation-list.ts:235
+#: app/src/window/conversation-list.ts:230
 msgid "Filter conversations"
 msgstr "Unterhaltungen filtern"
 
-#: app/src/window/conversation-list.ts:298
+#: app/src/window/conversation-list.ts:293
 msgid "Protocols"
 msgstr "Protokolle"
 
-#: app/src/window/conversation-list.ts:321
+#: app/src/window/conversation-list.ts:316
 msgid "Clear filters"
 msgstr "Filter zurücksetzen"
 
-#: app/src/window/conversation-list.ts:343
+#: app/src/window/conversation-list.ts:338
 msgid "No conversations yet"
 msgstr "Noch keine Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:343
+#: app/src/window/conversation-list.ts:338
 msgid "No matches"
 msgstr "Keine Treffer"
 
-#: app/src/window/conversation-list.ts:346
+#: app/src/window/conversation-list.ts:341
 msgid ""
 "Conversations appear here after Curlew has synced an account. Run \"curlew "
 "sync\" first."
@@ -2431,34 +2486,30 @@ msgstr ""
 "Unterhaltungen erscheinen hier, sobald Curlew ein Konto synchronisiert hat. "
 "Führe zuerst „curlew sync“ aus."
 
-#: app/src/window/conversation-list.ts:347
+#: app/src/window/conversation-list.ts:342
 msgid "Nothing fits the search and filters."
 msgstr "Nichts passt zur Suche und den Filtern."
 
-#: app/src/window/conversation-list.ts:393
+#: app/src/window/conversation-list.ts:388
 msgid "Search"
 msgstr "Suchen"
 
-#: app/src/window/conversation-list.ts:398
+#: app/src/window/conversation-list.ts:393
 #: app/src/window/new-conversation.ts:24
 msgid "New conversation"
 msgstr "Neue Unterhaltung"
 
-#: app/src/window/conversation-list.ts:415
-#: app/src/window/conversation-list.ts:496
+#: app/src/window/conversation-list.ts:410
+#: app/src/window/conversation-list.ts:491
 #: app/src/window/merge-assistant.ts:116
 msgid "Merge"
 msgstr "Zusammenführen"
 
-#: app/src/window/conversation-list.ts:417
-msgid "Separate"
-msgstr "Trennen"
-
-#: app/src/window/conversation-list.ts:492
+#: app/src/window/conversation-list.ts:487
 msgid "Merge these people?"
 msgstr "Diese Personen zusammenführen?"
 
-#: app/src/window/conversation-list.ts:493
+#: app/src/window/conversation-list.ts:488
 msgid ""
 "Their chats become one conversation. Nothing is deleted, and you can "
 "separate them again."
@@ -2466,23 +2517,23 @@ msgstr ""
 "Ihre Chats werden zu einer Unterhaltung. Nichts wird gelöscht, und du kannst "
 "sie wieder trennen."
 
-#: app/src/window/conversation-list.ts:519
+#: app/src/window/conversation-list.ts:514
 msgid "Review"
 msgstr "Prüfen"
 
-#: app/src/window/conversation-list.ts:526
+#: app/src/window/conversation-list.ts:521
 #: app/src/window/preferences-dialog.ts:40
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:548
+#: app/src/window/conversation-list.ts:543
 msgid "{count} possible duplicate"
 msgid_plural "{count} possible duplicates"
 msgstr[0] "{count} mögliches Duplikat"
 msgstr[1] "{count} mögliche Duplikate"
 
 #: app/src/window/conversation-model.ts:115
-#: app/src/window/conversation-view.ts:1271
+#: app/src/window/conversation-view.ts:1286
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -2518,7 +2569,7 @@ msgstr[1] "Du und {count} weitere Personen"
 
 #: app/src/window/conversation-model.ts:322
 #: app/src/window/conversation-model.ts:335
-#: app/src/window/conversation-view.ts:658
+#: app/src/window/conversation-view.ts:671
 msgid "You"
 msgstr "Du"
 
@@ -2528,128 +2579,132 @@ msgid_plural "{count} people"
 msgstr[0] "{count} Person"
 msgstr[1] "{count} Personen"
 
-#: app/src/window/conversation-view.ts:161
+#: app/src/window/conversation-view.ts:164
 msgid "Choose how to reach this person"
 msgstr "Erreichbarkeit dieser Person wählen"
 
-#: app/src/window/conversation-view.ts:183
+#: app/src/window/conversation-view.ts:177
+msgid "Contact details"
+msgstr "Kontaktdetails"
+
+#: app/src/window/conversation-view.ts:195
 msgid "No messages yet"
 msgstr "Noch keine Nachrichten"
 
-#: app/src/window/conversation-view.ts:192
-#: app/src/window/conversation-view.ts:442
+#: app/src/window/conversation-view.ts:204
+#: app/src/window/conversation-view.ts:455
 msgid "Write a message"
 msgstr "Nachricht schreiben"
 
-#: app/src/window/conversation-view.ts:204
+#: app/src/window/conversation-view.ts:216
 msgid "Send message"
 msgstr "Nachricht senden"
 
-#: app/src/window/conversation-view.ts:216
+#: app/src/window/conversation-view.ts:228
 msgid "Cancel reply"
 msgstr "Antwort abbrechen"
 
-#: app/src/window/conversation-view.ts:229
+#: app/src/window/conversation-view.ts:241
 msgid "Cancel editing"
 msgstr "Bearbeiten abbrechen"
 
-#: app/src/window/conversation-view.ts:278
+#: app/src/window/conversation-view.ts:290
 msgid "Conversation"
 msgstr "Unterhaltung"
 
-#: app/src/window/conversation-view.ts:408
+#: app/src/window/conversation-view.ts:421
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 "{protocol} kann keine Dateien senden; die angehängten Dateien wurden entfernt"
 
-#: app/src/window/conversation-view.ts:460
+#: app/src/window/conversation-view.ts:473
 msgid "Send via {protocol}"
 msgstr "Senden über {protocol}"
 
-#: app/src/window/conversation-view.ts:565
+#: app/src/window/conversation-view.ts:578
 msgid "Show the quoted message"
 msgstr "Zitierte Nachricht anzeigen"
 
-#: app/src/window/conversation-view.ts:572
-#: app/src/window/conversation-view.ts:604
+#: app/src/window/conversation-view.ts:585
+#: app/src/window/conversation-view.ts:617
 msgid "Reply to {author}: {excerpt}"
 msgstr "Antwort auf {author}: {excerpt}"
 
-#: app/src/window/conversation-view.ts:587
+#: app/src/window/conversation-view.ts:600
 msgid "The quoted message is no longer in the history"
 msgstr "Die zitierte Nachricht ist nicht mehr im Verlauf"
 
-#: app/src/window/conversation-view.ts:629
+#: app/src/window/conversation-view.ts:642
 msgid "Reaction not sent: {error}"
 msgstr "Reaktion nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:657
+#: app/src/window/conversation-view.ts:670
 msgid "Edit message"
 msgstr "Nachricht bearbeiten"
 
-#: app/src/window/conversation-view.ts:661
+#: app/src/window/conversation-view.ts:674
 msgid "Editing your message: {excerpt}"
 msgstr "Eigene Nachricht bearbeiten: {excerpt}"
 
-#: app/src/window/conversation-view.ts:669
+#: app/src/window/conversation-view.ts:682
 msgid "Delete message?"
 msgstr "Nachricht löschen?"
 
-#: app/src/window/conversation-view.ts:670
+#: app/src/window/conversation-view.ts:683
 msgid "This will remove the message for everyone in the chat."
 msgstr "Dadurch wird die Nachricht für alle im Chat entfernt."
 
-#: app/src/window/conversation-view.ts:675
+#: app/src/window/conversation-view.ts:688
 msgid "Delete for everyone"
 msgstr "Für alle löschen"
 
-#: app/src/window/conversation-view.ts:692
+#: app/src/window/conversation-view.ts:705
 msgid "Message not deleted: {error}"
 msgstr "Nachricht nicht gelöscht: {error}"
 
-#: app/src/window/conversation-view.ts:753
+#: app/src/window/conversation-view.ts:766
 msgid "Reply"
 msgstr "Antworten"
 
-#: app/src/window/conversation-view.ts:754
+#: app/src/window/conversation-view.ts:767
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: app/src/window/conversation-view.ts:755
+#: app/src/window/conversation-view.ts:768
 msgid "Delete"
 msgstr "Löschen"
 
-#: app/src/window/conversation-view.ts:756
+#: app/src/window/conversation-view.ts:769
 msgid "Copy"
 msgstr "Kopieren"
 
-#: app/src/window/conversation-view.ts:872
+#: app/src/window/conversation-view.ts:885
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:914
-#: app/src/window/conversation-view.ts:1048
+#: app/src/window/conversation-view.ts:927
+#: app/src/window/conversation-view.ts:1063
 msgid "edited"
 msgstr "bearbeitet"
 
-#: app/src/window/conversation-view.ts:924
-#: app/src/window/conversation-view.ts:925
+#: app/src/window/conversation-view.ts:937
+#: app/src/window/conversation-view.ts:938
 msgid "Read"
 msgstr "Gelesen"
 
-#: app/src/window/conversation-view.ts:1135
+#: app/src/window/conversation-view.ts:1150
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:1236
+#: app/src/window/conversation-view.ts:1251
 msgid "Message not edited: {error}"
 msgstr "Nachricht nicht bearbeitet: {error}"
 
-#: app/src/window/conversation-view.ts:1283
+#: app/src/window/conversation-view.ts:1298
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:1286
+#: app/src/window/conversation-view.ts:1301
 msgid "Retry"
 msgstr "Erneut versuchen"
 
@@ -2810,7 +2865,7 @@ msgstr "Chat-Hintergrund"
 msgid "A quiet pattern behind the messages"
 msgstr "Ein dezentes Muster hinter den Nachrichten"
 
-#: app/src/window/preferences-dialog.ts:80 app/src/window/window.ts:102
+#: app/src/window/preferences-dialog.ts:80 app/src/window/window.ts:110
 msgid "Preferences"
 msgstr "Einstellungen"
 
@@ -2820,31 +2875,31 @@ msgid_plural "{count} selected"
 msgstr[0] "{count} ausgewählt"
 msgstr[1] "{count} ausgewählt"
 
-#: app/src/window/window.ts:66
+#: app/src/window/window.ts:74
 msgid "Select a conversation"
 msgstr "Unterhaltung auswählen"
 
-#: app/src/window/window.ts:67
+#: app/src/window/window.ts:75
 msgid "Pick a conversation from the list."
 msgstr "Wähle eine Unterhaltung aus der Liste."
 
-#: app/src/window/window.ts:101
+#: app/src/window/window.ts:109
 msgid "Merge contacts…"
 msgstr "Kontakte zusammenführen…"
 
-#: app/src/window/window.ts:105
+#: app/src/window/window.ts:113
 msgid "About Curlew"
 msgstr "Über Curlew"
 
-#: app/src/window/window.ts:106
+#: app/src/window/window.ts:114
 msgid "Quit"
 msgstr "Beenden"
 
-#: app/src/window/window.ts:121
+#: app/src/window/window.ts:151
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:297
+#: app/src/window/window.ts:328
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 
@@ -2970,31 +3025,36 @@ msgid ""
 msgstr ""
 "der Matrix-Anhang kam mit {actual} Bytes an, angekündigt waren {announced}"
 
-#: packages/matrix/src/backend.ts:59
+#: packages/matrix/src/avatars.ts:95 packages/telegram/src/avatars.ts:32
+#: packages/whatsapp/src/avatars.ts:35 packages/xmpp/src/avatars.ts:29
+msgid "the picture is larger than the limit of {limit} bytes"
+msgstr "das Bild ist größer als das Limit von {limit} Bytes"
+
+#: packages/matrix/src/backend.ts:61
 msgid "log in again with `curlew accounts add matrix`"
 msgstr "melde dich mit `curlew accounts add matrix` neu an"
 
-#: packages/matrix/src/backend.ts:64
+#: packages/matrix/src/backend.ts:66
 msgid "Homeserver (URL like https://matrix.example.org, or the server name)"
 msgstr "Homeserver (URL wie https://matrix.example.org oder der Servername)"
 
-#: packages/matrix/src/backend.ts:65
+#: packages/matrix/src/backend.ts:67
 msgid "Matrix user (@name:example.org)"
 msgstr "Matrix-Benutzer (@name:example.org)"
 
-#: packages/matrix/src/backend.ts:66 packages/xmpp/src/backend.ts:51
+#: packages/matrix/src/backend.ts:68 packages/xmpp/src/backend.ts:53
 msgid "Password"
 msgstr "Passwort"
 
-#: packages/matrix/src/backend.ts:138
+#: packages/matrix/src/backend.ts:140
 msgid "no Matrix account {account} — {hint}"
 msgstr "Kein Matrix-Konto {account} — {hint}"
 
-#: packages/matrix/src/backend.ts:145
+#: packages/matrix/src/backend.ts:147
 msgid "the Matrix account file {account} is incomplete — {hint}"
 msgstr "Die Matrix-Kontodatei {account} ist unvollständig — {hint}"
 
-#: packages/matrix/src/backend.ts:194
+#: packages/matrix/src/backend.ts:208
 msgid "the Matrix account {account} is not usable ({reason}) — {hint}"
 msgstr "Das Matrix-Konto {account} ist nicht nutzbar ({reason}) — {hint}"
 
@@ -3357,10 +3417,6 @@ msgid ""
 msgstr ""
 "der Telegram-Anhang kam mit {actual} Bytes an, angekündigt waren {announced}"
 
-#: packages/telegram/src/avatars.ts:32
-msgid "the picture is larger than the limit of {limit} bytes"
-msgstr "das Bild ist größer als das Limit von {limit} Bytes"
-
 #: packages/telegram/src/backend.ts:43
 msgid "log in again with `curlew accounts add telegram`"
 msgstr "melde dich mit `curlew accounts add telegram` neu an"
@@ -3403,7 +3459,7 @@ msgstr "keine Telegram-Sitzung für {account} — {hint}"
 msgid "the Telegram session {account} is not usable ({reason}) — {hint}"
 msgstr "die Telegram-Sitzung {account} ist nicht nutzbar ({reason}) — {hint}"
 
-#: packages/telegram/src/client.ts:224
+#: packages/telegram/src/client.ts:229
 msgid ""
 "Telegram asks for an email login setup first — finish it in an official app"
 msgstr ""
@@ -3412,15 +3468,15 @@ msgstr ""
 
 #. TRANSLATORS: {channel} is Telegram's own word for the route it used ("sms", "app", …),
 #. and arrives untranslated from the server.
-#: packages/telegram/src/client.ts:228
+#: packages/telegram/src/client.ts:233
 msgid "Telegram sent the login code via {channel}."
 msgstr "Telegram hat den Anmeldecode über {channel} geschickt."
 
-#: packages/telegram/src/client.ts:232
+#: packages/telegram/src/client.ts:237
 msgid "That code was not accepted — try again."
 msgstr "Dieser Code wurde nicht akzeptiert — versuche es noch einmal."
 
-#: packages/telegram/src/client.ts:232
+#: packages/telegram/src/client.ts:237
 msgid "Wrong password — try again."
 msgstr "Falsches Passwort — versuche es noch einmal."
 
@@ -3583,42 +3639,46 @@ msgstr ""
 msgid "the WhatsApp attachment does not match its announced checksum"
 msgstr "der WhatsApp-Anhang passt nicht zur angekündigten Prüfsumme"
 
-#: packages/whatsapp/src/backend.ts:141
+#: packages/whatsapp/src/backend.ts:143
 msgid "no WhatsApp account {account}"
 msgstr "kein WhatsApp-Konto {account}"
 
-#: packages/whatsapp/src/backend.ts:163
+#: packages/whatsapp/src/backend.ts:165
 msgid "no WhatsApp session for {account} — {hint}"
 msgstr "Keine WhatsApp-Sitzung für {account} — {hint}"
 
-#: packages/whatsapp/src/backend.ts:173
+#: packages/whatsapp/src/backend.ts:175
 msgid "the WhatsApp session {account} was never linked — {hint}"
 msgstr "Die WhatsApp-Sitzung {account} wurde nie verknüpft — {hint}"
 
-#: packages/whatsapp/src/backend.ts:278
+#: packages/whatsapp/src/backend.ts:280
 msgid "the WhatsApp connection for {account} is not open — nothing was sent"
 msgstr ""
 "Die WhatsApp-Verbindung für {account} ist nicht offen — es wurde nichts "
 "gesendet"
 
-#: packages/whatsapp/src/client.ts:152
+#: packages/whatsapp/src/backend.ts:344
+msgid "the WhatsApp connection is not open — no pictures"
+msgstr "Die WhatsApp-Verbindung ist nicht offen — keine Bilder"
+
+#: packages/whatsapp/src/client.ts:163
 msgid "the WhatsApp connection closed: {reason}"
 msgstr "Die WhatsApp-Verbindung wurde geschlossen: {reason}"
 
-#: packages/whatsapp/src/client.ts:193 packages/whatsapp/src/client.ts:214
+#: packages/whatsapp/src/client.ts:225 packages/whatsapp/src/client.ts:246
 msgid "WhatsApp did not take the message — nothing was sent"
 msgstr "WhatsApp hat die Nachricht nicht angenommen — es wurde nichts gesendet"
 
-#: packages/whatsapp/src/client.ts:222
+#: packages/whatsapp/src/client.ts:254
 msgid "WhatsApp did not take the reaction — nothing was sent"
 msgstr "WhatsApp hat die Reaktion nicht angenommen — es wurde nichts gesendet"
 
-#: packages/whatsapp/src/client.ts:232
+#: packages/whatsapp/src/client.ts:264
 msgid "WhatsApp did not take the edit — nothing was sent"
 msgstr ""
 "WhatsApp hat die Bearbeitung nicht angenommen — es wurde nichts gesendet"
 
-#: packages/whatsapp/src/client.ts:237
+#: packages/whatsapp/src/client.ts:269
 msgid "WhatsApp did not take the deletion — nothing was sent"
 msgstr "WhatsApp hat die Löschung nicht angenommen — es wurde nichts gesendet"
 
@@ -3835,11 +3895,11 @@ msgstr "der verschlüsselte Anhang ist zu kurz"
 msgid "the encrypted attachment could not be verified"
 msgstr "der verschlüsselte Anhang konnte nicht verifiziert werden"
 
-#: packages/xmpp/src/backend.ts:50
+#: packages/xmpp/src/backend.ts:52
 msgid "XMPP address (name@example.org)"
 msgstr "XMPP-Adresse (name@example.org)"
 
-#: packages/xmpp/src/backend.ts:53
+#: packages/xmpp/src/backend.ts:55
 msgid ""
 "Server address — empty to discover it (e.g. xmpps://xmpp.example.org:5223, "
 "wss://…)"

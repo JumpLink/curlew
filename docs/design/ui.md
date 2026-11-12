@@ -75,6 +75,12 @@ protocol badges. One **Verify** section with the same three states, whatever the
 cross-signing). Shared media, common groups and mute live in the same place. Groups and channels
 get the same view: topic, members, settings.
 
+**Built so far** (`contact-page.ts`, an `Adw.Dialog` opened from the avatar in the chat header): the
+hero picture and name, "Combined from N chats", the Name and Picture choices for a merged
+contact (an *Automatic* row plus one row per part), a picture of their own for any direct
+contact, and *Separate* for a merge made by hand. Verify, shared media and common groups are
+still open. Groups and the note to self have no page.
+
 ## Main window: one combined list
 
 All contacts, channels and groups of every messenger in **one** list.

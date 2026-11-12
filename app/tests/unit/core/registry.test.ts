@@ -60,6 +60,7 @@ export default async () => {
           mergedPeople: [],
           declinedMerges: [],
           pins: {},
+          contactChoices: {},
           unknown: {},
         }).length,
       ).toBe(0);
@@ -74,6 +75,7 @@ export default async () => {
         mergedPeople: [],
         declinedMerges: [],
         pins: {},
+        contactChoices: {},
         unknown: {},
       };
       expect(registry.enabled(off).length).toBe(0);
@@ -113,6 +115,7 @@ export default async () => {
         mergedPeople: [],
         declinedMerges: [],
         pins: {},
+        contactChoices: {},
         unknown: {},
       };
       expect(registry.enabled(config).length).toBe(0);
@@ -195,6 +198,7 @@ export default async () => {
             mergedPeople: [],
             declinedMerges: [],
             pins: {},
+            contactChoices: {},
             unknown: {},
           },
           path,

@@ -83,6 +83,12 @@ const application = new AdwaitaApp({
         GLib.PRIORITY_DEFAULT,
         () => (window.activate_action('agent-access', null), GLib.SOURCE_REMOVE),
       );
+    if (process.env.CURLEW_WINDOW_OPEN_CONTACT === '1')
+      GLib.timeout_add(
+        GLib.PRIORITY_DEFAULT,
+        1500,
+        () => (window.activate_action('open-contact', null), GLib.SOURCE_REMOVE),
+      );
     if (process.env.CURLEW_WINDOW_OPEN_PREFERENCES === '1')
       GLib.idle_add(
         GLib.PRIORITY_DEFAULT,

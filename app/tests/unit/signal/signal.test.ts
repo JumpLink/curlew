@@ -243,6 +243,7 @@ export default async () => {
             mergedPeople: [],
             declinedMerges: [],
             pins: {},
+            contactChoices: {},
             unknown: {},
           })
           .find((e) => e.name === 'signal');

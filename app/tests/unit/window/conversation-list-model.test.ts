@@ -16,6 +16,7 @@ import {
   matches,
   previewText,
   withPreviews,
+  pictureSource,
   mergePeople,
   protocolChoices,
   protocolIcon,
@@ -256,6 +257,104 @@ export default async () => {
         expect(matches(merged!, only('telegram'))).toBe(true);
         expect(matches(merged!, only('matrix'))).toBe(false);
         expect(backendChoices([merged!])).toStrictEqual(['signal', 'telegram']);
+      });
+    });
+
+    describe('how a contact looks', () => {
+      const chat = (id: string, backend: string, name: string, at: string) =>
+        conversation({
+          id,
+          backend,
+          accountId: `${backend}-1`,
+          lastMessageAt: at,
+          participants: [
+            {
+              id: 'p-ana',
+              displayName: name,
+              addresses: [{ kind: backend === 'telegram' ? 'telegram' : 'signal', value: `${id}-addr` }],
+              contactUid: null,
+            },
+          ],
+        });
+      const rows = () => [
+        chat('c1', 'telegram', 'Ana E.', '2026-01-02T10:00:00Z'),
+        chat('c2', 'signal', 'Ana Example', '2026-01-01T10:00:00Z'),
+      ];
+      const can = () => true;
+
+      it('shows the name and picture of the part the person chose', () => {
+        const [plain] = toEntries(rows());
+        expect(plain!.title).toBe('Ana E.');
+        expect(plain!.picture).toBeUndefined();
+        const [row] = toEntries(
+          rows(),
+          true,
+          new Map(),
+          new Map(),
+          [],
+          {},
+          { 'p-ana': { name: 'c2', picture: 'c2' } },
+        );
+        expect(row!.title).toBe('Ana Example');
+        expect(row!.picture).toStrictEqual({ from: 'c2' });
+        expect(pictureSource(row!, can)).toStrictEqual({
+          kind: 'chat',
+          entry: row!.members.find((m) => m.id === 'c2'),
+        });
+      });
+
+      it('lets an own picture beat a chosen part, and ignores a part that is gone', () => {
+        const [own] = toEntries(
+          rows(),
+          true,
+          new Map(),
+          new Map(),
+          [],
+          {},
+          {
+            'p-ana': { picture: 'c2', own: 'x.png' },
+          },
+        );
+        expect(pictureSource(own!, can)).toStrictEqual({ kind: 'own', file: 'x.png' });
+        const [gone] = toEntries(
+          rows(),
+          true,
+          new Map(),
+          new Map(),
+          [],
+          {},
+          {
+            'p-ana': { name: 'c9', picture: 'c9' },
+          },
+        );
+        expect(gone!.title).toBe('Ana E.');
+        expect(gone!.picture).toBeUndefined();
+      });
+
+      it('gives a single contact an own picture too', () => {
+        const [single] = toEntries(
+          [rows()[0]!],
+          true,
+          new Map(),
+          new Map(),
+          [],
+          {},
+          {
+            'p-ana': { own: 'y.png' },
+          },
+        );
+        expect(single!.members).toStrictEqual([]);
+        expect(pictureSource(single!, can)).toStrictEqual({ kind: 'own', file: 'y.png' });
+      });
+
+      it('defaults to the newest part whose network can serve a picture', () => {
+        const [row] = toEntries(rows());
+        expect(pictureSource(row!, can)).toMatchObject({ kind: 'chat', entry: { id: 'c1' } });
+        expect(pictureSource(row!, (b) => b === 'signal')).toMatchObject({
+          kind: 'chat',
+          entry: { id: 'c2' },
+        });
+        expect(pictureSource(row!, () => false)).toBeNull();
       });
     });
 

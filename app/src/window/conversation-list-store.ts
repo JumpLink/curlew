@@ -61,7 +61,7 @@ export function loadConversationEntries(dbPath = indexDbPath(), cfgPath = config
   try {
     const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
     try {
-      const { senders, ui, mergedPeople, pins } = loadConfig(cfgPath);
+      const { senders, ui, mergedPeople, pins, contactChoices } = loadConfig(cfgPath);
       const entries = toEntries(
         [
           ...listConversations(db, { limit: CHAT_LIMIT, excludeBackend: 'mail', overrides: senders }),
@@ -77,6 +77,7 @@ export function loadConversationEntries(dbPath = indexDbPath(), cfgPath = config
         listChatRooms(db, 'matrix'),
         mergedPeople,
         pins,
+        contactChoices,
       );
       // The text of the newest message is read here and kept on the row: the `Conversation` the
       // agents get stays free of other people's words.
