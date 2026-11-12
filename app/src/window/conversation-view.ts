@@ -9,6 +9,8 @@ import { _, fmt } from '@curlew/protocol';
 import type { ConversationMessage, MessageReaction, ReplyTarget } from '@curlew/protocol';
 import type { MessageCursor } from '@curlew/store';
 
+import { hasContactPage } from './contact-page.ts';
+import { showPicture } from './contact-picture.ts';
 import type { ListEntry } from './conversation-list-model.ts';
 import {
   canSend,
@@ -124,6 +126,7 @@ export function createConversationView(
   loadQuoted: (entry: ListEntry, remoteIds: readonly string[]) => ShownMessage[],
   openMedia: (source: AttachmentSource, kind: AttachmentKind, album?: readonly AlbumItem[]) => void,
   onRoute: (entry: ListEntry, backend: string | null) => void,
+  onContact: (entry: ListEntry) => void,
 ): ConversationView {
   let entry: ListEntry | null = null;
   // The array is the caller's: a sent message is pushed onto it, an older page spliced in front.
@@ -169,6 +172,15 @@ export function createConversationView(
   });
   route.set_popover(new Gtk.Popover({ autohide: true, child: routeBox }));
   header.pack_end(route);
+  // The person's picture opens their contact page.
+  const contactAvatar = new Adw.Avatar({ size: 32, showInitials: true });
+  const contact = new Gtk.Button({ child: contactAvatar, tooltipText: _('Contact details'), visible: false });
+  contact.add_css_class('flat');
+  contact.add_css_class('circular');
+  contact.connect('clicked', () => {
+    if (entry) onContact(entry);
+  });
+  header.pack_start(contact);
   const history = new Gtk.ListBox({ selectionMode: Gtk.SelectionMode.NONE });
   history.add_css_class('navigation-sidebar');
   const scroller = new Gtk.ScrolledWindow({ hscrollbarPolicy: Gtk.PolicyType.NEVER, vexpand: true });
@@ -1312,6 +1324,10 @@ export function createConversationView(
       accountLabels = nextLabels;
       title.set_title(nextEntry.title);
       title.set_subtitle(entryProtocolSubtitle(nextEntry));
+      contact.set_visible(hasContactPage(nextEntry));
+      contactAvatar.set_text(nextEntry.title);
+      contactAvatar.set_custom_image(null);
+      showPicture(contactAvatar, nextEntry);
       history.remove_all();
       built.clear();
       empty.set_visible(nextMessages.length === 0);

@@ -9,6 +9,11 @@
       "recreate": "`gjsify link <gjsify-checkout>` (ADR 0065), danach `gjsify install`; werkstatt-Konvention: Checkout ~/Projekte/.worktrees/gjsify-dev. Per .git/info/exclude ignoriert, nie committet."
     },
     {
+      "path": "$XDG_DATA_HOME/curlew/contact-pictures",
+      "class": "state",
+      "why": "Pictures the person picked for contacts, scaled copies of files that may no longer exist elsewhere. Which contact uses which file is in config.json (contactChoices)."
+    },
+    {
       "path": "$XDG_DATA_HOME/curlew/writes.log",
       "class": "state",
       "why": "Nicht rekonstruierbar: Audit-Zeilen (Zeit, Capability, Ziel, Frontend, Id) jedes Schreibvorgangs, nie Nachrichtentext. Nur sichern, nicht wiederherstellbar aus dem Index."

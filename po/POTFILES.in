@@ -34,6 +34,7 @@ app/src/core/backends/builtin.ts
 app/src/core/backends/context.ts
 app/src/core/backends/registry.ts
 app/src/core/config.ts
+app/src/core/contact-choices.ts
 app/src/core/grants.ts
 app/src/core/lib/access-notifications.ts
 app/src/core/lib/appearance.ts
@@ -117,6 +118,8 @@ app/src/window/chat-background.ts
 app/src/window/chat-doodles.ts
 app/src/window/composer-files-model.ts
 app/src/window/composer-files.ts
+app/src/window/contact-page.ts
+app/src/window/contact-picture.ts
 app/src/window/conversation-list-model.ts
 app/src/window/conversation-list-store.ts
 app/src/window/conversation-list.ts
@@ -167,6 +170,7 @@ packages/imap/src/unavailable.ts
 packages/matrix/src/accounts.ts
 packages/matrix/src/api.ts
 packages/matrix/src/attachments.ts
+packages/matrix/src/avatars.ts
 packages/matrix/src/backend.ts
 packages/matrix/src/client.ts
 packages/matrix/src/guard.ts
@@ -286,6 +290,7 @@ packages/whatsapp/src/accounts.ts
 packages/whatsapp/src/api.ts
 packages/whatsapp/src/attachments.ts
 packages/whatsapp/src/auth-state.ts
+packages/whatsapp/src/avatars.ts
 packages/whatsapp/src/backend.ts
 packages/whatsapp/src/client.ts
 packages/whatsapp/src/events.ts
@@ -304,6 +309,7 @@ packages/xmpp/src/api.ts
 packages/xmpp/src/archive.ts
 packages/xmpp/src/attachment-link.ts
 packages/xmpp/src/attachments.ts
+packages/xmpp/src/avatars.ts
 packages/xmpp/src/backend.ts
 packages/xmpp/src/client.ts
 packages/xmpp/src/granted.ts

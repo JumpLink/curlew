@@ -101,10 +101,27 @@ export interface CurlewConfig {
    */
   pins: Record<string, string>;
   /**
+   * What the person chose for how a contact looks, keyed by the smallest participant id of the
+   * contact's person set. Presentation only and local, like a merge: the address book is not
+   * written. See `choiceFor` for how a choice survives a later merge.
+   */
+  contactChoices: Record<string, ContactChoice>;
+  /**
    * Top-level keys this build does not know, carried through unchanged so a build that does not
    * know a key cannot drop it on save (ADR 0004).
    */
   unknown: Record<string, unknown>;
+}
+
+/**
+ * How one contact is shown. `name` and `picture` name one part of a merged contact by its
+ * conversation id; `own` is the file name of a picture the person set, kept in the store's
+ * contact-pictures directory. An own picture beats a chosen part, which beats the default.
+ */
+export interface ContactChoice {
+  name?: string;
+  picture?: string;
+  own?: string;
 }
 
 const KNOWN_KEYS = [
@@ -118,6 +135,7 @@ const KNOWN_KEYS = [
   'mergedPeople',
   'declinedMerges',
   'pins',
+  'contactChoices',
 ];
 
 /**
@@ -137,6 +155,7 @@ export function defaultConfig(): CurlewConfig {
     mergedPeople: [],
     declinedMerges: [],
     pins: {},
+    contactChoices: {},
     unknown: {},
   };
 }
@@ -243,6 +262,7 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   const mergedPeople = parseIdGroups(obj.mergedPeople, 'mergedPeople');
   const declinedMerges = parseIdGroups(obj.declinedMerges, 'declinedMerges');
   const pins = parsePins(obj.pins);
+  const contactChoices = parseContactChoices(obj.contactChoices);
 
   const unknown: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
@@ -260,8 +280,32 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     mergedPeople,
     declinedMerges,
     pins,
+    contactChoices,
     unknown,
   };
+}
+
+function parseContactChoices(raw: unknown): Record<string, ContactChoice> {
+  if (raw === undefined) return {};
+  const bad = () =>
+    new Error('config.contactChoices must map participant ids to {name?, picture?, own?} choices');
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw bad();
+  const out: Record<string, ContactChoice> = {};
+  for (const [id, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (id === '' || typeof value !== 'object' || value === null || Array.isArray(value)) throw bad();
+    const { name, picture, own } = value as Record<string, unknown>;
+    for (const part of [name, picture, own]) {
+      if (part !== undefined && (typeof part !== 'string' || part === '')) throw bad();
+    }
+    if (typeof own === 'string' && /[/\\]/.test(own)) throw bad();
+    const choice: ContactChoice = {
+      ...(name !== undefined ? { name: name as string } : {}),
+      ...(picture !== undefined ? { picture: picture as string } : {}),
+      ...(own !== undefined ? { own: own as string } : {}),
+    };
+    if (Object.keys(choice).length > 0) out[id] = choice;
+  }
+  return out;
 }
 
 function parsePins(raw: unknown): Record<string, string> {
@@ -334,6 +378,7 @@ export function saveConfig(config: CurlewConfig, path = configPath()): void {
     mergedPeople,
     declinedMerges,
     pins,
+    contactChoices,
     ...known
   } = config;
   const writtenRules = agentAccess.rules.filter((rule) => !rule.migrated);
@@ -356,6 +401,7 @@ export function saveConfig(config: CurlewConfig, path = configPath()): void {
     ...(mergedPeople.length > 0 ? { mergedPeople } : {}),
     ...(declinedMerges.length > 0 ? { declinedMerges } : {}),
     ...(Object.keys(pins).length > 0 ? { pins } : {}),
+    ...(Object.keys(contactChoices).length > 0 ? { contactChoices } : {}),
   };
   writeFileSync(part, `${JSON.stringify(out, null, 2)}\n`, { mode: 0o600 });
   chmodSync(part, 0o600);

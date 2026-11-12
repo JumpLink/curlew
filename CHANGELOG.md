@@ -35,6 +35,7 @@
 
 ### Changed
 
+- A merged person shows a profile picture in the list now: the newest chat's, where its network can serve one.
 - Sender names above grouped messages use the accent colour, and a message bubble stops at a readable width on a wide window.
 - The conversation view is calmer: "Show more" sits on its own line under a long message instead of covering its text, an empty conversation says so, bubbles are easier to tell apart from the background in dark mode, and the unread count in the list is bold in the accent colour.
 - The primary colour tints the window more strongly, so the blue no longer reads as another grey.
@@ -54,6 +55,7 @@
 
 ### Added
 
+- A contact page opens from the picture in a chat's header. A person combined from several chats sees which chats they are and picks whose name and picture to show, and any contact can get a picture of their own. None of this touches the address book.
 - WhatsApp chats and contacts show their profile picture in the list.
 - XMPP contacts show the picture from their vCard in the list.
 - Matrix rooms and direct chats show their profile picture in the list.

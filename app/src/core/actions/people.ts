@@ -6,6 +6,7 @@
 
 import { configPath } from '@curlew/store';
 
+import { type ChoicePatch, withChoice } from '../contact-choices.ts';
 import { loadConfig, saveConfig } from '../config.ts';
 
 type Groups = ReadonlyArray<ReadonlyArray<string>>;
@@ -82,5 +83,12 @@ export function withPin(
 export function peoplePin(ids: readonly string[], backend: string | null, path = configPath()): void {
   const config = loadConfig(path);
   config.pins = withPin(config.pins, ids, backend);
+  saveConfig(config, path);
+}
+
+/** Change how one contact is shown. Interactive use only: no agent tool, no DTO carries it. */
+export function peopleChoose(ids: readonly string[], patch: ChoicePatch, path = configPath()): void {
+  const config = loadConfig(path);
+  config.contactChoices = withChoice(config.contactChoices, ids, patch);
   saveConfig(config, path);
 }

@@ -76,6 +76,15 @@ export function secretsDir(env: NodeJS.ProcessEnv = process.env): string {
   return explicit || join(dataDir(env), 'secrets');
 }
 
+/**
+ * The pictures the person picked for their contacts, scaled and saved by the window. They sit in
+ * the data directory, not the cache: nothing can fetch them again.
+ */
+export function contactPicturesDir(env: NodeJS.ProcessEnv = process.env): string {
+  const explicit = envValue(env, 'CONTACT_PICTURES_DIR');
+  return explicit || join(dataDir(env), 'contact-pictures');
+}
+
 /** Where attachments are saved by default. */
 export function attachmentsDir(env: NodeJS.ProcessEnv = process.env): string {
   const explicit = envValue(env, 'ATTACHMENTS_DIR');

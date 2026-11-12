@@ -18,8 +18,16 @@ import { listStamp, loadConversationEntries, searchConversationText } from './co
 import type { ListEntry } from './conversation-list-model.ts';
 import { loadConfig } from '../core/config.ts';
 import { candidateSets } from './merge-candidates-model.ts';
+import { presentContactPage } from './contact-page.ts';
 import { presentMergeAssistant } from './merge-assistant.ts';
-import { peopleDecline, peopleMerge, peoplePin, peopleUnmerge } from '../core/actions/people.ts';
+import {
+  peopleChoose,
+  peopleDecline,
+  peopleMerge,
+  peoplePin,
+  peopleUnmerge,
+} from '../core/actions/people.ts';
+import { choiceFor } from '../core/contact-choices.ts';
 import { createConversationList } from './conversation-list.ts';
 import { composeMailReply } from './conversation-model.ts';
 import {
@@ -112,6 +120,28 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     (title) => toasts.add_toast(new Adw.Toast({ title, timeout: 4 })),
     (shown) => split.set_sensitive(!shown),
   );
+
+  const openContact = (entry: ListEntry): void => {
+    presentContactPage(
+      window,
+      entry,
+      choiceFor(loadConfig().contactChoices, entry.personIds)?.choice ?? {},
+      labels,
+      {
+        choose: (ids, patch) => peopleChoose(ids, patch),
+        separate: (ids) => {
+          peopleUnmerge(ids);
+          refresh();
+        },
+        closed: () => {
+          refresh();
+          // The rebuilt row replaces this one; open it again so the header follows the choice.
+          const again = shown.find((e) => e.id === entry.id);
+          if (again && currentEntry?.id === entry.id) select(again);
+        },
+      },
+    );
+  };
 
   let currentEntry: ListEntry | null = null;
   let currentMessages: ConversationMessage[] = [];
@@ -207,6 +237,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
       const again = shown.find((e) => e.id === entry.id);
       if (again) select(again);
     },
+    (entry) => openContact(entry),
   );
   const select = (entry: ListEntry) => {
     currentEntry = entry;
@@ -319,6 +350,11 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     window.present();
   });
   window.add_action(openAction);
+  const contactAction = new Gio.SimpleAction({ name: 'open-contact' });
+  contactAction.connect('activate', () => {
+    if (currentEntry) openContact(currentEntry);
+  });
+  window.add_action(contactAction);
   if (options.open) openConversation(options.open);
   // The index changes as the daemon syncs; coming back to the window is the cheap moment to look.
   window.connect('notify::is-active', () => {
