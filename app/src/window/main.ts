@@ -61,6 +61,8 @@ const application = new AdwaitaApp({
     const window = createWindow(app, {
       protocol: process.env.CURLEW_WINDOW_FILTER || undefined,
       open: process.env.CURLEW_WINDOW_OPEN || undefined,
+      search: process.env.CURLEW_WINDOW_SEARCH || undefined,
+      openScope: process.env.CURLEW_WINDOW_OPEN_SCOPE === '1',
     });
     // A notification opens a chat over the bus: `app.open-conversation` hands the id to the window.
     const open = new Gio.SimpleAction({

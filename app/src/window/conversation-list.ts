@@ -14,6 +14,7 @@ import type Gio from 'gi://Gio?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import { _, _n, fmt } from '@curlew/protocol';
 
+import type { SearchScope } from '../core/lib/search-scope.ts';
 import { showPicture } from './contact-picture.ts';
 import {
   type ListEntry,
@@ -44,6 +45,10 @@ export interface PeopleTools {
   compose(): void;
   /** Conversation id → a line of message text that contains `text`; read from the index. */
   searchText(text: string): ReadonlyMap<string, string>;
+  /** The saved search scope, read once when the list is built. */
+  searchScope(): SearchScope;
+  /** The person picked another scope; the window saves it. */
+  setSearchScope(scope: SearchScope): void;
 }
 
 export interface ConversationList {
@@ -54,6 +59,8 @@ export interface ConversationList {
   setSuggestions(count: number): void;
   /** Switch one protocol chip on, as a click would. */
   chooseProtocol(backend: string): void;
+  /** Open the search with this text and optionally the scope menu (the screenshot hook). */
+  showSearch(text: string, openScope: boolean): void;
 }
 
 type RowRef = { kind: 'section'; id: string } | { kind: 'entry'; entry: ListEntry };
@@ -205,6 +212,7 @@ export function createConversationList(
   const accounts = new Map<string, Set<string>>();
   let query = '';
   let hits: ReadonlyMap<string, string> = new Map();
+  let scope: SearchScope = people.searchScope();
   const refs = new Map<Gtk.ListBoxRow, RowRef>();
   const checks = new Map<string, { row: Gtk.ListBoxRow; check: Gtk.CheckButton }>();
   let picking = false;
@@ -225,7 +233,35 @@ export function createConversationList(
   stack.add_named(empty, 'empty');
 
   const search = new Gtk.SearchEntry({ placeholderText: _('Search conversations'), hexpand: true });
-  const searchBar = new Gtk.SearchBar({ child: search });
+  search.update_property([Gtk.AccessibleProperty.LABEL], [_('Search conversations')]);
+
+  // The scope sits next to the entry as a menu of radio items; Adwaita styles it, no custom CSS.
+  const scopeLabels: Record<SearchScope, () => string> = {
+    all: () => _('Everything'),
+    names: () => _('Names and numbers'),
+    messages: () => _('Messages'),
+  };
+  const scopeButton = new Gtk.MenuButton({
+    iconName: 'view-list-symbolic',
+    tooltipText: _('Search in'),
+    valign: Gtk.Align.CENTER,
+  });
+  scopeButton.add_css_class('flat');
+  scopeButton.update_property([Gtk.AccessibleProperty.LABEL], [_('Search in')]);
+  const scopePopover = new Gtk.Popover({ autohide: true });
+  const scopeBox = new Gtk.Box({
+    orientation: Gtk.Orientation.VERTICAL,
+    marginStart: 6,
+    marginEnd: 6,
+    marginTop: 6,
+    marginBottom: 6,
+  });
+  scopePopover.set_child(scopeBox);
+  scopeButton.set_popover(scopePopover);
+  const searchRow = new Gtk.Box({ spacing: 6 });
+  searchRow.append(search);
+  searchRow.append(scopeButton);
+  const searchBar = new Gtk.SearchBar({ child: searchRow });
   searchBar.connect_entry(search);
 
   // Filters live in a popover instead of a row of chips, so a long account or protocol
@@ -255,7 +291,29 @@ export function createConversationList(
     else filterButton.remove_css_class('suggested-action');
   };
 
-  const filter = (): ListFilter => ({ backends, accounts, query, hits });
+  const filter = (): ListFilter => ({ backends, accounts, query, hits, scope });
+
+  const research = (): void => {
+    hits =
+      scope !== 'names' && query.trim().length >= MIN_TEXT_QUERY
+        ? people.searchText(query.trim())
+        : new Map();
+    rebuild();
+  };
+  let group: Gtk.CheckButton | null = null;
+  for (const id of ['all', 'names', 'messages'] as const) {
+    const item = new Gtk.CheckButton({ label: scopeLabels[id](), active: id === scope });
+    if (group === null) group = item;
+    else item.set_group(group);
+    item.connect('toggled', () => {
+      if (!item.get_active() || scope === id) return;
+      scope = id;
+      people.setSearchScope(id);
+      scopePopover.popdown();
+      research();
+    });
+    scopeBox.append(item);
+  }
 
   function makeToggle(label: string, set: Set<string>, key: string): Gtk.ToggleButton {
     const button = new Gtk.ToggleButton({ label, active: set.has(key) });
@@ -385,8 +443,7 @@ export function createConversationList(
   });
   search.connect('search-changed', () => {
     query = search.get_text();
-    hits = query.trim().length >= MIN_TEXT_QUERY ? people.searchText(query.trim()) : new Map();
-    rebuild();
+    research();
   });
 
   const searchToggle = new Gtk.ToggleButton({ iconName: 'system-search-symbolic' });
@@ -548,6 +605,11 @@ export function createConversationList(
         fmt(_n('{count} possible duplicate', '{count} possible duplicates', count), { count }),
       );
       banner.set_revealed(count > 0);
+    },
+    showSearch(text, openScope) {
+      searchToggle.set_active(true);
+      search.set_text(text);
+      if (openScope) scopeButton.popup();
     },
     chooseProtocol(backend) {
       if (!entries.some((e) => e.backend === backend)) return;

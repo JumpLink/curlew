@@ -11,6 +11,7 @@ import { _, _n, fmt } from '@curlew/protocol';
 
 import type { ContactChoice } from '../core/config.ts';
 import { choiceFor, type ContactChoices } from '../core/contact-choices.ts';
+import type { SearchScope } from '../core/lib/search-scope.ts';
 
 export type SectionId = 'people' | 'groups';
 
@@ -59,6 +60,14 @@ export interface ListEntry {
    * part of a merged row (a member's `id`). Absent when they chose none.
    */
   picture?: { own: string } | { from: string };
+  /** The people in the chat with their addresses, so a search can match a name or a number. */
+  people?: SearchPerson[];
+}
+
+/** One participant reduced to what the search compares. */
+export interface SearchPerson {
+  name: string | null;
+  addresses: string[];
 }
 
 /**
@@ -110,6 +119,8 @@ export interface ListFilter {
    * passes the query even when its title does not, and its row shows the line.
    */
   hits?: ReadonlyMap<string, string>;
+  /** What the query looks at; unset = everything. */
+  scope?: SearchScope;
 }
 
 /** Shorter queries are matched against titles only: one letter would hit nearly every message. */
@@ -307,6 +318,10 @@ export function toEntry(
     personIds: personOf(conversation, identity) === null ? [] : [personOf(conversation, identity)!],
     manual: false,
     pin: null,
+    people: conversation.participants.map((p) => ({
+      name: p.displayName?.trim() || null,
+      addresses: p.addresses.map((a) => a.value),
+    })),
   };
 }
 
@@ -514,6 +529,7 @@ function mergeEntries(
     personIds: [...new Set(members.flatMap((m) => m.personIds))],
     manual,
     pin,
+    people: members.flatMap((m) => m.people ?? []),
   };
 }
 
@@ -700,9 +716,48 @@ const hitOf = (entry: ListEntry, filter: ListFilter): string | undefined => {
   return undefined;
 };
 
+/** Digits of a phone-like query in national-neutral form: `+49 151 1`, `0049151 1` and `0151 1` give `1511`-style tails. */
+export function phoneDigits(text: string): string | null {
+  const t = text.trim();
+  if (!/^[+\d\s()\-./]+$/.test(t)) return null;
+  let digits = t.replace(/\D/g, '');
+  if (digits.startsWith('00')) digits = digits.slice(2);
+  else if (digits.startsWith('0')) digits = digits.slice(1);
+  return digits.length >= 3 ? digits : null;
+}
+
+/** What a name-or-number search matched when the title did not: the field to show on the row. */
+export function fieldHit(entry: ListEntry, rawQuery: string): string | undefined {
+  const query = rawQuery.trim().toLowerCase();
+  if (query === '') return undefined;
+  const digits = phoneDigits(query);
+  const handle = query.replace(/^@/, '');
+  for (const person of carriers(entry).flatMap((c) => c.people ?? [])) {
+    if (person.name?.toLowerCase().includes(query)) return person.name;
+    for (const address of person.addresses) {
+      if (digits !== null) {
+        // A WhatsApp or Signal id is the number before the `@`.
+        const local = address.split('@')[0] ?? '';
+        let own = local.replace(/\D/g, '');
+        if (own.startsWith('00')) own = own.slice(2);
+        if (/^\+?[\d\s()\-./]+$/.test(local) && own.includes(digits)) return address;
+      }
+      if (handle !== '' && address.toLowerCase().includes(handle)) return address;
+    }
+  }
+  return undefined;
+}
+
+const titleHit = (entry: ListEntry, query: string): boolean => entry.title.toLowerCase().includes(query);
+
 export function matches(entry: ListEntry, filter: ListFilter): boolean {
   const query = filter.query.trim().toLowerCase();
-  if (query !== '' && !entry.title.toLowerCase().includes(query) && !hitOf(entry, filter)) return false;
+  if (query !== '') {
+    const scope = filter.scope ?? 'all';
+    const byName = scope !== 'messages' && (titleHit(entry, query) || fieldHit(entry, query) !== undefined);
+    const byText = scope !== 'names' && hitOf(entry, filter) !== undefined;
+    if (!byName && !byText) return false;
+  }
   // A merged row stays while any of its carriers passes the protocol and account filter.
   return carriers(entry).some((carrier) => {
     if (filter.backends.size > 0 && !filter.backends.has(carrier.backend)) return false;
@@ -729,8 +784,15 @@ export function buildSections(entries: ListEntry[], filter: ListFilter = NO_FILT
   const shown = entries
     .filter((entry) => matches(entry, filter))
     .map((entry) => {
-      const line = searching ? hitOf(entry, filter) : undefined;
-      return line === undefined ? entry : { ...entry, preview: oneLine(line) };
+      if (!searching) return entry;
+      const scope = filter.scope ?? 'all';
+      const line = scope === 'names' ? undefined : hitOf(entry, filter);
+      if (line !== undefined) return { ...entry, preview: oneLine(line) };
+      // A match on a number or a name that is not the title: the row says which field matched.
+      const query = filter.query.trim().toLowerCase();
+      if (scope === 'messages' || titleHit(entry, query)) return entry;
+      const field = fieldHit(entry, query);
+      return field === undefined ? entry : { ...entry, preview: field };
     })
     .sort(newestFirst);
   const defs: Array<{ id: SectionId; title: string; kind: Conversation['kind'] }> = [
