@@ -171,7 +171,7 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
     network: { middlewares: telegramMiddlewares() },
   });
   // Structural check of the reads mtcute's client satisfies as it is; `openMedia` is built below.
-  const api: Omit<TelegramApi, 'openMedia' | 'destroy'> = client;
+  const api: Omit<TelegramApi, 'openMedia' | 'openAvatar' | 'destroy'> = client;
   return {
     getMe: () => api.getMe(),
     iterDialogs: (params) => api.iterDialogs(params),
@@ -183,6 +183,12 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
       // Contacts, polls, link previews and paid media have no file of their own to download.
       if (!media || !(media instanceof FileLocation)) return null;
       return { media, chunks: client.downloadAsIterable(media) };
+    },
+    openAvatar: async (chatId) => {
+      // A chat we have no access hash for, or a deleted account, makes `getChat` throw: no picture.
+      const chat = await client.getChat(chatId).catch(() => null);
+      const photo = chat?.photo?.small;
+      return photo ? client.downloadAsIterable(photo) : null;
     },
     sendText: (chatId, text, replyTo) =>
       client.sendText(chatId, text, replyTo === undefined ? undefined : { replyTo }),

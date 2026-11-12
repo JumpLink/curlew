@@ -38,6 +38,7 @@ app/src/core/grants.ts
 app/src/core/lib/access-notifications.ts
 app/src/core/lib/appearance.ts
 app/src/core/lib/autostart-portal.ts
+app/src/core/lib/avatar-cache.ts
 app/src/core/lib/contact-name.ts
 app/src/core/lib/daemon-access-client.ts
 app/src/core/lib/daemon-accounts.ts
@@ -111,6 +112,7 @@ app/src/window/attachment-model.ts
 app/src/window/attachment-store.ts
 app/src/window/attachment-view.ts
 app/src/window/audio-player.ts
+app/src/window/avatar-store.ts
 app/src/window/chat-background.ts
 app/src/window/chat-doodles.ts
 app/src/window/composer-files-model.ts
@@ -269,6 +271,7 @@ packages/store/src/threads.ts
 packages/telegram/src/accounts.ts
 packages/telegram/src/api.ts
 packages/telegram/src/attachments.ts
+packages/telegram/src/avatars.ts
 packages/telegram/src/backend.ts
 packages/telegram/src/client.ts
 packages/telegram/src/credentials.ts

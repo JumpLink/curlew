@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-12 07:16+0100\n"
+"POT-Creation-Date: 2026-11-12 10:25+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -142,7 +142,7 @@ msgid "systemctl --user {verb} exited {code}"
 msgstr "systemctl --user {verb} endete mit {code}"
 
 #: app/src/core/actions/chat-attachment.ts:140
-#: app/src/core/actions/daemon.ts:500
+#: app/src/core/actions/daemon.ts:504
 msgid "the attachment was not found in the index"
 msgstr "Der Anhang wurde im Index nicht gefunden"
 
@@ -158,13 +158,13 @@ msgstr "Kein Konto {account} für {backend}"
 msgid "{backend} cannot fetch attachments"
 msgstr "{backend} kann keine Anhänge abrufen"
 
-#: app/src/core/actions/daemon.ts:361
+#: app/src/core/actions/daemon.ts:365
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 "{capability} ist nicht die Berechtigung, unter der {backend} sendet — es "
 "wurde nichts gesendet"
 
-#: app/src/core/actions/daemon.ts:383
+#: app/src/core/actions/daemon.ts:387
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
@@ -172,7 +172,7 @@ msgstr ""
 "Der laufende curlew-Daemon konnte keinen Sender öffnen ({reason}) — es wurde "
 "nichts gesendet"
 
-#: app/src/core/actions/daemon.ts:449
+#: app/src/core/actions/daemon.ts:453
 msgid "the download stalled — try again"
 msgstr "Der Download ist hängen geblieben — versuche es noch einmal."
 
@@ -951,7 +951,7 @@ msgstr ""
 "Der laufende curlew-Daemon hat die Zugriffsrückfrage nicht beantwortet "
 "({reason})"
 
-#: app/src/core/lib/daemon-bus.ts:231
+#: app/src/core/lib/daemon-bus.ts:235
 msgid ""
 "the running curlew daemon speaks send protocol {theirs} and this curlew "
 "speaks {ours} — nothing was sent; restart it with `systemctl --user restart "
@@ -961,7 +961,7 @@ msgstr ""
 "spricht {ours} — es wurde nichts gesendet; starte ihn mit `systemctl --user "
 "restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:268
+#: app/src/core/lib/daemon-bus.ts:272
 msgid ""
 "the caller speaks send protocol {theirs} and this curlew daemon speaks "
 "{ours} — nothing was sent; restart it with `systemctl --user restart curlew-"
@@ -971,7 +971,7 @@ msgstr ""
 "{ours} — es wurde nichts gesendet; starte ihn mit `systemctl --user restart "
 "curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:438
+#: app/src/core/lib/daemon-bus.ts:442
 msgid ""
 "the caller speaks attachment protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -979,7 +979,7 @@ msgstr ""
 "Der Aufrufer spricht Anhangsprotokoll {theirs}, dieser curlew-Daemon spricht "
 "{ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:467
+#: app/src/core/lib/daemon-bus.ts:471
 msgid ""
 "the running curlew daemon speaks attachment protocol {theirs} and this "
 "curlew speaks {ours} — restart it with `systemctl --user restart curlew-"
@@ -988,7 +988,7 @@ msgstr ""
 "Der laufende curlew-Daemon spricht Anhangsprotokoll {theirs}, dieses curlew "
 "spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:532
+#: app/src/core/lib/daemon-bus.ts:622
 msgid ""
 "the caller speaks access protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -996,7 +996,7 @@ msgstr ""
 "Der Aufrufer spricht Zugriffsprotokoll {theirs}, dieser curlew-Daemon "
 "spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:569
+#: app/src/core/lib/daemon-bus.ts:659
 msgid ""
 "the running curlew daemon speaks access protocol {theirs} and this curlew "
 "speaks {ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -1004,13 +1004,13 @@ msgstr ""
 "Der laufende curlew-Daemon spricht Zugriffsprotokoll {theirs}, dieses curlew "
 "spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-send-client.ts:104
+#: app/src/core/lib/daemon-send-client.ts:112
 #: packages/imap/src/attachments.ts:101 packages/imap/src/attachments.ts:123
 #: packages/store/src/send-files.ts:99
 msgid "attachment {path} cannot be read"
 msgstr "Anhang {path} kann nicht gelesen werden"
 
-#: app/src/core/lib/daemon-send-client.ts:143
+#: app/src/core/lib/daemon-send-client.ts:151
 msgid ""
 "the running curlew daemon does not understand this send — nothing was sent; "
 "restart it with `systemctl --user restart curlew-daemon`"
@@ -1018,7 +1018,7 @@ msgstr ""
 "Der laufende curlew-Daemon versteht dieses Senden nicht — es wurde nichts "
 "gesendet; starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-send-client.ts:152
+#: app/src/core/lib/daemon-send-client.ts:160
 msgid ""
 "the running curlew daemon did not answer ({reason}); it may have sent the "
 "message — look at the chat before sending it again"
@@ -1027,13 +1027,13 @@ msgstr ""
 "Nachricht möglicherweise gesendet — sieh in den Chat, bevor du sie erneut "
 "sendest"
 
-#: app/src/core/lib/daemon-send-client.ts:193
+#: app/src/core/lib/daemon-send-client.ts:201
 msgid ""
 "the running curlew daemon did not answer the attachment fetch ({reason})"
 msgstr ""
 "Der laufende curlew-Daemon hat den Anhangsabruf nicht beantwortet ({reason})"
 
-#: app/src/core/lib/daemon-send-service.ts:212
+#: app/src/core/lib/daemon-send-service.ts:237
 msgid "the daemon could not take the attachments ({reason}) — nothing was sent"
 msgstr ""
 "Der Daemon konnte die Anhänge nicht übernehmen ({reason}) — es wurde nichts "
@@ -1908,8 +1908,8 @@ msgstr ""
 #: app/src/window/account-remove-model.ts:24
 #: app/src/window/account-remove-model.ts:37
 #: app/src/window/agent-access-page.ts:234
-#: app/src/window/conversation-list.ts:401
-#: app/src/window/conversation-list.ts:487
+#: app/src/window/conversation-list.ts:408
+#: app/src/window/conversation-list.ts:494
 #: app/src/window/conversation-view.ts:664
 msgid "Cancel"
 msgstr "Abbrechen"
@@ -2395,35 +2395,35 @@ msgstr "Personen"
 msgid "Groups"
 msgstr "Gruppen"
 
-#: app/src/window/conversation-list.ts:211
+#: app/src/window/conversation-list.ts:218
 msgid "Add an account"
 msgstr "Konto hinzufügen"
 
-#: app/src/window/conversation-list.ts:219
+#: app/src/window/conversation-list.ts:226
 msgid "Search conversations"
 msgstr "Unterhaltungen durchsuchen"
 
-#: app/src/window/conversation-list.ts:227
+#: app/src/window/conversation-list.ts:234
 msgid "Filter conversations"
 msgstr "Unterhaltungen filtern"
 
-#: app/src/window/conversation-list.ts:290
+#: app/src/window/conversation-list.ts:297
 msgid "Protocols"
 msgstr "Protokolle"
 
-#: app/src/window/conversation-list.ts:313
+#: app/src/window/conversation-list.ts:320
 msgid "Clear filters"
 msgstr "Filter zurücksetzen"
 
-#: app/src/window/conversation-list.ts:335
+#: app/src/window/conversation-list.ts:342
 msgid "No conversations yet"
 msgstr "Noch keine Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:335
+#: app/src/window/conversation-list.ts:342
 msgid "No matches"
 msgstr "Keine Treffer"
 
-#: app/src/window/conversation-list.ts:338
+#: app/src/window/conversation-list.ts:345
 msgid ""
 "Conversations appear here after Curlew has synced an account. Run \"curlew "
 "sync\" first."
@@ -2431,34 +2431,34 @@ msgstr ""
 "Unterhaltungen erscheinen hier, sobald Curlew ein Konto synchronisiert hat. "
 "Führe zuerst „curlew sync“ aus."
 
-#: app/src/window/conversation-list.ts:339
+#: app/src/window/conversation-list.ts:346
 msgid "Nothing fits the search and filters."
 msgstr "Nichts passt zur Suche und den Filtern."
 
-#: app/src/window/conversation-list.ts:385
+#: app/src/window/conversation-list.ts:392
 msgid "Search"
 msgstr "Suchen"
 
-#: app/src/window/conversation-list.ts:390
+#: app/src/window/conversation-list.ts:397
 #: app/src/window/new-conversation.ts:24
 msgid "New conversation"
 msgstr "Neue Unterhaltung"
 
-#: app/src/window/conversation-list.ts:407
-#: app/src/window/conversation-list.ts:488
+#: app/src/window/conversation-list.ts:414
+#: app/src/window/conversation-list.ts:495
 #: app/src/window/merge-assistant.ts:116
 msgid "Merge"
 msgstr "Zusammenführen"
 
-#: app/src/window/conversation-list.ts:409
+#: app/src/window/conversation-list.ts:416
 msgid "Separate"
 msgstr "Trennen"
 
-#: app/src/window/conversation-list.ts:484
+#: app/src/window/conversation-list.ts:491
 msgid "Merge these people?"
 msgstr "Diese Personen zusammenführen?"
 
-#: app/src/window/conversation-list.ts:485
+#: app/src/window/conversation-list.ts:492
 msgid ""
 "Their chats become one conversation. Nothing is deleted, and you can "
 "separate them again."
@@ -2466,16 +2466,16 @@ msgstr ""
 "Ihre Chats werden zu einer Unterhaltung. Nichts wird gelöscht, und du kannst "
 "sie wieder trennen."
 
-#: app/src/window/conversation-list.ts:511
+#: app/src/window/conversation-list.ts:518
 msgid "Review"
 msgstr "Prüfen"
 
-#: app/src/window/conversation-list.ts:518
+#: app/src/window/conversation-list.ts:525
 #: app/src/window/preferences-dialog.ts:40
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:540
+#: app/src/window/conversation-list.ts:547
 msgid "{count} possible duplicate"
 msgid_plural "{count} possible duplicates"
 msgstr[0] "{count} mögliches Duplikat"
@@ -2649,7 +2649,7 @@ msgstr "Nachricht nicht gesendet: {error}"
 msgid "Retry"
 msgstr "Erneut versuchen"
 
-#: app/src/window/fade-bin.ts:148
+#: app/src/window/fade-bin.ts:152
 msgid "Show more"
 msgstr "Mehr anzeigen"
 
@@ -2840,7 +2840,7 @@ msgstr "Beenden"
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:295
+#: app/src/window/window.ts:297
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 
@@ -3353,11 +3353,15 @@ msgid ""
 msgstr ""
 "der Telegram-Anhang kam mit {actual} Bytes an, angekündigt waren {announced}"
 
-#: packages/telegram/src/backend.ts:41
+#: packages/telegram/src/avatars.ts:32
+msgid "the picture is larger than the limit of {limit} bytes"
+msgstr "das Bild ist größer als das Limit von {limit} Bytes"
+
+#: packages/telegram/src/backend.ts:43
 msgid "log in again with `curlew accounts add telegram`"
 msgstr "melde dich mit `curlew accounts add telegram` neu an"
 
-#: packages/telegram/src/backend.ts:55
+#: packages/telegram/src/backend.ts:57
 msgid ""
 "Telegram live updates are unavailable in this build: the follow will not "
 "wake on new messages"
@@ -3367,35 +3371,35 @@ msgstr ""
 
 #. TRANSLATORS: `api_id` and `api_hash` are Telegram's own field names — do not translate them,
 #. the user has to recognise them on my.telegram.org.
-#: packages/telegram/src/backend.ts:82
+#: packages/telegram/src/backend.ts:85
 msgid "api_id of your Telegram app (from my.telegram.org)"
 msgstr "api_id deiner Telegram-App (von my.telegram.org)"
 
-#: packages/telegram/src/backend.ts:83
+#: packages/telegram/src/backend.ts:86
 msgid "api_hash of that app"
 msgstr "api_hash derselben App"
 
-#: packages/telegram/src/backend.ts:84
+#: packages/telegram/src/backend.ts:87
 msgid "Phone number of the Telegram account (international, e.g. +49…)"
 msgstr "Telefonnummer des Telegram-Kontos (international, z. B. +49…)"
 
-#: packages/telegram/src/backend.ts:85
+#: packages/telegram/src/backend.ts:88
 msgid "Login code Telegram sent you"
 msgstr "Anmeldecode, den Telegram geschickt hat"
 
-#: packages/telegram/src/backend.ts:86
+#: packages/telegram/src/backend.ts:89
 msgid "Two-step verification password"
 msgstr "Passwort der zweistufigen Bestätigung"
 
-#: packages/telegram/src/backend.ts:195
+#: packages/telegram/src/backend.ts:204
 msgid "no Telegram session for {account} — {hint}"
 msgstr "keine Telegram-Sitzung für {account} — {hint}"
 
-#: packages/telegram/src/backend.ts:221
+#: packages/telegram/src/backend.ts:230
 msgid "the Telegram session {account} is not usable ({reason}) — {hint}"
 msgstr "die Telegram-Sitzung {account} ist nicht nutzbar ({reason}) — {hint}"
 
-#: packages/telegram/src/client.ts:189
+#: packages/telegram/src/client.ts:224
 msgid ""
 "Telegram asks for an email login setup first — finish it in an official app"
 msgstr ""
@@ -3404,15 +3408,15 @@ msgstr ""
 
 #. TRANSLATORS: {channel} is Telegram's own word for the route it used ("sms", "app", …),
 #. and arrives untranslated from the server.
-#: packages/telegram/src/client.ts:193
+#: packages/telegram/src/client.ts:228
 msgid "Telegram sent the login code via {channel}."
 msgstr "Telegram hat den Anmeldecode über {channel} geschickt."
 
-#: packages/telegram/src/client.ts:197
+#: packages/telegram/src/client.ts:232
 msgid "That code was not accepted — try again."
 msgstr "Dieser Code wurde nicht akzeptiert — versuche es noch einmal."
 
-#: packages/telegram/src/client.ts:197
+#: packages/telegram/src/client.ts:232
 msgid "Wrong password — try again."
 msgstr "Falsches Passwort — versuche es noch einmal."
 
@@ -3495,7 +3499,7 @@ msgstr ""
 "Datei unter {pending} liegen und wird NICHT gelöscht. Verschiebe sie nach "
 "{target}, oder lösche sie und melde dich neu an."
 
-#: packages/telegram/src/manifest.ts:58
+#: packages/telegram/src/manifest.ts:60
 msgid ""
 "curlew talks to Telegram through the official MTProto API as a third-party "
 "client (mtcute). Telegram requires every client to use API credentials "

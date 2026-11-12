@@ -14,6 +14,7 @@ import type Gio from 'gi://Gio?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import { _, _n, fmt } from '@curlew/protocol';
 
+import { loadAvatar } from './avatar-store.ts';
 import {
   type ListEntry,
   type ListFilter,
@@ -92,6 +93,12 @@ function badgedAvatar(entry: ListEntry): Gtk.Widget {
   overlay.set_child(avatar);
   overlay.add_overlay(badge);
   overlay.set_tooltip_text(protocolLabel(entry.backend));
+  // A merged row stands for several chats; only a row that is one chat has one picture to show.
+  if (entry.members.length === 0 && entry.target !== null) {
+    loadAvatar({ backend: entry.backend, accountId: entry.accountId, target: entry.target }, (texture) =>
+      avatar.set_custom_image(texture),
+    );
+  }
   return overlay;
 }
 

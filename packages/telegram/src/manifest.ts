@@ -41,6 +41,8 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
     // one file per message the person picked in the window.
     attachments: true,
     attachmentsRead: true,
+    // `openAvatars` fetches the small profile picture of a chat for the list.
+    avatars: true,
     replies: true,
   },
   // Telegram keeps the full history of cloud chats: the index is rebuildable (`derived`).

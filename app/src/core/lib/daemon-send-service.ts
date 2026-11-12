@@ -23,6 +23,8 @@ import {
   type DaemonAccessReply,
   type DaemonAccessRequest,
   type DaemonFetchAttachmentReply,
+  type DaemonFetchAvatarsReply,
+  type DaemonFetchAvatarsRequest,
   type DaemonFetchAttachmentRequest,
   type DaemonSendReply,
   type DaemonFdPlan,
@@ -30,6 +32,7 @@ import {
   type DaemonSendWire,
   parseDaemonAccessRequest,
   parseDaemonFetchAttachmentRequest,
+  parseDaemonFetchAvatarsRequest,
   parseDaemonSendWire,
   planFdFiles,
 } from './daemon-bus.ts';
@@ -41,6 +44,9 @@ export type DaemonSendHandler = (request: DaemonSendRequest) => Promise<DaemonSe
 
 /** Answer one attachment fetch. Never throws: every outcome is a reply. */
 export type DaemonFetchHandler = (request: DaemonFetchAttachmentRequest) => Promise<DaemonFetchAttachmentReply>;
+
+/** Answer one avatar fetch. Never throws: every outcome is a reply. */
+export type DaemonAvatarsHandler = (request: DaemonFetchAvatarsRequest) => Promise<DaemonFetchAvatarsReply>;
 
 /** Answer one access question (ADR 0009). Never throws: every outcome is a reply. */
 export type DaemonAccessHandler = (request: DaemonAccessRequest) => Promise<AccessReply>;
@@ -63,6 +69,8 @@ export interface PublishOptions {
   access?: DaemonAccessHandler;
   /** Serves `FetchAttachment`. Absent: the method answers `UnknownMethod`. */
   fetch?: DaemonFetchHandler;
+  /** Serves `FetchAvatars`. Absent: the method answers `UnknownMethod`. */
+  avatars?: DaemonAvatarsHandler;
   /** A caller that asked left the bus: its session is over and so are its grants. */
   onSessionEnd?: (session: string) => void;
 }
@@ -151,6 +159,23 @@ export function publishDaemonSend(
         },
         (error: unknown) => {
           log(`curlew-daemon: the access handler threw — ${reasonOf(error)}`);
+          invocation.return_dbus_error('org.freedesktop.DBus.Error.Failed', reasonOf(error));
+        },
+      );
+      return;
+    }
+    if (method === 'FetchAvatars' && options.avatars) {
+      let request: DaemonFetchAvatarsRequest;
+      try {
+        request = parseDaemonFetchAvatarsRequest((params.recursiveUnpack() as [string])[0]);
+      } catch (error) {
+        invocation.return_dbus_error('org.freedesktop.DBus.Error.InvalidArgs', reasonOf(error));
+        return;
+      }
+      options.avatars(request).then(
+        (reply) => invocation.return_value(new GLib.Variant('(s)', [JSON.stringify(reply)])),
+        (error: unknown) => {
+          log(`curlew-daemon: the avatar handler threw — ${reasonOf(error)}`);
           invocation.return_dbus_error('org.freedesktop.DBus.Error.Failed', reasonOf(error));
         },
       );

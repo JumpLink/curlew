@@ -150,6 +150,11 @@ export interface MessageBackend {
    */
   openAttachments?(accountId: string): Promise<AttachmentFetcher>;
   /**
+   * Open a handle for fetching profile pictures, when the manifest claims `capabilities.avatars`.
+   * Optional: without it the window shows initials.
+   */
+  openAvatars?(accountId: string): Promise<AvatarSource>;
+  /**
    * Unlink an account from this machine: delete the stored login or session. The messages already
    * indexed stay, and the account stays linked on the service's side — the person unlinks the
    * device there. Optional: a system account (GNOME Online Accounts) is removed by the system, not by us.
@@ -767,6 +772,21 @@ export interface AttachmentFetcher {
     sink: ByteSink,
     options: { maxBytes: number; signal?: AbortSignal },
   ): Promise<{ mimeType: string | null; size: number }>;
+}
+
+/**
+ * Profile pictures behind ONE connection, so a screenful of rows costs one connect and not one
+ * per row. `peer` is the chat's address as the index holds it (`ListEntry.target`).
+ */
+export interface AvatarSource {
+  /** The small picture of `peer` into `sink`, or null when the peer has none (or it is not visible to us). */
+  fetchAvatar(
+    peer: string,
+    sink: ByteSink,
+    options: { maxBytes: number; signal?: AbortSignal },
+  ): Promise<{ mimeType: string | null; size: number } | null>;
+  /** Release the connection. */
+  close(): Promise<void>;
 }
 
 // ── the send port ───────────────────────────────────────────────────────

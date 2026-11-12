@@ -7,6 +7,7 @@ import {
   _,
   type AccountAddOptions,
   type AttachmentFetcher,
+  type AvatarSource,
   type AccountPrompter,
   type BackendAccount,
   type ListAccountsOptions,
@@ -28,6 +29,7 @@ import { embeddedCredentials, resolveCredentials, type TelegramCredentials } fro
 import { loginTelegram } from './login.ts';
 import { TELEGRAM_MANIFEST } from './manifest.ts';
 import { TelegramAttachments } from './attachments.ts';
+import { TelegramAvatars } from './avatars.ts';
 import { TelegramSender } from './sender.ts';
 import { TelegramChatSession } from './session.ts';
 import { SecretStoreStorage } from './storage.ts';
@@ -64,6 +66,7 @@ function withStoreClose(client: TelegramClientHandle, store: SecretStore): Teleg
     getHistory: (chatId, params) => client.getHistory(chatId, params),
     getMessages: (chatId, messageIds) => client.getMessages(chatId, messageIds),
     openMedia: (chatId, messageId) => client.openMedia(chatId, messageId),
+    openAvatar: (chatId) => client.openAvatar(chatId),
     destroy: async () => {
       try {
         await client.destroy();
@@ -185,6 +188,12 @@ export class TelegramBackend implements ChatBackend, SendBackend {
   async openAttachments(accountId: string): Promise<AttachmentFetcher> {
     const { api } = await this.open(accountId);
     return new TelegramAttachments(api);
+  }
+
+  /** The read-only picture handle: one connection for as many chats as the window asks about. */
+  async openAvatars(accountId: string): Promise<AvatarSource> {
+    const { api } = await this.open(accountId);
+    return new TelegramAvatars(api);
   }
 
   /** Open the session file, connect and prove the session is still authorized. */
