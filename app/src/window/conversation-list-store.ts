@@ -14,7 +14,7 @@ import {
   openIndexDb,
   searchMessageText,
 } from '@curlew/store';
-import { existsSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 
 import { loadConfig } from '../core/config.ts';
 import { type ListEntry, toEntries, withPreviews } from './conversation-list-model.ts';
@@ -37,6 +37,23 @@ function accountIdentities(db: IndexDatabase): Map<string, string> {
   }>;
   const known = rows.map((r) => [r.id, r.address?.trim() || r.identity?.trim() || ''] as const);
   return new Map(known.filter(([, value]) => value !== ''));
+}
+
+/**
+ * A cheap fingerprint of what the list is built from: the index (a write lands in the WAL file
+ * first) and the config. Equal fingerprints mean the list would come out the same, so a caller
+ * can skip the half-second load.
+ */
+export function listStamp(dbPath = indexDbPath(), cfgPath = configPath()): string {
+  const part = (path: string): string => {
+    try {
+      const { mtimeMs, size } = statSync(path);
+      return `${mtimeMs}:${size}`;
+    } catch {
+      return '-';
+    }
+  };
+  return [dbPath, `${dbPath}-wal`, cfgPath].map(part).join('|');
 }
 
 export function loadConversationEntries(dbPath = indexDbPath(), cfgPath = configPath()): ListEntry[] {
