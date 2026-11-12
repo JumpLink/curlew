@@ -142,6 +142,8 @@ export interface TelegramApi {
    * the message again instead of keeping a file reference, because those expire.
    */
   openMedia(chatId: number, messageId: number): Promise<TgMediaDownload | null>;
+  /** The small profile picture of a chat, as bytes in order. Null when it has none or is not visible to us. */
+  openAvatar(chatId: number): Promise<AsyncIterable<Uint8Array> | null>;
   destroy(): Promise<void>;
 }
 

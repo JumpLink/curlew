@@ -57,6 +57,8 @@ export interface BackendCapabilities {
   attachmentsRead: boolean;
   /** Messages can be sent as an answer to one message (`SendingMessage.replyTo`). */
   replies: boolean;
+  /** The backend can fetch the profile picture of a chat or person (`openAvatars`). */
+  avatars?: boolean;
 }
 
 export const CAPABILITY_NAMES: ReadonlyArray<keyof BackendCapabilities> = [

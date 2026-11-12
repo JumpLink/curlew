@@ -97,6 +97,17 @@ export function previewsDir(env: NodeJS.ProcessEnv = process.env): string {
 }
 
 /**
+ * Where the daemon keeps the profile pictures it fetched for the chat list. A cache, apart from
+ * `previewsDir` because the window empties that one at start and these are meant to last.
+ */
+export function avatarsDir(env: NodeJS.ProcessEnv = process.env): string {
+  const explicit = envValue(env, 'AVATARS_DIR');
+  if (explicit) return explicit;
+  const cache = env.XDG_CACHE_HOME?.trim();
+  return join(cache && cache.startsWith('/') ? cache : join(homedir(), '.cache'), 'curlew', 'avatars');
+}
+
+/**
  * Where the daemon copies the files a send handed it as descriptors, one 0700 directory per call,
  * removed when the call ends. The cache home and not `$XDG_RUNTIME_DIR`: that one is tmpfs, and a
  * 60 MB video would sit in RAM.

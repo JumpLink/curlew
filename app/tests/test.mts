@@ -75,6 +75,7 @@ import mailAddAccount from './unit/mail/add-account.test.ts';
 import telegramSend from './unit/telegram/send.test.ts';
 import telegramFollow from './unit/telegram/follow.test.ts';
 import telegramAttachments from './unit/telegram/attachments.test.ts';
+import telegramAvatars from './unit/telegram/avatars.test.ts';
 
 import date from './unit/core/date.test.ts';
 import i18n from './unit/core/i18n.test.ts';
@@ -117,6 +118,7 @@ import accountAddModel from './unit/window/account-add-model.test.ts';
 import qrImage from './unit/window/qr-image.test.ts';
 import notifyQr from './unit/protocol/notify-qr.test.ts';
 import daemonFetch from './unit/core/daemon-fetch.test.ts';
+import daemonAvatars from './unit/core/daemon-avatars.test.ts';
 import chatAttachment from './unit/core/chat-attachment.test.ts';
 import conversationsAttachments from './unit/core/conversations-attachments.test.ts';
 import messageNotices from './unit/core/message-notices.test.ts';
@@ -205,6 +207,7 @@ run({
   telegramSend,
   telegramFollow,
   telegramAttachments,
+  telegramAvatars,
   date,
   i18n,
   limits,
@@ -240,6 +243,7 @@ run({
   daemonAccounts,
   daemonSend,
   daemonFetch,
+  daemonAvatars,
   accountPrompter,
   accountAddModel,
   qrImage,

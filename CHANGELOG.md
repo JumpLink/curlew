@@ -51,6 +51,7 @@
 
 ### Added
 
+- Telegram chats show their profile picture in the list. The daemon fetches the pictures over one connection and keeps them for a week; without a daemon, or for a chat with none, the initials stay.
 - The preferences have a Style row (follow the system, light, dark) and a primary colour that tints the window, header, sidebar and dialogs; the accent colour joins it with the same colour dots and an on/off switch.
 - A quiet doodle pattern behind the messages of a conversation, drawn in the text colour at low opacity so it suits light and dark; switch it off under Appearance in the preferences. [ADR 0013](docs/adr/0013-appearance.md)
 - An Appearance group in the preferences with an accent colour: Curlew's own blue by default (it follows the system accent only on request), the nine Adwaita colours, or "follow the system". [ADR 0013](docs/adr/0013-appearance.md)

@@ -113,6 +113,7 @@ function fakeDaemon(reply: DaemonFetchAttachmentReply | null): DaemonSendClient 
   return {
     send: async () => null,
     fetchAttachment: async () => reply,
+    fetchAvatars: async () => null,
   };
 }
 

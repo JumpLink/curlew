@@ -93,6 +93,8 @@ export interface FakeScript {
   failAfterSignIn?: string;
   /** The bytes `openMedia` streams per message, keyed `<chatId>/<messageId>`, as the chunks given. */
   mediaBytes?: Map<string, Uint8Array[]>;
+  /** The bytes `openAvatar` streams per chat id; a chat not listed has no picture. */
+  avatarBytes?: Map<number, Uint8Array[]>;
 }
 
 /**
@@ -227,6 +229,15 @@ export class FakeClient implements TelegramClientHandle {
         for (const chunk of chunks) yield chunk;
       })(),
     };
+  }
+
+  async openAvatar(chatId: number): Promise<AsyncIterable<Uint8Array> | null> {
+    this.calls.push(`openAvatar:${chatId}`);
+    const chunks = this.script.avatarBytes?.get(chatId);
+    if (!chunks) return null;
+    return (async function* () {
+      for (const chunk of chunks) yield chunk;
+    })();
   }
 
   async sendText(chatId: number, text: string, replyTo?: number): Promise<TgMessage> {

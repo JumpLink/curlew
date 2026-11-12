@@ -25,9 +25,12 @@ import {
   DAEMON_SEND_TIMEOUT_MS,
   type DaemonFetchAttachmentReply,
   type DaemonFetchAttachmentRequest,
+  type DaemonFetchAvatarsReply,
+  type DaemonFetchAvatarsRequest,
   type DaemonSendReply,
   type DaemonSendRequest,
   parseDaemonFetchAttachmentReply,
+  parseDaemonFetchAvatarsReply,
   parseDaemonSendReply,
   toDaemonWire,
 } from './daemon-bus.ts';
@@ -38,6 +41,11 @@ export interface DaemonSendClient {
   send(request: DaemonSendRequest): Promise<DaemonSendReply | null>;
   /** Ask the daemon to fetch a chat attachment on a connection it is already holding. */
   fetchAttachment(request: DaemonFetchAttachmentRequest): Promise<DaemonFetchAttachmentReply | null>;
+  /**
+   * Ask the daemon for profile pictures. `null` when there is no daemon, or it is too old to know
+   * the method: either way the caller keeps the initials.
+   */
+  fetchAvatars(request: DaemonFetchAvatarsRequest): Promise<DaemonFetchAvatarsReply | null>;
 }
 
 /**
@@ -196,6 +204,41 @@ export function gioDaemonSendClient(): DaemonSendClient {
         );
       }
       return parseDaemonFetchAttachmentReply(json);
+    },
+    fetchAvatars: async (request) => {
+      let connection: Gio.DBusConnection;
+      try {
+        connection = Gio.bus_get_sync(Gio.BusType.SESSION, null);
+      } catch {
+        return null;
+      }
+      let json: string;
+      try {
+        json = await new Promise<string>((resolve, reject) => {
+          connection.call(
+            DAEMON_BUS_NAME,
+            DAEMON_OBJECT_PATH,
+            DAEMON_INTERFACE,
+            'FetchAvatars',
+            new GLib.Variant('(s)', [JSON.stringify(request)]),
+            new GLib.VariantType('(s)'),
+            Gio.DBusCallFlags.NO_AUTO_START,
+            DAEMON_FETCH_TIMEOUT_MS,
+            null,
+            (_source, result) => {
+              try {
+                resolve((connection.call_finish(result!).recursiveUnpack() as [string])[0]);
+              } catch (error) {
+                reject(error as Error);
+              }
+            },
+          );
+        });
+      } catch (error) {
+        if (meansNoDaemon(error) || reasonOf(error).includes('UnknownMethod')) return null;
+        throw new Error(`the running curlew daemon did not answer the avatar fetch (${reasonOf(error)})`);
+      }
+      return parseDaemonFetchAvatarsReply(json);
     },
   };
 }

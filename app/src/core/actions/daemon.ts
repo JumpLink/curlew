@@ -44,7 +44,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { readdirSync, rmSync } from 'node:fs';
+import { readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import {
   type ByteSink,
@@ -52,6 +52,7 @@ import {
   type DeliverySession,
   type MessageBackend,
   type MessageRef,
+  type AvatarSource,
   type MessageSender,
   type SendPermit,
   isAttachmentFetcherBackend,
@@ -70,6 +71,7 @@ import {
   loadAttachments,
   newestSeq,
   readChanges,
+  avatarsDir,
   previewsDir,
   receiveDeliveries,
   resolveDownloadPath,
@@ -89,9 +91,11 @@ import { contactNameFromIndex } from '../lib/contact-name.ts';
 import type { Capability } from '../grants.ts';
 import { configPath } from '@curlew/store';
 import { AccountTable } from '../lib/daemon-accounts.ts';
-import { DAEMON_WIRE_VERSION, type DaemonSendReply } from '../lib/daemon-bus.ts';
+import { DAEMON_WIRE_VERSION, type DaemonAvatarFile, type DaemonSendReply } from '../lib/daemon-bus.ts';
+import { avatarAccountDir, avatarFiles, avatarState } from '../lib/avatar-cache.ts';
 import {
   publishDaemonSend,
+  type DaemonAvatarsHandler,
   type DaemonFetchHandler,
   type DaemonSendHandler,
   type DaemonSendService,
@@ -535,6 +539,93 @@ export function createDaemonFetchHandler(options: DaemonFetchHandlerOptions): Da
   };
 }
 
+export interface DaemonAvatarsHandlerOptions {
+  /** The backends of the accounts this run holds, keyed by `sessionKey`; those with `openAvatars` serve pictures. */
+  backends: ReadonlyMap<string, MessageBackend>;
+  log: (line: string) => void;
+  /** Where the pictures are cached; `avatarsDir()` when unset. */
+  root?: string;
+  /** No-progress deadline of one picture; `FETCH_STALL_MS` when unset. */
+  stallTimeoutMs?: number;
+}
+
+const NO_SINK: ByteSink = { write: () => {}, close: () => {} };
+
+/**
+ * Answer one `FetchAvatars` off the session bus: the profile pictures of some chats.
+ *
+ * Peers with a fresh entry in the cache are answered from it. For the rest ONE connection is
+ * opened and used for each, so a screenful of rows costs one connect. A peer that fails is left
+ * out of the reply (the window asks again later); a peer without a picture is `null` and leaves
+ * a marker, so it is not asked for again at once. Pictures carry no message content, but they
+ * are still the person's contacts: the directory is private like the previews.
+ */
+export function createDaemonAvatarsHandler(options: DaemonAvatarsHandlerOptions): DaemonAvatarsHandler {
+  const { backends, log, root = avatarsDir(), stallTimeoutMs = FETCH_STALL_MS } = options;
+  return async (request) => {
+    const who = sessionKey(request.backend, request.account);
+    const backend = backends.get(who);
+    if (backend === undefined || backend.openAvatars === undefined) {
+      return { v: DAEMON_WIRE_VERSION, kind: 'not-followed' };
+    }
+    const avatars: Record<string, DaemonAvatarFile | null> = {};
+    const missing: string[] = [];
+    for (const peer of request.peers) {
+      const state = avatarState(root, request.backend, request.account, peer);
+      if (state.kind === 'hit') avatars[peer] = { path: state.path, mimeType: 'image/jpeg' };
+      else if (state.kind === 'none') avatars[peer] = null;
+      // A stale answer is still given: the window shows it now and the next ask refreshes it.
+      if (state.kind === 'unknown' || state.stale) missing.push(peer);
+    }
+    if (missing.length === 0) return { v: DAEMON_WIRE_VERSION, kind: 'fetched', avatars };
+    ensurePrivateDir(avatarAccountDir(root, request.backend, request.account));
+    let source: AvatarSource;
+    try {
+      source = await withStallDeadline(stallTimeoutMs, NO_SINK, () => backend.openAvatars!(request.account));
+    } catch (error) {
+      log(`curlew-daemon: avatar fetch for ${who} failed: ${errText(error)}`);
+      // What the cache had is still better than nothing.
+      if (Object.keys(avatars).length > 0) return { v: DAEMON_WIRE_VERSION, kind: 'fetched', avatars };
+      return { v: DAEMON_WIRE_VERSION, kind: 'failed', message: errText(error) };
+    }
+    let fetched = 0;
+    try {
+      for (const peer of missing) {
+        const files = avatarFiles(root, request.backend, request.account, peer);
+        let sink: FileSink;
+        try {
+          sink = new FileSink(files.image);
+        } catch {
+          continue; // Another window is fetching this very picture.
+        }
+        try {
+          const result = await withStallDeadline(stallTimeoutMs, sink, (guarded, signal) =>
+            source.fetchAvatar(peer, guarded, { maxBytes: request.maxBytes, signal }),
+          );
+          if (result === null) {
+            sink.abort('no picture');
+            rmSync(files.image, { force: true });
+            writeFileSync(files.none, '', { mode: 0o600 });
+            avatars[peer] = null;
+          } else {
+            sink.close();
+            rmSync(files.none, { force: true });
+            avatars[peer] = { path: files.image, mimeType: result.mimeType ?? 'image/jpeg' };
+            fetched++;
+          }
+        } catch (error) {
+          sink.abort(errText(error));
+          log(`curlew-daemon: avatar for ${who} failed: ${errText(error)}`);
+        }
+      }
+    } finally {
+      await source.close().catch(() => {});
+    }
+    if (fetched > 0) log(`curlew-daemon: fetched ${fetched} avatar(s) for ${who}`);
+    return { v: DAEMON_WIRE_VERSION, kind: 'fetched', avatars };
+  };
+}
+
 /**
  * Receive until `params.signal` aborts, then rebuild the conversations once and close the index.
  *
@@ -734,6 +825,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
               accounts: () => table.reply(),
               access: (request) => accessBroker.request(request),
               fetch: createDaemonFetchHandler({ db, fetchBackends, log }),
+              avatars: createDaemonAvatarsHandler({ backends: fetchBackends, log }),
               onSessionEnd: (session) => {
                 accessBroker.endSession(session);
                 log('curlew-daemon: an agent session ended — its temporary access grants are gone');

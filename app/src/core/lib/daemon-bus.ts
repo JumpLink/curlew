@@ -39,6 +39,10 @@ export const DAEMON_INTERFACE_XML = `<node>
       <arg type="s" name="request_json" direction="in"/>
       <arg type="s" name="reply_json" direction="out"/>
     </method>
+    <method name="FetchAvatars">
+      <arg type="s" name="request_json" direction="in"/>
+      <arg type="s" name="reply_json" direction="out"/>
+    </method>
     <method name="RequestAccess">
       <arg type="s" name="request_json" direction="in"/>
       <arg type="s" name="reply_json" direction="out"/>
@@ -494,6 +498,92 @@ export function parseDaemonFetchAttachmentReply(json: string): DaemonFetchAttach
       if (typeof (reply as { message?: unknown }).message !== 'string')
         throw new Error('the curlew daemon reported a problem without saying what it was');
       return reply as DaemonFetchAttachmentReply;
+    default:
+      throw new Error(`the curlew daemon answered an unknown reply kind ${String(reply.kind)}`);
+  }
+}
+
+/** The most peers one `FetchAvatars` carries: a screenful, so one slow row cannot hold a whole list. */
+export const DAEMON_MAX_AVATAR_PEERS = 30;
+
+/** Profile pictures for some chats of one account. New in the same wire version: an old daemon answers `UnknownMethod`. */
+export interface DaemonFetchAvatarsRequest {
+  v: number;
+  backend: string;
+  account: string;
+  /** Chat addresses as the index holds them (`ListEntry.target`). */
+  peers: string[];
+  /** Max bytes of one picture. */
+  maxBytes: number;
+}
+
+/** Where the daemon wrote the picture of a peer, or null when it has none. */
+export interface DaemonAvatarFile {
+  path: string;
+  mimeType: string;
+}
+
+export type DaemonFetchAvatarsReply =
+  | { v: number; kind: 'fetched'; avatars: Record<string, DaemonAvatarFile | null> }
+  | { v: number; kind: 'not-followed' }
+  | { v: number; kind: 'failed'; message: string };
+
+/** Read a `FetchAvatars` request off the wire, or throw. */
+export function parseDaemonFetchAvatarsRequest(json: string): DaemonFetchAvatarsRequest {
+  let value: unknown;
+  try {
+    value = JSON.parse(json);
+  } catch (error) {
+    throw new Error('the avatar request is not JSON', { cause: error });
+  }
+  if (typeof value !== 'object' || value === null) throw new Error('the avatar request is not an object');
+  const request = value as Partial<DaemonFetchAvatarsRequest>;
+  if (request.v !== DAEMON_WIRE_VERSION) throw new Error('the avatar request speaks another protocol version');
+  for (const field of ['backend', 'account'] as const) {
+    if (typeof request[field] !== 'string' || request[field] === '')
+      throw new Error(`the avatar request has no ${field}`);
+  }
+  if (
+    !Array.isArray(request.peers) ||
+    request.peers.length === 0 ||
+    request.peers.length > DAEMON_MAX_AVATAR_PEERS ||
+    request.peers.some((peer) => typeof peer !== 'string' || peer === '')
+  )
+    throw new Error('the avatar request has no usable peers');
+  if (!isCount(request.maxBytes, 1)) throw new Error('the avatar request has no maxBytes');
+  return request as DaemonFetchAvatarsRequest;
+}
+
+/** Read a `FetchAvatars` reply off the wire, or throw. */
+export function parseDaemonFetchAvatarsReply(json: string): DaemonFetchAvatarsReply {
+  let value: unknown;
+  try {
+    value = JSON.parse(json);
+  } catch (error) {
+    throw new Error('the curlew daemon answered something that is not JSON', { cause: error });
+  }
+  if (typeof value !== 'object' || value === null) throw new Error('the curlew daemon answered no object');
+  const reply = value as Partial<DaemonFetchAvatarsReply> & { avatars?: unknown; message?: unknown };
+  if (reply.v !== DAEMON_WIRE_VERSION) throw new Error('the running curlew daemon speaks another protocol version');
+  switch (reply.kind) {
+    case 'fetched': {
+      const avatars = reply.avatars;
+      if (typeof avatars !== 'object' || avatars === null || Array.isArray(avatars))
+        throw new Error('the curlew daemon reported avatars without saying which');
+      for (const file of Object.values(avatars as Record<string, unknown>)) {
+        if (file === null) continue;
+        const f = file as Partial<DaemonAvatarFile>;
+        if (typeof f?.path !== 'string' || typeof f.mimeType !== 'string')
+          throw new Error('the curlew daemon reported an avatar without its file');
+      }
+      return reply as DaemonFetchAvatarsReply;
+    }
+    case 'not-followed':
+      return reply as DaemonFetchAvatarsReply;
+    case 'failed':
+      if (typeof reply.message !== 'string')
+        throw new Error('the curlew daemon reported a problem without saying what it was');
+      return reply as DaemonFetchAvatarsReply;
     default:
       throw new Error(`the curlew daemon answered an unknown reply kind ${String(reply.kind)}`);
   }
