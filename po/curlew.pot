@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-12 15:41+0100\n"
+"POT-Creation-Date: 2026-11-12 16:24+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1649,9 +1649,9 @@ msgstr ""
 #: app/src/window/account-remove-model.ts:24
 #: app/src/window/account-remove-model.ts:37
 #: app/src/window/agent-access-page.ts:234
-#: app/src/window/conversation-list.ts:404
-#: app/src/window/conversation-list.ts:490
-#: app/src/window/conversation-view.ts:687
+#: app/src/window/conversation-list.ts:409
+#: app/src/window/conversation-list.ts:495
+#: app/src/window/conversation-view.ts:689
 msgid "Cancel"
 msgstr ""
 
@@ -1956,13 +1956,13 @@ msgstr ""
 msgid "Play"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:108 app/src/window/audio-player.ts:56
+#: app/src/window/attachment-view.ts:108 app/src/window/audio-player.ts:66
 #: app/src/window/media-viewer.ts:64
 msgid "Save as…"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:126 app/src/window/audio-player.ts:133
-#: app/src/window/audio-player.ts:160
+#: app/src/window/attachment-view.ts:126 app/src/window/audio-player.ts:143
+#: app/src/window/audio-player.ts:170
 msgid "Could not fetch the attachment: {error}"
 msgstr ""
 
@@ -1988,23 +1988,23 @@ msgid_plural "and {n} more attachments"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/audio-player.ts:27
+#: app/src/window/audio-player.ts:37
 msgid "Play voice message"
 msgstr ""
 
-#: app/src/window/audio-player.ts:27
+#: app/src/window/audio-player.ts:37
 msgid "Play {name}"
 msgstr ""
 
-#: app/src/window/audio-player.ts:45
+#: app/src/window/audio-player.ts:55
 msgid "Position"
 msgstr ""
 
-#: app/src/window/audio-player.ts:85
+#: app/src/window/audio-player.ts:95
 msgid "Pause"
 msgstr ""
 
-#: app/src/window/audio-player.ts:106
+#: app/src/window/audio-player.ts:116
 msgid "Could not play the attachment: {error}"
 msgstr ""
 
@@ -2050,44 +2050,44 @@ msgstr ""
 msgid "Remove Picture"
 msgstr ""
 
-#: app/src/window/contact-page.ts:162
+#: app/src/window/contact-page.ts:165
 msgid "Name"
 msgstr ""
 
-#: app/src/window/contact-page.ts:163
-msgid "Picture"
+#: app/src/window/contact-page.ts:166 app/src/window/contact-page.ts:184
+msgid "The newest chat decides"
 msgstr ""
 
-#: app/src/window/contact-page.ts:170
+#: app/src/window/contact-page.ts:168 app/src/window/contact-page.ts:183
 #: app/src/window/conversation-list-model.ts:383
 msgid "Automatic"
 msgstr ""
 
-#: app/src/window/contact-page.ts:171
-msgid "The newest chat decides"
+#: app/src/window/contact-page.ts:180
+msgid "Picture"
 msgstr ""
 
-#: app/src/window/contact-page.ts:197 app/src/window/conversation-list.ts:412
+#: app/src/window/contact-page.ts:204 app/src/window/conversation-list.ts:417
 msgid "Separate"
 msgstr ""
 
-#: app/src/window/contact-page.ts:198
+#: app/src/window/contact-page.ts:205
 msgid "Show these chats as separate people again"
 msgstr ""
 
-#: app/src/window/contact-page.ts:212
+#: app/src/window/contact-page.ts:219
 msgid "Images"
 msgstr ""
 
-#: app/src/window/contact-page.ts:216
+#: app/src/window/contact-page.ts:223
 msgid "Choose a Picture"
 msgstr ""
 
-#: app/src/window/contact-page.ts:229
+#: app/src/window/contact-page.ts:236
 msgid "This file is not a picture"
 msgstr ""
 
-#: app/src/window/contact-page.ts:260
+#: app/src/window/contact-page.ts:267
 msgid "Your own picture is shown instead"
 msgstr ""
 
@@ -2171,86 +2171,86 @@ msgstr ""
 msgid "Groups"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:214
+#: app/src/window/conversation-list.ts:219
 msgid "Add an account"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:222
+#: app/src/window/conversation-list.ts:227
 msgid "Search conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:230
+#: app/src/window/conversation-list.ts:235
 msgid "Filter conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:293
+#: app/src/window/conversation-list.ts:298
 msgid "Protocols"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:316
+#: app/src/window/conversation-list.ts:321
 msgid "Clear filters"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:338
+#: app/src/window/conversation-list.ts:343
 msgid "No conversations yet"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:338
+#: app/src/window/conversation-list.ts:343
 msgid "No matches"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:341
+#: app/src/window/conversation-list.ts:346
 msgid ""
 "Conversations appear here after Curlew has synced an account. Run \"curlew "
 "sync\" first."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:342
+#: app/src/window/conversation-list.ts:347
 msgid "Nothing fits the search and filters."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:388
+#: app/src/window/conversation-list.ts:393
 msgid "Search"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:393
+#: app/src/window/conversation-list.ts:398
 #: app/src/window/new-conversation.ts:24
 msgid "New conversation"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:410
-#: app/src/window/conversation-list.ts:491
+#: app/src/window/conversation-list.ts:415
+#: app/src/window/conversation-list.ts:496
 #: app/src/window/merge-assistant.ts:116
 msgid "Merge"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:487
+#: app/src/window/conversation-list.ts:492
 msgid "Merge these people?"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:488
+#: app/src/window/conversation-list.ts:493
 msgid ""
 "Their chats become one conversation. Nothing is deleted, and you can "
 "separate them again."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:514
+#: app/src/window/conversation-list.ts:519
 msgid "Review"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:521
+#: app/src/window/conversation-list.ts:526
 #: app/src/window/preferences-dialog.ts:40
 msgid "Conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:543
+#: app/src/window/conversation-list.ts:548
 msgid "{count} possible duplicate"
 msgid_plural "{count} possible duplicates"
 msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:115
-#: app/src/window/conversation-view.ts:1286
+#: app/src/window/conversation-view.ts:1290
 msgid "Continuing via {protocol}"
 msgstr ""
 
@@ -2286,7 +2286,7 @@ msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:322
 #: app/src/window/conversation-model.ts:335
-#: app/src/window/conversation-view.ts:671
+#: app/src/window/conversation-view.ts:673
 msgid "You"
 msgstr ""
 
@@ -2309,7 +2309,7 @@ msgid "No messages yet"
 msgstr ""
 
 #: app/src/window/conversation-view.ts:204
-#: app/src/window/conversation-view.ts:455
+#: app/src/window/conversation-view.ts:457
 msgid "Write a message"
 msgstr ""
 
@@ -2329,98 +2329,98 @@ msgstr ""
 msgid "Conversation"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:421
+#: app/src/window/conversation-view.ts:423
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:473
+#: app/src/window/conversation-view.ts:475
 msgid "Send via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:578
+#: app/src/window/conversation-view.ts:580
 msgid "Show the quoted message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:585
-#: app/src/window/conversation-view.ts:617
+#: app/src/window/conversation-view.ts:587
+#: app/src/window/conversation-view.ts:619
 msgid "Reply to {author}: {excerpt}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:600
+#: app/src/window/conversation-view.ts:602
 msgid "The quoted message is no longer in the history"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:642
+#: app/src/window/conversation-view.ts:644
 msgid "Reaction not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:670
+#: app/src/window/conversation-view.ts:672
 msgid "Edit message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:674
+#: app/src/window/conversation-view.ts:676
 msgid "Editing your message: {excerpt}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:682
+#: app/src/window/conversation-view.ts:684
 msgid "Delete message?"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:683
+#: app/src/window/conversation-view.ts:685
 msgid "This will remove the message for everyone in the chat."
 msgstr ""
 
-#: app/src/window/conversation-view.ts:688
+#: app/src/window/conversation-view.ts:690
 msgid "Delete for everyone"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:705
+#: app/src/window/conversation-view.ts:707
 msgid "Message not deleted: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:766
+#: app/src/window/conversation-view.ts:768
 msgid "Reply"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:767
+#: app/src/window/conversation-view.ts:769
 msgid "Edit"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:768
+#: app/src/window/conversation-view.ts:770
 msgid "Delete"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:769
+#: app/src/window/conversation-view.ts:771
 msgid "Copy"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:885
+#: app/src/window/conversation-view.ts:887
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:927
-#: app/src/window/conversation-view.ts:1063
+#: app/src/window/conversation-view.ts:929
+#: app/src/window/conversation-view.ts:1067
 msgid "edited"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:937
-#: app/src/window/conversation-view.ts:938
+#: app/src/window/conversation-view.ts:939
+#: app/src/window/conversation-view.ts:940
 msgid "Read"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1150
+#: app/src/window/conversation-view.ts:1154
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1251
+#: app/src/window/conversation-view.ts:1255
 msgid "Message not edited: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1298
+#: app/src/window/conversation-view.ts:1302
 msgid "Message not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1301
+#: app/src/window/conversation-view.ts:1305
 msgid "Retry"
 msgstr ""
 

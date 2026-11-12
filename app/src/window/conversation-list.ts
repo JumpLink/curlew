@@ -169,7 +169,9 @@ function entryRow(
 function sectionRow(section: Section, collapsed: boolean): Gtk.ListBoxRow {
   const box = new Gtk.Box({ spacing: 8, marginTop: 6, marginBottom: 6, marginStart: 12, marginEnd: 12 });
   const title = new Gtk.Label({ label: section.title, xalign: 0, hexpand: true });
-  title.add_css_class('heading');
+  // A step below the row titles, so the sections read as labels and the people as content.
+  title.add_css_class('caption-heading');
+  title.add_css_class('dim-label');
   box.append(title);
   // Collapsed, the section still says it holds something unread (Fractal's section_row).
   if (collapsed && section.unread > 0) {
@@ -178,9 +180,12 @@ function sectionRow(section: Section, collapsed: boolean): Gtk.ListBoxRow {
     count.add_css_class('dim-label');
     box.append(count);
   }
-  box.append(
-    new Gtk.Image({ iconName: collapsed ? 'pan-end-symbolic' : 'pan-down-symbolic', pixelSize: 16 }),
-  );
+  const chevron = new Gtk.Image({
+    iconName: collapsed ? 'pan-end-symbolic' : 'pan-down-symbolic',
+    pixelSize: 16,
+  });
+  chevron.add_css_class('dim-label');
+  box.append(chevron);
   const row = new Gtk.ListBoxRow({ selectable: false });
   row.set_child(box);
   return row;
