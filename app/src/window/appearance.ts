@@ -29,7 +29,8 @@ const ACCENTS: Record<AccentName, Adw.AccentColor> = {
 // lay the same tint over the window colour instead, and give the person's own messages the accent.
 const SURFACE_CSS = `
 .curlew-surface {
-  background-image: linear-gradient(@card_bg_color, @card_bg_color);
+  /* Twice: opaque in light, so no change there, and in dark it stacks the card's 8% white to ~15%. */
+  background-image: linear-gradient(@card_bg_color, @card_bg_color), linear-gradient(@card_bg_color, @card_bg_color);
   background-color: @window_bg_color;
 }
 .curlew-own {
