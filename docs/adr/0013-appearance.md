@@ -22,7 +22,7 @@ screen, where Telegram lets the history scroll under them.
    through the `@accent_*` colour variables, never per widget. The accent also fills the person's
    own message bubbles, as in Telegram and WhatsApp; every message surface is opaque so the
    background doodles never shine through.
-2. **Chat background.** A setting `ui.chatBackground`: `doodles` (the default) or `none`. The pattern is an SVG tile that carries no colour of its own: it is
+2. **Chat background.** A setting `ui.chatBackground`: `doodles` (the default), `dots`, `waves` or `none` (see 6). The pattern is an SVG tile that carries no colour of its own: it is
    drawn in `currentColor` at a few percent opacity, so it follows light/dark and the accent.
    The motifs are our own line drawings (a curlew, an envelope, a paper plane, a gear, a terminal,
    a speech bubble). Real mascots are not used: Tux and Wilber ask for attribution or share-alike,
@@ -45,6 +45,20 @@ screen, where Telegram lets the history scroll under them.
    defaults to blue; `system` (switch off) means no tint. The **accent colour** stays the Adwaita
    accent (default teal, `system` = the desktop's). The two are separate on purpose: a blue tint
    with a blue accent would leave own bubbles and buttons indistinguishable from the surface.
+
+6. **Design packs, patterns and a look per chat (addendum).** The background is managed with the
+   colours in one place: the preferences' Appearance page leads with a **Design** row. A pack is a
+   named triple of primary colour, accent colour and background (`curlew`, `forest`, `dusk`,
+   `sunrise`, `rose`, `graphite`; `curlew` is what an untouched install shows). Picking one writes
+   the three settings; the row reads "Custom" whenever they match no pack. The patterns are the
+   doodles, a staggered dot grid and waves, all one tile in the foreground colour, or none.
+   A direct chat with a contact page can **differ from the app**: `contactChoices` gains optional
+   `primary`, `accent` and `background`, set on the contact page (a pack, or the accent and the
+   background alone). The look is applied through CSS classes on the open chat's page
+   (`look-primary-<name>`, `look-accent-<name>`) with rules written once per colour, never a provider per
+   chat. For that the person's own bubbles carry `curlew-own` and the others `curlew-surface`,
+   not both: a scoped tint must not repaint own bubbles. Groups and Note to self have no contact
+   page, hence no look of their own yet.
 
 ## Consequences
 

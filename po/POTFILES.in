@@ -118,6 +118,7 @@ app/src/window/chat-background.ts
 app/src/window/chat-doodles.ts
 app/src/window/composer-files-model.ts
 app/src/window/composer-files.ts
+app/src/window/composer-input.ts
 app/src/window/contact-page.ts
 app/src/window/contact-picture.ts
 app/src/window/conversation-list-model.ts

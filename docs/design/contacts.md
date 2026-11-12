@@ -248,3 +248,7 @@ written to; the subtitle names the protocols (`XMPP · Mail`, most trusted first
 
 Open: whether a draft that was never sent should stay in the list (it does not now), and
 Matrix once an address book can carry a Matrix id.
+
+**Look per chat.** The contact page's Look group gives a direct chat its own design pack, accent
+colour or background (`contactChoices.primary`/`accent`/`background`, ADR 0013 item 6). "Like the
+rest of the app" clears a part. Groups have no look of their own yet.

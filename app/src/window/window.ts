@@ -27,7 +27,7 @@ import {
   peoplePin,
   peopleUnmerge,
 } from '../core/actions/people.ts';
-import { choiceFor } from '../core/contact-choices.ts';
+import { choiceFor, lookOf } from '../core/contact-choices.ts';
 import { createConversationList } from './conversation-list.ts';
 import { composeMailReply } from './conversation-model.ts';
 import {
@@ -243,6 +243,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     currentEntry = entry;
     currentMessages = loadConversationMessages(entry);
     conversation.show(entry, currentMessages, labels);
+    conversation.setLook(lookOf(choiceFor(loadConfig().contactChoices, entry.personIds)?.choice));
     split.set_content(conversation.page);
     split.set_show_content(true);
   };
@@ -251,6 +252,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     currentEntry = entry;
     currentMessages = [];
     conversation.show(entry, currentMessages, labels);
+    conversation.setLook(lookOf(choiceFor(loadConfig().contactChoices, entry.personIds)?.choice));
     split.set_content(conversation.page);
     split.set_show_content(true);
   };

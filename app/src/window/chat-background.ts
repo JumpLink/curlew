@@ -6,8 +6,8 @@ import GObject from 'gi://GObject?version=2.0';
 import Graphene from 'gi://Graphene?version=1.0';
 import Gtk from 'gi://Gtk?version=4.0';
 
-import { backgroundToShow } from '../core/lib/appearance.ts';
-import { DOODLE_TILE, doodleTileSvg } from './chat-doodles.ts';
+import { type BackgroundChoice, backgroundToShow } from '../core/lib/appearance.ts';
+import { DOODLE_TILE, patternTileSvg } from './chat-doodles.ts';
 
 const OPACITY = 0.1;
 
@@ -25,12 +25,19 @@ export const ChatBackground = GObject.registerClass(
   { GTypeName: 'CurlewChatBackground' },
   class ChatBackground extends Gtk.Widget {
     private texture: Gdk.Texture | null = null;
-    private textureColor = '';
+    private textureKey = '';
+    private own: BackgroundChoice | null = null;
 
     constructor() {
       super({ canTarget: false, canFocus: false, hexpand: true, vexpand: true });
       this.connect('realize', () => live.add(this));
       this.connect('unrealize', () => live.delete(this));
+    }
+
+    /** This conversation's own pattern, or null to follow the app-wide setting. */
+    setPattern(pattern: BackgroundChoice | null): void {
+      this.own = pattern;
+      this.queue_draw();
     }
 
     // The foreground is light on a dark window and dark on a light one, so the pattern follows
@@ -40,13 +47,14 @@ export const ChatBackground = GObject.registerClass(
       this.queue_draw();
     }
 
-    private tile(color: Gdk.RGBA): Gdk.Texture | null {
+    private tile(pattern: 'doodles' | 'dots' | 'waves', color: Gdk.RGBA): Gdk.Texture | null {
       const css = `rgb(${Math.round(color.red * 255)},${Math.round(color.green * 255)},${Math.round(color.blue * 255)})`;
-      if (this.texture && css === this.textureColor) return this.texture;
+      const key = `${pattern}/${css}`;
+      if (this.texture && key === this.textureKey) return this.texture;
       try {
-        const bytes = new TextEncoder().encode(doodleTileSvg(css, OPACITY));
+        const bytes = new TextEncoder().encode(patternTileSvg(pattern, css, OPACITY));
         this.texture = Gdk.Texture.new_from_bytes(GLib.Bytes.new(bytes));
-        this.textureColor = css;
+        this.textureKey = key;
       } catch {
         // No SVG loader on this system: the conversation simply has a plain background.
         this.texture = null;
@@ -57,8 +65,9 @@ export const ChatBackground = GObject.registerClass(
     vfunc_snapshot(snapshot: Gtk.Snapshot): void {
       const width = this.get_width();
       const height = this.get_height();
-      if (shown === 'none' || width <= 0 || height <= 0) return;
-      const texture = this.tile(this.get_color());
+      const pattern = this.own ?? shown;
+      if (pattern === 'none' || width <= 0 || height <= 0) return;
+      const texture = this.tile(pattern, this.get_color());
       if (!texture) return;
       const tile = new Graphene.Rect().init(0, 0, DOODLE_TILE, DOODLE_TILE);
       snapshot.push_repeat(new Graphene.Rect().init(0, 0, width, height), tile);
