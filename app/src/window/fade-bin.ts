@@ -13,9 +13,13 @@ import Gsk from 'gi://Gsk?version=4.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 
-/** A child taller than this is clamped. */
-const COLLAPSE_ABOVE = 400;
-const COLLAPSED_HEIGHT = 300;
+/**
+ * A child taller than this is clamped to exactly this. One value for both, not a higher threshold
+ * and a lower clamp: a gap between them makes the height jump DOWN as a child gets taller, so
+ * measured at its natural width it asked for more than at the width it is laid out at, and a list
+ * row kept the larger height with an empty stretch under the fade.
+ */
+const COLLAPSED_HEIGHT = 360;
 const FADE_HEIGHT = 125;
 
 export const FadeBin = GObject.registerClass(
@@ -56,7 +60,7 @@ export const FadeBin = GObject.registerClass(
     }
 
     private clamps(natural: number): boolean {
-      return !this.isExpanded && natural > COLLAPSE_ABOVE;
+      return !this.isExpanded && natural > COLLAPSED_HEIGHT;
     }
 
     // A Gtk.Widget defaults to CONSTANT_SIZE, so the parent would ask for the height without a
