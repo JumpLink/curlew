@@ -7,6 +7,7 @@ import { _, fmt, visibleAccounts } from '@curlew/protocol';
 import type {
   AccountPrompter,
   AttachmentFetcher,
+  AvatarSource,
   BackendAccount,
   ListAccountsOptions,
   BackendContext,
@@ -30,6 +31,7 @@ import {
 } from './accounts.ts';
 import { connectMatrixClient, isLoggedOutError, type MatrixConnector } from './client.ts';
 import { MatrixAttachments } from './attachments.ts';
+import { MatrixAvatars } from './avatars.ts';
 import { readOnlyFetch, sendFetch } from './guard.ts';
 import { loginMatrix } from './login.ts';
 import { reportUndecryptable } from './redact.ts';
@@ -177,6 +179,18 @@ export class MatrixBackend implements ChatBackend, SendBackend {
     return new MatrixAttachments({
       homeserver: record.homeserver,
       accessToken,
+      fetch: readOnlyFetch(this.httpFetch),
+      onClose: () => store.close(),
+    });
+  }
+
+  /** The read-only picture handle: plain GETs for a room's or a direct chat's thumbnail. */
+  async openAvatars(accountId: string): Promise<AvatarSource> {
+    const { store, record, accessToken } = this.openAccount(accountId);
+    return new MatrixAvatars({
+      homeserver: record.homeserver,
+      accessToken,
+      userId: record.userId,
       fetch: readOnlyFetch(this.httpFetch),
       onClose: () => store.close(),
     });
