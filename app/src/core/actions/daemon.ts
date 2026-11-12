@@ -506,15 +506,17 @@ export function createDaemonFetchHandler(options: DaemonFetchHandlerOptions): Da
     const path = resolveDownloadPath(dir, info.filename, fallbackAttachmentName(info));
     const sink = new FileSink(path);
     try {
-      const fetcher = await backend.openAttachments(request.account);
-      const result = await withStallDeadline(stallTimeoutMs, sink, (guarded, signal) =>
-        fetcher.fetchAttachment(
+      // Connecting is under the deadline too: a connection that never comes up would otherwise
+      // leave the caller's picture on its spinner for good.
+      const result = await withStallDeadline(stallTimeoutMs, sink, async (guarded, signal) => {
+        const fetcher = await backend.openAttachments(request.account);
+        return fetcher.fetchAttachment(
           { backend: request.backend, accountId: request.account },
           { kind: info.kind, handle },
           guarded,
           { maxBytes: request.maxBytes, signal },
-        ),
-      );
+        );
+      });
       sink.close();
       log(`curlew-daemon: fetched attachment for ${who} (${result.size} bytes)`);
       return {
@@ -527,7 +529,7 @@ export function createDaemonFetchHandler(options: DaemonFetchHandlerOptions): Da
       };
     } catch (error) {
       sink.abort(errText(error));
-      log(`curlew-daemon: attachment fetch for ${who} failed`);
+      log(`curlew-daemon: attachment fetch for ${who} failed: ${errText(error)}`);
       return { v: DAEMON_WIRE_VERSION, kind: 'failed', message: errText(error) };
     }
   };
