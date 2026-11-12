@@ -69,6 +69,7 @@ import { hasRichText, richMarkup } from './rich-text-model.ts';
 import type { AttachmentSource } from './attachment-store.ts';
 import { fadedOverlay } from './fade-bin.ts';
 import { createComposerFiles } from './composer-files.ts';
+import { createComposerInput } from './composer-input.ts';
 import type { PickedFile } from './composer-files-model.ts';
 
 export interface ConversationView {
@@ -202,8 +203,7 @@ export function createConversationView(
   backdrop.add_overlay(empty);
 
   const composer = new Gtk.Box({ spacing: 6, marginStart: 6, marginEnd: 6, marginTop: 6, marginBottom: 6 });
-  const input = new Gtk.Entry({ placeholderText: _('Write a message'), hexpand: true });
-  input.add_css_class('flat');
+  const input = createComposerInput(_('Write a message'));
   const picker = new Gtk.MenuButton({
     iconName: 'network-transmit-receive-symbolic',
     tooltipText: protocolLabel(''),
@@ -217,7 +217,7 @@ export function createConversationView(
   const send = new Gtk.Button({ iconName: 'mail-send-symbolic', tooltipText: _('Send message') });
   send.add_css_class('suggested-action');
   send.add_css_class('circular');
-  composer.append(input);
+  composer.append(input.widget);
   composer.append(picker);
   composer.append(send);
 
@@ -258,9 +258,11 @@ export function createConversationView(
     toast: (text) => overlay.add_toast(new Adw.Toast({ title: text, timeout: 4 })),
     onChange: () => {},
     dropOn: content,
-    pasteInto: input,
+    pasteInto: input.view,
   });
   composer.prepend(files.button);
+  // The buttons stay at the bottom edge while the field grows upward.
+  for (const part of [files.button, picker, send]) part.set_valign(Gtk.Align.END);
   // Everything the person types into rides in one bottom bar, so the history can run beneath it.
   const compose = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
   // Each part is a card of its own, so it stays legible over the messages scrolling beneath it.
@@ -455,7 +457,7 @@ export function createConversationView(
   };
   replyClose.connect('clicked', () => {
     clearReply();
-    input.grab_focus();
+    input.grabFocus();
   });
 
   const clearEdit = (): void => {
@@ -466,12 +468,12 @@ export function createConversationView(
       editSlot.remove(child);
       child = editSlot.get_first_child();
     }
-    input.set_placeholder_text(_('Write a message'));
+    input.setPlaceholder(_('Write a message'));
   };
   editClose.connect('clicked', () => {
     clearEdit();
-    input.set_text('');
-    input.grab_focus();
+    input.setText('');
+    input.grabFocus();
   });
 
   const selectChoice = (choice: ProtocolChoice): void => {
@@ -631,7 +633,7 @@ export function createConversationView(
       [fmt(_('Reply to {author}: {excerpt}'), { author: draft.author, excerpt: draft.excerpt })],
     );
     replyBar.set_visible(true);
-    input.grab_focus();
+    input.grabFocus();
   };
 
   // One reaction at a time per message: a second tap while the first is on its way would race it.
@@ -680,15 +682,15 @@ export function createConversationView(
     clearEdit();
     const text = message.bodyText ?? '';
     edit = { message, originalText: text, handle };
-    input.set_text(text);
-    input.set_placeholder_text(_('Edit message'));
+    input.setText(text);
+    input.setPlaceholder(_('Edit message'));
     editSlot.append(quoteLine(_('You'), text, 1));
     editBar.update_property(
       [Gtk.AccessibleProperty.LABEL],
       [fmt(_('Editing your message: {excerpt}'), { excerpt: text })],
     );
     editBar.set_visible(true);
-    input.grab_focus();
+    input.grabFocus();
   };
 
   const confirmDelete = (message: ShownMessage, handle: MessageHandle<ProtocolChoice>): void => {
@@ -1241,12 +1243,12 @@ export function createConversationView(
   adjustment.connect('notify::page-size', () => schedulePass());
 
   const submit = () => {
-    const text = input.get_text().trim();
+    const text = input.getText().trim();
     const picked = files.files();
     if (edit) {
       if (!text || sending) return;
       sending = true;
-      input.set_sensitive(false);
+      input.setSensitive(false);
       send.set_sensitive(false);
       send.set_child(new Adw.Spinner());
       const { message, originalText, handle } = edit;
@@ -1257,11 +1259,11 @@ export function createConversationView(
         .then(() => {
           message.bodyText = text;
           message.editedAt = next.editedAt;
-          input.set_text('');
+          input.setText('');
         })
         .catch((err: unknown) => {
           updateBubbleText({ ...message, bodyText: originalText });
-          input.set_text(text);
+          input.setText(text);
           overlay.add_toast(
             new Adw.Toast({
               title: fmt(_('Message not edited: {error}'), {
@@ -1273,16 +1275,16 @@ export function createConversationView(
         })
         .finally(() => {
           sending = false;
-          input.set_sensitive(true);
+          input.setSensitive(true);
           send.set_sensitive(true);
           send.set_icon_name('mail-send-symbolic');
-          input.grab_focus();
+          input.grabFocus();
         });
       return;
     }
     if ((!text && picked.length === 0) || sending || !entry || !selectedChoice) return;
     sending = true;
-    input.set_sensitive(false);
+    input.setSensitive(false);
     send.set_sensitive(false);
     // An upload takes a while: the button shows that something is happening.
     send.set_child(new Adw.Spinner());
@@ -1303,7 +1305,7 @@ export function createConversationView(
             : undefined;
         // The person's own message starts no sender run, and the next one from another starts its own.
         addRow(message, undefined, undefined, run, divider, day !== '' && day !== previousDay, -1);
-        input.set_text('');
+        input.setText('');
         files.clear();
         clearReply();
         scrollToEnd();
@@ -1322,14 +1324,14 @@ export function createConversationView(
       })
       .finally(() => {
         sending = false;
-        input.set_sensitive(true);
+        input.setSensitive(true);
         send.set_sensitive(true);
         send.set_icon_name('mail-send-symbolic');
-        input.grab_focus();
+        input.grabFocus();
       });
   };
   send.connect('clicked', submit);
-  input.connect('activate', submit);
+  input.onSubmit(submit);
 
   return {
     page,
@@ -1358,10 +1360,10 @@ export function createConversationView(
       const roomLine = blocked ?? roomHint(nextEntry);
       hint.set_label(roomLine ?? '');
       hint.set_visible(sendable && roomLine !== null);
-      input.set_sensitive(blocked === null);
+      input.setSensitive(blocked === null);
       send.set_sensitive(blocked === null);
       composerBlocked = blocked !== null;
-      input.set_text('');
+      input.setText('');
       files.clear();
       clearReply();
       clearEdit();

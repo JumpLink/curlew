@@ -27,7 +27,7 @@ export interface ComposerFilesOptions {
   /** Files may be dropped here. */
   dropOn: Gtk.Widget;
   /** Pasting into this entry may bring a file or a picture. */
-  pasteInto: Gtk.Editable & Gtk.Widget;
+  pasteInto: Gtk.Widget;
 }
 
 export interface ComposerFiles {
