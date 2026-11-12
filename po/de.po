@@ -1797,11 +1797,11 @@ msgstr "curlew window nimmt keine Argumente."
 msgid "Curlew"
 msgstr "Curlew"
 
-#: app/src/window/account-add.ts:138
+#: app/src/window/account-add.ts:138 app/src/window/protocols-page.ts:40
 msgid "Please read this first"
 msgstr "Bitte zuerst lesen"
 
-#: app/src/window/account-add.ts:144
+#: app/src/window/account-add.ts:144 app/src/window/protocols-page.ts:46
 msgid "I understand and accept the risk for my account"
 msgstr "Ich verstehe das Risiko für mein Konto und nehme es in Kauf"
 
@@ -1829,7 +1829,7 @@ msgstr "Konto konnte nicht hinzugefügt werden"
 msgid "Connecting…"
 msgstr "Verbindung wird hergestellt …"
 
-#: app/src/window/account-add.ts:258
+#: app/src/window/account-add.ts:258 app/src/window/protocols-page.ts:28
 msgid "Asks you to accept terms first"
 msgstr "Verlangt zuerst deine Zustimmung zu den Bedingungen"
 
@@ -1863,8 +1863,8 @@ msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 "Ein Konto verwenden, das du in den GNOME-Einstellungen eingerichtet hast"
 
-#: app/src/window/account-add.ts:319 app/src/window/accounts-page.ts:157
-#: app/src/window/accounts-page.ts:180
+#: app/src/window/account-add.ts:319 app/src/window/accounts-page.ts:158
+#: app/src/window/accounts-page.ts:181
 msgid "Add Account"
 msgstr "Konto hinzufügen"
 
@@ -1911,7 +1911,7 @@ msgstr ""
 #: app/src/window/agent-access-page.ts:234
 #: app/src/window/conversation-list.ts:409
 #: app/src/window/conversation-list.ts:495
-#: app/src/window/conversation-view.ts:707
+#: app/src/window/conversation-view.ts:707 app/src/window/protocols-page.ts:51
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -1941,7 +1941,7 @@ msgstr ""
 msgid "Could not start the background service: {reason}"
 msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
-#: app/src/window/accounts-dialog.ts:61 app/src/window/accounts-page.ts:187
+#: app/src/window/accounts-dialog.ts:71 app/src/window/accounts-page.ts:194
 #: app/src/window/window.ts:108
 msgid "Accounts"
 msgstr "Konten"
@@ -1986,31 +1986,36 @@ msgstr "GNOME-Einstellungen → Online-Konten öffnen"
 msgid "Could not load accounts"
 msgstr "Konten konnten nicht geladen werden"
 
-#: app/src/window/accounts-page.ts:124
+#: app/src/window/accounts-page.ts:124 app/src/window/protocols-page.ts:29
 msgid "No accounts yet"
 msgstr "Noch keine Konten"
 
-#: app/src/window/accounts-page.ts:149
+#: app/src/window/accounts-page.ts:150
 msgid "Accounts could not be loaded"
 msgstr "Konten konnten nicht geladen werden"
 
-#: app/src/window/accounts-page.ts:153
+#: app/src/window/accounts-page.ts:154
 msgid "No accounts"
 msgstr "Keine Konten"
 
-#: app/src/window/accounts-page.ts:154
+#: app/src/window/accounts-page.ts:155
 msgid "Add a chat account or a mail account."
 msgstr "Füge ein Chat-Konto oder ein E-Mail-Konto hinzu."
 
-#: app/src/window/accounts-page.ts:171
+#: app/src/window/accounts-page.ts:172
 msgid "The background service is not running, so chat accounts cannot connect."
 msgstr ""
 "Der Hintergrunddienst läuft nicht, daher können sich Chat-Konten nicht "
 "verbinden."
 
-#: app/src/window/accounts-page.ts:172
+#: app/src/window/accounts-page.ts:173
 msgid "Start"
 msgstr "Starten"
+
+#: app/src/window/accounts-page.ts:187 app/src/window/conversation-list.ts:298
+#: app/src/window/protocols-page.ts:111
+msgid "Protocols"
+msgstr "Protokolle"
 
 #: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:111
 msgid "Agent access"
@@ -2531,10 +2536,6 @@ msgstr "Unterhaltungen durchsuchen"
 msgid "Filter conversations"
 msgstr "Unterhaltungen filtern"
 
-#: app/src/window/conversation-list.ts:298
-msgid "Protocols"
-msgstr "Protokolle"
-
 #: app/src/window/conversation-list.ts:321
 msgid "Clear filters"
 msgstr "Filter zurücksetzen"
@@ -2921,6 +2922,20 @@ msgstr "Medien"
 #: app/src/window/preferences-dialog.ts:68 app/src/window/window.ts:110
 msgid "Preferences"
 msgstr "Einstellungen"
+
+#: app/src/window/protocols-page.ts:30
+msgid "{count} account"
+msgid_plural "{count} accounts"
+msgstr[0] "{count} Konto"
+msgstr[1] "{count} Konten"
+
+#: app/src/window/protocols-page.ts:52
+msgid "Accept and Turn On"
+msgstr "Zustimmen und einschalten"
+
+#: app/src/window/protocols-page.ts:66
+msgid "Accounts and messages stay when a protocol is switched off."
+msgstr "Konten und Nachrichten bleiben erhalten, wenn ein Protokoll ausgeschaltet wird."
 
 #: app/src/window/selection-model.ts:12
 msgid "{count} selected"

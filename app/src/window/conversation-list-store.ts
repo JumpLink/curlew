@@ -61,7 +61,10 @@ export function loadConversationEntries(dbPath = indexDbPath(), cfgPath = config
   try {
     const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
     try {
-      const { senders, ui, mergedPeople, pins, contactChoices } = loadConfig(cfgPath);
+      const { senders, ui, mergedPeople, pins, contactChoices, backends } = loadConfig(cfgPath);
+      // Only an explicit `enabled: false` hides a protocol: a config that never mentions one still
+      // shows what the index holds, and the person switched this off on purpose.
+      const switchedOff = (backend: string): boolean => backends[backend]?.enabled === false;
       const entries = toEntries(
         [
           ...listConversations(db, { limit: CHAT_LIMIT, excludeBackend: 'mail', overrides: senders }),
@@ -71,7 +74,7 @@ export function loadConversationEntries(dbPath = indexDbPath(), cfgPath = config
             emailChat: !ui.showAllEmails,
             overrides: senders,
           }),
-        ],
+        ].filter((conversation) => !switchedOff(conversation.backend)),
         ui.showAllEmails,
         accountIdentities(db),
         listChatRooms(db, 'matrix'),

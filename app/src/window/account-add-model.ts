@@ -54,6 +54,15 @@ export function mailProtocol(backends: readonly BackendStatus[]): AddableProtoco
   };
 }
 
+/**
+ * Every protocol that can be switched on or off: mail first (it is the one most people keep), then
+ * the chats in their fixed order. `terms` is null once accepted, so only a first switch-on asks.
+ */
+export function switchableProtocols(backends: readonly BackendStatus[]): AddableProtocol[] {
+  const mail = mailProtocol(backends);
+  return mail ? [mail, ...addableProtocols(backends)] : addableProtocols(backends);
+}
+
 /** Whether the person is shown terms before anything runs. */
 export function needsTerms(protocol: AddableProtocol): boolean {
   return protocol.terms !== null;

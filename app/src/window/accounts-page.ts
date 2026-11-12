@@ -136,6 +136,7 @@ export function createAccountsPage(
   onAdd: () => void,
   onOpenAccount: (group: ProtocolGroup, row: AccountRow, daemonPresent: boolean) => void,
   onStartDaemon: () => void,
+  onOpenProtocols: () => void,
 ): AccountsPage {
   const preferencesPage = new Adw.PreferencesPage();
   const loading = new Adw.Spinner({
@@ -181,6 +182,12 @@ export function createAccountsPage(
   });
   addButton.connect('clicked', onAdd);
   header.pack_start(addButton);
+  const protocolsButton = new Gtk.Button({
+    iconName: 'preferences-system-symbolic',
+    tooltipText: _('Protocols'),
+  });
+  protocolsButton.connect('clicked', onOpenProtocols);
+  header.pack_end(protocolsButton);
   toolbar.add_top_bar(header);
   toolbar.add_top_bar(banner);
   toolbar.set_content(stack);
