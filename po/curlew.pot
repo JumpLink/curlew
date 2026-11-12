@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-12 19:15+0100\n"
+"POT-Creation-Date: 2026-11-12 21:08+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1540,7 +1540,7 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr ""
 
-#: app/src/window/about.ts:14 app/src/window/appearance-rows.ts:129
+#: app/src/window/about.ts:14 app/src/window/appearance-rows.ts:126
 #: app/src/window/conversation-view.ts:163 app/src/window/window.ts:80
 #: app/src/window/window.ts:95
 msgid "Curlew"
@@ -1877,91 +1877,91 @@ msgstr ""
 msgid "Add rule"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:130
+#: app/src/window/appearance-rows.ts:127
 msgid "Forest"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:131
+#: app/src/window/appearance-rows.ts:128
 msgid "Dusk"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:132
+#: app/src/window/appearance-rows.ts:129
 msgid "Sunrise"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:133
+#: app/src/window/appearance-rows.ts:130
 msgid "Rose"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:134
+#: app/src/window/appearance-rows.ts:131
 msgid "Graphite"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:139
+#: app/src/window/appearance-rows.ts:136
 msgid "Doodles"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:139
+#: app/src/window/appearance-rows.ts:136
 msgid "Dots"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:139
+#: app/src/window/appearance-rows.ts:136
 msgid "Waves"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:139
+#: app/src/window/appearance-rows.ts:136
 msgid "Plain"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:147 app/src/window/contact-page.ts:93
+#: app/src/window/appearance-rows.ts:144 app/src/window/contact-page.ts:93
 msgid "Blue"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:148 app/src/window/contact-page.ts:94
+#: app/src/window/appearance-rows.ts:145 app/src/window/contact-page.ts:94
 msgid "Teal"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:149 app/src/window/contact-page.ts:95
+#: app/src/window/appearance-rows.ts:146 app/src/window/contact-page.ts:95
 msgid "Green"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:150 app/src/window/contact-page.ts:96
+#: app/src/window/appearance-rows.ts:147 app/src/window/contact-page.ts:96
 msgid "Yellow"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:151 app/src/window/contact-page.ts:97
+#: app/src/window/appearance-rows.ts:148 app/src/window/contact-page.ts:97
 msgid "Orange"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:152 app/src/window/contact-page.ts:98
+#: app/src/window/appearance-rows.ts:149 app/src/window/contact-page.ts:98
 msgid "Red"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:153 app/src/window/contact-page.ts:99
+#: app/src/window/appearance-rows.ts:150 app/src/window/contact-page.ts:99
 msgid "Pink"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:154 app/src/window/contact-page.ts:100
+#: app/src/window/appearance-rows.ts:151 app/src/window/contact-page.ts:100
 msgid "Purple"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:155 app/src/window/contact-page.ts:101
+#: app/src/window/appearance-rows.ts:152 app/src/window/contact-page.ts:101
 msgid "Slate"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:159
-msgid "Follow the system style"
+#: app/src/window/appearance-rows.ts:156
+msgid "System"
+msgstr ""
+
+#: app/src/window/appearance-rows.ts:157
+msgid "Light"
+msgstr ""
+
+#: app/src/window/appearance-rows.ts:158
+msgid "Dark"
 msgstr ""
 
 #: app/src/window/appearance-rows.ts:160
-msgid "Light style"
-msgstr ""
-
-#: app/src/window/appearance-rows.ts:161
-msgid "Dark style"
-msgstr ""
-
-#: app/src/window/appearance-rows.ts:163
 msgid "Style"
 msgstr ""
 
