@@ -72,8 +72,10 @@ import {
   parseLegacyBookmarks,
   parseMamResult,
   parseRoster,
+  parseVcardPhoto,
   type ReplyRef,
   rosterQuery,
+  vcardQuery,
 } from './stanza.ts';
 import {
   discoItemsQuery,
@@ -423,6 +425,24 @@ export class XmppConnection implements XmppLink {
     }
   }
 
+  async avatar(jid: string) {
+    try {
+      return parseVcardPhoto(await this.iq.get(vcardQuery(), jid, QUERY_TIMEOUT_MS));
+    } catch (err) {
+      const error = queryError(err);
+      // No vCard, or one we may not read: no picture, not a failure.
+      if (
+        error instanceof XmppQueryError &&
+        ['item-not-found', 'service-unavailable', 'forbidden', 'not-allowed', 'feature-not-implemented'].includes(
+          error.condition,
+        )
+      ) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
   async mam(query: MamQuery): Promise<MamPage> {
     const queryId = nextId('mam');
     const own = query.archive === null;
@@ -608,6 +628,7 @@ export function readOnly(link: XmppApi): XmppApi {
     roster: () => link.roster(),
     bookmarks: () => link.bookmarks(),
     features: (jid) => link.features(jid),
+    avatar: (jid) => link.avatar(jid),
     mam: (query) => link.mam(query),
     close: () => link.close(),
   };

@@ -53,6 +53,8 @@ export interface XmppApi {
   /** disco#info features of an entity (the user's own account for MAM support). */
   features(jid: string): Promise<Set<string>>;
   mam(query: MamQuery): Promise<MamPage>;
+  /** The picture in the vCard of `jid` (XEP-0054), or null: none set, or the server does not tell us. */
+  avatar(jid: string): Promise<{ bytes: Uint8Array; mimeType: string | null } | null>;
   close(): Promise<void>;
 }
 

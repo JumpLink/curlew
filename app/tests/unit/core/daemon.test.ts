@@ -169,6 +169,7 @@ function quietLink(): XmppLink {
     roster: async () => [],
     bookmarks: async () => [],
     features: async () => new Set(),
+    avatar: async () => null,
     mam: async () => ({ entries: [], complete: true }),
     close: async () => {},
     sendChat: async () => {},

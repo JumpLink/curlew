@@ -20,6 +20,7 @@ function fakeLink(onClose: () => void = () => {}, onArrival?: (fire: () => void)
     roster: async () => [],
     bookmarks: async () => [],
     features: async () => new Set(),
+    avatar: async () => null,
     mam: async () => ({ entries: [], complete: true }),
     close: async () => onClose(),
     sendChat: async () => {},

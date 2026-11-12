@@ -29,6 +29,7 @@ export const NS = {
   data: 'jabber:x:data',
   roster: 'jabber:iq:roster',
   discoInfo: 'http://jabber.org/protocol/disco#info',
+  vcard: 'vcard-temp',
   pubsub: 'http://jabber.org/protocol/pubsub',
   bookmarks: 'urn:xmpp:bookmarks:1',
   privateStorage: 'jabber:iq:private',
@@ -152,6 +153,26 @@ export function parseDiscoFeatures(query: XmlElement | undefined): Set<string> {
     if (feature.attrs.var) features.add(feature.attrs.var);
   }
   return features;
+}
+
+export const vcardQuery = () => xml('vCard', { xmlns: NS.vcard });
+
+/** The picture in a vCard-temp result (XEP-0054), or null when it carries none. */
+export function parseVcardPhoto(vcard: XmlElement | undefined): { bytes: Uint8Array; mimeType: string | null } | null {
+  const photo = vcard?.getChild('PHOTO');
+  const encoded = photo?.getChildText('BINVAL')?.replace(/\s+/g, '');
+  if (!encoded) return null;
+  let binary: string;
+  try {
+    // Servers drop the padding now and then; atob wants it.
+    binary = atob(encoded.padEnd(Math.ceil(encoded.length / 4) * 4, '='));
+  } catch {
+    return null;
+  }
+  if (binary.length === 0) return null;
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return { bytes, mimeType: photo?.getChildText('TYPE')?.trim() || null };
 }
 
 export const rosterQuery = () => xml('query', { xmlns: NS.roster });

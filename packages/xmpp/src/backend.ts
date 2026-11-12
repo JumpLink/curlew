@@ -7,6 +7,7 @@ import { _, fmt, visibleAccounts } from '@curlew/protocol';
 import type {
   AccountPrompter,
   AttachmentFetcher,
+  AvatarSource,
   BackendAccount,
   ListAccountsOptions,
   BackendContext,
@@ -28,6 +29,7 @@ import {
 import type { LoginPrompts, XmppApi } from './api.ts';
 import { XmppAttachments } from './attachments.ts';
 import { requireArchive } from './archive.ts';
+import { XmppAvatars } from './avatars.ts';
 import {
   type ClientFactory,
   createXmppClient,
@@ -98,6 +100,19 @@ export class XmppBackend implements ChatBackend, SendBackend {
       throw new Error(MESSAGES.noAccount(accountId));
     }
     return new XmppAttachments(this.attachmentFetch);
+  }
+
+  /**
+   * The read-only picture handle: its own connection (a fresh resource), the read-only face, and
+   * no archive check, because it never reads one.
+   */
+  async openAvatars(accountId: string): Promise<AvatarSource> {
+    if (!(await this.listAccounts()).some((a) => a.id === accountId)) {
+      throw new Error(MESSAGES.noAccount(accountId));
+    }
+    refuseConfigSecrets(this.context.settings);
+    const login = readLogin(this.context.secretsDir, accountId);
+    return new XmppAvatars(await this.createClient({ login, caFile: caFileSetting(this.context.settings) }));
   }
 
   /** The account's own bare JID, whatever the resource; the account's identity IS that JID. */
