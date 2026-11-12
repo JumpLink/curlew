@@ -32,9 +32,11 @@ assert(existsSync(gjsify), 'run `gjsify install` first — @gjsify/cli bin missi
 const env = { ...process.env };
 delete env.LD_LIBRARY_PATH;
 delete env.GI_TYPELIB_PATH;
-// Never the real config: grants in it would change the catalogue. No file = no grants.
+// Never the real config: grants in it would change the catalogue. AI features are on and there
+// are no grants (with `ui.ai` unset they are off, and `curlew mcp` refuses to start).
 const scratch = mkdtempSync(join(tmpdir(), 'curlew-mcp-'));
-env.CURLEW_CONFIG = join(scratch, 'none.json');
+env.CURLEW_CONFIG = join(scratch, 'ai-on.json');
+writeFileSync(env.CURLEW_CONFIG, JSON.stringify({ backends: {}, ui: { ai: true } }));
 // No session bus: an `ask` must refuse here, never reach a real daemon and put a prompt on the screen.
 env.DBUS_SESSION_BUS_ADDRESS = 'unix:path=/nonexistent';
 
