@@ -165,3 +165,43 @@ from it turn the bill into something stuck on the back of the skull.
 | 14 | `v14-front-hero-bill.svg` | 10 with the bill painted like Adium's beak: rim, gloss, pale lower mandible, dark tip |
 | 15 | `v15-head-crop-arc.svg` | head, neck and chest cropped to fill the tile — the most bill per pixel, built for 32 px |
 | 16 | `v16-head-in-tile-red.svg` | the fluffed head on the shipped icon's red bubble tile, the bill breaking out over its edge |
+
+## Round 6 — a thin bill
+
+Round 5b's bill was far too thick. `round6/build6.py` keeps the fluffed mascot but draws the bill
+as a long, thin, downcurved band (root width at most about 0.17 of the head's diameter), the one
+feature everybody recognises on a curlew. Overview and details are in `round6/`.
+
+## Round 7 — the chick in the bubble
+
+![Round 7 overview](round7/overview.png)
+
+A young curlew has a shorter bill than an adult, which lets the bill stay thin and still fit
+inside a bubble. `round7/build7.py` draws all variants; `round7/render7.sh` writes the overview,
+the 256 px details and the symbolic strip with ImageMagick.
+
+Two mistakes took a round to find, both in the three-quarter pose (v3 to v6): the bill was drawn
+*behind* the face, and the far eye was drawn smaller to suggest depth. On a flat head that reads
+as one big and one small eye, not as perspective. The frontal pose (v1, v2, v7 to v10) has two
+equal eyes and the bill in front of the face.
+
+| # | File | Idea |
+|---|---|---|
+| 1 | `v1-front-full-fluff.svg` | the frontal chick on its own, full feathers |
+| 2 | `v2-front-tilt-medium.svg` | the same with a slight head tilt, medium feathers |
+| 3–6 | `v3`…`v6` | three-quarter poses, rejected (see above) |
+| 7 | `v7-in-bubble.svg` | the shared bubble at full size, the chick inside it, the belly running on into the tail |
+| 8 | `v8-head-crop.svg` | head and chest at the right, the bubble behind it with its tail free; built for 32 px |
+| 9 | `v9-in-bubble-tilt.svg` | **the shipped icon**: 7 with the head tilted slightly |
+| 10 | `v10-head-crop-tilt.svg` | 8 with the tilt |
+
+The body is clipped to the bubble's face and the face of its tail, never to its side wall: the
+wall and the rim stay in front of the feathers, and the belly continues inside the rim of the
+tail. The blue is Adwaita blue, Pascal's wish; full fluff is on the edge, medium is right. The
+full plumage of v1 turns to mush at 32 and 16 px, which is why the symbolic icon drops it.
+
+### Shipped
+
+- `app/data/icons/hicolor/scalable/apps/eu.jumplink.curlew.svg` is v9.
+- `app/data/icons/hicolor/symbolic/apps/eu.jumplink.curlew-symbolic.svg` is the head of the chick,
+  frontal, with the crown tuft, two punched-out eyes and the thin bill (`round7/symbolic.svg`).

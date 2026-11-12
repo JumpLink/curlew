@@ -490,17 +490,17 @@ measure("v10-head-crop-tilt", bill, 1.1)
 # The pick (the three-quarter chick) reduced to one colour on the 16 px grid: round head with
 # the crown tuft, one eye punched out, the fluffed chest, the bill a thin downcurved line.
 
-S_BILL = Bill(ctrl=[(8.4, 7.6), (11.8, 7.8), (13.8, 8.8), (14.3, 13.8)], w_base=1.9, w_tip=1.0,
+S_BILL = Bill(ctrl=[(7.2, 9.0), (11.8, 9.0), (14.2, 10.4), (14.6, 15.2)], w_base=2.0, w_tip=1.0,
               taper=1.2, root=0.05)
 sym = ('<?xml version="1.0" encoding="UTF-8"?>\n'
-       '<!--\nSymbolic: the chick\'s head with crown tuft and punched-out eye, the fluffed chest and\n'
-       'the thin downcurved bill. One colour, 16 px grid, no gradients.\n-->\n'
+       '<!--\nSymbolic: the chick facing front, head only, with the crown tuft, two punched-out eyes\n'
+       'and the thin downcurved bill. One colour, 16 px grid, no gradients.\n-->\n'
        '<svg width="16" height="16" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">\n'
        '  <g fill="#2e3436">\n'
-       '    <path d="M3.6 3.6 C3 1.6 4.6 1.2 5 2.4 C5.2 0.6 7 0.8 6.8 2.4 C7.6 1.2 9 2 8 3.6 Z"/>\n'
-       '    <path fill-rule="evenodd" d="M5.8 2.8 a4.6 4.5 0 1 0 0.01 0 Z '
-       'M7.3 5.7 a1.3 1.3 0 1 0 0.01 0 Z"/>\n'
-       '    <path d="M2.6 11 C1.4 12.4 1.2 14.2 1.6 16 H10 C10.4 14.2 10.2 12.4 9 11 Z"/>\n'
+       '    <path d="M3.4 4 C2.8 2 4.4 1.4 4.8 2.6 C5 0.6 6.9 0.8 6.7 2.6 C7.5 1.4 9 2.2 8 4 Z"/>\n'
+       '    <path fill-rule="evenodd" d="M1.6 8.4 a4.8 4.9 0 1 0 9.6 0 a4.8 4.9 0 1 0 -9.6 0 Z '
+       'M3.2 7.4 a1.25 1.25 0 1 0 2.5 0 a1.25 1.25 0 1 0 -2.5 0 Z '
+       'M7.1 7.4 a1.25 1.25 0 1 0 2.5 0 a1.25 1.25 0 1 0 -2.5 0 Z"/>\n'
        f'    <path d="{S_BILL.band(1, -1, 0.0, 1.0)}"/>\n'
        '  </g>\n</svg>\n')
 (OUT / "symbolic.svg").write_text(sym)
