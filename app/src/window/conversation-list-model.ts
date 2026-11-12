@@ -10,7 +10,7 @@ import type { AddressKind, Conversation } from '@curlew/protocol';
 import { _, _n, fmt } from '@curlew/protocol';
 
 import type { ContactChoice } from '../core/config.ts';
-import { choiceFor, type ContactChoices } from '../core/contact-choices.ts';
+import { choiceFor, groupKey, type ContactChoices } from '../core/contact-choices.ts';
 import type { SearchScope } from '../core/lib/search-scope.ts';
 
 export type SectionId = 'people' | 'groups';
@@ -62,6 +62,10 @@ export interface ListEntry {
   picture?: { own: string } | { from: string };
   /** The people in the chat with their addresses, so a search can match a name or a number. */
   people?: SearchPerson[];
+  /** The members of a group the index knows, by name; absent for every other row. */
+  members?: string[];
+  /** The title before the person typed one of their own; set only on a row that has one. */
+  automaticTitle?: string;
 }
 
 /** One participant reduced to what the search compares. */
@@ -321,7 +325,15 @@ export function toEntry(
       name: p.displayName?.trim() || null,
       addresses: p.addresses.map((a) => a.value),
     })),
+    ...(conversation.kind === 'group' ? { members: memberNames(conversation) } : {}),
   };
+}
+
+/** The names of a group's other members, as the index has them; an address stands in for a missing name. */
+function memberNames(conversation: Conversation): string[] {
+  return conversation.participants
+    .map((p) => p.displayName?.trim() || p.addresses[0]?.value || '')
+    .filter((name) => name !== '');
 }
 
 /** The one other person of a direct chat, when the chat is not the note to self. */
@@ -600,9 +612,28 @@ export function mergePeople(
 export function withChoices(entries: ListEntry[], choices: ContactChoices): ListEntry[] {
   if (Object.keys(choices).length === 0) return entries;
   return entries.map((entry) => {
-    const found = entry.personIds.length === 0 ? null : choiceFor(choices, entry.personIds);
-    return found ? { ...entry, ...looksOf(found.choice, carriers(entry)) } : entry;
+    const found = choiceOfEntry(choices, entry);
+    if (!found) return entry;
+    const looks = looksOf(found.choice, carriers(entry));
+    return {
+      ...entry,
+      ...looks,
+      ...(found.choice.title !== undefined ? { automaticTitle: entry.title } : {}),
+    };
   });
+}
+
+/** The keys under which a row's choice lives: its people, or for a group its chat id. */
+export const choiceIdsOf = (entry: ListEntry): string[] =>
+  entry.personIds.length > 0 ? entry.personIds : entry.kind === 'group' ? [groupKey(entry.id)] : [];
+
+/** The choice that belongs to a row, or null. */
+export function choiceOfEntry(
+  choices: ContactChoices,
+  entry: ListEntry,
+): { key: string; choice: ContactChoice } | null {
+  const ids = choiceIdsOf(entry);
+  return ids.length === 0 ? null : choiceFor(choices, ids);
 }
 
 /** What one choice changes on a row made of `parts`: the name and the picture, when it set them. */
@@ -611,9 +642,13 @@ export function looksOf(
   parts: ListEntry[],
 ): Partial<Pick<ListEntry, 'title' | 'picture'>> {
   const named = parts.find((m) => m.id === choice.name);
+  const typed = choice.title !== undefined ? choice.title : undefined;
   const from = parts.find((m) => m.id === choice.picture);
   const picture = choice.own !== undefined ? { own: choice.own } : from ? { from: from.id } : undefined;
-  return { ...(named ? { title: named.title } : {}), ...(picture ? { picture } : {}) };
+  return {
+    ...(typed !== undefined ? { title: typed } : named ? { title: named.title } : {}),
+    ...(picture ? { picture } : {}),
+  };
 }
 
 /** Where a row's picture comes from: the person's own file, or one chat's profile picture. */

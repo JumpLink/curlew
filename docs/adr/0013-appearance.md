@@ -57,8 +57,9 @@ screen, where Telegram lets the history scroll under them.
    background alone). The look is applied through CSS classes on the open chat's page
    (`look-primary-<name>`, `look-accent-<name>`) with rules written once per colour, never a provider per
    chat. For that the person's own bubbles carry `curlew-own` and the others `curlew-surface`,
-   not both: a scoped tint must not repaint own bubbles. Groups and Note to self have no contact
-   page, hence no look of their own yet.
+   not both: a scoped tint must not repaint own bubbles. A group has the same look, stored under
+   `group:<conversation id>` in `contactChoices` (a group has no participant set), set on its group
+   page. Note to self has no page, hence no look of its own.
 
 ## Consequences
 

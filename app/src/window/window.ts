@@ -16,7 +16,7 @@ import { indexAccountLabels, loadAccountLabels } from './account-labels.ts';
 import { presentAccounts } from './accounts-dialog.ts';
 import { presentAgentAccess } from './agent-access-dialog.ts';
 import { listStamp, loadConversationEntries, searchConversationText } from './conversation-list-store.ts';
-import type { ListEntry } from './conversation-list-model.ts';
+import { choiceOfEntry, type ListEntry } from './conversation-list-model.ts';
 import { aiEnabled, loadConfig, saveConfig } from '../core/config.ts';
 import { DEFAULT_SEARCH_SCOPE } from '../core/lib/search-scope.ts';
 import { candidateSets } from './merge-candidates-model.ts';
@@ -29,7 +29,7 @@ import {
   peoplePin,
   peopleUnmerge,
 } from '../core/actions/people.ts';
-import { choiceFor, lookOf } from '../core/contact-choices.ts';
+import { lookOf } from '../core/contact-choices.ts';
 import { createConversationList } from './conversation-list.ts';
 import { composeMailReply } from './conversation-model.ts';
 import {
@@ -140,7 +140,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     presentContactPage(
       window,
       entry,
-      choiceFor(loadConfig().contactChoices, entry.personIds)?.choice ?? {},
+      choiceOfEntry(loadConfig().contactChoices, entry)?.choice ?? {},
       labels,
       {
         choose: (ids, patch) => peopleChoose(ids, patch),
@@ -260,7 +260,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     currentEntry = entry;
     currentMessages = loadConversationMessages(entry);
     conversation.show(entry, currentMessages, labels);
-    conversation.setLook(lookOf(choiceFor(loadConfig().contactChoices, entry.personIds)?.choice));
+    conversation.setLook(lookOf(choiceOfEntry(loadConfig().contactChoices, entry)?.choice));
     split.set_content(conversation.page);
     split.set_show_content(true);
   };
@@ -269,7 +269,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     currentEntry = entry;
     currentMessages = [];
     conversation.show(entry, currentMessages, labels);
-    conversation.setLook(lookOf(choiceFor(loadConfig().contactChoices, entry.personIds)?.choice));
+    conversation.setLook(lookOf(choiceOfEntry(loadConfig().contactChoices, entry)?.choice));
     split.set_content(conversation.page);
     split.set_show_content(true);
   };
