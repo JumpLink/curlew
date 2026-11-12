@@ -387,6 +387,7 @@ export function createConversationView(
     box.append(new Adw.Avatar({ size: 20, text: name, showInitials: initials(name) !== '' }));
     const label = new Gtk.Label({ label: name, xalign: 0, ellipsize: Pango.EllipsizeMode.END });
     label.add_css_class('caption-heading');
+    label.add_css_class('accent');
     box.append(label);
     return box;
   };
@@ -936,7 +937,9 @@ export function createConversationView(
       marginTop: 3,
       marginBottom: 3,
     });
-    row.set_child(card);
+    // A long message stops short of the pane's full width on a wide window, so a line stays readable.
+    const clamp = new Adw.Clamp({ maximumSize: 560, tighteningThreshold: 560, child: card });
+    row.set_child(clamp);
     row.set_halign(message.fromSelf ? Gtk.Align.END : Gtk.Align.START);
     const separator = startsDay ? daySeparator(dayOf(message)) : null;
     const protocolDivider = divider ? protocolDividerRow(divider) : null;
