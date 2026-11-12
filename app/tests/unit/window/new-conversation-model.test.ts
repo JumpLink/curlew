@@ -64,6 +64,27 @@ export default async () => {
           { backend: 'mail', accountId: 'mail-1' },
         ]);
       });
+
+      it('marks a mail route as email chat only for an opted-in account', () => {
+        const rows = [
+          row({ id: 'a', backend: 'mail', accountId: 'mail-1' }),
+          row({ id: 'b', backend: 'mail', accountId: 'mail-2' }),
+        ];
+        const c = contact({ emails: ['alex@example.org'] });
+        const routes = routeAccounts(rows, ['mail-2']);
+        expect(
+          draftEntry(
+            c,
+            routes.filter((r) => r.accountId === 'mail-1'),
+          )?.members[0].emailChat,
+        ).toBe(false);
+        expect(
+          draftEntry(
+            c,
+            routes.filter((r) => r.accountId === 'mail-2'),
+          )?.members[0].emailChat,
+        ).toBe(true);
+      });
     });
 
     describe('routes', () => {

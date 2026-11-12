@@ -59,14 +59,14 @@ export default async () => {
       expect(chatSubject('')).toBe('Chat');
       expect(replySubject('Frage')).toBe('Re: Frage');
       expect(replySubject('Re: Frage')).toBe('Re: Frage');
-      expect(composeMailReply(message({ id: 'a', emailChat: true }), null, 'Hallo').subject).toBe(
+      expect(composeMailReply(message({ id: 'a', emailChat: true }), null, 'Hallo', true).subject).toBe(
         'Chat: Hallo',
       );
-      expect(composeMailReply(message({ id: 'a', subject: 'Frage' }), null, 'Hallo').subject).toBe(
+      expect(composeMailReply(message({ id: 'a', subject: 'Frage' }), null, 'Hallo', true).subject).toBe(
         'Re: Frage',
       );
       // A first mail to this person is no reply, even though a Signal note comes before it.
-      expect(composeMailReply(null, null, 'Hallo').subject).toBe('Chat: Hallo');
+      expect(composeMailReply(null, null, 'Hallo', true).subject).toBe('Chat: Hallo');
     });
 
     await it('threads onto the parent Message-ID without duplicating References', async () => {
@@ -77,10 +77,21 @@ export default async () => {
           references: ['<root@example.org>', '<child@example.org>'],
         },
         'Hallo',
+        true,
       );
       expect(reply.inReplyTo).toBe('<child@example.org>');
       expect(reply.references).toEqualArray(['<root@example.org>', '<child@example.org>']);
       expect(reply.emailChat).toBe(true);
+    });
+
+    await it('sends ordinary mail, without the chat marker, unless the account opted in', async () => {
+      const off = composeMailReply(null, null, 'Hallo Welt', false);
+      expect(off.emailChat).toBe(undefined);
+      expect(off.subject).toBe('Hallo Welt');
+      const reply = composeMailReply(message({ id: 'a', emailChat: true }), null, 'Hi', false);
+      expect(reply.emailChat).toBe(undefined);
+      expect(reply.subject).toBe('Re: Chat');
+      expect(composeMailReply(null, null, 'Hallo', true).emailChat).toBe(true);
     });
 
     await it('labels ordinary subject changes but never generic chat subjects', async () => {

@@ -59,6 +59,7 @@ import { loadAgentAccess } from './agent-access-store.ts';
 import { reactToMessage } from '../core/actions/react.ts';
 import { contactsForPicker } from '../core/actions/contacts.ts';
 import { sendMessage } from '../core/actions/send.ts';
+import { deltaChatEnabled } from '../core/actions/accounts.ts';
 import { editMessage } from '../core/actions/edit.ts';
 import { deleteMessage } from '../core/actions/delete.ts';
 import { configPath } from '@curlew/store';
@@ -160,7 +161,9 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
           .reverse()
           .find((m) => m.backend === choice.backend && m.ref.accountId === choice.accountId) ?? null;
       const mail =
-        choice.backend === 'mail' ? composeMailReply(parent, loadMailReplyTarget(parent), text) : null;
+        choice.backend === 'mail'
+          ? composeMailReply(parent, loadMailReplyTarget(parent), text, deltaChatEnabled(choice.accountId))
+          : null;
       const result = await sendMessage({
         accountId: choice.accountId,
         to: choice.target,
@@ -183,7 +186,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
         subject: mail?.subject ?? null,
         seen: true,
         hasAttachments: false,
-        emailChat: mail !== null,
+        emailChat: mail?.emailChat === true,
         classification: 'conversational',
         classificationReason: 'self',
         // A chat network's id for the message is what the next reply to it points at.
@@ -262,7 +265,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     split.set_show_content(true);
   };
   const startConversation = () => {
-    const routes = routeAccounts(shown);
+    const routes = routeAccounts(shown, loadConfig().deltaChatAccounts);
     presentNewConversation(window, routes, contactsForPicker, (contact) => {
       const existing = existingEntry(shown, contact);
       if (existing) {

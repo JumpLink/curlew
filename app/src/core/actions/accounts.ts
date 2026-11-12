@@ -71,6 +71,19 @@ export function accountSetEnabled(
   saveConfig(config, path);
 }
 
+/** Whether a mail account is opted into Delta Chat; off unless the config lists it. */
+export function deltaChatEnabled(accountId: string, path = configPath()): boolean {
+  return (loadConfig(path).deltaChatAccounts ?? []).includes(accountId);
+}
+
+/** Opt a mail account into Delta Chat or out again. Interactive use only, like switching an account off. */
+export function accountSetDeltaChat(accountId: string, on: boolean, path = configPath()): void {
+  const config = loadConfig(path);
+  const rest = (config.deltaChatAccounts ?? []).filter((id) => id !== accountId);
+  config.deltaChatAccounts = on ? [...rest, accountId] : rest;
+  saveConfig(config, path);
+}
+
 /**
  * Add an account to an ENABLED backend, interactively. Only backends that keep their own accounts
  * can; the mail backend does too (an address and a password), besides the GNOME Online Accounts it

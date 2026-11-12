@@ -17,7 +17,7 @@ export interface MailReplyTarget {
 
 export interface MailReply {
   subject: string;
-  emailChat: true;
+  emailChat?: true;
   inReplyTo?: string;
   references?: string[];
 }
@@ -28,24 +28,38 @@ export function chatSubject(text: string): string {
   return excerpt ? `Chat: ${excerpt}` : 'Chat';
 }
 
+/** The subject of a first ordinary mail: the opening words, no chat label. */
+function plainSubject(text: string): string {
+  return text.trim().split(/\s+/).join(' ').slice(0, 60) || 'Message';
+}
+
 export function replySubject(subject: string | null): string {
   const clean = subject?.trim() || 'Chat';
   return /^re:/i.test(clean) ? clean : `Re: ${clean}`;
 }
 
-/** A UI mail send is always marked; the subject depends on whether the parent was already chat mail. */
+/**
+ * A UI mail send carries the chat marker only for an account opted into Delta Chat; the subject
+ * depends on whether the parent was already chat mail. Without the opt-in it is ordinary mail.
+ */
 export function composeMailReply(
   parent: ConversationMessage | null,
   target: MailReplyTarget | null,
   text: string,
+  deltaChat: boolean,
 ): MailReply {
   const references = [
     ...new Set([...(target?.references ?? []), ...(target?.messageId ? [target.messageId] : [])]),
   ];
   return {
     // No earlier mail on this carrier means a first message, not a reply to anything.
-    subject: parent === null || parent.emailChat ? chatSubject(text) : replySubject(parent.subject),
-    emailChat: true,
+    subject:
+      parent === null || (deltaChat && parent.emailChat)
+        ? deltaChat
+          ? chatSubject(text)
+          : plainSubject(text)
+        : replySubject(parent.subject),
+    ...(deltaChat ? { emailChat: true as const } : {}),
     ...(target?.messageId ? { inReplyTo: target.messageId } : {}),
     ...(references.length > 0 ? { references } : {}),
   };
