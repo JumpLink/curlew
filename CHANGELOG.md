@@ -35,6 +35,7 @@
 
 ### Changed
 
+- The date separator is a pill of its own, the hints above the composer (room banner, reply, edit, attachments) have padding inside their cards, and the voice player stops at a readable width.
 - Group chats show the sender's profile picture next to the name (Telegram, Matrix, WhatsApp). Messages of one sender sit closer together than the first message of a new one, the section headers of the list are quieter, the voice player has padding inside its card, and the contact page picks the name from a combo row.
 - A merged person shows a profile picture in the list now: the newest chat's, where its network can serve one.
 - Sender names above grouped messages use the accent colour, and a message bubble stops at a readable width on a wide window.

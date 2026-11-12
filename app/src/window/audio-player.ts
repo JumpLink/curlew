@@ -1,6 +1,7 @@
 /** A voice note or audio part in a bubble: play/pause, a seek bar and the time, fetched on the first press. */
 
 import GLib from 'gi://GLib?version=2.0';
+import Adw from 'gi://Adw?version=1';
 import Gtk from 'gi://Gtk?version=4.0';
 import { _, fmt } from '@curlew/protocol';
 
@@ -174,5 +175,6 @@ export function audioPlayer(source: AttachmentSource, toast: (text: string) => v
       });
   });
 
-  return box;
+  // A voice note is short: it stops at a width that reads as a player, not as a wide download bar.
+  return new Adw.Clamp({ maximumSize: 300, tighteningThreshold: 300, child: box, halign: Gtk.Align.START });
 }
