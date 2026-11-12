@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Telegram pictures and files load again in the long-running daemon: a fresh connection no longer counts as silent for hours and gets reset in a loop (an mtcute quirk, worked around until it is fixed there).
 - A picture whose Telegram connection never comes up now fails after the download deadline instead of showing its spinner for good, and the daemon log says why a fetch failed.
 - A long message folded behind "Show more" no longer leaves an empty stretch under it: the fold now keeps one height whatever the width, so a list row and its content agree.
 - The window opens its menus at once when you come back to it: the conversation list is reloaded only when the index or the settings changed, and loading it no longer reads every message of every chat (about half a second less).
