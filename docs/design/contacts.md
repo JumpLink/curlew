@@ -124,12 +124,16 @@ What stays per-protocol, always:
 
 ## Cross-protocol rules (decided)
 
-1. **A message NEVER silently switches protocol.** The carrier is what the picker said at
-   send time. If that protocol cannot carry the message — limit reached, feature missing,
-   link down, room encrypted — the send fails VISIBLY; the text stays in the entry.
-   Nothing falls back to another protocol on its own: which network carries a message is
-   a privacy statement (whose servers see it, which metadata trail it leaves), and the
-   encrypted-room refusal is the precedent — Curlew does not "fall back to sending".
+1. **A NEW message (text, file) NEVER silently switches protocol.** The carrier is what the
+   picker said at send time. If that protocol cannot carry the message — limit reached,
+   feature missing, link down, room encrypted — the send fails VISIBLY; the text stays in
+   the entry. Nothing falls back to another protocol on its own: which network carries a
+   message is a privacy statement (whose servers see it, which metadata trail it leaves),
+   and the encrypted-room refusal is the precedent — Curlew does not "fall back to
+   sending". Actions on an EXISTING message (reaction, edit, delete for everyone, read
+   receipt) address it in its own network and are never redirected; the thread's protocol
+   either offers them or they are absent
+   ([ADR 0015](../adr/0015-capabilities-per-thread.md)).
 2. **A borrowed feature is marked, subtly.** When the person switches protocol to carry
    what the current one cannot (a file, say), two marks appear: the small protocol badge
    on the bubble, tooltip "Sent via Telegram" (de "Über Telegram gesendet"), and ONE
