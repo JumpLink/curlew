@@ -177,6 +177,16 @@ export function createConversationView(
   const backdrop = new Gtk.Overlay({ vexpand: true });
   backdrop.set_child(new ChatBackground());
   backdrop.add_overlay(scroller);
+  // A conversation with nothing in it says so, instead of showing the bare pattern like a failed load.
+  const empty = new Adw.StatusPage({
+    iconName: 'chat-message-new-symbolic',
+    title: _('No messages yet'),
+    valign: Gtk.Align.CENTER,
+    canTarget: false,
+    visible: false,
+  });
+  empty.add_css_class('compact');
+  backdrop.add_overlay(empty);
 
   const composer = new Gtk.Box({ spacing: 6, marginStart: 6, marginEnd: 6, marginTop: 6, marginBottom: 6 });
   const input = new Gtk.Entry({ placeholderText: _('Write a message'), hexpand: true });
@@ -1301,6 +1311,7 @@ export function createConversationView(
       title.set_subtitle(entryProtocolSubtitle(nextEntry));
       history.remove_all();
       built.clear();
+      empty.set_visible(nextMessages.length === 0);
       waiting.length = 0;
       atEnd = true;
       const choices = protocolChoices(nextEntry);

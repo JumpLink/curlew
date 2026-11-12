@@ -34,6 +34,7 @@
 
 ### Changed
 
+- The conversation view is calmer: "Show more" sits on its own line under a long message instead of covering its text, an empty conversation says so, bubbles are easier to tell apart from the background in dark mode, and the unread count in the list is bold in the accent colour.
 - The primary colour tints the window more strongly, so the blue no longer reads as another grey.
 - Message bubbles and the composer are opaque, so the background doodles no longer shine through, and your own messages use the accent colour. The default accent is now teal instead of blue.
 - The message box of a conversation floats over the history as a rounded card, like Telegram's, and the messages scroll beneath it. [ADR 0013](docs/adr/0013-appearance.md)

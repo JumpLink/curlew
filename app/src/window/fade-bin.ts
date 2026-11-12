@@ -20,7 +20,7 @@ import { _ } from '@curlew/protocol';
  * row kept the larger height with an empty stretch under the fade.
  */
 const COLLAPSED_HEIGHT = 360;
-const FADE_HEIGHT = 125;
+const FADE_HEIGHT = 56;
 
 export const FadeBin = GObject.registerClass(
   {
@@ -141,22 +141,23 @@ export const FadeBin = GObject.registerClass(
 export type FadeBin = InstanceType<typeof FadeBin>;
 
 /**
- * `child` under a FadeBin with the "Show more" pill over its faded foot. The pill is there while
- * the child is clamped, or while `forced` says the text is cut short elsewhere; `onExpand` runs
- * first on a click, so the caller can put the full content in before the clamp is lifted.
+ * `child` under a FadeBin with a "Show more" button on its own line below it, so the button never
+ * covers text. The button is there while the child is clamped, or while `forced` says the text is
+ * cut short elsewhere; `onExpand` runs first on a click, so the caller can put the full content in
+ * before the clamp is lifted.
  */
-export function fadedOverlay(child: Gtk.Widget, forced: boolean, onExpand: () => void): Gtk.Overlay {
+export function fadedOverlay(child: Gtk.Widget, forced: boolean, onExpand: () => void): Gtk.Box {
   const bin = new FadeBin();
   bin.child = child;
   const more = new Gtk.Button({
     label: _('Show more'),
-    halign: Gtk.Align.CENTER,
-    valign: Gtk.Align.END,
-    marginBottom: 6,
+    halign: Gtk.Align.START,
+    marginTop: 2,
     visible: forced,
   });
-  more.add_css_class('pill');
-  more.add_css_class('opaque');
+  more.add_css_class('flat');
+  more.add_css_class('caption-heading');
+  more.add_css_class('accent');
   const sync = () => more.set_visible(!bin.expanded && (forced || bin.collapsed));
   bin.connect('notify::collapsed', sync);
   more.connect('clicked', () => {
@@ -164,7 +165,8 @@ export function fadedOverlay(child: Gtk.Widget, forced: boolean, onExpand: () =>
     bin.expanded = true;
     more.set_visible(false);
   });
-  const overlay = new Gtk.Overlay({ child: bin });
-  overlay.add_overlay(more);
-  return overlay;
+  const box = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
+  box.append(bin);
+  box.append(more);
+  return box;
 }

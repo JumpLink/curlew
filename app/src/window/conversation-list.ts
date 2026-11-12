@@ -140,7 +140,8 @@ function entryRow(
   if (unreadTier(entry) === 'count') {
     const count = new Gtk.Label({ label: unreadText(entry.unread), valign: Gtk.Align.CENTER });
     count.add_css_class('numeric');
-    count.add_css_class('dim-label');
+    count.add_css_class('caption-heading');
+    count.add_css_class('accent');
     subtitleLine.append(count);
   }
   const text = new Gtk.Box({
