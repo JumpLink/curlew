@@ -17,7 +17,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { applyGrantGate, serveStdio } from '@gjsify/mcp';
 import { configPath, envValue } from '@curlew/store';
 
-import { loadConfig } from '../../core/config.ts';
+import { aiEnabled, loadConfig } from '../../core/config.ts';
 
 import { registerAccountsTools } from './tools/accounts.ts';
 import { registerCalendarTools } from './tools/calendar.ts';
@@ -53,6 +53,8 @@ const REGISTRARS: Array<(server: McpServer) => void> = [
 
 export function createMcpServer(): McpServer {
   const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION });
+  // Switched off (`config.ui.ai`): no tool is registered, not even the always-served ones.
+  if (!aiEnabled(loadConfig(configPath()))) return server;
   const allowWrite = envValue(process.env, 'MCP_ALLOW_WRITE') === '1';
   // `setup_run` is gated by the env switch, not by a grant, and the two gates do not stack (each
   // wraps registerTool). With the switch on, the setup tools are registered before the grant
@@ -75,5 +77,10 @@ export function createMcpServer(): McpServer {
 
 /** Start the stdio server and serve until the client disconnects. Does not return. */
 export async function startMcpServer(): Promise<void> {
+  if (!aiEnabled(loadConfig(configPath()))) {
+    throw new Error(
+      'AI features are switched off — turn them on in Curlew Preferences, or set config.ui.ai to true in the config file',
+    );
+  }
   await serveStdio(createMcpServer(), SERVER_NAME);
 }

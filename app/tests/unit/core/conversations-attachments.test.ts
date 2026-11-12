@@ -44,6 +44,12 @@ function seed(dbPath: string): void {
   }
 }
 
+function aiOn() {
+  const config = defaultConfig();
+  config.ui.ai = true;
+  return config;
+}
+
 export default async () => {
   await describe('conversationsShow attachments', async () => {
     const withWorld = async (body: (dbPath: string, configPath: string) => Promise<void>): Promise<void> => {
@@ -117,7 +123,7 @@ export default async () => {
 
     await it('treats a person as the account itself when any of their addresses is', async () => {
       const { asked, agent } = rig();
-      await requireParticipantsRead(defaultConfig(), agent, ACCOUNT, [[OWN_TELEGRAM, OTHER_SIGNAL]]);
+      await requireParticipantsRead(aiOn(), agent, ACCOUNT, [[OWN_TELEGRAM, OTHER_SIGNAL]]);
       expect(asked.length).toBe(0);
     });
 
@@ -125,7 +131,7 @@ export default async () => {
       const { asked, agent } = rig();
       let refused = false;
       try {
-        await requireParticipantsRead(defaultConfig(), agent, ACCOUNT, [[OWN_TELEGRAM], [OTHER_SIGNAL]]);
+        await requireParticipantsRead(aiOn(), agent, ACCOUNT, [[OWN_TELEGRAM], [OTHER_SIGNAL]]);
       } catch {
         refused = true;
       }
