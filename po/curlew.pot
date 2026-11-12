@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-12 21:20+0100\n"
+"POT-Creation-Date: 2026-11-12 22:19+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1649,6 +1649,7 @@ msgstr ""
 
 #: app/src/window/account-remove-model.ts:24
 #: app/src/window/account-remove-model.ts:37
+#: app/src/window/account-remove-model.ts:71
 #: app/src/window/agent-access-page.ts:234
 #: app/src/window/conversation-list.ts:409
 #: app/src/window/conversation-list.ts:495
@@ -1666,6 +1667,32 @@ msgid ""
 "Curlew will forget the login for this account and stop syncing it. Messages "
 "already on this computer stay. The account stays linked on {protocol} until "
 "you remove this device there."
+msgstr ""
+
+#: app/src/window/account-remove-model.ts:59
+msgid "Also delete its messages on this computer"
+msgstr ""
+
+#: app/src/window/account-remove-model.ts:60
+msgid "Delete all messages of {account}?"
+msgstr ""
+
+#: app/src/window/account-remove-model.ts:64
+msgid ""
+"Curlew will delete every message, attachment and picture of this account "
+"from this computer. {protocol} does not send them again, so this is the only "
+"copy: they cannot be recovered."
+msgstr ""
+
+#: app/src/window/account-remove-model.ts:69
+msgid ""
+"Curlew will delete every message, attachment and picture of this account "
+"from this computer. Nothing changes on the server, but Curlew cannot restore "
+"them without syncing again."
+msgstr ""
+
+#: app/src/window/account-remove-model.ts:72
+msgid "Delete Messages and Remove"
 msgstr ""
 
 #: app/src/window/accounts-daemon.ts:58 app/src/window/accounts-daemon.ts:62

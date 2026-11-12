@@ -8,7 +8,7 @@ import Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 
 import { accountRemove, accountSetEnabled } from '../core/actions/accounts.ts';
-import { removeAccountCopy } from './account-remove-model.ts';
+import { deleteDataCopy, removeAccountCopy } from './account-remove-model.ts';
 import { restartDaemonIfRunning } from './accounts-daemon.ts';
 import type { AccountRow } from './accounts-model.ts';
 import { accountStatusLabel } from './accounts-page.ts';
@@ -31,7 +31,7 @@ export interface AccountDetailDeps {
   /** The switch to run; the real one unless a probe substitutes it. */
   setEnabled?(backend: string, accountId: string, enabled: boolean): void;
   /** The removal to run; the real one unless a probe substitutes it. */
-  remove?(backend: string, accountId: string): Promise<unknown>;
+  remove?(backend: string, accountId: string, deleteData?: boolean): Promise<unknown>;
 }
 
 export function pushAccountPage(deps: AccountDetailDeps): void {
@@ -109,16 +109,23 @@ export function pushAccountPage(deps: AccountDetailDeps): void {
 
   removeButton.connect('clicked', () => {
     const copy = removeAccountCopy(deps.backend, row.label);
+    const dataCopy = deleteDataCopy(deps.backend, row.label);
     const dialog = new Adw.AlertDialog({ heading: copy.heading, body: copy.body });
+    const deleteData = new Gtk.CheckButton({ label: dataCopy.option });
+    dialog.set_extra_child(deleteData);
     dialog.add_response('cancel', copy.cancel);
     dialog.add_response('remove', copy.confirm);
     dialog.set_response_appearance('remove', Adw.ResponseAppearance.DESTRUCTIVE);
     dialog.set_default_response('cancel');
     dialog.set_close_response('cancel');
-    dialog.connect('response', (_dialog, response) => {
-      if (response !== 'remove') return;
+
+    const run = (withData: boolean) => {
       removeButton.set_sensitive(false);
-      void (deps.remove ?? ((b, id) => accountRemove(b, id, deps.path)))(deps.backend, row.id).then(
+      void (deps.remove ?? ((b, id, data) => accountRemove(b, id, deps.path, { deleteData: data })))(
+        deps.backend,
+        row.id,
+        withData,
+      ).then(
         () => {
           restartDaemonIfRunning();
           deps.onRemoved();
@@ -129,6 +136,24 @@ export function pushAccountPage(deps: AccountDetailDeps): void {
           deps.onError(err instanceof Error ? err : new Error(String(err)));
         },
       );
+    };
+
+    dialog.connect('response', (_dialog, response) => {
+      if (response !== 'remove') return;
+      if (!deleteData.get_active()) {
+        run(false);
+        return;
+      }
+      const confirm = new Adw.AlertDialog({ heading: dataCopy.heading, body: dataCopy.body });
+      confirm.add_response('cancel', dataCopy.cancel);
+      confirm.add_response('delete', dataCopy.confirm);
+      confirm.set_response_appearance('delete', Adw.ResponseAppearance.DESTRUCTIVE);
+      confirm.set_default_response('cancel');
+      confirm.set_close_response('cancel');
+      confirm.connect('response', (_d, r) => {
+        if (r === 'delete') run(true);
+      });
+      confirm.present(deps.parent());
     });
     dialog.present(deps.parent());
   });

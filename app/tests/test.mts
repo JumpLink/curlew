@@ -38,6 +38,7 @@ import storeReceiveLease from './unit/store/receive-lease.test.ts';
 import storeChanges from './unit/store/changes.test.ts';
 import storeChangeAppends from './unit/store/change-appends.test.ts';
 import storeConcurrency from './unit/store/concurrency.test.ts';
+import storeAccountData from './unit/store/account-data.test.ts';
 
 import telegram from './unit/telegram/telegram.test.ts';
 import signal from './unit/signal/signal.test.ts';
@@ -174,6 +175,7 @@ run({
   storeChanges,
   storeChangeAppends,
   storeConcurrency,
+  storeAccountData,
   telegram,
   signal,
   signalSend,
