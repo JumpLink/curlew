@@ -9,7 +9,7 @@
  * A line that is only `![alt](https://…)` splits the message: the text before it, the image, then
  * the rest, in order. The image goes out as its own message (XEP-0066), see `send.ts`.
  *
- * Ported from Lotse's `xmpp-style.ts` and `stripQuote` (the protocol knowledge lives here now).
+ * Ported from Lotsman's `xmpp-style.ts` and `stripQuote` (the protocol knowledge lives here now).
  */
 
 export type Segment =

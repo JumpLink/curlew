@@ -8,7 +8,7 @@
 ## Context
 
 [ADR 0004](0004-sending-and-writing-granted-per-capability.md) was written when curlew was an
-account reader that an assistant (lotse) could be allowed to write through. Its §2 says the
+account reader that an assistant (lotsman) could be allowed to write through. Its §2 says the
 person's accounts send only with a grant for that account, §4 makes every frontend ask the same
 grant, and §5 follows an XMPP account only when an `xmpp.send` grant names it. A grant was the
 only way an account became live.
