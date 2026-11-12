@@ -4,7 +4,14 @@ import Adw from 'gi://Adw?version=1';
 import Gdk from 'gi://Gdk?version=4.0';
 import Gtk from 'gi://Gtk?version=4.0';
 
-import { type AccentName, accentToImpose } from '../core/lib/appearance.ts';
+import {
+  type AccentName,
+  accentToImpose,
+  type ColorScheme,
+  primaryCss,
+  primaryToImpose,
+  schemeToImpose,
+} from '../core/lib/appearance.ts';
 
 const ACCENTS: Record<AccentName, Adw.AccentColor> = {
   blue: Adw.AccentColor.BLUE,
@@ -64,6 +71,51 @@ function apply(): void {
 @define-color accent_fg_color white;`,
   );
   Gtk.StyleContext.add_provider_for_display(display, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+}
+
+let primaryProvider: Gtk.CssProvider | null = null;
+let primaryChoice: string | undefined;
+let followingPrimary = false;
+
+// The primary colour is a quiet tint over the window, header, sidebar, popover and dialog surfaces,
+// built from libadwaita's own base colours so light and dark both keep their contrast.
+function applyPrimaryTint(): void {
+  const display = Gdk.Display.get_default();
+  if (!display) return;
+  if (primaryProvider) Gtk.StyleContext.remove_provider_for_display(display, primaryProvider);
+  primaryProvider = null;
+  const name = primaryToImpose(primaryChoice);
+  if (name === null) return;
+  const color = Adw.accent_color_to_rgba(ACCENTS[name]);
+  const rgb = [color.red * 255, color.green * 255, color.blue * 255] as const;
+  primaryProvider = new Gtk.CssProvider();
+  primaryProvider.load_from_string(primaryCss(rgb, Adw.StyleManager.get_default().get_dark()));
+  Gtk.StyleContext.add_provider_for_display(
+    display,
+    primaryProvider,
+    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+  );
+}
+
+/** Apply `value` (the `ui.primaryColor` setting); the tint follows light and dark. */
+export function applyPrimary(value: string | undefined): void {
+  primaryChoice = value;
+  if (!followingPrimary) {
+    followingPrimary = true;
+    Adw.StyleManager.get_default().connect('notify::dark', applyPrimaryTint);
+  }
+  applyPrimaryTint();
+}
+
+const SCHEMES: Record<ColorScheme, Adw.ColorScheme> = {
+  system: Adw.ColorScheme.DEFAULT,
+  light: Adw.ColorScheme.FORCE_LIGHT,
+  dark: Adw.ColorScheme.FORCE_DARK,
+};
+
+/** Apply `value` (the `ui.colorScheme` setting): follow the desktop or force light or dark. */
+export function applyColorScheme(value: string | undefined): void {
+  Adw.StyleManager.get_default().set_color_scheme(SCHEMES[schemeToImpose(value)]);
 }
 
 /** Apply `value` (the `ui.accentColor` setting); the standalone shade follows light and dark. */

@@ -105,6 +105,7 @@ app/src/window/agent-access-dialog.ts
 app/src/window/agent-access-model.ts
 app/src/window/agent-access-page.ts
 app/src/window/agent-access-store.ts
+app/src/window/appearance-rows.ts
 app/src/window/appearance.ts
 app/src/window/attachment-model.ts
 app/src/window/attachment-store.ts
