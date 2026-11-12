@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<svg width="16" height="16" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
 <!--
   eu.jumplink.curlew-symbolic: the chick's head from the app icon in one colour: crown tuft,
   two punched-out eyes and the thin downcurved bill. 16 px grid, no gradients. The bubble is left
   out on purpose: at 16 px it competes with the head and both go mushy.
 -->
-<svg width="16" height="16" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
   <g fill="#222222">
     <path d="M3.4 4 C2.8 2 4.4 1.4 4.8 2.6 C5 0.6 6.9 0.8 6.7 2.6 C7.5 1.4 9 2.2 8 4 Z"/>
     <path fill-rule="evenodd" d="M1.6 8.4 a4.8 4.9 0 1 0 9.6 0 a4.8 4.9 0 1 0 -9.6 0 Z M3.2 7.4 a1.25 1.25 0 1 0 2.5 0 a1.25 1.25 0 1 0 -2.5 0 Z M7.1 7.4 a1.25 1.25 0 1 0 2.5 0 a1.25 1.25 0 1 0 -2.5 0 Z"/>

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
 <!--
   eu.jumplink.curlew: a fluffy curlew chick in a messenger bubble.
 
@@ -8,8 +10,6 @@
   equal eyes and the short bill of a young bird; its belly runs on into the bubble's tail while
   the side wall stays in front of the feathers. Drawn by docs/design/app-icon/round7/build7.py.
 -->
-<svg width="128" height="128" viewBox="0 0 128 128" version="1.1"
-     xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="buff" x1="28" y1="20" x2="76" y2="70" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#fbeed6"/>
