@@ -8,6 +8,7 @@ import {
   type BackendAccount,
   type ByteSink,
   type ChatBackend,
+  type DeliverySession,
   type MessageBackend,
   PLUGIN_API_VERSION,
 } from '@curlew/protocol';
@@ -115,6 +116,28 @@ export default async () => {
         expect(again.kind).toBe('fetched');
         expect(fake.opened()).toBe(1);
         expect(avatarState(root, BACKEND, ACCOUNT, '3').kind).toBe('none');
+      });
+    });
+
+    await it('asks the live session when the backend has no picture handle of its own', async () => {
+      await withRoot(async (root) => {
+        const fake = fakeBackend();
+        const { openAvatars, ...plain } = fake.backend;
+        void openAvatars;
+        const session = { openAvatars: fake.backend.openAvatars } as unknown as DeliverySession;
+        const handler = createDaemonAvatarsHandler({
+          backends: new Map([[sessionKey(BACKEND, ACCOUNT), plain as unknown as MessageBackend]]),
+          sessions: new Map([[sessionKey(BACKEND, ACCOUNT), session]]),
+          log: () => {},
+          root,
+        });
+        const reply = await handler(request(['1']));
+        expect(reply.kind).toBe('fetched');
+        expect(fake.opened()).toBe(1);
+        const none = await createDaemonAvatarsHandler({ backends: new Map(), log: () => {}, root })(
+          request(['2']),
+        );
+        expect(none.kind).toBe('not-followed');
       });
     });
 

@@ -54,6 +54,7 @@
 
 ### Added
 
+- WhatsApp chats and contacts show their profile picture in the list.
 - XMPP contacts show the picture from their vCard in the list.
 - Matrix rooms and direct chats show their profile picture in the list.
 - Telegram chats show their profile picture in the list. The daemon fetches the pictures over one connection and keeps them for a week; without a daemon, or for a chat with none, the initials stay.
