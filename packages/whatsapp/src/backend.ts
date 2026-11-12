@@ -15,6 +15,7 @@ import { _, fmt, visibleAccounts } from '@curlew/protocol';
 import type {
   AccountPrompter,
   AttachmentFetcher,
+  AvatarSource,
   BackendAccount,
   ListAccountsOptions,
   BackendContext,
@@ -29,6 +30,7 @@ import { removeSecretFiles, SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
 import type { WaMediaDownloader, WaSendSocketHandle } from './api.ts';
 import { WhatsAppAttachments } from './attachments.ts';
+import { WhatsAppAvatars } from './avatars.ts';
 import type { WaConnection } from './client.ts';
 import { listSessionAccounts, sessionPath } from './accounts.ts';
 import { SecretStoreAuthState } from './auth-state.ts';
@@ -333,6 +335,16 @@ export class WhatsAppBackend implements DeliveryBackend, SendBackend {
     return {
       nextBatch: () => receiver.nextBatch(),
       outcome: () => receiver.outcome(),
+      ...(createConnection === null
+        ? {}
+        : {
+            // The receiver's own connection, as for a send: a second login would collide with it.
+            openAvatars: async (): Promise<AvatarSource> => {
+              const view = (live as WaConnection | null)?.openAvatars?.();
+              if (!view) throw new Error(_('the WhatsApp connection is not open — no pictures'));
+              return new WhatsAppAvatars(view);
+            },
+          }),
       ...(createConnection === null
         ? {}
         : { openSender: (permit: SendPermit) => this.inSessionSender(() => live, mapper, permit) }),

@@ -72,6 +72,17 @@ export interface WaConnection {
    * with it. Close the connection through `handle.end()`.
    */
   openSend(): WaSendSocketHandle;
+  /**
+   * A read-only view for profile pictures: one IQ get per chat on the SAME connection, nothing
+   * the contact can see. Optional so a connection without it simply has no pictures.
+   */
+  openAvatars?(): WaAvatarView;
+}
+
+/** The one read behind profile pictures. */
+export interface WaAvatarView {
+  /** The URL of the small picture of `jid`, or null when it has none or hides it from us. */
+  profilePictureUrl(jid: string): Promise<string | null>;
 }
 
 export type ConnectionFactory = (options: SocketOptions) => WaConnection;
@@ -167,6 +178,27 @@ export const createBaileysConnection: ConnectionFactory = ({ auth, fullHistory =
 
   return {
     handle,
+    openAvatars: () => ({
+      profilePictureUrl: async (jid) => {
+        try {
+          return (await sock.profilePictureUrl(jid, 'preview', 15_000)) ?? null;
+        } catch (error) {
+          // The server answers an error for "no picture" (404) and "hidden from you" (401, 403); the
+          // query rejects with the error's own text, so that is what tells them from a timeout.
+          const status = (error as { output?: { statusCode?: number } })?.output?.statusCode;
+          const text = error instanceof Error ? error.message : '';
+          if (
+            status === 401 ||
+            status === 403 ||
+            status === 404 ||
+            ['not-authorized', 'forbidden', 'item-not-found'].includes(text)
+          ) {
+            return null;
+          }
+          throw error;
+        }
+      },
+    }),
     openSend: () => ({
       ev: sock.ev as unknown as WaSendSocketHandle['ev'],
       ready: async () => {

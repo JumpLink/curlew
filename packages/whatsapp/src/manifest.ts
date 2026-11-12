@@ -33,6 +33,8 @@ export const WHATSAPP_MANIFEST: BackendManifest = {
     // `openAttachments` downloads and decrypts a file a person tapped; the sender uploads one.
     attachments: true,
     attachmentsRead: true,
+    // Asked on the receiver's own connection (a second login would collide with it).
+    avatars: true,
     replies: true,
   },
   // No server archive: a message is gone from WhatsApp's servers once a device acknowledged it.

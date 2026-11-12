@@ -47,6 +47,7 @@ import signalStoreFence from './unit/signal/store-fence.test.ts';
 import signalGroups from './unit/signal/groups.test.ts';
 import whatsapp from './unit/whatsapp/whatsapp.test.ts';
 import whatsappSend from './unit/whatsapp/send.test.ts';
+import whatsappAvatars from './unit/whatsapp/avatars.test.ts';
 import whatsappAttachments from './unit/whatsapp/attachments.test.ts';
 import whatsappInSessionSend from './unit/whatsapp/in-session-send.test.ts';
 import xmpp from './unit/xmpp/xmpp.test.ts';
@@ -181,6 +182,7 @@ run({
   signalGroups,
   whatsapp,
   whatsappSend,
+  whatsappAvatars,
   whatsappAttachments,
   whatsappInSessionSend,
   xmpp,

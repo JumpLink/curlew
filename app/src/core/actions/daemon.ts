@@ -542,6 +542,8 @@ export function createDaemonFetchHandler(options: DaemonFetchHandlerOptions): Da
 export interface DaemonAvatarsHandlerOptions {
   /** The backends of the accounts this run holds, keyed by `sessionKey`; those with `openAvatars` serve pictures. */
   backends: ReadonlyMap<string, MessageBackend>;
+  /** The live delivery sessions, keyed the same way: the way to pictures on a network that allows one connection (WhatsApp). */
+  sessions?: ReadonlyMap<string, DeliverySession>;
   log: (line: string) => void;
   /** Where the pictures are cached; `avatarsDir()` when unset. */
   root?: string;
@@ -561,13 +563,19 @@ const NO_SINK: ByteSink = { write: () => {}, close: () => {} };
  * are still the person's contacts: the directory is private like the previews.
  */
 export function createDaemonAvatarsHandler(options: DaemonAvatarsHandlerOptions): DaemonAvatarsHandler {
-  const { backends, log, root = avatarsDir(), stallTimeoutMs = FETCH_STALL_MS } = options;
+  const { backends, sessions, log, root = avatarsDir(), stallTimeoutMs = FETCH_STALL_MS } = options;
   return async (request) => {
     const who = sessionKey(request.backend, request.account);
     const backend = backends.get(who);
-    if (backend === undefined || backend.openAvatars === undefined) {
-      return { v: DAEMON_WIRE_VERSION, kind: 'not-followed' };
-    }
+    const session = sessions?.get(who);
+    // The backend's own handle first; a session's one only where the backend has none.
+    const open: (() => Promise<AvatarSource>) | null =
+      backend?.openAvatars !== undefined
+        ? () => backend.openAvatars!(request.account)
+        : session?.openAvatars !== undefined
+          ? () => session.openAvatars!()
+          : null;
+    if (open === null) return { v: DAEMON_WIRE_VERSION, kind: 'not-followed' };
     const avatars: Record<string, DaemonAvatarFile | null> = {};
     const missing: string[] = [];
     for (const peer of request.peers) {
@@ -581,7 +589,7 @@ export function createDaemonAvatarsHandler(options: DaemonAvatarsHandlerOptions)
     ensurePrivateDir(avatarAccountDir(root, request.backend, request.account));
     let source: AvatarSource;
     try {
-      source = await withStallDeadline(stallTimeoutMs, NO_SINK, () => backend.openAvatars!(request.account));
+      source = await withStallDeadline(stallTimeoutMs, NO_SINK, open);
     } catch (error) {
       log(`curlew-daemon: avatar fetch for ${who} failed: ${errText(error)}`);
       // What the cache had is still better than nothing.
@@ -825,7 +833,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
               accounts: () => table.reply(),
               access: (request) => accessBroker.request(request),
               fetch: createDaemonFetchHandler({ db, fetchBackends, log }),
-              avatars: createDaemonAvatarsHandler({ backends: fetchBackends, log }),
+              avatars: createDaemonAvatarsHandler({ backends: fetchBackends, sessions, log }),
               onSessionEnd: (session) => {
                 accessBroker.endSession(session);
                 log('curlew-daemon: an agent session ended — its temporary access grants are gone');

@@ -697,6 +697,12 @@ export interface DeliverySession {
    */
   close(): Promise<void>;
   /**
+   * Profile pictures on THIS session's live connection, for a network where a second login would
+   * collide with the receiver's (WhatsApp). The daemon asks it when the backend has no
+   * `openAvatars` of its own; closing the source never closes the session.
+   */
+  openAvatars?(): Promise<AvatarSource>;
+  /**
    * Send on THIS session's live connection and protocol state (ADR 0004, amendment 2026-10-30,
    * daemon send).
    *
