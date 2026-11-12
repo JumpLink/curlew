@@ -19,15 +19,17 @@ screen, where Telegram lets the history scroll under them.
    `slate`). The default is Curlew's blue: it matches Signal, Telegram and WhatsApp, reads in light
    and dark, and is calm. It is applied through `Adw.StyleManager` where libadwaita supports an
    accent override, otherwise through the `@accent_*` colour variables, never per widget.
-2. **Chat background.** A setting `ui.chatBackground`: `doodles` (the default), `plain`, or `none`. The pattern is an SVG tile that carries no colour of its own: it is
+2. **Chat background.** A setting `ui.chatBackground`: `doodles` (the default) or `none`. The pattern is an SVG tile that carries no colour of its own: it is
    drawn in `currentColor` at a few percent opacity, so it follows light/dark and the accent.
    The motifs are our own line drawings (a curlew, an envelope, a paper plane, a gear, a terminal,
    a speech bubble). Real mascots are not used: Tux and Wilber ask for attribution or share-alike,
    Blender, KDE and others are marks, and Telegram's `pattern.svg` is not ours to copy.
-3. **Floating bars.** In the conversation view only, the header and the composer float over the
-   history (`AdwToolbarView` with `extend_content_to_top_edge` / `extend_content_to_bottom_edge`,
-   `top_bar_style` / `bottom_bar_style` raised). The history gets matching scroll padding so the
-   first and last message are never hidden. The contact list keeps its plain bars.
+3. **Floating composer.** In the conversation view only, the composer floats over the history
+   (`AdwToolbarView` with `extend_content_to_bottom_edge`, the history keeps a bottom margin equal to
+   the bar's height so the last message scrolls clear). The input row, the reply and edit bars, the
+   file strip and the hint are cards, so they stay legible over the messages beneath. The header
+   stays solid, as in Telegram: libadwaita draws a transparent bar over extended content, and a
+   title running over message text is unreadable. The contact list keeps its plain bars.
 4. **Where it lives.** One Appearance group in the preferences dialog (accent row, background row);
    a `ThemeService` in `app/src/window/` owns the provider, as in Learn6502. German strings from the
    first commit.
