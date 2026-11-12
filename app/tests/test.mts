@@ -89,6 +89,7 @@ import grants from './unit/core/grants.test.ts';
 import access from './unit/core/access.test.ts';
 import accessBroker from './unit/core/access-broker.test.ts';
 import agentAccess from './unit/core/agent-access.test.ts';
+import aiSwitch from './unit/core/ai-switch.test.ts';
 import windowAgentAccess from './unit/window/agent-access-model.test.ts';
 import accountRemove from './unit/core/account-remove.test.ts';
 import accountToggle from './unit/core/account-toggle.test.ts';
@@ -226,6 +227,7 @@ run({
   access,
   accessBroker,
   agentAccess,
+  aiSwitch,
   windowAgentAccess,
   windowAccounts,
   accountRemove,

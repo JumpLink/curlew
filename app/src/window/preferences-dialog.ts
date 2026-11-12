@@ -5,7 +5,7 @@ import Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 import { configPath } from '@curlew/store';
 
-import { loadConfig, saveConfig } from '../core/config.ts';
+import { aiEnabled, loadConfig, saveConfig } from '../core/config.ts';
 import { appearanceGroups, type AppearanceStore } from './appearance-rows.ts';
 import { silentVideosOn } from './video-preview-model.ts';
 import { refreshSilentVideos } from './video-preview.ts';
@@ -27,7 +27,11 @@ function appearanceStore(path: string, overlay: Adw.ToastOverlay): AppearanceSto
   };
 }
 
-export function presentPreferences(parent: Gtk.Window | null, onChanged: () => void): void {
+export function presentPreferences(
+  parent: Gtk.Window | null,
+  onChanged: () => void,
+  onAiChanged: () => void = () => {},
+): void {
   const path = configPath();
   const overlay = new Adw.ToastOverlay();
   const row = new Adw.SwitchRow({
@@ -56,11 +60,21 @@ export function presentPreferences(parent: Gtk.Window | null, onChanged: () => v
   });
   const mediaGroup = new Adw.PreferencesGroup({ title: _('Media') });
   mediaGroup.add(videos);
+  const ai = new Adw.SwitchRow({
+    title: _('AI features'),
+    subtitle: _(
+      'Let AI assistants read and send your messages through Curlew, each time as you allow it. Off: no assistant can reach your data',
+    ),
+    active: aiEnabled(loadConfig(path)),
+  });
+  const aiGroup = new Adw.PreferencesGroup({ title: _('AI') });
+  aiGroup.add(ai);
   const page = new Adw.PreferencesPage();
   for (const appearance of appearanceGroups(appearanceStore(path, overlay))) page.add(appearance);
   page.add(group);
   page.add(mediaGroup);
   page.add(notifyGroup);
+  page.add(aiGroup);
   const toolbar = new Adw.ToolbarView();
   toolbar.add_top_bar(new Adw.HeaderBar());
   toolbar.set_content(page);
@@ -86,6 +100,18 @@ export function presentPreferences(parent: Gtk.Window | null, onChanged: () => v
       config.ui.playVideosSilently = videos.get_active();
       saveConfig(config, path);
       refreshSilentVideos();
+    } catch (err) {
+      overlay.add_toast(
+        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
+      );
+    }
+  });
+  ai.connect('notify::active', () => {
+    try {
+      const config = loadConfig(path);
+      config.ui.ai = ai.get_active();
+      saveConfig(config, path);
+      onAiChanged();
     } catch (err) {
       overlay.add_toast(
         new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),

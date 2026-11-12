@@ -110,6 +110,18 @@ function exampleRule(target: AccessTarget): string {
   });
 }
 
+function deniedBySwitch(target: AccessTarget): AccessDeniedError {
+  return new AccessDeniedError(
+    fmt(
+      _(
+        'access to {target} is refused — AI features are switched off; turn them on in Curlew Preferences or set config.ui.ai to true',
+      ),
+      { target: describeTarget(target) },
+    ),
+    'policy',
+  );
+}
+
 function deniedByPolicy(target: AccessTarget, byDefault: boolean): AccessDeniedError {
   const what = describeTarget(target);
   const values = { target: what, rule: exampleRule(target) };
@@ -252,9 +264,12 @@ export async function requireAccess(gate: AccessGate, target: AccessTarget): Pro
   });
   const needsYes = target.confirmFiles === true && resolution.reason !== 'self';
   if (resolution.mode === 'allow' && !needsYes) {
-    return resolution.reason === 'default' ? 'rule' : resolution.reason;
+    return resolution.reason === 'default' || resolution.reason === 'off' ? 'rule' : resolution.reason;
   }
-  if (resolution.mode === 'deny') throw deniedByPolicy(target, resolution.reason === 'default');
+  if (resolution.mode === 'deny') {
+    if (resolution.reason === 'off') throw deniedBySwitch(target);
+    throw deniedByPolicy(target, resolution.reason === 'default');
+  }
 
   let reply: AccessReply | null;
   try {

@@ -81,7 +81,7 @@ import { TelegramBackend } from '@curlew/telegram';
 import { XmppBackend } from '@curlew/xmpp';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
-import { loadConfig, saveConfig, type CurlewConfig } from '../config.ts';
+import { effectiveAgentAccess, loadConfig, saveConfig, type CurlewConfig } from '../config.ts';
 import { AccessBroker, type PromptUi } from '../access-broker.ts';
 import { withAllowRule } from '../access.ts';
 import { gioNotificationPrompt } from '../lib/access-notifications.ts';
@@ -814,7 +814,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
       ui:
         params.accessPrompt ??
         gioNotificationPrompt({ nameOf: (ask) => contactNameFromIndex(db, ask.account, ask.contact) }),
-      policy: () => loadConfig(accessConfigPath).agentAccess,
+      policy: () => effectiveAgentAccess(loadConfig(accessConfigPath)),
       addRule: (ask) => saveConfig(withAllowRule(loadConfig(accessConfigPath), ask), accessConfigPath),
       log,
       timeoutMs: params.accessTimeoutMs,

@@ -16,7 +16,7 @@ import { presentAccounts } from './accounts-dialog.ts';
 import { presentAgentAccess } from './agent-access-dialog.ts';
 import { listStamp, loadConversationEntries, searchConversationText } from './conversation-list-store.ts';
 import type { ListEntry } from './conversation-list-model.ts';
-import { loadConfig } from '../core/config.ts';
+import { aiEnabled, loadConfig } from '../core/config.ts';
 import { candidateSets } from './merge-candidates-model.ts';
 import { presentContactPage } from './contact-page.ts';
 import { presentMergeAssistant } from './merge-assistant.ts';
@@ -113,7 +113,10 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   menu.append(_('Accounts'), 'win.accounts');
   menu.append(_('Merge contacts…'), 'win.merge-contacts');
   menu.append(_('Preferences'), 'win.preferences');
-  menu.append(_('Agent access'), 'win.agent-access');
+  // Hidden while AI features are off: the item follows the action's enabled state.
+  const agentItem = Gio.MenuItem.new(_('Agent access'), 'win.agent-access');
+  agentItem.set_attribute_value('hidden-when', GLib.Variant.new_string('action-disabled'));
+  menu.append_item(agentItem);
   menu.append(_('Welcome'), 'win.welcome');
   const appSection = new Gio.Menu();
   appSection.append(_('About Curlew'), 'app.about');
@@ -310,15 +313,21 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   window.add_action(mergeContacts);
   const action = new Gio.SimpleAction({ name: 'agent-access' });
   action.connect('activate', () => presentAgentAccess(window));
+  const syncAi = () => action.set_enabled(aiEnabled(loadConfig(configPath())));
+  syncAi();
   window.add_action(action);
   const preferences = new Gio.SimpleAction({ name: 'preferences' });
   preferences.connect('activate', () =>
-    presentPreferences(window, () => {
-      currentEntry = null;
-      currentMessages = [];
-      split.set_content(placeholder());
-      refresh();
-    }),
+    presentPreferences(
+      window,
+      () => {
+        currentEntry = null;
+        currentMessages = [];
+        split.set_content(placeholder());
+        refresh();
+      },
+      syncAi,
+    ),
   );
   window.add_action(preferences);
   const welcome = new Gio.SimpleAction({ name: 'welcome' });

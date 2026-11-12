@@ -204,6 +204,11 @@ It is a permission policy, not something one does all day. It lives in the prima
 choice (allow, ask, deny) is an `Adw.ToggleGroup`: three or four fixed options, all visible at
 once, which a dropdown would hide.
 
+The item only shows while AI features are on. The switch is the **AI features** row in Preferences
+(`ui.ai`); off, every agent request is denied and `curlew mcp` serves nothing. An unset `ui.ai` is
+off, except in a config that already has agent rules, grants or switches (`aiEnabled` in
+`app/src/core/config.ts`).
+
 ## App icon
 
 The app icon follows the GNOME HIG for app icons; how it came about, round by round, with every

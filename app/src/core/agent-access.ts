@@ -42,10 +42,12 @@ export interface AgentAccessPolicy {
    */
   sendFilesUnasked?: boolean;
   rules: PolicyRule[];
+  /** AI is switched off: every request is `deny`, the person's own address included. Never in the file. */
+  off?: true;
 }
 
 /** Why a request got its mode — the write log records this later (ADR 0009 §10). */
-export type Reason = 'self' | 'rule' | 'migrated' | 'default' | 'temporary';
+export type Reason = 'self' | 'rule' | 'migrated' | 'default' | 'temporary' | 'off';
 
 export interface Resolution {
   mode: Mode;
@@ -280,6 +282,7 @@ function resolveKind(policy: AgentAccessPolicy, request: AccessRequest, kind: Ki
  * `ask`, and `ask` is `deny` wherever no prompt can be shown.
  */
 export function resolve(policy: AgentAccessPolicy, request: AccessRequest): Resolution {
+  if (policy.off) return { mode: 'deny', reason: 'off' };
   if (request.self) return { mode: 'allow', reason: 'self' };
   const resolution = resolveKind(policy, request, request.kind);
   if (request.kind === 'write' && resolution.mode !== 'deny') {

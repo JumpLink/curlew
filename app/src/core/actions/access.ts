@@ -17,7 +17,7 @@ import {
   requireAccess,
   requireAccessAll,
 } from '../access.ts';
-import type { CurlewConfig } from '../config.ts';
+import { type CurlewConfig, effectiveAgentAccess } from '../config.ts';
 import { gioAccessClient } from '../lib/daemon-access-client.ts';
 
 export interface AgentAccess {
@@ -39,9 +39,12 @@ export function agentSessionId(frontend: AgentFrontend): string {
   return mcpSession;
 }
 
-export function agentGate(config: Pick<CurlewConfig, 'agentAccess'>, agent: AgentAccess): AccessGate {
+export function agentGate(
+  config: Pick<CurlewConfig, 'agentAccess' | 'ui' | 'grants'>,
+  agent: AgentAccess,
+): AccessGate {
   return {
-    policy: config.agentAccess,
+    policy: effectiveAgentAccess(config),
     port: agent.port ?? gioAccessClient(),
     session: agent.session ?? agentSessionId(agent.frontend),
     // A CLI call is a process of its own: there is no session to grant for.
@@ -51,7 +54,7 @@ export function agentGate(config: Pick<CurlewConfig, 'agentAccess'>, agent: Agen
 
 /** One account/contact/kind, or every contact of a message. Throws an `AccessDeniedError`. */
 export async function requireAgentAccess(
-  config: Pick<CurlewConfig, 'agentAccess'>,
+  config: Pick<CurlewConfig, 'agentAccess' | 'ui' | 'grants'>,
   agent: AgentAccess,
   account: string,
   contacts: readonly string[],

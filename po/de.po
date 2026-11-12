@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-12 22:55+0100\n"
+"POT-Creation-Date: 2026-11-12 23:10+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -12,7 +12,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app/src/core/access.ts:121
+#: app/src/core/access.ts:117
+msgid ""
+"access to {target} is refused — AI features are switched off; turn them on "
+"in Curlew Preferences or set config.ui.ai to true"
+msgstr ""
+"Zugriff auf {target} wird verweigert — KI-Funktionen sind ausgeschaltet; "
+"schalte sie in den Curlew-Einstellungen ein oder setze config.ui.ai auf true"
+
+#: app/src/core/access.ts:133
 msgid ""
 "sending to {target} is refused — no agentAccess rule covers it and "
 "config.agentAccess.askWithoutRule is false; add a rule like {rule} to "
@@ -22,7 +30,7 @@ msgstr ""
 "config.agentAccess.askWithoutRule ist false; füge eine Regel wie {rule} zu "
 "config.agentAccess.rules hinzu"
 
-#: app/src/core/access.ts:127
+#: app/src/core/access.ts:139
 msgid ""
 "reading messages of {target} is refused — no agentAccess rule covers it and "
 "config.agentAccess.askWithoutRule is false; add a rule like {rule} to "
@@ -32,7 +40,7 @@ msgstr ""
 "Regel deckt es ab und config.agentAccess.askWithoutRule ist false; füge eine "
 "Regel wie {rule} zu config.agentAccess.rules hinzu"
 
-#: app/src/core/access.ts:138
+#: app/src/core/access.ts:150
 msgid ""
 "sending to {target} is denied by config.agentAccess.rules — change the rule "
 "to allow it, for example {rule}"
@@ -40,7 +48,7 @@ msgstr ""
 "Senden an {target} wird von config.agentAccess.rules verweigert — ändere die "
 "Regel, um es zu erlauben, zum Beispiel {rule}"
 
-#: app/src/core/access.ts:144
+#: app/src/core/access.ts:156
 msgid ""
 "reading messages of {target} is denied by config.agentAccess.rules — change "
 "the rule to allow it, for example {rule}"
@@ -48,16 +56,16 @@ msgstr ""
 "Das Lesen von Nachrichten von {target} wird von config.agentAccess.rules "
 "verweigert — ändere die Regel, um es zu erlauben, zum Beispiel {rule}"
 
-#: app/src/core/access.ts:159
+#: app/src/core/access.ts:171
 msgid "sending to {target} was declined in the prompt"
 msgstr "Senden an {target} wurde in der Rückfrage abgelehnt"
 
-#: app/src/core/access.ts:160
+#: app/src/core/access.ts:172
 msgid "reading messages of {target} was declined in the prompt"
 msgstr ""
 "Das Lesen von Nachrichten von {target} wurde in der Rückfrage abgelehnt"
 
-#: app/src/core/access.ts:168
+#: app/src/core/access.ts:180
 msgid ""
 "sending to {target} was declined earlier in this session — it is not asked "
 "again; add a rule like {rule} to allow it"
@@ -65,7 +73,7 @@ msgstr ""
 "Senden an {target} wurde früher in dieser Sitzung abgelehnt — es wird nicht "
 "erneut gefragt; füge eine Regel wie {rule} hinzu, um es zu erlauben"
 
-#: app/src/core/access.ts:174
+#: app/src/core/access.ts:186
 msgid ""
 "reading messages of {target} was declined earlier in this session — it is "
 "not asked again; add a rule like {rule} to allow it"
@@ -74,14 +82,14 @@ msgstr ""
 "abgelehnt — es wird nicht erneut gefragt; füge eine Regel wie {rule} hinzu, "
 "um es zu erlauben"
 
-#: app/src/core/access.ts:183
+#: app/src/core/access.ts:195
 msgid ""
 "sending to {target} was refused — nobody answered the prompt within 2 minutes"
 msgstr ""
 "Senden an {target} wurde abgelehnt — niemand hat die Rückfrage innerhalb von "
 "2 Minuten beantwortet"
 
-#: app/src/core/access.ts:185
+#: app/src/core/access.ts:197
 msgid ""
 "reading messages of {target} was refused — nobody answered the prompt within "
 "2 minutes"
@@ -89,17 +97,17 @@ msgstr ""
 "Das Lesen von Nachrichten von {target} wurde abgelehnt — niemand hat die "
 "Rückfrage innerhalb von 2 Minuten beantwortet"
 
-#: app/src/core/access.ts:193
+#: app/src/core/access.ts:205
 msgid "sending to {target} was refused — the prompt was dismissed"
 msgstr "Senden an {target} wurde abgelehnt — die Rückfrage wurde verworfen"
 
-#: app/src/core/access.ts:194
+#: app/src/core/access.ts:206
 msgid "reading messages of {target} was refused — the prompt was dismissed"
 msgstr ""
 "Das Lesen von Nachrichten von {target} wurde abgelehnt — die Rückfrage wurde "
 "verworfen"
 
-#: app/src/core/access.ts:202
+#: app/src/core/access.ts:214
 msgid ""
 "sending to {target} was refused — the prompt could not be shown (no "
 "notification service); add a rule like {rule} to config.agentAccess.rules"
@@ -108,7 +116,7 @@ msgstr ""
 "werden (kein Benachrichtigungsdienst); füge eine Regel wie {rule} zu "
 "config.agentAccess.rules hinzu"
 
-#: app/src/core/access.ts:208
+#: app/src/core/access.ts:220
 msgid ""
 "reading messages of {target} was refused — the prompt could not be shown (no "
 "notification service); add a rule like {rule} to config.agentAccess.rules"
@@ -117,7 +125,7 @@ msgstr ""
 "konnte nicht angezeigt werden (kein Benachrichtigungsdienst); füge eine "
 "Regel wie {rule} zu config.agentAccess.rules hinzu"
 
-#: app/src/core/access.ts:225
+#: app/src/core/access.ts:237
 msgid ""
 "sending to {target} needs approval, but `curlew daemon` is not running, so "
 "nobody can be asked — start it, or add a rule like {rule} to "
@@ -127,7 +135,7 @@ msgstr ""
 "also kann niemand gefragt werden — starte ihn oder füge eine Regel wie "
 "{rule} zu config.agentAccess.rules hinzu"
 
-#: app/src/core/access.ts:231
+#: app/src/core/access.ts:243
 msgid ""
 "reading messages of {target} needs approval, but `curlew daemon` is not "
 "running, so nobody can be asked — start it, or add a rule like {rule} to "
@@ -2015,7 +2023,7 @@ msgstr "Offline"
 msgid "Daemon not running"
 msgstr "Daemon läuft nicht"
 
-#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:44
+#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:48
 msgid "Off"
 msgstr "Aus"
 
@@ -2062,7 +2070,7 @@ msgstr "Starten"
 msgid "Protocols"
 msgstr "Protokolle"
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:116
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:117
 msgid "Agent access"
 msgstr "Agentenzugriff"
 
@@ -2637,7 +2645,7 @@ msgid "Review"
 msgstr "Prüfen"
 
 #: app/src/window/conversation-list.ts:526
-#: app/src/window/preferences-dialog.ts:38
+#: app/src/window/preferences-dialog.ts:42
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
@@ -2921,50 +2929,66 @@ msgstr "Kontakte suchen"
 msgid "The address book could not be read"
 msgstr "Das Adressbuch konnte nicht gelesen werden"
 
-#: app/src/window/preferences-dialog.ts:34
+#: app/src/window/preferences-dialog.ts:38
 msgid "Show all emails"
 msgstr "Alle E-Mails anzeigen"
 
-#: app/src/window/preferences-dialog.ts:35
+#: app/src/window/preferences-dialog.ts:39
 msgid ""
 "Show ordinary email threads beside conversations started by a chat messenger"
 msgstr ""
 "Gewöhnliche E-Mail-Verläufe neben Unterhaltungen aus einem Chat-Messenger "
 "anzeigen"
 
-#: app/src/window/preferences-dialog.ts:42
+#: app/src/window/preferences-dialog.ts:46
 msgid "Message notifications"
 msgstr "Benachrichtigungen für Nachrichten"
 
-#: app/src/window/preferences-dialog.ts:43
+#: app/src/window/preferences-dialog.ts:47
 msgid "What a desktop notification for a new chat message shows"
 msgstr "Was eine Desktop-Benachrichtigung über eine neue Chat-Nachricht zeigt"
 
-#: app/src/window/preferences-dialog.ts:44
+#: app/src/window/preferences-dialog.ts:48
 msgid "Sender and text"
 msgstr "Absender und Text"
 
-#: app/src/window/preferences-dialog.ts:44
+#: app/src/window/preferences-dialog.ts:48
 msgid "Sender only"
 msgstr "Nur Absender"
 
-#: app/src/window/preferences-dialog.ts:47
+#: app/src/window/preferences-dialog.ts:51
 msgid "Notifications"
 msgstr "Benachrichtigungen"
 
-#: app/src/window/preferences-dialog.ts:50
+#: app/src/window/preferences-dialog.ts:54
 msgid "Play videos silently in chats"
 msgstr "Videos in Chats stumm abspielen"
 
-#: app/src/window/preferences-dialog.ts:51
+#: app/src/window/preferences-dialog.ts:55
 msgid "A video in a conversation plays muted while it is on screen"
 msgstr "Ein Video in einer Unterhaltung läuft stumm, solange es im Bild ist"
 
-#: app/src/window/preferences-dialog.ts:57
+#: app/src/window/preferences-dialog.ts:61
 msgid "Media"
 msgstr "Medien"
 
-#: app/src/window/preferences-dialog.ts:68 app/src/window/window.ts:115
+#: app/src/window/preferences-dialog.ts:64
+msgid "AI features"
+msgstr "KI-Funktionen"
+
+#: app/src/window/preferences-dialog.ts:66
+msgid ""
+"Let AI assistants read and send your messages through Curlew, each time as "
+"you allow it. Off: no assistant can reach your data"
+msgstr ""
+"KI-Assistenten dürfen über Curlew deine Nachrichten lesen und senden, "
+"jeweils so, wie du es erlaubst. Aus: Kein Assistent erreicht deine Daten"
+
+#: app/src/window/preferences-dialog.ts:70
+msgid "AI"
+msgstr "KI"
+
+#: app/src/window/preferences-dialog.ts:82 app/src/window/window.ts:115
 msgid "Preferences"
 msgstr "Einstellungen"
 
@@ -2991,7 +3015,7 @@ msgstr[0] "{count} ausgewählt"
 msgstr[1] "{count} ausgewählt"
 
 #: app/src/window/welcome.ts:62 app/src/window/welcome.ts:81
-#: app/src/window/window.ts:117
+#: app/src/window/window.ts:120
 msgid "Welcome"
 msgstr "Willkommen"
 
@@ -3029,19 +3053,19 @@ msgstr "Wähle eine Unterhaltung aus der Liste."
 msgid "Merge contacts…"
 msgstr "Kontakte zusammenführen…"
 
-#: app/src/window/window.ts:119
+#: app/src/window/window.ts:122
 msgid "About Curlew"
 msgstr "Über Curlew"
 
-#: app/src/window/window.ts:120
+#: app/src/window/window.ts:123
 msgid "Quit"
 msgstr "Beenden"
 
-#: app/src/window/window.ts:157
+#: app/src/window/window.ts:160
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:341
+#: app/src/window/window.ts:350
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 

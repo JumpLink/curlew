@@ -58,6 +58,12 @@ export interface UiConfig {
   chatBackground?: string;
   /** The first-run welcome screen was finished or skipped. Unset: not yet, so it may show. */
   welcomeDone?: boolean;
+  /**
+   * The AI/agent switch: `false` serves no MCP tools and answers every agent policy query with
+   * `deny`; `true` is the policy as configured. Unset: off, unless the file already configures
+   * agent access (see `aiEnabled`).
+   */
+  ai?: boolean;
 }
 
 export interface CurlewConfig {
@@ -175,6 +181,29 @@ export function defaultConfig(): CurlewConfig {
   };
 }
 
+/**
+ * Is AI/agent access on? An explicit `ui.ai` wins. Unset means off for a fresh config, but ON for
+ * a file that already configures agents (grants, agentAccess rules or switches): such a person set
+ * agent access up before the switch existed, and turning it off silently would break that.
+ */
+export function aiEnabled(config: Pick<CurlewConfig, 'ui' | 'grants' | 'agentAccess'>): boolean {
+  if (config.ui.ai !== undefined) return config.ui.ai;
+  const policy = config.agentAccess;
+  return (
+    config.grants.length > 0 ||
+    policy.rules.length > 0 ||
+    !policy.askWithoutRule ||
+    policy.sendFilesUnasked === true
+  );
+}
+
+/** The policy agents are held to: the configured one, or one that denies everything when AI is off. */
+export function effectiveAgentAccess(
+  config: Pick<CurlewConfig, 'ui' | 'grants' | 'agentAccess'>,
+): AgentAccessPolicy {
+  return aiEnabled(config) ? config.agentAccess : { ...config.agentAccess, off: true };
+}
+
 /** Parse and validate the file's text. Throws with the offending key named. */
 export function parseConfig(text: string, options: ParseGrantsOptions = {}): CurlewConfig {
   let raw: unknown;
@@ -247,8 +276,11 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   const welcomeDone = (rawUi as Record<string, unknown>).welcomeDone;
   if (welcomeDone !== undefined && typeof welcomeDone !== 'boolean')
     throw new Error('config.ui.welcomeDone must be true or false');
+  const ai = (rawUi as Record<string, unknown>).ai;
+  if (ai !== undefined && typeof ai !== 'boolean') throw new Error('config.ui.ai must be true or false');
   const ui: UiConfig = {
     showAllEmails,
+    ...(ai === undefined ? {} : { ai }),
     notifications,
     ...(playVideosSilently === undefined ? {} : { playVideosSilently }),
     ...(accentColor === undefined ? {} : { accentColor }),

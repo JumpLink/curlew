@@ -391,7 +391,7 @@ export default async () => {
           }
         }
         const configPath = join(dir, 'config.json');
-        writeFileSync(configPath, JSON.stringify({ grants, ...extraConfig }));
+        writeFileSync(configPath, JSON.stringify({ ui: { ai: true }, grants, ...extraConfig }));
         const sent: Array<[string, string, string]> = [];
         let n = 0;
         const backend = {
@@ -611,7 +611,7 @@ export default async () => {
       const dir = mkdtempSync(join(tmpdir(), 'curlew-adr8-'));
       try {
         const configPath = join(dir, 'config.json');
-        writeFileSync(configPath, JSON.stringify({ grants: [] }));
+        writeFileSync(configPath, JSON.stringify({ ui: { ai: true }, grants: [] }));
         const sent: Array<[string, string, string]> = [];
         const backend = {
           manifest: XMPP_MANIFEST,
@@ -656,7 +656,7 @@ export default async () => {
       const dir = mkdtempSync(join(tmpdir(), 'curlew-adr8-'));
       try {
         const configPath = join(dir, 'config.json');
-        writeFileSync(configPath, JSON.stringify({ grants: [] }));
+        writeFileSync(configPath, JSON.stringify({ ui: { ai: true }, grants: [] }));
         const sent: Array<[string, string, string]> = [];
         let n = 0;
         const backend = {
