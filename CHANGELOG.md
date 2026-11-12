@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- A long message folded behind "Show more" no longer leaves an empty stretch under it: the fold now keeps one height whatever the width, so a list row and its content agree.
 - The window opens its menus at once when you come back to it: the conversation list is reloaded only when the index or the settings changed, and loading it no longer reads every message of every chat (about half a second less).
 - The window no longer freezes when it is activated: the duplicate scan compared every pair of thousands of rows, and now compares only rows that share a word.
 - The merge assistant no longer offers deleted Telegram accounts (all named "Deleted Account") or any name that many contacts share as possible duplicates.
@@ -31,6 +32,7 @@
 
 ### Changed
 
+- The primary colour tints the window more strongly, so the blue no longer reads as another grey.
 - Message bubbles and the composer are opaque, so the background doodles no longer shine through, and your own messages use the accent colour. The default accent is now teal instead of blue.
 - The message box of a conversation floats over the history as a rounded card, like Telegram's, and the messages scroll beneath it. [ADR 0013](docs/adr/0013-appearance.md)
 - The message menu no longer offers what the chat cannot do: no reactions in Telegram's Saved Messages, and no edit or delete on Signal messages older than a day (the note to self is exempt).
