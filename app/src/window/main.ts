@@ -94,6 +94,11 @@ const application = new AdwaitaApp({
         GLib.PRIORITY_DEFAULT,
         () => (window.activate_action('preferences', null), GLib.SOURCE_REMOVE),
       );
+    if (process.env.CURLEW_WINDOW_OPEN_WELCOME === '1')
+      GLib.idle_add(
+        GLib.PRIORITY_DEFAULT,
+        () => (window.activate_action('welcome', null), GLib.SOURCE_REMOVE),
+      );
     return window;
   },
 });

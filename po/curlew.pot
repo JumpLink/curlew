@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-12 22:19+0100\n"
+"POT-Creation-Date: 2026-11-12 22:41+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1541,8 +1541,8 @@ msgid "curlew window takes no arguments."
 msgstr ""
 
 #: app/src/window/about.ts:14 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:163 app/src/window/window.ts:80
-#: app/src/window/window.ts:95
+#: app/src/window/conversation-view.ts:163 app/src/window/window.ts:84
+#: app/src/window/window.ts:99
 msgid "Curlew"
 msgstr ""
 
@@ -1610,7 +1610,7 @@ msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 
 #: app/src/window/account-add.ts:319 app/src/window/accounts-page.ts:158
-#: app/src/window/accounts-page.ts:181
+#: app/src/window/accounts-page.ts:181 app/src/window/welcome.ts:92
 msgid "Add Account"
 msgstr ""
 
@@ -1704,7 +1704,7 @@ msgid "Could not start the background service: {reason}"
 msgstr ""
 
 #: app/src/window/accounts-dialog.ts:71 app/src/window/accounts-page.ts:194
-#: app/src/window/window.ts:108
+#: app/src/window/welcome.ts:104 app/src/window/window.ts:112
 msgid "Accounts"
 msgstr ""
 
@@ -1777,7 +1777,7 @@ msgstr ""
 msgid "Protocols"
 msgstr ""
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:111
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:115
 msgid "Agent access"
 msgstr ""
 
@@ -2553,7 +2553,7 @@ msgstr ""
 msgid "Previous"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:125
+#: app/src/window/media-viewer.ts:125 app/src/window/welcome.ts:85
 msgid "Next"
 msgstr ""
 
@@ -2591,7 +2591,7 @@ msgstr ""
 msgid "You can separate merged people again from the conversation list."
 msgstr ""
 
-#: app/src/window/merge-assistant.ts:90
+#: app/src/window/merge-assistant.ts:90 app/src/window/welcome.ts:108
 msgid "Done"
 msgstr ""
 
@@ -2599,7 +2599,7 @@ msgstr ""
 msgid "These people have similar names. Are they the same person?"
 msgstr ""
 
-#: app/src/window/merge-assistant.ts:119
+#: app/src/window/merge-assistant.ts:119 app/src/window/welcome.ts:85
 msgid "Skip"
 msgstr ""
 
@@ -2660,7 +2660,7 @@ msgstr ""
 msgid "Media"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:68 app/src/window/window.ts:110
+#: app/src/window/preferences-dialog.ts:68 app/src/window/window.ts:114
 msgid "Preferences"
 msgstr ""
 
@@ -2684,31 +2684,54 @@ msgid_plural "{count} selected"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/window.ts:74
+#: app/src/window/welcome.ts:62 app/src/window/welcome.ts:81
+#: app/src/window/window.ts:116
+msgid "Welcome"
+msgstr ""
+
+#: app/src/window/welcome.ts:83
+msgid "Welcome to Curlew"
+msgstr ""
+
+#: app/src/window/welcome.ts:84
+msgid ""
+"Curlew brings your mail and chat accounts together in one conversation list."
+msgstr ""
+
+#: app/src/window/welcome.ts:106
+msgid "Add your accounts"
+msgstr ""
+
+#: app/src/window/welcome.ts:107
+msgid ""
+"Sign in to a mail or chat account. You can add more later from the menu."
+msgstr ""
+
+#: app/src/window/window.ts:78
 msgid "Select a conversation"
 msgstr ""
 
-#: app/src/window/window.ts:75
+#: app/src/window/window.ts:79
 msgid "Pick a conversation from the list."
 msgstr ""
 
-#: app/src/window/window.ts:109
+#: app/src/window/window.ts:113
 msgid "Merge contacts…"
 msgstr ""
 
-#: app/src/window/window.ts:113
+#: app/src/window/window.ts:118
 msgid "About Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:114
+#: app/src/window/window.ts:119
 msgid "Quit"
 msgstr ""
 
-#: app/src/window/window.ts:151
+#: app/src/window/window.ts:156
 msgid "This conversation has no recipient address."
 msgstr ""
 
-#: app/src/window/window.ts:330
+#: app/src/window/window.ts:338
 msgid "No contacts to merge"
 msgstr ""
 

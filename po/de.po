@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-12 21:20+0100\n"
+"POT-Creation-Date: 2026-11-12 22:33+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1792,8 +1792,8 @@ msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
 #: app/src/window/about.ts:14 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:163 app/src/window/window.ts:80
-#: app/src/window/window.ts:95
+#: app/src/window/conversation-view.ts:163 app/src/window/window.ts:84
+#: app/src/window/window.ts:99
 msgid "Curlew"
 msgstr "Curlew"
 
@@ -1864,7 +1864,7 @@ msgstr ""
 "Ein Konto verwenden, das du in den GNOME-Einstellungen eingerichtet hast"
 
 #: app/src/window/account-add.ts:319 app/src/window/accounts-page.ts:158
-#: app/src/window/accounts-page.ts:181
+#: app/src/window/accounts-page.ts:181 app/src/window/welcome.ts:92
 msgid "Add Account"
 msgstr "Konto hinzufügen"
 
@@ -1975,7 +1975,7 @@ msgid "Could not start the background service: {reason}"
 msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
 #: app/src/window/accounts-dialog.ts:71 app/src/window/accounts-page.ts:194
-#: app/src/window/window.ts:108
+#: app/src/window/welcome.ts:104 app/src/window/window.ts:112
 msgid "Accounts"
 msgstr "Konten"
 
@@ -2050,7 +2050,7 @@ msgstr "Starten"
 msgid "Protocols"
 msgstr "Protokolle"
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:111
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:115
 msgid "Agent access"
 msgstr "Agentenzugriff"
 
@@ -2843,7 +2843,7 @@ msgstr "Der Anhang konnte nicht geladen werden"
 msgid "Previous"
 msgstr "Zurück"
 
-#: app/src/window/media-viewer.ts:125
+#: app/src/window/media-viewer.ts:125 app/src/window/welcome.ts:85
 msgid "Next"
 msgstr "Weiter"
 
@@ -2881,7 +2881,7 @@ msgstr "Alles erledigt"
 msgid "You can separate merged people again from the conversation list."
 msgstr "Zusammengeführte Personen kannst du in der Chatliste wieder trennen."
 
-#: app/src/window/merge-assistant.ts:90
+#: app/src/window/merge-assistant.ts:90 app/src/window/welcome.ts:108
 msgid "Done"
 msgstr "Fertig"
 
@@ -2889,7 +2889,7 @@ msgstr "Fertig"
 msgid "These people have similar names. Are they the same person?"
 msgstr "Diese Personen haben ähnliche Namen. Sind sie dieselbe Person?"
 
-#: app/src/window/merge-assistant.ts:119
+#: app/src/window/merge-assistant.ts:119 app/src/window/welcome.ts:85
 msgid "Skip"
 msgstr "Überspringen"
 
@@ -2952,7 +2952,7 @@ msgstr "Ein Video in einer Unterhaltung läuft stumm, solange es im Bild ist"
 msgid "Media"
 msgstr "Medien"
 
-#: app/src/window/preferences-dialog.ts:68 app/src/window/window.ts:110
+#: app/src/window/preferences-dialog.ts:68 app/src/window/window.ts:114
 msgid "Preferences"
 msgstr "Einstellungen"
 
@@ -2968,7 +2968,9 @@ msgstr "Zustimmen und einschalten"
 
 #: app/src/window/protocols-page.ts:66
 msgid "Accounts and messages stay when a protocol is switched off."
-msgstr "Konten und Nachrichten bleiben erhalten, wenn ein Protokoll ausgeschaltet wird."
+msgstr ""
+"Konten und Nachrichten bleiben erhalten, wenn ein Protokoll ausgeschaltet "
+"wird."
 
 #: app/src/window/selection-model.ts:12
 msgid "{count} selected"
@@ -2976,31 +2978,58 @@ msgid_plural "{count} selected"
 msgstr[0] "{count} ausgewählt"
 msgstr[1] "{count} ausgewählt"
 
-#: app/src/window/window.ts:74
+#: app/src/window/welcome.ts:62 app/src/window/welcome.ts:81
+#: app/src/window/window.ts:116
+msgid "Welcome"
+msgstr "Willkommen"
+
+#: app/src/window/welcome.ts:83
+msgid "Welcome to Curlew"
+msgstr "Willkommen bei Curlew"
+
+#: app/src/window/welcome.ts:84
+msgid ""
+"Curlew brings your mail and chat accounts together in one conversation list."
+msgstr ""
+"Curlew bringt deine Mail- und Chat-Konten in einer gemeinsamen "
+"Unterhaltungsliste zusammen."
+
+#: app/src/window/welcome.ts:106
+msgid "Add your accounts"
+msgstr "Füge deine Konten hinzu"
+
+#: app/src/window/welcome.ts:107
+msgid ""
+"Sign in to a mail or chat account. You can add more later from the menu."
+msgstr ""
+"Melde dich bei einem Mail- oder Chat-Konto an. Weitere kannst du später im "
+"Menü hinzufügen."
+
+#: app/src/window/window.ts:78
 msgid "Select a conversation"
 msgstr "Unterhaltung auswählen"
 
-#: app/src/window/window.ts:75
+#: app/src/window/window.ts:79
 msgid "Pick a conversation from the list."
 msgstr "Wähle eine Unterhaltung aus der Liste."
 
-#: app/src/window/window.ts:109
+#: app/src/window/window.ts:113
 msgid "Merge contacts…"
 msgstr "Kontakte zusammenführen…"
 
-#: app/src/window/window.ts:113
+#: app/src/window/window.ts:118
 msgid "About Curlew"
 msgstr "Über Curlew"
 
-#: app/src/window/window.ts:114
+#: app/src/window/window.ts:119
 msgid "Quit"
 msgstr "Beenden"
 
-#: app/src/window/window.ts:151
+#: app/src/window/window.ts:156
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:330
+#: app/src/window/window.ts:338
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 

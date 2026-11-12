@@ -226,5 +226,8 @@ CURLEW_WINDOW_OPEN=c3 LC_ALL=en_US.UTF-8 LANGUAGE=en \
 
 `CURLEW_WINDOW_OPEN=<conversation id>` selects a conversation at start (`c3` is the email chat,
 `c5` an XMPP chat); `CURLEW_WINDOW_FILTER`, `CURLEW_WINDOW_SIZE` and
-`CURLEW_WINDOW_QUIT_AFTER_MS` are read in `app/src/window/main.ts` too. A smaller `--size` cuts
+`CURLEW_WINDOW_QUIT_AFTER_MS` are read in `app/src/window/main.ts` too; so is
+`CURLEW_WINDOW_OPEN_WELCOME=1`, which opens the first-run welcome screen
+(`app/src/window/welcome.ts`; pages listed in `welcome-model.ts`, where the Delta Chat and AI pages
+get added; shown once, tracked by `ui.welcomeDone`). A smaller `--size` cuts
 off the window shadow.
