@@ -8,7 +8,7 @@
 # with `addSourceTreeIcons` as the source-tree stand-in), and the shell matches a
 # window to its launcher only through an INSTALLED `.desktop` — under Wayland via
 # the application id, elsewhere via `StartupWMClass`. This is the "does it show
-# up in the shell" step, not a package; lotse's `scripts/install-packaging.sh`
+# up in the shell" step, not a package; lotsman's `scripts/install-packaging.sh`
 # is the pattern.
 #
 # `PREFIX` decides where. Default is the per-user XDG data dir, which needs no
