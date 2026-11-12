@@ -429,18 +429,28 @@ write("v6-standing-on-bubble",
 measure("v6-standing-on-bubble", bill, 0.56)
 
 # =========================================================================================== v7
-d, body, head, bill = bird("quarter", level=2, feet=False)
+d, body, head, bill = bird("front", level=2, feet=False,
+                           bill_ctrl=[(51.5, 55), (65, 61), (77, 71), (83, 88)])
 bd, bg = bubble(1.0, 8, 24)
+# The belly runs on into the bubble's tail: the body is clipped to the face and the tail together.
+# One path, not two shapes in the clipPath: renderers disagree on how those combine.
+bd += ('    <clipPath id="belly-clip"><path d="M24 24 H104 C112.835938 24 120 31.164062 120 40 V92 '
+       'C120 100.835938 112.835938 108 104 108 H58.824219 V112 '
+       'C57.011719 112 55.265625 112.691406 53.941406 113.933594 L40.417969 126.640625 '
+       'C38.964844 128.003906 36.839844 128.375 35.011719 127.585938 '
+       'C33.183594 126.792969 32 124.992188 32 123 V116 C32 113.789062 30.210938 112 28 112 '
+       'H24 V108 C15.164062 108 8 100.835938 8 92 V40 C8 31.164062 15.164062 24 24 24 Z"/>'
+       '</clipPath>\n')
 write("v7-in-bubble",
       "V7 -- the bubble is the icon: the shared Fractal/Flare shape at full size in blue, the\n"
-      "fluffed chick inside it, its body clipped at the bubble's lower edge, the bill across\n"
-      "the face of the bubble.",
-      d + bd, bg + place(body, 0.9, 6, 23, clip="face-clip") + place(head, 0.9, 6, 23))
+      "fluffed chick inside it with two equal eyes and the bill in front of the face. The body\n"
+      "is clipped to the bubble's face and its tail together, so the belly fills the tail.",
+      d + bd, bg + place(body, 0.9, 5, 24, clip="belly-clip") + place(head, 0.9, 5, 24))
 measure("v7-in-bubble", bill, 0.9)
 
 # =========================================================================================== v8
-d, body, head, bill = bird("quarter", level=1, feet=False,
-                           bill_ctrl=[(60, 51), (82, 53), (96, 60), (98, 84)], w_base=8.8)
+d, body, head, bill = bird("front", level=1, feet=False,
+                           bill_ctrl=[(51.5, 55), (65, 61), (77, 71), (83, 88)])
 bd, bg = bubble(0.6, 58, 2)
 write("v8-head-crop",
       "V8 -- head and fluff only, for 32 and 16 px: the head fills the tile, the chest runs off\n"
