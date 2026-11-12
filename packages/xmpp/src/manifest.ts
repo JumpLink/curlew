@@ -36,6 +36,8 @@ export const XMPP_MANIFEST: BackendManifest = {
     // to the server's HTTP File Upload service and sends the link.
     attachments: true,
     attachmentsRead: true,
+    // The picture in a contact's vCard (XEP-0054).
+    avatars: true,
     replies: true,
   },
   // With MAM (XEP-0313) the server keeps the history: the index is rebuildable (`derived`).

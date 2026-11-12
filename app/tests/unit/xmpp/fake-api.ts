@@ -83,6 +83,8 @@ export interface FakeServer {
   /** Every MAM query asked, for assertions on what went over the wire. */
   queries: MamQuery[];
   closed: number;
+  /** vCard pictures by JID; a JID missing here has none. */
+  avatars: Map<string, { bytes: Uint8Array; mimeType: string | null }>;
 }
 
 export function fakeServer(partial: Partial<FakeServer> = {}): FakeServer {
@@ -94,6 +96,7 @@ export function fakeServer(partial: Partial<FakeServer> = {}): FakeServer {
     rooms: new Map(),
     queries: [],
     closed: 0,
+    avatars: new Map(),
     ...partial,
   };
 }
@@ -132,6 +135,7 @@ export function fakeApi(server: FakeServer): XmppApi {
     roster: async () => server.roster,
     bookmarks: async () => server.bookmarks,
     features: async (jid) => (jid === ME ? server.features : new Set()),
+    avatar: async (jid) => server.avatars.get(jid) ?? null,
     mam: async (query) => {
       server.queries.push(query);
       if (query.archive === null) return answer(server.own, query);

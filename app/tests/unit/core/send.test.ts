@@ -41,6 +41,7 @@ function fakeLink(
     roster: async () => [],
     bookmarks: async () => [],
     features: async () => new Set(),
+    avatar: async () => null,
     mam: async () => ({ entries: [], complete: true }),
     close: async () => {},
     sendChat: async (to, id, body, oobUrl) => {
