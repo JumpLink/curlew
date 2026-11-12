@@ -14,7 +14,7 @@ import type { ConversationMessage } from '@curlew/protocol';
 import { indexAccountLabels, loadAccountLabels } from './account-labels.ts';
 import { presentAccounts } from './accounts-dialog.ts';
 import { presentAgentAccess } from './agent-access-dialog.ts';
-import { loadConversationEntries, searchConversationText } from './conversation-list-store.ts';
+import { listStamp, loadConversationEntries, searchConversationText } from './conversation-list-store.ts';
 import type { ListEntry } from './conversation-list-model.ts';
 import { loadConfig } from '../core/config.ts';
 import { candidateSets } from './merge-candidates-model.ts';
@@ -284,7 +284,9 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   let labels = indexAccountLabels();
   let labelled = false;
   let shown: ListEntry[] = [];
+  let stamp = '';
   const refresh = () => {
+    stamp = listStamp();
     shown = loadConversationEntries();
     sidebar.setEntries(shown, labels);
     sidebar.setSuggestions(candidateSets(shown, loadConfig(configPath()).declinedMerges).length);
@@ -320,7 +322,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   if (options.open) openConversation(options.open);
   // The index changes as the daemon syncs; coming back to the window is the cheap moment to look.
   window.connect('notify::is-active', () => {
-    if (window.is_active) refresh();
+    if (window.is_active && listStamp() !== stamp) refresh();
   });
   if (!labelled) {
     labelled = true;

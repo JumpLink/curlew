@@ -724,9 +724,11 @@ function loadParticipants(db: IndexDatabase, conversationIds: string[]): Map<str
 function loadVerdicts(db: IndexDatabase, conversationIds: string[]): Map<string, MessageVerdict[]> {
   const result = new Map<string, MessageVerdict[]>();
   if (conversationIds.length === 0) return result;
+  // The verdict depends on which combinations occur, not on how often: DISTINCT hands over a few
+  // thousand rows instead of every message of every chat (44 000 rows cost half a second on GJS).
   const rows = db
     .prepare(
-      `SELECT conversation_id, from_self, sender_address, classification, classification_reason
+      `SELECT DISTINCT conversation_id, from_self, sender_address, classification, classification_reason
          FROM conversation_messages WHERE conversation_id IN (${placeholders(conversationIds.length)})`,
     )
     .all(...conversationIds) as Array<Record<string, unknown>>;
