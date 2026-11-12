@@ -2,7 +2,12 @@ import { describe, expect, it } from '@gjsify/unit';
 import type { BackendCapabilities } from '@curlew/protocol';
 
 import type { BackendStatus } from '../../../src/core/backends/registry.ts';
-import { addableProtocols, mailProtocol, needsTerms } from '../../../src/window/account-add-model.ts';
+import {
+  addableProtocols,
+  mailProtocol,
+  needsTerms,
+  switchableProtocols,
+} from '../../../src/window/account-add-model.ts';
 
 function status(name: string, over: Partial<BackendStatus> = {}): BackendStatus {
   return {
@@ -20,6 +25,29 @@ function status(name: string, over: Partial<BackendStatus> = {}): BackendStatus 
 }
 
 export default async () => {
+  await describe('switchableProtocols', async () => {
+    await it('lists mail first, then the chats in their fixed order', async () => {
+      const list = switchableProtocols([status('xmpp'), status('signal'), status('mail')]);
+      expect(list.map((p) => p.backend)).toStrictEqual(['mail', 'signal', 'xmpp']);
+    });
+
+    await it('asks for terms only until they are accepted, and keeps what is on', async () => {
+      const terms = { summary: 'Unofficial protocol.' };
+      const list = switchableProtocols([
+        status('whatsapp', { terms }),
+        status('telegram', { terms, termsAccepted: true, enabled: true }),
+      ]);
+      const byName = new Map(list.map((p) => [p.backend, p]));
+      expect(byName.get('whatsapp')?.terms).toStrictEqual(terms);
+      expect(byName.get('telegram')?.terms).toBe(null);
+      expect(byName.get('telegram')?.enabled).toBe(true);
+    });
+
+    await it('works without a mail backend', async () => {
+      expect(switchableProtocols([status('matrix')]).map((p) => p.backend)).toStrictEqual(['matrix']);
+    });
+  });
+
   await describe('addableProtocols', async () => {
     await it('leaves mail out and orders the chats the same way every time', async () => {
       const list = addableProtocols([status('xmpp'), status('mail'), status('whatsapp'), status('signal')]);

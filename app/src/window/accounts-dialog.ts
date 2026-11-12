@@ -11,6 +11,7 @@ import { configPath } from '@curlew/store';
 import { buildProtocolGroups, type AccountsDaemonState, type AccountsPageState } from './accounts-model.ts';
 import { pushAddAccountPage } from './account-add.ts';
 import { pushAccountPage } from './account-detail.ts';
+import { pushProtocolsPage } from './protocols-page.ts';
 import { createAccountsPage, openGoaSettings } from './accounts-page.ts';
 import { gioAccountsDaemonSource, startDaemon } from './accounts-daemon.ts';
 import { inSandbox } from '../core/lib/sandbox.ts';
@@ -52,6 +53,15 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
         onChanged: () => void reload(),
       }),
     () => void startDaemon().catch((err: Error) => onError(err)),
+    () =>
+      pushProtocolsPage({
+        navigation: page.navigation,
+        path,
+        accountCounts: new Map((shown?.groups ?? []).map((group) => [group.backend, group.rows.length])),
+        onError,
+        onChanged: () => void reload(),
+        parent: () => page.widget,
+      }),
   );
 
   // The page is a navigation view with its own header bar, so the next pages get a back button.
@@ -68,12 +78,14 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
   let loadState: Awaited<ReturnType<typeof loadAccountsState>> | null = null;
   // Null until the bus has answered, so the dialog never claims "daemon not running" while it is still asking.
   let daemonState: AccountsDaemonState | null = null;
+  let shown: AccountsPageState | null = null;
   let loading = false;
   let again = false;
 
   const render = () => {
     if (!open || !loadState || !daemonState) return;
     const state: AccountsPageState = buildProtocolGroups(loadState, daemonState);
+    shown = state;
     page.show(state);
   };
 

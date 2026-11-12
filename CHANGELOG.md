@@ -60,6 +60,7 @@
 
 ### Added
 
+- Protocols can be switched on and off in the Accounts dialog (the gear button): an off protocol is not started by the background service and its chats leave the list, while accounts and history stay. Switching one on for the first time shows its terms.
 - Design packs (Curlew, Forest, Dusk, Sunrise, Rose, Graphite) set the primary colour, accent colour and chat background together; the background now sits with the colours in the preferences and has two new patterns, dots and waves.
 - A chat can have its own colours and background: pick a design, an accent colour or a pattern on the contact page.
 - A contact page opens from the picture in a chat's header. A person combined from several chats sees which chats they are and picks whose name and picture to show, and any contact can get a picture of their own. None of this touches the address book.

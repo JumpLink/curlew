@@ -137,6 +137,7 @@ app/src/window/new-conversation-model.ts
 app/src/window/new-conversation.ts
 app/src/window/preferences-dialog.ts
 app/src/window/preview-cache-model.ts
+app/src/window/protocols-page.ts
 app/src/window/qr-image.ts
 app/src/window/rich-text-model.ts
 app/src/window/selection-model.ts

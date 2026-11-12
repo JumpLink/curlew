@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-12 21:08+0100\n"
+"POT-Creation-Date: 2026-11-12 21:20+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1546,11 +1546,11 @@ msgstr ""
 msgid "Curlew"
 msgstr ""
 
-#: app/src/window/account-add.ts:138
+#: app/src/window/account-add.ts:138 app/src/window/protocols-page.ts:40
 msgid "Please read this first"
 msgstr ""
 
-#: app/src/window/account-add.ts:144
+#: app/src/window/account-add.ts:144 app/src/window/protocols-page.ts:46
 msgid "I understand and accept the risk for my account"
 msgstr ""
 
@@ -1578,7 +1578,7 @@ msgstr ""
 msgid "Connecting…"
 msgstr ""
 
-#: app/src/window/account-add.ts:258
+#: app/src/window/account-add.ts:258 app/src/window/protocols-page.ts:28
 msgid "Asks you to accept terms first"
 msgstr ""
 
@@ -1609,8 +1609,8 @@ msgstr ""
 msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 
-#: app/src/window/account-add.ts:319 app/src/window/accounts-page.ts:157
-#: app/src/window/accounts-page.ts:180
+#: app/src/window/account-add.ts:319 app/src/window/accounts-page.ts:158
+#: app/src/window/accounts-page.ts:181
 msgid "Add Account"
 msgstr ""
 
@@ -1652,7 +1652,7 @@ msgstr ""
 #: app/src/window/agent-access-page.ts:234
 #: app/src/window/conversation-list.ts:409
 #: app/src/window/conversation-list.ts:495
-#: app/src/window/conversation-view.ts:707
+#: app/src/window/conversation-view.ts:707 app/src/window/protocols-page.ts:51
 msgid "Cancel"
 msgstr ""
 
@@ -1676,7 +1676,7 @@ msgstr ""
 msgid "Could not start the background service: {reason}"
 msgstr ""
 
-#: app/src/window/accounts-dialog.ts:61 app/src/window/accounts-page.ts:187
+#: app/src/window/accounts-dialog.ts:71 app/src/window/accounts-page.ts:194
 #: app/src/window/window.ts:108
 msgid "Accounts"
 msgstr ""
@@ -1721,28 +1721,33 @@ msgstr ""
 msgid "Could not load accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:124
+#: app/src/window/accounts-page.ts:124 app/src/window/protocols-page.ts:29
 msgid "No accounts yet"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:149
+#: app/src/window/accounts-page.ts:150
 msgid "Accounts could not be loaded"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:153
+#: app/src/window/accounts-page.ts:154
 msgid "No accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:154
+#: app/src/window/accounts-page.ts:155
 msgid "Add a chat account or a mail account."
 msgstr ""
 
-#: app/src/window/accounts-page.ts:171
+#: app/src/window/accounts-page.ts:172
 msgid "The background service is not running, so chat accounts cannot connect."
 msgstr ""
 
-#: app/src/window/accounts-page.ts:172
+#: app/src/window/accounts-page.ts:173
 msgid "Start"
+msgstr ""
+
+#: app/src/window/accounts-page.ts:187 app/src/window/conversation-list.ts:298
+#: app/src/window/protocols-page.ts:111
+msgid "Protocols"
 msgstr ""
 
 #: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:111
@@ -2252,10 +2257,6 @@ msgstr ""
 msgid "Filter conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:298
-msgid "Protocols"
-msgstr ""
-
 #: app/src/window/conversation-list.ts:321
 msgid "Clear filters"
 msgstr ""
@@ -2634,6 +2635,20 @@ msgstr ""
 
 #: app/src/window/preferences-dialog.ts:68 app/src/window/window.ts:110
 msgid "Preferences"
+msgstr ""
+
+#: app/src/window/protocols-page.ts:30
+msgid "{count} account"
+msgid_plural "{count} accounts"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/window/protocols-page.ts:52
+msgid "Accept and Turn On"
+msgstr ""
+
+#: app/src/window/protocols-page.ts:66
+msgid "Accounts and messages stay when a protocol is switched off."
 msgstr ""
 
 #: app/src/window/selection-model.ts:12
