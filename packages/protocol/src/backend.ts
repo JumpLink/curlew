@@ -974,6 +974,12 @@ export interface SentMessage {
   warning?: string;
   /** The files that went out, by name and size — never their content. What the write log records. */
   attachments?: Array<{ filename: string; size: number }>;
+  /**
+   * The same files as the index stores them, for a backend whose network does not hand the sent
+   * message back to this device (Signal): the local echo then carries them, so the chat shows
+   * what was sent. Only with a handle that can fetch the bytes again.
+   */
+  echoAttachments?: ChatAttachment[];
 }
 
 /**

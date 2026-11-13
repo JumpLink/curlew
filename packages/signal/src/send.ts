@@ -32,6 +32,7 @@
 
 import {
   _,
+  type ChatAttachment,
   fmt,
   type MessageSender,
   type ReplyTarget,
@@ -48,7 +49,7 @@ import type * as Core from '@signalapp/libsignal-client';
 import { readFileSync } from 'node:fs';
 import type { ChatFetch, ChatResponseLike } from './guard.ts';
 import type { SignalLib } from './lib.ts';
-import { GROUP_PREFIX, messageRemoteId, parseMessageRemoteId } from './map.ts';
+import { attachmentHandle, GROUP_PREFIX, kindOfContentType, messageRemoteId, parseMessageRemoteId } from './map.ts';
 import { basicAuth, JSON_TYPE, jsonBody } from './net.ts';
 import { type DeviceAccount, fromBase64, NS, type SignalProtocolStore, toBase64 } from './protocol-store.ts';
 import { ProtoWriter } from './proto.ts';
@@ -299,6 +300,7 @@ export class SignalSender implements MessageSender {
     }
     // Every file is uploaded before anything is sent, so a failed upload means nothing went out.
     const pointers: ProtoWriter[] = [];
+    const echoAttachments: ChatAttachment[] = [];
     for (const file of files) {
       const uploaded = await uploadAttachment(
         readFileSync(file.realPath),
@@ -306,6 +308,25 @@ export class SignalSender implements MessageSender {
         this.fetch,
         this.upload,
       );
+      // The network does not give this device its own message back, so the index keeps the file
+      // with the handle the receive path would have written.
+      echoAttachments.push({
+        filename: file.filename,
+        mimeType: file.contentType,
+        size: uploaded.size,
+        kind: kindOfContentType(file.contentType),
+        width: null,
+        height: null,
+        durationMs: null,
+        handle: attachmentHandle({
+          cdnNumber: uploaded.cdnNumber,
+          cdnKey: uploaded.cdnKey,
+          cdnId: null,
+          key: toBase64(uploaded.key),
+          digest: toBase64(uploaded.digest),
+          size: uploaded.size,
+        }),
+      });
       pointers.push(
         new ProtoWriter()
           .string(F.attachment.contentType, file.contentType)
@@ -348,6 +369,12 @@ export class SignalSender implements MessageSender {
       chatRemoteId: aci,
       encrypted: true,
       ...(warning === undefined ? {} : { warning }),
+      ...(echoAttachments.length === 0
+        ? {}
+        : {
+            attachments: files.map((f) => ({ filename: f.filename, size: f.size })),
+            echoAttachments,
+          }),
     };
   }
 

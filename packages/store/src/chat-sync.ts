@@ -1014,6 +1014,8 @@ export interface SentChatRecord {
   text: string;
   /** ISO 8601, local clock. */
   sentAt: string;
+  /** The files that went with it, for a network that does not return the sent message to this device. */
+  attachments?: ChatAttachment[];
 }
 
 /**
@@ -1091,12 +1093,13 @@ function recordSentRows(
       sender: null,
       fromSelf: true,
       text: record.text,
-      hasAttachments: false,
+      hasAttachments: (record.attachments?.length ?? 0) > 0,
       replyToRemoteId: null,
       threadRemoteId: null,
     },
   );
   batch.messages.push(row);
+  (record.attachments ?? []).forEach((attachment, idx) => batch.messageAttachment(String(row[0]), idx, attachment));
   batch.changed.add(conversationId);
   writeBatchRows(db, batch);
   return { conversationId, messageId: String(row[0]) };

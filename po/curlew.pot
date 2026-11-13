@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 19:17+0100\n"
+"POT-Creation-Date: 2026-11-13 19:31+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -163,18 +163,18 @@ msgid "only your own messages can be deleted"
 msgstr ""
 
 #: app/src/core/actions/delete.ts:53 app/src/core/actions/edit.ts:55
-#: app/src/core/actions/react.ts:54 app/src/core/actions/send.ts:527
+#: app/src/core/actions/react.ts:54 app/src/core/actions/send.ts:528
 msgid "Demo mode: nothing is sent."
 msgstr ""
 
 #: app/src/core/actions/delete.ts:58 app/src/core/actions/edit.ts:60
 #: app/src/core/actions/react.ts:59 app/src/core/actions/read-receipt.ts:49
-#: app/src/core/actions/send.ts:473 app/src/core/actions/send.ts:533
+#: app/src/core/actions/send.ts:474 app/src/core/actions/send.ts:534
 msgid "no account {account} — `curlew accounts list` shows them"
 msgstr ""
 
 #: app/src/core/actions/delete.ts:63 app/src/core/actions/edit.ts:65
-#: app/src/core/actions/react.ts:64 app/src/core/actions/send.ts:540
+#: app/src/core/actions/react.ts:64 app/src/core/actions/send.ts:541
 msgid "{backend} cannot send"
 msgstr ""
 
@@ -219,13 +219,13 @@ msgid ""
 "config.agentAccess.rules"
 msgstr ""
 
-#: app/src/core/actions/send.ts:189 app/src/core/actions/send.ts:202
+#: app/src/core/actions/send.ts:190 app/src/core/actions/send.ts:203
 msgid ""
 "the message index is busy, so curlew cannot tell whether {account} is in use "
 "elsewhere — nothing was sent; try again in a moment"
 msgstr ""
 
-#: app/src/core/actions/send.ts:208
+#: app/src/core/actions/send.ts:209
 msgid ""
 "{account} is being received by {holder} right now, {backend} cannot send and "
 "receive at the same time, and that process did not take the send over — "
@@ -233,40 +233,40 @@ msgid ""
 "from your phone"
 msgstr ""
 
-#: app/src/core/actions/send.ts:287
+#: app/src/core/actions/send.ts:288
 msgid "account {account} is paused — switch it on in Accounts to send from it"
 msgstr ""
 
-#: app/src/core/actions/send.ts:360
+#: app/src/core/actions/send.ts:361
 msgid "{backend} cannot send an image — give text and leave image_url out"
 msgstr ""
 
-#: app/src/core/actions/send.ts:370
+#: app/src/core/actions/send.ts:371
 msgid "nothing to send: the text is empty after rendering"
 msgstr ""
 
-#: app/src/core/actions/send.ts:373 app/src/core/actions/send.ts:554
+#: app/src/core/actions/send.ts:374 app/src/core/actions/send.ts:555
 msgid "{backend} cannot send attachments"
 msgstr ""
 
-#: app/src/core/actions/send.ts:377
+#: app/src/core/actions/send.ts:378
 msgid "{backend} cannot send a reply"
 msgstr ""
 
-#: app/src/core/actions/send.ts:517
+#: app/src/core/actions/send.ts:518
 msgid ""
 "this person is pinned to {pinned}: a message through {backend} is refused"
 msgstr ""
 
-#: app/src/core/actions/send.ts:544
+#: app/src/core/actions/send.ts:545
 msgid "nothing to send: give text, an image URL or an attachment"
 msgstr ""
 
-#: app/src/core/actions/send.ts:546
+#: app/src/core/actions/send.ts:547
 msgid "{backend} messages carry no subject"
 msgstr ""
 
-#: app/src/core/actions/send.ts:549
+#: app/src/core/actions/send.ts:550
 msgid "{backend} cannot send email chat headers"
 msgstr ""
 
@@ -3269,7 +3269,7 @@ msgid "the mail account {account} is incomplete — add it again"
 msgstr ""
 
 #: packages/imap/src/send.ts:74 packages/matrix/src/send.ts:354
-#: packages/signal/src/send.ts:444 packages/telegram/src/sender.ts:80
+#: packages/signal/src/send.ts:471 packages/telegram/src/sender.ts:80
 #: packages/whatsapp/src/send.ts:403
 msgid "sending to {address} is not granted for account {account}"
 msgstr ""
@@ -3424,7 +3424,7 @@ msgid ""
 "shorten it"
 msgstr ""
 
-#: packages/matrix/src/send.ts:483 packages/signal/src/send.ts:229
+#: packages/matrix/src/send.ts:483 packages/signal/src/send.ts:230
 #: packages/telegram/src/sender.ts:141 packages/whatsapp/src/send.ts:164
 #: packages/xmpp/src/messages.ts:36
 msgid "only your own messages can be changed — nothing was sent"
@@ -3529,91 +3529,91 @@ msgstr ""
 msgid "Signal no longer knows this device (it was unlinked) — {hint}"
 msgstr ""
 
-#: packages/signal/src/send.ts:172
+#: packages/signal/src/send.ts:173
 msgid "Signal answered {what} with something that is not JSON"
 msgstr ""
 
-#: packages/signal/src/send.ts:241 packages/signal/src/send.ts:294
+#: packages/signal/src/send.ts:242 packages/signal/src/send.ts:295
 msgid ""
 "a Signal message holds at most {max} bytes of text, this one has {bytes} — "
 "shorten it"
 msgstr ""
 
-#: packages/signal/src/send.ts:267
+#: packages/signal/src/send.ts:268
 msgid "Signal needs the emoji being taken back — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:403
+#: packages/signal/src/send.ts:430
 msgid ""
 "the message was delivered, but this account's other devices were not told "
 "about it ({reason}) — it will not appear on the phone"
 msgstr ""
 
-#: packages/signal/src/send.ts:411
+#: packages/signal/src/send.ts:438
 msgid ""
 "a note to self is stored on this account's other devices, and this account "
 "has none — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:427
+#: packages/signal/src/send.ts:454
 msgid ""
 "curlew cannot send to a Signal group: a group message needs the member list "
 "and credentials from Signal's storage service, which curlew does not sync — "
 "send it from a Signal client"
 msgstr ""
 
-#: packages/signal/src/send.ts:436
+#: packages/signal/src/send.ts:463
 msgid ""
 "{address} is not a Signal account id — use the id `conversations_list` shows "
 "for the chat, not a phone number"
 msgstr ""
 
-#: packages/signal/src/send.ts:495
+#: packages/signal/src/send.ts:522
 msgid ""
 "Signal kept disagreeing about the recipient's devices — nothing was sent; "
 "try again, or send it from a Signal client"
 msgstr ""
 
-#: packages/signal/src/send.ts:504
+#: packages/signal/src/send.ts:531
 msgid ""
 "Signal refused this device (unauthorized) — nothing was sent; the device may "
 "be unlinked"
 msgstr ""
 
-#: packages/signal/src/send.ts:508
+#: packages/signal/src/send.ts:535
 msgid "Signal wants a rate-limit challenge answered — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:511
+#: packages/signal/src/send.ts:538
 msgid "Signal refused the message ({status}) — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:603
+#: packages/signal/src/send.ts:630
 msgid "Signal has no account {address} — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:608
+#: packages/signal/src/send.ts:635
 msgid ""
 "Signal did not hand over the keys for {address} ({status}) — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:626
+#: packages/signal/src/send.ts:653
 msgid "Signal lists no device for {address} — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:646
+#: packages/signal/src/send.ts:673
 msgid ""
 "a device of {address} publishes no usable keys, so curlew cannot start a "
 "session with it — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:692
+#: packages/signal/src/send.ts:719
 msgid ""
 "the safety number of {address} changed — nothing was sent; check it with "
 "them, then send again to accept the new one"
 msgstr ""
 
-#: packages/signal/src/send.ts:718
+#: packages/signal/src/send.ts:745
 msgid ""
 "Signal reported a device mismatch ({status}) without naming a device — "
 "nothing was sent"
