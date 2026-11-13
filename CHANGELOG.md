@@ -69,6 +69,7 @@
 
 ### Added
 
+- With ordinary mail hidden, the empty conversation list and the Delta Chat welcome page say so and name the "Show all emails" switch.
 - A mail thread with a Delta Chat peer (one that sent `Chat-Version`) can answer one message: *Reply* in the bubble menu threads it by `In-Reply-To`. Such a thread shows a *Forwarded from …* mark on a message that opens with Delta Chat's `---------- Forwarded message ----------` line. Ordinary mail threads offer neither (#294).
 - XMPP: a reaction, an edit or a delete for everyone is offered in a chat only when the other client advertises it (XEP-0444, 0308, 0424), so a peer without support no longer gets stray messages (#317).
 - An XMPP account's page has a *Require encryption* switch: nothing is sent from it in plain text, and a message to someone without OMEMO fails instead (`config.encryption`, ADR 0006 §7). Before, this was only possible by editing the config file. Every config key now has a place in the window or is documented as file-only (`docs/design/ui.md`, held by a test).

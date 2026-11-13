@@ -1,7 +1,11 @@
 import { describe, expect, it } from '@gjsify/unit';
 
 import { defaultConfig, parseConfig } from '../../../src/core/config.ts';
-import { shouldShowEmailChatHint, withHintSeen } from '../../../src/window/email-chat-model.ts';
+import {
+  hiddenMailNote,
+  shouldShowEmailChatHint,
+  withHintSeen,
+} from '../../../src/window/email-chat-model.ts';
 
 export default async () => {
   describe('the email chat hint', () => {
@@ -16,6 +20,10 @@ export default async () => {
     it('never shows in an ordinary mail thread or another protocol', () => {
       expect(shouldShowEmailChatHint({ ...chat, emailChat: false }, undefined)).toBe(false);
       expect(shouldShowEmailChatHint({ ...chat, backend: 'xmpp' }, undefined)).toBe(false);
+    });
+
+    it('names the switch that brings ordinary mail back', () => {
+      expect(hiddenMailNote().includes('Show all emails')).toBe(true);
     });
 
     it('records an account once', () => {

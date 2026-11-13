@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 10:42+0100\n"
+"POT-Creation-Date: 2026-11-13 10:56+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1653,7 +1653,7 @@ msgstr ""
 msgid "Sync this account"
 msgstr ""
 
-#: app/src/window/account-detail.ts:108 app/src/window/welcome.ts:203
+#: app/src/window/account-detail.ts:108 app/src/window/welcome.ts:207
 msgid "Use for Delta Chat"
 msgstr ""
 
@@ -1692,8 +1692,8 @@ msgstr ""
 #: app/src/window/account-remove-model.ts:37
 #: app/src/window/account-remove-model.ts:71
 #: app/src/window/agent-access-page.ts:234
-#: app/src/window/conversation-list.ts:466
-#: app/src/window/conversation-list.ts:552
+#: app/src/window/conversation-list.ts:475
+#: app/src/window/conversation-list.ts:561
 #: app/src/window/conversation-view.ts:733 app/src/window/protocols-page.ts:51
 msgid "Cancel"
 msgstr ""
@@ -1815,7 +1815,7 @@ msgstr ""
 msgid "Start"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:187 app/src/window/conversation-list.ts:356
+#: app/src/window/accounts-page.ts:187 app/src/window/conversation-list.ts:359
 #: app/src/window/protocols-page.ts:111 app/src/window/welcome-model.ts:57
 #: app/src/window/welcome.ts:147
 msgid "Protocols"
@@ -2216,7 +2216,7 @@ msgstr ""
 msgid "Picture"
 msgstr ""
 
-#: app/src/window/contact-page.ts:314 app/src/window/conversation-list.ts:474
+#: app/src/window/contact-page.ts:314 app/src/window/conversation-list.ts:483
 msgid "Separate"
 msgstr ""
 
@@ -2372,93 +2372,93 @@ msgstr ""
 msgid "Groups"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:227
+#: app/src/window/conversation-list.ts:230
 msgid "Add an account"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:235
-#: app/src/window/conversation-list.ts:236
+#: app/src/window/conversation-list.ts:238
+#: app/src/window/conversation-list.ts:239
 msgid "Search conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:240
+#: app/src/window/conversation-list.ts:243
 msgid "Everything"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:241
+#: app/src/window/conversation-list.ts:244
 msgid "Names and numbers"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:242
+#: app/src/window/conversation-list.ts:245
 msgid "Messages"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:246
-#: app/src/window/conversation-list.ts:250
+#: app/src/window/conversation-list.ts:249
+#: app/src/window/conversation-list.ts:253
 msgid "Search in"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:271
+#: app/src/window/conversation-list.ts:274
 msgid "Filter conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:379
+#: app/src/window/conversation-list.ts:382
 msgid "Clear filters"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:401
+#: app/src/window/conversation-list.ts:404
 msgid "No conversations yet"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:401
+#: app/src/window/conversation-list.ts:404
 msgid "No matches"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:404
+#: app/src/window/conversation-list.ts:407
 msgid ""
 "Conversations appear here after Curlew has synced an account. Run \"curlew "
 "sync\" first."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:405
+#: app/src/window/conversation-list.ts:414
 msgid "Nothing fits the search and filters."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:450
+#: app/src/window/conversation-list.ts:459
 msgid "Search"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:455
+#: app/src/window/conversation-list.ts:464
 #: app/src/window/new-conversation.ts:24
 msgid "New conversation"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:472
-#: app/src/window/conversation-list.ts:553
+#: app/src/window/conversation-list.ts:481
+#: app/src/window/conversation-list.ts:562
 #: app/src/window/merge-assistant.ts:116
 msgid "Merge"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:549
+#: app/src/window/conversation-list.ts:558
 msgid "Merge these people?"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:550
+#: app/src/window/conversation-list.ts:559
 msgid ""
 "Their chats become one conversation. Nothing is deleted, and you can "
 "separate them again."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:576
+#: app/src/window/conversation-list.ts:585
 msgid "Review"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:583
+#: app/src/window/conversation-list.ts:592
 #: app/src/window/preferences-dialog.ts:43
 msgid "Conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:605
+#: app/src/window/conversation-list.ts:614
 msgid "{count} possible duplicate"
 msgid_plural "{count} possible duplicates"
 msgstr[0] ""
@@ -2663,11 +2663,17 @@ msgstr ""
 
 #: app/src/window/email-chat-model.ts:17
 msgid ""
+"Ordinary email is hidden. To see it, switch on \"Show all emails\" in "
+"Preferences, Conversations."
+msgstr ""
+
+#: app/src/window/email-chat-model.ts:22
+msgid ""
 "Off lists only email chats. This changes the list only, never how mail is "
 "sent"
 msgstr ""
 
-#: app/src/window/email-chat-model.ts:23
+#: app/src/window/email-chat-model.ts:28
 msgid ""
 "This is an email chat: people with Delta Chat, ArcaneChat or DeltaTouch see "
 "it as a chat, everyone else as an ordinary email."
@@ -2808,7 +2814,7 @@ msgid "Media"
 msgstr ""
 
 #: app/src/window/preferences-dialog.ts:65 app/src/window/welcome-model.ts:72
-#: app/src/window/welcome.ts:221
+#: app/src/window/welcome.ts:225
 msgid "AI features"
 msgstr ""
 
@@ -2818,7 +2824,7 @@ msgid ""
 "you allow it. Off: no assistant can reach your data"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:71 app/src/window/welcome.ts:233
+#: app/src/window/preferences-dialog.ts:71 app/src/window/welcome.ts:237
 msgid "AI"
 msgstr ""
 
@@ -2854,7 +2860,7 @@ msgstr ""
 msgid "None yet"
 msgstr ""
 
-#: app/src/window/welcome-model.ts:66 app/src/window/welcome.ts:187
+#: app/src/window/welcome-model.ts:66 app/src/window/welcome.ts:189
 msgid "Delta Chat"
 msgstr ""
 
@@ -2910,35 +2916,35 @@ msgid ""
 "choose Add Account, then Mail. You can add more later from the menu."
 msgstr ""
 
-#: app/src/window/welcome.ts:196
+#: app/src/window/welcome.ts:200
 msgid ""
 "No mail account yet. Once you add one, you can switch this on in its "
 "settings."
 msgstr ""
 
-#: app/src/window/welcome.ts:223
+#: app/src/window/welcome.ts:227
 msgid ""
 "An assistant could then read and send your messages through Curlew, each "
 "time as you allow it."
 msgstr ""
 
-#: app/src/window/welcome.ts:234
+#: app/src/window/welcome.ts:238
 msgid ""
 "Off, no assistant can reach your data. You can change this at any time in "
 "Preferences."
 msgstr ""
 
-#: app/src/window/welcome.ts:244
+#: app/src/window/welcome.ts:248
 msgid "All set"
 msgstr ""
 
-#: app/src/window/welcome.ts:245
+#: app/src/window/welcome.ts:249
 msgid ""
 "You can change all of this later: accounts and protocols in Accounts, the "
 "rest in Preferences."
 msgstr ""
 
-#: app/src/window/welcome.ts:247
+#: app/src/window/welcome.ts:251
 msgid "Start Using Curlew"
 msgstr ""
 
