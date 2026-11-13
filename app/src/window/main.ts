@@ -136,7 +136,7 @@ const application = new AdwaitaApp({
         if (button) timed('open main menu', () => button.popup());
         return GLib.SOURCE_REMOVE;
       });
-    if (process.env.CURLEW_WINDOW_OPEN_ACCOUNTS === '1')
+    if (process.env.CURLEW_WINDOW_OPEN_ACCOUNTS === '1' || process.env.CURLEW_WINDOW_OPEN_ACCOUNT)
       GLib.timeout_add(
         GLib.PRIORITY_DEFAULT,
         1000,

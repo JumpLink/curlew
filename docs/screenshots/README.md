@@ -11,7 +11,6 @@ File name: `<motif>.<lang>.<scheme>.png`.
 | `conversations` | chat list | 900×640 |
 | `conversation` | chat view (Alex Weber, Signal + Telegram merged) | 900×640 |
 | `conversations-narrow`, `conversation-narrow` | the same, phone width | 360×740 |
-| `composer-emoji` | emoji chooser open over the composer, phone width | 360×740 |
 | `contact` | contact page | 900×700 |
 | `group` | group page (Climbing Tuesday) | 900×700 |
 | `preferences`, `preferences-off` | settings, demo defaults / everything off | 900×640 |
@@ -20,6 +19,8 @@ File name: `<motif>.<lang>.<scheme>.png`.
 | `agent-access` | agent access dialog | 900×640 |
 | `welcome` | first-run welcome | 360×740 |
 | `welcome-delta-chat` | welcome page that explains Delta Chat mode (`CURLEW_WINDOW_OPEN_WELCOME=delta-chat`) | 360×740 |
+| `contact-merged` | contact page of Sam: Delta Chat and XMPP combined | 900×700 |
+| `account-paused` | account page of a paused WhatsApp account | 900×640 |
 | `composer-emoji` | emoji chooser open in the composer (Alex Weber) | 900×640 |
 | `email-chat` | email chat thread (Sam Fischer, no voice notes or stickers) | 900×640 |
 

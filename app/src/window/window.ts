@@ -375,7 +375,11 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   viewer.install(window);
 
   const accounts = new Gio.SimpleAction({ name: 'accounts' });
-  accounts.connect('activate', () => timed('present accounts', () => presentAccounts(window)));
+  accounts.connect('activate', () =>
+    timed('present accounts', () =>
+      presentAccounts(window, { openAccount: process.env.CURLEW_WINDOW_OPEN_ACCOUNT || undefined }),
+    ),
+  );
   const protocols = new Gio.SimpleAction({ name: 'protocols' });
   protocols.connect('activate', () =>
     timed('present protocols', () => presentAccounts(window, { openProtocols: true })),

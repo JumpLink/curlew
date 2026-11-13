@@ -59,6 +59,7 @@ const CONVERSATIONS: Row[] = [
   ['c20', 'matrix', 'matrix-demo1', 'group', 'gjsify', 55, 1],
   ['c21', 'signal', 'signal-demo1', 'direct', 'Max 🎮', 30, 0],
   ['c22', 'signal', 'signal-demo1', 'group', 'WG Hinterhof', 45, 5],
+  ['c24', 'xmpp', 'xmpp-demo1', 'direct', 'Sam Fischer', 60 * 8, 0],
   ['c23', 'telegram', 'telegram-demo1', 'group', 'Hafenmeister', 60 * 6, 2],
 ];
 
@@ -68,6 +69,7 @@ const ALEX_SIGNAL = '1f0c6a52-2222-4333-8444-555566667777';
 const PEOPLE: Array<[id: string, name: string, addresses: Array<[kind: string, value: string]>]> = [
   ['p-sam', 'Sam Fischer', [['email', 'sam@example.org']]],
   ['p-robin-wa', 'Robin', [['whatsapp', '4915100000000@s.whatsapp.net']]],
+  ['p-sam-xmpp', 'Sam Fischer', [['jid', 'sam@chat.example.org']]],
   ['p-jo', 'Jo Klein', [['jid', 'jo@chat.example.org']]],
   [
     'p-alex',
@@ -524,6 +526,10 @@ function story(): Msg[] {
   add('c2', 'p-noah', 30, 'Can we ship it with the next release?');
   add('c2', 'p-mia', 18, 'Noah, what do you think?');
 
+  // c24 — the same Sam on XMPP; the config merges it with the email chat c3.
+  add('c24', 'p-sam-xmpp', h(8), 'The ladder is in the shed, key is under the pot.');
+  add('c24', 'me', h(8) - 3, 'Thanks, picking it up on the way.', { read: true });
+
   // c3 — an email chat (Delta Chat style) with a picture and a PDF in one mail.
   const chat = { subject: 'Chat: Garden day', emailChat: true };
   add('c3', 'p-sam', h(26), 'Are we still on for the garden day on Saturday?', chat);
@@ -602,6 +608,8 @@ export function generateDemo(dir: string, now: number = Date.now()): DemoSummary
     },
     ui: { welcomeDone: true, ai: true, showAllEmails: true, notifications: 'preview' },
     mailAccounts: { 'mail-demo1': { deltaChat: true } },
+    // Sam on email (Delta Chat) and on XMPP is one contact.
+    mergedPeople: [['p-sam', 'p-sam-xmpp']],
     // A few agent-access rules, so the dialog shows a contact rule and a whole-account rule.
     agentAccess: {
       askWithoutRule: true,

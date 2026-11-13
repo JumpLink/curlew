@@ -60,7 +60,13 @@ export async function backendAccountsList(
 ): Promise<{ backend: string; accounts: BackendAccount[] }> {
   if (demoActive()) {
     // Demo mode never reads the secrets directories: the accounts are the made-up ones.
-    return { backend: name, accounts: DEMO_ACCOUNTS.filter((a) => a.provider === name) };
+    const off = new Set(backendContext(name, loadConfig(path)).disabledAccounts);
+    return {
+      backend: name,
+      accounts: DEMO_ACCOUNTS.filter((a) => a.provider === name).map((a) =>
+        off.has(a.id) ? { ...a, disabled: true } : a,
+      ),
+    };
   }
   const config = loadConfig(path);
   const backend = builtinRegistry().create(config, name, backendContext(name, config));
