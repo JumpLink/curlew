@@ -90,6 +90,19 @@ export function accountSetDeltaChat(accountId: string, on: boolean, path = confi
   saveConfig(config, path);
 }
 
+/** Is plain text to every peer of this account refused (`config.encryption[account]`)? */
+export function encryptionRequiredFor(accountId: string, path = configPath()): boolean {
+  return loadConfig(path).encryption[accountId] === 'required';
+}
+
+/** Require encryption for a whole account or lift that; entries for single peers are kept. */
+export function accountSetEncryptionRequired(accountId: string, on: boolean, path = configPath()): void {
+  const config = loadConfig(path);
+  const { [accountId]: _dropped, ...rest } = config.encryption;
+  config.encryption = on ? { ...rest, [accountId]: 'required' } : rest;
+  saveConfig(config, path);
+}
+
 /**
  * Add an account to an ENABLED backend, interactively. Only backends that keep their own accounts
  * can; the mail backend does too (an address and a password), besides the GNOME Online Accounts it

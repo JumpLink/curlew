@@ -10,8 +10,10 @@ import { _ } from '@curlew/protocol';
 import {
   accountRemove,
   accountSetDeltaChat,
+  accountSetEncryptionRequired,
   accountSetEnabled,
   deltaChatEnabled,
+  encryptionRequiredFor,
 } from '../core/actions/accounts.ts';
 import { deleteDataCopy, removeAccountCopy } from './account-remove-model.ts';
 import { restartDaemonIfRunning } from './accounts-daemon.ts';
@@ -121,6 +123,23 @@ export function pushAccountPage(deps: AccountDetailDeps): void {
   });
   chat.add(deltaChat);
   page.add(chat);
+
+  const secure = new Adw.PreferencesGroup();
+  secure.set_visible(deps.backend === 'xmpp');
+  const required = new Adw.SwitchRow({
+    title: _('Require encryption'),
+    subtitle: _('Never send plain text from this account; a message to someone without OMEMO fails instead'),
+    active: deps.backend === 'xmpp' && encryptionRequiredFor(row.id, deps.path),
+  });
+  required.connect('notify::active', () => {
+    try {
+      accountSetEncryptionRequired(row.id, required.get_active(), deps.path);
+    } catch (err) {
+      deps.onError(err instanceof Error ? err : new Error(String(err)));
+    }
+  });
+  secure.add(required);
+  page.add(secure);
 
   const danger = new Adw.PreferencesGroup();
   const removeButton = new Gtk.Button({
