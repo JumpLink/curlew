@@ -748,47 +748,47 @@ msgid ""
 "(and shows its terms)"
 msgstr ""
 
-#: app/src/core/lib/access-notifications.ts:37
+#: app/src/core/lib/access-notifications.ts:41
 msgid "{name} ({address})"
 msgstr ""
 
-#: app/src/core/lib/access-notifications.ts:42
+#: app/src/core/lib/access-notifications.ts:46
 msgid "To {contact} ({account})."
 msgstr ""
 
-#: app/src/core/lib/access-notifications.ts:43
+#: app/src/core/lib/access-notifications.ts:47
 msgid "To {contact} ({account}): “{preview}”"
 msgstr ""
 
-#: app/src/core/lib/access-notifications.ts:46
+#: app/src/core/lib/access-notifications.ts:50
 msgid "An agent wants to send a message"
 msgstr ""
 
-#: app/src/core/lib/access-notifications.ts:47
+#: app/src/core/lib/access-notifications.ts:51
 msgid "Attachments: {files}"
 msgstr ""
 
-#: app/src/core/lib/access-notifications.ts:51
+#: app/src/core/lib/access-notifications.ts:55
 msgid "An agent wants to read messages"
 msgstr ""
 
-#: app/src/core/lib/access-notifications.ts:52
+#: app/src/core/lib/access-notifications.ts:56
 msgid "Messages of {contact} ({account})."
 msgstr ""
 
-#: app/src/core/lib/access-notifications.ts:59
+#: app/src/core/lib/access-notifications.ts:63
 msgid "Allow once"
 msgstr ""
 
-#: app/src/core/lib/access-notifications.ts:60
+#: app/src/core/lib/access-notifications.ts:64
 msgid "For this session"
 msgstr ""
 
-#: app/src/core/lib/access-notifications.ts:62
+#: app/src/core/lib/access-notifications.ts:66
 msgid "Always"
 msgstr ""
 
-#: app/src/core/lib/access-notifications.ts:64
+#: app/src/core/lib/access-notifications.ts:68
 #: app/src/window/agent-access-page.ts:58
 msgid "Deny"
 msgstr ""
