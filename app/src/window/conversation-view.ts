@@ -7,6 +7,7 @@ import GObject from 'gi://GObject?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import Pango from 'gi://Pango?version=1.0';
 import { _, fmt } from '@curlew/protocol';
+import type { ThreadCapabilities, ThreadFacts, ThreadFeature } from '@curlew/protocol';
 import type { ConversationMessage, MessageReaction, ReplyTarget } from '@curlew/protocol';
 import { configPath, type MessageCursor } from '@curlew/store';
 
@@ -117,16 +118,12 @@ export function createConversationView(
     files: PickedFile[],
     replyTo?: ReplyTarget,
   ) => Promise<ConversationMessage>,
-  canAttach: (backend: string) => boolean,
-  canReply: (backend: string) => boolean,
-  canReact: (backend: string) => boolean,
+  threadCapabilities: (facts: ThreadFacts) => ThreadCapabilities,
   onReact: (
     message: ShownMessage,
     handle: MessageHandle<ProtocolChoice>,
     change: ReactionChange,
   ) => Promise<void>,
-  canEdit: (backend: string) => boolean,
-  canDelete: (backend: string) => boolean,
   onEdit: (message: ShownMessage, handle: MessageHandle<ProtocolChoice>, text: string) => Promise<void>,
   onDelete: (message: ShownMessage, handle: MessageHandle<ProtocolChoice>) => Promise<void>,
   loadOlder: (entry: ListEntry, oldest: MessageCursor) => ShownMessage[],
@@ -136,6 +133,13 @@ export function createConversationView(
   onContact: (entry: ListEntry) => void,
 ): ConversationView {
   let entry: ListEntry | null = null;
+  // The open thread decides what its controls offer (ADR 0015), not the backend alone.
+  const threadCan =
+    (feature: ThreadFeature) =>
+    (backend: string): boolean =>
+      threadCapabilities({ backend, emailChat: entry?.emailChat === true, self: entry?.self === true })[
+        feature
+      ];
   // The array is the caller's: a sent message is pushed onto it, an older page spliced in front.
   let messages: ShownMessage[] = [];
   let accountLabels = new Map<string, string>();
@@ -451,7 +455,8 @@ export function createConversationView(
 
   // The paperclip follows the carrier: files picked for one that takes none would be lost silently.
   const updateAttachable = (): void => {
-    const on = selectedChoice !== null && !composerBlocked && canAttach(selectedChoice.backend);
+    const on =
+      selectedChoice !== null && !composerBlocked && threadCan('attachments')(selectedChoice.backend);
     if (files.setAttachable(on) > 0) {
       overlay.add_toast(
         new Adw.Toast({
@@ -754,7 +759,7 @@ export function createConversationView(
   // What the open chat allows beyond what a protocol can do: Saved Messages take no reaction,
   // Signal closes edit and delete after a day. The entries are not shown rather than refused.
   const reactable = (backend: string): boolean =>
-    canReact(backend) && reactionsOfferedIn(backend, entry?.self === true);
+    threadCan('reactions')(backend) && reactionsOfferedIn(backend, entry?.self === true);
   const changeable =
     (can: (backend: string) => boolean, message: ShownMessage) =>
     (backend: string): boolean =>
@@ -765,10 +770,14 @@ export function createConversationView(
   const attachBubbleActions = (card: Gtk.Box, message: ShownMessage, showReactions: () => void): void => {
     const open = (gesture: Gtk.Gesture, x: number, y: number): void => {
       const usable = composer.get_visible() && !composerBlocked;
-      const draft = usable ? replyDraftOf(message, carriers, canReply) : null;
+      const draft = usable ? replyDraftOf(message, carriers, threadCan('replies')) : null;
       const handle = usable ? reactHandleOf(message, carriers, reactable) : null;
-      const editHandle = usable ? editHandleOf(message, carriers, changeable(canEdit, message)) : null;
-      const deleteHandle = usable ? deleteHandleOf(message, carriers, changeable(canDelete, message)) : null;
+      const editHandle = usable
+        ? editHandleOf(message, carriers, changeable(threadCan('edits'), message))
+        : null;
+      const deleteHandle = usable
+        ? deleteHandleOf(message, carriers, changeable(threadCan('deletes'), message))
+        : null;
       const text = message.bodyText?.trim() ?? '';
       if (!draft && !handle && !editHandle && !deleteHandle && !text) return;
       gesture.set_state(Gtk.EventSequenceState.CLAIMED);

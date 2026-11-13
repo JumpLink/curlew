@@ -1,0 +1,35 @@
+# Thread capabilities
+
+Implements [ADR 0015](../adr/0015-capabilities-per-thread.md). The window asks "can *this thread*
+react, edit, delete?", not "can *this backend*?".
+
+## The layer
+
+`packages/protocol/src/thread-capabilities.ts` is pure (no `gi://`, no `node:*`):
+
+- `BackendCapabilities` (manifest) stays the **upper bound**.
+- `ThreadFacts` is what is known of one thread: `backend`, `emailChat` (a mail peer sent
+  `Chat-Version`), `self` (note to self). All but `backend` are optional.
+- `threadCapabilitiesOf(capabilities, facts)` returns `ThreadCapabilities`: `reactions`, `edits`,
+  `deletes`, `replies`, `attachments`, `readReceipts`. A backend's narrowing can only turn features
+  off, never exceed the manifest. `threadCan(...)` answers one feature.
+- Mail narrows by the peer: no `Chat-Version`, no reaction, edit, delete or read receipt. Every other
+  backend answers with its manifest.
+
+The facts come from the list entry the window already holds (`emailChat` is written to the index by
+the sync), so nothing is computed per bubble and no message is read.
+
+## Rules for callers (A7–A11)
+
+- Ask `threadCan(feature)` before showing an entry or control; never offer what the thread cannot do.
+- `PINNED_FEATURES` (reaction, edit, delete for everyone, read receipt) address one existing message
+  in its own network and are **never redirected** to another protocol; they are absent instead.
+- Only new content (message, file) may go through the next protocol, and only when the person chose it.
+- A backend that can narrow further (XMPP per JID, `XmppApi.features`) adds a `ThreadNarrowing` and
+  extends `ThreadFacts`; new facts stay optional.
+
+## Today
+
+The mail manifest still says `reactions/edits/deletes/replies: false`, because no mail sender
+delivers them yet; A7–A9 raise the flag and the mail narrowing then gives it to Delta Chat peers
+only. The window behaves as before.
