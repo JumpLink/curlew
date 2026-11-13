@@ -43,7 +43,9 @@ import {
   type SenderFeatures,
   type SentMessage,
 } from '@curlew/protocol';
+import { inspectSendFiles } from '@curlew/store';
 import type * as Core from '@signalapp/libsignal-client';
+import { readFileSync } from 'node:fs';
 import type { ChatFetch, ChatResponseLike } from './guard.ts';
 import type { SignalLib } from './lib.ts';
 import { GROUP_PREFIX, messageRemoteId, parseMessageRemoteId } from './map.ts';
@@ -51,6 +53,12 @@ import { basicAuth, JSON_TYPE, jsonBody } from './net.ts';
 import { type DeviceAccount, fromBase64, NS, type SignalProtocolStore, toBase64 } from './protocol-store.ts';
 import { ProtoWriter } from './proto.ts';
 import { EnvelopeType, isAci, normalizeServiceId, padPlaintext, uuidToBytes } from './schema.ts';
+import { type AttachmentUploader, httpsUploader, uploadAttachment } from './upload.ts';
+
+/** Per file; the whole file is held in memory while it is encrypted. */
+export const SIGNAL_MAX_FILE_BYTES = 64_000_000;
+/** How many files one message carries. */
+export const SIGNAL_MAX_FILES = 10;
 
 /**
  * The longest text one message may carry. curlew refuses more rather than splitting it.
@@ -72,7 +80,9 @@ export const SIGNAL_MAX_MESSAGE_BYTES = 2048;
  */
 const F = {
   content: { dataMessage: 1, syncMessage: 2, editMessage: 11 },
-  data: { body: 1, quote: 8, timestamp: 7, reaction: 16, delete: 17 },
+  data: { body: 1, attachments: 2, quote: 8, timestamp: 7, reaction: 16, delete: 17 },
+  /** `AttachmentPointer`; the CDN key and number are the current form, `cdnId` the legacy one. */
+  attachment: { contentType: 2, key: 3, size: 4, digest: 6, fileName: 7, cdnNumber: 14, cdnKey: 15 },
   /** `EditMessage`: the sent timestamp of the message being replaced, and its new `DataMessage`. */
   edit: { targetSentTimestamp: 1, dataMessage: 2 },
   /** `DataMessage.Delete`: the sent timestamp of the message being deleted for everyone. */
@@ -132,6 +142,8 @@ export interface SignalSendSession {
   store: SignalProtocolStore;
   account: DeviceAccount;
   fetch: ChatFetch;
+  /** Puts an encrypted attachment on the CDN — a test plays the CDN. Real HTTPS by default. */
+  upload?: AttachmentUploader;
   onClose: () => Promise<void>;
   /**
    * Run one whole send — encrypt, PUT, flush — with the protocol store to itself.
@@ -168,7 +180,7 @@ export class SignalSender implements MessageSender {
    */
   readonly features: SenderFeatures = {
     markdown: false,
-    attachments: false,
+    attachments: true,
     replies: true,
     reactions: true,
     edits: true,
@@ -178,6 +190,7 @@ export class SignalSender implements MessageSender {
   private readonly store: SignalProtocolStore;
   private readonly account: DeviceAccount;
   private readonly fetch: ChatFetch;
+  private readonly upload: AttachmentUploader;
   private readonly permit: SendPermit;
   private readonly onClose: () => Promise<void>;
   private readonly exclusive: <T>(send: () => Promise<T>) => Promise<T>;
@@ -187,6 +200,7 @@ export class SignalSender implements MessageSender {
     this.store = session.store;
     this.account = session.account;
     this.fetch = session.fetch;
+    this.upload = session.upload ?? httpsUploader();
     this.permit = permit;
     this.onClose = session.onClose;
     this.exclusive = session.exclusive ?? ((send) => send());
@@ -270,6 +284,10 @@ export class SignalSender implements MessageSender {
 
   private async sendNow(message: SendingMessage): Promise<SentMessage> {
     const aci = this.recipient(message.to);
+    const files = inspectSendFiles(message.attachments ?? [], {
+      perFile: SIGNAL_MAX_FILE_BYTES,
+      count: SIGNAL_MAX_FILES,
+    });
     const bytes = UTF8.encode(message.text).length;
     if (bytes > SIGNAL_MAX_MESSAGE_BYTES) {
       throw new Error(
@@ -277,6 +295,26 @@ export class SignalSender implements MessageSender {
           max: String(SIGNAL_MAX_MESSAGE_BYTES),
           bytes: String(bytes),
         }),
+      );
+    }
+    // Every file is uploaded before anything is sent, so a failed upload means nothing went out.
+    const pointers: ProtoWriter[] = [];
+    for (const file of files) {
+      const uploaded = await uploadAttachment(
+        readFileSync(file.realPath),
+        this.account,
+        this.fetch,
+        this.upload,
+      );
+      pointers.push(
+        new ProtoWriter()
+          .string(F.attachment.contentType, file.contentType)
+          .bytes(F.attachment.key, uploaded.key)
+          .uint(F.attachment.size, uploaded.size)
+          .bytes(F.attachment.digest, uploaded.digest)
+          .string(F.attachment.fileName, file.filename)
+          .uint(F.attachment.cdnNumber, uploaded.cdnNumber)
+          .string(F.attachment.cdnKey, uploaded.cdnKey),
       );
     }
     // A note to self is the transcript alone — the same way Signal implements Note to Self. There
@@ -287,6 +325,7 @@ export class SignalSender implements MessageSender {
     const dataMessage = new ProtoWriter()
       .string(F.data.body, message.text)
       .uint(F.data.timestamp, timestamp);
+    for (const pointer of pointers) dataMessage.message(F.data.attachments, pointer);
     if (message.replyTo) {
       const quoted = parseMessageRemoteId(message.replyTo.remoteId);
       dataMessage.message(

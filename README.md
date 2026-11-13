@@ -35,7 +35,7 @@ front of you can do it ([ADR 0015](docs/adr/0015-capabilities-per-thread.md)).
 |---|---|---|---|---|---|---|---|---|---|
 | Mail (IMAP/SMTP) | server archive | yes | yes | yes | yes | no | no | yes | yes |
 | Telegram | server archive | yes | yes | yes | forum topics | yes | no (cloud chats) | yes | yes |
-| Signal (linked device) | only on this computer | yes | yes | yes | no | yes | yes | no | yes |
+| Signal (linked device) | only on this computer | yes | yes | yes | no | yes | yes | yes | yes |
 | WhatsApp (linked device, **unofficial**) | only on this computer | yes | yes | yes | no | yes | yes | yes | yes |
 | Matrix | server archive | yes | yes | yes | yes | yes | decrypts; sends to unencrypted rooms only | yes | yes |
 | XMPP | server archive (MAM) | yes | yes, where the peer supports it | yes, where the peer supports it | no | no | OMEMO ([ADR 0006](docs/adr/0006-omemo-end-to-end-encryption.md)) | yes | yes |

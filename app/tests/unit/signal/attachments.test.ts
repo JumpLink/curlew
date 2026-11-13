@@ -126,9 +126,9 @@ async function withBackend<T>(
 
 export default async () => {
   await describe('Signal attachments', async () => {
-    await it('claims reading but not sending in its manifest', async () => {
+    await it('claims reading and sending in its manifest', async () => {
       expect(SIGNAL_MANIFEST.capabilities.attachmentsRead).toBe(true);
-      expect(SIGNAL_MANIFEST.capabilities.attachments).toBe(false);
+      expect(SIGNAL_MANIFEST.capabilities.attachments).toBe(true);
     });
 
     await it('maps a pointer into an attachment row with its facts and a handle', async () => {

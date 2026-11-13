@@ -27,6 +27,7 @@ import { isOwnAci, listSessionAccounts, sessionPath } from './accounts.ts';
 import { SIGNAL_TRUST_ROOTS_BASE64 } from './constants.ts';
 import { SignalAttachments } from './attachments.ts';
 import { type AttachmentDownloader, httpsDownloader } from './contacts.ts';
+import type { AttachmentUploader } from './upload.ts';
 import { EnvelopeDecryptor } from './decrypt.ts';
 import type { ChatFetch } from './guard.ts';
 import { FileJournal, journalPath } from './journal.ts';
@@ -97,6 +98,8 @@ export interface SignalBackendOptions {
   groupNames?: (account: DeviceAccount, lib: SignalLib) => GroupNameSource;
   /** The contact-sync download, and the one a tapped attachment uses. */
   download?: AttachmentDownloader;
+  /** Where a sent file's ciphertext goes — a test plays the CDN. The real HTTPS upload by default. */
+  upload?: AttachmentUploader;
   /** Sealed-sender trust roots (serialized public keys); Signal's production roots by default. */
   trustRoots?: readonly Uint8Array[];
   receiver?: Omit<ReceiverOptions, 'mode' | 'journal' | 'download'>;
@@ -250,6 +253,7 @@ export class SignalBackend implements DeliveryBackend, SendBackend {
         store,
         account,
         fetch: channel.fetch,
+        ...(this.options.upload ? { upload: this.options.upload } : {}),
         onClose: async () => {
           try {
             await channel.close();
@@ -354,6 +358,7 @@ export class SignalBackend implements DeliveryBackend, SendBackend {
             store,
             account,
             fetch: channel.fetch,
+            ...(this.options.upload ? { upload: this.options.upload } : {}),
             onClose: () => channel.close(),
             exclusive: (send) =>
               receiver.exclusive(async () => {
