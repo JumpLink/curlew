@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 18:20+0100\n"
+"POT-Creation-Date: 2026-11-13 18:45+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2800,7 +2800,7 @@ msgid "Search"
 msgstr "Suchen"
 
 #: app/src/window/conversation-list.ts:490
-#: app/src/window/new-conversation.ts:24
+#: app/src/window/new-conversation.ts:25
 msgid "New conversation"
 msgstr "Neue Unterhaltung"
 
@@ -3171,11 +3171,11 @@ msgstr "Kein Kontakt passt zur Suche"
 msgid "No contacts with an XMPP or mail address"
 msgstr "Keine Kontakte mit XMPP- oder E-Mail-Adresse"
 
-#: app/src/window/new-conversation.ts:29
+#: app/src/window/new-conversation.ts:30
 msgid "Search contacts"
 msgstr "Kontakte suchen"
 
-#: app/src/window/new-conversation.ts:80
+#: app/src/window/new-conversation.ts:101
 msgid "The address book could not be read"
 msgstr "Das Adressbuch konnte nicht gelesen werden"
 
@@ -3470,15 +3470,15 @@ msgstr "Beenden"
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:355
+#: app/src/window/window.ts:357
 msgid "Curlew (demo)"
 msgstr "Curlew (Demo)"
 
-#: app/src/window/window.ts:358
+#: app/src/window/window.ts:360
 msgid "Demo data — nothing here is real"
 msgstr "Demo-Daten – nichts hier ist echt"
 
-#: app/src/window/window.ts:427
+#: app/src/window/window.ts:429
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 
