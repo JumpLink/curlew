@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 04:13+0100\n"
+"POT-Creation-Date: 2026-11-13 08:03+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1634,36 +1634,46 @@ msgstr ""
 msgid "Add Account"
 msgstr ""
 
-#: app/src/window/account-detail.ts:71 app/src/window/agent-access-page.ts:218
+#: app/src/window/account-detail.ts:73 app/src/window/agent-access-page.ts:218
 #: app/src/window/contact-page.ts:392
 msgid "Account"
 msgstr ""
 
-#: app/src/window/account-detail.ts:75
+#: app/src/window/account-detail.ts:77
 msgid "Status"
 msgstr ""
 
-#: app/src/window/account-detail.ts:81
+#: app/src/window/account-detail.ts:83
 msgid ""
 "Off keeps the account linked and its messages here, but Curlew stops syncing "
 "it."
 msgstr ""
 
-#: app/src/window/account-detail.ts:85
+#: app/src/window/account-detail.ts:87
 msgid "Sync this account"
 msgstr ""
 
-#: app/src/window/account-detail.ts:106 app/src/window/welcome.ts:203
+#: app/src/window/account-detail.ts:108 app/src/window/welcome.ts:203
 msgid "Use for Delta Chat"
 msgstr ""
 
-#: app/src/window/account-detail.ts:108
+#: app/src/window/account-detail.ts:110
 msgid ""
 "Messages from this account become email chats. People without Delta Chat see "
 "an ordinary email."
 msgstr ""
 
-#: app/src/window/account-detail.ts:127
+#: app/src/window/account-detail.ts:130
+msgid "Require encryption"
+msgstr ""
+
+#: app/src/window/account-detail.ts:131
+msgid ""
+"Never send plain text from this account; a message to someone without OMEMO "
+"fails instead"
+msgstr ""
+
+#: app/src/window/account-detail.ts:146
 msgid "Remove Account…"
 msgstr ""
 

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 04:13+0100\n"
+"POT-Creation-Date: 2026-11-13 08:03+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1892,16 +1892,16 @@ msgstr ""
 msgid "Add Account"
 msgstr "Konto hinzufügen"
 
-#: app/src/window/account-detail.ts:71 app/src/window/agent-access-page.ts:218
+#: app/src/window/account-detail.ts:73 app/src/window/agent-access-page.ts:218
 #: app/src/window/contact-page.ts:392
 msgid "Account"
 msgstr "Konto"
 
-#: app/src/window/account-detail.ts:75
+#: app/src/window/account-detail.ts:77
 msgid "Status"
 msgstr "Status"
 
-#: app/src/window/account-detail.ts:81
+#: app/src/window/account-detail.ts:83
 msgid ""
 "Off keeps the account linked and its messages here, but Curlew stops syncing "
 "it."
@@ -1909,15 +1909,15 @@ msgstr ""
 "Aus lässt das Konto verknüpft und seine Nachrichten hier, aber Curlew "
 "synchronisiert es nicht mehr."
 
-#: app/src/window/account-detail.ts:85
+#: app/src/window/account-detail.ts:87
 msgid "Sync this account"
 msgstr "Dieses Konto synchronisieren"
 
-#: app/src/window/account-detail.ts:106 app/src/window/welcome.ts:203
+#: app/src/window/account-detail.ts:108 app/src/window/welcome.ts:203
 msgid "Use for Delta Chat"
 msgstr "Für Delta Chat verwenden"
 
-#: app/src/window/account-detail.ts:108
+#: app/src/window/account-detail.ts:110
 msgid ""
 "Messages from this account become email chats. People without Delta Chat see "
 "an ordinary email."
@@ -1925,7 +1925,19 @@ msgstr ""
 "Nachrichten von diesem Konto werden zu E-Mail-Chats. Wer kein Delta Chat "
 "hat, sieht eine gewöhnliche E-Mail."
 
-#: app/src/window/account-detail.ts:127
+#: app/src/window/account-detail.ts:130
+msgid "Require encryption"
+msgstr "Verschlüsselung verlangen"
+
+#: app/src/window/account-detail.ts:131
+msgid ""
+"Never send plain text from this account; a message to someone without OMEMO "
+"fails instead"
+msgstr ""
+"Von diesem Konto nie Klartext senden; eine Nachricht an jemanden ohne OMEMO "
+"schlägt stattdessen fehl"
+
+#: app/src/window/account-detail.ts:146
 msgid "Remove Account…"
 msgstr "Konto entfernen…"
 

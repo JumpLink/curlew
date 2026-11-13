@@ -228,6 +228,29 @@ The item only shows while AI features are on. The switch is the **AI features** 
 off, except in a config that already has agent rules, grants or switches (`aiEnabled` in
 `app/src/core/config.ts`).
 
+## Every setting has a place
+
+Nothing a person may sensibly change needs the config file. `app/src/window/settings-map.ts` lists
+every config key and where it is changed; its types follow `UiConfig` and `CurlewConfig`, and
+`settings-map.test.ts` holds the list against `parseConfig`, so a new key without a place fails.
+
+| Key | Place |
+|---|---|
+| `ui.showAllEmails`, `ui.notifications`, `ui.playVideosSilently` | Preferences: Conversations, Notifications, Media |
+| `ui.accentColor`, `primaryColor`, `colorScheme`, `chatBackground` | Preferences: Appearance |
+| `ui.ai` | Preferences: AI (Agent access in the menu only while on) |
+| `ui.searchScope` | Conversation list, search scope |
+| `backends.<name>.enabled`, `termsAcceptedAt` | Accounts: Protocols |
+| `disabledAccounts` | Account page: Sync this account |
+| `deltaChatAccounts` | Account page (mail): Use for Delta Chat |
+| `encryption` | Account page (XMPP): Require encryption (whole account; single-peer entries stay file-only) |
+| `agentAccess`, `grants` | Agent access dialog |
+| `mergedPeople`, `declinedMerges`, `pins`, `contactChoices` | Contact page, merge assistant, protocol picker |
+| `ui.welcomeDone`, `ui.emailChatHintSeen`, `unknown` | State the app keeps; no row |
+
+File-only on purpose: `senders` (`curlew conversations classify`) and `backends.<name>.settings`
+(a backend's own non-secret options).
+
 ## App icon
 
 The app icon follows the GNOME HIG for app icons; how it came about, round by round, with every

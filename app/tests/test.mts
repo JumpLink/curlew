@@ -127,6 +127,7 @@ import accountAddModel from './unit/window/account-add-model.test.ts';
 import qrImage from './unit/window/qr-image.test.ts';
 import windowWelcome from './unit/window/welcome-model.test.ts';
 import windowEmailChat from './unit/window/email-chat-model.test.ts';
+import windowSettingsMap from './unit/window/settings-map.test.ts';
 import notifyQr from './unit/protocol/notify-qr.test.ts';
 import daemonFetch from './unit/core/daemon-fetch.test.ts';
 import daemonAvatars from './unit/core/daemon-avatars.test.ts';
@@ -269,6 +270,7 @@ run({
   qrImage,
   windowWelcome,
   windowEmailChat,
+  windowSettingsMap,
   notifyQr,
   chatAttachment,
   conversationsAttachments,
