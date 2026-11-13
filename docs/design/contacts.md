@@ -246,7 +246,7 @@ written to; the subtitle names the protocols (`XMPP · Mail`, most trusted first
   empty timeline and the usual composer. Its picker lists the routes and defaults to the
   most trusted one (open question 1). The first send goes through the normal path; the real
   conversation appears in the list when the index has it. A first mail is a new message
-  (`Chat: …`), not a `Re:`.
+  (`Message from …` on a Delta Chat account), not a `Re:`.
 - **Address book size.** The picker asks for up to 1000 contacts, not the 100 an agent gets;
   typing asks the address book again, so a match beyond that still shows.
 

@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- The conversation search now finds unsent drafts by their text, not only by subject; drafts stay in the list as before (#307).
 - A message bubble shows the time of day (14:05) again; for messages older than yesterday it showed the date, which the day separator already gives.
 - Delta Chat messages are encrypted, and the window showed every one of them as an empty bubble reading "No text body". It now says "Encrypted message: it cannot be shown here"; the index marks such mail when it syncs, and mail folders with email chats are fetched once more to learn it.
 - Removing an account can now also delete its messages, attachments and cached pictures from this computer. A second confirmation says so, and warns when the index is the only copy (Signal, WhatsApp). Without the check mark, nothing changes: only the login goes.
@@ -38,6 +39,7 @@
 
 ### Changed
 
+- A new Delta Chat mail message now has the subject `Message from <name>` (Delta Chat spec 0.37, name = the part of the account address before the `@`) instead of `Chat: <first words>`, so a plain mail client no longer shows the start of the chat text.
 - Protocol badges are coloured now (Telegram blue, WhatsApp green, Signal blue, Matrix dark with green, XMPP orange, Mail purple) instead of neutral symbols; our own drawings, not the official logos.
 - New app icon: a fluffy curlew chick in the messenger bubble, with a matching symbolic icon.
 - The style (system, light, dark) is a segmented control in the preferences instead of three circles.

@@ -24,6 +24,7 @@ import {
   replyDraftOf,
   replySubject,
   senderName,
+  senderNameOf,
   senderRunStarts,
   subjectLabels,
   toggleOwnReaction,
@@ -55,18 +56,20 @@ function message(over: Partial<ConversationMessage> & { id: string }): Conversat
 export default async () => {
   await describe('mail chat presentation', async () => {
     await it('uses a generic excerpt for chat mail and Re for ordinary replies', async () => {
-      expect(chatSubject('  Hallo\n Welt  ')).toBe('Chat: Hallo Welt');
-      expect(chatSubject('')).toBe('Chat');
+      expect(chatSubject('  Alice ')).toBe('Message from Alice');
+      expect(chatSubject('')).toBe('Message');
+      expect(senderNameOf('alice@example.org')).toBe('alice');
+      expect(senderNameOf(undefined)).toBe('');
       expect(replySubject('Frage')).toBe('Re: Frage');
       expect(replySubject('Re: Frage')).toBe('Re: Frage');
-      expect(composeMailReply(message({ id: 'a', emailChat: true }), null, 'Hallo', true).subject).toBe(
-        'Chat: Hallo',
-      );
+      expect(
+        composeMailReply(message({ id: 'a', emailChat: true }), null, 'Hallo', true, 'alice').subject,
+      ).toBe('Message from alice');
       expect(composeMailReply(message({ id: 'a', subject: 'Frage' }), null, 'Hallo', true).subject).toBe(
         'Re: Frage',
       );
       // A first mail to this person is no reply, even though a Signal note comes before it.
-      expect(composeMailReply(null, null, 'Hallo', true).subject).toBe('Chat: Hallo');
+      expect(composeMailReply(null, null, 'Hallo', true, 'alice').subject).toBe('Message from alice');
     });
 
     await it('threads onto the parent Message-ID without duplicating References', async () => {

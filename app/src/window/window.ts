@@ -31,7 +31,7 @@ import {
 } from '../core/actions/people.ts';
 import { lookOf } from '../core/contact-choices.ts';
 import { createConversationList } from './conversation-list.ts';
-import { composeMailReply } from './conversation-model.ts';
+import { composeMailReply, senderNameOf } from './conversation-model.ts';
 import {
   attachingBackends,
   reactingBackends,
@@ -171,7 +171,13 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
           .find((m) => m.backend === choice.backend && m.ref.accountId === choice.accountId) ?? null;
       const mail =
         choice.backend === 'mail'
-          ? composeMailReply(parent, loadMailReplyTarget(parent), text, deltaChatEnabled(choice.accountId))
+          ? composeMailReply(
+              parent,
+              loadMailReplyTarget(parent),
+              text,
+              deltaChatEnabled(choice.accountId),
+              senderNameOf(labels.get(choice.accountId)),
+            )
           : null;
       const result = await sendMessage({
         accountId: choice.accountId,

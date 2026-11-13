@@ -18,7 +18,7 @@ import {
   setMessageText,
   syncIndex,
 } from '@curlew/store';
-import { AT, FakeBackend, freshDb, message } from './fixtures.ts';
+import { AT, FakeBackend, folder, freshDb, message } from './fixtures.ts';
 
 /**
  * Conversations built from a synced fake mailbox: threading, participants, the
@@ -774,6 +774,39 @@ export default async () => {
         expect(searchMessageText(db, '50%').map((h) => h.conversationId)).toStrictEqual(['c2']);
         expect(searchMessageText(db, '5_%')).toStrictEqual([]);
         expect(searchMessageText(db, '  ')).toStrictEqual([]);
+      } finally {
+        db.close();
+      }
+    });
+  });
+
+  await describe('searchMessageText in unsent drafts', async () => {
+    await it('finds the body of a draft, and only a draft', async () => {
+      const backend = new FakeBackend();
+      backend.folders = [folder('INBOX', 'INBOX', 'inbox'), folder('Drafts', 'Drafts', 'drafts')];
+      backend.put('INBOX', [
+        message(1, 'Hello', 'zebra crossing ahead', {
+          from: [ANNA],
+          to: [ME],
+          messageId: '<i1@example.org>',
+        }),
+      ]);
+      backend.put('Drafts', [
+        message(2, 'Unsent', 'my unfinished giraffe note', {
+          from: [ME],
+          to: [BEN],
+          messageId: '<d1@example.com>',
+          seen: true,
+        }),
+      ]);
+      const db = freshDb();
+      try {
+        await syncIndex(db, backend, { now: AT('2026-08-06T12:00:00Z') });
+        rebuildConversations(db, { contacts: CONTACTS });
+        const hits = searchMessageText(db, 'giraffe');
+        expect(hits.length).toBe(1);
+        expect(hits[0]?.snippet.includes('giraffe')).toBe(true);
+        expect(searchMessageText(db, 'zebra').length).toBe(0);
       } finally {
         db.close();
       }

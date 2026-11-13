@@ -22,10 +22,20 @@ export interface MailReply {
   references?: string[];
 }
 
-/** Delta Chat's conventional subject stays useful in an ordinary MUA without becoming a chat label. */
-export function chatSubject(text: string): string {
-  const excerpt = text.trim().split(/\s+/).join(' ').slice(0, 60);
-  return excerpt ? `Chat: ${excerpt}` : 'Chat';
+/** The name a subject shows for an account: the part before the `@` of its address, else the label. */
+export function senderNameOf(label: string | undefined): string {
+  const clean = label?.trim() ?? '';
+  const at = clean.indexOf('@');
+  return (at > 0 ? clean.slice(0, at) : clean).trim();
+}
+
+/**
+ * Delta Chat spec 0.37: the subject of a chat message is `Message from <sender name>`, the same for
+ * every message, so a plain mail client shows a neutral label and never the text of the chat.
+ */
+export function chatSubject(senderName: string): string {
+  const name = senderName.trim();
+  return name ? `Message from ${name}` : 'Message';
 }
 
 /** The subject of a first ordinary mail: the opening words, no chat label. */
@@ -47,6 +57,7 @@ export function composeMailReply(
   target: MailReplyTarget | null,
   text: string,
   deltaChat: boolean,
+  senderName = '',
 ): MailReply {
   const references = [
     ...new Set([...(target?.references ?? []), ...(target?.messageId ? [target.messageId] : [])]),
@@ -56,7 +67,7 @@ export function composeMailReply(
     subject:
       parent === null || (deltaChat && parent.emailChat)
         ? deltaChat
-          ? chatSubject(text)
+          ? chatSubject(senderName)
           : plainSubject(text)
         : replySubject(parent.subject),
     ...(deltaChat ? { emailChat: true as const } : {}),

@@ -139,7 +139,7 @@ shows the matching line instead of the newest message. Names and numbers are mat
 the rows the list already holds; only the message text goes to the index. Mail rows follow
 `ui.showAllEmails` as before, so chats and mails are searched together only when all mail is shown.
 Known limits: SQLite folds only ASCII case ("ä" does not find "Ä"), and mail bodies live in the
-full-text index and are not searched here; a merged chat-and-mail search is contacts.md question 6.
+full-text index and are not searched here, except the body of an unsent draft (a mail in a folder with the `drafts` role); a merged chat-and-mail search is contacts.md question 6.
 `CURLEW_WINDOW_SEARCH=<text>` opens the search with that text and `CURLEW_WINDOW_OPEN_SCOPE=1` also
 opens the scope menu, for screenshots.
 
@@ -207,7 +207,7 @@ what keeps the pane from freezing on a long history.
 Sending from the window is the person's own action (ADR 0008), so it asks no grant. A mail account sends
 **email chats** after Delta Chat's convention only when the person switched on *Use for Delta Chat* on its
 account page (`deltaChatAccounts` in the config, off by default); otherwise it sends ordinary mail. An email chat has: a `Chat-Version: 1.0` header, a generic
-subject (`Chat: <first words>`, or `Re: <subject>` when answering ordinary mail) and normal `In-Reply-To`/`References` threading, so any mail
+subject (`Message from <sender name>` per Delta Chat spec 0.37, or `Re: <subject>` when answering ordinary mail) and normal `In-Reply-To`/`References` threading, so any mail
 client still shows a readable thread. The index records the marker on receipt (`email_chat`),
 which is what *Show all emails* filters on. No encryption yet (curlew#145). A received message whose body is
 encrypted (Delta Chat sends every message as OpenPGP `multipart/encrypted`) is flagged `encrypted` by the sync

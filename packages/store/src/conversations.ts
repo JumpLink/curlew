@@ -993,7 +993,34 @@ export function searchMessageText(db: IndexDatabase, text: string): TextHit[] {
     if (snippet === null) continue;
     hits.set(id, { conversationId: id, sentAt: str(r.sent_at), snippet });
   }
-  return [...hits.values()];
+  for (const hit of searchDraftBodies(db, needle, pattern)) if (!hits.has(hit.conversationId)) hits.set(hit.conversationId, hit);
+  return [...hits.values()].sort((a, b) => (a.sentAt ?? '') < (b.sentAt ?? '') ? 1 : -1);
+}
+
+/**
+ * Unsent drafts: mail in a folder with the `drafts` role. Their body sits in the full-text index
+ * rather than on the message row, so the plain scan above misses it. Window-only, like the rest.
+ */
+function searchDraftBodies(db: IndexDatabase, needle: string, pattern: string): TextHit[] {
+  const rows = db
+    .prepare(
+      `SELECT cm.conversation_id, cm.sent_at, cm.subject, substr(f.body, max(1, instr(lower(f.body), lower(?)) - ${HIT_LEAD_CHARS}), ${HIT_CHARS}) AS around
+         FROM conversation_messages cm
+         JOIN folders fo ON fo.account_id = cm.account_id AND fo.path = cm.folder_path AND fo.role = 'drafts'
+         JOIN messages m ON m.account_id = cm.account_id AND m.folder_path = cm.folder_path AND m.uid = cm.uid
+         JOIN messages_fts f ON f.rowid = m.id
+        WHERE f.body LIKE ? ESCAPE '\\'
+        ORDER BY cm.sent_at DESC, cm.id DESC LIMIT ${HIT_SCAN_LIMIT}`,
+    )
+    .all(needle, pattern) as Array<Record<string, unknown>>;
+  const lower = needle.toLowerCase();
+  const found: TextHit[] = [];
+  for (const r of rows) {
+    const around = str(r.around);
+    const snippet = around !== null && around.toLowerCase().includes(lower) ? around : str(r.subject);
+    if (snippet !== null) found.push({ conversationId: String(r.conversation_id), sentAt: str(r.sent_at), snippet });
+  }
+  return found;
 }
 
 export interface ConversationDetailOptions {
