@@ -15,6 +15,7 @@ import { _ } from '@curlew/protocol';
 import { accountsAdd } from '../core/actions/accounts.ts';
 import { backendsEnable, backendsList } from '../core/actions/backends.ts';
 import { addableProtocols, mailProtocol, needsTerms, type AddableProtocol } from './account-add-model.ts';
+import { chatOnly } from '../core/platform.ts';
 import { inSandbox } from '../core/lib/sandbox.ts';
 import { restartDaemonIfRunning } from './accounts-daemon.ts';
 import { createSurfacePrompter, type PromptStep, type SurfacePrompter } from './account-prompter.ts';
@@ -296,7 +297,7 @@ export function pushAddAccountPage(deps: AddAccountDeps): void {
     mail.add(own);
   }
   // A Flatpak cannot see GNOME Online Accounts (ADR 0011), so the shortcut would lead nowhere.
-  if (!inSandbox()) {
+  if (!inSandbox() && !chatOnly()) {
     const goa = new Adw.ActionRow({
       title: _('GNOME Online Accounts'),
       subtitle: _('Use an account you already set up in GNOME Settings'),
@@ -311,7 +312,8 @@ export function pushAddAccountPage(deps: AddAccountDeps): void {
 
   const content = new Adw.PreferencesPage();
   content.add(chats);
-  content.add(mail);
+  // Chat-only platforms have no mail source at all, so the group would be empty.
+  if (mailEntry || (!inSandbox() && !chatOnly())) content.add(mail);
 
   const toolbar = new Adw.ToolbarView();
   toolbar.add_top_bar(new Adw.HeaderBar());

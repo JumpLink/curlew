@@ -9,6 +9,7 @@ import { SIGNAL_MANIFEST, SignalBackend } from '@curlew/signal';
 import { TELEGRAM_MANIFEST, TelegramBackend } from '@curlew/telegram';
 import { WHATSAPP_MANIFEST, WhatsAppBackend } from '@curlew/whatsapp';
 import { XMPP_MANIFEST, XmppBackend } from '@curlew/xmpp';
+import { backendAvailable, currentPlatform } from '../platform.ts';
 import { BackendRegistry, type BackendPlugin } from './registry.ts';
 
 export const BUILTIN_PLUGINS: readonly BackendPlugin[] = [
@@ -20,6 +21,7 @@ export const BUILTIN_PLUGINS: readonly BackendPlugin[] = [
   { manifest: SIGNAL_MANIFEST, create: (context) => new SignalBackend(context) },
 ];
 
-export function builtinRegistry(): BackendRegistry {
-  return new BackendRegistry(BUILTIN_PLUGINS);
+/** The backends that can run on `platform`; on Windows and macOS that is every chat protocol, not mail. */
+export function builtinRegistry(platform = currentPlatform()): BackendRegistry {
+  return new BackendRegistry(BUILTIN_PLUGINS.filter((p) => backendAvailable(p.manifest.name, platform)));
 }

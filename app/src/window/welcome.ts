@@ -14,6 +14,7 @@ import { openGoaSettings } from './accounts-page.ts';
 import { APP_ID } from './about.ts';
 import { pushProtocolsPage } from './protocols-page.ts';
 import { loadAccountsState } from './accounts-store.ts';
+import { chatOnly } from '../core/platform.ts';
 import { inSandbox } from '../core/lib/sandbox.ts';
 import { deltaChatPageText } from './email-chat-model.ts';
 import {
@@ -22,6 +23,7 @@ import {
   countAccounts,
   mailAccountChoices,
   welcomePages,
+  welcomeTexts,
   welcomeSummary,
   type WelcomePageId,
 } from './welcome-model.ts';
@@ -108,6 +110,7 @@ export function presentWelcome(parent: Gtk.Window | null, onClosed: () => void, 
   const onError = (err: Error) => overlay.add_toast(new Adw.Toast({ title: err.message, timeout: 4 }));
 
   const pages = welcomePages();
+  const texts = welcomeTexts();
   // Pages that show the current state are built when they are reached, not up front.
   const builders = new Map<WelcomePageId, () => Adw.NavigationPage>();
   const next = (from: WelcomePageId) => {
@@ -116,7 +119,7 @@ export function presentWelcome(parent: Gtk.Window | null, onClosed: () => void, 
     else navigation.push(builders.get(following)!());
   };
   const nextButton = (id: WelcomePageId) => pill(_('Next'), true, () => next(id));
-  const hostAccounts = () => !inSandbox();
+  const hostAccounts = () => !inSandbox() && !chatOnly();
 
   builders.set('intro', () =>
     statusPage(
@@ -124,7 +127,7 @@ export function presentWelcome(parent: Gtk.Window | null, onClosed: () => void, 
       _('Welcome'),
       APP_ID,
       _('Welcome to Curlew'),
-      _('Curlew brings your mail and chat accounts together in one conversation list.'),
+      texts.intro,
       [nextButton('intro'), pill(_('Skip'), false, () => dialog.close())],
       new Adw.HeaderBar({ showEndTitleButtons: false, showStartTitleButtons: false }),
     ),
@@ -147,9 +150,7 @@ export function presentWelcome(parent: Gtk.Window | null, onClosed: () => void, 
       _('Protocols'),
       'preferences-system-symbolic',
       _('Choose your protocols'),
-      _(
-        'Mail is on. Switch on a chat protocol to use it; some ask you to read a notice first. You can change this later in Accounts.',
-      ),
+      texts.protocols,
       [choose, nextButton('protocols')],
       new Adw.HeaderBar({ showEndTitleButtons: false }),
     );
@@ -173,9 +174,7 @@ export function presentWelcome(parent: Gtk.Window | null, onClosed: () => void, 
       _('Accounts'),
       'user-info-symbolic',
       _('Add your accounts'),
-      _(
-        'Mail accounts from GNOME Online Accounts appear on their own. Otherwise choose Add Account, then Mail. You can add more later from the menu.',
-      ),
+      texts.accounts,
       [add, pill(_('Done'), false, () => next('accounts'))],
       new Adw.HeaderBar({ showEndTitleButtons: false }),
     );

@@ -15,6 +15,7 @@ import Gtk from 'gi://Gtk?version=4.0';
 import { _, _n, fmt } from '@curlew/protocol';
 
 import { configPath } from '@curlew/store';
+import { chatOnly } from '../core/platform.ts';
 import { loadConfig } from '../core/config.ts';
 import type { SearchScope } from '../core/lib/search-scope.ts';
 import { hiddenMailNote } from './email-chat-model.ts';
@@ -402,7 +403,7 @@ export function createConversationList(
     if (sections.length === 0) {
       const none = entries.length === 0;
       empty.set_title(none ? _('No conversations yet') : _('No matches'));
-      const hidden = !loadConfig(configPath()).ui.showAllEmails;
+      const hidden = !chatOnly() && !loadConfig(configPath()).ui.showAllEmails;
       const synced = _(
         'Conversations appear here after Curlew has synced an account. Run "curlew sync" first.',
       );

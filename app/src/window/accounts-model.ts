@@ -10,6 +10,7 @@
 import type { BackendAccount, GnomeAccount } from '@curlew/protocol';
 import { _ } from '@curlew/protocol';
 
+import { backendAvailable, currentPlatform } from '../core/platform.ts';
 import type { BackendStatus } from '../core/backends/registry.ts';
 import type { DaemonAccountEntry, DaemonAccountState } from '../core/lib/daemon-bus.ts';
 import { protocolIcon, protocolLabel } from './conversation-list-model.ts';
@@ -154,17 +155,21 @@ function mailRows(load: AccountsLoadState, daemon: AccountsDaemonState): Account
 }
 
 /** Build the full page state from loaded accounts and live daemon state. */
-export function buildProtocolGroups(load: AccountsLoadState, daemon: AccountsDaemonState): AccountsPageState {
-  const groups: ProtocolGroup[] = [
-    {
+export function buildProtocolGroups(
+  load: AccountsLoadState,
+  daemon: AccountsDaemonState,
+  platform = currentPlatform(),
+): AccountsPageState {
+  const groups: ProtocolGroup[] = [];
+  if (backendAvailable('mail', platform))
+    groups.push({
       backend: 'mail',
       label: protocolLabel('mail'),
       icon: protocolIcon('mail'),
       rows: mailRows(load, daemon),
       error: load.goaAccounts.error,
       isGoa: load.goaAccounts.accounts.some((account) => account.capabilities.mail),
-    },
-  ];
+    });
 
   const enabledChat = new Set(load.backends.filter((b) => b.enabled && b.name !== 'mail').map((b) => b.name));
   for (const result of load.chatAccounts) {

@@ -8,6 +8,7 @@ import Gio from 'gi://Gio?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 
+import { chatOnly } from '../core/platform.ts';
 import type { AccountRow, AccountStatus, AccountsPageState, ProtocolGroup } from './accounts-model.ts';
 
 export interface AccountsPage {
@@ -152,7 +153,7 @@ export function createAccountsPage(
   const emptyPage = new Adw.StatusPage({
     iconName: 'user-info-symbolic',
     title: _('No accounts'),
-    description: _('Add a chat account or a mail account.'),
+    description: chatOnly() ? _('Add a chat account.') : _('Add a chat account or a mail account.'),
   });
   const emptyAdd = new Gtk.Button({
     label: _('Add Account'),

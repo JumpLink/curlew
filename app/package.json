@@ -4,7 +4,7 @@
   "license": "AGPL-3.0-or-later",
   "private": true,
   "type": "module",
-  "description": "Curlew app: the `curlew` binary — CLI + MCP frontends over the @curlew/* packages, bundled to a single .gjs.mjs and run on GJS via gjsify.",
+  "description": "Curlew app: a multi-protocol messenger (mail, Signal, WhatsApp, Telegram, XMPP, Matrix) with a GTK window, a background daemon, a CLI and an optional MCP server, bundled for GJS via gjsify.",
   "main": "src/index.ts",
   "exports": {
     ".": "./src/index.ts"
@@ -58,7 +58,7 @@
       "license": {
         "project": "AGPL-3.0-or-later"
       },
-      "description": "Curlew brings your mail and your chats from Telegram, Signal, WhatsApp, Matrix and XMPP into one list, with one conversation per person. Optional AI access through MCP is off by default. Contacts and calendar through GNOME Online Accounts are a feature of the Linux host build only.",
+      "description": "Curlew brings your chats from Telegram, Signal, WhatsApp, Matrix and XMPP into one list, with one conversation per person. On Linux it also reads your mail; the macOS and Windows packages offer the chat protocols only. Contacts and calendar through GNOME Online Accounts are a feature of the Linux host build only. Optional AI access through MCP is off by default.",
       "icon": "data/icons",
       "extraFiles": {
         "share/icons/hicolor/scalable/apps/curlew-protocol-mail.svg": "data/protocol-icons/hicolor/scalable/apps/curlew-protocol-mail.svg",
