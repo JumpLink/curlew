@@ -21,6 +21,19 @@
 # `~/.local/bin/curlew` and never touches units.
 set -eu
 
+# `--no-icons` leaves the icons alone, `--remove-icons` deletes the copies this script
+# installed. A source-tree run finds its icons in app/data (main.ts adds them as a search
+# path), but an installed copy under ~/.local/share/icons wins over that path and keeps showing
+# the OLD icon after app/data changed: docs/release/flathub-checklist.md, "Icons".
+icons=install
+for arg in "$@"; do
+	case "$arg" in
+	--no-icons) icons=skip ;;
+	--remove-icons) icons=remove ;;
+	*) echo "usage: $0 [--no-icons|--remove-icons]" >&2; exit 2 ;;
+	esac
+done
+
 : "${DESTDIR:=}"
 : "${PREFIX:=${XDG_DATA_HOME:-$HOME/.local/share}}"
 root="${DESTDIR}${PREFIX}"
@@ -33,13 +46,19 @@ install -Dm644 "$here/app/data/eu.jumplink.curlew.desktop" \
 	"$root/applications/eu.jumplink.curlew.desktop"
 install -Dm644 "$here/app/data/eu.jumplink.curlew.metainfo.xml" \
 	"$root/metainfo/eu.jumplink.curlew.metainfo.xml"
-install -Dm644 "$here/app/data/icons/hicolor/scalable/apps/eu.jumplink.curlew.svg" \
-	"$root/icons/hicolor/scalable/apps/eu.jumplink.curlew.svg"
-install -Dm644 "$here/app/data/icons/hicolor/symbolic/apps/eu.jumplink.curlew-symbolic.svg" \
-	"$root/icons/hicolor/symbolic/apps/eu.jumplink.curlew-symbolic.svg"
-for protocol_icon in "$here"/app/data/protocol-icons/hicolor/scalable/apps/curlew-protocol-*.svg; do
-	install -Dm644 "$protocol_icon" "$root/icons/hicolor/scalable/apps/$(basename "$protocol_icon")"
-done
+if [ "$icons" = remove ]; then
+	rm -f "$root/icons/hicolor/scalable/apps/eu.jumplink.curlew.svg" \
+		"$root/icons/hicolor/symbolic/apps/eu.jumplink.curlew-symbolic.svg" \
+		"$root"/icons/hicolor/scalable/apps/curlew-protocol-*.svg
+elif [ "$icons" = install ]; then
+	install -Dm644 "$here/app/data/icons/hicolor/scalable/apps/eu.jumplink.curlew.svg" \
+		"$root/icons/hicolor/scalable/apps/eu.jumplink.curlew.svg"
+	install -Dm644 "$here/app/data/icons/hicolor/symbolic/apps/eu.jumplink.curlew-symbolic.svg" \
+		"$root/icons/hicolor/symbolic/apps/eu.jumplink.curlew-symbolic.svg"
+	for protocol_icon in "$here"/app/data/protocol-icons/hicolor/scalable/apps/curlew-protocol-*.svg; do
+		install -Dm644 "$protocol_icon" "$root/icons/hicolor/scalable/apps/$(basename "$protocol_icon")"
+	done
+fi
 
 # The two caches are what a desktop shell actually reads. Both tools are optional:
 # without `update-desktop-database` the entry still launches, it just does not

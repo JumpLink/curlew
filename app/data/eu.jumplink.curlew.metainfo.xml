@@ -26,6 +26,18 @@
     <binary>curlew</binary>
   </provides>
   <content_rating type="oars-1.1"/>
+  <branding>
+    <color type="primary" scheme_preference="light">#f66151</color>
+    <color type="primary" scheme_preference="dark">#a51d2d</color>
+  </branding>
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+  <recommends>
+    <control>keyboard</control>
+    <control>pointing</control>
+    <control>touch</control>
+  </recommends>
   <categories>
     <category>Network</category>
     <category>Chat</category>
