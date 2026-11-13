@@ -2,6 +2,8 @@ import { describe, expect, it } from '@gjsify/unit';
 
 import { defaultConfig, parseConfig } from '../../../src/core/config.ts';
 import {
+  deltaChatPageText,
+  emailChatExplanation,
   hiddenMailNote,
   shouldShowEmailChatHint,
   withHintSeen,
@@ -24,6 +26,13 @@ export default async () => {
 
     it('names the switch that brings ordinary mail back', () => {
       expect(hiddenMailNote().includes('Show all emails')).toBe(true);
+    });
+
+    it('puts the explanation and the hidden-mail note on the welcome Delta Chat page', () => {
+      const text = deltaChatPageText();
+      expect(text.startsWith(emailChatExplanation())).toBe(true);
+      expect(text.endsWith(hiddenMailNote())).toBe(true);
+      expect(text.includes('\n\n')).toBe(true);
     });
 
     it('records an account once', () => {

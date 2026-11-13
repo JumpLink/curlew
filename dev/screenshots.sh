@@ -33,6 +33,8 @@ MOTIFS=(
   "protocols-off|900x640|off|CURLEW_WINDOW_OPEN_PROTOCOLS=1"
   "agent-access|900x640|demo|CURLEW_WINDOW_OPEN_ACCESS=1"
   "welcome|360x740|empty|CURLEW_WINDOW_OPEN_WELCOME=1"
+  "welcome-delta-chat|360x740|demo|CURLEW_WINDOW_OPEN_WELCOME=delta-chat"
+  "email-chat|900x640|demo|CURLEW_WINDOW_OPEN=c3"
 )
 
 BUILD=0 CHECK=0 ONLY="" LANGS=(en de) SCHEMES=(light dark)

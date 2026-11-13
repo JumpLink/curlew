@@ -50,7 +50,7 @@ import { presentNewConversation } from './new-conversation.ts';
 import { draftEntry, existingEntry, routeAccounts } from './new-conversation-model.ts';
 import { presentPreferences } from './preferences-dialog.ts';
 import { presentWelcome } from './welcome.ts';
-import { countAccounts, shouldShowWelcome } from './welcome-model.ts';
+import { countAccounts, shouldShowWelcome, welcomeStartPage } from './welcome-model.ts';
 import { loadAccountsState } from './accounts-store.ts';
 import { inSandbox } from '../core/lib/sandbox.ts';
 import { loadAgentAccess } from './agent-access-store.ts';
@@ -380,6 +380,16 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   const welcome = new Gio.SimpleAction({ name: 'welcome' });
   welcome.connect('activate', () => presentWelcome(window, () => refresh()));
   window.add_action(welcome);
+  // The screenshot hook `CURLEW_WINDOW_OPEN_WELCOME=<page>` opens one page directly.
+  const welcomePage = new Gio.SimpleAction({
+    name: 'welcome-page',
+    parameterType: GLib.VariantType.new('s'),
+  });
+  welcomePage.connect('activate', (_a, parameter) => {
+    const start = welcomeStartPage(parameter?.get_string()[0]);
+    presentWelcome(window, () => refresh(), start);
+  });
+  window.add_action(welcomePage);
 
   let labels = indexAccountLabels();
   let labelled = false;

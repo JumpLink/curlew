@@ -89,3 +89,9 @@ export function countAccounts(load: AccountsLoadState): number {
 export function shouldShowWelcome(welcomeDone: boolean | undefined, accountCount: number): boolean {
   return welcomeDone !== true && accountCount === 0;
 }
+
+/** The page a screenshot asks for: `1` is the first page, an id opens that page, anything else none. */
+export function welcomeStartPage(value: string | undefined): WelcomePageId | undefined {
+  if (value === '1') return welcomePages()[0];
+  return welcomePages().find((id) => id === value);
+}

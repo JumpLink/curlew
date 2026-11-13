@@ -18,6 +18,8 @@ File name: `<motif>.<lang>.<scheme>.png`.
 | `protocols`, `protocols-off` | protocol list, on / all off | 900×640 |
 | `agent-access` | agent access dialog | 900×640 |
 | `welcome` | first-run welcome | 360×740 |
+| `welcome-delta-chat` | welcome page that explains Delta Chat mode (`CURLEW_WINDOW_OPEN_WELCOME=delta-chat`) | 360×740 |
+| `email-chat` | email chat thread (Sam Fischer, no voice notes or stickers) | 900×640 |
 
 ## For the metainfo (Flathub)
 
@@ -29,6 +31,8 @@ captions are one sentence without a full stop. Suggested set, light scheme:
 3. `contact.en.light.png` / `.de.light.png`
 4. `accounts.en.light.png` / `.de.light.png`
 5. `conversation-narrow.en.light.png` / `.de.light.png` (mobile)
+6. `email-chat.en.light.png` / `.de.light.png` (Delta Chat style chat over mail)
+7. `welcome-delta-chat.en.light.png` / `.de.light.png` (mobile)
 
 Dark variants (`*.dark.png`) can be added as `<image type="source" …>` with a `color-scheme` hint.
 The pictures without a `<lang>.<scheme>` in the name (`conversations.png`, `agent-access.png`, …) are
