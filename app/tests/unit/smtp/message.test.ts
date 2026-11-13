@@ -42,6 +42,31 @@ export default async () => {
       expect(decodeRfc2047(line![1])).toBe('Grüße aus Köln');
     });
 
+    await it('writes the Delta Chat headers of spec 0.37 for a new chat message', async () => {
+      const raw = decode(
+        await buildMessage({ ...MESSAGE, subject: 'Message from alice', text: 'Hi\n', emailChat: true }),
+      );
+      expect(/^Chat-Version: 1\.0\r?$/m.test(raw)).toBe(true);
+      expect(/^Subject: Message from alice\r?$/m.test(raw)).toBe(true);
+      expect(/^Content-Type: text\/plain/m.test(raw)).toBe(true);
+      expect(/^Chat-Version/m.test(decode(await buildMessage(MESSAGE)))).toBe(false);
+    });
+
+    await it('threads a chat reply with In-Reply-To and References', async () => {
+      const raw = decode(
+        await buildMessage({
+          ...MESSAGE,
+          subject: 'Re: Message from alice',
+          emailChat: true,
+          inReplyTo: '<a@example.invalid>',
+          references: ['<r@example.invalid>', '<a@example.invalid>'],
+        }),
+      );
+      expect(/^Chat-Version: 1\.0\r?$/m.test(raw)).toBe(true);
+      expect(/^In-Reply-To: <a@example\.invalid>\r?$/m.test(raw)).toBe(true);
+      expect(/^References: <r@example\.invalid> <a@example\.invalid>\r?$/m.test(raw)).toBe(true);
+    });
+
     await it('carries an attachment as base64, byte for byte', async () => {
       const content = Uint8Array.from({ length: 256 }, (_, i) => i);
       const raw = decode(

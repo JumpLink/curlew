@@ -38,6 +38,7 @@
 
 ### Changed
 
+- A new Delta Chat mail message now has the subject `Message from <name>` (Delta Chat spec 0.37, name = the part of the account address before the `@`) instead of `Chat: <first words>`, so a plain mail client no longer shows the start of the chat text.
 - Protocol badges are coloured now (Telegram blue, WhatsApp green, Signal blue, Matrix dark with green, XMPP orange, Mail purple) instead of neutral symbols; our own drawings, not the official logos.
 - New app icon: a fluffy curlew chick in the messenger bubble, with a matching symbolic icon.
 - The style (system, light, dark) is a segmented control in the preferences instead of three circles.
