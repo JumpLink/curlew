@@ -226,7 +226,7 @@ what keeps the pane from freezing on a long history.
 
 Sending from the window is the person's own action (ADR 0008), so it asks no grant. A mail account sends
 **email chats** after Delta Chat's convention only when the person switched on *Use for Delta Chat* on its
-account page (`deltaChatAccounts` in the config, off by default); otherwise it sends ordinary mail. An email chat has: a `Chat-Version: 1.0` header, a generic
+account page (`mailAccounts.<id>.deltaChat` in the config, off by default; the old `deltaChatAccounts` list is still read); otherwise it sends ordinary mail. An email chat has: a `Chat-Version: 1.0` header, a generic
 subject (`Message from <sender name>` per Delta Chat spec 0.37, or `Re: <subject>` when answering ordinary mail) and normal `In-Reply-To`/`References` threading, so any mail
 client still shows a readable thread. The index records the marker on receipt (`email_chat`),
 which is what *Show all emails* filters on. No encryption yet (curlew#145). A received message whose body is
@@ -262,7 +262,7 @@ every config key and where it is changed; its types follow `UiConfig` and `Curle
 | `ui.searchScope` | Conversation list, search scope |
 | `backends.<name>.enabled`, `termsAcceptedAt` | Accounts: Protocols |
 | `disabledAccounts` | Account page: Use this account (pauses any account, mail included: hidden, no sync, no send; confirmed with the count of hidden chats) |
-| `deltaChatAccounts` | Account page (mail): Use for Delta Chat; Accounts: Protocols: Delta Chat |
+| `mailAccounts` | Account page (mail): Use for Delta Chat, Show ordinary email; Accounts: Protocols: Delta Chat; Welcome: Delta Chat page |
 | `encryption` | Account page (XMPP): Require encryption (whole account; single-peer entries stay file-only) |
 | `agentAccess`, `grants` | Agent access dialog |
 | `mergedPeople`, `declinedMerges`, `pins`, `contactChoices` | Contact page, merge assistant, protocol picker |
@@ -310,7 +310,7 @@ The window reads these environment variables (all in `app/src/window/main.ts`):
 `CURLEW_WINDOW_OPEN_ACCOUNTS=1`, `CURLEW_WINDOW_OPEN_PROTOCOLS=1` and `CURLEW_WINDOW_OPEN_WELCOME=1`,
 `CURLEW_DEBUG_STALL=1` (logs every main-loop stall over `CURLEW_DEBUG_STALL_MS`, default 50, and the timing of the list refresh),
 which opens the first-run welcome screen (`app/src/window/welcome.ts`; pages listed in
-`welcome-model.ts`; shown once, tracked by `ui.welcomeDone`). Pages: intro, protocols, accounts, Delta Chat (one switch per mail account, off by default, text from `email-chat-model.ts`), AI (off by default) and a summary; no page forces an input, skipping keeps the safe defaults. The email-chat hint (`Adw.Banner` above a thread, once per account in `ui.emailChatHintSeen`) shows only where the other side sent `Chat-Version`; "Show all emails" is a list filter only. On Windows and macOS (`chatOnly()` in `app/src/core/platform.ts`) the welcome screen has no Delta Chat page and no mail wording, Accounts has no mail group, Preferences no "Show all emails". `CURLEW_NO_HOST_ACCOUNTS=1` hides the
+`welcome-model.ts`; shown once, tracked by `ui.welcomeDone`). Pages: intro, protocols, accounts, Delta Chat (two switches per mail account, Delta Chat off and ordinary email on by default, text from `email-chat-model.ts`), AI (off by default) and a summary; no page forces an input, skipping keeps the safe defaults. The email-chat hint (`Adw.Banner` above a thread, once per account in `ui.emailChatHintSeen`) shows only where the other side sent `Chat-Version`; "Show all emails" is a list filter only. On Windows and macOS (`chatOnly()` in `app/src/core/platform.ts`) the welcome screen has no Delta Chat page and no mail wording, Accounts has no mail group, Preferences no "Show all emails". `CURLEW_NO_HOST_ACCOUNTS=1` hides the
 host's GNOME Online Accounts, so the Accounts dialog never shows real ones. The language comes from
 `LC_ALL`/`LANG`/`LANGUAGE`, which the script sets. A smaller `--size` cuts off the window shadow.
 

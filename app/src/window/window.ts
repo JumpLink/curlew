@@ -17,7 +17,7 @@ import { presentAccounts } from './accounts-dialog.ts';
 import { presentAgentAccess } from './agent-access-dialog.ts';
 import { listStamp, loadConversationEntries, searchConversationText } from './conversation-list-store.ts';
 import { choiceOfEntry, type ListEntry } from './conversation-list-model.ts';
-import { aiEnabled, loadConfig, saveConfig } from '../core/config.ts';
+import { aiEnabled, deltaChatAccountIds, loadConfig, saveConfig } from '../core/config.ts';
 import { DEFAULT_SEARCH_SCOPE } from '../core/lib/search-scope.ts';
 import { candidateSets } from './merge-candidates-model.ts';
 import { timed } from './stall-probe.ts';
@@ -309,7 +309,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     split.set_show_content(true);
   };
   const startConversation = () => {
-    const routes = routeAccounts(shown, loadConfig().deltaChatAccounts);
+    const routes = routeAccounts(shown, deltaChatAccountIds(loadConfig()));
     presentNewConversation(window, routes, contactsForPicker, (contact) => {
       const existing = existingEntry(shown, contact);
       if (existing) {

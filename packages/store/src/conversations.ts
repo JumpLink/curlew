@@ -837,6 +837,8 @@ export interface ConversationQuery {
   accountId?: string;
   /** Accounts left out (paused ones): `account_id NOT IN (...)`. */
   excludeAccounts?: readonly string[];
+  /** Accounts that show only email chats (plain mail switched off): their other mail threads are left out. */
+  chatOnlyAccounts?: readonly string[];
   backend?: string;
   /** Every protocol but this one: a window lists chats whole and mail by its own limit. */
   excludeBackend?: string;
@@ -1079,6 +1081,10 @@ export function listConversations(db: IndexDatabase, query: ConversationQuery = 
   if (query.excludeAccounts && query.excludeAccounts.length > 0) {
     where.push(`account_id NOT IN (${placeholders(query.excludeAccounts.length)})`);
     params.push(...query.excludeAccounts);
+  }
+  if (query.chatOnlyAccounts && query.chatOnlyAccounts.length > 0) {
+    where.push(`(backend <> 'mail' OR email_chat = 1 OR account_id NOT IN (${placeholders(query.chatOnlyAccounts.length)}))`);
+    params.push(...query.chatOnlyAccounts);
   }
   if (query.backend) {
     where.push('backend = ?');

@@ -10,7 +10,7 @@ import type { TermsNotice } from '@curlew/protocol';
 import { _, _n, fmt } from '@curlew/protocol';
 
 import type { BackendStatus } from '../core/backends/registry.ts';
-import { type CurlewConfig, setDeltaChatIn } from '../core/config.ts';
+import { type CurlewConfig, deltaChatAccountIds, setDeltaChatIn } from '../core/config.ts';
 import { DELTA_CHAT } from '../core/visibility.ts';
 import { protocolIcon, protocolLabel } from './conversation-list-model.ts';
 
@@ -88,10 +88,10 @@ export interface DeltaChatRow {
 
 export function deltaChatRow(
   backends: readonly BackendStatus[],
-  config: Pick<CurlewConfig, 'deltaChatAccounts'>,
+  config: Pick<CurlewConfig, 'mailAccounts'>,
 ): DeltaChatRow {
   const mailOn = backends.find((b) => b.name === 'mail')?.enabled === true;
-  const count = config.deltaChatAccounts?.length ?? 0;
+  const count = deltaChatAccountIds(config).length;
   return {
     backend: DELTA_CHAT,
     label: protocolLabel(DELTA_CHAT),

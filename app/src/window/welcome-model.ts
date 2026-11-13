@@ -3,7 +3,14 @@
 import { _, _n, fmt } from '@curlew/protocol';
 
 import { chatOnly, currentPlatform, type PlatformName } from '../core/platform.ts';
-import { aiEnabled, setDeltaChatIn, type CurlewConfig } from '../core/config.ts';
+import {
+  aiEnabled,
+  deltaChatAccountIds,
+  plainMailOn,
+  setDeltaChatIn,
+  setPlainMailIn,
+  type CurlewConfig,
+} from '../core/config.ts';
 import { buildProtocolGroups, type AccountsLoadState } from './accounts-model.ts';
 import { protocolLabel } from './conversation-list-model.ts';
 
@@ -69,6 +76,11 @@ export function applyDeltaChatChoice(config: CurlewConfig, accountId: string, on
   setDeltaChatIn(config, accountId, on);
 }
 
+/** Show a mail account's ordinary email or only its email chats; writes the one config field and nothing else. */
+export function applyPlainMailChoice(config: CurlewConfig, accountId: string, on: boolean): void {
+  setPlainMailIn(config, accountId, on);
+}
+
 /** Set the AI switch; an explicit value, so a later change of defaults cannot flip it. */
 export function applyAiChoice(config: CurlewConfig, on: boolean): void {
   config.ui.ai = on;
@@ -84,7 +96,8 @@ export function welcomeSummary(config: CurlewConfig, accountCount: number): Summ
   const protocols = Object.entries(config.backends)
     .filter(([, backend]) => backend.enabled)
     .map(([name]) => protocolLabel(name));
-  const deltaChat = config.deltaChatAccounts?.length ?? 0;
+  const deltaChat = deltaChatAccountIds(config).length;
+  const chatOnly = Object.keys(config.mailAccounts ?? {}).filter((id) => !plainMailOn(config, id)).length;
   return [
     { title: _('Protocols'), value: protocols.length > 0 ? protocols.join(', ') : _('None') },
     {
@@ -100,6 +113,13 @@ export function welcomeSummary(config: CurlewConfig, accountCount: number): Summ
         deltaChat === 0
           ? _('Off for every account')
           : fmt(_n('On for {count} account', 'On for {count} accounts', deltaChat), { count: deltaChat }),
+    },
+    {
+      title: _('Ordinary email'),
+      value:
+        chatOnly === 0
+          ? _('On for every account')
+          : fmt(_n('Off for {count} account', 'Off for {count} accounts', chatOnly), { count: chatOnly }),
     },
     { title: _('AI features'), value: aiEnabled(config) ? _('On') : _('Off') },
   ];

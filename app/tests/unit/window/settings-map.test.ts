@@ -22,7 +22,7 @@ const FULL = {
     emailChatHintSeen: ['mail-a'],
     searchScope: 'names',
   },
-  deltaChatAccounts: ['mail-a'],
+  mailAccounts: { 'mail-a': { deltaChat: true } },
 };
 
 export default async () => {

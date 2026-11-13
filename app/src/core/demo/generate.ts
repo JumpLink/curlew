@@ -597,7 +597,7 @@ export function generateDemo(dir: string, now: number = Date.now()): DemoSummary
       whatsapp: { enabled: true, termsAcceptedAt: terms },
     },
     ui: { welcomeDone: true, ai: true, showAllEmails: true, notifications: 'preview' },
-    deltaChatAccounts: ['mail-demo1'],
+    mailAccounts: { 'mail-demo1': { deltaChat: true } },
     // A few agent-access rules, so the dialog shows a contact rule and a whole-account rule.
     agentAccess: {
       askWithoutRule: true,

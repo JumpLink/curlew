@@ -103,10 +103,13 @@ export interface CurlewConfig {
    */
   disabledAccounts: string[];
   /**
-   * Ids of the mail accounts the person opted into Delta Chat: only their sent mail carries the
-   * `Chat-Version` marker. Absent or empty means every mail account sends ordinary mail.
+   * Per mail account, by account id: `deltaChat` opts the account into Delta Chat (only its sent
+   * mail carries the `Chat-Version` marker, default off); `plainMail: false` shows only the
+   * threads Delta Chat can talk (email chats) of that account and beats `ui.showAllEmails`
+   * (default on). Only non-default values are stored; absent means ordinary mail everywhere. The
+   * older `deltaChatAccounts` list is still read and folded in here.
    */
-  deltaChatAccounts?: string[];
+  mailAccounts?: Record<string, MailAccountOptions>;
   /**
    * People the person merged into one by hand: each group lists directory participant ids.
    * Presentation only and local — the address book is never written, no message is rewritten.
@@ -153,6 +156,12 @@ export interface ContactChoice {
   background?: BackgroundChoice;
 }
 
+/** What the person chose for one mail account; see `CurlewConfig.mailAccounts`. */
+export interface MailAccountOptions {
+  deltaChat?: boolean;
+  plainMail?: boolean;
+}
+
 const KNOWN_KEYS = [
   'backends',
   'ui',
@@ -162,6 +171,7 @@ const KNOWN_KEYS = [
   'encryption',
   'disabledAccounts',
   'deltaChatAccounts',
+  'mailAccounts',
   'mergedPeople',
   'declinedMerges',
   'pins',
@@ -206,10 +216,48 @@ export function aiEnabled(config: Pick<CurlewConfig, 'ui' | 'grants' | 'agentAcc
   );
 }
 
-/** Opt a mail account into Delta Chat or out again, in memory; off is the absence from the list. */
+/** Set one option of a mail account in memory; the default value is stored as absence. */
+function setMailOption(
+  config: CurlewConfig,
+  accountId: string,
+  key: keyof MailAccountOptions,
+  value: boolean,
+): void {
+  const { [accountId]: current, ...others } = config.mailAccounts ?? {};
+  const next: MailAccountOptions = { ...current };
+  if (value === (key === 'plainMail')) delete next[key];
+  else next[key] = value;
+  config.mailAccounts = Object.keys(next).length > 0 ? { ...others, [accountId]: next } : others;
+}
+
+/**
+ * Opt a mail account into Delta Chat or out again, in memory. Out also brings its ordinary email
+ * back: an account that lists only email chats must be able to send them.
+ */
 export function setDeltaChatIn(config: CurlewConfig, accountId: string, on: boolean): void {
-  const rest = (config.deltaChatAccounts ?? []).filter((id) => id !== accountId);
-  config.deltaChatAccounts = on ? [...rest, accountId] : rest;
+  setMailOption(config, accountId, 'deltaChat', on);
+  if (!on) setMailOption(config, accountId, 'plainMail', true);
+}
+
+/**
+ * Show a mail account's ordinary email or only its email chats, in memory. Only email chats
+ * means the account sends them, so that opts it into Delta Chat too.
+ */
+export function setPlainMailIn(config: CurlewConfig, accountId: string, on: boolean): void {
+  setMailOption(config, accountId, 'plainMail', on);
+  if (!on) setMailOption(config, accountId, 'deltaChat', true);
+}
+
+/** Ids of the mail accounts opted into Delta Chat. */
+export function deltaChatAccountIds(config: Pick<CurlewConfig, 'mailAccounts'>): string[] {
+  return Object.entries(config.mailAccounts ?? {})
+    .filter(([, options]) => options.deltaChat === true)
+    .map(([id]) => id);
+}
+
+/** Does this mail account show ordinary email? On unless `plainMail` is false. */
+export function plainMailOn(config: Pick<CurlewConfig, 'mailAccounts'>, accountId: string): boolean {
+  return config.mailAccounts?.[accountId]?.plainMail !== false;
 }
 
 /** The policy agents are held to: the configured one, or one that denies everything when AI is off. */
@@ -338,7 +386,7 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   const agentAccess = access.policy;
   const encryption = parseEncryption(obj.encryption);
   const disabledAccounts = parseDisabledAccounts(obj.disabledAccounts);
-  const deltaChatAccounts = parseDeltaChatAccounts(obj.deltaChatAccounts);
+  const mailAccounts = parseMailAccounts(obj.mailAccounts, parseDeltaChatAccounts(obj.deltaChatAccounts));
   const mergedPeople = parseIdGroups(obj.mergedPeople, 'mergedPeople');
   const declinedMerges = parseIdGroups(obj.declinedMerges, 'declinedMerges');
   const pins = parsePins(obj.pins);
@@ -357,7 +405,7 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     agentAccess,
     encryption,
     disabledAccounts,
-    ...(deltaChatAccounts.length > 0 ? { deltaChatAccounts } : {}),
+    ...(Object.keys(mailAccounts).length > 0 ? { mailAccounts } : {}),
     mergedPeople,
     declinedMerges,
     pins,
@@ -371,6 +419,39 @@ function parseDeltaChatAccounts(raw: unknown): string[] {
   if (!Array.isArray(raw) || raw.some((v) => typeof v !== 'string' || v === ''))
     throw new Error('config.deltaChatAccounts must be a list of mail account ids');
   return [...new Set(raw as string[])];
+}
+
+function parseMailAccounts(
+  raw: unknown,
+  legacyDeltaChat: readonly string[],
+): Record<string, MailAccountOptions> {
+  const bad = () =>
+    new Error('config.mailAccounts must map mail account ids to {deltaChat?, plainMail?} booleans');
+  if (raw !== undefined && (typeof raw !== 'object' || raw === null || Array.isArray(raw))) throw bad();
+  const out: Record<string, MailAccountOptions> = {};
+  const entries = Object.entries((raw ?? {}) as Record<string, unknown>);
+  for (const [id, value] of entries) {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) throw bad();
+    const { deltaChat, plainMail } = value as Record<string, unknown>;
+    if (
+      (deltaChat !== undefined && typeof deltaChat !== 'boolean') ||
+      (plainMail !== undefined && typeof plainMail !== 'boolean')
+    )
+      throw bad();
+    // Lists only email chats, so it must send them: `plainMail: false` implies `deltaChat`.
+    const options: MailAccountOptions = {
+      ...(deltaChat === true || plainMail === false ? { deltaChat: true } : {}),
+      ...(plainMail === false ? { plainMail } : {}),
+    };
+    if (Object.keys(options).length > 0) out[id] = options;
+  }
+  // The old list: an account it names is opted into Delta Chat, unless mailAccounts says otherwise.
+  for (const id of legacyDeltaChat) {
+    if (typeof (raw as Record<string, { deltaChat?: boolean }> | undefined)?.[id]?.deltaChat === 'boolean')
+      continue;
+    out[id] = { ...out[id], deltaChat: true };
+  }
+  return out;
 }
 
 function parseContactChoices(raw: unknown): Record<string, ContactChoice> {
@@ -475,7 +556,7 @@ export function saveConfig(config: CurlewConfig, path = configPath()): void {
     agentAccess,
     encryption,
     disabledAccounts,
-    deltaChatAccounts,
+    mailAccounts,
     mergedPeople,
     declinedMerges,
     pins,
@@ -499,7 +580,7 @@ export function saveConfig(config: CurlewConfig, path = configPath()): void {
       : {}),
     ...(Object.keys(encryption).length > 0 ? { encryption } : {}),
     ...(disabledAccounts.length > 0 ? { disabledAccounts } : {}),
-    ...(deltaChatAccounts && deltaChatAccounts.length > 0 ? { deltaChatAccounts } : {}),
+    ...(mailAccounts && Object.keys(mailAccounts).length > 0 ? { mailAccounts } : {}),
     ...(mergedPeople.length > 0 ? { mergedPeople } : {}),
     ...(declinedMerges.length > 0 ? { declinedMerges } : {}),
     ...(Object.keys(pins).length > 0 ? { pins } : {}),

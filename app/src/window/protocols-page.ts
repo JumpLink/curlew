@@ -10,7 +10,7 @@ import { _, _n, fmt } from '@curlew/protocol';
 
 import { backendsDisable, backendsEnable, backendsList } from '../core/actions/backends.ts';
 
-import { loadConfig, saveConfig } from '../core/config.ts';
+import { deltaChatAccountIds, loadConfig, saveConfig } from '../core/config.ts';
 import {
   applyDeltaChatAccounts,
   deltaChatRow,
@@ -19,6 +19,8 @@ import {
   type AddableProtocol,
 } from './account-add-model.ts';
 import { loadAccountsState } from './accounts-store.ts';
+import { showAllEmailsSubtitle } from './email-chat-model.ts';
+import { chatOnlyAccountIds } from '../core/visibility.ts';
 import { mailAccountChoices } from './welcome-model.ts';
 import { restartDaemonIfRunning } from './accounts-daemon.ts';
 
@@ -104,7 +106,7 @@ function deltaChatSwitch(deps: ProtocolsPageDeps): Adw.SwitchRow {
   row.connect('notify::active', () => {
     if (busy) return;
     if (!row.get_active()) {
-      const all = (loadConfig(deps.path).deltaChatAccounts ?? []).slice();
+      const all = deltaChatAccountIds(loadConfig(deps.path));
       return save(all, new Set());
     }
     loadAccountsState(deps.path).then(
@@ -144,6 +146,29 @@ function deltaChatSwitch(deps: ProtocolsPageDeps): Adw.SwitchRow {
         sync();
       },
     );
+  });
+  return row;
+}
+
+/** "Show ordinary email": the global list filter, `ui.showAllEmails`; an account's own switch beats it. */
+function plainMailSwitch(deps: ProtocolsPageDeps): Adw.SwitchRow {
+  const config = loadConfig(deps.path);
+  const row = new Adw.SwitchRow({
+    title: _('Show ordinary email'),
+    subtitle: showAllEmailsSubtitle(chatOnlyAccountIds(config).length),
+    active: config.ui.showAllEmails,
+    sensitive: backendsList(deps.path).backends.find((b) => b.name === 'mail')?.enabled === true,
+    useMarkup: false,
+  });
+  row.connect('notify::active', () => {
+    try {
+      const next = loadConfig(deps.path);
+      next.ui.showAllEmails = row.get_active();
+      saveConfig(next, deps.path);
+    } catch (err) {
+      deps.onError(err instanceof Error ? err : new Error(String(err)));
+    }
+    deps.onChanged();
   });
   return row;
 }
@@ -191,6 +216,8 @@ export function pushProtocolsPage(deps: ProtocolsPageDeps): void {
     group.add(row);
     if (protocol.backend === 'mail') group.add(deltaChatSwitch(deps));
   }
+
+  group.add(plainMailSwitch(deps));
 
   const content = new Adw.PreferencesPage();
   content.add(group);

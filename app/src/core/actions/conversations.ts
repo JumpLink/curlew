@@ -17,7 +17,7 @@ import {
   syncStatus,
 } from '@curlew/store';
 import { loadConfig, saveConfig } from '../config.ts';
-import { hiddenAccountIds } from '../visibility.ts';
+import { chatOnlyAccountIds, hiddenAccountIds } from '../visibility.ts';
 import type { AgentAccess } from './access.ts';
 import { requireParticipantsRead } from './message-access.ts';
 import { MAX_STALENESS_HOURS, openIndex } from './index-sync.ts';
@@ -45,6 +45,7 @@ export function conversationsList(params: ConversationsListParams = {}): {
       peopleOnly: params.peopleOnly,
       accountId: params.accountId,
       excludeAccounts: hiddenAccountIds(config),
+      chatOnlyAccounts: chatOnlyAccountIds(config),
       limit: capLimit(params.limit, CONVERSATION_LIMIT),
       overrides: senders,
     });

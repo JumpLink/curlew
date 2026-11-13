@@ -28,7 +28,14 @@ import {
 } from '@curlew/store';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
-import { loadConfig, saveConfig, setDeltaChatIn } from '../config.ts';
+import {
+  deltaChatAccountIds,
+  loadConfig,
+  plainMailOn,
+  saveConfig,
+  setDeltaChatIn,
+  setPlainMailIn,
+} from '../config.ts';
 import { avatarAccountDir } from '../lib/avatar-cache.ts';
 import { DEMO_ACCOUNTS } from '../demo/accounts.ts';
 import { demoActive } from '../demo/active.ts';
@@ -94,7 +101,19 @@ export function accountConversationCount(accountId: string, dbPath = indexDbPath
 
 /** Whether a mail account is opted into Delta Chat; off unless the config lists it. */
 export function deltaChatEnabled(accountId: string, path = configPath()): boolean {
-  return (loadConfig(path).deltaChatAccounts ?? []).includes(accountId);
+  return deltaChatAccountIds(loadConfig(path)).includes(accountId);
+}
+
+/** Whether a mail account shows ordinary email; on unless the config turns it off. */
+export function plainMailEnabled(accountId: string, path = configPath()): boolean {
+  return plainMailOn(loadConfig(path), accountId);
+}
+
+/** Show a mail account's ordinary email or only its email chats. Interactive use only. */
+export function accountSetPlainMail(accountId: string, on: boolean, path = configPath()): void {
+  const config = loadConfig(path);
+  setPlainMailIn(config, accountId, on);
+  saveConfig(config, path);
 }
 
 /** Opt a mail account into Delta Chat or out again. Interactive use only, like switching an account off. */

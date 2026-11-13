@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 17:22+0100\n"
+"POT-Creation-Date: 2026-11-13 17:40+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1848,18 +1848,18 @@ msgstr "Dafür muss Mail eingeschaltet sein"
 msgid "Email chats with people on Delta Chat, ArcaneChat or DeltaTouch"
 msgstr "E-Mail-Chats mit Leuten auf Delta Chat, ArcaneChat oder DeltaTouch"
 
-#: app/src/window/account-add-model.ts:108 app/src/window/protocols-page.ts:40
-#: app/src/window/welcome-model.ts:95
+#: app/src/window/account-add-model.ts:108 app/src/window/protocols-page.ts:42
+#: app/src/window/welcome-model.ts:108
 msgid "{count} account"
 msgid_plural "{count} accounts"
 msgstr[0] "{count} Konto"
 msgstr[1] "{count} Konten"
 
-#: app/src/window/account-add.ts:139 app/src/window/protocols-page.ts:50
+#: app/src/window/account-add.ts:139 app/src/window/protocols-page.ts:52
 msgid "Please read this first"
 msgstr "Bitte zuerst lesen"
 
-#: app/src/window/account-add.ts:145 app/src/window/protocols-page.ts:56
+#: app/src/window/account-add.ts:145 app/src/window/protocols-page.ts:58
 msgid "I understand and accept the risk for my account"
 msgstr "Ich verstehe das Risiko für mein Konto und nehme es in Kauf"
 
@@ -1887,7 +1887,7 @@ msgstr "Konto konnte nicht hinzugefügt werden"
 msgid "Connecting…"
 msgstr "Verbindung wird hergestellt …"
 
-#: app/src/window/account-add.ts:259 app/src/window/protocols-page.ts:38
+#: app/src/window/account-add.ts:259 app/src/window/protocols-page.ts:40
 msgid "Asks you to accept terms first"
 msgstr "Verlangt zuerst deine Zustimmung zu den Bedingungen"
 
@@ -1922,20 +1922,20 @@ msgstr ""
 "Ein Konto verwenden, das du in den GNOME-Einstellungen eingerichtet hast"
 
 #: app/src/window/account-add.ts:321 app/src/window/accounts-page.ts:159
-#: app/src/window/accounts-page.ts:182 app/src/window/welcome.ts:162
+#: app/src/window/accounts-page.ts:182 app/src/window/welcome.ts:163
 msgid "Add Account"
 msgstr "Konto hinzufügen"
 
-#: app/src/window/account-detail.ts:77 app/src/window/agent-access-page.ts:218
+#: app/src/window/account-detail.ts:79 app/src/window/agent-access-page.ts:218
 #: app/src/window/contact-page.ts:393
 msgid "Account"
 msgstr "Konto"
 
-#: app/src/window/account-detail.ts:81
+#: app/src/window/account-detail.ts:83
 msgid "Status"
 msgstr "Status"
 
-#: app/src/window/account-detail.ts:87
+#: app/src/window/account-detail.ts:89
 msgid ""
 "Off keeps the account and its messages, but shows nothing of it and sends "
 "nothing."
@@ -1943,35 +1943,35 @@ msgstr ""
 "Aus behält das Konto und seine Nachrichten, zeigt aber nichts davon an und "
 "sendet nichts."
 
-#: app/src/window/account-detail.ts:89
+#: app/src/window/account-detail.ts:91
 msgid "Use this account"
 msgstr "Dieses Konto verwenden"
 
-#: app/src/window/account-detail.ts:119
+#: app/src/window/account-detail.ts:121
 msgid "Pause this account?"
 msgstr "Dieses Konto pausieren?"
 
-#: app/src/window/account-detail.ts:122
+#: app/src/window/account-detail.ts:124
 #: app/src/window/account-remove-model.ts:24
 #: app/src/window/account-remove-model.ts:37
 #: app/src/window/account-remove-model.ts:71
 #: app/src/window/agent-access-page.ts:234
 #: app/src/window/conversation-list.ts:501
 #: app/src/window/conversation-list.ts:587
-#: app/src/window/conversation-view.ts:744 app/src/window/protocols-page.ts:61
-#: app/src/window/protocols-page.ts:128
+#: app/src/window/conversation-view.ts:744 app/src/window/protocols-page.ts:63
+#: app/src/window/protocols-page.ts:130
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: app/src/window/account-detail.ts:123 app/src/window/audio-player.ts:96
+#: app/src/window/account-detail.ts:125 app/src/window/audio-player.ts:96
 msgid "Pause"
 msgstr "Pause"
 
-#: app/src/window/account-detail.ts:143 app/src/window/welcome.ts:202
+#: app/src/window/account-detail.ts:145 app/src/window/welcome.ts:203
 msgid "Use for Delta Chat"
 msgstr "Für Delta Chat verwenden"
 
-#: app/src/window/account-detail.ts:145
+#: app/src/window/account-detail.ts:147
 msgid ""
 "Messages from this account become email chats. People without Delta Chat see "
 "an ordinary email."
@@ -1979,11 +1979,16 @@ msgstr ""
 "Nachrichten von diesem Konto werden zu E-Mail-Chats. Wer kein Delta Chat "
 "hat, sieht eine gewöhnliche E-Mail."
 
-#: app/src/window/account-detail.ts:165
+#: app/src/window/account-detail.ts:152 app/src/window/protocols-page.ts:157
+#: app/src/window/welcome.ts:209
+msgid "Show ordinary email"
+msgstr "Gewöhnliche E-Mails anzeigen"
+
+#: app/src/window/account-detail.ts:193
 msgid "Require encryption"
 msgstr "Verschlüsselung verlangen"
 
-#: app/src/window/account-detail.ts:166
+#: app/src/window/account-detail.ts:194
 msgid ""
 "Never send plain text from this account; a message to someone without OMEMO "
 "fails instead"
@@ -1991,7 +1996,7 @@ msgstr ""
 "Von diesem Konto nie Klartext senden; eine Nachricht an jemanden ohne OMEMO "
 "schlägt stattdessen fehl"
 
-#: app/src/window/account-detail.ts:181
+#: app/src/window/account-detail.ts:209
 msgid "Remove Account…"
 msgstr "Konto entfernen…"
 
@@ -2086,7 +2091,7 @@ msgid "Could not start the background service: {reason}"
 msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
 #: app/src/window/accounts-dialog.ts:75 app/src/window/accounts-page.ts:195
-#: app/src/window/welcome-model.ts:91 app/src/window/welcome.ts:174
+#: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:175
 #: app/src/window/window.ts:118
 msgid "Accounts"
 msgstr "Konten"
@@ -2115,8 +2120,8 @@ msgstr "Offline"
 msgid "Daemon not running"
 msgstr "Daemon läuft nicht"
 
-#: app/src/window/accounts-page.ts:36 app/src/window/preferences-dialog.ts:57
-#: app/src/window/welcome-model.ts:104
+#: app/src/window/accounts-page.ts:36 app/src/window/preferences-dialog.ts:58
+#: app/src/window/welcome-model.ts:124
 msgid "Off"
 msgstr "Aus"
 
@@ -2132,7 +2137,7 @@ msgstr "GNOME-Einstellungen → Online-Konten öffnen"
 msgid "Could not load accounts"
 msgstr "Konten konnten nicht geladen werden"
 
-#: app/src/window/accounts-page.ts:125 app/src/window/protocols-page.ts:39
+#: app/src/window/accounts-page.ts:125 app/src/window/protocols-page.ts:41
 msgid "No accounts yet"
 msgstr "Noch keine Konten"
 
@@ -2163,8 +2168,8 @@ msgid "Start"
 msgstr "Starten"
 
 #: app/src/window/accounts-page.ts:188 app/src/window/conversation-list.ts:361
-#: app/src/window/protocols-page.ts:200 app/src/window/welcome-model.ts:89
-#: app/src/window/welcome.ts:150
+#: app/src/window/protocols-page.ts:227 app/src/window/welcome-model.ts:102
+#: app/src/window/welcome.ts:151
 msgid "Protocols"
 msgstr "Protokolle"
 
@@ -2652,7 +2657,7 @@ msgid "Your own picture is shown instead"
 msgstr "Stattdessen wird dein eigenes Bild gezeigt"
 
 #: app/src/window/conversation-list-model.ts:141
-#: app/src/window/welcome-model.ts:98 app/src/window/welcome.ts:186
+#: app/src/window/welcome-model.ts:111 app/src/window/welcome.ts:187
 msgid "Delta Chat"
 msgstr "Delta Chat"
 
@@ -2822,7 +2827,7 @@ msgid "Review"
 msgstr "Prüfen"
 
 #: app/src/window/conversation-list.ts:618
-#: app/src/window/preferences-dialog.ts:44
+#: app/src/window/preferences-dialog.ts:45
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
@@ -3042,7 +3047,7 @@ msgstr ""
 "Gewöhnliche E-Mails sind ausgeblendet. Um sie zu sehen, schalte „Alle E-"
 "Mails anzeigen“ unter Einstellungen, Unterhaltungen ein."
 
-#: app/src/window/email-chat-model.ts:22
+#: app/src/window/email-chat-model.ts:25
 msgid ""
 "Off lists only email chats. This changes the list only, never how mail is "
 "sent"
@@ -3050,7 +3055,22 @@ msgstr ""
 "Aus zeigt nur E-Mail-Chats in der Liste. Das ändert nur die Liste, nie wie "
 "Mails gesendet werden"
 
-#: app/src/window/email-chat-model.ts:28
+#: app/src/window/email-chat-model.ts:29
+msgid "{count} account lists only email chats whatever this says"
+msgid_plural "{count} accounts list only email chats whatever this says"
+msgstr[0] "{count} Konto zeigt unabhängig davon nur E-Mail-Chats"
+msgstr[1] "{count} Konten zeigen unabhängig davon nur E-Mail-Chats"
+
+#: app/src/window/email-chat-model.ts:40
+msgid ""
+"Off lists only email chats of this account, and it uses Delta Chat. Ordinary "
+"email stays in the index and comes back when you switch this on"
+msgstr ""
+"Aus zeigt von diesem Konto nur E-Mail-Chats und nutzt Delta Chat. "
+"Gewöhnliche E-Mails bleiben im Index und kommen zurück, sobald du das wieder "
+"einschaltest"
+
+#: app/src/window/email-chat-model.ts:47
 msgid ""
 "This is an email chat: people with Delta Chat, ArcaneChat or DeltaTouch see "
 "it as a chat, everyone else as an ordinary email. A contact shows as Delta "
@@ -3093,7 +3113,7 @@ msgstr "Der Anhang konnte nicht geladen werden"
 msgid "Previous"
 msgstr "Zurück"
 
-#: app/src/window/media-viewer.ts:125 app/src/window/welcome.ts:121
+#: app/src/window/media-viewer.ts:125 app/src/window/welcome.ts:122
 msgid "Next"
 msgstr "Weiter"
 
@@ -3131,7 +3151,7 @@ msgstr "Alles erledigt"
 msgid "You can separate merged people again from the conversation list."
 msgstr "Zusammengeführte Personen kannst du in der Chatliste wieder trennen."
 
-#: app/src/window/merge-assistant.ts:90 app/src/window/welcome.ts:178
+#: app/src/window/merge-assistant.ts:90 app/src/window/welcome.ts:179
 msgid "Done"
 msgstr "Fertig"
 
@@ -3139,7 +3159,7 @@ msgstr "Fertig"
 msgid "These people have similar names. Are they the same person?"
 msgstr "Diese Personen haben ähnliche Namen. Sind sie dieselbe Person?"
 
-#: app/src/window/merge-assistant.ts:119 app/src/window/welcome.ts:131
+#: app/src/window/merge-assistant.ts:119 app/src/window/welcome.ts:132
 msgid "Skip"
 msgstr "Überspringen"
 
@@ -3159,15 +3179,15 @@ msgstr "Kontakte suchen"
 msgid "The address book could not be read"
 msgstr "Das Adressbuch konnte nicht gelesen werden"
 
-#: app/src/window/preferences-dialog.ts:40
+#: app/src/window/preferences-dialog.ts:41
 msgid "Show all emails"
 msgstr "Alle E-Mails anzeigen"
 
-#: app/src/window/preferences-dialog.ts:48
+#: app/src/window/preferences-dialog.ts:49
 msgid "Send read receipts"
 msgstr "Lesebestätigungen senden"
 
-#: app/src/window/preferences-dialog.ts:49
+#: app/src/window/preferences-dialog.ts:50
 msgid ""
 "Tell a Delta Chat contact when you have read their message, if they asked "
 "for it"
@@ -3175,44 +3195,44 @@ msgstr ""
 "Sag einer Delta-Chat-Kontaktperson, dass du ihre Nachricht gelesen hast, "
 "wenn sie darum gebeten hat"
 
-#: app/src/window/preferences-dialog.ts:55
+#: app/src/window/preferences-dialog.ts:56
 msgid "Message notifications"
 msgstr "Benachrichtigungen für Nachrichten"
 
-#: app/src/window/preferences-dialog.ts:56
+#: app/src/window/preferences-dialog.ts:57
 msgid "What a desktop notification for a new chat message shows"
 msgstr "Was eine Desktop-Benachrichtigung über eine neue Chat-Nachricht zeigt"
 
-#: app/src/window/preferences-dialog.ts:57
+#: app/src/window/preferences-dialog.ts:58
 msgid "Sender and text"
 msgstr "Absender und Text"
 
-#: app/src/window/preferences-dialog.ts:57
+#: app/src/window/preferences-dialog.ts:58
 msgid "Sender only"
 msgstr "Nur Absender"
 
-#: app/src/window/preferences-dialog.ts:60
+#: app/src/window/preferences-dialog.ts:61
 msgid "Notifications"
 msgstr "Benachrichtigungen"
 
-#: app/src/window/preferences-dialog.ts:63
+#: app/src/window/preferences-dialog.ts:64
 msgid "Play videos silently in chats"
 msgstr "Videos in Chats stumm abspielen"
 
-#: app/src/window/preferences-dialog.ts:64
+#: app/src/window/preferences-dialog.ts:65
 msgid "A video in a conversation plays muted while it is on screen"
 msgstr "Ein Video in einer Unterhaltung läuft stumm, solange es im Bild ist"
 
-#: app/src/window/preferences-dialog.ts:70
+#: app/src/window/preferences-dialog.ts:71
 msgid "Media"
 msgstr "Medien"
 
-#: app/src/window/preferences-dialog.ts:73 app/src/window/welcome-model.ts:104
-#: app/src/window/welcome.ts:220
+#: app/src/window/preferences-dialog.ts:74 app/src/window/welcome-model.ts:124
+#: app/src/window/welcome.ts:243
 msgid "AI features"
 msgstr "KI-Funktionen"
 
-#: app/src/window/preferences-dialog.ts:75
+#: app/src/window/preferences-dialog.ts:76
 msgid ""
 "Let AI assistants read and send your messages through Curlew, each time as "
 "you allow it. Off: no assistant can reach your data"
@@ -3220,38 +3240,38 @@ msgstr ""
 "KI-Assistenten dürfen über Curlew deine Nachrichten lesen und senden, "
 "jeweils so, wie du es erlaubst. Aus: Kein Assistent erreicht deine Daten"
 
-#: app/src/window/preferences-dialog.ts:79 app/src/window/welcome.ts:232
+#: app/src/window/preferences-dialog.ts:80 app/src/window/welcome.ts:255
 msgid "AI"
 msgstr "KI"
 
-#: app/src/window/preferences-dialog.ts:91 app/src/window/window.ts:120
+#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:120
 msgid "Preferences"
 msgstr "Einstellungen"
 
-#: app/src/window/protocols-page.ts:62
+#: app/src/window/protocols-page.ts:64
 msgid "Accept and Turn On"
 msgstr "Zustimmen und einschalten"
 
-#: app/src/window/protocols-page.ts:114
+#: app/src/window/protocols-page.ts:116
 msgid "No mail account yet. Add one first."
 msgstr "Noch kein Mail-Konto. Füge zuerst eines hinzu."
 
-#: app/src/window/protocols-page.ts:118
+#: app/src/window/protocols-page.ts:120
 msgid "Use Delta Chat for which accounts?"
 msgstr "Delta Chat für welche Konten nutzen?"
 
-#: app/src/window/protocols-page.ts:119
+#: app/src/window/protocols-page.ts:121
 msgid ""
 "Only these accounts send email chats. The others keep sending ordinary mail."
 msgstr ""
 "Nur diese Konten senden E-Mail-Chats. Die anderen senden weiter gewöhnliche "
 "E-Mail."
 
-#: app/src/window/protocols-page.ts:129
+#: app/src/window/protocols-page.ts:131
 msgid "Turn On"
 msgstr "Einschalten"
 
-#: app/src/window/protocols-page.ts:154
+#: app/src/window/protocols-page.ts:179
 msgid "Accounts and messages stay when a protocol is switched off."
 msgstr ""
 "Konten und Nachrichten bleiben erhalten, wenn ein Protokoll ausgeschaltet "
@@ -3280,7 +3300,7 @@ msgstr "Es konnte kein Mikrofon geöffnet werden"
 msgid "Stop and keep the recording"
 msgstr "Aufnahme beenden und behalten"
 
-#: app/src/window/welcome-model.ts:33
+#: app/src/window/welcome-model.ts:40
 msgid ""
 "Curlew brings your chat accounts together in one conversation list. Mail, "
 "contacts and calendar are not available on this system yet."
@@ -3289,7 +3309,7 @@ msgstr ""
 "zusammen. Mail, Kontakte und Kalender sind auf diesem System noch nicht "
 "verfügbar."
 
-#: app/src/window/welcome-model.ts:36
+#: app/src/window/welcome-model.ts:43
 msgid ""
 "Switch on a chat protocol to use it; some ask you to read a notice first. "
 "You can change this later in Accounts."
@@ -3297,7 +3317,7 @@ msgstr ""
 "Schalte ein Chat-Protokoll ein, um es zu nutzen; manche zeigen dir vorher "
 "einen Hinweis. Du kannst das später unter Konten ändern."
 
-#: app/src/window/welcome-model.ts:38
+#: app/src/window/welcome-model.ts:45
 msgid ""
 "Choose Add Account to sign in to a chat. You can add more later from the "
 "menu."
@@ -3305,14 +3325,14 @@ msgstr ""
 "Wähle „Konto hinzufügen“, um dich bei einem Chat anzumelden. Weitere kannst "
 "du später im Menü hinzufügen."
 
-#: app/src/window/welcome-model.ts:42
+#: app/src/window/welcome-model.ts:49
 msgid ""
 "Curlew brings your mail and chat accounts together in one conversation list."
 msgstr ""
 "Curlew bringt deine Mail- und Chat-Konten in einer gemeinsamen "
 "Unterhaltungsliste zusammen."
 
-#: app/src/window/welcome-model.ts:44
+#: app/src/window/welcome-model.ts:51
 msgid ""
 "Mail is on. Switch on a chat protocol to use it; some ask you to read a "
 "notice first. You can change this later in Accounts."
@@ -3320,7 +3340,7 @@ msgstr ""
 "Mail ist an. Schalte ein Chat-Protokoll ein, um es zu nutzen; manche fragen "
 "vorher nach einem Hinweis. Du kannst das später unter Konten ändern."
 
-#: app/src/window/welcome-model.ts:47
+#: app/src/window/welcome-model.ts:54
 msgid ""
 "Mail accounts from GNOME Online Accounts appear on their own. Otherwise "
 "choose Add Account, then Mail. You can add more later from the menu."
@@ -3329,50 +3349,64 @@ msgstr ""
 "„Konto hinzufügen“ und dann „Mail“. Weitere kannst du später im Menü "
 "hinzufügen."
 
-#: app/src/window/welcome-model.ts:89
+#: app/src/window/welcome-model.ts:102
 msgid "None"
 msgstr "Keine"
 
-#: app/src/window/welcome-model.ts:94
+#: app/src/window/welcome-model.ts:107
 msgid "None yet"
 msgstr "Noch keine"
 
-#: app/src/window/welcome-model.ts:101
+#: app/src/window/welcome-model.ts:114
 msgid "Off for every account"
 msgstr "Für kein Konto aktiv"
 
-#: app/src/window/welcome-model.ts:102
+#: app/src/window/welcome-model.ts:115
 msgid "On for {count} account"
 msgid_plural "On for {count} accounts"
 msgstr[0] "An für {count} Konto"
 msgstr[1] "An für {count} Konten"
 
-#: app/src/window/welcome-model.ts:104
+#: app/src/window/welcome-model.ts:118
+msgid "Ordinary email"
+msgstr "Gewöhnliche E-Mail"
+
+#: app/src/window/welcome-model.ts:121
+msgid "On for every account"
+msgstr "Für jedes Konto an"
+
+#: app/src/window/welcome-model.ts:122
+msgid "Off for {count} account"
+msgid_plural "Off for {count} accounts"
+msgstr[0] "Aus für {count} Konto"
+msgstr[1] "Aus für {count} Konten"
+
+#: app/src/window/welcome-model.ts:124
 msgid "On"
 msgstr "An"
 
-#: app/src/window/welcome.ts:108 app/src/window/welcome.ts:127
+#: app/src/window/welcome.ts:109 app/src/window/welcome.ts:128
 #: app/src/window/window.ts:125
 msgid "Welcome"
 msgstr "Willkommen"
 
-#: app/src/window/welcome.ts:129
+#: app/src/window/welcome.ts:130
 msgid "Welcome to Curlew"
 msgstr "Willkommen bei Curlew"
 
-#: app/src/window/welcome.ts:138
+#: app/src/window/welcome.ts:139
 msgid "Choose Protocols"
 msgstr "Protokolle wählen"
 
-#: app/src/window/welcome.ts:152
+#: app/src/window/welcome.ts:153
 msgid "Choose your protocols"
 msgstr "Wähle deine Protokolle"
 
-#: app/src/window/welcome.ts:176
+#: app/src/window/welcome.ts:177
 msgid "Add your accounts"
 msgstr "Füge deine Konten hinzu"
 
-#: app/src/window/welcome.ts:195
+#: app/src/window/welcome.ts:196
 msgid ""
 "No mail account yet. Once you add one, you can switch this on in its "
 "settings."
@@ -3380,7 +3414,7 @@ msgstr ""
 "Noch kein Mail-Konto. Sobald du eines hinzufügst, kannst du das in dessen "
 "Einstellungen einschalten."
 
-#: app/src/window/welcome.ts:222
+#: app/src/window/welcome.ts:245
 msgid ""
 "An assistant could then read and send your messages through Curlew, each "
 "time as you allow it."
@@ -3388,7 +3422,7 @@ msgstr ""
 "Ein Assistent könnte dann über Curlew deine Nachrichten lesen und senden, "
 "jeweils so, wie du es erlaubst."
 
-#: app/src/window/welcome.ts:233
+#: app/src/window/welcome.ts:256
 msgid ""
 "Off, no assistant can reach your data. You can change this at any time in "
 "Preferences."
@@ -3396,11 +3430,11 @@ msgstr ""
 "Aus: Kein Assistent erreicht deine Daten. Du kannst das jederzeit in den "
 "Einstellungen ändern."
 
-#: app/src/window/welcome.ts:243
+#: app/src/window/welcome.ts:266
 msgid "All set"
 msgstr "Alles bereit"
 
-#: app/src/window/welcome.ts:244
+#: app/src/window/welcome.ts:267
 msgid ""
 "You can change all of this later: accounts and protocols in Accounts, the "
 "rest in Preferences."
@@ -3408,7 +3442,7 @@ msgstr ""
 "Du kannst all das später ändern: Konten und Protokolle unter Konten, den "
 "Rest in den Einstellungen."
 
-#: app/src/window/welcome.ts:246
+#: app/src/window/welcome.ts:269
 msgid "Start Using Curlew"
 msgstr "Curlew benutzen"
 
@@ -3962,7 +3996,8 @@ msgstr ""
 
 #: packages/signal/src/upload.ts:83
 msgid "Signal would not take the file ({status}) — nothing was sent"
-msgstr "Signal hat die Datei nicht angenommen ({status}) — es wurde nichts gesendet"
+msgstr ""
+"Signal hat die Datei nicht angenommen ({status}) — es wurde nichts gesendet"
 
 #: packages/signal/src/upload.ts:105
 msgid ""
