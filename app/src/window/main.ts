@@ -17,7 +17,7 @@ import { loadConfig } from '../core/config.ts';
 import { applyAccent, applyColorScheme, applyPrimary, installSurfaces } from './appearance.ts';
 import { applyChatBackground } from './chat-background.ts';
 import { demoActive, prepareDemo } from '../core/demo/index.ts';
-import { startStallProbe } from './stall-probe.ts';
+import { startStallProbe, timed } from './stall-probe.ts';
 import { createWindow } from './window.ts';
 
 // This bundle carries its own copy of the gettext runtime, so the CLI bundle's catalogue is not
@@ -115,6 +115,27 @@ const application = new AdwaitaApp({
         4000,
         () => (window.activate_action('new-conversation', null), GLib.SOURCE_REMOVE),
       );
+    // Stall measurements: the newest bubble's context menu, and the primary (main) menu.
+    if (process.env.CURLEW_WINDOW_OPEN_BUBBLE === '1')
+      GLib.timeout_add(
+        GLib.PRIORITY_DEFAULT,
+        2000,
+        () => (window.activate_action('open-bubble-menu', null), GLib.SOURCE_REMOVE),
+      );
+    if (process.env.CURLEW_WINDOW_OPEN_MENU === '1')
+      GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => {
+        const find = (widget: Gtk.Widget | null): Gtk.MenuButton | null => {
+          for (let child = widget?.get_first_child() ?? null; child; child = child.get_next_sibling()) {
+            if (child instanceof Gtk.MenuButton && child.get_primary()) return child;
+            const inner = find(child);
+            if (inner) return inner;
+          }
+          return null;
+        };
+        const button = find(window);
+        if (button) timed('open main menu', () => button.popup());
+        return GLib.SOURCE_REMOVE;
+      });
     if (process.env.CURLEW_WINDOW_OPEN_ACCOUNTS === '1')
       GLib.timeout_add(
         GLib.PRIORITY_DEFAULT,

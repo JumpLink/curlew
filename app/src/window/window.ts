@@ -375,35 +375,39 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   viewer.install(window);
 
   const accounts = new Gio.SimpleAction({ name: 'accounts' });
-  accounts.connect('activate', () => presentAccounts(window));
+  accounts.connect('activate', () => timed('present accounts', () => presentAccounts(window)));
   const protocols = new Gio.SimpleAction({ name: 'protocols' });
-  protocols.connect('activate', () => presentAccounts(window, { openProtocols: true }));
+  protocols.connect('activate', () =>
+    timed('present protocols', () => presentAccounts(window, { openProtocols: true })),
+  );
   window.add_action(protocols);
   window.add_action(accounts);
   const mergeContacts = new Gio.SimpleAction({ name: 'merge-contacts' });
   mergeContacts.connect('activate', () => review());
   window.add_action(mergeContacts);
   const action = new Gio.SimpleAction({ name: 'agent-access' });
-  action.connect('activate', () => presentAgentAccess(window));
+  action.connect('activate', () => timed('present access', () => presentAgentAccess(window)));
   const syncAi = () => action.set_enabled(aiEnabled(loadConfig(configPath())));
   syncAi();
   window.add_action(action);
   const preferences = new Gio.SimpleAction({ name: 'preferences' });
   preferences.connect('activate', () =>
-    presentPreferences(
-      window,
-      () => {
-        currentEntry = null;
-        currentMessages = [];
-        split.set_content(placeholder());
-        refresh();
-      },
-      syncAi,
+    timed('present preferences', () =>
+      presentPreferences(
+        window,
+        () => {
+          currentEntry = null;
+          currentMessages = [];
+          split.set_content(placeholder());
+          refresh();
+        },
+        syncAi,
+      ),
     ),
   );
   window.add_action(preferences);
   const welcome = new Gio.SimpleAction({ name: 'welcome' });
-  welcome.connect('activate', () => presentWelcome(window, () => refresh()));
+  welcome.connect('activate', () => timed('present welcome', () => presentWelcome(window, () => refresh())));
   window.add_action(welcome);
   // The screenshot hook `CURLEW_WINDOW_OPEN_WELCOME=<page>` opens one page directly.
   const welcomePage = new Gio.SimpleAction({
@@ -499,6 +503,9 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   const emojiAction = new Gio.SimpleAction({ name: 'open-emoji' });
   emojiAction.connect('activate', () => conversation.openEmoji());
   window.add_action(emojiAction);
+  const bubbleAction = new Gio.SimpleAction({ name: 'open-bubble-menu' });
+  bubbleAction.connect('activate', () => conversation.openBubbleMenu());
+  window.add_action(bubbleAction);
   if (options.open) void firstLoad.then(() => openConversation(options.open!));
   // First start only: the flag says it was finished, and anybody with accounts is not new.
   void (async () => {

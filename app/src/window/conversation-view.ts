@@ -76,6 +76,7 @@ import { fadedOverlay } from './fade-bin.ts';
 import { createComposerFiles } from './composer-files.ts';
 import { createVoiceRecorder } from './voice-recorder.ts';
 import { createComposerInput } from './composer-input.ts';
+import { timed } from './stall-probe.ts';
 import type { PickedFile } from './composer-files-model.ts';
 
 export interface ConversationView {
@@ -85,6 +86,8 @@ export interface ConversationView {
   setLook(look: Look): void;
   /** Open the emoji chooser of the composer (the screenshot hook `CURLEW_WINDOW_OPEN_EMOJI`). */
   openEmoji(): void;
+  /** Open the context menu of the newest bubble (the stall-measurement hook `CURLEW_WINDOW_OPEN_BUBBLE`). */
+  openBubbleMenu(): void;
 }
 
 const ROWS_PER_TURN = 8;
@@ -783,8 +786,9 @@ export function createConversationView(
 
   // The emoji row, "Reply", "Edit", "Delete" and "Copy" for one bubble. Long press (touch) and right
   // click (pointer) open it; both run before the selectable text, which would otherwise keep the press.
+  let openNewestBubble: () => void = () => {};
   const attachBubbleActions = (card: Gtk.Box, message: ShownMessage, showReactions: () => void): void => {
-    const open = (gesture: Gtk.Gesture, x: number, y: number): void => {
+    const open = (gesture: Gtk.Gesture | null, x: number, y: number): void => {
       const usable = composer.get_visible() && !composerBlocked;
       const draft = usable ? replyDraftOf(message, carriers, threadCan('replies')) : null;
       const handle = usable ? reactHandleOf(message, carriers, reactable) : null;
@@ -796,7 +800,7 @@ export function createConversationView(
         : null;
       const text = message.bodyText?.trim() ?? '';
       if (!draft && !handle && !editHandle && !deleteHandle && !text) return;
-      gesture.set_state(Gtk.EventSequenceState.CLAIMED);
+      gesture?.set_state(Gtk.EventSequenceState.CLAIMED);
       const box = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
       const popover = new Gtk.Popover({ autohide: true, hasArrow: false, child: box });
       if (handle) {
@@ -839,8 +843,9 @@ export function createConversationView(
           return GLib.SOURCE_REMOVE;
         });
       });
-      popover.popup();
+      timed('open bubble menu', () => popover.popup());
     };
+    openNewestBubble = () => open(null, 20, 20);
     const longPress = new Gtk.GestureLongPress({
       touchOnly: true,
       propagationPhase: Gtk.PropagationPhase.CAPTURE,
@@ -1413,8 +1418,11 @@ export function createConversationView(
   let lookApplied: string[] = [];
   return {
     page,
+    openBubbleMenu() {
+      openNewestBubble();
+    },
     openEmoji() {
-      input.emoji.popup();
+      timed('open emoji picker', () => input.emoji.popup());
     },
     setLook(look) {
       for (const name of lookApplied) toolbar.remove_css_class(name);

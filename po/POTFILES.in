@@ -141,6 +141,9 @@ app/src/window/conversation-model.ts
 app/src/window/conversation-store.ts
 app/src/window/conversation-view.ts
 app/src/window/email-chat-model.ts
+app/src/window/emoji-data.ts
+app/src/window/emoji-model.ts
+app/src/window/emoji-picker.ts
 app/src/window/fade-bin.ts
 app/src/window/main.ts
 app/src/window/media-grid-model.ts

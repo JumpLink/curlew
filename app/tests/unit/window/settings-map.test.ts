@@ -21,6 +21,7 @@ const FULL = {
     ai: true,
     emailChatHintSeen: ['mail-a'],
     searchScope: 'names',
+    recentEmoji: ['😀'],
   },
   mailAccounts: { 'mail-a': { deltaChat: true } },
 };
