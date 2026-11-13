@@ -316,7 +316,9 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   // Demo data must never pass for a real inbox: say so once, then stay out of the way.
   if (demoActive()) {
     window.title = _('Curlew (demo)');
-    toasts.add_toast(new Adw.Toast({ title: _('Demo data — nothing here is real'), timeout: 5 }));
+    // `CURLEW_DEMO_QUIET=1` leaves the notice out, so a listing screenshot shows the window alone.
+    if (process.env.CURLEW_DEMO_QUIET !== '1')
+      toasts.add_toast(new Adw.Toast({ title: _('Demo data — nothing here is real'), timeout: 5 }));
   }
   viewer.install(window);
 
