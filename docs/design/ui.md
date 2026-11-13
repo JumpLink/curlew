@@ -139,7 +139,7 @@ shows the matching line instead of the newest message. Names and numbers are mat
 the rows the list already holds; only the message text goes to the index. Mail rows follow
 `ui.showAllEmails` as before, so chats and mails are searched together only when all mail is shown.
 Known limits: SQLite folds only ASCII case ("ä" does not find "Ä"), and mail bodies live in the
-full-text index and are not searched here; a merged chat-and-mail search is contacts.md question 6.
+full-text index and are not searched here, except the body of an unsent draft (a mail in a folder with the `drafts` role); a merged chat-and-mail search is contacts.md question 6.
 `CURLEW_WINDOW_SEARCH=<text>` opens the search with that text and `CURLEW_WINDOW_OPEN_SCOPE=1` also
 opens the scope menu, for screenshots.
 
