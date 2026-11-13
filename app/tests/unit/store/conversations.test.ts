@@ -6,6 +6,7 @@ import {
   getMessagesByRemoteId,
   getRecentMessages,
   latestMessagePreviews,
+  deleteOwnMessage,
   listConversations,
   mailAttachments,
   mailReplyTarget,
@@ -304,6 +305,73 @@ export default async () => {
       ]);
       expect(list.length).toBe(1);
       expect(detail?.messages[0].reactions).toBe(undefined);
+    });
+  });
+
+  await describe('own delete and edit echo', async () => {
+    const mailbox = (extra: Parameters<typeof message>[3][] = []): FakeBackend => {
+      const backend = new FakeBackend();
+      backend.put('INBOX', [
+        message(1, 'Hallo', 'Hi', { messageId: '<t1@example.org>', from: [ANNA], to: [ME], emailChat: true }),
+        ...extra.map((x, i) =>
+          message(2 + i, 'Message', '', { from: [ANNA], to: [ME], emailChat: true, ...x }),
+        ),
+      ]);
+      return backend;
+    };
+    const open = async (backend: FakeBackend) => {
+      const db = freshDb();
+      await syncIndex(db, backend, { now: AT('2026-08-06T12:00:00Z') });
+      rebuildConversations(db, {});
+      return db;
+    };
+    const first = (db: ReturnType<typeof freshDb>) => {
+      const id = listConversations(db, {})[0]?.id;
+      return id ? getConversation(db, id, {})?.messages[0] : undefined;
+    };
+    const markers = (db: ReturnType<typeof freshDb>) =>
+      (db.prepare("SELECT key FROM schema_meta WHERE key LIKE 'pending-delete:%'").all() as unknown[]).length;
+
+    await it('keeps a deleted message hidden through a rebuild until its Chat-Delete mail is seen', async () => {
+      const db = await open(mailbox());
+      try {
+        const id = first(db)?.id ?? '';
+        expect(deleteOwnMessage(db, id)).toBe(true);
+        rebuildConversations(db, {});
+        expect(listConversations(db, {}).length).toBe(0);
+        expect(markers(db)).toBe(1);
+        await syncIndex(
+          db,
+          mailbox([
+            {
+              messageId: '<d1@example.org>',
+              inReplyTo: '<t1@example.org>',
+              chatDelete: '<t1@example.org>',
+              bodyText: 'x',
+            },
+          ]),
+          { now: AT('2026-08-06T12:00:00Z') },
+        );
+        rebuildConversations(db, {});
+        expect(listConversations(db, {}).length).toBe(0);
+        expect(markers(db)).toBe(0);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('keeps the text of an own edit through a rebuild', async () => {
+      const db = await open(mailbox());
+      try {
+        const id = first(db)?.id ?? '';
+        expect(setMessageText(db, id, 'Hi there')).toBe(true);
+        rebuildConversations(db, {});
+        const again = getConversation(db, listConversations(db, {})[0].id, { includeBodies: true });
+        expect(again?.messages[0].bodyText).toBe('Hi there');
+        expect(again?.messages[0].editedAt !== undefined).toBe(true);
+      } finally {
+        db.close();
+      }
     });
   });
 

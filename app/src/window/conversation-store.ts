@@ -9,6 +9,7 @@ import {
 } from '@curlew/protocol';
 import {
   configPath,
+  deleteOwnMessage,
   getMessagesByRemoteId,
   getRecentMessages,
   type MessageCursor,
@@ -70,9 +71,7 @@ export function recordOwnEdit(messageId: string, text: string, dbPath = indexDbP
 export function recordOwnDeletion(messageId: string, dbPath = indexDbPath()): void {
   const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
   try {
-    db.prepare(
-      "DELETE FROM conversation_messages WHERE id = ? AND (remote_seq IS NOT NULL OR backend = 'mail')",
-    ).run(messageId);
+    deleteOwnMessage(db, messageId);
   } finally {
     db.close();
   }

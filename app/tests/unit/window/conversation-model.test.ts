@@ -2,6 +2,15 @@ import { describe, expect, it } from '@gjsify/unit';
 import type { ConversationMessage } from '@curlew/protocol';
 
 import {
+  threadCapabilitiesOf,
+  type ThreadFacts,
+  XMPP_CORRECT_NS,
+  XMPP_REACTIONS_NS,
+  XMPP_RETRACT_NS,
+} from '@curlew/protocol';
+import { BUILTIN_PLUGINS } from '../../../src/core/backends/builtin.ts';
+
+import {
   attachmentLines,
   bubbleText,
   chatSubject,
@@ -600,6 +609,53 @@ export default async () => {
       });
       expect(deleteHandleOf(chat({ id: 'y', fromSelf: false }), choices, () => true)).toBe(null);
       expect(deleteHandleOf(own, choices, () => false)).toBe(null);
+    });
+  });
+
+  await describe('bubble menu entries by thread', async () => {
+    const manifest = (name: string) =>
+      BUILTIN_PLUGINS.find((p) => p.manifest.name === name)!.manifest.capabilities;
+    const entries = (backend: string, facts: Omit<ThreadFacts, 'backend'>) => {
+      const caps = threadCapabilitiesOf(manifest(backend), { backend, ...facts });
+      const own = message({
+        id: 'x',
+        backend,
+        presentation: 'bubble',
+        fromSelf: true,
+        bodyText: 'Hi',
+        ref: { accountId: 'a', backend, remoteId: 'x' },
+      });
+      const choices = [{ backend, accountId: 'a' }];
+      return {
+        react: reactHandleOf(own, choices, () => caps.reactions) !== null,
+        edit: editHandleOf(own, choices, () => caps.edits) !== null,
+        remove: deleteHandleOf(own, choices, () => caps.deletes) !== null,
+      };
+    };
+
+    await it('offers react, edit and delete in a Delta Chat mail thread', async () => {
+      expect(entries('mail', { emailChat: true })).toStrictEqual({ react: true, edit: true, remove: true });
+    });
+
+    await it('offers none of them in a plain mail thread', async () => {
+      expect(entries('mail', { emailChat: false })).toStrictEqual({
+        react: false,
+        edit: false,
+        remove: false,
+      });
+    });
+
+    await it('offers an XMPP entry only when the peer advertised it', async () => {
+      const direct = { kind: 'direct' as const };
+      expect(entries('xmpp', direct)).toStrictEqual({ react: false, edit: false, remove: false });
+      expect(entries('xmpp', { ...direct, peerFeatures: [XMPP_REACTIONS_NS] })).toStrictEqual({
+        react: true,
+        edit: false,
+        remove: false,
+      });
+      expect(
+        entries('xmpp', { ...direct, peerFeatures: [XMPP_REACTIONS_NS, XMPP_CORRECT_NS, XMPP_RETRACT_NS] }),
+      ).toStrictEqual({ react: true, edit: true, remove: true });
     });
   });
 };

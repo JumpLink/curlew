@@ -167,6 +167,10 @@ the window learns what a sender can do from `sender.features`, through the manif
 - *Delete* asks first with an `AdwAlertDialog` (*Delete message?*, *Delete for everyone* as the
   destructive response, *Cancel*); the bubble goes at once and comes back with an error toast if
   the network refuses.
+  For a mail (Delta Chat) thread the index also keeps a `pending-delete:<Message-ID>` marker in
+  `schema_meta`, so a rebuild before the `Chat-Delete` mail syncs back does not show the message
+  again; the marker ends when that mail is seen, or after 30 days. An own edit needs no marker: the
+  rebuild keeps the echoed text of a row with `edited_at` until an edit mail says otherwise.
 - Nothing is offered for a network whose sender lacks the feature (hidden, not greyed out).
 
 **Order.** Plumbing (protocol, wire, `actions/edit.ts` and `actions/delete.ts` next to `react.ts`),

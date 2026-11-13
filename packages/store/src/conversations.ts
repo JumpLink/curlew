@@ -456,8 +456,15 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
   const self = selfAddressSet(db, options.selfAddresses ?? []);
   // A reaction, edit or delete mail is no message of the thread: it acts on its target.
   const controls = mailControls(db, all);
+  const pending = pendingDeletes(db, all, controls);
   const rows = all.filter(
-    (row) => !row.reaction && !row.chatEdit && !row.chatDelete && !row.mdn && !controls.deleted.has(row.key),
+    (row) =>
+      !row.reaction &&
+      !row.chatEdit &&
+      !row.chatDelete &&
+      !row.mdn &&
+      !controls.deleted.has(row.key) &&
+      !(row.messageId && pending.has(row.messageId)),
   );
   // A read receipt from someone else confirms the message it names was read; ours confirm nothing.
   const receipted = new Set<string>();
@@ -722,6 +729,57 @@ function mailControls(db: IndexDatabase, all: readonly MailRow[]): MailControls 
     if (text) result.edits.set(target.key, { text, at: row.sentAt });
   }
   return result;
+}
+
+const PENDING_DELETE = 'pending-delete:';
+const PENDING_DELETE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * The Message-IDs the person deleted for everyone whose `Chat-Delete` mail has not come back yet.
+ * Without this the rebuild would put the hidden message back until the IMAP sync catches up. A
+ * marker ends when the delete mail is seen, or after 30 days (a sent mail that no synced folder holds).
+ */
+function pendingDeletes(db: IndexDatabase, all: readonly MailRow[], controls: MailControls): Set<string> {
+  const stored = db
+    .prepare('SELECT key, value FROM schema_meta WHERE key LIKE ?')
+    .all(`${PENDING_DELETE}%`) as Array<Record<string, unknown>>;
+  const confirmed = new Set<string>();
+  for (const row of all) if (row.messageId && controls.deleted.has(row.key)) confirmed.add(row.messageId);
+  const pending = new Set<string>();
+  const now = Date.now();
+  for (const r of stored) {
+    const key = String(r.key);
+    const messageId = key.slice(PENDING_DELETE.length);
+    const age = now - (Date.parse(String(r.value)) || 0);
+    if (confirmed.has(messageId) || age > PENDING_DELETE_TTL_MS) {
+      db.prepare('DELETE FROM schema_meta WHERE key = ?').run(key);
+    } else {
+      pending.add(messageId);
+    }
+  }
+  return pending;
+}
+
+/**
+ * Hide a message the person deleted for everyone, at once. A mail row is also remembered as a
+ * pending delete, so a rebuild before the `Chat-Delete` mail syncs back does not show it again.
+ * Returns whether the message was found.
+ */
+export function deleteOwnMessage(db: IndexDatabase, messageId: string): boolean {
+  const row = db
+    .prepare(
+      "SELECT backend, remote_id FROM conversation_messages WHERE id = ? AND (remote_seq IS NOT NULL OR backend = 'mail')",
+    )
+    .get(messageId) as Record<string, unknown> | undefined;
+  if (!row) return false;
+  if (row.backend === MAIL_BACKEND && row.remote_id) {
+    db.prepare('INSERT OR REPLACE INTO schema_meta (key, value) VALUES (?, ?)').run(
+      `${PENDING_DELETE}${String(row.remote_id)}`,
+      new Date().toISOString(),
+    );
+  }
+  db.prepare('DELETE FROM conversation_messages WHERE id = ?').run(messageId);
+  return true;
 }
 
 /** The new text of an edit mail: the quote and the pencil before it are skipped (chatmail spec, "Request editing"). */
