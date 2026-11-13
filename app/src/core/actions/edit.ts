@@ -11,6 +11,7 @@ import { configPath, indexDbPath } from '@curlew/store';
 import type { MessageBackend, MessageSender, ReplyTarget, SendPermit } from '@curlew/protocol';
 import { _, fmt, isSendBackend } from '@curlew/protocol';
 import { loadConfig } from '../config.ts';
+import { demoActive } from '../demo/active.ts';
 import type { Capability } from '../grants.ts';
 import { DAEMON_WIRE_VERSION } from '../lib/daemon-bus.ts';
 import { type DaemonSendClient, gioDaemonSendClient } from '../lib/daemon-send-client.ts';
@@ -51,6 +52,7 @@ export async function editThrough(
 }
 
 export async function editMessage(params: EditParams): Promise<void> {
+  if (demoActive()) throw new Error(_('Demo mode: nothing is sent.'));
   const config = loadConfig(params.configPath ?? configPath());
   const found = await findAccountBackend(config, params.accountId, params.backend);
   if (found === null) {

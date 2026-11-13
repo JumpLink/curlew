@@ -30,10 +30,13 @@ import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig, saveConfig } from '../config.ts';
 import { avatarAccountDir } from '../lib/avatar-cache.ts';
+import { DEMO_ACCOUNTS } from '../demo/accounts.ts';
+import { demoActive } from '../demo/active.ts';
 import { openIndex } from './index-sync.ts';
 
 /** List configured GNOME Online Accounts and their capabilities. No credentials. */
 export async function accountsList(): Promise<GnomeAccount[]> {
+  if (demoActive()) return [];
   return listAccounts();
 }
 
@@ -48,6 +51,10 @@ export async function backendAccountsList(
   path = configPath(),
   options: ListAccountsOptions = {},
 ): Promise<{ backend: string; accounts: BackendAccount[] }> {
+  if (demoActive()) {
+    // Demo mode never reads the secrets directories: the accounts are the made-up ones.
+    return { backend: name, accounts: DEMO_ACCOUNTS.filter((a) => a.provider === name) };
+  }
   const config = loadConfig(path);
   const backend = builtinRegistry().create(config, name, backendContext(name, config));
   return { backend: name, accounts: await backend.listAccounts(options) };

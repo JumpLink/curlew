@@ -16,11 +16,16 @@ import { configPath } from '@curlew/store';
 import { loadConfig } from '../core/config.ts';
 import { applyAccent, applyColorScheme, applyPrimary, installSurfaces } from './appearance.ts';
 import { applyChatBackground } from './chat-background.ts';
+import { demoActive, prepareDemo } from '../core/demo/index.ts';
 import { createWindow } from './window.ts';
 
 // This bundle carries its own copy of the gettext runtime, so the CLI bundle's catalogue is not
 // the one `_()` reads here.
 initI18n();
+
+// `CURLEW_DEMO=1`: made-up data in a scratch directory, set up before anything reads the index or
+// the config.
+if (demoActive()) prepareDemo();
 
 // Wayland matches the window to its icon through the application id, but X11 and anything that
 // cannot read it need the name spelled out.

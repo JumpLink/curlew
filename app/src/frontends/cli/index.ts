@@ -11,6 +11,7 @@ export * from './contacts.ts';
 export * from './conversations.ts';
 export * from './daemon.ts';
 export * from './deliveries.ts';
+export * from './demo.ts';
 export * from './index-sync.ts';
 export * from './mail.ts';
 export * from './mcp.ts';
