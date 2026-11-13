@@ -22,6 +22,10 @@ Agent- and contributor-facing docs for the curlew repo. The hard rules that load
 - [`conventions/gjsify.md`](conventions/gjsify.md) — fixing gaps in gjsify instead of here, shim markers
 - [`i18n-status.md`](i18n-status.md) — gettext usage, what is translated, module-level and plural traps
 
+## Decisions
+
+- [`adr/0016-the-window-stays-in-the-background.md`](adr/0016-the-window-stays-in-the-background.md) — hold and hide the window only where the person can get it back (proposed)
+
 ## Design and references
 
 - [`design/ui.md`](design/ui.md) — window layout, role models, responsive rules
