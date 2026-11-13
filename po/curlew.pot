@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 18:20+0100\n"
+"POT-Creation-Date: 2026-11-13 18:45+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2500,7 +2500,7 @@ msgid "Search"
 msgstr ""
 
 #: app/src/window/conversation-list.ts:490
-#: app/src/window/new-conversation.ts:24
+#: app/src/window/new-conversation.ts:25
 msgid "New conversation"
 msgstr ""
 
@@ -2853,11 +2853,11 @@ msgstr ""
 msgid "No contacts with an XMPP or mail address"
 msgstr ""
 
-#: app/src/window/new-conversation.ts:29
+#: app/src/window/new-conversation.ts:30
 msgid "Search contacts"
 msgstr ""
 
-#: app/src/window/new-conversation.ts:80
+#: app/src/window/new-conversation.ts:101
 msgid "The address book could not be read"
 msgstr ""
 
@@ -3122,15 +3122,15 @@ msgstr ""
 msgid "This conversation has no recipient address."
 msgstr ""
 
-#: app/src/window/window.ts:355
+#: app/src/window/window.ts:357
 msgid "Curlew (demo)"
 msgstr ""
 
-#: app/src/window/window.ts:358
+#: app/src/window/window.ts:360
 msgid "Demo data — nothing here is real"
 msgstr ""
 
-#: app/src/window/window.ts:427
+#: app/src/window/window.ts:429
 msgid "No contacts to merge"
 msgstr ""
 

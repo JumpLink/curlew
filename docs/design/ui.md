@@ -310,7 +310,7 @@ Motifs: `conversations`, `conversation` (c1, Alex Weber), `conversation-narrow` 
 The window reads these environment variables (all in `app/src/window/main.ts`):
 `CURLEW_WINDOW_OPEN=<conversation id>` (`c3` is the email chat, `c5` an XMPP chat),
 `CURLEW_WINDOW_FILTER`, `CURLEW_WINDOW_SIZE=WxH`, `CURLEW_WINDOW_QUIT_AFTER_MS`,
-`CURLEW_WINDOW_OPEN_CONTACT=1`, `CURLEW_WINDOW_OPEN_PREFERENCES=1`, `CURLEW_WINDOW_OPEN_ACCESS=1`,
+`CURLEW_WINDOW_OPEN_CONTACT=1`, `CURLEW_WINDOW_OPEN_NEW=1` (the new-conversation picker; `CURLEW_DEMO_CONTACTS=<n>` gives it n synthetic contacts), `CURLEW_WINDOW_OPEN_PREFERENCES=1`, `CURLEW_WINDOW_OPEN_ACCESS=1`,
 `CURLEW_WINDOW_OPEN_ACCOUNTS=1`, `CURLEW_WINDOW_OPEN_PROTOCOLS=1` and `CURLEW_WINDOW_OPEN_WELCOME=1`,
 `CURLEW_DEBUG_STALL=1` (logs every main-loop stall over `CURLEW_DEBUG_STALL_MS`, default 50, and the timing of the list refresh),
 which opens the first-run welcome screen (`app/src/window/welcome.ts`; pages listed in

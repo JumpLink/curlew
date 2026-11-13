@@ -16,6 +16,16 @@ export async function contactsSearch(options: SearchContactsOptions = {}): Promi
 const PICKER_LIMIT = 1000;
 
 export async function contactsForPicker(query = ''): Promise<ContactDTO[]> {
-  if (demoActive()) return [];
+  if (demoActive()) {
+    // `CURLEW_DEMO_CONTACTS=<n>` makes n synthetic contacts, to measure the picker on a long book.
+    const n = Number(process.env.CURLEW_DEMO_CONTACTS) || 0;
+    return Array.from({ length: n }, (_v, i) => ({
+      uid: `demo-${i}`,
+      name: `Demo Contact ${i}`,
+      org: null,
+      emails: [`demo${i}@example.org`],
+      phones: [],
+    })).filter((c) => c.name.toLowerCase().includes(query.trim().toLowerCase()));
+  }
   return searchContacts({ query, limit: PICKER_LIMIT });
 }

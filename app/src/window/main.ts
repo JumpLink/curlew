@@ -109,6 +109,12 @@ const application = new AdwaitaApp({
         2000,
         () => (window.activate_action('open-emoji', null), GLib.SOURCE_REMOVE),
       );
+    if (process.env.CURLEW_WINDOW_OPEN_NEW === '1')
+      GLib.timeout_add(
+        GLib.PRIORITY_DEFAULT,
+        4000,
+        () => (window.activate_action('new-conversation', null), GLib.SOURCE_REMOVE),
+      );
     if (process.env.CURLEW_WINDOW_OPEN_ACCOUNTS === '1')
       GLib.timeout_add(
         GLib.PRIORITY_DEFAULT,
