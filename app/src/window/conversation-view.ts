@@ -6,7 +6,7 @@ import GLib from 'gi://GLib?version=2.0';
 import GObject from 'gi://GObject?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import Pango from 'gi://Pango?version=1.0';
-import { _, fmt } from '@curlew/protocol';
+import { _, fmt, parseForwarded } from '@curlew/protocol';
 import type { ThreadCapabilities, ThreadFacts, ThreadFeature } from '@curlew/protocol';
 import type { ConversationMessage, MessageReaction, ReplyTarget } from '@curlew/protocol';
 import { configPath, type MessageCursor } from '@curlew/store';
@@ -925,7 +925,21 @@ export function createConversationView(
     if (heading) bubble.append(heading);
     const quote = quoteOf(message, messages) ?? quoteOf(message, [...quoteTargets.values()]);
     if (quote) bubble.append(padded(quoteBlock(quote)));
-    const written = message.bodyText?.trim() || message.notice;
+    // Delta Chat's forward marker: only chat mail is read for it, and the header lines are not repeated.
+    const forwarded = message.emailChat ? parseForwarded(message.bodyText) : null;
+    if (forwarded) {
+      const mark = new Gtk.Label({
+        label: forwarded.from
+          ? fmt(_('Forwarded from {sender}'), { sender: forwarded.from })
+          : _('Forwarded'),
+        xalign: 0,
+        ellipsize: Pango.EllipsizeMode.END,
+      });
+      mark.add_css_class('caption-heading');
+      mark.add_css_class('dim-label');
+      bubble.append(padded(mark));
+    }
+    const written = (forwarded ? forwarded.text.trim() : message.bodyText?.trim()) || message.notice;
     const full =
       (written ||
         (message.hasAttachments

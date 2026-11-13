@@ -409,7 +409,11 @@ export function replyDraftOf<C extends { backend: string; accountId: string }>(
   choices: readonly C[],
   canReply: (backend: string) => boolean,
 ): ReplyDraft<C> | null {
-  const handle = handleOf(message, choices, canReply);
+  // Mail has no network id: the reply names the message itself, and the mail composer threads it.
+  const handle =
+    message.backend === 'mail' && !message.ref.remoteId
+      ? handleOf({ ...message, ref: { ...message.ref, remoteId: message.id } }, choices, canReply)
+      : handleOf(message, choices, canReply);
   return handle ? { ...handle, ...describeQuoted(message) } : null;
 }
 

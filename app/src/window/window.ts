@@ -161,10 +161,17 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
       const entry = currentEntry;
       if (!entry) throw new Error(_('This conversation has no recipient address.'));
       // The carrier's own last message: a mail reply must not thread onto a Signal note.
+      // A reply by mail names its message (`replyTo.remoteId` is the message id there).
+      const answered =
+        choice.backend === 'mail' && replyTo
+          ? currentMessages.find((m) => m.id === replyTo.remoteId)
+          : undefined;
       const parent =
+        answered ??
         [...currentMessages]
           .reverse()
-          .find((m) => m.backend === choice.backend && m.ref.accountId === choice.accountId) ?? null;
+          .find((m) => m.backend === choice.backend && m.ref.accountId === choice.accountId) ??
+        null;
       const mail =
         choice.backend === 'mail'
           ? composeMailReply(
@@ -181,7 +188,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
         text,
         frontend: 'window',
         ...(files.length > 0 ? { attachments: files.map((f) => f.path) } : {}),
-        ...(replyTo ? { replyTo } : {}),
+        ...(replyTo && mail === null ? { replyTo } : {}),
         ...mail,
       });
       return {
@@ -207,7 +214,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
           ...(mail === null ? { remoteId: result.originId } : {}),
         },
         ...(mail === null ? { clientId: result.originId } : {}),
-        ...(replyTo ? { replyToRemoteId: replyTo.remoteId } : {}),
+        ...(replyTo && mail === null ? { replyToRemoteId: replyTo.remoteId } : {}),
         bodyText: text || pickedNames(files),
       };
     },

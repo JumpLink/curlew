@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 08:34+0100\n"
+"POT-Creation-Date: 2026-11-13 08:50+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2762,7 +2762,7 @@ msgstr[0] "{count} mögliches Duplikat"
 msgstr[1] "{count} mögliche Duplikate"
 
 #: app/src/window/conversation-model.ts:140
-#: app/src/window/conversation-view.ts:1337
+#: app/src/window/conversation-view.ts:1351
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -2807,7 +2807,7 @@ msgid "Choose how to reach this person"
 msgstr "Erreichbarkeit dieser Person wählen"
 
 #: app/src/window/conversation-view.ts:188
-#: app/src/window/conversation-view.ts:1386
+#: app/src/window/conversation-view.ts:1400
 msgid "Contact details"
 msgstr "Kontaktdetails"
 
@@ -2906,41 +2906,49 @@ msgstr "Löschen"
 msgid "Copy"
 msgstr "Kopieren"
 
+#: app/src/window/conversation-view.ts:933
+msgid "Forwarded from {sender}"
+msgstr "Weitergeleitet von {sender}"
+
 #: app/src/window/conversation-view.ts:934
+msgid "Forwarded"
+msgstr "Weitergeleitet"
+
+#: app/src/window/conversation-view.ts:948
 msgid "Encrypted message: it cannot be shown here"
 msgstr "Verschlüsselte Nachricht: Sie kann hier nicht angezeigt werden"
 
-#: app/src/window/conversation-view.ts:935
+#: app/src/window/conversation-view.ts:949
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:976
-#: app/src/window/conversation-view.ts:1114
+#: app/src/window/conversation-view.ts:990
+#: app/src/window/conversation-view.ts:1128
 msgid "edited"
 msgstr "bearbeitet"
 
-#: app/src/window/conversation-view.ts:986
-#: app/src/window/conversation-view.ts:987
+#: app/src/window/conversation-view.ts:1000
+#: app/src/window/conversation-view.ts:1001
 msgid "Read"
 msgstr "Gelesen"
 
-#: app/src/window/conversation-view.ts:1201
+#: app/src/window/conversation-view.ts:1215
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:1302
+#: app/src/window/conversation-view.ts:1316
 msgid "Message not edited: {error}"
 msgstr "Nachricht nicht bearbeitet: {error}"
 
-#: app/src/window/conversation-view.ts:1349
+#: app/src/window/conversation-view.ts:1363
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:1352
+#: app/src/window/conversation-view.ts:1366
 msgid "Retry"
 msgstr "Erneut versuchen"
 
-#: app/src/window/conversation-view.ts:1386
+#: app/src/window/conversation-view.ts:1400
 msgid "Group details"
 msgstr "Gruppendetails"
 
@@ -3283,15 +3291,15 @@ msgstr "Beenden"
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:318
+#: app/src/window/window.ts:325
 msgid "Curlew (demo)"
 msgstr "Curlew (Demo)"
 
-#: app/src/window/window.ts:319
+#: app/src/window/window.ts:326
 msgid "Demo data — nothing here is real"
 msgstr "Demo-Daten – nichts hier ist echt"
 
-#: app/src/window/window.ts:368
+#: app/src/window/window.ts:375
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 

@@ -16,7 +16,7 @@ const DELIVERED_CAPABILITIES: ReadonlyArray<{
   {
     backend: 'mail',
     manifest: BUILTIN_PLUGINS.find((p) => p.manifest.name === 'mail')!.manifest,
-    trueFlags: 'threads,groups,subject,folders,attachments',
+    trueFlags: 'threads,groups,subject,folders,attachments,replies',
   },
   {
     backend: 'telegram',

@@ -20,5 +20,6 @@ export * from './backend.ts';
 export * from './messenger.ts';
 export * from './thread-capabilities.ts';
 export * from './mail-headers.ts';
+export * from './mail-forward.ts';
 export * from './sink.ts';
 export * from './transfer-decode.ts';

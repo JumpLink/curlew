@@ -31,5 +31,7 @@ the sync), so nothing is computed per bubble and no message is read.
 ## Today
 
 The mail manifest still says `reactions/edits/deletes/replies: false`, because no mail sender
-delivers them yet; A7–A9 raise the flag and the mail narrowing then gives it to Delta Chat peers
+delivers them yet; A7, A8 and A10 raise the flag and the mail narrowing then gives it to Delta Chat peers
 only. The window behaves as before.
+
+Replies (A9) are on: the mail manifest says `replies: true`, and the narrowing gives them to Delta Chat peers only. A mail reply names the message by its own id; the window threads it by `In-Reply-To`/`References`. The forward marker (`parseForwarded`, `packages/protocol/src/mail-forward.ts`) is read only for chat mail.

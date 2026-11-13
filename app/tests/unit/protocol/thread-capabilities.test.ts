@@ -62,6 +62,12 @@ export default async () => {
       for (const feature of PINNED_FEATURES) expect(result[feature]).toBe(false);
     });
 
+    await it('gives replies to a Delta Chat mail thread only', async () => {
+      const mail = manifestOf('mail');
+      expect(threadCan(mail, { backend: 'mail', emailChat: true }, 'replies')).toBe(true);
+      expect(threadCan(mail, { backend: 'mail', emailChat: false }, 'replies')).toBe(false);
+    });
+
     await it('leaves every non-mail backend at its manifest', async () => {
       for (const plugin of BUILTIN_PLUGINS) {
         if (plugin.manifest.name === 'mail') continue;

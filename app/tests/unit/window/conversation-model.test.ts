@@ -451,6 +451,13 @@ export default async () => {
       );
     });
 
+    await it('names a mail message by its own id, since mail has no network id', async () => {
+      const mail = message({ id: 'm1', ref: { accountId: 'a', backend: 'mail', folder: 'INBOX', uid: 4 } });
+      const draft = replyDraftOf(mail, [{ backend: 'mail', accountId: 'a' }], (b) => b === 'mail');
+      expect(draft?.target.remoteId).toBe('m1');
+      expect(replyDraftOf(mail, [{ backend: 'mail', accountId: 'a' }], () => false)).toBe(null);
+    });
+
     await it('offers nothing for a backend that cannot reply, a message without a network id or a foreign account', async () => {
       const signal = message({
         id: 'x',
