@@ -64,6 +64,7 @@ export function planNotices(
   changes: readonly ChangeRow[],
   mode: NoticeMode,
   state: NoticeState,
+  hiddenAccounts: readonly string[] = [],
 ): Notice[] {
   if (mode === 'off') return [];
   const notices: Notice[] = [];
@@ -75,6 +76,8 @@ export function planNotices(
       incomingOnly: true,
     });
     if (!found || found.conversation.backend === 'mail') continue;
+    // A paused account stays silent: its messages may still sit in the index.
+    if (hiddenAccounts.includes(found.conversation.accountId)) continue;
     const already = state.announced.get(conversationId);
     let fresh = found.messages.filter((m) => !m.seen && m.presentation !== 'notice');
     if (already !== undefined) {

@@ -66,6 +66,7 @@ import { isSendBackend } from '@curlew/protocol';
 import { isOmemoSendRefusedError, MESSAGES, validateImageUrl } from '@curlew/xmpp';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
+import { hiddenAccountIds } from '../visibility.ts';
 import { loadConfig, type CurlewConfig } from '../config.ts';
 import { demoActive } from '../demo/active.ts';
 import { type AllowReason, previewOf, requireAccess } from '../access.ts';
@@ -279,6 +280,17 @@ export async function findAccountBackend(
   return null;
 }
 
+/** A paused account sends nothing: say so, instead of a bare "no account". */
+export function refuseIfPaused(config: CurlewConfig, accountId: string): void {
+  if (hiddenAccountIds(config).includes(accountId)) {
+    throw new Error(
+      fmt(_('account {account} is paused — switch it on in Accounts to send from it'), {
+        account: accountId,
+      }),
+    );
+  }
+}
+
 /** One message that went out, and the body it carried — what the write log and the index need. */
 export interface SendStep {
   sent: SentMessage;
@@ -454,6 +466,7 @@ export async function isSelf(backend: unknown, accountId: string, to: string): P
  */
 export async function sendAsAgent(params: SendParams): Promise<SendResult> {
   const config = loadConfig(params.configPath ?? configPath());
+  refuseIfPaused(config, params.accountId);
   const found = await findAccountBackend(config, params.accountId, params.backend);
   if (found === null) {
     throw new Error(
@@ -513,6 +526,7 @@ async function refuseOutsidePin(config: CurlewConfig, backend: string, params: S
 export async function sendMessage(params: SendParams): Promise<SendResult> {
   if (demoActive()) throw new Error(_('Demo mode: nothing is sent.'));
   const config = loadConfig(params.configPath ?? configPath());
+  refuseIfPaused(config, params.accountId);
   const found = await findAccountBackend(config, params.accountId, params.backend);
   if (found === null) {
     throw new Error(

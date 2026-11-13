@@ -1,6 +1,9 @@
 /**
  * What the person is shown of an account. One seam, so the list, the contact page and the pickers
- * agree (docs/design/ui.md, "Delta Chat is visible").
+ * agree (docs/design/ui.md, "Delta Chat is visible"), and every read of the index that lists
+ * conversations or searches messages asks here for the paused account ids to leave out, so a view
+ * never filters by itself. Pausing is a read filter over the config: the messages stay in the
+ * index and come back the moment the account is switched on again.
  */
 
 import type { CurlewConfig } from './config.ts';
@@ -20,4 +23,19 @@ export function carrierOf(
   _config: Pick<CurlewConfig, 'deltaChatAccounts'> = {},
 ): string {
   return backend === 'mail' && emailChat ? DELTA_CHAT : backend;
+}
+
+/** Account ids the person paused (`config.disabledAccounts`, entries are `<backend>/<accountId>`). */
+export function hiddenAccountIds(config: Pick<CurlewConfig, 'disabledAccounts'>): string[] {
+  const ids = config.disabledAccounts.map((key) => key.slice(key.indexOf('/') + 1));
+  return [...new Set(ids)];
+}
+
+/** Is this account paused? */
+export function isAccountPaused(
+  config: Pick<CurlewConfig, 'disabledAccounts'>,
+  backend: string,
+  accountId: string,
+): boolean {
+  return config.disabledAccounts.includes(`${backend}/${accountId}`);
 }

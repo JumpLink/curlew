@@ -17,7 +17,7 @@ import type {
   ListAccountsOptions,
 } from '@curlew/protocol';
 import { isAccountRemoverBackend } from '@curlew/protocol';
-import { rmSync } from 'node:fs';
+import { existsSync, rmSync } from 'node:fs';
 import {
   type AccountDataRemoved,
   avatarsDir,
@@ -61,8 +61,8 @@ export async function backendAccountsList(
 }
 
 /**
- * Switch a chat account on or off. Off keeps it linked and keeps its messages; the daemon and
- * `curlew sync` then skip it. Interactive use only, like removal: an agent must not be able to
+ * Pause or resume an account of any backend, mail included. Paused keeps it linked and keeps its
+ * messages in the index, but shows nothing of it, syncs nothing and sends nothing. Interactive use only, like removal: an agent must not be able to
  * silence an account.
  */
 export function accountSetEnabled(
@@ -76,6 +76,20 @@ export function accountSetEnabled(
   const rest = config.disabledAccounts.filter((k) => k !== key);
   config.disabledAccounts = enabled ? rest : [...rest, key];
   saveConfig(config, path);
+}
+
+/** How many conversations pausing this account hides; the confirmation names the number. */
+export function accountConversationCount(accountId: string, dbPath = indexDbPath()): number {
+  if (!existsSync(dbPath)) return 0;
+  const db = openIndex(dbPath);
+  try {
+    const row = db.prepare('SELECT COUNT(*) AS n FROM conversations WHERE account_id = ?').get(accountId) as
+      | { n?: unknown }
+      | undefined;
+    return Number(row?.n ?? 0);
+  } finally {
+    db.close();
+  }
 }
 
 /** Whether a mail account is opted into Delta Chat; off unless the config lists it. */

@@ -46,6 +46,8 @@
 ### Changed
 
 - A mail thread whose peer sent the Delta Chat marker is now shown as "Delta Chat" (own badge, tooltip, contact page, merge dialog, new-conversation picker); ordinary mail stays "Mail". A merged contact reads "Delta Chat · XMPP" instead of "Mail · XMPP", and one address with both appears once as Delta Chat. Pins and routes stay on Mail. The email-chat hint now explains why a contact switches from Mail to Delta Chat.
+- Switching an account off now pauses it, for every protocol including mail: its conversations and search hits disappear from the window, the CLI and MCP, nothing is synced, nothing is sent and no notification comes. Nothing is deleted, and switching it on again brings everything back without a new login. The switch reads "Use this account" and asks first, naming how many conversations will be hidden. A send from a paused account is refused with a clear message.
+
 - The version lives in one place, `app/package.json`; the About dialog, `curlew --version` and the MCP server handshake read it from there instead of each carrying a copy.
 - `npm run packaging:install` takes `--no-icons` and `--remove-icons`, so a stale installed icon no longer shadows the one in `app/data` during development.
 - The README describes the messenger and is short; the per-protocol, command-line, daemon, MCP and release details moved to `docs/guide/`. The package metadata and the Flathub listing text describe the messenger, not a mail tool. The first release is `0.2.0`.

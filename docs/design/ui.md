@@ -261,7 +261,7 @@ every config key and where it is changed; its types follow `UiConfig` and `Curle
 | `ui.ai` | Preferences: AI (Agent access in the menu only while on) |
 | `ui.searchScope` | Conversation list, search scope |
 | `backends.<name>.enabled`, `termsAcceptedAt` | Accounts: Protocols |
-| `disabledAccounts` | Account page: Sync this account |
+| `disabledAccounts` | Account page: Use this account (pauses any account, mail included: hidden, no sync, no send; confirmed with the count of hidden chats) |
 | `deltaChatAccounts` | Account page (mail): Use for Delta Chat; Accounts: Protocols: Delta Chat |
 | `encryption` | Account page (XMPP): Require encryption (whole account; single-peer entries stay file-only) |
 | `agentAccess`, `grants` | Agent access dialog |

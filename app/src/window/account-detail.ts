@@ -8,6 +8,7 @@ import Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 
 import {
+  accountConversationCount,
   accountRemove,
   accountSetDeltaChat,
   accountSetEncryptionRequired,
@@ -18,6 +19,7 @@ import {
 import { deleteDataCopy, removeAccountCopy } from './account-remove-model.ts';
 import { restartDaemonIfRunning } from './accounts-daemon.ts';
 import type { AccountRow } from './accounts-model.ts';
+import { pauseBody } from './account-pause-model.ts';
 import { emailChatExplanation } from './email-chat-model.ts';
 import { accountStatusLabel } from './accounts-page.ts';
 
@@ -38,6 +40,8 @@ export interface AccountDetailDeps {
   onChanged(): void;
   /** The switch to run; the real one unless a probe substitutes it. */
   setEnabled?(backend: string, accountId: string, enabled: boolean): void;
+  /** How many conversations pausing hides; the real count unless a probe substitutes it. */
+  conversationCount?(accountId: string): number;
   /** The Delta Chat opt-in to store; the real one unless a probe substitutes it. */
   setDeltaChat?(accountId: string, on: boolean): void;
   /** The removal to run; the real one unless a probe substitutes it. */
@@ -80,12 +84,11 @@ export function pushAccountPage(deps: AccountDetailDeps): void {
   page.add(details);
 
   const sync = new Adw.PreferencesGroup({
-    description: _('Off keeps the account linked and its messages here, but Curlew stops syncing it.'),
+    description: _('Off keeps the account and its messages, but shows nothing of it and sends nothing.'),
   });
-  // Mail is read on demand, not held by the daemon, so there is nothing to switch off.
-  sync.set_visible(deps.backend !== 'mail');
-  const enabled = new Adw.SwitchRow({ title: _('Sync this account'), active: row.status !== 'disabled' });
-  enabled.connect('notify::active', () => {
+  const enabled = new Adw.SwitchRow({ title: _('Use this account'), active: row.status !== 'disabled' });
+  let confirmed = false;
+  const apply = () => {
     try {
       (deps.setEnabled ?? ((b, id, on) => accountSetEnabled(b, id, on, deps.path)))(
         deps.backend,
@@ -98,6 +101,38 @@ export function pushAccountPage(deps: AccountDetailDeps): void {
     }
     restartDaemonIfRunning();
     deps.onChanged();
+  };
+  enabled.connect('notify::active', () => {
+    if (enabled.get_active() || confirmed) {
+      confirmed = false;
+      apply();
+      return;
+    }
+    // Pausing hides the account's chats at once: say how many, and that nothing is deleted.
+    let count = 0;
+    try {
+      count = (deps.conversationCount ?? ((id) => accountConversationCount(id)))(row.id);
+    } catch {
+      count = 0;
+    }
+    const dialog = new Adw.AlertDialog({
+      heading: _('Pause this account?'),
+      body: pauseBody(count),
+    });
+    dialog.add_response('cancel', _('Cancel'));
+    dialog.add_response('pause', _('Pause'));
+    dialog.set_default_response('cancel');
+    dialog.set_close_response('cancel');
+    dialog.connect('response', (_d, response) => {
+      if (response === 'pause') {
+        confirmed = true;
+        apply();
+        confirmed = false;
+      } else {
+        enabled.set_active(true);
+      }
+    });
+    dialog.present(deps.parent());
   });
   sync.add(enabled);
   page.add(sync);

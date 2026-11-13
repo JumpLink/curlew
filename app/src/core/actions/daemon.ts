@@ -81,6 +81,7 @@ import { TelegramBackend } from '@curlew/telegram';
 import { XmppBackend } from '@curlew/xmpp';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
+import { hiddenAccountIds, isAccountPaused } from '../visibility.ts';
 import { effectiveAgentAccess, loadConfig, saveConfig, type CurlewConfig } from '../config.ts';
 import { AccessBroker, type PromptUi } from '../access-broker.ts';
 import { withAllowRule } from '../access.ts';
@@ -309,6 +310,8 @@ export interface DaemonSendHandlerOptions {
   /** The live sessions of this run, keyed by `sessionKey` — the map `onSession` keeps up to date. */
   sessions: ReadonlyMap<string, DeliverySession>;
   log: (line: string) => void;
+  /** Is this account paused right now? A paused account refuses a send that was already queued. */
+  isPaused?: (backend: string, accountId: string) => boolean;
 }
 
 export interface DaemonFetchHandlerOptions {
@@ -349,9 +352,17 @@ function previewDirFor(ref: MessageRef, index: number, root: string): string {
  * It writes no log line and indexes nothing: the caller owns both.
  */
 export function createDaemonSendHandler(options: DaemonSendHandlerOptions): DaemonSendHandler {
-  const { log, sessions } = options;
+  const { log, sessions, isPaused } = options;
   return async (request) => {
     const who = sessionKey(request.backend, request.account);
+    if (isPaused?.(request.backend, request.account)) {
+      log(`curlew-daemon: a send for ${who} was refused — the account is paused`);
+      return {
+        v: DAEMON_WIRE_VERSION,
+        kind: 'refused',
+        message: _('this account is paused — switch it on in Accounts to send from it'),
+      };
+    }
     const session = sessions.get(who);
     if (session === undefined || session.openSender === undefined) {
       log(`curlew-daemon: a send for ${who} is not this daemon's to make — the caller keeps it`);
@@ -776,8 +787,10 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   const notify = (after: number | null): void => {
     if (!notices) return;
     try {
-      const mode = loadConfig(noticeConfigPath).ui.notifications;
-      for (const notice of planNotices(db, readChanges(db, after ?? 0).changes, mode, noticeState))
+      const noticeConfig = loadConfig(noticeConfigPath);
+      const mode = noticeConfig.ui.notifications;
+      const paused = hiddenAccountIds(noticeConfig);
+      for (const notice of planNotices(db, readChanges(db, after ?? 0).changes, mode, noticeState, paused))
         notices.show(notice);
     } catch (err) {
       log(`curlew-daemon: a notification could not be planned: ${errText(err)}`);
@@ -827,6 +840,8 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
             createDaemonSendHandler({
               sessions,
               log,
+              isPaused: (backend, accountId) =>
+                isAccountPaused(loadConfig(accessConfigPath), backend, accountId),
             }),
             {
               log,
