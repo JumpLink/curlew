@@ -24,6 +24,7 @@ import { backgroundLabels, packLabels } from './appearance-rows.ts';
 import { deleteOwnPicture, saveOwnPicture, showPicture } from './contact-picture.ts';
 import {
   type ListEntry,
+  choiceIdsOf,
   entryProtocolSubtitle,
   listSubtitle,
   looksOf,
@@ -42,15 +43,19 @@ export interface ContactPageTools {
 const HERO_SIZE = 96;
 const ROW_AVATAR_SIZE = 32;
 
-/** A direct chat with someone known has a page; groups, the note to self and drafts have none. */
+/** A direct chat with someone known and a group have a page; the note to self and drafts have none. */
 export function hasContactPage(entry: ListEntry): boolean {
-  return entry.kind === 'direct' && entry.self !== true && entry.personIds.length > 0;
+  if (entry.self === true) return false;
+  return entry.kind === 'group' || (entry.kind === 'direct' && entry.personIds.length > 0);
 }
+
+const isGroup = (entry: ListEntry): boolean => entry.kind === 'group';
 
 const parts = (entry: ListEntry): ListEntry[] => (entry.members.length > 0 ? entry.members : [entry]);
 
 /** The name a merged row has when the person chose none: the newest part's, as in the list. */
 function automaticTitle(entry: ListEntry): string {
+  if (entry.automaticTitle !== undefined) return entry.automaticTitle;
   const newest = parts(entry).reduce((a, b) => ((a.lastMessageAt ?? '') >= (b.lastMessageAt ?? '') ? a : b));
   return entry.members.length > 0 ? newest.title : entry.title;
 }
@@ -163,13 +168,18 @@ export function presentContactPage(
   labels: ReadonlyMap<string, string>,
   tools: ContactPageTools,
 ): void {
-  const ids = [...entry.personIds];
+  const ids = choiceIdsOf(entry);
+  const group = isGroup(entry);
   const members = parts(entry);
   const merged = entry.members.length > 1;
   const choice: ContactChoice = { ...initial };
   const fallback = automaticTitle(entry);
 
-  const dialog = new Adw.Dialog({ title: _('Contact'), contentWidth: 400, contentHeight: 600 });
+  const dialog = new Adw.Dialog({
+    title: group ? _('Group') : _('Contact'),
+    contentWidth: 400,
+    contentHeight: 600,
+  });
   const toasts = new Adw.ToastOverlay();
   const view = new Adw.ToolbarView();
   view.add_top_bar(new Adw.HeaderBar());
@@ -191,7 +201,9 @@ export function presentContactPage(
       ? fmt(_n('Combined from {count} chat', 'Combined from {count} chats', members.length), {
           count: members.length,
         })
-      : entryProtocolSubtitle(entry),
+      : group
+        ? groupSubtitle(entry)
+        : entryProtocolSubtitle(entry),
     wrap: true,
     justify: Gtk.Justification.CENTER,
   });
@@ -235,7 +247,7 @@ export function presentContactPage(
       if (value === null) delete choice[field];
       else if (value !== undefined) choice[field] = value;
     };
-    for (const field of ['name', 'picture', 'own'] as const) set(field, patch[field]);
+    for (const field of ['title', 'name', 'picture', 'own'] as const) set(field, patch[field]);
     for (const field of ['primary', 'accent', 'background'] as const) set(field, patch[field]);
     tools.choose(ids, patch);
     refresh();
@@ -279,6 +291,19 @@ export function presentContactPage(
       pictureGroup.add(row.row);
     }
     column.append(pictureGroup);
+  }
+
+  if (group) {
+    const nameGroup = new Adw.PreferencesGroup();
+    const nameRow = new Adw.EntryRow({ title: _('Name'), text: choice.title ?? fallback });
+    nameRow.set_show_apply_button(true);
+    nameRow.connect('apply', () => {
+      const typed = nameRow.get_text().trim();
+      apply({ title: typed === '' || typed === fallback ? null : typed });
+    });
+    nameGroup.add(nameRow);
+    column.append(nameGroup);
+    column.append(infoGroup(entry, labels));
   }
 
   column.append(lookGroup(choice, apply));
@@ -341,6 +366,51 @@ export function presentContactPage(
   refresh();
   dialog.connect('closed', () => tools.closed());
   dialog.present(parent);
+}
+
+const countOf = (entry: ListEntry): number | null =>
+  entry.room?.memberCount ??
+  (entry.groupMembers && entry.groupMembers.length > 0 ? entry.groupMembers.length : null);
+
+function groupSubtitle(entry: ListEntry): string {
+  const count = countOf(entry);
+  const protocol = entryProtocolSubtitle(entry);
+  return count === null
+    ? protocol
+    : `${protocol} · ${fmt(_n('{count} member', '{count} members', count), { count })}`;
+}
+
+/** What the index knows about the group: network, account, room facts and the members it has. */
+function infoGroup(entry: ListEntry, labels: ReadonlyMap<string, string>): Adw.PreferencesGroup {
+  const group = new Adw.PreferencesGroup({ title: _('About') });
+  const line = (title: string, value: string): void => {
+    const row = new Adw.ActionRow({ title, subtitle: value, subtitleSelectable: true });
+    row.add_css_class('property');
+    group.add(row);
+  };
+  line(_('Protocol'), protocolLabel(entry.backend));
+  line(_('Account'), labels.get(entry.accountId) ?? protocolLabel(entry.backend));
+  const count = countOf(entry);
+  if (count !== null) line(_('Members'), String(count));
+  const room = entry.room;
+  if (room?.public != null) line(_('Visibility'), room.public ? _('Public room') : _('Private room'));
+  if (room?.encrypted != null) line(_('Encryption'), room.encrypted ? _('Encrypted') : _('Not encrypted'));
+  const people = entry.groupMembers ?? [];
+  if (people.length > 0) {
+    const expander = new Adw.ExpanderRow({
+      title: _('Members the app knows'),
+      subtitle: fmt(_n('{count} person', '{count} people', people.length), { count: people.length }),
+    });
+    for (const person of people) {
+      const row = new Adw.ActionRow({ title: person });
+      row.set_title_lines(1);
+      const avatar = new Adw.Avatar({ size: ROW_AVATAR_SIZE, text: person, showInitials: true });
+      row.add_prefix(avatar);
+      expander.add_row(row);
+    }
+    group.add(expander);
+  }
+  return group;
 }
 
 interface PictureHint {

@@ -121,7 +121,7 @@ export interface CurlewConfig {
   pins: Record<string, string>;
   /**
    * What the person chose for how a contact looks, keyed by the smallest participant id of the
-   * contact's person set. Presentation only and local, like a merge: the address book is not
+   * contact's person set, or `group:<conversation id>` for a group. Presentation only and local, like a merge: the address book is not
    * written. See `choiceFor` for how a choice survives a later merge.
    */
   contactChoices: Record<string, ContactChoice>;
@@ -139,6 +139,8 @@ export interface CurlewConfig {
  * `primary`, `accent` and `background` give this one chat its own look (ADR 0013).
  */
 export interface ContactChoice {
+  /** A name typed by the person; a group has no parts to pick one from. */
+  title?: string;
   name?: string;
   picture?: string;
   own?: string;
@@ -356,14 +358,14 @@ function parseContactChoices(raw: unknown): Record<string, ContactChoice> {
   if (raw === undefined) return {};
   const bad = () =>
     new Error(
-      'config.contactChoices must map participant ids to {name?, picture?, own?, primary?, accent?, background?} choices',
+      'config.contactChoices must map participant ids (or group:<conversation id>) to {title?, name?, picture?, own?, primary?, accent?, background?} choices',
     );
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw bad();
   const out: Record<string, ContactChoice> = {};
   for (const [id, value] of Object.entries(raw as Record<string, unknown>)) {
     if (id === '' || typeof value !== 'object' || value === null || Array.isArray(value)) throw bad();
-    const { name, picture, own, primary, accent, background } = value as Record<string, unknown>;
-    for (const part of [name, picture, own, primary, accent, background]) {
+    const { title, name, picture, own, primary, accent, background } = value as Record<string, unknown>;
+    for (const part of [title, name, picture, own, primary, accent, background]) {
       if (part !== undefined && (typeof part !== 'string' || part === '')) throw bad();
     }
     if (typeof own === 'string' && /[/\\]/.test(own)) throw bad();
@@ -374,6 +376,7 @@ function parseContactChoices(raw: unknown): Record<string, ContactChoice> {
       throw bad();
     }
     const choice: ContactChoice = {
+      ...(title !== undefined ? { title: title as string } : {}),
       ...(name !== undefined ? { name: name as string } : {}),
       ...(picture !== undefined ? { picture: picture as string } : {}),
       ...(own !== undefined ? { own: own as string } : {}),

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 02:57+0100\n"
+"POT-Creation-Date: 2026-11-13 03:13+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1613,7 +1613,7 @@ msgid ""
 msgstr ""
 
 #: app/src/window/account-add.ts:288 app/src/window/accounts-model.ts:80
-#: app/src/window/conversation-list-model.ts:132
+#: app/src/window/conversation-list-model.ts:136
 msgid "Mail"
 msgstr ""
 
@@ -1635,6 +1635,7 @@ msgid "Add Account"
 msgstr ""
 
 #: app/src/window/account-detail.ts:70 app/src/window/agent-access-page.ts:218
+#: app/src/window/contact-page.ts:392
 msgid "Account"
 msgstr ""
 
@@ -1975,39 +1976,39 @@ msgstr ""
 msgid "Plain"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:154 app/src/window/contact-page.ts:93
+#: app/src/window/appearance-rows.ts:154 app/src/window/contact-page.ts:98
 msgid "Blue"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:155 app/src/window/contact-page.ts:94
+#: app/src/window/appearance-rows.ts:155 app/src/window/contact-page.ts:99
 msgid "Teal"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:156 app/src/window/contact-page.ts:95
+#: app/src/window/appearance-rows.ts:156 app/src/window/contact-page.ts:100
 msgid "Green"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:157 app/src/window/contact-page.ts:96
+#: app/src/window/appearance-rows.ts:157 app/src/window/contact-page.ts:101
 msgid "Yellow"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:158 app/src/window/contact-page.ts:97
+#: app/src/window/appearance-rows.ts:158 app/src/window/contact-page.ts:102
 msgid "Orange"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:159 app/src/window/contact-page.ts:98
+#: app/src/window/appearance-rows.ts:159 app/src/window/contact-page.ts:103
 msgid "Red"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:160 app/src/window/contact-page.ts:99
+#: app/src/window/appearance-rows.ts:160 app/src/window/contact-page.ts:104
 msgid "Pink"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:161 app/src/window/contact-page.ts:100
+#: app/src/window/appearance-rows.ts:161 app/src/window/contact-page.ts:105
 msgid "Purple"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:162 app/src/window/contact-page.ts:101
+#: app/src/window/appearance-rows.ts:162 app/src/window/contact-page.ts:106
 msgid "Slate"
 msgstr ""
 
@@ -2027,7 +2028,7 @@ msgstr ""
 msgid "Style"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:248 app/src/window/contact-page.ts:110
+#: app/src/window/appearance-rows.ts:248 app/src/window/contact-page.ts:115
 msgid "Design"
 msgstr ""
 
@@ -2051,7 +2052,7 @@ msgstr ""
 msgid "Tints the window and its panels"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:277 app/src/window/contact-page.ts:114
+#: app/src/window/appearance-rows.ts:277 app/src/window/contact-page.ts:119
 msgid "Accent colour"
 msgstr ""
 
@@ -2063,7 +2064,7 @@ msgstr ""
 msgid "Colours buttons, links and your own messages"
 msgstr ""
 
-#: app/src/window/appearance-rows.ts:292 app/src/window/contact-page.ts:118
+#: app/src/window/appearance-rows.ts:292 app/src/window/contact-page.ts:123
 msgid "Chat background"
 msgstr ""
 
@@ -2086,7 +2087,7 @@ msgid "Could not fetch the attachment: {error}"
 msgstr ""
 
 #: app/src/window/attachment-view.ts:149 app/src/window/attachment-view.ts:158
-#: app/src/window/conversation-list-model.ts:459
+#: app/src/window/conversation-list-model.ts:471
 #: app/src/window/conversation-model.ts:295
 #: app/src/window/conversation-model.ts:300
 msgid "Attachment"
@@ -2151,154 +2152,210 @@ msgstr ""
 msgid "The picture could not be saved"
 msgstr ""
 
-#: app/src/window/contact-page.ts:91
+#: app/src/window/contact-page.ts:96
 msgid "Like the rest of the app"
 msgstr ""
 
-#: app/src/window/contact-page.ts:106
+#: app/src/window/contact-page.ts:111
 msgid "Look"
 msgstr ""
 
-#: app/src/window/contact-page.ts:107
+#: app/src/window/contact-page.ts:112
 msgid "Give this chat its own colours and background"
 msgstr ""
 
-#: app/src/window/contact-page.ts:172
+#: app/src/window/contact-page.ts:179
+msgid "Group"
+msgstr ""
+
+#: app/src/window/contact-page.ts:179
 msgid "Contact"
 msgstr ""
 
-#: app/src/window/contact-page.ts:191
+#: app/src/window/contact-page.ts:201
 msgid "Combined from {count} chat"
 msgid_plural "Combined from {count} chats"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/contact-page.ts:199
+#: app/src/window/contact-page.ts:211
 msgid "Choose Picture…"
 msgstr ""
 
-#: app/src/window/contact-page.ts:201
+#: app/src/window/contact-page.ts:213
 msgid "Remove Picture"
 msgstr ""
 
-#: app/src/window/contact-page.ts:248
+#: app/src/window/contact-page.ts:260 app/src/window/contact-page.ts:298
 msgid "Name"
 msgstr ""
 
-#: app/src/window/contact-page.ts:249 app/src/window/contact-page.ts:267
+#: app/src/window/contact-page.ts:261 app/src/window/contact-page.ts:279
 msgid "The newest chat decides"
 msgstr ""
 
-#: app/src/window/contact-page.ts:251 app/src/window/contact-page.ts:266
-#: app/src/window/conversation-list-model.ts:406
+#: app/src/window/contact-page.ts:263 app/src/window/contact-page.ts:278
+#: app/src/window/conversation-list-model.ts:418
 msgid "Automatic"
 msgstr ""
 
-#: app/src/window/contact-page.ts:263
+#: app/src/window/contact-page.ts:275
 msgid "Picture"
 msgstr ""
 
-#: app/src/window/contact-page.ts:289 app/src/window/conversation-list.ts:474
+#: app/src/window/contact-page.ts:314 app/src/window/conversation-list.ts:474
 msgid "Separate"
 msgstr ""
 
-#: app/src/window/contact-page.ts:290
+#: app/src/window/contact-page.ts:315
 msgid "Show these chats as separate people again"
 msgstr ""
 
-#: app/src/window/contact-page.ts:304
+#: app/src/window/contact-page.ts:329
 msgid "Images"
 msgstr ""
 
-#: app/src/window/contact-page.ts:308
+#: app/src/window/contact-page.ts:333
 msgid "Choose a Picture"
 msgstr ""
 
-#: app/src/window/contact-page.ts:321
+#: app/src/window/contact-page.ts:346
 msgid "This file is not a picture"
 msgstr ""
 
-#: app/src/window/contact-page.ts:352
+#: app/src/window/contact-page.ts:380
+msgid "{count} member"
+msgid_plural "{count} members"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/window/contact-page.ts:385
+msgid "About"
+msgstr ""
+
+#: app/src/window/contact-page.ts:391
+msgid "Protocol"
+msgstr ""
+
+#: app/src/window/contact-page.ts:394
+msgid "Members"
+msgstr ""
+
+#: app/src/window/contact-page.ts:396
+msgid "Visibility"
+msgstr ""
+
+#: app/src/window/contact-page.ts:396
+msgid "Public room"
+msgstr ""
+
+#: app/src/window/contact-page.ts:396
+msgid "Private room"
+msgstr ""
+
+#: app/src/window/contact-page.ts:397
+msgid "Encryption"
+msgstr ""
+
+#: app/src/window/contact-page.ts:397
+msgid "Encrypted"
+msgstr ""
+
+#: app/src/window/contact-page.ts:397
+msgid "Not encrypted"
+msgstr ""
+
+#: app/src/window/contact-page.ts:401
+msgid "Members the app knows"
+msgstr ""
+
+#: app/src/window/contact-page.ts:402 app/src/window/conversation-model.ts:337
+msgid "{count} person"
+msgid_plural "{count} people"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/window/contact-page.ts:422
 msgid "Your own picture is shown instead"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:133
+#: app/src/window/conversation-list-model.ts:137
 msgid "XMPP"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:134
+#: app/src/window/conversation-list-model.ts:138
 msgid "Signal"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:135
+#: app/src/window/conversation-list-model.ts:139
 msgid "Matrix"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:136
+#: app/src/window/conversation-list-model.ts:140
 msgid "Telegram"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:137
+#: app/src/window/conversation-list-model.ts:141
 msgid "WhatsApp"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:168
+#: app/src/window/conversation-list-model.ts:172
 msgid "Yesterday"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:245
-#: app/src/window/conversation-list-model.ts:644
+#: app/src/window/conversation-list-model.ts:249
+#: app/src/window/conversation-list-model.ts:679
 msgid "Note to self"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:263
+#: app/src/window/conversation-list-model.ts:267
 msgid "Unnamed group · {count} member"
 msgid_plural "Unnamed group · {count} members"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-list-model.ts:267
+#: app/src/window/conversation-list-model.ts:271
 msgid "Unnamed conversation"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:343
+#: app/src/window/conversation-list-model.ts:355
 msgid "Only via {protocol}, which has no address for this person"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:347
+#: app/src/window/conversation-list-model.ts:359
 msgid "Encrypted rooms are not supported yet"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:402
-#: app/src/window/conversation-list-model.ts:415
+#: app/src/window/conversation-list-model.ts:414
+#: app/src/window/conversation-list-model.ts:427
 msgid "Only via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:462
+#: app/src/window/conversation-list-model.ts:474
 msgid "You: {text}"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:464
+#: app/src/window/conversation-list-model.ts:476
 msgid "{name}: {text}"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:494
+#: app/src/window/conversation-list-model.ts:506
 msgid "Public room · {count} member"
 msgid_plural "Public room · {count} members"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-list-model.ts:495
+#: app/src/window/conversation-list-model.ts:507
 msgid "Room · {count} member"
 msgid_plural "Room · {count} members"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-list-model.ts:798
+#: app/src/window/conversation-list-model.ts:833
 msgid "People"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:799
+#: app/src/window/conversation-list-model.ts:834
 msgid "Groups"
 msgstr ""
 
@@ -2435,17 +2492,12 @@ msgstr[1] ""
 msgid "You"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:337
-msgid "{count} person"
-msgid_plural "{count} people"
-msgstr[0] ""
-msgstr[1] ""
-
 #: app/src/window/conversation-view.ts:169
 msgid "Choose how to reach this person"
 msgstr ""
 
 #: app/src/window/conversation-view.ts:182
+#: app/src/window/conversation-view.ts:1360
 msgid "Contact details"
 msgstr ""
 
@@ -2571,6 +2623,10 @@ msgstr ""
 
 #: app/src/window/conversation-view.ts:1326
 msgid "Retry"
+msgstr ""
+
+#: app/src/window/conversation-view.ts:1360
+msgid "Group details"
 msgstr ""
 
 #: app/src/window/fade-bin.ts:153

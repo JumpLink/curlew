@@ -34,6 +34,9 @@ import {
   buildSections,
   entryTitle,
   toEntries,
+  choiceIdsOf,
+  choiceOfEntry,
+  withChoices,
   toEntry,
   unreadText,
   unreadTier,
@@ -947,6 +950,44 @@ export default async () => {
         ['xmpp-1', 'Me@example.org'],
       ]);
       expect(listSubtitle(merged, labels)).toBe('Me@example.org · My Signal · Telegram');
+    });
+  });
+
+  describe('how a group looks', () => {
+    it('keys a group by its chat id and a person by participants', () => {
+      expect(choiceIdsOf(entry({ id: 'c4', kind: 'group' }))).toStrictEqual(['group:c4']);
+      expect(choiceIdsOf(entry({ id: 'd', personIds: ['p-b', 'p-a'] }))).toStrictEqual(['p-b', 'p-a']);
+      expect(choiceIdsOf(entry({ id: 'n', self: true }))).toStrictEqual([]);
+    });
+
+    it('applies a typed name and keeps the automatic one', () => {
+      const group = entry({ id: 'c4', kind: 'group', title: 'Climbing Tuesday' });
+      const choices = { 'group:c4': { title: 'Friday climbing', own: 'g.png' } };
+      expect(choiceOfEntry(choices, group)?.key).toBe('group:c4');
+      const [shown] = withChoices([group], choices);
+      expect(shown!.title).toBe('Friday climbing');
+      expect(shown!.automaticTitle).toBe('Climbing Tuesday');
+      expect(shown!.picture).toStrictEqual({ own: 'g.png' });
+      const [plain] = withChoices([group], { 'group:other': { title: 'x' } });
+      expect(plain!.title).toBe('Climbing Tuesday');
+    });
+
+    it('lists the member names of a group only', () => {
+      const person = (id: string, displayName: string | null, value: string) => ({
+        id,
+        displayName,
+        addresses: [{ kind: 'jid' as const, value }],
+        contactUid: null,
+      });
+      const group = toEntry(
+        conversation({
+          id: 'g',
+          kind: 'group',
+          participants: [person('1', 'Ana', 'ana@example.org'), person('2', null, 'bo@example.org')],
+        }),
+      );
+      expect(group.groupMembers).toStrictEqual(['Ana', 'bo@example.org']);
+      expect(toEntry(conversation({ id: 'd' })).groupMembers).toBeUndefined();
     });
   });
 };

@@ -1357,6 +1357,7 @@ export function createConversationView(
       title.set_title(nextEntry.title);
       title.set_subtitle(entryProtocolSubtitle(nextEntry));
       contact.set_visible(hasContactPage(nextEntry));
+      contact.set_tooltip_text(nextEntry.kind === 'group' ? _('Group details') : _('Contact details'));
       contactAvatar.set_text(nextEntry.title);
       contactAvatar.set_custom_image(null);
       showPicture(contactAvatar, nextEntry);

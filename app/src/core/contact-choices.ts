@@ -10,6 +10,7 @@ export type ContactChoices = Readonly<Record<string, ContactChoice>>;
 
 /** What to change in a contact's choice: a value sets, null clears, undefined keeps. */
 export interface ChoicePatch {
+  title?: string | null;
   name?: string | null;
   picture?: string | null;
   own?: string | null;
@@ -17,6 +18,9 @@ export interface ChoicePatch {
   accent?: AccentName | null;
   background?: BackgroundChoice | null;
 }
+
+/** The key a group's choice is stored under: groups have no participant set, the chat id is stable. */
+export const groupKey = (conversationId: string): string => `group:${conversationId}`;
 
 /** The key a contact's choice is stored under: the smallest participant id of its person set. */
 export const choiceKey = (ids: readonly string[]): string | null => [...ids].sort()[0] ?? null;
@@ -49,7 +53,7 @@ export function withChoice(
     if (value === null) delete next[field];
     else if (value !== undefined) next[field] = value;
   };
-  for (const field of ['name', 'picture', 'own'] as const) set(field, patch[field]);
+  for (const field of ['title', 'name', 'picture', 'own'] as const) set(field, patch[field]);
   for (const field of ['primary', 'accent', 'background'] as const) set(field, patch[field]);
   const out = { ...choices };
   for (const id of ids) delete out[id];

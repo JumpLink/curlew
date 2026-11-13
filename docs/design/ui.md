@@ -79,7 +79,10 @@ get the same view: topic, members, settings.
 hero picture and name, "Combined from N chats", the Name and Picture choices for a merged
 contact (an *Automatic* row plus one row per part), a picture of their own for any direct
 contact, and *Separate* for a merge made by hand. Verify, shared media and common groups are
-still open. Groups and the note to self have no page.
+still open. The note to self has no page. A **group** opens the same dialog titled *Group*: a name
+the person types, a picture of their own, an *About* block (protocol, account, member count, and
+for Matrix public/encrypted when the homeserver said so, plus the member names the index holds)
+and the same Look rows. No pin, merge or separate action: a group has none of them.
 
 ## Main window: one combined list
 

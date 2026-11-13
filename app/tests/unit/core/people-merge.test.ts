@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { choiceFor, lookOf, withChoice } from '../../../src/core/contact-choices.ts';
+import { choiceFor, groupKey, lookOf, withChoice } from '../../../src/core/contact-choices.ts';
 import {
   peopleChoose,
   peopleDecline,
@@ -153,6 +153,27 @@ export default async () => {
     await it('moves a choice to the new smallest id when people merge', async () => {
       const merged = withChoice({ 'p-b': { name: 'c1' } }, ['p-a', 'p-b'], { picture: 'c2' });
       expect(merged).toStrictEqual({ 'p-a': { name: 'c1', picture: 'c2' } });
+    });
+
+    await it('keeps a group look under its chat id, with a typed name', async () => {
+      const key = groupKey('c4');
+      expect(key).toBe('group:c4');
+      let choices = withChoice({}, [key], { title: 'Friday climbing', accent: 'teal', background: 'dots' });
+      expect(choices).toStrictEqual({
+        'group:c4': { title: 'Friday climbing', accent: 'teal', background: 'dots' },
+      });
+      expect(lookOf(choiceFor(choices, [key])?.choice)).toStrictEqual({ accent: 'teal', background: 'dots' });
+      choices = withChoice(choices, [key], { title: null, accent: null, background: null });
+      expect(choices).toStrictEqual({});
+    });
+
+    await it('reads a config with and without group choices', async () => {
+      expect(parseConfig('{"contactChoices": {"p-a": {"name": "c1"}}}').contactChoices).toStrictEqual({
+        'p-a': { name: 'c1' },
+      });
+      const parsed = parseConfig('{"contactChoices": {"group:c4": {"title": "Climbing", "accent": "red"}}}');
+      expect(parsed.contactChoices).toStrictEqual({ 'group:c4': { title: 'Climbing', accent: 'red' } });
+      expect(() => parseConfig('{"contactChoices": {"group:c4": {"title": ""}}}')).toThrow(/contactChoices/);
     });
 
     await it('writes, reads back and refuses malformed choices', async () => {
