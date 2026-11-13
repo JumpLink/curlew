@@ -3961,31 +3961,28 @@ msgstr ""
 "nennen — es wurde nichts gesendet"
 
 #: packages/signal/src/upload.ts:83
-#, fuzzy
 msgid "Signal would not take the file ({status}) — nothing was sent"
-msgstr ""
-"Signal hat die Nachricht abgelehnt ({status}) — es wurde nichts gesendet"
+msgstr "Signal hat die Datei nicht angenommen ({status}) — es wurde nichts gesendet"
 
 #: packages/signal/src/upload.ts:105
-#, fuzzy
 msgid ""
 "Signal answered the upload request with something curlew cannot read — "
 "nothing was sent"
 msgstr ""
-"Signal braucht das Emoji, das zurückgenommen wird — es wurde nichts gesendet"
+"Signal hat auf die Upload-Anfrage mit etwas geantwortet, das Curlew nicht "
+"lesen kann — es wurde nichts gesendet"
 
 #: packages/signal/src/upload.ts:150
-#, fuzzy
 msgid "the file server refused the upload ({status}) — nothing was sent"
 msgstr ""
-"Signal hat die Nachricht abgelehnt ({status}) — es wurde nichts gesendet"
+"der Dateiserver hat den Upload abgelehnt ({status}) — es wurde nichts "
+"gesendet"
 
 #: packages/signal/src/upload.ts:166
-#, fuzzy
 msgid "the file server named no place to upload to — nothing was sent"
 msgstr ""
-"Der Homeserver hat die Reaktionen in {room} nicht aufgelistet ({reason}) — "
-"es wurde nichts gesendet"
+"der Dateiserver hat keinen Ort zum Hochladen genannt — es wurde nichts "
+"gesendet"
 
 #: packages/store/src/send-files.ts:78
 msgid "at most {max} attachments per message, this one has {count}"
