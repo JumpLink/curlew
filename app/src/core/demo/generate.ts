@@ -175,6 +175,10 @@ function story(): Msg[] {
   const thanks = add('c16', 'me', 5, 'Perfect, thank you!', { read: true });
   add('c16', 'p-alex', 4.2, '', {
     att: [{ kind: 'image', name: 'harbour.png', scene: 'harbour', w: 480, h: 320 }],
+    react: [
+      ['', '😍'],
+      ['p-sam', '😍'],
+    ],
   });
   add('c16', 'p-alex', 3, 'See you at ten at the lighthouse.', { reply: thanks });
   add('c16', 'p-alex', 2, '', { att: [{ kind: 'video', name: 'harbour.mp4' }] });

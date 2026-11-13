@@ -63,6 +63,7 @@ import {
   type ReactionChange,
   type ReplyDraft,
 } from './conversation-model.ts';
+import { reactionPlacement } from './reaction-placement-model.ts';
 import { attachmentList, type AttachmentHandlers } from './attachment-view.ts';
 import { type Look, lookClasses } from '../core/lib/appearance.ts';
 import { ChatBackground } from './chat-background.ts';
@@ -991,7 +992,9 @@ export function createConversationView(
       bubble.append(padded(fadedOverlay(label, preview.clipped, () => setBodyText(label, full))));
     }
     showReactions();
-    bubble.append(padded(reactions));
+    // A bubble of only media shows its chips in a row under it, a bubble with text keeps them inside.
+    const below = reactionPlacement(message) === 'below';
+    if (!below) bubble.append(padded(reactions));
     const time = new Gtk.Label({ label: clockTime(message.sentAt), xalign: 1 });
     time.add_css_class('caption');
     time.add_css_class('dim-label');
@@ -1031,7 +1034,17 @@ export function createConversationView(
       marginBottom: 2,
     });
     // A long message stops short of the pane's full width on a wide window, so a line stays readable.
-    const clamp = new Adw.Clamp({ maximumSize: 560, tighteningThreshold: 560, child: card });
+    const side = message.fromSelf ? Gtk.Align.END : Gtk.Align.START;
+    let shownCard: Gtk.Widget = card;
+    if (below) {
+      const column = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 4 });
+      card.set_halign(side);
+      reactions.set_halign(side);
+      column.append(card);
+      column.append(reactions);
+      shownCard = column;
+    }
+    const clamp = new Adw.Clamp({ maximumSize: 560, tighteningThreshold: 560, child: shownCard });
     row.set_child(clamp);
     row.set_halign(message.fromSelf ? Gtk.Align.END : Gtk.Align.START);
     const separator = startsDay ? daySeparator(dayOf(message)) : null;
@@ -1138,7 +1151,7 @@ export function createConversationView(
     setBodyText(body, preview.clipped ? `${preview.text} …` : preview.text);
     one.bubble.insert_before(
       padded(fadedOverlay(body, preview.clipped, () => setBodyText(body, text))),
-      one.reactions,
+      one.reactions.get_parent() === one.bubble ? one.reactions : one.meta,
     );
     one.body = body;
     if (message.editedAt && !one.edited) {

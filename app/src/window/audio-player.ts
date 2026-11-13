@@ -18,18 +18,10 @@ export function audioPlayer(source: AttachmentSource, toast: (text: string) => v
   const { info } = source;
   const name = info.filename ?? attachmentLine(info);
   const voice = attachmentKind(info) === 'voice';
-  // The card is the surface; the controls sit inside it with their own padding, not against its edge.
-  const box = new Gtk.Box({ marginStart: 8, marginEnd: 8, marginTop: 8, marginBottom: 8 });
-  box.add_css_class('card');
+  // The bubble is the surface: the controls sit straight in it, with no card of their own.
+  const box = new Gtk.Box();
   box.set_tooltip_text(name);
-  const content = new Gtk.Box({
-    spacing: 10,
-    hexpand: true,
-    marginStart: 10,
-    marginEnd: 8,
-    marginTop: 8,
-    marginBottom: 8,
-  });
+  const content = new Gtk.Box({ spacing: 10, hexpand: true, marginTop: 4, marginBottom: 4 });
   box.append(content);
 
   const play = new Gtk.Button({ iconName: 'media-playback-start-symbolic', valign: Gtk.Align.CENTER });
