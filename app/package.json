@@ -60,6 +60,14 @@
       },
       "description": "curlew reads the mail (IMAP), contacts (CardDAV) and calendar (CalDAV) of the accounts already configured in GNOME Online Accounts, as a CLI and an MCP server. Read-only unless a grant says otherwise: it never sets \\Seen, and its only write is one granted send to one address. GNOME Online Accounts and Evolution Data Server are Linux-only, so the macOS and Windows packages ship with every account backend unavailable — see the Releasing section of README.md.",
       "icon": "data/icons",
+      "extraFiles": {
+        "share/icons/hicolor/scalable/apps/curlew-protocol-mail.svg": "data/protocol-icons/hicolor/scalable/apps/curlew-protocol-mail.svg",
+        "share/icons/hicolor/scalable/apps/curlew-protocol-matrix.svg": "data/protocol-icons/hicolor/scalable/apps/curlew-protocol-matrix.svg",
+        "share/icons/hicolor/scalable/apps/curlew-protocol-signal.svg": "data/protocol-icons/hicolor/scalable/apps/curlew-protocol-signal.svg",
+        "share/icons/hicolor/scalable/apps/curlew-protocol-telegram.svg": "data/protocol-icons/hicolor/scalable/apps/curlew-protocol-telegram.svg",
+        "share/icons/hicolor/scalable/apps/curlew-protocol-whatsapp.svg": "data/protocol-icons/hicolor/scalable/apps/curlew-protocol-whatsapp.svg",
+        "share/icons/hicolor/scalable/apps/curlew-protocol-xmpp.svg": "data/protocol-icons/hicolor/scalable/apps/curlew-protocol-xmpp.svg"
+      },
       "homepageUrl": "https://github.com/JumpLink/curlew",
       "bugtrackerUrl": "https://github.com/JumpLink/curlew/issues",
       "vcsBrowserUrl": "https://github.com/JumpLink/curlew",

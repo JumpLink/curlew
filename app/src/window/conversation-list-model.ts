@@ -145,7 +145,7 @@ export function protocolLabel(backend: string): string {
 }
 
 /**
- * Our own coloured badge per protocol (`data/icons`), drawn after, not copied from, the protocols'
+ * Our own coloured badge per protocol (`data/protocol-icons`), drawn after, not copied from, the protocols'
  * logos: they are trademarks. Colour never carries the meaning alone: every use has a label or tooltip.
  */
 export function protocolIcon(backend: string): string {

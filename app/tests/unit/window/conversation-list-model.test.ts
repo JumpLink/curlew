@@ -368,11 +368,13 @@ export default async () => {
 
     it('ships a file for every protocol icon, named in the mapping', () => {
       let dir = process.cwd();
-      while (!existsSync(join(dir, 'app/data/icons')) && dirname(dir) !== dir) dir = dirname(dir);
+      while (!existsSync(join(dir, 'app/data/protocol-icons')) && dirname(dir) !== dir) dir = dirname(dir);
       for (const backend of ['mail', 'xmpp', 'signal', 'matrix', 'telegram', 'whatsapp']) {
         const name = protocolIcon(backend);
         expect(name).toBe(`curlew-protocol-${backend}`);
-        expect(existsSync(join(dir, 'app/data/icons/hicolor/scalable/apps', `${name}.svg`))).toBe(true);
+        expect(existsSync(join(dir, 'app/data/protocol-icons/hicolor/scalable/apps', `${name}.svg`))).toBe(
+          true,
+        );
       }
     });
 

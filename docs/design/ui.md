@@ -146,7 +146,7 @@ agents get stays free of bodies. Mail keeps its body in the full-text index, so 
 subject. Not built: per-type labels ("Photo", "Voice message") instead of "Attachment".
 
 Protocol badges are 16 px coloured round icons (our own `curlew-protocol-<backend>` SVGs in
-`app/data/icons`, see `PROTOCOLS.md`) on a solid 22 px circle (the `card` style class: it contrasts
+`app/data/protocol-icons`, see `PROTOCOLS.md`) on a solid 22 px circle (the `card` style class: it contrasts
 in light and dark mode) that hangs on the avatar's lower-right rim so the initials stay readable;
 one colour and glyph per protocol (mail: purple envelope, XMPP: orange cross, Signal: blue ring,
 Matrix: green `[m]`, Telegram: blue plane, WhatsApp: green handset), with a tooltip naming the
