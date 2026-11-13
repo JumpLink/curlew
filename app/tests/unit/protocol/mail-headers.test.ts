@@ -70,6 +70,12 @@ export default async () => {
       expect(automation.autoSubmitted).toBe(null);
     });
 
+    await it('recognises a reaction mail by its Content-Disposition', async () => {
+      expect(parseThreadHeaders('Content-Disposition: reaction\r\n').reaction).toBe(true);
+      expect(parseThreadHeaders('Content-Disposition: attachment; filename=a\r\n').reaction).toBe(false);
+      expect(parseThreadHeaders('').reaction).toBe(false);
+    });
+
     await it('yields empty threading for an empty block', async () => {
       const parsed = parseThreadHeaders('');
       expect(parsed.references.length).toBe(0);

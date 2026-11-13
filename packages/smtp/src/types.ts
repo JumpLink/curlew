@@ -34,6 +34,8 @@ export interface OutgoingMessage {
   messageId?: string;
   /** Add Delta Chat's open `Chat-Version: 1.0` marker. */
   emailChat?: boolean;
+  /** `Content-Disposition: reaction` (RFC 9078): the body is the emoji, empty to retract. */
+  reaction?: boolean;
   /** RFC 5322 threading headers, used when this is a reply. */
   inReplyTo?: string;
   references?: string[];

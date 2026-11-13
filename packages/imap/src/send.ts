@@ -16,6 +16,7 @@ import type {
   SendPermit,
   SenderFeatures,
   SendingMessage,
+  SendingReaction,
   SentMessage,
   SmtpTarget,
 } from '@curlew/protocol';
@@ -50,7 +51,7 @@ export class MailSender implements MessageSender {
     markdown: false,
     attachments: true,
     replies: false,
-    reactions: false,
+    reactions: true,
     edits: false,
     deletes: false,
   };
@@ -103,6 +104,28 @@ export class MailSender implements MessageSender {
       sentAt: new Date().toISOString(),
       ...(files.length === 0 ? {} : { attachments: files.map((f) => ({ filename: f.filename, size: f.size })) }),
     };
+  }
+
+  /**
+   * A reaction is a mail with `Content-Disposition: reaction` whose body is the emoji (RFC 9078);
+   * an empty body takes the person's reaction back. Only a Delta Chat peer's message is reacted to.
+   */
+  async react(reaction: SendingReaction): Promise<void> {
+    const to = this.address(reaction.to);
+    const target = reaction.target.remoteId;
+    if (!reaction.target.emailChat || !/^<[^\s<>@]+@[^\s<>@]+>$/.test(target)) {
+      throw new Error(_('only a Delta Chat message can be reacted to by mail'));
+    }
+    await sendMessage(await smtpAccountFor(this.target), {
+      from: this.target.from,
+      to: [to],
+      subject: 'Message from Curlew',
+      text: reaction.emoji ?? '',
+      emailChat: true,
+      reaction: true,
+      inReplyTo: target,
+      references: [target],
+    });
   }
 
   /** Nothing stays open between sends: the transport is closed inside `sendMessage`. */

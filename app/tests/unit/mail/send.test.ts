@@ -105,6 +105,35 @@ export default async () => {
       });
     });
 
+    await it('reacts with a reaction mail that answers the target', async () => {
+      await withServer(async (server) => {
+        const sender = new MailSender(targetFor(server.port), PERMIT);
+        await sender.react({
+          to: OWNER,
+          target: { remoteId: '<t1@example.org>', emailChat: true },
+          emoji: '👍',
+        });
+        const raw = server.dialogue.messages[0];
+        expect(raw.includes('Content-Disposition: reaction')).toBe(true);
+        expect(raw.includes('Chat-Version: 1.0')).toBe(true);
+        expect(raw.includes('In-Reply-To: <t1@example.org>')).toBe(true);
+      });
+    });
+
+    await it('refuses to react to a message that is not a Delta Chat one, sending nothing', async () => {
+      await withServer(async (server) => {
+        const sender = new MailSender(targetFor(server.port), PERMIT);
+        let refused = false;
+        try {
+          await sender.react({ to: OWNER, target: { remoteId: '<t1@example.org>' }, emoji: '👍' });
+        } catch {
+          refused = true;
+        }
+        expect(refused).toBe(true);
+        expect(server.dialogue.messages.length).toBe(0);
+      });
+    });
+
     await it('keeps the password out of an SMTP error', async () => {
       const server = await startDummyServer({ rejectAuthEchoing: PASSWORD });
       try {

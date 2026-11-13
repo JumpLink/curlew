@@ -399,6 +399,7 @@ function handleOf<C extends { backend: string; accountId: string }>(
     ...(clientId ? { clientId } : {}),
     ...(message.fromSelf ? { fromSelf: true } : {}),
     ...(text ? { text } : {}),
+    ...(message.backend === 'mail' && message.emailChat ? { emailChat: true } : {}),
   };
   return { target, choice };
 }

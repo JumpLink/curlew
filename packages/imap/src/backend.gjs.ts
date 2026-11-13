@@ -172,6 +172,7 @@ class ImapBackendSession implements BackendSession {
         references: thread.references,
         automation: thread.automation,
         emailChat: thread.emailChat,
+        ...(thread.reaction ? { reaction: true } : {}),
         ...(isEncryptedStructure(parts) ? { encrypted: true } : {}),
       });
     }

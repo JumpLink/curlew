@@ -67,6 +67,7 @@ interface MailRow extends ThreadMember {
   precedence: string | null;
   emailChat: boolean;
   encrypted: boolean;
+  reaction: boolean;
 }
 
 function str(value: unknown): string | null {
@@ -92,7 +93,7 @@ function loadMailRows(db: IndexDatabase): MailRow[] {
     .prepare(
       `SELECT account_id, folder_path, uid, message_id, subject, sender, date, internal_date, seen,
               has_attachment, in_reply_to, thread_refs, from_json, to_json, list_id,
-              list_unsubscribe, auto_submitted, precedence, email_chat, encrypted
+              list_unsubscribe, auto_submitted, precedence, email_chat, encrypted, reaction
          FROM messages ORDER BY id`,
     )
     .all() as Array<Record<string, unknown>>;
@@ -117,6 +118,7 @@ function loadMailRows(db: IndexDatabase): MailRow[] {
     precedence: str(r.precedence),
     emailChat: Number(r.email_chat) === 1,
     encrypted: Number(r.encrypted) === 1,
+    reaction: Number(r.reaction) === 1,
   }));
 }
 
@@ -319,6 +321,11 @@ const CONVERSATION_PARTICIPANTS: SyncedTable = {
   columns: ['conversation_id', 'participant_id'],
   key: [0, 1],
 };
+const MAIL_REACTIONS: SyncedTable = {
+  table: 'message_reactions',
+  columns: ['message_id', 'reactor', 'emoji'],
+  key: [0, 1, 2],
+};
 const MAIL_MESSAGES: SyncedTable = {
   table: 'conversation_messages',
   columns: [
@@ -342,6 +349,7 @@ const MAIL_MESSAGES: SyncedTable = {
     'uid',
     'email_chat',
     'encrypted',
+    'remote_id',
   ],
   key: [0],
 };
@@ -430,7 +438,9 @@ function updateIfAny(db: IndexDatabase, where: string, set: string): boolean {
  * Idempotent: running it twice yields the same rows and the same ids.
  */
 export function rebuildConversations(db: IndexDatabase, options: RebuildOptions = {}): RebuildResult {
-  const rows = loadMailRows(db);
+  const all = loadMailRows(db);
+  // A reaction mail is no message of the thread: it becomes a reaction on its target below.
+  const rows = all.filter((row) => !row.reaction);
   const self = selfAddressSet(db, options.selfAddresses ?? []);
   const directory = new ParticipantDirectory(options.contacts ?? []);
   const threads = buildThreads(rows);
@@ -441,6 +451,7 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
   const messageRows: SqlValue[][] = [];
   const conversationRows: SqlValue[][] = [];
   const memberRows: SqlValue[][] = [];
+  const idByMessageId = new Map<string, string>();
 
   for (const thread of threads) {
     const conversationId = stableId('c-', MAIL_BACKEND, thread.accountId, thread.rootKey);
@@ -484,8 +495,10 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
       if (!fromSelf && !row.seen) unread++;
       if (row.hasAttachment) attachments = true;
 
+      const id = stableId('m-', conversationId, row.messageId ?? row.key);
+      if (row.messageId) idByMessageId.set(row.messageId, id);
       messageRows.push([
-        stableId('m-', conversationId, row.messageId ?? row.key),
+        id,
         conversationId,
         MAIL_BACKEND,
         row.accountId,
@@ -506,6 +519,8 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
         row.uid,
         row.emailChat ? 1 : 0,
         row.encrypted ? 1 : 0,
+        // Mail's own id, so a reaction (or later an edit) can name the message it is about.
+        row.messageId,
       ]);
     }
 
@@ -587,7 +602,16 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
     [MAIL_BACKEND],
   );
   sync(CONVERSATIONS, conversationRows, 'backend = ?', [MAIL_BACKEND]);
+  const reactions = mailReactions(db, all.filter((row) => row.reaction), idByMessageId, self);
+  // Before the messages: a deleted message is still in the scope subquery, so its reactions go too.
+  sync(
+    MAIL_REACTIONS,
+    reactions.others,
+    "reactor != '' AND message_id IN (SELECT id FROM conversation_messages WHERE backend = ?)",
+    [MAIL_BACKEND],
+  );
   sync(MAIL_MESSAGES, messageRows, 'backend = ?', [MAIL_BACKEND]);
+  for (const [target, emoji] of reactions.own) setOwnReaction(db, target, emoji);
 
   // Chats: point every message and membership at the rebuilt directory. A chat conversation
   // is one with a cursor — the store tells chat from mail by driver data, not by name.
@@ -631,6 +655,38 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
   if (changes > 0) appendChangesTransaction(db, [{ kind: 'conversations' }]);
 
   return { conversations: threads.length, messages: messageRows.length, participants: participants.length };
+}
+
+/**
+ * What the reaction mails of a mailbox leave on their targets (RFC 9078): the last one of each
+ * reactor wins, an empty body takes it back, a target the index does not hold is dropped.
+ * `own` is the person's own, by message id: those rows are written beside the local echo, not
+ * synced, because a sent reaction may not be in any synced folder.
+ */
+function mailReactions(
+  db: IndexDatabase,
+  mails: readonly MailRow[],
+  idByMessageId: ReadonlyMap<string, string>,
+  self: ReadonlySet<string>,
+): { others: SqlValue[][]; own: Map<string, string | null> } {
+  const sentAt = (row: MailRow) => Date.parse(row.sentAt ?? '') || 0;
+  const last = new Map<string, { target: string; reactor: string; emoji: string | null }>();
+  for (const row of [...mails].sort((a, b) => sentAt(a) - sentAt(b))) {
+    const target = row.inReplyTo ? idByMessageId.get(row.inReplyTo) : undefined;
+    const email = normalizeAddress('email', row.from[0]?.email ?? '');
+    if (!target || !email) continue;
+    const reactor = self.has(email) ? '' : email;
+    const body = messageBody(db, row.accountId, row.folderPath, row.uid)?.trim() ?? '';
+    if (body.length > 64) continue;
+    last.set(`${target}\u0000${reactor}`, { target, reactor, emoji: body || null });
+  }
+  const others: SqlValue[][] = [];
+  const own = new Map<string, string | null>();
+  for (const { target, reactor, emoji } of last.values()) {
+    if (reactor === '') own.set(target, emoji);
+    else if (emoji) others.push([target, reactor, emoji]);
+  }
+  return { others, own };
 }
 
 // ── reads ──────────────────────────────────────────────────────────────
@@ -1140,9 +1196,9 @@ export function getMessagesByRemoteId(
   return found;
 }
 
-/** Fills `reactions` on the chat messages among `messages`, one query for all of them. */
+/** Fills `reactions` on the chat messages and email-chat mails among `messages`, one query for all of them. */
 function attachReactions(db: IndexDatabase, messages: ConversationMessage[]): void {
-  const chat = messages.filter((m) => m.editedAt !== undefined);
+  const chat = messages.filter((m) => m.editedAt !== undefined || m.emailChat);
   if (chat.length === 0) return;
   const byId = new Map(chat.map((m) => [m.id, m]));
   const ids = [...byId.keys()];

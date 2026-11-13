@@ -27,6 +27,7 @@ export const THREAD_HEADER_FIELDS: readonly string[] = [
   'AUTO-SUBMITTED',
   'PRECEDENCE',
   'CHAT-VERSION',
+  'CONTENT-DISPOSITION',
 ];
 
 /** The FETCH item that asks for them without setting `\Seen`. */
@@ -76,6 +77,8 @@ export interface ThreadHeaders {
   automation: AutomationHeaders;
   /** Only version 1.0 is understood; a future version is not guessed at. */
   emailChat: boolean;
+  /** `Content-Disposition: reaction` (RFC 9078): the body is an emoji, not a message. */
+  reaction: boolean;
 }
 
 /** Parse the fetched header block into threading and classification input. */
@@ -96,5 +99,6 @@ export function parseThreadHeaders(block: string): ThreadHeaders {
       precedence: get('precedence'),
     },
     emailChat: get('chat-version') === '1.0',
+    reaction: /^reaction\s*(;|$)/i.test(get('content-disposition') ?? ''),
   };
 }

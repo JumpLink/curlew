@@ -14,7 +14,7 @@ export const MAIL_MANIFEST: BackendManifest = {
   pluginApi: PLUGIN_API_VERSION,
   capabilities: {
     edits: false,
-    reactions: false,
+    reactions: true,
     editsOwn: false,
     deletesOwn: false,
     threads: true,
