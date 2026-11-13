@@ -231,6 +231,7 @@ packages/protocol/src/rfc2231.ts
 packages/protocol/src/safe-filename.ts
 packages/protocol/src/search-plan.ts
 packages/protocol/src/sink.ts
+packages/protocol/src/thread-capabilities.ts
 packages/protocol/src/transfer-decode.ts
 packages/protocol/src/types.ts
 packages/signal/src/accounts.ts

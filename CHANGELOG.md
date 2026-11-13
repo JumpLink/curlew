@@ -67,6 +67,7 @@
 ### Added
 
 - An XMPP account's page has a *Require encryption* switch: nothing is sent from it in plain text, and a message to someone without OMEMO fails instead (`config.encryption`, ADR 0006 §7). Before, this was only possible by editing the config file. Every config key now has a place in the window or is documented as file-only (`docs/design/ui.md`, held by a test).
+- The window asks each conversation, not each backend, what it can do (reaction, edit, delete, reply, files). A mail thread offers chat features only when the other side speaks Delta Chat; nothing changes for other chats yet (ADR 0015, #294).
 - The welcome screen now walks through protocols, accounts, Delta Chat (one switch per mail account, off by default), AI features (off by default) and a summary. Nothing is forced; skipping leaves everything off.
 - A mail account's page and the first email chat explain what an email chat is, once per account and dismissible. "Show all emails" now says it only filters the list.
 - Every design pack has its own chat background: leaves for Forest, moon and stars for Dusk, a beach for Sunrise, hearts for Rose, calm geometry for Graphite. Each can be chosen on its own too.

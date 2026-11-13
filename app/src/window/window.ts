@@ -33,12 +33,8 @@ import { lookOf } from '../core/contact-choices.ts';
 import { createConversationList } from './conversation-list.ts';
 import { composeMailReply, senderNameOf } from './conversation-model.ts';
 import {
-  attachingBackends,
-  reactingBackends,
+  threadCapabilitiesFor,
   recordOwnReaction,
-  replyingBackends,
-  editingBackends,
-  deletingBackends,
   recordOwnEdit,
   recordOwnDeletion,
   loadConversationMessages,
@@ -215,9 +211,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
         bodyText: text || pickedNames(files),
       };
     },
-    (backend) => attachingBackends().has(backend),
-    (backend) => replyingBackends().has(backend),
-    (backend) => reactingBackends().has(backend),
+    (facts) => threadCapabilitiesFor(facts),
     async (message, handle, change) => {
       await reactToMessage({
         accountId: handle.choice.accountId,
@@ -229,8 +223,6 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
       });
       recordOwnReaction(message.id, change.emoji);
     },
-    (backend) => editingBackends().has(backend),
-    (backend) => deletingBackends().has(backend),
     async (message, handle, text) => {
       await editMessage({
         accountId: handle.choice.accountId,

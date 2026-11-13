@@ -18,6 +18,7 @@ import bodyStructure from './unit/protocol/bodystructure.test.ts';
 import safeFilename from './unit/protocol/safe-filename.test.ts';
 import transferDecode from './unit/protocol/transfer-decode.test.ts';
 import messenger from './unit/protocol/messenger.test.ts';
+import threadCapabilities from './unit/protocol/thread-capabilities.test.ts';
 import mailHeaders from './unit/protocol/mail-headers.test.ts';
 
 import storePaths from './unit/store/paths.test.ts';
@@ -164,6 +165,7 @@ run({
   safeFilename,
   transferDecode,
   messenger,
+  threadCapabilities,
   mailHeaders,
   storePaths,
   storeDownload,

@@ -1,6 +1,12 @@
 /** Read-side adapter between the canonical store threads and the window's contact-chat view. */
 
-import type { BackendCapabilities, ConversationMessage } from '@curlew/protocol';
+import {
+  NO_THREAD_CAPABILITIES,
+  threadCapabilitiesOf,
+  type ConversationMessage,
+  type ThreadCapabilities,
+  type ThreadFacts,
+} from '@curlew/protocol';
 import {
   configPath,
   getMessagesByRemoteId,
@@ -34,30 +40,11 @@ export function loadConversationMessages(
   return loadPage(entry, undefined, dbPath, cfgPath);
 }
 
-/** The names of the backends whose manifest sets `capability`: only those get the matching control. */
-function backendsWith(capability: keyof BackendCapabilities, cfgPath: string): Set<string> {
-  return new Set(
-    backendsList(cfgPath)
-      .backends.filter((status) => status.capabilities[capability])
-      .map((status) => status.name),
-  );
+/** What the thread can do (ADR 0015): the backend's manifest, narrowed by what is known of the thread. */
+export function threadCapabilitiesFor(facts: ThreadFacts, cfgPath = configPath()): ThreadCapabilities {
+  const status = backendsList(cfgPath).backends.find((b) => b.name === facts.backend);
+  return status ? threadCapabilitiesOf(status.capabilities, facts) : NO_THREAD_CAPABILITIES;
 }
-
-/** The backends whose manifest says they can send a file: only those get a paperclip. */
-export const attachingBackends = (cfgPath = configPath()): Set<string> =>
-  backendsWith('attachments', cfgPath);
-
-/** The backends whose sender can answer one message: only those get a "Reply" entry. */
-export const replyingBackends = (cfgPath = configPath()): Set<string> => backendsWith('replies', cfgPath);
-
-/** The backends that can send a reaction: only those get the emoji row. */
-export const reactingBackends = (cfgPath = configPath()): Set<string> => backendsWith('reactions', cfgPath);
-
-/** The backends whose manifest says they can edit one of the person's own messages. */
-export const editingBackends = (cfgPath = configPath()): Set<string> => backendsWith('editsOwn', cfgPath);
-
-/** The backends whose manifest says they can delete one of the person's own messages. */
-export const deletingBackends = (cfgPath = configPath()): Set<string> => backendsWith('deletesOwn', cfgPath);
 
 /** Keeps the person's reaction in the index, so reopening the chat shows it before any sync does. */
 export function recordOwnReaction(messageId: string, emoji: string | null, dbPath = indexDbPath()): void {
