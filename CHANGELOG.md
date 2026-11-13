@@ -79,6 +79,7 @@
 
 ### Added
 
+- The message field has an emoji button that opens GTK's emoji chooser and inserts the emoji at the cursor, in every protocol's thread; it is hidden while the field is read-only.
 - A test fails when the root `package.json`, a workspace package or the newest metainfo release disagrees with the version the app reports.
 - Read receipts for Delta Chat threads: a message you send asks the peer to confirm reading, and a receipt from them shows as the read tick on the message. *Send read receipts* in Preferences (off by default) lets Curlew confirm to them when you open their conversation; it answers only a request from the sender itself, once per message. Receipts that Delta Chat encrypts cannot be read here.
 - The AppStream metadata carries brand colours and display and input requirements, and `docs/release/flathub-checklist.md` lists what is left for Flathub.

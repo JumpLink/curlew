@@ -448,6 +448,9 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     if (currentEntry) openContact(currentEntry);
   });
   window.add_action(contactAction);
+  const emojiAction = new Gio.SimpleAction({ name: 'open-emoji' });
+  emojiAction.connect('activate', () => conversation.openEmoji());
+  window.add_action(emojiAction);
   if (options.open) openConversation(options.open);
   // First start only: the flag says it was finished, and anybody with accounts is not new.
   void (async () => {

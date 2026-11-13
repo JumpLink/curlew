@@ -82,6 +82,8 @@ export interface ConversationView {
   show(entry: ListEntry, messages: ShownMessage[], accountLabels: Map<string, string>): void;
   /** Give the open chat its own colours and pattern; an empty look follows the app-wide setting. */
   setLook(look: Look): void;
+  /** Open the emoji chooser of the composer (the screenshot hook `CURLEW_WINDOW_OPEN_EMOJI`). */
+  openEmoji(): void;
 }
 
 const ROWS_PER_TURN = 8;
@@ -233,6 +235,7 @@ export function createConversationView(
   send.add_css_class('suggested-action');
   send.add_css_class('circular');
   composer.append(input.widget);
+  composer.append(input.emoji);
   composer.append(picker);
   composer.append(send);
 
@@ -297,7 +300,8 @@ export function createConversationView(
   });
   composer.insert_child_after(recorder.button, files.button);
   // The buttons stay at the bottom edge while the field grows upward.
-  for (const part of [files.button, recorder.button, picker, send]) part.set_valign(Gtk.Align.END);
+  for (const part of [files.button, recorder.button, input.emoji, picker, send])
+    part.set_valign(Gtk.Align.END);
   // Everything the person types into rides in one bottom bar, so the history can run beneath it.
   const compose = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
   // Each part is a card of its own, so it stays legible over the messages scrolling beneath it.
@@ -1396,6 +1400,9 @@ export function createConversationView(
   let lookApplied: string[] = [];
   return {
     page,
+    openEmoji() {
+      input.emoji.popup();
+    },
     setLook(look) {
       for (const name of lookApplied) toolbar.remove_css_class(name);
       lookApplied = lookClasses(look);
