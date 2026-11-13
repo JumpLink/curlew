@@ -64,10 +64,10 @@ refuse_real_state() {
     [[ -n $base ]] || continue
     # Skip what the lab itself exported earlier (`eval "$(omemo-lab env)"`): those are not real.
     within "$(realpath -m -- "$base")" "$lab" && continue
-    reals+=("$(realpath -m -- "$base")/curlew" "$(realpath -m -- "$base")/postbote")
+    reals+=("$(realpath -m -- "$base")/curlew")
   done
   for real in "${reals[@]}"; do
-    for candidate in "$lab" "$lab/data/curlew" "$lab/data/postbote" "$lab/config/curlew" "$lab/config/postbote"; do
+    for candidate in "$lab" "$lab/data/curlew" "$lab/config/curlew"; do
       candidate="$(realpath -m -- "$candidate")"
       if within "$candidate" "$real" || within "$real" "$candidate"; then
         die "refusing: $candidate overlaps the real curlew state $real"
@@ -87,7 +87,7 @@ curlew_lab() {
   [[ -f $bundle ]] || die "no curlew bundle at $bundle — build it: gjsify workspace curlew-cli build"
   local -a unset_args=()
   local var
-  while IFS= read -r var; do unset_args+=(-u "$var"); done < <(compgen -e | grep -E '^(CURLEW|POSTBOTE)_' || true)
+  while IFS= read -r var; do unset_args+=(-u "$var"); done < <(compgen -e | grep -E '^CURLEW_' || true)
   # No session bus: GNOME Online Accounts would hand curlew the REAL mailboxes (and the unpinned bus
   # made `sync` hang on them). The lab speaks XMPP only.
   env "${unset_args[@]}" LC_ALL=C LANGUAGE= DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent \
@@ -233,7 +233,7 @@ cmd_env() {
   [[ -d $LAB ]] || die "no lab — run: omemo-lab up"
   refuse_real_state
   local var
-  while IFS= read -r var; do printf 'unset %s\n' "$var"; done < <(compgen -e | grep -E '^(CURLEW|POSTBOTE)_' || true)
+  while IFS= read -r var; do printf 'unset %s\n' "$var"; done < <(compgen -e | grep -E '^CURLEW_' || true)
   printf 'export XDG_DATA_HOME=%q\n' "$LAB/data"
   printf 'export XDG_CONFIG_HOME=%q\n' "$LAB/config"
   printf 'export XDG_DOWNLOAD_DIR=%q\n' "$LAB/download"

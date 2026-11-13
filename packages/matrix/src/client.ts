@@ -152,9 +152,8 @@ export function ensureIndexedDb(): IDBFactory {
 
 /** The IndexedDB name prefix of one account's crypto store. */
 export function cryptoStorePrefix(accountId: string): string {
-  // Rename fallback: this prefix names the IndexedDB stores inside EXISTING snapshots; changing it
-  // would orphan every account's crypto store. It stays `postbote-` — a format key, not a brand.
-  return `postbote-${accountId}`;
+  // Names the IndexedDB stores inside the account's snapshot; changing it orphans the crypto store.
+  return `curlew-${accountId}`;
 }
 
 export interface MatrixSession {

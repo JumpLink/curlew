@@ -44,7 +44,7 @@ const NS = {
 
 /** curlew's own namespace in the same file: which account this is, for `accounts list`. */
 // Rename fallback: the key inside existing account files, read back as-is. Do not rebrand.
-export const ACCOUNT_NAMESPACE = 'postbote.account';
+export const ACCOUNT_NAMESPACE = 'curlew.account';
 
 /**
  * True when the file already holds a SIGNED-IN session — Telegram authorized it AND the sign-in

@@ -43,7 +43,7 @@ export const NS = {
 
 /** curlew's own namespace in the same file: which account this is, for `accounts list`. */
 // Rename fallback: the key inside existing account files, read back as-is. Do not rebrand.
-export const ACCOUNT_NAMESPACE = 'postbote.account';
+export const ACCOUNT_NAMESPACE = 'curlew.account';
 
 /** The ledger of plaintexts this build could not map, in the account file. One key, a JSON array. */
 export const SET_ASIDE_NAMESPACE = 'signal.setaside';

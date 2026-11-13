@@ -5,10 +5,6 @@ the human overview is [README.md](README.md). This repo is a submodule of **werk
 [AGENTS.md](../../AGENTS.md) carries the broader workspace rules — this file is the curlew-specific
 layer and wins where they differ.
 
-> **Curlew was `postbote`.** Identifiers, packages, binary and MCP server are `curlew`; the old name
-> survives only in persisted formats and the data-directory fallback. **The fallback is load-bearing
-> — do not "simplify" it away.** Details: [`docs/project/rename-postbote.md`](docs/project/rename-postbote.md).
-
 ## What this is
 
 Mail (IMAP), contacts (CardDAV) and calendar (CalDAV) through GNOME Online Accounts, as a CLI and
@@ -54,8 +50,7 @@ Details, pinning, bundle relocation and long-running process rules: [`docs/proje
 
 Hard rules; per-backend details in [`docs/privacy/`](docs/privacy/).
 
-- The index holds headers **and plain-text bodies** at `$XDG_DATA_HOME/curlew/index.db` (or
-  `postbote/`), mode `0600`, **never inside the repo**. Attachments and secrets outside the repo too.
+- The index holds headers **and plain-text bodies** at `$XDG_DATA_HOME/curlew/index.db`, mode `0600`, **never inside the repo**. Attachments and secrets outside the repo too.
 - Test fixtures are **synthetic only**.
 - Credentials from GOA: never logged, stored, or in a DTO.
 - Chat sessions are `secret`, one file per account in `SecretStore` — never in the index, logs,

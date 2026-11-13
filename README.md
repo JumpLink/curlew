@@ -13,10 +13,6 @@ Mail is one protocol among the others, and it can show mail threads as email cha
 Chat style. AI assistants can work with your messages through an [MCP](https://modelcontextprotocol.io)
 server, but that is an option, and it is off until you turn it on.
 
-*Formerly `postbote`.* The GitHub repository is `JumpLink/curlew` (old URLs redirect). An existing
-`~/.local/share/postbote` / `~/.config/postbote` keeps being used as it is, and the old
-`POSTBOTE_*` variables still work.
-
 ## Screenshots
 
 <!-- Produced by dev/screenshots.sh into docs/screenshots/ (see docs/screenshots/README.md). -->

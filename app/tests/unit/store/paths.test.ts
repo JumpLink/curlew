@@ -1,18 +1,10 @@
-import { mkdirSync, mkdtempSync } from 'node:fs';
+import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { describe, expect, it } from '@gjsify/unit';
 
-import {
-  attachmentsDir,
-  configPath,
-  dataDir,
-  homeSubdir,
-  indexDbPath,
-  previewsDir,
-  xdgDataHome,
-} from '@curlew/store';
+import { attachmentsDir, dataDir, indexDbPath, previewsDir, xdgDataHome } from '@curlew/store';
 
 // Every function here takes its environment as a parameter, so the promise these tests check —
 // nothing is EVER written inside the repository — is checkable without touching the real one.
@@ -96,40 +88,6 @@ export default async () => {
       expect(attachmentsDir({ XDG_DOWNLOAD_DIR: 'Downloads', XDG_DATA_HOME: '/d' })).toBe(
         '/d/curlew/attachments',
       );
-    });
-  });
-
-  // The rename fallback is load-bearing: delivery-only messages in the old directory are the only
-  // copy, so an install that has ONLY `postbote/` keeps reading and writing there.
-  await describe('the postbote → curlew rename fallback', async () => {
-    const fresh = () => mkdtempSync(join(tmpdir(), 'curlew-rename-'));
-
-    await it('a fresh install (neither directory) gets curlew/', async () => {
-      const data = fresh();
-      expect(dataDir({ XDG_DATA_HOME: data })).toBe(join(data, 'curlew'));
-      expect(configPath({ XDG_CONFIG_HOME: data })).toBe(join(data, 'curlew', 'config.json'));
-    });
-
-    await it('an old install (only postbote/) keeps using it, and never grows a second directory', async () => {
-      const data = fresh();
-      mkdirSync(join(data, 'postbote'));
-      expect(dataDir({ XDG_DATA_HOME: data })).toBe(join(data, 'postbote'));
-      expect(indexDbPath({ XDG_DATA_HOME: data })).toBe(join(data, 'postbote', 'index.db'));
-      expect(configPath({ XDG_CONFIG_HOME: data })).toBe(join(data, 'postbote', 'config.json'));
-      expect(homeSubdir(data)).toBe(join(data, 'postbote'));
-    });
-
-    await it('curlew/ wins when both exist', async () => {
-      const data = fresh();
-      mkdirSync(join(data, 'postbote'));
-      mkdirSync(join(data, 'curlew'));
-      expect(dataDir({ XDG_DATA_HOME: data })).toBe(join(data, 'curlew'));
-    });
-
-    await it('the old POSTBOTE_* variables are still read, the new ones win', async () => {
-      expect(dataDir({ POSTBOTE_DATA_DIR: '/old' })).toBe('/old');
-      expect(dataDir({ POSTBOTE_DATA_DIR: '/old', CURLEW_DATA_DIR: '/new' })).toBe('/new');
-      expect(configPath({ POSTBOTE_CONFIG: '/old.json' })).toBe('/old.json');
     });
   });
 };

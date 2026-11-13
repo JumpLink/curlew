@@ -6,10 +6,10 @@ This repo is **public**. The local index holds mail headers **and plain-text bod
 
 Nothing is ever written inside the repository. `.gitignore` is the second line of defence; not writing there is the first.
 
-- `$XDG_DATA_HOME/curlew/index.db` (or `postbote/`; see [`rename-postbote.md`](../project/rename-postbote.md)) — mode `0600`, re-applied on every open.
+- `$XDG_DATA_HOME/curlew/index.db` — mode `0600`, re-applied on every open.
 - Attachments to `$XDG_DOWNLOAD_DIR`, else `$XDG_DATA_HOME/curlew/attachments`, dir mode `0700`.
 - Backend secrets (chat sessions) in `SecretStore` files under `$XDG_DATA_HOME/curlew/secrets/`, 0600 in 0700, TEXT only (bytes as base64).
-- Overridable only through `CURLEW_DATA_DIR` / `CURLEW_DB_PATH` / `CURLEW_ATTACHMENTS_DIR` / `CURLEW_SECRETS_DIR` (and the `POSTBOTE_*` fallback; see [`rename-postbote.md`](../project/rename-postbote.md)).
+- Overridable only through `CURLEW_DATA_DIR` / `CURLEW_DB_PATH` / `CURLEW_ATTACHMENTS_DIR` / `CURLEW_SECRETS_DIR`.
 
 ## Tiers
 

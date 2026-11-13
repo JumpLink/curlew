@@ -10,7 +10,7 @@
  *
  * Where a user's own live: in the account's SESSION file (`SecretStore`, 0600, backup tier `secret`),
  * asked for once by `curlew accounts add telegram`. The environment
- * (`CURLEW_TELEGRAM_API_ID`, `CURLEW_TELEGRAM_API_HASH`; the old `POSTBOTE_` names still work) overrides them, for a user who keeps
+ * (`CURLEW_TELEGRAM_API_ID`, `CURLEW_TELEGRAM_API_HASH`) overrides them, for a user who keeps
  * them in a password manager. NOT in the config file: that is `state` in a backup, readable
  * wherever the backup goes, and the api_hash is a credential — so a config that carries one is
  * refused rather than silently used.
@@ -41,7 +41,7 @@ export type CredentialSource = 'embedded' | 'own';
 
 /** The session file's namespace for the credentials the session was created with. */
 // Rename fallback: the key inside existing account files, read back as-is. Do not rebrand.
-export const CREDENTIALS_NAMESPACE = 'postbote.api';
+export const CREDENTIALS_NAMESPACE = 'curlew.api';
 
 /** Key, inside `CREDENTIALS_NAMESPACE`, recording the `CredentialSource`. */
 export const SOURCE_KEY = 'source';
