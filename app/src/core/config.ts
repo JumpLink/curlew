@@ -65,6 +65,8 @@ export interface UiConfig {
    * agent access (see `aiEnabled`).
    */
   ai?: boolean;
+  /** Mail accounts whose "this is an email chat" hint was dismissed; the hint shows once per account. */
+  emailChatHintSeen?: string[];
   /** What the conversation search looks at: `all`, `names` (names and numbers) or `messages`. Unset: `all`. */
   searchScope?: SearchScope;
 }
@@ -202,6 +204,12 @@ export function aiEnabled(config: Pick<CurlewConfig, 'ui' | 'grants' | 'agentAcc
   );
 }
 
+/** Opt a mail account into Delta Chat or out again, in memory; off is the absence from the list. */
+export function setDeltaChatIn(config: CurlewConfig, accountId: string, on: boolean): void {
+  const rest = (config.deltaChatAccounts ?? []).filter((id) => id !== accountId);
+  config.deltaChatAccounts = on ? [...rest, accountId] : rest;
+}
+
 /** The policy agents are held to: the configured one, or one that denies everything when AI is off. */
 export function effectiveAgentAccess(
   config: Pick<CurlewConfig, 'ui' | 'grants' | 'agentAccess'>,
@@ -283,6 +291,10 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     throw new Error('config.ui.welcomeDone must be true or false');
   const ai = (rawUi as Record<string, unknown>).ai;
   if (ai !== undefined && typeof ai !== 'boolean') throw new Error('config.ui.ai must be true or false');
+  const seenRaw = (rawUi as Record<string, unknown>).emailChatHintSeen;
+  if (seenRaw !== undefined && (!Array.isArray(seenRaw) || seenRaw.some((id) => typeof id !== 'string')))
+    throw new Error('config.ui.emailChatHintSeen must be a list of mail account ids');
+  const emailChatHintSeen = seenRaw as string[] | undefined;
   const searchScope = (rawUi as Record<string, unknown>).searchScope;
   if (searchScope !== undefined && !isSearchScope(searchScope))
     throw new Error(`config.ui.searchScope must be one of ${SEARCH_SCOPES.join(', ')}`);
@@ -296,6 +308,7 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     ...(colorScheme === undefined ? {} : { colorScheme }),
     ...(chatBackground === undefined ? {} : { chatBackground }),
     ...(welcomeDone === undefined ? {} : { welcomeDone }),
+    ...(emailChatHintSeen === undefined || emailChatHintSeen.length === 0 ? {} : { emailChatHintSeen }),
     ...(searchScope === undefined ? {} : { searchScope }),
   };
 

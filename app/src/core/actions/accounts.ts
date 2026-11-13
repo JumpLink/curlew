@@ -28,7 +28,7 @@ import {
 } from '@curlew/store';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
-import { loadConfig, saveConfig } from '../config.ts';
+import { loadConfig, saveConfig, setDeltaChatIn } from '../config.ts';
 import { avatarAccountDir } from '../lib/avatar-cache.ts';
 import { DEMO_ACCOUNTS } from '../demo/accounts.ts';
 import { demoActive } from '../demo/active.ts';
@@ -86,8 +86,7 @@ export function deltaChatEnabled(accountId: string, path = configPath()): boolea
 /** Opt a mail account into Delta Chat or out again. Interactive use only, like switching an account off. */
 export function accountSetDeltaChat(accountId: string, on: boolean, path = configPath()): void {
   const config = loadConfig(path);
-  const rest = (config.deltaChatAccounts ?? []).filter((id) => id !== accountId);
-  config.deltaChatAccounts = on ? [...rest, accountId] : rest;
+  setDeltaChatIn(config, accountId, on);
   saveConfig(config, path);
 }
 

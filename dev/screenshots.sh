@@ -25,9 +25,8 @@ MOTIFS=(
   "accounts|900x640|CURLEW_WINDOW_OPEN_ACCOUNTS=1"
   "protocols|900x640|CURLEW_WINDOW_OPEN_PROTOCOLS=1"
   "agent-access|900x640|CURLEW_WINDOW_OPEN_ACCESS=1"
+  "welcome|360x740|CURLEW_WINDOW_OPEN_WELCOME=1"
 )
-# `welcome` is a no-op hook until the welcome screen exists (CURLEW_WINDOW_OPEN_WELCOME=1), so it is
-# not in the list yet; add "welcome|900x640|CURLEW_WINDOW_OPEN_WELCOME=1" with the screen.
 
 BUILD=0 CHECK=0 ONLY="" LANGS=(en de) SCHEMES=(light dark)
 while [ $# -gt 0 ]; do

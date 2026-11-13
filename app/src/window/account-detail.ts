@@ -16,6 +16,7 @@ import {
 import { deleteDataCopy, removeAccountCopy } from './account-remove-model.ts';
 import { restartDaemonIfRunning } from './accounts-daemon.ts';
 import type { AccountRow } from './accounts-model.ts';
+import { emailChatExplanation } from './email-chat-model.ts';
 import { accountStatusLabel } from './accounts-page.ts';
 
 export interface AccountDetailDeps {
@@ -99,7 +100,7 @@ export function pushAccountPage(deps: AccountDetailDeps): void {
   sync.add(enabled);
   page.add(sync);
 
-  const chat = new Adw.PreferencesGroup();
+  const chat = new Adw.PreferencesGroup({ description: emailChatExplanation() });
   chat.set_visible(deps.backend === 'mail');
   const deltaChat = new Adw.SwitchRow({
     title: _('Use for Delta Chat'),
