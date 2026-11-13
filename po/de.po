@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 03:33+0100\n"
+"POT-Creation-Date: 2026-11-13 04:13+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2382,8 +2382,8 @@ msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
 #: app/src/window/attachment-view.ts:149 app/src/window/attachment-view.ts:158
 #: app/src/window/conversation-list-model.ts:471
-#: app/src/window/conversation-model.ts:295
-#: app/src/window/conversation-model.ts:300
+#: app/src/window/conversation-model.ts:306
+#: app/src/window/conversation-model.ts:311
 msgid "Attachment"
 msgstr "Anhang"
 
@@ -2396,7 +2396,7 @@ msgid "Image: {name}"
 msgstr "Bild: {name}"
 
 #: app/src/window/attachment-view.ts:466
-#: app/src/window/conversation-model.ts:303
+#: app/src/window/conversation-model.ts:314
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] "und {n} weiterer Anhang"
@@ -2563,7 +2563,7 @@ msgstr "Nicht verschlüsselt"
 msgid "Members the app knows"
 msgstr "Mitglieder, die die App kennt"
 
-#: app/src/window/contact-page.ts:402 app/src/window/conversation-model.ts:337
+#: app/src/window/contact-page.ts:402 app/src/window/conversation-model.ts:348
 msgid "{count} person"
 msgid_plural "{count} people"
 msgstr[0] "{count} Person"
@@ -2749,43 +2749,43 @@ msgid_plural "{count} possible duplicates"
 msgstr[0] "{count} mögliches Duplikat"
 msgstr[1] "{count} mögliche Duplikate"
 
-#: app/src/window/conversation-model.ts:129
+#: app/src/window/conversation-model.ts:140
 #: app/src/window/conversation-view.ts:1328
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
-#: app/src/window/conversation-model.ts:249
+#: app/src/window/conversation-model.ts:260
 msgid "Unknown sender"
 msgstr "Unbekannter Absender"
 
-#: app/src/window/conversation-model.ts:286
+#: app/src/window/conversation-model.ts:297
 msgid "{kind}: {name}"
 msgstr "{kind}: {name}"
 
-#: app/src/window/conversation-model.ts:291
+#: app/src/window/conversation-model.ts:302
 msgid "Image"
 msgstr "Bild"
 
-#: app/src/window/conversation-model.ts:292
+#: app/src/window/conversation-model.ts:303
 msgid "Video"
 msgstr "Video"
 
-#: app/src/window/conversation-model.ts:293
+#: app/src/window/conversation-model.ts:304
 msgid "Audio"
 msgstr "Audio"
 
-#: app/src/window/conversation-model.ts:294
+#: app/src/window/conversation-model.ts:305
 msgid "File"
 msgstr "Datei"
 
-#: app/src/window/conversation-model.ts:335
+#: app/src/window/conversation-model.ts:346
 msgid "You and {count} other"
 msgid_plural "You and {count} others"
 msgstr[0] "Du und {count} weitere Person"
 msgstr[1] "Du und {count} weitere Personen"
 
-#: app/src/window/conversation-model.ts:336
-#: app/src/window/conversation-model.ts:349
+#: app/src/window/conversation-model.ts:347
+#: app/src/window/conversation-model.ts:360
 #: app/src/window/conversation-view.ts:708
 msgid "You"
 msgstr "Du"
@@ -2937,19 +2937,27 @@ msgid ""
 "People using Delta Chat, ArcaneChat or DeltaTouch see messages from this "
 "account as a chat. Everyone else sees an ordinary email. Curlew offers chat "
 "features only in threads where the other side sent the chat marker."
-msgstr "Leute mit Delta Chat, ArcaneChat oder DeltaTouch sehen Nachrichten von diesem Konto als Chat. Alle anderen sehen eine gewöhnliche E-Mail. Curlew bietet Chat-Funktionen nur in Threads an, in denen das Gegenüber die Chat-Markierung gesendet hat."
+msgstr ""
+"Leute mit Delta Chat, ArcaneChat oder DeltaTouch sehen Nachrichten von "
+"diesem Konto als Chat. Alle anderen sehen eine gewöhnliche E-Mail. Curlew "
+"bietet Chat-Funktionen nur in Threads an, in denen das Gegenüber die Chat-"
+"Markierung gesendet hat."
 
 #: app/src/window/email-chat-model.ts:17
 msgid ""
 "Off lists only email chats. This changes the list only, never how mail is "
 "sent"
-msgstr "Aus zeigt nur E-Mail-Chats in der Liste. Das ändert nur die Liste, nie wie Mails gesendet werden"
+msgstr ""
+"Aus zeigt nur E-Mail-Chats in der Liste. Das ändert nur die Liste, nie wie "
+"Mails gesendet werden"
 
 #: app/src/window/email-chat-model.ts:23
 msgid ""
 "This is an email chat: people with Delta Chat, ArcaneChat or DeltaTouch see "
 "it as a chat, everyone else as an ordinary email."
-msgstr "Das ist ein E-Mail-Chat: Leute mit Delta Chat, ArcaneChat oder DeltaTouch sehen ihn als Chat, alle anderen als gewöhnliche E-Mail."
+msgstr ""
+"Das ist ein E-Mail-Chat: Leute mit Delta Chat, ArcaneChat oder DeltaTouch "
+"sehen ihn als Chat, alle anderen als gewöhnliche E-Mail."
 
 #: app/src/window/fade-bin.ts:153
 msgid "Show more"
@@ -3182,7 +3190,9 @@ msgstr "Wähle deine Protokolle"
 msgid ""
 "Mail is on. Switch on a chat protocol to use it; some ask you to read a "
 "notice first. You can change this later in Accounts."
-msgstr "Mail ist an. Schalte ein Chat-Protokoll ein, um es zu nutzen; manche fragen vorher nach einem Hinweis. Du kannst das später unter Konten ändern."
+msgstr ""
+"Mail ist an. Schalte ein Chat-Protokoll ein, um es zu nutzen; manche fragen "
+"vorher nach einem Hinweis. Du kannst das später unter Konten ändern."
 
 #: app/src/window/welcome.ts:175
 msgid "Add your accounts"
@@ -3192,25 +3202,34 @@ msgstr "Füge deine Konten hinzu"
 msgid ""
 "Mail accounts from GNOME Online Accounts appear on their own. Otherwise "
 "choose Add Account, then Mail. You can add more later from the menu."
-msgstr "Mail-Konten aus den GNOME-Online-Konten erscheinen von selbst. Sonst wähle „Konto hinzufügen“ und dann „Mail“. Weitere kannst du später im Menü hinzufügen."
+msgstr ""
+"Mail-Konten aus den GNOME-Online-Konten erscheinen von selbst. Sonst wähle "
+"„Konto hinzufügen“ und dann „Mail“. Weitere kannst du später im Menü "
+"hinzufügen."
 
 #: app/src/window/welcome.ts:196
 msgid ""
 "No mail account yet. Once you add one, you can switch this on in its "
 "settings."
-msgstr "Noch kein Mail-Konto. Sobald du eines hinzufügst, kannst du das in dessen Einstellungen einschalten."
+msgstr ""
+"Noch kein Mail-Konto. Sobald du eines hinzufügst, kannst du das in dessen "
+"Einstellungen einschalten."
 
 #: app/src/window/welcome.ts:223
 msgid ""
 "An assistant could then read and send your messages through Curlew, each "
 "time as you allow it."
-msgstr "Ein Assistent könnte dann über Curlew deine Nachrichten lesen und senden, jeweils so, wie du es erlaubst."
+msgstr ""
+"Ein Assistent könnte dann über Curlew deine Nachrichten lesen und senden, "
+"jeweils so, wie du es erlaubst."
 
 #: app/src/window/welcome.ts:234
 msgid ""
 "Off, no assistant can reach your data. You can change this at any time in "
 "Preferences."
-msgstr "Aus: Kein Assistent erreicht deine Daten. Du kannst das jederzeit in den Einstellungen ändern."
+msgstr ""
+"Aus: Kein Assistent erreicht deine Daten. Du kannst das jederzeit in den "
+"Einstellungen ändern."
 
 #: app/src/window/welcome.ts:244
 msgid "All set"
@@ -3220,7 +3239,9 @@ msgstr "Alles bereit"
 msgid ""
 "You can change all of this later: accounts and protocols in Accounts, the "
 "rest in Preferences."
-msgstr "Du kannst all das später ändern: Konten und Protokolle unter Konten, den Rest in den Einstellungen."
+msgstr ""
+"Du kannst all das später ändern: Konten und Protokolle unter Konten, den "
+"Rest in den Einstellungen."
 
 #: app/src/window/welcome.ts:247
 msgid "Start Using Curlew"
@@ -3250,15 +3271,15 @@ msgstr "Beenden"
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:320
+#: app/src/window/window.ts:326
 msgid "Curlew (demo)"
 msgstr "Curlew (Demo)"
 
-#: app/src/window/window.ts:321
+#: app/src/window/window.ts:327
 msgid "Demo data — nothing here is real"
 msgstr "Demo-Daten – nichts hier ist echt"
 
-#: app/src/window/window.ts:370
+#: app/src/window/window.ts:376
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 

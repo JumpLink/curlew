@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 03:59+0100\n"
+"POT-Creation-Date: 2026-11-13 04:13+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2091,8 +2091,8 @@ msgstr ""
 
 #: app/src/window/attachment-view.ts:149 app/src/window/attachment-view.ts:158
 #: app/src/window/conversation-list-model.ts:471
-#: app/src/window/conversation-model.ts:295
-#: app/src/window/conversation-model.ts:300
+#: app/src/window/conversation-model.ts:306
+#: app/src/window/conversation-model.ts:311
 msgid "Attachment"
 msgstr ""
 
@@ -2105,7 +2105,7 @@ msgid "Image: {name}"
 msgstr ""
 
 #: app/src/window/attachment-view.ts:466
-#: app/src/window/conversation-model.ts:303
+#: app/src/window/conversation-model.ts:314
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] ""
@@ -2272,7 +2272,7 @@ msgstr ""
 msgid "Members the app knows"
 msgstr ""
 
-#: app/src/window/contact-page.ts:402 app/src/window/conversation-model.ts:337
+#: app/src/window/contact-page.ts:402 app/src/window/conversation-model.ts:348
 msgid "{count} person"
 msgid_plural "{count} people"
 msgstr[0] ""
@@ -2454,43 +2454,43 @@ msgid_plural "{count} possible duplicates"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-model.ts:129
+#: app/src/window/conversation-model.ts:140
 #: app/src/window/conversation-view.ts:1328
 msgid "Continuing via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:249
+#: app/src/window/conversation-model.ts:260
 msgid "Unknown sender"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:286
+#: app/src/window/conversation-model.ts:297
 msgid "{kind}: {name}"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:291
+#: app/src/window/conversation-model.ts:302
 msgid "Image"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:292
+#: app/src/window/conversation-model.ts:303
 msgid "Video"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:293
+#: app/src/window/conversation-model.ts:304
 msgid "Audio"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:294
+#: app/src/window/conversation-model.ts:305
 msgid "File"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:335
+#: app/src/window/conversation-model.ts:346
 msgid "You and {count} other"
 msgid_plural "You and {count} others"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-model.ts:336
-#: app/src/window/conversation-model.ts:349
+#: app/src/window/conversation-model.ts:347
+#: app/src/window/conversation-model.ts:360
 #: app/src/window/conversation-view.ts:708
 msgid "You"
 msgstr ""
@@ -2948,15 +2948,15 @@ msgstr ""
 msgid "This conversation has no recipient address."
 msgstr ""
 
-#: app/src/window/window.ts:320
+#: app/src/window/window.ts:326
 msgid "Curlew (demo)"
 msgstr ""
 
-#: app/src/window/window.ts:321
+#: app/src/window/window.ts:327
 msgid "Demo data — nothing here is real"
 msgstr ""
 
-#: app/src/window/window.ts:370
+#: app/src/window/window.ts:376
 msgid "No contacts to merge"
 msgstr ""
 
