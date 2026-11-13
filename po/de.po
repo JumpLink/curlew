@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 16:35+0100\n"
+"POT-Creation-Date: 2026-11-13 16:52+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1829,11 +1829,26 @@ msgstr "© 2026 Pascal Garber"
 msgid "Chats across messengers"
 msgstr "Chats über alle Messenger"
 
-#: app/src/window/account-add.ts:139 app/src/window/protocols-page.ts:40
+#: app/src/window/account-add-model.ts:106
+msgid "Needs Mail to be switched on"
+msgstr "Dafür muss Mail eingeschaltet sein"
+
+#: app/src/window/account-add-model.ts:107
+msgid "Email chats with people on Delta Chat, ArcaneChat or DeltaTouch"
+msgstr "E-Mail-Chats mit Leuten auf Delta Chat, ArcaneChat oder DeltaTouch"
+
+#: app/src/window/account-add-model.ts:108 app/src/window/protocols-page.ts:40
+#: app/src/window/welcome-model.ts:95
+msgid "{count} account"
+msgid_plural "{count} accounts"
+msgstr[0] "{count} Konto"
+msgstr[1] "{count} Konten"
+
+#: app/src/window/account-add.ts:139 app/src/window/protocols-page.ts:50
 msgid "Please read this first"
 msgstr "Bitte zuerst lesen"
 
-#: app/src/window/account-add.ts:145 app/src/window/protocols-page.ts:46
+#: app/src/window/account-add.ts:145 app/src/window/protocols-page.ts:56
 msgid "I understand and accept the risk for my account"
 msgstr "Ich verstehe das Risiko für mein Konto und nehme es in Kauf"
 
@@ -1861,7 +1876,7 @@ msgstr "Konto konnte nicht hinzugefügt werden"
 msgid "Connecting…"
 msgstr "Verbindung wird hergestellt …"
 
-#: app/src/window/account-add.ts:259 app/src/window/protocols-page.ts:28
+#: app/src/window/account-add.ts:259 app/src/window/protocols-page.ts:38
 msgid "Asks you to accept terms first"
 msgstr "Verlangt zuerst deine Zustimmung zu den Bedingungen"
 
@@ -1878,7 +1893,7 @@ msgstr ""
 "deines Kontos."
 
 #: app/src/window/account-add.ts:289 app/src/window/accounts-model.ts:81
-#: app/src/window/conversation-list-model.ts:138
+#: app/src/window/conversation-list-model.ts:139
 msgid "Mail"
 msgstr "E-Mail"
 
@@ -1901,7 +1916,7 @@ msgid "Add Account"
 msgstr "Konto hinzufügen"
 
 #: app/src/window/account-detail.ts:73 app/src/window/agent-access-page.ts:218
-#: app/src/window/contact-page.ts:392
+#: app/src/window/contact-page.ts:393
 msgid "Account"
 msgstr "Konto"
 
@@ -1967,9 +1982,10 @@ msgstr ""
 #: app/src/window/account-remove-model.ts:37
 #: app/src/window/account-remove-model.ts:71
 #: app/src/window/agent-access-page.ts:234
-#: app/src/window/conversation-list.ts:500
-#: app/src/window/conversation-list.ts:586
-#: app/src/window/conversation-view.ts:744 app/src/window/protocols-page.ts:51
+#: app/src/window/conversation-list.ts:501
+#: app/src/window/conversation-list.ts:587
+#: app/src/window/conversation-view.ts:744 app/src/window/protocols-page.ts:61
+#: app/src/window/protocols-page.ts:128
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -2078,7 +2094,7 @@ msgstr "GNOME-Einstellungen → Online-Konten öffnen"
 msgid "Could not load accounts"
 msgstr "Konten konnten nicht geladen werden"
 
-#: app/src/window/accounts-page.ts:125 app/src/window/protocols-page.ts:29
+#: app/src/window/accounts-page.ts:125 app/src/window/protocols-page.ts:39
 msgid "No accounts yet"
 msgstr "Noch keine Konten"
 
@@ -2108,8 +2124,8 @@ msgstr ""
 msgid "Start"
 msgstr "Starten"
 
-#: app/src/window/accounts-page.ts:188 app/src/window/conversation-list.ts:360
-#: app/src/window/protocols-page.ts:111 app/src/window/welcome-model.ts:89
+#: app/src/window/accounts-page.ts:188 app/src/window/conversation-list.ts:361
+#: app/src/window/protocols-page.ts:200 app/src/window/welcome-model.ts:89
 #: app/src/window/welcome.ts:150
 msgid "Protocols"
 msgstr "Protokolle"
@@ -2294,39 +2310,39 @@ msgstr "Wellen"
 msgid "Plain"
 msgstr "Schlicht"
 
-#: app/src/window/appearance-rows.ts:154 app/src/window/contact-page.ts:98
+#: app/src/window/appearance-rows.ts:154 app/src/window/contact-page.ts:99
 msgid "Blue"
 msgstr "Blau"
 
-#: app/src/window/appearance-rows.ts:155 app/src/window/contact-page.ts:99
+#: app/src/window/appearance-rows.ts:155 app/src/window/contact-page.ts:100
 msgid "Teal"
 msgstr "Petrol"
 
-#: app/src/window/appearance-rows.ts:156 app/src/window/contact-page.ts:100
+#: app/src/window/appearance-rows.ts:156 app/src/window/contact-page.ts:101
 msgid "Green"
 msgstr "Grün"
 
-#: app/src/window/appearance-rows.ts:157 app/src/window/contact-page.ts:101
+#: app/src/window/appearance-rows.ts:157 app/src/window/contact-page.ts:102
 msgid "Yellow"
 msgstr "Gelb"
 
-#: app/src/window/appearance-rows.ts:158 app/src/window/contact-page.ts:102
+#: app/src/window/appearance-rows.ts:158 app/src/window/contact-page.ts:103
 msgid "Orange"
 msgstr "Orange"
 
-#: app/src/window/appearance-rows.ts:159 app/src/window/contact-page.ts:103
+#: app/src/window/appearance-rows.ts:159 app/src/window/contact-page.ts:104
 msgid "Red"
 msgstr "Rot"
 
-#: app/src/window/appearance-rows.ts:160 app/src/window/contact-page.ts:104
+#: app/src/window/appearance-rows.ts:160 app/src/window/contact-page.ts:105
 msgid "Pink"
 msgstr "Rosa"
 
-#: app/src/window/appearance-rows.ts:161 app/src/window/contact-page.ts:105
+#: app/src/window/appearance-rows.ts:161 app/src/window/contact-page.ts:106
 msgid "Purple"
 msgstr "Violett"
 
-#: app/src/window/appearance-rows.ts:162 app/src/window/contact-page.ts:106
+#: app/src/window/appearance-rows.ts:162 app/src/window/contact-page.ts:107
 msgid "Slate"
 msgstr "Schiefergrau"
 
@@ -2346,7 +2362,7 @@ msgstr "Dunkel"
 msgid "Style"
 msgstr "Stil"
 
-#: app/src/window/appearance-rows.ts:248 app/src/window/contact-page.ts:115
+#: app/src/window/appearance-rows.ts:248 app/src/window/contact-page.ts:116
 msgid "Design"
 msgstr "Design"
 
@@ -2370,7 +2386,7 @@ msgstr "Benutzerdefinierte Primärfarbe verwenden"
 msgid "Tints the window and its panels"
 msgstr "Färbt das Fenster und seine Flächen"
 
-#: app/src/window/appearance-rows.ts:277 app/src/window/contact-page.ts:119
+#: app/src/window/appearance-rows.ts:277 app/src/window/contact-page.ts:120
 msgid "Accent colour"
 msgstr "Akzentfarbe"
 
@@ -2382,7 +2398,7 @@ msgstr "Benutzerdefinierte Akzentfarbe verwenden"
 msgid "Colours buttons, links and your own messages"
 msgstr "Färbt Schaltflächen, Links und deine eigenen Nachrichten"
 
-#: app/src/window/appearance-rows.ts:292 app/src/window/contact-page.ts:123
+#: app/src/window/appearance-rows.ts:292 app/src/window/contact-page.ts:124
 msgid "Chat background"
 msgstr "Chat-Hintergrund"
 
@@ -2405,7 +2421,7 @@ msgid "Could not fetch the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
 #: app/src/window/attachment-view.ts:149 app/src/window/attachment-view.ts:158
-#: app/src/window/conversation-list-model.ts:475
+#: app/src/window/conversation-list-model.ts:497
 #: app/src/window/conversation-model.ts:312
 #: app/src/window/conversation-model.ts:317
 msgid "Attachment"
@@ -2474,256 +2490,261 @@ msgstr "Das Bild konnte nicht gespeichert werden"
 msgid "Insert emoji"
 msgstr "Emoji einfügen"
 
-#: app/src/window/contact-page.ts:96
+#: app/src/window/contact-page.ts:97
 msgid "Like the rest of the app"
 msgstr "Wie in der restlichen App"
 
-#: app/src/window/contact-page.ts:111
+#: app/src/window/contact-page.ts:112
 msgid "Look"
 msgstr "Aussehen"
 
-#: app/src/window/contact-page.ts:112
+#: app/src/window/contact-page.ts:113
 msgid "Give this chat its own colours and background"
 msgstr "Gib diesem Chat eigene Farben und einen eigenen Hintergrund"
 
-#: app/src/window/contact-page.ts:179
+#: app/src/window/contact-page.ts:180
 msgid "Group"
 msgstr "Gruppe"
 
-#: app/src/window/contact-page.ts:179
+#: app/src/window/contact-page.ts:180
 msgid "Contact"
 msgstr "Kontakt"
 
-#: app/src/window/contact-page.ts:201
+#: app/src/window/contact-page.ts:202
 msgid "Combined from {count} chat"
 msgid_plural "Combined from {count} chats"
 msgstr[0] "Aus {count} Chat zusammengeführt"
 msgstr[1] "Aus {count} Chats zusammengeführt"
 
-#: app/src/window/contact-page.ts:211
+#: app/src/window/contact-page.ts:212
 msgid "Choose Picture…"
 msgstr "Bild wählen …"
 
-#: app/src/window/contact-page.ts:213
+#: app/src/window/contact-page.ts:214
 msgid "Remove Picture"
 msgstr "Bild entfernen"
 
-#: app/src/window/contact-page.ts:260 app/src/window/contact-page.ts:298
+#: app/src/window/contact-page.ts:261 app/src/window/contact-page.ts:299
 msgid "Name"
 msgstr "Name"
 
-#: app/src/window/contact-page.ts:261 app/src/window/contact-page.ts:279
+#: app/src/window/contact-page.ts:262 app/src/window/contact-page.ts:280
 msgid "The newest chat decides"
 msgstr "Der neueste Chat entscheidet"
 
-#: app/src/window/contact-page.ts:263 app/src/window/contact-page.ts:278
-#: app/src/window/conversation-list-model.ts:422
+#: app/src/window/contact-page.ts:264 app/src/window/contact-page.ts:279
+#: app/src/window/conversation-list-model.ts:444
 msgid "Automatic"
 msgstr "Automatisch"
 
-#: app/src/window/contact-page.ts:275
+#: app/src/window/contact-page.ts:276
 msgid "Picture"
 msgstr "Bild"
 
-#: app/src/window/contact-page.ts:314 app/src/window/conversation-list.ts:508
+#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:509
 msgid "Separate"
 msgstr "Trennen"
 
-#: app/src/window/contact-page.ts:315
+#: app/src/window/contact-page.ts:316
 msgid "Show these chats as separate people again"
 msgstr "Diese Chats wieder als getrennte Personen zeigen"
 
-#: app/src/window/contact-page.ts:329
+#: app/src/window/contact-page.ts:330
 msgid "Images"
 msgstr "Bilder"
 
-#: app/src/window/contact-page.ts:333
+#: app/src/window/contact-page.ts:334
 msgid "Choose a Picture"
 msgstr "Bild wählen"
 
-#: app/src/window/contact-page.ts:346
+#: app/src/window/contact-page.ts:347
 msgid "This file is not a picture"
 msgstr "Diese Datei ist kein Bild"
 
-#: app/src/window/contact-page.ts:380
+#: app/src/window/contact-page.ts:381
 msgid "{count} member"
 msgid_plural "{count} members"
 msgstr[0] "{count} Mitglied"
 msgstr[1] "{count} Mitglieder"
 
-#: app/src/window/contact-page.ts:385
+#: app/src/window/contact-page.ts:386
 msgid "About"
 msgstr "Info"
 
-#: app/src/window/contact-page.ts:391
+#: app/src/window/contact-page.ts:392
 msgid "Protocol"
 msgstr "Protokoll"
 
-#: app/src/window/contact-page.ts:394
+#: app/src/window/contact-page.ts:395
 msgid "Members"
 msgstr "Mitglieder"
 
-#: app/src/window/contact-page.ts:396
+#: app/src/window/contact-page.ts:397
 msgid "Visibility"
 msgstr "Sichtbarkeit"
 
-#: app/src/window/contact-page.ts:396
+#: app/src/window/contact-page.ts:397
 msgid "Public room"
 msgstr "Öffentlicher Raum"
 
-#: app/src/window/contact-page.ts:396
+#: app/src/window/contact-page.ts:397
 msgid "Private room"
 msgstr "Privater Raum"
 
-#: app/src/window/contact-page.ts:397
+#: app/src/window/contact-page.ts:398
 msgid "Encryption"
 msgstr "Verschlüsselung"
 
-#: app/src/window/contact-page.ts:397
+#: app/src/window/contact-page.ts:398
 msgid "Encrypted"
 msgstr "Verschlüsselt"
 
-#: app/src/window/contact-page.ts:397
+#: app/src/window/contact-page.ts:398
 msgid "Not encrypted"
 msgstr "Nicht verschlüsselt"
 
-#: app/src/window/contact-page.ts:401
+#: app/src/window/contact-page.ts:402
 msgid "Members the app knows"
 msgstr "Mitglieder, die die App kennt"
 
-#: app/src/window/contact-page.ts:402 app/src/window/conversation-model.ts:354
+#: app/src/window/contact-page.ts:403 app/src/window/conversation-model.ts:354
 msgid "{count} person"
 msgid_plural "{count} people"
 msgstr[0] "{count} Person"
 msgstr[1] "{count} Personen"
 
-#: app/src/window/contact-page.ts:422
+#: app/src/window/contact-page.ts:423
 msgid "Your own picture is shown instead"
 msgstr "Stattdessen wird dein eigenes Bild gezeigt"
 
-#: app/src/window/conversation-list-model.ts:139
+#: app/src/window/conversation-list-model.ts:141
+#: app/src/window/welcome-model.ts:98 app/src/window/welcome.ts:186
+msgid "Delta Chat"
+msgstr "Delta Chat"
+
+#: app/src/window/conversation-list-model.ts:142
 msgid "XMPP"
 msgstr "XMPP"
 
-#: app/src/window/conversation-list-model.ts:140
+#: app/src/window/conversation-list-model.ts:143
 msgid "Signal"
 msgstr "Signal"
 
-#: app/src/window/conversation-list-model.ts:141
+#: app/src/window/conversation-list-model.ts:144
 msgid "Matrix"
 msgstr "Matrix"
 
-#: app/src/window/conversation-list-model.ts:142
+#: app/src/window/conversation-list-model.ts:145
 msgid "Telegram"
 msgstr "Telegram"
 
-#: app/src/window/conversation-list-model.ts:143
+#: app/src/window/conversation-list-model.ts:146
 msgid "WhatsApp"
 msgstr "WhatsApp"
 
-#: app/src/window/conversation-list-model.ts:174
+#: app/src/window/conversation-list-model.ts:196
 msgid "Yesterday"
 msgstr "Gestern"
 
-#: app/src/window/conversation-list-model.ts:251
-#: app/src/window/conversation-list-model.ts:683
+#: app/src/window/conversation-list-model.ts:273
+#: app/src/window/conversation-list-model.ts:705
 msgid "Note to self"
 msgstr "Notiz an mich"
 
-#: app/src/window/conversation-list-model.ts:269
+#: app/src/window/conversation-list-model.ts:291
 msgid "Unnamed group · {count} member"
 msgid_plural "Unnamed group · {count} members"
 msgstr[0] "Unbenannte Gruppe · {count} Mitglied"
 msgstr[1] "Unbenannte Gruppe · {count} Mitglieder"
 
-#: app/src/window/conversation-list-model.ts:273
+#: app/src/window/conversation-list-model.ts:295
 msgid "Unnamed conversation"
 msgstr "Unbenannte Unterhaltung"
 
-#: app/src/window/conversation-list-model.ts:359
+#: app/src/window/conversation-list-model.ts:381
 msgid "Only via {protocol}, which has no address for this person"
 msgstr "Nur über {protocol}, das keine Adresse für diese Person hat"
 
-#: app/src/window/conversation-list-model.ts:363
+#: app/src/window/conversation-list-model.ts:385
 msgid "Encrypted rooms are not supported yet"
 msgstr "Verschlüsselte Räume werden noch nicht unterstützt"
 
-#: app/src/window/conversation-list-model.ts:418
-#: app/src/window/conversation-list-model.ts:431
+#: app/src/window/conversation-list-model.ts:440
+#: app/src/window/conversation-list-model.ts:453
 msgid "Only via {protocol}"
 msgstr "Nur über {protocol}"
 
-#: app/src/window/conversation-list-model.ts:478
+#: app/src/window/conversation-list-model.ts:500
 msgid "You: {text}"
 msgstr "Du: {text}"
 
-#: app/src/window/conversation-list-model.ts:480
+#: app/src/window/conversation-list-model.ts:502
 msgid "{name}: {text}"
 msgstr "{name}: {text}"
 
-#: app/src/window/conversation-list-model.ts:510
+#: app/src/window/conversation-list-model.ts:532
 msgid "Public room · {count} member"
 msgid_plural "Public room · {count} members"
 msgstr[0] "Öffentlicher Raum · {count} Mitglied"
 msgstr[1] "Öffentlicher Raum · {count} Mitglieder"
 
-#: app/src/window/conversation-list-model.ts:511
+#: app/src/window/conversation-list-model.ts:533
 msgid "Room · {count} member"
 msgid_plural "Room · {count} members"
 msgstr[0] "Raum · {count} Mitglied"
 msgstr[1] "Raum · {count} Mitglieder"
 
-#: app/src/window/conversation-list-model.ts:843
+#: app/src/window/conversation-list-model.ts:865
 msgid "People"
 msgstr "Personen"
 
-#: app/src/window/conversation-list-model.ts:844
+#: app/src/window/conversation-list-model.ts:866
 msgid "Groups"
 msgstr "Gruppen"
 
-#: app/src/window/conversation-list.ts:231
+#: app/src/window/conversation-list.ts:232
 msgid "Add an account"
 msgstr "Konto hinzufügen"
 
-#: app/src/window/conversation-list.ts:239
 #: app/src/window/conversation-list.ts:240
+#: app/src/window/conversation-list.ts:241
 msgid "Search conversations"
 msgstr "Unterhaltungen durchsuchen"
 
-#: app/src/window/conversation-list.ts:244
+#: app/src/window/conversation-list.ts:245
 msgid "Everything"
 msgstr "Alles"
 
-#: app/src/window/conversation-list.ts:245
+#: app/src/window/conversation-list.ts:246
 msgid "Names and numbers"
 msgstr "Namen und Nummern"
 
-#: app/src/window/conversation-list.ts:246
+#: app/src/window/conversation-list.ts:247
 msgid "Messages"
 msgstr "Nachrichten"
 
-#: app/src/window/conversation-list.ts:250
-#: app/src/window/conversation-list.ts:254
+#: app/src/window/conversation-list.ts:251
+#: app/src/window/conversation-list.ts:255
 msgid "Search in"
 msgstr "Suchen in"
 
-#: app/src/window/conversation-list.ts:275
+#: app/src/window/conversation-list.ts:276
 msgid "Filter conversations"
 msgstr "Unterhaltungen filtern"
 
-#: app/src/window/conversation-list.ts:383
+#: app/src/window/conversation-list.ts:384
 msgid "Clear filters"
 msgstr "Filter zurücksetzen"
 
-#: app/src/window/conversation-list.ts:409
+#: app/src/window/conversation-list.ts:410
 msgid "No conversations yet"
 msgstr "Noch keine Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:409
+#: app/src/window/conversation-list.ts:410
 msgid "No matches"
 msgstr "Keine Treffer"
 
-#: app/src/window/conversation-list.ts:412
+#: app/src/window/conversation-list.ts:413
 msgid ""
 "Conversations appear here after Curlew has synced an account. Run \"curlew "
 "sync\" first."
@@ -2731,30 +2752,30 @@ msgstr ""
 "Unterhaltungen erscheinen hier, sobald Curlew ein Konto synchronisiert hat. "
 "Führe zuerst „curlew sync“ aus."
 
-#: app/src/window/conversation-list.ts:419
+#: app/src/window/conversation-list.ts:420
 msgid "Nothing fits the search and filters."
 msgstr "Nichts passt zur Suche und den Filtern."
 
-#: app/src/window/conversation-list.ts:484
+#: app/src/window/conversation-list.ts:485
 msgid "Search"
 msgstr "Suchen"
 
-#: app/src/window/conversation-list.ts:489
+#: app/src/window/conversation-list.ts:490
 #: app/src/window/new-conversation.ts:24
 msgid "New conversation"
 msgstr "Neue Unterhaltung"
 
-#: app/src/window/conversation-list.ts:506
-#: app/src/window/conversation-list.ts:587
+#: app/src/window/conversation-list.ts:507
+#: app/src/window/conversation-list.ts:588
 #: app/src/window/merge-assistant.ts:116
 msgid "Merge"
 msgstr "Zusammenführen"
 
-#: app/src/window/conversation-list.ts:583
+#: app/src/window/conversation-list.ts:584
 msgid "Merge these people?"
 msgstr "Diese Personen zusammenführen?"
 
-#: app/src/window/conversation-list.ts:584
+#: app/src/window/conversation-list.ts:585
 msgid ""
 "Their chats become one conversation. Nothing is deleted, and you can "
 "separate them again."
@@ -2762,16 +2783,16 @@ msgstr ""
 "Ihre Chats werden zu einer Unterhaltung. Nichts wird gelöscht, und du kannst "
 "sie wieder trennen."
 
-#: app/src/window/conversation-list.ts:610
+#: app/src/window/conversation-list.ts:611
 msgid "Review"
 msgstr "Prüfen"
 
-#: app/src/window/conversation-list.ts:617
+#: app/src/window/conversation-list.ts:618
 #: app/src/window/preferences-dialog.ts:44
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:639
+#: app/src/window/conversation-list.ts:640
 msgid "{count} possible duplicate"
 msgid_plural "{count} possible duplicates"
 msgstr[0] "{count} mögliches Duplikat"
@@ -2996,9 +3017,11 @@ msgstr ""
 "Mails gesendet werden"
 
 #: app/src/window/email-chat-model.ts:28
+#, fuzzy
 msgid ""
 "This is an email chat: people with Delta Chat, ArcaneChat or DeltaTouch see "
-"it as a chat, everyone else as an ordinary email."
+"it as a chat, everyone else as an ordinary email. A contact shows as Delta "
+"Chat once their app has sent the chat marker, and as Mail before that."
 msgstr ""
 "Das ist ein E-Mail-Chat: Leute mit Delta Chat, ArcaneChat oder DeltaTouch "
 "sehen ihn als Chat, alle anderen als gewöhnliche E-Mail."
@@ -3170,17 +3193,31 @@ msgstr "KI"
 msgid "Preferences"
 msgstr "Einstellungen"
 
-#: app/src/window/protocols-page.ts:30 app/src/window/welcome-model.ts:95
-msgid "{count} account"
-msgid_plural "{count} accounts"
-msgstr[0] "{count} Konto"
-msgstr[1] "{count} Konten"
-
-#: app/src/window/protocols-page.ts:52
+#: app/src/window/protocols-page.ts:62
 msgid "Accept and Turn On"
 msgstr "Zustimmen und einschalten"
 
-#: app/src/window/protocols-page.ts:66
+#: app/src/window/protocols-page.ts:114
+msgid "No mail account yet. Add one first."
+msgstr "Noch kein Mail-Konto. Füge zuerst eines hinzu."
+
+#: app/src/window/protocols-page.ts:118
+msgid "Use Delta Chat for which accounts?"
+msgstr "Delta Chat für welche Konten nutzen?"
+
+#: app/src/window/protocols-page.ts:119
+#, fuzzy
+msgid ""
+"Only these accounts send email chats. The others keep sending ordinary mail."
+msgstr ""
+"Nachrichten von diesem Konto werden zu E-Mail-Chats. Wer kein Delta Chat "
+"hat, sieht eine gewöhnliche E-Mail."
+
+#: app/src/window/protocols-page.ts:129
+msgid "Turn On"
+msgstr "Einschalten"
+
+#: app/src/window/protocols-page.ts:154
 msgid "Accounts and messages stay when a protocol is switched off."
 msgstr ""
 "Konten und Nachrichten bleiben erhalten, wenn ein Protokoll ausgeschaltet "
@@ -3265,10 +3302,6 @@ msgstr "Keine"
 #: app/src/window/welcome-model.ts:94
 msgid "None yet"
 msgstr "Noch keine"
-
-#: app/src/window/welcome-model.ts:98 app/src/window/welcome.ts:186
-msgid "Delta Chat"
-msgstr "Delta Chat"
 
 #: app/src/window/welcome-model.ts:101
 msgid "Off for every account"

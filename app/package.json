@@ -61,6 +61,7 @@
       "description": "Curlew brings your chats from Telegram, Signal, WhatsApp, Matrix and XMPP into one list, with one conversation per person. On Linux it also reads your mail; the macOS and Windows packages offer the chat protocols only. Contacts and calendar through GNOME Online Accounts are a feature of the Linux host build only. Optional AI access through MCP is off by default.",
       "icon": "data/icons",
       "extraFiles": {
+        "share/icons/hicolor/scalable/apps/curlew-protocol-deltachat.svg": "data/protocol-icons/hicolor/scalable/apps/curlew-protocol-deltachat.svg",
         "share/icons/hicolor/scalable/apps/curlew-protocol-mail.svg": "data/protocol-icons/hicolor/scalable/apps/curlew-protocol-mail.svg",
         "share/icons/hicolor/scalable/apps/curlew-protocol-matrix.svg": "data/protocol-icons/hicolor/scalable/apps/curlew-protocol-matrix.svg",
         "share/icons/hicolor/scalable/apps/curlew-protocol-signal.svg": "data/protocol-icons/hicolor/scalable/apps/curlew-protocol-signal.svg",

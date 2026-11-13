@@ -45,6 +45,7 @@
 
 ### Changed
 
+- A mail thread whose peer sent the Delta Chat marker is now shown as "Delta Chat" (own badge, tooltip, contact page, merge dialog, new-conversation picker); ordinary mail stays "Mail". A merged contact reads "Delta Chat · XMPP" instead of "Mail · XMPP", and one address with both appears once as Delta Chat. Pins and routes stay on Mail. The email-chat hint now explains why a contact switches from Mail to Delta Chat.
 - The version lives in one place, `app/package.json`; the About dialog, `curlew --version` and the MCP server handshake read it from there instead of each carrying a copy.
 - `npm run packaging:install` takes `--no-icons` and `--remove-icons`, so a stale installed icon no longer shadows the one in `app/data` during development.
 - The README describes the messenger and is short; the per-protocol, command-line, daemon, MCP and release details moved to `docs/guide/`. The package metadata and the Flathub listing text describe the messenger, not a mail tool. The first release is `0.2.0`.
@@ -81,6 +82,7 @@
 ### Added
 
 - The message field has an emoji button that opens GTK's emoji chooser and inserts the emoji at the cursor, in every protocol's thread; it is hidden while the field is read-only.
+- The Protocols page has a "Delta Chat" row next to "Mail": off until a mail account is opted in, a dialog asks for which accounts, the subtitle counts them, and it is greyed with the reason while Mail is off.
 - A test fails when the root `package.json`, a workspace package or the newest metainfo release disagrees with the version the app reports.
 - Read receipts for Delta Chat threads: a message you send asks the peer to confirm reading, and a receipt from them shows as the read tick on the message. *Send read receipts* in Preferences (off by default) lets Curlew confirm to them when you open their conversation; it answers only a request from the sender itself, once per message. Receipts that Delta Chat encrypts cannot be read here.
 - The AppStream metadata carries brand colours and display and input requirements, and `docs/release/flathub-checklist.md` lists what is left for Flathub.

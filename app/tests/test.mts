@@ -134,6 +134,7 @@ import watch from './unit/core/watch.test.ts';
 import daemonSend from './unit/core/daemon-send.test.ts';
 import accountPrompter from './unit/window/account-prompter.test.ts';
 import accountAddModel from './unit/window/account-add-model.test.ts';
+import protocolsModel from './unit/window/protocols-model.test.ts';
 import qrImage from './unit/window/qr-image.test.ts';
 import platform from './unit/core/platform.test.ts';
 import windowWelcome from './unit/window/welcome-model.test.ts';
@@ -287,6 +288,7 @@ run({
   daemonAvatars,
   accountPrompter,
   accountAddModel,
+  protocolsModel,
   qrImage,
   platform,
   windowWelcome,
