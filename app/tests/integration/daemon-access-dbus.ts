@@ -22,6 +22,14 @@ const NOTIFICATIONS_XML = `<node>
   </interface>
 </node>`;
 
+const PORTAL_XML = `<node>
+  <interface name="org.freedesktop.portal.Notification">
+    <method name="AddNotification"><arg type="s" direction="in"/><arg type="a{sv}" direction="in"/></method>
+    <method name="RemoveNotification"><arg type="s" direction="in"/></method>
+    <signal name="ActionInvoked"><arg type="s"/><arg type="s"/><arg type="av"/></signal>
+  </interface>
+</node>`;
+
 const log = (...parts: unknown[]) => console.log(parts.map((p) => String(p)).join(' '));
 let failures = 0;
 const check = (name: string, ok: boolean): void => {
@@ -166,6 +174,97 @@ async function main(): Promise<void> {
   check(
     'no answer is a timeout',
     (await said({ contact: 'silent@example.org' })) === '{"allowed":false,"reason":"timeout"}',
+  );
+
+  // The same prompt through the Notification portal (the path inside a sandbox), with a fake portal.
+  const portalShown: Array<{ id: string; title: string; buttons: string[] }> = [];
+  const portalScript: string[] = [];
+  const portalIface = Gio.DBusNodeInfo.new_for_xml(PORTAL_XML).lookup_interface(
+    'org.freedesktop.portal.Notification',
+  );
+  if (!portalIface) throw new Error('no portal interface');
+  conn.register_object(
+    '/org/freedesktop/portal/desktop',
+    portalIface,
+    ((
+      _c: unknown,
+      _s: string,
+      _p: string,
+      _i: string,
+      method: string,
+      params: GLib.Variant,
+      inv: Gio.DBusMethodInvocation,
+    ) => {
+      inv.return_value(null);
+      if (method !== 'AddNotification') return;
+      const [id, vardict] = params.recursiveUnpack() as [
+        string,
+        { title: string; buttons: Array<{ action: string; label: string }> },
+      ];
+      const buttons = vardict.buttons.map((button) => `${button.action}=${button.label}`);
+      portalShown.push({ id, title: vardict.title, buttons });
+      const key = portalScript.shift();
+      if (key !== undefined) {
+        setTimeout(() => {
+          conn.emit_signal(
+            null,
+            '/org/freedesktop/portal/desktop',
+            'org.freedesktop.portal.Notification',
+            'ActionInvoked',
+            new GLib.Variant('(ssav)', [id, key, []]),
+          );
+        }, 30);
+      }
+    }) as unknown as Parameters<Gio.DBusConnection['register_object']>[2],
+    null,
+    null,
+  );
+  Gio.bus_own_name_on_connection(
+    conn,
+    'org.freedesktop.portal.Desktop',
+    Gio.BusNameOwnerFlags.NONE,
+    null,
+    null,
+  );
+  await new Promise<void>((resolve) => setTimeout(resolve, 200));
+
+  const portalBroker = new AccessBroker({
+    ui: gioNotificationPrompt({ portal: true }),
+    policy: () => ({ askWithoutRule: true, rules: [] }),
+    addRule: () => undefined,
+    timeoutMs: 400,
+  });
+  const portalAsk = (over: Partial<AccessAsk> = {}) =>
+    portalBroker.request({
+      account: 'xmpp-abc123',
+      contact: 'friend@example.org',
+      kind: 'write',
+      session: 'mcp-2',
+      oneShot: false,
+      preview: 'hello',
+      ...over,
+    });
+  portalScript.push('once');
+  check('portal: once is allowed', JSON.stringify(await portalAsk()) === '{"allowed":true,"reason":"once"}');
+  check(
+    'portal: four buttons, plain action names',
+    portalShown[0].buttons.join('|') === 'once=Allow once|session=For this session|always=Always|deny=Deny',
+  );
+  portalScript.push('deny');
+  check(
+    'portal: deny is refused',
+    JSON.stringify(await portalAsk({ kind: 'read', contact: 'b@example.org' })) ===
+      '{"allowed":false,"reason":"denied"}',
+  );
+  check(
+    'portal: a one-shot prompt has three buttons',
+    (portalScript.push('once'), await portalAsk({ oneShot: true, contact: 'c@example.org' })) !== null &&
+      portalShown[portalShown.length - 1].buttons.length === 3,
+  );
+  check(
+    'portal: no answer is a timeout',
+    JSON.stringify(await portalAsk({ contact: 'silent@example.org' })) ===
+      '{"allowed":false,"reason":"timeout"}',
   );
 
   service.close();

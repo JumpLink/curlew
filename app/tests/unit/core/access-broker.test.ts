@@ -4,7 +4,7 @@ import { type PromptChoice, type PromptUi, AccessBroker } from '../../../src/cor
 import { ACCESS_PROMPT_TIMEOUT_MS, type AccessAsk } from '../../../src/core/access.ts';
 import { contactNameFromIndex } from '../../../src/core/lib/contact-name.ts';
 import { openIndex } from '../../../src/core/actions/index-sync.ts';
-import { promptText } from '../../../src/core/lib/access-notifications.ts';
+import { portalButtons, promptText } from '../../../src/core/lib/access-notifications.ts';
 import {
   DAEMON_ACCESS_TIMEOUT_MS,
   DAEMON_WIRE_VERSION,
@@ -302,6 +302,19 @@ export default async () => {
         failed = true;
       }
       expect(failed).toBe(true);
+    });
+  });
+
+  await describe('portal buttons', async () => {
+    await it('offers the four choices with plain action names', async () => {
+      expect(portalButtons(ask()).map((b) => b.action)).toStrictEqual(['once', 'session', 'always', 'deny']);
+    });
+    await it('a one-shot request is not offered "for this session"', async () => {
+      expect(portalButtons(ask({ oneShot: true })).map((b) => b.action)).toStrictEqual([
+        'once',
+        'always',
+        'deny',
+      ]);
     });
   });
 

@@ -27,13 +27,15 @@ maintainer's own step. Context: [ADR 0011](../adr/0011-same-app-inside-and-outsi
 ## Finish args
 
 Current: `--share=network`, `--share=ipc`, `--socket=wayland`, `--socket=fallback-x11`,
-`--device=dri`.
+`--socket=pulseaudio`, `--device=dri`. JSON has no comments, so the reason for each lives in this
+table (the manifest is generated from `gjsify.ship.flatpak.finishArgs` in `app/package.json`).
 
 | Arg | Why it is needed |
 |---|---|
 | `--share=network` | every protocol (IMAP/SMTP, Telegram, Signal, Matrix, XMPP, WhatsApp) talks to servers |
 | `--share=ipc` | X11 shared memory for the `fallback-x11` case |
 | `--socket=wayland`, `--socket=fallback-x11` | the GTK window |
+| `--socket=pulseaudio` | voice notes: `voice-recorder.ts` records through GStreamer `pulsesrc`/`pipewiresrc`, and `Gtk.MediaFile` plays voice notes and attachments. PipeWire serves the PulseAudio socket, so this is the one audio permission. Microphone access is then gated by the desktop's own prompt. |
 | `--device=dri` | GPU rendering for GTK 4 |
 
 Deliberately absent:
@@ -45,15 +47,21 @@ Deliberately absent:
 - `--talk-name=org.gnome.OnlineAccounts`: decided against in ADR 0011; chat client only.
 - `--own-name=eu.jumplink.curlew.Daemon`: Flatpak allows an app to own its id and everything
   below it.
-- `--socket=pulseaudio`: not granted. **Open:** voice notes are played and recorded; if recording
-  or playback needs audio output, add `--socket=pulseaudio` after measuring, not before.
+- `--device=all`: not needed; the microphone is reached through the PulseAudio socket, not a device node.
+- Secrets, settings, autostart: no permission. Chat secrets are files in the app's own data
+  directory; GSettings/dconf is not used by the app; autostart goes through the Background portal
+  (`autostart-portal.ts`), which needs no finish arg.
+- Mail, contacts and calendar through GOA/EDS: not reachable in a sandbox by design (ADR 0011); the
+  Flatpak is the chat client.
 - `--socket=session-bus`, `--socket=system-bus`, `--share=ssh-auth`, `--socket=gpg-agent`: not
   needed.
 
-Open: the access prompts in `access-notifications.ts` still call the raw
-`org.freedesktop.Notifications` service. In a sandbox without that talk-name they silently do not
-appear (ADR 0011 §2 lists the portal driver with buttons as next). Resolve before 0.1.0 relies on
-the prompts inside the Flatpak.
+Access prompts: `access-notifications.ts` now has a portal driver. Inside a sandbox it calls
+`AddNotification` with four buttons (Allow once, For this session, Always, Deny); the actions have
+no `app.` prefix, so the portal reports them to the daemon as `ActionInvoked`. Limit: the Notification
+portal reports no "closed" signal, so an unanswered prompt ends with the broker's two-minute timeout
+(a refusal, as a dismissal would be) instead of at once. Covered by `gjsify run test:access-dbus`
+against a fake portal; not yet run inside a real Flatpak.
 
 ## Desktop file
 
@@ -108,7 +116,7 @@ the prompts inside the Flatpak.
 
 ## Submission steps (maintainer)
 
-1. Settle the open points above (offline sources, access prompt portal, OARS, audio).
+1. Settle the open points above (offline sources, OARS).
 2. Tag a release; pin the screenshot URLs and the metainfo `<release>` entry to it.
 3. Fork `flathub/flathub`, add the manifest on a `new-pr` branch, open the PR.
 4. Run `flatpak-builder-lint` on manifest and repository first.

@@ -63,8 +63,8 @@ supporting is **unchecked**.
    D-Bus connection, so GLib's notification backends find no service (checked with a fake server).
    Instead `message-notifications.ts` carries two drivers: the desktop's own service outside a
    sandbox, the Notification portal inside one (`AddNotification`, activated through the application
-   id, so the window handles the click). The access prompts in `access-notifications.ts` still use
-   the raw service and need a portal driver with buttons next. The two gaps in
+   id, so the window handles the click). The access prompts in `access-notifications.ts` have the same
+   two drivers; the portal one uses buttons that come back as `ActionInvoked`. The two gaps in
    `docs/design/notifications.md` are unchanged.
 3. **A launcher seam for "keep receiving"** (**done**). `core/actions/autostart.ts` defines
    `Autostart { status, enable, disable }`; `systemdAutostart` is the Linux-outside-a-sandbox driver

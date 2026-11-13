@@ -34,6 +34,11 @@ id, so the window takes `open-conversation` itself and the daemon forwards nothi
 exercised against a fake service by `gjsify run test:notifications-dbus`; the portal one has not run
 inside a real Flatpak yet.
 
+Access prompts (`access-notifications.ts`) follow the same split. The portal driver sends four
+buttons without an `app.` prefix and reads the answer from `ActionInvoked`. The portal reports no
+close, so an unanswered prompt is a timeout refusal after two minutes. `gjsify run test:access-dbus`
+covers both drivers against fakes.
+
 The default sink exists only for the user's own index (`dbPath` unset); tests get none, so
 synthetic messages never reach a real server.
 

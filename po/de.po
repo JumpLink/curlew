@@ -888,47 +888,47 @@ msgstr ""
 "Das Backend {name} ist nicht aktiviert — `curlew backends enable {name}` "
 "schaltet es ein (und zeigt seine Bedingungen)"
 
-#: app/src/core/lib/access-notifications.ts:37
+#: app/src/core/lib/access-notifications.ts:41
 msgid "{name} ({address})"
 msgstr "{name} ({address})"
 
-#: app/src/core/lib/access-notifications.ts:42
+#: app/src/core/lib/access-notifications.ts:46
 msgid "To {contact} ({account})."
 msgstr "An {contact} ({account})."
 
-#: app/src/core/lib/access-notifications.ts:43
+#: app/src/core/lib/access-notifications.ts:47
 msgid "To {contact} ({account}): “{preview}”"
 msgstr "An {contact} ({account}): „{preview}“"
 
-#: app/src/core/lib/access-notifications.ts:46
+#: app/src/core/lib/access-notifications.ts:50
 msgid "An agent wants to send a message"
 msgstr "Ein Agent möchte eine Nachricht senden"
 
-#: app/src/core/lib/access-notifications.ts:47
+#: app/src/core/lib/access-notifications.ts:51
 msgid "Attachments: {files}"
 msgstr "Anhänge: {files}"
 
-#: app/src/core/lib/access-notifications.ts:51
+#: app/src/core/lib/access-notifications.ts:55
 msgid "An agent wants to read messages"
 msgstr "Ein Agent möchte Nachrichten lesen"
 
-#: app/src/core/lib/access-notifications.ts:52
+#: app/src/core/lib/access-notifications.ts:56
 msgid "Messages of {contact} ({account})."
 msgstr "Nachrichten von {contact} ({account})."
 
-#: app/src/core/lib/access-notifications.ts:59
+#: app/src/core/lib/access-notifications.ts:63
 msgid "Allow once"
 msgstr "Einmal erlauben"
 
-#: app/src/core/lib/access-notifications.ts:60
+#: app/src/core/lib/access-notifications.ts:64
 msgid "For this session"
 msgstr "Für diese Sitzung"
 
-#: app/src/core/lib/access-notifications.ts:62
+#: app/src/core/lib/access-notifications.ts:66
 msgid "Always"
 msgstr "Immer"
 
-#: app/src/core/lib/access-notifications.ts:64
+#: app/src/core/lib/access-notifications.ts:68
 #: app/src/window/agent-access-page.ts:58
 msgid "Deny"
 msgstr "Verweigern"
