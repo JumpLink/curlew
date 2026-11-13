@@ -12,7 +12,11 @@ import {
   checkRequest,
   type Content,
   decodeContent,
+  decryptAttachment,
+  encryptAttachment,
   EnvelopeType,
+  padAttachment,
+  paddedSize,
   fromBase64,
   sendFetch,
   sendRefusal,
@@ -229,6 +233,8 @@ class SendServer {
   readonly delivered: Delivered[] = [];
   /** The permitted service ids each `openSender` built its gate from. */
   readonly opened: string[][] = [];
+  /** What the CDN received: the form it was addressed with and the ciphertext. */
+  readonly uploads: Array<{ cdn: number; key: string; data: Uint8Array }> = [];
   /** Devices that answer the next PUT with 410 and get fresh keys, once. */
   readonly stale = new Map<string, number[]>();
   /** A raw failure status for the next PUT to this service id, once. */
@@ -265,6 +271,14 @@ class SendServer {
     this.requests.push({ verb: request.verb, path, body });
     const keys = /^\/v2\/keys\/([^/]+)\/\*$/.exec(path);
     if (request.verb === 'GET' && keys) return this.keysOf(keys[1]);
+    if (request.verb === 'GET' && path === '/v4/attachments/form/upload') {
+      return json(200, {
+        cdn: 3,
+        key: 'synthetic-cdn-key',
+        headers: { 'x-synthetic': '1' },
+        signedUploadLocation: 'https://cdn3.example.invalid/attachments/upload',
+      });
+    }
     const send = /^\/v1\/messages\/([^/]+)$/.exec(path);
     if (request.verb === 'PUT' && send) return this.put(send[1], body as PutBody);
     return { status: 404 };
@@ -379,6 +393,9 @@ async function withRig<T>(config: unknown, body: (rig: Rig) => Promise<T>): Prom
       trustRoots: trust.publicKeys,
       connector: () => inbox.connector(),
       sendChannel: server.channel(),
+      upload: async (form, data) => {
+        server.uploads.push({ cdn: form.cdn, key: form.key, data });
+      },
       download: async () => {
         throw new Error('no CDN in tests');
       },
@@ -800,6 +817,92 @@ export default async () => {
         await send(rig, ALICE_ACI, 'x'.repeat(SIGNAL_MAX_MESSAGE_BYTES));
         expect(rig.server.delivered.length).toBe(4);
       });
+    });
+
+    await it('uploads a file encrypted and sends its pointer to every device', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const bytes = new Uint8Array(1000).map((_v, i) => i % 251);
+        const path = join(rig.dir, 'bild.png');
+        writeFileSync(path, bytes);
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [ALICE_ACI],
+        });
+        expect(sender.features.attachments).toBe(true);
+        await sender.send({ to: ALICE_ACI, text: 'Foto', attachments: [{ path }] });
+        await sender.close();
+
+        expect(rig.server.uploads.length).toBe(1);
+        const upload = rig.server.uploads[0];
+        expect(upload.cdn).toBe(3);
+        expect(rig.server.requests.some((r) => r.path === '/v4/attachments/form/upload')).toBe(true);
+        // What the CDN holds is ciphertext: padded to a size bucket, never the plaintext.
+        expect(upload.data.length > bytes.length).toBe(true);
+
+        expect(rig.server.delivered.length).toBe(4);
+        const alice = rig.server.delivered.find((d) => d.to === 'alice.1')!;
+        const message = alice.content.dataMessage!;
+        expect(message.body).toBe('Foto');
+        expect(message.attachments?.length).toBe(1);
+        const pointer = message.attachments![0];
+        expect(pointer.contentType).toBe('image/png');
+        expect(pointer.fileName).toBe('bild.png');
+        expect(pointer.cdnKey).toBe('synthetic-cdn-key');
+        expect(pointer.cdnNumber).toBe(3);
+        expect(pointer.size).toBe(1000);
+        // The recipient's half: key, digest and size from the pointer open what was uploaded.
+        const plain = decryptAttachment(upload.data, pointer.key!, {
+          size: pointer.size,
+          digest: pointer.digest,
+        });
+        expect(Array.from(plain)).toStrictEqual(Array.from(bytes));
+
+        // The transcript on the account's other devices carries the same pointer.
+        const own = rig.server.delivered.find((d) => d.to === 'self.1')!;
+        expect(own.content.syncMessage?.sent?.message?.attachments?.[0].cdnKey).toBe('synthetic-cdn-key');
+      });
+    });
+
+    await it('refuses a file that cannot be read before anything leaves', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [ALICE_ACI],
+        });
+        expect(
+          await refused(
+            sender.send({ to: ALICE_ACI, text: 'x', attachments: [{ path: join(rig.dir, 'nope.png') }] }),
+          ),
+        ).toBe(true);
+        await sender.close();
+        expect(rig.server.requests.length).toBe(0);
+        expect(rig.server.uploads.length).toBe(0);
+      });
+    });
+
+    await it('lets only the upload form request through for a file', async () => {
+      const permitted = [ALICE_ACI, OWN_ACI];
+      expect(sendRefusal(req('GET', '/v4/attachments/form/upload?uploadLength=1024'), permitted)).toBe(null);
+      expect(threw(() => checkRequest('sync', req('GET', '/v4/attachments/form/upload')))).toBe(true);
+      for (const request of [
+        req('PUT', '/v4/attachments/form/upload'),
+        req('POST', '/v4/attachments/form/upload'),
+        req('GET', '/v4/attachments/form/upload/other'),
+      ]) {
+        expect(sendRefusal(request, permitted) !== null).toBe(true);
+      }
+    });
+
+    await it('pads to a size bucket and round-trips through the receive code', async () => {
+      const plain = new Uint8Array(700).fill(7);
+      const padded = padAttachment(plain);
+      expect(padded.length).toBe(paddedSize(700));
+      expect(padded.length >= 700).toBe(true);
+      const key = new Uint8Array(64).map((_v, i) => i);
+      const { data, digest } = encryptAttachment(padded, key);
+      expect(Array.from(decryptAttachment(data, key, { size: 700, digest }))).toStrictEqual(
+        Array.from(plain),
+      );
     });
 
     await it('sends a note to self as the transcript alone', async () => {

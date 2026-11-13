@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 17:08+0100\n"
+"POT-Creation-Date: 2026-11-13 17:22+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -3539,7 +3539,7 @@ msgid "the mail account {account} is incomplete — add it again"
 msgstr "Das E-Mail-Konto {account} ist unvollständig — füge es erneut hinzu"
 
 #: packages/imap/src/send.ts:74 packages/matrix/src/send.ts:354
-#: packages/signal/src/send.ts:405 packages/telegram/src/sender.ts:80
+#: packages/signal/src/send.ts:444 packages/telegram/src/sender.ts:80
 #: packages/whatsapp/src/send.ts:403
 msgid "sending to {address} is not granted for account {account}"
 msgstr "Das Senden an {address} ist für Konto {account} nicht freigegeben"
@@ -3712,7 +3712,7 @@ msgstr ""
 "Eine Matrix-Nachricht fasst höchstens {max} Byte Text, diese hat {bytes} — "
 "kürze sie"
 
-#: packages/matrix/src/send.ts:483 packages/signal/src/send.ts:215
+#: packages/matrix/src/send.ts:483 packages/signal/src/send.ts:229
 #: packages/telegram/src/sender.ts:141 packages/whatsapp/src/send.ts:164
 #: packages/xmpp/src/messages.ts:36
 msgid "only your own messages can be changed — nothing was sent"
@@ -3749,11 +3749,11 @@ msgid ""
 msgstr ""
 "der Signal-Anhang kam mit {actual} Bytes an, angekündigt waren {announced}"
 
-#: packages/signal/src/backend.ts:136 packages/signal/src/backend.ts:193
+#: packages/signal/src/backend.ts:139 packages/signal/src/backend.ts:196
 msgid "no Signal session for {account} — {hint}"
 msgstr "Keine Signal-Sitzung für {account} — {hint}"
 
-#: packages/signal/src/backend.ts:200
+#: packages/signal/src/backend.ts:203
 msgid "the Signal session {account} was never linked — {hint}"
 msgstr "Die Signal-Sitzung {account} wurde nie verknüpft — {hint}"
 
@@ -3842,11 +3842,11 @@ msgstr "verknüpfe es mit `curlew accounts add signal` neu"
 msgid "Signal no longer knows this device (it was unlinked) — {hint}"
 msgstr "Signal kennt dieses Gerät nicht mehr (es wurde entkoppelt) — {hint}"
 
-#: packages/signal/src/send.ts:160
+#: packages/signal/src/send.ts:172
 msgid "Signal answered {what} with something that is not JSON"
 msgstr "Signal hat {what} mit etwas beantwortet, das kein JSON ist"
 
-#: packages/signal/src/send.ts:227 packages/signal/src/send.ts:276
+#: packages/signal/src/send.ts:241 packages/signal/src/send.ts:294
 msgid ""
 "a Signal message holds at most {max} bytes of text, this one has {bytes} — "
 "shorten it"
@@ -3854,12 +3854,12 @@ msgstr ""
 "Eine Signal-Nachricht fasst höchstens {max} Byte Text, diese hat {bytes} — "
 "kürze sie"
 
-#: packages/signal/src/send.ts:253
+#: packages/signal/src/send.ts:267
 msgid "Signal needs the emoji being taken back — nothing was sent"
 msgstr ""
 "Signal braucht das Emoji, das zurückgenommen wird — es wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:364
+#: packages/signal/src/send.ts:403
 msgid ""
 "the message was delivered, but this account's other devices were not told "
 "about it ({reason}) — it will not appear on the phone"
@@ -3867,7 +3867,7 @@ msgstr ""
 "Die Nachricht wurde zugestellt, aber die anderen Geräte dieses Kontos haben "
 "nichts davon erfahren ({reason}) — auf dem Telefon erscheint sie nicht"
 
-#: packages/signal/src/send.ts:372
+#: packages/signal/src/send.ts:411
 msgid ""
 "a note to self is stored on this account's other devices, and this account "
 "has none — nothing was sent"
@@ -3875,7 +3875,7 @@ msgstr ""
 "Eine Notiz an dich selbst wird auf den anderen Geräten dieses Kontos "
 "gespeichert, und dieses Konto hat keine — es wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:388
+#: packages/signal/src/send.ts:427
 msgid ""
 "curlew cannot send to a Signal group: a group message needs the member list "
 "and credentials from Signal's storage service, which curlew does not sync — "
@@ -3885,7 +3885,7 @@ msgstr ""
 "braucht die Mitgliederliste und Zugangsdaten aus Signals Storage Service, "
 "den curlew nicht synchronisiert — sende sie aus einem Signal-Client"
 
-#: packages/signal/src/send.ts:397
+#: packages/signal/src/send.ts:436
 msgid ""
 "{address} is not a Signal account id — use the id `conversations_list` shows "
 "for the chat, not a phone number"
@@ -3893,7 +3893,7 @@ msgstr ""
 "{address} ist keine Signal-Konto-ID — nimm die ID, die `conversations_list` "
 "für den Chat anzeigt, keine Telefonnummer"
 
-#: packages/signal/src/send.ts:456
+#: packages/signal/src/send.ts:495
 msgid ""
 "Signal kept disagreeing about the recipient's devices — nothing was sent; "
 "try again, or send it from a Signal client"
@@ -3901,7 +3901,7 @@ msgstr ""
 "Signal war sich über die Geräte des Empfängers dauerhaft uneinig — es wurde "
 "nichts gesendet; versuche es erneut oder sende aus einem Signal-Client"
 
-#: packages/signal/src/send.ts:465
+#: packages/signal/src/send.ts:504
 msgid ""
 "Signal refused this device (unauthorized) — nothing was sent; the device may "
 "be unlinked"
@@ -3909,33 +3909,33 @@ msgstr ""
 "Signal hat dieses Gerät abgewiesen (nicht autorisiert) — es wurde nichts "
 "gesendet; das Gerät ist möglicherweise entkoppelt"
 
-#: packages/signal/src/send.ts:469
+#: packages/signal/src/send.ts:508
 msgid "Signal wants a rate-limit challenge answered — nothing was sent"
 msgstr ""
 "Signal verlangt die Antwort auf eine Ratenbegrenzungs-Abfrage — es wurde "
 "nichts gesendet"
 
-#: packages/signal/src/send.ts:472
+#: packages/signal/src/send.ts:511
 msgid "Signal refused the message ({status}) — nothing was sent"
 msgstr ""
 "Signal hat die Nachricht abgelehnt ({status}) — es wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:564
+#: packages/signal/src/send.ts:603
 msgid "Signal has no account {address} — nothing was sent"
 msgstr "Signal kennt kein Konto {address} — es wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:569
+#: packages/signal/src/send.ts:608
 msgid ""
 "Signal did not hand over the keys for {address} ({status}) — nothing was sent"
 msgstr ""
 "Signal hat die Schlüssel für {address} nicht herausgegeben ({status}) — es "
 "wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:587
+#: packages/signal/src/send.ts:626
 msgid "Signal lists no device for {address} — nothing was sent"
 msgstr "Signal führt kein Gerät für {address} — es wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:607
+#: packages/signal/src/send.ts:646
 msgid ""
 "a device of {address} publishes no usable keys, so curlew cannot start a "
 "session with it — nothing was sent"
@@ -3943,7 +3943,7 @@ msgstr ""
 "Ein Gerät von {address} veröffentlicht keine brauchbaren Schlüssel, also "
 "kann curlew keine Sitzung damit beginnen — es wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:653
+#: packages/signal/src/send.ts:692
 msgid ""
 "the safety number of {address} changed — nothing was sent; check it with "
 "them, then send again to accept the new one"
@@ -3952,13 +3952,40 @@ msgstr ""
 "gesendet; prüfe sie gemeinsam mit der Person und sende dann erneut, um die "
 "neue zu akzeptieren"
 
-#: packages/signal/src/send.ts:679
+#: packages/signal/src/send.ts:718
 msgid ""
 "Signal reported a device mismatch ({status}) without naming a device — "
 "nothing was sent"
 msgstr ""
 "Signal hat eine Geräteabweichung gemeldet ({status}), ohne ein Gerät zu "
 "nennen — es wurde nichts gesendet"
+
+#: packages/signal/src/upload.ts:83
+#, fuzzy
+msgid "Signal would not take the file ({status}) — nothing was sent"
+msgstr ""
+"Signal hat die Nachricht abgelehnt ({status}) — es wurde nichts gesendet"
+
+#: packages/signal/src/upload.ts:105
+#, fuzzy
+msgid ""
+"Signal answered the upload request with something curlew cannot read — "
+"nothing was sent"
+msgstr ""
+"Signal braucht das Emoji, das zurückgenommen wird — es wurde nichts gesendet"
+
+#: packages/signal/src/upload.ts:150
+#, fuzzy
+msgid "the file server refused the upload ({status}) — nothing was sent"
+msgstr ""
+"Signal hat die Nachricht abgelehnt ({status}) — es wurde nichts gesendet"
+
+#: packages/signal/src/upload.ts:166
+#, fuzzy
+msgid "the file server named no place to upload to — nothing was sent"
+msgstr ""
+"Der Homeserver hat die Reaktionen in {room} nicht aufgelistet ({reason}) — "
+"es wurde nichts gesendet"
 
 #: packages/store/src/send-files.ts:78
 msgid "at most {max} attachments per message, this one has {count}"

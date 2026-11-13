@@ -28,9 +28,9 @@ export const SIGNAL_MANIFEST: BackendManifest = {
     e2ee: true,
     subject: false,
     folders: false,
-    // Receiving only: `openAttachments` downloads and decrypts a file a person tapped. Sending a
-    // file is not built, so `attachments` stays false.
-    attachments: false,
+    // `openAttachments` downloads and decrypts a file a person tapped; a granted send encrypts a
+    // file, uploads it to the CDN and sends its pointer (`upload.ts`).
+    attachments: true,
     attachmentsRead: true,
     replies: true,
   },
@@ -47,7 +47,7 @@ export const SIGNAL_MANIFEST: BackendManifest = {
   sendSharesReceiveState: true,
   terms: {
     summary:
-      'curlew connects to Signal as a linked device (like Signal Desktop), using libsignal, the Rust library the official apps are built on. Signal does not offer an API and does not license third-party clients: curlew is not an official Signal client, and Signal does not support it. Independent clients of this kind (signal-cli, Flare, Whisperfish) exist and are used without known account bans, but Signal could block them at any time. curlew reads your messages, and writes only where you granted it: it sends a plain-text message into a chat a `signal.send` grant names, and nothing else — no read receipts, no typing indicators, no files sent (it does acknowledge delivery, as every linked device must). It downloads a received file only when you open it, from the Signal CDN. Signal keeps no server archive, so what curlew receives exists only in its local index, and Signal unlinks a linked device that stays offline for too long.',
+      'curlew connects to Signal as a linked device (like Signal Desktop), using libsignal, the Rust library the official apps are built on. Signal does not offer an API and does not license third-party clients: curlew is not an official Signal client, and Signal does not support it. Independent clients of this kind (signal-cli, Flare, Whisperfish) exist and are used without known account bans, but Signal could block them at any time. curlew reads your messages, and writes only where you granted it: it sends a message, with files if you attach any, into a chat a `signal.send` grant names, and nothing else — no read receipts, no typing indicators (it does acknowledge delivery, as every linked device must). It downloads a received file only when you open it, from the Signal CDN. Signal keeps no server archive, so what curlew receives exists only in its local index, and Signal unlinks a linked device that stays offline for too long.',
     url: 'https://signal.org/legal/',
   },
 };

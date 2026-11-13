@@ -105,7 +105,8 @@ export default async () => {
     });
 
     await it('lets a narrowing only turn features off', async () => {
-      const result = threadCapabilitiesOf(manifestOf('signal'), { backend: 'signal' }, () => ({
+      const noFiles: BackendCapabilities = { ...manifestOf('signal'), attachments: false };
+      const result = threadCapabilitiesOf(noFiles, { backend: 'signal' }, () => ({
         ...NO_THREAD_CAPABILITIES,
         attachments: true,
         reactions: true,

@@ -188,8 +188,9 @@ WhatsApp sends files through the same gated send socket as its text (`WaSendSock
 behind the same per-permit gate), one message per file, the text as the caption of the first. The
 daemon's `Send` request grows `attachments` (absolute paths: the daemon is the same user and the
 sender re-checks every one) and its answer reports what was sent, so the wire version is 3 and the
-old refusal "cannot send attachments through the daemon" is gone. Signal keeps `attachments: false`
-until its own upload exists (AP4.5).
+old refusal "cannot send attachments through the daemon" is gone. Signal followed: it
+encrypts the file, uploads it to the CDN (`GET /v4/attachments/form/upload`, then HTTPS, never the chat
+socket) and sends a `DataMessage` with the pointers, so it declares `attachments: true` (AP4.5).
 
 ## Work packages
 

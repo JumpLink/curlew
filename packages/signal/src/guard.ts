@@ -101,6 +101,13 @@ const PRE_KEYS = new RegExp(String.raw`^/v2/keys/(${SERVICE_ID})/(?:\*|\d+)(?:\?
 const SEND = new RegExp(String.raw`^/v1/messages/(${SERVICE_ID})(?:\?.*)?$`, 'i');
 
 /**
+ * `GET /v4/attachments/form/upload` — where to put an encrypted attachment (CDN, key, signed URL).
+ * It names nobody and changes nothing on the account; the ciphertext itself goes to the CDN over
+ * HTTPS, never through this socket. Needed to send a file (Signal-Desktop `getAttachmentUploadForm`).
+ */
+const UPLOAD_FORM = /^\/v4\/attachments\/form\/upload(?:\?uploadLength=\d+)?$/;
+
+/**
  * Why a request is refused for a sender permitted to write to `recipients`, or null when it may
  * go out. A service id no permit names is refused without naming it: the caller knows what it
  * asked for, and a refusal is not a place to put other people's ACIs.
@@ -109,6 +116,7 @@ export function sendRefusal(request: ChatRequestLike, recipients: readonly strin
   const verb = request.verb.toUpperCase();
   const permits = (id: string): boolean => recipients.some((r) => r.toLowerCase() === id.toLowerCase());
   if (verb === 'GET') {
+    if (UPLOAD_FORM.test(request.path)) return null;
     const keys = PRE_KEYS.exec(request.path);
     if (keys) return permits(keys[1]) ? null : 'the pre-keys of someone no grant names';
   }
