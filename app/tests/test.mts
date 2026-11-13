@@ -112,6 +112,7 @@ import windowSelection from './unit/window/selection-model.test.ts';
 import windowAttachment from './unit/window/attachment-model.test.ts';
 import windowMediaGrid from './unit/window/media-grid-model.test.ts';
 import windowPreviewCache from './unit/window/preview-cache-model.test.ts';
+import windowComposerEmoji from './unit/window/composer-emoji.test.ts';
 import windowRichText from './unit/window/rich-text-model.test.ts';
 import windowViewer from './unit/window/viewer-model.test.ts';
 import windowAppearance from './unit/window/appearance.test.ts';
@@ -267,6 +268,7 @@ run({
   windowAttachment,
   windowMediaGrid,
   windowPreviewCache,
+  windowComposerEmoji,
   windowRichText,
   windowViewer,
   windowAppearance,

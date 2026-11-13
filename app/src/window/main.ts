@@ -100,6 +100,13 @@ const application = new AdwaitaApp({
         1500,
         () => (window.activate_action('open-contact', null), GLib.SOURCE_REMOVE),
       );
+    // Likewise for the composer's emoji chooser, after the conversation has been built.
+    if (process.env.CURLEW_WINDOW_OPEN_EMOJI === '1')
+      GLib.timeout_add(
+        GLib.PRIORITY_DEFAULT,
+        2000,
+        () => (window.activate_action('open-emoji', null), GLib.SOURCE_REMOVE),
+      );
     if (process.env.CURLEW_WINDOW_OPEN_ACCOUNTS === '1')
       GLib.timeout_add(
         GLib.PRIORITY_DEFAULT,

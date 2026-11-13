@@ -183,6 +183,14 @@ picture is fetched when it nears the screen, any other part on a click, through 
 That cache is message content, so the window empties it at start. Not built: SVG, audio in the
 viewer, thumbnails decoded off the main thread, screen-reader labels beyond the tooltips.
 
+**Emoji in the composer.** A flat round smiley button sits right of the field (tooltip and accessible
+label "Insert emoji"); it opens `Gtk.EmojiChooser` as a popover and inserts the pick at the cursor,
+then returns focus to the field. Emoji are plain text everywhere, so every protocol's thread has it;
+it is hidden when the composer is read-only. The bubble menu keeps its six quick reactions
+(`QUICK_REACTIONS`): a reaction row is a one-tap choice, and not every protocol accepts any emoji
+as a reaction (Telegram allows a fixed set), so the full chooser is not offered there.
+Screenshot hook: `CURLEW_WINDOW_OPEN_EMOJI=1`.
+
 **Voice notes and stickers** (Delta Chat threads only). The composer shows a record button next
 to the paperclip when the thread offers `voiceNotes` (a mail thread whose peer sent
 `Chat-Version`; the manifest flag is the upper bound). It records Ogg/Opus through GStreamer

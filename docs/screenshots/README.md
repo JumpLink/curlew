@@ -11,6 +11,7 @@ File name: `<motif>.<lang>.<scheme>.png`.
 | `conversations` | chat list | 900×640 |
 | `conversation` | chat view (Alex Weber, Signal + Telegram merged) | 900×640 |
 | `conversations-narrow`, `conversation-narrow` | the same, phone width | 360×740 |
+| `composer-emoji` | emoji chooser open over the composer, phone width | 360×740 |
 | `contact` | contact page | 900×700 |
 | `group` | group page (Climbing Tuesday) | 900×700 |
 | `preferences`, `preferences-off` | settings, demo defaults / everything off | 900×640 |

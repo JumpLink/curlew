@@ -4,6 +4,8 @@ import Gdk from 'gi://Gdk?version=4.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import Pango from 'gi://Pango?version=1.0';
 
+import { _ } from '@curlew/protocol';
+
 /** Lines after which the field scrolls instead of growing further. */
 const MAX_LINES = 5;
 const LINE_HEIGHT = 22;
@@ -12,6 +14,8 @@ export interface ComposerInput {
   widget: Gtk.Widget;
   /** The editing widget: what paste and drop handlers attach to. */
   view: Gtk.TextView;
+  /** Opens the emoji chooser; an emoji lands at the cursor. Hidden while the field is read-only. */
+  emoji: Gtk.MenuButton;
   getText(): string;
   setText(text: string): void;
   setPlaceholder(text: string): void;
@@ -70,10 +74,25 @@ export function createComposerInput(placeholder: string): ComposerInput {
   });
   view.add_controller(keys);
 
+  // Emoji are plain text on every protocol, so the chooser is offered wherever the field is.
+  const chooser = new Gtk.EmojiChooser();
+  chooser.connect('emoji-picked', (_c, emoji: string) => buffer.insert_at_cursor(emoji, -1));
+  chooser.connect('closed', () => view.grab_focus());
+  const emoji = new Gtk.MenuButton({
+    iconName: 'face-smile-symbolic',
+    tooltipText: _('Insert emoji'),
+    popover: chooser,
+    valign: Gtk.Align.END,
+  });
+  emoji.add_css_class('flat');
+  emoji.add_css_class('circular');
+  emoji.update_property([Gtk.AccessibleProperty.LABEL], [_('Insert emoji')]);
+
   const text = (): string => buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), false);
   return {
     widget: overlay,
     view,
+    emoji,
     getText: text,
     setText(value) {
       buffer.set_text(value, -1);
@@ -83,6 +102,7 @@ export function createComposerInput(placeholder: string): ComposerInput {
     },
     setSensitive(on) {
       view.set_sensitive(on);
+      emoji.set_visible(on);
     },
     grabFocus() {
       view.grab_focus();
