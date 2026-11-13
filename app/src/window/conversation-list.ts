@@ -14,7 +14,10 @@ import type Gio from 'gi://Gio?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import { _, _n, fmt } from '@curlew/protocol';
 
+import { configPath } from '@curlew/store';
+import { loadConfig } from '../core/config.ts';
 import type { SearchScope } from '../core/lib/search-scope.ts';
+import { hiddenMailNote } from './email-chat-model.ts';
 import { showPicture } from './contact-picture.ts';
 import {
   type ListEntry,
@@ -399,9 +402,15 @@ export function createConversationList(
     if (sections.length === 0) {
       const none = entries.length === 0;
       empty.set_title(none ? _('No conversations yet') : _('No matches'));
+      const hidden = !loadConfig(configPath()).ui.showAllEmails;
+      const synced = _(
+        'Conversations appear here after Curlew has synced an account. Run "curlew sync" first.',
+      );
       empty.set_description(
         none
-          ? _('Conversations appear here after Curlew has synced an account. Run "curlew sync" first.')
+          ? hidden
+            ? `${synced}\n\n${hiddenMailNote()}`
+            : synced
           : _('Nothing fits the search and filters.'),
       );
       addButton.set_visible(none);

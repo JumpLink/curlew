@@ -12,6 +12,11 @@ export function emailChatExplanation(): string {
   );
 }
 
+/** Why ordinary mail is missing from the list, and where it comes back. */
+export function hiddenMailNote(): string {
+  return _('Ordinary email is hidden. To see it, switch on "Show all emails" in Preferences, Conversations.');
+}
+
 /** What the "Show all emails" switch does: it filters the list and nothing else. */
 export function showAllEmailsSubtitle(): string {
   return _('Off lists only email chats. This changes the list only, never how mail is sent');

@@ -15,7 +15,7 @@ import { APP_ID } from './about.ts';
 import { pushProtocolsPage } from './protocols-page.ts';
 import { loadAccountsState } from './accounts-store.ts';
 import { inSandbox } from '../core/lib/sandbox.ts';
-import { emailChatExplanation } from './email-chat-model.ts';
+import { emailChatExplanation, hiddenMailNote } from './email-chat-model.ts';
 import {
   applyAiChoice,
   applyDeltaChatChoice,
@@ -184,9 +184,13 @@ export function presentWelcome(parent: Gtk.Window | null, onClosed: () => void):
 
   builders.set('delta-chat', () => {
     const group = new Adw.PreferencesGroup();
-    const page = formPage('delta-chat', _('Delta Chat'), emailChatExplanation(), group, [
-      nextButton('delta-chat'),
-    ]);
+    const page = formPage(
+      'delta-chat',
+      _('Delta Chat'),
+      `${emailChatExplanation()}\n\n${hiddenMailNote()}`,
+      group,
+      [nextButton('delta-chat')],
+    );
     const enabled = new Set(loadConfig(path).deltaChatAccounts ?? []);
     void loadAccountsState(path, { hostAccounts: hostAccounts() }).then(
       (load) => {
