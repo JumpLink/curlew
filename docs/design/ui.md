@@ -261,6 +261,14 @@ every config key and where it is changed; its types follow `UiConfig` and `Curle
 File-only on purpose: `senders` (`curlew conversations classify`) and `backends.<name>.settings`
 (a backend's own non-secret options).
 
+## About dialog
+
+`Adw.AboutDialog`, opened from the header menu. It shows the app icon and ID, the version, the
+developer (JumpLink / Pascal Garber, as in the metainfo), the copyright, the AGPL-3.0 licence, the
+website and the issue tracker. The version comes from `app/src/core/version.ts`, which reads
+`app/package.json`, the same source as `curlew --version`; a unit test keeps the metainfo release
+and every `package.json` on that number.
+
 ## App icon
 
 The app icon follows the GNOME HIG for app icons; how it came about, round by round, with every

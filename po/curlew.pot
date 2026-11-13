@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 13:43+0100\n"
+"POT-Creation-Date: 2026-11-13 14:36+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1560,10 +1560,18 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr ""
 
-#: app/src/window/about.ts:14 app/src/window/appearance-rows.ts:126
+#: app/src/window/about.ts:16 app/src/window/appearance-rows.ts:126
 #: app/src/window/conversation-view.ts:174 app/src/window/window.ts:85
 #: app/src/window/window.ts:104
 msgid "Curlew"
+msgstr ""
+
+#: app/src/window/about.ts:21
+msgid "© 2026 Pascal Garber"
+msgstr ""
+
+#: app/src/window/about.ts:22
+msgid "Chats across messengers"
 msgstr ""
 
 #: app/src/window/account-add.ts:139 app/src/window/protocols-page.ts:40
