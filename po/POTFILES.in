@@ -65,6 +65,7 @@ app/src/core/markdown.ts
 app/src/core/platform.ts
 app/src/core/runtime.ts
 app/src/core/version.ts
+app/src/core/visibility.ts
 app/src/core/write-log.ts
 app/src/frontends/cli/accounts.ts
 app/src/frontends/cli/addon-canary.ts

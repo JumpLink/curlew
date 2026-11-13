@@ -31,6 +31,7 @@ import {
   buildSections,
   initials,
   listSubtitle,
+  entryCarrier,
   protocolIcon,
   protocolLabel,
   shortTime,
@@ -93,7 +94,7 @@ function badgedAvatar(entry: ListEntry): Gtk.Widget {
   badge.add_css_class('card');
   badge.add_css_class('view');
   const icon = new Gtk.Image({
-    iconName: protocolIcon(entry.backend),
+    iconName: protocolIcon(entryCarrier(entry)),
     pixelSize: 16,
     hexpand: true,
     halign: Gtk.Align.CENTER,
@@ -103,7 +104,7 @@ function badgedAvatar(entry: ListEntry): Gtk.Widget {
   const overlay = new Gtk.Overlay();
   overlay.set_child(avatar);
   overlay.add_overlay(badge);
-  overlay.set_tooltip_text(protocolLabel(entry.backend));
+  overlay.set_tooltip_text(protocolLabel(entryCarrier(entry)));
   showPicture(avatar, entry);
   return overlay;
 }

@@ -5,7 +5,7 @@
 
 import { _n, fmt } from '@curlew/protocol';
 
-import { type ListEntry, protocolLabel } from './conversation-list-model.ts';
+import { type ListEntry, carriersOf, protocolLabel } from './conversation-list-model.ts';
 
 /** The header while rows are picked: "2 selected", de "2 ausgewählt". */
 export function selectionTitle(count: number): string {
@@ -36,7 +36,7 @@ export function selectionTools(picked: readonly ListEntry[]): SelectionTools {
 export function mergeSummary(picked: readonly ListEntry[]): string[] {
   return picked.map((entry) => {
     const carriers = entry.members.length > 0 ? entry.members : [entry];
-    const networks = [...new Set(carriers.map((c) => protocolLabel(c.backend)))].sort();
+    const networks = carriersOf(carriers).map(protocolLabel).sort();
     return `${entry.title} (${networks.join(' · ')})`;
   });
 }

@@ -25,7 +25,7 @@ export function showAllEmailsSubtitle(): string {
 /** The one-line hint above the first email chat of an account. */
 export function emailChatHint(): string {
   return _(
-    'This is an email chat: people with Delta Chat, ArcaneChat or DeltaTouch see it as a chat, everyone else as an ordinary email.',
+    'This is an email chat: people with Delta Chat, ArcaneChat or DeltaTouch see it as a chat, everyone else as an ordinary email. A contact shows as Delta Chat once their app has sent the chat marker, and as Mail before that.',
   );
 }
 

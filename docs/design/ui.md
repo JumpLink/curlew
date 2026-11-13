@@ -154,8 +154,8 @@ Protocol badges are 16 px coloured round icons (our own `curlew-protocol-<backen
 `app/data/protocol-icons`, see `PROTOCOLS.md`) on a solid 22 px circle (the `card` style class: it contrasts
 in light and dark mode) that hangs on the avatar's lower-right rim so the initials stay readable;
 one colour and glyph per protocol (mail: purple envelope, XMPP: orange cross, Signal: blue ring,
-Matrix: green `[m]`, Telegram: blue plane, WhatsApp: green handset), with a tooltip naming the
-protocol, so colour never carries the meaning alone. The drawings are inspired by, not copies of,
+Matrix: green `[m]`, Telegram: blue plane, WhatsApp: green handset, Delta Chat: red bubble with envelope flap), with a tooltip naming the
+protocol, so colour never carries the meaning alone. Delta Chat is not a backend: `carrierOf()` (`app/src/core/visibility.ts`) shows a mail thread as Delta Chat when its peer sent the chat marker (per thread, so a contact flips from Mail to Delta Chat once the marker arrives; the thread hint says so). Pins and routes stay on `mail`. The Protocols page lists Delta Chat as a derived row (on = at least one opted-in mail account, greyed while Mail is off). The drawings are inspired by, not copies of,
 the protocols' trademarked logos, and imply no endorsement.
 
 ## Conversation view
@@ -262,7 +262,7 @@ every config key and where it is changed; its types follow `UiConfig` and `Curle
 | `ui.searchScope` | Conversation list, search scope |
 | `backends.<name>.enabled`, `termsAcceptedAt` | Accounts: Protocols |
 | `disabledAccounts` | Account page: Sync this account |
-| `deltaChatAccounts` | Account page (mail): Use for Delta Chat |
+| `deltaChatAccounts` | Account page (mail): Use for Delta Chat; Accounts: Protocols: Delta Chat |
 | `encryption` | Account page (XMPP): Require encryption (whole account; single-peer entries stay file-only) |
 | `agentAccess`, `grants` | Agent access dialog |
 | `mergedPeople`, `declinedMerges`, `pins`, `contactChoices` | Contact page, merge assistant, protocol picker |

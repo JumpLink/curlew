@@ -12,6 +12,7 @@ import {
   canSend,
   composerBlock,
   dropDeselectedAccounts,
+  entryCarrier,
   entryProtocolSubtitle,
   initials,
   listSubtitle,
@@ -553,6 +554,30 @@ export default async () => {
       expect(list[0].lastMessageAt).toBe('2026-11-03T00:00:00Z');
       expect(list[0].emailChat).toBe(true);
       expect(list[0].target).toBe('anna@example.invalid');
+    });
+
+    it('shows an email chat thread as Delta Chat and an ordinary one as Mail', () => {
+      const list = toEntries([mailWith('t-1', 'anna'), mailWith('t-2', 'ben', { emailChat: true })]);
+      const [anna, ben] = list;
+      expect(entryCarrier(anna!)).toBe('mail');
+      expect(protocolLabel(entryCarrier(anna!))).toBe('Mail');
+      expect(entryCarrier(ben!)).toBe('deltachat');
+      expect(protocolLabel(entryCarrier(ben!))).toBe('Delta Chat');
+      expect(protocolIcon(entryCarrier(ben!))).toBe('curlew-protocol-deltachat');
+      expect(ben!.backend).toBe('mail');
+    });
+
+    it('shows a merged contact as Delta Chat instead of Mail, and the same address once', () => {
+      const merged = entry({
+        id: 'p',
+        backend: 'mail',
+        members: [
+          entry({ id: 'm1', backend: 'mail', emailChat: true }),
+          entry({ id: 'm2', backend: 'mail', emailChat: false }),
+          entry({ id: 'x1', backend: 'xmpp' }),
+        ],
+      });
+      expect(entryProtocolSubtitle(merged)).toBe('Delta Chat · XMPP');
     });
 
     it('hides unmarked mail threads when not showing all emails, never other backends', () => {

@@ -11,7 +11,7 @@
 import type { ContactDTO } from '@curlew/protocol';
 import { _ } from '@curlew/protocol';
 
-import { protocolLabel, type ListEntry } from './conversation-list-model.ts';
+import { carriersOf, protocolLabel, type ListEntry } from './conversation-list-model.ts';
 import { trustRank } from './conversation-model.ts';
 
 /** An account of a protocol that takes a bare address. */
@@ -84,7 +84,7 @@ export function contactProtocols(contact: ContactDTO, accounts: readonly RouteAc
 
 /** "XMPP · Mail": what a row in the picker says about the contact. */
 export function contactSubtitle(contact: ContactDTO, accounts: readonly RouteAccount[]): string {
-  return contactProtocols(contact, accounts).map(protocolLabel).join(' · ');
+  return carriersOf(routeMembers(contact, accounts)).map(protocolLabel).join(' · ');
 }
 
 /** The row to open for a contact who has no conversation yet; null when no address fits. */

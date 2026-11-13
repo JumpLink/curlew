@@ -87,6 +87,22 @@ export default async () => {
       });
     });
 
+    describe('carrier', () => {
+      it('names Delta Chat for an opted-in mail account, Mail otherwise', () => {
+        const c = contact({ emails: ['alex@example.org'], jids: ['alex@xmpp.example.org'] });
+        const plain = [
+          { backend: 'xmpp', accountId: 'xmpp-1' },
+          { backend: 'mail', accountId: 'mail-1' },
+        ];
+        const chat = [
+          { backend: 'xmpp', accountId: 'xmpp-1' },
+          { backend: 'mail', accountId: 'mail-1', deltaChat: true },
+        ];
+        expect(contactSubtitle(c, plain)).toBe('XMPP · Mail');
+        expect(contactSubtitle(c, chat)).toBe('XMPP · Delta Chat');
+      });
+    });
+
     describe('routes', () => {
       it('offers only protocols the contact has a bare address for, most trusted first', () => {
         const c = contact({

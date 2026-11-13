@@ -12,6 +12,7 @@ import { _, _n, fmt } from '@curlew/protocol';
 import type { ContactChoice } from '../core/config.ts';
 import { choiceFor, groupKey, type ContactChoices } from '../core/contact-choices.ts';
 import type { SearchScope } from '../core/lib/search-scope.ts';
+import { carrierOf, DELTA_CHAT } from '../core/visibility.ts';
 
 export type SectionId = 'people' | 'groups';
 
@@ -136,6 +137,8 @@ export const NO_FILTER: ListFilter = { backends: new Set(), accounts: new Map(),
 
 const PROTOCOLS: Record<string, { label: () => string; icon: string }> = {
   mail: { label: () => _('Mail'), icon: 'curlew-protocol-mail' },
+  // Not a backend: a mail thread whose peer sent the chat marker, shown through `carrierOf`.
+  [DELTA_CHAT]: { label: () => _('Delta Chat'), icon: 'curlew-protocol-deltachat' },
   xmpp: { label: () => _('XMPP'), icon: 'curlew-protocol-xmpp' },
   signal: { label: () => _('Signal'), icon: 'curlew-protocol-signal' },
   matrix: { label: () => _('Matrix'), icon: 'curlew-protocol-matrix' },
@@ -156,6 +159,25 @@ export function protocolLabel(backend: string): string {
  */
 export function protocolIcon(backend: string): string {
   return PROTOCOLS[backend]?.icon ?? FALLBACK_ICON;
+}
+
+/**
+ * The protocol a row is shown as: Delta Chat for an email chat, else its backend. Display only;
+ * sending, pins and routes keep using `entry.backend`.
+ */
+export function entryCarrier(entry: ListEntry): string {
+  const emailChat =
+    entry.members.length > 0
+      ? entry.members.some((m) => m.backend === entry.backend && m.emailChat)
+      : entry.emailChat;
+  return carrierOf(entry.backend, entry.accountId, emailChat);
+}
+
+/** The carriers of several rows, each once; one address that is both Delta Chat and plain mail counts as Delta Chat. */
+export function carriersOf(entries: readonly ListEntry[]): string[] {
+  const all = new Set(entries.map(entryCarrier));
+  if (all.has(DELTA_CHAT)) all.delete('mail');
+  return [...all];
 }
 
 /**
@@ -427,9 +449,9 @@ export function routeOptions(entry: ListEntry): RouteOption[] {
  * in a fixed order. An ordinary row keeps the single protocol label.
  */
 export function entryProtocolSubtitle(entry: ListEntry): string {
-  if (entry.members.length === 0) return protocolLabel(entry.backend);
+  if (entry.members.length === 0) return protocolLabel(entryCarrier(entry));
   if (entry.pin !== null) return fmt(_('Only via {protocol}'), { protocol: protocolLabel(entry.pin) });
-  const labels = [...new Set(entry.members.map((m) => protocolLabel(m.backend)))].sort();
+  const labels = carriersOf(entry.members).map(protocolLabel).sort();
   return labels.join(' · ');
 }
 
@@ -440,10 +462,10 @@ export function entryProtocolSubtitle(entry: ListEntry): string {
  */
 export function listSubtitle(entry: ListEntry, accountLabels: ReadonlyMap<string, string>): string {
   if (entry.members.length === 0) {
-    return accountLabels.get(entry.accountId) ?? protocolLabel(entry.backend);
+    return accountLabels.get(entry.accountId) ?? protocolLabel(entryCarrier(entry));
   }
   const labels = [
-    ...new Set(entry.members.map((m) => accountLabels.get(m.accountId) ?? protocolLabel(m.backend))),
+    ...new Set(entry.members.map((m) => accountLabels.get(m.accountId) ?? protocolLabel(entryCarrier(m)))),
   ].sort();
   return labels.join(' · ');
 }

@@ -7,8 +7,11 @@
  */
 
 import type { TermsNotice } from '@curlew/protocol';
+import { _, _n, fmt } from '@curlew/protocol';
 
 import type { BackendStatus } from '../core/backends/registry.ts';
+import { type CurlewConfig, setDeltaChatIn } from '../core/config.ts';
+import { DELTA_CHAT } from '../core/visibility.ts';
 import { protocolIcon, protocolLabel } from './conversation-list-model.ts';
 
 export interface AddableProtocol {
@@ -66,4 +69,50 @@ export function switchableProtocols(backends: readonly BackendStatus[]): Addable
 /** Whether the person is shown terms before anything runs. */
 export function needsTerms(protocol: AddableProtocol): boolean {
   return protocol.terms !== null;
+}
+
+/**
+ * The "Delta Chat" row of the Protocols page. Derived, not a backend (ADR 0001 §5): it is on when
+ * at least one mail account is opted in, and it needs the mail backend to be on.
+ */
+export interface DeltaChatRow {
+  backend: string;
+  label: string;
+  icon: string;
+  enabled: boolean;
+  /** Mail accounts opted in. */
+  count: number;
+  /** False while mail is off: the row is greyed and the subtitle says why. */
+  available: boolean;
+}
+
+export function deltaChatRow(
+  backends: readonly BackendStatus[],
+  config: Pick<CurlewConfig, 'deltaChatAccounts'>,
+): DeltaChatRow {
+  const mailOn = backends.find((b) => b.name === 'mail')?.enabled === true;
+  const count = config.deltaChatAccounts?.length ?? 0;
+  return {
+    backend: DELTA_CHAT,
+    label: protocolLabel(DELTA_CHAT),
+    icon: protocolIcon(DELTA_CHAT),
+    enabled: mailOn && count > 0,
+    count,
+    available: mailOn,
+  };
+}
+
+export function deltaChatSubtitle(row: DeltaChatRow): string {
+  if (!row.available) return _('Needs Mail to be switched on');
+  if (!row.enabled) return _('Email chats with people on Delta Chat, ArcaneChat or DeltaTouch');
+  return fmt(_n('{count} account', '{count} accounts', row.count), { count: row.count });
+}
+
+/** Opt exactly the `chosen` mail accounts of `all` into Delta Chat; writes only that config field. */
+export function applyDeltaChatAccounts(
+  config: CurlewConfig,
+  all: readonly string[],
+  chosen: ReadonlySet<string>,
+): void {
+  for (const id of all) setDeltaChatIn(config, id, chosen.has(id));
 }

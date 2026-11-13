@@ -25,6 +25,7 @@ import { deleteOwnPicture, saveOwnPicture, showPicture } from './contact-picture
 import {
   type ListEntry,
   choiceIdsOf,
+  entryCarrier,
   entryProtocolSubtitle,
   listSubtitle,
   looksOf,
@@ -261,7 +262,7 @@ export function presentContactPage(
       subtitle: _('The newest chat decides'),
       model: Gtk.StringList.new([
         _('Automatic'),
-        ...members.map((part) => `${part.title} · ${protocolLabel(part.backend)}`),
+        ...members.map((part) => `${part.title} · ${protocolLabel(entryCarrier(part))}`),
       ]),
       selected: Math.max(0, members.findIndex((part) => part.id === choice.name) + 1),
     });
@@ -284,7 +285,7 @@ export function presentContactPage(
     );
     pictureGroup.add(first.row);
     for (const part of members) {
-      const line = `${protocolLabel(part.backend)} · ${listSubtitle(part, labels)}`;
+      const line = `${protocolLabel(entryCarrier(part))} · ${listSubtitle(part, labels)}`;
       const row = radioRow(part.title, line, first.check, choice.picture === part.id, partAvatar(part), () =>
         apply({ picture: part.id }),
       );
@@ -388,8 +389,8 @@ function infoGroup(entry: ListEntry, labels: ReadonlyMap<string, string>): Adw.P
     row.add_css_class('property');
     group.add(row);
   };
-  line(_('Protocol'), protocolLabel(entry.backend));
-  line(_('Account'), labels.get(entry.accountId) ?? protocolLabel(entry.backend));
+  line(_('Protocol'), protocolLabel(entryCarrier(entry)));
+  line(_('Account'), labels.get(entry.accountId) ?? protocolLabel(entryCarrier(entry)));
   const count = countOf(entry);
   if (count !== null) line(_('Members'), String(count));
   const room = entry.room;
