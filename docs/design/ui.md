@@ -123,11 +123,22 @@ Not built, future work: the **accent count** and the **dot**. The index keeps on
 per conversation; a mention and activity-without-count need the backends to store that state in
 the index first. Until then only the grey tier exists.
 
-**Search** matches the title, and from two characters on also the text of chat messages and the
-subject of mail (`searchMessageText`, a `LIKE` over `conversation_messages`, newest match per
-conversation). A row that matched by text shows the matching line instead of the newest message.
+**Search** looks at names, numbers and message text, and a menu button next to the entry narrows
+it: *Everything* (default), *Names and numbers*, *Messages*; the choice is kept in `ui.searchScope`
+(`all`, `names`, `messages`). Names are the row title and every participant name; numbers are the
+participants' addresses. A phone query ignores spaces, dashes and brackets and the leading `+`,
+`00` or `0`, so `+49 151 123`, `0049 151 123` and `0151 123` find the same chat (the match is on
+the digits, not on country codes). A handle matches with or without `@`. A row that matched a
+number or a name other than its title shows that field as its subtitle. From two characters on
+the scope also reads the text of chat messages and the subject of mail (`searchMessageText`, a
+`LIKE` over `conversation_messages`, newest match per conversation); a row that matched by text
+shows the matching line instead of the newest message. Names and numbers are matched in memory on
+the rows the list already holds; only the message text goes to the index. Mail rows follow
+`ui.showAllEmails` as before, so chats and mails are searched together only when all mail is shown.
 Known limits: SQLite folds only ASCII case ("ä" does not find "Ä"), and mail bodies live in the
 full-text index and are not searched here; a merged chat-and-mail search is contacts.md question 6.
+`CURLEW_WINDOW_SEARCH=<text>` opens the search with that text and `CURLEW_WINDOW_OPEN_SCOPE=1` also
+opens the scope menu, for screenshots.
 
 The preview is read from `conversation_messages` by the window alone (`latestMessagePreviews`, the
 first 300 characters of the newest body) and kept on the `ListEntry`; the `Conversation` DTO that

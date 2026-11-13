@@ -16,7 +16,8 @@ import { presentAccounts } from './accounts-dialog.ts';
 import { presentAgentAccess } from './agent-access-dialog.ts';
 import { listStamp, loadConversationEntries, searchConversationText } from './conversation-list-store.ts';
 import type { ListEntry } from './conversation-list-model.ts';
-import { aiEnabled, loadConfig } from '../core/config.ts';
+import { aiEnabled, loadConfig, saveConfig } from '../core/config.ts';
+import { DEFAULT_SEARCH_SCOPE } from '../core/lib/search-scope.ts';
 import { candidateSets } from './merge-candidates-model.ts';
 import { presentContactPage } from './contact-page.ts';
 import { presentMergeAssistant } from './merge-assistant.ts';
@@ -90,6 +91,10 @@ function placeholder(): Adw.NavigationPage {
 export interface WindowOptions {
   /** Start with this protocol chip on (the screenshot hook `CURLEW_WINDOW_FILTER`). */
   protocol?: string;
+  /** Open the search with this text (the screenshot hook `CURLEW_WINDOW_SEARCH`). */
+  search?: string;
+  /** Also open the search scope menu (`CURLEW_WINDOW_OPEN_SCOPE`). */
+  openScope?: boolean;
   /** Open this conversation at start (the screenshot hook `CURLEW_WINDOW_OPEN`). */
   open?: string;
 }
@@ -291,6 +296,12 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     review: () => review(),
     compose: () => startConversation(),
     searchText: (text) => searchConversationText(text),
+    searchScope: () => loadConfig(configPath()).ui.searchScope ?? DEFAULT_SEARCH_SCOPE,
+    setSearchScope: (scope) => {
+      const config = loadConfig(configPath());
+      config.ui.searchScope = scope;
+      saveConfig(config, configPath());
+    },
   });
   split.set_sidebar(sidebar.page);
   split.set_content(placeholder());
@@ -361,6 +372,11 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   };
   refresh();
   if (options.protocol) sidebar.chooseProtocol(options.protocol);
+  if (options.search !== undefined)
+    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 800, () => {
+      sidebar.showSearch(options.search!, options.openScope === true);
+      return GLib.SOURCE_REMOVE;
+    });
   // A notification, or the screenshot hook, names a chat by its conversation id or its row id.
   const openConversation = (id: string): void => {
     const entry = loadConversationEntries().find((e) => e.id === id || e.conversationIds.includes(id));

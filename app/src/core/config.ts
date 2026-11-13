@@ -24,6 +24,7 @@ import {
   isBackgroundChoice,
   isColorScheme,
 } from './lib/appearance.ts';
+import { isSearchScope, SEARCH_SCOPES, type SearchScope } from './lib/search-scope.ts';
 import { type AgentAccessPolicy, defaultAgentAccess, parseAgentAccess } from './agent-access.ts';
 import { type Grant, type ParseGrantsOptions, parseGrants } from './grants.ts';
 import { chmodSync, existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
@@ -64,6 +65,8 @@ export interface UiConfig {
    * agent access (see `aiEnabled`).
    */
   ai?: boolean;
+  /** What the conversation search looks at: `all`, `names` (names and numbers) or `messages`. Unset: `all`. */
+  searchScope?: SearchScope;
 }
 
 export interface CurlewConfig {
@@ -278,6 +281,9 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     throw new Error('config.ui.welcomeDone must be true or false');
   const ai = (rawUi as Record<string, unknown>).ai;
   if (ai !== undefined && typeof ai !== 'boolean') throw new Error('config.ui.ai must be true or false');
+  const searchScope = (rawUi as Record<string, unknown>).searchScope;
+  if (searchScope !== undefined && !isSearchScope(searchScope))
+    throw new Error(`config.ui.searchScope must be one of ${SEARCH_SCOPES.join(', ')}`);
   const ui: UiConfig = {
     showAllEmails,
     ...(ai === undefined ? {} : { ai }),
@@ -288,6 +294,7 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     ...(colorScheme === undefined ? {} : { colorScheme }),
     ...(chatBackground === undefined ? {} : { chatBackground }),
     ...(welcomeDone === undefined ? {} : { welcomeDone }),
+    ...(searchScope === undefined ? {} : { searchScope }),
   };
 
   const senders: Record<string, Classification> = {};
