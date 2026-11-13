@@ -202,9 +202,9 @@ jobs:
       # that runtime and the matching `@gjsify/node-gi` native addon from node_modules at pack time.
       # Assembly is not host-bound (ADR 0024 § A1): the Mach-O and PE payloads are only VERIFIED on
       # their own OS — a Mac or a Windows runner would be for that, not assembled on one. The `node`
-      # bundle they ship has no `gi://`, so GOA/EDS and every account backend are unavailable there
-      # on purpose (see README.md's Releasing section) — the Linux `.deb`/`.rpm` above is the only
-      # package with working accounts.
+      # bundle they ship has no `gi://`, so GOA/EDS are unavailable there: these packages offer the
+      # chat protocols only, and the app hides mail (`app/src/core/platform.ts`, see README.md's
+      # Releasing section) — the Linux `.deb`/`.rpm` above is the only package with mail.
       - name: Package macOS (arm64)
         run: gjsify install --os darwin --cpu arm64 --immutable
 

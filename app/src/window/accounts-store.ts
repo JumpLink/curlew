@@ -10,6 +10,7 @@ import { configPath } from '@curlew/store';
 
 import { accountsList, backendAccountsList } from '../core/actions/accounts.ts';
 import { backendsList } from '../core/actions/backends.ts';
+import { chatOnly } from '../core/platform.ts';
 import type { BackendStatus } from '../core/backends/registry.ts';
 import { loadAccountLabels } from './account-labels.ts';
 import type { AccountsLoadState } from './accounts-model.ts';
@@ -41,7 +42,9 @@ export async function loadAccountsState(
   // `CURLEW_NO_HOST_ACCOUNTS=1` hides the host's GNOME Online Accounts, so a screenshot never shows
   // the real ones (the screenshot script sets it).
   const goaAccountsPromise = (
-    process.env.CURLEW_NO_HOST_ACCOUNTS === '1' ? Promise.resolve([] as GnomeAccount[]) : accountsList()
+    process.env.CURLEW_NO_HOST_ACCOUNTS === '1' || chatOnly()
+      ? Promise.resolve([] as GnomeAccount[])
+      : accountsList()
   ).then(
     (accounts): { accounts: GnomeAccount[]; error?: string } => ({ accounts }),
     (err: unknown): { accounts: GnomeAccount[]; error?: string } =>

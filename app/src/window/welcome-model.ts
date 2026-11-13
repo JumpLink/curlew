@@ -2,6 +2,7 @@
 
 import { _, _n, fmt } from '@curlew/protocol';
 
+import { chatOnly, currentPlatform, type PlatformName } from '../core/platform.ts';
 import { aiEnabled, setDeltaChatIn, type CurlewConfig } from '../core/config.ts';
 import { buildProtocolGroups, type AccountsLoadState } from './accounts-model.ts';
 import { protocolLabel } from './conversation-list-model.ts';
@@ -13,8 +14,39 @@ export type WelcomePageId = 'intro' | 'protocols' | 'accounts' | 'delta-chat' | 
  * summary. `welcome.ts` builds a page for every id and needs a matching `case`. No page forces an
  * input; leaving every one untouched keeps the safe defaults (Delta Chat off, AI off).
  */
-export function welcomePages(): WelcomePageId[] {
-  return ['intro', 'protocols', 'accounts', 'delta-chat', 'ai', 'summary'];
+export function welcomePages(platform: PlatformName = currentPlatform()): WelcomePageId[] {
+  // Delta Chat is a way of using a mail account; a chat-only platform has none.
+  return chatOnly(platform)
+    ? ['intro', 'protocols', 'accounts', 'ai', 'summary']
+    : ['intro', 'protocols', 'accounts', 'delta-chat', 'ai', 'summary'];
+}
+
+/** The welcome texts that name mail; chat-only platforms say what they offer instead. */
+export function welcomeTexts(platform: PlatformName = currentPlatform()): {
+  intro: string;
+  protocols: string;
+  accounts: string;
+} {
+  if (chatOnly(platform)) {
+    return {
+      intro: _(
+        'Curlew brings your chat accounts together in one conversation list. Mail, contacts and calendar are not available on this system yet.',
+      ),
+      protocols: _(
+        'Switch on a chat protocol to use it; some ask you to read a notice first. You can change this later in Accounts.',
+      ),
+      accounts: _('Choose Add Account to sign in to a chat. You can add more later from the menu.'),
+    };
+  }
+  return {
+    intro: _('Curlew brings your mail and chat accounts together in one conversation list.'),
+    protocols: _(
+      'Mail is on. Switch on a chat protocol to use it; some ask you to read a notice first. You can change this later in Accounts.',
+    ),
+    accounts: _(
+      'Mail accounts from GNOME Online Accounts appear on their own. Otherwise choose Add Account, then Mail. You can add more later from the menu.',
+    ),
+  };
 }
 
 export interface MailAccountChoice {

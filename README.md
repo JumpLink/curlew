@@ -100,7 +100,7 @@ CURLEW_DEMO=1 gjsify run app/dist/curlew.gjs.mjs window    # the window, on made
 ```
 
 Curlew runs on GJS through [gjsify](https://github.com/gjsify/gjsify). Needs GTK 4, libadwaita and
-`libgda-sqlite`; the GNOME features also need GNOME Online Accounts and Evolution Data Server.
+`libgda-sqlite`; the GNOME features also need GNOME Online Accounts and Evolution Data Server. The Windows and macOS packages offer the chat protocols only.
 The command line, `curlew setup` and the systemd unit for the daemon are covered in
 [docs/guide/cli.md](docs/guide/cli.md).
 

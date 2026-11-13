@@ -11,6 +11,7 @@ import {
   welcomePages,
   welcomeStartPage,
   welcomeSummary,
+  welcomeTexts,
 } from '../../../src/window/welcome-model.ts';
 
 const load = (goa: number, own: number, chat: number): AccountsLoadState =>
@@ -37,7 +38,25 @@ export default async () => {
     });
 
     it('walks intro, protocols, accounts, Delta Chat, AI and ends with a summary', () => {
-      expect(welcomePages()).toStrictEqual(['intro', 'protocols', 'accounts', 'delta-chat', 'ai', 'summary']);
+      expect(welcomePages('linux')).toStrictEqual([
+        'intro',
+        'protocols',
+        'accounts',
+        'delta-chat',
+        'ai',
+        'summary',
+      ]);
+    });
+
+    it('leaves out the Delta Chat page and the mail wording on Windows and macOS', () => {
+      for (const platform of ['win32', 'darwin']) {
+        expect(welcomePages(platform)).toStrictEqual(['intro', 'protocols', 'accounts', 'ai', 'summary']);
+        const texts = welcomeTexts(platform);
+        expect(texts.intro.includes('not available on this system yet')).toBe(true);
+        expect(texts.protocols.startsWith('Mail is on')).toBe(false);
+        expect(texts.accounts.includes('GNOME')).toBe(false);
+      }
+      expect(welcomeTexts('linux').protocols.startsWith('Mail is on')).toBe(true);
     });
 
     it('maps the screenshot hook value to a page', () => {

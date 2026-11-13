@@ -5,6 +5,7 @@ import Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 import { configPath } from '@curlew/store';
 
+import { chatOnly } from '../core/platform.ts';
 import { aiEnabled, loadConfig, saveConfig } from '../core/config.ts';
 import { appearanceGroups, type AppearanceStore } from './appearance-rows.ts';
 import { showAllEmailsSubtitle } from './email-chat-model.ts';
@@ -41,7 +42,8 @@ export function presentPreferences(
     active: loadConfig(path).ui.showAllEmails,
   });
   const group = new Adw.PreferencesGroup({ title: _('Conversations') });
-  group.add(row);
+  // "Show all emails" filters mail, which a chat-only platform does not have.
+  if (!chatOnly()) group.add(row);
   const receipts = new Adw.SwitchRow({
     title: _('Send read receipts'),
     subtitle: _('Tell a Delta Chat contact when you have read their message, if they asked for it'),
@@ -78,7 +80,7 @@ export function presentPreferences(
   aiGroup.add(ai);
   const page = new Adw.PreferencesPage();
   for (const appearance of appearanceGroups(appearanceStore(path, overlay))) page.add(appearance);
-  page.add(group);
+  if (!chatOnly()) page.add(group);
   page.add(mediaGroup);
   page.add(notifyGroup);
   page.add(aiGroup);
