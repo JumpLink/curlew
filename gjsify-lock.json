@@ -37,6 +37,7 @@
     "typescript@^6.0.3",
     "@girs/adw-1@^4.1.0",
     "@girs/gtk-4.0@^4.1.0",
+    "@girs/gst-1.0@^5.4.0",
     "@gjsify/node-runtime-darwin-arm64@0.64.22",
     "@gjsify/node-runtime-darwin-x64@0.64.22",
     "@gjsify/node-runtime-win32-x64@0.64.22",

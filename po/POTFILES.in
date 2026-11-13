@@ -156,6 +156,8 @@ app/src/window/settings-map.ts
 app/src/window/video-preview-model.ts
 app/src/window/video-preview.ts
 app/src/window/viewer-model.ts
+app/src/window/voice-recorder-model.ts
+app/src/window/voice-recorder.ts
 app/src/window/watch.ts
 app/src/window/welcome-model.ts
 app/src/window/welcome.ts

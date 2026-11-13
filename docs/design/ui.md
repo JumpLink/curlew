@@ -181,6 +181,16 @@ picture is fetched when it nears the screen, any other part on a click, through 
 That cache is message content, so the window empties it at start. Not built: SVG, audio in the
 viewer, thumbnails decoded off the main thread, screen-reader labels beyond the tooltips.
 
+**Voice notes and stickers** (Delta Chat threads only). The composer shows a record button next
+to the paperclip when the thread offers `voiceNotes` (a mail thread whose peer sent
+`Chat-Version`; the manifest flag is the upper bound). It records Ogg/Opus through GStreamer
+(PulseAudio, else PipeWire) into `$XDG_CACHE_HOME/curlew/previews/voice`, shows the running time,
+and a second click turns the recording into a chip; under half a second is dropped, five minutes
+is the limit. A lone recording goes out as `Chat-Voice-Message` with `Chat-Duration`; next to
+other files it is an ordinary attachment. A received voice note uses the player; a received
+sticker (`Chat-Content: sticker`, flagged `sticker` on the attachment, no schema change) with no
+text is a bare picture without a bubble. Not built: sending stickers, pause/resume, waveform.
+
 **History is paged** (Fractal's rule). The pane opens on the newest 50 messages and scrolls to
 the end; when the scroll position comes within two viewports of the top (`value < page_size * 2`)
 it reads the next older 50, with an `Adw.Spinner` row on top meanwhile, until a page comes back

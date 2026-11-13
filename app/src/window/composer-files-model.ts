@@ -6,6 +6,8 @@ export interface PickedFile {
   name: string;
   size: number;
   temporary: boolean;
+  /** A recorded voice note, with its length in milliseconds: sent as a voice message. */
+  voiceMs?: number;
 }
 
 /** One message carries at most this many files; the backends enforce their own, lower, limits again. */

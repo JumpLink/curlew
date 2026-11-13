@@ -22,6 +22,8 @@ export interface ThreadCapabilities {
   replies: boolean;
   attachments: boolean;
   readReceipts: boolean;
+  /** Send a recorded voice note as a voice message. */
+  voiceNotes: boolean;
 }
 
 export type ThreadFeature = keyof ThreadCapabilities;
@@ -33,6 +35,7 @@ export const THREAD_FEATURES: readonly ThreadFeature[] = [
   'replies',
   'attachments',
   'readReceipts',
+  'voiceNotes',
 ];
 
 /** Features that address one existing message in its own network: never redirected. */
@@ -75,6 +78,7 @@ export function upperBoundOf(capabilities: BackendCapabilities): ThreadCapabilit
     replies: capabilities.replies,
     attachments: capabilities.attachments,
     readReceipts: capabilities.readReceipts,
+    voiceNotes: capabilities.voiceNotes === true && capabilities.attachments,
   };
 }
 
@@ -86,6 +90,7 @@ export const NO_THREAD_CAPABILITIES: ThreadCapabilities = Object.freeze({
   replies: false,
   attachments: false,
   readReceipts: false,
+  voiceNotes: false,
 });
 
 /**
@@ -102,6 +107,7 @@ export const narrowMailThread: ThreadNarrowing = (facts, upper) =>
         edits: false,
         deletes: false,
         readReceipts: false,
+        voiceNotes: false,
         // A plain mail reply is `In-Reply-To`, not a chat reply: it stays in the mail composer.
         replies: false,
       };

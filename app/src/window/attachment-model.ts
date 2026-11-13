@@ -96,6 +96,15 @@ export function showsInline(info: AttachmentInfo): boolean {
   return info.size === null || info.size === undefined || info.size <= INLINE_IMAGE_MAX_BYTES;
 }
 
+/** A Delta Chat sticker with no text of its own: it goes without a bubble, as a bare picture. */
+export function isStickerOnly(message: {
+  bodyText?: string | null;
+  attachments?: readonly AttachmentInfo[];
+}): boolean {
+  const parts = message.attachments ?? [];
+  return parts.length === 1 && parts[0]?.sticker === true && !message.bodyText?.trim();
+}
+
 /** What a tile's primary button does: a video plays in the viewer, anything else goes to the desktop. */
 export function tileAction(kind: AttachmentKind): 'view' | 'open' {
   return kind === 'video' ? 'view' : 'open';

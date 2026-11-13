@@ -68,11 +68,12 @@ import { type Look, lookClasses } from '../core/lib/appearance.ts';
 import { ChatBackground } from './chat-background.ts';
 import type { AlbumItem } from './media-viewer.ts';
 import { createSilentVideoHost } from './video-preview.ts';
-import { leadsWithMedia, shownAttachments, type AttachmentKind } from './attachment-model.ts';
+import { isStickerOnly, leadsWithMedia, shownAttachments, type AttachmentKind } from './attachment-model.ts';
 import { hasRichText, richMarkup } from './rich-text-model.ts';
 import type { AttachmentSource } from './attachment-store.ts';
 import { fadedOverlay } from './fade-bin.ts';
 import { createComposerFiles } from './composer-files.ts';
+import { createVoiceRecorder } from './voice-recorder.ts';
 import { createComposerInput } from './composer-input.ts';
 import type { PickedFile } from './composer-files-model.ts';
 
@@ -290,8 +291,13 @@ export function createConversationView(
     pasteInto: input.view,
   });
   composer.prepend(files.button);
+  const recorder = createVoiceRecorder({
+    toast: (text) => overlay.add_toast(new Adw.Toast({ title: text, timeout: 4 })),
+    onRecorded: (file) => files.addRecorded(file),
+  });
+  composer.insert_child_after(recorder.button, files.button);
   // The buttons stay at the bottom edge while the field grows upward.
-  for (const part of [files.button, picker, send]) part.set_valign(Gtk.Align.END);
+  for (const part of [files.button, recorder.button, picker, send]) part.set_valign(Gtk.Align.END);
   // Everything the person types into rides in one bottom bar, so the history can run beneath it.
   const compose = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
   // Each part is a card of its own, so it stays legible over the messages scrolling beneath it.
@@ -461,6 +467,7 @@ export function createConversationView(
   const updateAttachable = (): void => {
     const on =
       selectedChoice !== null && !composerBlocked && threadCan('attachments')(selectedChoice.backend);
+    recorder.setAvailable(on && selectedChoice !== null && threadCan('voiceNotes')(selectedChoice.backend));
     if (files.setAttachable(on) > 0) {
       overlay.add_toast(
         new Adw.Toast({
@@ -904,10 +911,12 @@ export function createConversationView(
   ) => {
     // Clips a picture block to the bubble's rounded corners.
     const card = new Gtk.Box({ overflow: Gtk.Overflow.HIDDEN });
-    card.add_css_class('card');
+    if (!isStickerOnly(message)) card.add_css_class('card');
     // The person's own messages take the accent colour, as in Telegram and WhatsApp (ADR 0013); the
     // others get the opaque surface, which a chat's own primary tint recolours.
-    card.add_css_class(message.fromSelf ? 'curlew-own' : 'curlew-surface');
+    // A sticker alone floats free of any bubble.
+    if (isStickerOnly(message)) card.set_overflow(Gtk.Overflow.VISIBLE);
+    else card.add_css_class(message.fromSelf ? 'curlew-own' : 'curlew-surface');
     // No padding of its own: text parts carry the side margins, a picture block runs to the edge.
     const bubble = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 4, marginBottom: 8 });
     card.append(bubble);

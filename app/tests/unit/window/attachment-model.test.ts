@@ -11,6 +11,7 @@ import {
   isGridMedia,
   leadsWithMedia,
   isOpenable,
+  isStickerOnly,
   playbackFraction,
   playbackLabel,
   previewKey,
@@ -193,6 +194,19 @@ export default async () => {
       expect(leadsWithMedia([picture, part({ mimeType: 'application/pdf', filename: 'a.pdf' })])).toBe(true);
       expect(leadsWithMedia([part({ mimeType: 'application/pdf', filename: 'a.pdf' }), picture])).toBe(false);
       expect(leadsWithMedia([part({ mimeType: 'audio/ogg', filename: 'a.ogg' })])).toBe(false);
+    });
+  });
+
+  await describe('isStickerOnly', async () => {
+    const sticker = { ...part({}), sticker: true };
+    await it('is true for a lone sticker without text', async () => {
+      expect(isStickerOnly({ attachments: [sticker] })).toBe(true);
+      expect(isStickerOnly({ bodyText: '  ', attachments: [sticker] })).toBe(true);
+    });
+    await it('is false with text, a second part or an ordinary picture', async () => {
+      expect(isStickerOnly({ bodyText: 'hi', attachments: [sticker] })).toBe(false);
+      expect(isStickerOnly({ attachments: [sticker, sticker] })).toBe(false);
+      expect(isStickerOnly({ attachments: [part({})] })).toBe(false);
     });
   });
 

@@ -59,6 +59,8 @@ export interface BackendCapabilities {
   replies: boolean;
   /** The backend can fetch the profile picture of a chat or person (`openAvatars`). */
   avatars?: boolean;
+  /** Can send a recorded voice note as such (Delta Chat over mail); a thread narrows it further. */
+  voiceNotes?: boolean;
 }
 
 export const CAPABILITY_NAMES: ReadonlyArray<keyof BackendCapabilities> = [
