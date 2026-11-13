@@ -22,8 +22,8 @@ MOTIFS=(
   "conversation|900x640|demo|CURLEW_WINDOW_OPEN=c1"
   "conversation-narrow|360x740|demo|CURLEW_WINDOW_OPEN=c1"
   "conversations-narrow|360x740|demo|"
-  "contact|900x640|demo|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_OPEN_CONTACT=1"
-  "group|900x640|demo|CURLEW_WINDOW_OPEN=c4 CURLEW_WINDOW_OPEN_CONTACT=1"
+  "contact|900x700|demo|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_OPEN_CONTACT=1"
+  "group|900x700|demo|CURLEW_WINDOW_OPEN=c4 CURLEW_WINDOW_OPEN_CONTACT=1"
   "preferences|900x640|demo|CURLEW_WINDOW_OPEN_PREFERENCES=1"
   "preferences-off|900x640|off|CURLEW_WINDOW_OPEN_PREFERENCES=1"
   "accounts|900x640|demo|CURLEW_WINDOW_OPEN_ACCOUNTS=1"
@@ -102,7 +102,7 @@ for m in "${MOTIFS[@]}"; do
       # CURLEW_WINDOW_QUIT_AFTER_MS: it would end the window before the shot delay is over.
       rm -f "$file"
       # shellcheck disable=SC2086
-      env "${dataenv[@]}" CURLEW_WINDOW_SIZE="$size" CURLEW_NO_HOST_ACCOUNTS=1 $extra \
+      env "${dataenv[@]}" CURLEW_WINDOW_SIZE="$size" CURLEW_NO_HOST_ACCOUNTS=1 CURLEW_DEMO_QUIET=1 $extra \
         LC_ALL="$locale" LANG="$locale" LANGUAGE="$l" \
         timeout 170 "$HEADLESS" --size 1300x1000 --shot-delay 10 "${dark[@]}" --window-shot "$file" -- \
         gjsify run app/dist/window.gjs.mjs >/dev/null 2>&1 || true

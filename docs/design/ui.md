@@ -269,6 +269,7 @@ in `/tmp/curlew-demo-shots` (never the real ones), under `scripts/headless-run`:
 dev/screenshots.sh --build            # all motifs → docs/screenshots/<motif>.<lang>.<scheme>.png
 dev/screenshots.sh --only accounts --lang de --scheme dark
 dev/screenshots.sh --check            # only verifies that every expected file exists
+# file names and the Flathub set: docs/screenshots/README.md
 ```
 
 Motifs: `conversations`, `conversation` (c1, Alex Weber), `conversation-narrow` and
@@ -286,7 +287,7 @@ host's GNOME Online Accounts, so the Accounts dialog never shows real ones. The 
 
 For a quick look without the script, `CURLEW_DEMO=1 curlew window` (or `curlew demo`) opens the window on
 the same kind of synthetic data (`app/src/core/demo/`), generated into `CURLEW_DEMO_DIR` (default
-`$XDG_CACHE_HOME/curlew-demo`). A demo window is titled "Curlew (demo)" and shows a notice once.
+`$XDG_CACHE_HOME/curlew-demo`). A demo window is titled "Curlew (demo)" and shows a notice once (`CURLEW_DEMO_QUIET=1` omits it; the screenshot script sets it).
 
 ## Chat backgrounds
 
