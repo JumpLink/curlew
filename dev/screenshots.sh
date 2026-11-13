@@ -22,6 +22,7 @@ MOTIFS=(
   "conversation|900x640|demo|CURLEW_WINDOW_OPEN=c1"
   "conversation-narrow|360x740|demo|CURLEW_WINDOW_OPEN=c1"
   "conversations-narrow|360x740|demo|"
+  "composer-emoji|360x740|demo|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_OPEN_EMOJI=1"
   "contact|900x700|demo|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_OPEN_CONTACT=1"
   "group|900x700|demo|CURLEW_WINDOW_OPEN=c4 CURLEW_WINDOW_OPEN_CONTACT=1"
   "preferences|900x640|demo|CURLEW_WINDOW_OPEN_PREFERENCES=1"
