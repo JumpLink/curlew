@@ -76,6 +76,8 @@ export interface FakeServer {
   roster: RosterItem[];
   bookmarks: Bookmark[];
   features: Set<string>;
+  /** Disco features of other JIDs (a peer's client); a JID missing here answers none. */
+  peerFeatures: Map<string, Set<string>>;
   /** The user's own archive (every direct chat), oldest first. */
   own: ArchivedEntry[];
   /** Room archives by room JID; a room missing here answers `forbidden`. */
@@ -92,6 +94,7 @@ export function fakeServer(partial: Partial<FakeServer> = {}): FakeServer {
     roster: [],
     bookmarks: [],
     features: new Set([NS.mam]),
+    peerFeatures: new Map(),
     own: [],
     rooms: new Map(),
     queries: [],
@@ -134,7 +137,7 @@ export function fakeApi(server: FakeServer): XmppApi {
     jid: ME,
     roster: async () => server.roster,
     bookmarks: async () => server.bookmarks,
-    features: async (jid) => (jid === ME ? server.features : new Set()),
+    features: async (jid) => (jid === ME ? server.features : (server.peerFeatures.get(jid) ?? new Set())),
     avatar: async (jid) => server.avatars.get(jid) ?? null,
     mam: async (query) => {
       server.queries.push(query);

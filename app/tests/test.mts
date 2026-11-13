@@ -59,6 +59,7 @@ import xmppAttachments from './unit/xmpp/attachments.test.ts';
 import xmppAvatars from './unit/xmpp/avatars.test.ts';
 import xmppSendFiles from './unit/xmpp/send-files.test.ts';
 import xmppSendReply from './unit/xmpp/send-reply.test.ts';
+import xmppPeerFeatures from './unit/xmpp/peer-features.test.ts';
 import omemoUpkeep from './unit/xmpp/omemo-upkeep.test.ts';
 import pepRead from './unit/xmpp/pep-read.test.ts';
 import omemoSend from './unit/xmpp/omemo-send.test.ts';
@@ -205,6 +206,7 @@ run({
   xmppAvatars,
   xmppSendFiles,
   xmppSendReply,
+  xmppPeerFeatures,
   omemoUpkeep,
   pepRead,
   omemoSend,

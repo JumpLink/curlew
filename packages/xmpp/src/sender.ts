@@ -42,7 +42,11 @@ export const XMPP_MAX_FILE_BYTES = 50_000_000;
 export const XMPP_MAX_FILES = 10;
 
 export class XmppSender implements MessageSender {
-  /** Long texts are rendered as XEP-0393 and split (see `core/markdown.ts`). */
+  /**
+   * Long texts are rendered as XEP-0393 and split (see `core/markdown.ts`). Reactions, edits and
+   * deletes are what the network can do; one thread offers them only when its peer advertises the
+   * XEP (`narrowXmppThread`).
+   */
   readonly features: SenderFeatures = {
     markdown: true,
     attachments: true,

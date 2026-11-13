@@ -7,7 +7,7 @@
  * drives it in the unit tests exactly as xmpp.js does in production.
  */
 
-import type { ChatHistoryPage, ChatInfo, ChatSession } from '@curlew/protocol';
+import { type ChatHistoryPage, type ChatInfo, type ChatSession, XMPP_PEER_FEATURES } from '@curlew/protocol';
 import { type MamPage, type MamQuery, type XmppApi, XmppQueryError } from './api.ts';
 import {
   buildPage,
@@ -156,11 +156,28 @@ export class XmppChatSession implements ChatSession {
       }
     });
 
+    // What the peer of a direct chat advertises decides which message XEPs are offered there.
+    // No answer is no entry: unknown, which the window reads as "offer nothing".
+    const peers = await pool(states, PROBE_CONCURRENCY, async (chat): Promise<string[] | undefined> => {
+      if (chat.kind !== 'direct') return undefined;
+      try {
+        const advertised = await this.api.features(chat.chatJid);
+        return XMPP_PEER_FEATURES.filter((ns) => advertised.has(ns));
+      } catch {
+        return undefined;
+      }
+    });
+
     this.chats.clear();
     for (const chat of states) this.chats.set(chat.chatJid, chat);
     // Most recently active first, like every other chat list.
     return states
-      .map((chat, i) => ({ info: toChatInfo(chat, newest[i]), at: newest[i]?.stampMs ?? -1 }))
+      .map((chat, i) => {
+        const info = toChatInfo(chat, newest[i]);
+        const peerFeatures = peers[i];
+        if (peerFeatures) info.peerFeatures = peerFeatures;
+        return { info, at: newest[i]?.stampMs ?? -1 };
+      })
       .sort((a, b) => b.at - a.at)
       .map((c) => c.info);
   }

@@ -31,6 +31,8 @@ export interface ListEntry {
   emailChat: boolean;
   /** What the index knows about the room behind a Matrix chat; null for every other backend. */
   room: RoomFacts | null;
+  /** XMPP direct chat: the message XEPs the peer advertised; absent = unknown (nothing offered). */
+  peerFeatures?: readonly string[];
   /**
    * For merged rows only: the child rows this presentation combines. A merged "Note to self"
    * carries every self-chat backend here; non-merged rows keep an empty array.
@@ -301,6 +303,7 @@ export function toEntry(
   conversation: Conversation,
   identity?: string,
   room: RoomFacts | null = null,
+  peerFeatures?: readonly string[],
 ): ListEntry {
   return {
     id: conversation.id,
@@ -317,6 +320,7 @@ export function toEntry(
         : (selfAddressOf(conversation, identity) ?? targetOf(conversation)),
     emailChat: conversation.emailChat,
     room: conversation.backend === 'matrix' ? room : null,
+    ...(peerFeatures ? { peerFeatures } : {}),
     members: [],
     personIds: personOf(conversation, identity) === null ? [] : [personOf(conversation, identity)!],
     manual: false,
@@ -691,6 +695,7 @@ export function toEntries(
   merges: PersonMerges = [],
   pins: PersonPins = {},
   choices: ContactChoices = {},
+  peerFeatures: ReadonlyMap<string, readonly string[]> = new Map(),
 ): ListEntry[] {
   const entries: ListEntry[] = [];
   const mailContacts = new Map<string, ListEntry>();
@@ -698,7 +703,12 @@ export function toEntries(
   for (const conversation of conversations) {
     if (conversation.backend === 'mail' && !showAllEmails && !conversation.emailChat) continue;
     const identity = identities.get(conversation.accountId);
-    const entry = toEntry(conversation, identity, rooms.get(conversation.id) ?? null);
+    const entry = toEntry(
+      conversation,
+      identity,
+      rooms.get(conversation.id) ?? null,
+      peerFeatures.get(conversation.id),
+    );
     if (selfAddressOf(conversation, identity) !== null) {
       selfEntries.push(entry);
       continue;

@@ -1274,6 +1274,23 @@ function tri(value: unknown): boolean | null {
   return value === null || value === undefined ? null : Number(value) === 1;
 }
 
+/** The XEPs an XMPP peer advertised, by conversation id; a chat never asked is missing. */
+export function listPeerFeatures(db: IndexDatabase, backend: string): Map<string, string[]> {
+  const rows = db
+    .prepare('SELECT conversation_id, peer_features FROM chat_cursors WHERE backend = ? AND peer_features IS NOT NULL')
+    .all(backend) as Array<Record<string, unknown>>;
+  const result = new Map<string, string[]>();
+  for (const r of rows) {
+    try {
+      const parsed: unknown = JSON.parse(String(r.peer_features));
+      if (Array.isArray(parsed)) result.set(String(r.conversation_id), parsed.map(String));
+    } catch {
+      // A damaged value is unknown, not "none".
+    }
+  }
+  return result;
+}
+
 /** The chat rows of one backend by conversation id; empty for a backend with no chats. */
 export function listChatRooms(db: IndexDatabase, backend: string): Map<string, ChatRoomRow> {
   const rows = db

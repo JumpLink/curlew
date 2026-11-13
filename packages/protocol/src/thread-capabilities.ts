@@ -45,7 +45,23 @@ export interface ThreadFacts {
   emailChat?: boolean;
   /** The thread is the person's own note to self. */
   self?: boolean;
+  /** Direct chat, group or channel; XMPP asks the peer only in a direct chat. */
+  kind?: 'direct' | 'group' | 'broadcast';
+  /**
+   * XMPP only: the disco features the peer answered with, narrowed to the ones that matter here
+   * (`XMPP_PEER_FEATURES`). Absent = not asked or no answer = unknown, and unknown offers nothing.
+   */
+  peerFeatures?: readonly string[];
 }
+
+/** XEP-0444 message reactions. */
+export const XMPP_REACTIONS_NS = 'urn:xmpp:reactions:0';
+/** XEP-0308 last message correction. */
+export const XMPP_CORRECT_NS = 'urn:xmpp:message-correct:0';
+/** XEP-0424 message retraction. */
+export const XMPP_RETRACT_NS = 'urn:xmpp:message-retract:1';
+/** The disco features the index keeps per direct XMPP chat. */
+export const XMPP_PEER_FEATURES: readonly string[] = [XMPP_REACTIONS_NS, XMPP_CORRECT_NS, XMPP_RETRACT_NS];
 
 /** A backend's own narrowing of its upper bound for one thread; absent means "the manifest". */
 export type ThreadNarrowing = (facts: ThreadFacts, upper: ThreadCapabilities) => ThreadCapabilities;
@@ -90,7 +106,23 @@ export const narrowMailThread: ThreadNarrowing = (facts, upper) =>
         replies: false,
       };
 
-const NARROWINGS: Readonly<Record<string, ThreadNarrowing>> = { mail: narrowMailThread };
+/**
+ * XMPP narrows by the peer in a direct chat: a reaction, a correction or a retraction is a stanza
+ * the other client must understand, or it shows a stray message. Each is offered only when the
+ * peer advertised its XEP; no answer is no offer. Rooms keep the manifest.
+ */
+export const narrowXmppThread: ThreadNarrowing = (facts, upper) => {
+  if (facts.kind !== 'direct') return upper;
+  const has = (ns: string): boolean => facts.peerFeatures?.includes(ns) === true;
+  return {
+    ...upper,
+    reactions: has(XMPP_REACTIONS_NS),
+    edits: has(XMPP_CORRECT_NS),
+    deletes: has(XMPP_RETRACT_NS),
+  };
+};
+
+const NARROWINGS: Readonly<Record<string, ThreadNarrowing>> = { mail: narrowMailThread, xmpp: narrowXmppThread };
 
 /**
  * What the thread can do: the backend's upper bound, narrowed by what is known about the thread.

@@ -158,6 +158,8 @@ interface Cursor {
    * about. NULL starts again at the chat's oldest stored message (ADR 0004).
    */
   probeSeq: number | null;
+  /** The stored JSON of the peer's advertised XEPs, kept when a sync does not ask again. */
+  peerFeatures: string | null;
 }
 
 /** A tri-state flag as the column holds it: NULL = the network did not say. */
@@ -173,7 +175,7 @@ function loadCursors(db: IndexDatabase, backend: string, accountId: string): Map
   const rows = db
     .prepare(
       `SELECT chat_id, ${seqColumn('last_seq')}, last_cursor, ${seqColumn('read_inbox_seq')}, ${seqColumn('read_outbox_seq')},
-              ${seqColumn('probe_seq')}
+              ${seqColumn('probe_seq')}, peer_features
          FROM chat_cursors WHERE backend = ? AND account_id = ?`,
     )
     .all(backend, accountId) as Array<Record<string, unknown>>;
@@ -186,6 +188,7 @@ function loadCursors(db: IndexDatabase, backend: string, accountId: string): Map
         readInboxSeq: num(r.read_inbox_seq),
         readOutboxSeq: num(r.read_outbox_seq),
         probeSeq: num(r.probe_seq),
+        peerFeatures: r.peer_features === null || r.peer_features === undefined ? null : String(r.peer_features),
       },
     ]),
   );
@@ -481,7 +484,7 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
     db,
     `INSERT OR REPLACE INTO chat_cursors
        (conversation_id, backend, account_id, chat_id, kind, last_seq, read_inbox_seq, read_outbox_seq, last_sync_at,
-        last_cursor, probe_seq, room_public, room_encrypted, room_members)`,
+        last_cursor, probe_seq, room_public, room_encrypted, room_members, peer_features)`,
     batch.cursors,
   );
   // After the inserts, so a correction or retraction of a message written in this very batch
@@ -858,6 +861,7 @@ async function syncAccount(
         flag(chat.room?.public),
         flag(chat.room?.encrypted),
         chat.room?.memberCount ?? null,
+        chat.peerFeatures ? JSON.stringify(chat.peerFeatures) : (cursor?.peerFeatures ?? null),
       ]);
       // The network asked this account to wait. What this chat already delivered is in the batch
       // and is committed by the `finally` below; the cursor covers exactly it, so a later run
@@ -1067,6 +1071,7 @@ function recordSentRows(
       null,
       null,
       record.sentAt,
+      null,
       null,
       null,
       null,
