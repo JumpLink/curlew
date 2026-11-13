@@ -87,7 +87,7 @@
   access* page lets an `allow` rule send files unasked, for mail and chats alike.
 - Setting up a network with a terms notice (WhatsApp, Signal, Telegram) asks you to tick *I
   understand and accept the risk for my account* before *Accept and Continue* is enabled.
-- The listing screenshots in `docs/screenshots/` are rendered again (EN/DE × light/dark, all motifs); the old files without language and scheme in the name are gone, and the README and guides point to the new ones. `dev/check-screenshot-refs.sh` (also in CI) fails when the README, a guide or the metainfo points to a missing screenshot.
+- The listing screenshots in `docs/screenshots/` are rendered again (EN/DE × light/dark, all motifs, plus the new `composer-emoji`); the old files without language and scheme in the name are gone, and the README and guides point to the new ones. `dev/check-screenshot-refs.sh` (also in CI) fails when the README, a guide or the metainfo points to a missing screenshot.
 
 ### Added
 

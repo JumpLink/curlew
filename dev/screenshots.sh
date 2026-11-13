@@ -36,6 +36,7 @@ MOTIFS=(
   "welcome|360x740|empty|CURLEW_WINDOW_OPEN_WELCOME=1"
   "welcome-delta-chat|360x740|demo|CURLEW_WINDOW_OPEN_WELCOME=delta-chat"
   "email-chat|900x640|demo|CURLEW_WINDOW_OPEN=c3"
+  "composer-emoji|900x640|demo|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_OPEN_EMOJI=1"
 )
 
 BUILD=0 CHECK=0 ONLY="" LANGS=(en de) SCHEMES=(light dark)

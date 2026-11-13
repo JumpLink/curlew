@@ -20,6 +20,7 @@ File name: `<motif>.<lang>.<scheme>.png`.
 | `agent-access` | agent access dialog | 900×640 |
 | `welcome` | first-run welcome | 360×740 |
 | `welcome-delta-chat` | welcome page that explains Delta Chat mode (`CURLEW_WINDOW_OPEN_WELCOME=delta-chat`) | 360×740 |
+| `composer-emoji` | emoji chooser open in the composer (Alex Weber) | 900×640 |
 | `email-chat` | email chat thread (Sam Fischer, no voice notes or stickers) | 900×640 |
 
 ## For the metainfo (Flathub)
