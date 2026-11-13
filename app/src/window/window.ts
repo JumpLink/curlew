@@ -29,7 +29,7 @@ import {
   peoplePin,
   peopleUnmerge,
 } from '../core/actions/people.ts';
-import { lookOf } from '../core/contact-choices.ts';
+import { lookAfter, lookOf } from '../core/contact-choices.ts';
 import { createConversationList } from './conversation-list.ts';
 import { composeMailReply, senderNameOf } from './conversation-model.ts';
 import {
@@ -141,7 +141,12 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
       choiceOfEntry(loadConfig().contactChoices, entry)?.choice ?? {},
       labels,
       {
-        choose: (ids, patch) => peopleChoose(ids, patch),
+        choose: (ids, patch) => {
+          const before = loadConfig().contactChoices;
+          peopleChoose(ids, patch);
+          // The chat behind the open page follows each pick at once, not after the page closes.
+          if (currentEntry?.id === entry.id) conversation.setLook(lookAfter(before, ids, patch));
+        },
         separate: (ids) => {
           peopleUnmerge(ids);
           refresh();

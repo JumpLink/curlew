@@ -82,7 +82,9 @@ contact, and *Separate* for a merge made by hand. Verify, shared media and commo
 still open. The note to self has no page. A **group** opens the same dialog titled *Group*: a name
 the person types, a picture of their own, an *About* block (protocol, account, member count, and
 for Matrix public/encrypted when the homeserver said so, plus the member names the index holds)
-and the same Look rows. No pin, merge or separate action: a group has none of them.
+and the same Look rows. No pin, merge or separate action: a group has none of them. Each Look
+pick is saved and applied to the open chat behind the dialog at once (live preview); the list and
+header are rebuilt when the dialog closes. Preferences already applied each pick immediately.
 
 ## Main window: one combined list
 
