@@ -32,9 +32,10 @@ captions are one sentence without a full stop. Suggested set, light scheme:
 3. `contact.en.light.png` / `.de.light.png`
 4. `accounts.en.light.png` / `.de.light.png`
 5. `conversation-narrow.en.light.png` / `.de.light.png` (mobile)
-6. `email-chat.en.light.png` / `.de.light.png` (Delta Chat style chat over mail)
-7. `welcome-delta-chat.en.light.png` / `.de.light.png` (mobile)
 
-Dark variants (`*.dark.png`) can be added as `<image type="source" …>` with a `color-scheme` hint.
-The pictures without a `<lang>.<scheme>` in the name (`conversations.png`, `agent-access.png`, …) are
-older shots that the README still uses; the script does not produce them.
+`welcome-delta-chat` and `email-chat` stay out of the metainfo for now: they would promise Delta
+Chat compatibility, which waits for the live test against a real Delta Chat peer. Dark variants
+(`*.dark.png`) can be added as `<image type="source" …>` with a `color-scheme` hint.
+
+Every file the README, the guides or the metainfo point to must exist: `dev/check-screenshot-refs.sh`
+checks that (it runs in CI). `dev/screenshots.sh --check` checks the full set of generated files.

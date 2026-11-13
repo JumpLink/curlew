@@ -118,9 +118,9 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   });
 
   const split = new Adw.NavigationSplitView({
-    minSidebarWidth: 280,
+    minSidebarWidth: 320,
     maxSidebarWidth: 400,
-    sidebarWidthFraction: 0.3,
+    sidebarWidthFraction: 0.35,
   });
 
   const menu = new Gio.Menu();
