@@ -310,15 +310,17 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   };
   const startConversation = () => {
     const routes = routeAccounts(shown, deltaChatAccountIds(loadConfig()));
-    presentNewConversation(window, routes, contactsForPicker, (contact) => {
-      const existing = existingEntry(shown, contact);
-      if (existing) {
-        select(existing);
-        return;
-      }
-      const draft = draftEntry(contact, routes);
-      if (draft) selectDraft(draft);
-    });
+    timed('present new conversation', () =>
+      presentNewConversation(window, routes, contactsForPicker, (contact) => {
+        const existing = existingEntry(shown, contact);
+        if (existing) {
+          select(existing);
+          return;
+        }
+        const draft = draftEntry(contact, routes);
+        if (draft) selectDraft(draft);
+      }),
+    );
   };
   const sidebar = createConversationList(menu, select, () => presentAccounts(window), {
     merge: (ids) => {
@@ -459,6 +461,9 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     if (currentEntry) openContact(currentEntry);
   });
   window.add_action(contactAction);
+  const newConversationAction = new Gio.SimpleAction({ name: 'new-conversation' });
+  newConversationAction.connect('activate', () => startConversation());
+  window.add_action(newConversationAction);
   const emojiAction = new Gio.SimpleAction({ name: 'open-emoji' });
   emojiAction.connect('activate', () => conversation.openEmoji());
   window.add_action(emojiAction);
