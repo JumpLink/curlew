@@ -18,6 +18,8 @@ export interface AttachmentInfo {
   width: number | null;
   height: number | null;
   durationMs: number | null;
+  /** Delta Chat sticker (`Chat-Content: sticker`): shown as a borderless picture. */
+  sticker?: boolean;
   /** True when a chat attachment row has a non-empty backend handle and can be fetched. */
   fetchable: boolean;
 }
@@ -41,6 +43,7 @@ export function loadAttachments(db: IndexDatabase, ref: MessageRef): AttachmentI
         width: null,
         height: null,
         durationMs: voice ? mark.durationMs : null,
+        ...(mark?.content === 'sticker' && kind === 'image' ? { sticker: true } : {}),
         fetchable: false,
       };
     });

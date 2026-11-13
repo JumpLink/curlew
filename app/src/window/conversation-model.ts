@@ -276,6 +276,8 @@ export interface AttachmentInfo {
   width?: number | null;
   height?: number | null;
   durationMs?: number | null;
+  /** Delta Chat sticker: a borderless picture without a bubble. */
+  sticker?: boolean;
   /** The message the part belongs to, when that is not the bubble's own: a folded album. */
   ref?: MessageRef;
   /** IMAP section (mail only): the key to fetch the bytes with. */

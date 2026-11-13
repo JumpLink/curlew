@@ -43,6 +43,7 @@ import {
   loadQuotedMessages,
 } from './conversation-store.ts';
 import { pickedNames } from './composer-files-model.ts';
+import { voiceNoteOf } from './voice-recorder-model.ts';
 import { clearPreviews } from './attachment-store.ts';
 import { createConversationView } from './conversation-view.ts';
 import { createMediaViewer } from './media-viewer.ts';
@@ -192,6 +193,9 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
         ...(files.length > 0 ? { attachments: files.map((f) => f.path) } : {}),
         ...(replyTo && mail === null ? { replyTo } : {}),
         ...mail,
+        ...(mail?.emailChat && voiceNoteOf(files)
+          ? { voiceMessage: true, durationMs: voiceNoteOf(files)!.durationMs }
+          : {}),
       });
       return {
         id: result.originId,

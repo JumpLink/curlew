@@ -23,7 +23,8 @@
       "@girs/icalglib-3.0",
       "@girs/gdkpixbuf-2.0",
       "@girs/gtk-4.0/ambient",
-      "@girs/adw-1/ambient"
+      "@girs/adw-1/ambient",
+      "@girs/gst-1.0/ambient"
     ]
   },
   "include": ["./src/**/*", "./tests/**/*"]

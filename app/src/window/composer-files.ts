@@ -43,6 +43,8 @@ export interface ComposerFiles {
    * Returns how many files that dropped, so the caller can say so.
    */
   setAttachable(on: boolean): number;
+  /** Adds a file the app made itself (a recorded voice note); the paperclip's own rules do not apply. */
+  addRecorded(file: PickedFile): void;
 }
 
 const dismissed = (err: unknown): boolean =>
@@ -223,6 +225,12 @@ export function createComposerFiles(options: ComposerFilesOptions): ComposerFile
       for (const file of picked) discard(file);
       picked = [];
       render();
+    },
+    addRecorded(file) {
+      const { files } = mergePicked(picked, [file]);
+      picked = files;
+      render();
+      options.onChange();
     },
     setAttachable(on) {
       attachable = on;

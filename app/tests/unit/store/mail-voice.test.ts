@@ -45,6 +45,7 @@ export default async () => {
       const png = { section: '2', filename: 's.png', mimeType: 'image/png', size: 900 };
       const info = await kindOf({ emailChat: true, chatContent: 'sticker', attachments: [png] });
       expect(info?.kind).toBe('image');
+      expect(info?.sticker).toBe(true);
     });
   });
 };
