@@ -22,7 +22,7 @@
 import { type IndexDatabase, withTransaction } from './db.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 
-export const SCHEMA_VERSION = 20;
+export const SCHEMA_VERSION = 22;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -440,6 +440,25 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
   // v20: which message XEPs an XMPP peer advertised (a JSON array), learned at sync time so the
   // window never opens a secret. NULL = not asked or no answer; a reader must not read it as "none".
   20: [{ table: 'chat_cursors', column: 'peer_features', type: 'TEXT' }],
+  // v21: Delta Chat's edit and delete requests (`Chat-Edit`, `Chat-Delete`) name the Message-ID they act on.
+  // Folders with email chats are fetched again to learn them.
+  21: [
+    { table: 'messages', column: 'chat_edit', type: 'TEXT' },
+    { table: 'messages', column: 'chat_delete', type: 'TEXT' },
+    `UPDATE folders SET last_uid = 0, uid_next = NULL, message_count = NULL
+       WHERE EXISTS (SELECT 1 FROM messages m
+                      WHERE m.account_id = folders.account_id AND m.folder_path = folders.path
+                        AND m.email_chat = 1)`,
+  ],
+  // v22: a reaction mail (Content-Disposition: reaction) is stored but shown as a reaction on its
+  // target. Folders with email chats are fetched again to learn the flag.
+  22: [
+    { table: 'messages', column: 'reaction', type: 'INTEGER NOT NULL DEFAULT 0' },
+    `UPDATE folders SET last_uid = 0, uid_next = NULL, message_count = NULL
+       WHERE EXISTS (SELECT 1 FROM messages m
+                      WHERE m.account_id = folders.account_id AND m.folder_path = folders.path
+                        AND m.email_chat = 1)`,
+  ],
 };
 
 function columnsOf(db: IndexDatabase, table: string): Set<string> {

@@ -59,7 +59,17 @@ export default async () => {
 
     await it('never exceeds the manifest, even for a marked peer', async () => {
       const result = threadCapabilitiesOf(manifestOf('mail'), { backend: 'mail', emailChat: true });
-      for (const feature of PINNED_FEATURES) expect(result[feature]).toBe(false);
+      // Mail reacts, edits and deletes through Delta Chat headers; read receipt is not claimed yet.
+      expect(result.reactions).toBe(true);
+      expect(result.edits).toBe(true);
+      expect(result.deletes).toBe(true);
+      expect(result.readReceipts).toBe(false);
+    });
+
+    await it('gives a plain mail thread no reaction, edit or delete', async () => {
+      for (const feature of ['reactions', 'edits', 'deletes'] as const) {
+        expect(threadCan(manifestOf('mail'), { backend: 'mail', emailChat: false }, feature)).toBe(false);
+      }
     });
 
     await it('gives replies to a Delta Chat mail thread only', async () => {

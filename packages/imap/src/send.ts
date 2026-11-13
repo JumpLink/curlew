@@ -15,7 +15,10 @@ import type {
   MessageSender,
   SendPermit,
   SenderFeatures,
+  SendingDeletion,
+  SendingEdit,
   SendingMessage,
+  SendingReaction,
   SentMessage,
   SmtpTarget,
 } from '@curlew/protocol';
@@ -50,9 +53,9 @@ export class MailSender implements MessageSender {
     markdown: false,
     attachments: true,
     replies: false,
-    reactions: false,
-    edits: false,
-    deletes: false,
+    reactions: true,
+    edits: true,
+    deletes: true,
   };
   private readonly target: SmtpTarget;
   private readonly permit: SendPermit;
@@ -103,6 +106,69 @@ export class MailSender implements MessageSender {
       sentAt: new Date().toISOString(),
       ...(files.length === 0 ? {} : { attachments: files.map((f) => ({ filename: f.filename, size: f.size })) }),
     };
+  }
+
+  /**
+   * A reaction is a mail with `Content-Disposition: reaction` whose body is the emoji (RFC 9078);
+   * an empty body takes the person's reaction back. Only a Delta Chat peer's message is reacted to.
+   */
+  async react(reaction: SendingReaction): Promise<void> {
+    const to = this.address(reaction.to);
+    const target = reaction.target.remoteId;
+    if (!reaction.target.emailChat || !/^<[^\s<>@]+@[^\s<>@]+>$/.test(target)) {
+      throw new Error(_('only a Delta Chat message can be reacted to by mail'));
+    }
+    await sendMessage(await smtpAccountFor(this.target), {
+      from: this.target.from,
+      to: [to],
+      subject: 'Message from Curlew',
+      text: reaction.emoji ?? '',
+      emailChat: true,
+      reaction: true,
+      inReplyTo: target,
+      references: [target],
+    });
+  }
+
+  /** The Message-ID of a message of a Delta Chat peer, or a refusal: nothing else is changed by mail. */
+  private changeable(target: SendingEdit['target']): string {
+    if (!target.fromSelf || !target.emailChat || !/^<[^\s<>@]+@[^\s<>@]+>$/.test(target.remoteId)) {
+      throw new Error(_('only your own Delta Chat messages can be changed by mail'));
+    }
+    return target.remoteId;
+  }
+
+  /** `Chat-Edit`: a mail answering the message, whose body is the new text (never empty). */
+  async edit(edit: SendingEdit): Promise<void> {
+    const to = this.address(edit.to);
+    const target = this.changeable(edit.target);
+    if (!edit.text.trim()) throw new Error(_('an edited message cannot be empty'));
+    await sendMessage(await smtpAccountFor(this.target), {
+      from: this.target.from,
+      to: [to],
+      subject: 'Message from Curlew',
+      text: edit.text,
+      emailChat: true,
+      chatEdit: target,
+      inReplyTo: target,
+      references: [target],
+    });
+  }
+
+  /** `Chat-Delete`: the body is any non-empty text, which the receiver ignores. */
+  async delete(deletion: SendingDeletion): Promise<void> {
+    const to = this.address(deletion.to);
+    const target = this.changeable(deletion.target);
+    await sendMessage(await smtpAccountFor(this.target), {
+      from: this.target.from,
+      to: [to],
+      subject: 'Message from Curlew',
+      text: 'Message deleted',
+      emailChat: true,
+      chatDelete: target,
+      inReplyTo: target,
+      references: [target],
+    });
   }
 
   /** Nothing stays open between sends: the transport is closed inside `sendMessage`. */

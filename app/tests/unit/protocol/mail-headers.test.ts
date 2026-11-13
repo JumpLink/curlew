@@ -70,6 +70,22 @@ export default async () => {
       expect(automation.autoSubmitted).toBe(null);
     });
 
+    await it('recognises a reaction mail by its Content-Disposition', async () => {
+      expect(parseThreadHeaders('Content-Disposition: reaction\r\n').reaction).toBe(true);
+      expect(parseThreadHeaders('Content-Disposition: attachment; filename=a\r\n').reaction).toBe(false);
+      expect(parseThreadHeaders('').reaction).toBe(false);
+    });
+
+    await it('reads Chat-Edit and Chat-Delete with or without angle brackets', async () => {
+      const parsed = parseThreadHeaders(
+        'Chat-Edit: 00001@example.org\r\nChat-Delete: <00003@example.org>\r\n',
+      );
+      expect(parsed.chatEdit).toBe('<00001@example.org>');
+      expect(parsed.chatDelete).toBe('<00003@example.org>');
+      expect(parseThreadHeaders('').chatEdit).toBe(null);
+      expect(parseThreadHeaders('Chat-Edit: a b\r\n').chatEdit).toBe(null);
+    });
+
     await it('yields empty threading for an empty block', async () => {
       const parsed = parseThreadHeaders('');
       expect(parsed.references.length).toBe(0);

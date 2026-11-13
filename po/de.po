@@ -3401,13 +3401,25 @@ msgstr "Ein Servername fehlt"
 msgid "the mail account {account} is incomplete — add it again"
 msgstr "Das E-Mail-Konto {account} ist unvollständig — füge es erneut hinzu"
 
-#: packages/imap/src/send.ts:69 packages/matrix/src/send.ts:354
+#: packages/imap/src/send.ts:72 packages/matrix/src/send.ts:354
 #: packages/signal/src/send.ts:405 packages/telegram/src/sender.ts:80
 #: packages/whatsapp/src/send.ts:403
 msgid "sending to {address} is not granted for account {account}"
 msgstr "Das Senden an {address} ist für Konto {account} nicht freigegeben"
 
-#: packages/imap/src/send.ts:123
+#: packages/imap/src/send.ts:119
+msgid "only a Delta Chat message can be reacted to by mail"
+msgstr "Per E-Mail kann nur auf eine Delta-Chat-Nachricht reagiert werden"
+
+#: packages/imap/src/send.ts:136
+msgid "only your own Delta Chat messages can be changed by mail"
+msgstr "Nur eigene Delta-Chat-Nachrichten lassen sich per Mail ändern"
+
+#: packages/imap/src/send.ts:145
+msgid "an edited message cannot be empty"
+msgstr "Eine bearbeitete Nachricht darf nicht leer sein"
+
+#: packages/imap/src/send.ts:189
 msgid "no mail account {account} with SMTP — `curlew accounts list` shows them"
 msgstr ""
 "Kein E-Mail-Konto {account} mit SMTP — `curlew accounts list` zeigt sie an"

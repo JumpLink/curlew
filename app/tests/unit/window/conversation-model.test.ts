@@ -507,6 +507,7 @@ export default async () => {
       expect(changesOfferedFor('signal', { sentAt: sent }, true, now + 25 * hour)).toBe(true);
       expect(changesOfferedFor('signal', { sentAt: null }, false, now + 25 * hour)).toBe(true);
       expect(changesOfferedFor('telegram', { sentAt: sent }, false, now + 99 * hour)).toBe(true);
+      expect(changesOfferedFor('mail', { sentAt: sent }, false, now + 99 * hour)).toBe(true);
     });
 
     await it('takes the own emoji back on a second tap and replaces it on another', async () => {
