@@ -4,1043 +4,118 @@
 
 # Curlew
 
-*Formerly `postbote`.* The GitHub repository is `JumpLink/curlew` (old URLs redirect). An existing `~/.local/share/postbote` / `~/.config/postbote` keeps being used as it is, and the old `POSTBOTE_*` variables still work.
+One chat per person, across every messenger. Curlew is a GNOME app that brings your mail and your
+chats from Telegram, Signal, WhatsApp, Matrix and XMPP into a single list, so a person is one
+conversation however they reach you. Reply from the same window, send and open pictures, voice
+messages and files, and choose which messenger a person is reached through.
 
-Your GNOME mail, contacts and calendar — on the command line, and as an
-[MCP](https://modelcontextprotocol.io) server so an AI assistant can search your
-mailbox for you.
+Mail is one protocol among the others, and it can show mail threads as email chats in the Delta
+Chat style. AI assistants can work with your messages through an [MCP](https://modelcontextprotocol.io)
+server, but that is an option, and it is off until you turn it on.
 
-Curlew reads the mail accounts you already configured in **GNOME Settings → Online
-Accounts**: there is nothing to log into, and their credentials come from GNOME Online
-Accounts at runtime and are never written to disk. Where there are none — in a Flatpak, or
-on a machine without GNOME — you add a mail account in Curlew itself (*Add Account → Mail*):
-an address and a password, kept in one file readable only by you. Neither kind of password
-is ever logged or returned by any command.
+*Formerly `postbote`.* The GitHub repository is `JumpLink/curlew` (old URLs redirect). An existing
+`~/.local/share/postbote` / `~/.config/postbote` keeps being used as it is, and the old
+`POSTBOTE_*` variables still work.
 
-It runs on **GJS** (GNOME's JavaScript runtime) via
-[gjsify](https://github.com/gjsify/gjsify) — the same stack a GNOME desktop app
-is built on, which is where this is headed.
+## Screenshots
 
-> **Status: early.** The CLI and the MCP server work; the desktop app does not
-> exist yet.
+<!-- Produced by dev/screenshots.sh into docs/screenshots/ (see docs/screenshots/README.md). -->
 
-## What it does
+| | |
+|---|---|
+| ![The chat list](docs/screenshots/conversations.en.light.png) | ![A conversation](docs/screenshots/conversation.en.light.png) |
+| ![A contact across messengers](docs/screenshots/contact.en.light.png) | ![Accounts](docs/screenshots/accounts.en.light.png) |
 
-- **Mail (IMAP)** — search across folders by sender, recipient, subject, date
-  range and full text; read a message; list its parts; save an attachment.
-- **Contacts** and **calendar** — read the address books and calendars that
-  Evolution Data Server keeps in sync for your online accounts.
-- **Local index** — an optional SQLite full-text index so repeated searches are
-  instant and work offline. Indexing ~1200 messages takes about half a minute;
-  searching them afterwards takes under a second.
+The narrow layout for phones and small windows: `docs/screenshots/conversation-narrow.en.light.png`.
+Dark mode and German variants sit next to these files.
 
-- **Telegram** (optional, off by default) — your direct chats, groups and
-  channels in the same conversation view as mail, through Telegram's official
-  API ([mtcute](https://github.com/mtcute/mtcute)). See [Telegram](#telegram).
-- **WhatsApp** (optional, off by default, **unofficial — risks your account**) —
-  your chats as a linked device through [Baileys](https://github.com/WhiskeySockets/Baileys).
-  See [WhatsApp](#whatsapp).
-- **Signal** (optional, off by default, **not an official client**) — your
-  chats as a linked device through [libsignal](https://github.com/signalapp/libsignal),
-  the library Signal's own apps are built on. See [Signal](#signal).
-- **XMPP / Jabber** (optional, off by default) — direct chats with your roster
-  and the rooms you joined, read from the server's message archive (MAM) through
-  [xmpp.js](https://github.com/xmppjs/xmpp.js). See [XMPP](#xmpp).
-- **Matrix** (optional, off by default) — the rooms you have joined, end-to-end
-  encrypted ones included, through
-  [matrix-js-sdk](https://github.com/matrix-org/matrix-js-sdk) and its Rust
-  crypto compiled to WebAssembly. See [Matrix](#matrix-1).
+## Protocols
 
-Everything is **read-only for an agent unless a grant names it**: grants are agent
-access, not a lock on you ([ADR 0008](docs/adr/0008-grants-restrict-agents-not-the-person.md)).
-An account you enabled is fully yours — the daemon follows it and your own
-frontends send from it without a grant. Messages are fetched with
-IMAP `BODY.PEEK`, so opening a mail through Curlew never marks it as read.
-Telegram is read the same way: without a grant nothing is sent, edited, deleted
-or marked read. WhatsApp too: no message, no read receipt, no online presence
-(see [WhatsApp](#whatsapp) for the one acknowledgement every linked device
-sends). XMPP likewise — the daemon follows an enabled account with a negative
-presence priority and no status text, so contacts do not see it online and your
-offline messages stay queued for your real clients. Matrix too: no presence, no read receipt, no typing
-notice, no message without a `matrix.send` grant, and no invitation is
-accepted. Signal too: no message, no
-receipt, no typing notice (see [Signal](#signal) for the acknowledgement and the
-two requests at link time). The only writes an agent can make are a granted send — one message,
-from one account, to one address, off by default
-(see [Sending](#sending-grants-backendsend)).
+What each protocol can do, as its backend manifest declares it (`packages/*/src/manifest.ts`).
+The columns describe what the network allows; the window offers an action only where the chat in
+front of you can do it ([ADR 0015](docs/adr/0015-capabilities-per-thread.md)).
 
-## Requirements
+| Protocol | History | Groups | Reactions | Edit / delete own | Threads | Read receipts | End-to-end encrypted | Send files | Open received files |
+|---|---|---|---|---|---|---|---|---|---|
+| Mail (IMAP/SMTP) | server archive | yes | yes | yes | yes | no | no | yes | yes |
+| Telegram | server archive | yes | yes | yes | forum topics | yes | no (cloud chats) | yes | yes |
+| Signal (linked device) | only on this computer | yes | yes | yes | no | yes | yes | no | yes |
+| WhatsApp (linked device, **unofficial**) | only on this computer | yes | yes | yes | no | yes | yes | yes | yes |
+| Matrix | server archive | yes | yes | yes | yes | yes | decrypts; sends to unencrypted rooms only | yes | yes |
+| XMPP | server archive (MAM) | yes | yes, where the peer supports it | yes, where the peer supports it | no | no | OMEMO ([ADR 0006](docs/adr/0006-omemo-end-to-end-encryption.md)) | yes | yes |
 
-- GNOME Online Accounts + Evolution Data Server (Fedora:
-  `gnome-online-accounts`, `evolution-data-server`), and `libgda-sqlite` for the
-  index
-- A running user session D-Bus — the GOA and EDS daemons are reached over it, so
-  a bare SSH session without one will report the backend as unavailable
-- GNOME accounts, contacts and calendar run on Node/Bun too (`gi://` via `@gjsify/node-gi`);
-  that is groundwork for a macOS/Windows port, not a supported target yet. The IMAP mail
-  transport is GJS-only, since it speaks IMAP over Gio TLS sockets. Without the GOA/EDS
-  typelibs Curlew still starts: only the calls that need them fail, with a clear message.
-- An **Email (IMAP/SMTP)** account: either one added in Curlew (*Add Account → Mail*) or an
-  *Email* account in GNOME Settings. Nextcloud/ownCloud accounts expose files, calendar and
-  contacts but no mail.
-- Implicit TLS (port 993). STARTTLS on port 143 is not implemented yet.
+- Every protocol except mail is **off until you enable it**, and Telegram, Signal and WhatsApp show
+  their terms first. WhatsApp is an unofficial client and can get the account banned; Signal does
+  not license third-party clients.
+- Signal and WhatsApp keep no server archive: what Curlew receives is the only copy, so the
+  [receiving daemon](docs/guide/daemon.md) matters there.
+- Setup, terms and behaviour per protocol: [docs/guide/protocols.md](docs/guide/protocols.md).
 
-## Install and run
+### Mail and email chats
+
+Mail accounts are added in Curlew (*Add Account → Mail*: an address and a password), or, on a
+GNOME desktop, taken from GNOME Settings → Online Accounts. Mail threads that carry the open
+`Chat-Version` marker are shown as email chats in the Delta Chat style: bubbles instead of a
+mailbox. Sending the marker is a setting of each mail account and **off by default**
+([ADR 0014](docs/adr/0014-delta-chat-is-a-protocol.md)). People without such a client simply get
+normal mail. Compatibility with Delta Chat itself has not been confirmed against a live peer yet,
+so Curlew does not claim it.
+
+## AI assistants and MCP (optional, off by default)
+
+`curlew mcp` serves your messages to an AI assistant over MCP, but only if you switch AI on
+(*Preferences → AI*). Off, every agent request is denied and the server offers nothing. On, you
+decide per account and contact whether an agent may read, send, or must ask you first
+([ADR 0009](docs/adr/0009-agent-access-per-account-and-contact.md)). Your own actions in the window
+are never restricted ([ADR 0008](docs/adr/0008-grants-restrict-agents-not-the-person.md)).
+Details: [docs/guide/mcp-and-data.md](docs/guide/mcp-and-data.md).
+
+## Privacy
+
+- Your messages are indexed in a local SQLite database (`$XDG_DATA_HOME/curlew/index.db`, mode
+  `0600`) and nowhere else. Curlew talks to your mail server and to the messengers you enabled,
+  and to nothing else. There is no Curlew server, no telemetry.
+- Passwords and session keys are kept in files readable only by you, or come from GNOME Online
+  Accounts at runtime; they are never logged.
+- Opening a mail never marks it as read, and no messenger gets read receipts or presence from an
+  agent.
+- What lives where, and what you can rebuild: [docs/privacy/data-tiers.md](docs/privacy/data-tiers.md).
+
+## Install
+
+Chat is what the packaged builds below offer. Contacts and calendar through GNOME Online Accounts
+and Evolution Data Server are a feature of the Linux host build only.
+
+- **Flatpak** (Linux): CI builds one on every release, with network and display access and nothing
+  else. Flathub is not published yet ([ADR 0011](docs/adr/0011-same-app-inside-and-outside-a-sandbox.md)).
+- **Windows** and **macOS**: unsigned packages are attached to each
+  [GitHub release](https://github.com/JumpLink/curlew/releases). Chat only: GNOME accounts do not
+  exist there.
+- **`.deb` / `.rpm`** (x86_64): attached to each release as well.
+
+How the artifacts are built: [docs/guide/releasing.md](docs/guide/releasing.md).
+
+## Build from source
 
 ```bash
 gjsify install
 gjsify workspace curlew-cli build
-gjsify run app/dist/curlew.gjs.mjs accounts
+CURLEW_DEMO=1 gjsify run app/dist/curlew.gjs.mjs window    # the window, on made-up data
 ```
 
-The bundle resolves its native addon (libsignal, for the Signal backend) by the
-absolute path it was built at, so do not move or copy a built tree — the copy
-fails at the first Signal command. `curlew-cli test:relocation` measures this
-and says so out loud; the fix is tracked in gjsify.
-
-### Desktop install (development)
-
-`npm run packaging:install` copies the desktop entry, the hicolor icons and the
-metainfo from `app/data/` into `~/.local/share` and refreshes the desktop and icon
-caches — the step that makes GNOME Shell show Curlew in the app grid, match its
-window to the launcher (`StartupWMClass=eu.jumplink.curlew`, the GTK application
-id) and find the window icon by name. It is idempotent and installs nothing else:
-`Exec=curlew window` calls whatever `curlew` your machine has on `PATH`, and no
-systemd unit is touched — that wiring is [`curlew setup`](#setup)'s or your own.
-
-### Setup
-
-`curlew setup` walks you through the whole thing — linking Signal and WhatsApp,
-accepting their terms, building the index, running the receiving daemon and
-installing its systemd user unit — one confirmed stage at a time:
-
-```bash
-curlew setup
-```
-
-It finds the checkout it is run from, and falls back to a published `curlew` on
-`PATH` when there is no tree. `curlew setup --status` reports what is done and
-what is left without changing anything, and `curlew setup --only <stage>`
-runs the named stages and nothing else — `--status` prints the name of every
-stage. `--only` may be repeated (`--only terms --only link-signal`) to pick more
-than one.
-
-Re-run it whenever: a stage that is already done says so instead of failing.
-
-The QR code and every pairing code it prints stay in that terminal. curlew
-calls the same account-adding command you would call by hand, with the same
-prompter, and neither copies, captures, logs nor stores a pairing payload. The
-terms are displayed before you are asked to accept them, and nothing accepts them
-for you.
-
-## Use it
-
-```bash
-curlew check                              # which backends are reachable
-curlew accounts                           # which online accounts are available
-curlew folders                            # mailboxes, with their roles
-
-curlew search "energieberater" --since 2025-01-01
-curlew search --from berater --all-folders --limit 20
-curlew message <uid> --account <id>       # one message: body + attachment list
-curlew parts <uid> --account <id>         # what is attached, and how big
-curlew save <uid> --account <id>          # write the attachment to disk
-
-curlew sync                               # build the local index
-curlew index status                       # what it holds, and how fresh
-curlew index search "wärmepumpe"          # offline, no server contact
-
-curlew daemon                             # receive Signal/WhatsApp until stopped
-curlew watch                              # one JSON line per index change, as it happens
-
-curlew conversations list --people-only   # threads with a person in them, newest first
-curlew conversations show <id>            # its messages; bodies only with --bodies
-curlew conversations classify <address> automated   # correct one sender (auto = undo)
-
-curlew backends list                      # message backends, and which are enabled
-
-curlew contacts --query maier
-curlew calendar --from 2026-09-01 --to 2026-09-30
-```
-
-Every command prints JSON — the same shapes the MCP tools return.
-
-`search` returns headers only, never bodies; reading one message is a separate,
-explicit call, and getting an attachment's bytes a third. That is not a policy
-you can flip with a flag — the search path contains no code that can fetch a
-body.
-
-`--since` and `--before` filter the message **Date** header, not its arrival
-time. After a mailbox migration every message's arrival timestamp is the
-migration date, which makes an arrival filter useless; `--received-since` is
-there when you genuinely mean arrival.
-
-Search folds diacritics, so `marz` finds `März`. (`ß` is a letter rather than a
-diacritic, so `grusse` does not find `Grüße`.)
-
-`sync` also groups mail into **conversations** by `Message-ID`, `In-Reply-To` and
-`References`, and classifies each one: *conversational* (a known contact, or a
-thread you replied in) or *automated* (`List-Id`, `List-Unsubscribe`,
-`Auto-Submitted`, `Precedence`, no-reply senders). A stranger nobody replied to
-is held back until you reply or classify the sender. This is the groundwork for
-chat backends ([ADR 0001](docs/adr/0001-multi-protocol-messenger.md)): each
-backend is enabled explicitly in the config, and one with a terms notice only
-after `curlew backends enable <name> --accept-terms`.
-
-## Telegram
-
-Telegram requires every third-party client to use an `api_id` and `api_hash`.
-They identify the *application*, not you. The repository and CI/dev builds ship
-none; a **packaged build may embed one pair** that its distributor supplied at
-build time (see [Packaging](#embedding-a-telegram-api-pair-packagers)), so the
-login asks for phone number and code only. Which pair is used, first match wins:
-
-1. `CURLEW_TELEGRAM_API_ID` / `CURLEW_TELEGRAM_API_HASH` in the environment;
-2. the pair stored in the account's session file (what it was created with);
-3. the pair embedded in this build, if any;
-4. otherwise the login asks for one (steps below).
-
-To use credentials of your own even when the build embeds a pair (so you do not
-depend on a package id Telegram might block), create an app for yourself at
-<https://my.telegram.org> → *API development tools* (an `api_id`, a number, and
-an `api_hash`, 32 hex characters) and log in with `--own-credentials`:
-
-```bash
-curlew backends enable telegram --accept-terms   # shows Telegram's terms once
-curlew accounts add telegram                     # phone, code, 2FA password; asks for api_id/api_hash first if the build embeds none
-curlew accounts add telegram --own-credentials   # always asks for your own api_id/api_hash (hash without echo)
-curlew accounts list --backend telegram
-curlew sync                      # mail and Telegram into one index
-curlew conversations list --people-only
-```
-
-The pair is kept in the account's session file, not in the config (which is
-plain text in every backup; a config that carries one is refused), together with
-whether it was the embedded or your own. A session created with the embedded
-pair never switches silently: if a later build embeds a different pair (or none),
-`sync` fails with a message saying so — use the original build, set the
-environment variables, or log in again. Telegram has no public test credentials
-that curlew may use; accounts that use them get banned, so none is a default.
-
-The first sync takes the newest 200 messages of every chat; later syncs walk
-forward from there, at most 5 000 messages per run (the rest follows on the
-next). A contact whose phone number is in your address book becomes the same
-person as their mail address. Channels and bots are classified *automated*.
-
-A message deleted on Telegram stays in the index until a full scan:
-`curlew sync --full-scan` re-reads each chat's newest window and removes every
-stored message in it that Telegram no longer has, and every chat that left your
-list. (Telegram reports deletions only as live updates, which a sync without a
-daemon does not receive.) Below that window each full scan additionally asks
-Telegram about 200 stored messages per chat, oldest first, and continues where
-the last scan stopped — so a deletion deep in a long chat is found within a few
-full scans rather than never.
-
-The login leaves a **session file** at
-`$XDG_DATA_HOME/curlew/secrets/telegram/telegram-<user id>.db` (mode `0600`
-in a `0700` directory; override the base with `CURLEW_SECRETS_DIR`). Whoever
-holds it can read your Telegram account (it also holds your `api_id`/`api_hash`):
-back it up like a password, never share it. A login killed halfway leaves a
-`login-*.pending.db` there; the next `accounts add` or account listing removes it
-once it is 15 minutes old. Telegram lists it under *Settings → Devices* as `curlew`, where you can
-end it; deleting the file ends it on this machine.
-
-## WhatsApp
-
-> **Read this first.** WhatsApp has no API for reading your own chats. Curlew
-> uses [Baileys](https://github.com/WhiskeySockets/Baileys), an **unofficial**
-> reimplementation of the WhatsApp Web protocol. Using it **violates WhatsApp's
-> Terms of Service**, and WhatsApp bans accounts it sees using unofficial
-> clients — temporarily or for good. The ban hits your **phone number**. Enable
-> this only if you accept that risk for that number.
-
-Curlew joins your WhatsApp as a **linked device**, like WhatsApp Web:
-
-```bash
-curlew backends enable whatsapp --accept-terms   # shows the notice above once
-curlew accounts add whatsapp                     # QR code, or a pairing code
-curlew sync                                      # right away — see below
-curlew conversations list --people-only
-```
-
-`accounts add whatsapp` asks for a phone number. Leave it empty and a QR code
-appears in the terminal: on the phone, *WhatsApp → Settings → Linked devices →
-Link a device*, and scan it (a new code appears every ~20 s). Or type the number
-(international, `+49…`) and enter the 8-character pairing code it prints under
-*Link a device → Link with phone number instead*. The device shows up in that
-list as a browser session (Baileys' default, *Chrome (Mac OS)*); unlink it there
-to end it.
-
-**WhatsApp keeps no archive.** A message is gone from WhatsApp's servers once a
-device has received it, so what curlew stores is the **only copy** it has —
-its part of the index is irreplaceable, not a cache. Consequences:
-
-- **Run `curlew sync` right after linking.** The phone hands the recent
-  history (roughly the last months) to a new device once. `sync` connects,
-  receives that history and everything queued while no device of curlew was
-  connected, writes it, and disconnects once WhatsApp has nothing more to hand
-  over. If that does not happen within ten minutes, the run stops there and that
-  is **not an error**: everything received is written and the run counts as a
-  success. The only sign in the output is that account's `caughtUp: false`
-  (`error` stays `null`), and whatever WhatsApp still had queued arrives in the
-  next `sync`. Set `backends.whatsapp.settings.fullHistory: true` in the config
-  **before** linking to ask for the full history instead — larger, slower.
-- **Stay connected — the [receiving daemon](#receiving-daemon).** WhatsApp unlinks
-  a device that has not connected for about 14 days; after that, `sync` reports
-  the logout and you link again (the conversations stay, under the same account
-  id). `curlew daemon` holds the connection, so that clock never runs out; a
-  `sync` from a timer is the fallback for a machine where the daemon does not
-  run.
-- **Back up the index** (`$XDG_DATA_HOME/curlew/index.db`) like the config:
-  with WhatsApp enabled it holds messages that exist nowhere else.
-
-Deletions and edits are applied as they arrive: a message the sender deleted
-for everyone, or you deleted or cleared on your phone, is removed from the index;
-an edited one gets the new text. Contacts are linked by phone number to your
-address book, like Telegram's.
-
-What curlew sends: nothing you could see. It connects with
-`markOnlineOnConnect: false`, so it announces itself *unavailable* (never online)
-and your phone keeps its notifications; it never sends a read receipt (the
-blue ticks stay yours). It does acknowledge each delivered message — the grey
-double tick every linked device sends, and the signal for WhatsApp to forget the
-message.
-
-The link leaves a **session file** at
-`$XDG_DATA_HOME/curlew/secrets/whatsapp/whatsapp-<LID>.db` (mode `0600`): the
-device's Signal keys. Whoever holds it can read your incoming WhatsApp messages —
-back it up like a password, never share it. The account id is your LID,
-WhatsApp's privacy id, never your phone number.
-
-## Signal
-
-> **Read this first.** Signal offers no API and does not license third-party
-> clients. Curlew is **not an official Signal client** and Signal does not
-> support it. It uses libsignal, Signal's own library, and links like Signal
-> Desktop. Independent clients of this kind (signal-cli, Flare, Whisperfish) are
-> used without known account bans, but Signal could block them at any time.
-
-Curlew joins your Signal account as a **linked device**, like Signal Desktop:
-
-```bash
-curlew backends enable signal --accept-terms   # shows the notice above once
-curlew accounts add signal                     # prints a QR code
-curlew sync                                    # right away — see below
-curlew conversations list --people-only
-```
-
-Linking, step by step:
-
-1. Run `curlew accounts add signal`. A QR code appears in the terminal.
-2. On the phone: *Signal → Settings → Linked devices → Link new device* (the `+`),
-   and scan the code. If the terminal prints a fresh code, scan that one: Signal
-   replaces the connection behind a code after a while.
-3. The phone asks you to confirm linking a device named `curlew` (set
-   `backends.signal.settings.deviceName` in the config to change it). Confirm.
-4. The terminal says *Linked*. The phone now lists `curlew` under *Linked
-   devices*; unlink it there to end it.
-5. Run `curlew sync`.
-
-Signal runs on **linux-x64 and macOS arm64** (libsignal is a native addon that
-curlew loads through gjsify's N-API host). On another platform the rest of
-curlew works; `accounts add signal` says libsignal did not load.
-
-**Signal keeps no archive.** The server holds a message for a device only until
-that device receives it, so what curlew stores is the **only copy** — its part
-of the index is irreplaceable, not a cache. Consequences:
-
-- **Curlew gets no history.** A linked device receives what arrives after it
-  was linked; the phone's older messages stay on the phone.
-- **Stay connected — the [receiving daemon](#receiving-daemon).** `sync`
-  connects, receives what was queued, writes it and disconnects once Signal
-  reports the queue empty. If the queue does not go
-  empty within ten minutes, the run stops there and that is **not an error**:
-  everything received is written and the run counts as a success. The only sign
-  in the output is that account's `caughtUp: false` (`error` stays `null`), and
-  whatever is still queued arrives in the next `sync`. Signal unlinks a device
-  that stays offline too long; after that, `sync` reports it and you link again
-  (the conversations stay, under the same account id), and `curlew daemon`
-  holds the connection so it does not come to that.
-- **Back up the index** (`$XDG_DATA_HOME/curlew/index.db`) like the config.
-
-What arrives: direct and group messages (sealed sender included), your own
-messages sent from the phone, edits, deletions (for everyone, and the ones you
-make on the phone), read receipts for your messages, and the contact list when
-the phone sends it (it does after linking and when contacts change; the
-download needs Node for now, see below). A group takes its name the next time a
-message arrives in it: Signal keeps group names encrypted on its group server,
-so curlew reads that one name (two read-only requests, to Signal's chat service
-and to `storage.signal.org`, for groups you already belong to) and keeps it in
-the session file. Set `backends.signal.settings.groupNames` to `false` to never
-ask; groups then stay *Unnamed group*. Reading a chat on the phone is not mirrored: messages arrive unread.
-Reactions, typing, calls and a disappearing-messages timer are read and dropped
-on purpose; they are settings, not messages.
-
-Two things curlew reports instead of swallowing:
-
-- A **changed safety number** shows up in that contact's conversation as a
-  *Safety number changed* notice — already read, never unread. Compare the
-  number on the phone before you trust the conversation.
-- A message curlew decrypted but **could not read** (a message type a newer
-  Signal added, or a bug in the decoder) is **not** thrown away: the raw
-  plaintext goes into the session file, and `sync` reports how many. Nothing is
-  lost on Signal's side either — curlew only acknowledges an envelope once
-  that plaintext is on disk. `curlew deliveries set-aside` lists them: who
-  sent it, when, why curlew could not map it and how big the plaintext was —
-  enough to look the message up on the phone or to report a decoder bug. The
-  plaintext itself is never printed, and no flag prints it.
-
-What curlew sends: at link time, two requests — it registers the device with
-the one-time code the phone sent, and publishes one batch of pre-keys so
-contacts can start encrypted sessions with it. During `sync`, only the
-acknowledgement of each received message (without it Signal would deliver it
-again), and only after the message is written to disk. Never a message, a read
-or delivery receipt, a typing notice, a request to the phone, or a retry request
-for a message it could not decrypt — `sync` counts those and reports them.
-
-The link leaves a **session file** at
-`$XDG_DATA_HOME/curlew/secrets/signal/signal-<ACI>.db` (mode `0600`): your
-account's identity key and this device's keys. Whoever holds it can read your
-incoming Signal messages — back it up like a password, never share it. The
-account id carries your ACI (Signal's account UUID), never your phone number.
-
-Known gap: the contact list is downloaded from Signal's CDN, which needs Signal's
-own root certificate; on GJS, gjsify's `node:https` does not take one yet, so
-`sync` reports the contact list as not read and people appear by their Signal id
-until the next contact sync after that is fixed.
-
-## XMPP
-
-Curlew reads XMPP history only from the server's **message archive** (MAM,
-XEP-0313), which Prosody (`mod_mam`, `mod_muc_mam`) and ejabberd offer. A server
-without one is refused with an explanation: the alternative, receiving offline
-messages, would take them away from your other clients.
-
-```bash
-curlew backends enable xmpp
-curlew accounts add xmpp        # JID, password (no echo), server address
-curlew sync
-```
-
-The server address may stay empty: Curlew then looks up direct TLS
-(`_xmpps-client._tcp` SRV, XEP-0368), then WebSocket (`host-meta`, XEP-0156),
-then STARTTLS. The certificate is checked against your XMPP domain. All three
-endpoint kinds work on GJS as of the gjsify release Curlew runs on (0.54.0):
-the raw TLS socket landed in [gjsify#1837](https://github.com/gjsify/gjsify/pull/1837)
-and the last piece, `Readable.prototype.addListener` aliased to `on`, in
-[gjsify#1958](https://github.com/gjsify/gjsify/pull/1958) — without it @xmpp/tls
-subscribed to the peer's bytes through `addListener` and the stream sat at
-"opening" until the login timed out.
-A server with its own CA: set `backends.xmpp.settings.tlsCaFile` to the PEM file.
-A publicly-trusted certificate is checked reliably; a custom one is checked
-unreliably on GJS, because gjsify decides it in a JS `accept-certificate`
-callback that GIO emits on its handshake thread and GJS blocks. Measured 1 of 20
-logins refused with a certificate error on 0.54.0 (2 of 12 before), so a
-custom-CA server may need a second attempt there.
-
-The login uses SCRAM-SHA-1 and sends a password in the clear (PLAIN) only inside
-TLS. The password is kept in
-`$XDG_DATA_HOME/curlew/secrets/xmpp/xmpp-<hash>.db` (`0600`), never in the
-config — a config that carries one is refused.
-
-Chats are your roster contacts and the bookmarked rooms you join automatically.
-Corrections (XEP-0308) replace the stored text, retractions (XEP-0424/0425)
-remove the message. OMEMO-encrypted messages are read and written for every enabled
-account; no grant is involved. See [End-to-end encryption](#end-to-end-encryption) and
-[ADR 0006](docs/adr/0006-omemo-end-to-end-encryption.md).
-
-### Sending (grants `<backend>.send`)
-
-Grants are **agent access** (ADR 0008): the CLI and the MCP tool — the frontends an
-agent drives — send one message only from an account and to an address you
-granted, as an exact `<account>/<address>` pair (see
-[Your data stays yours](#your-data-stays-yours)); a message to the account's own
-address needs no grant. Your own frontends — the daemon's send service today, the
-UI later — send from every enabled account without one. Every send, whoever made
-it, leaves a line in the write log. Every backend has its own
-capability — `xmpp.send`, `mail.send`, `telegram.send`, `matrix.send`, `signal.send` and
-`whatsapp.send` today — and one grant never authorises
-another backend:
-
-```json
-{ "grants": [ { "capability": "xmpp.send", "target": "xmpp-abc123/owner@example.org" } ] }
-```
-
-The limit, stated plainly: under one Unix user an agent with a shell can still call
-the daemon's D-Bus `Send` directly, and no grant stops that. A hard boundary needs
-a sandbox, which is future work.
-
-```bash
-curlew send --account xmpp-abc123 --to owner@example.org "Build is green"
-```
-
-#### XMPP
-
-An image goes with `--image-url https://…` (text optional). The URL is sent as
-its own message after the text: body = the URL plus an out-of-band reference
-(XEP-0066, `<x xmlns='jabber:x:oob'><url>…</url></x>`), the shape Conversations,
-Gajim and Monocles render inline. Text and image are two stanzas, because a
-client shows the file only when the body is exactly the URL. https only, no
-credentials in the URL; curlew neither uploads nor fetches the image, and the
-same `xmpp.send` grant covers it.
-
-The MCP server offers the same as `send_message` (`account`, `to`, `text`,
-`image_url`; at least one of the last two) —
-always listed. Without a grant it can only send to your own account (your own
-address, note to self); anything else needs the exact `<backend>.send` grant
-for the account and address, so a `mail.send` grant does not let an agent write
-over XMPP. For XMPP the answer carries `conversationId`, `sentAt` and `originId`.
-`send_message` also takes `format`: `plain` (default, the text goes out as is) or
-`markdown`. Markdown is rendered as XEP-0393 message styling (other protocols would get
-a plain-text degradation), an image link on its own line becomes an image message, and a
-text over 7000 characters is split at line breaks into several messages instead of being
-refused. A markdown answer adds `parts` (how many messages went out) and `originIds`
-(every id, in order; `originId` is the first). The read-only tool `messaging_capabilities`
-reports per protocol the maximum message length, the formats, image support, the longest
-`timeout_s` and whether long texts are split — no addresses, no account data.
-The message goes out as `type=chat` with an origin-id (XEP-0359), a receipt
-request (XEP-0184) and `markable`; it is stored in the index as your own
-message, and the archive's copy replaces that local echo on the next sync.
-Every send is logged (time, grant, target, never the text) to
-`$XDG_DATA_HOME/curlew/writes.log`.
-
-#### Mail
-
-`mail.send` sends one plain-text mail with an optional `--subject` (or
-`subject` in `send_message`) and optional file attachments. The recipient is the granted address and the
-sender is the account's own address; the SMTP credentials come from the
-account (Curlew's own or GNOME Online Accounts) and appear in no output, log or error. There is
-no HTML, and a sent mail is not indexed as a conversation —
-the answer has `sentAt` and the message id, no `conversationId`:
-
-```bash
-curlew send --account <goa-account-id> --to owner@example.org \
-  --subject "Build is green" "All tests passed."
-```
-
-Attachments: repeat `--attach <absolute path>` on the CLI, or pass
-`attachments: ["/abs/path/report.pdf"]` to `send_message`. Only mail carries them; every
-other backend refuses, as does the daemon's bus send. Rules: absolute paths, regular
-files only (a symlink is followed once and its target must be a regular file), at most 10
-files, 20 MB each and 25 MB together. The attachment name is the file's base name and the type
-comes from the extension (otherwise `application/octet-stream`). They ride on the address
-grant ([ADR 0004](docs/adr/0004-sending-and-writing-granted-per-capability.md)); the
-permission prompt lists the file names, and the write log records names and sizes, never
-content.
-
-```bash
-curlew send --account <goa-account-id> --to owner@example.org \
-  --subject "Report" --attach /home/me/report.pdf "Attached."
-```
-
-#### Telegram
-
-`telegram.send` sends one plain-text message to a chat. The address is the chat id
-exactly as `curlew conversations list` shows it: the user id for a direct chat, the
-negative id for a group or channel, so a grant reads
-`{ "capability": "telegram.send", "target": "telegram-42/1001" }`. A text over 4096
-characters is refused rather than split, and there is no Markdown and no image. The
-sent message is stored in the index as your own message and replaced by Telegram's
-copy on the next sync. Telegram only resolves a chat the account has already synced,
-so run `curlew sync` once before the first send to a new chat:
-
-```bash
-curlew send --account telegram-42 --to 1001 "Build is green"
-```
-
-#### Matrix
-
-`matrix.send` sends one plain-text `m.room.message` to a room. The address is the room
-id exactly as `curlew conversations list` shows it, colon and all, so a grant reads
-`{ "capability": "matrix.send", "target": "matrix-0123456789abcd/!room:example.org" }`.
-A body over 32000 UTF-8 bytes is refused rather than split, and there is no Markdown
-and no image. The sent message is stored in the index as your own message and replaced
-by the homeserver's copy on the next sync.
-
-**An end-to-end encrypted room is refused.** Curlew reads encrypted rooms — it decrypts
-what it holds the key for — but it does not encrypt, so it will not put a cleartext
-message into a room whose members chose encryption. Before every send it reads the
-room's `m.room.encryption` state; if the homeserver cannot answer, the send is refused
-too, never attempted in the dark:
-
-```bash
-curlew send --account matrix-0123456789abcd --to '!room:example.org' "Build is green"
-```
-
-#### WhatsApp
-
-`whatsapp.send` sends one plain-text message to a 1:1 chat. The address is the chat id
-exactly as `curlew conversations list` shows it — a full JID, `<digits>@lid` or
-`<digits>@s.whatsapp.net` — so a grant reads
-`{ "capability": "whatsapp.send", "target": "whatsapp-2084.../1348...@lid" }`. A bare phone
-number is refused, and so is a `<user>:3@…` device address: both leave open which chat is
-meant, and the grant has to name the string you read back. A text over 65536 UTF-8 bytes is
-refused rather than split, and there is no Markdown and no reaction. Files go along as `--attach`
-(up to 10, 64 MB each): one message per file, pictures and MP4 videos as such, everything else as
-a document under its file name, and a text up to 1024 characters becomes the caption of the
-first. An agent is always asked before it sends files. Groups and
-status updates are refused — a group message needs a member list curlew does not keep. The
-sent message is stored in the index as your own message and replaced by WhatsApp's own copy
-when it comes back.
-
-**A send needs the daemon to let go of the account.** WhatsApp allows one connection per
-linked device, and the session state is a single file both would write, so curlew takes the
-same lease the daemon takes and refuses the send while the daemon holds it, naming
-`curlew daemon stop` as the way out. A refusal is the safe outcome here: a race on that file
-can end in a logout, and relinking would lose the history WhatsApp never hands out twice:
-
-```bash
-curlew send --account whatsapp-208451726394015 --to '134875029461837@lid' "Build is green"
-```
-
-**Waiting for a reply.** Run `curlew daemon`: for every enabled XMPP account it
-stays connected, enables carbons (XEP-0280) and catches up from the archive on
-every arrival and after every reconnect, so a reply reaches the index within
-seconds. Then call the read-only MCP tool
-`xmpp_wait_reply {account, peer, after, timeout_s}` with the `sentAt` of the
-send as `after`: it returns `{status: "reply", messages, cursor}` or
-`{status: "timeout", cursor}`; pass `cursor` as `after` of the next call.
-Each reply message has `replyToId`, the id its XEP-0461 `<reply>` names (null
-when it is not a reply). `send_message` returns `originId` — the message's
-stanza `id`, identical to its origin-id (XEP-0359) — so compare the two to see
-which sent message was answered.
-With `strip_quotes: true` the quoted lines (`> …`) a client adds to a reply are removed
-from each message's text; the default is `false`, and a message that is only a quote is kept.
-`conversations_get {id, since, incoming_only}` is the non-blocking form. The
-cursor compares the sender's timestamp with the one you stored, so a badly
-skewed clock can hide or repeat a message.
-
-Limits, stated plainly: there is no stream management (XEP-0198): a message
-written as the connection drops is not retransmitted (receiving is covered by
-the archive catch-up). Rooms are not joined; they are only read through the
-archive on connect and `curlew sync`. Encryption is
-one-to-one only — a room is never encrypted.
-
-### End-to-end encryption
-
-OMEMO (XEP-0384, the `eu.siacs.conversations.axolotl` version every current
-client speaks) is on for every enabled XMPP account; there is no grant for it.
-What an agent may read of the decrypted text is decided per account and contact
-by `agentAccess`. An old `xmpp.omemo` grant in the config is ignored.
-
-Curlew becomes a device of that account: it publishes an identity key
-and a bundle, decrypts incoming messages into the index, and encrypts what you
-send to every trusted device of the peer and to your own other devices. Keys
-live in the account's secret file (`0600`), next to the password, and never in
-the config or the index.
-
-Trust is blind trust before verification, as Conversations does it: a key first
-seen on a contact is accepted and from then on fixed. `curlew omemo devices
---account xmpp-abc123` lists the fingerprints; the MCP tool `omemo_devices`
-shows the same, read-only. **No MCP tool changes trust, and no agent can turn
-encryption off.**
-
-A peer who has OMEMO devices is never sent plaintext. If their key material
-cannot be fetched, or no device of theirs is trusted, the send is **refused**
-with the reason — it does not quietly go out in the clear. A peer with no OMEMO
-at all still gets plaintext, as before.
-
-Verifying a fingerprint by hand, resetting a broken session and the
-"encryption required" setting are not there yet
-([ADR 0006](docs/adr/0006-omemo-end-to-end-encryption.md) stage 4).
-
-## Matrix
-
-Matrix is an open protocol, so there are no terms beyond your homeserver's own.
-Log in with your homeserver, user and password:
-
-```bash
-curlew backends enable matrix
-curlew accounts add matrix       # homeserver URL or server name, user, password
-curlew sync
-```
-
-The login creates a **new device** named `curlew` (it appears in your
-session list in Element and every other client) and uploads its encryption
-keys. Only password login is supported: a homeserver that offers single
-sign-on alone — matrix.org, since its move to the Matrix Authentication
-Service — is refused with that reason for now.
-
-Login and sync are quiet by default: the SDK's info and debug narration is
-dropped, and only its warnings and errors reach stderr, with user, room and
-event ids redacted. `CURLEW_MATRIX_LOG` changes that for a diagnosis — `debug`
-or `trace` to see the SDK's own logging, `silent` to mute it; the output is
-redacted at every level.
-
-Encrypted rooms are decrypted where this device holds the room key. That is
-every message sent **after** the login: senders encrypt for the new device from
-then on, and its keys arrive with each sync. Messages sent **before** it show as
-`[encrypted message: this device has no key for it]`: reading them needs your
-server-side key backup or a verified session sharing its keys, and neither is
-built yet. Curlew remembers such placeholders and tries them again on every
-sync, so a key that arrives later still turns them into text.
-
-Curlew never shows you as online (every sync says `set_presence=offline`) and
-never sends a read receipt or a typing notice: a read-only gate refuses every
-request outside login, the sync filter and the encryption key exchange before it
-leaves the machine. Messages are no exception until you grant one: with a
-`matrix.send` grant (see [Matrix](#matrix) under Sending) the granted room
-alone becomes reachable, through a second gate that passes exactly one request —
-the send of a plain-text message to that room — while the syncing side keeps
-refusing every write. The device's crypto store is saved after every sync step,
-before the server is told the keys arrived, so even a crash loses no key.
-
-The first sync takes the newest 200 messages of every joined room, later syncs
-walk forward. Edits and redactions arrive as events of their own and are applied
-on the next sync — a message redacted on the server is removed from the index
-without a full scan. Rooms you are only invited to are left alone.
-
-The login leaves an **account file** at
-`$XDG_DATA_HOME/curlew/secrets/matrix/matrix-<hash>.db` (mode `0600`). It holds
-the access token and the device's crypto store (its identity keys and every room
-key it received): back it up like a password. Losing it means a new login, a new
-device, and no key for anything sent before it. To end the session, sign the
-`curlew` device out in another client and delete the file.
-
-## Receiving daemon
-
-Signal and WhatsApp have no server archive: a message is gone from the network
-once this device acknowledged it, so whatever curlew stores is the **only**
-copy. `curlew sync` from a timer narrows the window in which nothing is
-received; `curlew daemon` closes it.
-
-```bash
-curlew daemon                   # receive until stopped (SIGTERM/SIGINT)
-```
-
-It connects to every **delivery-only** backend you enabled — Signal and
-WhatsApp — for every account, all at once, and keeps receiving. Mail and chat
-backends (IMAP, Telegram) stay on `curlew sync`: they are
-pull models with a cursor, and a daemon buys them nothing. Every enabled XMPP
-account is followed as well, so replies arrive live, and so is every
-account of an enabled Matrix backend (a long-polling `/sync`, read-only, no
-presence; a new message wakes an ordinary catch-up). While the daemon follows an
-account, `curlew sync` leaves that account to it (one device, one crypto store, one
-to-device stream) and says so on stderr. A dropped connection
-is retried with growing pauses (5 s to 5 min); a device the network **logged out
-or unlinked** is not retried — the daemon stops that account and says so, because
-the credentials are gone and every retry would fail the same way while messages
-queue up on the network.
-
-Run it as a user service (the unit ships in
-[`contrib/systemd/curlew-daemon.service`](contrib/systemd/curlew-daemon.service)):
-
-```bash
-mkdir -p ~/.config/systemd/user
-cp contrib/systemd/curlew-daemon.service ~/.config/systemd/user/
-# point WorkingDirectory/ExecStart at your checkout if it is not ~/curlew
-systemd-analyze --user verify ~/.config/systemd/user/curlew-daemon.service
-systemctl --user daemon-reload
-systemctl --user enable --now curlew-daemon
-loginctl enable-linger "$USER"     # so it also runs while you are logged out
-journalctl --user -u curlew-daemon -f
-```
-
-Mail and the pull-model chats need a timer instead: `contrib/systemd/curlew-sync.service`
-plus `curlew-sync.timer` run `curlew sync` 15 minutes after the previous run ended.
-
-```bash
-cp contrib/systemd/curlew-sync.{service,timer} ~/.config/systemd/user/
-systemctl --user daemon-reload
-systemctl --user enable --now curlew-sync.timer
-```
-
-The unit deliberately does **not** stop when you log out — staying connected is its whole
-point, and the one thing it uses from your session (the address book, for the participant
-link) is optional: without it it still receives, and the link appears on the next rebuild.
-`loginctl enable-linger` is what lets a user unit run at all while you are not logged in.
-
-The daemon writes **one line per state change** to stderr, which journald
-collects — connected, a batch with its counts, a reconnect in N seconds, a
-logout, a stop. Never message text, chat titles, peer names or phone numbers:
-a log line is a file that gets copied and pasted around, and the same privacy
-rule that guards the index guards it.
-
-**Live updates.** The daemon tells listeners that the index changed, over the session
-bus (`eu.jumplink.curlew.Daemon1`, [ADR 0007](docs/adr/0007-live-updates-over-the-session-bus.md)):
-`Changed(seq)` after its own writes and whenever a poll every 2 s finds that a `sync` or
-`send` moved the change journal, `AccountsChanged` plus `GetAccounts` for each account's state
-(`connected`, `connecting`, `reconnecting`, `logged-out`, `held-elsewhere`, `stopped`). Ids,
-states and numbers only — never message text. `curlew watch` is the reference listener: one
-JSON line per journal row, starting at the newest (`--since <seq>` starts earlier). Without a
-daemon it says so once and reads the journal every 2 s itself; it follows the daemon
-coming and going on the bus, subscribing and reading once when one appears and saying once
-when it leaves. A
-`{"resync":true,…}` line means the journal moved past you: read what you show again.
-
-**And `sync` at the same time?** Yes — and that is what the **lease** is for.
-Both take a lease on each delivery account, stored in the index itself: whoever
-holds it refreshes it every 30 seconds and drops it when it stops. A `sync` that
-finds a live lease reports that account as received by the other run and moves
-on — not an error, because nothing failed. A daemon that finds one **waits** for
-it and takes the account as soon as it is free, rather than never receiving it:
-that includes a `sync` in the middle of a WhatsApp catch-up, which can run for
-ten minutes. Two connected devices on one Signal account would each acknowledge
-half the messages, so this is what keeps the copy whole. A run that was killed
-leaves a lease behind, which expires by itself after 90 seconds.
-
-Stopping is a normal end: SIGTERM (or `systemctl stop`) closes every session,
-writes what was in flight, rebuilds the conversations once and exits 0. It is
-never a kill — an unacknowledged message is still on the network, and a written
-one must never be lost.
-
-**When the unit fails.** If every account was logged out — WhatsApp unlinked the
-device after ~14 days, or Signal did the same — the daemon exits **2**, the unit
-is not restarted (a restart cannot relink anything) and shows as failed:
-
-```bash
-systemctl --user status curlew-daemon   # "code=exited, status=2"
-journalctl --user -u curlew-daemon -n 20
-curlew accounts add whatsapp            # or: curlew accounts add signal
-systemctl --user restart curlew-daemon
-```
-
-Anything else exits 0, including a plain `systemctl stop`.
-
-What the daemon does **not** do: send a message, mark anything read, or touch a
-server-archive backend. It is the same fail-closed curlew, connected all the
-time. See [ADR 0002](docs/adr/0002-receiving-daemon.md) for why each piece is
-the way it is.
-
-## As an MCP server
-
-`curlew mcp` speaks MCP over stdio. Registered in an MCP client it exposes
-`mail_search`, `mail_get_message`, `mail_list_folders`, `mail_list_parts`,
-`mail_save_attachment`, `mail_search_local`, `mail_sync_status`,
-`conversations_list`, `conversations_get`, `message_save_attachment`, `contacts_search`,
-`calendar_list_events` and `accounts_list` — plus `send_message` when some
-`<backend>.send` grant exists.
-
-The server is read-only by default and **fails closed**: a tool is registered
-only if it declares itself read-only or a grant names its capability, so a
-future write tool that forgets its annotation is withheld rather than silently
-exposed. `send_message` is always listed, and every call is checked: your own
-address needs no grant, anything else the exact `<account>/<address>` pair.
-
-See [`.mcp.json`](.mcp.json) for a working registration.
-
-## Your data stays yours
-
-The local index contains message headers **and** plain-text bodies. It lives at
-`$XDG_DATA_HOME/curlew/index.db` (mode `0600`), never inside this repository,
-and only `curlew sync` and `curlew daemon` ever write to it — a search never
-does. Attachments
-are saved to your download directory. Both locations are overridable via
-`CURLEW_DATA_DIR`, `CURLEW_DB_PATH` and `CURLEW_ATTACHMENTS_DIR`.
-
-### Demo mode
-
-`CURLEW_DEMO=1 curlew window` (or `curlew demo`) opens the window on made-up data: no accounts, no
-network, nothing sent. The data is generated into `$XDG_CACHE_HOME/curlew-demo` (override with
-`CURLEW_DEMO_DIR`) when it is missing or from an older version, and your real index, config and
-accounts are not read. Every name and address is invented (`example.org`).
-
-Your decisions — enabled backends, accepted terms, per-sender classification —
-live in `$XDG_CONFIG_HOME/curlew/config.json` (mode `0600`, override with
-`CURLEW_CONFIG`). Unlike the index they cannot be rebuilt from a server, so
-back that file up. Keys this build does not know are kept when it saves the file.
-
-**Agent writes are off unless granted** ([ADR 0004](docs/adr/0004-sending-and-writing-granted-per-capability.md),
-[ADR 0008](docs/adr/0008-grants-restrict-agents-not-the-person.md)): grants are agent access,
-checked by the CLI and the MCP server, not by your own frontends.
-`grants` lists capabilities, each bound to exactly one target; no wildcards, and a
-missing or empty list denies everything. A malformed entry, an empty target or an
-unknown capability is an error when the file loads.
-
-```json
-{
-  "grants": [
-    { "capability": "xmpp.send", "target": "<account>/<address>" },
-    { "capability": "mail.send", "target": "<account>/<address>" },
-    { "capability": "telegram.send", "target": "<account>/<chat id>" },
-    { "capability": "matrix.send", "target": "<account>/<room id>" },
-    { "capability": "signal.send", "target": "<account>/<ACI>" },
-    { "capability": "whatsapp.send", "target": "<account>/<chat jid>" }
-  ]
-}
-```
-
-`xmpp.send`, `mail.send`, `telegram.send`, `matrix.send`, `signal.send` and `whatsapp.send` are
-the capabilities a command or tool uses today
-(see [Sending](#sending-grants-backendsend)); a later backend gets its own
-`<backend>.send` row when it is built, and an unknown one is a config error.
-
-**Agent access per account and contact** ([ADR 0009](docs/adr/0009-agent-access-per-account-and-contact.md)) —
-`agentAccess` holds rules that give one account, or one
-account/contact pair, a `read` mode (message bodies) and a `write` mode (sending): `allow`,
-`ask` or `deny`. A contact rule beats an account rule per kind, and a kind a rule leaves out falls
-through to the next rule up, then to `askWithoutRule` (default `true`: ask; `false`: deny). An
-explicit `deny` is final, and a write needs the read: `write` `allow`/`ask` with `read` `deny`
-is an error. Two rules with the same scope, an unknown key or a bad mode are errors when the
-file loads. Your old `<backend>.send` grants are read as contact rules with `read` and `write`
-`allow`, in memory; an explicit contact rule for the same pair wins, and the file is never rewritten.
-
-**Agents are held to these rules; you are not.** The MCP tools and the agent commands of the CLI
-(`curlew send`, and the read commands below) check them; your own use of the CLI and the GTK app
-checks nothing. A message to your own address is always allowed.
-
-- **Write** — `send_message` and `curlew send` need `write`. `allow` sends, `deny` refuses and
-  names the config key with an example rule, `ask` asks you (below).
-- **Read** — only message *bodies* are gated: `conversations_get` with `include_bodies`,
-  `xmpp_wait_reply`, `mail_get_message`, `mail_save_attachment`, `message_save_attachment`, and the CLI's
-  `conversations show --bodies`, `mail message`, `mail attachment` and the same for a `query` or
-  `body` search. Metadata (who, when, subjects, lists) stays readable. A mail's contact is its
-  sender (or, for your own mail, every recipient); a chat's contacts are its participants, so a
-  rule on a Matrix room id does not match a member-based check — write the rule for the member.
-- **Searches never ask.** `mail_search` with a query and `index_search` return only the hits
-  whose contact you have allowed, and say how many were left out (`withheld`); read that
-  conversation directly to be asked.
-
-**The prompt.** On `ask`, the running `curlew daemon` shows a desktop notification — *Allow once*,
-*For this session*, *Always*, *Deny* — naming the contact and, for a send, the first 80
-characters of the text. *For this session* lasts until that MCP process ends and lives in the
-daemon's memory only; a CLI call is always "once" and is not offered it. *Always* adds a rule to
-`agentAccess.rules` (a migrated rule is never rewritten). A dismissed notification, a *Deny* and
-no answer within 2 minutes all refuse; after a *Deny* the same session is not asked again for
-that contact and kind. Without a running daemon or a notification service, `ask` refuses and
-says so — start `curlew daemon`, or add a rule. Give the MCP tool call a timeout above 2 minutes
-in your agent, or it gives up while you are still reading.
-
-**Behaviour change in 0.2.0:** with no rule, bodies and sends are `ask`, so an agent that could
-read mail or chats freely before is now asked about, per contact. To keep the old behaviour for
-an account, add `{ "account": "<id>", "read": "allow" }`.
-
-```json
-{
-  "agentAccess": {
-    "askWithoutRule": true,
-    "rules": [
-      { "account": "xmpp-abc123", "read": "allow", "write": "ask" },
-      { "account": "xmpp-abc123", "contact": "friend@example.org", "read": "allow", "write": "allow" },
-      { "account": "mail-def456", "read": "deny", "write": "deny" }
-    ]
-  }
-}
-```
-
-**The window.** `curlew window` opens a GTK 4 / libadwaita window (needs GJS and a desktop
-session; only this explicit command opens it, so a bare `curlew`, and an agent running one, never
-shows a window). The sidebar is one read-only list of every conversation from the local index,
-whatever the messenger, in collapsible sections *People* and *Groups*. Each row shows an avatar with
-a small protocol badge, the title (bold while unread), the protocol and account, and a grey unread
-count. Filter chips narrow it by protocol (and by account, once a protocol with several is
-chosen); the search button filters by name. One person with several messengers is one row and
-one chat, whichever protocol a message came by. Pictures show in the bubble; other files open from
-a tile. At 720 sp and narrower the window collapses to one pane, down to 360 px wide. The layout rules and
-their role models are in [`docs/design/ui.md`](docs/design/ui.md).
-
-![A conversation with a person who writes on two messengers](docs/screenshots/conversations.png)
-
-![The same conversation at 360 px wide](docs/screenshots/conversation-narrow.png)
-
-**Agent access** is not a main area: it opens from the primary menu as a dialog. It lists the
-rules grouped by account, with `Name (address)` where the index knows the contact and *Whole
-account* for an account-wide rule. Each rule has a read and a write mode (allow, ask, deny); you
-can remove a rule, add one, and switch `askWithoutRule`. Your own commands and the window are
-never restricted, and your own addresses are always allowed — the dialog says so.
-
-![The Agent access dialog](docs/screenshots/agent-access.png)
-
-- *Writing.* Every edit re-reads `config.json`, changes only `agentAccess`, and writes it
-  atomically with mode 0600 — no other key is touched. The daemon can write the same file (an
-  *Always* answer); there is no file lock, so the two can still race within the milliseconds
-  between read and rename. The window watches the file and reloads after any change, so what it
-  shows is what is on disk, also after a refused edit.
-- *Migrated rules.* A rule that exists only because of an old `mail.send` / `xmpp.send` grant is
-  shown with a note. Changing a mode makes it a rule of its own. It cannot be removed on its
-  own — the grant stays in your configuration — and removing the explicit rule brings the
-  migrated one back.
-- *Not yet.* The ask prompt is still a desktop notification; showing it in this window is open,
-  and so is the app icon.
-
-Chat sessions (Telegram, WhatsApp, Matrix — including Matrix's crypto store) and
-chat passwords (XMPP) are **secrets**, kept apart from the index under
-`$XDG_DATA_HOME/curlew/secrets/` — no command or MCP tool ever returns one.
-The index can be rebuilt from the servers **unless WhatsApp is enabled**:
-WhatsApp keeps no archive, so its messages in the index are the only copy
-(`curlew backends list` shows this as `storeTier: state`).
-
-Nothing is sent anywhere. Curlew talks to your mail server — and to Telegram,
-WhatsApp, your XMPP server or your Matrix homeserver if you enabled them — and
-to nothing else.
-
-## Releasing
-
-A tag `v*` pushed to the repo (`git tag v0.1.0 && git push --tags`) builds every
-installable format and attaches them to a GitHub release:
-[`.deb`/`.rpm`](.github/workflows/ci.yml) and [macOS (arm64 + x64) /
-Windows (x64)](.github/workflows/ci.yml) packages, via
-[`release.yml`](.github/workflows/release.yml). `workflow_dispatch` re-cuts
-artifacts for an existing tag without moving it (`tag` + `publish` inputs).
-
-**GOA and Evolution Data Server are Linux-only.** The macOS and Windows
-packages still build and ship — they carry the same `curlew` CLI and MCP
-server — but every account backend (mail, contacts, calendar; also the
-chat/delivery backends that depend on `@curlew/gnome` for credentials)
-reports itself unavailable on those two platforms, because the GObject-
-Introspection libraries GOA/EDS need do not exist there. Today that is the
-honest state of the macOS/Windows artifacts: a working binary with no
-working account source. Closing that gap — a platform-native credential
-and sync layer for macOS/Windows — is open work, not a bug in these
-packages.
-
-### Flatpak
-
-CI builds a Flatpak (`ship-flatpak` artifact, `gjsify ship linux --target flatpak`). It is the
-chat client: network, Wayland/X11 and nothing else, no `--talk-name=org.gnome.OnlineAccounts`
-and no home access, so Curlew's index lives in `~/.var/app/eu.jumplink.curlew/`. Mail in the
-sandbox is a chat transport with its own login, not a GOA account; contacts and calendar stay a
-feature of the host build until a portal covers them. The rest of the app is brought to the
-same-code-inside-and-outside-a-sandbox rule of gjsify ADR 0138 in the order set out in
-[ADR 0011](docs/adr/0011-same-app-inside-and-outside-a-sandbox.md). The manifest is generated
-from `gjsify.ship.flatpak` in `app/package.json`; Flathub itself needs offline npm sources
-(`gjsify flatpak sources`) and is not wired yet.
-
-### Embedding a Telegram api pair (packagers)
-
-A distributor — for example a Flatpak manifest for a Telegram-only build, where
-GOA is not needed — can embed *its own* `api_id`/`api_hash` (registered at
-my.telegram.org under the distributor's name; per-distributor, never shared and
-never committed to this repository) by setting both variables for the build:
-
-```bash
-CURLEW_TELEGRAM_EMBEDDED_API_ID=<id> CURLEW_TELEGRAM_EMBEDDED_API_HASH=<hash> \
-  gjsify workspace curlew-cli build        # or build:node
-```
-
-`app/scripts/build-bundle.mjs` turns them into the compile-time constant
-`__CURLEW_TELEGRAM_EMBEDDED__`; set only one, or malformed values, and the build
-fails (values never printed). Unset — as in CI and dev builds — embeds nothing.
-In a Flatpak manifest, put them in the `build-options.env` of the curlew module
-(or inject them from the packager's secret store). The pair is readable by
-anyone holding the bundle: Telegram treats it as an application identifier, not
-a secret.
-
-Local verification, mirroring what CI does on `fedora:44`:
-
-```bash
-gjsify workspace curlew-cli build:node   # darwin/win32 ship `dist/curlew.node.mjs`
-gjsify install --os darwin --cpu arm64 --immutable
-(cd app && gjsify ship darwin --arch arm64 --skip-build --target macos-app-zip)
-gjsify install --os win32 --cpu x64 --immutable
-(cd app && gjsify ship windows --arch x64 --skip-build --target windows-dir-zip,msi)
-(cd app && gjsify ship linux --stage)   # needs gir1.2-*/typelib packages to assert .deb/.rpm fully
-gjsify install   # back to the plain install afterwards
-```
-
-Unsigned on both macOS and Windows, by design (ADR 0024 § A13 in gjsify) —
-a legitimate deliverable, not a placeholder. Where signing would attach, on
-a runner that holds the identity:
-
-- macOS — `gjsify ship darwin --arch <arch> --skip-build --target macos-app-zip --sign <identity>` (Developer ID; `--notarize <keychain-profile>` on top)
-- Windows — same shape, `--sign <certificate thumbprint or PFX path>` reaching `signtool` (unverified upstream: no gjsify run has invoked it)
-
-## Development
-
-See [AGENTS.md](AGENTS.md).
-
-Translations: English sources, German in [`po/de.po`](po/de.po), status and how to add a string
-in [`docs/i18n-status.md`](docs/i18n-status.md).
+Curlew runs on GJS through [gjsify](https://github.com/gjsify/gjsify). Needs GTK 4, libadwaita and
+`libgda-sqlite`; the GNOME features also need GNOME Online Accounts and Evolution Data Server.
+The command line, `curlew setup` and the systemd unit for the daemon are covered in
+[docs/guide/cli.md](docs/guide/cli.md).
+
+## Documentation
+
+- [docs/README.md](docs/README.md): the index
+- Decisions: [docs/adr/](docs/adr/), starting with [ADR 0001](docs/adr/0001-multi-protocol-messenger.md)
+- Design: [docs/design/ui.md](docs/design/ui.md)
+- Contributing and agent rules: [AGENTS.md](AGENTS.md)
+- Translations: English sources, German in [`po/de.po`](po/de.po); see [docs/i18n-status.md](docs/i18n-status.md)
+- [CHANGELOG.md](CHANGELOG.md)
 
 ## License
 
@@ -1051,6 +126,6 @@ The apps (`app/`) are AGPL-3.0-or-later. The reusable packages under `packages/`
 other programs can link them. The exception is `@curlew/signal`, which stays AGPL-3.0-or-later:
 it builds on libsignal-client (AGPL-3.0-only) and contains code ported from Signal Desktop.
 
-Free to use, modify and share. The AGPL adds one condition to the GPL: anyone who
-runs this program **as a network service** must offer that service's users the
-source of their version. Running it locally for yourself adds no obligation.
+The AGPL adds one condition to the GPL: anyone who runs this program **as a network service** must
+offer that service's users the source of their version. Running it locally for yourself adds no
+obligation.

@@ -9,6 +9,14 @@ Agent- and contributor-facing docs for the curlew repo. The hard rules that load
 - [`project/runtime.md`](project/runtime.md) — build, test and run commands; gjsify workspace rules
 - [`project/rename-postbote.md`](project/rename-postbote.md) — why the old `postbote` name is still load-bearing
 
+## Guide
+
+- [`guide/protocols.md`](guide/protocols.md) — per-protocol setup, terms and behaviour, sending grants, end-to-end encryption
+- [`guide/cli.md`](guide/cli.md) — requirements, install, `curlew setup`, the command line
+- [`guide/daemon.md`](guide/daemon.md) — the receiving daemon and its systemd unit
+- [`guide/mcp-and-data.md`](guide/mcp-and-data.md) — the MCP server, agent access, where your data lives, demo mode
+- [`guide/releasing.md`](guide/releasing.md) — release tags, Flatpak, packagers
+
 ## Privacy and state
 
 - [`privacy/data-tiers.md`](privacy/data-tiers.md) — what is `state`, `secret`, `derived`; where data lives
