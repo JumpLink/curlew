@@ -60,6 +60,12 @@ export interface BackendMessage {
   automation: AutomationHeaders;
   /** Delta Chat's open email-chat marker (`Chat-Version: 1.0`). */
   emailChat: boolean;
+  /** A reaction mail (RFC 9078): it belongs on its target as a reaction, never in the list. */
+  reaction?: boolean;
+  /** `Chat-Edit` (Delta Chat): this mail replaces the text of the message with that Message-ID. */
+  chatEdit?: string;
+  /** `Chat-Delete` (Delta Chat): this mail asks to delete the message with that Message-ID. */
+  chatDelete?: string;
   /** The body is encrypted (OpenPGP, S/MIME): there is no text to index, and the window says so. */
   encrypted?: boolean;
 }
@@ -862,6 +868,8 @@ export interface ReplyTarget {
   fromSelf?: boolean;
   /** What the message said, for a network whose quote carries the content itself (WhatsApp). */
   text?: string;
+  /** Mail only: the message carries `Chat-Version`, so its peer speaks Delta Chat. */
+  emailChat?: boolean;
 }
 
 /** One message handed to a sender. */

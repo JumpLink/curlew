@@ -399,6 +399,7 @@ function handleOf<C extends { backend: string; accountId: string }>(
     ...(clientId ? { clientId } : {}),
     ...(message.fromSelf ? { fromSelf: true } : {}),
     ...(text ? { text } : {}),
+    ...(message.backend === 'mail' && message.emailChat ? { emailChat: true } : {}),
   };
   return { target, choice };
 }
@@ -431,7 +432,7 @@ export const SIGNAL_CHANGE_WINDOW_MS = 24 * 60 * 60 * 1000;
 /**
  * Whether editing or deleting `message` is still open to the person. Signal closes both a day
  * after sending, except in the note to self; the time is the sender's, an unknown one is not
- * guessed at. Other protocols set no window the client can see.
+ * guessed at. Other protocols set no window the client can see; mail (Delta Chat) has none.
  */
 export function changesOfferedFor(
   backend: string,

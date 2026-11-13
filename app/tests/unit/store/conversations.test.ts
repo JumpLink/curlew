@@ -202,6 +202,111 @@ export default async () => {
     });
   });
 
+  await describe('reaction mails', async () => {
+    const chatMailbox = (reactions: Parameters<typeof message>[3][]): FakeBackend => {
+      const backend = new FakeBackend();
+      backend.put('INBOX', [
+        message(1, 'Hallo', 'Hi', { messageId: '<t1@example.org>', from: [ANNA], to: [ME], emailChat: true }),
+        ...reactions.map((extra, i) =>
+          message(2 + i, 'Message', '', { from: [ANNA], to: [ME], emailChat: true, ...extra }),
+        ),
+      ]);
+      return backend;
+    };
+    const shown = async (reactions: Parameters<typeof message>[3][]) => {
+      const db = freshDb();
+      await syncIndex(db, chatMailbox(reactions), { now: AT('2026-08-06T12:00:00Z') });
+      rebuildConversations(db, {});
+      const list = listConversations(db, {});
+      const id = list[0]?.id;
+      return {
+        list,
+        detail: id ? getConversation(db, id, {}) : undefined,
+        full: id ? getConversation(db, id, { includeBodies: true }) : undefined,
+      };
+    };
+
+    await it('attaches the emoji to its target and adds no message', async () => {
+      const { list, detail } = await shown([
+        { messageId: '<r1@example.org>', inReplyTo: '<t1@example.org>', reaction: true, bodyText: '👍' },
+      ]);
+      expect(list.length).toBe(1);
+      expect(detail?.messages.length).toBe(1);
+      expect(detail?.messages[0].reactions?.[0].emoji).toBe('👍');
+    });
+
+    await it('lets the latest reaction of a person replace the earlier one, and an empty one take it back', async () => {
+      const first = {
+        messageId: '<r1@example.org>',
+        inReplyTo: '<t1@example.org>',
+        reaction: true,
+        bodyText: '👍',
+      };
+      const replaced = await shown([first, { ...first, messageId: '<r2@example.org>', bodyText: '❤️' }]);
+      expect(replaced.detail?.messages[0].reactions?.map((r) => r.emoji)).toStrictEqual(['❤️']);
+      const taken = await shown([first, { ...first, messageId: '<r2@example.org>', bodyText: '' }]);
+      expect(taken.detail?.messages[0].reactions).toBe(undefined);
+    });
+
+    await it('replaces the text on a Chat-Edit, skipping the quote and the pencil, and shows no extra message', async () => {
+      const {
+        list,
+        detail,
+        full: withBody,
+      } = await shown([
+        {
+          messageId: '<e1@example.org>',
+          inReplyTo: '<t1@example.org>',
+          chatEdit: '<t1@example.org>',
+          bodyText: 'On 2026-01-01, Anna wrote:\n> Hi\n\n✏️Hi there',
+        },
+      ]);
+      expect(list.length).toBe(1);
+      expect(detail?.messages.length).toBe(1);
+      expect(withBody?.messages[0].bodyText).toBe('Hi there');
+      expect(withBody?.messages[0].editedAt !== undefined).toBe(true);
+    });
+
+    await it('removes the message on a Chat-Delete, and ignores a request from someone else or for an unknown id', async () => {
+      const gone = await shown([
+        {
+          messageId: '<d1@example.org>',
+          inReplyTo: '<t1@example.org>',
+          chatDelete: '<t1@example.org>',
+          bodyText: 'foo',
+        },
+      ]);
+      expect(gone.list.length).toBe(0);
+      const foreign = await shown([
+        {
+          messageId: '<d1@example.org>',
+          inReplyTo: '<t1@example.org>',
+          chatDelete: '<t1@example.org>',
+          from: [BEN],
+          bodyText: 'foo',
+        },
+      ]);
+      expect(foreign.detail?.messages.length).toBe(1);
+      const unknown = await shown([
+        {
+          messageId: '<d1@example.org>',
+          inReplyTo: '<t1@example.org>',
+          chatDelete: '<nope@example.org>',
+          bodyText: 'foo',
+        },
+      ]);
+      expect(unknown.detail?.messages.length).toBe(1);
+    });
+
+    await it('drops a reaction whose target the index does not hold', async () => {
+      const { list, detail } = await shown([
+        { messageId: '<r1@example.org>', inReplyTo: '<gone@example.org>', reaction: true, bodyText: '👍' },
+      ]);
+      expect(list.length).toBe(1);
+      expect(detail?.messages[0].reactions).toBe(undefined);
+    });
+  });
+
   await describe('bulk writes', async () => {
     await it('writes every row across several multi-row INSERT chunks', async () => {
       // 121 threads: many chunks at every table's width, plus a short tail. A `?` in the data
@@ -297,8 +402,8 @@ export default async () => {
         expect(second.senderId).toBe(null);
         expect(first.ref.folder).toBe('INBOX');
         expect(first.ref.uid).toBe(1);
-        // Mail is located by folder + uid; remoteId is for the other backends.
-        expect(first.ref.remoteId).toBe(undefined);
+        // Mail is located by folder + uid; its remoteId is the Message-ID a reaction names.
+        expect(first.ref.remoteId).toBe('<t1@example.org>');
       } finally {
         db.close();
       }

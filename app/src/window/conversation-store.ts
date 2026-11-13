@@ -70,7 +70,9 @@ export function recordOwnEdit(messageId: string, text: string, dbPath = indexDbP
 export function recordOwnDeletion(messageId: string, dbPath = indexDbPath()): void {
   const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
   try {
-    db.prepare('DELETE FROM conversation_messages WHERE id = ? AND remote_seq IS NOT NULL').run(messageId);
+    db.prepare(
+      "DELETE FROM conversation_messages WHERE id = ? AND (remote_seq IS NOT NULL OR backend = 'mail')",
+    ).run(messageId);
   } finally {
     db.close();
   }

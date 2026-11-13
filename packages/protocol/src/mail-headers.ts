@@ -27,6 +27,9 @@ export const THREAD_HEADER_FIELDS: readonly string[] = [
   'AUTO-SUBMITTED',
   'PRECEDENCE',
   'CHAT-VERSION',
+  'CONTENT-DISPOSITION',
+  'CHAT-EDIT',
+  'CHAT-DELETE',
 ];
 
 /** The FETCH item that asks for them without setting `\Seen`. */
@@ -76,6 +79,18 @@ export interface ThreadHeaders {
   automation: AutomationHeaders;
   /** Only version 1.0 is understood; a future version is not guessed at. */
   emailChat: boolean;
+  /** `Content-Disposition: reaction` (RFC 9078): the body is an emoji, not a message. */
+  reaction: boolean;
+  /** `Chat-Edit`: the Message-ID (`<id@host>`) whose text this mail replaces; the body is the new text. */
+  chatEdit: string | null;
+  /** `Chat-Delete`: the Message-ID of the message this mail asks to delete; the body is ignored. */
+  chatDelete: string | null;
+}
+
+/** The Message-ID in angle brackets: Delta Chat writes these two headers with or without them. */
+function bracketedId(value: string | null): string | null {
+  const id = value?.replace(/^<|>$/g, '') ?? '';
+  return id && !/[\s<>]/.test(id) ? `<${id}>` : null;
 }
 
 /** Parse the fetched header block into threading and classification input. */
@@ -96,5 +111,8 @@ export function parseThreadHeaders(block: string): ThreadHeaders {
       precedence: get('precedence'),
     },
     emailChat: get('chat-version') === '1.0',
+    reaction: /^reaction\s*(;|$)/i.test(get('content-disposition') ?? ''),
+    chatEdit: bracketedId(get('chat-edit')),
+    chatDelete: bracketedId(get('chat-delete')),
   };
 }

@@ -32,6 +32,9 @@ export function composerOptions(message: OutgoingMessage, messageId: string): Ma
     messageId,
     headers: {
       ...(message.emailChat ? { 'Chat-Version': '1.0' } : {}),
+      ...(message.chatEdit ? { 'Chat-Edit': message.chatEdit.slice(1, -1) } : {}),
+      ...(message.chatDelete ? { 'Chat-Delete': message.chatDelete.slice(1, -1) } : {}),
+      ...(message.reaction ? { 'Content-Disposition': 'reaction' } : {}),
       ...(message.inReplyTo ? { 'In-Reply-To': message.inReplyTo } : {}),
       ...(message.references && message.references.length > 0 ? { References: message.references.join(' ') } : {}),
     },

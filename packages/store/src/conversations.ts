@@ -67,6 +67,9 @@ interface MailRow extends ThreadMember {
   precedence: string | null;
   emailChat: boolean;
   encrypted: boolean;
+  reaction: boolean;
+  chatEdit: string | null;
+  chatDelete: string | null;
 }
 
 function str(value: unknown): string | null {
@@ -92,7 +95,7 @@ function loadMailRows(db: IndexDatabase): MailRow[] {
     .prepare(
       `SELECT account_id, folder_path, uid, message_id, subject, sender, date, internal_date, seen,
               has_attachment, in_reply_to, thread_refs, from_json, to_json, list_id,
-              list_unsubscribe, auto_submitted, precedence, email_chat, encrypted
+              list_unsubscribe, auto_submitted, precedence, email_chat, encrypted, reaction, chat_edit, chat_delete
          FROM messages ORDER BY id`,
     )
     .all() as Array<Record<string, unknown>>;
@@ -117,6 +120,9 @@ function loadMailRows(db: IndexDatabase): MailRow[] {
     precedence: str(r.precedence),
     emailChat: Number(r.email_chat) === 1,
     encrypted: Number(r.encrypted) === 1,
+    reaction: Number(r.reaction) === 1,
+    chatEdit: str(r.chat_edit),
+    chatDelete: str(r.chat_delete),
   }));
 }
 
@@ -319,6 +325,11 @@ const CONVERSATION_PARTICIPANTS: SyncedTable = {
   columns: ['conversation_id', 'participant_id'],
   key: [0, 1],
 };
+const MAIL_REACTIONS: SyncedTable = {
+  table: 'message_reactions',
+  columns: ['message_id', 'reactor', 'emoji'],
+  key: [0, 1, 2],
+};
 const MAIL_MESSAGES: SyncedTable = {
   table: 'conversation_messages',
   columns: [
@@ -342,6 +353,9 @@ const MAIL_MESSAGES: SyncedTable = {
     'uid',
     'email_chat',
     'encrypted',
+    'remote_id',
+    'body',
+    'edited_at',
   ],
   key: [0],
 };
@@ -430,8 +444,20 @@ function updateIfAny(db: IndexDatabase, where: string, set: string): boolean {
  * Idempotent: running it twice yields the same rows and the same ids.
  */
 export function rebuildConversations(db: IndexDatabase, options: RebuildOptions = {}): RebuildResult {
-  const rows = loadMailRows(db);
+  const all = loadMailRows(db);
   const self = selfAddressSet(db, options.selfAddresses ?? []);
+  // A reaction, edit or delete mail is no message of the thread: it acts on its target.
+  const controls = mailControls(db, all);
+  const rows = all.filter(
+    (row) => !row.reaction && !row.chatEdit && !row.chatDelete && !controls.deleted.has(row.key),
+  );
+  // The person's own edit, echoed locally before its mail was synced, stays until a mail says otherwise.
+  const echoed = new Map<string, { body: SqlValue; editedAt: SqlValue }>();
+  for (const r of db
+    .prepare("SELECT id, body, edited_at FROM conversation_messages WHERE backend = ? AND edited_at IS NOT NULL")
+    .all(MAIL_BACKEND) as Array<Record<string, unknown>>) {
+    echoed.set(String(r.id), { body: r.body as SqlValue, editedAt: r.edited_at as SqlValue });
+  }
   const directory = new ParticipantDirectory(options.contacts ?? []);
   const threads = buildThreads(rows);
 
@@ -441,6 +467,7 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
   const messageRows: SqlValue[][] = [];
   const conversationRows: SqlValue[][] = [];
   const memberRows: SqlValue[][] = [];
+  const idByMessageId = new Map<string, string>();
 
   for (const thread of threads) {
     const conversationId = stableId('c-', MAIL_BACKEND, thread.accountId, thread.rootKey);
@@ -484,8 +511,10 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
       if (!fromSelf && !row.seen) unread++;
       if (row.hasAttachment) attachments = true;
 
+      const id = stableId('m-', conversationId, row.messageId ?? row.key);
+      if (row.messageId) idByMessageId.set(row.messageId, id);
       messageRows.push([
-        stableId('m-', conversationId, row.messageId ?? row.key),
+        id,
         conversationId,
         MAIL_BACKEND,
         row.accountId,
@@ -506,6 +535,9 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
         row.uid,
         row.emailChat ? 1 : 0,
         row.encrypted ? 1 : 0,
+        // Mail's own id, so a reaction or an edit can name the message it is about.
+        row.messageId,
+        ...editedOf(controls.edits.get(row.key), echoed.get(id)),
       ]);
     }
 
@@ -587,7 +619,16 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
     [MAIL_BACKEND],
   );
   sync(CONVERSATIONS, conversationRows, 'backend = ?', [MAIL_BACKEND]);
+  const reactions = mailReactions(db, all.filter((row) => row.reaction), idByMessageId, self);
+  // Before the messages: a deleted message is still in the scope subquery, so its reactions go too.
+  sync(
+    MAIL_REACTIONS,
+    reactions.others,
+    "reactor != '' AND message_id IN (SELECT id FROM conversation_messages WHERE backend = ?)",
+    [MAIL_BACKEND],
+  );
   sync(MAIL_MESSAGES, messageRows, 'backend = ?', [MAIL_BACKEND]);
+  for (const [target, emoji] of reactions.own) setOwnReaction(db, target, emoji);
 
   // Chats: point every message and membership at the rebuilt directory. A chat conversation
   // is one with a cursor — the store tells chat from mail by driver data, not by name.
@@ -631,6 +672,87 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
   if (changes > 0) appendChangesTransaction(db, [{ kind: 'conversations' }]);
 
   return { conversations: threads.length, messages: messageRows.length, participants: participants.length };
+}
+
+interface MailControls {
+  /** Mail rows a `Chat-Delete` took away, by `key`. */
+  deleted: Set<string>;
+  /** The newest `Chat-Edit` text per mail row, by `key`. */
+  edits: Map<string, { text: string; at: string | null }>;
+}
+
+/**
+ * What `Chat-Edit` and `Chat-Delete` mails ask for. Only the author of a message can change it, so a
+ * request from anyone else is ignored, as is one that names a message the index does not hold or one
+ * that is not part of a Delta Chat thread (nothing but an email chat is edited or deleted by mail).
+ */
+function mailControls(db: IndexDatabase, all: readonly MailRow[]): MailControls {
+  const byId = new Map<string, MailRow>();
+  for (const row of all) {
+    if (row.messageId && !row.reaction && !row.chatEdit && !row.chatDelete) byId.set(row.messageId, row);
+  }
+  const author = (row: MailRow) => normalizeAddress('email', row.from[0]?.email ?? '');
+  const result: MailControls = { deleted: new Set(), edits: new Map() };
+  const sentAt = (row: MailRow) => Date.parse(row.sentAt ?? '') || 0;
+  for (const row of [...all].sort((a, b) => sentAt(a) - sentAt(b))) {
+    const named = row.chatDelete ?? row.chatEdit;
+    const target = named ? byId.get(named) : undefined;
+    if (!target || !target.emailChat || author(target) === null || author(target) !== author(row)) continue;
+    if (row.chatDelete) {
+      result.deleted.add(target.key);
+      continue;
+    }
+    const text = editedText(messageBody(db, row.accountId, row.folderPath, row.uid) ?? '');
+    if (text) result.edits.set(target.key, { text, at: row.sentAt });
+  }
+  return result;
+}
+
+/** The new text of an edit mail: the quote and the pencil before it are skipped (chatmail spec, "Request editing"). */
+function editedText(body: string): string {
+  const pencil = body.lastIndexOf('\u270f');
+  const text = pencil === -1 ? body : body.slice(pencil + 1).replace(/^\ufe0f/, '');
+  return text.trim();
+}
+
+function editedOf(
+  edit: { text: string; at: string | null } | undefined,
+  echo: { body: SqlValue; editedAt: SqlValue } | undefined,
+): [SqlValue, SqlValue] {
+  if (edit) return [edit.text, edit.at ?? new Date().toISOString()];
+  return echo ? [echo.body, echo.editedAt] : [null, null];
+}
+
+/**
+ * What the reaction mails of a mailbox leave on their targets (RFC 9078): the last one of each
+ * reactor wins, an empty body takes it back, a target the index does not hold is dropped.
+ * `own` is the person's own, by message id: those rows are written beside the local echo, not
+ * synced, because a sent reaction may not be in any synced folder.
+ */
+function mailReactions(
+  db: IndexDatabase,
+  mails: readonly MailRow[],
+  idByMessageId: ReadonlyMap<string, string>,
+  self: ReadonlySet<string>,
+): { others: SqlValue[][]; own: Map<string, string | null> } {
+  const sentAt = (row: MailRow) => Date.parse(row.sentAt ?? '') || 0;
+  const last = new Map<string, { target: string; reactor: string; emoji: string | null }>();
+  for (const row of [...mails].sort((a, b) => sentAt(a) - sentAt(b))) {
+    const target = row.inReplyTo ? idByMessageId.get(row.inReplyTo) : undefined;
+    const email = normalizeAddress('email', row.from[0]?.email ?? '');
+    if (!target || !email) continue;
+    const reactor = self.has(email) ? '' : email;
+    const body = messageBody(db, row.accountId, row.folderPath, row.uid)?.trim() ?? '';
+    if (body.length > 64) continue;
+    last.set(`${target}\u0000${reactor}`, { target, reactor, emoji: body || null });
+  }
+  const others: SqlValue[][] = [];
+  const own = new Map<string, string | null>();
+  for (const { target, reactor, emoji } of last.values()) {
+    if (reactor === '') own.set(target, emoji);
+    else if (emoji) others.push([target, reactor, emoji]);
+  }
+  return { others, own };
 }
 
 // ── reads ──────────────────────────────────────────────────────────────
@@ -1140,9 +1262,9 @@ export function getMessagesByRemoteId(
   return found;
 }
 
-/** Fills `reactions` on the chat messages among `messages`, one query for all of them. */
+/** Fills `reactions` on the chat messages and email-chat mails among `messages`, one query for all of them. */
 function attachReactions(db: IndexDatabase, messages: ConversationMessage[]): void {
-  const chat = messages.filter((m) => m.editedAt !== undefined);
+  const chat = messages.filter((m) => m.editedAt !== undefined || m.emailChat);
   if (chat.length === 0) return;
   const byId = new Map(chat.map((m) => [m.id, m]));
   const ids = [...byId.keys()];
@@ -1178,12 +1300,15 @@ export function setOwnReaction(db: IndexDatabase, messageId: string, emoji: stri
 }
 
 /**
- * Updates a chat message's body and edited timestamp. Returns true when the row existed and was
- * changed; false when the id was not a chat message (mail bodies live in the FTS table).
+ * Updates a message's body and edited timestamp. Returns true when the row existed and was
+ * changed; false when the id was not a chat or email message.
  */
 export function setMessageText(db: IndexDatabase, messageId: string, text: string): boolean {
+  // A mail's edited text lives on its row too (the original stays in the FTS table).
   const result = db
-    .prepare("UPDATE conversation_messages SET body = ?, edited_at = ? WHERE id = ? AND remote_seq IS NOT NULL")
+    .prepare(
+      "UPDATE conversation_messages SET body = ?, edited_at = ? WHERE id = ? AND (remote_seq IS NOT NULL OR backend = 'mail')",
+    )
     .run(text, new Date().toISOString(), messageId);
   return result.changes > 0;
 }
@@ -1234,6 +1359,9 @@ function toMessage(
   // Chat rows carry a sequence; their extra fields are set only for them, so a mail message
   // looks exactly as it did before chats existed.
   const chat = r.remote_seq !== null && r.remote_seq !== undefined;
+  // A mail edited by a `Chat-Edit` keeps the new text on its row, and says when.
+  const editedMail = !chat && r.edited_at !== null && r.edited_at !== undefined;
+  if (editedMail) message.editedAt = str(r.edited_at);
   if (chat) {
     message.editedAt = str(r.edited_at);
     message.replyToRemoteId = str(r.reply_to_remote_id);
@@ -1249,7 +1377,9 @@ function toMessage(
     // Mail keeps its body once, in the FTS table; a chat message keeps it on its own row.
     const body =
       folder && uid !== undefined
-        ? messageBody(db, message.ref.accountId, folder, uid)
+        ? editedMail
+          ? str(r.body)
+          : messageBody(db, message.ref.accountId, folder, uid)
         : chat
           ? str(r.body)
           : null;

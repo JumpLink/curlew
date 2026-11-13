@@ -105,6 +105,72 @@ export default async () => {
       });
     });
 
+    await it('reacts with a reaction mail that answers the target', async () => {
+      await withServer(async (server) => {
+        const sender = new MailSender(targetFor(server.port), PERMIT);
+        await sender.react({
+          to: OWNER,
+          target: { remoteId: '<t1@example.org>', emailChat: true },
+          emoji: '👍',
+        });
+        const raw = server.dialogue.messages[0];
+        expect(raw.includes('Content-Disposition: reaction')).toBe(true);
+        expect(raw.includes('Chat-Version: 1.0')).toBe(true);
+        expect(raw.includes('In-Reply-To: <t1@example.org>')).toBe(true);
+      });
+    });
+
+    await it('edits and deletes through Chat-Edit and Chat-Delete without angle brackets', async () => {
+      await withServer(async (server) => {
+        const sender = new MailSender(targetFor(server.port), PERMIT);
+        const target = { remoteId: '<t1@example.invalid>', emailChat: true, fromSelf: true };
+        await sender.edit({ to: OWNER, target, text: 'Hello world!' });
+        await sender.delete({ to: OWNER, target });
+        const [edited, deleted] = server.dialogue.messages;
+        expect(edited.includes('Chat-Edit: t1@example.invalid')).toBe(true);
+        expect(edited.includes('Hello world!')).toBe(true);
+        expect(deleted.includes('Chat-Delete: t1@example.invalid')).toBe(true);
+      });
+    });
+
+    await it('refuses to edit or delete what is not the own message of a Delta Chat peer, sending nothing', async () => {
+      await withServer(async (server) => {
+        const sender = new MailSender(targetFor(server.port), PERMIT);
+        let refused = 0;
+        for (const target of [
+          { remoteId: '<t1@example.invalid>', emailChat: true },
+          { remoteId: '<t1@example.invalid>', fromSelf: true },
+        ]) {
+          try {
+            await sender.edit({ to: OWNER, target, text: 'x' });
+          } catch {
+            refused++;
+          }
+          try {
+            await sender.delete({ to: OWNER, target });
+          } catch {
+            refused++;
+          }
+        }
+        expect(refused).toBe(4);
+        expect(server.dialogue.messages.length).toBe(0);
+      });
+    });
+
+    await it('refuses to react to a message that is not a Delta Chat one, sending nothing', async () => {
+      await withServer(async (server) => {
+        const sender = new MailSender(targetFor(server.port), PERMIT);
+        let refused = false;
+        try {
+          await sender.react({ to: OWNER, target: { remoteId: '<t1@example.org>' }, emoji: '👍' });
+        } catch {
+          refused = true;
+        }
+        expect(refused).toBe(true);
+        expect(server.dialogue.messages.length).toBe(0);
+      });
+    });
+
     await it('keeps the password out of an SMTP error', async () => {
       const server = await startDummyServer({ rejectAuthEchoing: PASSWORD });
       try {
