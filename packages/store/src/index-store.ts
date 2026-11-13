@@ -36,6 +36,8 @@ export interface IndexSearchCriteria {
   /** Full-text across subject, sender, recipients and body. */
   query?: string;
   accountId?: string;
+  /** Accounts left out (paused ones). */
+  excludeAccounts?: readonly string[];
   folderPath?: string;
   from?: string;
   subject?: string;
@@ -466,6 +468,10 @@ export function searchIndex(db: IndexDatabase, criteria: IndexSearchCriteria): I
   if (criteria.accountId) {
     where.push('account_id = ?');
     params.push(criteria.accountId);
+  }
+  if (criteria.excludeAccounts && criteria.excludeAccounts.length > 0) {
+    where.push(`account_id NOT IN (${placeholders(criteria.excludeAccounts.length)})`);
+    params.push(...criteria.excludeAccounts);
   }
   if (criteria.folderPath) {
     where.push('folder_path = ?');

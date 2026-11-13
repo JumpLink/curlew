@@ -18,6 +18,7 @@ import {
 import { existsSync, statSync } from 'node:fs';
 
 import { loadConfig } from '../core/config.ts';
+import { hiddenAccountIds } from '../core/visibility.ts';
 import { type ListEntry, toEntries, withPreviews } from './conversation-list-model.ts';
 
 // Mail is two orders of magnitude bigger than chat: one shared limit let 480 newsletters push every
@@ -62,16 +63,24 @@ export function loadConversationEntries(dbPath = indexDbPath(), cfgPath = config
   try {
     const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
     try {
-      const { senders, ui, mergedPeople, pins, contactChoices, backends } = loadConfig(cfgPath);
+      const config = loadConfig(cfgPath);
+      const { senders, ui, mergedPeople, pins, contactChoices, backends } = config;
+      const excludeAccounts = hiddenAccountIds(config);
       // Only an explicit `enabled: false` hides a protocol: a config that never mentions one still
       // shows what the index holds, and the person switched this off on purpose.
       const switchedOff = (backend: string): boolean => backends[backend]?.enabled === false;
       const entries = toEntries(
         [
-          ...listConversations(db, { limit: CHAT_LIMIT, excludeBackend: 'mail', overrides: senders }),
+          ...listConversations(db, {
+            limit: CHAT_LIMIT,
+            excludeBackend: 'mail',
+            excludeAccounts,
+            overrides: senders,
+          }),
           ...listConversations(db, {
             limit: MAIL_LIMIT,
             backend: 'mail',
+            excludeAccounts,
             emailChat: !ui.showAllEmails,
             overrides: senders,
           }),

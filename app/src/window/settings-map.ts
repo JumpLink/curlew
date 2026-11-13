@@ -33,7 +33,7 @@ export const CONFIG_SETTINGS: Record<keyof CurlewConfig, SettingPlace> = {
   grants: { kind: 'window', where: 'Agent access (migrated rules)' },
   agentAccess: { kind: 'window', where: 'Agent access, only while AI features are on' },
   encryption: { kind: 'window', where: 'Account page, XMPP: Require encryption' },
-  disabledAccounts: { kind: 'window', where: 'Account page: Sync this account' },
+  disabledAccounts: { kind: 'window', where: 'Account page: Use this account' },
   deltaChatAccounts: { kind: 'window', where: 'Account page, mail: Use for Delta Chat' },
   mergedPeople: { kind: 'window', where: 'Contact page and merge assistant' },
   declinedMerges: { kind: 'window', where: 'Merge assistant (Skip)' },

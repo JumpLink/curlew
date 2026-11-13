@@ -61,7 +61,7 @@ export async function indexSearchForAgent(
   dbPath?: string,
   cfgPath = configPath(),
 ): Promise<{ messages: IndexedMessage[]; staleFolders: number; indexedAt: string | null } & Withheld> {
-  const found = indexSearch(criteria, dbPath);
+  const found = indexSearch(criteria, dbPath, cfgPath);
   if (criteria.query === undefined) return { ...found, withheld: 0 };
   const config = loadConfig(cfgPath);
   const isSelfAddress = selfChecker(config, agent);

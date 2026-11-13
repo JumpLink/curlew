@@ -17,6 +17,7 @@ import {
   syncStatus,
 } from '@curlew/store';
 import { loadConfig, saveConfig } from '../config.ts';
+import { hiddenAccountIds } from '../visibility.ts';
 import type { AgentAccess } from './access.ts';
 import { requireParticipantsRead } from './message-access.ts';
 import { MAX_STALENESS_HOURS, openIndex } from './index-sync.ts';
@@ -36,12 +37,14 @@ export function conversationsList(params: ConversationsListParams = {}): {
   indexedAt: string | null;
   conversations: Conversation[];
 } {
-  const { senders } = loadConfig(params.configPath ?? configPath());
+  const config = loadConfig(params.configPath ?? configPath());
+  const { senders } = config;
   const db = openIndex(params.dbPath ?? indexDbPath());
   try {
     const conversations = listConversations(db, {
       peopleOnly: params.peopleOnly,
       accountId: params.accountId,
+      excludeAccounts: hiddenAccountIds(config),
       limit: capLimit(params.limit, CONVERSATION_LIMIT),
       overrides: senders,
     });

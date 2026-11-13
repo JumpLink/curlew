@@ -37,6 +37,7 @@ import {
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig } from '../config.ts';
+import { hiddenAccountIds } from '../visibility.ts';
 import { chmodSync } from 'node:fs';
 import { dirname } from 'node:path';
 
@@ -281,12 +282,14 @@ export function indexStatus(dbPath?: string): SyncStatus & { path: string; maxSt
 export function indexSearch(
   criteria: IndexSearchCriteria,
   dbPath?: string,
+  cfgPath = configPath(),
 ): { messages: IndexedMessage[]; staleFolders: number; indexedAt: string | null } {
+  const excludeAccounts = [...(criteria.excludeAccounts ?? []), ...hiddenAccountIds(loadConfig(cfgPath))];
   const db = openIndex(dbPath ?? indexDbPath());
   try {
     const status = syncStatus(db, MAX_STALENESS_HOURS, new Date());
     return {
-      messages: searchIndex(db, criteria),
+      messages: searchIndex(db, { ...criteria, excludeAccounts }),
       staleFolders: status.staleFolders.length,
       indexedAt: status.newestSync,
     };

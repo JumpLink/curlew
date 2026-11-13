@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 16:55+0100\n"
+"POT-Creation-Date: 2026-11-13 17:08+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -120,7 +120,7 @@ msgid "systemctl --user {verb} exited {code}"
 msgstr ""
 
 #: app/src/core/actions/chat-attachment.ts:140
-#: app/src/core/actions/daemon.ts:504
+#: app/src/core/actions/daemon.ts:515
 msgid "the attachment was not found in the index"
 msgstr ""
 
@@ -136,17 +136,21 @@ msgstr ""
 msgid "{backend} cannot fetch attachments"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:365
+#: app/src/core/actions/daemon.ts:363
+msgid "this account is paused — switch it on in Accounts to send from it"
+msgstr ""
+
+#: app/src/core/actions/daemon.ts:376
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:387
+#: app/src/core/actions/daemon.ts:398
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:453
+#: app/src/core/actions/daemon.ts:464
 msgid "the download stalled — try again"
 msgstr ""
 
@@ -159,18 +163,18 @@ msgid "only your own messages can be deleted"
 msgstr ""
 
 #: app/src/core/actions/delete.ts:53 app/src/core/actions/edit.ts:55
-#: app/src/core/actions/react.ts:54 app/src/core/actions/send.ts:514
+#: app/src/core/actions/react.ts:54 app/src/core/actions/send.ts:527
 msgid "Demo mode: nothing is sent."
 msgstr ""
 
 #: app/src/core/actions/delete.ts:58 app/src/core/actions/edit.ts:60
 #: app/src/core/actions/react.ts:59 app/src/core/actions/read-receipt.ts:49
-#: app/src/core/actions/send.ts:460 app/src/core/actions/send.ts:519
+#: app/src/core/actions/send.ts:473 app/src/core/actions/send.ts:533
 msgid "no account {account} — `curlew accounts list` shows them"
 msgstr ""
 
 #: app/src/core/actions/delete.ts:63 app/src/core/actions/edit.ts:65
-#: app/src/core/actions/react.ts:64 app/src/core/actions/send.ts:526
+#: app/src/core/actions/react.ts:64 app/src/core/actions/send.ts:540
 msgid "{backend} cannot send"
 msgstr ""
 
@@ -182,19 +186,19 @@ msgstr ""
 msgid "only your own messages can be edited"
 msgstr ""
 
-#: app/src/core/actions/index-sync.ts:156
+#: app/src/core/actions/index-sync.ts:157
 msgid ""
 "the index stayed locked by another process during the {phase} phase "
 "({message})"
 msgstr ""
 
-#: app/src/core/actions/index-sync.ts:175
+#: app/src/core/actions/index-sync.ts:176
 msgid ""
 "no backend is enabled — `curlew backends list` shows them, `backends enable "
 "<name>` turns one on"
 msgstr ""
 
-#: app/src/core/actions/index-sync.ts:225
+#: app/src/core/actions/index-sync.ts:226
 msgid ""
 "backend {name} uses the {kind} driver, which this curlew cannot sync yet"
 msgstr ""
@@ -215,13 +219,13 @@ msgid ""
 "config.agentAccess.rules"
 msgstr ""
 
-#: app/src/core/actions/send.ts:188 app/src/core/actions/send.ts:201
+#: app/src/core/actions/send.ts:189 app/src/core/actions/send.ts:202
 msgid ""
 "the message index is busy, so curlew cannot tell whether {account} is in use "
 "elsewhere — nothing was sent; try again in a moment"
 msgstr ""
 
-#: app/src/core/actions/send.ts:207
+#: app/src/core/actions/send.ts:208
 msgid ""
 "{account} is being received by {holder} right now, {backend} cannot send and "
 "receive at the same time, and that process did not take the send over — "
@@ -229,36 +233,40 @@ msgid ""
 "from your phone"
 msgstr ""
 
-#: app/src/core/actions/send.ts:348
+#: app/src/core/actions/send.ts:287
+msgid "account {account} is paused — switch it on in Accounts to send from it"
+msgstr ""
+
+#: app/src/core/actions/send.ts:360
 msgid "{backend} cannot send an image — give text and leave image_url out"
 msgstr ""
 
-#: app/src/core/actions/send.ts:358
+#: app/src/core/actions/send.ts:370
 msgid "nothing to send: the text is empty after rendering"
 msgstr ""
 
-#: app/src/core/actions/send.ts:361 app/src/core/actions/send.ts:540
+#: app/src/core/actions/send.ts:373 app/src/core/actions/send.ts:554
 msgid "{backend} cannot send attachments"
 msgstr ""
 
-#: app/src/core/actions/send.ts:365
+#: app/src/core/actions/send.ts:377
 msgid "{backend} cannot send a reply"
 msgstr ""
 
-#: app/src/core/actions/send.ts:504
+#: app/src/core/actions/send.ts:517
 msgid ""
 "this person is pinned to {pinned}: a message through {backend} is refused"
 msgstr ""
 
-#: app/src/core/actions/send.ts:530
+#: app/src/core/actions/send.ts:544
 msgid "nothing to send: give text, an image URL or an attachment"
 msgstr ""
 
-#: app/src/core/actions/send.ts:532
+#: app/src/core/actions/send.ts:546
 msgid "{backend} messages carry no subject"
 msgstr ""
 
-#: app/src/core/actions/send.ts:535
+#: app/src/core/actions/send.ts:549
 msgid "{backend} cannot send email chat headers"
 msgstr ""
 
@@ -893,22 +901,22 @@ msgid "Sent an attachment"
 msgstr ""
 
 #: app/src/core/lib/message-notices.ts:46
-#: app/src/core/lib/message-notices.ts:88
-#: app/src/core/lib/message-notices.ts:98
+#: app/src/core/lib/message-notices.ts:91
+#: app/src/core/lib/message-notices.ts:101
 msgid "New message"
 msgstr ""
 
-#: app/src/core/lib/message-notices.ts:97
+#: app/src/core/lib/message-notices.ts:100
 msgid "{name} wrote a message"
 msgstr ""
 
-#: app/src/core/lib/message-notices.ts:99
+#: app/src/core/lib/message-notices.ts:102
 msgid "{n} new message"
 msgid_plural "{n} new messages"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/core/lib/message-notices.ts:111
+#: app/src/core/lib/message-notices.ts:114
 msgid "{n} more chat has new messages"
 msgid_plural "{n} more chats have new messages"
 msgstr[0] ""
@@ -1657,47 +1665,83 @@ msgstr ""
 msgid "Add Account"
 msgstr ""
 
-#: app/src/window/account-detail.ts:73 app/src/window/agent-access-page.ts:218
+#: app/src/window/account-detail.ts:77 app/src/window/agent-access-page.ts:218
 #: app/src/window/contact-page.ts:393
 msgid "Account"
 msgstr ""
 
-#: app/src/window/account-detail.ts:77
+#: app/src/window/account-detail.ts:81
 msgid "Status"
 msgstr ""
 
-#: app/src/window/account-detail.ts:83
-msgid ""
-"Off keeps the account linked and its messages here, but Curlew stops syncing "
-"it."
-msgstr ""
-
 #: app/src/window/account-detail.ts:87
-msgid "Sync this account"
+msgid ""
+"Off keeps the account and its messages, but shows nothing of it and sends "
+"nothing."
 msgstr ""
 
-#: app/src/window/account-detail.ts:108 app/src/window/welcome.ts:202
+#: app/src/window/account-detail.ts:89
+msgid "Use this account"
+msgstr ""
+
+#: app/src/window/account-detail.ts:119
+msgid "Pause this account?"
+msgstr ""
+
+#: app/src/window/account-detail.ts:122
+#: app/src/window/account-remove-model.ts:24
+#: app/src/window/account-remove-model.ts:37
+#: app/src/window/account-remove-model.ts:71
+#: app/src/window/agent-access-page.ts:234
+#: app/src/window/conversation-list.ts:501
+#: app/src/window/conversation-list.ts:587
+#: app/src/window/conversation-view.ts:744 app/src/window/protocols-page.ts:61
+#: app/src/window/protocols-page.ts:128
+msgid "Cancel"
+msgstr ""
+
+#: app/src/window/account-detail.ts:123 app/src/window/audio-player.ts:96
+msgid "Pause"
+msgstr ""
+
+#: app/src/window/account-detail.ts:143 app/src/window/welcome.ts:202
 msgid "Use for Delta Chat"
 msgstr ""
 
-#: app/src/window/account-detail.ts:110
+#: app/src/window/account-detail.ts:145
 msgid ""
 "Messages from this account become email chats. People without Delta Chat see "
 "an ordinary email."
 msgstr ""
 
-#: app/src/window/account-detail.ts:130
+#: app/src/window/account-detail.ts:165
 msgid "Require encryption"
 msgstr ""
 
-#: app/src/window/account-detail.ts:131
+#: app/src/window/account-detail.ts:166
 msgid ""
 "Never send plain text from this account; a message to someone without OMEMO "
 "fails instead"
 msgstr ""
 
-#: app/src/window/account-detail.ts:146
+#: app/src/window/account-detail.ts:181
 msgid "Remove Account…"
+msgstr ""
+
+#: app/src/window/account-pause-model.ts:9
+msgid "{n} conversation will be hidden."
+msgid_plural "{n} conversations will be hidden."
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/window/account-pause-model.ts:12
+msgid "Its conversations will be hidden."
+msgstr ""
+
+#: app/src/window/account-pause-model.ts:13
+msgid ""
+"Nothing is deleted, and switching the account on again brings everything "
+"back."
 msgstr ""
 
 #: app/src/window/account-remove-model.ts:20
@@ -1709,17 +1753,6 @@ msgstr ""
 msgid ""
 "Curlew will forget the password for this account and stop reading its mail. "
 "Messages already on this computer stay, and nothing changes at your provider."
-msgstr ""
-
-#: app/src/window/account-remove-model.ts:24
-#: app/src/window/account-remove-model.ts:37
-#: app/src/window/account-remove-model.ts:71
-#: app/src/window/agent-access-page.ts:234
-#: app/src/window/conversation-list.ts:501
-#: app/src/window/conversation-list.ts:587
-#: app/src/window/conversation-view.ts:744 app/src/window/protocols-page.ts:61
-#: app/src/window/protocols-page.ts:128
-msgid "Cancel"
 msgstr ""
 
 #: app/src/window/account-remove-model.ts:25
@@ -2159,10 +2192,6 @@ msgstr ""
 
 #: app/src/window/audio-player.ts:56
 msgid "Position"
-msgstr ""
-
-#: app/src/window/audio-player.ts:96
-msgid "Pause"
 msgstr ""
 
 #: app/src/window/audio-player.ts:117

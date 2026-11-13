@@ -835,6 +835,8 @@ export interface ConversationQuery {
   /** Only conversations with a person in them (ADR 0001: `--people-only`). */
   peopleOnly?: boolean;
   accountId?: string;
+  /** Accounts left out (paused ones): `account_id NOT IN (...)`. */
+  excludeAccounts?: readonly string[];
   backend?: string;
   /** Every protocol but this one: a window lists chats whole and mail by its own limit. */
   excludeBackend?: string;
@@ -1073,6 +1075,10 @@ export function listConversations(db: IndexDatabase, query: ConversationQuery = 
   if (query.accountId) {
     where.push('account_id = ?');
     params.push(query.accountId);
+  }
+  if (query.excludeAccounts && query.excludeAccounts.length > 0) {
+    where.push(`account_id NOT IN (${placeholders(query.excludeAccounts.length)})`);
+    params.push(...query.excludeAccounts);
   }
   if (query.backend) {
     where.push('backend = ?');
