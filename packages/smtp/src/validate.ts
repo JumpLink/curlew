@@ -77,6 +77,10 @@ export function validateMessage(message: OutgoingMessage): void {
   if (typeof message.text !== 'string') throw config('text is missing');
   if (message.html !== undefined && typeof message.html !== 'string') throw config('html must be a string');
 
+  if (message.durationMs !== undefined && (!Number.isInteger(message.durationMs) || message.durationMs < 0)) {
+    throw config('durationMs must be a non-negative integer');
+  }
+
   if (message.messageId !== undefined && !MESSAGE_ID.test(message.messageId)) {
     throw config('messageId must look like <id@host>');
   }

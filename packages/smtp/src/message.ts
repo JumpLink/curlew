@@ -35,6 +35,11 @@ export function composerOptions(message: OutgoingMessage, messageId: string): Ma
       ...(message.chatEdit ? { 'Chat-Edit': message.chatEdit.slice(1, -1) } : {}),
       ...(message.chatDelete ? { 'Chat-Delete': message.chatDelete.slice(1, -1) } : {}),
       ...(message.reaction ? { 'Content-Disposition': 'reaction' } : {}),
+      ...(message.emailChat && message.voiceMessage ? { 'Chat-Voice-Message': '1' } : {}),
+      ...(message.emailChat && message.voiceMessage && message.durationMs !== undefined
+        ? { 'Chat-Duration': String(message.durationMs) }
+        : {}),
+      ...(message.emailChat && message.sticker ? { 'Chat-Content': 'sticker' } : {}),
       ...(message.inReplyTo ? { 'In-Reply-To': message.inReplyTo } : {}),
       ...(message.references && message.references.length > 0 ? { References: message.references.join(' ') } : {}),
     },

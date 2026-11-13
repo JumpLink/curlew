@@ -40,6 +40,12 @@ export interface OutgoingMessage {
   chatEdit?: string;
   /** `Chat-Delete` (Delta Chat): the `<id@host>` of the message to delete for everyone. */
   chatDelete?: string;
+  /** Delta Chat voice note: `Chat-Voice-Message: 1`. Only written together with `emailChat`. */
+  voiceMessage?: boolean;
+  /** Length of the voice note in milliseconds: `Chat-Duration`. Only with `voiceMessage`. */
+  durationMs?: number;
+  /** Delta Chat sticker: `Chat-Content: sticker`. Only written together with `emailChat`. */
+  sticker?: boolean;
   /** RFC 5322 threading headers, used when this is a reply. */
   inReplyTo?: string;
   references?: string[];

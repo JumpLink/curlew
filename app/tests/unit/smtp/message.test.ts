@@ -232,4 +232,47 @@ export default async () => {
       ).not.toThrow();
     });
   });
+
+  await describe('voice notes and stickers', async () => {
+    const audio = [{ filename: 'voice.ogg', content: new Uint8Array([1, 2, 3]), contentType: 'audio/ogg' }];
+
+    await it('writes the voice headers with the duration in milliseconds', async () => {
+      const raw = decode(
+        await buildMessage({
+          ...MESSAGE,
+          emailChat: true,
+          voiceMessage: true,
+          durationMs: 4200,
+          attachments: audio,
+        }),
+      );
+      expect(/^Chat-Voice-Message: 1\r?$/m.test(raw)).toBe(true);
+      expect(/^Chat-Duration: 4200\r?$/m.test(raw)).toBe(true);
+    });
+
+    await it('writes Chat-Content: sticker', async () => {
+      const raw = decode(
+        await buildMessage({ ...MESSAGE, emailChat: true, sticker: true, attachments: audio }),
+      );
+      expect(/^Chat-Content: sticker\r?$/m.test(raw)).toBe(true);
+    });
+
+    await it('never writes them for plain mail', async () => {
+      const raw = decode(
+        await buildMessage({
+          ...MESSAGE,
+          voiceMessage: true,
+          durationMs: 10,
+          sticker: true,
+          attachments: audio,
+        }),
+      );
+      expect(/^Chat-/m.test(raw)).toBe(false);
+    });
+
+    await it('refuses a negative or fractional duration', async () => {
+      expect(await codeOf(() => validateMessage({ ...MESSAGE, durationMs: -1 }))).toBe('config');
+      expect(await codeOf(() => validateMessage({ ...MESSAGE, durationMs: 1.5 }))).toBe('config');
+    });
+  });
 };

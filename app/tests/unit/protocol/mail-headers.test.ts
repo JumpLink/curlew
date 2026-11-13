@@ -104,4 +104,38 @@ export default async () => {
       );
     });
   });
+
+  await describe('Delta Chat voice note and sticker headers', async () => {
+    const block = (...lines: string[]) => lines.join('\r\n') + '\r\n\r\n';
+
+    await it('types a voice note with its duration', async () => {
+      const parsed = parseThreadHeaders(
+        block('Chat-Version: 1.0', 'Chat-Voice-Message: 1', 'Chat-Duration: 4200'),
+      );
+      expect(parsed.chatContent).toBe('voice');
+      expect(parsed.durationMs).toBe(4200);
+    });
+
+    await it('accepts a voice note without Chat-Duration', async () => {
+      const parsed = parseThreadHeaders(block('Chat-Version: 1.0', 'Chat-Voice-Message: 1'));
+      expect(parsed.chatContent).toBe('voice');
+      expect(parsed.durationMs).toBe(null);
+      const garbled = parseThreadHeaders(
+        block('Chat-Version: 1.0', 'Chat-Voice-Message: 1', 'Chat-Duration: soon'),
+      );
+      expect(garbled.durationMs).toBe(null);
+    });
+
+    await it('types a sticker', async () => {
+      const parsed = parseThreadHeaders(block('Chat-Version: 1.0', 'Chat-Content: sticker'));
+      expect(parsed.chatContent).toBe('sticker');
+      expect(parsed.durationMs).toBe(null);
+    });
+
+    await it('ignores the headers on plain mail', async () => {
+      const parsed = parseThreadHeaders(block('Chat-Voice-Message: 1', 'Chat-Duration: 900'));
+      expect(parsed.chatContent).toBe(null);
+      expect(parsed.durationMs).toBe(null);
+    });
+  });
 };

@@ -88,6 +88,11 @@ export class MailSender implements MessageSender {
       subject: message.subject ?? '',
       text: message.text,
       ...(message.emailChat ? { emailChat: true } : {}),
+      ...(message.emailChat && message.voiceMessage ? { voiceMessage: true } : {}),
+      ...(message.emailChat && message.voiceMessage && message.durationMs !== undefined
+        ? { durationMs: message.durationMs }
+        : {}),
+      ...(message.emailChat && message.sticker ? { sticker: true } : {}),
       ...(message.inReplyTo ? { inReplyTo: message.inReplyTo } : {}),
       ...(message.references ? { references: message.references } : {}),
       ...(files.length === 0

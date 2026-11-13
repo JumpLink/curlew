@@ -99,6 +99,10 @@ export interface SendParams {
   attachments?: string[];
   /** Mail from the chat UI: Delta Chat's marker and an optional RFC 5322 parent. */
   emailChat?: boolean;
+  /** Mail from the chat UI: the one attachment is a voice note (length in ms) or a sticker. */
+  voiceMessage?: boolean;
+  durationMs?: number;
+  sticker?: boolean;
   inReplyTo?: string;
   references?: string[];
   /** Chat: the message this one answers. A backend whose sender cannot reply refuses it. */
@@ -287,6 +291,9 @@ export interface SendRequest {
   subject?: string;
   attachments?: string[];
   emailChat?: boolean;
+  voiceMessage?: boolean;
+  durationMs?: number;
+  sticker?: boolean;
   inReplyTo?: string;
   references?: string[];
   replyTo?: ReplyTarget;
@@ -366,6 +373,11 @@ export async function sendThrough(
                 text: step.value,
                 ...(request.subject === undefined ? {} : { subject: request.subject }),
                 ...(request.emailChat ? { emailChat: true } : {}),
+                ...(request.voiceMessage && index === firstText ? { voiceMessage: true } : {}),
+                ...(request.durationMs !== undefined && index === firstText
+                  ? { durationMs: request.durationMs }
+                  : {}),
+                ...(request.sticker && index === firstText ? { sticker: true } : {}),
                 ...(request.inReplyTo ? { inReplyTo: request.inReplyTo } : {}),
                 ...(request.references ? { references: request.references } : {}),
                 ...(request.replyTo === undefined || index !== firstText ? {} : { replyTo: request.replyTo }),
@@ -534,6 +546,11 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
     ...(imageUrl === undefined ? {} : { imageUrl }),
     ...(params.subject === undefined ? {} : { subject: params.subject }),
     ...(params.emailChat ? { emailChat: true } : {}),
+    ...(params.emailChat && params.voiceMessage ? { voiceMessage: true } : {}),
+    ...(params.emailChat && params.voiceMessage && params.durationMs !== undefined
+      ? { durationMs: params.durationMs }
+      : {}),
+    ...(params.emailChat && params.sticker ? { sticker: true } : {}),
     ...(params.inReplyTo ? { inReplyTo: params.inReplyTo } : {}),
     ...(params.references ? { references: params.references } : {}),
     ...(params.replyTo === undefined ? {} : { replyTo: params.replyTo }),

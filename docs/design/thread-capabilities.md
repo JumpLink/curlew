@@ -22,6 +22,11 @@ react, edit, delete?", not "can *this backend*?".
   and the list entry carries it as `ThreadFacts.peerFeatures`. No answer is unknown and offers
   nothing; rooms keep the manifest; replies and files are not affected.
 
+Voice notes and stickers (`Chat-Voice-Message`, `Chat-Duration`, `Chat-Content: sticker`) are read from the headers
+and written on send only when `emailChat` is true; the index keeps them in `messages.chat_content` and
+`chat_duration_ms` (schema v20), and `loadAttachments` types the audio part as `voice`. A missing
+`Chat-Duration` is not an error.
+
 The facts come from the list entry the window already holds (`emailChat` is written to the index by
 the sync), so nothing is computed per bubble and no message is read.
 

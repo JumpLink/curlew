@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 10:56+0100\n"
+"POT-Creation-Date: 2026-11-13 11:17+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -159,18 +159,18 @@ msgid "only your own messages can be deleted"
 msgstr ""
 
 #: app/src/core/actions/delete.ts:53 app/src/core/actions/edit.ts:55
-#: app/src/core/actions/react.ts:54 app/src/core/actions/send.ts:497
+#: app/src/core/actions/react.ts:54 app/src/core/actions/send.ts:509
 msgid "Demo mode: nothing is sent."
 msgstr ""
 
 #: app/src/core/actions/delete.ts:58 app/src/core/actions/edit.ts:60
-#: app/src/core/actions/react.ts:59 app/src/core/actions/send.ts:443
-#: app/src/core/actions/send.ts:502
+#: app/src/core/actions/react.ts:59 app/src/core/actions/send.ts:455
+#: app/src/core/actions/send.ts:514
 msgid "no account {account} — `curlew accounts list` shows them"
 msgstr ""
 
 #: app/src/core/actions/delete.ts:63 app/src/core/actions/edit.ts:65
-#: app/src/core/actions/react.ts:64 app/src/core/actions/send.ts:509
+#: app/src/core/actions/react.ts:64 app/src/core/actions/send.ts:521
 msgid "{backend} cannot send"
 msgstr ""
 
@@ -215,13 +215,13 @@ msgid ""
 "config.agentAccess.rules"
 msgstr ""
 
-#: app/src/core/actions/send.ts:182 app/src/core/actions/send.ts:195
+#: app/src/core/actions/send.ts:186 app/src/core/actions/send.ts:199
 msgid ""
 "the message index is busy, so curlew cannot tell whether {account} is in use "
 "elsewhere — nothing was sent; try again in a moment"
 msgstr ""
 
-#: app/src/core/actions/send.ts:201
+#: app/src/core/actions/send.ts:205
 msgid ""
 "{account} is being received by {holder} right now, {backend} cannot send and "
 "receive at the same time, and that process did not take the send over — "
@@ -229,36 +229,36 @@ msgid ""
 "from your phone"
 msgstr ""
 
-#: app/src/core/actions/send.ts:337
+#: app/src/core/actions/send.ts:344
 msgid "{backend} cannot send an image — give text and leave image_url out"
 msgstr ""
 
-#: app/src/core/actions/send.ts:347
+#: app/src/core/actions/send.ts:354
 msgid "nothing to send: the text is empty after rendering"
 msgstr ""
 
-#: app/src/core/actions/send.ts:350 app/src/core/actions/send.ts:523
+#: app/src/core/actions/send.ts:357 app/src/core/actions/send.ts:535
 msgid "{backend} cannot send attachments"
 msgstr ""
 
-#: app/src/core/actions/send.ts:354
+#: app/src/core/actions/send.ts:361
 msgid "{backend} cannot send a reply"
 msgstr ""
 
-#: app/src/core/actions/send.ts:487
+#: app/src/core/actions/send.ts:499
 msgid ""
 "this person is pinned to {pinned}: a message through {backend} is refused"
 msgstr ""
 
-#: app/src/core/actions/send.ts:513
+#: app/src/core/actions/send.ts:525
 msgid "nothing to send: give text, an image URL or an attachment"
 msgstr ""
 
-#: app/src/core/actions/send.ts:515
+#: app/src/core/actions/send.ts:527
 msgid "{backend} messages carry no subject"
 msgstr ""
 
-#: app/src/core/actions/send.ts:518
+#: app/src/core/actions/send.ts:530
 msgid "{backend} cannot send email chat headers"
 msgstr ""
 
@@ -3076,19 +3076,19 @@ msgstr ""
 msgid "sending to {address} is not granted for account {account}"
 msgstr ""
 
-#: packages/imap/src/send.ts:119
+#: packages/imap/src/send.ts:124
 msgid "only a Delta Chat message can be reacted to by mail"
 msgstr ""
 
-#: packages/imap/src/send.ts:136
+#: packages/imap/src/send.ts:141
 msgid "only your own Delta Chat messages can be changed by mail"
 msgstr ""
 
-#: packages/imap/src/send.ts:145
+#: packages/imap/src/send.ts:150
 msgid "an edited message cannot be empty"
 msgstr ""
 
-#: packages/imap/src/send.ts:189
+#: packages/imap/src/send.ts:194
 msgid "no mail account {account} with SMTP — `curlew accounts list` shows them"
 msgstr ""
 
