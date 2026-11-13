@@ -22,7 +22,7 @@
 import { type IndexDatabase, withTransaction } from './db.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 
-export const SCHEMA_VERSION = 19;
+export const SCHEMA_VERSION = 20;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -437,6 +437,9 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
                       WHERE m.account_id = folders.account_id AND m.folder_path = folders.path
                         AND m.email_chat = 1)`,
   ],
+  // v20: which message XEPs an XMPP peer advertised (a JSON array), learned at sync time so the
+  // window never opens a secret. NULL = not asked or no answer; a reader must not read it as "none".
+  20: [{ table: 'chat_cursors', column: 'peer_features', type: 'TEXT' }],
 };
 
 function columnsOf(db: IndexDatabase, table: string): Set<string> {

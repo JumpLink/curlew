@@ -272,6 +272,11 @@ export interface ChatInfo {
    * did not say: a reader must not guess "public" or "not encrypted" from silence.
    */
   room?: ChatRoomFacts;
+  /**
+   * XMPP, direct chats: which of the XEPs in `XMPP_PEER_FEATURES` the peer advertised. Absent when
+   * the peer was not asked or did not answer (unknown, not "none").
+   */
+  peerFeatures?: string[];
 }
 
 /** The room facts a window shows next to a composer; null = unknown. */

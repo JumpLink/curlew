@@ -10,6 +10,7 @@ import {
   indexDbPath,
   latestMessagePreviews,
   listChatRooms,
+  listPeerFeatures,
   listConversations,
   openIndexDb,
   searchMessageText,
@@ -81,6 +82,7 @@ export function loadConversationEntries(dbPath = indexDbPath(), cfgPath = config
         mergedPeople,
         pins,
         contactChoices,
+        listPeerFeatures(db, 'xmpp'),
       );
       // The text of the newest message is read here and kept on the row: the `Conversation` the
       // agents get stays free of other people's words.

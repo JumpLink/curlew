@@ -137,9 +137,13 @@ export function createConversationView(
   const threadCan =
     (feature: ThreadFeature) =>
     (backend: string): boolean =>
-      threadCapabilities({ backend, emailChat: entry?.emailChat === true, self: entry?.self === true })[
-        feature
-      ];
+      threadCapabilities({
+        backend,
+        emailChat: entry?.emailChat === true,
+        self: entry?.self === true,
+        kind: entry?.kind,
+        peerFeatures: entry?.peerFeatures,
+      })[feature];
   // The array is the caller's: a sent message is pushed onto it, an older page spliced in front.
   let messages: ShownMessage[] = [];
   let accountLabels = new Map<string, string>();

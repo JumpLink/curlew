@@ -15,9 +15,11 @@ export const XMPP_MANIFEST: BackendManifest = {
   capabilities: {
     // Last message correction (XEP-0308): applied to the stored message.
     edits: true,
-    // Message reactions (XEP-0444), received and sent (1:1 chats without OMEMO).
+    // Message reactions (XEP-0444), received always; sent per JID only when the peer advertises it
+    // (1:1 chats without OMEMO), see `narrowXmppThread`.
     reactions: true,
-    // Sent too: a correction (XEP-0308) and a retraction (XEP-0424), 1:1 chats without OMEMO.
+    // Sent too, per JID and only when the peer advertises it: a correction (XEP-0308) and a
+    // retraction (XEP-0424), 1:1 chats without OMEMO.
     editsOwn: true,
     deletesOwn: true,
     // XMPP has `<thread/>`, but no client shows threads; claiming them would promise a view

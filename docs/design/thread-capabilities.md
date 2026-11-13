@@ -15,6 +15,12 @@ react, edit, delete?", not "can *this backend*?".
   off, never exceed the manifest. `threadCan(...)` answers one feature.
 - Mail narrows by the peer: no `Chat-Version`, no reaction, edit, delete or read receipt. Every other
   backend answers with its manifest.
+- XMPP narrows per JID in a direct chat (`narrowXmppThread`): a reaction (XEP-0444), a correction
+  (XEP-0308) and a retraction (XEP-0424) are offered only when the peer advertised
+  `urn:xmpp:reactions:0`, `urn:xmpp:message-correct:0` or `urn:xmpp:message-retract:1` in disco.
+  The sync asks (`XmppApi.features`), stores the answer in `chat_cursors.peer_features` (schema v20)
+  and the list entry carries it as `ThreadFacts.peerFeatures`. No answer is unknown and offers
+  nothing; rooms keep the manifest; replies and files are not affected.
 
 The facts come from the list entry the window already holds (`emailChat` is written to the index by
 the sync), so nothing is computed per bubble and no message is read.
