@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 12:22+0100\n"
+"POT-Creation-Date: 2026-11-13 13:18+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1821,47 +1821,47 @@ msgstr "curlew window nimmt keine Argumente."
 msgid "Curlew"
 msgstr "Curlew"
 
-#: app/src/window/account-add.ts:138 app/src/window/protocols-page.ts:40
+#: app/src/window/account-add.ts:139 app/src/window/protocols-page.ts:40
 msgid "Please read this first"
 msgstr "Bitte zuerst lesen"
 
-#: app/src/window/account-add.ts:144 app/src/window/protocols-page.ts:46
+#: app/src/window/account-add.ts:145 app/src/window/protocols-page.ts:46
 msgid "I understand and accept the risk for my account"
 msgstr "Ich verstehe das Risiko für mein Konto und nehme es in Kauf"
 
-#: app/src/window/account-add.ts:147
+#: app/src/window/account-add.ts:148
 msgid "Accept and Continue"
 msgstr "Zustimmen und fortfahren"
 
-#: app/src/window/account-add.ts:188
+#: app/src/window/account-add.ts:189
 msgid "Continue"
 msgstr "Weiter"
 
-#: app/src/window/account-add.ts:211
+#: app/src/window/account-add.ts:212
 msgid "Adding account…"
 msgstr "Konto wird hinzugefügt …"
 
-#: app/src/window/account-add.ts:219 app/src/window/media-viewer.ts:104
+#: app/src/window/account-add.ts:220 app/src/window/media-viewer.ts:104
 msgid "Try Again"
 msgstr "Erneut versuchen"
 
-#: app/src/window/account-add.ts:223
+#: app/src/window/account-add.ts:224
 msgid "Could not add the account"
 msgstr "Konto konnte nicht hinzugefügt werden"
 
-#: app/src/window/account-add.ts:234
+#: app/src/window/account-add.ts:235
 msgid "Connecting…"
 msgstr "Verbindung wird hergestellt …"
 
-#: app/src/window/account-add.ts:258 app/src/window/protocols-page.ts:28
+#: app/src/window/account-add.ts:259 app/src/window/protocols-page.ts:28
 msgid "Asks you to accept terms first"
 msgstr "Verlangt zuerst deine Zustimmung zu den Bedingungen"
 
-#: app/src/window/account-add.ts:275
+#: app/src/window/account-add.ts:276
 msgid "Chats"
 msgstr "Chats"
 
-#: app/src/window/account-add.ts:276
+#: app/src/window/account-add.ts:277
 msgid ""
 "Signal, WhatsApp and Telegram link this computer as another device of your "
 "account."
@@ -1869,26 +1869,26 @@ msgstr ""
 "Signal, WhatsApp und Telegram verknüpfen diesen Computer als weiteres Gerät "
 "deines Kontos."
 
-#: app/src/window/account-add.ts:288 app/src/window/accounts-model.ts:80
+#: app/src/window/account-add.ts:289 app/src/window/accounts-model.ts:81
 #: app/src/window/conversation-list-model.ts:138
 msgid "Mail"
 msgstr "E-Mail"
 
-#: app/src/window/account-add.ts:295
+#: app/src/window/account-add.ts:296
 msgid "Sign in with an address and a password"
 msgstr "Mit Adresse und Passwort anmelden"
 
-#: app/src/window/account-add.ts:301
+#: app/src/window/account-add.ts:302
 msgid "GNOME Online Accounts"
 msgstr "GNOME-Online-Konten"
 
-#: app/src/window/account-add.ts:302
+#: app/src/window/account-add.ts:303
 msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 "Ein Konto verwenden, das du in den GNOME-Einstellungen eingerichtet hast"
 
-#: app/src/window/account-add.ts:319 app/src/window/accounts-page.ts:158
-#: app/src/window/accounts-page.ts:181 app/src/window/welcome.ts:161
+#: app/src/window/account-add.ts:321 app/src/window/accounts-page.ts:159
+#: app/src/window/accounts-page.ts:182 app/src/window/welcome.ts:162
 msgid "Add Account"
 msgstr "Konto hinzufügen"
 
@@ -1913,7 +1913,7 @@ msgstr ""
 msgid "Sync this account"
 msgstr "Dieses Konto synchronisieren"
 
-#: app/src/window/account-detail.ts:108 app/src/window/welcome.ts:203
+#: app/src/window/account-detail.ts:108 app/src/window/welcome.ts:202
 msgid "Use for Delta Chat"
 msgstr "Für Delta Chat verwenden"
 
@@ -1959,8 +1959,8 @@ msgstr ""
 #: app/src/window/account-remove-model.ts:37
 #: app/src/window/account-remove-model.ts:71
 #: app/src/window/agent-access-page.ts:234
-#: app/src/window/conversation-list.ts:475
-#: app/src/window/conversation-list.ts:561
+#: app/src/window/conversation-list.ts:476
+#: app/src/window/conversation-list.ts:562
 #: app/src/window/conversation-view.ts:733 app/src/window/protocols-page.ts:51
 msgid "Cancel"
 msgstr "Abbrechen"
@@ -2023,82 +2023,86 @@ msgstr ""
 msgid "Could not start the background service: {reason}"
 msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
-#: app/src/window/accounts-dialog.ts:75 app/src/window/accounts-page.ts:194
-#: app/src/window/welcome-model.ts:59 app/src/window/welcome.ts:173
+#: app/src/window/accounts-dialog.ts:75 app/src/window/accounts-page.ts:195
+#: app/src/window/welcome-model.ts:91 app/src/window/welcome.ts:174
 #: app/src/window/window.ts:116
 msgid "Accounts"
 msgstr "Konten"
 
-#: app/src/window/accounts-model.ts:81
+#: app/src/window/accounts-model.ts:82
 msgid "Calendar"
 msgstr "Kalender"
 
-#: app/src/window/accounts-model.ts:82
+#: app/src/window/accounts-model.ts:83
 msgid "Contacts"
 msgstr "Kontakte"
 
-#: app/src/window/accounts-page.ts:27
+#: app/src/window/accounts-page.ts:28
 msgid "Connected"
 msgstr "Verbunden"
 
-#: app/src/window/accounts-page.ts:29
+#: app/src/window/accounts-page.ts:30
 msgid "Connecting"
 msgstr "Verbindung wird hergestellt"
 
-#: app/src/window/accounts-page.ts:31
+#: app/src/window/accounts-page.ts:32
 msgid "Offline"
 msgstr "Offline"
 
-#: app/src/window/accounts-page.ts:33
+#: app/src/window/accounts-page.ts:34
 msgid "Daemon not running"
 msgstr "Daemon läuft nicht"
 
-#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:55
-#: app/src/window/welcome-model.ts:72
+#: app/src/window/accounts-page.ts:36 app/src/window/preferences-dialog.ts:57
+#: app/src/window/welcome-model.ts:104
 msgid "Off"
 msgstr "Aus"
 
-#: app/src/window/accounts-page.ts:112
+#: app/src/window/accounts-page.ts:113
 msgid "Manage…"
 msgstr "Verwalten …"
 
-#: app/src/window/accounts-page.ts:113
+#: app/src/window/accounts-page.ts:114
 msgid "Open GNOME Settings → Online Accounts"
 msgstr "GNOME-Einstellungen → Online-Konten öffnen"
 
-#: app/src/window/accounts-page.ts:122
+#: app/src/window/accounts-page.ts:123
 msgid "Could not load accounts"
 msgstr "Konten konnten nicht geladen werden"
 
-#: app/src/window/accounts-page.ts:124 app/src/window/protocols-page.ts:29
+#: app/src/window/accounts-page.ts:125 app/src/window/protocols-page.ts:29
 msgid "No accounts yet"
 msgstr "Noch keine Konten"
 
-#: app/src/window/accounts-page.ts:150
+#: app/src/window/accounts-page.ts:151
 msgid "Accounts could not be loaded"
 msgstr "Konten konnten nicht geladen werden"
 
-#: app/src/window/accounts-page.ts:154
+#: app/src/window/accounts-page.ts:155
 msgid "No accounts"
 msgstr "Keine Konten"
 
-#: app/src/window/accounts-page.ts:155
+#: app/src/window/accounts-page.ts:156
+msgid "Add a chat account."
+msgstr "Füge ein Chat-Konto hinzu."
+
+#: app/src/window/accounts-page.ts:156
 msgid "Add a chat account or a mail account."
 msgstr "Füge ein Chat-Konto oder ein E-Mail-Konto hinzu."
 
-#: app/src/window/accounts-page.ts:172
+#: app/src/window/accounts-page.ts:173
 msgid "The background service is not running, so chat accounts cannot connect."
 msgstr ""
 "Der Hintergrunddienst läuft nicht, daher können sich Chat-Konten nicht "
 "verbinden."
 
-#: app/src/window/accounts-page.ts:173
+#: app/src/window/accounts-page.ts:174
 msgid "Start"
 msgstr "Starten"
 
-#: app/src/window/accounts-page.ts:187 app/src/window/conversation-list.ts:359
-#: app/src/window/protocols-page.ts:111 app/src/window/welcome-model.ts:57
-#: app/src/window/welcome.ts:147
+#: app/src/window/accounts-page.ts:188 app/src/window/conversation-list.ts:360
+#: app/src/window/protocols-page.ts:111 app/src/window/welcome-model.ts:89
+#: app/src/window/welcome.ts:150
 msgid "Protocols"
 msgstr "Protokolle"
 
@@ -2509,7 +2513,7 @@ msgstr "Automatisch"
 msgid "Picture"
 msgstr "Bild"
 
-#: app/src/window/contact-page.ts:314 app/src/window/conversation-list.ts:483
+#: app/src/window/contact-page.ts:314 app/src/window/conversation-list.ts:484
 msgid "Separate"
 msgstr "Trennen"
 
@@ -2665,49 +2669,49 @@ msgstr "Personen"
 msgid "Groups"
 msgstr "Gruppen"
 
-#: app/src/window/conversation-list.ts:230
+#: app/src/window/conversation-list.ts:231
 msgid "Add an account"
 msgstr "Konto hinzufügen"
 
-#: app/src/window/conversation-list.ts:238
 #: app/src/window/conversation-list.ts:239
+#: app/src/window/conversation-list.ts:240
 msgid "Search conversations"
 msgstr "Unterhaltungen durchsuchen"
 
-#: app/src/window/conversation-list.ts:243
+#: app/src/window/conversation-list.ts:244
 msgid "Everything"
 msgstr "Alles"
 
-#: app/src/window/conversation-list.ts:244
+#: app/src/window/conversation-list.ts:245
 msgid "Names and numbers"
 msgstr "Namen und Nummern"
 
-#: app/src/window/conversation-list.ts:245
+#: app/src/window/conversation-list.ts:246
 msgid "Messages"
 msgstr "Nachrichten"
 
-#: app/src/window/conversation-list.ts:249
-#: app/src/window/conversation-list.ts:253
+#: app/src/window/conversation-list.ts:250
+#: app/src/window/conversation-list.ts:254
 msgid "Search in"
 msgstr "Suchen in"
 
-#: app/src/window/conversation-list.ts:274
+#: app/src/window/conversation-list.ts:275
 msgid "Filter conversations"
 msgstr "Unterhaltungen filtern"
 
-#: app/src/window/conversation-list.ts:382
+#: app/src/window/conversation-list.ts:383
 msgid "Clear filters"
 msgstr "Filter zurücksetzen"
 
-#: app/src/window/conversation-list.ts:404
+#: app/src/window/conversation-list.ts:405
 msgid "No conversations yet"
 msgstr "Noch keine Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:404
+#: app/src/window/conversation-list.ts:405
 msgid "No matches"
 msgstr "Keine Treffer"
 
-#: app/src/window/conversation-list.ts:407
+#: app/src/window/conversation-list.ts:408
 msgid ""
 "Conversations appear here after Curlew has synced an account. Run \"curlew "
 "sync\" first."
@@ -2715,30 +2719,30 @@ msgstr ""
 "Unterhaltungen erscheinen hier, sobald Curlew ein Konto synchronisiert hat. "
 "Führe zuerst „curlew sync“ aus."
 
-#: app/src/window/conversation-list.ts:414
+#: app/src/window/conversation-list.ts:415
 msgid "Nothing fits the search and filters."
 msgstr "Nichts passt zur Suche und den Filtern."
 
-#: app/src/window/conversation-list.ts:459
+#: app/src/window/conversation-list.ts:460
 msgid "Search"
 msgstr "Suchen"
 
-#: app/src/window/conversation-list.ts:464
+#: app/src/window/conversation-list.ts:465
 #: app/src/window/new-conversation.ts:24
 msgid "New conversation"
 msgstr "Neue Unterhaltung"
 
-#: app/src/window/conversation-list.ts:481
-#: app/src/window/conversation-list.ts:562
+#: app/src/window/conversation-list.ts:482
+#: app/src/window/conversation-list.ts:563
 #: app/src/window/merge-assistant.ts:116
 msgid "Merge"
 msgstr "Zusammenführen"
 
-#: app/src/window/conversation-list.ts:558
+#: app/src/window/conversation-list.ts:559
 msgid "Merge these people?"
 msgstr "Diese Personen zusammenführen?"
 
-#: app/src/window/conversation-list.ts:559
+#: app/src/window/conversation-list.ts:560
 msgid ""
 "Their chats become one conversation. Nothing is deleted, and you can "
 "separate them again."
@@ -2746,16 +2750,16 @@ msgstr ""
 "Ihre Chats werden zu einer Unterhaltung. Nichts wird gelöscht, und du kannst "
 "sie wieder trennen."
 
-#: app/src/window/conversation-list.ts:585
+#: app/src/window/conversation-list.ts:586
 msgid "Review"
 msgstr "Prüfen"
 
-#: app/src/window/conversation-list.ts:592
-#: app/src/window/preferences-dialog.ts:43
+#: app/src/window/conversation-list.ts:593
+#: app/src/window/preferences-dialog.ts:44
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:614
+#: app/src/window/conversation-list.ts:615
 msgid "{count} possible duplicate"
 msgid_plural "{count} possible duplicates"
 msgstr[0] "{count} mögliches Duplikat"
@@ -3019,7 +3023,7 @@ msgstr "Der Anhang konnte nicht geladen werden"
 msgid "Previous"
 msgstr "Zurück"
 
-#: app/src/window/media-viewer.ts:125 app/src/window/welcome.ts:118
+#: app/src/window/media-viewer.ts:125 app/src/window/welcome.ts:121
 msgid "Next"
 msgstr "Weiter"
 
@@ -3057,7 +3061,7 @@ msgstr "Alles erledigt"
 msgid "You can separate merged people again from the conversation list."
 msgstr "Zusammengeführte Personen kannst du in der Chatliste wieder trennen."
 
-#: app/src/window/merge-assistant.ts:90 app/src/window/welcome.ts:179
+#: app/src/window/merge-assistant.ts:90 app/src/window/welcome.ts:178
 msgid "Done"
 msgstr "Fertig"
 
@@ -3065,7 +3069,7 @@ msgstr "Fertig"
 msgid "These people have similar names. Are they the same person?"
 msgstr "Diese Personen haben ähnliche Namen. Sind sie dieselbe Person?"
 
-#: app/src/window/merge-assistant.ts:119 app/src/window/welcome.ts:128
+#: app/src/window/merge-assistant.ts:119 app/src/window/welcome.ts:131
 msgid "Skip"
 msgstr "Überspringen"
 
@@ -3085,15 +3089,15 @@ msgstr "Kontakte suchen"
 msgid "The address book could not be read"
 msgstr "Das Adressbuch konnte nicht gelesen werden"
 
-#: app/src/window/preferences-dialog.ts:39
+#: app/src/window/preferences-dialog.ts:40
 msgid "Show all emails"
 msgstr "Alle E-Mails anzeigen"
 
-#: app/src/window/preferences-dialog.ts:46
+#: app/src/window/preferences-dialog.ts:48
 msgid "Send read receipts"
 msgstr "Lesebestätigungen senden"
 
-#: app/src/window/preferences-dialog.ts:47
+#: app/src/window/preferences-dialog.ts:49
 msgid ""
 "Tell a Delta Chat contact when you have read their message, if they asked "
 "for it"
@@ -3101,44 +3105,44 @@ msgstr ""
 "Sag einer Delta-Chat-Kontaktperson, dass du ihre Nachricht gelesen hast, "
 "wenn sie darum gebeten hat"
 
-#: app/src/window/preferences-dialog.ts:53
+#: app/src/window/preferences-dialog.ts:55
 msgid "Message notifications"
 msgstr "Benachrichtigungen für Nachrichten"
 
-#: app/src/window/preferences-dialog.ts:54
+#: app/src/window/preferences-dialog.ts:56
 msgid "What a desktop notification for a new chat message shows"
 msgstr "Was eine Desktop-Benachrichtigung über eine neue Chat-Nachricht zeigt"
 
-#: app/src/window/preferences-dialog.ts:55
+#: app/src/window/preferences-dialog.ts:57
 msgid "Sender and text"
 msgstr "Absender und Text"
 
-#: app/src/window/preferences-dialog.ts:55
+#: app/src/window/preferences-dialog.ts:57
 msgid "Sender only"
 msgstr "Nur Absender"
 
-#: app/src/window/preferences-dialog.ts:58
+#: app/src/window/preferences-dialog.ts:60
 msgid "Notifications"
 msgstr "Benachrichtigungen"
 
-#: app/src/window/preferences-dialog.ts:61
+#: app/src/window/preferences-dialog.ts:63
 msgid "Play videos silently in chats"
 msgstr "Videos in Chats stumm abspielen"
 
-#: app/src/window/preferences-dialog.ts:62
+#: app/src/window/preferences-dialog.ts:64
 msgid "A video in a conversation plays muted while it is on screen"
 msgstr "Ein Video in einer Unterhaltung läuft stumm, solange es im Bild ist"
 
-#: app/src/window/preferences-dialog.ts:68
+#: app/src/window/preferences-dialog.ts:70
 msgid "Media"
 msgstr "Medien"
 
-#: app/src/window/preferences-dialog.ts:71 app/src/window/welcome-model.ts:72
-#: app/src/window/welcome.ts:221
+#: app/src/window/preferences-dialog.ts:73 app/src/window/welcome-model.ts:104
+#: app/src/window/welcome.ts:220
 msgid "AI features"
 msgstr "KI-Funktionen"
 
-#: app/src/window/preferences-dialog.ts:73
+#: app/src/window/preferences-dialog.ts:75
 msgid ""
 "Let AI assistants read and send your messages through Curlew, each time as "
 "you allow it. Off: no assistant can reach your data"
@@ -3146,15 +3150,15 @@ msgstr ""
 "KI-Assistenten dürfen über Curlew deine Nachrichten lesen und senden, "
 "jeweils so, wie du es erlaubst. Aus: Kein Assistent erreicht deine Daten"
 
-#: app/src/window/preferences-dialog.ts:77 app/src/window/welcome.ts:233
+#: app/src/window/preferences-dialog.ts:79 app/src/window/welcome.ts:232
 msgid "AI"
 msgstr "KI"
 
-#: app/src/window/preferences-dialog.ts:89 app/src/window/window.ts:118
+#: app/src/window/preferences-dialog.ts:91 app/src/window/window.ts:118
 msgid "Preferences"
 msgstr "Einstellungen"
 
-#: app/src/window/protocols-page.ts:30 app/src/window/welcome-model.ts:63
+#: app/src/window/protocols-page.ts:30 app/src/window/welcome-model.ts:95
 msgid "{count} account"
 msgid_plural "{count} accounts"
 msgstr[0] "{count} Konto"
@@ -3176,57 +3180,32 @@ msgid_plural "{count} selected"
 msgstr[0] "{count} ausgewählt"
 msgstr[1] "{count} ausgewählt"
 
-#: app/src/window/welcome-model.ts:57
-msgid "None"
-msgstr "Keine"
+#: app/src/window/welcome-model.ts:33
+msgid ""
+"Curlew brings your chat accounts together in one conversation list. Mail, "
+"contacts and calendar are not available on this system yet."
+msgstr "Curlew bringt deine Chat-Konten in einer gemeinsamen Unterhaltungsliste zusammen. Mail, Kontakte und Kalender sind auf diesem System noch nicht verfügbar."
 
-#: app/src/window/welcome-model.ts:62
-msgid "None yet"
-msgstr "Noch keine"
+#: app/src/window/welcome-model.ts:36
+msgid ""
+"Switch on a chat protocol to use it; some ask you to read a notice first. "
+"You can change this later in Accounts."
+msgstr "Schalte ein Chat-Protokoll ein, um es zu nutzen; manche zeigen dir vorher einen Hinweis. Du kannst das später unter Konten ändern."
 
-#: app/src/window/welcome-model.ts:66 app/src/window/welcome.ts:187
-msgid "Delta Chat"
-msgstr "Delta Chat"
+#: app/src/window/welcome-model.ts:38
+msgid ""
+"Choose Add Account to sign in to a chat. You can add more later from the "
+"menu."
+msgstr "Wähle „Konto hinzufügen“, um dich bei einem Chat anzumelden. Weitere kannst du später im Menü hinzufügen."
 
-#: app/src/window/welcome-model.ts:69
-msgid "Off for every account"
-msgstr "Für kein Konto aktiv"
-
-#: app/src/window/welcome-model.ts:70
-msgid "On for {count} account"
-msgid_plural "On for {count} accounts"
-msgstr[0] "An für {count} Konto"
-msgstr[1] "An für {count} Konten"
-
-#: app/src/window/welcome-model.ts:72
-msgid "On"
-msgstr "An"
-
-#: app/src/window/welcome.ts:106 app/src/window/welcome.ts:124
-#: app/src/window/window.ts:123
-msgid "Welcome"
-msgstr "Willkommen"
-
-#: app/src/window/welcome.ts:126
-msgid "Welcome to Curlew"
-msgstr "Willkommen bei Curlew"
-
-#: app/src/window/welcome.ts:127
+#: app/src/window/welcome-model.ts:42
 msgid ""
 "Curlew brings your mail and chat accounts together in one conversation list."
 msgstr ""
 "Curlew bringt deine Mail- und Chat-Konten in einer gemeinsamen "
 "Unterhaltungsliste zusammen."
 
-#: app/src/window/welcome.ts:135
-msgid "Choose Protocols"
-msgstr "Protokolle wählen"
-
-#: app/src/window/welcome.ts:149
-msgid "Choose your protocols"
-msgstr "Wähle deine Protokolle"
-
-#: app/src/window/welcome.ts:151
+#: app/src/window/welcome-model.ts:44
 msgid ""
 "Mail is on. Switch on a chat protocol to use it; some ask you to read a "
 "notice first. You can change this later in Accounts."
@@ -3234,11 +3213,7 @@ msgstr ""
 "Mail ist an. Schalte ein Chat-Protokoll ein, um es zu nutzen; manche fragen "
 "vorher nach einem Hinweis. Du kannst das später unter Konten ändern."
 
-#: app/src/window/welcome.ts:175
-msgid "Add your accounts"
-msgstr "Füge deine Konten hinzu"
-
-#: app/src/window/welcome.ts:177
+#: app/src/window/welcome-model.ts:47
 msgid ""
 "Mail accounts from GNOME Online Accounts appear on their own. Otherwise "
 "choose Add Account, then Mail. You can add more later from the menu."
@@ -3247,7 +3222,54 @@ msgstr ""
 "„Konto hinzufügen“ und dann „Mail“. Weitere kannst du später im Menü "
 "hinzufügen."
 
-#: app/src/window/welcome.ts:196
+#: app/src/window/welcome-model.ts:89
+msgid "None"
+msgstr "Keine"
+
+#: app/src/window/welcome-model.ts:94
+msgid "None yet"
+msgstr "Noch keine"
+
+#: app/src/window/welcome-model.ts:98 app/src/window/welcome.ts:186
+msgid "Delta Chat"
+msgstr "Delta Chat"
+
+#: app/src/window/welcome-model.ts:101
+msgid "Off for every account"
+msgstr "Für kein Konto aktiv"
+
+#: app/src/window/welcome-model.ts:102
+msgid "On for {count} account"
+msgid_plural "On for {count} accounts"
+msgstr[0] "An für {count} Konto"
+msgstr[1] "An für {count} Konten"
+
+#: app/src/window/welcome-model.ts:104
+msgid "On"
+msgstr "An"
+
+#: app/src/window/welcome.ts:108 app/src/window/welcome.ts:127
+#: app/src/window/window.ts:123
+msgid "Welcome"
+msgstr "Willkommen"
+
+#: app/src/window/welcome.ts:129
+msgid "Welcome to Curlew"
+msgstr "Willkommen bei Curlew"
+
+#: app/src/window/welcome.ts:138
+msgid "Choose Protocols"
+msgstr "Protokolle wählen"
+
+#: app/src/window/welcome.ts:152
+msgid "Choose your protocols"
+msgstr "Wähle deine Protokolle"
+
+#: app/src/window/welcome.ts:176
+msgid "Add your accounts"
+msgstr "Füge deine Konten hinzu"
+
+#: app/src/window/welcome.ts:195
 msgid ""
 "No mail account yet. Once you add one, you can switch this on in its "
 "settings."
@@ -3255,7 +3277,7 @@ msgstr ""
 "Noch kein Mail-Konto. Sobald du eines hinzufügst, kannst du das in dessen "
 "Einstellungen einschalten."
 
-#: app/src/window/welcome.ts:223
+#: app/src/window/welcome.ts:222
 msgid ""
 "An assistant could then read and send your messages through Curlew, each "
 "time as you allow it."
@@ -3263,7 +3285,7 @@ msgstr ""
 "Ein Assistent könnte dann über Curlew deine Nachrichten lesen und senden, "
 "jeweils so, wie du es erlaubst."
 
-#: app/src/window/welcome.ts:234
+#: app/src/window/welcome.ts:233
 msgid ""
 "Off, no assistant can reach your data. You can change this at any time in "
 "Preferences."
@@ -3271,11 +3293,11 @@ msgstr ""
 "Aus: Kein Assistent erreicht deine Daten. Du kannst das jederzeit in den "
 "Einstellungen ändern."
 
-#: app/src/window/welcome.ts:244
+#: app/src/window/welcome.ts:243
 msgid "All set"
 msgstr "Alles bereit"
 
-#: app/src/window/welcome.ts:245
+#: app/src/window/welcome.ts:244
 msgid ""
 "You can change all of this later: accounts and protocols in Accounts, the "
 "rest in Preferences."
@@ -3283,7 +3305,7 @@ msgstr ""
 "Du kannst all das später ändern: Konten und Protokolle unter Konten, den "
 "Rest in den Einstellungen."
 
-#: app/src/window/welcome.ts:247
+#: app/src/window/welcome.ts:246
 msgid "Start Using Curlew"
 msgstr "Curlew benutzen"
 
@@ -4542,12 +4564,6 @@ msgstr ""
 #~ msgstr ""
 #~ "Gewöhnliche E-Mail-Verläufe neben Unterhaltungen aus einem Chat-Messenger "
 #~ "anzeigen"
-
-#~ msgid ""
-#~ "Sign in to a mail or chat account. You can add more later from the menu."
-#~ msgstr ""
-#~ "Melde dich bei einem Mail- oder Chat-Konto an. Weitere kannst du später "
-#~ "im Menü hinzufügen."
 
 #~ msgid "Follow the system style"
 #~ msgstr "Dem Systemstil folgen"
