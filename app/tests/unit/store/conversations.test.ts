@@ -112,6 +112,19 @@ export default async () => {
       }
     });
 
+    await it('reads the list in slices that join up without gaps or repeats', async () => {
+      const { db } = await built();
+      try {
+        const whole = listConversations(db, { limit: 10 }).map((c) => c.id);
+        const sliced = [0, 1, 2, 3].flatMap((offset) =>
+          listConversations(db, { limit: 1, offset }).map((c) => c.id),
+        );
+        expect(sliced).toEqualArray(whole);
+      } finally {
+        db.close();
+      }
+    });
+
     await it('builds one participant per person, with every address the contact has', async () => {
       const { db } = await built();
       try {

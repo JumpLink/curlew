@@ -15,7 +15,12 @@ import type { ConversationMessage } from '@curlew/protocol';
 import { indexAccountLabels, loadAccountLabels } from './account-labels.ts';
 import { presentAccounts } from './accounts-dialog.ts';
 import { presentAgentAccess } from './agent-access-dialog.ts';
-import { listStamp, loadConversationEntries, searchConversationText } from './conversation-list-store.ts';
+import {
+  listStamp,
+  loadConversationEntries,
+  loadConversationEntriesAsync,
+  searchConversationText,
+} from './conversation-list-store.ts';
 import { choiceOfEntry, type ListEntry } from './conversation-list-model.ts';
 import { aiEnabled, deltaChatAccountIds, loadConfig, saveConfig } from '../core/config.ts';
 import { DEFAULT_SEARCH_SCOPE } from '../core/lib/search-scope.ts';
@@ -100,6 +105,10 @@ export interface WindowOptions {
 }
 
 export function createWindow(app: Adw.Application, options: WindowOptions = {}): Adw.ApplicationWindow {
+  return timed('createWindow', () => createWindowInner(app, options));
+}
+
+function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.ApplicationWindow {
   const window = new Adw.ApplicationWindow({
     application: app,
     title: _('Curlew'),
@@ -292,12 +301,16 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   };
   const select = (entry: ListEntry) => {
     currentEntry = entry;
-    currentMessages = loadConversationMessages(entry);
-    conversation.show(entry, currentMessages, labels);
-    conversation.setLook(lookOf(choiceOfEntry(loadConfig().contactChoices, entry)?.choice));
-    split.set_content(conversation.page);
-    split.set_show_content(true);
-    confirmRead(currentMessages);
+    currentMessages = timed('load messages', () => loadConversationMessages(entry));
+    timed('conversation.show', () => conversation.show(entry, currentMessages, labels));
+    timed('setLook', () =>
+      conversation.setLook(lookOf(choiceOfEntry(loadConfig().contactChoices, entry)?.choice)),
+    );
+    timed('set_content', () => {
+      split.set_content(conversation.page);
+      split.set_show_content(true);
+    });
+    timed('confirmRead', () => confirmRead(currentMessages));
   };
   // A contact with no conversation opens as a draft row; the index gets the real one with the first send.
   const selectDraft = (entry: ListEntry) => {
@@ -409,18 +422,27 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   let stamp = '';
   let suggestionsIdle = 0;
   let activationIdle = 0;
+  let refreshRun = 0;
+  const pendingLoad: Array<() => void> = [];
   const refresh = () => {
     stamp = listStamp();
-    shown = timed('load entries', () => loadConversationEntries());
-    timed('set entries', () => sidebar.setEntries(shown, labels));
-    // The duplicate scan is only a banner: it runs when the loop is idle, once per burst of refreshes.
-    if (suggestionsIdle) GLib.source_remove(suggestionsIdle);
-    suggestionsIdle = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
-      suggestionsIdle = 0;
-      timed('candidate sets', () =>
-        sidebar.setSuggestions(candidateSets(shown, loadConfig(configPath()).declinedMerges).length),
-      );
-      return GLib.SOURCE_REMOVE;
+    const run = ++refreshRun;
+    // Read in slices so the window keeps painting; a newer refresh abandons this one.
+    void loadConversationEntriesAsync(() => run !== refreshRun).then((loaded) => {
+      if (loaded === null || run !== refreshRun) return;
+      shown = loaded;
+      timed('set entries', () => sidebar.setEntries(shown, labels));
+      // The duplicate scan is only a banner: it runs when the loop is idle, once per burst of refreshes.
+      if (suggestionsIdle) GLib.source_remove(suggestionsIdle);
+      suggestionsIdle = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+        suggestionsIdle = 0;
+        timed('candidate sets', () =>
+          sidebar.setSuggestions(candidateSets(shown, loadConfig(configPath()).declinedMerges).length),
+        );
+        return GLib.SOURCE_REMOVE;
+      });
+      pendingLoad.forEach((done) => done());
+      pendingLoad.length = 0;
     });
   };
   const review = () => {
@@ -435,8 +457,17 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
       closed: () => refresh(),
     });
   };
-  refresh();
-  if (options.protocol) sidebar.chooseProtocol(options.protocol);
+  // The window paints its empty shell first; the list loads on the next idle turn.
+  const firstLoad = new Promise<void>((resolve) => {
+    GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+      pendingLoad.push(() => {
+        if (options.protocol) sidebar.chooseProtocol(options.protocol);
+        resolve();
+      });
+      refresh();
+      return GLib.SOURCE_REMOVE;
+    });
+  });
   if (options.search !== undefined)
     GLib.timeout_add(GLib.PRIORITY_DEFAULT, 800, () => {
       sidebar.showSearch(options.search!, options.openScope === true);
@@ -444,7 +475,8 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     });
   // A notification, or the screenshot hook, names a chat by its conversation id or its row id.
   const openConversation = (id: string): void => {
-    const entry = loadConversationEntries().find((e) => e.id === id || e.conversationIds.includes(id));
+    const match = (e: ListEntry) => e.id === id || e.conversationIds.includes(id);
+    const entry = shown.find(match) ?? loadConversationEntries().find(match);
     if (entry) select(entry);
   };
   const openAction = new Gio.SimpleAction({
@@ -467,7 +499,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   const emojiAction = new Gio.SimpleAction({ name: 'open-emoji' });
   emojiAction.connect('activate', () => conversation.openEmoji());
   window.add_action(emojiAction);
-  if (options.open) openConversation(options.open);
+  if (options.open) void firstLoad.then(() => openConversation(options.open!));
   // First start only: the flag says it was finished, and anybody with accounts is not new.
   void (async () => {
     try {
