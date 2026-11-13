@@ -1936,23 +1936,20 @@ msgid "Status"
 msgstr "Status"
 
 #: app/src/window/account-detail.ts:87
-#, fuzzy
 msgid ""
 "Off keeps the account and its messages, but shows nothing of it and sends "
 "nothing."
 msgstr ""
-"Aus lässt das Konto verknüpft und seine Nachrichten hier, aber Curlew "
-"synchronisiert es nicht mehr."
+"Aus behält das Konto und seine Nachrichten, zeigt aber nichts davon an und "
+"sendet nichts."
 
 #: app/src/window/account-detail.ts:89
-#, fuzzy
 msgid "Use this account"
-msgstr "Dieses Konto synchronisieren"
+msgstr "Dieses Konto verwenden"
 
 #: app/src/window/account-detail.ts:119
-#, fuzzy
 msgid "Pause this account?"
-msgstr "Dieses Konto synchronisieren"
+msgstr "Dieses Konto pausieren?"
 
 #: app/src/window/account-detail.ts:122
 #: app/src/window/account-remove-model.ts:24
@@ -1999,16 +1996,14 @@ msgid "Remove Account…"
 msgstr "Konto entfernen…"
 
 #: app/src/window/account-pause-model.ts:9
-#, fuzzy
 msgid "{n} conversation will be hidden."
 msgid_plural "{n} conversations will be hidden."
-msgstr[0] "{n} Unterhaltung"
-msgstr[1] "{n} Unterhaltungen"
+msgstr[0] "{n} Unterhaltung wird ausgeblendet."
+msgstr[1] "{n} Unterhaltungen werden ausgeblendet."
 
 #: app/src/window/account-pause-model.ts:12
-#, fuzzy
 msgid "Its conversations will be hidden."
-msgstr "Diese Unterhaltung hat keine Empfängeradresse."
+msgstr "Die Unterhaltungen des Kontos werden ausgeblendet."
 
 #: app/src/window/account-pause-model.ts:13
 msgid ""
