@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- The window no longer stalls when it opens or is brought back into focus with thousands of conversations: the list rows are built in idle batches instead of one blocking pass (about 1.2 s down to 35 ms on 2000 conversations), the duplicate scan runs when the loop is idle, a refresh on activation waits until the window has painted, and the account names no longer trigger a second full rebuild when they match the index. `CURLEW_DEBUG_STALL=1` logs main-loop stalls and the timing of the list refresh.
 - Changing a chat's Design, Accent colour or Chat background on its contact page now shows in the chat behind the dialog at once, not only after the dialog closes.
 - The About dialog now shows the version, the licence, the website, the issue tracker, the developer and the copyright; it showed none of the version before. `curlew --version` prints the same number.
 - In the Flatpak, an agent's access prompt now appears (through the Notification portal, with the same four buttons) and voice notes can use the microphone (`--socket=pulseaudio`). Both were silently missing in the sandbox.
