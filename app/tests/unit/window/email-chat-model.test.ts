@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { parseConfig } from '../../../src/core/config.ts';
+import { defaultConfig, parseConfig } from '../../../src/core/config.ts';
 import { shouldShowEmailChatHint, withHintSeen } from '../../../src/window/email-chat-model.ts';
 
 export default async () => {
@@ -21,6 +21,12 @@ export default async () => {
     it('records an account once', () => {
       expect(withHintSeen(undefined, 'mail-a')).toStrictEqual(['mail-a']);
       expect(withHintSeen(['mail-a'], 'mail-a')).toStrictEqual(['mail-a']);
+    });
+
+    it('lists only email chats unless the person asks for all mail', () => {
+      expect(parseConfig('{}').ui.showAllEmails).toBe(false);
+      expect(defaultConfig().ui.showAllEmails).toBe(false);
+      expect(parseConfig('{"ui":{"showAllEmails":true}}').ui.showAllEmails).toBe(true);
     });
 
     it('reads and rejects the config field', () => {
