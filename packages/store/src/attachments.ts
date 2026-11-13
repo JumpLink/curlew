@@ -25,20 +25,39 @@ export interface AttachmentInfo {
 /** Load every attachment descriptor for a message; routes by `ref.backend`. */
 export function loadAttachments(db: IndexDatabase, ref: MessageRef): AttachmentInfo[] {
   if (ref.backend === 'mail') {
-    return mailAttachments(db, ref).map((a, i) => ({
-      section: a.section,
-      filename: a.filename,
-      mimeType: a.mimeType,
-      size: a.size,
-      index: i,
-      kind: kindFromMime(a.filename, a.mimeType),
-      width: null,
-      height: null,
-      durationMs: null,
-      fetchable: false,
-    }));
+    const mark = mailChatMark(db, ref);
+    return mailAttachments(db, ref).map((a, i) => {
+      const kind = kindFromMime(a.filename, a.mimeType);
+      // The mark describes the message's one attachment: a voice note is audio. A sticker is an
+      // image already, and the window shows it as one.
+      const voice = mark?.content === 'voice' && kind === 'audio';
+      return {
+        section: a.section,
+        filename: a.filename,
+        mimeType: a.mimeType,
+        size: a.size,
+        index: i,
+        kind: voice ? 'voice' : kind,
+        width: null,
+        height: null,
+        durationMs: voice ? mark.durationMs : null,
+        fetchable: false,
+      };
+    });
   }
   return chatAttachments(db, ref);
+}
+
+/** Delta Chat's voice/sticker mark of a mail message; only email chats carry one. */
+function mailChatMark(db: IndexDatabase, ref: MessageRef): { content: string; durationMs: number | null } | null {
+  if (!ref.folder || ref.uid === undefined) return null;
+  const row = db
+    .prepare(
+      'SELECT chat_content, chat_duration_ms FROM messages WHERE account_id = ? AND folder_path = ? AND uid = ? AND email_chat = 1',
+    )
+    .get(ref.accountId, ref.folder, ref.uid) as { chat_content?: unknown; chat_duration_ms?: unknown } | undefined;
+  if (typeof row?.chat_content !== 'string') return null;
+  return { content: row.chat_content, durationMs: num(row.chat_duration_ms) };
 }
 
 /** The opaque backend handle for one chat attachment, or null when there is none. */

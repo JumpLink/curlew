@@ -30,6 +30,9 @@ export const THREAD_HEADER_FIELDS: readonly string[] = [
   'CONTENT-DISPOSITION',
   'CHAT-EDIT',
   'CHAT-DELETE',
+  'CHAT-VOICE-MESSAGE',
+  'CHAT-DURATION',
+  'CHAT-CONTENT',
 ];
 
 /** The FETCH item that asks for them without setting `\Seen`. */
@@ -85,6 +88,10 @@ export interface ThreadHeaders {
   chatEdit: string | null;
   /** `Chat-Delete`: the Message-ID of the message this mail asks to delete; the body is ignored. */
   chatDelete: string | null;
+  /** Delta Chat's `Chat-Voice-Message: 1` / `Chat-Content: sticker`; only meaningful with `emailChat`. */
+  chatContent: 'voice' | 'sticker' | null;
+  /** `Chat-Duration` in milliseconds; null when absent or not a number (never an error). */
+  durationMs: number | null;
 }
 
 /** The Message-ID in angle brackets: Delta Chat writes these two headers with or without them. */
@@ -101,6 +108,16 @@ export function parseThreadHeaders(block: string): ThreadHeaders {
     return value ? decodeRfc2047(value) : null;
   };
   const inReplyTo = parseMessageIdList(headers.get('in-reply-to'));
+  const emailChat = get('chat-version') === '1.0';
+  const duration = get('chat-duration');
+  const durationMs = duration !== null && /^\d{1,9}$/.test(duration) ? Number.parseInt(duration, 10) : null;
+  const chatContent: ThreadHeaders['chatContent'] = !emailChat
+    ? null
+    : get('chat-voice-message') === '1'
+      ? 'voice'
+      : get('chat-content')?.toLowerCase() === 'sticker'
+        ? 'sticker'
+        : null;
   return {
     references: parseMessageIdList(headers.get('references')),
     inReplyTo: inReplyTo[0] ?? null,
@@ -110,9 +127,11 @@ export function parseThreadHeaders(block: string): ThreadHeaders {
       autoSubmitted: get('auto-submitted'),
       precedence: get('precedence'),
     },
-    emailChat: get('chat-version') === '1.0',
+    emailChat,
     reaction: /^reaction\s*(;|$)/i.test(get('content-disposition') ?? ''),
     chatEdit: bracketedId(get('chat-edit')),
     chatDelete: bracketedId(get('chat-delete')),
+    chatContent,
+    durationMs: chatContent === 'voice' ? durationMs : null,
   };
 }

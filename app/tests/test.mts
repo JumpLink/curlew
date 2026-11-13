@@ -24,6 +24,7 @@ import mailForward from './unit/protocol/mail-forward.test.ts';
 
 import storePaths from './unit/store/paths.test.ts';
 import storeDownload from './unit/store/download.test.ts';
+import storeMailVoice from './unit/store/mail-voice.test.ts';
 import storeSendFiles from './unit/store/send-files.test.ts';
 import storeFts from './unit/store/fts.test.ts';
 import storeDb from './unit/store/db.test.ts';
@@ -172,6 +173,7 @@ run({
   mailForward,
   storePaths,
   storeDownload,
+  storeMailVoice,
   storeSendFiles,
   storeFts,
   storeDb,

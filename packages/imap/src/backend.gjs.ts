@@ -175,6 +175,8 @@ class ImapBackendSession implements BackendSession {
         ...(thread.reaction ? { reaction: true } : {}),
         ...(thread.chatEdit ? { chatEdit: thread.chatEdit } : {}),
         ...(thread.chatDelete ? { chatDelete: thread.chatDelete } : {}),
+        ...(thread.chatContent ? { chatContent: thread.chatContent } : {}),
+        ...(thread.durationMs !== null ? { durationMs: thread.durationMs } : {}),
         ...(isEncryptedStructure(parts) ? { encrypted: true } : {}),
       });
     }

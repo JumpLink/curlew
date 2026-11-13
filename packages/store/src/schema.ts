@@ -22,7 +22,7 @@
 import { type IndexDatabase, withTransaction } from './db.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 
-export const SCHEMA_VERSION = 22;
+export const SCHEMA_VERSION = 23;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -458,6 +458,12 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
        WHERE EXISTS (SELECT 1 FROM messages m
                       WHERE m.account_id = folders.account_id AND m.folder_path = folders.path
                         AND m.email_chat = 1)`,
+  ],
+  // v23: Delta Chat's voice-note and sticker markers (`Chat-Voice-Message`, `Chat-Content`,
+  // `Chat-Duration`). Older rows stay plain attachments: no re-fetch for a cosmetic mark.
+  23: [
+    { table: 'messages', column: 'chat_content', type: 'TEXT' },
+    { table: 'messages', column: 'chat_duration_ms', type: 'INTEGER' },
   ],
 };
 

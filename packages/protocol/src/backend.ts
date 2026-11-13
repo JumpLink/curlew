@@ -66,6 +66,10 @@ export interface BackendMessage {
   chatEdit?: string;
   /** `Chat-Delete` (Delta Chat): this mail asks to delete the message with that Message-ID. */
   chatDelete?: string;
+  /** Only with `emailChat`: the message is a voice note or a sticker (Delta Chat headers). */
+  chatContent?: 'voice' | 'sticker';
+  /** The voice note's `Chat-Duration` in milliseconds, when it came. */
+  durationMs?: number;
   /** The body is encrypted (OpenPGP, S/MIME): there is no text to index, and the window says so. */
   encrypted?: boolean;
 }
@@ -884,6 +888,11 @@ export interface SendingMessage {
   attachments?: SendingAttachment[];
   /** Mail from the chat UI: add `Chat-Version: 1.0` and optionally answer an existing message. */
   emailChat?: boolean;
+  /** With `emailChat`: the one attachment is a voice note (`Chat-Voice-Message`), `durationMs` its length. */
+  voiceMessage?: boolean;
+  durationMs?: number;
+  /** With `emailChat`: the one attachment is a sticker (`Chat-Content: sticker`). */
+  sticker?: boolean;
   inReplyTo?: string;
   references?: string[];
 }
