@@ -8,8 +8,10 @@ import Gtk from 'gi://Gtk?version=4.0';
 import Pango from 'gi://Pango?version=1.0';
 import { _, fmt } from '@curlew/protocol';
 import type { ConversationMessage, MessageReaction, ReplyTarget } from '@curlew/protocol';
-import type { MessageCursor } from '@curlew/store';
+import { configPath, type MessageCursor } from '@curlew/store';
 
+import { loadConfig, saveConfig } from '../core/config.ts';
+import { emailChatHint, shouldShowEmailChatHint, withHintSeen } from './email-chat-model.ts';
 import { hasContactPage } from './contact-page.ts';
 import { showPicture, showSenderPicture } from './contact-picture.ts';
 import type { ListEntry } from './conversation-list-model.ts';
@@ -255,6 +257,21 @@ export function createConversationView(
   const hint = new Gtk.Label({ xalign: 0, marginStart: 12, marginEnd: 12, marginTop: 4, visible: false });
   hint.add_css_class('dim-label');
   hint.add_css_class('caption');
+  // Once per mail account, above its first email chat: what an email chat is (dismissed for good).
+  const chatBanner = new Adw.Banner({ title: emailChatHint(), buttonLabel: _('Got It'), revealed: false });
+  chatBanner.connect('button-clicked', () => {
+    chatBanner.set_revealed(false);
+    if (!entry) return;
+    try {
+      const path = configPath();
+      const config = loadConfig(path);
+      config.ui.emailChatHintSeen = withHintSeen(config.ui.emailChatHintSeen, entry.accountId);
+      saveConfig(config, path);
+    } catch {
+      // The hint is a convenience; it simply shows again next time.
+    }
+  });
+  content.append(chatBanner);
   content.append(backdrop);
   const overlay = new Adw.ToastOverlay({ child: content });
   const files = createComposerFiles({
@@ -1361,6 +1378,13 @@ export function createConversationView(
       contactAvatar.set_text(nextEntry.title);
       contactAvatar.set_custom_image(null);
       showPicture(contactAvatar, nextEntry);
+      let hintSeen: string[] | undefined;
+      try {
+        hintSeen = loadConfig(configPath()).ui.emailChatHintSeen;
+      } catch {
+        hintSeen = undefined;
+      }
+      chatBanner.set_revealed(shouldShowEmailChatHint(nextEntry, hintSeen));
       history.remove_all();
       built.clear();
       empty.set_visible(nextMessages.length === 0);

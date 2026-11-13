@@ -7,6 +7,7 @@ import { configPath } from '@curlew/store';
 
 import { aiEnabled, loadConfig, saveConfig } from '../core/config.ts';
 import { appearanceGroups, type AppearanceStore } from './appearance-rows.ts';
+import { showAllEmailsSubtitle } from './email-chat-model.ts';
 import { silentVideosOn } from './video-preview-model.ts';
 import { refreshSilentVideos } from './video-preview.ts';
 
@@ -36,7 +37,7 @@ export function presentPreferences(
   const overlay = new Adw.ToastOverlay();
   const row = new Adw.SwitchRow({
     title: _('Show all emails'),
-    subtitle: _('Show ordinary email threads beside conversations started by a chat messenger'),
+    subtitle: showAllEmailsSubtitle(),
     active: loadConfig(path).ui.showAllEmails,
   });
   const group = new Adw.PreferencesGroup({ title: _('Conversations') });

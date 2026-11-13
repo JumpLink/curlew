@@ -64,6 +64,8 @@
 
 ### Added
 
+- The welcome screen now walks through protocols, accounts, Delta Chat (one switch per mail account, off by default), AI features (off by default) and a summary. Nothing is forced; skipping leaves everything off.
+- A mail account's page and the first email chat explain what an email chat is, once per account and dismissible. "Show all emails" now says it only filters the list.
 - Every design pack has its own chat background: leaves for Forest, moon and stars for Dusk, a beach for Sunrise, hearts for Rose, calm geometry for Graphite. Each can be chosen on its own too.
 - The conversation search finds people by name, phone number, address or handle as well as by message text. A row that matched a number shows it under the name. A menu next to the search field narrows the search to *Names and numbers* or *Messages*, and the choice is remembered (`ui.searchScope`).
 - Demo mode: `CURLEW_DEMO=1 curlew window` (or `curlew demo`) opens the window on made-up data — 23 chats over all six protocols with reactions, edits, replies, threads, an album, a voice note, a video, files and a long mail — for screenshots, tests and trying Curlew without accounts. The data is generated into `$XDG_CACHE_HOME/curlew-demo` (`CURLEW_DEMO_DIR` changes it); your real index, config and accounts are never read, nothing is sent and the daemon is not contacted. The window title and a short notice say so.

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 03:13+0100\n"
+"POT-Creation-Date: 2026-11-13 03:59+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1561,7 +1561,7 @@ msgid "curlew window takes no arguments."
 msgstr ""
 
 #: app/src/window/about.ts:14 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:163 app/src/window/window.ts:87
+#: app/src/window/conversation-view.ts:165 app/src/window/window.ts:87
 #: app/src/window/window.ts:106
 msgid "Curlew"
 msgstr ""
@@ -1630,40 +1630,40 @@ msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 
 #: app/src/window/account-add.ts:319 app/src/window/accounts-page.ts:158
-#: app/src/window/accounts-page.ts:181 app/src/window/welcome.ts:92
+#: app/src/window/accounts-page.ts:181 app/src/window/welcome.ts:161
 msgid "Add Account"
 msgstr ""
 
-#: app/src/window/account-detail.ts:70 app/src/window/agent-access-page.ts:218
+#: app/src/window/account-detail.ts:71 app/src/window/agent-access-page.ts:218
 #: app/src/window/contact-page.ts:392
 msgid "Account"
 msgstr ""
 
-#: app/src/window/account-detail.ts:74
+#: app/src/window/account-detail.ts:75
 msgid "Status"
 msgstr ""
 
-#: app/src/window/account-detail.ts:80
+#: app/src/window/account-detail.ts:81
 msgid ""
 "Off keeps the account linked and its messages here, but Curlew stops syncing "
 "it."
 msgstr ""
 
-#: app/src/window/account-detail.ts:84
+#: app/src/window/account-detail.ts:85
 msgid "Sync this account"
 msgstr ""
 
-#: app/src/window/account-detail.ts:105
+#: app/src/window/account-detail.ts:106 app/src/window/welcome.ts:203
 msgid "Use for Delta Chat"
 msgstr ""
 
-#: app/src/window/account-detail.ts:107
+#: app/src/window/account-detail.ts:108
 msgid ""
 "Messages from this account become email chats. People without Delta Chat see "
 "an ordinary email."
 msgstr ""
 
-#: app/src/window/account-detail.ts:126
+#: app/src/window/account-detail.ts:127
 msgid "Remove Account…"
 msgstr ""
 
@@ -1684,7 +1684,7 @@ msgstr ""
 #: app/src/window/agent-access-page.ts:234
 #: app/src/window/conversation-list.ts:466
 #: app/src/window/conversation-list.ts:552
-#: app/src/window/conversation-view.ts:707 app/src/window/protocols-page.ts:51
+#: app/src/window/conversation-view.ts:724 app/src/window/protocols-page.ts:51
 msgid "Cancel"
 msgstr ""
 
@@ -1735,7 +1735,8 @@ msgid "Could not start the background service: {reason}"
 msgstr ""
 
 #: app/src/window/accounts-dialog.ts:75 app/src/window/accounts-page.ts:194
-#: app/src/window/welcome.ts:104 app/src/window/window.ts:119
+#: app/src/window/welcome-model.ts:59 app/src/window/welcome.ts:173
+#: app/src/window/window.ts:119
 msgid "Accounts"
 msgstr ""
 
@@ -1763,7 +1764,8 @@ msgstr ""
 msgid "Daemon not running"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:48
+#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:49
+#: app/src/window/welcome-model.ts:72
 msgid "Off"
 msgstr ""
 
@@ -1804,7 +1806,8 @@ msgid "Start"
 msgstr ""
 
 #: app/src/window/accounts-page.ts:187 app/src/window/conversation-list.ts:356
-#: app/src/window/protocols-page.ts:111
+#: app/src/window/protocols-page.ts:111 app/src/window/welcome-model.ts:57
+#: app/src/window/welcome.ts:147
 msgid "Protocols"
 msgstr ""
 
@@ -2441,7 +2444,7 @@ msgid "Review"
 msgstr ""
 
 #: app/src/window/conversation-list.ts:583
-#: app/src/window/preferences-dialog.ts:42
+#: app/src/window/preferences-dialog.ts:43
 msgid "Conversations"
 msgstr ""
 
@@ -2452,7 +2455,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:129
-#: app/src/window/conversation-view.ts:1311
+#: app/src/window/conversation-view.ts:1328
 msgid "Continuing via {protocol}"
 msgstr ""
 
@@ -2488,145 +2491,168 @@ msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:336
 #: app/src/window/conversation-model.ts:349
-#: app/src/window/conversation-view.ts:691
+#: app/src/window/conversation-view.ts:708
 msgid "You"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:169
+#: app/src/window/conversation-view.ts:171
 msgid "Choose how to reach this person"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:182
-#: app/src/window/conversation-view.ts:1360
+#: app/src/window/conversation-view.ts:184
+#: app/src/window/conversation-view.ts:1377
 msgid "Contact details"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:201
+#: app/src/window/conversation-view.ts:203
 msgid "No messages yet"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:210
-#: app/src/window/conversation-view.ts:475
+#: app/src/window/conversation-view.ts:212
+#: app/src/window/conversation-view.ts:492
 msgid "Write a message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:221
+#: app/src/window/conversation-view.ts:223
 msgid "Send message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:233
+#: app/src/window/conversation-view.ts:235
 msgid "Cancel reply"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:246
+#: app/src/window/conversation-view.ts:248
 msgid "Cancel editing"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:298
+#: app/src/window/conversation-view.ts:261
+msgid "Got It"
+msgstr ""
+
+#: app/src/window/conversation-view.ts:315
 msgid "Conversation"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:441
+#: app/src/window/conversation-view.ts:458
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:493
+#: app/src/window/conversation-view.ts:510
 msgid "Send via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:598
+#: app/src/window/conversation-view.ts:615
 msgid "Show the quoted message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:605
-#: app/src/window/conversation-view.ts:637
+#: app/src/window/conversation-view.ts:622
+#: app/src/window/conversation-view.ts:654
 msgid "Reply to {author}: {excerpt}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:620
+#: app/src/window/conversation-view.ts:637
 msgid "The quoted message is no longer in the history"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:662
+#: app/src/window/conversation-view.ts:679
 msgid "Reaction not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:690
+#: app/src/window/conversation-view.ts:707
 msgid "Edit message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:694
+#: app/src/window/conversation-view.ts:711
 msgid "Editing your message: {excerpt}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:702
+#: app/src/window/conversation-view.ts:719
 msgid "Delete message?"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:703
+#: app/src/window/conversation-view.ts:720
 msgid "This will remove the message for everyone in the chat."
 msgstr ""
 
-#: app/src/window/conversation-view.ts:708
+#: app/src/window/conversation-view.ts:725
 msgid "Delete for everyone"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:725
+#: app/src/window/conversation-view.ts:742
 msgid "Message not deleted: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:786
+#: app/src/window/conversation-view.ts:803
 msgid "Reply"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:787
+#: app/src/window/conversation-view.ts:804
 msgid "Edit"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:788
+#: app/src/window/conversation-view.ts:805
 msgid "Delete"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:789
+#: app/src/window/conversation-view.ts:806
 msgid "Copy"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:908
+#: app/src/window/conversation-view.ts:925
 msgid "Encrypted message: it cannot be shown here"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:909
+#: app/src/window/conversation-view.ts:926
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:950
-#: app/src/window/conversation-view.ts:1088
+#: app/src/window/conversation-view.ts:967
+#: app/src/window/conversation-view.ts:1105
 msgid "edited"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:960
-#: app/src/window/conversation-view.ts:961
+#: app/src/window/conversation-view.ts:977
+#: app/src/window/conversation-view.ts:978
 msgid "Read"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1175
+#: app/src/window/conversation-view.ts:1192
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1276
+#: app/src/window/conversation-view.ts:1293
 msgid "Message not edited: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1323
+#: app/src/window/conversation-view.ts:1340
 msgid "Message not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1326
+#: app/src/window/conversation-view.ts:1343
 msgid "Retry"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1360
+#: app/src/window/conversation-view.ts:1377
 msgid "Group details"
+msgstr ""
+
+#: app/src/window/email-chat-model.ts:11
+msgid ""
+"People using Delta Chat, ArcaneChat or DeltaTouch see messages from this "
+"account as a chat. Everyone else sees an ordinary email. Curlew offers chat "
+"features only in threads where the other side sent the chat marker."
+msgstr ""
+
+#: app/src/window/email-chat-model.ts:17
+msgid ""
+"Off lists only email chats. This changes the list only, never how mail is "
+"sent"
+msgstr ""
+
+#: app/src/window/email-chat-model.ts:23
+msgid ""
+"This is an email chat: people with Delta Chat, ArcaneChat or DeltaTouch see "
+"it as a chat, everyone else as an ordinary email."
 msgstr ""
 
 #: app/src/window/fade-bin.ts:153
@@ -2661,7 +2687,7 @@ msgstr ""
 msgid "Previous"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:125 app/src/window/welcome.ts:85
+#: app/src/window/media-viewer.ts:125 app/src/window/welcome.ts:118
 msgid "Next"
 msgstr ""
 
@@ -2699,7 +2725,7 @@ msgstr ""
 msgid "You can separate merged people again from the conversation list."
 msgstr ""
 
-#: app/src/window/merge-assistant.ts:90 app/src/window/welcome.ts:108
+#: app/src/window/merge-assistant.ts:90 app/src/window/welcome.ts:179
 msgid "Done"
 msgstr ""
 
@@ -2707,7 +2733,7 @@ msgstr ""
 msgid "These people have similar names. Are they the same person?"
 msgstr ""
 
-#: app/src/window/merge-assistant.ts:119 app/src/window/welcome.ts:85
+#: app/src/window/merge-assistant.ts:119 app/src/window/welcome.ts:128
 msgid "Skip"
 msgstr ""
 
@@ -2727,66 +2753,62 @@ msgstr ""
 msgid "The address book could not be read"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:38
+#: app/src/window/preferences-dialog.ts:39
 msgid "Show all emails"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:39
-msgid ""
-"Show ordinary email threads beside conversations started by a chat messenger"
-msgstr ""
-
-#: app/src/window/preferences-dialog.ts:46
+#: app/src/window/preferences-dialog.ts:47
 msgid "Message notifications"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:47
+#: app/src/window/preferences-dialog.ts:48
 msgid "What a desktop notification for a new chat message shows"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:48
+#: app/src/window/preferences-dialog.ts:49
 msgid "Sender and text"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:48
+#: app/src/window/preferences-dialog.ts:49
 msgid "Sender only"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:51
+#: app/src/window/preferences-dialog.ts:52
 msgid "Notifications"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:54
+#: app/src/window/preferences-dialog.ts:55
 msgid "Play videos silently in chats"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:55
+#: app/src/window/preferences-dialog.ts:56
 msgid "A video in a conversation plays muted while it is on screen"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:61
+#: app/src/window/preferences-dialog.ts:62
 msgid "Media"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:64
+#: app/src/window/preferences-dialog.ts:65 app/src/window/welcome-model.ts:72
+#: app/src/window/welcome.ts:221
 msgid "AI features"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:66
+#: app/src/window/preferences-dialog.ts:67
 msgid ""
 "Let AI assistants read and send your messages through Curlew, each time as "
 "you allow it. Off: no assistant can reach your data"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:70
+#: app/src/window/preferences-dialog.ts:71 app/src/window/welcome.ts:233
 msgid "AI"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:82 app/src/window/window.ts:121
+#: app/src/window/preferences-dialog.ts:83 app/src/window/window.ts:121
 msgid "Preferences"
 msgstr ""
 
-#: app/src/window/protocols-page.ts:30
+#: app/src/window/protocols-page.ts:30 app/src/window/welcome-model.ts:63
 msgid "{count} account"
 msgid_plural "{count} accounts"
 msgstr[0] ""
@@ -2806,27 +2828,100 @@ msgid_plural "{count} selected"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/welcome.ts:62 app/src/window/welcome.ts:81
+#: app/src/window/welcome-model.ts:57
+msgid "None"
+msgstr ""
+
+#: app/src/window/welcome-model.ts:62
+msgid "None yet"
+msgstr ""
+
+#: app/src/window/welcome-model.ts:66 app/src/window/welcome.ts:187
+msgid "Delta Chat"
+msgstr ""
+
+#: app/src/window/welcome-model.ts:69
+msgid "Off for every account"
+msgstr ""
+
+#: app/src/window/welcome-model.ts:70
+msgid "On for {count} account"
+msgid_plural "On for {count} accounts"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/src/window/welcome-model.ts:72
+msgid "On"
+msgstr ""
+
+#: app/src/window/welcome.ts:106 app/src/window/welcome.ts:124
 #: app/src/window/window.ts:126
 msgid "Welcome"
 msgstr ""
 
-#: app/src/window/welcome.ts:83
+#: app/src/window/welcome.ts:126
 msgid "Welcome to Curlew"
 msgstr ""
 
-#: app/src/window/welcome.ts:84
+#: app/src/window/welcome.ts:127
 msgid ""
 "Curlew brings your mail and chat accounts together in one conversation list."
 msgstr ""
 
-#: app/src/window/welcome.ts:106
+#: app/src/window/welcome.ts:135
+msgid "Choose Protocols"
+msgstr ""
+
+#: app/src/window/welcome.ts:149
+msgid "Choose your protocols"
+msgstr ""
+
+#: app/src/window/welcome.ts:151
+msgid ""
+"Mail is on. Switch on a chat protocol to use it; some ask you to read a "
+"notice first. You can change this later in Accounts."
+msgstr ""
+
+#: app/src/window/welcome.ts:175
 msgid "Add your accounts"
 msgstr ""
 
-#: app/src/window/welcome.ts:107
+#: app/src/window/welcome.ts:177
 msgid ""
-"Sign in to a mail or chat account. You can add more later from the menu."
+"Mail accounts from GNOME Online Accounts appear on their own. Otherwise "
+"choose Add Account, then Mail. You can add more later from the menu."
+msgstr ""
+
+#: app/src/window/welcome.ts:196
+msgid ""
+"No mail account yet. Once you add one, you can switch this on in its "
+"settings."
+msgstr ""
+
+#: app/src/window/welcome.ts:223
+msgid ""
+"An assistant could then read and send your messages through Curlew, each "
+"time as you allow it."
+msgstr ""
+
+#: app/src/window/welcome.ts:234
+msgid ""
+"Off, no assistant can reach your data. You can change this at any time in "
+"Preferences."
+msgstr ""
+
+#: app/src/window/welcome.ts:244
+msgid "All set"
+msgstr ""
+
+#: app/src/window/welcome.ts:245
+msgid ""
+"You can change all of this later: accounts and protocols in Accounts, the "
+"rest in Preferences."
+msgstr ""
+
+#: app/src/window/welcome.ts:247
+msgid "Start Using Curlew"
 msgstr ""
 
 #: app/src/window/window.ts:81
