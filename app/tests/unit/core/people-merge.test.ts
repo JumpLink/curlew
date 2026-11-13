@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { choiceFor, groupKey, lookOf, withChoice } from '../../../src/core/contact-choices.ts';
+import { choiceFor, groupKey, lookAfter, lookOf, withChoice } from '../../../src/core/contact-choices.ts';
 import {
   peopleChoose,
   peopleDecline,
@@ -35,6 +35,17 @@ export default async () => {
         ['a', 'b', 'c'],
       ]);
       expect(withMerge([['a', 'b']], ['c'])).toStrictEqual([['a', 'b']]);
+    });
+
+    await it('gives the open chat the look a pick leads to, before the page closes', async () => {
+      const first = lookAfter({}, ['a'], { accent: 'red' });
+      expect(first).toStrictEqual({ accent: 'red' });
+      const choices = withChoice({}, ['a'], { accent: 'red' });
+      expect(lookAfter(choices, ['a'], { background: 'dots' })).toStrictEqual({
+        accent: 'red',
+        background: 'dots',
+      });
+      expect(lookAfter(choices, ['a'], { accent: null })).toStrictEqual({});
     });
 
     await it('undoes a whole merge when any of its people is named', async () => {

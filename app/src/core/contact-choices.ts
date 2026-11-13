@@ -61,6 +61,11 @@ export function withChoice(
   return out;
 }
 
+/** The look a contact's chat wears after `patch`: what an open chat shows while its page is open. */
+export function lookAfter(choices: ContactChoices, ids: readonly string[], patch: ChoicePatch): Look {
+  return lookOf(choiceFor(withChoice(choices, ids, patch), ids)?.choice);
+}
+
 /** The part of a choice that gives a chat its own colours and pattern. */
 export function lookOf(choice: ContactChoice | undefined): Look {
   return {

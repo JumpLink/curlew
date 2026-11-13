@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Changing a chat's Design, Accent colour or Chat background on its contact page now shows in the chat behind the dialog at once, not only after the dialog closes.
 - The About dialog now shows the version, the licence, the website, the issue tracker, the developer and the copyright; it showed none of the version before. `curlew --version` prints the same number.
 - In the Flatpak, an agent's access prompt now appears (through the Notification portal, with the same four buttons) and voice notes can use the microphone (`--socket=pulseaudio`). Both were silently missing in the sandbox.
 - Deleting your own Delta Chat message for everyone no longer brings it back when the conversation is rebuilt before the delete mail has synced: the delete is remembered until that mail is seen (at most 30 days). A test also covers that an own edit survives a rebuild, and which entries the bubble menu offers in Delta Chat, plain mail and XMPP threads.
