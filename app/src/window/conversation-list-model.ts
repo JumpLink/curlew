@@ -63,7 +63,7 @@ export interface ListEntry {
   /** The people in the chat with their addresses, so a search can match a name or a number. */
   people?: SearchPerson[];
   /** The members of a group the index knows, by name; absent for every other row. */
-  members?: string[];
+  groupMembers?: string[];
   /** The title before the person typed one of their own; set only on a row that has one. */
   automaticTitle?: string;
 }
@@ -325,7 +325,7 @@ export function toEntry(
       name: p.displayName?.trim() || null,
       addresses: p.addresses.map((a) => a.value),
     })),
-    ...(conversation.kind === 'group' ? { members: memberNames(conversation) } : {}),
+    ...(conversation.kind === 'group' ? { groupMembers: memberNames(conversation) } : {}),
   };
 }
 

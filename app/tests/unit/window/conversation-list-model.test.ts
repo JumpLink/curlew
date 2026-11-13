@@ -986,8 +986,8 @@ export default async () => {
           participants: [person('1', 'Ana', 'ana@example.org'), person('2', null, 'bo@example.org')],
         }),
       );
-      expect(group.members).toStrictEqual(['Ana', 'bo@example.org']);
-      expect(toEntry(conversation({ id: 'd' })).members).toBeUndefined();
+      expect(group.groupMembers).toStrictEqual(['Ana', 'bo@example.org']);
+      expect(toEntry(conversation({ id: 'd' })).groupMembers).toBeUndefined();
     });
   });
 };

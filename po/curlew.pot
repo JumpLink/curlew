@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 03:11+0100\n"
+"POT-Creation-Date: 2026-11-13 03:13+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1635,7 +1635,7 @@ msgid "Add Account"
 msgstr ""
 
 #: app/src/window/account-detail.ts:70 app/src/window/agent-access-page.ts:218
-#: app/src/window/contact-page.ts:391
+#: app/src/window/contact-page.ts:392
 msgid "Account"
 msgstr ""
 
@@ -2223,59 +2223,59 @@ msgstr ""
 msgid "This file is not a picture"
 msgstr ""
 
-#: app/src/window/contact-page.ts:379
+#: app/src/window/contact-page.ts:380
 msgid "{count} member"
 msgid_plural "{count} members"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/contact-page.ts:384
+#: app/src/window/contact-page.ts:385
 msgid "About"
 msgstr ""
 
-#: app/src/window/contact-page.ts:390
+#: app/src/window/contact-page.ts:391
 msgid "Protocol"
 msgstr ""
 
-#: app/src/window/contact-page.ts:393
+#: app/src/window/contact-page.ts:394
 msgid "Members"
 msgstr ""
 
-#: app/src/window/contact-page.ts:395
+#: app/src/window/contact-page.ts:396
 msgid "Visibility"
 msgstr ""
 
-#: app/src/window/contact-page.ts:395
+#: app/src/window/contact-page.ts:396
 msgid "Public room"
 msgstr ""
 
-#: app/src/window/contact-page.ts:395
+#: app/src/window/contact-page.ts:396
 msgid "Private room"
 msgstr ""
 
-#: app/src/window/contact-page.ts:396
+#: app/src/window/contact-page.ts:397
 msgid "Encryption"
 msgstr ""
 
-#: app/src/window/contact-page.ts:396
+#: app/src/window/contact-page.ts:397
 msgid "Encrypted"
 msgstr ""
 
-#: app/src/window/contact-page.ts:396
+#: app/src/window/contact-page.ts:397
 msgid "Not encrypted"
 msgstr ""
 
-#: app/src/window/contact-page.ts:400
+#: app/src/window/contact-page.ts:401
 msgid "Members the app knows"
 msgstr ""
 
-#: app/src/window/contact-page.ts:401 app/src/window/conversation-model.ts:337
+#: app/src/window/contact-page.ts:402 app/src/window/conversation-model.ts:337
 msgid "{count} person"
 msgid_plural "{count} people"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/contact-page.ts:421
+#: app/src/window/contact-page.ts:422
 msgid "Your own picture is shown instead"
 msgstr ""
 

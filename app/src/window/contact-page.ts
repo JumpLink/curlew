@@ -369,7 +369,8 @@ export function presentContactPage(
 }
 
 const countOf = (entry: ListEntry): number | null =>
-  entry.room?.memberCount ?? (entry.members && entry.members.length > 0 ? entry.members.length : null);
+  entry.room?.memberCount ??
+  (entry.groupMembers && entry.groupMembers.length > 0 ? entry.groupMembers.length : null);
 
 function groupSubtitle(entry: ListEntry): string {
   const count = countOf(entry);
@@ -394,7 +395,7 @@ function infoGroup(entry: ListEntry, labels: ReadonlyMap<string, string>): Adw.P
   const room = entry.room;
   if (room?.public != null) line(_('Visibility'), room.public ? _('Public room') : _('Private room'));
   if (room?.encrypted != null) line(_('Encryption'), room.encrypted ? _('Encrypted') : _('Not encrypted'));
-  const people = entry.members ?? [];
+  const people = entry.groupMembers ?? [];
   if (people.length > 0) {
     const expander = new Adw.ExpanderRow({
       title: _('Members the app knows'),

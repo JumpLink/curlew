@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 03:11+0100\n"
+"POT-Creation-Date: 2026-11-13 03:13+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1893,7 +1893,7 @@ msgid "Add Account"
 msgstr "Konto hinzufügen"
 
 #: app/src/window/account-detail.ts:70 app/src/window/agent-access-page.ts:218
-#: app/src/window/contact-page.ts:391
+#: app/src/window/contact-page.ts:392
 msgid "Account"
 msgstr "Konto"
 
@@ -2456,9 +2456,8 @@ msgid "Give this chat its own colours and background"
 msgstr "Gib diesem Chat eigene Farben und einen eigenen Hintergrund"
 
 #: app/src/window/contact-page.ts:179
-#, fuzzy
 msgid "Group"
-msgstr "Gruppen"
+msgstr "Gruppe"
 
 #: app/src/window/contact-page.ts:179
 msgid "Contact"
@@ -2515,62 +2514,59 @@ msgstr "Bild wählen"
 msgid "This file is not a picture"
 msgstr "Diese Datei ist kein Bild"
 
-#: app/src/window/contact-page.ts:379
-#, fuzzy
+#: app/src/window/contact-page.ts:380
 msgid "{count} member"
 msgid_plural "{count} members"
-msgstr[0] "{count} zusammengeführt"
-msgstr[1] "{count} zusammengeführt"
+msgstr[0] "{count} Mitglied"
+msgstr[1] "{count} Mitglieder"
 
-#: app/src/window/contact-page.ts:384
+#: app/src/window/contact-page.ts:385
 msgid "About"
 msgstr "Info"
 
-#: app/src/window/contact-page.ts:390
-#, fuzzy
+#: app/src/window/contact-page.ts:391
 msgid "Protocol"
-msgstr "Protokolle"
+msgstr "Protokoll"
 
-#: app/src/window/contact-page.ts:393
+#: app/src/window/contact-page.ts:394
 msgid "Members"
 msgstr "Mitglieder"
 
-#: app/src/window/contact-page.ts:395
+#: app/src/window/contact-page.ts:396
 msgid "Visibility"
 msgstr "Sichtbarkeit"
 
-#: app/src/window/contact-page.ts:395
+#: app/src/window/contact-page.ts:396
 msgid "Public room"
 msgstr "Öffentlicher Raum"
 
-#: app/src/window/contact-page.ts:395
+#: app/src/window/contact-page.ts:396
 msgid "Private room"
 msgstr "Privater Raum"
 
-#: app/src/window/contact-page.ts:396
+#: app/src/window/contact-page.ts:397
 msgid "Encryption"
 msgstr "Verschlüsselung"
 
-#: app/src/window/contact-page.ts:396
+#: app/src/window/contact-page.ts:397
 msgid "Encrypted"
 msgstr "Verschlüsselt"
 
-#: app/src/window/contact-page.ts:396
-#, fuzzy
+#: app/src/window/contact-page.ts:397
 msgid "Not encrypted"
-msgstr "Offen"
+msgstr "Nicht verschlüsselt"
 
-#: app/src/window/contact-page.ts:400
+#: app/src/window/contact-page.ts:401
 msgid "Members the app knows"
 msgstr "Mitglieder, die die App kennt"
 
-#: app/src/window/contact-page.ts:401 app/src/window/conversation-model.ts:337
+#: app/src/window/contact-page.ts:402 app/src/window/conversation-model.ts:337
 msgid "{count} person"
 msgid_plural "{count} people"
 msgstr[0] "{count} Person"
 msgstr[1] "{count} Personen"
 
-#: app/src/window/contact-page.ts:421
+#: app/src/window/contact-page.ts:422
 msgid "Your own picture is shown instead"
 msgstr "Stattdessen wird dein eigenes Bild gezeigt"
 
@@ -2926,9 +2922,8 @@ msgid "Retry"
 msgstr "Erneut versuchen"
 
 #: app/src/window/conversation-view.ts:1360
-#, fuzzy
 msgid "Group details"
-msgstr "Kontaktdetails"
+msgstr "Gruppendetails"
 
 #: app/src/window/fade-bin.ts:153
 msgid "Show more"
