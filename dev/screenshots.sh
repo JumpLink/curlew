@@ -37,6 +37,8 @@ MOTIFS=(
   "welcome-delta-chat|360x740|demo|CURLEW_WINDOW_OPEN_WELCOME=delta-chat"
   "email-chat|900x640|demo|CURLEW_WINDOW_OPEN=c3"
   "composer-emoji|900x640|demo|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_OPEN_EMOJI=1"
+  "reactions|900x640|demo|CURLEW_WINDOW_OPEN=c25"
+  "reactions-narrow|360x740|demo|CURLEW_WINDOW_OPEN=c25"
   "contact-merged|900x700|demo|CURLEW_WINDOW_OPEN=c3 CURLEW_WINDOW_OPEN_CONTACT=1"
   "account-paused|900x640|paused|CURLEW_WINDOW_OPEN_ACCOUNT=whatsapp/whatsapp-demo1"
 )

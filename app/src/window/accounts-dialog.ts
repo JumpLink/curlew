@@ -103,7 +103,8 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
       options.openAccount = undefined;
       for (const group of state.groups)
         for (const row of group.rows)
-          if (group.backend === backend && row.id === id) openAccountPage(group.backend, row, state.daemonPresent);
+          if (group.backend === backend && row.id === id)
+            openAccountPage(group.backend, row, state.daemonPresent);
     }
   };
 

@@ -21,6 +21,7 @@ File name: `<motif>.<lang>.<scheme>.png`.
 | `welcome-delta-chat` | welcome page that explains Delta Chat mode (`CURLEW_WINDOW_OPEN_WELCOME=delta-chat`) | 360×740 |
 | `contact-merged` | contact page of Sam: Delta Chat and XMPP combined | 900×700 |
 | `account-paused` | account page of a paused WhatsApp account | 900×640 |
+| `reactions`, `reactions-narrow` | picture and voice note with reactions under the bubble (Ida Roth) | 900×640 / 360×740 |
 | `composer-emoji` | emoji chooser open in the composer (Alex Weber) | 900×640 |
 | `email-chat` | email chat thread (Sam Fischer, no voice notes or stickers) | 900×640 |
 

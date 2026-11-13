@@ -60,6 +60,7 @@ const CONVERSATIONS: Row[] = [
   ['c21', 'signal', 'signal-demo1', 'direct', 'Max 🎮', 30, 0],
   ['c22', 'signal', 'signal-demo1', 'group', 'WG Hinterhof', 45, 5],
   ['c24', 'xmpp', 'xmpp-demo1', 'direct', 'Sam Fischer', 60 * 8, 0],
+  ['c25', 'telegram', 'telegram-demo1', 'direct', 'Ida Roth', 60 * 9, 0],
   ['c23', 'telegram', 'telegram-demo1', 'group', 'Hafenmeister', 60 * 6, 2],
 ];
 
@@ -70,6 +71,7 @@ const PEOPLE: Array<[id: string, name: string, addresses: Array<[kind: string, v
   ['p-sam', 'Sam Fischer', [['email', 'sam@example.org']]],
   ['p-robin-wa', 'Robin', [['whatsapp', '4915100000000@s.whatsapp.net']]],
   ['p-sam-xmpp', 'Sam Fischer', [['jid', 'sam@chat.example.org']]],
+  ['p-ida', 'Ida Roth', [['telegram', '515151']]],
   ['p-jo', 'Jo Klein', [['jid', 'jo@chat.example.org']]],
   [
     'p-alex',
@@ -209,6 +211,28 @@ function story(): Msg[] {
       att: [{ kind: 'image', name: `walk-${i + 1}.png`, scene, w, h: ht }],
     }),
   );
+
+  // c25 — short on purpose: a picture and a voice note, each with reactions under the bubble.
+  add('c25', 'p-ida', h(9) + 6, 'Look what the harbour looked like this morning.');
+  add('c25', 'p-ida', h(9) + 5, '', {
+    att: [{ kind: 'image', name: 'harbour-morning.png', scene: 'harbour', w: 480, h: 320 }],
+    react: [
+      ['', '😍'],
+      ['p-sam', '😍'],
+    ],
+  });
+  add('c25', 'p-ida', h(9) + 3, '', {
+    att: [
+      {
+        kind: 'voice',
+        speech: speech('See you at ten at the lighthouse, I bring the coffee!', 'en-gb+f3', 55),
+      },
+    ],
+    react: [
+      ['', '👍'],
+      ['p-sam', '❤️'],
+    ],
+  });
 
   // c17 — the partner, on Signal.
   add('c17', 'p-lena', d(1) + h(10), 'Guten Morgen, mein Lieblingsmensch ☀️');
