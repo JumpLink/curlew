@@ -87,6 +87,7 @@ export function validateMessage(message: OutgoingMessage): void {
   if (message.inReplyTo !== undefined && !MESSAGE_ID.test(message.inReplyTo)) {
     throw config('inReplyTo must look like <id@host>');
   }
+  if (message.mdn !== undefined && !MESSAGE_ID.test(message.mdn)) throw config('mdn must look like <id@host>');
   for (const id of [message.chatEdit, message.chatDelete]) {
     if (id !== undefined && !MESSAGE_ID.test(id)) throw config('chatEdit and chatDelete must look like <id@host>');
   }

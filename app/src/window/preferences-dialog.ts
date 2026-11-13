@@ -42,6 +42,12 @@ export function presentPreferences(
   });
   const group = new Adw.PreferencesGroup({ title: _('Conversations') });
   group.add(row);
+  const receipts = new Adw.SwitchRow({
+    title: _('Send read receipts'),
+    subtitle: _('Tell a Delta Chat contact when you have read their message, if they asked for it'),
+    active: loadConfig(path).ui.sendReadReceipts === true,
+  });
+  group.add(receipts);
   const modes = ['preview', 'sender', 'off'] as const;
   const notifications = new Adw.ComboRow({
     title: _('Message notifications'),
@@ -89,6 +95,17 @@ export function presentPreferences(
       config.ui.showAllEmails = row.get_active();
       saveConfig(config, path);
       onChanged();
+    } catch (err) {
+      overlay.add_toast(
+        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
+      );
+    }
+  });
+  receipts.connect('notify::active', () => {
+    try {
+      const config = loadConfig(path);
+      config.ui.sendReadReceipts = receipts.get_active();
+      saveConfig(config, path);
     } catch (err) {
       overlay.add_toast(
         new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),

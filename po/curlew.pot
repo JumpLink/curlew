@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 11:17+0100\n"
+"POT-Creation-Date: 2026-11-13 11:38+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -159,18 +159,18 @@ msgid "only your own messages can be deleted"
 msgstr ""
 
 #: app/src/core/actions/delete.ts:53 app/src/core/actions/edit.ts:55
-#: app/src/core/actions/react.ts:54 app/src/core/actions/send.ts:509
+#: app/src/core/actions/react.ts:54 app/src/core/actions/send.ts:514
 msgid "Demo mode: nothing is sent."
 msgstr ""
 
 #: app/src/core/actions/delete.ts:58 app/src/core/actions/edit.ts:60
-#: app/src/core/actions/react.ts:59 app/src/core/actions/send.ts:455
-#: app/src/core/actions/send.ts:514
+#: app/src/core/actions/react.ts:59 app/src/core/actions/read-receipt.ts:49
+#: app/src/core/actions/send.ts:460 app/src/core/actions/send.ts:519
 msgid "no account {account} — `curlew accounts list` shows them"
 msgstr ""
 
 #: app/src/core/actions/delete.ts:63 app/src/core/actions/edit.ts:65
-#: app/src/core/actions/react.ts:64 app/src/core/actions/send.ts:521
+#: app/src/core/actions/react.ts:64 app/src/core/actions/send.ts:526
 msgid "{backend} cannot send"
 msgstr ""
 
@@ -215,13 +215,13 @@ msgid ""
 "config.agentAccess.rules"
 msgstr ""
 
-#: app/src/core/actions/send.ts:186 app/src/core/actions/send.ts:199
+#: app/src/core/actions/send.ts:188 app/src/core/actions/send.ts:201
 msgid ""
 "the message index is busy, so curlew cannot tell whether {account} is in use "
 "elsewhere — nothing was sent; try again in a moment"
 msgstr ""
 
-#: app/src/core/actions/send.ts:205
+#: app/src/core/actions/send.ts:207
 msgid ""
 "{account} is being received by {holder} right now, {backend} cannot send and "
 "receive at the same time, and that process did not take the send over — "
@@ -229,36 +229,36 @@ msgid ""
 "from your phone"
 msgstr ""
 
-#: app/src/core/actions/send.ts:344
+#: app/src/core/actions/send.ts:348
 msgid "{backend} cannot send an image — give text and leave image_url out"
 msgstr ""
 
-#: app/src/core/actions/send.ts:354
+#: app/src/core/actions/send.ts:358
 msgid "nothing to send: the text is empty after rendering"
 msgstr ""
 
-#: app/src/core/actions/send.ts:357 app/src/core/actions/send.ts:535
+#: app/src/core/actions/send.ts:361 app/src/core/actions/send.ts:540
 msgid "{backend} cannot send attachments"
 msgstr ""
 
-#: app/src/core/actions/send.ts:361
+#: app/src/core/actions/send.ts:365
 msgid "{backend} cannot send a reply"
 msgstr ""
 
-#: app/src/core/actions/send.ts:499
+#: app/src/core/actions/send.ts:504
 msgid ""
 "this person is pinned to {pinned}: a message through {backend} is refused"
 msgstr ""
 
-#: app/src/core/actions/send.ts:525
+#: app/src/core/actions/send.ts:530
 msgid "nothing to send: give text, an image URL or an attachment"
 msgstr ""
 
-#: app/src/core/actions/send.ts:527
+#: app/src/core/actions/send.ts:532
 msgid "{backend} messages carry no subject"
 msgstr ""
 
-#: app/src/core/actions/send.ts:530
+#: app/src/core/actions/send.ts:535
 msgid "{backend} cannot send email chat headers"
 msgstr ""
 
@@ -1561,8 +1561,8 @@ msgid "curlew window takes no arguments."
 msgstr ""
 
 #: app/src/window/about.ts:14 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:173 app/src/window/window.ts:83
-#: app/src/window/window.ts:102
+#: app/src/window/conversation-view.ts:173 app/src/window/window.ts:84
+#: app/src/window/window.ts:103
 msgid "Curlew"
 msgstr ""
 
@@ -1746,7 +1746,7 @@ msgstr ""
 
 #: app/src/window/accounts-dialog.ts:75 app/src/window/accounts-page.ts:194
 #: app/src/window/welcome-model.ts:59 app/src/window/welcome.ts:173
-#: app/src/window/window.ts:115
+#: app/src/window/window.ts:116
 msgid "Accounts"
 msgstr ""
 
@@ -1774,7 +1774,7 @@ msgstr ""
 msgid "Daemon not running"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:49
+#: app/src/window/accounts-page.ts:35 app/src/window/preferences-dialog.ts:55
 #: app/src/window/welcome-model.ts:72
 msgid "Off"
 msgstr ""
@@ -1821,7 +1821,7 @@ msgstr ""
 msgid "Protocols"
 msgstr ""
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:119
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:120
 msgid "Agent access"
 msgstr ""
 
@@ -2101,8 +2101,8 @@ msgstr ""
 
 #: app/src/window/attachment-view.ts:149 app/src/window/attachment-view.ts:158
 #: app/src/window/conversation-list-model.ts:475
-#: app/src/window/conversation-model.ts:306
-#: app/src/window/conversation-model.ts:311
+#: app/src/window/conversation-model.ts:310
+#: app/src/window/conversation-model.ts:315
 msgid "Attachment"
 msgstr ""
 
@@ -2115,7 +2115,7 @@ msgid "Image: {name}"
 msgstr ""
 
 #: app/src/window/attachment-view.ts:466
-#: app/src/window/conversation-model.ts:314
+#: app/src/window/conversation-model.ts:318
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] ""
@@ -2282,7 +2282,7 @@ msgstr ""
 msgid "Members the app knows"
 msgstr ""
 
-#: app/src/window/contact-page.ts:402 app/src/window/conversation-model.ts:348
+#: app/src/window/contact-page.ts:402 app/src/window/conversation-model.ts:352
 msgid "{count} person"
 msgid_plural "{count} people"
 msgstr[0] ""
@@ -2464,43 +2464,43 @@ msgid_plural "{count} possible duplicates"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-model.ts:140
+#: app/src/window/conversation-model.ts:144
 #: app/src/window/conversation-view.ts:1355
 msgid "Continuing via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:260
+#: app/src/window/conversation-model.ts:264
 msgid "Unknown sender"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:297
+#: app/src/window/conversation-model.ts:301
 msgid "{kind}: {name}"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:302
+#: app/src/window/conversation-model.ts:306
 msgid "Image"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:303
+#: app/src/window/conversation-model.ts:307
 msgid "Video"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:304
+#: app/src/window/conversation-model.ts:308
 msgid "Audio"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:305
+#: app/src/window/conversation-model.ts:309
 msgid "File"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:346
+#: app/src/window/conversation-model.ts:350
 msgid "You and {count} other"
 msgid_plural "You and {count} others"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-model.ts:347
-#: app/src/window/conversation-model.ts:360
+#: app/src/window/conversation-model.ts:351
+#: app/src/window/conversation-model.ts:364
 #: app/src/window/conversation-view.ts:717
 msgid "You"
 msgstr ""
@@ -2781,54 +2781,64 @@ msgstr ""
 msgid "Show all emails"
 msgstr ""
 
+#: app/src/window/preferences-dialog.ts:46
+msgid "Send read receipts"
+msgstr ""
+
 #: app/src/window/preferences-dialog.ts:47
+msgid ""
+"Tell a Delta Chat contact when you have read their message, if they asked "
+"for it"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:53
 msgid "Message notifications"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:48
+#: app/src/window/preferences-dialog.ts:54
 msgid "What a desktop notification for a new chat message shows"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:49
+#: app/src/window/preferences-dialog.ts:55
 msgid "Sender and text"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:49
+#: app/src/window/preferences-dialog.ts:55
 msgid "Sender only"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:52
+#: app/src/window/preferences-dialog.ts:58
 msgid "Notifications"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:55
+#: app/src/window/preferences-dialog.ts:61
 msgid "Play videos silently in chats"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:56
+#: app/src/window/preferences-dialog.ts:62
 msgid "A video in a conversation plays muted while it is on screen"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:62
+#: app/src/window/preferences-dialog.ts:68
 msgid "Media"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:65 app/src/window/welcome-model.ts:72
+#: app/src/window/preferences-dialog.ts:71 app/src/window/welcome-model.ts:72
 #: app/src/window/welcome.ts:225
 msgid "AI features"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:67
+#: app/src/window/preferences-dialog.ts:73
 msgid ""
 "Let AI assistants read and send your messages through Curlew, each time as "
 "you allow it. Off: no assistant can reach your data"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:71 app/src/window/welcome.ts:237
+#: app/src/window/preferences-dialog.ts:77 app/src/window/welcome.ts:237
 msgid "AI"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:83 app/src/window/window.ts:117
+#: app/src/window/preferences-dialog.ts:89 app/src/window/window.ts:118
 msgid "Preferences"
 msgstr ""
 
@@ -2879,7 +2889,7 @@ msgid "On"
 msgstr ""
 
 #: app/src/window/welcome.ts:106 app/src/window/welcome.ts:124
-#: app/src/window/window.ts:122
+#: app/src/window/window.ts:123
 msgid "Welcome"
 msgstr ""
 
@@ -2948,39 +2958,39 @@ msgstr ""
 msgid "Start Using Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:77
+#: app/src/window/window.ts:78
 msgid "Select a conversation"
 msgstr ""
 
-#: app/src/window/window.ts:78
+#: app/src/window/window.ts:79
 msgid "Pick a conversation from the list."
 msgstr ""
 
-#: app/src/window/window.ts:116
+#: app/src/window/window.ts:117
 msgid "Merge contacts…"
 msgstr ""
 
-#: app/src/window/window.ts:124
+#: app/src/window/window.ts:125
 msgid "About Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:125
+#: app/src/window/window.ts:126
 msgid "Quit"
 msgstr ""
 
-#: app/src/window/window.ts:162
+#: app/src/window/window.ts:163
 msgid "This conversation has no recipient address."
 msgstr ""
 
-#: app/src/window/window.ts:325
+#: app/src/window/window.ts:345
 msgid "Curlew (demo)"
 msgstr ""
 
-#: app/src/window/window.ts:328
+#: app/src/window/window.ts:348
 msgid "Demo data — nothing here is real"
 msgstr ""
 
-#: app/src/window/window.ts:377
+#: app/src/window/window.ts:397
 msgid "No contacts to merge"
 msgstr ""
 
@@ -3070,25 +3080,29 @@ msgstr ""
 msgid "the mail account {account} is incomplete — add it again"
 msgstr ""
 
-#: packages/imap/src/send.ts:72 packages/matrix/src/send.ts:354
+#: packages/imap/src/send.ts:74 packages/matrix/src/send.ts:354
 #: packages/signal/src/send.ts:405 packages/telegram/src/sender.ts:80
 #: packages/whatsapp/src/send.ts:403
 msgid "sending to {address} is not granted for account {account}"
 msgstr ""
 
-#: packages/imap/src/send.ts:124
+#: packages/imap/src/send.ts:128
 msgid "only a Delta Chat message can be reacted to by mail"
 msgstr ""
 
-#: packages/imap/src/send.ts:141
+#: packages/imap/src/send.ts:145
 msgid "only your own Delta Chat messages can be changed by mail"
 msgstr ""
 
-#: packages/imap/src/send.ts:150
+#: packages/imap/src/send.ts:154
 msgid "an edited message cannot be empty"
 msgstr ""
 
-#: packages/imap/src/send.ts:194
+#: packages/imap/src/send.ts:192
+msgid "only a Delta Chat message gets a read receipt by mail"
+msgstr ""
+
+#: packages/imap/src/send.ts:218
 msgid "no mail account {account} with SMTP — `curlew accounts list` shows them"
 msgstr ""
 

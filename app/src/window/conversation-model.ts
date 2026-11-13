@@ -18,6 +18,7 @@ export interface MailReplyTarget {
 export interface MailReply {
   subject: string;
   emailChat?: true;
+  readReceipt?: true;
   inReplyTo?: string;
   references?: string[];
 }
@@ -58,6 +59,7 @@ export function composeMailReply(
   text: string,
   deltaChat: boolean,
   senderName = '',
+  readReceipts = false,
 ): MailReply {
   const references = [
     ...new Set([...(target?.references ?? []), ...(target?.messageId ? [target.messageId] : [])]),
@@ -71,6 +73,8 @@ export function composeMailReply(
           : plainSubject(text)
         : replySubject(parent.subject),
     ...(deltaChat ? { emailChat: true as const } : {}),
+    // Only a thread whose peer already speaks Delta Chat is asked for receipts; plain mail never is.
+    ...(deltaChat && readReceipts && parent?.emailChat ? { readReceipt: true as const } : {}),
     ...(target?.messageId ? { inReplyTo: target.messageId } : {}),
     ...(references.length > 0 ? { references } : {}),
   };

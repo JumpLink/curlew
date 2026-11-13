@@ -70,6 +70,9 @@ interface MailRow extends ThreadMember {
   reaction: boolean;
   chatEdit: string | null;
   chatDelete: string | null;
+  mdn: boolean;
+  mdnFor: string | null;
+  receiptTo: string | null;
 }
 
 function str(value: unknown): string | null {
@@ -95,7 +98,8 @@ function loadMailRows(db: IndexDatabase): MailRow[] {
     .prepare(
       `SELECT account_id, folder_path, uid, message_id, subject, sender, date, internal_date, seen,
               has_attachment, in_reply_to, thread_refs, from_json, to_json, list_id,
-              list_unsubscribe, auto_submitted, precedence, email_chat, encrypted, reaction, chat_edit, chat_delete
+              list_unsubscribe, auto_submitted, precedence, email_chat, encrypted, reaction, chat_edit, chat_delete,
+              mdn, mdn_for, receipt_to
          FROM messages ORDER BY id`,
     )
     .all() as Array<Record<string, unknown>>;
@@ -123,6 +127,9 @@ function loadMailRows(db: IndexDatabase): MailRow[] {
     reaction: Number(r.reaction) === 1,
     chatEdit: str(r.chat_edit),
     chatDelete: str(r.chat_delete),
+    mdn: Number(r.mdn) === 1,
+    mdnFor: str(r.mdn_for),
+    receiptTo: str(r.receipt_to),
   }));
 }
 
@@ -356,6 +363,7 @@ const MAIL_MESSAGES: SyncedTable = {
     'remote_id',
     'body',
     'edited_at',
+    'peer_read',
   ],
   key: [0],
 };
@@ -449,8 +457,14 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
   // A reaction, edit or delete mail is no message of the thread: it acts on its target.
   const controls = mailControls(db, all);
   const rows = all.filter(
-    (row) => !row.reaction && !row.chatEdit && !row.chatDelete && !controls.deleted.has(row.key),
+    (row) => !row.reaction && !row.chatEdit && !row.chatDelete && !row.mdn && !controls.deleted.has(row.key),
   );
+  // A read receipt from someone else confirms the message it names was read; ours confirm nothing.
+  const receipted = new Set<string>();
+  for (const row of all) {
+    const from = normalizeAddress('email', row.from[0]?.email ?? '');
+    if (row.mdn && row.mdnFor && !(from !== null && self.has(from))) receipted.add(row.mdnFor);
+  }
   // The person's own edit, echoed locally before its mail was synced, stays until a mail says otherwise.
   const echoed = new Map<string, { body: SqlValue; editedAt: SqlValue }>();
   for (const r of db
@@ -538,6 +552,8 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
         // Mail's own id, so a reaction or an edit can name the message it is about.
         row.messageId,
         ...editedOf(controls.edits.get(row.key), echoed.get(id)),
+        // Only a Delta Chat message of ours shows the tick; NULL elsewhere keeps old rows unchanged.
+        fromSelf && row.emailChat && row.messageId && receipted.has(row.messageId) ? 1 : null,
       ]);
     }
 
@@ -689,7 +705,7 @@ interface MailControls {
 function mailControls(db: IndexDatabase, all: readonly MailRow[]): MailControls {
   const byId = new Map<string, MailRow>();
   for (const row of all) {
-    if (row.messageId && !row.reaction && !row.chatEdit && !row.chatDelete) byId.set(row.messageId, row);
+    if (row.messageId && !row.reaction && !row.chatEdit && !row.chatDelete && !row.mdn) byId.set(row.messageId, row);
   }
   const author = (row: MailRow) => normalizeAddress('email', row.from[0]?.email ?? '');
   const result: MailControls = { deleted: new Set(), edits: new Map() };
@@ -1370,6 +1386,8 @@ function toMessage(
     message.groupId = str(r.group_id) || null;
     message.clientId = str(r.client_id);
     if (message.fromSelf) message.readByPeer = Number(r.peer_read) === 1;
+  } else if (message.fromSelf && r.email_chat !== undefined && Number(r.email_chat) === 1) {
+    message.readByPeer = Number(r.peer_read) === 1;
   }
   // A notice is what the network said about the chat: shown with or without bodies.
   if (message.presentation === 'notice') message.notice = str(r.body);

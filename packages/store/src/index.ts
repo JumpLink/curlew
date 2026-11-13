@@ -15,6 +15,7 @@ export * from './mail-reply.ts';
 export * from './attachments.ts';
 export * from './send-files.ts';
 export * from './conversations.ts';
+export * from './read-receipts.ts';
 export * from './conversation-totals.ts';
 export * from './secret-store.ts';
 export * from './chat-sync.ts';

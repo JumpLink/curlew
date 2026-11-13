@@ -33,6 +33,8 @@ export const THREAD_HEADER_FIELDS: readonly string[] = [
   'CHAT-VOICE-MESSAGE',
   'CHAT-DURATION',
   'CHAT-CONTENT',
+  'CONTENT-TYPE',
+  'CHAT-DISPOSITION-NOTIFICATION-TO',
 ];
 
 /** The FETCH item that asks for them without setting `\Seen`. */
@@ -92,6 +94,14 @@ export interface ThreadHeaders {
   chatContent: 'voice' | 'sticker' | null;
   /** `Chat-Duration` in milliseconds; null when absent or not a number (never an error). */
   durationMs: number | null;
+  /** The mail is a read receipt (`multipart/report; report-type=disposition-notification`, RFC 8098). */
+  mdn: boolean;
+  /**
+   * `Chat-Disposition-Notification-To`: the address the sender wants a read receipt at. Only this
+   * Delta Chat header counts; the plain `Disposition-Notification-To` is never read, because
+   * answering that would confirm to every mailing list that someone looked.
+   */
+  receiptTo: string | null;
 }
 
 /** The Message-ID in angle brackets: Delta Chat writes these two headers with or without them. */
@@ -133,5 +143,42 @@ export function parseThreadHeaders(block: string): ThreadHeaders {
     chatDelete: bracketedId(get('chat-delete')),
     chatContent,
     durationMs: chatContent === 'voice' ? durationMs : null,
+    mdn: isDispositionNotification(get('content-type')),
+    receiptTo: receiptAddress(get('chat-disposition-notification-to')),
+  };
+}
+
+/** `multipart/report` whose `report-type` is `disposition-notification`: a read receipt, not a message. */
+export function isDispositionNotification(contentType: string | null | undefined): boolean {
+  if (!contentType) return false;
+  return (
+    /^\s*multipart\/report\s*(;|$)/i.test(contentType) &&
+    /;\s*report-type\s*=\s*"?disposition-notification"?\s*(;|$)/i.test(contentType)
+  );
+}
+
+/** The lowercase `local@host` of a `Chat-Disposition-Notification-To` value (`<a@b>`, `Name <a@b>` or bare), or null. */
+function receiptAddress(value: string | null): string | null {
+  const text = value?.trim() ?? '';
+  const match = /<([^<>\s@]+@[^<>\s@]+)>/.exec(text) ?? /^([^<>\s@,;]+@[^<>\s@,;]+)$/.exec(text);
+  return match ? match[1].toLowerCase() : null;
+}
+
+/** What the `message/disposition-notification` part of a read receipt says. */
+export interface DispositionNotification {
+  /** `Original-Message-ID` (`<id@host>`): the message that was read. */
+  originalMessageId: string | null;
+  /** The disposition type is `displayed`: the person saw it. Anything else (deleted, denied) is no read receipt. */
+  displayed: boolean;
+}
+
+/** Read the fields of a decoded `message/disposition-notification` part. Never throws. */
+export function parseDispositionNotification(text: string): DispositionNotification {
+  const fields = parseHeaders(text.replace(/^\s+/, ''));
+  const disposition = fields.get('disposition') ?? '';
+  return {
+    originalMessageId: bracketedId(fields.get('original-message-id')?.trim() || null),
+    // `manual-action/MDN-sent-manually; displayed`: the type follows the last semicolon (RFC 8098 §3.2.6).
+    displayed: /;\s*displayed\b/i.test(disposition),
   };
 }

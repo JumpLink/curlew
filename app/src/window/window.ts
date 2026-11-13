@@ -57,6 +57,7 @@ import { loadAgentAccess } from './agent-access-store.ts';
 import { reactToMessage } from '../core/actions/react.ts';
 import { contactsForPicker } from '../core/actions/contacts.ts';
 import { sendMessage } from '../core/actions/send.ts';
+import { sendReadReceipts } from '../core/actions/read-receipt.ts';
 import { deltaChatEnabled } from '../core/actions/accounts.ts';
 import { editMessage } from '../core/actions/edit.ts';
 import { deleteMessage } from '../core/actions/delete.ts';
@@ -180,6 +181,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
               text,
               deltaChatEnabled(choice.accountId),
               senderNameOf(labels.get(choice.accountId)),
+              loadConfig().ui.sendReadReceipts === true,
             )
           : null;
       const result = await sendMessage({
@@ -261,6 +263,23 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     },
     (entry) => openContact(entry),
   );
+  // Opening a Delta Chat conversation answers the receipts its messages asked for (setting permitting).
+  const confirmRead = (messages: readonly ConversationMessage[]): void => {
+    if (loadConfig().ui.sendReadReceipts !== true) return;
+    const carriers = new Map<string, Set<string>>();
+    for (const m of messages) {
+      if (m.backend !== 'mail' || !m.emailChat || m.fromSelf) continue;
+      const ids = carriers.get(m.ref.accountId) ?? new Set<string>();
+      ids.add(m.conversationId);
+      carriers.set(m.ref.accountId, ids);
+    }
+    for (const [accountId, ids] of carriers) {
+      for (const conversationId of ids) {
+        // Fire and forget: a failed receipt must not disturb opening the conversation.
+        void sendReadReceipts({ accountId, conversationId, frontend: 'window' }).catch(() => {});
+      }
+    }
+  };
   const select = (entry: ListEntry) => {
     currentEntry = entry;
     currentMessages = loadConversationMessages(entry);
@@ -268,6 +287,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
     conversation.setLook(lookOf(choiceOfEntry(loadConfig().contactChoices, entry)?.choice));
     split.set_content(conversation.page);
     split.set_show_content(true);
+    confirmRead(currentMessages);
   };
   // A contact with no conversation opens as a draft row; the index gets the real one with the first send.
   const selectDraft = (entry: ListEntry) => {

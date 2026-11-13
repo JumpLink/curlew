@@ -22,7 +22,7 @@
 import { type IndexDatabase, withTransaction } from './db.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 
-export const SCHEMA_VERSION = 23;
+export const SCHEMA_VERSION = 24;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -464,6 +464,24 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
   23: [
     { table: 'messages', column: 'chat_content', type: 'TEXT' },
     { table: 'messages', column: 'chat_duration_ms', type: 'INTEGER' },
+  ],
+  // v24: Delta Chat read receipts. `mdn` marks a receipt mail (shown as a tick on its target `mdn_for`,
+  // never as a row), `receipt_to` is the `Chat-Disposition-Notification-To` address, and
+  // `mail_receipts_sent` remembers which messages we already answered. Email-chat folders are fetched again.
+  24: [
+    { table: 'messages', column: 'mdn', type: 'INTEGER NOT NULL DEFAULT 0' },
+    { table: 'messages', column: 'mdn_for', type: 'TEXT' },
+    { table: 'messages', column: 'receipt_to', type: 'TEXT' },
+    `CREATE TABLE IF NOT EXISTS mail_receipts_sent (
+       account_id TEXT NOT NULL,
+       message_id TEXT NOT NULL,
+       sent_at INTEGER NOT NULL,
+       PRIMARY KEY (account_id, message_id)
+     )`,
+    `UPDATE folders SET last_uid = 0, uid_next = NULL, message_count = NULL
+       WHERE EXISTS (SELECT 1 FROM messages m
+                      WHERE m.account_id = folders.account_id AND m.folder_path = folders.path
+                        AND m.email_chat = 1)`,
   ],
 };
 

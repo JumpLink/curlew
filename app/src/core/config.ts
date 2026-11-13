@@ -57,6 +57,8 @@ export interface UiConfig {
   colorScheme?: string;
   /** `doodles` or `none`. Unset: `doodles`. */
   chatBackground?: string;
+  /** Confirm to a Delta Chat peer that a message was read, when it asked for that. Unset: off. */
+  sendReadReceipts?: boolean;
   /** The first-run welcome screen was finished or skipped. Unset: not yet, so it may show. */
   welcomeDone?: boolean;
   /**
@@ -268,6 +270,9 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   const notifications = (rawUi as Record<string, unknown>).notifications ?? 'preview';
   if (notifications !== 'preview' && notifications !== 'sender' && notifications !== 'off')
     throw new Error('config.ui.notifications must be "preview", "sender" or "off"');
+  const sendReadReceipts = (rawUi as Record<string, unknown>).sendReadReceipts;
+  if (sendReadReceipts !== undefined && typeof sendReadReceipts !== 'boolean')
+    throw new Error('config.ui.sendReadReceipts must be true or false');
   const playVideosSilently = (rawUi as Record<string, unknown>).playVideosSilently;
   if (playVideosSilently !== undefined && typeof playVideosSilently !== 'boolean')
     throw new Error('config.ui.playVideosSilently must be true or false');
@@ -303,6 +308,7 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     ...(ai === undefined ? {} : { ai }),
     notifications,
     ...(playVideosSilently === undefined ? {} : { playVideosSilently }),
+    ...(sendReadReceipts === undefined ? {} : { sendReadReceipts }),
     ...(accentColor === undefined ? {} : { accentColor }),
     ...(primaryColor === undefined ? {} : { primaryColor }),
     ...(colorScheme === undefined ? {} : { colorScheme }),

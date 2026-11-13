@@ -46,6 +46,13 @@ export interface OutgoingMessage {
   durationMs?: number;
   /** Delta Chat sticker: `Chat-Content: sticker`. Only written together with `emailChat`. */
   sticker?: boolean;
+  /** `Chat-Disposition-Notification-To: <from>`: ask the peer for a read receipt. */
+  readReceipt?: boolean;
+  /**
+   * Send a read receipt (RFC 8098, as Delta Chat writes it) for the message with this `<id@host>`
+   * instead of a message: `text` and `attachments` are ignored.
+   */
+  mdn?: string;
   /** RFC 5322 threading headers, used when this is a reply. */
   inReplyTo?: string;
   references?: string[];
