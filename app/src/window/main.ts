@@ -28,14 +28,18 @@ Gtk.Window.set_default_icon_name(APP_ID);
 
 // An installed curlew finds its icon in the hicolor theme. A run from the source tree has none
 // installed, so the window, the About dialog and the shell all fell back to a generic icon:
-// <app>/dist/window.gjs.mjs → <app>/data/icons.
+// <app>/dist/window.gjs.mjs → <app>/data/icons and <app>/data/protocol-icons.
 function addSourceTreeIcons(): void {
   const display = Gdk.Display.get_default();
   if (!display || !import.meta.url.startsWith('file:')) return;
   const bundleDir = GLib.path_get_dirname(GLib.filename_from_uri(import.meta.url)[0]);
-  const icons = GLib.build_filenamev([bundleDir, '..', 'data', 'icons']);
-  if (GLib.file_test(icons, GLib.FileTest.IS_DIR))
-    Gtk.IconTheme.get_for_display(display).add_search_path(icons);
+  // The protocol badges live apart from the app icon: `gjsify ship` reads every SVG under
+  // `gjsify.ship.icon` as the app's own icon, and ships the badges through `extraFiles` instead.
+  for (const dir of ['icons', 'protocol-icons']) {
+    const icons = GLib.build_filenamev([bundleDir, '..', 'data', dir]);
+    if (GLib.file_test(icons, GLib.FileTest.IS_DIR))
+      Gtk.IconTheme.get_for_display(display).add_search_path(icons);
+  }
 }
 
 const application = new AdwaitaApp({

@@ -38,6 +38,7 @@
 
 ### Changed
 
+- Protocol badges are coloured now (Telegram blue, WhatsApp green, Signal blue, Matrix dark with green, XMPP orange, Mail purple) instead of neutral symbols; our own drawings, not the official logos.
 - New app icon: a fluffy curlew chick in the messenger bubble, with a matching symbolic icon.
 - The style (system, light, dark) is a segmented control in the preferences instead of three circles.
 - The message field grows with what is typed, up to five lines. Enter sends, Shift+Enter breaks the line.

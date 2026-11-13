@@ -145,10 +145,13 @@ first 300 characters of the newest body) and kept on the `ListEntry`; the `Conve
 agents get stays free of bodies. Mail keeps its body in the full-text index, so a mail row shows the
 subject. Not built: per-type labels ("Photo", "Voice message") instead of "Attachment".
 
-Protocol badges are 16 px themed Adwaita symbolic icons on a solid 22 px circle (the `card` style class: it contrasts in light and dark mode) that hangs on the avatar's lower-right rim so the initials stay readable; one distinct icon per protocol (mail:
-envelope, XMPP: server, Signal: shield, Matrix: globe of nodes, Telegram: paper plane, WhatsApp:
-phone), with a tooltip naming the protocol.
-The protocols' logos have their own trademark licences, so Curlew ships none.
+Protocol badges are 16 px coloured round icons (our own `curlew-protocol-<backend>` SVGs in
+`app/data/protocol-icons`, see `PROTOCOLS.md`) on a solid 22 px circle (the `card` style class: it contrasts
+in light and dark mode) that hangs on the avatar's lower-right rim so the initials stay readable;
+one colour and glyph per protocol (mail: purple envelope, XMPP: orange cross, Signal: blue ring,
+Matrix: green `[m]`, Telegram: blue plane, WhatsApp: green handset), with a tooltip naming the
+protocol, so colour never carries the meaning alone. The drawings are inspired by, not copies of,
+the protocols' trademarked logos, and imply no endorsement.
 
 ## Conversation view
 

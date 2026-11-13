@@ -37,6 +37,9 @@ install -Dm644 "$here/app/data/icons/hicolor/scalable/apps/eu.jumplink.curlew.sv
 	"$root/icons/hicolor/scalable/apps/eu.jumplink.curlew.svg"
 install -Dm644 "$here/app/data/icons/hicolor/symbolic/apps/eu.jumplink.curlew-symbolic.svg" \
 	"$root/icons/hicolor/symbolic/apps/eu.jumplink.curlew-symbolic.svg"
+for protocol_icon in "$here"/app/data/protocol-icons/hicolor/scalable/apps/curlew-protocol-*.svg; do
+	install -Dm644 "$protocol_icon" "$root/icons/hicolor/scalable/apps/$(basename "$protocol_icon")"
+done
 
 # The two caches are what a desktop shell actually reads. Both tools are optional:
 # without `update-desktop-database` the entry still launches, it just does not

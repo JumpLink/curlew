@@ -129,12 +129,12 @@ export const MIN_TEXT_QUERY = 2;
 export const NO_FILTER: ListFilter = { backends: new Set(), accounts: new Map(), query: '' };
 
 const PROTOCOLS: Record<string, { label: () => string; icon: string }> = {
-  mail: { label: () => _('Mail'), icon: 'mail-unread-symbolic' },
-  xmpp: { label: () => _('XMPP'), icon: 'network-server-symbolic' },
-  signal: { label: () => _('Signal'), icon: 'security-high-symbolic' },
-  matrix: { label: () => _('Matrix'), icon: 'network-workgroup-symbolic' },
-  telegram: { label: () => _('Telegram'), icon: 'send-to-symbolic' },
-  whatsapp: { label: () => _('WhatsApp'), icon: 'call-start-symbolic' },
+  mail: { label: () => _('Mail'), icon: 'curlew-protocol-mail' },
+  xmpp: { label: () => _('XMPP'), icon: 'curlew-protocol-xmpp' },
+  signal: { label: () => _('Signal'), icon: 'curlew-protocol-signal' },
+  matrix: { label: () => _('Matrix'), icon: 'curlew-protocol-matrix' },
+  telegram: { label: () => _('Telegram'), icon: 'curlew-protocol-telegram' },
+  whatsapp: { label: () => _('WhatsApp'), icon: 'curlew-protocol-whatsapp' },
 };
 
 const FALLBACK_ICON = 'network-transmit-receive-symbolic';
@@ -145,9 +145,8 @@ export function protocolLabel(backend: string): string {
 }
 
 /**
- * A neutral themed symbolic icon: the protocols' own logos are trademarks with their own licences,
- * so each badge is a distinct symbol (envelope, server, shield, globe, paper plane, phone) and the
- * tooltip names the protocol.
+ * Our own coloured badge per protocol (`data/protocol-icons`), drawn after, not copied from, the protocols'
+ * logos: they are trademarks. Colour never carries the meaning alone: every use has a label or tooltip.
  */
 export function protocolIcon(backend: string): string {
   return PROTOCOLS[backend]?.icon ?? FALLBACK_ICON;
