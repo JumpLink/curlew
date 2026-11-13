@@ -111,22 +111,20 @@ const application = new AdwaitaApp({
         GLib.PRIORITY_DEFAULT,
         () => (window.activate_action('protocols', null), GLib.SOURCE_REMOVE),
       );
-    // Reserved for the welcome screen: a no-op until `win.welcome` exists, so the screenshot
-    // script can already ask for it.
-    if (process.env.CURLEW_WINDOW_OPEN_WELCOME === '1' && window.lookup_action('welcome'))
-      GLib.idle_add(
-        GLib.PRIORITY_DEFAULT,
-        () => (window.activate_action('welcome', null), GLib.SOURCE_REMOVE),
-      );
     if (process.env.CURLEW_WINDOW_OPEN_PREFERENCES === '1')
       GLib.idle_add(
         GLib.PRIORITY_DEFAULT,
         () => (window.activate_action('preferences', null), GLib.SOURCE_REMOVE),
       );
-    if (process.env.CURLEW_WINDOW_OPEN_WELCOME === '1')
+    // `CURLEW_WINDOW_OPEN_WELCOME=1` opens the first-run welcome screen, `=<page id>` that page.
+    const welcomeAt = process.env.CURLEW_WINDOW_OPEN_WELCOME;
+    if (welcomeAt)
       GLib.idle_add(
         GLib.PRIORITY_DEFAULT,
-        () => (window.activate_action('welcome', null), GLib.SOURCE_REMOVE),
+        () => (
+          window.activate_action('welcome-page', GLib.Variant.new_string(welcomeAt)),
+          GLib.SOURCE_REMOVE
+        ),
       );
     return window;
   },

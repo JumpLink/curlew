@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 11:38+0100\n"
+"POT-Creation-Date: 2026-11-13 12:22+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1913,7 +1913,7 @@ msgstr ""
 msgid "Sync this account"
 msgstr "Dieses Konto synchronisieren"
 
-#: app/src/window/account-detail.ts:108 app/src/window/welcome.ts:207
+#: app/src/window/account-detail.ts:108 app/src/window/welcome.ts:203
 msgid "Use for Delta Chat"
 msgstr "Für Delta Chat verwenden"
 
@@ -3097,7 +3097,9 @@ msgstr "Lesebestätigungen senden"
 msgid ""
 "Tell a Delta Chat contact when you have read their message, if they asked "
 "for it"
-msgstr "Sag einer Delta-Chat-Kontaktperson, dass du ihre Nachricht gelesen hast, wenn sie darum gebeten hat"
+msgstr ""
+"Sag einer Delta-Chat-Kontaktperson, dass du ihre Nachricht gelesen hast, "
+"wenn sie darum gebeten hat"
 
 #: app/src/window/preferences-dialog.ts:53
 msgid "Message notifications"
@@ -3132,7 +3134,7 @@ msgid "Media"
 msgstr "Medien"
 
 #: app/src/window/preferences-dialog.ts:71 app/src/window/welcome-model.ts:72
-#: app/src/window/welcome.ts:225
+#: app/src/window/welcome.ts:221
 msgid "AI features"
 msgstr "KI-Funktionen"
 
@@ -3144,7 +3146,7 @@ msgstr ""
 "KI-Assistenten dürfen über Curlew deine Nachrichten lesen und senden, "
 "jeweils so, wie du es erlaubst. Aus: Kein Assistent erreicht deine Daten"
 
-#: app/src/window/preferences-dialog.ts:77 app/src/window/welcome.ts:237
+#: app/src/window/preferences-dialog.ts:77 app/src/window/welcome.ts:233
 msgid "AI"
 msgstr "KI"
 
@@ -3182,7 +3184,7 @@ msgstr "Keine"
 msgid "None yet"
 msgstr "Noch keine"
 
-#: app/src/window/welcome-model.ts:66 app/src/window/welcome.ts:189
+#: app/src/window/welcome-model.ts:66 app/src/window/welcome.ts:187
 msgid "Delta Chat"
 msgstr "Delta Chat"
 
@@ -3245,7 +3247,7 @@ msgstr ""
 "„Konto hinzufügen“ und dann „Mail“. Weitere kannst du später im Menü "
 "hinzufügen."
 
-#: app/src/window/welcome.ts:200
+#: app/src/window/welcome.ts:196
 msgid ""
 "No mail account yet. Once you add one, you can switch this on in its "
 "settings."
@@ -3253,7 +3255,7 @@ msgstr ""
 "Noch kein Mail-Konto. Sobald du eines hinzufügst, kannst du das in dessen "
 "Einstellungen einschalten."
 
-#: app/src/window/welcome.ts:227
+#: app/src/window/welcome.ts:223
 msgid ""
 "An assistant could then read and send your messages through Curlew, each "
 "time as you allow it."
@@ -3261,7 +3263,7 @@ msgstr ""
 "Ein Assistent könnte dann über Curlew deine Nachrichten lesen und senden, "
 "jeweils so, wie du es erlaubst."
 
-#: app/src/window/welcome.ts:238
+#: app/src/window/welcome.ts:234
 msgid ""
 "Off, no assistant can reach your data. You can change this at any time in "
 "Preferences."
@@ -3269,11 +3271,11 @@ msgstr ""
 "Aus: Kein Assistent erreicht deine Daten. Du kannst das jederzeit in den "
 "Einstellungen ändern."
 
-#: app/src/window/welcome.ts:248
+#: app/src/window/welcome.ts:244
 msgid "All set"
 msgstr "Alles bereit"
 
-#: app/src/window/welcome.ts:249
+#: app/src/window/welcome.ts:245
 msgid ""
 "You can change all of this later: accounts and protocols in Accounts, the "
 "rest in Preferences."
@@ -3281,7 +3283,7 @@ msgstr ""
 "Du kannst all das später ändern: Konten und Protokolle unter Konten, den "
 "Rest in den Einstellungen."
 
-#: app/src/window/welcome.ts:251
+#: app/src/window/welcome.ts:247
 msgid "Start Using Curlew"
 msgstr "Curlew benutzen"
 
@@ -3317,7 +3319,7 @@ msgstr "Curlew (Demo)"
 msgid "Demo data — nothing here is real"
 msgstr "Demo-Daten – nichts hier ist echt"
 
-#: app/src/window/window.ts:397
+#: app/src/window/window.ts:407
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 

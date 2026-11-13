@@ -273,7 +273,7 @@ dev/screenshots.sh --check            # only verifies that every expected file e
 ```
 
 Motifs: `conversations`, `conversation` (c1, Alex Weber), `conversation-narrow` and
-`conversations-narrow` (360×740), `contact`, `preferences`, `accounts`, `protocols`, `agent-access`.
+`conversations-narrow` (360×740), `contact`, `preferences`, `accounts`, `protocols`, `agent-access`, `welcome`, `welcome-delta-chat`, `email-chat`.
 
 The window reads these environment variables (all in `app/src/window/main.ts`):
 `CURLEW_WINDOW_OPEN=<conversation id>` (`c3` is the email chat, `c5` an XMPP chat),

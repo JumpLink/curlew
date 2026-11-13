@@ -45,3 +45,8 @@ export function withHintSeen(seen: readonly string[] | undefined, accountId: str
   const list = seen ?? [];
   return list.includes(accountId) ? [...list] : [...list, accountId];
 }
+
+/** The text above the switches on the welcome screen's Delta Chat page: what it does, then where mail went. */
+export function deltaChatPageText(): string {
+  return `${emailChatExplanation()}\n\n${hiddenMailNote()}`;
+}

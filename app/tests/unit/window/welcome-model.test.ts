@@ -9,6 +9,7 @@ import {
   mailAccountChoices,
   shouldShowWelcome,
   welcomePages,
+  welcomeStartPage,
   welcomeSummary,
 } from '../../../src/window/welcome-model.ts';
 
@@ -37,6 +38,14 @@ export default async () => {
 
     it('walks intro, protocols, accounts, Delta Chat, AI and ends with a summary', () => {
       expect(welcomePages()).toStrictEqual(['intro', 'protocols', 'accounts', 'delta-chat', 'ai', 'summary']);
+    });
+
+    it('maps the screenshot hook value to a page', () => {
+      expect(welcomeStartPage('1')).toBe('intro');
+      expect(welcomeStartPage('delta-chat')).toBe('delta-chat');
+      expect(welcomeStartPage('ai')).toBe('ai');
+      expect(welcomeStartPage('nope')).toBe(undefined);
+      expect(welcomeStartPage(undefined)).toBe(undefined);
     });
 
     it('leaves Delta Chat and AI off when nothing is touched', () => {

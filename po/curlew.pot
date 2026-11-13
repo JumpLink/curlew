@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 11:38+0100\n"
+"POT-Creation-Date: 2026-11-13 12:22+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1653,7 +1653,7 @@ msgstr ""
 msgid "Sync this account"
 msgstr ""
 
-#: app/src/window/account-detail.ts:108 app/src/window/welcome.ts:207
+#: app/src/window/account-detail.ts:108 app/src/window/welcome.ts:203
 msgid "Use for Delta Chat"
 msgstr ""
 
@@ -2824,7 +2824,7 @@ msgid "Media"
 msgstr ""
 
 #: app/src/window/preferences-dialog.ts:71 app/src/window/welcome-model.ts:72
-#: app/src/window/welcome.ts:225
+#: app/src/window/welcome.ts:221
 msgid "AI features"
 msgstr ""
 
@@ -2834,7 +2834,7 @@ msgid ""
 "you allow it. Off: no assistant can reach your data"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:77 app/src/window/welcome.ts:237
+#: app/src/window/preferences-dialog.ts:77 app/src/window/welcome.ts:233
 msgid "AI"
 msgstr ""
 
@@ -2870,7 +2870,7 @@ msgstr ""
 msgid "None yet"
 msgstr ""
 
-#: app/src/window/welcome-model.ts:66 app/src/window/welcome.ts:189
+#: app/src/window/welcome-model.ts:66 app/src/window/welcome.ts:187
 msgid "Delta Chat"
 msgstr ""
 
@@ -2926,35 +2926,35 @@ msgid ""
 "choose Add Account, then Mail. You can add more later from the menu."
 msgstr ""
 
-#: app/src/window/welcome.ts:200
+#: app/src/window/welcome.ts:196
 msgid ""
 "No mail account yet. Once you add one, you can switch this on in its "
 "settings."
 msgstr ""
 
-#: app/src/window/welcome.ts:227
+#: app/src/window/welcome.ts:223
 msgid ""
 "An assistant could then read and send your messages through Curlew, each "
 "time as you allow it."
 msgstr ""
 
-#: app/src/window/welcome.ts:238
+#: app/src/window/welcome.ts:234
 msgid ""
 "Off, no assistant can reach your data. You can change this at any time in "
 "Preferences."
 msgstr ""
 
-#: app/src/window/welcome.ts:248
+#: app/src/window/welcome.ts:244
 msgid "All set"
 msgstr ""
 
-#: app/src/window/welcome.ts:249
+#: app/src/window/welcome.ts:245
 msgid ""
 "You can change all of this later: accounts and protocols in Accounts, the "
 "rest in Preferences."
 msgstr ""
 
-#: app/src/window/welcome.ts:251
+#: app/src/window/welcome.ts:247
 msgid "Start Using Curlew"
 msgstr ""
 
@@ -2990,7 +2990,7 @@ msgstr ""
 msgid "Demo data — nothing here is real"
 msgstr ""
 
-#: app/src/window/window.ts:397
+#: app/src/window/window.ts:407
 msgid "No contacts to merge"
 msgstr ""
 

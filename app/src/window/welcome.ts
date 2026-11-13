@@ -15,7 +15,7 @@ import { APP_ID } from './about.ts';
 import { pushProtocolsPage } from './protocols-page.ts';
 import { loadAccountsState } from './accounts-store.ts';
 import { inSandbox } from '../core/lib/sandbox.ts';
-import { emailChatExplanation, hiddenMailNote } from './email-chat-model.ts';
+import { deltaChatPageText } from './email-chat-model.ts';
 import {
   applyAiChoice,
   applyDeltaChatChoice,
@@ -98,7 +98,7 @@ function saveWith(
   }
 }
 
-export function presentWelcome(parent: Gtk.Window | null, onClosed: () => void): void {
+export function presentWelcome(parent: Gtk.Window | null, onClosed: () => void, start?: WelcomePageId): void {
   const path = configPath();
   const overlay = new Adw.ToastOverlay();
   const navigation = new Adw.NavigationView();
@@ -184,13 +184,9 @@ export function presentWelcome(parent: Gtk.Window | null, onClosed: () => void):
 
   builders.set('delta-chat', () => {
     const group = new Adw.PreferencesGroup();
-    const page = formPage(
-      'delta-chat',
-      _('Delta Chat'),
-      `${emailChatExplanation()}\n\n${hiddenMailNote()}`,
-      group,
-      [nextButton('delta-chat')],
-    );
+    const page = formPage('delta-chat', _('Delta Chat'), deltaChatPageText(), group, [
+      nextButton('delta-chat'),
+    ]);
     const enabled = new Set(loadConfig(path).deltaChatAccounts ?? []);
     void loadAccountsState(path, { hostAccounts: hostAccounts() }).then(
       (load) => {
@@ -258,7 +254,7 @@ export function presentWelcome(parent: Gtk.Window | null, onClosed: () => void):
     return page;
   });
 
-  navigation.add(builders.get(pages[0])!());
+  navigation.add(builders.get(start !== undefined && builders.has(start) ? start : pages[0])!());
   dialog.connect('closed', () => {
     try {
       markWelcomeDone(path);
