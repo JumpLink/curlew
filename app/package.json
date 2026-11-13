@@ -54,11 +54,11 @@
         "name": "Pascal Garber",
         "email": "pascal@jumplink.eu"
       },
-      "summary": "Mail, contacts and calendar for you and your agents",
+      "summary": "Chats across messengers",
       "license": {
         "project": "AGPL-3.0-or-later"
       },
-      "description": "curlew reads the mail (IMAP), contacts (CardDAV) and calendar (CalDAV) of the accounts already configured in GNOME Online Accounts, as a CLI and an MCP server. Read-only unless a grant says otherwise: it never sets \\Seen, and its only write is one granted send to one address. GNOME Online Accounts and Evolution Data Server are Linux-only, so the macOS and Windows packages ship with every account backend unavailable — see the Releasing section of README.md.",
+      "description": "Curlew brings your mail and your chats from Telegram, Signal, WhatsApp, Matrix and XMPP into one list, with one conversation per person. Optional AI access through MCP is off by default. Contacts and calendar through GNOME Online Accounts are a feature of the Linux host build only.",
       "icon": "data/icons",
       "extraFiles": {
         "share/icons/hicolor/scalable/apps/curlew-protocol-mail.svg": "data/protocol-icons/hicolor/scalable/apps/curlew-protocol-mail.svg",

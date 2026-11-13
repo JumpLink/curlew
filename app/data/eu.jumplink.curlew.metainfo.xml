@@ -15,8 +15,8 @@
     <p xml:lang="de">Curlew bringt deine Mails und deine Chats von Telegram, Signal, WhatsApp, Matrix und XMPP in eine Liste, mit einer Unterhaltung pro Person, auf welchem Weg sie dich auch erreicht.</p>
     <p>Reply from the same window, send and open pictures, voice messages and files, and choose which messenger a person is reached through.</p>
     <p xml:lang="de">Antworte im selben Fenster, sende und öffne Bilder, Sprachnachrichten und Dateien, und wähle, über welchen Messenger eine Person erreicht wird.</p>
-    <p>AI assistants can work with your messages too, but only as far as you allow: each rule per account and contact allows, asks about or denies reading and sending. Your own actions are never restricted.</p>
-    <p xml:lang="de">KI-Assistenten können ebenfalls mit deinen Nachrichten arbeiten, aber nur so weit, wie du es erlaubst: Jede Regel pro Konto und Kontakt erlaubt, erfragt oder verweigert Lesen und Senden. Deine eigenen Aktionen werden nie eingeschränkt.</p>
+    <p>AI assistants can work with your messages too, but only if you switch it on, and then only as far as you allow: each rule per account and contact allows, asks about or denies reading and sending. Your own actions are never restricted.</p>
+    <p xml:lang="de">KI-Assistenten können ebenfalls mit deinen Nachrichten arbeiten, aber nur, wenn du es einschaltest, und dann nur so weit, wie du es erlaubst: Jede Regel pro Konto und Kontakt erlaubt, erfragt oder verweigert Lesen und Senden. Deine eigenen Aktionen werden nie eingeschränkt.</p>
   </description>
   <url type="homepage">https://github.com/JumpLink/curlew</url>
   <url type="vcs-browser">https://github.com/JumpLink/curlew</url>
@@ -52,26 +52,45 @@
     <keyword>Signal</keyword>
     <keyword>Matrix</keyword>
     <keyword>XMPP</keyword>
-    <keyword>agent</keyword>
+    <keyword>email chat</keyword>
+    <keyword>Delta Chat</keyword>
   </keywords>
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversations.png</image>
-      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversations.de.png</image>
+      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversations.en.light.png</image>
+      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversations.de.light.png</image>
       <caption>One chat per person, across every messenger</caption>
       <caption xml:lang="de">Ein Chat pro Person, über alle Messenger</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/agent-access.png</image>
-      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/agent-access.de.png</image>
-      <caption>Rules for what agents may read and send</caption>
-      <caption xml:lang="de">Regeln, was Agenten lesen und senden dürfen</caption>
+      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversation.en.light.png</image>
+      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversation.de.light.png</image>
+      <caption>Messages from several messengers in one conversation</caption>
+      <caption xml:lang="de">Nachrichten mehrerer Messenger in einer Unterhaltung</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/contact.en.light.png</image>
+      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/contact.de.light.png</image>
+      <caption>One person, every way to reach them</caption>
+      <caption xml:lang="de">Eine Person, alle Wege, sie zu erreichen</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/accounts.en.light.png</image>
+      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/accounts.de.light.png</image>
+      <caption>Your accounts and protocols</caption>
+      <caption xml:lang="de">Deine Konten und Protokolle</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversation-narrow.en.light.png</image>
+      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversation-narrow.de.light.png</image>
+      <caption>The same on a phone-sized screen</caption>
+      <caption xml:lang="de">Dasselbe auf einem Bildschirm in Handygröße</caption>
     </screenshot>
   </screenshots>
   <releases>
-    <release version="0.2.0" date="2026-10-26">
+    <release version="0.2.0" date="2026-11-13">
       <description>
-        <p>Agent access rules, OMEMO for XMPP, and sending on Telegram, Matrix and WhatsApp.</p>
+        <p>The first release: one list for mail, Telegram, Signal, WhatsApp, Matrix and XMPP, with email chats in the Delta Chat style, optional AI access that is off by default, and a new look for the chat list.</p>
       </description>
     </release>
   </releases>
