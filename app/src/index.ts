@@ -3,6 +3,7 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
 import { initI18n } from './core/lib/i18n.ts';
+import { VERSION } from './core/version.ts';
 
 import {
   accountsCommand,
@@ -97,6 +98,7 @@ const parseArgs = () =>
     // With this, both reject → reportError → exit 1.
     .strictCommands()
     .scriptName('curlew')
+    .version(VERSION)
     // Pin the locale: yargs otherwise translates its own chrome ("Commands:", "Options:") from
     // $LANG while every describe string here stays English, so a German shell got a half-German
     // help screen. It also keeps --help byte-stable across machines and CI.

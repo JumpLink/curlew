@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- The About dialog now shows the version, the licence, the website, the issue tracker, the developer and the copyright; it showed none of the version before. `curlew --version` prints the same number.
 - Deleting your own Delta Chat message for everyone no longer brings it back when the conversation is rebuilt before the delete mail has synced: the delete is remembered until that mail is seen (at most 30 days). A test also covers that an own edit survives a rebuild, and which entries the bubble menu offers in Delta Chat, plain mail and XMPP threads.
 - The conversation search now finds unsent drafts by their text, not only by subject; drafts stay in the list as before (#307).
 - A message bubble shows the time of day (14:05) again; for messages older than yesterday it showed the date, which the day separator already gives.
@@ -41,6 +42,7 @@
 
 ### Changed
 
+- The version lives in one place, `app/package.json`; the About dialog, `curlew --version` and the MCP server handshake read it from there instead of each carrying a copy.
 - `npm run packaging:install` takes `--no-icons` and `--remove-icons`, so a stale installed icon no longer shadows the one in `app/data` during development.
 - The README describes the messenger and is short; the per-protocol, command-line, daemon, MCP and release details moved to `docs/guide/`. The package metadata and the Flathub listing text describe the messenger, not a mail tool. The first release is `0.2.0`.
 - The old project name is gone from the code and docs: only `CURLEW_*` environment variables and the `curlew/` data and config directories are read, and the secret stores use `curlew.*` namespaces and a `curlew-<account>` crypto store name.
@@ -75,6 +77,7 @@
 
 ### Added
 
+- A test fails when the root `package.json`, a workspace package or the newest metainfo release disagrees with the version the app reports.
 - Read receipts for Delta Chat threads: a message you send asks the peer to confirm reading, and a receipt from them shows as the read tick on the message. *Send read receipts* in Preferences (off by default) lets Curlew confirm to them when you open their conversation; it answers only a request from the sender itself, once per message. Receipts that Delta Chat encrypts cannot be read here.
 - The AppStream metadata carries brand colours and display and input requirements, and `docs/release/flathub-checklist.md` lists what is left for Flathub.
 - `CURLEW_WINDOW_OPEN_WELCOME=<page>` opens a single page of the welcome screen (for example `delta-chat`); the screenshot script gained the motifs `welcome-delta-chat` and `email-chat`.
