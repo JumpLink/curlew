@@ -38,6 +38,8 @@ export interface IndexSearchCriteria {
   accountId?: string;
   /** Accounts left out (paused ones). */
   excludeAccounts?: readonly string[];
+  /** Accounts that show only email chats (plain mail switched off): other messages are left out. */
+  chatOnlyAccounts?: readonly string[];
   folderPath?: string;
   from?: string;
   subject?: string;
@@ -472,6 +474,10 @@ export function searchIndex(db: IndexDatabase, criteria: IndexSearchCriteria): I
   if (criteria.excludeAccounts && criteria.excludeAccounts.length > 0) {
     where.push(`account_id NOT IN (${placeholders(criteria.excludeAccounts.length)})`);
     params.push(...criteria.excludeAccounts);
+  }
+  if (criteria.chatOnlyAccounts && criteria.chatOnlyAccounts.length > 0) {
+    where.push(`(email_chat = 1 OR account_id NOT IN (${placeholders(criteria.chatOnlyAccounts.length)}))`);
+    params.push(...criteria.chatOnlyAccounts);
   }
   if (criteria.folderPath) {
     where.push('folder_path = ?');

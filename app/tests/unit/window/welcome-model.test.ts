@@ -70,7 +70,7 @@ export default async () => {
     it('leaves Delta Chat and AI off when nothing is touched', () => {
       const config = parseConfig('{}');
       expect(aiEnabled(config)).toBe(false);
-      expect(config.deltaChatAccounts).toBe(undefined);
+      expect(config.mailAccounts).toBe(undefined);
       const rows = welcomeSummary(config, 0);
       expect(rows.find((r) => r.title === 'AI features')?.value).toBe('Off');
     });
@@ -80,7 +80,7 @@ export default async () => {
       applyDeltaChatChoice(config, 'mail-a', true);
       applyDeltaChatChoice(config, 'mail-b', true);
       applyDeltaChatChoice(config, 'mail-a', false);
-      expect(config.deltaChatAccounts).toStrictEqual(['mail-b']);
+      expect(config.mailAccounts).toStrictEqual({ 'mail-b': { deltaChat: true } });
       applyAiChoice(config, true);
       expect(config.ui.ai).toBe(true);
       expect(aiEnabled(config)).toBe(true);

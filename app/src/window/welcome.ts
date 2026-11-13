@@ -8,7 +8,7 @@ import Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 import { configPath } from '@curlew/store';
 
-import { aiEnabled, loadConfig, saveConfig } from '../core/config.ts';
+import { aiEnabled, deltaChatAccountIds, loadConfig, plainMailOn, saveConfig } from '../core/config.ts';
 import { pushAddAccountPage } from './account-add.ts';
 import { openGoaSettings } from './accounts-page.ts';
 import { APP_ID } from './about.ts';
@@ -20,6 +20,7 @@ import { deltaChatPageText } from './email-chat-model.ts';
 import {
   applyAiChoice,
   applyDeltaChatChoice,
+  applyPlainMailChoice,
   countAccounts,
   mailAccountChoices,
   welcomePages,
@@ -186,7 +187,7 @@ export function presentWelcome(parent: Gtk.Window | null, onClosed: () => void, 
     const page = formPage('delta-chat', _('Delta Chat'), deltaChatPageText(), group, [
       nextButton('delta-chat'),
     ]);
-    const enabled = new Set(loadConfig(path).deltaChatAccounts ?? []);
+    const enabled = new Set(deltaChatAccountIds(loadConfig(path)));
     void loadAccountsState(path, { hostAccounts: hostAccounts() }).then(
       (load) => {
         const choices = mailAccountChoices(load);
@@ -203,10 +204,32 @@ export function presentWelcome(parent: Gtk.Window | null, onClosed: () => void, 
             active: enabled.has(choice.id),
             useMarkup: false,
           });
-          row.connect('notify::active', () =>
-            saveWith(path, (config) => applyDeltaChatChoice(config, choice.id, row.get_active()), onError),
-          );
+          const plain = new Adw.SwitchRow({
+            title: choice.label,
+            subtitle: _('Show ordinary email'),
+            active: plainMailOn(loadConfig(path), choice.id),
+            useMarkup: false,
+          });
+          let syncing = false;
+          const reload = () => {
+            const config = loadConfig(path);
+            syncing = true;
+            row.set_active(deltaChatAccountIds(config).includes(choice.id));
+            plain.set_active(plainMailOn(config, choice.id));
+            syncing = false;
+          };
+          row.connect('notify::active', () => {
+            if (syncing) return;
+            saveWith(path, (config) => applyDeltaChatChoice(config, choice.id, row.get_active()), onError);
+            reload();
+          });
+          plain.connect('notify::active', () => {
+            if (syncing) return;
+            saveWith(path, (config) => applyPlainMailChoice(config, choice.id, plain.get_active()), onError);
+            reload();
+          });
           group.add(row);
+          group.add(plain);
         }
       },
       (err: unknown) => onError(err instanceof Error ? err : new Error(String(err))),

@@ -102,6 +102,7 @@ import accountRemove from './unit/core/account-remove.test.ts';
 import accountToggle from './unit/core/account-toggle.test.ts';
 import pauseAccounts from './unit/core/pause-accounts.test.ts';
 import deltaChatOptin from './unit/core/delta-chat-optin.test.ts';
+import plainMailOff from './unit/core/plain-mail-off.test.ts';
 import peopleMergeTest from './unit/core/people-merge.test.ts';
 import windowAccounts from './unit/window/accounts-model.test.ts';
 import windowConversationList from './unit/window/conversation-list-model.test.ts';
@@ -258,6 +259,7 @@ run({
   accountToggle,
   pauseAccounts,
   deltaChatOptin,
+  plainMailOff,
   peopleMergeTest,
   windowConversationList,
   windowSearchScope,

@@ -30,23 +30,25 @@ export default async () => {
     });
 
     await it('is on with a count once an account is opted in', async () => {
-      const row = deltaChatRow([status('mail', true)], { deltaChatAccounts: ['a', 'b'] });
+      const row = deltaChatRow([status('mail', true)], {
+        mailAccounts: { a: { deltaChat: true }, b: { deltaChat: true } },
+      });
       expect(row.enabled).toBe(true);
       expect(row.count).toBe(2);
       expect(deltaChatSubtitle(row)).toBe('2 accounts');
     });
 
     await it('is greyed with a reason while mail is off', async () => {
-      const row = deltaChatRow([status('mail', false)], { deltaChatAccounts: ['a'] });
+      const row = deltaChatRow([status('mail', false)], { mailAccounts: { a: { deltaChat: true } } });
       expect(row.available).toBe(false);
       expect(row.enabled).toBe(false);
       expect(deltaChatSubtitle(row).includes('Mail')).toBe(true);
     });
 
     await it('opts exactly the chosen accounts in and the rest out', async () => {
-      const config = { ...defaultConfig(), deltaChatAccounts: ['a'] };
+      const config = { ...defaultConfig(), mailAccounts: { a: { deltaChat: true } } };
       applyDeltaChatAccounts(config, ['a', 'b'], new Set(['b']));
-      expect(config.deltaChatAccounts).toStrictEqual(['b']);
+      expect(config.mailAccounts).toStrictEqual({ b: { deltaChat: true } });
     });
   });
 };

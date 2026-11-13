@@ -11,16 +11,18 @@ import {
   accountConversationCount,
   accountRemove,
   accountSetDeltaChat,
+  accountSetPlainMail,
   accountSetEncryptionRequired,
   accountSetEnabled,
   deltaChatEnabled,
   encryptionRequiredFor,
+  plainMailEnabled,
 } from '../core/actions/accounts.ts';
 import { deleteDataCopy, removeAccountCopy } from './account-remove-model.ts';
 import { restartDaemonIfRunning } from './accounts-daemon.ts';
 import type { AccountRow } from './accounts-model.ts';
 import { pauseBody } from './account-pause-model.ts';
-import { emailChatExplanation } from './email-chat-model.ts';
+import { emailChatExplanation, plainMailSubtitle } from './email-chat-model.ts';
 import { accountStatusLabel } from './accounts-page.ts';
 
 export interface AccountDetailDeps {
@@ -146,7 +148,21 @@ export function pushAccountPage(deps: AccountDetailDeps): void {
     ),
     active: deps.backend === 'mail' && deltaChatEnabled(row.id, deps.path),
   });
+  const plainMail = new Adw.SwitchRow({
+    title: _('Show ordinary email'),
+    subtitle: plainMailSubtitle(),
+    active: deps.backend !== 'mail' || plainMailEnabled(row.id, deps.path),
+  });
+  // The two switches move together (off plain mail implies Delta Chat), so one write may flip the other.
+  let syncing = false;
+  const reload = () => {
+    syncing = true;
+    deltaChat.set_active(deltaChatEnabled(row.id, deps.path));
+    plainMail.set_active(plainMailEnabled(row.id, deps.path));
+    syncing = false;
+  };
   deltaChat.connect('notify::active', () => {
+    if (syncing) return;
     try {
       (deps.setDeltaChat ?? ((id, on) => accountSetDeltaChat(id, on, deps.path)))(
         row.id,
@@ -155,8 +171,20 @@ export function pushAccountPage(deps: AccountDetailDeps): void {
     } catch (err) {
       deps.onError(err instanceof Error ? err : new Error(String(err)));
     }
+    reload();
+  });
+  plainMail.connect('notify::active', () => {
+    if (syncing) return;
+    try {
+      accountSetPlainMail(row.id, plainMail.get_active(), deps.path);
+    } catch (err) {
+      deps.onError(err instanceof Error ? err : new Error(String(err)));
+    }
+    reload();
+    deps.onChanged();
   });
   chat.add(deltaChat);
+  chat.add(plainMail);
   page.add(chat);
 
   const secure = new Adw.PreferencesGroup();

@@ -6,7 +6,7 @@
  * index and come back the moment the account is switched on again.
  */
 
-import type { CurlewConfig } from './config.ts';
+import { plainMailOn, type CurlewConfig } from './config.ts';
 
 /** The key of the derived Delta Chat carrier in the protocol tables; it is not a backend (ADR 0001 §5). */
 export const DELTA_CHAT = 'deltachat';
@@ -18,11 +18,22 @@ export const DELTA_CHAT = 'deltachat';
  */
 export function carrierOf(
   backend: string,
-  _accountId: string,
+  accountId: string,
   emailChat: boolean,
-  _config: Pick<CurlewConfig, 'deltaChatAccounts'> = {},
+  config: Pick<CurlewConfig, 'mailAccounts'> = {},
 ): string {
-  return backend === 'mail' && emailChat ? DELTA_CHAT : backend;
+  // An account with plain mail off lists only email chats, so "E-Mail" cannot arise for it.
+  return backend === 'mail' && (emailChat || !plainMailOn(config, accountId)) ? DELTA_CHAT : backend;
+}
+
+/**
+ * Mail accounts that show only email chats: `plainMail: false` beats the global
+ * `ui.showAllEmails`. Their other mail threads stay in the index and come back on switching.
+ */
+export function chatOnlyAccountIds(config: Pick<CurlewConfig, 'mailAccounts'>): string[] {
+  return Object.entries(config.mailAccounts ?? {})
+    .filter(([, options]) => options.plainMail === false)
+    .map(([id]) => id);
 }
 
 /** Account ids the person paused (`config.disabledAccounts`, entries are `<backend>/<accountId>`). */

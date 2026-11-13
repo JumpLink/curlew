@@ -23,8 +23,8 @@ const raw = async (deltaChat: boolean): Promise<string> => {
 export default async () => {
   await describe('Delta Chat opt-in per mail account', async () => {
     await it('is off for a config without the field and for a fresh account', async () => {
-      expect(parseConfig('{}').deltaChatAccounts).toBe(undefined);
-      expect(defaultConfig().deltaChatAccounts).toBe(undefined);
+      expect(parseConfig('{}').mailAccounts).toBe(undefined);
+      expect(defaultConfig().mailAccounts).toBe(undefined);
     });
 
     await it('stores the choice per account and leaves the others alone', async () => {
@@ -32,15 +32,15 @@ export default async () => {
       try {
         const path = join(dir, 'config.json');
         saveConfig(defaultConfig(), path);
-        expect(readFileSync(path, 'utf8').includes('deltaChatAccounts')).toBe(false);
+        expect(readFileSync(path, 'utf8').includes('mailAccounts')).toBe(false);
         accountSetDeltaChat('mail-1', true, path);
         accountSetDeltaChat('mail-1', true, path);
         expect(deltaChatEnabled('mail-1', path)).toBe(true);
         expect(deltaChatEnabled('mail-2', path)).toBe(false);
-        expect(loadConfig(path).deltaChatAccounts?.join(',')).toBe('mail-1');
+        expect(Object.keys(loadConfig(path).mailAccounts ?? {}).join(',')).toBe('mail-1');
         accountSetDeltaChat('mail-1', false, path);
         expect(deltaChatEnabled('mail-1', path)).toBe(false);
-        expect(readFileSync(path, 'utf8').includes('deltaChatAccounts')).toBe(false);
+        expect(readFileSync(path, 'utf8').includes('mailAccounts')).toBe(false);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
@@ -49,6 +49,8 @@ export default async () => {
     await it('rejects a malformed list', async () => {
       expect(() => parseConfig('{"deltaChatAccounts":"mail-1"}')).toThrow(/deltaChatAccounts/);
       expect(() => parseConfig('{"deltaChatAccounts":[""]}')).toThrow(/deltaChatAccounts/);
+      expect(() => parseConfig('{"mailAccounts":{"a":{"plainMail":"no"}}}')).toThrow(/mailAccounts/);
+      expect(() => parseConfig('{"mailAccounts":[]}')).toThrow(/mailAccounts/);
     });
 
     await it('puts Chat-Version on the wire only with the opt-in', async () => {

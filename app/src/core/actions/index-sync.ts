@@ -37,7 +37,7 @@ import {
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig } from '../config.ts';
-import { hiddenAccountIds } from '../visibility.ts';
+import { chatOnlyAccountIds, hiddenAccountIds } from '../visibility.ts';
 import { chmodSync } from 'node:fs';
 import { dirname } from 'node:path';
 
@@ -284,12 +284,14 @@ export function indexSearch(
   dbPath?: string,
   cfgPath = configPath(),
 ): { messages: IndexedMessage[]; staleFolders: number; indexedAt: string | null } {
-  const excludeAccounts = [...(criteria.excludeAccounts ?? []), ...hiddenAccountIds(loadConfig(cfgPath))];
+  const config = loadConfig(cfgPath);
+  const excludeAccounts = [...(criteria.excludeAccounts ?? []), ...hiddenAccountIds(config)];
+  const chatOnlyAccounts = [...(criteria.chatOnlyAccounts ?? []), ...chatOnlyAccountIds(config)];
   const db = openIndex(dbPath ?? indexDbPath());
   try {
     const status = syncStatus(db, MAX_STALENESS_HOURS, new Date());
     return {
-      messages: searchIndex(db, { ...criteria, excludeAccounts }),
+      messages: searchIndex(db, { ...criteria, excludeAccounts, chatOnlyAccounts }),
       staleFolders: status.staleFolders.length,
       indexedAt: status.newestSync,
     };

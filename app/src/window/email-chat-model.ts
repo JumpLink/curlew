@@ -3,7 +3,7 @@
  * test that what the interface promises is what the list filter and the opt-in actually do.
  */
 
-import { _ } from '@curlew/protocol';
+import { _, _n, fmt } from '@curlew/protocol';
 
 /** What Delta Chat mode does for a mail account, for the account page and the welcome screen. */
 export function emailChatExplanation(): string {
@@ -17,9 +17,28 @@ export function hiddenMailNote(): string {
   return _('Ordinary email is hidden. To see it, switch on "Show all emails" in Preferences, Conversations.');
 }
 
-/** What the "Show all emails" switch does: it filters the list and nothing else. */
-export function showAllEmailsSubtitle(): string {
-  return _('Off lists only email chats. This changes the list only, never how mail is sent');
+/**
+ * What the "Show all emails" switch does: it filters the list and nothing else. `chatOnly` is the
+ * number of accounts that list only email chats whatever this says (their own switch wins).
+ */
+export function showAllEmailsSubtitle(chatOnly = 0): string {
+  const base = _('Off lists only email chats. This changes the list only, never how mail is sent');
+  if (chatOnly === 0) return base;
+  return `${base}. ${fmt(
+    _n(
+      '{count} account lists only email chats whatever this says',
+      '{count} accounts list only email chats whatever this says',
+      chatOnly,
+    ),
+    { count: chatOnly },
+  )}`;
+}
+
+/** What an account's "Show ordinary email" switch does. */
+export function plainMailSubtitle(): string {
+  return _(
+    'Off lists only email chats of this account, and it uses Delta Chat. Ordinary email stays in the index and comes back when you switch this on',
+  );
 }
 
 /** The one-line hint above the first email chat of an account. */
