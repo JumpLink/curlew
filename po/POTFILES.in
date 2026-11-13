@@ -222,6 +222,7 @@ packages/protocol/src/i18n.ts
 packages/protocol/src/imap-parse.ts
 packages/protocol/src/index.ts
 packages/protocol/src/list-parse.ts
+packages/protocol/src/mail-forward.ts
 packages/protocol/src/mail-headers.ts
 packages/protocol/src/messenger.ts
 packages/protocol/src/mime-parse.ts

@@ -69,6 +69,7 @@
 
 ### Added
 
+- A mail thread with a Delta Chat peer (one that sent `Chat-Version`) can answer one message: *Reply* in the bubble menu threads it by `In-Reply-To`. Such a thread shows a *Forwarded from …* mark on a message that opens with Delta Chat's `---------- Forwarded message ----------` line. Ordinary mail threads offer neither (#294).
 - An XMPP account's page has a *Require encryption* switch: nothing is sent from it in plain text, and a message to someone without OMEMO fails instead (`config.encryption`, ADR 0006 §7). Before, this was only possible by editing the config file. Every config key now has a place in the window or is documented as file-only (`docs/design/ui.md`, held by a test).
 - The window asks each conversation, not each backend, what it can do (reaction, edit, delete, reply, files). A mail thread offers chat features only when the other side speaks Delta Chat; nothing changes for other chats yet (ADR 0015, #294).
 - The welcome screen now walks through protocols, accounts, Delta Chat (one switch per mail account, off by default), AI features (off by default) and a summary. Nothing is forced; skipping leaves everything off.

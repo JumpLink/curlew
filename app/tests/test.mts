@@ -20,6 +20,7 @@ import transferDecode from './unit/protocol/transfer-decode.test.ts';
 import messenger from './unit/protocol/messenger.test.ts';
 import threadCapabilities from './unit/protocol/thread-capabilities.test.ts';
 import mailHeaders from './unit/protocol/mail-headers.test.ts';
+import mailForward from './unit/protocol/mail-forward.test.ts';
 
 import storePaths from './unit/store/paths.test.ts';
 import storeDownload from './unit/store/download.test.ts';
@@ -167,6 +168,7 @@ run({
   messenger,
   threadCapabilities,
   mailHeaders,
+  mailForward,
   storePaths,
   storeDownload,
   storeSendFiles,
