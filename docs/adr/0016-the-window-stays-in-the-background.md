@@ -47,12 +47,12 @@ Otherwise closing quits, as today. An invisible process the person cannot find i
 "Quit" in the window's menu always ends the process (`release()`, then quit).
 
 **3. Autostart is off by default.** A switch in the preferences turns it on. In the Flatpak it is
-the `autostart` flag of the Background portal; elsewhere it is an `.desktop` entry in
+the `autostart` flag of the Background portal; elsewhere it is a `.desktop` entry in
 `~/.config/autostart`. The entry runs `curlew window --background`: the window starts hidden and
 holds the application. The portal reads each request as the whole wish, so every later request
 repeats `autostart` while the switch is on. Where no backend exists the switch is not shown.
 Whether to ask once after the first successful account link, as Beifahrer does after its first
-pairing, is open question 2.
+pairing, is open question 3.
 
 **4. Order: the Flatpak first.** `hold()` plus `request_background` work on GJS through libportal
 with no new gjsify package. Beifahrer measured that this needs the GNOME runtime 51; runtime 50
@@ -72,7 +72,7 @@ characters) may carry a one-line summary later, and is not part of this decision
 - **The window is the daemon.** One process, no IPC. Rejected in rule 1: delivery-only backends
   would depend on a graphical session, and ADR 0007's bus split would collapse.
 - **Autostart on by default.** Convenient, but a process the person never asked for starts at every
-  login. Rejected; the switch is cheap to find and the question in open question 2 covers
+  login. Rejected; the switch is cheap to find and open question 3 covers
   beginners.
 - **Always hide on close, everywhere.** Simple, and Beifahrer's ADR 0024 rejected it for the same
   reason: with no way back (no icon, no list entry) the process is lost.
