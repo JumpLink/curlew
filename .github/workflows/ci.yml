@@ -97,6 +97,7 @@ jobs:
           ./dev/i18n.sh extract
           msgfmt --check --statistics -o /dev/null po/de.po 2>&1 | tee /tmp/msgfmt.txt
           if grep -qE 'fuzzy|unübersetzt|untranslated' /tmp/msgfmt.txt; then exit 1; fi
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           # POT-Creation-Date changes on every run; any other difference means a stale catalogue.
           git diff --exit-code -I'^"POT-Creation-Date' -- po/
 
