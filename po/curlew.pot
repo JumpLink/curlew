@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 19:00+0100\n"
+"POT-Creation-Date: 2026-11-13 19:17+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1569,7 +1569,7 @@ msgid "curlew window takes no arguments."
 msgstr ""
 
 #: app/src/window/about.ts:16 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:177 app/src/window/window.ts:91
+#: app/src/window/conversation-view.ts:180 app/src/window/window.ts:91
 #: app/src/window/window.ts:114
 msgid "Curlew"
 msgstr ""
@@ -1695,7 +1695,7 @@ msgstr ""
 #: app/src/window/agent-access-page.ts:234
 #: app/src/window/conversation-list.ts:501
 #: app/src/window/conversation-list.ts:587
-#: app/src/window/conversation-view.ts:745 app/src/window/protocols-page.ts:63
+#: app/src/window/conversation-view.ts:748 app/src/window/protocols-page.ts:63
 #: app/src/window/protocols-page.ts:130
 msgid "Cancel"
 msgstr ""
@@ -2227,7 +2227,7 @@ msgstr ""
 msgid "The picture could not be saved"
 msgstr ""
 
-#: app/src/window/composer-input.ts:83 app/src/window/composer-input.ts:89
+#: app/src/window/composer-input.ts:103 app/src/window/composer-input.ts:109
 msgid "Insert emoji"
 msgstr ""
 
@@ -2536,7 +2536,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:144
-#: app/src/window/conversation-view.ts:1381
+#: app/src/window/conversation-view.ts:1386
 msgid "Continuing via {protocol}"
 msgstr ""
 
@@ -2572,156 +2572,156 @@ msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:353
 #: app/src/window/conversation-model.ts:366
-#: app/src/window/conversation-view.ts:729
+#: app/src/window/conversation-view.ts:732
 msgid "You"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:183
+#: app/src/window/conversation-view.ts:186
 msgid "Choose how to reach this person"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:196
-#: app/src/window/conversation-view.ts:1433
+#: app/src/window/conversation-view.ts:199
+#: app/src/window/conversation-view.ts:1441
 msgid "Contact details"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:215
+#: app/src/window/conversation-view.ts:218
 msgid "No messages yet"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:224
-#: app/src/window/conversation-view.ts:513
+#: app/src/window/conversation-view.ts:227
+#: app/src/window/conversation-view.ts:516
 msgid "Write a message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:235
+#: app/src/window/conversation-view.ts:238
 msgid "Send message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:248
+#: app/src/window/conversation-view.ts:251
 msgid "Cancel reply"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:261
+#: app/src/window/conversation-view.ts:264
 msgid "Cancel editing"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:274
+#: app/src/window/conversation-view.ts:277
 msgid "Got It"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:334
+#: app/src/window/conversation-view.ts:337
 msgid "Conversation"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:479
+#: app/src/window/conversation-view.ts:482
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:531
+#: app/src/window/conversation-view.ts:534
 msgid "Send via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:636
+#: app/src/window/conversation-view.ts:639
 msgid "Show the quoted message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:643
-#: app/src/window/conversation-view.ts:675
+#: app/src/window/conversation-view.ts:646
+#: app/src/window/conversation-view.ts:678
 msgid "Reply to {author}: {excerpt}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:658
+#: app/src/window/conversation-view.ts:661
 msgid "The quoted message is no longer in the history"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:700
+#: app/src/window/conversation-view.ts:703
 msgid "Reaction not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:728
+#: app/src/window/conversation-view.ts:731
 msgid "Edit message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:732
+#: app/src/window/conversation-view.ts:735
 msgid "Editing your message: {excerpt}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:740
+#: app/src/window/conversation-view.ts:743
 msgid "Delete message?"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:741
+#: app/src/window/conversation-view.ts:744
 msgid "This will remove the message for everyone in the chat."
 msgstr ""
 
-#: app/src/window/conversation-view.ts:746
+#: app/src/window/conversation-view.ts:749
 msgid "Delete for everyone"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:763
+#: app/src/window/conversation-view.ts:766
 msgid "Message not deleted: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:828
+#: app/src/window/conversation-view.ts:832
 msgid "Reply"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:829
+#: app/src/window/conversation-view.ts:833
 msgid "Edit"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:830
+#: app/src/window/conversation-view.ts:834
 msgid "Delete"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:831
+#: app/src/window/conversation-view.ts:835
 msgid "Copy"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:951
+#: app/src/window/conversation-view.ts:956
 msgid "Forwarded from {sender}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:952
+#: app/src/window/conversation-view.ts:957
 msgid "Forwarded"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:966
+#: app/src/window/conversation-view.ts:971
 msgid "Encrypted message: it cannot be shown here"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:967
+#: app/src/window/conversation-view.ts:972
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1010
-#: app/src/window/conversation-view.ts:1158
+#: app/src/window/conversation-view.ts:1015
+#: app/src/window/conversation-view.ts:1163
 msgid "edited"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1020
-#: app/src/window/conversation-view.ts:1021
+#: app/src/window/conversation-view.ts:1025
+#: app/src/window/conversation-view.ts:1026
 msgid "Read"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1245
+#: app/src/window/conversation-view.ts:1250
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1346
+#: app/src/window/conversation-view.ts:1351
 msgid "Message not edited: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1393
+#: app/src/window/conversation-view.ts:1398
 msgid "Message not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1396
+#: app/src/window/conversation-view.ts:1401
 msgid "Retry"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1433
+#: app/src/window/conversation-view.ts:1441
 msgid "Group details"
 msgstr ""
 
@@ -2761,6 +2761,54 @@ msgid ""
 "This is an email chat: people with Delta Chat, ArcaneChat or DeltaTouch see "
 "it as a chat, everyone else as an ordinary email. A contact shows as Delta "
 "Chat once their app has sent the chat marker, and as Mail before that."
+msgstr ""
+
+#: app/src/window/emoji-picker.ts:28
+msgid "Recent"
+msgstr ""
+
+#: app/src/window/emoji-picker.ts:29
+msgid "Smileys & Emotion"
+msgstr ""
+
+#: app/src/window/emoji-picker.ts:30
+msgid "People & Body"
+msgstr ""
+
+#: app/src/window/emoji-picker.ts:31
+msgid "Animals & Nature"
+msgstr ""
+
+#: app/src/window/emoji-picker.ts:32
+msgid "Food & Drink"
+msgstr ""
+
+#: app/src/window/emoji-picker.ts:33
+msgid "Travel & Places"
+msgstr ""
+
+#: app/src/window/emoji-picker.ts:34
+msgid "Activities"
+msgstr ""
+
+#: app/src/window/emoji-picker.ts:35
+msgid "Objects"
+msgstr ""
+
+#: app/src/window/emoji-picker.ts:36
+msgid "Symbols"
+msgstr ""
+
+#: app/src/window/emoji-picker.ts:37
+msgid "Flags"
+msgstr ""
+
+#: app/src/window/emoji-picker.ts:95
+msgid "No emoji found"
+msgstr ""
+
+#: app/src/window/emoji-picker.ts:101 app/src/window/emoji-picker.ts:102
+msgid "Search emoji"
 msgstr ""
 
 #: app/src/window/fade-bin.ts:153
@@ -3130,7 +3178,7 @@ msgstr ""
 msgid "Demo data — nothing here is real"
 msgstr ""
 
-#: app/src/window/window.ts:451
+#: app/src/window/window.ts:455
 msgid "No contacts to merge"
 msgstr ""
 

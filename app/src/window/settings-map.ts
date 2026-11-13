@@ -24,6 +24,7 @@ export const UI_SETTINGS: Record<keyof UiConfig, SettingPlace> = {
   ai: { kind: 'window', where: 'Preferences, AI' },
   emailChatHintSeen: { kind: 'state', why: 'set when the email-chat hint is dismissed' },
   searchScope: { kind: 'window', where: 'Conversation list, search scope' },
+  recentEmoji: { kind: 'state', why: 'set when an emoji is picked in the emoji picker' },
 };
 
 export const CONFIG_SETTINGS: Record<keyof CurlewConfig, SettingPlace> = {

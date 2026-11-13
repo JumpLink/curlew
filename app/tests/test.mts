@@ -110,6 +110,7 @@ import windowSearchScope from './unit/window/search-scope.test.ts';
 import windowCandidates from './unit/window/merge-candidates-model.test.ts';
 import windowListStamp from './unit/window/list-stamp.test.ts';
 import windowStallProbeModel from './unit/window/stall-probe-model.test.ts';
+import windowEmojiModel from './unit/window/emoji-model.test.ts';
 import coreDemo from './unit/core/demo.test.ts';
 import windowSelection from './unit/window/selection-model.test.ts';
 import windowAttachment from './unit/window/attachment-model.test.ts';
@@ -268,6 +269,7 @@ run({
   windowCandidates,
   windowListStamp,
   windowStallProbeModel,
+  windowEmojiModel,
   coreDemo,
   windowConversation,
   windowReactionPlacement,

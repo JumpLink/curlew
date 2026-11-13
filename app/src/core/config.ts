@@ -71,6 +71,8 @@ export interface UiConfig {
   emailChatHintSeen?: string[];
   /** What the conversation search looks at: `all`, `names` (names and numbers) or `messages`. Unset: `all`. */
   searchScope?: SearchScope;
+  /** The emoji picked last, newest first (the picker's "Recent" row). Unset: none yet. */
+  recentEmoji?: string[];
 }
 
 export interface CurlewConfig {
@@ -351,6 +353,10 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   const searchScope = (rawUi as Record<string, unknown>).searchScope;
   if (searchScope !== undefined && !isSearchScope(searchScope))
     throw new Error(`config.ui.searchScope must be one of ${SEARCH_SCOPES.join(', ')}`);
+  const recentRaw = (rawUi as Record<string, unknown>).recentEmoji;
+  const recentEmoji = Array.isArray(recentRaw)
+    ? recentRaw.filter((one): one is string => typeof one === 'string')
+    : undefined;
   const ui: UiConfig = {
     showAllEmails,
     ...(ai === undefined ? {} : { ai }),
@@ -364,6 +370,7 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     ...(welcomeDone === undefined ? {} : { welcomeDone }),
     ...(emailChatHintSeen === undefined || emailChatHintSeen.length === 0 ? {} : { emailChatHintSeen }),
     ...(searchScope === undefined ? {} : { searchScope }),
+    ...(recentEmoji === undefined || recentEmoji.length === 0 ? {} : { recentEmoji }),
   };
 
   const senders: Record<string, Classification> = {};

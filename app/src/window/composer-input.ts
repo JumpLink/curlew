@@ -5,6 +5,10 @@ import Gtk from 'gi://Gtk?version=4.0';
 import Pango from 'gi://Pango?version=1.0';
 
 import { _ } from '@curlew/protocol';
+import { configPath } from '@curlew/store';
+
+import { loadConfig, saveConfig } from '../core/config.ts';
+import { createEmojiPopover } from './emoji-picker.ts';
 
 /** Lines after which the field scrolls instead of growing further. */
 const MAX_LINES = 5;
@@ -75,8 +79,24 @@ export function createComposerInput(placeholder: string): ComposerInput {
   view.add_controller(keys);
 
   // Emoji are plain text on every protocol, so the chooser is offered wherever the field is.
-  const chooser = new Gtk.EmojiChooser();
-  chooser.connect('emoji-picked', (_c, emoji: string) => buffer.insert_at_cursor(emoji, -1));
+  const chooser = createEmojiPopover((emoji) => buffer.insert_at_cursor(emoji, -1), {
+    read: () => {
+      try {
+        return loadConfig(configPath()).ui.recentEmoji ?? [];
+      } catch {
+        return [];
+      }
+    },
+    write: (list) => {
+      try {
+        const config = loadConfig(configPath());
+        config.ui.recentEmoji = list;
+        saveConfig(config, configPath());
+      } catch {
+        // A recent list is a convenience: an unwritable config must not break the picker.
+      }
+    },
+  });
   chooser.connect('closed', () => view.grab_focus());
   const emoji = new Gtk.MenuButton({
     iconName: 'face-smile-symbolic',
