@@ -171,6 +171,50 @@ export default async () => {
       });
     });
 
+    await it('asks for a read receipt only in a Delta Chat message that opts in', async () => {
+      await withServer(async (server) => {
+        const sender = new MailSender(targetFor(server.port), PERMIT);
+        await sender.send({ to: OWNER, text: 'a', emailChat: true, readReceipt: true });
+        await sender.send({ to: OWNER, text: 'b', readReceipt: true });
+        await sender.send({ to: OWNER, text: 'c', emailChat: true });
+        const [asked, plain, notAsked] = server.dialogue.messages;
+        expect(asked.includes(`Chat-Disposition-Notification-To: <${FROM}>`)).toBe(true);
+        expect(plain.includes('Disposition-Notification-To')).toBe(false);
+        expect(notAsked.includes('Disposition-Notification-To')).toBe(false);
+      });
+    });
+
+    await it('writes a read receipt that names the message it confirms', async () => {
+      await withServer(async (server) => {
+        const sender = new MailSender(targetFor(server.port), PERMIT);
+        await sender.readReceipt({ to: OWNER, target: { remoteId: '<t1@example.org>', emailChat: true } });
+        const raw = server.dialogue.messages[0];
+        expect(/Content-Type: multipart\/report; report-type=disposition-notification/.test(raw)).toBe(true);
+        expect(raw.includes('Original-Message-ID: <t1@example.org>')).toBe(true);
+        expect(raw.includes('; displayed')).toBe(true);
+        expect(raw.includes('In-Reply-To: <t1@example.org>')).toBe(true);
+      });
+    });
+
+    await it('refuses a read receipt for a message that is not a Delta Chat one, sending nothing', async () => {
+      await withServer(async (server) => {
+        const sender = new MailSender(targetFor(server.port), PERMIT);
+        let refused = 0;
+        for (const target of [
+          { remoteId: '<t1@example.org>' },
+          { remoteId: 'no-brackets', emailChat: true },
+        ]) {
+          try {
+            await sender.readReceipt({ to: OWNER, target });
+          } catch {
+            refused++;
+          }
+        }
+        expect(refused).toBe(2);
+        expect(server.dialogue.messages.length).toBe(0);
+      });
+    });
+
     await it('keeps the password out of an SMTP error', async () => {
       const server = await startDummyServer({ rejectAuthEchoing: PASSWORD });
       try {

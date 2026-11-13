@@ -15,6 +15,7 @@ export const UI_SETTINGS: Record<keyof UiConfig, SettingPlace> = {
   showAllEmails: { kind: 'window', where: 'Preferences, Conversations' },
   notifications: { kind: 'window', where: 'Preferences, Notifications' },
   playVideosSilently: { kind: 'window', where: 'Preferences, Media' },
+  sendReadReceipts: { kind: 'window', where: 'Preferences, Conversations' },
   accentColor: { kind: 'window', where: 'Preferences, Appearance' },
   primaryColor: { kind: 'window', where: 'Preferences, Appearance' },
   colorScheme: { kind: 'window', where: 'Preferences, Appearance' },

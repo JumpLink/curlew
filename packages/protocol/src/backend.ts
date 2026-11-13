@@ -70,6 +70,14 @@ export interface BackendMessage {
   chatContent?: 'voice' | 'sticker';
   /** The voice note's `Chat-Duration` in milliseconds, when it came. */
   durationMs?: number;
+  /**
+   * A read receipt (MDN, RFC 8098) of the other side: it belongs on the message it confirms as
+   * "read", never in the list. `for` is that message's id (`Original-Message-ID`), null when the
+   * receipt names none.
+   */
+  mdn?: { for: string | null };
+  /** `Chat-Disposition-Notification-To`: the address that asked for a read receipt of this message. */
+  receiptTo?: string;
   /** The body is encrypted (OpenPGP, S/MIME): there is no text to index, and the window says so. */
   encrypted?: boolean;
 }
@@ -852,6 +860,11 @@ export interface SenderFeatures {
    * is never asked to, and a frontend hides its delete entry.
    */
   deletes: boolean;
+  /**
+   * The sender can confirm that the person read a message (`MessageSender.readReceipt`); one that
+   * cannot is never asked to. Absent means false.
+   */
+  readReceipts?: boolean;
 }
 
 /** A file to send with a message, by absolute path. Only the sender that claims `attachments` reads it. */
@@ -895,6 +908,11 @@ export interface SendingMessage {
   sticker?: boolean;
   inReplyTo?: string;
   references?: string[];
+  /**
+   * Mail from a Delta Chat thread: ask the peer for a read receipt (`Chat-Disposition-Notification-To`).
+   * Set only when the person allowed read receipts and the thread can do them.
+   */
+  readReceipt?: boolean;
 }
 
 /** One reaction handed to a sender: the person's emoji on a message of the chat `to`. */
@@ -924,6 +942,14 @@ export interface SendingEdit {
 export interface SendingDeletion {
   to: string;
   /** The message being deleted; it must be the person's own (`fromSelf: true`). */
+  target: ReplyTarget;
+}
+
+/** One read receipt handed to a sender: the person read `target`, a message of the chat `to`. */
+export interface SendingReadReceipt {
+  /** Where the receipt goes: the address that asked for it (`Chat-Disposition-Notification-To`). */
+  to: string;
+  /** The message that was read. */
   target: ReplyTarget;
 }
 
@@ -966,6 +992,8 @@ export interface MessageSender {
   edit?(edit: SendingEdit): Promise<void>;
   /** Present exactly when `features.deletes` is true. */
   delete?(deletion: SendingDeletion): Promise<void>;
+  /** Present exactly when `features.readReceipts` is true. */
+  readReceipt?(receipt: SendingReadReceipt): Promise<void>;
   close(): Promise<void>;
 }
 

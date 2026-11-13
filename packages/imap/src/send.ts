@@ -19,6 +19,7 @@ import type {
   SendingEdit,
   SendingMessage,
   SendingReaction,
+  SendingReadReceipt,
   SentMessage,
   SmtpTarget,
 } from '@curlew/protocol';
@@ -56,6 +57,7 @@ export class MailSender implements MessageSender {
     reactions: true,
     edits: true,
     deletes: true,
+    readReceipts: true,
   };
   private readonly target: SmtpTarget;
   private readonly permit: SendPermit;
@@ -93,6 +95,8 @@ export class MailSender implements MessageSender {
         ? { durationMs: message.durationMs }
         : {}),
       ...(message.emailChat && message.sticker ? { sticker: true } : {}),
+      // Only a Delta Chat thread ever asks: the header means nothing to a plain mail client.
+      ...(message.emailChat && message.readReceipt ? { readReceipt: true } : {}),
       ...(message.inReplyTo ? { inReplyTo: message.inReplyTo } : {}),
       ...(message.references ? { references: message.references } : {}),
       ...(files.length === 0
@@ -173,6 +177,26 @@ export class MailSender implements MessageSender {
       chatDelete: target,
       inReplyTo: target,
       references: [target],
+    });
+  }
+
+  /**
+   * A read receipt (RFC 8098) for one message of a Delta Chat peer, sent to the address that asked
+   * for it with `Chat-Disposition-Notification-To`. Refused for anything else: a plain
+   * `Disposition-Notification-To` is never answered, so Curlew confirms nothing to a mailing list.
+   */
+  async readReceipt(receipt: SendingReadReceipt): Promise<void> {
+    const to = this.address(receipt.to);
+    const target = receipt.target.remoteId;
+    if (!receipt.target.emailChat || !/^<[^\s<>@]+@[^\s<>@]+>$/.test(target)) {
+      throw new Error(_('only a Delta Chat message gets a read receipt by mail'));
+    }
+    await sendMessage(await smtpAccountFor(this.target), {
+      from: this.target.from,
+      to: [to],
+      subject: '',
+      text: '',
+      mdn: target,
     });
   }
 

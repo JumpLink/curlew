@@ -69,6 +69,7 @@
 
 ### Added
 
+- Read receipts for Delta Chat threads: a message you send asks the peer to confirm reading, and a receipt from them shows as the read tick on the message. *Send read receipts* in Preferences (off by default) lets Curlew confirm to them when you open their conversation; it answers only a request from the sender itself, once per message. Receipts that Delta Chat encrypts cannot be read here.
 - With ordinary mail hidden, the empty conversation list and the Delta Chat welcome page say so and name the "Show all emails" switch.
 - A mail thread with a Delta Chat peer (one that sent `Chat-Version`) can answer one message: *Reply* in the bubble menu threads it by `In-Reply-To`. Such a thread shows a *Forwarded from …* mark on a message that opens with Delta Chat's `---------- Forwarded message ----------` line. Ordinary mail threads offer neither (#294).
 - XMPP: a reaction, an edit or a delete for everyone is offered in a chat only when the other client advertises it (XEP-0444, 0308, 0424), so a peer without support no longer gets stray messages (#317).

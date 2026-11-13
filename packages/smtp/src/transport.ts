@@ -4,7 +4,7 @@ import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 
 import { SmtpError } from './errors.ts';
 import type { SmtpErrorCode } from './errors.ts';
-import { composerOptions, resolveMessageId } from './message.ts';
+import { composerOptions, readReceiptSource, resolveMessageId } from './message.ts';
 import type { OutgoingMessage, SendResult, SmtpAccount } from './types.ts';
 import { validateAccount } from './validate.ts';
 
@@ -123,7 +123,11 @@ export async function sendMessage(account: SmtpAccount, message: OutgoingMessage
   const messageId = resolveMessageId(message);
   const transport = transportFor(account);
   try {
-    const info = await transport.sendMail(composerOptions(message, messageId));
+    const info = await transport.sendMail(
+      message.mdn === undefined
+        ? composerOptions(message, messageId)
+        : { envelope: { from: message.from, to: message.to }, raw: readReceiptSource(message, messageId) },
+    );
     const accepted = info.accepted.map(String);
     if (accepted.length === 0) throw new SmtpError('rejected', SUMMARY.rejected);
     return { messageId, accepted, rejected: info.rejected.map(String), response: scrub(info.response, secretsOf(account)) };

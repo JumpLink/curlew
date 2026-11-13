@@ -22,6 +22,7 @@ app/src/core/actions/messaging.ts
 app/src/core/actions/omemo.ts
 app/src/core/actions/people.ts
 app/src/core/actions/react.ts
+app/src/core/actions/read-receipt.ts
 app/src/core/actions/search-access.ts
 app/src/core/actions/send.ts
 app/src/core/actions/setup-host.ts
@@ -283,6 +284,7 @@ packages/store/src/index.ts
 packages/store/src/local-echo.ts
 packages/store/src/mail-reply.ts
 packages/store/src/paths.ts
+packages/store/src/read-receipts.ts
 packages/store/src/receive-lease.ts
 packages/store/src/schema.ts
 packages/store/src/secret-store.ts

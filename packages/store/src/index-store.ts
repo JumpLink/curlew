@@ -251,7 +251,7 @@ export function upsertMessages(
       `INSERT INTO messages
          (account_id, folder_path, uid, message_id, subject, sender, recipients, date, internal_date,
           size, seen, flagged, has_attachment, indexed_at, in_reply_to, thread_refs, from_json, to_json,
-          list_id, list_unsubscribe, auto_submitted, precedence, email_chat, encrypted, reaction, chat_edit, chat_delete, chat_content, chat_duration_ms)`,
+          list_id, list_unsubscribe, auto_submitted, precedence, email_chat, encrypted, reaction, chat_edit, chat_delete, chat_content, chat_duration_ms, mdn, mdn_for, receipt_to)`,
       messages.map((message): SqlValue[] => [
         accountId,
         folderPath,
@@ -284,6 +284,9 @@ export function upsertMessages(
         message.chatDelete ?? null,
         message.emailChat ? (message.chatContent ?? null) : null,
         message.emailChat && message.chatContent === 'voice' ? (message.durationMs ?? null) : null,
+        message.mdn ? 1 : 0,
+        message.mdn?.for ?? null,
+        message.receiptTo ?? null,
       ]),
     );
 

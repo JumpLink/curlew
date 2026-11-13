@@ -32,6 +32,7 @@ import storeSync from './unit/store/sync.test.ts';
 import storeClassify from './unit/store/classify.test.ts';
 import storeThreads from './unit/store/threads.test.ts';
 import storeConversations from './unit/store/conversations.test.ts';
+import storeReadReceipts from './unit/store/read-receipts.test.ts';
 import storeConversationTotals from './unit/store/conversation-totals.test.ts';
 import storeChatSync from './unit/store/chat-sync.test.ts';
 import storeChatBackfill from './unit/store/chat-backfill.test.ts';
@@ -181,6 +182,7 @@ run({
   storeClassify,
   storeThreads,
   storeConversations,
+  storeReadReceipts,
   storeConversationTotals,
   storeChatSync,
   storeChatBackfill,

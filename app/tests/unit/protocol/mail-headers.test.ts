@@ -6,6 +6,7 @@ import {
   parseEnvelope,
   parseFetchAttributes,
   parseMessageIdList,
+  parseDispositionNotification,
   parseThreadHeaders,
   threadHeaderFetchItem,
   tokenizeImapList,
@@ -84,6 +85,35 @@ export default async () => {
       expect(parsed.chatDelete).toBe('<00003@example.org>');
       expect(parseThreadHeaders('').chatEdit).toBe(null);
       expect(parseThreadHeaders('Chat-Edit: a b\r\n').chatEdit).toBe(null);
+    });
+
+    await it('reads the receipt address only from Chat-Disposition-Notification-To', async () => {
+      const asked = parseThreadHeaders('Chat-Disposition-Notification-To: Anna <Anna@Example.org>\r\n');
+      expect(asked.receiptTo).toBe('anna@example.org');
+      // A plain Disposition-Notification-To (newsletters, spam) is never a request we answer.
+      expect(parseThreadHeaders('Disposition-Notification-To: anna@example.org\r\n').receiptTo).toBe(null);
+      expect(parseThreadHeaders('Chat-Disposition-Notification-To: not an address\r\n').receiptTo).toBe(null);
+    });
+
+    await it('recognises a read receipt and reads what it confirms', async () => {
+      expect(
+        parseThreadHeaders(
+          'Content-Type: multipart/report; report-type=disposition-notification; boundary=x\r\n',
+        ).mdn,
+      ).toBe(true);
+      expect(parseThreadHeaders('Content-Type: multipart/mixed; boundary=x\r\n').mdn).toBe(false);
+      const report = [
+        'Reporting-UA: Example',
+        'Original-Recipient: rfc822;ben@example.org',
+        'Original-Message-ID: <t1@example.org>',
+        'Disposition: manual-action/MDN-sent-manually; displayed',
+      ].join('\r\n');
+      expect(parseDispositionNotification(report)).toStrictEqual({
+        originalMessageId: '<t1@example.org>',
+        displayed: true,
+      });
+      const other = report.replace('displayed', 'deleted');
+      expect(parseDispositionNotification(other).displayed).toBe(false);
     });
 
     await it('yields empty threading for an empty block', async () => {

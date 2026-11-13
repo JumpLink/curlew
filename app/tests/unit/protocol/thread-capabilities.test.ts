@@ -59,11 +59,13 @@ export default async () => {
 
     await it('never exceeds the manifest, even for a marked peer', async () => {
       const result = threadCapabilitiesOf(manifestOf('mail'), { backend: 'mail', emailChat: true });
-      // Mail reacts, edits and deletes through Delta Chat headers; read receipt is not claimed yet.
+      // Mail reacts, edits, deletes and confirms reading through Delta Chat headers.
       expect(result.reactions).toBe(true);
       expect(result.edits).toBe(true);
       expect(result.deletes).toBe(true);
-      expect(result.readReceipts).toBe(false);
+      expect(result.readReceipts).toBe(true);
+      const plain = threadCapabilitiesOf(manifestOf('mail'), { backend: 'mail', emailChat: false });
+      expect(plain.readReceipts).toBe(false);
     });
 
     await it('gives a plain mail thread no reaction, edit or delete', async () => {

@@ -36,6 +36,8 @@ import {
   extractHeaderFields,
   parseMessageIdList,
   parseThreadHeaders,
+  parseDispositionNotification,
+  type BodyPart,
   threadHeaderFetchItem,
   tokenizeImapList,
   walkBodyStructure,
@@ -149,6 +151,8 @@ class ImapBackendSession implements BackendSession {
         }
       }
 
+      // A read receipt names its message in its machine-readable part, which no body index reads.
+      const mdn = thread.mdn ? await this.readReceiptOf(uid, parts, thread.inReplyTo) : null;
       messages.push({
         uid,
         messageId: env.messageId,
@@ -177,12 +181,33 @@ class ImapBackendSession implements BackendSession {
         ...(thread.chatDelete ? { chatDelete: thread.chatDelete } : {}),
         ...(thread.chatContent ? { chatContent: thread.chatContent } : {}),
         ...(thread.durationMs !== null ? { durationMs: thread.durationMs } : {}),
+        ...(mdn ? { mdn } : {}),
+        ...(thread.receiptTo ? { receiptTo: thread.receiptTo } : {}),
         ...(isEncryptedStructure(parts) ? { encrypted: true } : {}),
       });
     }
     // Ascending, so the engine's cursor advances monotonically.
     messages.sort((a, b) => a.uid - b.uid);
     return messages;
+  }
+
+  /**
+   * What a read receipt confirms: the `Original-Message-ID` of its `message/disposition-notification`
+   * part, else the mail's own `In-Reply-To`. Null when the receipt says something else than "displayed".
+   */
+  private async readReceiptOf(
+    uid: number,
+    parts: BodyPart[],
+    inReplyTo: string | null,
+  ): Promise<{ for: string | null }> {
+    const part = parts.find((p) => p.mimeType === 'message/disposition-notification');
+    if (!part) return { for: inReplyTo };
+    const response = await this.client.fetchSection(String(uid), part.section);
+    if (!response.ok) return { for: inReplyTo };
+    const [items] = [...fetchItems(response)];
+    const raw = items ? extractBodySection(items, part.section) : '';
+    const parsed = parseDispositionNotification(decodePart(raw, part.encoding, part.params.charset));
+    return { for: parsed.displayed ? (parsed.originalMessageId ?? inReplyTo) : null };
   }
 
   async listFlags(path: string): Promise<BackendFlagState[]> {

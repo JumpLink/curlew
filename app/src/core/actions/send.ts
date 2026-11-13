@@ -103,6 +103,8 @@ export interface SendParams {
   voiceMessage?: boolean;
   durationMs?: number;
   sticker?: boolean;
+  /** With `emailChat`: ask the peer to confirm reading (`Chat-Disposition-Notification-To`). */
+  readReceipt?: boolean;
   inReplyTo?: string;
   references?: string[];
   /** Chat: the message this one answers. A backend whose sender cannot reply refuses it. */
@@ -294,6 +296,8 @@ export interface SendRequest {
   voiceMessage?: boolean;
   durationMs?: number;
   sticker?: boolean;
+  /** With `emailChat`: ask the peer to confirm reading (`Chat-Disposition-Notification-To`). */
+  readReceipt?: boolean;
   inReplyTo?: string;
   references?: string[];
   replyTo?: ReplyTarget;
@@ -378,6 +382,7 @@ export async function sendThrough(
                   ? { durationMs: request.durationMs }
                   : {}),
                 ...(request.sticker && index === firstText ? { sticker: true } : {}),
+                ...(request.readReceipt ? { readReceipt: true } : {}),
                 ...(request.inReplyTo ? { inReplyTo: request.inReplyTo } : {}),
                 ...(request.references ? { references: request.references } : {}),
                 ...(request.replyTo === undefined || index !== firstText ? {} : { replyTo: request.replyTo }),
@@ -551,6 +556,7 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
       ? { durationMs: params.durationMs }
       : {}),
     ...(params.emailChat && params.sticker ? { sticker: true } : {}),
+    ...(params.readReceipt ? { readReceipt: true } : {}),
     ...(params.inReplyTo ? { inReplyTo: params.inReplyTo } : {}),
     ...(params.references ? { references: params.references } : {}),
     ...(params.replyTo === undefined ? {} : { replyTo: params.replyTo }),
