@@ -19,7 +19,7 @@ import { bareJid } from './stanza.ts';
 
 const ACCOUNT_ID = /^xmpp-[0-9a-z]+$/;
 // Rename fallback: the key inside existing account files, read back as-is. Do not rebrand.
-const ACCOUNT_NAMESPACE = 'postbote.account';
+const ACCOUNT_NAMESPACE = 'curlew.account';
 const LOGIN_NAMESPACE = 'xmpp.login';
 
 /** The account id for a bare JID: stable, and without the address in a file name. */

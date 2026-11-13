@@ -165,20 +165,14 @@ export function xdgDataHome(host: CommandRunner): string {
   return xdg !== undefined && xdg !== '' ? xdg : join(host.home(), '.local', 'share');
 }
 
-/** `$XDG_CONFIG_HOME/curlew/config.json` (or the old `postbote` directory, if only that exists) — the file a run reads and writes. */
+/** `$XDG_CONFIG_HOME/curlew/config.json` — the file a run reads and writes. */
 export function setupConfigPath(host: CommandRunner): string {
-  return join(
-    homeSubdir(xdgConfigHome(host), (path) => host.exists(path)),
-    'config.json',
-  );
+  return join(homeSubdir(xdgConfigHome(host)), 'config.json');
 }
 
-/** `$XDG_DATA_HOME/curlew/index.db` (same fallback) — the index a run reports on, never the user's in a test. */
+/** `$XDG_DATA_HOME/curlew/index.db` — the index a run reports on, never the user's in a test. */
 export function setupIndexPath(host: CommandRunner): string {
-  return join(
-    homeSubdir(xdgDataHome(host), (path) => host.exists(path)),
-    'index.db',
-  );
+  return join(homeSubdir(xdgDataHome(host)), 'index.db');
 }
 
 /** Create the parent directory of a file, then write it. */

@@ -42,7 +42,7 @@
 
 - `npm run packaging:install` takes `--no-icons` and `--remove-icons`, so a stale installed icon no longer shadows the one in `app/data` during development.
 - The README describes the messenger and is short; the per-protocol, command-line, daemon, MCP and release details moved to `docs/guide/`. The package metadata and the Flathub listing text describe the messenger, not a mail tool. The first release is `0.2.0`.
-
+- The old project name is gone from the code and docs: only `CURLEW_*` environment variables and the `curlew/` data and config directories are read, and the secret stores use `curlew.*` namespaces and a `curlew-<account>` crypto store name.
 - "Show all emails" is off by default: the list shows only email chats (mail from Delta Chat compatible clients) and the replies to them, so Curlew reads like a messenger. A config file that sets `ui.showAllEmails` keeps its value; switch it on in Preferences, Conversations, to see every mail thread.
 - `dev/screenshots.sh` renders from the demo mode (`CURLEW_DEMO=1`) instead of its own fixture index, and adds group, empty-accounts and all-off motifs; `CURLEW_DEMO_QUIET=1` omits the demo notice. File names: `docs/screenshots/README.md`.
 

@@ -7,38 +7,17 @@
  * there is the first, and it lives here.
  */
 
-import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-/**
- * The environment variable `CURLEW_<name>`, falling back to the pre-rename `POSTBOTE_<name>`.
- * The rename fallback is load-bearing: an existing install, service unit or .env keeps working.
- */
+/** The environment variable `CURLEW_<name>`, trimmed; undefined when unset or blank. */
 export function envValue(env: NodeJS.ProcessEnv, name: string): string | undefined {
-  return env[`CURLEW_${name}`]?.trim() || env[`POSTBOTE_${name}`]?.trim() || undefined;
+  return env[`CURLEW_${name}`]?.trim() || undefined;
 }
 
-const announced = new Set<string>();
-
-/** The ONE notice that an old-name directory is still in use — once per directory per process. */
-export function announceLegacyDir(legacy: string, current: string): void {
-  if (announced.has(legacy)) return;
-  announced.add(legacy);
-  console.error(`curlew: still using ${legacy} (the old name); move it to ${current} when convenient`);
-}
-
-/**
- * `<home>/curlew`, unless only the pre-rename `<home>/postbote` exists. Rename fallback, load-bearing:
- * delivery-only messages live in that directory and are the only copy. Nothing here ever moves it,
- * and a second directory is never created next to it.
- */
-export function homeSubdir(home: string, exists: (path: string) => boolean = existsSync): string {
-  const current = join(home, 'curlew');
-  const legacy = join(home, 'postbote');
-  if (exists(current) || !exists(legacy)) return current;
-  announceLegacyDir(legacy, current);
-  return legacy;
+/** `<home>/curlew`. */
+export function homeSubdir(home: string): string {
+  return join(home, 'curlew');
 }
 
 /** `$XDG_DATA_HOME`, or the spec's default. */

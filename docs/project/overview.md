@@ -2,8 +2,6 @@
 
 Mail (IMAP), contacts (CardDAV) and calendar (CalDAV) through **GNOME Online Accounts**, as a CLI and an MCP server. A TypeScript monorepo that **runs on GJS via gjsify** (not Node), following the buchhaltung/leitstand pattern: pure-TS `packages/*` + one `app` workspace that carries the gjsify toolchain and picks a frontend at the yargs entrypoint.
 
-curlew was formerly called `postbote`; see [`rename-postbote.md`](rename-postbote.md) for why the old name is still load-bearing in file paths, environment variables and on-disk namespaces.
-
 The code came out of `buchhaltung/packages/gnome`; the git history there is the deeper record.
 
 ## Read-only, fail-closed, grant-gated

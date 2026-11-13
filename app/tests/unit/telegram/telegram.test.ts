@@ -783,7 +783,7 @@ export default async () => {
         expect(factory.clients[0].credentials.apiId).toBe(12345);
         // Stored in the 0600 session file, not the config; `sync` needs no environment.
         const store = SecretStore.open(join(noEnv.secretsDir, 'telegram-42.db'));
-        expect(store.get('postbote.api', 'apiHash')).toBe(HASH);
+        expect(store.get('curlew.api', 'apiHash')).toBe(HASH);
         store.close();
         const session = await new TelegramBackend(noEnv, factory.create).connect('telegram-42');
         expect(factory.clients[1].credentials.apiHash).toBe(HASH);
@@ -808,8 +808,8 @@ export default async () => {
         expect(ask.asked[0]).toMatch(/Phone/);
         expect(factory.clients[0].credentials.apiId).toBe(777);
         const store = SecretStore.open(join(noEnv.secretsDir, 'telegram-42.db'));
-        expect(store.get('postbote.api', 'source')).toBe('embedded');
-        expect(store.get('postbote.api', 'apiHash')).toBe(EMBEDDED_HASH);
+        expect(store.get('curlew.api', 'source')).toBe('embedded');
+        expect(store.get('curlew.api', 'apiHash')).toBe(EMBEDDED_HASH);
         store.close();
         await (await new TelegramBackend(noEnv, factory.create, embedded).connect('telegram-42')).close();
         expect(factory.clients[1].credentials.apiId).toBe(777);
@@ -823,7 +823,7 @@ export default async () => {
         await new TelegramBackend(context(dir), factory.create, embedded).addAccount(withEnv);
         expect(factory.clients[3].credentials.apiId).toBe(12345);
         const again = SecretStore.open(join(noEnv.secretsDir, 'telegram-42.db'));
-        expect(again.get('postbote.api', 'source')).toBe('own');
+        expect(again.get('curlew.api', 'source')).toBe('own');
         again.close();
       } finally {
         rmSync(dir, { recursive: true, force: true });
@@ -841,7 +841,7 @@ export default async () => {
         expect(ask.asked[0]).toMatch(/api_id/);
         expect(factory.clients[0].credentials.apiId).toBe(12345);
         const store = SecretStore.open(join(noEnv.secretsDir, 'telegram-42.db'));
-        expect(store.get('postbote.api', 'source')).toBe('own');
+        expect(store.get('curlew.api', 'source')).toBe('own');
         store.close();
         // An own pair stays in use after the build embeds another one.
         await (

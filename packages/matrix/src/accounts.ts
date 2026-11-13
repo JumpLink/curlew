@@ -17,10 +17,10 @@ const ACCOUNT_ID = /^matrix-[0-9a-f]{14}$/;
 
 /** curlew's namespace in the account file: who this is and where. Public data only. */
 // Rename fallback: the key inside existing account files, read back as-is. Do not rebrand.
-export const ACCOUNT_NAMESPACE = 'postbote.account';
+export const ACCOUNT_NAMESPACE = 'curlew.account';
 /** The session: the access token. SECRET. */
 // Rename fallback: key inside existing files, do not rebrand.
-export const SESSION_NAMESPACE = 'postbote.matrix';
+export const SESSION_NAMESPACE = 'curlew.matrix';
 
 export function accountIdFor(userId: string): string {
   return stableId('matrix-', userId);
@@ -117,7 +117,7 @@ export function listAccounts(secretsDir: string): BackendAccount[] {
 
 /** The account file's namespace for `UndecryptableLedger`: room id → JSON array of event ids. */
 // Rename fallback: key inside existing files, do not rebrand.
-export const UNDECRYPTABLE_NAMESPACE = 'postbote.undecryptable';
+export const UNDECRYPTABLE_NAMESPACE = 'curlew.undecryptable';
 
 /** The ledger of undecryptable messages, in the account file. One batched write per save. */
 export function secretStoreLedger(store: SecretStore): UndecryptableLedger {

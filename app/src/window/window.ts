@@ -127,7 +127,7 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   menu.append_section(null, appSection);
 
   // Fetched attachments are message content; an earlier run's leftovers go before this one's.
-  if (!process.env.CURLEW_PREVIEWS_DIR && !process.env.POSTBOTE_PREVIEWS_DIR) clearPreviews();
+  if (!process.env.CURLEW_PREVIEWS_DIR) clearPreviews();
   const viewer = createMediaViewer(
     (title) => toasts.add_toast(new Adw.Toast({ title, timeout: 4 })),
     (shown) => split.set_sensitive(!shown),
