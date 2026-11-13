@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 16:21+0100\n"
+"POT-Creation-Date: 2026-11-13 16:35+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1561,8 +1561,8 @@ msgid "curlew window takes no arguments."
 msgstr ""
 
 #: app/src/window/about.ts:16 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:176 app/src/window/window.ts:85
-#: app/src/window/window.ts:104
+#: app/src/window/conversation-view.ts:176 app/src/window/window.ts:86
+#: app/src/window/window.ts:105
 msgid "Curlew"
 msgstr ""
 
@@ -1700,8 +1700,8 @@ msgstr ""
 #: app/src/window/account-remove-model.ts:37
 #: app/src/window/account-remove-model.ts:71
 #: app/src/window/agent-access-page.ts:234
-#: app/src/window/conversation-list.ts:476
-#: app/src/window/conversation-list.ts:562
+#: app/src/window/conversation-list.ts:500
+#: app/src/window/conversation-list.ts:586
 #: app/src/window/conversation-view.ts:744 app/src/window/protocols-page.ts:51
 msgid "Cancel"
 msgstr ""
@@ -1754,7 +1754,7 @@ msgstr ""
 
 #: app/src/window/accounts-dialog.ts:75 app/src/window/accounts-page.ts:195
 #: app/src/window/welcome-model.ts:91 app/src/window/welcome.ts:174
-#: app/src/window/window.ts:117
+#: app/src/window/window.ts:118
 msgid "Accounts"
 msgstr ""
 
@@ -1833,7 +1833,7 @@ msgstr ""
 msgid "Protocols"
 msgstr ""
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:121
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:122
 msgid "Agent access"
 msgstr ""
 
@@ -2232,7 +2232,7 @@ msgstr ""
 msgid "Picture"
 msgstr ""
 
-#: app/src/window/contact-page.ts:314 app/src/window/conversation-list.ts:484
+#: app/src/window/contact-page.ts:314 app/src/window/conversation-list.ts:508
 msgid "Separate"
 msgstr ""
 
@@ -2422,59 +2422,59 @@ msgstr ""
 msgid "Clear filters"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:405
+#: app/src/window/conversation-list.ts:409
 msgid "No conversations yet"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:405
+#: app/src/window/conversation-list.ts:409
 msgid "No matches"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:408
+#: app/src/window/conversation-list.ts:412
 msgid ""
 "Conversations appear here after Curlew has synced an account. Run \"curlew "
 "sync\" first."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:415
+#: app/src/window/conversation-list.ts:419
 msgid "Nothing fits the search and filters."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:460
+#: app/src/window/conversation-list.ts:484
 msgid "Search"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:465
+#: app/src/window/conversation-list.ts:489
 #: app/src/window/new-conversation.ts:24
 msgid "New conversation"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:482
-#: app/src/window/conversation-list.ts:563
+#: app/src/window/conversation-list.ts:506
+#: app/src/window/conversation-list.ts:587
 #: app/src/window/merge-assistant.ts:116
 msgid "Merge"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:559
+#: app/src/window/conversation-list.ts:583
 msgid "Merge these people?"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:560
+#: app/src/window/conversation-list.ts:584
 msgid ""
 "Their chats become one conversation. Nothing is deleted, and you can "
 "separate them again."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:586
+#: app/src/window/conversation-list.ts:610
 msgid "Review"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:593
+#: app/src/window/conversation-list.ts:617
 #: app/src/window/preferences-dialog.ts:44
 msgid "Conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:615
+#: app/src/window/conversation-list.ts:639
 msgid "{count} possible duplicate"
 msgid_plural "{count} possible duplicates"
 msgstr[0] ""
@@ -2854,7 +2854,7 @@ msgstr ""
 msgid "AI"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:91 app/src/window/window.ts:119
+#: app/src/window/preferences-dialog.ts:91 app/src/window/window.ts:120
 msgid "Preferences"
 msgstr ""
 
@@ -2957,7 +2957,7 @@ msgid "On"
 msgstr ""
 
 #: app/src/window/welcome.ts:108 app/src/window/welcome.ts:127
-#: app/src/window/window.ts:124
+#: app/src/window/window.ts:125
 msgid "Welcome"
 msgstr ""
 
@@ -3009,39 +3009,39 @@ msgstr ""
 msgid "Start Using Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:79
+#: app/src/window/window.ts:80
 msgid "Select a conversation"
 msgstr ""
 
-#: app/src/window/window.ts:80
+#: app/src/window/window.ts:81
 msgid "Pick a conversation from the list."
 msgstr ""
 
-#: app/src/window/window.ts:118
+#: app/src/window/window.ts:119
 msgid "Merge contacts…"
 msgstr ""
 
-#: app/src/window/window.ts:126
+#: app/src/window/window.ts:127
 msgid "About Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:127
+#: app/src/window/window.ts:128
 msgid "Quit"
 msgstr ""
 
-#: app/src/window/window.ts:169
+#: app/src/window/window.ts:170
 msgid "This conversation has no recipient address."
 msgstr ""
 
-#: app/src/window/window.ts:354
+#: app/src/window/window.ts:355
 msgid "Curlew (demo)"
 msgstr ""
 
-#: app/src/window/window.ts:357
+#: app/src/window/window.ts:358
 msgid "Demo data — nothing here is real"
 msgstr ""
 
-#: app/src/window/window.ts:416
+#: app/src/window/window.ts:427
 msgid "No contacts to merge"
 msgstr ""
 

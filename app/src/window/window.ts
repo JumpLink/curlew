@@ -20,6 +20,7 @@ import { choiceOfEntry, type ListEntry } from './conversation-list-model.ts';
 import { aiEnabled, loadConfig, saveConfig } from '../core/config.ts';
 import { DEFAULT_SEARCH_SCOPE } from '../core/lib/search-scope.ts';
 import { candidateSets } from './merge-candidates-model.ts';
+import { timed } from './stall-probe.ts';
 import { presentContactPage } from './contact-page.ts';
 import { presentMergeAssistant } from './merge-assistant.ts';
 import {
@@ -404,11 +405,21 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   let labelled = false;
   let shown: ListEntry[] = [];
   let stamp = '';
+  let suggestionsIdle = 0;
+  let activationIdle = 0;
   const refresh = () => {
     stamp = listStamp();
-    shown = loadConversationEntries();
-    sidebar.setEntries(shown, labels);
-    sidebar.setSuggestions(candidateSets(shown, loadConfig(configPath()).declinedMerges).length);
+    shown = timed('load entries', () => loadConversationEntries());
+    timed('set entries', () => sidebar.setEntries(shown, labels));
+    // The duplicate scan is only a banner: it runs when the loop is idle, once per burst of refreshes.
+    if (suggestionsIdle) GLib.source_remove(suggestionsIdle);
+    suggestionsIdle = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+      suggestionsIdle = 0;
+      timed('candidate sets', () =>
+        sidebar.setSuggestions(candidateSets(shown, loadConfig(configPath()).declinedMerges).length),
+      );
+      return GLib.SOURCE_REMOVE;
+    });
   };
   const review = () => {
     const sets = candidateSets(shown, loadConfig(configPath()).declinedMerges);
@@ -465,13 +476,21 @@ export function createWindow(app: Adw.Application, options: WindowOptions = {}):
   })();
   // The index changes as the daemon syncs; coming back to the window is the cheap moment to look.
   window.connect('notify::is-active', () => {
-    if (window.is_active && listStamp() !== stamp) refresh();
+    if (!window.is_active || listStamp() === stamp || activationIdle) return;
+    // Let the window paint and take its first click before the list is reloaded.
+    activationIdle = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+      activationIdle = 0;
+      if (listStamp() !== stamp) refresh();
+      return GLib.SOURCE_REMOVE;
+    });
   });
   if (!labelled) {
     labelled = true;
     void accountLabels().then((found) => {
+      // The index already named the accounts; a second full rebuild only when a name differs.
+      const same = found.size === labels.size && [...found].every(([k, v]) => labels.get(k) === v);
       labels = found;
-      refresh();
+      if (!same) refresh();
     });
   }
   return window;

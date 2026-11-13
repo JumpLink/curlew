@@ -154,6 +154,8 @@ app/src/window/qr-image.ts
 app/src/window/rich-text-model.ts
 app/src/window/selection-model.ts
 app/src/window/settings-map.ts
+app/src/window/stall-probe-model.ts
+app/src/window/stall-probe.ts
 app/src/window/video-preview-model.ts
 app/src/window/video-preview.ts
 app/src/window/viewer-model.ts

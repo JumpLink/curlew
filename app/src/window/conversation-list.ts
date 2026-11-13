@@ -395,6 +395,10 @@ export function createConversationList(
     updateFilterButton();
   }
 
+  let rebuildGeneration = 0;
+  const FIRST_ROWS = 40;
+  const ROWS_PER_IDLE = 40;
+
   function rebuild(): void {
     list.remove_all();
     refs.clear();
@@ -419,20 +423,40 @@ export function createConversationList(
       return;
     }
     stack.set_visible_child_name('list');
+    // Thousands of rows built in one go blocked the main loop for over a second: the first batch
+    // is built now, the rest in idle batches that a newer rebuild cancels.
+    const queue: Array<() => void> = [];
     for (const section of sections) {
       const isCollapsed = collapsed.has(section.id);
-      const header = sectionRow(section, isCollapsed);
-      refs.set(header, { kind: 'section', id: section.id });
-      list.append(header);
+      queue.push(() => {
+        const header = sectionRow(section, isCollapsed);
+        refs.set(header, { kind: 'section', id: section.id });
+        list.append(header);
+      });
       if (isCollapsed) continue;
       for (const entry of section.entries) {
-        const { row, check } = entryRow(entry, labels, picking, picked.has(entry.id));
-        refs.set(row, { kind: 'entry', entry });
-        checks.set(entry.id, { row, check });
-        list.append(row);
-        if (!picking && entry.id === selectedId) list.select_row(row);
+        queue.push(() => {
+          const { row, check } = entryRow(entry, labels, picking, picked.has(entry.id));
+          refs.set(row, { kind: 'entry', entry });
+          checks.set(entry.id, { row, check });
+          list.append(row);
+          if (!picking && entry.id === selectedId) list.select_row(row);
+        });
       }
     }
+    const generation = ++rebuildGeneration;
+    let next = 0;
+    const build = (count: number) => {
+      const end = Math.min(next + count, queue.length);
+      for (; next < end; next++) queue[next]!();
+    };
+    build(FIRST_ROWS);
+    if (next < queue.length)
+      GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+        if (generation !== rebuildGeneration) return GLib.SOURCE_REMOVE;
+        build(ROWS_PER_IDLE);
+        return next < queue.length ? GLib.SOURCE_CONTINUE : GLib.SOURCE_REMOVE;
+      });
   }
 
   list.connect('row-activated', (_list: Gtk.ListBox, row: Gtk.ListBoxRow) => {
