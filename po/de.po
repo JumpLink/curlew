@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 00:22+0100\n"
+"POT-Creation-Date: 2026-11-13 00:58+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2656,7 +2656,7 @@ msgstr[0] "{count} mögliches Duplikat"
 msgstr[1] "{count} mögliche Duplikate"
 
 #: app/src/window/conversation-model.ts:129
-#: app/src/window/conversation-view.ts:1308
+#: app/src/window/conversation-view.ts:1311
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -2801,33 +2801,37 @@ msgstr "Löschen"
 msgid "Copy"
 msgstr "Kopieren"
 
-#: app/src/window/conversation-view.ts:905
+#: app/src/window/conversation-view.ts:908
+msgid "Encrypted message: it cannot be shown here"
+msgstr "Verschlüsselte Nachricht: Sie kann hier nicht angezeigt werden"
+
+#: app/src/window/conversation-view.ts:909
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:947
-#: app/src/window/conversation-view.ts:1085
+#: app/src/window/conversation-view.ts:950
+#: app/src/window/conversation-view.ts:1088
 msgid "edited"
 msgstr "bearbeitet"
 
-#: app/src/window/conversation-view.ts:957
-#: app/src/window/conversation-view.ts:958
+#: app/src/window/conversation-view.ts:960
+#: app/src/window/conversation-view.ts:961
 msgid "Read"
 msgstr "Gelesen"
 
-#: app/src/window/conversation-view.ts:1172
+#: app/src/window/conversation-view.ts:1175
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:1273
+#: app/src/window/conversation-view.ts:1276
 msgid "Message not edited: {error}"
 msgstr "Nachricht nicht bearbeitet: {error}"
 
-#: app/src/window/conversation-view.ts:1320
+#: app/src/window/conversation-view.ts:1323
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:1323
+#: app/src/window/conversation-view.ts:1326
 msgid "Retry"
 msgstr "Erneut versuchen"
 

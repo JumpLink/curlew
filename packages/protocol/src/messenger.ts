@@ -299,6 +299,8 @@ export interface ConversationMessage {
   notice?: string | null;
   /** Mail only: this message itself carries `Chat-Version: 1.0`. */
   emailChat: boolean;
+  /** Mail only: the body is encrypted and cannot be shown; `bodyText` is empty. */
+  encrypted?: boolean;
   /** Plain-text body — present only when explicitly requested. */
   bodyText?: string | null;
   bodyTruncated?: boolean;

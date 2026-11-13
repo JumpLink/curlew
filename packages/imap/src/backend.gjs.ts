@@ -29,6 +29,7 @@ import {
   parseEnvelope,
   parseFetchAttributes,
   pickBodyPart,
+  isEncryptedStructure,
   quotedPrintableToBytes,
   base64ToBytes,
   attachmentParts,
@@ -171,6 +172,7 @@ class ImapBackendSession implements BackendSession {
         references: thread.references,
         automation: thread.automation,
         emailChat: thread.emailChat,
+        ...(isEncryptedStructure(parts) ? { encrypted: true } : {}),
       });
     }
     // Ascending, so the engine's cursor advances monotonically.

@@ -187,6 +187,20 @@ export function attachmentParts(parts: BodyPart[]): BodyPart[] {
 }
 
 /**
+ * True when the message body is encrypted (OpenPGP `multipart/encrypted`, as Delta Chat sends it, or
+ * S/MIME enveloped data). Its only text lives inside the ciphertext, which the index cannot read,
+ * so such a message has no body to show; it is not an empty one.
+ */
+export function isEncryptedStructure(parts: BodyPart[]): boolean {
+  return parts.some(
+    (p) =>
+      p.mimeType === 'multipart/encrypted' ||
+      p.mimeType === 'application/pgp-encrypted' ||
+      (p.mimeType === 'application/pkcs7-mime' && p.params['smime-type']?.toLowerCase() === 'enveloped-data'),
+  );
+}
+
+/**
  * Pick the part to use as the message body: the first text/plain, else the first text/html.
  * Attachments are skipped even when they are text — an attached .txt is not the body.
  */

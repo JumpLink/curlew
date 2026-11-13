@@ -318,6 +318,32 @@ export default async () => {
       }
     });
 
+    await it('carries the encrypted flag of a mail to its conversation message', async () => {
+      const backend = new FakeBackend();
+      backend.put('INBOX', [
+        message(1, '...', '', {
+          messageId: '<e1@example.org>',
+          from: [ANNA],
+          to: [ME],
+          emailChat: true,
+          encrypted: true,
+        }),
+        message(2, 'Plain', 'Hello', { messageId: '<e2@example.org>', from: [BEN], to: [ME] }),
+      ]);
+      const db = freshDb();
+      try {
+        await syncIndex(db, backend, { now: AT('2026-08-06T12:00:00Z') });
+        rebuildConversations(db, { contacts: CONTACTS });
+        const flags = listConversations(db)
+          .map((c) => getConversation(db, c.id)?.messages[0])
+          .map((m) => m?.encrypted === true);
+        expect(flags.filter(Boolean).length).toBe(1);
+        expect(flags.length).toBe(2);
+      } finally {
+        db.close();
+      }
+    });
+
     await it('marks a thread an email chat when any message carries Chat-Version, per message too', async () => {
       const backend = new FakeBackend();
       backend.put('INBOX', [

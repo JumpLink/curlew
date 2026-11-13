@@ -1,6 +1,12 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { attachmentParts, pickBodyPart, tokenizeImapList, walkBodyStructure } from '@curlew/protocol';
+import {
+  attachmentParts,
+  isEncryptedStructure,
+  pickBodyPart,
+  tokenizeImapList,
+  walkBodyStructure,
+} from '@curlew/protocol';
 
 /** Tokenize a bare BODYSTRUCTURE literal into the nested list the walker consumes. */
 function parse(structure: string) {
@@ -165,6 +171,26 @@ export default async () => {
     await it('returns null when there is no text part at all', async () => {
       const s = '("APPLICATION" "PDF" ("NAME" "only.pdf") NIL NIL "BASE64" 100 NIL)';
       expect(pickBodyPart(parse(s))).toBe(null);
+    });
+  });
+
+  await describe('encrypted structures', async () => {
+    const PGP =
+      '(("APPLICATION" "PGP-ENCRYPTED" NIL NIL NIL "7BIT" 11 NIL NIL NIL)' +
+      '("APPLICATION" "OCTET-STREAM" ("NAME" "encrypted.asc") NIL NIL "7BIT" 800 NIL ' +
+      '("INLINE" ("FILENAME" "encrypted.asc")) NIL)' +
+      ' "ENCRYPTED" ("PROTOCOL" "application/pgp-encrypted" "BOUNDARY" "b") NIL NIL)';
+
+    await it('recognises Delta Chat style multipart/encrypted: no body, no attachment', async () => {
+      const parts = parse(PGP);
+      expect(isEncryptedStructure(parts)).toBe(true);
+      expect(pickBodyPart(parts)).toBe(null);
+      expect(attachmentParts(parts).length).toBe(0);
+    });
+
+    await it('does not flag plain or signed mail', async () => {
+      expect(isEncryptedStructure(parse(TEXT_ONLY))).toBe(false);
+      expect(isEncryptedStructure(parse(ALTERNATIVE_WITH_PDF))).toBe(false);
     });
   });
 };

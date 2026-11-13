@@ -192,7 +192,9 @@ Sending from the window is the person's own action (ADR 0008), so it asks no gra
 account page (`deltaChatAccounts` in the config, off by default); otherwise it sends ordinary mail. An email chat has: a `Chat-Version: 1.0` header, a generic
 subject (`Chat: <first words>`, or `Re: <subject>` when answering ordinary mail) and normal `In-Reply-To`/`References` threading, so any mail
 client still shows a readable thread. The index records the marker on receipt (`email_chat`),
-which is what *Show all emails* filters on. No encryption yet (curlew#145).
+which is what *Show all emails* filters on. No encryption yet (curlew#145). A received message whose body is
+encrypted (Delta Chat sends every message as OpenPGP `multipart/encrypted`) is flagged `encrypted` by the sync
+from its BODYSTRUCTURE; its bubble reads *Encrypted message: it cannot be shown here* instead of *No text body*.
 
 Not built: system events collapsed into one expandable line ("3 room changes"), reaction chips,
 stacked read-receipt avatars, attach, emoji and the more-menu in the composer.
