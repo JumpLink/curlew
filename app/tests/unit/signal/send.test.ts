@@ -17,6 +17,7 @@ import {
   EnvelopeType,
   padAttachment,
   paddedSize,
+  parseAttachmentHandle,
   fromBase64,
   sendFetch,
   sendRefusal,
@@ -860,6 +861,26 @@ export default async () => {
         // The transcript on the account's other devices carries the same pointer.
         const own = rig.server.delivered.find((d) => d.to === 'self.1')!;
         expect(own.content.syncMessage?.sent?.message?.attachments?.[0].cdnKey).toBe('synthetic-cdn-key');
+      });
+    });
+
+    await it('hands back the sent file for the local echo, with a handle that can fetch it', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const path = join(rig.dir, 'bild.png');
+        writeFileSync(path, new Uint8Array(500).fill(3));
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [ALICE_ACI],
+        });
+        const sent = await sender.send({ to: ALICE_ACI, text: 'Foto', attachments: [{ path }] });
+        await sender.close();
+        expect(sent.echoAttachments?.length).toBe(1);
+        const echo = sent.echoAttachments![0];
+        expect(echo.filename).toBe('bild.png');
+        expect(echo.kind).toBe('image');
+        const handle = parseAttachmentHandle(echo.handle);
+        expect(handle?.cdnKey).toBe('synthetic-cdn-key');
+        expect(handle?.key !== undefined && handle.key !== '').toBe(true);
       });
     });
 

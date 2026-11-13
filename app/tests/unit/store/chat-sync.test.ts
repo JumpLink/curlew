@@ -766,6 +766,41 @@ export default async () => {
       }
     });
 
+    await it('stores the files of a sent message, so the chat can show them', async () => {
+      const db = freshDb();
+      try {
+        const { messageId, conversationId } = recordSentChatMessage(db, {
+          backend: 'signal',
+          account: { id: ACCOUNT, identity: 'me', provider: 'Signal' },
+          chatRemoteId: '1002',
+          clientId: 'oid-8',
+          text: 'Foto',
+          sentAt: '2026-08-01T10:00:00.000Z',
+          attachments: [
+            {
+              filename: 'bild.png',
+              mimeType: 'image/png',
+              size: 500,
+              kind: 'image',
+              width: null,
+              height: null,
+              durationMs: null,
+              handle: JSON.stringify({ cdnNumber: 3 }),
+            },
+          ],
+        });
+        const message = getConversation(db, conversationId)?.messages[0];
+        expect(message?.hasAttachments).toBe(true);
+        const attachments = loadAttachments(db, message!.ref);
+        expect(attachments.length).toBe(1);
+        expect(attachments[0].kind).toBe('image');
+        expect(attachments[0].fetchable).toBe(true);
+        expect(messageId.length > 0).toBe(true);
+      } finally {
+        db.close();
+      }
+    });
+
     await it("yields to the archive's own text when there is one", async () => {
       const { db, conversationId } = await sendThenSync('wie der Server es kennt');
       try {

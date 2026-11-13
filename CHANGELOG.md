@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- A picture or file you send in a Signal chat now shows in the chat right away. The message arrived, but Signal does not hand a device its own sent message back, so Curlew's local copy had no attachment and the bubble stayed empty; it now keeps the file with a handle that can fetch it again.
 - The new-conversation picker opens at once and scrolls smoothly: its contact list is a virtualised list view that fills after the dialog is shown, instead of one widget row per contact built in a single blocking pass (1000 contacts blocked the main loop for ~620 ms).
 - The window starts and refreshes more smoothly with thousands of conversations: the list is read in slices between main-loop turns, so the first paint no longer waits for the whole index (first stall 860 ms down to 420 ms on 2000 conversations / 48k messages, the refresh itself no longer blocks for 250 ms), the newest-message query uses the row id (about 4× faster), and a conversation opened from a notification reuses the loaded list.
 - The emoji picker no longer freezes the window when it first opens (about 1.2 s down to 31 ms): it is now Curlew's own popover with a virtualised grid, search in English and German, jump buttons for the groups and a row of recently used emoji, replacing GTK's chooser. `CURLEW_DEBUG_STALL=1` also times the dialog openers, the bubble menu, the main menu and opening a conversation.

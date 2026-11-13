@@ -57,6 +57,7 @@ import {
 import type { LeaseTake, SentChatRecord } from '@curlew/store';
 import type {
   BackendAccount,
+  ChatAttachment,
   MessageBackend,
   MessageSender,
   SentMessage,
@@ -641,7 +642,13 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
       : recordDelivered(
           dbPath,
           account,
-          { chatJid: sent.chatRemoteId, originId: sent.id, text: body, sentAt: sent.sentAt },
+          {
+            chatJid: sent.chatRemoteId,
+            originId: sent.id,
+            text: body,
+            sentAt: sent.sentAt,
+            ...(sent.echoAttachments === undefined ? {} : { attachments: sent.echoAttachments }),
+          },
           backend.manifest.name,
         );
   });
@@ -668,7 +675,7 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
 export function recordDelivered(
   dbPath: string,
   account: SentChatRecord['account'],
-  sent: { chatJid: string; originId: string; text: string; sentAt: string },
+  sent: { chatJid: string; originId: string; text: string; sentAt: string; attachments?: ChatAttachment[] },
   backend = 'xmpp',
 ): { conversationId: string; messageId: string | null; indexError?: string } {
   try {
@@ -681,6 +688,7 @@ export function recordDelivered(
         clientId: sent.originId,
         text: sent.text,
         sentAt: sent.sentAt,
+        ...(sent.attachments === undefined ? {} : { attachments: sent.attachments }),
       });
     } finally {
       db.close();

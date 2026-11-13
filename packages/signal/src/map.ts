@@ -139,10 +139,15 @@ export function pointerOfHandle(handle: SignalAttachmentHandle): AttachmentPoint
 
 const VOICE_MESSAGE = 1;
 
+/** What the UI shows a file of this MIME type as. */
+export function kindOfContentType(contentType: string | null): AttachmentKind {
+  const major = contentType?.split('/')[0];
+  return major === 'image' || major === 'video' || major === 'audio' ? major : 'file';
+}
+
 function attachmentKind(pointer: AttachmentPointer): AttachmentKind {
   if (pointer.flags & VOICE_MESSAGE) return 'voice';
-  const major = pointer.contentType?.split('/')[0];
-  return major === 'image' || major === 'video' || major === 'audio' ? major : 'file';
+  return kindOfContentType(pointer.contentType);
 }
 
 /**
