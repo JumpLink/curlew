@@ -312,7 +312,9 @@ The window reads these environment variables (all in `app/src/window/main.ts`):
 `CURLEW_WINDOW_FILTER`, `CURLEW_WINDOW_SIZE=WxH`, `CURLEW_WINDOW_QUIT_AFTER_MS`,
 `CURLEW_WINDOW_OPEN_CONTACT=1`, `CURLEW_WINDOW_OPEN_NEW=1` (the new-conversation picker; `CURLEW_DEMO_CONTACTS=<n>` gives it n synthetic contacts), `CURLEW_WINDOW_OPEN_PREFERENCES=1`, `CURLEW_WINDOW_OPEN_ACCESS=1`,
 `CURLEW_WINDOW_OPEN_ACCOUNTS=1`, `CURLEW_WINDOW_OPEN_PROTOCOLS=1` and `CURLEW_WINDOW_OPEN_WELCOME=1`,
-`CURLEW_DEBUG_STALL=1` (logs every main-loop stall over `CURLEW_DEBUG_STALL_MS`, default 50, and the timing of the list refresh),
+`CURLEW_DEBUG_STALL=1` (logs every main-loop stall over `CURLEW_DEBUG_STALL_MS`, default 50, and the timing of the list refresh;
+the first ~400 ms stall at start is GTK/Adw mapping the first window, a bare `Adw.ApplicationWindow` blocks as long, so it is not Curlew's;
+`Gtk.SearchEntry` already debounces `search-changed` by 150 ms),
 which opens the first-run welcome screen (`app/src/window/welcome.ts`; pages listed in
 `welcome-model.ts`; shown once, tracked by `ui.welcomeDone`). Pages: intro, protocols, accounts, Delta Chat (two switches per mail account, Delta Chat off and ordinary email on by default, text from `email-chat-model.ts`), AI (off by default) and a summary; no page forces an input, skipping keeps the safe defaults. The email-chat hint (`Adw.Banner` above a thread, once per account in `ui.emailChatHintSeen`) shows only where the other side sent `Chat-Version`; "Show all emails" is a list filter only. On Windows and macOS (`chatOnly()` in `app/src/core/platform.ts`) the welcome screen has no Delta Chat page and no mail wording, Accounts has no mail group, Preferences no "Show all emails". `CURLEW_NO_HOST_ACCOUNTS=1` hides the
 host's GNOME Online Accounts, so the Accounts dialog never shows real ones. The language comes from

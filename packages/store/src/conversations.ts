@@ -845,6 +845,8 @@ export interface ConversationQuery {
   /** Only mail threads that are email chats (Chat-Version), so newsletters do not fill the limit. */
   emailChat?: boolean;
   limit?: number;
+  /** Rows to skip, for reading a long list in slices. */
+  offset?: number;
   /** Per-sender corrections, keyed by normalized address. */
   overrides?: SenderOverrides;
 }
@@ -1104,9 +1106,9 @@ export function listConversations(db: IndexDatabase, query: ConversationQuery = 
     .prepare(
       `SELECT ${CONVERSATION_COLUMNS} FROM conversations
          ${where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''}
-        ORDER BY last_message_at DESC, id LIMIT ?`,
+        ORDER BY last_message_at DESC, id LIMIT ? OFFSET ?`,
     )
-    .all(...params, query.limit ?? DEFAULT_LIST_LIMIT) as Array<Record<string, unknown>>;
+    .all(...params, query.limit ?? DEFAULT_LIST_LIMIT, query.offset ?? 0) as Array<Record<string, unknown>>;
   return hydrate(db, rows, overrides);
 }
 
@@ -1142,9 +1144,9 @@ export function latestMessagePreviews(
                 m.subject, m.has_attachments, m.sender_name
            FROM conversation_messages m
           WHERE m.conversation_id IN (${chunk.map(() => '?').join(',')})
-            AND m.id = (SELECT n.id FROM conversation_messages n
-                         WHERE n.conversation_id = m.conversation_id
-                         ORDER BY n.sent_at DESC, n.id DESC LIMIT 1)`,
+            AND m.rowid = (SELECT n.rowid FROM conversation_messages n
+                            WHERE n.conversation_id = m.conversation_id
+                            ORDER BY n.sent_at DESC, n.rowid DESC LIMIT 1)`,
       )
       .all(...chunk) as Array<Record<string, unknown>>;
     for (const r of rows) {
