@@ -7,6 +7,39 @@ and every `packages/*/src`.
 A build without compiled catalogues is not broken: an unresolved lookup returns its msgid, so the
 output is correct English rather than blank.
 
+## Status
+
+As of 2026-11-13: 867 msgids, all translated into German, 0 fuzzy, 0 untranslated. Every msgid is
+English. Every `{placeholder}` of a msgid appears in its German text (checked by script, then held by
+a test). German uses informal "du" throughout; the terms are fixed: *Konto* (never "Account"),
+*Unterhaltung* for a conversation and *Chat* for one chat on a network, *Nachricht*, *Anhang*,
+*Sprachnachricht*. A string in a window, a dialog or a command's output goes through `_()` / `_n()`;
+a sweep of `app/src` and `packages/*/src` found no user-visible literal left outside them besides the
+ones listed under "Deliberately English".
+
+## Checking it
+
+```sh
+./dev/i18n.sh extract                                  # refresh po/curlew.pot, merge into po/de.po
+LC_ALL=C msgfmt --check --statistics -o /dev/null po/de.po   # want: only "N translated messages."
+grep -c fuzzy po/de.po                                 # want: 0
+gjsify workspace curlew-cli test                       # includes po-catalogue.test.ts (Node and GJS)
+```
+
+`app/tests/unit/core/po-catalogue.test.ts` fails on a fuzzy entry, an empty translation, or a
+placeholder that the German text lost or invented. CI runs the `msgfmt` check and a freshness check of
+the catalogue (`extract` must leave `po/` unchanged apart from the creation date) before it builds.
+
+Counter-check by eye, after `gjsify workspace curlew-cli build` (it compiles `app/dist/locale`):
+
+```sh
+cd app
+LANGUAGE=de LC_ALL=C gjsify run dist/curlew.gjs.mjs --help   # all English: LC_ALL=C beats LANGUAGE
+LANGUAGE=de gjsify run dist/curlew.gjs.mjs --help            # all German, no raw msgid
+```
+
+For the window run the same two prefixes under `./scripts/headless-run --` from the werkstatt hub.
+
 ## How it works
 
 - **Runtime:** [`packages/protocol/src/i18n.ts`](../packages/protocol/src/i18n.ts) — `_`, `_n`,
@@ -75,7 +108,7 @@ German uses informal "du", matching the sibling projects.
 | Backend registry, `send`, `omemo`, `index-sync` actions | the refusals and errors that reach a user |
 | Window ([`app/src/window/`](../app/src/window/)) | the conversation list (sections, filter popover, empty states), the conversation view (composer, attachment tiles and viewer, send errors), people rows, merge and pin menus, the Accounts dialog, the Preferences and Agent access dialogs, the primary menu |
 
-631 msgids. Covered by `app/tests/unit/core/i18n.test.ts`: a German locale yields German, a
+867 msgids. Covered by `app/tests/unit/core/i18n.test.ts`: a German locale yields German, a
 language we do not ship falls back to English, `LC_ALL=C` wins over `LANGUAGE`, and a wired
 Telegram error comes out German once the catalogue is installed.
 

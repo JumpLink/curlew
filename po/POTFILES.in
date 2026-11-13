@@ -26,8 +26,8 @@ app/src/core/actions/read-receipt.ts
 app/src/core/actions/search-access.ts
 app/src/core/actions/send.ts
 app/src/core/actions/setup-host.ts
-app/src/core/actions/setup.ts
 app/src/core/actions/setup-unit.ts
+app/src/core/actions/setup.ts
 app/src/core/actions/wait-reply.ts
 app/src/core/actions/watch.ts
 app/src/core/agent-access.ts
@@ -252,13 +252,13 @@ packages/signal/src/index.ts
 packages/signal/src/journal.ts
 packages/signal/src/keys.ts
 packages/signal/src/lib.ts
-packages/signal/src/link.ts
 packages/signal/src/link-url.ts
+packages/signal/src/link.ts
 packages/signal/src/manifest.ts
 packages/signal/src/map.ts
 packages/signal/src/net.ts
-packages/signal/src/protocol-store.ts
 packages/signal/src/proto.ts
+packages/signal/src/protocol-store.ts
 packages/signal/src/provisioning.ts
 packages/signal/src/qr.ts
 packages/signal/src/receiver.ts
@@ -276,8 +276,8 @@ packages/store/src/changes.ts
 packages/store/src/chat-backfill.ts
 packages/store/src/chat-sync.ts
 packages/store/src/classify.ts
-packages/store/src/conversations.ts
 packages/store/src/conversation-totals.ts
+packages/store/src/conversations.ts
 packages/store/src/db.ts
 packages/store/src/delivery-sync.ts
 packages/store/src/download.ts

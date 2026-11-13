@@ -37,6 +37,7 @@
   tile without a download.
 - Opening a video or file from a chat or mail bubble no longer stops at 25 MB; the window may
   fetch up to 100 MB, since a phone video is often bigger than the limit meant for agents.
+- German: the refusal for a bad Matrix event id no longer carries a stray second sentence, and one command hint addressed you as "Sie" instead of "du".
 
 ### Changed
 

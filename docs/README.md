@@ -27,7 +27,7 @@ Agent- and contributor-facing docs for the curlew repo. The hard rules that load
 
 - [`conventions/mcp-gate.md`](conventions/mcp-gate.md) — read-only / granted-write MCP tool registration and canaries
 - [`conventions/gjsify.md`](conventions/gjsify.md) — fixing gaps in gjsify instead of here, shim markers
-- [`i18n-status.md`](i18n-status.md) — gettext usage, what is translated, module-level and plural traps
+- [`i18n-status.md`](i18n-status.md) — translation status, the check commands and the LC_ALL=C / LANGUAGE=de counter-check, gettext usage, module-level and plural traps
 
 ## Release
 
