@@ -103,7 +103,7 @@ All contacts, channels and groups of every messenger in **one** list.
   room known to be encrypted keeps the composer disabled with the reason shown instead.
 - **Direct mail is grouped by person**: every direct mail thread with the same person is one
   row. Chat backends are not regrouped, their conversations already are one per person.
-- **Show all emails** (Preferences, on by default). Off, the list keeps only mail threads that
+- **Show all emails** (Preferences, off by default). Off, the list keeps only mail threads that
   carry the chat marker (`Chat-Version`, see below) and the replies to them, so the window reads
   like a messenger beside the mail client.
 - Row: avatar with protocol badge (the protocol is shown ONLY there, never as text), title with a

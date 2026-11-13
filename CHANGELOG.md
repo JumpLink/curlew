@@ -39,6 +39,7 @@
 
 ### Changed
 
+- "Show all emails" is off by default: the list shows only email chats (mail from Delta Chat compatible clients) and the replies to them, so Curlew reads like a messenger. A config file that sets `ui.showAllEmails` keeps its value; switch it on in Preferences, Conversations, to see every mail thread.
 - `dev/screenshots.sh` renders from the demo mode (`CURLEW_DEMO=1`) instead of its own fixture index, and adds group, empty-accounts and all-off motifs; `CURLEW_DEMO_QUIET=1` omits the demo notice. File names: `docs/screenshots/README.md`.
 
 - A new Delta Chat mail message now has the subject `Message from <name>` (Delta Chat spec 0.37, name = the part of the account address before the `@`) instead of `Chat: <first words>`, so a plain mail client no longer shows the start of the chat text.

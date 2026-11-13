@@ -20,7 +20,7 @@ Curlew's "email chat" renders mail threads as bubbles and sends them with Delta 
 - The subject of a marked first message is `Chat: <first words>` (`chatSubject`,
   `app/src/window/conversation-model.ts:26`). Delta Chat's specification (0.37) asks for
   `Message from <sender name>`.
-- The list filter "show all emails" (`ui.showAllEmails`, default `true`,
+- The list filter "show all emails" (`ui.showAllEmails`, default `false` since the release plan,
   `app/src/core/config.ts:156`; applied in `app/src/window/conversation-list-model.ts:640`) hides
   unmarked mail threads. It changes the list only, never what is sent or stored.
 
