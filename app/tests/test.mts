@@ -88,6 +88,7 @@ import telegramAvatars from './unit/telegram/avatars.test.ts';
 
 import date from './unit/core/date.test.ts';
 import i18n from './unit/core/i18n.test.ts';
+import poCatalogue from './unit/core/po-catalogue.test.ts';
 import limits from './unit/core/limits.test.ts';
 import registry from './unit/core/registry.test.ts';
 import grants from './unit/core/grants.test.ts';
@@ -238,6 +239,7 @@ run({
   telegramAvatars,
   date,
   i18n,
+  poCatalogue,
   limits,
   registry,
   grants,

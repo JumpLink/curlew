@@ -182,7 +182,7 @@ msgstr ""
 
 #: app/src/core/actions/daemon.ts:453
 msgid "the download stalled — try again"
-msgstr "Der Download ist hängen geblieben — versuche es noch einmal."
+msgstr "Der Download ist hängen geblieben — versuche es noch einmal"
 
 #: app/src/core/actions/delete.ts:44
 msgid "{backend} cannot delete a message"
@@ -1151,7 +1151,7 @@ msgid ""
 "Nothing was changed. To accept this risk for your account and enable: curlew "
 "backends enable {name} --accept-terms"
 msgstr ""
-"Es wurde nichts geändert. Um dieses Risiko für Ihr Konto zu akzeptieren und "
+"Es wurde nichts geändert. Um dieses Risiko für dein Konto zu akzeptieren und "
 "zu aktivieren: curlew backends enable {name} --accept-terms"
 
 #: app/src/frontends/cli/backends.ts:66
@@ -3624,8 +3624,7 @@ msgstr ""
 #: packages/matrix/src/send.ts:480
 msgid "{id} is not a Matrix event id — nothing was sent"
 msgstr ""
-"{id} ist keine Matrix-Event-ID – es wurde nichts gesendet{capability} ist "
-"nicht die Berechtigung, unter der {backend} sendet — es wurde nichts gesendet"
+"{id} ist keine Matrix-Event-ID — es wurde nichts gesendet"
 
 #: packages/matrix/src/send.ts:395
 msgid ""

@@ -90,6 +90,16 @@ jobs:
       - name: Lint
         run: gjsify workspace curlew-cli lint
 
+      # Hard gate: a fuzzy or untranslated entry, or a catalogue that no longer matches the
+      # sources, fails here. The same checks per entry run as a test (po-catalogue.test.ts).
+      - name: Check the translation catalogue
+        run: |
+          ./dev/i18n.sh extract
+          msgfmt --check --statistics -o /dev/null po/de.po 2>&1 | tee /tmp/msgfmt.txt
+          if grep -qE 'fuzzy|unübersetzt|untranslated' /tmp/msgfmt.txt; then exit 1; fi
+          # POT-Creation-Date changes on every run; any other difference means a stale catalogue.
+          git diff --exit-code -I'^"POT-Creation-Date' -- po/
+
       - name: Build the CLI bundle
         run: gjsify workspace curlew-cli build
 
