@@ -101,8 +101,20 @@ import {
   type DaemonSendHandler,
   type DaemonSendService,
 } from '../lib/daemon-send-service.ts';
+import {
+  PULL_SYNC_INTERVAL_MS,
+  PULL_SYNC_START_DELAY_MS,
+  type PullSyncTicker,
+  startPullSync,
+} from '../lib/pull-sync.ts';
 import { followAccount, type FollowResult } from './follow.ts';
-import { openIndex, rebuildWithAddressBook } from './index-sync.ts';
+import {
+  indexSync,
+  openIndex,
+  rebuildWithAddressBook,
+  type IndexSyncResult,
+  type SyncParams,
+} from './index-sync.ts';
 import { deleteThrough } from './delete.ts';
 import { editThrough } from './edit.ts';
 import { reactThrough } from './react.ts';
@@ -159,6 +171,20 @@ export interface DaemonParams {
   writeLogPath?: string;
   /** Injected by tests; the address-book rebuild `indexSync` also uses. */
   rebuild?: (db: IndexDatabase) => Promise<RebuildResult & { contacts: number | null }>;
+  /**
+   * The pull sync the daemon runs on its own timer — `indexSync`, i.e. exactly what
+   * `curlew sync` runs. Injected by tests, which have no mail account and no second index.
+   *
+   * `null` runs none, for the one host that already has a ticker of its own: a window on a
+   * platform without a background service runs this very action in-process and owns the sync
+   * there (`hostReceiveLoop`), and two tickers in ONE process are not kept apart by the
+   * index-writer lease — they would hold it under the same holder and both run.
+   */
+  pullSync?: ((params: SyncParams) => Promise<IndexSyncResult>) | null;
+  /** Short only in tests: how long until the first pull sync. */
+  pullSyncDelayMs?: number;
+  /** Short only in tests: how long between pull syncs. */
+  pullSyncIntervalMs?: number;
   /**
    * How the send interface is published; injected by tests, which have no session bus. `null`
    * publishes nothing, which is also what the default does when there is no bus to publish on —
@@ -687,16 +713,19 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
       : (await telegram.listAccounts())
           .map((a) => a.id)
           .filter((id) => !params.accountId || id === params.accountId);
-  if (
+  /**
+   * No account to follow — the normal state of a fresh install, NOT a reason to end the run
+   * (ADR 0002 §8). It used to throw, and that made the background service `failed` on every
+   * machine whose owner had only mail: systemd showed red, the window showed "not running", and
+   * the periodic sync this process now owns never happened. The run stays up instead: it owns the
+   * pull sync, it answers the session bus (access prompts, `GetAccounts`), and adding an account
+   * `try-restart`s the unit from the window, which picks the account up.
+   */
+  const nothingToReceive =
     backends.length === 0 &&
     xmppAccounts.length === 0 &&
     matrixAccounts.length === 0 &&
-    telegramAccounts.length === 0
-  ) {
-    throw new Error(
-      'nothing to receive — no delivery-only backend is enabled (`curlew backends list`; the daemon receives Signal and WhatsApp), no XMPP or Matrix account is enabled; `curlew sync` stays for mail and the other chats',
-    );
-  }
+    telegramAccounts.length === 0;
 
   const db = openIndex(params.dbPath);
   const rebuild = params.rebuild ?? rebuildWithAddressBook;
@@ -750,6 +779,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   const forward = (): void => run.abort();
   if (outer.aborted) run.abort();
   else outer.addEventListener('abort', forward, { once: true });
+
   let followed: FollowResult[] = [];
   let followedMatrix: FollowResult[] = [];
   let followedTelegram: FollowResult[] = [];
@@ -811,15 +841,61 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   const progress = (event: DeliveryProgress): void => {
     if (table.apply(event, new Date())) sendService?.emitAccountsChanged();
   };
+
+  /**
+   * One pass of the periodic pull sync (ADR 0002 §8) — mail and the pull-model chats, through the
+   * very `indexSync` that `curlew sync` runs, so a GUI-only install needs neither a terminal nor
+   * a timer. The ticker around it, and why a tick is skipped rather than queued, is in
+   * `../lib/pull-sync.ts`; across processes the lock is the index-writer lease, so a `curlew sync`
+   * started by hand stands down for this one and this one stands down for it.
+   */
+  const pullSync = params.pullSync === undefined ? indexSync : params.pullSync;
+  const pullInterval = params.pullSyncIntervalMs ?? PULL_SYNC_INTERVAL_MS;
+  const runPullSync = async (): Promise<void> => {
+    if (pullSync === null) return;
+    const result = await pullSync({ configPath: params.configPath, dbPath: params.dbPath });
+    if (result.heldBy !== undefined) {
+      log(
+        `curlew-daemon: pull sync stood down — the index is written by ${result.heldBy ?? 'another process'}`,
+      );
+      return;
+    }
+    log(
+      `curlew-daemon: pull sync done (${result.added} added, ${result.updated} updated, ` +
+        `${result.removed} removed, ${result.errors} error(s))`,
+    );
+    announce();
+  };
+  let pullTicker: PullSyncTicker | null = null;
+  /** Stop the ticker and let a sync that is running finish. Safe to call twice, and before start. */
+  const stopPullSync = async (): Promise<void> => {
+    await pullTicker?.stop();
+  };
+
   const changeWatch = setInterval(announce, params.changePollMs ?? CHANGE_POLL_MS);
   try {
     log(
-      `curlew-daemon: receiving from ${backends.map((b) => b.manifest.name).join(', ') || 'no delivery backend'}` +
-        `${xmppAccounts.length > 0 ? ` and following ${xmppAccounts.length} xmpp account(s)` : ''}` +
-        `${matrixAccounts.length > 0 ? `${xmppAccounts.length > 0 ? ',' : ' and following'} ${matrixAccounts.length} matrix account(s)` : ''}` +
-        `${telegramAccounts.length > 0 ? `${xmppAccounts.length + matrixAccounts.length > 0 ? ',' : ' and following'} ${telegramAccounts.length} telegram account(s)` : ''} ` +
-        `(${params.accountId ?? 'every account'}) — stop with SIGTERM`,
+      nothingToReceive
+        ? `curlew-daemon: nothing to receive (${params.accountId ?? 'every account'}) — idle` +
+            `${pullSync === null ? '' : `, syncing every ${Math.round(pullInterval / 60_000)} min`}` +
+            '; stop with SIGTERM'
+        : `curlew-daemon: receiving from ${backends.map((b) => b.manifest.name).join(', ') || 'no delivery backend'}` +
+            `${xmppAccounts.length > 0 ? ` and following ${xmppAccounts.length} xmpp account(s)` : ''}` +
+            `${matrixAccounts.length > 0 ? `${xmppAccounts.length > 0 ? ',' : ' and following'} ${matrixAccounts.length} matrix account(s)` : ''}` +
+            `${telegramAccounts.length > 0 ? `${xmppAccounts.length + matrixAccounts.length > 0 ? ',' : ' and following'} ${telegramAccounts.length} telegram account(s)` : ''} ` +
+            `(${params.accountId ?? 'every account'}) — stop with SIGTERM`,
     );
+    // Armed inside the `try` so the `finally` below is what stops it: a throw between here and
+    // the stop would otherwise leave a timer holding the event loop open with a closed index.
+    if (pullSync !== null)
+      pullTicker = startPullSync({
+        run: runPullSync,
+        log,
+        who: 'curlew-daemon',
+        signal,
+        delayMs: params.pullSyncDelayMs ?? PULL_SYNC_START_DELAY_MS,
+        intervalMs: pullInterval,
+      });
     // The prompt service (ADR 0009). The policy is read afresh per request, so a rule edited by
     // hand applies at once; "Always" saves through the same path as every other config write.
     const accessConfigPath = params.configPath ?? configPath();
@@ -981,6 +1057,20 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
       followingMatrix,
       followingTelegram,
     ]);
+    /**
+     * There was nothing to receive, so every loop above returned at once — the run still stays up
+     * until the signal (ADR 0002 §8). It owns the pull sync, and it answers the session bus, so
+     * the window sees a running background service and an access prompt still has somebody to
+     * ask. Adding the first account `try-restart`s the unit, which then picks it up.
+     */
+    if (nothingToReceive && !signal.aborted) {
+      await new Promise<void>((resolve) => {
+        signal.addEventListener('abort', () => resolve(), { once: true });
+      });
+    }
+    // The pull sync is stopped before the rebuild flush below, not after: it writes to the very
+    // index the rebuild derives from, and a tick landing mid-rebuild would make the counts a race.
+    await stopPullSync();
     // The writes are in: no more debounced rebuilds are scheduled, and whatever is already running
     // or queued is awaited — `rebuildNow` chains behind it, so this covers a rebuild that started
     // before the last batch was written (then `dirty` is still set and one more pass is due).
@@ -1043,6 +1133,9 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
       followed: [...followed, ...followedMatrix, ...followedTelegram],
     };
   } finally {
+    // Idempotent, and the only place that is reached when the run ends by a throw: a tick left
+    // running here would write through a handle `db.close()` is about to take away.
+    await stopPullSync();
     clearInterval(changeWatch);
     notices?.close();
     // Give the name up before the sessions are gone: a caller that arrives after this gets

@@ -1,6 +1,7 @@
 # ADR 0002 — the receiving daemon, and the lease that keeps two of them apart
 
-- **Status:** Accepted (2026-09-29)
+- **Status:** Accepted (2026-09-29), extended by
+  [Amendment (2026-11-14, the daemon owns the pull sync)](#amendment-2026-11-14-the-daemon-owns-the-pull-sync) — §8, §9 and §10
 - **Scope:** `@curlew/protocol` (`DeliveryOutcome`), `@curlew/store` (the receive path,
   schema v6), `app` (`curlew daemon`, `curlew sync`)
 
@@ -178,3 +179,73 @@ a copy of a command that already works. A user unit, not a system one: curlew re
   delivery-only backend") — [0001-multi-protocol-messenger.md](0001-multi-protocol-messenger.md)
 - `packages/store/AGENTS.md` → "Delivered chats are the only copy"
 - gjsify 0.49.0: `@gjsify/process` signals, measured on GJS 1.88.1
+
+## Amendment (2026-11-14, the daemon owns the pull sync)
+
+The decision above stands. It covered the **delivery-only** half of ADR 0001 §2 and left the
+other half — mail and the server-archive chats — to `curlew sync`, started by a person or by
+`contrib/systemd/curlew-sync.timer`. Both of those are a terminal, and a GUI-only install
+(Flatpak, a phone, Windows, macOS) has neither: mail arrived when somebody remembered to ask
+for it. Two additions, and a third thing that follows from them.
+
+### 8. The running process runs the pull sync
+
+The process that is already up owns the periodic `indexSync` — `curlew daemon` where the
+platform has a background service, the window itself (`hostReceiveLoop`) where
+`backgroundService` is `while-open`. The first pass runs 20 s after start, then every 15 min:
+the same interval the timer unit used, because this replaces it, and not immediately because the
+delivery connections and the follow loops are coming up in those same seconds and a mail sync of
+several accounts holds the write path for minutes.
+
+A constant in `app/src/core/lib/pull-sync.ts`, not a config key. The number that matters to a
+person is "mail arrives by itself"; a key would be a second place to look when it does not.
+
+A tick that arrives while the previous one is still running is **skipped, not queued** — a sync
+of several mail accounts can outlast the interval, and a queue would collect ticks and then run
+them back to back forever. The stop waits for a tick in flight, for the same reason §5's rebuild
+is awaited: `db.close()` under a running sync takes the handle away mid-batch.
+
+### 9. `indexSync` takes an index-writer lease
+
+`indexSync` used to have one caller a person started by hand, so SQLite's own locking was the
+whole story. It now has three that can be live on one machine at once: the daemon's tick, a
+`curlew sync` typed in a terminal, and a `curlew-sync.timer` installed before §8 existed. Issue
+#73's fix (a busy timeout on every connection, `BEGIN IMMEDIATE` for every transaction) makes
+each *statement* wait its turn, which is not the same thing — a sync is thousands of statements
+over minutes, so two runs would interleave batch by batch, fetch the same mail twice and race
+each other's cursor updates.
+
+The lock is §4's receive lease under a key no backend can take (`receive_leases` is keyed
+`(backend, account_id)`; `'index'`/`'sync'` is not a backend), wrapped in `withIndexLease`.
+A second mechanism was not needed: that lease is already a cross-process lock measured on both
+runtimes, and it already survives a SIGKILLed holder by expiry rather than by a cleanup path.
+
+It **never waits**. Every caller is on a timer or is a command a person can repeat, so a skipped
+run costs at most one interval, while a queue of waiting syncs would pile up behind a ten-minute
+WhatsApp catch-up and then all run at once. Whoever is second returns zero counts, `failed:
+false` and `heldBy` — like §4's "received by the running daemon", not an error.
+
+Two tickers in *one* process are not kept apart by this: they would hold the lease under the same
+holder and both run. The window therefore starts the daemon action with `pullSync: null` and
+keeps its own ticker.
+
+### 10. Nothing to receive is idle, not an error
+
+`curlew daemon` used to throw when no delivery backend was enabled and no chat account was
+followed. That is the normal state of a fresh install and of every machine whose owner has only
+mail: systemd showed the unit `failed`, the window showed "not running", and under §8 the
+periodic sync would never have happened on exactly those machines. The run stays up instead,
+until the signal — it owns the pull sync and it answers the session bus (access prompts,
+`GetAccounts`). Adding the first account `try-restart`s the unit from the window, which picks it
+up.
+
+### Consequences
+
+- `contrib/systemd/curlew-sync.timer` stays shippable and stays harmless on a machine that also
+  runs the daemon: its `curlew sync` takes or loses the same lease as the tick. Setup is not
+  changed to stop installing it, so an existing install keeps working after an update.
+- `IndexSyncResult` gains an optional top-level `heldBy`; `curlew sync` prints one line for it.
+- `DaemonParams` gains `pullSync` (`null` = none, for the in-window host), `pullSyncDelayMs` and
+  `pullSyncIntervalMs`; the last two are short only in tests.
+- `runDeliveryDaemon` no longer throws for an empty account set, so a caller that treated that
+  throw as "misconfigured" now has to look at `DaemonResult.accounts` instead.

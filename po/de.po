@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-14 16:30+0100\n"
+"POT-Creation-Date: 2026-11-14 16:51+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -150,7 +150,7 @@ msgid "systemctl --user {verb} exited {code}"
 msgstr "systemctl --user {verb} endete mit {code}"
 
 #: app/src/core/actions/chat-attachment.ts:140
-#: app/src/core/actions/daemon.ts:515
+#: app/src/core/actions/daemon.ts:541
 msgid "the attachment was not found in the index"
 msgstr "Der Anhang wurde im Index nicht gefunden"
 
@@ -166,18 +166,18 @@ msgstr "Kein Konto {account} für {backend}"
 msgid "{backend} cannot fetch attachments"
 msgstr "{backend} kann keine Anhänge abrufen"
 
-#: app/src/core/actions/daemon.ts:363
+#: app/src/core/actions/daemon.ts:389
 msgid "this account is paused — switch it on in Accounts to send from it"
 msgstr ""
 "dieses Konto ist pausiert — schalte es unter Konten ein, um davon zu senden"
 
-#: app/src/core/actions/daemon.ts:376
+#: app/src/core/actions/daemon.ts:402
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 "{capability} ist nicht die Berechtigung, unter der {backend} sendet — es "
 "wurde nichts gesendet"
 
-#: app/src/core/actions/daemon.ts:398
+#: app/src/core/actions/daemon.ts:424
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
@@ -185,7 +185,7 @@ msgstr ""
 "Der laufende curlew-Daemon konnte keinen Sender öffnen ({reason}) — es wurde "
 "nichts gesendet"
 
-#: app/src/core/actions/daemon.ts:464
+#: app/src/core/actions/daemon.ts:490
 msgid "the download stalled — try again"
 msgstr "Der Download ist hängen geblieben — versuche es noch einmal"
 
@@ -221,7 +221,7 @@ msgstr "{backend} kann keine Nachricht bearbeiten"
 msgid "only your own messages can be edited"
 msgstr "nur eigene Nachrichten können bearbeitet werden"
 
-#: app/src/core/actions/index-sync.ts:157
+#: app/src/core/actions/index-sync.ts:238
 msgid ""
 "the index stayed locked by another process during the {phase} phase "
 "({message})"
@@ -229,7 +229,7 @@ msgstr ""
 "der Download ist hängen geblieben – versuche es noch einmalDer Index blieb "
 "während der Phase „{phase}“ von einem anderen Prozess gesperrt ({message})"
 
-#: app/src/core/actions/index-sync.ts:176
+#: app/src/core/actions/index-sync.ts:257
 msgid ""
 "no backend is enabled — `curlew backends list` shows them, `backends enable "
 "<name>` turns one on"
@@ -237,7 +237,7 @@ msgstr ""
 "Kein Backend ist aktiviert — `curlew backends list` zeigt sie an, `backends "
 "enable <name>` schaltet eines ein"
 
-#: app/src/core/actions/index-sync.ts:226
+#: app/src/core/actions/index-sync.ts:308
 msgid ""
 "backend {name} uses the {kind} driver, which this curlew cannot sync yet"
 msgstr ""
@@ -1381,15 +1381,23 @@ msgstr[1] "{n} Fehler"
 msgid "  {backend}: rate limited, retry in {seconds}s"
 msgstr "  {backend}: Ratenbegrenzung, neuer Versuch in {seconds} s"
 
-#: app/src/frontends/cli/index-sync.ts:73
+#: app/src/frontends/cli/index-sync.ts:76
+msgid "  the index is being written by {holder} — nothing synced"
+msgstr "  Der Index wird von {holder} geschrieben — nichts synchronisiert"
+
+#: app/src/frontends/cli/index-sync.ts:77
+msgid "  the index is busy — nothing synced"
+msgstr "  Der Index ist belegt — nichts synchronisiert"
+
+#: app/src/frontends/cli/index-sync.ts:85
 msgid "  {backend}: followed by the running daemon, left to it"
 msgstr "  {backend}: wird vom laufenden Daemon empfangen, ihm überlassen"
 
-#: app/src/frontends/cli/index-sync.ts:74
+#: app/src/frontends/cli/index-sync.ts:86
 msgid "  {backend}: index busy, skipped"
 msgstr "  {backend}: Index belegt, übersprungen"
 
-#: app/src/frontends/cli/index-sync.ts:83
+#: app/src/frontends/cli/index-sync.ts:95
 msgid ""
 "Build or update the local full-text index (the only command that writes to "
 "it)"
@@ -1397,17 +1405,17 @@ msgstr ""
 "Den lokalen Volltextindex aufbauen oder aktualisieren (der einzige Befehl, "
 "der ihn beschreibt)"
 
-#: app/src/frontends/cli/index-sync.ts:89
+#: app/src/frontends/cli/index-sync.ts:101
 msgid "Restrict to one account id (GOA, or e.g. telegram-…); omit for all"
 msgstr ""
 "Auf eine Konto-ID beschränken (GOA oder z. B. telegram-…); ohne Angabe alle"
 
-#: app/src/frontends/cli/index-sync.ts:93
+#: app/src/frontends/cli/index-sync.ts:105
 msgid "Restrict to one mailbox (skips chat backends); omit for all"
 msgstr ""
 "Auf ein Postfach beschränken (überspringt Chat-Backends); ohne Angabe alle"
 
-#: app/src/frontends/cli/index-sync.ts:98
+#: app/src/frontends/cli/index-sync.ts:110
 msgid ""
 "Mail: force the flag/expunge pass. Chats: re-fetch the newest window, "
 "picking up edits and removing what was deleted"
@@ -1416,63 +1424,63 @@ msgstr ""
 "das neueste Fenster erneut abrufen, Bearbeitungen übernehmen und Gelöschtes "
 "entfernen"
 
-#: app/src/frontends/cli/index-sync.ts:123
+#: app/src/frontends/cli/index-sync.ts:135
 msgid "Inspect or query the local index without touching the network"
 msgstr "Den lokalen Index ansehen oder abfragen, ohne das Netzwerk zu berühren"
 
-#: app/src/frontends/cli/index-sync.ts:128
+#: app/src/frontends/cli/index-sync.ts:140
 msgid "Choose a subcommand: status, search"
 msgstr "Wähle einen Unterbefehl: status, search"
 
-#: app/src/frontends/cli/index-sync.ts:131
+#: app/src/frontends/cli/index-sync.ts:143
 msgid "What the index holds, and which folders are stale"
 msgstr "Was der Index enthält und welche Ordner veraltet sind"
 
-#: app/src/frontends/cli/index-sync.ts:138
+#: app/src/frontends/cli/index-sync.ts:150
 msgid "Search the index only — offline, no server contact"
 msgstr "Nur den Index durchsuchen — offline, ohne Serverkontakt"
 
-#: app/src/frontends/cli/index-sync.ts:141
+#: app/src/frontends/cli/index-sync.ts:153
 msgid "Full text across subject, sender and body"
 msgstr "Volltext über Betreff, Absender und Text"
 
-#: app/src/frontends/cli/index-sync.ts:142 app/src/frontends/cli/mail.ts:36
+#: app/src/frontends/cli/index-sync.ts:154 app/src/frontends/cli/mail.ts:36
 msgid "Sender contains"
 msgstr "Absender enthält"
 
-#: app/src/frontends/cli/index-sync.ts:143 app/src/frontends/cli/mail.ts:39
+#: app/src/frontends/cli/index-sync.ts:155 app/src/frontends/cli/mail.ts:39
 msgid "Subject contains"
 msgstr "Betreff enthält"
 
-#: app/src/frontends/cli/index-sync.ts:144 app/src/frontends/cli/mail.ts:41
+#: app/src/frontends/cli/index-sync.ts:156 app/src/frontends/cli/mail.ts:41
 msgid "Date header on/after YYYY-MM-DD"
 msgstr "Date-Header am oder nach JJJJ-MM-TT"
 
-#: app/src/frontends/cli/index-sync.ts:145 app/src/frontends/cli/mail.ts:42
+#: app/src/frontends/cli/index-sync.ts:157 app/src/frontends/cli/mail.ts:42
 msgid "Date header before YYYY-MM-DD"
 msgstr "Date-Header vor JJJJ-MM-TT"
 
-#: app/src/frontends/cli/index-sync.ts:146 app/src/frontends/cli/mail.ts:48
+#: app/src/frontends/cli/index-sync.ts:158 app/src/frontends/cli/mail.ts:48
 msgid "Only unseen messages"
 msgstr "Nur ungelesene Nachrichten"
 
-#: app/src/frontends/cli/index-sync.ts:147 app/src/frontends/cli/mail.ts:49
+#: app/src/frontends/cli/index-sync.ts:159 app/src/frontends/cli/mail.ts:49
 msgid "Only flagged messages"
 msgstr "Nur markierte Nachrichten"
 
-#: app/src/frontends/cli/index-sync.ts:148
+#: app/src/frontends/cli/index-sync.ts:160
 msgid "Only messages with an attachment"
 msgstr "Nur Nachrichten mit Anhang"
 
-#: app/src/frontends/cli/index-sync.ts:149
+#: app/src/frontends/cli/index-sync.ts:161
 msgid "Restrict to a GOA account id"
 msgstr "Auf eine GOA-Konto-ID beschränken"
 
-#: app/src/frontends/cli/index-sync.ts:150
+#: app/src/frontends/cli/index-sync.ts:162
 msgid "Restrict to one mailbox (wire path)"
 msgstr "Auf ein Postfach beschränken (Pfad auf dem Server)"
 
-#: app/src/frontends/cli/index-sync.ts:153
+#: app/src/frontends/cli/index-sync.ts:165
 msgid "Max messages (max {max})"
 msgstr "Höchstzahl an Nachrichten (maximal {max})"
 
@@ -1835,8 +1843,8 @@ msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
 #: app/src/window/about.ts:16 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:180 app/src/window/window.ts:94
-#: app/src/window/window.ts:117
+#: app/src/window/conversation-view.ts:180 app/src/window/window.ts:95
+#: app/src/window/window.ts:118
 msgid "Curlew"
 msgstr "Curlew"
 
@@ -2106,7 +2114,7 @@ msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
 #: app/src/window/accounts-dialog.ts:82 app/src/window/accounts-page.ts:187
 #: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:175
-#: app/src/window/window.ts:130
+#: app/src/window/window.ts:131
 msgid "Accounts"
 msgstr "Konten"
 
@@ -2191,7 +2199,7 @@ msgstr "Starten"
 msgid "Protocols"
 msgstr "Protokolle"
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:134
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:135
 msgid "Agent access"
 msgstr "Agentenzugriff"
 
@@ -3311,7 +3319,7 @@ msgstr ""
 msgid "AI"
 msgstr "KI"
 
-#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:132
+#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:133
 msgid "Preferences"
 msgstr "Einstellungen"
 
@@ -3453,7 +3461,7 @@ msgid "On"
 msgstr "An"
 
 #: app/src/window/welcome.ts:109 app/src/window/welcome.ts:128
-#: app/src/window/window.ts:137
+#: app/src/window/window.ts:138
 msgid "Welcome"
 msgstr "Willkommen"
 
@@ -3513,39 +3521,39 @@ msgstr ""
 msgid "Start Using Curlew"
 msgstr "Curlew benutzen"
 
-#: app/src/window/window.ts:88
+#: app/src/window/window.ts:89
 msgid "Select a conversation"
 msgstr "Unterhaltung auswählen"
 
-#: app/src/window/window.ts:89
+#: app/src/window/window.ts:90
 msgid "Pick a conversation from the list."
 msgstr "Wähle eine Unterhaltung aus der Liste."
 
-#: app/src/window/window.ts:131
+#: app/src/window/window.ts:132
 msgid "Merge contacts…"
 msgstr "Kontakte zusammenführen…"
 
-#: app/src/window/window.ts:139
+#: app/src/window/window.ts:140
 msgid "About Curlew"
 msgstr "Über Curlew"
 
-#: app/src/window/window.ts:140
+#: app/src/window/window.ts:141
 msgid "Quit"
 msgstr "Beenden"
 
-#: app/src/window/window.ts:182
+#: app/src/window/window.ts:183
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:382
+#: app/src/window/window.ts:386
 msgid "Curlew (demo)"
 msgstr "Curlew (Demo)"
 
-#: app/src/window/window.ts:385
+#: app/src/window/window.ts:389
 msgid "Demo data — nothing here is real"
 msgstr "Demo-Daten – nichts hier ist echt"
 
-#: app/src/window/window.ts:471
+#: app/src/window/window.ts:475
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 

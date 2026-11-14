@@ -5,6 +5,8 @@
 ### Fixed
 
 - The window no longer tells you to run `curlew sync` or `curlew setup`: the empty conversation list explains itself, "Start" in the Accounts dialog installs the background service when it is missing, and the banner only appears when an account needs that service.
+- Mail now arrives by itself in a GUI-only install: `curlew daemon` runs the mail and chat sync on its own timer (20 seconds after it starts, then every 15 minutes), and on Windows and macOS, where there is no daemon, the window runs it while it is open. Before this, a Flatpak or phone install received nothing until somebody typed `curlew sync` in a terminal it does not have.
+- `curlew daemon` no longer fails to start when there is nothing to receive — an install with mail accounts only made the background service `failed` on every start, so systemd showed red and the window showed "not running". It now says it is idle and stays up: it runs the sync and answers the window, and adding the first chat account picks it up.
 - The Flatpak built by `gjsify ship` carries the `<releases>` block again: `gjsify ship` renders its own metainfo from `gjsify.ship` and never read the hand-written file, so `flatpak-builder-lint` reported `releases-info-missing`. The release list now lives in `gjsify.ship.releases` too, and a unit test keeps both in step.
 - An account avatar no longer takes an initial from a note in parentheses: "Robin (Signal)" showed "R(", now "R".
 - On Windows and macOS the window now receives Signal, WhatsApp, XMPP, Matrix and Telegram messages while it is open, in the same loop `curlew daemon` runs, and the Accounts dialog says "Messages arrive while Curlew is open" instead of offering to start a systemd service that does not exist there. It never calls `systemctl` or asks for `curlew setup` on those platforms (#333).
@@ -60,6 +62,7 @@
 
 ### Changed
 
+- Two runs can no longer write the index at the same time: a sync takes an index-writer lease, and the one that does not get it stands down for that round and reports who holds it instead of fighting for the write lock. `contrib/systemd/curlew-sync.timer` is therefore no longer needed and can be switched off (`systemctl --user disable --now curlew-sync.timer`); it still ships for a setup that wants its own schedule.
 - CI: the Flatpak job uploads the generated manifest, runs `flatpak-builder-lint` on it and on the repo, and probes the `Xdp` typelib inside the sandbox.
 - In the Flatpak, "keep receiving" now asks the Background portal through libportal (`Xdp.Portal.request_background`) instead of calling `org.freedesktop.portal.Background` over D-Bus itself. A missing libportal typelib reads as "no Background portal on this system" and never stops the app (gjsify ADR 0101, #333).
 - A mail thread names the account it sends from in its header, next to the protocol.

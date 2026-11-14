@@ -47,6 +47,56 @@ export default async () => {
       expect(l.started()).toBe(0);
     });
 
+    it('runs the pull sync while the window is open, even with nothing to receive', async () => {
+      const lines: string[] = [];
+      let syncs = 0;
+      let open: () => void = () => {};
+      const gate = new Promise<void>((resolve) => {
+        open = resolve;
+      });
+      let finished = false;
+      const receiver = hostReceiveLoop(
+        'win32',
+        // A window with mail accounts only: the receive loop is over at once and must not take
+        // the pull sync with it.
+        () => Promise.reject(new Error('nothing to receive')),
+        (line) => lines.push(line),
+        {
+          pullSync: async () => {
+            syncs++;
+            await gate;
+            finished = true;
+          },
+          pullSyncDelayMs: 1,
+          pullSyncIntervalMs: 1,
+        },
+      );
+      await new Promise<void>((resolve) => setTimeout(resolve, 20));
+      // One sync at a time, however many intervals passed.
+      expect(syncs).toBe(1);
+      expect(lines.some((l) => l.includes('still running — skipping this tick'))).toBe(true);
+      let stopped = false;
+      const stopping = receiver!.stop().then(() => {
+        stopped = true;
+      });
+      await new Promise<void>((resolve) => setTimeout(resolve, 5));
+      // The window closes the index when `stop()` resolves.
+      expect(stopped).toBe(false);
+      open();
+      await stopping;
+      expect(finished).toBe(true);
+    });
+
+    it('starts no pull sync when the host does not ask for one', async () => {
+      const lines: string[] = [];
+      const l = loop();
+      const receiver = hostReceiveLoop('darwin', l.run, (line) => lines.push(line));
+      await new Promise<void>((resolve) => setTimeout(resolve, 10));
+      await receiver!.stop();
+      expect(l.aborted()).toBe(true);
+      expect(lines.some((line) => line.includes('pull sync'))).toBe(false);
+    });
+
     it('logs a loop that ends with an error instead of throwing', async () => {
       const lines: string[] = [];
       const receiver = hostReceiveLoop(
