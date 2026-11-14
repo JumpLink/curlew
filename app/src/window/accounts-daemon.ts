@@ -10,7 +10,7 @@ import { _, fmt } from '@curlew/protocol';
 
 import { demoActive } from '../core/demo/active.ts';
 import { DEMO_ACCOUNTS } from '../core/demo/accounts.ts';
-import { nodeHost, systemdUserUnitDir, writeFileEnsured } from '../core/actions/setup-host.ts';
+import { detectSetup, nodeHost, systemdUserUnitDir, writeFileEnsured } from '../core/actions/setup-host.ts';
 import { renderUnit, UNIT_NAME, unitFilePath, unitPathsFor } from '../core/actions/setup-unit.ts';
 import { portalAutostart } from '../core/lib/autostart-portal.ts';
 import { inSandbox } from '../core/lib/sandbox.ts';
@@ -67,14 +67,20 @@ function systemctl(args: string[]): Promise<{ ok: boolean; reason: string }> {
 /** Write the user unit for this machine, the way `curlew setup` does. */
 function writeUserUnit(): void {
   const host = nodeHost();
-  const bundle = host.bundlePath();
-  const gjsify = host.which('gjsify');
+  // A checkout's unit must run out of its tree (the addon path is baked in), so find it the way
+  // `curlew setup` does; anything else is a published install that runs the command.
+  let setup: { mode: 'checkout' | 'published'; checkout: string | null };
+  try {
+    setup = detectSetup(host);
+  } catch {
+    setup = { mode: 'published', checkout: null };
+  }
   const paths = unitPathsFor({
-    mode: bundle !== null && gjsify !== null ? 'checkout' : 'published',
+    mode: setup.mode,
     home: host.home(),
-    checkout: null,
-    gjsify,
-    bundle,
+    checkout: setup.checkout,
+    gjsify: host.which('gjsify'),
+    bundle: host.bundlePath(),
   });
   writeFileEnsured(host, unitFilePath(systemdUserUnitDir(host)), renderUnit(paths));
 }

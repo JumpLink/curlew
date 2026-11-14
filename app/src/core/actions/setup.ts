@@ -58,9 +58,8 @@ export interface SetupPrompter extends AccountPrompter {
   confirm(question: string): Promise<boolean>;
 }
 
-/** Which curlew is being set up. A checkout needs gjsify and a built bundle; a published
- * install needs neither. */
-export type SetupMode = 'checkout' | 'published';
+export { detectSetup, type SetupMode } from './setup-host.ts';
+import type { SetupMode } from './setup-host.ts';
 
 /**
  * What a step did, so the next stage and the final report can use it without re-asking.
@@ -1087,31 +1086,6 @@ export async function runSetup(ctx: SetupContext, options: SetupRunOptions = {})
     if (options.bail) break;
   }
   return { steps, ok, followUps: setupFollowUps(), remaining, failed };
-}
-
-/**
- * Which curlew this run sets up, and where it lives.
- *
- * A checkout runs the built bundle out of its own tree, because the native addon's absolute
- * prebuild path is baked in at build time and a copied tree starts and then dies at the first
- * Signal command (AGENTS.md). A published install has no tree and just runs the command. The
- * walk starts at the working directory and stops at the first checkout above it.
- */
-export function detectSetup(host: CommandRunner): { mode: SetupMode; checkout: string | null } {
-  let dir = host.cwd();
-  for (let i = 0; i < 8; i++) {
-    if (host.isCheckout(dir)) return { mode: 'checkout', checkout: dir };
-    const up = dir.slice(0, dir.lastIndexOf('/'));
-    if (up === '' || up === dir) break;
-    dir = up;
-  }
-  if (host.which('curlew') !== null) return { mode: 'published', checkout: null };
-  throw new Error(
-    _(
-      'neither a curlew checkout above this directory nor a `curlew` command on PATH. ' +
-        'Clone the repo and run `gjsify install`, or install the published command, then run this again.',
-    ),
-  );
 }
 
 /** The default linker: the existing action, with the SHARED prompter. This is the whole reason
