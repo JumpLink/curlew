@@ -9,6 +9,8 @@ import Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 
 import { chatOnly } from '../core/platform.ts';
+import { DELTA_CHAT } from '../core/visibility.ts';
+import { protocolLabel } from './conversation-list-model.ts';
 import type { AccountRow, AccountStatus, AccountsPageState, ProtocolGroup } from './accounts-model.ts';
 
 export interface AccountsPage {
@@ -85,6 +87,15 @@ function buildRow(row: AccountRow, daemonPresent: boolean, onOpen: (() => void) 
       }),
     );
   }
+  if (row.deltaChat) {
+    widget.add_suffix(
+      new Gtk.Label({
+        label: protocolLabel(DELTA_CHAT),
+        cssClasses: ['caption', 'accent'],
+        valign: Gtk.Align.CENTER,
+      }),
+    );
+  }
   if (onOpen) {
     widget.add_suffix(new Gtk.Image({ iconName: 'go-next-symbolic' }));
     widget.connect('activated', onOpen);
@@ -125,8 +136,8 @@ function buildGroup(
     prefGroup.add(buildMessageRow(_('No accounts yet'), null, null));
   } else {
     for (const row of group.rows) {
-      // A GNOME Online Account is managed in GNOME Settings, so it has no page of its own here.
-      prefGroup.add(buildRow(row, daemonPresent, row.isGoa ? null : () => onOpenAccount(group, row)));
+      // A GNOME Online Account's page holds Curlew's own switches; the login stays in GNOME Settings.
+      prefGroup.add(buildRow(row, daemonPresent, () => onOpenAccount(group, row)));
     }
   }
   return prefGroup;

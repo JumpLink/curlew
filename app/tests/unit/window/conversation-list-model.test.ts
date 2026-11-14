@@ -859,6 +859,17 @@ export default async () => {
       expect(entryProtocolSubtitle(entry({ id: 'b', backend: 'future' }))).toBe('future');
     });
 
+    it('names the sending account of a mail thread, and only of mail', () => {
+      const labels = new Map([
+        ['mail-1', 'ada@example.org'],
+        ['xmpp-abc123', 'ada@example.net'],
+      ]);
+      const mail = entry({ id: 'm', backend: 'mail', accountId: 'mail-1', emailChat: true });
+      expect(entryProtocolSubtitle(mail, labels)).toBe('Delta Chat · ada@example.org');
+      expect(entryProtocolSubtitle(mail)).toBe('Delta Chat');
+      expect(entryProtocolSubtitle(entry({ id: 'x' }), labels)).toBe('XMPP');
+    });
+
     describe('searching message text', () => {
       const rows = [
         entry({ id: 'a', title: 'Alex', conversationIds: ['c1'] }),

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-14 06:36+0100\n"
+"POT-Creation-Date: 2026-11-14 11:15+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1911,7 +1911,7 @@ msgstr ""
 "Signal, WhatsApp und Telegram verknüpfen diesen Computer als weiteres Gerät "
 "deines Kontos."
 
-#: app/src/window/account-add.ts:289 app/src/window/accounts-model.ts:81
+#: app/src/window/account-add.ts:289 app/src/window/accounts-model.ts:87
 #: app/src/window/conversation-list-model.ts:139
 msgid "Mail"
 msgstr "E-Mail"
@@ -1929,8 +1929,8 @@ msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 "Ein Konto verwenden, das du in den GNOME-Einstellungen eingerichtet hast"
 
-#: app/src/window/account-add.ts:321 app/src/window/accounts-page.ts:159
-#: app/src/window/accounts-page.ts:182 app/src/window/welcome.ts:163
+#: app/src/window/account-add.ts:321 app/src/window/accounts-page.ts:170
+#: app/src/window/accounts-page.ts:193 app/src/window/welcome.ts:163
 msgid "Add Account"
 msgstr "Konto hinzufügen"
 
@@ -2004,7 +2004,19 @@ msgstr ""
 "Von diesem Konto nie Klartext senden; eine Nachricht an jemanden ohne OMEMO "
 "schlägt stattdessen fehl"
 
-#: app/src/window/account-detail.ts:209
+#: app/src/window/account-detail.ts:211
+msgid "Manage in Online Accounts…"
+msgstr "In Online-Konten verwalten…"
+
+#: app/src/window/account-detail.ts:217
+msgid ""
+"The sign-in and the server settings of this account are managed in GNOME "
+"Settings."
+msgstr ""
+"Die Anmeldung und die Servereinstellungen dieses Kontos werden in den GNOME-"
+"Einstellungen verwaltet."
+
+#: app/src/window/account-detail.ts:222
 msgid "Remove Account…"
 msgstr "Konto entfernen…"
 
@@ -2098,84 +2110,84 @@ msgstr ""
 msgid "Could not start the background service: {reason}"
 msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
-#: app/src/window/accounts-dialog.ts:82 app/src/window/accounts-page.ts:195
+#: app/src/window/accounts-dialog.ts:82 app/src/window/accounts-page.ts:206
 #: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:175
 #: app/src/window/window.ts:127
 msgid "Accounts"
 msgstr "Konten"
 
-#: app/src/window/accounts-model.ts:82
+#: app/src/window/accounts-model.ts:88
 msgid "Calendar"
 msgstr "Kalender"
 
-#: app/src/window/accounts-model.ts:83
+#: app/src/window/accounts-model.ts:89
 msgid "Contacts"
 msgstr "Kontakte"
 
-#: app/src/window/accounts-page.ts:28
+#: app/src/window/accounts-page.ts:30
 msgid "Connected"
 msgstr "Verbunden"
 
-#: app/src/window/accounts-page.ts:30
+#: app/src/window/accounts-page.ts:32
 msgid "Connecting"
 msgstr "Verbindung wird hergestellt"
 
-#: app/src/window/accounts-page.ts:32
+#: app/src/window/accounts-page.ts:34
 msgid "Offline"
 msgstr "Offline"
 
-#: app/src/window/accounts-page.ts:34
+#: app/src/window/accounts-page.ts:36
 msgid "Daemon not running"
 msgstr "Daemon läuft nicht"
 
-#: app/src/window/accounts-page.ts:36 app/src/window/preferences-dialog.ts:58
+#: app/src/window/accounts-page.ts:38 app/src/window/preferences-dialog.ts:58
 #: app/src/window/welcome-model.ts:124
 msgid "Off"
 msgstr "Aus"
 
-#: app/src/window/accounts-page.ts:113
+#: app/src/window/accounts-page.ts:124
 msgid "Manage…"
 msgstr "Verwalten …"
 
-#: app/src/window/accounts-page.ts:114
+#: app/src/window/accounts-page.ts:125
 msgid "Open GNOME Settings → Online Accounts"
 msgstr "GNOME-Einstellungen → Online-Konten öffnen"
 
-#: app/src/window/accounts-page.ts:123
+#: app/src/window/accounts-page.ts:134
 msgid "Could not load accounts"
 msgstr "Konten konnten nicht geladen werden"
 
-#: app/src/window/accounts-page.ts:125 app/src/window/protocols-page.ts:41
+#: app/src/window/accounts-page.ts:136 app/src/window/protocols-page.ts:41
 msgid "No accounts yet"
 msgstr "Noch keine Konten"
 
-#: app/src/window/accounts-page.ts:151
+#: app/src/window/accounts-page.ts:162
 msgid "Accounts could not be loaded"
 msgstr "Konten konnten nicht geladen werden"
 
-#: app/src/window/accounts-page.ts:155
+#: app/src/window/accounts-page.ts:166
 msgid "No accounts"
 msgstr "Keine Konten"
 
-#: app/src/window/accounts-page.ts:156
+#: app/src/window/accounts-page.ts:167
 msgid "Add a chat account."
 msgstr "Füge ein Chat-Konto hinzu."
 
-#: app/src/window/accounts-page.ts:156
+#: app/src/window/accounts-page.ts:167
 msgid "Add a chat account or a mail account."
 msgstr "Füge ein Chat-Konto oder ein E-Mail-Konto hinzu."
 
-#: app/src/window/accounts-page.ts:173
+#: app/src/window/accounts-page.ts:184
 msgid "The background service is not running, so chat accounts cannot connect."
 msgstr ""
 "Der Hintergrunddienst läuft nicht, daher können sich Chat-Konten nicht "
 "verbinden."
 
-#: app/src/window/accounts-page.ts:174
+#: app/src/window/accounts-page.ts:185
 msgid "Start"
 msgstr "Starten"
 
-#: app/src/window/accounts-page.ts:188 app/src/window/conversation-list.ts:361
+#: app/src/window/accounts-page.ts:199 app/src/window/conversation-list.ts:361
 #: app/src/window/protocols-page.ts:227 app/src/window/welcome-model.ts:102
 #: app/src/window/welcome.ts:151
 msgid "Protocols"
@@ -2472,7 +2484,7 @@ msgid "Could not fetch the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
 #: app/src/window/attachment-view.ts:149 app/src/window/attachment-view.ts:158
-#: app/src/window/conversation-list-model.ts:497
+#: app/src/window/conversation-list-model.ts:503
 #: app/src/window/conversation-model.ts:312
 #: app/src/window/conversation-model.ts:317
 msgid "Attachment"
@@ -2694,7 +2706,7 @@ msgid "Yesterday"
 msgstr "Gestern"
 
 #: app/src/window/conversation-list-model.ts:273
-#: app/src/window/conversation-list-model.ts:705
+#: app/src/window/conversation-list-model.ts:711
 msgid "Note to self"
 msgstr "Notiz an mich"
 
@@ -2717,35 +2729,35 @@ msgid "Encrypted rooms are not supported yet"
 msgstr "Verschlüsselte Räume werden noch nicht unterstützt"
 
 #: app/src/window/conversation-list-model.ts:440
-#: app/src/window/conversation-list-model.ts:453
+#: app/src/window/conversation-list-model.ts:459
 msgid "Only via {protocol}"
 msgstr "Nur über {protocol}"
 
-#: app/src/window/conversation-list-model.ts:500
+#: app/src/window/conversation-list-model.ts:506
 msgid "You: {text}"
 msgstr "Du: {text}"
 
-#: app/src/window/conversation-list-model.ts:502
+#: app/src/window/conversation-list-model.ts:508
 msgid "{name}: {text}"
 msgstr "{name}: {text}"
 
-#: app/src/window/conversation-list-model.ts:532
+#: app/src/window/conversation-list-model.ts:538
 msgid "Public room · {count} member"
 msgid_plural "Public room · {count} members"
 msgstr[0] "Öffentlicher Raum · {count} Mitglied"
 msgstr[1] "Öffentlicher Raum · {count} Mitglieder"
 
-#: app/src/window/conversation-list-model.ts:533
+#: app/src/window/conversation-list-model.ts:539
 msgid "Room · {count} member"
 msgid_plural "Room · {count} members"
 msgstr[0] "Raum · {count} Mitglied"
 msgstr[1] "Raum · {count} Mitglieder"
 
-#: app/src/window/conversation-list-model.ts:865
+#: app/src/window/conversation-list-model.ts:871
 msgid "People"
 msgstr "Personen"
 
-#: app/src/window/conversation-list-model.ts:866
+#: app/src/window/conversation-list-model.ts:872
 msgid "Groups"
 msgstr "Gruppen"
 

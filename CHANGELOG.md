@@ -5,6 +5,7 @@
 ### Fixed
 
 - A mail from your other own account is a message from a person now, not from you: the thread shows that address, can be answered, and is no longer "You" on both sides. Own addresses are matched per account.
+- A paused GNOME Online Accounts mail account now shows as paused in the Accounts dialog.
 - A picture or file you send in a Signal chat now shows in the chat right away. The message arrived, but Signal does not hand a device its own sent message back, so Curlew's local copy had no attachment and the bubble stayed empty; it now keeps the file with a handle that can fetch it again.
 - The new-conversation picker opens at once and scrolls smoothly: its contact list is a virtualised list view that fills after the dialog is shown, instead of one widget row per contact built in a single blocking pass (1000 contacts blocked the main loop for ~620 ms).
 - The window starts and refreshes more smoothly with thousands of conversations: the list is read in slices between main-loop turns, so the first paint no longer waits for the whole index (first stall 860 ms down to 420 ms on 2000 conversations / 48k messages, the refresh itself no longer blocks for 250 ms), the newest-message query uses the row id (about 4× faster), and a conversation opened from a notification reuses the loaded list.
@@ -51,6 +52,7 @@
 
 ### Changed
 
+- A mail thread names the account it sends from in its header, next to the protocol.
 - A voice note or audio part no longer sits in a card of its own inside the bubble: the bubble is the surface, with the play button, the seek bar, the time and the save button laid out straight in it. A message made only of media (picture, gallery, clip, voice note, file without a caption) now shows its reaction chips in a row under the bubble, on the bubble's side, instead of inside it; bubbles with text keep them inside, and the timestamp stays in the bubble.
 - Ordinary email can be switched off per mail account: on the account page (and on the Delta Chat page of the welcome screen) "Show ordinary email" off lists only the threads Delta Chat can talk, in the list, the search, the CLI and MCP. It beats the global "Show all emails", turns Delta Chat on for that account, and switching it back on restores every mail, because nothing is deleted. Protocols has the same "Show ordinary email" row for all accounts, and its text says how many accounts differ. In `config.json` the list `deltaChatAccounts` becomes `mailAccounts` (`{ "<id>": { "deltaChat": true, "plainMail": false } }`); the old key is still read and rewritten on the next save.
 - A mail thread whose peer sent the Delta Chat marker is now shown as "Delta Chat" (own badge, tooltip, contact page, merge dialog, new-conversation picker); ordinary mail stays "Mail". A merged contact reads "Delta Chat · XMPP" instead of "Mail · XMPP", and one address with both appears once as Delta Chat. Pins and routes stay on Mail. The email-chat hint now explains why a contact switches from Mail to Delta Chat.
@@ -92,6 +94,7 @@
 
 ### Added
 
+- The Accounts dialog marks mail accounts that are used for Delta Chat, and a GNOME Online Accounts mail account now has a page with Curlew's own switches (use the account, Delta Chat, ordinary email) and a button to manage its sign-in in GNOME Settings.
 - `curlew send --email-chat` sends a mail as an email chat message (Delta Chat style), so the chat path can be tried from the command line.
 - The message field has an emoji button that opens GTK's emoji chooser and inserts the emoji at the cursor, in every protocol's thread; it is hidden while the field is read-only.
 - The Protocols page has a "Delta Chat" row next to "Mail": off until a mail account is opted in, a dialog asks for which accounts, the subtitle counts them, and it is greyed with the reason while Mail is off.

@@ -27,8 +27,10 @@ export interface AccountRow {
   status: AccountStatus | null;
   /** ISO time the daemon entered this state, when it is known. */
   since?: string;
-  /** A GNOME Online Account: managed in GNOME Settings, so it has no page of its own here. */
+  /** A GNOME Online Account: GNOME Settings owns the login, Curlew's page holds only its own switches. */
   isGoa?: boolean;
+  /** A mail account opted into Delta Chat, so the list can say where it is active. */
+  deltaChat?: boolean;
 }
 
 export interface ProtocolGroup {
@@ -53,6 +55,10 @@ export interface AccountsLoadState {
   ownMailAccounts?: BackendAccount[];
   chatAccounts: { backend: string; accounts: BackendAccount[]; error?: string }[];
   labels: ReadonlyMap<string, string>;
+  /** Mail account ids opted into Delta Chat (`config.mailAccounts`). */
+  deltaChatIds?: ReadonlySet<string>;
+  /** Paused accounts as `<backend>/<accountId>` (`config.disabledAccounts`); GOA accounts have no flag of their own. */
+  pausedKeys?: ReadonlySet<string>;
 }
 
 export interface AccountsDaemonState {
@@ -146,12 +152,22 @@ function mailRows(load: AccountsLoadState, daemon: AccountsDaemonState): Account
     .filter((account) => account.capabilities.mail)
     .filter((account) => !ownAddresses.has(account.identity.toLowerCase()))
     .map((account) =>
-      makeRow(account.id, goaAccountLabel(account), 'mail', daemon, goaAccountDetail(account), false, true),
+      makeRow(
+        account.id,
+        goaAccountLabel(account),
+        'mail',
+        daemon,
+        goaAccountDetail(account),
+        load.pausedKeys?.has(`mail/${account.id}`) === true,
+        true,
+      ),
     );
   const mine = own.map((account) =>
     makeRow(account.id, account.identity, 'mail', daemon, undefined, account.disabled === true),
   );
-  return [...mine, ...goa].sort((a, b) => a.label.localeCompare(b.label));
+  return [...mine, ...goa]
+    .map((row) => (load.deltaChatIds?.has(row.id) ? { ...row, deltaChat: true } : row))
+    .sort((a, b) => a.label.localeCompare(b.label));
 }
 
 /** Build the full page state from loaded accounts and live daemon state. */
