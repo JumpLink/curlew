@@ -9,6 +9,7 @@ import {
   MIN_TEXT_QUERY,
   NO_FILTER,
   accountChoices,
+  avatarSeed,
   canSend,
   composerBlock,
   dropDeselectedAccounts,
@@ -840,6 +841,14 @@ export default async () => {
       expect(initials('  (team) chat room')).toBe('TC');
       expect(initials('ben')).toBe('B');
       expect(initials('')).toBe('');
+    });
+
+    it('seeds the avatar colour of a note to self independent of the language', () => {
+      expect(avatarSeed({ title: 'Notiz an mich', self: true })).toBe(
+        avatarSeed({ title: 'Note to self', self: true }),
+      );
+      expect(avatarSeed({ title: 'Note to self' })).toBe('note-to-self');
+      expect(avatarSeed({ title: 'Anna Example' })).toBe('Anna Example');
     });
 
     it('subtitles a merged row with every member protocol once, sorted', () => {

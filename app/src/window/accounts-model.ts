@@ -33,6 +33,11 @@ export interface AccountRow {
   deltaChat?: boolean;
 }
 
+/** The row's second line: the parts that exist, in order, with a middle dot between. */
+export function accountSubtitle(parts: ReadonlyArray<string | null | undefined>): string {
+  return parts.filter((part): part is string => !!part).join(' · ');
+}
+
 export interface ProtocolGroup {
   backend: string;
   label: string;

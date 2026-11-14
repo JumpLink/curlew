@@ -926,3 +926,12 @@ export function initials(title: string): string {
     .filter((letter) => letter !== '');
   return words.slice(0, 2).join('').toUpperCase();
 }
+
+/**
+ * The text an avatar derives its colour from. A note to self is titled in the interface language,
+ * which would give it a different colour in every translation; its colour comes from this fixed
+ * seed instead. Everything else keeps its title.
+ */
+export function avatarSeed(entry: Pick<ListEntry, 'title' | 'self'>): string {
+  return entry.self === true || entry.title === _('Note to self') ? NOTE_TO_SELF_ID : entry.title;
+}
