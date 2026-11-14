@@ -1,7 +1,8 @@
 name: Release
 
-# A tag is a release: `git tag v0.1.0 && git push --tags` builds every target, runs the whole of
-# CI, and hangs the installable packages off the tag on GitHub. The build itself is NOT repeated
+# A tag is a release: `git tag v<version> && git push --tags` builds every target, runs the whole
+# of CI, and hangs the installable packages off the tag as a DRAFT release (notes from the tag's
+# CHANGELOG section, plus SHA256SUMS); publishing it is a manual step. The build itself is NOT repeated
 # here — the `build` job below calls .github/workflows/ci.yml, so there is exactly one definition
 # of how the toolchain is installed and what "green" means. A release therefore cannot be cut from
 # a commit whose tests, type check or lint did not pass.
@@ -66,9 +67,8 @@ jobs:
 
       # Each file named individually, not just a directory check: a cli/ holding SOME files would
       # pass a non-empty check and still let `gh release create` publish an incomplete release.
-      # Names and versions are the ones ci.yml's own asserts use, derived from the TAG rather than
-      # a checkout — this job never checks the repo out, and `v<version>` is the tag this workflow
-      # is triggered on.
+      # Names and versions are the ones ci.yml's own asserts use, derived from the TAG:
+      # `v<version>` is the tag this workflow is triggered on.
       - name: Assert every artifact arrived
         env:
           TAG: ${{ inputs.tag || github.ref_name }}
@@ -83,7 +83,8 @@ jobs:
             "cli/curlew-${version}-1.macos.arm64.zip" \
             "cli/curlew-${version}-1.macos.x86_64.zip" \
             "cli/curlew-${version}-1.windows.x64.zip" \
-            "cli/curlew-${version}-1.x64.msi"; do
+            "cli/curlew-${version}-1.x64.msi" \
+            "cli/eu.jumplink.curlew-${version}-1.x86_64.flatpak"; do
             if [ ! -s "$f" ]; then
               echo "::error::missing or empty artifact: $f"
               missing=1
@@ -91,16 +92,40 @@ jobs:
           done
           [ "$missing" -eq 0 ]
 
+      # Release notes are the tag's own CHANGELOG section, not GitHub's PR list. The checkout is
+      # only for CHANGELOG.md and the extract script, at the tag being released.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          path: src
+
+      - name: Write the release notes and checksums
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          set -eu
+          src/scripts/changelog-section.sh "$TAG" src/CHANGELOG.md > notes.md
+          (cd cli && sha256sum -- * | grep -v ' SHA256SUMS$' > SHA256SUMS)
+          cat cli/SHA256SUMS
+
+      # A DRAFT: nobody can download an artifact before the maintainer has looked at the release
+      # page and published it by hand. A re-run on an existing release replaces assets and notes
+      # instead of failing, because `gh release create` refuses a tag that already has a release.
       - name: Attach everything to the release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           set -eu
           ls -la cli
           [ -n "$(ls -A cli)" ] || { echo "::error::no CLI packages were downloaded"; exit 1; }
-          # `--generate-notes` is GitHub's own, from the previous tag: no note to keep in step here.
-          gh release create "$TAG" cli/* --title "$TAG" --generate-notes
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" cli/* --clobber
+            gh release edit "$TAG" --notes-file notes.md
+          else
+            gh release create "$TAG" cli/* --draft --title "$TAG" --notes-file notes.md
+          fi
           gh release view "$TAG" --json assets --jq '.assets[].name'
 
       # macOS (arm64 + x64, `macos-app-zip`) and Windows (x64, `windows-dir-zip` + `.msi`) ARE
