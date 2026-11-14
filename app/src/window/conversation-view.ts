@@ -1436,7 +1436,7 @@ export function createConversationView(
       messages = foldAlbums(nextMessages);
       accountLabels = nextLabels;
       title.set_title(nextEntry.title);
-      title.set_subtitle(entryProtocolSubtitle(nextEntry));
+      title.set_subtitle(entryProtocolSubtitle(nextEntry, nextLabels));
       contact.set_visible(hasContactPage(nextEntry));
       contact.set_tooltip_text(nextEntry.kind === 'group' ? _('Group details') : _('Contact details'));
       contactAvatar.set_text(nextEntry.title);

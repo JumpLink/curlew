@@ -23,7 +23,7 @@ import { restartDaemonIfRunning } from './accounts-daemon.ts';
 import type { AccountRow } from './accounts-model.ts';
 import { pauseBody } from './account-pause-model.ts';
 import { emailChatExplanation, plainMailSubtitle } from './email-chat-model.ts';
-import { accountStatusLabel } from './accounts-page.ts';
+import { accountStatusLabel, openGoaSettings } from './accounts-page.ts';
 
 export interface AccountDetailDeps {
   navigation: Adw.NavigationView;
@@ -205,12 +205,25 @@ export function pushAccountPage(deps: AccountDetailDeps): void {
   page.add(secure);
 
   const danger = new Adw.PreferencesGroup();
+  if (row.isGoa) {
+    // The login belongs to GNOME Online Accounts; the switches above are Curlew's own and stay here.
+    const manage = new Gtk.Button({
+      label: _('Manage in Online Accounts…'),
+      halign: Gtk.Align.CENTER,
+      cssClasses: ['pill'],
+    });
+    manage.connect('clicked', () => openGoaSettings(deps.onError));
+    danger.set_description(
+      _('The sign-in and the server settings of this account are managed in GNOME Settings.'),
+    );
+    danger.add(manage);
+  }
   const removeButton = new Gtk.Button({
     label: _('Remove Account…'),
     halign: Gtk.Align.CENTER,
     cssClasses: ['destructive-action', 'pill'],
   });
-  danger.add(removeButton);
+  if (!row.isGoa) danger.add(removeButton);
   page.add(danger);
 
   const toolbar = new Adw.ToolbarView();

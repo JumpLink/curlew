@@ -220,6 +220,30 @@ export default async () => {
       expect(group.isGoa).toBe(true);
     });
 
+    it('marks Delta Chat mail accounts and shows a paused GOA account as paused', () => {
+      const load: AccountsLoadState = {
+        backends: [backend('mail')],
+        goaAccounts: {
+          accounts: [
+            goaAccount({ id: 'goa-a', identity: 'ada@example.org', providerName: 'IMAP and SMTP' }),
+            goaAccount({ id: 'goa-b', identity: 'bob@example.org', providerName: 'IMAP and SMTP' }),
+          ],
+        },
+        ownMailAccounts: [chatAccount({ id: 'mail-own', identity: 'cleo@example.org' })],
+        chatAccounts: [],
+        labels: new Map(),
+        deltaChatIds: new Set(['goa-a', 'mail-own']),
+        pausedKeys: new Set(['mail/goa-b']),
+      };
+      const rows = buildProtocolGroups(load, daemonState(true, new Map())).groups[0]!.rows;
+      const byId = new Map(rows.map((r) => [r.id, r]));
+      expect(byId.get('goa-a')!.deltaChat).toBe(true);
+      expect(byId.get('mail-own')!.deltaChat).toBe(true);
+      expect(byId.get('goa-b')!.deltaChat).toBeUndefined();
+      expect(byId.get('goa-b')!.status).toBe('disabled');
+      expect(byId.get('goa-a')!.status).not.toBe('disabled');
+    });
+
     it('does not link to GNOME Settings when only own mail accounts exist', () => {
       const load: AccountsLoadState = {
         backends: [backend('mail')],

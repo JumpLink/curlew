@@ -9,6 +9,7 @@ import { isOwnAccountId } from '@curlew/imap';
 import { configPath } from '@curlew/store';
 
 import { accountsList, backendAccountsList } from '../core/actions/accounts.ts';
+import { deltaChatAccountIds, loadConfig } from '../core/config.ts';
 import { backendsList } from '../core/actions/backends.ts';
 import { chatOnly } from '../core/platform.ts';
 import type { BackendStatus } from '../core/backends/registry.ts';
@@ -88,5 +89,14 @@ export async function loadAccountsState(
     path,
   ).catch(() => new Map<string, string>());
 
-  return { backends, goaAccounts, ownMailAccounts, chatAccounts, labels };
+  const config = loadConfig(path);
+  return {
+    backends,
+    goaAccounts,
+    ownMailAccounts,
+    chatAccounts,
+    labels,
+    deltaChatIds: new Set(deltaChatAccountIds(config)),
+    pausedKeys: new Set(config.disabledAccounts),
+  };
 }

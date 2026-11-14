@@ -448,8 +448,14 @@ export function routeOptions(entry: ListEntry): RouteOption[] {
  * The subtitle under a merged "Note to self" header: the protocols it can send through, each once,
  * in a fixed order. An ordinary row keeps the single protocol label.
  */
-export function entryProtocolSubtitle(entry: ListEntry): string {
-  if (entry.members.length === 0) return protocolLabel(entryCarrier(entry));
+export function entryProtocolSubtitle(entry: ListEntry, accountLabels?: ReadonlyMap<string, string>): string {
+  if (entry.members.length === 0) {
+    // Mail is where several accounts of one kind are common, so a mail thread names the account it sends from.
+    const account = entry.backend === 'mail' ? accountLabels?.get(entry.accountId) : undefined;
+    return account
+      ? `${protocolLabel(entryCarrier(entry))} · ${account}`
+      : protocolLabel(entryCarrier(entry));
+  }
   if (entry.pin !== null) return fmt(_('Only via {protocol}'), { protocol: protocolLabel(entry.pin) });
   const labels = carriersOf(entry.members).map(protocolLabel).sort();
   return labels.join(' · ');
