@@ -96,6 +96,9 @@ function seedMail(db: IndexDatabase, account: string): void {
   ).run(Number(row.id), 'Hello', 'a@example.org', 'b@example.org', 'plain body');
   db.prepare("INSERT INTO attachments (message_id, section) VALUES (?, '2')").run(Number(row.id));
   db.prepare('INSERT INTO sync_log (started_at, account_id) VALUES (?, ?)').run('t', account);
+  db.prepare(
+    "INSERT INTO mail_receipts_sent (account_id, message_id, sent_at) VALUES (?, '<m@example.org>', 1)",
+  ).run(account);
 }
 
 export default async () => {
@@ -146,6 +149,42 @@ export default async () => {
           .prepare('SELECT COUNT(*) AS n FROM messages_fts WHERE rowid NOT IN (SELECT id FROM messages)')
           .get() as { n: number };
         expect(Number(orphans.n)).toBe(0);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('leaves no row with an account_id column behind, whichever table it is in', async () => {
+      const db = freshDb();
+      try {
+        seedMail(db, 'mail-a');
+        seedMail(db, 'mail-b');
+        const tables = (
+          db
+            .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")
+            .all() as Array<{ name: string }>
+        )
+          .map((r) => String(r.name))
+          // The change journal records the removal itself, so it keeps the account id on purpose.
+          .filter((name) => name !== 'index_changes')
+          .filter((name) =>
+            (db.prepare(`PRAGMA table_info(${name})`).all() as Array<{ name?: string }>).some(
+              (c) => c.name === 'account_id',
+            ),
+          );
+        expect(tables.includes('mail_receipts_sent')).toBe(true);
+        const n = (table: string, account: string): number =>
+          Number(
+            (
+              db.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE account_id = ?`).get(account) as {
+                n: number;
+              }
+            ).n,
+          );
+        const otherBefore = tables.map((t) => n(t, 'mail-b'));
+        deleteAccountData(db, 'mail', 'mail-a');
+        for (const t of tables) expect(n(t, 'mail-a')).toBe(0);
+        expect(tables.map((t) => n(t, 'mail-b'))).toStrictEqual(otherBefore);
       } finally {
         db.close();
       }
