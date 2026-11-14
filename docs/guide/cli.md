@@ -65,6 +65,10 @@ prompter, and neither copies, captures, logs nor stores a pairing payload. The
 terms are displayed before you are asked to accept them, and nothing accepts them
 for you.
 
+## The CLI is an agent frontend
+
+`curlew send` and the other commands that read or write messages are an *agent* frontend, like the MCP server ([ADR 0008](../adr/0008-grants-restrict-agents-not-the-person.md), [ADR 0009](../adr/0009-agent-access-per-account-and-contact.md)): they follow the same access rules and the AI switch. With the switch off they refuse and say so: "AI access is off: switch it on in Preferences → AI (or set `ui.ai` to true in the config)". `curlew send --email-chat` also needs the account to be opted into Delta Chat ("Use for Delta Chat" on its page in Accounts, or `mailAccounts.<id>.deltaChat` in the config).
+
 ## Use it
 
 ```bash
