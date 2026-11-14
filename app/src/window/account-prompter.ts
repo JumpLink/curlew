@@ -9,7 +9,7 @@
  * next. Both are rules about the CALL, not the widgets, so they live here.
  */
 
-import type { AccountPrompter } from '@curlew/protocol';
+import type { AccountPrompter, LoginChoice } from '@curlew/protocol';
 
 /** One thing the person sees or answers while an account is added. */
 export type PromptStep =
@@ -21,6 +21,7 @@ export type PromptStep =
       skip?: string;
       submit(value: string): void;
     }
+  | { kind: 'choose'; label: string; options: readonly LoginChoice[]; submit(id: string): void }
   | { kind: 'qr'; data: string; instructions: string }
   | { kind: 'status'; message: string };
 
@@ -47,27 +48,36 @@ export function createSurfacePrompter(surface: PromptSurface): SurfacePrompter {
   let cancelled = false;
   let pending: ((err: Error) => void) | null = null;
 
+  /** One answer per question: a second press of Enter must not answer one already answered. */
+  const question = (present: (submit: (value: string) => void) => void): Promise<string> => {
+    if (cancelled) return Promise.reject(new PromptCancelled());
+    return new Promise<string>((resolve, reject) => {
+      pending = reject;
+      present((value) => {
+        if (pending !== reject) return;
+        pending = null;
+        resolve(value);
+      });
+    });
+  };
+
   return {
     get cancelled() {
       return cancelled;
     },
     ask(label, options) {
-      if (cancelled) return Promise.reject(new PromptCancelled());
-      return new Promise<string>((resolve, reject) => {
-        pending = reject;
+      return question((submit) =>
         surface.present({
           kind: 'ask',
           label,
           secret: options?.secret === true,
           ...(options?.skip ? { skip: options.skip } : {}),
-          submit: (value) => {
-            // A second press of Enter must not answer a question that is already answered.
-            if (pending !== reject) return;
-            pending = null;
-            resolve(value);
-          },
-        });
-      });
+          submit,
+        }),
+      );
+    },
+    choose(label, options) {
+      return question((submit) => surface.present({ kind: 'choose', label, options, submit }));
     },
     notify(message) {
       if (!cancelled) surface.present({ kind: 'status', message });

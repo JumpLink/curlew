@@ -6,7 +6,9 @@
  * login succeeded, so a cancelled or failed login never leaves a half-authorized session that
  * `sync` would then try to use. Logging in to an account that already has a session replaces it.
  *
- * The api_id/api_hash come from the environment, else this build's embedded pair, else are asked
+ * The user first picks how to log in: phone number and code, or a QR code scanned with the
+ * Telegram app on another device (or their own api_id/api_hash first, then one of those). The
+ * api_id/api_hash come from the environment, else this build's embedded pair, else are asked
  * for first (always asked with `--own-credentials`), and are stored in the session file together
  * with which of those they were — never in the config. A login that is killed outright leaves its pending file;
  * the next `accounts add` or account listing sweeps it once it is stale.
@@ -47,19 +49,26 @@ export function identityOf(user: Pick<TgUser, 'username' | 'displayName' | 'id'>
   return user.displayName || fmt(_('Telegram user {id}'), { id: user.id });
 }
 
-/** The environment's pair, else the embedded one, else asked — before anyone types a phone number. */
-async function loginCredentials(
+/**
+ * The pair to log in with and how: the environment's pair, else the embedded one, else asked — all
+ * before anyone types a phone number. Choosing "own credentials" asks for them, then for the method.
+ */
+async function loginPlan(
   context: BackendContext,
   prompts: LoginPrompts,
   embedded: TelegramCredentials | null,
   ownCredentials: boolean,
-): Promise<{ credentials: TelegramCredentials; source: CredentialSource }> {
+): Promise<{ credentials: TelegramCredentials; source: CredentialSource; method: 'phone' | 'qr' }> {
   refuseConfigCredentials(context.settings);
   const picked = pickLoginCredentials(context.env, embedded, ownCredentials);
-  if (picked) return picked;
+  // Only the embedded pair can be traded for the user's own; the environment's already is theirs.
+  const chosen = await prompts.method(picked?.source === 'embedded');
+  if (picked && chosen !== 'own-credentials') return { ...picked, method: chosen };
   const apiId = await prompts.apiId();
   const apiHash = await prompts.apiHash();
-  return { credentials: parseCredentials(apiId, apiHash), source: 'own' };
+  const credentials = parseCredentials(apiId, apiHash);
+  const method = chosen === 'own-credentials' ? await prompts.method(false) : chosen;
+  return { credentials, source: 'own', method: method === 'qr' ? 'qr' : 'phone' };
 }
 
 /**
@@ -121,7 +130,7 @@ export async function loginTelegram(
   options: AccountAddOptions = {},
   embedded: TelegramCredentials | null = embeddedCredentials(),
 ): Promise<BackendAccount> {
-  const { credentials, source } = await loginCredentials(
+  const { credentials, source, method } = await loginPlan(
     context,
     prompts,
     embedded,
@@ -143,7 +152,7 @@ export async function loginTelegram(
   // still tell the user which file to move where.
   let accountId: string | null = null;
   try {
-    const me = await client.login(prompts);
+    const me = await client.login(prompts, method);
     accountId = accountIdFor(me.id);
     const account: BackendAccount = {
       id: accountId,

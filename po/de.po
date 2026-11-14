@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-14 17:15+0100\n"
+"POT-Creation-Date: 2026-11-14 18:17+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1692,11 +1692,15 @@ msgstr ""
 "Sitzungen zurückzusetzen braucht ein interaktives Terminal: Führe `curlew "
 "omemo reset` selbst aus"
 
-#: app/src/frontends/cli/prompt.ts:102
+#: app/src/frontends/cli/prompt.ts:102 app/src/frontends/cli/prompt.ts:119
 msgid "input ended before the login was complete — nothing was saved"
 msgstr ""
 "Die Eingabe endete, bevor die Anmeldung abgeschlossen war — es wurde nichts "
 "gespeichert"
+
+#: app/src/frontends/cli/prompt.ts:115
+msgid "Number (1–{count}, Enter for 1):"
+msgstr "Nummer (1–{count}, Eingabetaste für 1):"
 
 #: app/src/frontends/cli/send.ts:18
 msgid ""
@@ -1800,7 +1804,7 @@ msgstr "(noch nicht geschrieben)"
 msgid "enabled backends"
 msgstr "aktive Backends"
 
-#: app/src/frontends/cli/setup.ts:128 packages/telegram/src/credentials.ts:181
+#: app/src/frontends/cli/setup.ts:128 packages/telegram/src/credentials.ts:186
 msgid "none"
 msgstr "keines"
 
@@ -1871,7 +1875,7 @@ msgid_plural "{count} accounts"
 msgstr[0] "{count} Konto"
 msgstr[1] "{count} Konten"
 
-#: app/src/window/account-add.ts:123 app/src/window/account-add.ts:262
+#: app/src/window/account-add.ts:123 app/src/window/account-add.ts:284
 msgid "Connecting…"
 msgstr "Verbindung wird hergestellt …"
 
@@ -1893,31 +1897,31 @@ msgstr "Bitte zuerst lesen"
 msgid "Accept and Continue"
 msgstr "Zustimmen und fortfahren"
 
-#: app/src/window/account-add.ts:207
+#: app/src/window/account-add.ts:210
 msgid "Continue"
 msgstr "Weiter"
 
-#: app/src/window/account-add.ts:239
+#: app/src/window/account-add.ts:261
 msgid "Adding account…"
 msgstr "Konto wird hinzugefügt …"
 
-#: app/src/window/account-add.ts:247 app/src/window/media-viewer.ts:104
+#: app/src/window/account-add.ts:269 app/src/window/media-viewer.ts:104
 msgid "Try Again"
 msgstr "Erneut versuchen"
 
-#: app/src/window/account-add.ts:251
+#: app/src/window/account-add.ts:273
 msgid "Could not add the account"
 msgstr "Konto konnte nicht hinzugefügt werden"
 
-#: app/src/window/account-add.ts:286 app/src/window/protocols-page.ts:46
+#: app/src/window/account-add.ts:308 app/src/window/protocols-page.ts:46
 msgid "Asks you to accept terms first"
 msgstr "Verlangt zuerst deine Zustimmung zu den Bedingungen"
 
-#: app/src/window/account-add.ts:303
+#: app/src/window/account-add.ts:325
 msgid "Chats"
 msgstr "Chats"
 
-#: app/src/window/account-add.ts:304
+#: app/src/window/account-add.ts:326
 msgid ""
 "Signal, WhatsApp and Telegram link this computer as another device of your "
 "account."
@@ -1925,25 +1929,25 @@ msgstr ""
 "Signal, WhatsApp und Telegram verknüpfen diesen Computer als weiteres Gerät "
 "deines Kontos."
 
-#: app/src/window/account-add.ts:313 app/src/window/accounts-model.ts:107
+#: app/src/window/account-add.ts:335 app/src/window/accounts-model.ts:107
 #: app/src/window/conversation-list-model.ts:139
 msgid "Mail"
 msgstr "E-Mail"
 
-#: app/src/window/account-add.ts:316
+#: app/src/window/account-add.ts:338
 msgid "Sign in with an address and a password"
 msgstr "Mit Adresse und Passwort anmelden"
 
-#: app/src/window/account-add.ts:322
+#: app/src/window/account-add.ts:344
 msgid "GNOME Online Accounts"
 msgstr "GNOME-Online-Konten"
 
-#: app/src/window/account-add.ts:323
+#: app/src/window/account-add.ts:345
 msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 "Ein Konto verwenden, das du in den GNOME-Einstellungen eingerichtet hast"
 
-#: app/src/window/account-add.ts:341 app/src/window/accounts-page.ts:148
+#: app/src/window/account-add.ts:363 app/src/window/accounts-page.ts:148
 #: app/src/window/accounts-page.ts:174 app/src/window/welcome.ts:163
 msgid "Add Account"
 msgstr "Konto hinzufügen"
@@ -4135,11 +4139,11 @@ msgid ""
 msgstr ""
 "der Telegram-Anhang kam mit {actual} Bytes an, angekündigt waren {announced}"
 
-#: packages/telegram/src/backend.ts:43
+#: packages/telegram/src/backend.ts:46
 msgid "log in again with `curlew accounts add telegram`"
 msgstr "melde dich mit `curlew accounts add telegram` neu an"
 
-#: packages/telegram/src/backend.ts:57
+#: packages/telegram/src/backend.ts:60
 msgid ""
 "Telegram live updates are unavailable in this build: the follow will not "
 "wake on new messages"
@@ -4147,37 +4151,84 @@ msgstr ""
 "Telegram-Live-Aktualisierungen sind in diesem Build nicht verfügbar: der "
 "Daemon wird bei neuen Nachrichten nicht geweckt"
 
+#: packages/telegram/src/backend.ts:87
+msgid "How do you want to log in to Telegram?"
+msgstr "Wie möchtest du dich bei Telegram anmelden?"
+
+#: packages/telegram/src/backend.ts:90
+msgid "Phone Number and Code"
+msgstr "Telefonnummer und Code"
+
+#: packages/telegram/src/backend.ts:91
+msgid "Telegram sends a code to your other devices or by SMS"
+msgstr "Telegram schickt einen Code an deine anderen Geräte oder per SMS"
+
+#
+#: packages/telegram/src/backend.ts:95
+msgid "Scan a QR Code"
+msgstr "QR-Code scannen"
+
+#: packages/telegram/src/backend.ts:96
+msgid "With the Telegram app on another device"
+msgstr "Mit der Telegram-App auf einem anderen Gerät"
+
+#: packages/telegram/src/backend.ts:102
+msgid "Use Your Own API Credentials"
+msgstr "Eigene API-Zugangsdaten verwenden"
+
+#. TRANSLATORS: `api_id` and `api_hash` are Telegram's own field names — do not translate them.
+#: packages/telegram/src/backend.ts:104
+msgid "For advanced users: an api_id and api_hash from my.telegram.org"
+msgstr "Für Fortgeschrittene: eine api_id und ein api_hash von my.telegram.org"
+
+#
+#: packages/telegram/src/backend.ts:114
+msgid ""
+"Scan this with the Telegram app on your phone: Settings → Devices → Link "
+"Desktop Device. (A new code appears every ~30 s.)"
+msgstr ""
+"Scanne dies mit der Telegram-App auf deinem Telefon: Einstellungen → Geräte "
+"→ Desktop-Gerät verknüpfen. (Etwa alle 30 s erscheint ein neuer Code.)"
+
 #. TRANSLATORS: `api_id` and `api_hash` are Telegram's own field names — do not translate them,
 #. the user has to recognise them on my.telegram.org.
-#: packages/telegram/src/backend.ts:85
+#: packages/telegram/src/backend.ts:120
 msgid "api_id of your Telegram app (from my.telegram.org)"
 msgstr "api_id deiner Telegram-App (von my.telegram.org)"
 
-#: packages/telegram/src/backend.ts:86
+#: packages/telegram/src/backend.ts:121
 msgid "api_hash of that app"
 msgstr "api_hash derselben App"
 
-#: packages/telegram/src/backend.ts:87
+#: packages/telegram/src/backend.ts:122
 msgid "Phone number of the Telegram account (international, e.g. +49…)"
 msgstr "Telefonnummer des Telegram-Kontos (international, z. B. +49…)"
 
-#: packages/telegram/src/backend.ts:88
+#: packages/telegram/src/backend.ts:123
 msgid "Login code Telegram sent you"
 msgstr "Anmeldecode, den Telegram geschickt hat"
 
-#: packages/telegram/src/backend.ts:89
+#: packages/telegram/src/backend.ts:124
 msgid "Two-step verification password"
 msgstr "Passwort der zweistufigen Bestätigung"
 
-#: packages/telegram/src/backend.ts:204
+#: packages/telegram/src/backend.ts:239
 msgid "no Telegram session for {account} — {hint}"
 msgstr "keine Telegram-Sitzung für {account} — {hint}"
 
-#: packages/telegram/src/backend.ts:230
+#: packages/telegram/src/backend.ts:265
 msgid "the Telegram session {account} is not usable ({reason}) — {hint}"
 msgstr "die Telegram-Sitzung {account} ist nicht nutzbar ({reason}) — {hint}"
 
-#: packages/telegram/src/client.ts:229
+#: packages/telegram/src/client.ts:225
+msgid "That code was not accepted — try again."
+msgstr "Dieser Code wurde nicht akzeptiert — versuche es noch einmal."
+
+#: packages/telegram/src/client.ts:225
+msgid "Wrong password — try again."
+msgstr "Falsches Passwort — versuche es noch einmal."
+
+#: packages/telegram/src/client.ts:241
 msgid ""
 "Telegram asks for an email login setup first — finish it in an official app"
 msgstr ""
@@ -4186,32 +4237,24 @@ msgstr ""
 
 #. TRANSLATORS: {channel} is Telegram's own word for the route it used ("sms", "app", …),
 #. and arrives untranslated from the server.
-#: packages/telegram/src/client.ts:233
+#: packages/telegram/src/client.ts:245
 msgid "Telegram sent the login code via {channel}."
 msgstr "Telegram hat den Anmeldecode über {channel} geschickt."
 
-#: packages/telegram/src/client.ts:237
-msgid "That code was not accepted — try again."
-msgstr "Dieser Code wurde nicht akzeptiert — versuche es noch einmal."
-
-#: packages/telegram/src/client.ts:237
-msgid "Wrong password — try again."
-msgstr "Falsches Passwort — versuche es noch einmal."
-
 #. TRANSLATORS: Tail of several credential errors. "API development tools" is the literal name of
 #. that section at my.telegram.org — keep it exactly as Telegram writes it.
-#: packages/telegram/src/credentials.ts:58
+#: packages/telegram/src/credentials.ts:63
 msgid ""
 "create them for yourself at https://my.telegram.org (\"API development "
 "tools\")"
 msgstr ""
 "erstelle dir eigene unter https://my.telegram.org (\"API development tools\")"
 
-#: packages/telegram/src/credentials.ts:64
+#: packages/telegram/src/credentials.ts:69
 msgid "the Telegram api_id must be a positive whole number — {where}"
 msgstr "die Telegram-api_id muss eine positive ganze Zahl sein — {where}"
 
-#: packages/telegram/src/credentials.ts:69
+#: packages/telegram/src/credentials.ts:74
 msgid ""
 "the Telegram api_hash must be 32 hexadecimal characters (value not shown) — "
 "{where}"
@@ -4219,7 +4262,7 @@ msgstr ""
 "der Telegram-api_hash muss aus 32 hexadezimalen Zeichen bestehen (Wert wird "
 "nicht angezeigt) — {where}"
 
-#: packages/telegram/src/credentials.ts:83
+#: packages/telegram/src/credentials.ts:88
 msgid ""
 "the Telegram api_id/api_hash do not belong in the config file (it is backed "
 "up in the clear) — remove backends.telegram.settings.apiId/apiHash; `curlew "
@@ -4231,11 +4274,11 @@ msgstr ""
 "apiHash; `curlew accounts add telegram` legt sie in der 0600-Sitzungsdatei "
 "des Kontos ab, oder setze {idEnv} und {hashEnv}"
 
-#: packages/telegram/src/credentials.ts:99
+#: packages/telegram/src/credentials.ts:104
 msgid "set both {idEnv} and {hashEnv}, or neither"
 msgstr "setze {idEnv} und {hashEnv} gemeinsam oder gar nicht"
 
-#: packages/telegram/src/credentials.ts:175
+#: packages/telegram/src/credentials.ts:180
 msgid ""
 "this Telegram session was created with the API credentials embedded in the "
 "build that made it, and this build embeds {embeds} (values not shown) — use "
@@ -4248,11 +4291,11 @@ msgstr ""
 "{hashEnv}, oder melde dich mit `curlew accounts add telegram` neu an"
 
 #. TRANSLATORS: Both fill {embeds} in the message above.
-#: packages/telegram/src/credentials.ts:181
+#: packages/telegram/src/credentials.ts:186
 msgid "a different pair"
 msgstr "ein anderes Paar"
 
-#: packages/telegram/src/credentials.ts:194
+#: packages/telegram/src/credentials.ts:199
 msgid ""
 "this Telegram session has no api_id/api_hash stored — log in again with "
 "`curlew accounts add telegram`, or set {idEnv} and {hashEnv}"
@@ -4263,11 +4306,11 @@ msgstr ""
 
 #. TRANSLATORS: Stands in for the name of an account that has neither a @username nor a
 #. display name. {id} is Telegram's numeric user id.
-#: packages/telegram/src/login.ts:47
+#: packages/telegram/src/login.ts:49
 msgid "Telegram user {id}"
 msgstr "Telegram-Benutzer {id}"
 
-#: packages/telegram/src/login.ts:109
+#: packages/telegram/src/login.ts:118
 msgid ""
 "{reason} — Telegram HAD authorized this session, so its file is kept at "
 "{pending} and NOT deleted. Move it to {target}, or delete it and log in "
@@ -4277,37 +4320,37 @@ msgstr ""
 "Datei unter {pending} liegen und wird NICHT gelöscht. Verschiebe sie nach "
 "{target}, oder lösche sie und melde dich neu an."
 
+#
 #: packages/telegram/src/manifest.ts:60
 msgid ""
 "curlew talks to Telegram through the official MTProto API as a third-party "
 "client (mtcute). Telegram requires every client to use API credentials "
-"(api_id and api_hash). A packaged build MAY embed a pair supplied by its "
-"distributor, so the login needs only your phone number and code; curlew "
-"itself ships none, and you can always use your own — create them for "
-"YOURSELF at my.telegram.org and run `curlew accounts add telegram --own-"
-"credentials` (or set them in the environment). They are kept with the "
-"session. Use is subject to Telegram's API Terms of Service; an account that "
-"misuses the API can be limited or banned by Telegram. curlew reads by "
-"default; it sends a plain-text message only to a chat you granted with "
-"`telegram.send`; a file goes out only when you pick it in the window or when "
-"an agent names one and you confirm it in a prompt, and curlew never edits or "
-"deletes. It keeps the session key on this machine only."
+"(api_id and api_hash). curlew ships the pair of its own registered app, so "
+"the login needs only your phone number and code, or a QR code scanned with "
+"the Telegram app. You can use your own instead — created for yourself at "
+"my.telegram.org — by picking \"Use Your Own API Credentials\" when you log "
+"in. They are kept with the session. Use is subject to Telegram's API Terms "
+"of Service; an account that misuses the API can be limited or banned by "
+"Telegram. curlew reads by default; it sends a plain-text message only to a "
+"chat you granted with `telegram.send`; a file goes out only when you pick it "
+"in the window or when an agent names one and you confirm it in a prompt, and "
+"curlew never edits or deletes. It keeps the session key on this machine only."
 msgstr ""
 "curlew spricht als Drittanbieter-Client (mtcute) über die offizielle MTProto-"
 "API mit Telegram. Telegram verlangt von jedem Client API-Zugangsdaten "
-"(api_id und api_hash). Ein paketierter Build KANN ein Paar mitbringen, das "
-"sein Distributor beigesteuert hat — dann braucht die Anmeldung nur deine "
-"Telefonnummer und den Code; curlew selbst liefert keines, und du kannst "
-"immer eigene verwenden: erstelle sie für DICH SELBST auf my.telegram.org und "
-"starte `curlew accounts add telegram --own-credentials` (oder setze sie in "
-"der Umgebung). Sie werden bei der Sitzung aufbewahrt. Die Nutzung unterliegt "
-"den API-Nutzungsbedingungen von Telegram; ein Konto, das die API "
-"missbraucht, kann von Telegram eingeschränkt oder gesperrt werden. curlew "
-"liest standardmäßig; es sendet eine Nur-Text-Nachricht nur an einen Chat, "
-"den du mit `telegram.send` freigegeben hast; eine Datei geht nur raus, wenn "
-"du sie im Fenster auswählst oder ein Agent eine nennt und du das in einer "
-"Rückfrage bestätigst, und curlew bearbeitet oder löscht nie. Den "
-"Sitzungsschlüssel behält es ausschließlich auf diesem Rechner."
+"(api_id und api_hash). curlew bringt das Paar seiner eigenen registrierten "
+"App mit, daher braucht die Anmeldung nur deine Telefonnummer und den Code "
+"oder einen QR-Code, den du mit der Telegram-App scannst. Du kannst "
+"stattdessen eigene verwenden — für dich selbst auf my.telegram.org erstellt "
+"—, indem du bei der Anmeldung „Eigene API-Zugangsdaten verwenden“ wählst. "
+"Sie werden bei der Sitzung aufbewahrt. Die Nutzung unterliegt den API-"
+"Nutzungsbedingungen von Telegram; ein Konto, das die API missbraucht, kann "
+"von Telegram eingeschränkt oder gesperrt werden. curlew liest standardmäßig; "
+"es sendet eine Nur-Text-Nachricht nur an einen Chat, den du mit "
+"`telegram.send` freigegeben hast; eine Datei geht nur raus, wenn du sie im "
+"Fenster auswählst oder ein Agent eine nennt und du das in einer Rückfrage "
+"bestätigst, und curlew bearbeitet oder löscht nie. Den Sitzungsschlüssel "
+"behält es ausschließlich auf diesem Rechner."
 
 #: packages/telegram/src/sender.ts:51
 msgid "{id} is not a message of this Telegram chat — nothing was sent"

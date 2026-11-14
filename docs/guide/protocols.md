@@ -5,24 +5,35 @@ Per-protocol setup, terms and behaviour. The overview table is in the [README](.
 ## Telegram
 
 Telegram requires every third-party client to use an `api_id` and `api_hash`.
-They identify the *application*, not you. The repository and CI/dev builds ship
-none; a **packaged build may embed one pair** that its distributor supplied at
-build time (see [Packaging](releasing.md#embedding-a-telegram-api-pair-packagers)), so the
-login asks for phone number and code only. Which pair is used, first match wins:
+They identify the *application*, not you. curlew ships the pair of its own
+registered app ("Curlew" at my.telegram.org), so the login needs nothing from
+my.telegram.org. A packager may replace it at build time with a pair registered
+under its own name (see [Packaging](releasing.md#embedding-a-telegram-api-pair-packagers)).
+
+The login first asks how to sign in:
+
+- **Phone number and code** — Telegram sends a code to your other devices or by SMS;
+- **Scan a QR code** — with the Telegram app on another device
+  (Settings → Devices → Link Desktop Device), no code needed;
+- **Use your own API credentials** — for advanced users, then one of the two above.
+
+The two-step verification password is asked afterwards when the account has
+one. Which pair is used, first match wins:
 
 1. `CURLEW_TELEGRAM_API_ID` / `CURLEW_TELEGRAM_API_HASH` in the environment;
 2. the pair stored in the account's session file (what it was created with);
-3. the pair embedded in this build, if any;
-4. otherwise the login asks for one (steps below).
+3. the pair embedded in this build (curlew's own unless a packager replaced it);
+4. otherwise the login asks for one.
 
-To use credentials of your own even when the build embeds a pair (so you do not
-depend on a package id Telegram might block), create an app for yourself at
-<https://my.telegram.org> → *API development tools* (an `api_id`, a number, and
-an `api_hash`, 32 hex characters) and log in with `--own-credentials`:
+To use credentials of your own (so you do not depend on an app id Telegram
+might block), create an app for yourself at <https://my.telegram.org> → *API
+development tools* (an `api_id`, a number, and an `api_hash`, 32 hex characters)
+and pick "Use your own API credentials", or pass `--own-credentials` on the
+command line:
 
 ```bash
 curlew backends enable telegram --accept-terms   # shows Telegram's terms once
-curlew accounts add telegram                     # phone, code, 2FA password; asks for api_id/api_hash first if the build embeds none
+curlew accounts add telegram                     # pick phone + code or a QR code, then the 2FA password
 curlew accounts add telegram --own-credentials   # always asks for your own api_id/api_hash (hash without echo)
 curlew accounts list --backend telegram
 curlew sync                      # mail and Telegram into one index
@@ -34,8 +45,8 @@ plain text in every backup; a config that carries one is refused), together with
 whether it was the embedded or your own. A session created with the embedded
 pair never switches silently: if a later build embeds a different pair (or none),
 `sync` fails with a message saying so — use the original build, set the
-environment variables, or log in again. Telegram has no public test credentials
-that curlew may use; accounts that use them get banned, so none is a default.
+environment variables, or log in again. curlew never uses the sample
+credentials from Telegram's documentation: accounts that use them get banned.
 
 The first sync takes the newest 200 messages of every chat; later syncs walk
 forward from there, at most 5 000 messages per run (the rest follows on the

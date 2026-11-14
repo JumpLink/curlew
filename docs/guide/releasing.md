@@ -33,10 +33,10 @@ from `gjsify.ship.flatpak` in `app/package.json`; Flathub itself needs offline n
 
 ### Embedding a Telegram api pair (packagers)
 
-A distributor — for example a Flatpak manifest for a Telegram-only build, where
-GOA is not needed — can embed *its own* `api_id`/`api_hash` (registered at
-my.telegram.org under the distributor's name; per-distributor, never shared and
-never committed to this repository) by setting both variables for the build:
+Every build embeds curlew's own `api_id`/`api_hash` (`CURLEW_APP` in
+`packages/telegram/src/credentials.ts`). A distributor that wants Telegram to
+see its own app instead — registered at my.telegram.org under the
+distributor's name — replaces it by setting both variables for the build:
 
 ```bash
 CURLEW_TELEGRAM_EMBEDDED_API_ID=<id> CURLEW_TELEGRAM_EMBEDDED_API_HASH=<hash> \
@@ -45,7 +45,7 @@ CURLEW_TELEGRAM_EMBEDDED_API_ID=<id> CURLEW_TELEGRAM_EMBEDDED_API_HASH=<hash> \
 
 `app/scripts/build-bundle.mjs` turns them into the compile-time constant
 `__CURLEW_TELEGRAM_EMBEDDED__`; set only one, or malformed values, and the build
-fails (values never printed). Unset — as in CI and dev builds — embeds nothing.
+fails (values never printed). Unset — as in CI and dev builds — the build keeps curlew's own pair.
 In a Flatpak manifest, put them in the `build-options.env` of the curlew module
 (or inject them from the packager's secret store). The pair is readable by
 anyone holding the bundle: Telegram treats it as an application identifier, not

@@ -7,7 +7,7 @@
  * (readline's echo goes through a muted stream); piped input is not echoed anyway.
  */
 
-import { _, type AccountPrompter } from '@curlew/protocol';
+import { _, type AccountPrompter, fmt } from '@curlew/protocol';
 
 import type { SetupPrompter } from '../../core/actions/setup.ts';
 import { createInterface } from 'node:readline';
@@ -101,6 +101,27 @@ export function readPrompter(
       muted = false;
       if (line === null) throw new Error(_('input ended before the login was complete — nothing was saved'));
       return line.trim();
+    },
+    async choose(label, options) {
+      process.stderr.write(`${bold(label, ERR)}\n`);
+      options.forEach((option, index) => {
+        const subtitle = option.subtitle ? ` ${dim(`— ${option.subtitle}`, ERR)}` : '';
+        process.stderr.write(`  ${index + 1}) ${option.title}${subtitle}\n`);
+      });
+      for (;;) {
+        // TRANSLATORS: Asks for the number of one entry in the list printed above it. {count} is
+        // how many entries there are; an empty answer takes the first.
+        process.stderr.write(
+          `${bold(fmt(_('Number (1–{count}, Enter for 1):'), { count: options.length }), ERR)} `,
+        );
+        const line = await next();
+        if (line === null)
+          throw new Error(_('input ended before the login was complete — nothing was saved'));
+        const answer = line.trim();
+        const index = answer === '' ? 0 : Number(answer) - 1;
+        const option = Number.isInteger(index) ? options[index] : undefined;
+        if (option) return option.id;
+      }
     },
     async confirm(question) {
       // `[y/N]`, on stderr like every other question here, so a piped stdout stays machine-readable.
