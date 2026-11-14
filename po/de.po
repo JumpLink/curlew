@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-14 11:56+0100\n"
+"POT-Creation-Date: 2026-11-14 12:15+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1923,7 +1923,7 @@ msgstr ""
 "Signal, WhatsApp und Telegram verknüpfen diesen Computer als weiteres Gerät "
 "deines Kontos."
 
-#: app/src/window/account-add.ts:289 app/src/window/accounts-model.ts:87
+#: app/src/window/account-add.ts:289 app/src/window/accounts-model.ts:92
 #: app/src/window/conversation-list-model.ts:139
 msgid "Mail"
 msgstr "E-Mail"
@@ -1941,8 +1941,8 @@ msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 "Ein Konto verwenden, das du in den GNOME-Einstellungen eingerichtet hast"
 
-#: app/src/window/account-add.ts:321 app/src/window/accounts-page.ts:170
-#: app/src/window/accounts-page.ts:193 app/src/window/welcome.ts:163
+#: app/src/window/account-add.ts:321 app/src/window/accounts-page.ts:149
+#: app/src/window/accounts-page.ts:172 app/src/window/welcome.ts:163
 msgid "Add Account"
 msgstr "Konto hinzufügen"
 
@@ -1976,8 +1976,8 @@ msgstr "Dieses Konto pausieren?"
 #: app/src/window/account-remove-model.ts:37
 #: app/src/window/account-remove-model.ts:71
 #: app/src/window/agent-access-page.ts:234
-#: app/src/window/conversation-list.ts:501
-#: app/src/window/conversation-list.ts:587
+#: app/src/window/conversation-list.ts:503
+#: app/src/window/conversation-list.ts:589
 #: app/src/window/conversation-view.ts:748 app/src/window/protocols-page.ts:63
 #: app/src/window/protocols-page.ts:130
 msgid "Cancel"
@@ -2122,84 +2122,84 @@ msgstr ""
 msgid "Could not start the background service: {reason}"
 msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
-#: app/src/window/accounts-dialog.ts:82 app/src/window/accounts-page.ts:206
+#: app/src/window/accounts-dialog.ts:82 app/src/window/accounts-page.ts:185
 #: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:175
 #: app/src/window/window.ts:127
 msgid "Accounts"
 msgstr "Konten"
 
-#: app/src/window/accounts-model.ts:88
+#: app/src/window/accounts-model.ts:93
 msgid "Calendar"
 msgstr "Kalender"
 
-#: app/src/window/accounts-model.ts:89
+#: app/src/window/accounts-model.ts:94
 msgid "Contacts"
 msgstr "Kontakte"
 
-#: app/src/window/accounts-page.ts:30
+#: app/src/window/accounts-page.ts:31
 msgid "Connected"
 msgstr "Verbunden"
 
-#: app/src/window/accounts-page.ts:32
+#: app/src/window/accounts-page.ts:33
 msgid "Connecting"
 msgstr "Verbindung wird hergestellt"
 
-#: app/src/window/accounts-page.ts:34
+#: app/src/window/accounts-page.ts:35
 msgid "Offline"
 msgstr "Offline"
 
-#: app/src/window/accounts-page.ts:36
+#: app/src/window/accounts-page.ts:37
 msgid "Daemon not running"
 msgstr "Daemon läuft nicht"
 
-#: app/src/window/accounts-page.ts:38 app/src/window/preferences-dialog.ts:58
+#: app/src/window/accounts-page.ts:39 app/src/window/preferences-dialog.ts:58
 #: app/src/window/welcome-model.ts:124
 msgid "Off"
 msgstr "Aus"
 
-#: app/src/window/accounts-page.ts:124
+#: app/src/window/accounts-page.ts:103
 msgid "Manage…"
 msgstr "Verwalten …"
 
-#: app/src/window/accounts-page.ts:125
+#: app/src/window/accounts-page.ts:104
 msgid "Open GNOME Settings → Online Accounts"
 msgstr "GNOME-Einstellungen → Online-Konten öffnen"
 
-#: app/src/window/accounts-page.ts:134
+#: app/src/window/accounts-page.ts:113
 msgid "Could not load accounts"
 msgstr "Konten konnten nicht geladen werden"
 
-#: app/src/window/accounts-page.ts:136 app/src/window/protocols-page.ts:41
+#: app/src/window/accounts-page.ts:115 app/src/window/protocols-page.ts:41
 msgid "No accounts yet"
 msgstr "Noch keine Konten"
 
-#: app/src/window/accounts-page.ts:162
+#: app/src/window/accounts-page.ts:141
 msgid "Accounts could not be loaded"
 msgstr "Konten konnten nicht geladen werden"
 
-#: app/src/window/accounts-page.ts:166
+#: app/src/window/accounts-page.ts:145
 msgid "No accounts"
 msgstr "Keine Konten"
 
-#: app/src/window/accounts-page.ts:167
+#: app/src/window/accounts-page.ts:146
 msgid "Add a chat account."
 msgstr "Füge ein Chat-Konto hinzu."
 
-#: app/src/window/accounts-page.ts:167
+#: app/src/window/accounts-page.ts:146
 msgid "Add a chat account or a mail account."
 msgstr "Füge ein Chat-Konto oder ein E-Mail-Konto hinzu."
 
-#: app/src/window/accounts-page.ts:184
+#: app/src/window/accounts-page.ts:163
 msgid "The background service is not running, so chat accounts cannot connect."
 msgstr ""
 "Der Hintergrunddienst läuft nicht, daher können sich Chat-Konten nicht "
 "verbinden."
 
-#: app/src/window/accounts-page.ts:185
+#: app/src/window/accounts-page.ts:164
 msgid "Start"
 msgstr "Starten"
 
-#: app/src/window/accounts-page.ts:199 app/src/window/conversation-list.ts:361
+#: app/src/window/accounts-page.ts:178 app/src/window/conversation-list.ts:363
 #: app/src/window/protocols-page.ts:227 app/src/window/welcome-model.ts:102
 #: app/src/window/welcome.ts:151
 msgid "Protocols"
@@ -2612,7 +2612,7 @@ msgstr "Automatisch"
 msgid "Picture"
 msgstr "Bild"
 
-#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:509
+#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:511
 msgid "Separate"
 msgstr "Trennen"
 
@@ -2719,6 +2719,7 @@ msgstr "Gestern"
 
 #: app/src/window/conversation-list-model.ts:273
 #: app/src/window/conversation-list-model.ts:711
+#: app/src/window/conversation-list-model.ts:936
 msgid "Note to self"
 msgstr "Notiz an mich"
 
@@ -2773,49 +2774,49 @@ msgstr "Personen"
 msgid "Groups"
 msgstr "Gruppen"
 
-#: app/src/window/conversation-list.ts:232
+#: app/src/window/conversation-list.ts:234
 msgid "Add an account"
 msgstr "Konto hinzufügen"
 
-#: app/src/window/conversation-list.ts:240
-#: app/src/window/conversation-list.ts:241
+#: app/src/window/conversation-list.ts:242
+#: app/src/window/conversation-list.ts:243
 msgid "Search conversations"
 msgstr "Unterhaltungen durchsuchen"
 
-#: app/src/window/conversation-list.ts:245
+#: app/src/window/conversation-list.ts:247
 msgid "Everything"
 msgstr "Alles"
 
-#: app/src/window/conversation-list.ts:246
+#: app/src/window/conversation-list.ts:248
 msgid "Names and numbers"
 msgstr "Namen und Nummern"
 
-#: app/src/window/conversation-list.ts:247
+#: app/src/window/conversation-list.ts:249
 msgid "Messages"
 msgstr "Nachrichten"
 
-#: app/src/window/conversation-list.ts:251
-#: app/src/window/conversation-list.ts:255
+#: app/src/window/conversation-list.ts:253
+#: app/src/window/conversation-list.ts:257
 msgid "Search in"
 msgstr "Suchen in"
 
-#: app/src/window/conversation-list.ts:276
+#: app/src/window/conversation-list.ts:278
 msgid "Filter conversations"
 msgstr "Unterhaltungen filtern"
 
-#: app/src/window/conversation-list.ts:384
+#: app/src/window/conversation-list.ts:386
 msgid "Clear filters"
 msgstr "Filter zurücksetzen"
 
-#: app/src/window/conversation-list.ts:410
+#: app/src/window/conversation-list.ts:412
 msgid "No conversations yet"
 msgstr "Noch keine Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:410
+#: app/src/window/conversation-list.ts:412
 msgid "No matches"
 msgstr "Keine Treffer"
 
-#: app/src/window/conversation-list.ts:413
+#: app/src/window/conversation-list.ts:415
 msgid ""
 "Conversations appear here after Curlew has synced an account. Run \"curlew "
 "sync\" first."
@@ -2823,30 +2824,30 @@ msgstr ""
 "Unterhaltungen erscheinen hier, sobald Curlew ein Konto synchronisiert hat. "
 "Führe zuerst „curlew sync“ aus."
 
-#: app/src/window/conversation-list.ts:420
+#: app/src/window/conversation-list.ts:422
 msgid "Nothing fits the search and filters."
 msgstr "Nichts passt zur Suche und den Filtern."
 
-#: app/src/window/conversation-list.ts:485
+#: app/src/window/conversation-list.ts:487
 msgid "Search"
 msgstr "Suchen"
 
-#: app/src/window/conversation-list.ts:490
+#: app/src/window/conversation-list.ts:492
 #: app/src/window/new-conversation.ts:25
 msgid "New conversation"
 msgstr "Neue Unterhaltung"
 
-#: app/src/window/conversation-list.ts:507
-#: app/src/window/conversation-list.ts:588
+#: app/src/window/conversation-list.ts:509
+#: app/src/window/conversation-list.ts:590
 #: app/src/window/merge-assistant.ts:116
 msgid "Merge"
 msgstr "Zusammenführen"
 
-#: app/src/window/conversation-list.ts:584
+#: app/src/window/conversation-list.ts:586
 msgid "Merge these people?"
 msgstr "Diese Personen zusammenführen?"
 
-#: app/src/window/conversation-list.ts:585
+#: app/src/window/conversation-list.ts:587
 msgid ""
 "Their chats become one conversation. Nothing is deleted, and you can "
 "separate them again."
@@ -2854,16 +2855,16 @@ msgstr ""
 "Ihre Chats werden zu einer Unterhaltung. Nichts wird gelöscht, und du kannst "
 "sie wieder trennen."
 
-#: app/src/window/conversation-list.ts:611
+#: app/src/window/conversation-list.ts:613
 msgid "Review"
 msgstr "Prüfen"
 
-#: app/src/window/conversation-list.ts:618
+#: app/src/window/conversation-list.ts:620
 #: app/src/window/preferences-dialog.ts:45
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:640
+#: app/src/window/conversation-list.ts:642
 msgid "{count} possible duplicate"
 msgid_plural "{count} possible duplicates"
 msgstr[0] "{count} mögliches Duplikat"
