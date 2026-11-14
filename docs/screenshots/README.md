@@ -8,18 +8,19 @@ File name: `<motif>.<lang>.<scheme>.png`.
 
 | Motif | Shows | Size (logical) |
 |---|---|---|
-| `conversations` | chat list | 900×640 |
+| `conversations` | chat list with a chat open (GNOME Design) | 900×640 |
 | `conversation` | chat view (Alex Weber, Signal + Telegram merged) | 900×640 |
 | `conversations-narrow`, `conversation-narrow` | the same, phone width | 360×740 |
-| `contact` | contact page | 900×700 |
-| `group` | group page (Climbing Tuesday) | 900×700 |
+| `contact` | contact page | 900×640 |
+| `group` | group page (Climbing Tuesday) | 900×640 |
 | `preferences`, `preferences-off` | settings, demo defaults / everything off | 900×640 |
-| `accounts`, `accounts-off`, `accounts-empty` | accounts; all protocols off; no accounts with the daemon banner | 900×640 |
+| `accounts` | accounts (the list scrolls; the last groups are below the fold) | 900×640 |
+| `accounts-off`, `accounts-empty` | all protocols off; no accounts with the daemon banner | 360×740 |
 | `protocols`, `protocols-off` | protocol list, on / all off | 900×640 |
 | `agent-access` | agent access dialog | 900×640 |
 | `welcome` | first-run welcome | 360×740 |
 | `welcome-delta-chat` | welcome page that explains Delta Chat mode (`CURLEW_WINDOW_OPEN_WELCOME=delta-chat`) | 360×740 |
-| `contact-merged` | contact page of Sam: Delta Chat and XMPP combined | 900×700 |
+| `contact-merged` | contact page of Sam: Delta Chat and XMPP combined | 900×640 |
 | `account-paused` | account page of a paused WhatsApp account | 900×640 |
 | `reactions`, `reactions-narrow` | picture and voice note with reactions under the bubble (Ida Roth) | 900×640 / 360×740 |
 | `composer-emoji` | emoji chooser open in the composer (Alex Weber) | 900×640 |
@@ -27,7 +28,10 @@ File name: `<motif>.<lang>.<scheme>.png`.
 
 ## For the metainfo (Flathub)
 
-All files are ≤ 1000×700 logical. Use the English file first, the German one with `xml:lang="de"`;
+All windows are ≤ 900×740 logical. The files keep the window shadow (a 900×640 window is a 932×672
+canvas), so **every wide motif is 900×640 and no file exceeds 1000×700**; the phone-width motifs
+(360×740) are not suggested for the wide slots. Cropping the shadow was rejected: the shadow is part
+of how the window looks on a GNOME desktop and Flathub only bounds the size. Use the English file first, the German one with `xml:lang="de"`;
 captions are one sentence without a full stop. Suggested set, light scheme:
 
 1. `conversations.en.light.png` (default) with `conversations.de.light.png` (`de`)

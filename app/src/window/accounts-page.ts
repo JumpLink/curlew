@@ -11,6 +11,7 @@ import { _ } from '@curlew/protocol';
 import { chatOnly } from '../core/platform.ts';
 import { DELTA_CHAT } from '../core/visibility.ts';
 import { protocolLabel } from './conversation-list-model.ts';
+import { accountSubtitle } from './accounts-model.ts';
 import type { AccountRow, AccountStatus, AccountsPageState, ProtocolGroup } from './accounts-model.ts';
 
 export interface AccountsPage {
@@ -39,15 +40,6 @@ export function accountStatusLabel(status: AccountStatus): string {
   }
 }
 
-/** Colour comes from the Adwaita palette classes, so dark mode and accent colours keep working. */
-const STATUS_CLASS: Record<AccountStatus, string> = {
-  connected: 'success',
-  connecting: 'warning',
-  offline: 'dim-label',
-  'daemon-not-running': 'dim-label',
-  disabled: 'dim-label',
-};
-
 export function openGoaSettings(onError: (err: Error) => void): void {
   try {
     const appInfo = Gio.AppInfo.create_from_commandline(
@@ -62,11 +54,17 @@ export function openGoaSettings(onError: (err: Error) => void): void {
 }
 
 function buildRow(row: AccountRow, daemonPresent: boolean, onOpen: (() => void) | null): Adw.ActionRow {
+  // The state and the Delta Chat note ride in the subtitle, not as suffixes: two badges next to a
+  // long address squeezed the title until it broke inside the word.
+  const status =
+    row.status && (daemonPresent || row.status === 'disabled') ? accountStatusLabel(row.status) : null;
   const widget = new Adw.ActionRow({
     title: row.label,
-    subtitle: row.detail ?? '',
+    subtitle: accountSubtitle([status, row.deltaChat ? protocolLabel(DELTA_CHAT) : null, row.detail]),
     useMarkup: false,
     activatable: onOpen !== null,
+    titleLines: 1,
+    subtitleLines: 2,
   });
   widget.add_prefix(
     new Adw.Avatar({
@@ -77,25 +75,6 @@ function buildRow(row: AccountRow, daemonPresent: boolean, onOpen: (() => void) 
       valign: Gtk.Align.CENTER,
     }),
   );
-  // With the daemon down every chat row would say the same; the banner says it once instead.
-  if (row.status && (daemonPresent || row.status === 'disabled')) {
-    widget.add_suffix(
-      new Gtk.Label({
-        label: accountStatusLabel(row.status),
-        cssClasses: ['caption', STATUS_CLASS[row.status]],
-        valign: Gtk.Align.CENTER,
-      }),
-    );
-  }
-  if (row.deltaChat) {
-    widget.add_suffix(
-      new Gtk.Label({
-        label: protocolLabel(DELTA_CHAT),
-        cssClasses: ['caption', 'accent'],
-        valign: Gtk.Align.CENTER,
-      }),
-    );
-  }
   if (onOpen) {
     widget.add_suffix(new Gtk.Image({ iconName: 'go-next-symbolic' }));
     widget.connect('activated', onOpen);

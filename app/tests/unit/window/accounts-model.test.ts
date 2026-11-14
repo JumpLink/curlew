@@ -3,6 +3,7 @@ import type { BackendAccount, GnomeAccount } from '@curlew/protocol';
 
 import {
   accountStatus,
+  accountSubtitle,
   buildProtocolGroups,
   type AccountsDaemonState,
   type AccountsLoadState,
@@ -287,6 +288,13 @@ export default async () => {
       const state = buildProtocolGroups(load, daemonState(true, new Map()));
       expect(state.groups.map((g) => g.backend)).toStrictEqual(['mail', 'xmpp']);
       expect(state.groups[0]!.rows.length).toBe(0);
+    });
+  });
+
+  describe('accountSubtitle', () => {
+    it('joins the parts that exist with a middle dot', () => {
+      expect(accountSubtitle(['Connected', null, 'robin@example.org'])).toBe('Connected · robin@example.org');
+      expect(accountSubtitle([null, undefined, ''])).toBe('');
     });
   });
 };

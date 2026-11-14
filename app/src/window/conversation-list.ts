@@ -29,6 +29,7 @@ import {
   dropDeselectedAccounts,
   backendChoices,
   buildSections,
+  avatarSeed,
   initials,
   listSubtitle,
   entryCarrier,
@@ -78,8 +79,9 @@ const BADGE_OVERHANG = 6;
 function badgedAvatar(entry: ListEntry): Gtk.Widget {
   const avatar = new Adw.Avatar({
     size: AVATAR_SIZE,
-    text: entry.title,
-    showInitials: initials(entry.title) !== '',
+    text: avatarSeed(entry),
+    // A note to self shows the person icon: its seed is not a name, so it has no initials.
+    showInitials: avatarSeed(entry) === entry.title && initials(entry.title) !== '',
     marginEnd: BADGE_OVERHANG,
     marginBottom: BADGE_OVERHANG,
   });

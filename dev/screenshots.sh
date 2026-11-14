@@ -14,22 +14,25 @@ HEADLESS="${HEADLESS_RUN:-$HOME/Projekte/werkstatt/scripts/headless-run}"
 OUT="$ROOT/docs/screenshots"
 WORK="${CURLEW_SHOTS_DEMO:-/tmp/curlew-demo-shots}"
 
+# Window sizes: 900x640 for every wide motif (canvas 932x672 with the shadow, so every file stays within
+# Flathub's 1000x700), 360x740 for phone width. The empty-state motifs use the phone width because on
+# the wide window the Accounts dialog covers half of the empty page behind it.
 # motif | window size (logical) | data set | extra environment
 # data set: demo = the demo data, off = same with every protocol and switch off,
 #           paused = the demo with the WhatsApp account paused,
 #           empty = no accounts, no index (the Accounts dialog with its daemon banner).
 MOTIFS=(
-  "conversations|900x640|demo|"
+  "conversations|900x640|demo|CURLEW_WINDOW_OPEN=c2"
   "conversation|900x640|demo|CURLEW_WINDOW_OPEN=c1"
   "conversation-narrow|360x740|demo|CURLEW_WINDOW_OPEN=c1"
   "conversations-narrow|360x740|demo|"
-  "contact|900x700|demo|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_OPEN_CONTACT=1"
-  "group|900x700|demo|CURLEW_WINDOW_OPEN=c4 CURLEW_WINDOW_OPEN_CONTACT=1"
+  "contact|900x640|demo|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_OPEN_CONTACT=1"
+  "group|900x640|demo|CURLEW_WINDOW_OPEN=c4 CURLEW_WINDOW_OPEN_CONTACT=1"
   "preferences|900x640|demo|CURLEW_WINDOW_OPEN_PREFERENCES=1"
   "preferences-off|900x640|off|CURLEW_WINDOW_OPEN_PREFERENCES=1"
   "accounts|900x640|demo|CURLEW_WINDOW_OPEN_ACCOUNTS=1"
-  "accounts-off|900x640|off|CURLEW_WINDOW_OPEN_ACCOUNTS=1"
-  "accounts-empty|900x640|empty|CURLEW_WINDOW_OPEN_ACCOUNTS=1"
+  "accounts-off|360x740|off|CURLEW_WINDOW_OPEN_ACCOUNTS=1"
+  "accounts-empty|360x740|empty|CURLEW_WINDOW_OPEN_ACCOUNTS=1"
   "protocols|900x640|demo|CURLEW_WINDOW_OPEN_PROTOCOLS=1"
   "protocols-off|900x640|off|CURLEW_WINDOW_OPEN_PROTOCOLS=1"
   "agent-access|900x640|demo|CURLEW_WINDOW_OPEN_ACCESS=1"
@@ -39,7 +42,7 @@ MOTIFS=(
   "composer-emoji|900x640|demo|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_OPEN_EMOJI=1"
   "reactions|900x640|demo|CURLEW_WINDOW_OPEN=c25"
   "reactions-narrow|360x740|demo|CURLEW_WINDOW_OPEN=c25"
-  "contact-merged|900x700|demo|CURLEW_WINDOW_OPEN=c3 CURLEW_WINDOW_OPEN_CONTACT=1"
+  "contact-merged|900x640|demo|CURLEW_WINDOW_OPEN=c3 CURLEW_WINDOW_OPEN_CONTACT=1"
   "account-paused|900x640|paused|CURLEW_WINDOW_OPEN_ACCOUNT=whatsapp/whatsapp-demo1"
 )
 

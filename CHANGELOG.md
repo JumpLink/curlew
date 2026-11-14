@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- The Accounts dialog no longer breaks an address in the middle of a word: the state and the Delta Chat note now sit under the address instead of beside it. The "Note to self" avatar keeps the same colour in every language, and the demo data used for the listing screenshots is English throughout (#338).
 - A mail from your other own account is a message from a person now, not from you: the thread shows that address, can be answered, and is no longer "You" on both sides. Own addresses are matched per account.
 - A paused GNOME Online Accounts mail account now shows as paused in the Accounts dialog.
 - `curlew send --email-chat` can no longer bypass the per-account Delta Chat opt-in: the send itself refuses an account that has not switched on "Use for Delta Chat" and says where. The refusal when AI access is off now names the switch (Preferences → AI, or `ui.ai` in the config), and `docs/guide/cli.md` explains it.
