@@ -91,6 +91,7 @@
 
 ### Added
 
+- `curlew send --email-chat` sends a mail as an email chat message (Delta Chat style), so the chat path can be tried from the command line.
 - The message field has an emoji button that opens GTK's emoji chooser and inserts the emoji at the cursor, in every protocol's thread; it is hidden while the field is read-only.
 - The Protocols page has a "Delta Chat" row next to "Mail": off until a mail account is opted in, a dialog asks for which accounts, the subtitle counts them, and it is greyed with the reason while Mail is off.
 - Signal: Curlew now sends files into a chat a `signal.send` grant names. The file is encrypted on this computer, uploaded to Signal's file server and sent as an attachment; the text becomes its caption. The protocol table and ADR 0010 say so.

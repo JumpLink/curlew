@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-14 06:22+0100\n"
+"POT-Creation-Date: 2026-11-14 06:36+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1466,17 +1466,23 @@ msgstr ""
 msgid "Mail only: the subject line"
 msgstr ""
 
-#: app/src/frontends/cli/send.ts:37
+#: app/src/frontends/cli/send.ts:35
+msgid ""
+"Mail only: send as an email chat message (Delta Chat style, adds Chat-"
+"Version)"
+msgstr ""
+
+#: app/src/frontends/cli/send.ts:41
 msgid ""
 "Absolute path of a file to send (repeatable; mail, Telegram, Matrix, XMPP, "
 "WhatsApp)"
 msgstr ""
 
-#: app/src/frontends/cli/send.ts:42
+#: app/src/frontends/cli/send.ts:46
 msgid "Account id from `curlew accounts list`"
 msgstr ""
 
-#: app/src/frontends/cli/send.ts:47
+#: app/src/frontends/cli/send.ts:51
 msgid "Address exactly as the rule spells it (name@example.org)"
 msgstr ""
 
