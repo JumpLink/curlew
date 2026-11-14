@@ -330,6 +330,37 @@ jobs:
           flatpak install --system -y --noninteractive --bundle eu.jumplink.curlew-*.flatpak
           flatpak run --command=curlew eu.jumplink.curlew --version
           flatpak run --command=curlew eu.jumplink.curlew conversations list
+          # ADR 0016 needs libportal: prove the GNOME runtime ships the Xdp typelib.
+          flatpak run --command=gjs eu.jumplink.curlew -c "imports.gi.versions.Xdp='1.0'; imports.gi.Xdp; print('Xdp ok')"
+
+      # Findings go to the job log; they do not fail the job yet (Flathub readiness, B1).
+      - name: Find the generated manifest
+        id: manifest
+        run: |
+          set -eu
+          m=$(find app/ship -name 'eu.jumplink.curlew*.json' -o -name 'eu.jumplink.curlew*.y*ml' | grep -v '/stage/' | head -1)
+          echo "manifest: ${m:-none}"
+          echo "path=$m" >> "$GITHUB_OUTPUT"
+          r=$(find app/ship -type d -name repo | head -1)
+          echo "repo: ${r:-none}"
+          echo "repo=$r" >> "$GITHUB_OUTPUT"
+
+      - name: Lint the manifest and the repo (informational)
+        continue-on-error: true
+        run: |
+          command -v flatpak-builder-lint || echo "flatpak-builder-lint missing"
+          if [ -n "${{ steps.manifest.outputs.path }}" ]; then
+            flatpak-builder-lint manifest "${{ steps.manifest.outputs.path }}" || true
+          fi
+          if [ -n "${{ steps.manifest.outputs.repo }}" ]; then
+            flatpak-builder-lint repo "${{ steps.manifest.outputs.repo }}" || true
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ steps.manifest.outputs.path != '' }}
+        with:
+          name: flatpak-manifest
+          path: ${{ steps.manifest.outputs.path }}
 
       - uses: actions/upload-artifact@v4
         with:
