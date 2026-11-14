@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Notices in a conversation ("Copied", send errors, …) now appear above the message box instead of sliding in behind it.
 - The background service no longer stops receiving WhatsApp and Signal about 20 seconds after it starts: its own mail and chat sync took the receive lease the service was holding and removed it when done, so the service saw its accounts as taken and exited. The sync now leaves a running service's accounts alone, and an account whose lease is taken over waits and takes it back instead of stopping for good.
 - Adding an account on a phone-sized screen: the terms notice no longer runs off the right edge (the "I accept the risk" line now wraps), a protocol this build cannot run here — Signal on ARM64 Linux — says so before the terms instead of failing after you accepted them, WhatsApp offers "Scan a QR Code Instead" as a button next to the phone-number field, and XMPP offers "Discover Automatically" for the server. The "Linked" message no longer names a terminal command.
 - The window no longer tells you to run `curlew sync` or `curlew setup`: the empty conversation list explains itself, "Start" in the Accounts dialog installs the background service when it is missing, and the banner only appears when an account needs that service.

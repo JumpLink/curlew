@@ -289,7 +289,9 @@ export function createConversationView(
   });
   content.append(chatBanner);
   content.append(backdrop);
-  const overlay = new Adw.ToastOverlay({ child: content });
+  // Toasts sit over the whole page, bottom bar included: inside the content they would slide in
+  // beneath the floating composer, which covers the content's bottom edge.
+  const overlay = new Adw.ToastOverlay();
   const files = createComposerFiles({
     parent: () => (page.get_root() as Gtk.Window | null) ?? null,
     toast: (text) => overlay.add_toast(new Adw.Toast({ title: text, timeout: 4 })),
@@ -328,14 +330,15 @@ export function createConversationView(
   const toolbar = new Adw.ToolbarView({ extendContentToBottomEdge: true });
   toolbar.add_top_bar(header);
   toolbar.add_bottom_bar(compose);
-  toolbar.set_content(overlay);
+  toolbar.set_content(content);
   // The header stays solid, as in Telegram, so a message never runs under its title. The composer
   // floats, so the last message must be able to scroll clear of it (ADR 0013).
   toolbar.connect('notify::bottom-bar-height', () =>
     history.set_margin_bottom(toolbar.get_bottom_bar_height()),
   );
   const page = new Adw.NavigationPage({ title: _('Conversation'), tag: 'content' });
-  page.set_child(toolbar);
+  overlay.set_child(toolbar);
+  page.set_child(overlay);
 
   const adjustment = scroller.get_vadjustment();
 
