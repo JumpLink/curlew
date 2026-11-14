@@ -30,6 +30,10 @@ export const sendCommand: CommandModule = {
         type: 'string',
         describe: _('Mail only: the subject line'),
       })
+      .option('email-chat', {
+        type: 'boolean',
+        describe: _('Mail only: send as an email chat message (Delta Chat style, adds Chat-Version)'),
+      })
       .option('attach', {
         type: 'string',
         array: true,
@@ -54,6 +58,7 @@ export const sendCommand: CommandModule = {
         to: String(raw.to),
         text: raw.text === undefined ? undefined : String(raw.text),
         subject: raw.subject === undefined ? undefined : String(raw.subject),
+        ...(raw['email-chat'] === true ? { emailChat: true } : {}),
         imageUrl: raw['image-url'] === undefined ? undefined : String(raw['image-url']),
         attachments: Array.isArray(raw.attach) && raw.attach.length > 0 ? raw.attach.map(String) : undefined,
         frontend: 'cli',
