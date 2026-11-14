@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-14 18:17+0100\n"
+"POT-Creation-Date: 2026-11-14 20:16+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -237,7 +237,7 @@ msgstr ""
 "Kein Backend ist aktiviert — `curlew backends list` zeigt sie an, `backends "
 "enable <name>` schaltet eines ein"
 
-#: app/src/core/actions/index-sync.ts:308
+#: app/src/core/actions/index-sync.ts:317
 msgid ""
 "backend {name} uses the {kind} driver, which this curlew cannot sync yet"
 msgstr ""
