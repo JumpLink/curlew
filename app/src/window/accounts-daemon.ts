@@ -10,7 +10,8 @@ import { _, fmt } from '@curlew/protocol';
 
 import { demoActive } from '../core/demo/active.ts';
 import { DEMO_ACCOUNTS } from '../core/demo/accounts.ts';
-import { UNIT_NAME } from '../core/actions/setup-unit.ts';
+import { detectSetup, nodeHost, systemdUserUnitDir, writeFileEnsured } from '../core/actions/setup-host.ts';
+import { renderUnit, UNIT_NAME, unitFilePath, unitPathsFor } from '../core/actions/setup-unit.ts';
 import { portalAutostart } from '../core/lib/autostart-portal.ts';
 import { inSandbox } from '../core/lib/sandbox.ts';
 import { backgroundService } from '../core/platform.ts';
@@ -44,33 +45,71 @@ export function restartDaemonIfRunning(): void {
   }
 }
 
-/**
- * Start the background service. Resolves with an error when there is no unit to start (the user
- * has not run `curlew setup`); on success the bus watch reports the daemon as present.
- */
-export function startDaemon(): Promise<void> {
-  if (demoActive()) return Promise.resolve();
-  // Nothing to start: the window receives while it is open.
-  if (backgroundService() === 'while-open') return Promise.resolve();
-  if (inSandbox()) return startDaemonThroughPortal();
-  return new Promise((resolve, reject) => {
+/** Run `systemctl --user` and resolve with whether it succeeded, plus what it said on stderr. */
+function systemctl(args: string[]): Promise<{ ok: boolean; reason: string }> {
+  return new Promise((resolve) => {
     try {
-      const process = Gio.Subprocess.new(
-        ['systemctl', '--user', 'start', UNIT_NAME],
-        Gio.SubprocessFlags.STDERR_SILENCE,
-      );
-      process.wait_check_async(null, (_source, result) => {
+      const process = Gio.Subprocess.new(['systemctl', '--user', ...args], Gio.SubprocessFlags.STDERR_PIPE);
+      process.communicate_utf8_async(null, null, (_source, result) => {
         try {
-          process.wait_check_finish(result);
-          resolve();
-        } catch {
-          reject(new Error(_('Could not start the background service. Run “curlew setup” first.')));
+          const [, , stderr] = process.communicate_utf8_finish(result);
+          resolve({ ok: process.get_successful(), reason: (stderr ?? '').trim() });
+        } catch (error) {
+          resolve({ ok: false, reason: (error as Error).message });
         }
       });
-    } catch {
-      reject(new Error(_('Could not start the background service. Run “curlew setup” first.')));
+    } catch (error) {
+      resolve({ ok: false, reason: (error as Error).message });
     }
   });
+}
+
+/** Write the user unit for this machine, the way `curlew setup` does. */
+function writeUserUnit(): void {
+  const host = nodeHost();
+  // A checkout's unit must run out of its tree (the addon path is baked in), so find it the way
+  // `curlew setup` does; anything else is a published install that runs the command.
+  let setup: { mode: 'checkout' | 'published'; checkout: string | null };
+  try {
+    setup = detectSetup(host);
+  } catch {
+    setup = { mode: 'published', checkout: null };
+  }
+  const paths = unitPathsFor({
+    mode: setup.mode,
+    home: host.home(),
+    checkout: setup.checkout,
+    gjsify: host.which('gjsify'),
+    bundle: host.bundlePath(),
+  });
+  writeFileEnsured(host, unitFilePath(systemdUserUnitDir(host)), renderUnit(paths));
+}
+
+/**
+ * Start the background service. When the machine has no unit yet, the window installs it, then
+ * enables and starts it; on success the bus watch reports the daemon as present.
+ */
+export async function startDaemon(): Promise<void> {
+  if (demoActive()) return;
+  // Nothing to start: the window receives while it is open.
+  if (backgroundService() === 'while-open') return;
+  if (inSandbox()) return startDaemonThroughPortal();
+  const started = await systemctl(['start', UNIT_NAME]);
+  if (started.ok) return;
+  let reason = started.reason;
+  try {
+    writeUserUnit();
+    const reloaded = await systemctl(['daemon-reload']);
+    if (!reloaded.ok) reason = reloaded.reason;
+    else {
+      const enabled = await systemctl(['enable', '--now', UNIT_NAME]);
+      if (enabled.ok) return;
+      reason = enabled.reason;
+    }
+  } catch (error) {
+    reason = (error as Error).message;
+  }
+  throw new Error(fmt(_('Could not start the background service: {reason}'), { reason }));
 }
 
 /** Inside a Flatpak the capability is "keep receiving", granted by the Background portal. */

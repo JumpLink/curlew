@@ -190,6 +190,15 @@ function mailRows(load: AccountsLoadState, daemon: AccountsDaemonState): Account
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
+/** Whether an enabled account needs the background service: any chat account, or a mail account on Delta Chat. */
+export function accountsNeedService(groups: readonly ProtocolGroup[]): boolean {
+  return groups.some((group) =>
+    group.rows.some(
+      (row) => row.status !== 'disabled' && (group.backend !== 'mail' || row.deltaChat === true),
+    ),
+  );
+}
+
 /** Build the full page state from loaded accounts and live daemon state. */
 export function buildProtocolGroups(
   load: AccountsLoadState,

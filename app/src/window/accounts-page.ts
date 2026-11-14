@@ -11,7 +11,7 @@ import { _ } from '@curlew/protocol';
 import { backgroundService, chatOnly } from '../core/platform.ts';
 import { DELTA_CHAT } from '../core/visibility.ts';
 import { protocolLabel } from './conversation-list-model.ts';
-import { accountSubtitle, avatarText } from './accounts-model.ts';
+import { accountsNeedService, accountSubtitle, avatarText } from './accounts-model.ts';
 import type { AccountRow, AccountStatus, AccountsPageState, ProtocolGroup } from './accounts-model.ts';
 
 export interface AccountsPage {
@@ -210,7 +210,7 @@ export function createAccountsPage(
     },
     show(state) {
       clearGroups();
-      banner.set_revealed(!state.daemonPresent);
+      banner.set_revealed(!state.daemonPresent && accountsNeedService(state.groups));
       for (const group of state.groups) {
         const widget = buildGroup(group, state.daemonPresent, onError, (g, row) =>
           onOpenAccount(g, row, state.daemonPresent),

@@ -3,9 +3,11 @@ import type { BackendAccount, GnomeAccount } from '@curlew/protocol';
 
 import {
   accountStatus,
+  accountsNeedService,
   accountSubtitle,
   avatarText,
   buildProtocolGroups,
+  type AccountRow,
   type AccountsDaemonState,
   type AccountsLoadState,
 } from '../../../src/window/accounts-model.ts';
@@ -306,6 +308,35 @@ export default async () => {
     it('joins the parts that exist with a middle dot', () => {
       expect(accountSubtitle(['Connected', null, 'robin@example.org'])).toBe('Connected · robin@example.org');
       expect(accountSubtitle([null, undefined, ''])).toBe('');
+    });
+  });
+
+  describe('accountsNeedService', () => {
+    const row = (over: Partial<AccountRow>) => ({
+      id: 'a',
+      label: 'a',
+      status: 'offline' as const,
+      ...over,
+    });
+    const group = (backend: string, rows: ReturnType<typeof row>[]) => ({
+      backend,
+      label: backend,
+      icon: '',
+      rows,
+      isGoa: false,
+    });
+    it('is false with no accounts', () => {
+      expect(accountsNeedService([])).toBe(false);
+    });
+    it('is false for plain mail accounts', () => {
+      expect(accountsNeedService([group('mail', [row({})])])).toBe(false);
+    });
+    it('is true for an enabled chat account or a Delta Chat mail account', () => {
+      expect(accountsNeedService([group('xmpp', [row({})])])).toBe(true);
+      expect(accountsNeedService([group('mail', [row({ deltaChat: true })])])).toBe(true);
+    });
+    it('ignores paused accounts', () => {
+      expect(accountsNeedService([group('xmpp', [row({ status: 'disabled' })])])).toBe(false);
     });
   });
 };

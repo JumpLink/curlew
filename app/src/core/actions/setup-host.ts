@@ -17,6 +17,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { delimiter, dirname, join } from 'node:path';
 
+import { _ } from '@curlew/protocol';
 import { homeSubdir } from '@curlew/store';
 
 import { isGjsifyShimDir } from './setup-unit.ts';
@@ -179,4 +180,33 @@ export function setupIndexPath(host: CommandRunner): string {
 export function writeFileEnsured(host: CommandRunner, path: string, text: string): void {
   host.mkdirp(dirname(path));
   host.writeFile(path, text);
+}
+
+/** Which curlew is being set up. A checkout needs gjsify and a built bundle; a published
+ * install needs neither. */
+export type SetupMode = 'checkout' | 'published';
+
+/**
+ * Which curlew this run sets up, and where it lives.
+ *
+ * A checkout runs the built bundle out of its own tree, because the native addon's absolute
+ * prebuild path is baked in at build time and a copied tree starts and then dies at the first
+ * Signal command (AGENTS.md). A published install has no tree and just runs the command. The
+ * walk starts at the working directory and stops at the first checkout above it.
+ */
+export function detectSetup(host: CommandRunner): { mode: SetupMode; checkout: string | null } {
+  let dir = host.cwd();
+  for (let i = 0; i < 8; i++) {
+    if (host.isCheckout(dir)) return { mode: 'checkout', checkout: dir };
+    const up = dir.slice(0, dir.lastIndexOf('/'));
+    if (up === '' || up === dir) break;
+    dir = up;
+  }
+  if (host.which('curlew') !== null) return { mode: 'published', checkout: null };
+  throw new Error(
+    _(
+      'neither a curlew checkout above this directory nor a `curlew` command on PATH. ' +
+        'Clone the repo and run `gjsify install`, or install the published command, then run this again.',
+    ),
+  );
 }
