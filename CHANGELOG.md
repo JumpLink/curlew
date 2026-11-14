@@ -57,6 +57,7 @@
 
 ### Changed
 
+- CI: the Flatpak job uploads the generated manifest, runs `flatpak-builder-lint` on it and on the repo, and probes the `Xdp` typelib inside the sandbox.
 - A mail thread names the account it sends from in its header, next to the protocol.
 - A voice note or audio part no longer sits in a card of its own inside the bubble: the bubble is the surface, with the play button, the seek bar, the time and the save button laid out straight in it. A message made only of media (picture, gallery, clip, voice note, file without a caption) now shows its reaction chips in a row under the bubble, on the bubble's side, instead of inside it; bubbles with text keep them inside, and the timestamp stays in the bubble.
 - Ordinary email can be switched off per mail account: on the account page (and on the Delta Chat page of the welcome screen) "Show ordinary email" off lists only the threads Delta Chat can talk, in the list, the search, the CLI and MCP. It beats the global "Show all emails", turns Delta Chat on for that account, and switching it back on restores every mail, because nothing is deleted. Protocols has the same "Show ordinary email" row for all accounts, and its text says how many accounts differ. In `config.json` the list `deltaChatAccounts` becomes `mailAccounts` (`{ "<id>": { "deltaChat": true, "plainMail": false } }`); the old key is still read and rewritten on the next save.
