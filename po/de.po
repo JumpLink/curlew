@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-14 12:31+0100\n"
+"POT-Creation-Date: 2026-11-14 12:51+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1941,13 +1941,8 @@ msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 "Ein Konto verwenden, das du in den GNOME-Einstellungen eingerichtet hast"
 
-<<<<<<< HEAD
 #: app/src/window/account-add.ts:321 app/src/window/accounts-page.ts:148
-#: app/src/window/accounts-page.ts:171 app/src/window/welcome.ts:163
-=======
-#: app/src/window/account-add.ts:321 app/src/window/accounts-page.ts:149
-#: app/src/window/accounts-page.ts:175 app/src/window/welcome.ts:163
->>>>>>> 4de27b2 (feat(window): receive while open on win32/darwin)
+#: app/src/window/accounts-page.ts:174 app/src/window/welcome.ts:163
 msgid "Add Account"
 msgstr "Konto hinzufügen"
 
@@ -2127,11 +2122,7 @@ msgstr ""
 msgid "Could not start the background service: {reason}"
 msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
-<<<<<<< HEAD
-#: app/src/window/accounts-dialog.ts:82 app/src/window/accounts-page.ts:184
-=======
-#: app/src/window/accounts-dialog.ts:82 app/src/window/accounts-page.ts:188
->>>>>>> 4de27b2 (feat(window): receive while open on win32/darwin)
+#: app/src/window/accounts-dialog.ts:82 app/src/window/accounts-page.ts:187
 #: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:175
 #: app/src/window/window.ts:130
 msgid "Accounts"
@@ -2198,33 +2189,21 @@ msgstr "Füge ein Chat-Konto hinzu."
 msgid "Add a chat account or a mail account."
 msgstr "Füge ein Chat-Konto oder ein E-Mail-Konto hinzu."
 
-<<<<<<< HEAD
-#: app/src/window/accounts-page.ts:162
-=======
-#: app/src/window/accounts-page.ts:165
+#: app/src/window/accounts-page.ts:164
 msgid "Messages arrive while Curlew is open."
 msgstr "Nachrichten kommen an, solange Curlew geöffnet ist."
 
-#: app/src/window/accounts-page.ts:166
->>>>>>> 4de27b2 (feat(window): receive while open on win32/darwin)
+#: app/src/window/accounts-page.ts:165
 msgid "The background service is not running, so chat accounts cannot connect."
 msgstr ""
 "Der Hintergrunddienst läuft nicht, daher können sich Chat-Konten nicht "
 "verbinden."
 
-<<<<<<< HEAD
-#: app/src/window/accounts-page.ts:163
+#: app/src/window/accounts-page.ts:166
 msgid "Start"
 msgstr "Starten"
 
-#: app/src/window/accounts-page.ts:177 app/src/window/conversation-list.ts:363
-=======
-#: app/src/window/accounts-page.ts:167
-msgid "Start"
-msgstr "Starten"
-
-#: app/src/window/accounts-page.ts:181 app/src/window/conversation-list.ts:363
->>>>>>> 4de27b2 (feat(window): receive while open on win32/darwin)
+#: app/src/window/accounts-page.ts:180 app/src/window/conversation-list.ts:363
 #: app/src/window/protocols-page.ts:227 app/src/window/welcome-model.ts:102
 #: app/src/window/welcome.ts:151
 msgid "Protocols"
