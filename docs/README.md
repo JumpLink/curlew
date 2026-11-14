@@ -36,6 +36,7 @@ Agent- and contributor-facing docs for the curlew repo. The hard rules that load
 ## Release
 
 - [`release/flathub-checklist.md`](release/flathub-checklist.md) — Flathub readiness: finish args, metainfo, icons, open blockers
+- [`release/run-through.md`](release/run-through.md) — the supervised real-window and real-Flatpak run before a release
 
 ## Decisions
 
