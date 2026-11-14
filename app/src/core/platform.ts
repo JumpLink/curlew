@@ -21,3 +21,19 @@ export function chatOnly(platform: PlatformName = currentPlatform()): boolean {
 export function backendAvailable(name: string, platform: PlatformName = currentPlatform()): boolean {
   return name !== 'mail' || !chatOnly(platform);
 }
+
+/**
+ * How receiving continues when the window is closed. `systemd` is the user unit `curlew setup`
+ * writes; `portal` is the Flatpak Background portal; `while-open` has no background service at
+ * all (Windows and macOS ship no systemd or session bus), so the window itself receives while it
+ * is open and says so. Views ask this instead of checking the platform name.
+ */
+export type BackgroundService = 'systemd' | 'portal' | 'while-open';
+
+export function backgroundService(
+  platform: PlatformName = currentPlatform(),
+  sandboxed = false,
+): BackgroundService {
+  if (chatOnly(platform)) return 'while-open';
+  return sandboxed ? 'portal' : 'systemd';
+}

@@ -976,7 +976,7 @@ msgid "no Background portal on this system"
 msgstr "Auf diesem System gibt es kein Hintergrund-Portal"
 
 #: app/src/core/lib/autostart-portal.ts:113
-#: app/src/window/accounts-daemon.ts:75
+#: app/src/window/accounts-daemon.ts:80
 msgid "Keep receiving messages while the window is closed"
 msgstr "Nachrichten weiter empfangen, während das Fenster geschlossen ist"
 
@@ -1847,8 +1847,8 @@ msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
 #: app/src/window/about.ts:16 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:180 app/src/window/window.ts:91
-#: app/src/window/window.ts:114
+#: app/src/window/conversation-view.ts:180 app/src/window/window.ts:94
+#: app/src/window/window.ts:117
 msgid "Curlew"
 msgstr "Curlew"
 
@@ -1941,8 +1941,13 @@ msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 "Ein Konto verwenden, das du in den GNOME-Einstellungen eingerichtet hast"
 
+<<<<<<< HEAD
 #: app/src/window/account-add.ts:321 app/src/window/accounts-page.ts:148
 #: app/src/window/accounts-page.ts:171 app/src/window/welcome.ts:163
+=======
+#: app/src/window/account-add.ts:321 app/src/window/accounts-page.ts:149
+#: app/src/window/accounts-page.ts:175 app/src/window/welcome.ts:163
+>>>>>>> 4de27b2 (feat(window): receive while open on win32/darwin)
 msgid "Add Account"
 msgstr "Konto hinzufügen"
 
@@ -2112,19 +2117,23 @@ msgstr ""
 msgid "Delete Messages and Remove"
 msgstr "Nachrichten löschen und entfernen"
 
-#: app/src/window/accounts-daemon.ts:62 app/src/window/accounts-daemon.ts:66
+#: app/src/window/accounts-daemon.ts:67 app/src/window/accounts-daemon.ts:71
 msgid "Could not start the background service. Run “curlew setup” first."
 msgstr ""
 "Der Hintergrunddienst ließ sich nicht starten. Führe zuerst „curlew setup“ "
 "aus."
 
-#: app/src/window/accounts-daemon.ts:78
+#: app/src/window/accounts-daemon.ts:83
 msgid "Could not start the background service: {reason}"
 msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
+<<<<<<< HEAD
 #: app/src/window/accounts-dialog.ts:82 app/src/window/accounts-page.ts:184
+=======
+#: app/src/window/accounts-dialog.ts:82 app/src/window/accounts-page.ts:188
+>>>>>>> 4de27b2 (feat(window): receive while open on win32/darwin)
 #: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:175
-#: app/src/window/window.ts:127
+#: app/src/window/window.ts:130
 msgid "Accounts"
 msgstr "Konten"
 
@@ -2189,23 +2198,39 @@ msgstr "Füge ein Chat-Konto hinzu."
 msgid "Add a chat account or a mail account."
 msgstr "Füge ein Chat-Konto oder ein E-Mail-Konto hinzu."
 
+<<<<<<< HEAD
 #: app/src/window/accounts-page.ts:162
+=======
+#: app/src/window/accounts-page.ts:165
+msgid "Messages arrive while Curlew is open."
+msgstr "Nachrichten kommen an, solange Curlew geöffnet ist."
+
+#: app/src/window/accounts-page.ts:166
+>>>>>>> 4de27b2 (feat(window): receive while open on win32/darwin)
 msgid "The background service is not running, so chat accounts cannot connect."
 msgstr ""
 "Der Hintergrunddienst läuft nicht, daher können sich Chat-Konten nicht "
 "verbinden."
 
+<<<<<<< HEAD
 #: app/src/window/accounts-page.ts:163
 msgid "Start"
 msgstr "Starten"
 
 #: app/src/window/accounts-page.ts:177 app/src/window/conversation-list.ts:363
+=======
+#: app/src/window/accounts-page.ts:167
+msgid "Start"
+msgstr "Starten"
+
+#: app/src/window/accounts-page.ts:181 app/src/window/conversation-list.ts:363
+>>>>>>> 4de27b2 (feat(window): receive while open on win32/darwin)
 #: app/src/window/protocols-page.ts:227 app/src/window/welcome-model.ts:102
 #: app/src/window/welcome.ts:151
 msgid "Protocols"
 msgstr "Protokolle"
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:131
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:134
 msgid "Agent access"
 msgstr "Agentenzugriff"
 
@@ -3325,7 +3350,7 @@ msgstr ""
 msgid "AI"
 msgstr "KI"
 
-#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:129
+#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:132
 msgid "Preferences"
 msgstr "Einstellungen"
 
@@ -3467,7 +3492,7 @@ msgid "On"
 msgstr "An"
 
 #: app/src/window/welcome.ts:109 app/src/window/welcome.ts:128
-#: app/src/window/window.ts:134
+#: app/src/window/window.ts:137
 msgid "Welcome"
 msgstr "Willkommen"
 
@@ -3527,39 +3552,39 @@ msgstr ""
 msgid "Start Using Curlew"
 msgstr "Curlew benutzen"
 
-#: app/src/window/window.ts:85
+#: app/src/window/window.ts:88
 msgid "Select a conversation"
 msgstr "Unterhaltung auswählen"
 
-#: app/src/window/window.ts:86
+#: app/src/window/window.ts:89
 msgid "Pick a conversation from the list."
 msgstr "Wähle eine Unterhaltung aus der Liste."
 
-#: app/src/window/window.ts:128
+#: app/src/window/window.ts:131
 msgid "Merge contacts…"
 msgstr "Kontakte zusammenführen…"
 
-#: app/src/window/window.ts:136
+#: app/src/window/window.ts:139
 msgid "About Curlew"
 msgstr "Über Curlew"
 
-#: app/src/window/window.ts:137
+#: app/src/window/window.ts:140
 msgid "Quit"
 msgstr "Beenden"
 
-#: app/src/window/window.ts:179
+#: app/src/window/window.ts:182
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:370
+#: app/src/window/window.ts:382
 msgid "Curlew (demo)"
 msgstr "Curlew (Demo)"
 
-#: app/src/window/window.ts:373
+#: app/src/window/window.ts:385
 msgid "Demo data — nothing here is real"
 msgstr "Demo-Daten – nichts hier ist echt"
 
-#: app/src/window/window.ts:459
+#: app/src/window/window.ts:471
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 

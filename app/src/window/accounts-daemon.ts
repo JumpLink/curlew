@@ -13,6 +13,7 @@ import { DEMO_ACCOUNTS } from '../core/demo/accounts.ts';
 import { UNIT_NAME } from '../core/actions/setup-unit.ts';
 import { portalAutostart } from '../core/lib/autostart-portal.ts';
 import { inSandbox } from '../core/lib/sandbox.ts';
+import { backgroundService } from '../core/platform.ts';
 import {
   DAEMON_BUS_NAME,
   DAEMON_INTERFACE,
@@ -32,6 +33,8 @@ export interface AccountsDaemonSource {
 /** The daemon reads its account list once at start, so a change to it takes effect on a restart. */
 export function restartDaemonIfRunning(): void {
   if (demoActive()) return;
+  // No systemd to ask: the window's own receive loop reads the account list when it starts.
+  if (backgroundService() === 'while-open') return;
   // A sandbox has no systemd: the Background portal starts the daemon at the next login.
   if (inSandbox()) return;
   try {
@@ -47,6 +50,8 @@ export function restartDaemonIfRunning(): void {
  */
 export function startDaemon(): Promise<void> {
   if (demoActive()) return Promise.resolve();
+  // Nothing to start: the window receives while it is open.
+  if (backgroundService() === 'while-open') return Promise.resolve();
   if (inSandbox()) return startDaemonThroughPortal();
   return new Promise((resolve, reject) => {
     try {
