@@ -5,6 +5,8 @@
 ### Fixed
 
 - A Matrix account that needs a new login no longer tells you to run `curlew accounts add matrix`; it points to Accounts (#375).
+- The terms notices of Telegram, Signal and WhatsApp are short, translatable and fit a phone-sized dialog: two to four sentences on what can happen to the account, no grant names, the details behind the terms link. The German catalogue is complete again, with no fuzzy or untranslated entry (#378, #334).
+
 - WhatsApp reactions made before an account was linked now show: the history WhatsApp sends on linking carries each reaction inside the message it belongs to, and those were skipped.
 - Notices in a conversation ("Copied", send errors, …) now appear above the message box instead of sliding in behind it.
 - The background service no longer stops receiving WhatsApp and Signal about 20 seconds after it starts: its own mail and chat sync took the receive lease the service was holding and removed it when done, so the service saw its accounts as taken and exited. The sync now leaves a running service's accounts alone, and an account whose lease is taken over waits and takes it back instead of stopping for good.

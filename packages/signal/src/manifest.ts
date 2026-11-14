@@ -5,7 +5,7 @@
  * terms notice is shown before any Signal code — and the native addon — is loaded.
  */
 
-import { type BackendManifest, PLUGIN_API_VERSION } from '@curlew/protocol';
+import { _, type BackendManifest, PLUGIN_API_VERSION } from '@curlew/protocol';
 
 export const SIGNAL_MANIFEST: BackendManifest = {
   name: 'signal',
@@ -46,8 +46,13 @@ export const SIGNAL_MANIFEST: BackendManifest = {
   // serialises a send through the receive lease, and refuses while the daemon holds the account.
   sendSharesReceiveState: true,
   terms: {
-    summary:
-      'curlew connects to Signal as a linked device (like Signal Desktop), using libsignal, the Rust library the official apps are built on. Signal does not offer an API and does not license third-party clients: curlew is not an official Signal client, and Signal does not support it. Independent clients of this kind (signal-cli, Flare, Whisperfish) exist and are used without known account bans, but Signal could block them at any time. curlew reads your messages, and writes only where you granted it: it sends a message, with files if you attach any, into a chat a `signal.send` grant names, and nothing else — no read receipts, no typing indicators (it does acknowledge delivery, as every linked device must). It downloads a received file only when you open it, from the Signal CDN. Signal keeps no server archive, so what curlew receives exists only in its local index, and Signal unlinks a linked device that stays offline for too long.',
+    // A getter: this module is evaluated before `initI18n()` on some paths, and a `_()` here
+    // would resolve once, in English, for the whole process.
+    get summary() {
+      return _(
+        'curlew connects to Signal as a linked device, like Signal Desktop. It is not an official Signal client and Signal does not support it, so Signal could block it at any time. curlew reads your messages and sends only what you tell it to. Signal keeps no archive: what curlew receives exists only on this device.',
+      );
+    },
     url: 'https://signal.org/legal/',
   },
 };

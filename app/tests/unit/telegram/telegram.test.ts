@@ -102,8 +102,8 @@ export default async () => {
       expect(TELEGRAM_MANIFEST.capabilities.subject).toBe(false);
       expect(TELEGRAM_MANIFEST.capabilities.edits && TELEGRAM_MANIFEST.capabilities.readReceipts).toBe(true);
       expect(TELEGRAM_MANIFEST.addressKinds.join(',')).toBe('telegram,phone');
-      expect(TELEGRAM_MANIFEST.terms?.summary.includes('api_id')).toBe(true);
-      expect(TELEGRAM_MANIFEST.terms?.summary.includes('Use Your Own API Credentials')).toBe(true);
+      expect(TELEGRAM_MANIFEST.terms?.summary.includes('API credentials')).toBe(true);
+      expect(TELEGRAM_MANIFEST.terms?.summary.includes('banned by Telegram')).toBe(true);
       // The window shows this text: it must not send anyone to a terminal.
       expect(TELEGRAM_MANIFEST.terms?.summary.includes('curlew accounts')).toBe(false);
     });

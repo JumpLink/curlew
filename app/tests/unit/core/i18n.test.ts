@@ -240,7 +240,7 @@ export default async () => {
       } finally {
         setCatalogue(undefined);
       }
-      expect(TELEGRAM_MANIFEST.terms?.summary.includes('api_id')).toBe(true);
+      expect(TELEGRAM_MANIFEST.terms?.summary.includes('API credentials')).toBe(true);
     });
 
     await it('translates the manifest terms through their getter', async () => {
