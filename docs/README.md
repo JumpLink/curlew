@@ -8,6 +8,10 @@ Agent- and contributor-facing docs for the curlew repo. The hard rules that load
 - [`project/package-layout.md`](project/package-layout.md) — package map, import rules, the `*.gjs.ts` split
 - [`project/runtime.md`](project/runtime.md) — build, test and run commands; gjsify workspace rules
 
+## Android
+
+- [`android/target-gap.md`](android/target-gap.md) — measured gaps of the NativeScript target (widgets, enums, namespaces), the measuring command
+
 ## Guide
 
 - [`guide/protocols.md`](guide/protocols.md) — per-protocol setup, terms and behaviour, sending grants, end-to-end encryption
