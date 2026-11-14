@@ -82,6 +82,14 @@
         ]
       },
       "typelibPackages": {
+        "Xdp-1.0": {
+          "deb": "gir1.2-xdp-1.0",
+          "rpm": "libportal"
+        },
+        "XdpGtk4-1.0": {
+          "deb": "gir1.2-xdpgtk4-1.0",
+          "rpm": "libportal-gtk4"
+        },
         "EBook-1.2": {
           "deb": "gir1.2-ebook-1.2",
           "rpm": "evolution-data-server"
