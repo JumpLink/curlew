@@ -38,6 +38,21 @@ export function accountSubtitle(parts: ReadonlyArray<string | null | undefined>)
   return parts.filter((part): part is string => !!part).join(' · ');
 }
 
+/**
+ * The text an account avatar takes its initials from. Adw.Avatar uses the first character of the
+ * first two words, so syntax would become an initial: a leading "@" or "+", or a note in
+ * parentheses ("Robin (Signal)" gave "R(").
+ */
+export function avatarText(label: string): string {
+  const text = label
+    .replace(/\([^)]*\)/g, ' ')
+    .split(/\s+/)
+    .map((word) => word.replace(/^[^\p{L}\p{N}]+/u, ''))
+    .filter((word) => word !== '')
+    .join(' ');
+  return text || label;
+}
+
 export interface ProtocolGroup {
   backend: string;
   label: string;

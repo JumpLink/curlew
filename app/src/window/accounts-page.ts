@@ -11,7 +11,7 @@ import { _ } from '@curlew/protocol';
 import { chatOnly } from '../core/platform.ts';
 import { DELTA_CHAT } from '../core/visibility.ts';
 import { protocolLabel } from './conversation-list-model.ts';
-import { accountSubtitle } from './accounts-model.ts';
+import { accountSubtitle, avatarText } from './accounts-model.ts';
 import type { AccountRow, AccountStatus, AccountsPageState, ProtocolGroup } from './accounts-model.ts';
 
 export interface AccountsPage {
@@ -69,8 +69,7 @@ function buildRow(row: AccountRow, daemonPresent: boolean, onOpen: (() => void) 
   widget.add_prefix(
     new Adw.Avatar({
       size: 36,
-      // A leading "@" or "+" is syntax, not part of the name, and would become the initial.
-      text: row.label.replace(/^[@+\s]+/, '') || row.label,
+      text: avatarText(row.label),
       showInitials: true,
       valign: Gtk.Align.CENTER,
     }),
