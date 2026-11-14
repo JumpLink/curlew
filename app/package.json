@@ -85,19 +85,19 @@
       "typelibPackages": {
         "EBook-1.2": {
           "deb": "gir1.2-ebook-1.2",
-          "rpm": "evolution-data-server-libs"
+          "rpm": "evolution-data-server"
         },
         "EBookContacts-1.2": {
           "deb": "gir1.2-ebookcontacts-1.2",
-          "rpm": "evolution-data-server-libs"
+          "rpm": "evolution-data-server"
         },
         "ECal-2.0": {
           "deb": "gir1.2-ecal-2.0",
-          "rpm": "evolution-data-server-libs"
+          "rpm": "evolution-data-server"
         },
         "EDataServer-1.2": {
           "deb": "gir1.2-edataserver-1.2",
-          "rpm": "evolution-data-server-libs"
+          "rpm": "evolution-data-server"
         },
         "Goa-1.0": {
           "deb": "gir1.2-goa-1.0",

@@ -429,17 +429,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - image: debian:stable
+          - image: debian:testing
             install: apt-get update -qq && apt-get install -y ./curlew_*.deb
-          - image: ubuntu:24.04
+          - image: ubuntu:26.04
             install: apt-get update -qq && apt-get install -y ./curlew_*.deb
           - image: fedora:latest
             install: dnf install -y ./curlew-*.rpm
     runs-on: ubuntu-latest
-    # Known packaging gaps (declared dependencies the distributions do not provide: gjs >= 1.86 on
-    # Debian stable/Ubuntu 24.04, `evolution-data-server-libs` on Fedora). They are real findings
-    # for gjsify's dependency metadata, so the job still reports them without blocking the PR.
-    continue-on-error: true
+    # The packages need gjs >= 1.86 (GNOME 49), so the oldest images that can install them are
+    # Debian testing and Ubuntu 26.04; Debian stable and Ubuntu 24.04 cannot.
     container:
       image: ${{ matrix.image }}
     steps:
