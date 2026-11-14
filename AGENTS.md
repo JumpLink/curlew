@@ -7,8 +7,10 @@ layer and wins where they differ.
 
 ## What this is
 
-Mail (IMAP), contacts (CardDAV) and calendar (CalDAV) through GNOME Online Accounts, as a CLI and
-MCP server. TypeScript monorepo running on GJS via gjsify. Details:
+A messenger: one chat per person across Telegram, Signal, WhatsApp, Matrix, XMPP and mail (IMAP,
+with Delta Chat style email chats). Mail, contacts and calendar come through GNOME Online Accounts
+(Linux only); Windows and macOS are chat-only. A CLI and an opt-in MCP server expose the same
+core. TypeScript monorepo running on GJS via gjsify. Details:
 [`docs/project/overview.md`](docs/project/overview.md).
 
 The index and MCP server are **read-only and fail-closed**. IMAP uses `BODY.PEEK` only; no flag

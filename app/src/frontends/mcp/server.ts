@@ -1,5 +1,5 @@
 /**
- * Curlew MCP server — mail, contacts and calendar from GNOME Online Accounts, over stdio.
+ * Curlew MCP server — messages, mail, contacts and calendar from the local index, over stdio.
  *
  * The server is read-only unless a grant names a write, and `applyGrantGate` ENFORCES that rather
  * than trusting it: a tool must carry `readOnlyHint: true` or declare a capability that is

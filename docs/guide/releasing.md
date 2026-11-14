@@ -2,22 +2,22 @@
 
 
 A tag `v*` pushed to the repo (`git tag v0.2.0 && git push --tags`) builds every
-installable format and attaches them to a GitHub release:
-[`.deb`/`.rpm`](../../.github/workflows/ci.yml) and [macOS (arm64 + x64) /
-Windows (x64)](../../.github/workflows/ci.yml) packages, via
-[`release.yml`](../../.github/workflows/release.yml). `workflow_dispatch` re-cuts
-artifacts for an existing tag without moving it (`tag` + `publish` inputs).
+installable format and attaches them to a **draft** GitHub release:
+[`.deb`/`.rpm`](../../.github/workflows/ci.yml), the Flatpak, and [macOS (arm64 + x64) /
+Windows (x64)](../../.github/workflows/ci.yml) packages, plus a `SHA256SUMS` file, via
+[`release.yml`](../../.github/workflows/release.yml). The release notes are the version's section
+of [`CHANGELOG.md`](../../CHANGELOG.md), not generated notes. Read the draft, then publish it by
+hand. `workflow_dispatch` re-cuts artifacts for an existing tag without moving it (`tag` +
+`publish` inputs); on an existing release it replaces the files (`gh release upload --clobber`).
 
 **GOA and Evolution Data Server are Linux-only.** The macOS and Windows
-packages still build and ship — they carry the same `curlew` CLI and MCP
-server — but every account backend (mail, contacts, calendar; also the
-chat/delivery backends that depend on `@curlew/gnome` for credentials)
-reports itself unavailable on those two platforms, because the GObject-
-Introspection libraries GOA/EDS need do not exist there. Today that is the
-honest state of the macOS/Windows artifacts: a working binary with no
-working account source. Closing that gap — a platform-native credential
-and sync layer for macOS/Windows — is open work, not a bug in these
-packages.
+packages are chat-only ([`platform.ts`](../../app/src/core/platform.ts)): the
+chat protocols (Telegram, Signal, WhatsApp, Matrix, XMPP) run there, with
+their own logins. Mail, contacts and calendar do not, because they need
+GNOME Online Accounts or Evolution Data Server, and the GObject-
+Introspection libraries those need do not exist on macOS or Windows. A
+platform-native credential and sync layer for mail, contacts and calendar
+is open work, not a bug in these packages.
 
 ### Flatpak
 
@@ -63,9 +63,10 @@ gjsify install --os win32 --cpu x64 --immutable
 gjsify install   # back to the plain install afterwards
 ```
 
-Unsigned on both macOS and Windows, by design (ADR 0024 § A13 in gjsify) —
-a legitimate deliverable, not a placeholder. Where signing would attach, on
-a runner that holds the identity:
+Signing status: the macOS and Windows packages are **unsigned today**. No
+signing identity is wired into the release workflow yet (gjsify ADR 0024 § A13
+describes the unsigned deliverable). Expect Gatekeeper and SmartScreen
+warnings. Where signing would attach, on a runner that holds the identity:
 
 - macOS — `gjsify ship darwin --arch <arch> --skip-build --target macos-app-zip --sign <identity>` (Developer ID; `--notarize <keychain-profile>` on top)
 - Windows — same shape, `--sign <certificate thumbprint or PFX path>` reaching `signtool` (unverified upstream: no gjsify run has invoked it)
