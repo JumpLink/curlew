@@ -24,7 +24,6 @@
     "test:mcp": "node tests/integration/mcp-gjs-smoke.mjs",
     "test:send-fd-dbus": "gjsify build tests/integration/daemon-send-fd-dbus.ts --app gjs --outfile dist/daemon-send-fd-dbus.gjs.mjs && dbus-run-session -- gjsify run dist/daemon-send-fd-dbus.gjs.mjs",
     "test:notifications-dbus": "gjsify build tests/integration/message-notifications-dbus.ts --app gjs --outfile dist/message-notifications-dbus.gjs.mjs && dbus-run-session -- gjsify run dist/message-notifications-dbus.gjs.mjs",
-    "test:autostart-dbus": "gjsify build tests/integration/autostart-portal-dbus.ts --app gjs --outfile dist/autostart-portal-dbus.gjs.mjs && dbus-run-session -- gjsify run dist/autostart-portal-dbus.gjs.mjs",
     "test:access-dbus": "gjsify build tests/integration/daemon-access-dbus.ts --app gjs --outfile dist/daemon-access-dbus.gjs.mjs && dbus-run-session -- gjsify run dist/daemon-access-dbus.gjs.mjs",
     "test:relocation": "node tests/integration/bundle-relocation.mjs",
     "test:telegram-network": "gjsify build tests/integration/telegram-handshake.ts --app gjs --outfile dist/telegram-handshake.gjs.mjs && gjsify run dist/telegram-handshake.gjs.mjs",
@@ -222,6 +221,8 @@
     "typescript": "^6.0.3",
     "@girs/adw-1": "^4.1.0",
     "@girs/gtk-4.0": "^4.1.0",
+    "@girs/xdp-1.0": "^5.4.0",
+    "@girs/xdpgtk4-1.0": "^5.4.0",
     "@girs/gst-1.0": "^5.4.0"
   }
 }

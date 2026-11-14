@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-14 12:51+0100\n"
+"POT-Creation-Date: 2026-11-14 13:01+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -808,28 +808,15 @@ msgstr ""
 msgid "Deny"
 msgstr ""
 
-#: app/src/core/lib/autostart-portal.ts:37
-msgid "no session bus"
-msgstr ""
-
-#: app/src/core/lib/autostart-portal.ts:63
+#: app/src/core/lib/autostart-portal-model.ts:29
 msgid "declined in the permission dialog"
 msgstr ""
 
-#: app/src/core/lib/autostart-portal.ts:64
-msgid "the portal did not allow it"
-msgstr ""
-
-#: app/src/core/lib/autostart-portal.ts:69
-msgid "the portal did not answer"
-msgstr ""
-
-#: app/src/core/lib/autostart-portal.ts:95
+#: app/src/core/lib/autostart-portal-model.ts:34
 msgid "no Background portal on this system"
 msgstr ""
 
-#: app/src/core/lib/autostart-portal.ts:113
-#: app/src/window/accounts-daemon.ts:80
+#: app/src/core/lib/autostart-portal.ts:84 app/src/window/accounts-daemon.ts:80
 msgid "Keep receiving messages while the window is closed"
 msgstr ""
 
