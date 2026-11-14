@@ -15,18 +15,21 @@ import {
   type BackendContext,
   type ChatBackend,
   type ChatSession,
+  chooseOption,
   fmt,
   type MessageSender,
   type SendBackend,
+  notifyQr,
   type SendPermit,
 } from '@curlew/protocol';
 import { removeSecretFiles, SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
-import type { LoginPrompts, TelegramApi, TelegramClientHandle } from './api.ts';
+import type { LoginMethod, LoginPrompts, TelegramApi, TelegramClientHandle } from './api.ts';
 import { isOwnChatId, listSessionAccounts, sessionPath } from './accounts.ts';
 import { type ClientFactory, createMtcuteClient, sessionGone } from './client.ts';
 import { embeddedCredentials, resolveCredentials, type TelegramCredentials } from './credentials.ts';
 import { loginTelegram } from './login.ts';
+import { renderQr } from './qr.ts';
 import { TELEGRAM_MANIFEST } from './manifest.ts';
 import { TelegramAttachments } from './attachments.ts';
 import { TelegramAvatars } from './avatars.ts';
@@ -77,9 +80,41 @@ function withStoreClose(client: TelegramClientHandle, store: SecretStore): Teleg
   };
 }
 
-/** Telegram's three login questions, asked through whatever frontend is running. */
+/** Telegram's login questions, asked through whatever frontend is running. */
 export function telegramPrompts(prompter: AccountPrompter): LoginPrompts {
   return {
+    method: (offerOwnCredentials) =>
+      chooseOption<LoginMethod>(prompter, _('How do you want to log in to Telegram?'), [
+        {
+          id: 'phone',
+          title: _('Phone Number and Code'),
+          subtitle: _('Telegram sends a code to your other devices or by SMS'),
+        },
+        {
+          id: 'qr',
+          title: _('Scan a QR Code'),
+          subtitle: _('With the Telegram app on another device'),
+        },
+        ...(offerOwnCredentials
+          ? [
+              {
+                id: 'own-credentials' as const,
+                title: _('Use Your Own API Credentials'),
+                // TRANSLATORS: `api_id` and `api_hash` are Telegram's own field names — do not translate them.
+                subtitle: _('For advanced users: an api_id and api_hash from my.telegram.org'),
+              },
+            ]
+          : []),
+      ]),
+    qr: (url) =>
+      notifyQr(
+        prompter,
+        url,
+        _(
+          'Scan this with the Telegram app on your phone: Settings → Devices → Link Desktop Device. (A new code appears every ~30 s.)',
+        ),
+        renderQr,
+      ),
     // TRANSLATORS: `api_id` and `api_hash` are Telegram's own field names — do not translate them,
     // the user has to recognise them on my.telegram.org.
     apiId: () => prompter.ask(_('api_id of your Telegram app (from my.telegram.org)')),

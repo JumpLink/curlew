@@ -205,6 +205,35 @@ export interface AccountPrompter {
    * what `notifyQr` does.
    */
   showQr?(data: string, instructions: string): void;
+  /**
+   * Let the user pick one of several ways to go on ("Scan a QR code", "Phone number and code").
+   * Resolves to the chosen option's `id`. Optional: a prompter without it gets the first option,
+   * which is what `chooseOption` does — so the first one must always be a way that works.
+   */
+  choose?(label: string, options: readonly LoginChoice[]): Promise<string>;
+}
+
+/** One way to go on, as `AccountPrompter.choose` offers it. */
+export interface LoginChoice {
+  readonly id: string;
+  readonly title: string;
+  /** One sentence on what this way needs ("Needs the Telegram app on another device"). */
+  readonly subtitle?: string;
+}
+
+/** Ask the user to pick an option when this prompter can, else take the first. */
+export async function chooseOption<T extends string>(
+  prompter: AccountPrompter,
+  label: string,
+  options: readonly (LoginChoice & { readonly id: T })[],
+): Promise<T> {
+  const first = options[0];
+  if (!first) throw new Error('chooseOption needs at least one option');
+  if (options.length === 1 || !prompter.choose) return first.id;
+  const picked = await prompter.choose(label, options);
+  const match = options.find((option) => option.id === picked);
+  if (!match) throw new Error(`not one of the offered options: ${picked}`);
+  return match.id;
 }
 
 /** Show a QR code the best way this prompter can: as an image when it can, else as text. */

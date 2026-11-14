@@ -186,6 +186,9 @@ class LoginPage {
       case 'ask':
         this.showAsk(step);
         return;
+      case 'choose':
+        this.showChoose(step);
+        return;
       case 'qr':
         this.showQr(step.data, step.instructions);
         return;
@@ -221,6 +224,25 @@ class LoginPage {
       entry.grab_focus();
       return GLib.SOURCE_REMOVE;
     });
+  }
+
+  private showChoose(step: Extract<PromptStep, { kind: 'choose' }>): void {
+    const box = column();
+    box.append(wrappedLabel(step.label, ['title-4']));
+    const list = new Gtk.ListBox({ selectionMode: Gtk.SelectionMode.NONE, cssClasses: ['boxed-list'] });
+    for (const option of step.options) {
+      const row = new Adw.ActionRow({
+        title: option.title,
+        subtitle: option.subtitle ?? '',
+        activatable: true,
+        useMarkup: false,
+      });
+      row.add_suffix(new Gtk.Image({ iconName: 'go-next-symbolic' }));
+      row.connect('activated', () => step.submit(option.id));
+      list.append(row);
+    }
+    box.append(list);
+    this.show(scrolled(box));
   }
 
   private showQr(data: string, instructions: string): void {

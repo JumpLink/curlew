@@ -297,16 +297,20 @@ export class FakeClient implements TelegramClientHandle {
     return tgMessage(chat, this.nextSentId++, 'me', file.caption ?? '');
   }
 
-  async login(prompts: LoginPrompts): Promise<TgUser> {
-    this.calls.push('login');
+  async login(prompts: LoginPrompts, method: 'phone' | 'qr' = 'phone'): Promise<TgUser> {
+    this.calls.push(method === 'qr' ? 'login:qr' : 'login');
     await this.storage.driver.load?.();
     // The auth key is the TRANSPORT key: mtcute creates it in the DH handshake on connect, before
     // anyone typed a phone number (`SessionConnection.onConnected` → `_authorize`). A login that
     // then fails still leaves it in the file — it says nothing about a sign-in.
     await this.storage.authKeys.set(2, new Uint8Array([1, 2, 3, 4, 250, 251]));
-    const phone = await prompts.phone();
-    const code = await prompts.code();
-    if (!phone || !code) throw new Error('PHONE_CODE_EMPTY');
+    if (method === 'qr') {
+      prompts.qr('tg://login?token=AAAA');
+    } else {
+      const phone = await prompts.phone();
+      const code = await prompts.code();
+      if (!phone || !code) throw new Error('PHONE_CODE_EMPTY');
+    }
     const password = await prompts.password();
     if (password !== 'correct horse') throw new Error('PASSWORD_HASH_INVALID');
     // What the sign-in itself leaves: `notifyLoggedIn` → `CurrentUserService.store` writes the

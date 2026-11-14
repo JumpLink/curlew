@@ -1,3 +1,4 @@
+import { chooseOption } from '@curlew/protocol';
 import { describe, expect, it } from '@gjsify/unit';
 
 import {
@@ -45,6 +46,45 @@ export default async () => {
       void prompter.ask('Name');
       const plain = steps[1];
       expect(plain.kind === 'ask' && plain.skip).toBe(undefined);
+    });
+
+    await it('offers a choice and resolves with the picked id, once', async () => {
+      const { steps, surface } = recorder();
+      const prompter = createSurfacePrompter(surface);
+      const options = [
+        { id: 'phone', title: 'Phone number' },
+        { id: 'qr', title: 'QR code', subtitle: 'Needs another device' },
+      ];
+      const picked = chooseOption(prompter, 'How?', options);
+      const step = steps[0];
+      if (step.kind !== 'choose') throw new Error('expected a choice');
+      expect(step.label).toBe('How?');
+      expect(step.options.length).toBe(2);
+      step.submit('qr');
+      step.submit('phone');
+      expect(await picked).toBe('qr');
+    });
+
+    await it('takes the first option when the prompter cannot choose, or there is only one', async () => {
+      const ask = async () => '';
+      const options = [
+        { id: 'a', title: 'A' },
+        { id: 'b', title: 'B' },
+      ];
+      expect(await chooseOption({ ask, notify: () => {} }, 'How?', options)).toBe('a');
+      const { steps, surface } = recorder();
+      expect(await chooseOption(createSurfacePrompter(surface), 'How?', [options[1]])).toBe('b');
+      expect(steps.length).toBe(0);
+    });
+
+    await it('refuses an answer that was not offered', async () => {
+      const choose = async () => 'z';
+      let message = '';
+      await chooseOption({ ask: async () => '', notify: () => {}, choose }, 'How?', [
+        { id: 'a', title: 'A' },
+        { id: 'b', title: 'B' },
+      ]).catch((err: Error) => (message = err.message));
+      expect(message).toMatch(/not one of the offered options/);
     });
 
     await it('answers a question only once', async () => {

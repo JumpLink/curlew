@@ -219,8 +219,20 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
     ...(live === true ? { live: mtcuteLive(client) } : {}),
     destroy: () => client.destroy(),
     connect: () => client.connect(),
-    login: async (prompts: LoginPrompts): Promise<TgUser> =>
-      client.start({
+    login: async (prompts: LoginPrompts, method: 'phone' | 'qr' = 'phone'): Promise<TgUser> => {
+      const invalidCodeCallback = (kind: 'code' | 'password') => {
+        prompts.notify(
+          kind === 'code' ? _('That code was not accepted — try again.') : _('Wrong password — try again.'),
+        );
+      };
+      if (method === 'qr') {
+        return client.start({
+          qrCodeHandler: (url) => prompts.qr(url),
+          password: () => prompts.password(),
+          invalidCodeCallback,
+        });
+      }
+      return client.start({
         phone: () => prompts.phone(),
         code: () => prompts.code(),
         password: () => prompts.password(),
@@ -232,12 +244,9 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
           // and arrives untranslated from the server.
           prompts.notify(fmt(_('Telegram sent the login code via {channel}.'), { channel: sent.type }));
         },
-        invalidCodeCallback: (kind) => {
-          prompts.notify(
-            kind === 'code' ? _('That code was not accepted — try again.') : _('Wrong password — try again.'),
-          );
-        },
-      }),
+        invalidCodeCallback,
+      });
+    },
   };
 };
 

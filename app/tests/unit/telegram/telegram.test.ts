@@ -103,7 +103,9 @@ export default async () => {
       expect(TELEGRAM_MANIFEST.capabilities.edits && TELEGRAM_MANIFEST.capabilities.readReceipts).toBe(true);
       expect(TELEGRAM_MANIFEST.addressKinds.join(',')).toBe('telegram,phone');
       expect(TELEGRAM_MANIFEST.terms?.summary.includes('api_id')).toBe(true);
-      expect(TELEGRAM_MANIFEST.terms?.summary.includes('--own-credentials')).toBe(true);
+      expect(TELEGRAM_MANIFEST.terms?.summary.includes('Use Your Own API Credentials')).toBe(true);
+      // The window shows this text: it must not send anyone to a terminal.
+      expect(TELEGRAM_MANIFEST.terms?.summary.includes('curlew accounts')).toBe(false);
     });
   });
 
@@ -777,7 +779,7 @@ export default async () => {
         const noEnv = context(dir, {});
         const factory = fakeFactory({ dialogs: [] });
         const ask = prompter(['12345', HASH, '+49 170 0000000', '12345', 'correct horse']);
-        await new TelegramBackend(noEnv, factory.create).addAccount(ask);
+        await new TelegramBackend(noEnv, factory.create, null).addAccount(ask);
         expect(ask.asked[0]).toMatch(/api_id/);
         expect(ask.asked[1]).toMatch(/api_hash.*\(secret\)$/);
         expect(factory.clients[0].credentials.apiId).toBe(12345);
@@ -825,6 +827,64 @@ export default async () => {
         const again = SecretStore.open(join(noEnv.secretsDir, 'telegram-42.db'));
         expect(again.get('curlew.api', 'source')).toBe('own');
         again.close();
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('logs in by QR code when the user picks it, with no phone question', async () => {
+      const dir = tempDir();
+      try {
+        const noEnv = context(dir, {});
+        const factory = fakeFactory({ dialogs: [] });
+        const ask = prompter(['correct horse']);
+        const offered: string[][] = [];
+        const qrs: string[] = [];
+        const choosing = Object.assign(ask, {
+          choose: async (_label: string, options: readonly { id: string }[]) => {
+            offered.push(options.map((option) => option.id));
+            return 'qr';
+          },
+          showQr: (data: string) => void qrs.push(data),
+        });
+        await new TelegramBackend(noEnv, factory.create, parseCredentials('777', EMBEDDED_HASH)).addAccount(
+          choosing,
+        );
+        expect(offered[0].join(',')).toBe('phone,qr,own-credentials');
+        expect(factory.clients[0].calls.includes('login:qr')).toBe(true);
+        expect(qrs[0]).toBe('tg://login?token=AAAA');
+        expect(ask.asked.some((label) => /Phone/.test(label))).toBe(false);
+        const store = SecretStore.open(join(noEnv.secretsDir, 'telegram-42.db'));
+        expect(store.get('curlew.api', 'source')).toBe('embedded');
+        store.close();
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('picking own credentials asks for the pair, then for the method again', async () => {
+      const dir = tempDir();
+      try {
+        const noEnv = context(dir, {});
+        const factory = fakeFactory({ dialogs: [] });
+        const ask = prompter(['12345', HASH, '+49 170 0000000', '12345', 'correct horse']);
+        const offered: string[][] = [];
+        const choosing = Object.assign(ask, {
+          choose: async (_label: string, options: readonly { id: string }[]) => {
+            offered.push(options.map((option) => option.id));
+            return offered.length === 1 ? 'own-credentials' : 'phone';
+          },
+        });
+        await new TelegramBackend(noEnv, factory.create, parseCredentials('777', EMBEDDED_HASH)).addAccount(
+          choosing,
+        );
+        expect(offered.length).toBe(2);
+        expect(offered[1].join(',')).toBe('phone,qr');
+        expect(ask.asked[0]).toMatch(/api_id/);
+        expect(factory.clients[0].credentials.apiId).toBe(12345);
+        const store = SecretStore.open(join(noEnv.secretsDir, 'telegram-42.db'));
+        expect(store.get('curlew.api', 'source')).toBe('own');
+        store.close();
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
@@ -881,8 +941,8 @@ export default async () => {
       }
     });
 
-    await it('reads the embedded pair from the build constant, none by default', async () => {
-      expect(embeddedCredentials()).toBe(null);
+    await it("reads the embedded pair from the build constant, curlew's own app by default", async () => {
+      expect(embeddedCredentials()?.apiId).toBe(355849);
       expect(embeddedCredentials('')).toBe(null);
       expect(embeddedCredentials(`777:${EMBEDDED_HASH}`)?.apiId).toBe(777);
       expect(() => embeddedCredentials('777:nothex')).toThrow(/32 hexadecimal/);

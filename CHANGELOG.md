@@ -109,6 +109,8 @@
 
 ### Added
 
+- Telegram needs nothing from my.telegram.org any more: Curlew ships the API credentials of its own registered app, and the login first asks how to sign in — phone number and code, a QR code scanned with the Telegram app on another device, or (for advanced users) your own api_id and api_hash. A login that offers several ways now shows them as a list in the window and as a numbered menu in the terminal (#373, #374).
+
 - The Accounts dialog marks mail accounts that are used for Delta Chat, and a GNOME Online Accounts mail account now has a page with Curlew's own switches (use the account, Delta Chat, ordinary email) and a button to manage its sign-in in GNOME Settings.
 - `curlew send --email-chat` sends a mail as an email chat message (Delta Chat style), so the chat path can be tried from the command line.
 - The message field has an emoji button that opens GTK's emoji chooser and inserts the emoji at the cursor, in every protocol's thread; it is hidden while the field is read-only.

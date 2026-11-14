@@ -2,10 +2,10 @@
 //
 // Two reasons it is not a plain `gjsify build` line. The second is the catalogues, down near the
 // build call. The first: a distributor (the Flatpak manifest)
-// can embed ONE Telegram api_id/api_hash pair through CURLEW_TELEGRAM_EMBEDDED_API_ID and
-// CURLEW_TELEGRAM_EMBEDDED_API_HASH. The pair becomes the compile-time constant
-// `__CURLEW_TELEGRAM_EMBEDDED__` ("<id>:<hash>") — only when both are set. CI and dev builds set
-// neither, pass no --define, and embed nothing. The values are never printed.
+// can replace curlew's own Telegram api_id/api_hash pair with one registered under its name, through
+// CURLEW_TELEGRAM_EMBEDDED_API_ID and CURLEW_TELEGRAM_EMBEDDED_API_HASH. The pair becomes the
+// compile-time constant `__CURLEW_TELEGRAM_EMBEDDED__` ("<id>:<hash>") — only when both are set.
+// Without them the build keeps `CURLEW_APP` from packages/telegram. The values are never printed.
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 

@@ -165,8 +165,19 @@ export interface TelegramLive {
   onClosed(listener: (end: { reason: string; loggedOut: boolean }) => void): void;
 }
 
+/**
+ * How a login reaches Telegram: a phone number and the code Telegram sends, or a QR code scanned
+ * by the Telegram app on another device. `own-credentials` first asks for the user's own
+ * api_id/api_hash, then for one of the other two.
+ */
+export type LoginMethod = 'phone' | 'qr' | 'own-credentials';
+
 /** What the interactive login asks the user for. Each is called only when Telegram needs it. */
 export interface LoginPrompts {
+  /** How to log in. `own-credentials` is offered only when `offerOwnCredentials` is true. */
+  method(offerOwnCredentials: boolean): Promise<LoginMethod>;
+  /** Show the QR login URL (`tg://login?token=…`); called again whenever Telegram renews it. */
+  qr(url: string): void;
   /** Your own app's api_id and api_hash — asked only when the environment does not set them. */
   apiId(): Promise<string>;
   apiHash(): Promise<string>;
@@ -218,6 +229,9 @@ export interface TelegramClientHandle extends TelegramApi {
   connect(): Promise<void>;
   /** Present only on a client made with `live: true`. */
   readonly live?: TelegramLive;
-  /** Log in (phone → code → optional 2FA password) and return the logged-in user. */
-  login(prompts: LoginPrompts): Promise<TgUser>;
+  /**
+   * Log in — phone → code, or a scanned QR code; then the 2FA password when the account has one —
+   * and return the logged-in user.
+   */
+  login(prompts: LoginPrompts, method?: 'phone' | 'qr'): Promise<TgUser>;
 }

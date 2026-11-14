@@ -2,11 +2,13 @@
  * The Telegram API credentials — an `api_id` and `api_hash` that identify the APPLICATION.
  *
  * Telegram requires every third-party client to use credentials registered at my.telegram.org.
- * The repository and CI/dev builds ship none. A packaged build MAY embed one pair, supplied by
- * its distributor at build time (`app/scripts/build-bundle.mjs`, the Flatpak manifest); a user
- * can always bring their own instead (`curlew accounts add telegram --own-credentials`).
- * Precedence: environment > the pair stored in the account's session > the embedded pair >
- * the interactive prompt. curlew never invents a pair and ships no Telegram test credentials.
+ * curlew ships the pair of its own registered app (`CURLEW_APP`), so a login needs only a phone
+ * number and code (or a QR scan). A distributor MAY replace it at build time with a pair
+ * registered under its own name (`app/scripts/build-bundle.mjs`); a user can always bring their
+ * own instead (`curlew accounts add telegram --own-credentials`). Precedence: environment > the
+ * pair stored in the account's session > the embedded pair > the interactive prompt. Telegram
+ * treats the pair as an application identifier, readable in every client binary — not a secret
+ * in the way a session is.
  *
  * Where a user's own live: in the account's SESSION file (`SecretStore`, 0600, backup tier `secret`),
  * asked for once by `curlew accounts add telegram`. The environment
@@ -31,10 +33,13 @@ export const API_ID_ENV = 'CURLEW_TELEGRAM_API_ID';
 export const API_HASH_ENV = 'CURLEW_TELEGRAM_API_HASH';
 
 /**
- * The compile-time constant `"<id>:<hash>"`, defined by `build-bundle.mjs` only when the
- * distributor supplied a pair. Undeclared at runtime in every other build, hence the `typeof`.
+ * The compile-time constant `"<id>:<hash>"`, defined by `build-bundle.mjs` only when a
+ * distributor supplied its own pair. Undeclared at runtime in every other build, hence the `typeof`.
  */
 declare const __CURLEW_TELEGRAM_EMBEDDED__: string | undefined;
+
+/** The pair of curlew's own app at my.telegram.org (short name `curlew`). */
+export const CURLEW_APP = '355849:ed17a40376d222fe342e6d76f64e8414';
 
 /** Which pair a session was created with. A session without the key predates it: `own`. */
 export type CredentialSource = 'embedded' | 'own';
@@ -101,10 +106,10 @@ export function credentialsFromEnv(env: BackendContext['env']): TelegramCredenti
   return parseCredentials(id, hash);
 }
 
-/** The pair this build embeds, or null. `raw` is injectable for tests. */
+/** The pair this build embeds: a distributor's, else curlew's own. `raw` is injectable for tests. */
 export function embeddedCredentials(
   raw: string | undefined = typeof __CURLEW_TELEGRAM_EMBEDDED__ === 'undefined'
-    ? undefined
+    ? CURLEW_APP
     : __CURLEW_TELEGRAM_EMBEDDED__,
 ): TelegramCredentials | null {
   if (!raw) return null;
