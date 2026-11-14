@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-14 20:37+0100\n"
+"POT-Creation-Date: 2026-11-14 23:15+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -3731,54 +3731,86 @@ msgid "the picture is larger than the limit of {limit} bytes"
 msgstr "das Bild ist größer als das Limit von {limit} Bytes"
 
 #: packages/matrix/src/backend.ts:61
-msgid "log in again with `curlew accounts add matrix`"
-msgstr "melde dich mit `curlew accounts add matrix` neu an"
-
-#: packages/matrix/src/backend.ts:66
-msgid "Homeserver (URL like https://matrix.example.org, or the server name)"
-msgstr "Homeserver (URL wie https://matrix.example.org oder der Servername)"
+msgid "add the account again in Accounts"
+msgstr "füge das Konto unter „Konten“ erneut hinzu"
 
 #: packages/matrix/src/backend.ts:67
-msgid "Matrix user (@name:example.org)"
-msgstr "Matrix-Benutzer (@name:example.org)"
+msgid "How do you want to log in to Matrix?"
+msgstr "Wie möchtest du dich bei Matrix anmelden?"
 
-#: packages/matrix/src/backend.ts:68 packages/xmpp/src/backend.ts:53
+#: packages/matrix/src/backend.ts:68 packages/matrix/src/backend.ts:78
+#: packages/xmpp/src/backend.ts:53
 msgid "Password"
 msgstr "Passwort"
 
-#: packages/matrix/src/backend.ts:140
+#: packages/matrix/src/backend.ts:68
+msgid "Your Matrix user and password"
+msgstr "Dein Matrix-Benutzer und dein Passwort"
+
+#: packages/matrix/src/backend.ts:71
+msgid "Access Token"
+msgstr "Zugangstoken"
+
+#: packages/matrix/src/backend.ts:72
+msgid "For servers without password login, such as matrix.org"
+msgstr "Für Server ohne Anmeldung mit Passwort, etwa matrix.org"
+
+#: packages/matrix/src/backend.ts:75
+msgid "Access token"
+msgstr "Zugangstoken"
+
+#: packages/matrix/src/backend.ts:76
+msgid "Homeserver (URL like https://matrix.example.org, or the server name)"
+msgstr "Homeserver (URL wie https://matrix.example.org oder der Servername)"
+
+#: packages/matrix/src/backend.ts:77
+msgid "Matrix user (@name:example.org)"
+msgstr "Matrix-Benutzer (@name:example.org)"
+
+#: packages/matrix/src/backend.ts:150
 msgid "no Matrix account {account} — {hint}"
 msgstr "Kein Matrix-Konto {account} — {hint}"
 
-#: packages/matrix/src/backend.ts:147
+#: packages/matrix/src/backend.ts:157
 msgid "the Matrix account file {account} is incomplete — {hint}"
 msgstr "Die Matrix-Kontodatei {account} ist unvollständig — {hint}"
 
-#: packages/matrix/src/backend.ts:208
+#: packages/matrix/src/backend.ts:218
 msgid "the Matrix account {account} is not usable ({reason}) — {hint}"
 msgstr "Das Matrix-Konto {account} ist nicht nutzbar ({reason}) — {hint}"
 
-#: packages/matrix/src/login.ts:41
+#: packages/matrix/src/login.ts:40
 msgid "the homeserver must be a URL or a server name"
 msgstr "Der Homeserver muss eine URL oder ein Servername sein"
 
 #: packages/matrix/src/login.ts:63
-msgid ""
-"{homeserver} offers no password login (only {flows}) — single sign-on is not "
-"supported yet"
-msgstr ""
-"{homeserver} bietet keine Anmeldung per Passwort (nur {flows}) — Single Sign-"
-"on wird noch nicht unterstützt"
+msgid "{homeserver} did not accept this access token"
+msgstr "{homeserver} hat diesen Zugangstoken nicht angenommen"
 
-#: packages/matrix/src/login.ts:64
+#: packages/matrix/src/login.ts:66
+msgid "{homeserver} did not say whom this access token belongs to"
+msgstr "{homeserver} hat nicht mitgeteilt, wem dieser Zugangstoken gehört"
+
+#: packages/matrix/src/login.ts:70
+msgid ""
+"this access token belongs to no device, so it cannot hold encryption keys"
+msgstr "dieser Zugangstoken gehört zu keinem Gerät und kann daher keine Schlüssel für die Verschlüsselung halten"
+
+#: packages/matrix/src/login.ts:94
+msgid ""
+"{homeserver} offers no password login (only {flows}) — choose “Access Token” "
+"instead"
+msgstr "{homeserver} bietet keine Anmeldung mit Passwort an (nur {flows}) – wähle stattdessen „Zugangstoken“"
+
+#: packages/matrix/src/login.ts:95
 msgid "nothing"
 msgstr "nichts"
 
-#: packages/matrix/src/login.ts:70
+#: packages/matrix/src/login.ts:101
 msgid "the Matrix user is empty"
 msgstr "Der Matrix-Benutzer ist leer"
 
-#: packages/matrix/src/login.ts:89
+#: packages/matrix/src/login.ts:122
 msgid "Logged in; setting up this device’s encryption keys…"
 msgstr ""
 "Angemeldet; die Verschlüsselungsschlüssel dieses Geräts werden eingerichtet …"
@@ -4868,6 +4900,9 @@ msgid ""
 msgstr ""
 "{count} Geräte von {jid} tragen diesen Fingerabdruck, er benennt also keines "
 "— nichts wurde geändert"
+
+#~ msgid "log in again with `curlew accounts add matrix`"
+#~ msgstr "melde dich mit `curlew accounts add matrix` neu an"
 
 #~ msgid "Could not start the background service. Run “curlew setup” first."
 #~ msgstr ""

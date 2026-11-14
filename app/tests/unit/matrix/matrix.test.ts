@@ -20,6 +20,7 @@ import {
   IndexedDbSnapshot,
   listAccounts,
   loadMatrixSdk,
+  loginMatrix,
   MATRIX_MANIFEST,
   MatrixBackend,
   MatrixChatSession,
@@ -584,7 +585,7 @@ export default async () => {
         } catch (err) {
           message = (err as Error).message;
         }
-        expect(message.includes('curlew accounts add matrix')).toBe(true);
+        expect(message.includes('add the account again in Accounts')).toBe(true);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
@@ -760,6 +761,71 @@ export default async () => {
         expect(api.fetched.join()).toBe(hopeless.eventId);
       } finally {
         db.close();
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('logs in with an access token: user and device come from /whoami', async () => {
+      const dir = tempDir();
+      const calls: string[] = [];
+      const homeserver = async (url: string | URL | Request, init?: RequestInit): Promise<Response> => {
+        calls.push(
+          `${init?.method ?? 'GET'} ${String(url)} ${new Headers(init?.headers).get('Authorization')}`,
+        );
+        return new Response(JSON.stringify({ user_id: ME, device_id: 'TOKENDEV' }), { status: 200 });
+      };
+      try {
+        const account = await loginMatrix(
+          { settings: {}, env: {}, secretsDir: dir },
+          {
+            method: async () => 'token',
+            token: async () => ' synthetic-token ',
+            homeserver: async () => 'https://matrix.example.org/',
+            user: async () => {
+              throw new Error('not asked');
+            },
+            password: async () => {
+              throw new Error('not asked');
+            },
+            notify: () => {},
+          },
+          fakeConnector(new FakeMatrixApi()),
+          homeserver as typeof globalThis.fetch,
+        );
+        expect(account.identity).toBe(ME);
+        expect(calls.join()).toBe(
+          'GET https://matrix.example.org/_matrix/client/v3/account/whoami Bearer synthetic-token',
+        );
+        expect(listAccounts(dir).length).toBe(1);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('refuses an access token the homeserver does not know, leaving no account', async () => {
+      const dir = tempDir();
+      let message = '';
+      try {
+        await loginMatrix(
+          { settings: {}, env: {}, secretsDir: dir },
+          {
+            method: async () => 'token',
+            token: async () => 'wrong',
+            homeserver: async () => 'https://matrix.example.org',
+            user: async () => '',
+            password: async () => '',
+            notify: () => {},
+          },
+          fakeConnector(new FakeMatrixApi()),
+          (async () => new Response('{}', { status: 401 })) as typeof globalThis.fetch,
+        );
+      } catch (err) {
+        message = (err as Error).message;
+      }
+      try {
+        expect(message.includes('did not accept this access token')).toBe(true);
+        expect(listAccounts(dir).length).toBe(0);
+      } finally {
         rmSync(dir, { recursive: true, force: true });
       }
     });

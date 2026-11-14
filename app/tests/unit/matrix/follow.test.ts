@@ -309,7 +309,7 @@ export default async () => {
           thrown = err;
         }
         expect(thrown instanceof MatrixLoggedOutError).toBe(true);
-        expect((thrown as Error).message.includes('curlew accounts add matrix')).toBe(true);
+        expect((thrown as Error).message.includes('add the account again in Accounts')).toBe(true);
 
         const { running, events } = follow({ ...fixture, backend }, controller);
         const result = await running;

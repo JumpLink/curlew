@@ -3,7 +3,7 @@
  * only through the registry.
  */
 
-import { _, fmt, visibleAccounts } from '@curlew/protocol';
+import { _, chooseOption, fmt, visibleAccounts } from '@curlew/protocol';
 import type {
   AccountPrompter,
   AttachmentFetcher,
@@ -58,11 +58,21 @@ export interface MatrixLiveConnection {
   close(): Promise<void>;
 }
 
-export const reloginHint = (): string => _('log in again with `curlew accounts add matrix`');
+export const reloginHint = (): string => _('add the account again in Accounts');
 
 /** The login questions, asked through whatever frontend is running. */
 export function matrixPrompts(prompter: AccountPrompter): MatrixLoginPrompts {
   return {
+    method: () =>
+      chooseOption<'password' | 'token'>(prompter, _('How do you want to log in to Matrix?'), [
+        { id: 'password', title: _('Password'), subtitle: _('Your Matrix user and password') },
+        {
+          id: 'token',
+          title: _('Access Token'),
+          subtitle: _('For servers without password login, such as matrix.org'),
+        },
+      ]),
+    token: () => prompter.ask(_('Access token'), { secret: true }),
     homeserver: () => prompter.ask(_('Homeserver (URL like https://matrix.example.org, or the server name)')),
     user: () => prompter.ask(_('Matrix user (@name:example.org)')),
     password: () => prompter.ask(_('Password'), { secret: true }),
@@ -125,9 +135,9 @@ export class MatrixBackend implements ChatBackend, SendBackend {
     }
   }
 
-  /** Log in with homeserver, user and password; SSO-only servers are refused with the reason. */
+  /** Log in with a password or an access token. */
   addAccount(prompter: AccountPrompter): Promise<BackendAccount> {
-    return loginMatrix(this.context, matrixPrompts(prompter), this.connectClient);
+    return loginMatrix(this.context, matrixPrompts(prompter), this.connectClient, this.httpFetch);
   }
 
   /** Open the account's secret file and read what a session needs from it. */

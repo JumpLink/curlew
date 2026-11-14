@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- A Matrix account that needs a new login no longer tells you to run `curlew accounts add matrix`; it points to Accounts (#375).
 - WhatsApp reactions made before an account was linked now show: the history WhatsApp sends on linking carries each reaction inside the message it belongs to, and those were skipped.
 - Notices in a conversation ("Copied", send errors, …) now appear above the message box instead of sliding in behind it.
 - The background service no longer stops receiving WhatsApp and Signal about 20 seconds after it starts: its own mail and chat sync took the receive lease the service was holding and removed it when done, so the service saw its accounts as taken and exited. The sync now leaves a running service's accounts alone, and an account whose lease is taken over waits and takes it back instead of stopping for good.
@@ -112,6 +113,7 @@
 
 ### Added
 
+- Matrix: log in with an access token as well as a password, so homeservers without password login (matrix.org) can be used. The user comes from the server's `/whoami`. Browser sign-in (SSO/OIDC) is still to come (Refs #375).
 - Telegram needs nothing from my.telegram.org any more: Curlew ships the API credentials of its own registered app, and the login first asks how to sign in — phone number and code, a QR code scanned with the Telegram app on another device, or (for advanced users) your own api_id and api_hash. A login that offers several ways now shows them as a list in the window and as a numbered menu in the terminal (#373, #374).
 
 - The Accounts dialog marks mail accounts that are used for Delta Chat, and a GNOME Online Accounts mail account now has a page with Curlew's own switches (use the account, Delta Chat, ordinary email) and a button to manage its sign-in in GNOME Settings.
