@@ -833,6 +833,79 @@ export default async () => {
       }
     });
 
+    await it('a daemon whose lease is taken over waits, then takes the account back', async () => {
+      const db = freshDb();
+      const controller = new AbortController();
+      const progress: DeliveryProgress[] = [];
+      try {
+        const backend = new FollowBackend(['a-1']);
+        const following = receiveDeliveries(db, backend, {
+          mode: 'follow',
+          signal: controller.signal,
+          holder: 'pid-daemon',
+          leaseIntervalMs: 5,
+          onProgress: (event) => progress.push(event),
+        });
+        await settle();
+        expect(backend.connects.length).toBe(1);
+        // Somebody else writes the row: the daemon's next heartbeat finds the account taken.
+        db.prepare(
+          `UPDATE receive_leases SET holder = 'pid-other', expires_at = '2999-01-01T00:00:00.000Z'
+             WHERE backend = ? AND account_id = ?`,
+        ).run(BACKEND, 'a-1');
+        await until(() => progress.some((p) => p.type === 'lease-lost'), 'the daemon to see the lease gone');
+        await until(
+          () => progress.some((p) => p.type === 'lease-waiting'),
+          'the daemon to wait for the lease instead of giving the account up',
+        );
+        // The session closed with the lease: two receivers would split the copy.
+        expect(backend.connects.length).toBe(1);
+        // The other holder lets go — the daemon takes the account back and receives again.
+        db.prepare('DELETE FROM receive_leases WHERE backend = ? AND account_id = ?').run(BACKEND, 'a-1');
+        await until(() => backend.connects.length === 2, 'the daemon to take the lease back');
+        expect(leaseHolder(db, 'a-1')).toBe('pid-daemon');
+        backend.sessionOf('a-1')?.push(incoming('d-anna', msg('b1/1', 1, 'eins')));
+        await settle();
+        controller.abort();
+        const result = await following;
+        expect(result.added).toBe(1);
+        expect(result.errors).toBe(0);
+      } finally {
+        controller.abort();
+        db.close();
+      }
+    });
+
+    await it("the daemon's own pull sync stands down and leaves the daemon's lease alone", async () => {
+      const db = freshDb();
+      const controller = new AbortController();
+      const progress: DeliveryProgress[] = [];
+      try {
+        const backend = new FollowBackend(['a-1']);
+        const following = receiveDeliveries(db, backend, {
+          mode: 'follow',
+          signal: controller.signal,
+          holder: 'pid-daemon',
+          leaseIntervalMs: 5,
+          onProgress: (event) => progress.push(event),
+        });
+        await settle();
+        // `indexSync` on the daemon's timer: same process, its own holder (`sync-<pid>`). Under
+        // the bare pid it read the live lease as its own, took it and deleted the row on the way out.
+        const pull = await receiveDeliveries(db, new FollowBackend(['a-1']), { holder: 'sync-pid-daemon' });
+        expect(pull.accounts[0].heldBy).toBe('pid-daemon');
+        expect(leaseHolder(db, 'a-1')).toBe('pid-daemon');
+        await new Promise<void>((resolve) => setTimeout(resolve, 25));
+        expect(progress.some((p) => p.type === 'lease-lost')).toBe(false);
+        expect(backend.connects.length).toBe(1);
+        controller.abort();
+        await following;
+      } finally {
+        controller.abort();
+        db.close();
+      }
+    });
+
     await it('a sync that holds the lease keeps a starting daemon off the account', async () => {
       const db = freshDb();
       const sync = new AbortController();

@@ -259,6 +259,11 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
   }
   const db = openIndex(params.dbPath ?? indexDbPath());
   const backends = plugins.map((p) => p.manifest.name);
+  // The per-account receive leases are taken under a holder of their own. The daemon runs this
+  // action on its own timer and holds those same leases under its pid while it follows: a
+  // holder equal to the pid would read the daemon's live lease as its own, take it, and delete
+  // the row when done — and the daemon's next heartbeat would find its account stolen.
+  const accountHolder = `sync-${params.holder ?? String(process.pid)}`;
   const run = async (): Promise<IndexSyncResult> => {
     const results: SyncResult[] = [];
     const chats: IndexSyncResult['chats'] = [];
@@ -288,7 +293,7 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
               accountId: params.accountId,
               fullScan: params.fullScan,
               // A daemon following the account holds the lease: stand down for it.
-              lease: {},
+              lease: { holder: accountHolder },
             }),
           )),
         });
@@ -300,7 +305,11 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
         deliveries.push({
           backend: name,
           ...(await inPhase('delivery', () =>
-            receiveDeliveries(db, backend, { accountId: params.accountId, mode: 'catch-up' }),
+            receiveDeliveries(db, backend, {
+              accountId: params.accountId,
+              mode: 'catch-up',
+              holder: accountHolder,
+            }),
           )),
         });
       } else {
