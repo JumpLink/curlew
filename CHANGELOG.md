@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- The Flatpak built by `gjsify ship` carries the `<releases>` block again: `gjsify ship` renders its own metainfo from `gjsify.ship` and never read the hand-written file, so `flatpak-builder-lint` reported `releases-info-missing`. The release list now lives in `gjsify.ship.releases` too, and a unit test keeps both in step.
 - An account avatar no longer takes an initial from a note in parentheses: "Robin (Signal)" showed "R(", now "R".
 - On Windows and macOS the window now receives Signal, WhatsApp, XMPP, Matrix and Telegram messages while it is open, in the same loop `curlew daemon` runs, and the Accounts dialog says "Messages arrive while Curlew is open" instead of offering to start a systemd service that does not exist there. It never calls `systemctl` or asks for `curlew setup` on those platforms (#333).
 - The Accounts dialog no longer breaks an address in the middle of a word: the state and the Delta Chat note now sit under the address instead of beside it. The "Note to self" avatar keeps the same colour in every language, and the demo data used for the listing screenshots is English throughout (#338).
