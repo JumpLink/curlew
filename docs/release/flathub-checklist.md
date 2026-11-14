@@ -117,7 +117,8 @@ against a fake portal; not yet run inside a real Flatpak.
 ## Submission steps (maintainer)
 
 1. Settle the open points above (offline sources, OARS).
-2. Tag a release; pin the screenshot URLs and the metainfo `<release>` entry to it.
+2. Tag first: cut the release, then pin the screenshot URLs and the metainfo `<release>` entry to
+   that tag. Submit to Flathub only after the tag exists.
 3. Fork `flathub/flathub`, add the manifest on a `new-pr` branch, open the PR.
 4. Run `flatpak-builder-lint` on manifest and repository first.
 5. After acceptance, verify the app with the `.well-known` token.
