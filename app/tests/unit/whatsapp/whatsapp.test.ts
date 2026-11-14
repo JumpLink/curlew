@@ -221,6 +221,42 @@ export default async () => {
       expect(react('❤️', true)[0]).toMatchObject({ reactor: null, emoji: '❤️' });
     });
 
+    await it('reads the reactions a history-sync message carries', async () => {
+      const mapper = new WhatsAppMapper();
+      const own = mapper.message(
+        waMessage(ANNA_LID, 'I1', 8, text('Bild'), {
+          reactions: [
+            { key: { remoteJid: ANNA_LID, fromMe: true, id: 'X1' }, text: '❤️' },
+            { key: { remoteJid: ANNA_LID, fromMe: false, id: 'X2' }, text: '👍' },
+            { key: { remoteJid: ANNA_LID, fromMe: false, id: 'X3' }, text: '' },
+          ],
+        }),
+        true,
+      );
+      const reactions = own.filter((e) => e.type === 'reaction');
+      expect(reactions.length).toBe(2);
+      expect(reactions[0]).toMatchObject({
+        chatRemoteId: ANNA_LID,
+        remoteId: 'I1',
+        reactor: null,
+        emoji: '❤️',
+      });
+      expect(reactions[1]).toMatchObject({ remoteId: 'I1', reactor: ANNA_LID, emoji: '👍' });
+      const [, groupReaction] = mapper.message(
+        waMessage(GROUP, 'G2', 9, text('Salat?'), {
+          participant: BEN_LID,
+          reactions: [{ key: { remoteJid: GROUP, participant: ANNA_LID, id: 'X4' }, text: '😂' }],
+        }),
+        true,
+      );
+      expect(groupReaction).toMatchObject({
+        type: 'reaction',
+        remoteId: 'G2',
+        reactor: ANNA_LID,
+        emoji: '😂',
+      });
+    });
+
     await it('turns revokes and edits into delete and edit events for the message they name', async () => {
       const mapper = new WhatsAppMapper();
       const [revoke] = mapper.message(

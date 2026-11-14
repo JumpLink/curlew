@@ -129,6 +129,12 @@ export interface WaMessage {
   messageStubType?: number | null;
   /** 4 = READ, 5 = PLAYED: for the user's own messages, the other side has seen them. */
   status?: number | null;
+  /**
+   * The reactions a history-sync message already carries: history sync folds each reaction into
+   * the message it targets instead of sending it as a message of its own. `key` is the reaction's
+   * own key, so it names who reacted.
+   */
+  reactions?: ReadonlyArray<{ key?: WaMessageKey | null; text?: string | null }> | null;
 }
 
 /** `Chat` (`proto.IConversation` plus Baileys' fields), as history sync and chat events carry it. */

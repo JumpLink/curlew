@@ -326,6 +326,25 @@ export class WhatsAppMapper {
     if (fromSelf && (raw.status ?? 0) >= STATUS_READ) {
       events.push({ type: 'peer-read', chatRemoteId: chatId, remoteIds: [message.remoteId] });
     }
+    for (const r of raw.reactions ?? []) {
+      const emoji = r.text?.trim() ? r.text : null;
+      if (!emoji) continue;
+      const rk = r.key;
+      const reactor =
+        rk?.fromMe === true
+          ? null
+          : kind === 'direct'
+            ? this.resolver.peer(rk?.remoteJid ?? key.remoteJid, rk?.remoteJidAlt ?? key.remoteJidAlt, null)
+            : this.resolver.peer(rk?.participant, rk?.participantAlt, null);
+      if (rk?.fromMe !== true && !reactor) continue;
+      events.push({
+        type: 'reaction',
+        chatRemoteId: chatId,
+        remoteId: message.remoteId,
+        reactor: reactor?.remoteId ?? null,
+        emoji,
+      });
+    }
     return events;
   }
 
