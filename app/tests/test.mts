@@ -79,6 +79,7 @@ import matrixAvatars from './unit/matrix/avatars.test.ts';
 import smtpMessage from './unit/smtp/message.test.ts';
 import smtpSend from './unit/smtp/send.test.ts';
 import mailSend from './unit/mail/send.test.ts';
+import mailSentCopy from './unit/mail/sent-copy.test.ts';
 import mailSystemTargets from './unit/mail/system-targets.test.ts';
 import mailAutoconfig from './unit/mail/autoconfig.test.ts';
 import mailOwnAccounts from './unit/mail/own-accounts.test.ts';
@@ -239,6 +240,7 @@ run({
   smtpMessage,
   smtpSend,
   mailSend,
+  mailSentCopy,
   mailSystemTargets,
   mailAutoconfig,
   mailOwnAccounts,

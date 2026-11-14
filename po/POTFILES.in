@@ -190,6 +190,7 @@ packages/imap/src/manifest.ts
 packages/imap/src/messages.gjs.ts
 packages/imap/src/own-accounts.ts
 packages/imap/src/send.ts
+packages/imap/src/sent-copy.ts
 packages/imap/src/system-targets.ts
 packages/imap/src/targets.ts
 packages/imap/src/transport.gjs.ts

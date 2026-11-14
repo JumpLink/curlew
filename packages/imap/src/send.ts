@@ -23,9 +23,10 @@ import type {
   SentMessage,
   SmtpTarget,
 } from '@curlew/protocol';
-import { sendMessage, type SmtpAccount } from '@curlew/smtp';
+import { buildMessage, sendMessage, type OutgoingMessage, type SmtpAccount } from '@curlew/smtp';
 import { _, fmt } from '@curlew/protocol';
 import { readAttachments } from './attachments.ts';
+import { sentCopyWarning, type SentCopyFiler } from './sent-copy.ts';
 import { resolveSmtpTargets } from './targets.ts';
 
 /** `'none'` exists for a loopback dummy server; `@curlew/smtp` allows it on 127.0.0.1 only. */
@@ -61,10 +62,13 @@ export class MailSender implements MessageSender {
   };
   private readonly target: SmtpTarget;
   private readonly permit: SendPermit;
+  private readonly fileCopy: SentCopyFiler | undefined;
 
-  constructor(target: SmtpTarget, permit: SendPermit) {
+  /** `fileCopy`: keeps the sent copy in the Sent mailbox (#108); absent, nothing is filed. */
+  constructor(target: SmtpTarget, permit: SendPermit, fileCopy?: SentCopyFiler) {
     this.target = target;
     this.permit = permit;
+    this.fileCopy = fileCopy;
   }
 
   /** The address exactly as the permit spells it, or a refusal — the permit is the second check. */
@@ -84,7 +88,7 @@ export class MailSender implements MessageSender {
     const to = this.address(message.to);
     // Read (and refused) before the connection exists; the content goes to `@curlew/smtp` only.
     const files = readAttachments(message.attachments ?? []);
-    const result = await sendMessage(await smtpAccountFor(this.target), {
+    const outgoing: OutgoingMessage = {
       from: this.target.from,
       to: [to],
       subject: message.subject ?? '',
@@ -108,11 +112,23 @@ export class MailSender implements MessageSender {
               content: f.content,
             })),
           }),
-    });
+    };
+    const result = await sendMessage(await smtpAccountFor(this.target), outgoing);
+    // The mail is out: whatever fails from here on is a warning, never a failed send.
+    let warning: string | undefined;
+    if (this.fileCopy !== undefined) {
+      try {
+        const raw = await buildMessage({ ...outgoing, messageId: result.messageId });
+        await this.fileCopy(raw, result.messageId);
+      } catch (error) {
+        warning = sentCopyWarning(error);
+      }
+    }
     return {
       target: to,
       id: result.messageId,
       sentAt: new Date().toISOString(),
+      ...(warning === undefined ? {} : { warning }),
       ...(files.length === 0 ? {} : { attachments: files.map((f) => ({ filename: f.filename, size: f.size })) }),
     };
   }
@@ -211,7 +227,11 @@ export async function isOwnAddressOf(accountId: string, to: string): Promise<boo
 }
 
 /** Open the sender for one account. Reads no password until a message is actually sent. */
-export async function openMailSender(accountId: string, permit: SendPermit): Promise<MessageSender> {
+export async function openMailSender(
+  accountId: string,
+  permit: SendPermit,
+  fileCopy?: SentCopyFiler,
+): Promise<MessageSender> {
   const target = (await resolveSmtpTargets(accountId)).find((t) => t.accountId === accountId);
   if (!target) {
     throw new Error(
@@ -220,5 +240,5 @@ export async function openMailSender(accountId: string, permit: SendPermit): Pro
       }),
     );
   }
-  return new MailSender(target, permit);
+  return new MailSender(target, permit, fileCopy);
 }

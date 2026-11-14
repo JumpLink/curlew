@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-14 11:40+0100\n"
+"POT-Creation-Date: 2026-11-14 11:56+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3291,30 +3291,40 @@ msgstr ""
 msgid "the mail account {account} is incomplete — add it again"
 msgstr ""
 
-#: packages/imap/src/send.ts:74 packages/matrix/src/send.ts:354
+#: packages/imap/src/send.ts:78 packages/matrix/src/send.ts:354
 #: packages/signal/src/send.ts:471 packages/telegram/src/sender.ts:80
 #: packages/whatsapp/src/send.ts:403
 msgid "sending to {address} is not granted for account {account}"
 msgstr ""
 
-#: packages/imap/src/send.ts:128
+#: packages/imap/src/send.ts:144
 msgid "only a Delta Chat message can be reacted to by mail"
 msgstr ""
 
-#: packages/imap/src/send.ts:145
+#: packages/imap/src/send.ts:161
 msgid "only your own Delta Chat messages can be changed by mail"
 msgstr ""
 
-#: packages/imap/src/send.ts:154
+#: packages/imap/src/send.ts:170
 msgid "an edited message cannot be empty"
 msgstr ""
 
-#: packages/imap/src/send.ts:192
+#: packages/imap/src/send.ts:208
 msgid "only a Delta Chat message gets a read receipt by mail"
 msgstr ""
 
-#: packages/imap/src/send.ts:218
+#: packages/imap/src/send.ts:238
 msgid "no mail account {account} with SMTP — `curlew accounts list` shows them"
+msgstr ""
+
+#: packages/imap/src/sent-copy.ts:46
+msgid "the account has no Sent mailbox"
+msgstr ""
+
+#: packages/imap/src/sent-copy.ts:54
+msgid ""
+"The message was sent, but its copy could not be saved to the Sent folder: "
+"{reason}"
 msgstr ""
 
 #: packages/matrix/src/attachments.ts:45 packages/signal/src/attachments.ts:30
