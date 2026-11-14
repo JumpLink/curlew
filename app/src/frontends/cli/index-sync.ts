@@ -66,6 +66,18 @@ function reportRateLimits(result: IndexSyncResult): void {
 
 /** One line per chat account left to the running daemon — it is receiving, so nothing is wrong. */
 function reportHeld(result: IndexSyncResult): void {
+  // The whole run stood down: another process holds the index-writer lease — the daemon's
+  // 15-minute tick, or a `curlew sync` that is still going. Every count is zero for that reason
+  // and not because there was nothing to fetch, so say so before the JSON document.
+  if (result.heldBy !== undefined) {
+    process.stderr.write(
+      `${
+        result.heldBy
+          ? fmt(_('  the index is being written by {holder} — nothing synced'), { holder: result.heldBy })
+          : _('  the index is busy — nothing synced')
+      }\n`,
+    );
+  }
   for (const chat of result.chats) {
     for (const account of chat.accounts) {
       if (!account.heldBy && !account.indexBusy) continue;

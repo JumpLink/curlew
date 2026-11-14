@@ -38,14 +38,25 @@ loginctl enable-linger "$USER"     # so it also runs while you are logged out
 journalctl --user -u curlew-daemon -f
 ```
 
-Mail and the pull-model chats need a timer instead: `contrib/systemd/curlew-sync.service`
-plus `curlew-sync.timer` run `curlew sync` 15 minutes after the previous run ended.
+Mail and the pull-model chats need no timer: **the daemon runs that sync itself** —
+once 20 seconds after it starts and then every 15 minutes, exactly what
+`curlew sync` does. That is why it also stays up with nothing to receive at
+all: a machine whose owner has only mail accounts still needs the sync, and
+on a GUI-only install (Flatpak, Windows, macOS) there is no terminal to type
+`curlew sync` into. On Windows and macOS there is no daemon either — the
+window runs the same timer while it is open.
+
+A hand-typed `curlew sync` and the daemon's own run do not collide: both take
+the **index-writer lease**, and whichever is late stands down for this round
+and says who holds it. So the old timer, if you installed it, is harmless and
+can go:
 
 ```bash
-cp contrib/systemd/curlew-sync.{service,timer} ~/.config/systemd/user/
-systemctl --user daemon-reload
-systemctl --user enable --now curlew-sync.timer
+systemctl --user disable --now curlew-sync.timer
 ```
+
+`contrib/systemd/curlew-sync.{service,timer}` still ship for a setup that wants
+its own schedule (a laptop that should only sync on AC, say).
 
 The unit deliberately does **not** stop when you log out — staying connected is its whole
 point, and the one thing it uses from your session (the address book, for the participant
@@ -80,6 +91,12 @@ that includes a `sync` in the middle of a WhatsApp catch-up, which can run for
 ten minutes. Two connected devices on one Signal account would each acknowledge
 half the messages, so this is what keeps the copy whole. A run that was killed
 leaves a lease behind, which expires by itself after 90 seconds.
+
+The **pull** sync has a lease of its own, one for the whole index rather than
+per account, because it writes mail and chat rows for every account at once.
+Whoever gets it syncs; the other run reports *the index is being written by …*
+with every count at zero and tries again next time. Nothing waits and nothing
+queues: the next round is 15 minutes away, not an hour.
 
 Stopping is a normal end: SIGTERM (or `systemctl stop`) closes every session,
 writes what was in flight, rebuilds the conversations once and exits 0. It is

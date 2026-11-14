@@ -145,6 +145,7 @@ import qrImage from './unit/window/qr-image.test.ts';
 import platform from './unit/core/platform.test.ts';
 import autostartPortal from './unit/core/autostart-portal.test.ts';
 import inProcessReceive from './unit/core/in-process-receive.test.ts';
+import pullSync from './unit/core/pull-sync.test.ts';
 import windowWelcome from './unit/window/welcome-model.test.ts';
 import windowEmailChat from './unit/window/email-chat-model.test.ts';
 import windowSettingsMap from './unit/window/settings-map.test.ts';
@@ -307,6 +308,7 @@ run({
   platform,
   autostartPortal,
   inProcessReceive,
+  pullSync,
   windowWelcome,
   windowEmailChat,
   windowSettingsMap,

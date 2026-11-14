@@ -18,7 +18,7 @@ import { takeReceiveLease } from '@curlew/store';
 import { accountIdFor } from '@curlew/signal';
 import { GrantedXmppSession, type XmppBackend, type XmppLink } from '@curlew/xmpp';
 import { accountIdFromCreds } from '@curlew/whatsapp';
-import { openIndex } from '../../../src/core/actions/index-sync.ts';
+import { type IndexSyncResult, openIndex } from '../../../src/core/actions/index-sync.ts';
 import {
   daemonExitCode,
   type DaemonAccountResult,
@@ -202,6 +202,21 @@ const REBUILD: RebuildResult & { contacts: number | null } = {
   contacts: 41,
 };
 
+/** What an injected pull sync hands back — the shape of a run that touched nothing. */
+const syncResult = (over: Partial<IndexSyncResult> = {}): IndexSyncResult => ({
+  folders: [],
+  added: 0,
+  updated: 0,
+  removed: 0,
+  errors: 0,
+  failed: false,
+  backends: [],
+  chats: [],
+  deliveries: [],
+  conversations: { conversations: 0, messages: 0, participants: 0, contacts: null },
+  ...over,
+});
+
 export default async () => {
   await describe('rebuilds', async () => {
     await it('serialises them and waits for the one in flight before the index closes', async () => {
@@ -380,22 +395,35 @@ export default async () => {
       }
     });
 
-    await it('has nothing to receive when XMPP is off and no other backend is enabled', async () => {
-      let message = '';
-      try {
-        await runDeliveryDaemon({
-          dbPath: ':memory:',
-          configPath: NO_CONFIG,
-          backends: [],
-          matrix: null,
-          xmpp: null,
-          publishSend: null,
-          log: () => {},
-        });
-      } catch (error) {
-        message = error instanceof Error ? error.message : String(error);
-      }
-      expect(message.includes('nothing to receive')).toBe(true);
+    await it('stays idle when XMPP is off and no other backend is enabled', async () => {
+      const controller = new AbortController();
+      const logs: string[] = [];
+      let ended = false;
+      const running = runDeliveryDaemon({
+        dbPath: ':memory:',
+        configPath: NO_CONFIG,
+        backends: [],
+        matrix: null,
+        xmpp: null,
+        publishSend: null,
+        pullSync: null,
+        rebuild: async () => REBUILD,
+        signal: controller.signal,
+        log: (line) => logs.push(line),
+      });
+      void running.then(() => {
+        ended = true;
+      });
+      await settle();
+      // Still up — it does not throw and it does not resolve (ADR 0002 §10): it says it is idle
+      // and waits for the signal, because it owns the pull sync and answers the session bus.
+      expect(logs.some((l) => l.includes('nothing to receive') && l.includes('idle'))).toBe(true);
+      expect(ended).toBe(false);
+      controller.abort();
+      const result = await running;
+      expect(result.accounts.length).toBe(0);
+      expect(result.errors).toBe(0);
+      expect(daemonExitCode(result)).toBe(0);
     });
   });
 
@@ -570,14 +598,78 @@ export default async () => {
       }
     });
 
-    await it('refuses to start with nothing to receive', async () => {
-      let message: string | null = null;
-      try {
-        await runDeliveryDaemon({ dbPath: ':memory:', configPath: NO_CONFIG, backends: [], log: () => {} });
-      } catch (err) {
-        message = err instanceof Error ? err.message : String(err);
-      }
-      expect(message ?? '').toMatch(/no delivery-only backend is enabled/);
+    await it('runs the pull sync on a timer and stops it with the daemon', async () => {
+      const controller = new AbortController();
+      const logs: string[] = [];
+      let syncs = 0;
+      const running = runDeliveryDaemon({
+        dbPath: ':memory:',
+        configPath: NO_CONFIG,
+        backends: [],
+        matrix: null,
+        xmpp: null,
+        publishSend: null,
+        rebuild: async () => REBUILD,
+        signal: controller.signal,
+        log: (line) => logs.push(line),
+        pullSync: async () => {
+          syncs++;
+          return syncResult({ added: 1 });
+        },
+        pullSyncDelayMs: 1,
+        pullSyncIntervalMs: 1,
+      });
+      await settle();
+      await settle();
+      controller.abort();
+      await running;
+      const after = syncs;
+      expect(after > 0).toBe(true);
+      expect(logs.some((l) => l.includes('pull sync done (1 added'))).toBe(true);
+      // The ticker is gone with the run: nothing is scheduled behind a closed index.
+      await settle();
+      await settle();
+      expect(syncs).toBe(after);
+    });
+
+    await it('waits for a pull sync in flight before it ends', async () => {
+      const controller = new AbortController();
+      let open: () => void = () => {};
+      const gate = new Promise<void>((resolve) => {
+        open = resolve;
+      });
+      let finished = false;
+      let ended = false;
+      const running = runDeliveryDaemon({
+        dbPath: ':memory:',
+        configPath: NO_CONFIG,
+        backends: [],
+        matrix: null,
+        xmpp: null,
+        publishSend: null,
+        rebuild: async () => REBUILD,
+        signal: controller.signal,
+        log: () => {},
+        pullSync: async () => {
+          await gate;
+          finished = true;
+          return syncResult();
+        },
+        pullSyncDelayMs: 1,
+        pullSyncIntervalMs: 1,
+      });
+      void running.then(() => {
+        ended = true;
+      });
+      await settle();
+      controller.abort();
+      await settle();
+      // Mid-sync: the run must not resolve, because the window closes the index when it does.
+      expect(ended).toBe(false);
+      expect(finished).toBe(false);
+      open();
+      await running;
+      expect(finished).toBe(true);
     });
   });
 };

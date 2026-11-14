@@ -15,6 +15,7 @@ import type { ConversationMessage } from '@curlew/protocol';
 import { indexAccountLabels, loadAccountLabels } from './account-labels.ts';
 import { presentAccounts } from './accounts-dialog.ts';
 import { runDeliveryDaemon } from '../core/actions/daemon.ts';
+import { indexSync } from '../core/actions/index-sync.ts';
 import { hostReceiveLoop } from '../core/lib/in-process-receive.ts';
 import { currentPlatform } from '../core/platform.ts';
 import { presentAgentAccess } from './agent-access-dialog.ts';
@@ -368,13 +369,16 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   stage.add_overlay(viewer.widget);
   const toasts = new Adw.ToastOverlay({ child: stage });
   window.set_content(toasts);
-  // No systemd or session bus here: the window receives while it is open (ADR 0002 stays the loop).
+  // No systemd or session bus here: the window receives while it is open (ADR 0002 stays the loop)
+  // and runs the periodic pull sync itself (ADR 0002 §8) — the action's own ticker is off, because
+  // two tickers in one process would hold the index-writer lease under the same holder.
   const receiver = demoActive()
     ? null
     : hostReceiveLoop(
         currentPlatform(),
-        (params) => runDeliveryDaemon(params),
+        (params) => runDeliveryDaemon({ ...params, pullSync: null }),
         (line) => console.error(line),
+        { pullSync: () => indexSync() },
       );
   if (receiver) window.connect('destroy', () => void receiver.stop());
   // Demo data must never pass for a real inbox: say so once, then stay out of the way.

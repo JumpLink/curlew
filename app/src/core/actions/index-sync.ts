@@ -23,16 +23,20 @@ import {
   configPath,
   ensurePrivateDir,
   indexDbPath,
+  LEASE_HEARTBEAT_MS,
   migrate,
   openIndexDb,
   probeFts5,
   rebuildConversations,
   receiveDeliveries,
+  refreshReceiveLease,
+  releaseReceiveLease,
   searchIndex,
   syncChats,
   syncIndex,
   type SyncProgress,
   syncStatus,
+  takeReceiveLease,
 } from '@curlew/store';
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
@@ -89,6 +93,76 @@ export interface SyncParams {
    * to a renderer, so a frontend never has to guess when the next thing will appear.
    */
   onProgress?: (event: SyncProgress) => void;
+  /** Who takes the index-writer lease; the default is this process. Tests pass their own. */
+  holder?: string;
+  /** Short only in tests: how often the index-writer lease is refreshed. */
+  leaseIntervalMs?: number;
+}
+
+/**
+ * The index-writer lease — one row that says "a pull sync is writing the index right now".
+ *
+ * `indexSync` used to have one caller a person started by hand, so SQLite's own locking was the
+ * whole story. It now has three that can be live on one machine at the same time: the daemon's
+ * 15-minute tick (ADR 0002 §8), a `curlew sync` typed in a terminal, and a `curlew-sync.timer`
+ * installed before the daemon took the job over. Issue #73's fix (a busy timeout on every
+ * connection, `BEGIN IMMEDIATE` for every transaction) makes each STATEMENT wait its turn, which
+ * is not the same thing: a sync is thousands of statements over minutes, so two runs would
+ * interleave batch by batch, fetch the same mail twice and race each other's cursor updates.
+ *
+ * It is the receive lease (ADR 0002 §4) under a key no backend can take — `receive_leases` is
+ * keyed `(backend, account_id)` and no backend is named `index` — rather than a second
+ * mechanism: that lease is already a cross-process lock measured on both runtimes, and it
+ * already survives a SIGKILLed holder by expiry instead of by a cleanup path.
+ */
+export const INDEX_LEASE_BACKEND = 'index';
+export const INDEX_LEASE_ACCOUNT = 'sync';
+
+export type IndexLeaseRun<T> =
+  | { ran: true; value: T }
+  /** Another process is writing the index. `null`: the index was busy and nobody is known. */
+  | { ran: false; heldBy: string | null };
+
+/**
+ * Run `run` as the only index writer, or report who is already writing.
+ *
+ * Never waits: every caller of this is on a timer or is a command the person can repeat, so a
+ * skipped run costs at most one interval, while a queue of waiting syncs would pile up behind a
+ * ten-minute WhatsApp catch-up and then all run at once.
+ */
+export async function withIndexLease<T>(
+  db: IndexDatabase,
+  holder: string,
+  run: () => Promise<T>,
+  intervalMs: number = LEASE_HEARTBEAT_MS,
+): Promise<IndexLeaseRun<T>> {
+  let take: ReturnType<typeof takeReceiveLease>;
+  try {
+    take = takeReceiveLease(db, INDEX_LEASE_BACKEND, INDEX_LEASE_ACCOUNT, holder, new Date(), intervalMs);
+  } catch {
+    // A busy index means somebody is writing it. Not knowing who is the same as not holding it.
+    return { ran: false, heldBy: null };
+  }
+  if (!take.acquired) return { ran: false, heldBy: take.holder };
+  // A sync runs for minutes, far past the three intervals the lease is good for, so it has to
+  // move its own expiry forward while it runs — or it would declare its own lease stale.
+  const heartbeat = setInterval(() => {
+    try {
+      refreshReceiveLease(db, INDEX_LEASE_BACKEND, INDEX_LEASE_ACCOUNT, holder, new Date(), intervalMs);
+    } catch {
+      // A busy index is tried again by the next beat; the lease still has two of them left.
+    }
+  }, intervalMs);
+  try {
+    return { ran: true, value: await run() };
+  } finally {
+    clearInterval(heartbeat);
+    try {
+      releaseReceiveLease(db, INDEX_LEASE_BACKEND, INDEX_LEASE_ACCOUNT, holder);
+    } catch {
+      // Not released is not stuck: the lease runs out on its own three intervals from now.
+    }
+  }
 }
 
 export interface IndexSyncResult extends SyncResult {
@@ -105,6 +179,13 @@ export interface IndexSyncResult extends SyncResult {
     /** Contacts the classifier knew about; null when the address book was unreachable. */
     contacts: number | null;
   };
+  /**
+   * Set when this run wrote NOTHING because another process held the index-writer lease — the
+   * daemon's tick, or a `curlew sync` that is still going. Not an error and not `failed`:
+   * nothing failed, the index is being written, and the counts are all zero because this run
+   * stood down. `null` means the index was busy and no holder could be determined.
+   */
+  heldBy?: string | null;
 }
 
 /** Far above any real address book: this is a full read for the classifier, not a search. */
@@ -177,7 +258,8 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
     );
   }
   const db = openIndex(params.dbPath ?? indexDbPath());
-  try {
+  const backends = plugins.map((p) => p.manifest.name);
+  const run = async (): Promise<IndexSyncResult> => {
     const results: SyncResult[] = [];
     const chats: IndexSyncResult['chats'] = [];
     const deliveries: IndexSyncResult['deliveries'] = [];
@@ -253,10 +335,29 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
       errors,
       // An error overall only when every folder AND every chat account failed.
       failed: sources > 0 && errors === sources,
-      backends: plugins.map((p) => p.manifest.name),
+      backends,
       chats,
       deliveries,
       conversations,
+    };
+  };
+  try {
+    const held = await withIndexLease(db, params.holder ?? String(process.pid), run, params.leaseIntervalMs);
+    if (held.ran) return held.value;
+    // Stood down for the writer that has it: every count zero, nothing failed, and `heldBy` says
+    // why. A frontend prints one line; the daemon's tick waits for the next one.
+    return {
+      folders: [],
+      added: 0,
+      updated: 0,
+      removed: 0,
+      errors: 0,
+      failed: false,
+      backends,
+      chats: [],
+      deliveries: [],
+      conversations: { conversations: 0, messages: 0, participants: 0, contacts: null },
+      heldBy: held.heldBy,
     };
   } finally {
     db.close();
