@@ -49,6 +49,7 @@
   fetch up to 100 MB, since a phone video is often bigger than the limit meant for agents.
 - German: the refusal for a bad Matrix event id no longer carries a stray second sentence, and one command hint addressed you as "Sie" instead of "du".
 - The sidebar is wider (at least 320 px), so the title "Conversations" is no longer cut off to "Convers…" in the default window.
+- Removing an account with its data now also deletes the Delta Chat read receipts remembered for it (`mail_receipts_sent`); a test checks every table with an `account_id` column, and another opens an index written at schema 24 and checks that an upgrade keeps delivery-only messages.
 
 ### Changed
 

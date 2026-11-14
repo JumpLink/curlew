@@ -62,6 +62,7 @@ export function deleteAccountData(db: IndexDatabase, backend: string, accountId:
       db.prepare('DELETE FROM messages WHERE account_id = ?').run(accountId);
       db.prepare('DELETE FROM folders WHERE account_id = ?').run(accountId);
       db.prepare('DELETE FROM sync_log WHERE account_id = ?').run(accountId);
+      db.prepare('DELETE FROM mail_receipts_sent WHERE account_id = ?').run(accountId);
     }
     db.prepare('DELETE FROM accounts WHERE id = ?').run(accountId);
 

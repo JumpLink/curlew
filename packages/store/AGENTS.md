@@ -118,6 +118,14 @@ names its sender (`ChatEdit.senderRemoteId`, Matrix) only lands on a message by 
 Chat bodies live on their `conversation_messages` row (`body`); mail bodies stay once in the
 FTS table.
 
+## Upgrade baseline
+
+`app/tests/unit/store/upgrade-baseline.test.ts` holds a hand-written index at schema 24 (the DDL a
+user's `index.db` has on disk, synthetic rows) and asserts that `migrate` keeps every row,
+delivery-only chat messages included. Every new `UPGRADES` step must keep it green. Never
+regenerate the DDL from `schema.ts`: a baseline that follows the code proves nothing. When a step
+is added, extend the test with the new version's expectations instead of replacing the baseline.
+
 ## Delivered chats are the only copy
 
 `receiveDeliveries` (the `delivery` driver's engine, `delivery-sync.ts`) writes the same chat

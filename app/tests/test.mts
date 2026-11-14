@@ -44,6 +44,7 @@ import storeChanges from './unit/store/changes.test.ts';
 import storeChangeAppends from './unit/store/change-appends.test.ts';
 import storeConcurrency from './unit/store/concurrency.test.ts';
 import storeAccountData from './unit/store/account-data.test.ts';
+import storeUpgradeBaseline from './unit/store/upgrade-baseline.test.ts';
 
 import telegram from './unit/telegram/telegram.test.ts';
 import signal from './unit/signal/signal.test.ts';
@@ -204,6 +205,7 @@ run({
   storeChangeAppends,
   storeConcurrency,
   storeAccountData,
+  storeUpgradeBaseline,
   telegram,
   signal,
   signalSend,
