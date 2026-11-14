@@ -126,6 +126,7 @@ export async function linkWhatsApp(
   const phone = parsePairingPhone(
     await prompter.ask(
       _('Phone number for a pairing code (international, e.g. +49…) — leave empty to scan a QR code'),
+      { skip: _('Scan a QR Code Instead') },
     ),
   );
   ensurePrivateDir(context.secretsDir);
@@ -169,7 +170,7 @@ export async function linkWhatsApp(
     moved = true;
     prompter.notify(
       _(
-        'Linked. Run `curlew sync` now: WhatsApp hands the recent history and everything queued to the first connection that takes it, once.',
+        'Linked. Sync soon: WhatsApp hands the recent history and everything queued to the first connection that takes it, once.',
       ),
     );
     return account;

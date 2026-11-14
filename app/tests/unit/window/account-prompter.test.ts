@@ -33,6 +33,20 @@ export default async () => {
       expect(step.kind === 'ask' && step.secret).toBe(false);
     });
 
+    await it('passes a skip label through, and only when the backend offers one', async () => {
+      const { steps, surface } = recorder();
+      const prompter = createSurfacePrompter(surface);
+      const answer = prompter.ask('Phone number', { skip: 'Scan a QR Code Instead' });
+      const step = steps[0];
+      if (step.kind !== 'ask') throw new Error('expected a question');
+      expect(step.skip).toBe('Scan a QR Code Instead');
+      step.submit('');
+      expect(await answer).toBe('');
+      void prompter.ask('Name');
+      const plain = steps[1];
+      expect(plain.kind === 'ask' && plain.skip).toBe(undefined);
+    });
+
     await it('answers a question only once', async () => {
       const { steps, surface } = recorder();
       const prompter = createSurfacePrompter(surface);

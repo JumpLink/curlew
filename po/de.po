@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-14 16:51+0100\n"
+"POT-Creation-Date: 2026-11-14 17:15+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -890,19 +890,19 @@ msgstr ""
 msgid "a curlew daemon is on the session bus — waking on its signal"
 msgstr "Ein curlew-Daemon ist am Session-Bus — ich warte auf sein Signal"
 
-#: app/src/core/backends/registry.ts:59
+#: app/src/core/backends/registry.ts:64
 msgid "backend {name} has an invalid manifest: {problems}"
 msgstr "Das Backend {name} hat ein ungültiges Manifest: {problems}"
 
-#: app/src/core/backends/registry.ts:67
+#: app/src/core/backends/registry.ts:72
 msgid "two backends are named {name}"
 msgstr "Zwei Backends heißen {name}"
 
-#: app/src/core/backends/registry.ts:82
+#: app/src/core/backends/registry.ts:87
 msgid "unknown backend {name} — known: {known}"
 msgstr "Unbekanntes Backend {name} — bekannt: {known}"
 
-#: app/src/core/backends/registry.ts:125
+#: app/src/core/backends/registry.ts:130
 msgid ""
 "backend {name} is not enabled — `curlew backends enable {name}` turns it on "
 "(and shows its terms)"
@@ -1864,54 +1864,60 @@ msgstr "Dafür muss Mail eingeschaltet sein"
 msgid "Email chats with people on Delta Chat, ArcaneChat or DeltaTouch"
 msgstr "E-Mail-Chats mit Leuten auf Delta Chat, ArcaneChat oder DeltaTouch"
 
-#: app/src/window/account-add-model.ts:108 app/src/window/protocols-page.ts:42
+#: app/src/window/account-add-model.ts:108 app/src/window/protocols-page.ts:48
 #: app/src/window/welcome-model.ts:108
 msgid "{count} account"
 msgid_plural "{count} accounts"
 msgstr[0] "{count} Konto"
 msgstr[1] "{count} Konten"
 
-#: app/src/window/account-add.ts:139 app/src/window/protocols-page.ts:52
-msgid "Please read this first"
-msgstr "Bitte zuerst lesen"
-
-#: app/src/window/account-add.ts:145 app/src/window/protocols-page.ts:58
-msgid "I understand and accept the risk for my account"
-msgstr "Ich verstehe das Risiko für mein Konto und nehme es in Kauf"
-
-#: app/src/window/account-add.ts:148
-msgid "Accept and Continue"
-msgstr "Zustimmen und fortfahren"
-
-#: app/src/window/account-add.ts:189
-msgid "Continue"
-msgstr "Weiter"
-
-#: app/src/window/account-add.ts:212
-msgid "Adding account…"
-msgstr "Konto wird hinzugefügt …"
-
-#: app/src/window/account-add.ts:220 app/src/window/media-viewer.ts:104
-msgid "Try Again"
-msgstr "Erneut versuchen"
-
-#: app/src/window/account-add.ts:224
-msgid "Could not add the account"
-msgstr "Konto konnte nicht hinzugefügt werden"
-
-#: app/src/window/account-add.ts:235
+#: app/src/window/account-add.ts:123 app/src/window/account-add.ts:262
 msgid "Connecting…"
 msgstr "Verbindung wird hergestellt …"
 
-#: app/src/window/account-add.ts:259 app/src/window/protocols-page.ts:40
+#: app/src/window/account-add.ts:139 app/src/window/protocols-page.ts:80
+msgid "{protocol} is not available on this device"
+msgstr "{protocol} ist auf diesem Gerät nicht verfügbar"
+
+#: app/src/window/account-add.ts:140 app/src/window/protocols-page.ts:81
+msgid "This build of Curlew cannot run it on this kind of computer yet."
+msgstr ""
+"Diese Ausgabe von Curlew kann es auf dieser Art von Gerät noch nicht "
+"ausführen."
+
+#: app/src/window/account-add.ts:160 app/src/window/protocols-page.ts:58
+msgid "Please read this first"
+msgstr "Bitte zuerst lesen"
+
+#: app/src/window/account-add.ts:166
+msgid "Accept and Continue"
+msgstr "Zustimmen und fortfahren"
+
+#: app/src/window/account-add.ts:207
+msgid "Continue"
+msgstr "Weiter"
+
+#: app/src/window/account-add.ts:239
+msgid "Adding account…"
+msgstr "Konto wird hinzugefügt …"
+
+#: app/src/window/account-add.ts:247 app/src/window/media-viewer.ts:104
+msgid "Try Again"
+msgstr "Erneut versuchen"
+
+#: app/src/window/account-add.ts:251
+msgid "Could not add the account"
+msgstr "Konto konnte nicht hinzugefügt werden"
+
+#: app/src/window/account-add.ts:286 app/src/window/protocols-page.ts:46
 msgid "Asks you to accept terms first"
 msgstr "Verlangt zuerst deine Zustimmung zu den Bedingungen"
 
-#: app/src/window/account-add.ts:276
+#: app/src/window/account-add.ts:303
 msgid "Chats"
 msgstr "Chats"
 
-#: app/src/window/account-add.ts:277
+#: app/src/window/account-add.ts:304
 msgid ""
 "Signal, WhatsApp and Telegram link this computer as another device of your "
 "account."
@@ -1919,25 +1925,25 @@ msgstr ""
 "Signal, WhatsApp und Telegram verknüpfen diesen Computer als weiteres Gerät "
 "deines Kontos."
 
-#: app/src/window/account-add.ts:289 app/src/window/accounts-model.ts:107
+#: app/src/window/account-add.ts:313 app/src/window/accounts-model.ts:107
 #: app/src/window/conversation-list-model.ts:139
 msgid "Mail"
 msgstr "E-Mail"
 
-#: app/src/window/account-add.ts:296
+#: app/src/window/account-add.ts:316
 msgid "Sign in with an address and a password"
 msgstr "Mit Adresse und Passwort anmelden"
 
-#: app/src/window/account-add.ts:302
+#: app/src/window/account-add.ts:322
 msgid "GNOME Online Accounts"
 msgstr "GNOME-Online-Konten"
 
-#: app/src/window/account-add.ts:303
+#: app/src/window/account-add.ts:323
 msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 "Ein Konto verwenden, das du in den GNOME-Einstellungen eingerichtet hast"
 
-#: app/src/window/account-add.ts:321 app/src/window/accounts-page.ts:148
+#: app/src/window/account-add.ts:341 app/src/window/accounts-page.ts:148
 #: app/src/window/accounts-page.ts:174 app/src/window/welcome.ts:163
 msgid "Add Account"
 msgstr "Konto hinzufügen"
@@ -1974,8 +1980,8 @@ msgstr "Dieses Konto pausieren?"
 #: app/src/window/agent-access-page.ts:234
 #: app/src/window/conversation-list.ts:501
 #: app/src/window/conversation-list.ts:587
-#: app/src/window/conversation-view.ts:748 app/src/window/protocols-page.ts:63
-#: app/src/window/protocols-page.ts:130
+#: app/src/window/conversation-view.ts:748 app/src/window/protocols-page.ts:66
+#: app/src/window/protocols-page.ts:142
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -1995,7 +2001,7 @@ msgstr ""
 "Nachrichten von diesem Konto werden zu E-Mail-Chats. Wer kein Delta Chat "
 "hat, sieht eine gewöhnliche E-Mail."
 
-#: app/src/window/account-detail.ts:152 app/src/window/protocols-page.ts:157
+#: app/src/window/account-detail.ts:152 app/src/window/protocols-page.ts:169
 #: app/src/window/welcome.ts:209
 msgid "Show ordinary email"
 msgstr "Gewöhnliche E-Mails anzeigen"
@@ -2112,7 +2118,7 @@ msgstr "Nachrichten löschen und entfernen"
 msgid "Could not start the background service: {reason}"
 msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
-#: app/src/window/accounts-dialog.ts:82 app/src/window/accounts-page.ts:187
+#: app/src/window/accounts-dialog.ts:86 app/src/window/accounts-page.ts:187
 #: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:175
 #: app/src/window/window.ts:131
 msgid "Accounts"
@@ -2159,7 +2165,7 @@ msgstr "GNOME-Einstellungen → Online-Konten öffnen"
 msgid "Could not load accounts"
 msgstr "Konten konnten nicht geladen werden"
 
-#: app/src/window/accounts-page.ts:114 app/src/window/protocols-page.ts:41
+#: app/src/window/accounts-page.ts:114 app/src/window/protocols-page.ts:47
 msgid "No accounts yet"
 msgstr "Noch keine Konten"
 
@@ -2194,7 +2200,7 @@ msgid "Start"
 msgstr "Starten"
 
 #: app/src/window/accounts-page.ts:180 app/src/window/conversation-list.ts:363
-#: app/src/window/protocols-page.ts:227 app/src/window/welcome-model.ts:102
+#: app/src/window/protocols-page.ts:248 app/src/window/welcome-model.ts:102
 #: app/src/window/welcome.ts:151
 msgid "Protocols"
 msgstr "Protokolle"
@@ -3323,30 +3329,34 @@ msgstr "KI"
 msgid "Preferences"
 msgstr "Einstellungen"
 
-#: app/src/window/protocols-page.ts:64
+#: app/src/window/protocols-page.ts:67
 msgid "Accept and Turn On"
 msgstr "Zustimmen und einschalten"
 
-#: app/src/window/protocols-page.ts:116
+#: app/src/window/protocols-page.ts:83
+msgid "Close"
+msgstr "Schließen"
+
+#: app/src/window/protocols-page.ts:128
 msgid "No mail account yet. Add one first."
 msgstr "Noch kein Mail-Konto. Füge zuerst eines hinzu."
 
-#: app/src/window/protocols-page.ts:120
+#: app/src/window/protocols-page.ts:132
 msgid "Use Delta Chat for which accounts?"
 msgstr "Delta Chat für welche Konten nutzen?"
 
-#: app/src/window/protocols-page.ts:121
+#: app/src/window/protocols-page.ts:133
 msgid ""
 "Only these accounts send email chats. The others keep sending ordinary mail."
 msgstr ""
 "Nur diese Konten senden E-Mail-Chats. Die anderen senden weiter gewöhnliche "
 "E-Mail."
 
-#: app/src/window/protocols-page.ts:131
+#: app/src/window/protocols-page.ts:143
 msgid "Turn On"
 msgstr "Einschalten"
 
-#: app/src/window/protocols-page.ts:179
+#: app/src/window/protocols-page.ts:191
 msgid "Accounts and messages stay when a protocol is switched off."
 msgstr ""
 "Konten und Nachrichten bleiben erhalten, wenn ein Protokoll ausgeschaltet "
@@ -3357,6 +3367,10 @@ msgid "{count} selected"
 msgid_plural "{count} selected"
 msgstr[0] "{count} ausgewählt"
 msgstr[1] "{count} ausgewählt"
+
+#: app/src/window/terms-widgets.ts:22
+msgid "I understand and accept the risk for my account"
+msgstr "Ich verstehe das Risiko für mein Konto und nehme es in Kauf"
 
 #: app/src/window/voice-recorder.ts:78 app/src/window/voice-recorder.ts:81
 #: app/src/window/voice-recorder.ts:94
@@ -3553,7 +3567,7 @@ msgstr "Curlew (Demo)"
 msgid "Demo data — nothing here is real"
 msgstr "Demo-Daten – nichts hier ist echt"
 
-#: app/src/window/window.ts:475
+#: app/src/window/window.ts:478
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 
@@ -3892,7 +3906,7 @@ msgstr ""
 "Die Kopplungsverbindung ist fehlgeschlagen ({reason}) — es wurde nichts "
 "gespeichert"
 
-#: packages/signal/src/link.ts:105 packages/whatsapp/src/login.ts:144
+#: packages/signal/src/link.ts:105 packages/whatsapp/src/login.ts:145
 msgid "no phone linked this device in time — nothing was saved"
 msgstr ""
 "Kein Telefon hat dieses Gerät rechtzeitig verknüpft — es wurde nichts "
@@ -3944,12 +3958,11 @@ msgstr ""
 
 #: packages/signal/src/link.ts:261
 msgid ""
-"Linked. Run `curlew sync` now: Signal keeps what arrived for this device "
-"only until it is received, and the phone sends the contact list on its own."
+"Linked. Sync soon: Signal keeps what arrived for this device only until it "
+"is received, and the phone sends the contact list on its own."
 msgstr ""
-"Verknüpft. Führe jetzt `curlew sync` aus: Signal hält für dieses Gerät "
-"Eingegangenes nur bis zum Empfang vor, und das Telefon sendet die "
-"Kontaktliste von selbst."
+"Verknüpft. Bald synchronisieren: Signal hält für dieses Gerät Eingegangenes "
+"nur bis zum Empfang vor, und das Telefon sendet die Kontaktliste von selbst."
 
 #: packages/signal/src/map.ts:54
 msgid "this message has no Signal id to reply to"
@@ -4425,19 +4438,23 @@ msgstr ""
 "Telefonnummer für einen Kopplungscode (international, z. B. +49…) — leer "
 "lassen, um einen QR-Code zu scannen"
 
-#: packages/whatsapp/src/login.ts:150
+#: packages/whatsapp/src/login.ts:129
+msgid "Scan a QR Code Instead"
+msgstr "Stattdessen QR-Code scannen"
+
+#: packages/whatsapp/src/login.ts:151
 msgid "WhatsApp kept asking for a reconnect — nothing was saved"
 msgstr ""
 "WhatsApp verlangte immer wieder eine Neuverbindung — es wurde nichts "
 "gespeichert"
 
-#: packages/whatsapp/src/login.ts:172
+#: packages/whatsapp/src/login.ts:173
 msgid ""
-"Linked. Run `curlew sync` now: WhatsApp hands the recent history and "
-"everything queued to the first connection that takes it, once."
+"Linked. Sync soon: WhatsApp hands the recent history and everything queued "
+"to the first connection that takes it, once."
 msgstr ""
-"Verknüpft. Führe jetzt `curlew sync` aus: WhatsApp übergibt den jüngsten "
-"Verlauf und alles Wartende einmalig an die erste Verbindung, die es annimmt."
+"Verknüpft. Bald synchronisieren: WhatsApp übergibt den jüngsten Verlauf und "
+"alles Wartende einmalig an die erste Verbindung, die es annimmt."
 
 #: packages/whatsapp/src/receiver.ts:31
 msgid "link it again with `curlew accounts add whatsapp`"
@@ -4611,6 +4628,10 @@ msgid ""
 msgstr ""
 "Serveradresse — leer lassen, um sie zu ermitteln (z. B. xmpps://"
 "xmpp.example.org:5223, wss://…)"
+
+#: packages/xmpp/src/backend.ts:56
+msgid "Discover Automatically"
+msgstr "Automatisch ermitteln"
 
 #: packages/xmpp/src/login.ts:28
 msgid "an empty password cannot log in"

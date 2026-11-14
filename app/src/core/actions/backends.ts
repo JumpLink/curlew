@@ -25,6 +25,11 @@ export function backendsEnable(
   return { name, outcome: result.outcome, terms: result.terms };
 }
 
+/** Why backend `name` cannot run on this machine, or null when it can. */
+export function backendUnavailableReason(name: string): Promise<string | null> {
+  return builtinRegistry().unavailableReason(name);
+}
+
 export function backendsDisable(name: string, path = configPath()): { name: string; enabled: false } {
   saveConfig(builtinRegistry().disable(loadConfig(path), name), path);
   return { name, enabled: false };
