@@ -4,6 +4,7 @@ import type { BackendAccount, GnomeAccount } from '@curlew/protocol';
 import {
   accountStatus,
   accountSubtitle,
+  avatarText,
   buildProtocolGroups,
   type AccountsDaemonState,
   type AccountsLoadState,
@@ -288,6 +289,16 @@ export default async () => {
       const state = buildProtocolGroups(load, daemonState(true, new Map()));
       expect(state.groups.map((g) => g.backend)).toStrictEqual(['mail', 'xmpp']);
       expect(state.groups[0]!.rows.length).toBe(0);
+    });
+  });
+
+  describe('avatarText', () => {
+    it('drops syntax and notes in parentheses so they do not become initials', () => {
+      expect(avatarText('Robin (Signal)')).toBe('Robin');
+      expect(avatarText('@robin:example.org')).toBe('robin:example.org');
+      expect(avatarText('+49 170 0000000')).toBe('49 170 0000000');
+      expect(avatarText('Ada Lovelace')).toBe('Ada Lovelace');
+      expect(avatarText('(…)')).toBe('(…)');
     });
   });
 
