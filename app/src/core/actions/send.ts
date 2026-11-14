@@ -68,7 +68,7 @@ import { isOmemoSendRefusedError, MESSAGES, validateImageUrl } from '@curlew/xmp
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { hiddenAccountIds } from '../visibility.ts';
-import { loadConfig, type CurlewConfig } from '../config.ts';
+import { deltaChatAccountIds, loadConfig, type CurlewConfig } from '../config.ts';
 import { demoActive } from '../demo/active.ts';
 import { type AllowReason, previewOf, requireAccess } from '../access.ts';
 import { type AgentAccess, agentGate } from './access.ts';
@@ -539,6 +539,17 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
   const capability = `${backend.manifest.name}.send` as Capability;
   if (!isSendBackend(backend))
     throw new Error(fmt(_('{backend} cannot send'), { backend: backend.manifest.name }));
+
+  if (params.emailChat && !deltaChatAccountIds(config).includes(params.accountId)) {
+    throw new Error(
+      fmt(
+        _(
+          'account {account} is not opted into Delta Chat — switch on "Use for Delta Chat" on its page in Accounts (or set mailAccounts.{account}.deltaChat to true in the config) to send an email chat message',
+        ),
+        { account: params.accountId },
+      ),
+    );
+  }
 
   const text = params.text !== undefined && params.text.trim().length > 0 ? params.text : undefined;
   if (text === undefined && params.imageUrl === undefined && (params.attachments ?? []).length === 0)

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-14 11:15+0100\n"
+"POT-Creation-Date: 2026-11-14 11:40+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -14,11 +14,11 @@ msgstr ""
 
 #: app/src/core/access.ts:117
 msgid ""
-"access to {target} is refused — AI features are switched off; turn them on "
-"in Curlew Preferences or set config.ui.ai to true"
+"access to {target} is refused — AI access is off: switch it on in "
+"Preferences → AI (or set ui.ai to true in the config)"
 msgstr ""
-"Zugriff auf {target} wird verweigert — KI-Funktionen sind ausgeschaltet; "
-"schalte sie in den Curlew-Einstellungen ein oder setze config.ui.ai auf true"
+"Zugriff auf {target} wird verweigert — KI-Zugriff ist aus: schalte ihn in "
+"Einstellungen → KI ein (oder setze ui.ai in der Konfiguration auf true)"
 
 #: app/src/core/access.ts:133
 msgid ""
@@ -299,7 +299,7 @@ msgstr "{backend} kann kein Bild senden — gib Text an und lass image_url weg"
 msgid "nothing to send: the text is empty after rendering"
 msgstr "Nichts zu senden: Der Text ist nach dem Rendern leer"
 
-#: app/src/core/actions/send.ts:374 app/src/core/actions/send.ts:555
+#: app/src/core/actions/send.ts:374 app/src/core/actions/send.ts:566
 msgid "{backend} cannot send attachments"
 msgstr "{backend} kann keine Anhänge senden"
 
@@ -314,15 +314,26 @@ msgstr ""
 "Diese Person ist auf {pinned} festgelegt: eine Nachricht über {backend} wird "
 "abgelehnt"
 
-#: app/src/core/actions/send.ts:545
+#: app/src/core/actions/send.ts:547
+msgid ""
+"account {account} is not opted into Delta Chat — switch on \"Use for Delta "
+"Chat\" on its page in Accounts (or set mailAccounts.{account}.deltaChat to "
+"true in the config) to send an email chat message"
+msgstr ""
+"Konto {account} ist nicht für Delta Chat freigeschaltet — schalte „Für Delta "
+"Chat verwenden“ auf der Seite des Kontos unter Konten ein (oder setze "
+"mailAccounts.{account}.deltaChat in der Konfiguration auf true), um eine E-"
+"Mail-Chat-Nachricht zu senden"
+
+#: app/src/core/actions/send.ts:556
 msgid "nothing to send: give text, an image URL or an attachment"
 msgstr "Nichts zu senden: Gib Text, eine Bild-URL oder einen Anhang an"
 
-#: app/src/core/actions/send.ts:547
+#: app/src/core/actions/send.ts:558
 msgid "{backend} messages carry no subject"
 msgstr "Nachrichten von {backend} haben keinen Betreff"
 
-#: app/src/core/actions/send.ts:550
+#: app/src/core/actions/send.ts:561
 msgid "{backend} cannot send email chat headers"
 msgstr "{backend} kann keine E-Mail-Chat-Kopfzeilen senden"
 
@@ -1691,38 +1702,39 @@ msgstr ""
 "Die Eingabe endete, bevor die Anmeldung abgeschlossen war — es wurde nichts "
 "gespeichert"
 
-#: app/src/frontends/cli/send.ts:17
+#: app/src/frontends/cli/send.ts:18
 msgid ""
 "Send a message from a granted account (needs a <backend>.send grant in the "
-"config)"
+"config and AI access switched on in Preferences → AI)"
 msgstr ""
 "Eine Nachricht von einem freigegebenen Konto senden (braucht eine "
-"<backend>.send-Freigabe in der Konfiguration)"
+"<backend>.send-Freigabe in der Konfiguration und KI-Zugriff, eingeschaltet "
+"unter Einstellungen → KI)"
 
-#: app/src/frontends/cli/send.ts:23
+#: app/src/frontends/cli/send.ts:25
 msgid "The message, plain text (optional with --image-url)"
 msgstr "Die Nachricht als reiner Text (optional mit --image-url)"
 
-#: app/src/frontends/cli/send.ts:27
+#: app/src/frontends/cli/send.ts:29
 msgid ""
 "XMPP only: https URL of one image, sent as its own message after the text"
 msgstr ""
 "Nur XMPP: https-URL eines Bildes, das nach dem Text als eigene Nachricht "
 "gesendet wird"
 
-#: app/src/frontends/cli/send.ts:31
+#: app/src/frontends/cli/send.ts:33
 msgid "Mail only: the subject line"
 msgstr "Nur E-Mail: die Betreffzeile"
 
-#: app/src/frontends/cli/send.ts:35
+#: app/src/frontends/cli/send.ts:38
 msgid ""
 "Mail only: send as an email chat message (Delta Chat style, adds Chat-"
-"Version)"
+"Version); the account must be opted into Delta Chat"
 msgstr ""
 "Nur E-Mail: als E-Mail-Chat-Nachricht senden (im Delta-Chat-Stil, mit Chat-"
-"Version)"
+"Version); das Konto muss für Delta Chat freigeschaltet sein"
 
-#: app/src/frontends/cli/send.ts:41
+#: app/src/frontends/cli/send.ts:45
 msgid ""
 "Absolute path of a file to send (repeatable; mail, Telegram, Matrix, XMPP, "
 "WhatsApp)"
@@ -1730,11 +1742,11 @@ msgstr ""
 "Absoluter Pfad einer zu sendenden Datei (wiederholbar; E-Mail, Telegram, "
 "Matrix, XMPP, WhatsApp)"
 
-#: app/src/frontends/cli/send.ts:46
+#: app/src/frontends/cli/send.ts:50
 msgid "Account id from `curlew accounts list`"
 msgstr "Konto-ID aus `curlew accounts list`"
 
-#: app/src/frontends/cli/send.ts:51
+#: app/src/frontends/cli/send.ts:55
 msgid "Address exactly as the rule spells it (name@example.org)"
 msgstr "Reine Adresse genau so, wie die Regel sie schreibt (name@example.org)"
 
@@ -4785,66 +4797,3 @@ msgid ""
 msgstr ""
 "{count} Geräte von {jid} tragen diesen Fingerabdruck, er benennt also keines "
 "— nichts wurde geändert"
-
-#~ msgid ""
-#~ "Show ordinary email threads beside conversations started by a chat "
-#~ "messenger"
-#~ msgstr ""
-#~ "Gewöhnliche E-Mail-Verläufe neben Unterhaltungen aus einem Chat-Messenger "
-#~ "anzeigen"
-
-#~ msgid "Follow the system style"
-#~ msgstr "Dem Systemstil folgen"
-
-#~ msgid "Dark style"
-#~ msgstr "Dunkler Stil"
-
-#~ msgid "Appearance"
-#~ msgstr "Erscheinungsbild"
-
-#~ msgid "Mail, calendar and contacts"
-#~ msgstr "E-Mail, Kalender und Kontakte"
-
-#~ msgid "{backend} cannot send attachments through the daemon"
-#~ msgstr "{backend} kann Anhänge nicht über den Daemon senden"
-
-#~ msgid ""
-#~ "{backend} takes no attachments from an agent — pick the file in the "
-#~ "Curlew window"
-#~ msgstr ""
-#~ "{backend} nimmt von einem Agenten keine Anhänge an — wähle die Datei im "
-#~ "Curlew-Fenster"
-
-#~ msgid "Mail only: absolute path of a file to attach (repeatable)"
-#~ msgstr "Nur E-Mail: absoluter Pfad einer anzuhängenden Datei (wiederholbar)"
-
-#~ msgid "Enable a backend in Preferences to add accounts here."
-#~ msgstr ""
-#~ "Aktiviere in den Einstellungen ein Backend, um hier Konten hinzuzufügen."
-
-#~ msgid "Loading…"
-#~ msgstr "Wird geladen…"
-
-#~ msgid ""
-#~ "sending to {target} is not granted — add a grant like {grant} to the "
-#~ "config file, naming the account and the address"
-#~ msgstr ""
-#~ "Das Senden an {target} ist nicht freigegeben — füge eine Freigabe wie "
-#~ "{grant} in der Konfigurationsdatei hinzu, die Konto und Adresse nennt"
-
-#~ msgid ""
-#~ "{capability} is not granted for {target} — add {grant} to the grants in "
-#~ "the config file"
-#~ msgstr ""
-#~ "{capability} ist für {target} nicht freigegeben — füge {grant} in der "
-#~ "Konfigurationsdatei zu den Freigaben hinzu"
-
-#~ msgid "the xmpp backend is not available"
-#~ msgstr "Das XMPP-Backend ist nicht verfügbar"
-
-#~ msgid "no {backend} account {account} — `curlew accounts list` shows them"
-#~ msgstr ""
-#~ "Kein {backend}-Konto {account} — `curlew accounts list` zeigt sie an"
-
-#~ msgid "XMPP account id (xmpp-…)"
-#~ msgstr "XMPP-Konto-ID (xmpp-…)"

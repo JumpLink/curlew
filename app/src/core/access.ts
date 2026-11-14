@@ -114,7 +114,7 @@ function deniedBySwitch(target: AccessTarget): AccessDeniedError {
   return new AccessDeniedError(
     fmt(
       _(
-        'access to {target} is refused — AI features are switched off; turn them on in Curlew Preferences or set config.ui.ai to true',
+        'access to {target} is refused — AI access is off: switch it on in Preferences → AI (or set ui.ai to true in the config)',
       ),
       { target: describeTarget(target) },
     ),

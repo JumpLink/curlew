@@ -14,7 +14,9 @@ import { runAndExit } from './output.ts';
 export const sendCommand: CommandModule = {
   command: 'send [text]',
   get describe() {
-    return _('Send a message from a granted account (needs a <backend>.send grant in the config)');
+    return _(
+      'Send a message from a granted account (needs a <backend>.send grant in the config and AI access switched on in Preferences → AI)',
+    );
   },
   builder: (yargs) =>
     yargs
@@ -32,7 +34,9 @@ export const sendCommand: CommandModule = {
       })
       .option('email-chat', {
         type: 'boolean',
-        describe: _('Mail only: send as an email chat message (Delta Chat style, adds Chat-Version)'),
+        describe: _(
+          'Mail only: send as an email chat message (Delta Chat style, adds Chat-Version); the account must be opted into Delta Chat',
+        ),
       })
       .option('attach', {
         type: 'string',
