@@ -22,7 +22,7 @@ export type PromptStep =
       submit(value: string): void;
     }
   | { kind: 'choose'; label: string; options: readonly LoginChoice[]; submit(id: string): void }
-  | { kind: 'qr'; data: string; instructions: string }
+  | { kind: 'qr'; data: string; instructions: string; link?: boolean }
   | { kind: 'status'; message: string };
 
 /** What shows a step. The latest one replaces the one before. */
@@ -82,8 +82,10 @@ export function createSurfacePrompter(surface: PromptSurface): SurfacePrompter {
     notify(message) {
       if (!cancelled) surface.present({ kind: 'status', message });
     },
-    showQr(data, instructions) {
-      if (!cancelled) surface.present({ kind: 'qr', data, instructions });
+    showQr(data, instructions, options) {
+      if (!cancelled) {
+        surface.present({ kind: 'qr', data, instructions, ...(options?.link ? { link: true } : {}) });
+      }
     },
     cancel() {
       cancelled = true;

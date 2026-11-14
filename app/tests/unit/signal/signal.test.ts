@@ -131,10 +131,14 @@ function tempDir(): string {
   return mkdtempSync(join(tmpdir(), 'curlew-signal-'));
 }
 
-function prompter(): AccountPrompter & { notes: string[] } {
+function prompter(): AccountPrompter & { notes: string[]; qrs: { data: string; link?: boolean }[] } {
   const notes: string[] = [];
+  const qrs: { data: string; link?: boolean }[] = [];
   return {
     notes,
+    qrs,
+    showQr: (data, _instructions, options) =>
+      void qrs.push({ data, ...(options?.link ? { link: true } : {}) }),
     ask: async () => '',
     notify: (message) => notes.push(message),
   };
@@ -677,7 +681,9 @@ export default async () => {
         });
         const account = await backend.addAccount(p);
         expect(account.id).toBe(ACCOUNT);
-        expect(p.notes[0].includes('Linked devices')).toBe(true);
+        expect(p.qrs.length).toBe(1);
+        expect(p.qrs[0].link).toBe(true);
+        expect(p.qrs[0].data.startsWith('sgnl://linkdevice')).toBe(true);
         expect(phone.requests.map((r) => `${r.verb} ${r.path}`).join(' | ')).toBe(
           'PUT /v1/devices/link | PUT /v2/keys?identity=aci',
         );

@@ -14,6 +14,17 @@ export default async () => {
       expect(seen).toStrictEqual(['qr:payload|Scan it']);
     });
 
+    await it('passes the link option on to a prompter that shows an image', async () => {
+      const seen: unknown[] = [];
+      const prompter: AccountPrompter = {
+        ask: async () => '',
+        notify: () => {},
+        showQr: (_data, _instructions, options) => void seen.push(options),
+      };
+      notifyQr(prompter, 'sgnl://x', 'Open it', () => 'TEXT', { link: true });
+      expect(seen).toStrictEqual([{ link: true }]);
+    });
+
     await it('falls back to the text rendering through notify', async () => {
       const seen: string[] = [];
       const prompter: AccountPrompter = { ask: async () => '', notify: (message) => void seen.push(message) };

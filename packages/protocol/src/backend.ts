@@ -204,13 +204,23 @@ export interface AccountPrompter {
    * without it (the terminal) gets the code rendered as text through `notify` instead, which is
    * what `notifyQr` does.
    */
-  showQr?(data: string, instructions: string): void;
+  showQr?(data: string, instructions: string, options?: QrOptions): void;
   /**
    * Let the user pick one of several ways to go on ("Scan a QR code", "Phone number and code").
    * Resolves to the chosen option's `id`. Optional: a prompter without it gets the first option,
    * which is what `chooseOption` does — so the first one must always be a way that works.
    */
   choose?(label: string, options: readonly LoginChoice[]): Promise<string>;
+}
+
+/** How `showQr` presents a code. */
+export interface QrOptions {
+  /**
+   * The payload is also a link another app on this device can open (`sgnl://linkdevice?…`). A
+   * window then offers "open" and "copy" next to the code, for when the screen showing it is
+   * the device the other app runs on. A prompter that cannot ignores it.
+   */
+  link?: boolean;
 }
 
 /** One way to go on, as `AccountPrompter.choose` offers it. */
@@ -242,8 +252,9 @@ export function notifyQr(
   data: string,
   instructions: string,
   renderText: (data: string) => string,
+  options?: QrOptions,
 ): void {
-  if (prompter.showQr) prompter.showQr(data, instructions);
+  if (prompter.showQr) prompter.showQr(data, instructions, options);
   else prompter.notify(`${renderText(data)}\n${instructions}`);
 }
 

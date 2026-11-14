@@ -109,6 +109,13 @@ export default async () => {
       ]);
     });
 
+    await it('marks a QR step as an openable link only when the backend says so', async () => {
+      const { steps, surface } = recorder();
+      const prompter = createSurfacePrompter(surface);
+      prompter.showQr?.('sgnl://x', 'Open it', { link: true });
+      expect(steps).toStrictEqual([{ kind: 'qr', data: 'sgnl://x', instructions: 'Open it', link: true }]);
+    });
+
     await it('rejects the pending question when cancelled', async () => {
       const { surface } = recorder();
       const prompter = createSurfacePrompter(surface);
