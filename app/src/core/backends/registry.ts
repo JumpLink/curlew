@@ -28,6 +28,11 @@ import type { CurlewConfig } from '../config.ts';
 export interface BackendPlugin<B extends MessageBackend = MessageBackend> {
   manifest: BackendManifest;
   create(context: BackendContext): B;
+  /**
+   * Rejects when the backend cannot run on this machine — a native library without a build for
+   * it. Asked before anything is shown, so nobody accepts terms for a backend that cannot start.
+   */
+  ready?(): Promise<void>;
 }
 
 export interface BackendStatus {
@@ -131,6 +136,18 @@ export class BackendRegistry {
       );
     }
     return plugin.create(context);
+  }
+
+  /** Why `name` cannot run on this machine, or null when it can. */
+  async unavailableReason(name: string): Promise<string | null> {
+    const plugin = this.require(name);
+    if (!plugin.ready) return null;
+    try {
+      await plugin.ready();
+      return null;
+    } catch (err) {
+      return err instanceof Error ? err.message : String(err);
+    }
   }
 
   /** The plugins `config` enables — the only ones any code path may construct. */

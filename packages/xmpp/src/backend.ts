@@ -52,7 +52,9 @@ export function xmppPrompts(prompter: AccountPrompter): LoginPrompts {
     jid: () => prompter.ask(_('XMPP address (name@example.org)')),
     password: () => prompter.ask(_('Password'), { secret: true }),
     service: () =>
-      prompter.ask(_('Server address — empty to discover it (e.g. xmpps://xmpp.example.org:5223, wss://…)')),
+      prompter.ask(_('Server address — empty to discover it (e.g. xmpps://xmpp.example.org:5223, wss://…)'), {
+        skip: _('Discover Automatically'),
+      }),
     notify: (message) => prompter.notify(message),
   };
 }

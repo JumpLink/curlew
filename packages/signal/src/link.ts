@@ -258,7 +258,7 @@ export async function linkSignal(
     moved = true;
     prompter.notify(
       _(
-        'Linked. Run `curlew sync` now: Signal keeps what arrived for this device only until it is received, and the phone sends the contact list on its own.',
+        'Linked. Sync soon: Signal keeps what arrived for this device only until it is received, and the phone sends the contact list on its own.',
       ),
     );
     return account;

@@ -13,7 +13,14 @@ import type { AccountPrompter } from '@curlew/protocol';
 
 /** One thing the person sees or answers while an account is added. */
 export type PromptStep =
-  | { kind: 'ask'; label: string; secret: boolean; submit(value: string): void }
+  | {
+      kind: 'ask';
+      label: string;
+      secret: boolean;
+      /** Label of a second button that answers with an empty value, when the backend offers one. */
+      skip?: string;
+      submit(value: string): void;
+    }
   | { kind: 'qr'; data: string; instructions: string }
   | { kind: 'status'; message: string };
 
@@ -52,6 +59,7 @@ export function createSurfacePrompter(surface: PromptSurface): SurfacePrompter {
           kind: 'ask',
           label,
           secret: options?.secret === true,
+          ...(options?.skip ? { skip: options.skip } : {}),
           submit: (value) => {
             // A second press of Enter must not answer a question that is already answered.
             if (pending !== reject) return;

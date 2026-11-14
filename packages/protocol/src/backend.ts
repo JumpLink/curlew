@@ -190,8 +190,12 @@ export interface AccountAddOptions {
 
 /** How a backend asks the user for login input, whatever the frontend is. */
 export interface AccountPrompter {
-  /** Ask for one value. `secret` input is not echoed and never logged. */
-  ask(label: string, options?: { secret?: boolean }): Promise<string>;
+  /**
+   * Ask for one value. `secret` input is not echoed and never logged. `skip` names what an EMPTY
+   * answer does ("Scan a QR Code Instead"): a window offers it as its own button, so nobody has to
+   * know that leaving a field empty is a choice. The label still says so for the terminal.
+   */
+  ask(label: string, options?: { secret?: boolean; skip?: string }): Promise<string>;
   /** Progress to show the user. Never carries a secret. */
   notify(message: string): void;
   /**

@@ -5,7 +5,7 @@
 
 import { ImapBackend, MAIL_MANIFEST } from '@curlew/imap';
 import { MATRIX_MANIFEST, MatrixBackend } from '@curlew/matrix';
-import { SIGNAL_MANIFEST, SignalBackend } from '@curlew/signal';
+import { SIGNAL_MANIFEST, SignalBackend, loadSignalLib } from '@curlew/signal';
 import { TELEGRAM_MANIFEST, TelegramBackend } from '@curlew/telegram';
 import { WHATSAPP_MANIFEST, WhatsAppBackend } from '@curlew/whatsapp';
 import { XMPP_MANIFEST, XmppBackend } from '@curlew/xmpp';
@@ -18,7 +18,11 @@ export const BUILTIN_PLUGINS: readonly BackendPlugin[] = [
   { manifest: WHATSAPP_MANIFEST, create: (context) => new WhatsAppBackend(context) },
   { manifest: XMPP_MANIFEST, create: (context) => new XmppBackend(context) },
   { manifest: MATRIX_MANIFEST, create: (context) => new MatrixBackend(context) },
-  { manifest: SIGNAL_MANIFEST, create: (context) => new SignalBackend(context) },
+  {
+    manifest: SIGNAL_MANIFEST,
+    create: (context) => new SignalBackend(context),
+    ready: () => loadSignalLib().then(() => undefined),
+  },
 ];
 
 /** The backends that can run on `platform`; on Windows and macOS that is every chat protocol, not mail. */

@@ -393,7 +393,10 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   const accounts = new Gio.SimpleAction({ name: 'accounts' });
   accounts.connect('activate', () =>
     timed('present accounts', () =>
-      presentAccounts(window, { openAccount: process.env.CURLEW_WINDOW_OPEN_ACCOUNT || undefined }),
+      presentAccounts(window, {
+        openAccount: process.env.CURLEW_WINDOW_OPEN_ACCOUNT || undefined,
+        openAdd: process.env.CURLEW_WINDOW_OPEN_ADD || undefined,
+      }),
     ),
   );
   const protocols = new Gio.SimpleAction({ name: 'protocols' });

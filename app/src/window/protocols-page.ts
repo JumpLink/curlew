@@ -8,7 +8,12 @@ import Adw from 'gi://Adw?version=1';
 import Gtk from 'gi://Gtk?version=4.0';
 import { _, _n, fmt } from '@curlew/protocol';
 
-import { backendsDisable, backendsEnable, backendsList } from '../core/actions/backends.ts';
+import {
+  backendUnavailableReason,
+  backendsDisable,
+  backendsEnable,
+  backendsList,
+} from '../core/actions/backends.ts';
 
 import { deltaChatAccountIds, loadConfig, saveConfig } from '../core/config.ts';
 import {
@@ -23,6 +28,7 @@ import { showAllEmailsSubtitle } from './email-chat-model.ts';
 import { chatOnlyAccountIds } from '../core/visibility.ts';
 import { mailAccountChoices } from './welcome-model.ts';
 import { restartDaemonIfRunning } from './accounts-daemon.ts';
+import { riskCheckButton, termsLinkButton } from './terms-widgets.ts';
 
 export interface ProtocolsPageDeps {
   navigation: Adw.NavigationView;
@@ -52,12 +58,9 @@ function askTerms(
   const dialog = new Adw.AlertDialog({ heading: _('Please read this first'), body: terms.summary });
   const extra = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 12 });
   if (terms.url) {
-    extra.append(new Gtk.LinkButton({ uri: terms.url, label: terms.url, halign: Gtk.Align.CENTER }));
+    extra.append(termsLinkButton(terms.url, Gtk.Align.CENTER));
   }
-  const risk = new Gtk.CheckButton({
-    label: _('I understand and accept the risk for my account'),
-    halign: Gtk.Align.CENTER,
-  });
+  const risk = riskCheckButton();
   extra.append(risk);
   dialog.set_extra_child(extra);
   dialog.add_response('cancel', _('Cancel'));
@@ -69,6 +72,15 @@ function askTerms(
   dialog.set_default_response('cancel');
   dialog.set_close_response('cancel');
   dialog.connect('response', (_dialog: Adw.AlertDialog, response: string) => done(response === 'accept'));
+  dialog.present(deps.parent());
+}
+
+function showUnavailable(deps: ProtocolsPageDeps, protocol: AddableProtocol): void {
+  const dialog = new Adw.AlertDialog({
+    heading: fmt(_('{protocol} is not available on this device'), { protocol: protocol.label }),
+    body: _('This build of Curlew cannot run it on this kind of computer yet.'),
+  });
+  dialog.add_response('close', _('Close'));
   dialog.present(deps.parent());
 }
 
@@ -207,10 +219,19 @@ export function pushProtocolsPage(deps: ProtocolsPageDeps): void {
     row.connect('notify::active', () => {
       if (busy) return;
       const on = row.get_active();
-      if (!on || protocol.terms === null) return apply(on, false);
-      askTerms(deps, protocol, (accepted) => {
-        if (accepted) apply(true, true);
-        else revert(false);
+      if (!on) return apply(false, false);
+      void backendUnavailableReason(protocol.backend).then((reason) => {
+        if (reason !== null) {
+          console.warn(`curlew: ${protocol.backend} is unavailable: ${reason}`);
+          revert(false);
+          showUnavailable(deps, protocol);
+          return;
+        }
+        if (protocol.terms === null) return apply(true, false);
+        askTerms(deps, protocol, (accepted) => {
+          if (accepted) apply(true, true);
+          else revert(false);
+        });
       });
     });
     group.add(row);

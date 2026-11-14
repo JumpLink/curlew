@@ -27,6 +27,8 @@ export interface AccountsDialogOptions {
   openProtocols?: boolean;
   /** Show the page of this account (`<backend>/<id>`) once loaded (the screenshot hook `CURLEW_WINDOW_OPEN_ACCOUNT`). */
   openAccount?: string;
+  /** Open the login page of this backend at once (the screenshot hook `CURLEW_WINDOW_OPEN_ADD`). */
+  openAdd?: string;
 }
 
 export function presentAccounts(parent: Gtk.Window | null, options: AccountsDialogOptions = {}): void {
@@ -35,19 +37,21 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
   const onError = (err: Error) => overlay.add_toast(new Adw.Toast({ title: err.message, timeout: 4 }));
   const page: ReturnType<typeof createAccountsPage> = createAccountsPage(
     onError,
-    () =>
-      pushAddAccountPage({
-        navigation: page.navigation,
-        root: page.root,
-        path,
-        onError,
-        onAdded: () => void reload(),
-        openGoaSettings: () => openGoaSettings(onError),
-      }),
+    () => openAddPage(),
     (group, row, daemonPresent) => openAccountPage(group.backend, row, daemonPresent),
     () => void startDaemon().catch((err: Error) => onError(err)),
     () => openProtocols(),
   );
+  const openAddPage = (openLogin?: string): void =>
+    pushAddAccountPage({
+      navigation: page.navigation,
+      root: page.root,
+      path,
+      onError,
+      onAdded: () => void reload(),
+      openGoaSettings: () => openGoaSettings(onError),
+      ...(openLogin ? { openLogin } : {}),
+    });
   const openAccountPage = (
     backend: string,
     row: Parameters<typeof pushAccountPage>[0]['row'],
@@ -145,4 +149,7 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
   dialog.present(parent);
   if (options.openProtocols)
     GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => (openProtocols(), GLib.SOURCE_REMOVE));
+  const openAdd = options.openAdd;
+  if (openAdd)
+    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => (openAddPage(openAdd), GLib.SOURCE_REMOVE));
 }

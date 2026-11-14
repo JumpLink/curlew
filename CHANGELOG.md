@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Adding an account on a phone-sized screen: the terms notice no longer runs off the right edge (the "I accept the risk" line now wraps), a protocol this build cannot run here — Signal on ARM64 Linux — says so before the terms instead of failing after you accepted them, WhatsApp offers "Scan a QR Code Instead" as a button next to the phone-number field, and XMPP offers "Discover Automatically" for the server. The "Linked" message no longer names a terminal command.
 - The window no longer tells you to run `curlew sync` or `curlew setup`: the empty conversation list explains itself, "Start" in the Accounts dialog installs the background service when it is missing, and the banner only appears when an account needs that service.
 - Mail now arrives by itself in a GUI-only install: `curlew daemon` runs the mail and chat sync on its own timer (20 seconds after it starts, then every 15 minutes), and on Windows and macOS, where there is no daemon, the window runs it while it is open. Before this, a Flatpak or phone install received nothing until somebody typed `curlew sync` in a terminal it does not have.
 - `curlew daemon` no longer fails to start when there is nothing to receive — an install with mail accounts only made the background service `failed` on every start, so systemd showed red and the window showed "not running". It now says it is idle and stays up: it runs the sync and answers the window, and adding the first chat account picks it up.

@@ -10,16 +10,17 @@ import Adw from 'gi://Adw?version=1';
 import Gdk from 'gi://Gdk?version=4.0';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
-import { _ } from '@curlew/protocol';
+import { _, fmt } from '@curlew/protocol';
 
 import { accountsAdd } from '../core/actions/accounts.ts';
-import { backendsEnable, backendsList } from '../core/actions/backends.ts';
+import { backendUnavailableReason, backendsEnable, backendsList } from '../core/actions/backends.ts';
 import { addableProtocols, mailProtocol, needsTerms, type AddableProtocol } from './account-add-model.ts';
 import { chatOnly } from '../core/platform.ts';
 import { inSandbox } from '../core/lib/sandbox.ts';
 import { restartDaemonIfRunning } from './accounts-daemon.ts';
 import { createSurfacePrompter, type PromptStep, type SurfacePrompter } from './account-prompter.ts';
 import { qrImage, qrScaleFor } from './qr-image.ts';
+import { riskCheckButton, termsLinkButton } from './terms-widgets.ts';
 
 export interface AddAccountDeps {
   navigation: Adw.NavigationView;
@@ -33,6 +34,8 @@ export interface AddAccountDeps {
   openGoaSettings(): void;
   /** The login to run; the real one unless a probe substitutes it. */
   login?(backend: string, prompter: SurfacePrompter): Promise<unknown>;
+  /** Open this backend's login page at once (the screenshot hook `CURLEW_WINDOW_OPEN_ADD`). */
+  openLogin?: string;
 }
 
 /** The widest a QR code is drawn, so it fits a phone-sized window with its margins. */
@@ -116,9 +119,27 @@ class LoginPage {
     });
   }
 
-  start(): void {
+  async start(): Promise<void> {
+    this.showStatus(_('Connecting…'));
+    // Asked before the terms: nobody should accept a risk for a backend that cannot start here.
+    const reason = await backendUnavailableReason(this.protocol.backend);
+    if (reason !== null) {
+      console.warn(`curlew: ${this.protocol.backend} is unavailable: ${reason}`);
+      this.showUnavailable();
+      return;
+    }
     if (needsTerms(this.protocol)) this.showTerms();
     else void this.run();
+  }
+
+  private showUnavailable(): void {
+    this.show(
+      new Adw.StatusPage({
+        iconName: 'dialog-warning-symbolic',
+        title: fmt(_('{protocol} is not available on this device'), { protocol: this.protocol.label }),
+        description: _('This build of Curlew cannot run it on this kind of computer yet.'),
+      }),
+    );
   }
 
   private show(widget: Gtk.Widget): void {
@@ -139,12 +160,9 @@ class LoginPage {
     box.append(wrappedLabel(_('Please read this first'), ['title-2']));
     box.append(wrappedLabel(terms.summary));
     if (terms.url) {
-      box.append(new Gtk.LinkButton({ uri: terms.url, label: terms.url, halign: Gtk.Align.START }));
+      box.append(termsLinkButton(terms.url, Gtk.Align.START));
     }
-    const risk = new Gtk.CheckButton({
-      label: _('I understand and accept the risk for my account'),
-      halign: Gtk.Align.CENTER,
-    });
+    const risk = riskCheckButton();
     const accept = pillButton(_('Accept and Continue'));
     // Reading the notice is not accepting it: the button stays off until the box is ticked.
     accept.set_sensitive(false);
@@ -189,6 +207,15 @@ class LoginPage {
     const next = pillButton(_('Continue'));
     next.connect('clicked', submit);
     box.append(next);
+    if (step.skip) {
+      const skip = new Gtk.Button({
+        label: step.skip,
+        halign: Gtk.Align.CENTER,
+        cssClasses: ['pill', 'flat'],
+      });
+      skip.connect('clicked', () => step.submit(''));
+      box.append(skip);
+    }
     this.show(scrolled(box));
     GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
       entry.grab_focus();
@@ -276,23 +303,16 @@ export function pushAddAccountPage(deps: AddAccountDeps): void {
     title: _('Chats'),
     description: _('Signal, WhatsApp and Telegram link this computer as another device of your account.'),
   });
-  for (const protocol of protocols) {
-    chats.add(
-      protocolRow(protocol, () => {
-        const login = new LoginPage(deps, protocol);
-        deps.navigation.push(login.page);
-        login.start();
-      }),
-    );
-  }
+  const openLogin = (protocol: AddableProtocol): void => {
+    const login = new LoginPage(deps, protocol);
+    deps.navigation.push(login.page);
+    void login.start();
+  };
+  for (const protocol of protocols) chats.add(protocolRow(protocol, () => openLogin(protocol)));
 
   const mail = new Adw.PreferencesGroup({ title: _('Mail') });
   if (mailEntry) {
-    const own = protocolRow(mailEntry, () => {
-      const login = new LoginPage(deps, mailEntry);
-      deps.navigation.push(login.page);
-      login.start();
-    });
+    const own = protocolRow(mailEntry, () => openLogin(mailEntry));
     own.set_subtitle(_('Sign in with an address and a password'));
     mail.add(own);
   }
@@ -319,4 +339,6 @@ export function pushAddAccountPage(deps: AddAccountDeps): void {
   toolbar.add_top_bar(new Adw.HeaderBar());
   toolbar.set_content(content);
   deps.navigation.push(new Adw.NavigationPage({ title: _('Add Account'), child: toolbar }));
+  const first = [...protocols, ...(mailEntry ? [mailEntry] : [])].find((p) => p.backend === deps.openLogin);
+  if (first) openLogin(first);
 }

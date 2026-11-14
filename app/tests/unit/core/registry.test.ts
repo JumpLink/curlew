@@ -137,6 +137,15 @@ export default async () => {
         /unknown backend/,
       );
     });
+
+    await it('reports why a backend cannot run here, and null when it can', async () => {
+      const broken = { ...plugin('broken'), ready: () => Promise.reject(new Error('no native library')) };
+      const fine = { ...plugin('fine'), ready: () => Promise.resolve() };
+      const registry = new BackendRegistry([broken, fine, plugin('plain')]);
+      expect(await registry.unavailableReason('broken')).toBe('no native library');
+      expect(await registry.unavailableReason('fine')).toBe(null);
+      expect(await registry.unavailableReason('plain')).toBe(null);
+    });
   });
 
   await describe('built-in Telegram backend', async () => {
