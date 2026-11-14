@@ -301,6 +301,7 @@ in `/tmp/curlew-demo-shots` (never the real ones), under `scripts/headless-run`:
 dev/screenshots.sh --build            # all motifs → docs/screenshots/<motif>.<lang>.<scheme>.png
 dev/screenshots.sh --only accounts --lang de --scheme dark
 dev/screenshots.sh --check            # only verifies that every expected file exists
+dev/check-screenshot-refs.sh          # every PNG the README, guides and metainfo name exists (CI)
 # file names and the Flathub set: docs/screenshots/README.md
 ```
 

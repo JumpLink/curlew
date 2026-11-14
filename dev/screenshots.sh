@@ -16,13 +16,13 @@ WORK="${CURLEW_SHOTS_DEMO:-/tmp/curlew-demo-shots}"
 
 # motif | window size (logical) | data set | extra environment
 # data set: demo = the demo data, off = same with every protocol and switch off,
+#           paused = the demo with the WhatsApp account paused,
 #           empty = no accounts, no index (the Accounts dialog with its daemon banner).
 MOTIFS=(
   "conversations|900x640|demo|"
   "conversation|900x640|demo|CURLEW_WINDOW_OPEN=c1"
   "conversation-narrow|360x740|demo|CURLEW_WINDOW_OPEN=c1"
   "conversations-narrow|360x740|demo|"
-  "composer-emoji|360x740|demo|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_OPEN_EMOJI=1"
   "contact|900x700|demo|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_OPEN_CONTACT=1"
   "group|900x700|demo|CURLEW_WINDOW_OPEN=c4 CURLEW_WINDOW_OPEN_CONTACT=1"
   "preferences|900x640|demo|CURLEW_WINDOW_OPEN_PREFERENCES=1"
@@ -36,6 +36,11 @@ MOTIFS=(
   "welcome|360x740|empty|CURLEW_WINDOW_OPEN_WELCOME=1"
   "welcome-delta-chat|360x740|demo|CURLEW_WINDOW_OPEN_WELCOME=delta-chat"
   "email-chat|900x640|demo|CURLEW_WINDOW_OPEN=c3"
+  "composer-emoji|900x640|demo|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_OPEN_EMOJI=1"
+  "reactions|900x640|demo|CURLEW_WINDOW_OPEN=c25"
+  "reactions-narrow|360x740|demo|CURLEW_WINDOW_OPEN=c25"
+  "contact-merged|900x700|demo|CURLEW_WINDOW_OPEN=c3 CURLEW_WINDOW_OPEN_CONTACT=1"
+  "account-paused|900x640|paused|CURLEW_WINDOW_OPEN_ACCOUNT=whatsapp/whatsapp-demo1"
 )
 
 BUILD=0 CHECK=0 ONLY="" LANGS=(en de) SCHEMES=(light dark)
@@ -71,13 +76,15 @@ cd "$ROOT"
 
 # Fresh data on every run, so the list times ("4 min ago") are relative to now.
 rm -rf "$WORK"
-mkdir -p "$WORK/demo" "$WORK/off" "$WORK/empty" "$OUT"
+mkdir -p "$WORK/demo" "$WORK/off" "$WORK/paused" "$WORK/empty" "$OUT"
 (cd app && node --experimental-strip-types scripts/demo-index.ts "$WORK/demo" >/dev/null)
 cp -a "$WORK/demo/." "$WORK/off/"
 jq '.backends |= with_entries(.value.enabled = false)
     | .ui |= (.ai = false | .notifications = "off" | .showAllEmails = false)
     | .agentAccess.rules = []' "$WORK/demo/config.json" >"$WORK/off/config.json.new"
 mv "$WORK/off/config.json.new" "$WORK/off/config.json"
+cp -a "$WORK/demo/." "$WORK/paused/"
+jq '.disabledAccounts = ["whatsapp/whatsapp-demo1"]' "$WORK/demo/config.json" >"$WORK/paused/config.json"
 echo '{"ui":{"welcomeDone":true}}' >"$WORK/empty/config.json"
 
 for m in "${MOTIFS[@]}"; do

@@ -46,6 +46,7 @@
 - Opening a video or file from a chat or mail bubble no longer stops at 25 MB; the window may
   fetch up to 100 MB, since a phone video is often bigger than the limit meant for agents.
 - German: the refusal for a bad Matrix event id no longer carries a stray second sentence, and one command hint addressed you as "Sie" instead of "du".
+- The sidebar is wider (at least 320 px), so the title "Conversations" is no longer cut off to "Convers…" in the default window.
 
 ### Changed
 
@@ -86,6 +87,7 @@
   access* page lets an `allow` rule send files unasked, for mail and chats alike.
 - Setting up a network with a terms notice (WhatsApp, Signal, Telegram) asks you to tick *I
   understand and accept the risk for my account* before *Accept and Continue* is enabled.
+- The listing screenshots in `docs/screenshots/` are rendered again (EN/DE × light/dark, all motifs, plus the new `composer-emoji`, `reactions`, `contact-merged` and `account-paused`); the old files without language and scheme in the name are gone, and the README and guides point to the new ones. `dev/check-screenshot-refs.sh` (also in CI) fails when the README, a guide or the metainfo points to a missing screenshot.
 
 ### Added
 

@@ -11,7 +11,6 @@ File name: `<motif>.<lang>.<scheme>.png`.
 | `conversations` | chat list | 900×640 |
 | `conversation` | chat view (Alex Weber, Signal + Telegram merged) | 900×640 |
 | `conversations-narrow`, `conversation-narrow` | the same, phone width | 360×740 |
-| `composer-emoji` | emoji chooser open over the composer, phone width | 360×740 |
 | `contact` | contact page | 900×700 |
 | `group` | group page (Climbing Tuesday) | 900×700 |
 | `preferences`, `preferences-off` | settings, demo defaults / everything off | 900×640 |
@@ -20,6 +19,10 @@ File name: `<motif>.<lang>.<scheme>.png`.
 | `agent-access` | agent access dialog | 900×640 |
 | `welcome` | first-run welcome | 360×740 |
 | `welcome-delta-chat` | welcome page that explains Delta Chat mode (`CURLEW_WINDOW_OPEN_WELCOME=delta-chat`) | 360×740 |
+| `contact-merged` | contact page of Sam: Delta Chat and XMPP combined | 900×700 |
+| `account-paused` | account page of a paused WhatsApp account | 900×640 |
+| `reactions`, `reactions-narrow` | picture and voice note with reactions under the bubble (Ida Roth) | 900×640 / 360×740 |
+| `composer-emoji` | emoji chooser open in the composer (Alex Weber) | 900×640 |
 | `email-chat` | email chat thread (Sam Fischer, no voice notes or stickers) | 900×640 |
 
 ## For the metainfo (Flathub)
@@ -32,9 +35,10 @@ captions are one sentence without a full stop. Suggested set, light scheme:
 3. `contact.en.light.png` / `.de.light.png`
 4. `accounts.en.light.png` / `.de.light.png`
 5. `conversation-narrow.en.light.png` / `.de.light.png` (mobile)
-6. `email-chat.en.light.png` / `.de.light.png` (Delta Chat style chat over mail)
-7. `welcome-delta-chat.en.light.png` / `.de.light.png` (mobile)
 
-Dark variants (`*.dark.png`) can be added as `<image type="source" …>` with a `color-scheme` hint.
-The pictures without a `<lang>.<scheme>` in the name (`conversations.png`, `agent-access.png`, …) are
-older shots that the README still uses; the script does not produce them.
+`welcome-delta-chat` and `email-chat` stay out of the metainfo for now: they would promise Delta
+Chat compatibility, which waits for the live test against a real Delta Chat peer. Dark variants
+(`*.dark.png`) can be added as `<image type="source" …>` with a `color-scheme` hint.
+
+Every file the README, the guides or the metainfo point to must exist: `dev/check-screenshot-refs.sh`
+checks that (it runs in CI). `dev/screenshots.sh --check` checks the full set of generated files.

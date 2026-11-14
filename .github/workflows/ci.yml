@@ -101,6 +101,9 @@ jobs:
           # POT-Creation-Date changes on every run; any other difference means a stale catalogue.
           git diff --exit-code -I'^"POT-Creation-Date' -- po/
 
+      - name: Check the screenshot references
+        run: ./dev/check-screenshot-refs.sh
+
       - name: Build the CLI bundle
         run: gjsify workspace curlew-cli build
 

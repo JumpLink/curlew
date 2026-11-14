@@ -127,9 +127,9 @@ one chat, whichever protocol a message came by. Pictures show in the bubble; oth
 a tile. At 720 sp and narrower the window collapses to one pane, down to 360 px wide. The layout rules and
 their role models are in [`docs/design/ui.md`](../design/ui.md).
 
-![A conversation with a person who writes on two messengers](../screenshots/conversations.png)
+![A conversation with a person who writes on two messengers](../screenshots/conversations.en.light.png)
 
-![The same conversation at 360 px wide](../screenshots/conversation-narrow.png)
+![The same conversation at 360 px wide](../screenshots/conversation-narrow.en.light.png)
 
 **Agent access** is not a main area: it opens from the primary menu as a dialog. It lists the
 rules grouped by account, with `Name (address)` where the index knows the contact and *Whole
@@ -137,7 +137,7 @@ account* for an account-wide rule. Each rule has a read and a write mode (allow,
 can remove a rule, add one, and switch `askWithoutRule`. Your own commands and the window are
 never restricted, and your own addresses are always allowed — the dialog says so.
 
-![The Agent access dialog](../screenshots/agent-access.png)
+![The Agent access dialog](../screenshots/agent-access.en.light.png)
 
 - *Writing.* Every edit re-reads `config.json`, changes only `agentAccess`, and writes it
   atomically with mode 0600 — no other key is touched. The daemon can write the same file (an

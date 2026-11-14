@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-13 19:31+0100\n"
+"POT-Creation-Date: 2026-11-14 06:22+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1806,7 +1806,7 @@ msgstr ""
 msgid "Could not start the background service: {reason}"
 msgstr ""
 
-#: app/src/window/accounts-dialog.ts:75 app/src/window/accounts-page.ts:195
+#: app/src/window/accounts-dialog.ts:82 app/src/window/accounts-page.ts:195
 #: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:175
 #: app/src/window/window.ts:127
 msgid "Accounts"
@@ -3178,7 +3178,7 @@ msgstr ""
 msgid "Demo data — nothing here is real"
 msgstr ""
 
-#: app/src/window/window.ts:455
+#: app/src/window/window.ts:459
 msgid "No contacts to merge"
 msgstr ""
 

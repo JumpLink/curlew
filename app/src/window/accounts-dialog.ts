@@ -25,6 +25,8 @@ export interface AccountsDialogOptions {
   height?: number;
   /** Show the protocols page once the accounts are loaded (the screenshot hook `CURLEW_WINDOW_OPEN_PROTOCOLS`). */
   openProtocols?: boolean;
+  /** Show the page of this account (`<backend>/<id>`) once loaded (the screenshot hook `CURLEW_WINDOW_OPEN_ACCOUNT`). */
+  openAccount?: string;
 }
 
 export function presentAccounts(parent: Gtk.Window | null, options: AccountsDialogOptions = {}): void {
@@ -42,22 +44,27 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
         onAdded: () => void reload(),
         openGoaSettings: () => openGoaSettings(onError),
       }),
-    (group, row, daemonPresent) =>
-      pushAccountPage({
-        navigation: page.navigation,
-        root: page.root,
-        parent: () => page.widget,
-        path,
-        backend: group.backend,
-        row,
-        daemonPresent,
-        onError,
-        onRemoved: () => void reload(),
-        onChanged: () => void reload(),
-      }),
+    (group, row, daemonPresent) => openAccountPage(group.backend, row, daemonPresent),
     () => void startDaemon().catch((err: Error) => onError(err)),
     () => openProtocols(),
   );
+  const openAccountPage = (
+    backend: string,
+    row: Parameters<typeof pushAccountPage>[0]['row'],
+    daemonPresent: boolean,
+  ): void =>
+    pushAccountPage({
+      navigation: page.navigation,
+      root: page.root,
+      parent: () => page.widget,
+      path,
+      backend,
+      row,
+      daemonPresent,
+      onError,
+      onRemoved: () => void reload(),
+      onChanged: () => void reload(),
+    });
   const openProtocols = (): void =>
     pushProtocolsPage({
       navigation: page.navigation,
@@ -91,6 +98,14 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
     const state: AccountsPageState = buildProtocolGroups(loadState, daemonState);
     shown = state;
     page.show(state);
+    if (options.openAccount) {
+      const [backend, id] = options.openAccount.split('/');
+      options.openAccount = undefined;
+      for (const group of state.groups)
+        for (const row of group.rows)
+          if (group.backend === backend && row.id === id)
+            openAccountPage(group.backend, row, state.daemonPresent);
+    }
   };
 
   async function reload(): Promise<void> {
