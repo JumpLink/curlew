@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-14 12:31+0100\n"
+"POT-Creation-Date: 2026-11-14 12:51+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -829,7 +829,7 @@ msgid "no Background portal on this system"
 msgstr ""
 
 #: app/src/core/lib/autostart-portal.ts:113
-#: app/src/window/accounts-daemon.ts:75
+#: app/src/window/accounts-daemon.ts:80
 msgid "Keep receiving messages while the window is closed"
 msgstr ""
 
@@ -1582,8 +1582,8 @@ msgid "curlew window takes no arguments."
 msgstr ""
 
 #: app/src/window/about.ts:16 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:180 app/src/window/window.ts:91
-#: app/src/window/window.ts:114
+#: app/src/window/conversation-view.ts:180 app/src/window/window.ts:94
+#: app/src/window/window.ts:117
 msgid "Curlew"
 msgstr ""
 
@@ -1674,7 +1674,7 @@ msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 
 #: app/src/window/account-add.ts:321 app/src/window/accounts-page.ts:148
-#: app/src/window/accounts-page.ts:171 app/src/window/welcome.ts:163
+#: app/src/window/accounts-page.ts:174 app/src/window/welcome.ts:163
 msgid "Add Account"
 msgstr ""
 
@@ -1821,17 +1821,17 @@ msgstr ""
 msgid "Delete Messages and Remove"
 msgstr ""
 
-#: app/src/window/accounts-daemon.ts:62 app/src/window/accounts-daemon.ts:66
+#: app/src/window/accounts-daemon.ts:67 app/src/window/accounts-daemon.ts:71
 msgid "Could not start the background service. Run “curlew setup” first."
 msgstr ""
 
-#: app/src/window/accounts-daemon.ts:78
+#: app/src/window/accounts-daemon.ts:83
 msgid "Could not start the background service: {reason}"
 msgstr ""
 
-#: app/src/window/accounts-dialog.ts:82 app/src/window/accounts-page.ts:184
+#: app/src/window/accounts-dialog.ts:82 app/src/window/accounts-page.ts:187
 #: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:175
-#: app/src/window/window.ts:127
+#: app/src/window/window.ts:130
 msgid "Accounts"
 msgstr ""
 
@@ -1896,21 +1896,25 @@ msgstr ""
 msgid "Add a chat account or a mail account."
 msgstr ""
 
-#: app/src/window/accounts-page.ts:162
+#: app/src/window/accounts-page.ts:164
+msgid "Messages arrive while Curlew is open."
+msgstr ""
+
+#: app/src/window/accounts-page.ts:165
 msgid "The background service is not running, so chat accounts cannot connect."
 msgstr ""
 
-#: app/src/window/accounts-page.ts:163
+#: app/src/window/accounts-page.ts:166
 msgid "Start"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:177 app/src/window/conversation-list.ts:363
+#: app/src/window/accounts-page.ts:180 app/src/window/conversation-list.ts:363
 #: app/src/window/protocols-page.ts:227 app/src/window/welcome-model.ts:102
 #: app/src/window/welcome.ts:151
 msgid "Protocols"
 msgstr ""
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:131
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:134
 msgid "Agent access"
 msgstr ""
 
@@ -2994,7 +2998,7 @@ msgstr ""
 msgid "AI"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:129
+#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:132
 msgid "Preferences"
 msgstr ""
 
@@ -3118,7 +3122,7 @@ msgid "On"
 msgstr ""
 
 #: app/src/window/welcome.ts:109 app/src/window/welcome.ts:128
-#: app/src/window/window.ts:134
+#: app/src/window/window.ts:137
 msgid "Welcome"
 msgstr ""
 
@@ -3170,39 +3174,39 @@ msgstr ""
 msgid "Start Using Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:85
+#: app/src/window/window.ts:88
 msgid "Select a conversation"
 msgstr ""
 
-#: app/src/window/window.ts:86
+#: app/src/window/window.ts:89
 msgid "Pick a conversation from the list."
 msgstr ""
 
-#: app/src/window/window.ts:128
+#: app/src/window/window.ts:131
 msgid "Merge contacts…"
 msgstr ""
 
-#: app/src/window/window.ts:136
+#: app/src/window/window.ts:139
 msgid "About Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:137
+#: app/src/window/window.ts:140
 msgid "Quit"
 msgstr ""
 
-#: app/src/window/window.ts:179
+#: app/src/window/window.ts:182
 msgid "This conversation has no recipient address."
 msgstr ""
 
-#: app/src/window/window.ts:370
+#: app/src/window/window.ts:382
 msgid "Curlew (demo)"
 msgstr ""
 
-#: app/src/window/window.ts:373
+#: app/src/window/window.ts:385
 msgid "Demo data — nothing here is real"
 msgstr ""
 
-#: app/src/window/window.ts:459
+#: app/src/window/window.ts:471
 msgid "No contacts to merge"
 msgstr ""
 

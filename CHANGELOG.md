@@ -5,6 +5,7 @@
 ### Fixed
 
 - An account avatar no longer takes an initial from a note in parentheses: "Robin (Signal)" showed "R(", now "R".
+- On Windows and macOS the window now receives Signal, WhatsApp, XMPP, Matrix and Telegram messages while it is open, in the same loop `curlew daemon` runs, and the Accounts dialog says "Messages arrive while Curlew is open" instead of offering to start a systemd service that does not exist there. It never calls `systemctl` or asks for `curlew setup` on those platforms (#333).
 - The Accounts dialog no longer breaks an address in the middle of a word: the state and the Delta Chat note now sit under the address instead of beside it. The "Note to self" avatar keeps the same colour in every language, and the demo data used for the listing screenshots is English throughout (#338).
 - A mail from your other own account is a message from a person now, not from you: the thread shows that address, can be answered, and is no longer "You" on both sides. Own addresses are matched per account.
 - A paused GNOME Online Accounts mail account now shows as paused in the Accounts dialog.

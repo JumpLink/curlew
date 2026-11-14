@@ -8,7 +8,7 @@ import Gio from 'gi://Gio?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 
-import { chatOnly } from '../core/platform.ts';
+import { backgroundService, chatOnly } from '../core/platform.ts';
 import { DELTA_CHAT } from '../core/visibility.ts';
 import { protocolLabel } from './conversation-list-model.ts';
 import { accountSubtitle, avatarText } from './accounts-model.ts';
@@ -158,12 +158,15 @@ export function createAccountsPage(
   stack.add_named(emptyPage, 'empty');
   stack.set_visible_child_name('loading');
 
+  const whileOpen = backgroundService() === 'while-open';
   const banner = new Adw.Banner({
-    title: _('The background service is not running, so chat accounts cannot connect.'),
-    buttonLabel: _('Start'),
+    title: whileOpen
+      ? _('Messages arrive while Curlew is open.')
+      : _('The background service is not running, so chat accounts cannot connect.'),
+    buttonLabel: whileOpen ? '' : _('Start'),
     revealed: false,
   });
-  banner.connect('button-clicked', onStartDaemon);
+  if (!whileOpen) banner.connect('button-clicked', onStartDaemon);
   const toolbar = new Adw.ToolbarView();
   const header = new Adw.HeaderBar();
   const addButton = new Gtk.Button({

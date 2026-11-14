@@ -14,6 +14,9 @@ import type { ConversationMessage } from '@curlew/protocol';
 
 import { indexAccountLabels, loadAccountLabels } from './account-labels.ts';
 import { presentAccounts } from './accounts-dialog.ts';
+import { runDeliveryDaemon } from '../core/actions/daemon.ts';
+import { hostReceiveLoop } from '../core/lib/in-process-receive.ts';
+import { currentPlatform } from '../core/platform.ts';
 import { presentAgentAccess } from './agent-access-dialog.ts';
 import {
   listStamp,
@@ -365,6 +368,15 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   stage.add_overlay(viewer.widget);
   const toasts = new Adw.ToastOverlay({ child: stage });
   window.set_content(toasts);
+  // No systemd or session bus here: the window receives while it is open (ADR 0002 stays the loop).
+  const receiver = demoActive()
+    ? null
+    : hostReceiveLoop(
+        currentPlatform(),
+        (params) => runDeliveryDaemon(params),
+        (line) => console.error(line),
+      );
+  if (receiver) window.connect('destroy', () => void receiver.stop());
   // Demo data must never pass for a real inbox: say so once, then stay out of the way.
   if (demoActive()) {
     window.title = _('Curlew (demo)');

@@ -143,6 +143,7 @@ import accountAddModel from './unit/window/account-add-model.test.ts';
 import protocolsModel from './unit/window/protocols-model.test.ts';
 import qrImage from './unit/window/qr-image.test.ts';
 import platform from './unit/core/platform.test.ts';
+import inProcessReceive from './unit/core/in-process-receive.test.ts';
 import windowWelcome from './unit/window/welcome-model.test.ts';
 import windowEmailChat from './unit/window/email-chat-model.test.ts';
 import windowSettingsMap from './unit/window/settings-map.test.ts';
@@ -303,6 +304,7 @@ run({
   protocolsModel,
   qrImage,
   platform,
+  inProcessReceive,
   windowWelcome,
   windowEmailChat,
   windowSettingsMap,
