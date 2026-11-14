@@ -6,7 +6,7 @@
  * anywhere else in curlew.
  */
 
-import { type BackendManifest, PLUGIN_API_VERSION } from '@curlew/protocol';
+import { _, type BackendManifest, PLUGIN_API_VERSION } from '@curlew/protocol';
 
 export const WHATSAPP_MANIFEST: BackendManifest = {
   name: 'whatsapp',
@@ -48,8 +48,13 @@ export const WHATSAPP_MANIFEST: BackendManifest = {
   // serialises a send through the receive lease and refuses while the daemon holds the account.
   sendSharesReceiveState: true,
   terms: {
-    summary:
-      "curlew connects to WhatsApp as a linked device through Baileys, an UNOFFICIAL reimplementation of the WhatsApp Web protocol. It is not an official WhatsApp client, and using it violates WhatsApp's Terms of Service: WhatsApp can ban the account — your phone number — temporarily or for good, and does so with accounts it sees using unofficial clients. Enable this only if you accept that risk for this number. curlew reads your messages, and writes only where you granted it: it sends a message, with files if you attach them, into a 1:1 chat a `whatsapp.send` grant names, and nothing else — no read receipts, no typing indicator, no online presence (it does acknowledge delivery, as every linked device must). It downloads a received file only when you open it, from WhatsApp's media servers, and WhatsApp keeps those for a limited time. WhatsApp keeps no server archive, so what curlew receives exists only in its local index, and WhatsApp unlinks a device that has not connected for about 14 days.",
+    // A getter: this module is evaluated before `initI18n()` on some paths, and a `_()` here
+    // would resolve once, in English, for the whole process.
+    get summary() {
+      return _(
+        "curlew connects to WhatsApp as a linked device through Baileys, an unofficial client. This violates WhatsApp's Terms of Service, so WhatsApp can ban your phone number, temporarily or for good. Enable it only if you accept that risk. curlew reads your messages and sends only what you tell it to. WhatsApp keeps no archive: what curlew receives exists only on this device.",
+      );
+    },
     url: 'https://www.whatsapp.com/legal/terms-of-service',
   },
 };

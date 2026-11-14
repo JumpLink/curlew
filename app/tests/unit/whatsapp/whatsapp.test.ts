@@ -89,7 +89,7 @@ export default async () => {
       expect(WHATSAPP_MANIFEST.capabilities.groups).toBe(true);
       expect(WHATSAPP_MANIFEST.addressKinds.join(',')).toBe('whatsapp,phone');
       const terms = WHATSAPP_MANIFEST.terms?.summary ?? '';
-      expect(terms.includes('UNOFFICIAL')).toBe(true);
+      expect(terms.includes('unofficial')).toBe(true);
       expect(terms.includes("violates WhatsApp's Terms of Service")).toBe(true);
       expect(terms.includes('ban')).toBe(true);
     });
