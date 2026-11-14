@@ -96,6 +96,7 @@
 - Setting up a network with a terms notice (WhatsApp, Signal, Telegram) asks you to tick *I
   understand and accept the risk for my account* before *Accept and Continue* is enabled.
 - The listing screenshots in `docs/screenshots/` are rendered again (EN/DE × light/dark, all motifs, plus the new `composer-emoji`, `reactions`, `contact-merged` and `account-paused`); the old files without language and scheme in the name are gone, and the README and guides point to the new ones. `dev/check-screenshot-refs.sh` (also in CI) fails when the README, a guide or the metainfo points to a missing screenshot.
+- CI now starts every built artifact on its own OS: the macOS (arm64, Intel) and Windows zips, the Windows MSI after a quiet install, the `.deb` on Debian and Ubuntu, the `.rpm` on Fedora and the Flatpak each run `--version` and `conversations list` against an empty home, instead of only checking that the file exists.
 
 ### Added
 

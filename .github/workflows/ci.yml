@@ -328,6 +328,7 @@ jobs:
         run: |
           set -eu
           flatpak install --system -y --noninteractive --bundle eu.jumplink.curlew-*.flatpak
+          flatpak run --command=curlew eu.jumplink.curlew --version
           flatpak run --command=curlew eu.jumplink.curlew conversations list
 
       - uses: actions/upload-artifact@v4
@@ -335,3 +336,127 @@ jobs:
           name: ship-flatpak
           path: app/ship/out/*.flatpak
           compression-level: 0
+
+  # Start every built artifact on the OS it is for. `build-and-test` only ASSEMBLES the macOS and
+  # Windows payloads on Linux, and the `.deb`/`.rpm` were never installed anywhere; a file that
+  # exists is not a program that starts. Each job unpacks what the packaging job uploaded, runs
+  # `--version`, then `conversations list` against an EMPTY home (no account, no daemon, no
+  # network): that opens the index and starts the bridge stack, so a missing native or a bad
+  # bundle path fails here. It does not prove the window.
+  start-macos-windows:
+    needs: build-and-test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            zip: "*.macos.arm64.zip"
+          - os: macos-15-intel
+            zip: "*.macos.x86_64.zip"
+          - os: windows-latest
+            zip: "*.windows.x64.zip"
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ship-macos-windows
+          path: ship
+
+      - name: Unpack
+        run: |
+          set -eu
+          ls -la ship
+          mkdir unpacked
+          cd ship
+          for z in ${{ matrix.zip }}; do
+            if [ "$RUNNER_OS" = Windows ]; then
+              powershell -NoProfile -Command "Expand-Archive -Path '$z' -DestinationPath '../unpacked'"
+            else
+              ditto -x -k "$z" ../unpacked
+            fi
+          done
+          find ../unpacked -maxdepth 4 | head -40
+
+      - name: Locate the binary
+        run: |
+          set -eu
+          if [ "$RUNNER_OS" = Windows ]; then
+            bin=$(find unpacked -iname 'curlew.exe' | head -1)
+          else
+            bin=$(find unpacked -path '*/Contents/MacOS/*' -type f -iname 'curlew*' | head -1)
+          fi
+          if [ -z "$bin" ]; then
+            echo "::error::no curlew binary in the unpacked archive"
+            exit 1
+          fi
+          chmod +x "$bin" || true
+          echo "CURLEW_BIN=$(cd "$(dirname "$bin")" && pwd)/$(basename "$bin")" >> "$GITHUB_ENV"
+
+      - name: Start the binary (--version, empty index)
+        run: |
+          set -eu
+          home=$(mktemp -d)
+          export HOME="$home" USERPROFILE="$home" XDG_CONFIG_HOME="$home/.config" XDG_DATA_HOME="$home/.local/share" XDG_CACHE_HOME="$home/.cache"
+          "$CURLEW_BIN" --version
+          "$CURLEW_BIN" conversations list
+
+      # The Windows installer, not only the zip: install quietly, then start what it installed.
+      - name: Install the MSI and start the installed binary
+        if: runner.os == 'Windows'
+        run: |
+          set -eu
+          msi=$(ls ship/*.msi | head -1)
+          powershell -NoProfile -Command "\$p = Start-Process msiexec.exe -ArgumentList '/i','$(cygpath -w "$PWD/$msi")','/qn','/l*v','msi.log' -Wait -PassThru; exit \$p.ExitCode" || { tail -50 msi.log; exit 1; }
+          bin=$(find "/c/Program Files" "/c/Program Files (x86)" "$LOCALAPPDATA" -iname 'curlew.exe' 2>/dev/null | head -1)
+          if [ -z "$bin" ]; then
+            echo "::error::the MSI installed no curlew.exe"
+            tail -50 msi.log
+            exit 1
+          fi
+          home=$(mktemp -d)
+          export HOME="$home" USERPROFILE="$home"
+          "$bin" --version
+          "$bin" conversations list
+
+  # The Linux packages in the distributions they target. `apt`/`dnf` resolve the declared
+  # dependencies, which is half of what is being tested.
+  start-linux-packages:
+    needs: build-and-test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: debian:testing
+            install: apt-get update -qq && apt-get install -y ./curlew_*.deb
+          - image: ubuntu:26.04
+            install: apt-get update -qq && apt-get install -y ./curlew_*.deb
+          - image: fedora:latest
+            install: dnf install -y ./curlew-*.rpm
+    runs-on: ubuntu-latest
+    # The packages need gjs >= 1.86 (GNOME 49), so the oldest images that can install them are
+    # Debian testing and Ubuntu 26.04; Debian stable and Ubuntu 24.04 cannot.
+    container:
+      image: ${{ matrix.image }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ship-deb-rpm
+          path: pkg
+
+      - name: Install the package
+        working-directory: pkg
+        run: |
+          set -eu
+          ls -la
+          ${{ matrix.install }}
+
+      - name: Start the installed binary (--version, empty index)
+        run: |
+          set -eu
+          home=$(mktemp -d)
+          export HOME="$home" XDG_CONFIG_HOME="$home/.config" XDG_DATA_HOME="$home/.local/share" XDG_CACHE_HOME="$home/.cache"
+          curlew --version
+          curlew conversations list
