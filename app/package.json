@@ -127,6 +127,13 @@
         "accentDark": "#a51d2d"
       },
       "contentRating": "oars-1.1",
+      "releases": [
+        {
+          "version": "0.2.0",
+          "date": "2026-11-13",
+          "description": "The first release: one list for mail, Telegram, Signal, WhatsApp, Matrix and XMPP, with email chats in the Delta Chat style, optional AI access that is off by default, and a new look for the chat list."
+        }
+      ],
       "flatpak": {
         "runtimeVersion": "51",
         "finishArgs": [

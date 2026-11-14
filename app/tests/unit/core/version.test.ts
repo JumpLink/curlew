@@ -44,5 +44,20 @@ export default async () => {
       const first = /<release\s+version="([^"]+)"/.exec(xml);
       expect(first?.[1]).toBe(VERSION);
     });
+
+    // `gjsify ship` renders its own metainfo from `gjsify.ship` and never reads the hand-written
+    // file, so a release missing from the config ships a Flatpak without `<releases>`
+    // (flatpak-builder-lint: releases-info-missing).
+    await it('lists the metainfo releases in gjsify.ship.releases', async () => {
+      const xml = readFileSync(join(root, 'app', 'data', 'eu.jumplink.curlew.metainfo.xml'), 'utf8');
+      const fromXml = [...xml.matchAll(/<release\s+version="([^"]+)"\s+date="([^"]+)"/g)].map(
+        (m) => `${m[1]} ${m[2]}`,
+      );
+      const pkg = JSON.parse(readFileSync(join(root, 'app', 'package.json'), 'utf8')) as {
+        gjsify: { ship: { releases?: { version: string; date: string }[] } };
+      };
+      const fromConfig = (pkg.gjsify.ship.releases ?? []).map((r) => `${r.version} ${r.date}`);
+      expect(fromConfig).toStrictEqual(fromXml);
+    });
   });
 };
