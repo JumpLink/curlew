@@ -1,5 +1,5 @@
 /**
- * `curlew accounts add matrix` — the password login, as a function the CLI calls with its
+ * The Matrix login — by password or by an access token, as a function the CLI calls with its
  * terminal prompts.
  *
  * Homeserver (a URL, or a server name whose `.well-known` names it), user and password are
@@ -8,9 +8,8 @@
  * History encrypted BEFORE that is not readable by this device (see AGENTS.md: no key backup,
  * no verification yet).
  *
- * Only `m.login.password`. A homeserver that offers only single sign-on (SSO/OIDC — matrix.org
- * since its move to the Matrix Authentication Service is one) is refused with that reason: a
- * browser-redirect login is out of scope for this version.
+ * `m.login.password`, or an access token (the person's own session, user id from `/whoami`).
+ * A browser-redirect login (SSO/OIDC) is not built yet (JumpLink/curlew#375).
  *
  * The account file is written under a temporary name and moved to `<account id>.db` only once
  * the first sync succeeded, so a failed login never leaves a half-set-up account. A login that
@@ -47,51 +46,85 @@ export async function resolveHomeserver(input: string): Promise<string> {
   return `https://${value}`;
 }
 
+/** What a login ends in, whichever way the person proved who they are. */
+interface Session {
+  userId: string;
+  deviceId: string;
+  accessToken: string;
+  /** The server issued this device for curlew: a failed setup logs it out again. */
+  issuedHere: boolean;
+}
+
+/** `GET /account/whoami` with a token the person brought: the user and device it belongs to. */
+export async function whoami(homeserver: string, token: string, httpFetch: typeof globalThis.fetch): Promise<Session> {
+  const response = await readOnlyFetch(httpFetch)(`${homeserver}/_matrix/client/v3/account/whoami`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error(fmt(_('{homeserver} did not accept this access token'), { homeserver }));
+  const body = (await response.json()) as { user_id?: unknown; device_id?: unknown };
+  if (typeof body.user_id !== 'string' || !body.user_id) {
+    throw new Error(fmt(_('{homeserver} did not say whom this access token belongs to'), { homeserver }));
+  }
+  // End-to-end encryption needs the token's own device; a token without one cannot be used.
+  if (typeof body.device_id !== 'string' || !body.device_id) {
+    throw new Error(_('this access token belongs to no device, so it cannot hold encryption keys'));
+  }
+  return { userId: body.user_id, deviceId: body.device_id, accessToken: token, issuedHere: false };
+}
+
 export async function loginMatrix(
   context: BackendContext,
   prompts: MatrixLoginPrompts,
   connect: MatrixConnector = connectMatrixClient,
+  httpFetch: typeof globalThis.fetch = globalThis.fetch.bind(globalThis),
 ): Promise<BackendAccount> {
   const homeserver = await resolveHomeserver(await prompts.homeserver());
   const { createClient } = await loadMatrixSdk();
-  const fetchFn = readOnlyFetch(globalThis.fetch.bind(globalThis));
+  const fetchFn = readOnlyFetch(httpFetch);
   const probe = createClient({ baseUrl: homeserver, fetchFn, logger: quietLogger() });
-  const { flows } = await probe.loginFlows();
-  if (!flows.some((f) => f.type === 'm.login.password')) {
-    throw new Error(
-      fmt(
-        _('{homeserver} offers no password login (only {flows}) — single sign-on is not supported yet'),
-        { homeserver, flows: flows.map((f) => f.type).join(', ') || _('nothing') },
-      ),
-    );
+  const method = await prompts.method();
+  let login: Session;
+  if (method === 'token') {
+    login = await whoami(homeserver, (await prompts.token()).trim(), httpFetch);
+  } else {
+    const { flows } = await probe.loginFlows();
+    if (!flows.some((f) => f.type === 'm.login.password')) {
+      throw new Error(
+        fmt(
+          _('{homeserver} offers no password login (only {flows}) — choose “Access Token” instead'),
+          { homeserver, flows: flows.map((f) => f.type).join(', ') || _('nothing') },
+        ),
+      );
+    }
+    // `@anna:example.org` or just `anna`: the server resolves either.
+    const user = (await prompts.user()).trim();
+    if (!user) throw new Error(_('the Matrix user is empty'));
+    const password = await prompts.password();
+    const issued = await probe.loginRequest({
+      type: 'm.login.password',
+      identifier: { type: 'm.id.user', user },
+      password,
+      // What the user sees in their list of sessions, in Element and everywhere else.
+      initial_device_display_name: 'curlew',
+    });
+    login = { userId: issued.user_id, deviceId: issued.device_id, accessToken: issued.access_token, issuedHere: true };
   }
-  // `@anna:example.org` or just `anna`: the server resolves either.
-  const user = (await prompts.user()).trim();
-  if (!user) throw new Error(_('the Matrix user is empty'));
-  const password = await prompts.password();
-  const login = await probe.loginRequest({
-    type: 'm.login.password',
-    identifier: { type: 'm.id.user', user },
-    password,
-    // What the user sees in their list of sessions, in Element and everywhere else.
-    initial_device_display_name: 'curlew',
-  });
 
   ensurePrivateDir(context.secretsDir);
   sweepPendingAccounts(context.secretsDir);
   const pending = pendingAccountPath(context.secretsDir);
   const store = SecretStore.open(pending);
-  const accountId = accountIdFor(login.user_id);
+  const accountId = accountIdFor(login.userId);
   let moved = false;
   try {
-    writeAccountRecord(store, { userId: login.user_id, homeserver, deviceId: login.device_id });
-    writeAccessToken(store, login.access_token);
+    writeAccountRecord(store, { userId: login.userId, homeserver, deviceId: login.deviceId });
+    writeAccessToken(store, login.accessToken);
     prompts.notify(_('Logged in; setting up this device’s encryption keys…'));
     const api = await connect({
       homeserver,
-      userId: login.user_id,
-      deviceId: login.device_id,
-      accessToken: login.access_token,
+      userId: login.userId,
+      deviceId: login.deviceId,
+      accessToken: login.accessToken,
       store,
       accountId,
     });
@@ -99,7 +132,7 @@ export async function loginMatrix(
     store.close();
     renameSync(pending, accountPath(context.secretsDir, accountId));
     moved = true;
-    return { id: accountId, identity: login.user_id, provider: 'Matrix' };
+    return { id: accountId, identity: login.userId, provider: 'Matrix' };
   } finally {
     if (!moved) {
       try {
@@ -109,13 +142,16 @@ export async function loginMatrix(
       }
       for (const path of [pending, `${pending}-journal`]) if (existsSync(path)) rmSync(path, { force: true });
       // The server issued a device; without its file it is an orphan in the user's session list.
-      const orphan = createClient({
-        baseUrl: homeserver,
-        accessToken: login.access_token,
-        fetchFn,
-        logger: quietLogger(),
-      });
-      await orphan.logout(true).catch(() => {});
+      // A token the person brought is their own session: never log it out.
+      if (login.issuedHere) {
+        const orphan = createClient({
+          baseUrl: homeserver,
+          accessToken: login.accessToken,
+          fetchFn,
+          logger: quietLogger(),
+        });
+        await orphan.logout(true).catch(() => {});
+      }
     }
   }
 }

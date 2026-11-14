@@ -102,6 +102,10 @@ export interface MatrixApi {
 
 /** What the password login needs from the user. */
 export interface MatrixLoginPrompts {
+  /** Password, or an access token the person already holds. */
+  method(): Promise<'password' | 'token'>;
+  /** The access token (`token` method only). */
+  token(): Promise<string>;
   /** A homeserver URL (`https://…`) or a server name to discover it for (`example.org`). */
   homeserver(): Promise<string>;
   /** The user: `@local:server` or just the localpart. */

@@ -477,15 +477,16 @@ Log in with your homeserver, user and password:
 
 ```bash
 curlew backends enable matrix
-curlew accounts add matrix       # homeserver URL or server name, user, password
+curlew accounts add matrix       # homeserver URL or server name, then password or access token
 curlew sync
 ```
 
 The login creates a **new device** named `curlew` (it appears in your
 session list in Element and every other client) and uploads its encryption
-keys. Only password login is supported: a homeserver that offers single
-sign-on alone — matrix.org, since its move to the Matrix Authentication
-Service — is refused with that reason for now.
+keys. Log in with a password, or with an access token (the choice the login
+offers) for a homeserver without password login, such as matrix.org since its
+move to the Matrix Authentication Service. A browser sign-in (SSO/OIDC) is
+not built yet.
 
 Login and sync are quiet by default: the SDK's info and debug narration is
 dropped, and only its warnings and errors reach stderr, with user, room and
