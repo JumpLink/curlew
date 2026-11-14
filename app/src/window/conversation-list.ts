@@ -411,9 +411,7 @@ export function createConversationList(
       const none = entries.length === 0;
       empty.set_title(none ? _('No conversations yet') : _('No matches'));
       const hidden = !chatOnly() && !loadConfig(configPath()).ui.showAllEmails;
-      const synced = _(
-        'Conversations appear here after Curlew has synced an account. Run "curlew sync" first.',
-      );
+      const synced = _('Conversations appear here once an account is added and its messages have arrived.');
       empty.set_description(
         none
           ? hidden

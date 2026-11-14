@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-14 13:01+0100\n"
+"POT-Creation-Date: 2026-11-14 14:00+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -963,7 +963,8 @@ msgstr "im Berechtigungsdialog abgelehnt"
 msgid "no Background portal on this system"
 msgstr "Auf diesem System gibt es kein Hintergrund-Portal"
 
-#: app/src/core/lib/autostart-portal.ts:84 app/src/window/accounts-daemon.ts:80
+#: app/src/core/lib/autostart-portal.ts:84
+#: app/src/window/accounts-daemon.ts:113
 msgid "Keep receiving messages while the window is closed"
 msgstr "Nachrichten weiter empfangen, während das Fenster geschlossen ist"
 
@@ -1963,8 +1964,8 @@ msgstr "Dieses Konto pausieren?"
 #: app/src/window/account-remove-model.ts:37
 #: app/src/window/account-remove-model.ts:71
 #: app/src/window/agent-access-page.ts:234
-#: app/src/window/conversation-list.ts:503
-#: app/src/window/conversation-list.ts:589
+#: app/src/window/conversation-list.ts:501
+#: app/src/window/conversation-list.ts:587
 #: app/src/window/conversation-view.ts:748 app/src/window/protocols-page.ts:63
 #: app/src/window/protocols-page.ts:130
 msgid "Cancel"
@@ -2099,13 +2100,7 @@ msgstr ""
 msgid "Delete Messages and Remove"
 msgstr "Nachrichten löschen und entfernen"
 
-#: app/src/window/accounts-daemon.ts:67 app/src/window/accounts-daemon.ts:71
-msgid "Could not start the background service. Run “curlew setup” first."
-msgstr ""
-"Der Hintergrunddienst ließ sich nicht starten. Führe zuerst „curlew setup“ "
-"aus."
-
-#: app/src/window/accounts-daemon.ts:83
+#: app/src/window/accounts-daemon.ts:106 app/src/window/accounts-daemon.ts:116
 msgid "Could not start the background service: {reason}"
 msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
@@ -2603,7 +2598,7 @@ msgstr "Automatisch"
 msgid "Picture"
 msgstr "Bild"
 
-#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:511
+#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:509
 msgid "Separate"
 msgstr "Trennen"
 
@@ -2807,38 +2802,38 @@ msgstr "Noch keine Unterhaltungen"
 msgid "No matches"
 msgstr "Keine Treffer"
 
-#: app/src/window/conversation-list.ts:415
+#: app/src/window/conversation-list.ts:414
 msgid ""
-"Conversations appear here after Curlew has synced an account. Run \"curlew "
-"sync\" first."
+"Conversations appear here once an account is added and its messages have "
+"arrived."
 msgstr ""
-"Unterhaltungen erscheinen hier, sobald Curlew ein Konto synchronisiert hat. "
-"Führe zuerst „curlew sync“ aus."
+"Unterhaltungen erscheinen hier, sobald ein Konto hinzugefügt wurde und seine "
+"Nachrichten angekommen sind."
 
-#: app/src/window/conversation-list.ts:422
+#: app/src/window/conversation-list.ts:420
 msgid "Nothing fits the search and filters."
 msgstr "Nichts passt zur Suche und den Filtern."
 
-#: app/src/window/conversation-list.ts:487
+#: app/src/window/conversation-list.ts:485
 msgid "Search"
 msgstr "Suchen"
 
-#: app/src/window/conversation-list.ts:492
+#: app/src/window/conversation-list.ts:490
 #: app/src/window/new-conversation.ts:25
 msgid "New conversation"
 msgstr "Neue Unterhaltung"
 
-#: app/src/window/conversation-list.ts:509
-#: app/src/window/conversation-list.ts:590
+#: app/src/window/conversation-list.ts:507
+#: app/src/window/conversation-list.ts:588
 #: app/src/window/merge-assistant.ts:116
 msgid "Merge"
 msgstr "Zusammenführen"
 
-#: app/src/window/conversation-list.ts:586
+#: app/src/window/conversation-list.ts:584
 msgid "Merge these people?"
 msgstr "Diese Personen zusammenführen?"
 
-#: app/src/window/conversation-list.ts:587
+#: app/src/window/conversation-list.ts:585
 msgid ""
 "Their chats become one conversation. Nothing is deleted, and you can "
 "separate them again."
@@ -2846,16 +2841,16 @@ msgstr ""
 "Ihre Chats werden zu einer Unterhaltung. Nichts wird gelöscht, und du kannst "
 "sie wieder trennen."
 
-#: app/src/window/conversation-list.ts:613
+#: app/src/window/conversation-list.ts:611
 msgid "Review"
 msgstr "Prüfen"
 
-#: app/src/window/conversation-list.ts:620
+#: app/src/window/conversation-list.ts:618
 #: app/src/window/preferences-dialog.ts:45
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:642
+#: app/src/window/conversation-list.ts:640
 msgid "{count} possible duplicate"
 msgid_plural "{count} possible duplicates"
 msgstr[0] "{count} mögliches Duplikat"
@@ -4801,6 +4796,18 @@ msgid ""
 msgstr ""
 "{count} Geräte von {jid} tragen diesen Fingerabdruck, er benennt also keines "
 "— nichts wurde geändert"
+
+#~ msgid "Could not start the background service. Run “curlew setup” first."
+#~ msgstr ""
+#~ "Der Hintergrunddienst ließ sich nicht starten. Führe zuerst „curlew "
+#~ "setup“ aus."
+
+#~ msgid ""
+#~ "Conversations appear here after Curlew has synced an account. Run "
+#~ "\"curlew sync\" first."
+#~ msgstr ""
+#~ "Unterhaltungen erscheinen hier, sobald Curlew ein Konto synchronisiert "
+#~ "hat. Führe zuerst „curlew sync“ aus."
 
 #~ msgid "no session bus"
 #~ msgstr "kein Sitzungs-Bus"
