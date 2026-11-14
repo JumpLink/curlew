@@ -317,7 +317,7 @@ function line(event: DeliveryProgress, log: (line: string) => void): void {
         `curlew-daemon: ${who} is held by ${event.holder ?? 'another process'} — waiting for the lease`,
       );
     case 'lease-lost':
-      return log(`curlew-daemon: ${who} lost the receive lease — stopping that account`);
+      return log(`curlew-daemon: ${who} lost the receive lease — waiting to take it again`);
     case 'lease-unrefreshable':
       return log(
         `curlew-daemon: ${who} could not refresh its receive lease (the index is busy) — stopping that account and taking it back`,

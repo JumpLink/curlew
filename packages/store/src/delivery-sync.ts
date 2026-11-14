@@ -1280,10 +1280,12 @@ async function receiveAccount(
 
     // Refreshed while receiving: a run that stops refreshing is a crashed run, and a `sync` or a
     // second daemon may take the account over. A `false` says somebody else is on this account
-    // NOW — two receivers split the copy, so this one stops. A THROW says the index was busy,
-    // which is not the same thing: nobody necessarily holds the lease, so the next tick tries
-    // again. Two busy ticks in a row are not a hiccup either — the account stops before its lease
-    // can look stale (three intervals), and the cycle below takes it back.
+    // NOW — two receivers split the copy, so this session closes. A follow run then waits for the
+    // lease like at its start: giving the account up for good would leave it unreceived until a
+    // restart. A THROW says the index was busy, which is not the same thing: nobody necessarily
+    // holds the lease, so the next tick tries again. Two busy ticks in a row are not a hiccup
+    // either — the account stops before its lease can look stale (three intervals), and the cycle
+    // below takes it back.
     let leaseLost = false;
     let busyTicks = 0;
     const heartbeat = setInterval(() => {
@@ -1324,9 +1326,9 @@ async function receiveAccount(
         );
         if (mode !== 'follow') return result;
         if (stop.signal.aborted) {
-          // Stopped by the heartbeat over a lease it could not refresh: go round again, unless the
-          // RUN was stopped, which no retry can undo.
-          retake = busyTicks >= 2 && !options.signal?.aborted;
+          // Stopped by the heartbeat over a lease it lost or could not refresh: go round again,
+          // unless the RUN was stopped, which no retry can undo.
+          retake = (busyTicks >= 2 || leaseLost) && !options.signal?.aborted;
           break;
         }
         // The network dropped the device (logged out, unlinked): the credentials are gone, and
@@ -1356,9 +1358,9 @@ async function receiveAccount(
         const sleep = options.sleep ?? ((ms: number) => abortableSleep(ms, stop.signal));
         await sleep(wait);
         if (stop.signal.aborted) {
-          // Stopped by the heartbeat over a lease it could not refresh: go round again, unless the
-          // RUN was stopped, which no retry can undo.
-          retake = busyTicks >= 2 && !options.signal?.aborted;
+          // Stopped by the heartbeat over a lease it lost or could not refresh: go round again,
+          // unless the RUN was stopped, which no retry can undo.
+          retake = (busyTicks >= 2 || leaseLost) && !options.signal?.aborted;
           break;
         }
         wait = Math.min(wait * 2, RECONNECT_CAP_MS);
