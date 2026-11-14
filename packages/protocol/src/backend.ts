@@ -961,7 +961,7 @@ export interface SentMessage {
   sentAt: string;
   /**
    * The chat the message belongs to, for a backend whose archive the index holds (XMPP's bare
-   * JID). Absent for mail, whose sent copy is not indexed here.
+   * JID). Absent for mail, whose sent copy is filed in the Sent mailbox and indexed by the next sync.
    */
   chatRemoteId?: string;
   /** Whether it left end-to-end encrypted. Absent where the network has no such thing. */

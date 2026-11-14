@@ -161,6 +161,20 @@ export class ImapClient {
     return this.readResponse(tag);
   }
 
+  /** APPEND one message with `\Seen` (RFC 3501 §6.3.11); `path` is the WIRE name. */
+  async append(path: string, raw: Uint8Array): Promise<void> {
+    const tag = this.nextTag();
+    await this.write(`${tag} APPEND ${quoteImapString(path)} (\\Seen) {${raw.length}}\r\n`);
+    const cont = await this.reader.readLine();
+    if (!cont || !cont.startsWith('+')) {
+      throw new GnomeError(`IMAP server refused APPEND: ${cont ?? 'connection closed'}`);
+    }
+    await this.writeBytes(raw);
+    await this.write('\r\n');
+    const r = await this.readResponse(tag);
+    if (!r.ok) throw new GnomeError('IMAP APPEND failed');
+  }
+
   async login(user: string, password: string): Promise<void> {
     const r = await this.command(`LOGIN ${quoteImapString(user)} ${quoteImapString(password)}`);
     if (!r.ok) throw new GnomeError('IMAP LOGIN failed (check the password of the account)');

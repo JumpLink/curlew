@@ -48,6 +48,7 @@ import { readOwnAccounts, removeOwnAccount, type OwnMailAccount } from './own-ac
 import { mailSecretsDir, resolveMailTargets } from './targets.ts';
 import { MAIL_MANIFEST } from './manifest.ts';
 import { isOwnAddressOf, openMailSender } from './send.ts';
+import { fileSentCopy, type SentCopyOutcome } from './sent-copy.ts';
 
 /**
  * How much body text is indexed per message.
@@ -315,7 +316,34 @@ export class ImapBackend implements MailBackend, SendBackend {
    * The permit is checked again on every send; this method reads no password.
    */
   async openSender(accountId: string, permit: SendPermit): Promise<MessageSender> {
-    return openMailSender(accountId, permit);
+    return openMailSender(accountId, permit, (raw, id) => this.fileSent(accountId, raw, id));
+  }
+
+  /** Own IMAP connection per copy: the send path holds none, and the daemon's is not ours to use. */
+  private async fileSent(accountId: string, raw: Uint8Array, messageId: string): Promise<SentCopyOutcome> {
+    const target = (await this.allTargets()).find((t) => t.accountId === accountId);
+    if (!target) throw new Error(`no mail account with id ${accountId}`);
+    const client = new ImapClient();
+    await client.connect(target);
+    try {
+      await client.login(target.user, await target.getPassword());
+      return await fileSentCopy(
+        {
+          listFolders: () => client.listFolders(),
+          hasMessageId: async (path, id) => {
+            await client.examine(path);
+            const found = await client.search({ header: [{ name: 'Message-ID', value: id }] });
+            return found.uids.length > 0;
+          },
+          append: (path, bytes) => client.append(path, bytes),
+        },
+        raw,
+        messageId,
+        target.host,
+      );
+    } finally {
+      await client.logout();
+    }
   }
 
   /** The account's own mail address; an account without SMTP has none to recognise. */

@@ -136,7 +136,7 @@ export interface SendResult {
   backend: string;
   /** The grant target: `<account>/<address>`. */
   target: string;
-  /** The conversation to watch for a reply; absent for a backend whose sent copy is not indexed (mail). */
+  /** The conversation to watch for a reply; absent for mail, whose sent copy is filed in the Sent mailbox and indexed by the next sync. */
   conversationId?: string;
   /** The indexed row, or null when the message went out but could not be indexed (see `indexError`). */
   messageId?: string | null;
