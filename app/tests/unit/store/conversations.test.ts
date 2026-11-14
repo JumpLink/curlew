@@ -439,6 +439,47 @@ export default async () => {
     });
   });
 
+  await describe('own addresses are per account', async () => {
+    await it('treats a mail from the other own account as a peer, so the thread can be answered', async () => {
+      const db = freshDb();
+      try {
+        const accounts = db.prepare('INSERT INTO accounts (id, identity, provider) VALUES (?, ?, ?)');
+        accounts.run('one', 'me@example.com', 'imap_smtp');
+        accounts.run('two', 'me@example.org', 'imap_smtp');
+        const put = (account: string, uid: number, from: string, to: string) =>
+          db
+            .prepare(
+              `INSERT INTO messages (account_id, folder_path, uid, message_id, subject, sender, recipients, date,
+                 indexed_at, thread_refs, from_json, to_json)
+               VALUES (?, 'INBOX', ?, ?, 'Chat: hello', ?, ?, '2026-08-06T10:00:00Z', '2026-08-06T12:00:00Z', '', ?, ?)`,
+            )
+            .run(
+              account,
+              uid,
+              `<own${uid}@example.org>`,
+              from,
+              to,
+              JSON.stringify([{ name: '', email: from }]),
+              JSON.stringify([{ name: '', email: to }]),
+            );
+        // The same message as the receiving account sees it, and as the sending account's Sent copy.
+        put('two', 1, 'me@example.com', 'me@example.org');
+        put('one', 2, 'me@example.com', 'me@example.org');
+        rebuildConversations(db, {});
+        const byAccount = (id: string) => listConversations(db).find((c) => c.accountId === id);
+        const received = byAccount('two');
+        expect(received?.kind).toBe('direct');
+        expect(received?.participants.map((p) => p.addresses[0]?.value)).toStrictEqual(['me@example.com']);
+        const sent = byAccount('one');
+        expect(sent?.participants.map((p) => p.addresses[0]?.value)).toStrictEqual(['me@example.org']);
+        expect(getConversation(db, received?.id ?? '')?.messages[0].fromSelf).toBe(false);
+        expect(getConversation(db, sent?.id ?? '')?.messages[0].fromSelf).toBe(true);
+      } finally {
+        db.close();
+      }
+    });
+  });
+
   await describe('per-sender overrides at read time', async () => {
     await it('promote a stranger into the people list', async () => {
       const { db } = await built();

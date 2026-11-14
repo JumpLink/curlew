@@ -239,14 +239,30 @@ class ParticipantDirectory {
   }
 }
 
-function selfAddressSet(db: IndexDatabase, extra: readonly string[]): Set<string> {
-  const rows = db.prepare('SELECT identity FROM accounts').all() as Array<{ identity?: string | null }>;
-  const self = new Set<string>();
-  for (const raw of [...rows.map((r) => r.identity ?? ''), ...extra]) {
-    const email = normalizeAddress('email', raw);
-    if (email) self.add(email);
+/**
+ * The person's own mail addresses, per account. A mail from the person's OTHER account is a peer
+ * message here: two own addresses talking to each other is a chat between two people from each
+ * account's point of view, and only its Sent copy is "from self".
+ */
+class SelfAddresses {
+  private readonly byAccount = new Map<string, Set<string>>();
+  private readonly extra = new Set<string>();
+
+  constructor(db: IndexDatabase, extra: readonly string[]) {
+    const rows = db.prepare('SELECT id, identity FROM accounts').all() as Array<{ id?: string; identity?: string | null }>;
+    for (const row of rows) {
+      const email = normalizeAddress('email', row.identity ?? '');
+      if (email && row.id) this.byAccount.set(row.id, new Set([email]));
+    }
+    for (const raw of extra) {
+      const email = normalizeAddress('email', raw);
+      if (email) this.extra.add(email);
+    }
   }
-  return self;
+
+  has(accountId: string, email: string): boolean {
+    return this.extra.has(email) || (this.byAccount.get(accountId)?.has(email) ?? false);
+  }
 }
 
 interface ChatPeerRow {
@@ -453,7 +469,7 @@ function updateIfAny(db: IndexDatabase, where: string, set: string): boolean {
  */
 export function rebuildConversations(db: IndexDatabase, options: RebuildOptions = {}): RebuildResult {
   const all = loadMailRows(db);
-  const self = selfAddressSet(db, options.selfAddresses ?? []);
+  const self = new SelfAddresses(db, options.selfAddresses ?? []);
   // A reaction, edit or delete mail is no message of the thread: it acts on its target.
   const controls = mailControls(db, all);
   const pending = pendingDeletes(db, all, controls);
@@ -470,7 +486,7 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
   const receipted = new Set<string>();
   for (const row of all) {
     const from = normalizeAddress('email', row.from[0]?.email ?? '');
-    if (row.mdn && row.mdnFor && !(from !== null && self.has(from))) receipted.add(row.mdnFor);
+    if (row.mdn && row.mdnFor && !(from !== null && self.has(row.accountId, from))) receipted.add(row.mdnFor);
   }
   // The person's own edit, echoed locally before its mail was synced, stays until a mail says otherwise.
   const echoed = new Map<string, { body: SqlValue; editedAt: SqlValue }>();
@@ -495,7 +511,7 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
     const senderEmail = (row: MailRow) => normalizeAddress('email', row.from[0]?.email ?? '');
     const repliedInThread = thread.members.some((row) => {
       const email = senderEmail(row);
-      return email !== null && self.has(email);
+      return email !== null && self.has(thread.accountId, email);
     });
 
     const others = new Set<string>();
@@ -505,11 +521,11 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
 
     for (const row of thread.members) {
       const email = senderEmail(row);
-      const fromSelf = email !== null && self.has(email);
+      const fromSelf = email !== null && self.has(thread.accountId, email);
       const sender = row.from[0] ? directory.resolve(row.from[0]) : null;
       for (const address of [...row.from, ...row.recipients]) {
         const participant = directory.resolve(address);
-        if (participant && !self.has(participant.email)) others.add(participant.id);
+        if (participant && !self.has(thread.accountId, participant.email)) others.add(participant.id);
       }
       const verdict = classifyMail({
         fromSelf,
@@ -807,7 +823,7 @@ function mailReactions(
   db: IndexDatabase,
   mails: readonly MailRow[],
   idByMessageId: ReadonlyMap<string, string>,
-  self: ReadonlySet<string>,
+  self: SelfAddresses,
 ): { others: SqlValue[][]; own: Map<string, string | null> } {
   const sentAt = (row: MailRow) => Date.parse(row.sentAt ?? '') || 0;
   const last = new Map<string, { target: string; reactor: string; emoji: string | null }>();
@@ -815,7 +831,7 @@ function mailReactions(
     const target = row.inReplyTo ? idByMessageId.get(row.inReplyTo) : undefined;
     const email = normalizeAddress('email', row.from[0]?.email ?? '');
     if (!target || !email) continue;
-    const reactor = self.has(email) ? '' : email;
+    const reactor = self.has(row.accountId, email) ? '' : email;
     const body = messageBody(db, row.accountId, row.folderPath, row.uid)?.trim() ?? '';
     if (body.length > 64) continue;
     last.set(`${target}\u0000${reactor}`, { target, reactor, emoji: body || null });
