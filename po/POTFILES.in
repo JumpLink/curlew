@@ -44,6 +44,7 @@ app/src/core/demo/media.ts
 app/src/core/grants.ts
 app/src/core/lib/access-notifications.ts
 app/src/core/lib/appearance.ts
+app/src/core/lib/autostart-portal-model.ts
 app/src/core/lib/autostart-portal.ts
 app/src/core/lib/avatar-cache.ts
 app/src/core/lib/contact-name.ts

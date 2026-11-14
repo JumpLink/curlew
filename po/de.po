@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-14 12:51+0100\n"
+"POT-Creation-Date: 2026-11-14 13:01+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -955,28 +955,15 @@ msgstr "Immer"
 msgid "Deny"
 msgstr "Verweigern"
 
-#: app/src/core/lib/autostart-portal.ts:37
-msgid "no session bus"
-msgstr "kein Sitzungs-Bus"
-
-#: app/src/core/lib/autostart-portal.ts:63
+#: app/src/core/lib/autostart-portal-model.ts:29
 msgid "declined in the permission dialog"
 msgstr "im Berechtigungsdialog abgelehnt"
 
-#: app/src/core/lib/autostart-portal.ts:64
-msgid "the portal did not allow it"
-msgstr "Das Portal hat es nicht erlaubt"
-
-#: app/src/core/lib/autostart-portal.ts:69
-msgid "the portal did not answer"
-msgstr "Das Portal hat nicht geantwortet"
-
-#: app/src/core/lib/autostart-portal.ts:95
+#: app/src/core/lib/autostart-portal-model.ts:34
 msgid "no Background portal on this system"
 msgstr "Auf diesem System gibt es kein Hintergrund-Portal"
 
-#: app/src/core/lib/autostart-portal.ts:113
-#: app/src/window/accounts-daemon.ts:80
+#: app/src/core/lib/autostart-portal.ts:84 app/src/window/accounts-daemon.ts:80
 msgid "Keep receiving messages while the window is closed"
 msgstr "Nachrichten weiter empfangen, während das Fenster geschlossen ist"
 
@@ -4814,3 +4801,12 @@ msgid ""
 msgstr ""
 "{count} Geräte von {jid} tragen diesen Fingerabdruck, er benennt also keines "
 "— nichts wurde geändert"
+
+#~ msgid "no session bus"
+#~ msgstr "kein Sitzungs-Bus"
+
+#~ msgid "the portal did not allow it"
+#~ msgstr "Das Portal hat es nicht erlaubt"
+
+#~ msgid "the portal did not answer"
+#~ msgstr "Das Portal hat nicht geantwortet"

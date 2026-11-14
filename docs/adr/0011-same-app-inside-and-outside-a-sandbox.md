@@ -68,13 +68,15 @@ supporting is **unchecked**.
    `docs/design/notifications.md` are unchanged.
 3. **A launcher seam for "keep receiving"** (**done**). `core/actions/autostart.ts` defines
    `Autostart { status, enable, disable }`; `systemdAutostart` is the Linux-outside-a-sandbox driver
-   (the unit file itself stays `setup-unit.ts`), `core/lib/autostart-portal.ts` calls the
-   Background portal (`RequestBackground`, answered on a Request object) and `autostartFor` picks
+   (the unit file itself stays `setup-unit.ts`), `core/lib/autostart-portal.ts` asks the
+   Background portal through libportal (`gi://Xdp`, `request_background`, loaded lazily so a missing
+   typelib reads "unavailable"; gjsify ADR 0101 forbids calling `org.freedesktop.portal.*` directly),
+   the pure request/answer rules are in `autostart-portal-model.ts`, and `autostartFor` picks
    one. The portal has no query, so its `status()` is `unknown`. The setup stage `unit` runs the
    driver; one without a unit file skips writing and verifying it. Not wired yet: the window's
    `startDaemon` still calls `systemctl --user start`, and no settings switch exists. The seam is
-   Curlew's own stand-in until gjsify's portal table The seam is Curlew's own stand-in until gjsify's portal table
-   (ADR 0101) grows a Background row; it moves there then.
+   Curlew's own stand-in until gjsify's portal table (ADR 0101) grows a Background row; it moves
+   there then.
 4. **Accounts stay behind `system-accounts`.** Curlew's mail, contact and calendar code asks the
    interface; `@curlew/gnome` is the Linux driver. The Flatpak does **not** get
    `--talk-name=org.gnome.OnlineAccounts` (decided, open question 2): it is a messenger and chat

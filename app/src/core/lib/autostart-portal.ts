@@ -1,102 +1,73 @@
 /**
- * The Background portal as the `Autostart` driver inside a sandbox (ADR 0011).
+ * The Background portal as the `Autostart` driver inside a sandbox (ADR 0011), through libportal
+ * (gjsify ADR 0101: app code does not call `org.freedesktop.portal.*` itself).
  *
- * `RequestBackground` answers on a `Request` object, not on the call: the response signal names
- * whether the person allowed it, and the portal shows its own dialog the first time. It has no
- * query, so `status()` is `unknown`; the answer to the last request is not recorded here because a
- * person can revoke it in the system settings behind our back.
+ * libportal is loaded lazily and inside a try: a missing typelib reads `unavailable`, it never stops
+ * the process. The portal has no query, so `status()` is `unknown`; the answer to the last request is
+ * not recorded here because a person can revoke it in the system settings behind our back.
  */
 
-import GLib from 'gi://GLib?version=2.0';
-import Gio from 'gi://Gio?version=2.0';
+import type Gtk from 'gi://Gtk?version=4.0';
+import type XdpModule from 'gi://Xdp?version=1.0';
+import type XdpGtk4Module from 'gi://XdpGtk4?version=1.0';
 import { _ } from '@curlew/protocol';
 import { systemdAutostart, type Autostart, type AutostartResult } from '../actions/autostart.ts';
 import type { CommandRunner } from '../actions/setup-host.ts';
+import { backgroundRequest, backgroundResult, unavailableResult } from './autostart-portal-model.ts';
 import { inSandbox } from './sandbox.ts';
 
-const PORTAL_NAME = 'org.freedesktop.portal.Desktop';
-const PORTAL_PATH = '/org/freedesktop/portal/desktop';
-const BACKGROUND = 'org.freedesktop.portal.Background';
-const REQUEST = 'org.freedesktop.portal.Request';
-const REQUEST_TIMEOUT_MS = 120_000;
+type Xdp = typeof XdpModule;
+type XdpGtk4 = typeof XdpGtk4Module;
+// libportal's typings carry their own copy of Gio, so its result type is taken from the call itself.
+type PortalResult = Parameters<InstanceType<Xdp['Portal']>['request_background_finish']>[0];
 
 export interface PortalAutostartOptions {
   /** What the portal starts at login: `curlew daemon`, as the sandbox sees it. */
   commandline: string[];
   /** Shown by the portal's dialog. */
   reason: string;
+  /** The window the dialog belongs to, when there is one; without it the dialog has no parent. */
+  parent?: () => Gtk.Window | null;
 }
 
 export function portalAutostart(options: PortalAutostartOptions): Autostart {
-  const ask = (autostart: boolean): Promise<AutostartResult> =>
-    new Promise((resolve) => {
-      let connection: Gio.DBusConnection;
-      try {
-        connection = Gio.bus_get_sync(Gio.BusType.SESSION, null);
-      } catch {
-        resolve({ ok: false, reason: _('no session bus') });
-        return;
-      }
-      // The Request path is predictable, so the subscription exists before the call can answer.
-      const token = `curlew_${GLib.random_int()}`;
-      const sender = (connection.get_unique_name() ?? '').replace(/^:/, '').replace(/\./g, '_');
-      const requestPath = `${PORTAL_PATH}/request/${sender}/${token}`;
-      let timer = 0;
-      let subscription = 0;
-      const finish = (result: AutostartResult): void => {
-        if (timer) GLib.source_remove(timer);
-        if (subscription) connection.signal_unsubscribe(subscription);
-        timer = 0;
-        subscription = 0;
-        resolve(result);
-      };
-      subscription = connection.signal_subscribe(
-        PORTAL_NAME,
-        REQUEST,
-        'Response',
-        requestPath,
-        null,
-        Gio.DBusSignalFlags.NONE,
-        ((_c: unknown, _s: unknown, _p: unknown, _i: unknown, _n: unknown, params: GLib.Variant) => {
-          const [response, results] = params.recursiveUnpack() as [number, Record<string, unknown>];
-          if (response === 0 && results.autostart === autostart) finish({ ok: true });
-          else if (response === 1) finish({ ok: false, reason: _('declined in the permission dialog') });
-          else finish({ ok: false, reason: _('the portal did not allow it') });
-        }) as unknown as Parameters<Gio.DBusConnection['signal_subscribe']>[6],
-      );
-      timer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, REQUEST_TIMEOUT_MS, () => {
-        timer = 0;
-        finish({ ok: false, reason: _('the portal did not answer') });
-        return GLib.SOURCE_REMOVE;
-      });
-      connection.call(
-        PORTAL_NAME,
-        PORTAL_PATH,
-        BACKGROUND,
-        'RequestBackground',
-        new GLib.Variant('(sa{sv})', [
-          '',
-          {
-            handle_token: new GLib.Variant('s', token),
-            reason: new GLib.Variant('s', options.reason),
-            autostart: new GLib.Variant('b', autostart),
-            commandline: new GLib.Variant('as', options.commandline),
-            'dbus-activatable': new GLib.Variant('b', false),
+  let loaded: Promise<{ Xdp: Xdp; XdpGtk4: XdpGtk4 | null; portal: InstanceType<Xdp['Portal']> }> | null = null;
+  const load = () =>
+    (loaded ??= (async () => {
+      const Xdp: Xdp = (await import('gi://Xdp?version=1.0')).default;
+      let XdpGtk4: XdpGtk4 | null = null;
+      if (options.parent) XdpGtk4 = (await import('gi://XdpGtk4?version=1.0')).default;
+      return { Xdp, XdpGtk4, portal: Xdp.Portal.new() };
+    })());
+
+  const ask = async (autostart: boolean): Promise<AutostartResult> => {
+    try {
+      const { Xdp, XdpGtk4, portal } = await load();
+      const window = options.parent?.() ?? null;
+      const parent = window && XdpGtk4 ? XdpGtk4.parent_new_gtk(window as unknown as Parameters<XdpGtk4['parent_new_gtk']>[0]) : null;
+      const wish = backgroundRequest(autostart, options.commandline);
+      const granted = await new Promise<boolean>((resolve, reject) => {
+        portal.request_background(
+          parent,
+          options.reason,
+          wish.commandline,
+          wish.autostart ? Xdp.BackgroundFlags.AUTOSTART : Xdp.BackgroundFlags.NONE,
+          null,
+          (_source: unknown, result: PortalResult) => {
+            try {
+              resolve(portal.request_background_finish(result));
+            } catch (error) {
+              reject(error);
+            }
           },
-        ]),
-        null,
-        Gio.DBusCallFlags.NONE,
-        10_000,
-        null,
-        (_source, result) => {
-          try {
-            connection.call_finish(result!);
-          } catch {
-            finish({ ok: false, reason: _('no Background portal on this system') });
-          }
-        },
-      );
-    });
+        );
+      });
+      return backgroundResult(granted, autostart);
+    } catch (error) {
+      console.warn(`Background portal request failed (autostart=${autostart}):`, error);
+      return unavailableResult();
+    }
+  };
   return {
     needsUnitFile: false,
     status: async () => 'unknown',
