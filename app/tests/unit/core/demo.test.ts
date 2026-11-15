@@ -6,7 +6,7 @@ import { openIndexDb } from '@curlew/store';
 
 import { DEMO_ACCOUNTS } from '../../../src/core/demo/accounts.ts';
 import { demoActive } from '../../../src/core/demo/active.ts';
-import { demoDir, demoIsFresh, prepareDemo } from '../../../src/core/demo/index.ts';
+import { demoDir, demoIsFresh, demoLang, prepareDemo } from '../../../src/core/demo/index.ts';
 import { generateDemo } from '../../../src/core/demo/generate.ts';
 
 const NOW = Date.parse('2026-06-01T12:00:00Z');
@@ -77,6 +77,44 @@ export default async () => {
       } finally {
         rmSync(a, { recursive: true, force: true });
         rmSync(b, { recursive: true, force: true });
+      }
+    });
+
+    it('picks the demo language from the locale chain', () => {
+      expect(demoLang({ LC_ALL: 'de_DE.UTF-8', LANGUAGE: 'de' })).toBe('de');
+      expect(demoLang({ LANG: 'de_AT.UTF-8' })).toBe('de');
+      expect(demoLang({ LC_ALL: 'en_US.UTF-8', LANGUAGE: 'en' })).toBe('en');
+      expect(demoLang({ LC_ALL: 'C', LANGUAGE: 'de' })).toBe('en');
+      expect(demoLang({})).toBe('en');
+    });
+
+    it('writes the message texts in the requested language and keeps names and structure', () => {
+      const en = mkdtempSync(join(tmpdir(), 'curlew-demo-'));
+      const de = mkdtempSync(join(tmpdir(), 'curlew-demo-'));
+      try {
+        const a = generateDemo(en, NOW, 'en');
+        const b = generateDemo(de, NOW, 'de');
+        expect(b.messages).toBe(a.messages);
+        expect(b.reactions).toBe(a.reactions);
+        const read = (dir: string, sql: string) => {
+          const db = openIndexDb(join(dir, 'index.db'));
+          try {
+            return db.prepare(sql).all() as Array<Record<string, string>>;
+          } finally {
+            db.close();
+          }
+        };
+        const note = "SELECT body FROM conversation_messages WHERE conversation_id = 'c12'";
+        expect(read(en, note)[0]?.body).toBe('Buy oat milk and stamps');
+        expect(read(de, note)[0]?.body).toBe('Hafermilch und Briefmarken kaufen');
+        const names = 'SELECT id, display_name FROM participants ORDER BY id';
+        expect(JSON.stringify(read(de, names))).toBe(JSON.stringify(read(en, names)));
+        expect(read(de, "SELECT title FROM conversations WHERE id = 'c6'")[0]?.title).toBe('Familie');
+        expect(demoIsFresh(de, 'de')).toBe(true);
+        expect(demoIsFresh(de, 'en')).toBe(false);
+      } finally {
+        rmSync(en, { recursive: true, force: true });
+        rmSync(de, { recursive: true, force: true });
       }
     });
 

@@ -78,36 +78,42 @@ cd "$ROOT"
 [ "$BUILD" = 0 ] || gjsify workspace curlew-cli build >/dev/null
 [ -f app/dist/window.gjs.mjs ] || { echo "no app/dist/window.gjs.mjs: run with --build" >&2; exit 1; }
 
-# Fresh data on every run, so the list times ("4 min ago") are relative to now.
+# Fresh data on every run, so the list times ("4 min ago") are relative to now. One tree per language:
+# the demo text is generated in the language of the shot.
 rm -rf "$WORK"
-mkdir -p "$WORK/demo" "$WORK/off" "$WORK/paused" "$WORK/empty" "$OUT"
-(cd app && node --experimental-strip-types scripts/demo-index.ts "$WORK/demo" >/dev/null)
-cp -a "$WORK/demo/." "$WORK/off/"
-jq '.backends |= with_entries(.value.enabled = false)
-    | .ui |= (.ai = false | .notifications = "off" | .showAllEmails = false)
-    | .agentAccess.rules = []' "$WORK/demo/config.json" >"$WORK/off/config.json.new"
-mv "$WORK/off/config.json.new" "$WORK/off/config.json"
-cp -a "$WORK/demo/." "$WORK/paused/"
-jq '.disabledAccounts = ["whatsapp/whatsapp-demo1"]' "$WORK/demo/config.json" >"$WORK/paused/config.json"
-echo '{"ui":{"welcomeDone":true}}' >"$WORK/empty/config.json"
+mkdir -p "$OUT"
+for l in "${LANGS[@]}"; do
+  W="$WORK/$l"
+  mkdir -p "$W/demo" "$W/off" "$W/paused" "$W/empty"
+  (cd app && node --experimental-strip-types scripts/demo-index.ts "$W/demo" "$l" >/dev/null)
+  cp -a "$W/demo/." "$W/off/"
+  jq '.backends |= with_entries(.value.enabled = false)
+      | .ui |= (.ai = false | .notifications = "off" | .showAllEmails = false)
+      | .agentAccess.rules = []' "$W/demo/config.json" >"$W/off/config.json.new"
+  mv "$W/off/config.json.new" "$W/off/config.json"
+  cp -a "$W/demo/." "$W/paused/"
+  jq '.disabledAccounts = ["whatsapp/whatsapp-demo1"]' "$W/demo/config.json" >"$W/paused/config.json"
+  echo '{"ui":{"welcomeDone":true}}' >"$W/empty/config.json"
+done
 
 for m in "${MOTIFS[@]}"; do
   IFS='|' read -r name size data extra <<<"$m"
   [ -z "$ONLY" ] || [ "$ONLY" = "$name" ] || continue
-  # The welcome screen only shows on a first start.
-  config="$WORK/$data/config.json"
-  if [ "$name" = welcome ]; then
-    mkdir -p "$WORK/empty"; echo "{}" >"$WORK/empty/welcome.json"; config="$WORK/empty/welcome.json"
-  fi
-  if [ "$data" = empty ]; then
-    # Not demo mode: an empty index and config, so there is nothing to list.
-    dataenv=(CURLEW_DB_PATH="$WORK/empty/index.db" CURLEW_CONFIG="$config"
-      CURLEW_PREVIEWS_DIR="$WORK/empty/previews" CURLEW_AVATARS_DIR="$WORK/empty/avatars"
-      CURLEW_DATA_DIR="$WORK/empty" CURLEW_SECRETS_DIR="$WORK/empty/secrets")
-  else
-    dataenv=(CURLEW_DEMO=1 CURLEW_DEMO_DIR="$WORK/$data")
-  fi
   for l in "${LANGS[@]}"; do
+    W="$WORK/$l"
+    # The welcome screen only shows on a first start.
+    config="$W/$data/config.json"
+    if [ "$name" = welcome ]; then
+      echo "{}" >"$W/empty/welcome.json"; config="$W/empty/welcome.json"
+    fi
+    if [ "$data" = empty ]; then
+      # Not demo mode: an empty index and config, so there is nothing to list.
+      dataenv=(CURLEW_DB_PATH="$W/empty/index.db" CURLEW_CONFIG="$config"
+        CURLEW_PREVIEWS_DIR="$W/empty/previews" CURLEW_AVATARS_DIR="$W/empty/avatars"
+        CURLEW_DATA_DIR="$W/empty" CURLEW_SECRETS_DIR="$W/empty/secrets")
+    else
+      dataenv=(CURLEW_DEMO=1 CURLEW_DEMO_DIR="$W/$data")
+    fi
     locale="en_US.UTF-8"; [ "$l" = de ] && locale="de_DE.UTF-8"
     for s in "${SCHEMES[@]}"; do
       dark=(); [ "$s" = dark ] && dark=(--dark)
