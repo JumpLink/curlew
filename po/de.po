@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-15 00:20+0100\n"
+"POT-Creation-Date: 2026-11-15 01:02+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1875,7 +1875,7 @@ msgid_plural "{count} accounts"
 msgstr[0] "{count} Konto"
 msgstr[1] "{count} Konten"
 
-#: app/src/window/account-add.ts:123 app/src/window/account-add.ts:284
+#: app/src/window/account-add.ts:123 app/src/window/account-add.ts:313
 msgid "Connecting…"
 msgstr "Verbindung wird hergestellt …"
 
@@ -1901,27 +1901,43 @@ msgstr "Zustimmen und fortfahren"
 msgid "Continue"
 msgstr "Weiter"
 
-#: app/src/window/account-add.ts:261
+#: app/src/window/account-add.ts:256
+msgid "Open Link"
+msgstr "Link öffnen"
+
+#: app/src/window/account-add.ts:267
+msgid "No App Opened the Link"
+msgstr "Keine App hat den Link geöffnet"
+
+#: app/src/window/account-add.ts:273
+msgid "Copy Link"
+msgstr "Link kopieren"
+
+#: app/src/window/account-add.ts:276
+msgid "Link Copied"
+msgstr "Link kopiert"
+
+#: app/src/window/account-add.ts:290
 msgid "Adding account…"
 msgstr "Konto wird hinzugefügt …"
 
-#: app/src/window/account-add.ts:269 app/src/window/media-viewer.ts:104
+#: app/src/window/account-add.ts:298 app/src/window/media-viewer.ts:104
 msgid "Try Again"
 msgstr "Erneut versuchen"
 
-#: app/src/window/account-add.ts:273
+#: app/src/window/account-add.ts:302
 msgid "Could not add the account"
 msgstr "Konto konnte nicht hinzugefügt werden"
 
-#: app/src/window/account-add.ts:308 app/src/window/protocols-page.ts:46
+#: app/src/window/account-add.ts:337 app/src/window/protocols-page.ts:46
 msgid "Asks you to accept terms first"
 msgstr "Verlangt zuerst deine Zustimmung zu den Bedingungen"
 
-#: app/src/window/account-add.ts:325
+#: app/src/window/account-add.ts:354
 msgid "Chats"
 msgstr "Chats"
 
-#: app/src/window/account-add.ts:326
+#: app/src/window/account-add.ts:355
 msgid ""
 "Signal, WhatsApp and Telegram link this computer as another device of your "
 "account."
@@ -1929,25 +1945,25 @@ msgstr ""
 "Signal, WhatsApp und Telegram verknüpfen diesen Computer als weiteres Gerät "
 "deines Kontos."
 
-#: app/src/window/account-add.ts:335 app/src/window/accounts-model.ts:107
+#: app/src/window/account-add.ts:364 app/src/window/accounts-model.ts:107
 #: app/src/window/conversation-list-model.ts:139
 msgid "Mail"
 msgstr "E-Mail"
 
-#: app/src/window/account-add.ts:338
+#: app/src/window/account-add.ts:367
 msgid "Sign in with an address and a password"
 msgstr "Mit Adresse und Passwort anmelden"
 
-#: app/src/window/account-add.ts:344
+#: app/src/window/account-add.ts:373
 msgid "GNOME Online Accounts"
 msgstr "GNOME-Online-Konten"
 
-#: app/src/window/account-add.ts:345
+#: app/src/window/account-add.ts:374
 msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 "Ein Konto verwenden, das du in den GNOME-Einstellungen eingerichtet hast"
 
-#: app/src/window/account-add.ts:363 app/src/window/accounts-page.ts:148
+#: app/src/window/account-add.ts:392 app/src/window/accounts-page.ts:148
 #: app/src/window/accounts-page.ts:174 app/src/window/welcome.ts:163
 msgid "Add Account"
 msgstr "Konto hinzufügen"
@@ -3932,63 +3948,64 @@ msgstr "Keine Signal-Sitzung für {account} — {hint}"
 msgid "the Signal session {account} was never linked — {hint}"
 msgstr "Die Signal-Sitzung {account} wurde nie verknüpft — {hint}"
 
-#: packages/signal/src/link.ts:86
+#: packages/signal/src/link.ts:87
 msgid ""
-"Scan this with the phone: Signal → Settings → Linked devices → Link new "
-"device."
+"On the phone with Signal: open the link below, or scan the code from another "
+"screen (Signal → Settings → Linked devices → Link new device)."
 msgstr ""
-"Scanne dies mit dem Telefon: Signal → Einstellungen → Verknüpfte Geräte → "
-"Neues Gerät verknüpfen."
+"Auf dem Handy mit Signal: Öffne den Link unten oder scanne den Code von "
+"einem anderen Bildschirm (Signal → Einstellungen → Verknüpfte Geräte → "
+"Neues Gerät verknüpfen)."
 
-#: packages/signal/src/link.ts:100
+#: packages/signal/src/link.ts:103
 msgid "the provisioning connection failed ({reason}) — nothing was saved"
 msgstr ""
 "Die Kopplungsverbindung ist fehlgeschlagen ({reason}) — es wurde nichts "
 "gespeichert"
 
-#: packages/signal/src/link.ts:105 packages/whatsapp/src/login.ts:145
+#: packages/signal/src/link.ts:108 packages/whatsapp/src/login.ts:145
 msgid "no phone linked this device in time — nothing was saved"
 msgstr ""
 "Kein Telefon hat dieses Gerät rechtzeitig verknüpft — es wurde nichts "
 "gespeichert"
 
-#: packages/signal/src/link.ts:132
+#: packages/signal/src/link.ts:135
 msgid "the phone sent an incomplete link message — nothing was saved"
 msgstr ""
 "Das Telefon hat eine unvollständige Verknüpfungsnachricht gesendet — es "
 "wurde nichts gespeichert"
 
-#: packages/signal/src/link.ts:134
+#: packages/signal/src/link.ts:137
 msgid "The phone answered. Registering this device…"
 msgstr "Das Telefon hat geantwortet. Dieses Gerät wird registriert …"
 
-#: packages/signal/src/link.ts:157
+#: packages/signal/src/link.ts:160
 msgid ""
 "the phone sent a number but no phone number identity key — nothing was saved"
 msgstr ""
 "Das Telefon hat eine Nummer, aber keinen Identitätsschlüssel zur "
 "Telefonnummer gesendet — es wurde nichts gespeichert"
 
-#: packages/signal/src/link.ts:160
+#: packages/signal/src/link.ts:163
 msgid ""
 "the phone sent a phone number identity key but no number — nothing was saved"
 msgstr ""
 "Das Telefon hat einen Identitätsschlüssel zur Telefonnummer, aber keine "
 "Nummer gesendet — es wurde nichts gespeichert"
 
-#: packages/signal/src/link.ts:210
+#: packages/signal/src/link.ts:213
 msgid "Signal refused the link (status {status}{detail}) — nothing was saved"
 msgstr ""
 "Signal hat die Verknüpfung abgelehnt (Status {status}{detail}) — es wurde "
 "nichts gespeichert"
 
-#: packages/signal/src/link.ts:221
+#: packages/signal/src/link.ts:224
 msgid "Signal answered the link for a different account — nothing was saved"
 msgstr ""
 "Signal hat die Verknüpfung für ein anderes Konto beantwortet — es wurde "
 "nichts gespeichert"
 
-#: packages/signal/src/link.ts:241
+#: packages/signal/src/link.ts:244
 msgid ""
 "Linked, but the one-time keys were not published ({reason}); new contacts "
 "fall back to the last-resort key."
@@ -3996,7 +4013,7 @@ msgstr ""
 "Verknüpft, aber die Einmalschlüssel wurden nicht veröffentlicht ({reason}); "
 "neue Kontakte weichen auf den Notfallschlüssel aus."
 
-#: packages/signal/src/link.ts:261
+#: packages/signal/src/link.ts:264
 msgid ""
 "Linked. Sync soon: Signal keeps what arrived for this device only until it "
 "is received, and the phone sends the contact list on its own."
