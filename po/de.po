@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-15 01:02+0100\n"
+"POT-Creation-Date: 2026-11-15 08:38+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1847,8 +1847,8 @@ msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
 #: app/src/window/about.ts:16 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:180 app/src/window/window.ts:95
-#: app/src/window/window.ts:118
+#: app/src/window/conversation-view.ts:180 app/src/window/window.ts:98
+#: app/src/window/window.ts:121
 msgid "Curlew"
 msgstr "Curlew"
 
@@ -2140,7 +2140,7 @@ msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
 #: app/src/window/accounts-dialog.ts:86 app/src/window/accounts-page.ts:187
 #: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:175
-#: app/src/window/window.ts:131
+#: app/src/window/window.ts:134
 msgid "Accounts"
 msgstr "Konten"
 
@@ -2225,7 +2225,7 @@ msgstr "Starten"
 msgid "Protocols"
 msgstr "Protokolle"
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:135
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:138
 msgid "Agent access"
 msgstr "Agentenzugriff"
 
@@ -3345,7 +3345,7 @@ msgstr ""
 msgid "AI"
 msgstr "KI"
 
-#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:133
+#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:136
 msgid "Preferences"
 msgstr "Einstellungen"
 
@@ -3495,7 +3495,7 @@ msgid "On"
 msgstr "An"
 
 #: app/src/window/welcome.ts:109 app/src/window/welcome.ts:128
-#: app/src/window/window.ts:138
+#: app/src/window/window.ts:141
 msgid "Welcome"
 msgstr "Willkommen"
 
@@ -3555,39 +3555,39 @@ msgstr ""
 msgid "Start Using Curlew"
 msgstr "Curlew benutzen"
 
-#: app/src/window/window.ts:89
+#: app/src/window/window.ts:92
 msgid "Select a conversation"
 msgstr "Unterhaltung auswählen"
 
-#: app/src/window/window.ts:90
+#: app/src/window/window.ts:93
 msgid "Pick a conversation from the list."
 msgstr "Wähle eine Unterhaltung aus der Liste."
 
-#: app/src/window/window.ts:132
+#: app/src/window/window.ts:135
 msgid "Merge contacts…"
 msgstr "Kontakte zusammenführen…"
 
-#: app/src/window/window.ts:140
+#: app/src/window/window.ts:143
 msgid "About Curlew"
 msgstr "Über Curlew"
 
-#: app/src/window/window.ts:141
+#: app/src/window/window.ts:144
 msgid "Quit"
 msgstr "Beenden"
 
-#: app/src/window/window.ts:183
+#: app/src/window/window.ts:186
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:386
+#: app/src/window/window.ts:389
 msgid "Curlew (demo)"
 msgstr "Curlew (Demo)"
 
-#: app/src/window/window.ts:389
+#: app/src/window/window.ts:392
 msgid "Demo data — nothing here is real"
 msgstr "Demo-Daten – nichts hier ist echt"
 
-#: app/src/window/window.ts:478
+#: app/src/window/window.ts:497
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 
@@ -3954,8 +3954,8 @@ msgid ""
 "screen (Signal → Settings → Linked devices → Link new device)."
 msgstr ""
 "Auf dem Handy mit Signal: Öffne den Link unten oder scanne den Code von "
-"einem anderen Bildschirm (Signal → Einstellungen → Verknüpfte Geräte → "
-"Neues Gerät verknüpfen)."
+"einem anderen Bildschirm (Signal → Einstellungen → Verknüpfte Geräte → Neues "
+"Gerät verknüpfen)."
 
 #: packages/signal/src/link.ts:103
 msgid "the provisioning connection failed ({reason}) — nothing was saved"
