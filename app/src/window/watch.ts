@@ -70,6 +70,48 @@ export function watchFiles(
   };
 }
 
+/**
+ * Call `onChange` when the size or mtime of one of `paths` changed, checked every `intervalMs`.
+ *
+ * For files that change on their own schedule, like the index the daemon writes. A directory
+ * monitor hands every event a fresh `Gio.File`; when the signal returns, GJS sees its toggle
+ * reference drop and forces a full, non-incremental GC. The daemon renews its receive lease
+ * every 30 s, so that was a ~200 ms freeze twice a minute on the OnePlus 6T. Files queried from
+ * here are owned by JS from the start and never toggle.
+ */
+export function pollFiles(paths: readonly string[], onChange: () => void, intervalMs: number): () => void {
+  const files = paths.map((path) => Gio.File.new_for_path(path));
+  const stamp = (): string =>
+    files
+      .map((file) => {
+        try {
+          const info = file.query_info(
+            'standard::size,time::modified,time::modified-usec',
+            Gio.FileQueryInfoFlags.NONE,
+            null,
+          );
+          const seconds = info.get_attribute_uint64('time::modified');
+          return `${info.get_size()}:${seconds}.${info.get_attribute_uint32('time::modified-usec')}`;
+        } catch {
+          return '-';
+        }
+      })
+      .join('|');
+  let last = stamp();
+  let tick = GLib.timeout_add(GLib.PRIORITY_DEFAULT, intervalMs, () => {
+    const now = stamp();
+    if (now !== last) {
+      last = now;
+      onChange();
+    }
+    return GLib.SOURCE_CONTINUE;
+  });
+  return () => {
+    if (tick) GLib.source_remove(tick);
+    tick = 0;
+  };
+}
+
 export function watchConfig(path: string, onChange: () => void): () => void {
   return watchFiles(GLib.path_get_dirname(path), [GLib.path_get_basename(path)], onChange);
 }
