@@ -5,6 +5,8 @@
 ### Fixed
 
 - The accounts page no longer flashes "The background service is not running" while it starts or restarts: an absence shows only after the service stayed gone for 10 seconds.
+- Signal now asks the phone for the contact list after linking, so contacts appear without a message first.
+
 - The background service now shows an XMPP account as away instead of available.
 - The capability flags match what Curlew can do: Signal, Matrix, Telegram and WhatsApp no longer claim they send read receipts (only mail does), and the send tool's description no longer says Signal refuses attachments.
 - The demo data is written in the language of the session, so the German listing screenshots show German messages, subjects and chat names ("Du: Hafermilch und Briefmarken kaufen") instead of English ones; names and avatars are the same in both languages.

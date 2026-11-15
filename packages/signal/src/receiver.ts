@@ -98,6 +98,8 @@ export interface Flushable {
    */
   setAside(entry: SetAsideEntry): number;
   flush(): void;
+  /** Remember that a contact list arrived, so it is not asked for again. Written by the next `flush()`. */
+  markContactsSynced?(at: number): void;
 }
 
 /**
@@ -424,6 +426,7 @@ export class SignalReceiver implements DeliverySession {
         try {
           this.pendingEvents.push(...(await readContactsSync(mapped.contactsBlob, this.download)));
           this.contactsProblem = null;
+          this.store.markContactsSynced?.(Date.now());
         } catch (err) {
           this.contactsProblem = `the contact list from the phone could not be read (${err instanceof Error ? err.message : String(err)})`;
         }

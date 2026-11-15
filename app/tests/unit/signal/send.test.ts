@@ -393,6 +393,7 @@ async function withRig<T>(config: unknown, body: (rig: Rig) => Promise<T>): Prom
       lib: LIB,
       trustRoots: trust.publicKeys,
       connector: () => inbox.connector(),
+      requestContacts: false,
       sendChannel: server.channel(),
       upload: async (form, data) => {
         server.uploads.push({ cdn: form.cdn, key: form.key, data });

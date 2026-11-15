@@ -376,6 +376,23 @@ export class SignalProtocolStore {
     this.set(NS.account, 'registrationId', String(account.registrationId));
   }
 
+  /** When a contact list last arrived and when one was last asked for (ms), `null` if never. */
+  contactsState(): { syncedAt: number | null; requestedAt: number | null } {
+    const read = (key: string): number | null => {
+      const n = Number(this.get(NS.account, key));
+      return Number.isFinite(n) && n > 0 ? n : null;
+    };
+    return { syncedAt: read('contactsSyncedAt'), requestedAt: read('contactsRequestedAt') };
+  }
+
+  markContactsRequested(at: number): void {
+    this.set(NS.account, 'contactsRequestedAt', String(at));
+  }
+
+  markContactsSynced(at: number): void {
+    this.set(NS.account, 'contactsSyncedAt', String(at));
+  }
+
   setIdentityKey(privateKey: Core.PrivateKey): void {
     this.set(NS.account, 'identityPrivate', toBase64(privateKey.serialize()));
   }

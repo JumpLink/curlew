@@ -6,8 +6,9 @@
  * Signal-Desktop `ts/textsecure/ContactsParser.preload.ts` and `downloadAttachment.preload.ts`
  * (Copyright 2020-2026 Signal Messenger, LLC, AGPL-3.0-only). Avatars are skipped.
  *
- * The phone sends contact sync on its own schedule (after a link, when contacts change); curlew
- * never asks for it — asking is a message to the user's devices, and curlew sends nothing.
+ * The phone sends contact sync when contacts change, and after a link only when asked: curlew
+ * sends the request (`encodeContactsRequest`) once per account, retried after a day without an
+ * answer (`shouldRequestContacts`).
  *
  * The download is a GET from Signal's CDN, which chains to Signal's private CA
  * (`constants.ts`). `ca` is what makes that work: gjsify#1843 hands the request's TLS options to
@@ -23,6 +24,20 @@ import { decryptAttachment } from './crypto.ts';
 import { peerOf } from './map.ts';
 import { readDelimited } from './proto.ts';
 import { type AttachmentPointer, type ContactDetails, decodeContactDetails } from './schema.ts';
+
+/** How long a contact request stands before an account that never got a list asks again. */
+export const CONTACTS_REQUEST_RETRY_MS = 24 * 60 * 60 * 1000;
+
+export interface ContactsSyncState {
+  syncedAt: number | null;
+  requestedAt: number | null;
+}
+
+/** Ask when no list ever arrived and no request went out in the last day. */
+export function shouldRequestContacts(state: ContactsSyncState, now: number): boolean {
+  if (state.syncedAt !== null) return false;
+  return state.requestedAt === null || now - state.requestedAt >= CONTACTS_REQUEST_RETRY_MS;
+}
 
 /** Fetch an attachment's encrypted bytes. Injected so tests serve synthetic blobs. */
 export type AttachmentDownloader = (url: string) => Promise<Uint8Array>;
