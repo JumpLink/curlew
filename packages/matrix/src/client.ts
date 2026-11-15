@@ -13,6 +13,7 @@
  * crypto store before any history is read. `close` saves it again after the loop has stopped.
  */
 
+import { _ } from '@curlew/protocol';
 import type { SecretStore } from '@curlew/store';
 import {
   IDBCursor,
@@ -174,6 +175,48 @@ export function isLoggedOutError(err: unknown): boolean {
   return e?.errcode === 'M_UNKNOWN_TOKEN' || e?.httpStatus === 401;
 }
 
+/**
+ * The homeserver already holds one-time keys under this device id that this process's Olm account
+ * did not make: the crypto store was lost or regenerated. Uploading never succeeds again, so
+ * retrying cannot help — the account has to be added again (same class of error as a dead token).
+ */
+export class MatrixKeysOutOfSyncError extends Error {
+  readonly loggedOut = true;
+  constructor() {
+    super(_('the device keys are out of sync with the server — add the account again in Accounts'));
+    this.name = 'MatrixKeysOutOfSyncError';
+  }
+}
+
+/** A `/keys/upload` answer that says a one-time key of this device exists already. */
+export function isKeyUploadConflict(url: string, status: number, body: string): boolean {
+  return (
+    status === 400 &&
+    url.includes('/keys/upload') &&
+    /one time key .* already exists/i.test(body)
+  );
+}
+
+const liveAccounts = new Set<string>();
+
+/**
+ * One live client per account and process: opening the crypto store deletes every IndexedDB under
+ * the account's prefix in the process-wide factory (`restore`), which would wipe a running
+ * client's database. Returns the release function; throws when the account is already open.
+ */
+export function claimAccount(accountId: string): () => void {
+  if (liveAccounts.has(accountId)) {
+    throw new Error(_('this Matrix account is already connected in this process'));
+  }
+  liveAccounts.add(accountId);
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    liveAccounts.delete(accountId);
+  };
+}
+
 export type MatrixConnector = (session: MatrixSession) => Promise<MatrixApi>;
 
 function toMxEvent(event: MatrixEvent): MxEvent {
@@ -262,12 +305,20 @@ function firstSync(sdk: MatrixSdk, client: MatrixClient): Promise<void> {
  * hear the initial room list as arrivals). A new event in a timeline is a wake-up; the SDK giving
  * up (`Error` after three failed polls, or at once on a dead token) closes the connection.
  */
-function liveOf(sdk: MatrixSdk, client: MatrixClient): MatrixLive {
+function liveOf(
+  sdk: MatrixSdk,
+  client: MatrixClient,
+  onConflict: (listener: () => void) => void,
+): MatrixLive {
   const arrivals = new Set<() => void>();
   const closers = new Set<(end: { reason: string; loggedOut: boolean }) => void>();
   client.on(sdk.RoomEvent.Timeline, (_event, _room, toStart, _removed, data) => {
     if (toStart || data?.liveEvent === false) return;
     for (const listener of [...arrivals]) listener();
+  });
+  onConflict(() => {
+    const reason = new MatrixKeysOutOfSyncError().message;
+    for (const listener of [...closers]) listener({ reason, loggedOut: true });
   });
   client.on(sdk.ClientEvent.Sync, (state, _previous, data) => {
     if (state !== sdk.SyncState.Error) return;
@@ -293,6 +344,16 @@ function liveOf(sdk: MatrixSdk, client: MatrixClient): MatrixLive {
 
 /** The one place matrix-js-sdk is constructed. */
 export const connectMatrixClient: MatrixConnector = async (session) => {
+  const release = claimAccount(session.accountId);
+  try {
+    return await connectGuarded(session, release);
+  } catch (err) {
+    release();
+    throw err;
+  }
+};
+
+async function connectGuarded(session: MatrixSession, release: () => void): Promise<MatrixApi> {
   const sdk = await loadMatrixSdk();
   const { LoggerLevel, Tracing } = await import('@matrix-org/matrix-sdk-crypto-wasm');
   const snapshot = new IndexedDbSnapshot(
@@ -322,7 +383,25 @@ export const connectMatrixClient: MatrixConnector = async (session) => {
     return next;
   };
   const refusedBefore = refusals.length;
+  let keyConflict = false;
+  const conflictListeners = new Set<() => void>();
+  const baseFetch = session.fetch ?? globalThis.fetch.bind(globalThis);
+  const watchedFetch: typeof globalThis.fetch = async (input, init) => {
+    const response = await baseFetch(input, init);
+    if (!response.ok && !keyConflict) {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (url.includes('/keys/upload') && response.status === 400) {
+        const body = await response.clone().text().catch(() => '');
+        if (isKeyUploadConflict(url, response.status, body)) {
+          keyConflict = true;
+          for (const listener of [...conflictListeners]) listener();
+        }
+      }
+    }
+    return response;
+  };
   const healthy = (): void => {
+    if (keyConflict) throw new MatrixKeysOutOfSyncError();
     if (saveError) throw saveError;
     const refused = refusals.slice(refusedBefore);
     if (refused.length > 0) throw new ReadOnlyViolation(refused[0]);
@@ -351,7 +430,7 @@ export const connectMatrixClient: MatrixConnector = async (session) => {
     deviceId: session.deviceId,
     logger: quietLogger(),
     store: new CheckpointStore(),
-    fetchFn: readOnlyFetch(session.fetch ?? globalThis.fetch.bind(globalThis)),
+    fetchFn: readOnlyFetch(watchedFetch),
   });
   let running = false;
   try {
@@ -370,6 +449,11 @@ export const connectMatrixClient: MatrixConnector = async (session) => {
       silent: LoggerLevel.Error,
     };
     if (Tracing.isAvailable()) new Tracing(cryptoLevel[sdkLogLevel()]).turnOn();
+    // The crypto just made a new Olm account and queued its one-time keys; they go to the server
+    // during the first sync. Save now, so a process killed before the first checkpoint cannot
+    // come back with a different account for the same device id (the server would refuse its
+    // keys forever). Keys the crypto makes later are covered by the checkpoints after each sync.
+    await save();
     const synced = firstSync(sdk, client);
     running = true;
     await client.startClient({
@@ -384,7 +468,8 @@ export const connectMatrixClient: MatrixConnector = async (session) => {
     await synced;
     await save();
     healthy();
-  } catch (err) {
+  } catch (caught) {
+    const err = keyConflict ? new MatrixKeysOutOfSyncError() : caught;
     if (running) client.stopClient();
     const saved = await save().then(
       () => null,
@@ -397,7 +482,7 @@ export const connectMatrixClient: MatrixConnector = async (session) => {
   }
 
   const mapper = client.getEventMapper();
-  const live = liveOf(sdk, client);
+  const live = liveOf(sdk, client, (l) => conflictListeners.add(l));
   return {
     live,
     userId: session.userId,
@@ -446,9 +531,13 @@ export const connectMatrixClient: MatrixConnector = async (session) => {
       return toMxEvent(event);
     },
     close: async () => {
-      client.stopClient();
-      await save();
-      healthy();
+      try {
+        client.stopClient();
+        await save();
+        healthy();
+      } finally {
+        release();
+      }
     },
   };
-};
+}

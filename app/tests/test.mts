@@ -72,6 +72,7 @@ import omemoArchive from './unit/xmpp/omemo-archive.test.ts';
 import matrix from './unit/matrix/matrix.test.ts';
 import matrixSend from './unit/matrix/send.test.ts';
 import matrixFollow from './unit/matrix/follow.test.ts';
+import matrixKeysave from './unit/matrix/keysave.test.ts';
 import matrixRedact from './unit/matrix/redact.test.ts';
 import matrixAttachments from './unit/matrix/attachments.test.ts';
 import matrixSelfRoom from './unit/matrix/self-room.test.ts';
@@ -237,6 +238,7 @@ run({
   matrix,
   matrixSend,
   matrixFollow,
+  matrixKeysave,
   matrixRedact,
   matrixAttachments,
   matrixSelfRoom,

@@ -220,7 +220,7 @@ export class MatrixBackend implements ChatBackend, SendBackend {
         reason: err instanceof Error ? err.message : String(err),
         hint: reloginHint(),
       });
-      throw isLoggedOutError(err) ? new MatrixLoggedOutError(message) : new Error(message);
+      throw isLoggedOutError(err) || (err as { loggedOut?: unknown } | null)?.loggedOut === true ? new MatrixLoggedOutError(message) : new Error(message);
     }
   }
 
