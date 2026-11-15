@@ -19,6 +19,7 @@ import {
   buildPage,
   type ChatContext,
   discoverEndpoints,
+  followPresence,
   endpointsFor,
   mamQuery,
   NS,
@@ -114,6 +115,12 @@ export default async () => {
   });
 
   await describe('XMPP stanza grammar', async () => {
+    await it('announces the follow session as available, away, priority -1, without status text', () => {
+      expect(followPresence().toString()).toBe(
+        '<presence><show>away</show><priority>-1</priority></presence>',
+      );
+    });
+
     await it('reads an archived direct message with its stamp, ids and body', async () => {
       const e = entry({
         id: 'a1',

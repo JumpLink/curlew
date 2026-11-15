@@ -541,8 +541,13 @@ export function retractionMessage(spec: { to: string; id: string; target: string
 /** Message Carbons (XEP-0280): copies of the account's other clients' traffic, to this session. */
 export const carbonsEnable = () => xml('enable', { xmlns: NS.carbons });
 
-/** The follow session's presence: available, but with a negative priority and no status text. */
-export const followPresence = () => xml('presence', {}, xml('priority', {}, '-1'));
+/**
+ * The follow session's presence: available (no `type`, so carbons and live delivery work), `show=away`
+ * because the person is not at this device when only the daemon runs, priority -1 so other clients
+ * keep their messages, and no status text.
+ */
+export const followPresence = () =>
+  xml('presence', {}, xml('show', {}, 'away'), xml('priority', {}, '-1'));
 
 /**
  * Does this stanza say "something new may be in the archive"? A message with content, plain or

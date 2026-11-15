@@ -244,7 +244,7 @@ export class GrantedXmppSession {
     return chatJid;
   }
 
-  /** Follow mode: carbons on, then the negative-priority presence. */
+  /** Follow mode: carbons on, then the presence (available, show=away, priority -1). */
   goAvailable(): Promise<void> {
     return this.link.goAvailable();
   }

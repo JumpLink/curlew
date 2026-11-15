@@ -39,7 +39,7 @@ The person's own frontends need no grant for anything an enabled account can do.
   with the receive lease from ADR 0002 §4 as today. The `xmpp.send` requirement of ADR 0004 §5 is
   gone. `--account` still narrows a run to one account.
 - **XMPP follow presence keeps the ADR 0004 §5 rules**: it lasts exactly as long as the daemon,
-  the priority is negative, there is no status text, and the write log records the line when the
+  the priority is negative, `show` is `away`, there is no status text, and the write log records the line when the
   account went available. What changes is only the condition: it is tied to the account being
   enabled and followed, not to a grant.
 - **The person's frontends send from every enabled account without a grant.** Today that is the
@@ -119,7 +119,7 @@ and the watch goes away together with the grant.
 
 - **A behaviour change for an existing user, deliberately:** with the XMPP backend enabled, the
   daemon follows every XMPP account curlew holds, including the ones that had no `xmpp.send`
-  grant, and those accounts go available (negative priority) while it runs. A person who wants an
+  grant, and those accounts go available but away (negative priority) while it runs. A person who wants an
   account left alone disables the backend or runs the daemon with `--account`.
 - The daemon no longer restarts on an edit of an `xmpp.send` grant, nor on any send grant: they
   change nothing it does. An `xmpp.omemo` edit still stops it (exit 3) until §5 is built.

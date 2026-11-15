@@ -115,7 +115,7 @@ grant. The CLI is no back door: an agent with a shell can run it too.
   `xmpp.send`. An account without a grant is not followed, only synced. The lease from ADR 0002
   §4 also covers follow mode.
 - **The presence lasts exactly as long as the daemon.** It is sent when follow mode connects and
-  ends when it stops; there is no status text, and the priority is negative, so the account
+  ends when it stops; there is no status text, `show` is `away` and the priority is negative, so the account
   stays reachable without presenting itself as the person at a desk and without pulling their
   other clients' messages to curlew. The write log records the moment it went available — it is
   the one thing the account's contacts can see, so it is not an invisible write.

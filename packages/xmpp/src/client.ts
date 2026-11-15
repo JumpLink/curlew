@@ -18,7 +18,7 @@
  * because RFC 6120 §8.2.3 requires an answer to every IQ.
  *
  * The write handle (`createXmppLink`) is the same connection with three more methods — send a
- * chat message, enable carbons, send the follow presence — and is typed apart: nothing that
+ * chat message, enable carbons, send the follow presence (available, show=away, priority -1) — and is typed apart: nothing that
  * holds an `XmppApi` can reach them (ADR 0004 §5). No stream management (XEP-0198): a message
  * written just as the connection drops is not retransmitted; the archive tells whether it landed.
  */
@@ -366,7 +366,7 @@ export class XmppConnection implements XmppLink {
     try {
       await this.iq.set(carbonsEnable(), undefined, QUERY_TIMEOUT_MS);
     } catch (err) {
-      // Without carbons a negative-priority session receives nothing live; following would be a lie.
+      // Without carbons a priority -1 session receives nothing live; following would be a lie.
       throw queryError(err);
     }
     await this.entity.send(followPresence());
