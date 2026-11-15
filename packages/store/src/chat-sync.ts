@@ -57,6 +57,7 @@ import {
   takeReceiveLease,
   type LeaseTake,
 } from './receive-lease.ts';
+import { flag, num } from './row.ts';
 import { stableId } from './threads.ts';
 
 export interface ChatSyncOptions {
@@ -160,15 +161,6 @@ interface Cursor {
   probeSeq: number | null;
   /** The stored JSON of the peer's advertised XEPs, kept when a sync does not ask again. */
   peerFeatures: string | null;
-}
-
-/** A tri-state flag as the column holds it: NULL = the network did not say. */
-function flag(value: boolean | null | undefined): number | null {
-  return value === null || value === undefined ? null : value ? 1 : 0;
-}
-
-function num(value: unknown): number | null {
-  return value === null || value === undefined ? null : Number(value);
 }
 
 function loadCursors(db: IndexDatabase, backend: string, accountId: string): Map<string, Cursor> {

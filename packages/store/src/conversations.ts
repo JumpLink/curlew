@@ -30,6 +30,7 @@ import type { IndexDatabase } from './db.ts';
 import { insertMany, placeholders, seqColumn, type SqlValue, withTransaction } from './db.ts';
 import { messageBody } from './index-store.ts';
 import { buildThreads, normalizeSubject, stableId, type ThreadMember } from './threads.ts';
+import { str, tri } from './row.ts';
 
 const MAIL_BACKEND = 'mail';
 
@@ -73,10 +74,6 @@ interface MailRow extends ThreadMember {
   mdn: boolean;
   mdnFor: string | null;
   receiptTo: string | null;
-}
-
-function str(value: unknown): string | null {
-  return value === null || value === undefined ? null : String(value);
 }
 
 function parseAddresses(json: unknown): MailAddress[] {
@@ -1504,10 +1501,6 @@ export interface ChatRoomRow {
   public: boolean | null;
   encrypted: boolean | null;
   memberCount: number | null;
-}
-
-function tri(value: unknown): boolean | null {
-  return value === null || value === undefined ? null : Number(value) === 1;
 }
 
 /** The XEPs an XMPP peer advertised, by conversation id; a chat never asked is missing. */
