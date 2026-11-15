@@ -170,7 +170,9 @@ Linking, step by step:
 Signal is tested on **linux-x64 and macOS arm64** (libsignal is a native addon
 that curlew loads through gjsify's N-API host; every package carries the build
 for its own target). libsignal's Linux builds need glibc: on a musl system such
-as postmarketOS or Alpine, use the Flatpak. Where libsignal does not load, the
+as postmarketOS or Alpine, use the Flatpak, or install `gcompat` and preload the
+shim built from `contrib/glibc-shim` (`dev/build-glibc-shim.sh`) with
+`LD_PRELOAD=…/libcurlew-glibc-shim.so`. Where libsignal does not load, the
 rest of curlew works and `accounts add signal` says so.
 
 **Signal keeps no archive.** The server holds a message for a device only until

@@ -79,6 +79,7 @@ import {
   toBase64,
   unpadPlaintext,
   uuidToBytes,
+  loadFailureReason,
 } from '@curlew/signal';
 import * as Signal from '@signalapp/libsignal-client';
 
@@ -2214,6 +2215,20 @@ export default async () => {
       expect(url.searchParams.get('uuid')).toBe('abc+/def==');
       expect(url.searchParams.get('pub_key')).toBe(btoa(String.fromCharCode(...publicKey)));
       expect(url.searchParams.get('capabilities')).toBe('nopni');
+    });
+  });
+
+  describe('libsignal load failure reason', () => {
+    it('names gcompat on a musl system', () => {
+      const reason = loadFailureReason('boom', true);
+      expect(reason).toContain('gcompat');
+      expect(reason).toContain('boom');
+    });
+
+    it('does not name gcompat elsewhere', () => {
+      const reason = loadFailureReason('boom', false);
+      expect(reason.includes('gcompat')).toBe(false);
+      expect(reason).toContain('boom');
     });
   });
 };
