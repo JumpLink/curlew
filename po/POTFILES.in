@@ -299,6 +299,7 @@ packages/store/src/conversations-rebuild.ts
 packages/store/src/conversations-shared.ts
 packages/store/src/conversations.ts
 packages/store/src/db.ts
+packages/store/src/delivery-batch.ts
 packages/store/src/delivery-sync.ts
 packages/store/src/download.ts
 packages/store/src/fts.ts
