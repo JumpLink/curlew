@@ -155,6 +155,7 @@ import daemonAvatars from './unit/core/daemon-avatars.test.ts';
 import chatAttachment from './unit/core/chat-attachment.test.ts';
 import conversationsAttachments from './unit/core/conversations-attachments.test.ts';
 import messageNotices from './unit/core/message-notices.test.ts';
+import windowLaunch from './unit/core/window-launch.test.ts';
 import follow from './unit/core/follow.test.ts';
 import deliveries from './unit/core/deliveries.test.ts';
 import setup from './unit/core/setup.test.ts';
@@ -316,6 +317,7 @@ run({
   chatAttachment,
   conversationsAttachments,
   messageNotices,
+  windowLaunch,
   watch,
   follow,
   deliveries,

@@ -12,6 +12,7 @@ import Gio from 'gi://Gio?version=2.0';
 import { _ } from '@curlew/protocol';
 import type { Notice } from './message-notices.ts';
 import { inSandbox } from './sandbox.ts';
+import { scopedArgv } from './window-launch.ts';
 
 const NOTIFICATIONS_NAME = 'org.freedesktop.Notifications';
 const NOTIFICATIONS_PATH = '/org/freedesktop/Notifications';
@@ -57,11 +58,30 @@ function launchWindow(conversationId: string): void {
   try {
     const entry = Gio.AppInfo.get_all().find((app) => app.get_id() === `${APP_ID}.desktop`);
     if (!entry) return;
+    if (launchScoped(entry, conversationId)) return;
     const context = new Gio.AppLaunchContext();
     context.setenv('CURLEW_WINDOW_OPEN', conversationId);
     entry.launch([], context);
   } catch {
     // No desktop entry installed: the notification still did its job.
+  }
+}
+
+/** Starts the window in a scope of its own when the daemon runs as a systemd unit; see `window-launch.ts`. */
+function launchScoped(entry: Gio.AppInfo, conversationId: string): boolean {
+  const systemdRun = GLib.find_program_in_path('systemd-run');
+  const commandline = entry.get_commandline();
+  if (!GLib.getenv('INVOCATION_ID') || !systemdRun || !commandline) return false;
+  try {
+    const [, argv] = GLib.shell_parse_argv(commandline);
+    const launcher = new Gio.SubprocessLauncher({ flags: Gio.SubprocessFlags.NONE });
+    launcher.setenv('CURLEW_WINDOW_OPEN', conversationId, true);
+    launcher.unsetenv('INVOCATION_ID');
+    launcher.unsetenv('JOURNAL_STREAM');
+    launcher.spawnv(scopedArgv(systemdRun, APP_ID, `${GLib.get_monotonic_time()}`, argv ?? []));
+    return true;
+  } catch {
+    return false;
   }
 }
 

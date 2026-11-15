@@ -64,6 +64,7 @@ app/src/core/lib/message-notifications.ts
 app/src/core/lib/pull-sync.ts
 app/src/core/lib/sandbox.ts
 app/src/core/lib/search-scope.ts
+app/src/core/lib/window-launch.ts
 app/src/core/markdown.ts
 app/src/core/platform.ts
 app/src/core/runtime.ts

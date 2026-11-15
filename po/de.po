@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-15 10:12+0100\n"
+"POT-Creation-Date: 2026-11-15 12:22+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1088,7 +1088,7 @@ msgid_plural "{n} more chats have new messages"
 msgstr[0] "{n} weiterer Chat hat neue Nachrichten"
 msgstr[1] "{n} weitere Chats haben neue Nachrichten"
 
-#: app/src/core/lib/message-notifications.ts:177
+#: app/src/core/lib/message-notifications.ts:197
 #: app/src/window/attachment-view.ts:103
 msgid "Open"
 msgstr "Öffnen"
