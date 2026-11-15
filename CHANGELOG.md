@@ -5,6 +5,7 @@
 ### Fixed
 
 - The capability flags match what Curlew can do: Signal, Matrix, Telegram and WhatsApp no longer claim they send read receipts (only mail does), and the send tool's description no longer says Signal refuses attachments.
+- The demo data is written in the language of the session, so the German listing screenshots show German messages, subjects and chat names ("Du: Hafermilch und Briefmarken kaufen") instead of English ones; names and avatars are the same in both languages.
 - A Matrix account no longer ends up with keys the server refuses forever ("One time key … already exists"): the encryption keys are saved right after they are created, before the first sync, so stopping Curlew early cannot lose them. If the server does refuse them anyway, the account says its device keys are out of sync and asks to add it again, instead of only logging it. A second connection to the same account in one process no longer wipes the first one's key store.
 - A window opened from a notification stays open when the background service restarts: under systemd it runs in a scope of its own instead of the service's.
 - The listing screenshots end cleanly (#338): the Accounts, contact, group, preferences and agent access dialogs are taller and show their content without a cut-off section (Accounts lists all six demo accounts), the empty-state Accounts shots use a phone-width window so no page is clipped behind the dialog, the first shot opens a chat, and the emoji chooser opens inward from the composer's button instead of past the window's right edge.

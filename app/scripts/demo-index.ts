@@ -8,7 +8,7 @@ import { generateDemo } from '../src/core/demo/generate.ts';
 
 const dir = process.argv[2];
 if (!dir) {
-  console.error('usage: demo-index.ts <dir>');
+  console.error('usage: demo-index.ts <dir> [en|de]');
   process.exit(2);
 }
-console.log(JSON.stringify(generateDemo(dir)));
+console.log(JSON.stringify(generateDemo(dir, Date.now(), process.argv[3] === 'de' ? 'de' : 'en')));

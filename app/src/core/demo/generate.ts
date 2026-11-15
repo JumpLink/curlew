@@ -8,6 +8,7 @@
  * bundle calls it for `CURLEW_DEMO=1`; `app/scripts/demo-index.ts` is a thin wrapper for Node.
  */
 
+import { localeCandidates } from '@curlew/protocol';
 import { migrate, openIndexDb } from '@curlew/store';
 import { createHash } from 'node:crypto';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -17,7 +18,15 @@ import { DEMO_ACCOUNTS } from './accounts.ts';
 import { demoClip, scenePng, speak, writeBytes, type Scene, type Speech } from './media.ts';
 
 /** Bump when the generated content changes: an older stamp makes `prepareDemo` regenerate. */
-export const DEMO_VERSION = 1;
+export const DEMO_VERSION = 2;
+
+/** The language of the made-up text: message texts, subjects and chat names that are words. Names stay. */
+export type DemoLang = 'en' | 'de';
+
+/** `de` when the locale chain starts with German, else `en`. */
+export function demoLang(env: Record<string, string | undefined>): DemoLang {
+  return localeCandidates(env)[0]?.startsWith('de') ? 'de' : 'en';
+}
 
 export interface DemoSummary {
   conversations: number;
@@ -25,6 +34,8 @@ export interface DemoSummary {
   attachments: number;
   reactions: number;
 }
+
+type Tr = (en: string, de: string) => string;
 
 type Row = [
   id: string,
@@ -36,20 +47,20 @@ type Row = [
   unread: number,
 ];
 
-const CONVERSATIONS: Row[] = [
+const conversations = (t: Tr): Row[] => [
   ['c1', 'signal', 'signal-demo1', 'direct', 'Alex Weber', 4, 2],
   ['c2', 'matrix', 'matrix-demo1', 'group', 'GNOME Design', 18, 14],
   ['c3', 'mail', 'mail-demo1', 'direct', 'Sam Fischer', 52, 1],
-  ['c4', 'whatsapp', 'whatsapp-demo1', 'group', 'Climbing Tuesday', 95, 0],
+  ['c4', 'whatsapp', 'whatsapp-demo1', 'group', t('Climbing Tuesday', 'Klettern am Dienstag'), 95, 0],
   ['c5', 'xmpp', 'xmpp-demo1', 'direct', 'Jo Klein', 180, 0],
-  ['c6', 'signal', 'signal-demo1', 'group', 'Family', 60 * 20, 0],
+  ['c6', 'signal', 'signal-demo1', 'group', t('Family', 'Familie'), 60 * 20, 0],
   ['c7', 'mail', 'mail-demo1', 'direct', 'Kim Becker', 60 * 30, 0],
   ['c8', 'matrix', 'matrix-demo1', 'direct', 'Dana Wolf', 60 * 50, 0],
   ['c9', 'whatsapp', 'whatsapp-demo1', 'direct', 'Lee Hoffmann', 60 * 80, 0],
-  ['c10', 'xmpp', 'xmpp-demo1', 'group', 'Book club', 60 * 120, 0],
+  ['c10', 'xmpp', 'xmpp-demo1', 'group', t('Book club', 'Buchclub'), 60 * 120, 0],
   ['c11', 'mail', 'mail-demo1', 'direct', 'Monitoring Alerts', 60 * 200, 0],
-  ['c13', 'matrix', 'matrix-demo1', 'group', 'Release planning', 25, 0],
-  ['c14', 'matrix', 'matrix-demo1', 'group', 'Security team', 35, 0],
+  ['c13', 'matrix', 'matrix-demo1', 'group', t('Release planning', 'Release-Planung'), 25, 0],
+  ['c14', 'matrix', 'matrix-demo1', 'group', t('Security team', 'Sicherheitsteam'), 35, 0],
   ['c16', 'telegram', 'telegram-demo1', 'direct', 'Alex Weber', 3, 0],
   ['c15', 'whatsapp', 'whatsapp-demo1', 'direct', 'Robin', 7, 0],
   ['c12', 'signal', 'signal-0b8e1c2a-1111-4222-8333-444455556666', 'direct', '', 5, 0],
@@ -149,7 +160,7 @@ const speech = (text: string, voice: string, pitch = 50, speed = 160): Speech =>
   speed,
 });
 
-function story(): Msg[] {
+function story(t: Tr): Msg[] {
   const rows: Msg[] = [];
   let seq = 0;
   const add = (conv: string, who: string, ago: number, text: string, o: Opts = {}): number => {
@@ -159,24 +170,49 @@ function story(): Msg[] {
   };
 
   // c1 — Alex on Signal.
-  add('c1', 'p-alex', h(5), 'Are you coming to the harbour on Sunday?');
-  add('c1', 'me', h(5) - 2, 'Yes, I would love to.', { read: true });
+  add(
+    'c1',
+    'p-alex',
+    h(5),
+    t('Are you coming to the harbour on Sunday?', 'Kommst du am Sonntag mit zum Hafen?'),
+  );
+  add('c1', 'me', h(5) - 2, t('Yes, I would love to.', 'Ja, sehr gerne.'), { read: true });
   add(
     'c1',
     'p-alex',
     h(4),
-    'Great! I will send you the **route**: https://example.org/harbour-walk (about ~~one~~ two hours, `easy`).',
+    t(
+      'Great! I will send you the **route**: https://example.org/harbour-walk (about ~~one~~ two hours, `easy`).',
+      'Super! Ich schick dir die **Route**: https://example.org/harbour-walk (etwa ~~eine~~ zwei Stunden, `leicht`).',
+    ),
   );
-  const bring = add('c1', 'me', h(3), 'I will bring coffee ☕ and something sweet', {
-    read: true,
-    react: [['p-alex', '❤️']],
-  });
-  add('c1', 'p-alex', 12, 'Haha perfect. Bring the camera too 📷', { reply: bring });
-  add('c1', 'p-alex', 4, 'And the weather will be 🌞', { react: [['', '👍']] });
+  const bring = add(
+    'c1',
+    'me',
+    h(3),
+    t('I will bring coffee ☕ and something sweet', 'Ich bringe Kaffee ☕ und was Süßes mit'),
+    {
+      read: true,
+      react: [['p-alex', '❤️']],
+    },
+  );
+  add(
+    'c1',
+    'p-alex',
+    12,
+    t('Haha perfect. Bring the camera too 📷', 'Haha perfekt. Bring die Kamera auch mit 📷'),
+    { reply: bring },
+  );
+  add('c1', 'p-alex', 4, t('And the weather will be 🌞', 'Und das Wetter wird 🌞'), { react: [['', '👍']] });
 
   // c16 — Alex on Telegram: the picture, clip, voice note and album cases.
-  add('c16', 'p-alex', 6, 'Here is the route, it is a nice walk.');
-  const thanks = add('c16', 'me', 5, 'Perfect, thank you!', { read: true });
+  add(
+    'c16',
+    'p-alex',
+    6,
+    t('Here is the route, it is a nice walk.', 'Hier ist die Route, es ist ein schöner Spaziergang.'),
+  );
+  const thanks = add('c16', 'me', 5, t('Perfect, thank you!', 'Perfekt, danke dir!'), { read: true });
   add('c16', 'p-alex', 4.2, '', {
     att: [{ kind: 'image', name: 'harbour.png', scene: 'harbour', w: 480, h: 320 }],
     react: [
@@ -184,13 +220,22 @@ function story(): Msg[] {
       ['p-sam', '😍'],
     ],
   });
-  add('c16', 'p-alex', 3, 'See you at ten at the lighthouse.', { reply: thanks });
+  add('c16', 'p-alex', 3, t('See you at ten at the lighthouse.', 'Wir sehen uns um zehn am Leuchtturm.'), {
+    reply: thanks,
+  });
   add('c16', 'p-alex', 2, '', { att: [{ kind: 'video', name: 'harbour.mp4' }] });
   add('c16', 'p-alex', 1.5, '', {
     att: [
       {
         kind: 'voice',
-        speech: speech('Hey, quick one: I will be a few minutes late, start without me!', 'en-gb+m2', 45),
+        speech: speech(
+          t(
+            'Hey, quick one: I will be a few minutes late, start without me!',
+            'Hey, kurz Bescheid: Ich komme ein paar Minuten später, fangt ohne mich an!',
+          ),
+          t('en-gb+m2', 'de+m2'),
+          45,
+        ),
       },
     ],
     react: [
@@ -213,7 +258,12 @@ function story(): Msg[] {
   );
 
   // c25 — short on purpose: a picture and a voice note, each with reactions under the bubble.
-  add('c25', 'p-ida', h(9) + 6, 'Look what the harbour looked like this morning.');
+  add(
+    'c25',
+    'p-ida',
+    h(9) + 6,
+    t('Look what the harbour looked like this morning.', 'Schau mal, wie der Hafen heute Morgen aussah.'),
+  );
   add('c25', 'p-ida', h(9) + 5, '', {
     att: [{ kind: 'image', name: 'harbour-morning.png', scene: 'harbour', w: 480, h: 320 }],
     react: [
@@ -225,7 +275,14 @@ function story(): Msg[] {
     att: [
       {
         kind: 'voice',
-        speech: speech('See you at ten at the lighthouse, I bring the coffee!', 'en-gb+f3', 55),
+        speech: speech(
+          t(
+            'See you at ten at the lighthouse, I bring the coffee!',
+            'Wir sehen uns um zehn am Leuchtturm, ich bringe den Kaffee mit!',
+          ),
+          t('en-gb+f3', 'de+f3'),
+          55,
+        ),
       },
     ],
     react: [
@@ -235,37 +292,68 @@ function story(): Msg[] {
   });
 
   // c17 — the partner, on Signal.
-  add('c17', 'p-lena', d(1) + h(10), 'Good morning, my favourite person ☀️');
-  add('c17', 'me', d(1) + h(10) - 3, 'Morning you 😘 did you sleep well?', { read: true });
+  add(
+    'c17',
+    'p-lena',
+    d(1) + h(10),
+    t('Good morning, my favourite person ☀️', 'Guten Morgen, mein Lieblingsmensch ☀️'),
+  );
+  add(
+    'c17',
+    'me',
+    d(1) + h(10) - 3,
+    t('Morning you 😘 did you sleep well?', 'Morgen du 😘 gut geschlafen?'),
+    { read: true },
+  );
   add('c17', 'p-lena', d(1) + h(6), '', {
     att: [
       {
         kind: 'voice',
-        speech: speech('I miss you already. Come home soon, okay?', 'en+f3', 60, 150),
+        speech: speech(
+          t(
+            'I miss you already. Come home soon, okay?',
+            'Ich vermisse dich jetzt schon. Komm bald nach Hause, ja?',
+          ),
+          t('en+f3', 'de+f3'),
+          60,
+          150,
+        ),
       },
     ],
   });
-  add('c17', 'p-lena', h(3), 'Beach tonight 🌅 would be so nice with you here', {
-    att: [{ kind: 'image', name: 'beach-sunset.png', scene: 'sunset', w: 480, h: 320 }],
-  });
+  add(
+    'c17',
+    'p-lena',
+    h(3),
+    t('Beach tonight 🌅 would be so nice with you here', 'Heute Abend Strand 🌅 mit dir wäre es so schön'),
+    {
+      att: [{ kind: 'image', name: 'beach-sunset.png', scene: 'sunset', w: 480, h: 320 }],
+    },
+  );
   add('c17', 'me', h(3) - 1, '😍😍😍', { read: true, react: [['p-lena', '❤️']] });
   add('c17', 'p-lena', h(2), '❤️❤️❤️❤️❤️🥰🥰😘');
-  add('c17', 'me', 50, 'I love you. See you soon!', { read: true });
-  add('c17', 'me', 30, 'Shall I bring pizza?', { read: false });
-  add('c17', 'p-lena', 20, 'Yes please, the one with artichokes 🍕');
+  add('c17', 'me', 50, t('I love you. See you soon!', 'Ich liebe dich. Bis bald!'), { read: true });
+  add('c17', 'me', 30, t('Shall I bring pizza?', 'Soll ich Pizza mitbringen?'), { read: false });
+  add('c17', 'p-lena', 20, t('Yes please, the one with artichokes 🍕', 'Ja bitte, die mit Artischocken 🍕'));
 
   // c18 — a public tech room: code, links, reactions, a quoted thread.
   const q = add(
     'c18',
     'p-hannah',
     h(5),
-    'Is there a way to read the accent colour from `AdwStyleManager` in 1.6?',
+    t(
+      'Is there a way to read the accent colour from `AdwStyleManager` in 1.6?',
+      'Gibt es in 1.6 eine Möglichkeit, die Akzentfarbe aus dem `AdwStyleManager` zu lesen?',
+    ),
   );
   add(
     'c18',
     'p-carlos',
     h(5) - 4,
-    'Yep: `Adw.StyleManager.get_default().get_accent_color()`, it returns an `Adw.AccentColor`.',
+    t(
+      'Yep: `Adw.StyleManager.get_default().get_accent_color()`, it returns an `Adw.AccentColor`.',
+      'Jep: `Adw.StyleManager.get_default().get_accent_color()`, das liefert eine `Adw.AccentColor`.',
+    ),
     {
       reply: q,
       react: [
@@ -278,14 +366,18 @@ function story(): Msg[] {
     'c18',
     'p-carlos',
     h(5) - 6,
-    'Small example:\n\n```js\nconst style = Adw.StyleManager.get_default();\nstyle.connect("notify::accent-color", () => {\n  print(style.accent_color_rgba.to_string());\n});\n```',
+    t('Small example:', 'Kleines Beispiel:') +
+      '\n\n```js\nconst style = Adw.StyleManager.get_default();\nstyle.connect("notify::accent-color", () => {\n  print(style.accent_color_rgba.to_string());\n});\n```',
     { react: [['p-hannah', '🎉']] },
   );
   add(
     'c18',
     'p-priya',
     h(3),
-    'Docs live at https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/ if anyone needs them',
+    t(
+      'Docs live at https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/ if anyone needs them',
+      'Die Doku liegt unter https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/ falls jemand sie braucht',
+    ),
     {
       react: [
         ['p-hannah', '🙏'],
@@ -294,33 +386,62 @@ function story(): Msg[] {
       ],
     },
   );
-  add('c18', 'p-hannah', 80, 'Works, thanks both! Sorry for the noise 😅', { reply: snippet, thread: q });
-  add('c18', 'p-priya', 50, 'No noise at all, that is what the room is for.', { thread: q });
-  add('c18', 'p-hannah', 40, 'Anyone tried `AdwToolbarView` with a bottom bar on mobile yet?');
+  add(
+    'c18',
+    'p-hannah',
+    80,
+    t('Works, thanks both! Sorry for the noise 😅', 'Klappt, danke euch! Sorry fürs Rauschen 😅'),
+    { reply: snippet, thread: q },
+  );
+  add(
+    'c18',
+    'p-priya',
+    50,
+    t('No noise at all, that is what the room is for.', 'Kein Rauschen, dafür ist der Raum ja da.'),
+    { thread: q },
+  );
+  add(
+    'c18',
+    'p-hannah',
+    40,
+    t(
+      'Anyone tried `AdwToolbarView` with a bottom bar on mobile yet?',
+      'Hat jemand `AdwToolbarView` schon mit einer unteren Leiste auf dem Handy probiert?',
+    ),
+  );
 
   // c19 — a TypeScript room.
   const sat = add(
     'c19',
     'p-noah',
     h(8),
-    'why does `satisfies` not narrow here?\n\n```ts\nconst cfg = { mode: "dark" } satisfies { mode: string };\n```',
+    t('why does `satisfies` not narrow here?', 'warum verengt `satisfies` hier nicht?') +
+      '\n\n```ts\nconst cfg = { mode: "dark" } satisfies { mode: string };\n```',
   );
   add(
     'c19',
     'p-mia',
     h(8) - 5,
-    'It checks, it does not narrow. Use `as const` if you want the literal: `{ mode: "dark" } as const`.',
+    t(
+      'It checks, it does not narrow. Use `as const` if you want the literal: `{ mode: "dark" } as const`.',
+      'Es prüft nur, es verengt nicht. Nimm `as const`, wenn du das Literal willst: `{ mode: "dark" } as const`.',
+    ),
     {
       reply: sat,
       react: [['p-noah', '💡']],
     },
   );
-  add('c19', 'p-noah', h(8) - 9, 'ahhh of course. thank you!', { edited: h(8) - 10 });
+  add('c19', 'p-noah', h(8) - 9, t('ahhh of course. thank you!', 'ahhh klar. danke dir!'), {
+    edited: h(8) - 10,
+  });
   add(
     'c19',
     'p-mia',
     120,
-    'TIL: `using` declarations work in 5.2 now 🎉 https://example.org/ts-using-notes',
+    t(
+      'TIL: `using` declarations work in 5.2 now 🎉 https://example.org/ts-using-notes',
+      'TIL: `using`-Deklarationen gehen jetzt in 5.2 🎉 https://example.org/ts-using-notes',
+    ),
     {
       react: [
         ['', '🎉'],
@@ -328,25 +449,59 @@ function story(): Msg[] {
       ],
     },
   );
-  add('c19', 'me', 70, 'Nice, the cleanup in `finally` was getting old.', { read: true });
+  add(
+    'c19',
+    'me',
+    70,
+    t('Nice, the cleanup in `finally` was getting old.', 'Schön, das Aufräumen in `finally` nervte langsam.'),
+    { read: true },
+  );
 
   // c20 — a GJS / gjsify room.
-  const ui = add('c20', 'p-mia', h(26), 'How do I load a `.ui` file with `Gtk.Template` under gjsify?');
+  const ui = add(
+    'c20',
+    'p-mia',
+    h(26),
+    t(
+      'How do I load a `.ui` file with `Gtk.Template` under gjsify?',
+      'Wie lade ich unter gjsify eine `.ui`-Datei mit `Gtk.Template`?',
+    ),
+  );
   add(
     'c20',
     'p-noah',
     h(25),
-    'Same as plain GJS: `@GObject.registerClass({ Template: "resource:///…" }, class …)`.\nThe bundler copies the resource for you.',
+    t(
+      'Same as plain GJS: `@GObject.registerClass({ Template: "resource:///…" }, class …)`.\nThe bundler copies the resource for you.',
+      'Wie in reinem GJS: `@GObject.registerClass({ Template: "resource:///…" }, class …)`.\nDer Bundler kopiert die Ressource für dich.',
+    ),
     {
       reply: ui,
     },
   );
-  add('c20', 'me', h(2), 'Works, and the hot reload on save is a joy 🚀', {
-    read: true,
-    react: [['p-mia', '🚀']],
-    edited: h(2) - 4,
-  });
-  add('c20', 'p-noah', 55, 'btw `node:sqlite` now runs on libgda, so no native addon needed');
+  add(
+    'c20',
+    'me',
+    h(2),
+    t(
+      'Works, and the hot reload on save is a joy 🚀',
+      'Klappt, und das Hot Reload beim Speichern ist ein Traum 🚀',
+    ),
+    {
+      read: true,
+      react: [['p-mia', '🚀']],
+      edited: h(2) - 4,
+    },
+  );
+  add(
+    'c20',
+    'p-noah',
+    55,
+    t(
+      'btw `node:sqlite` now runs on libgda, so no native addon needed',
+      'übrigens läuft `node:sqlite` jetzt auf libgda, also kein natives Addon nötig',
+    ),
+  );
 
   // c21 — Max and the SNES.
   add('c21', 'p-max', d(2) + h(3), 'Digga, hab gestern endlich Super Metroid auf 100% 🤯');
@@ -356,53 +511,102 @@ function story(): Msg[] {
     att: [{ kind: 'image', name: 'screenshot.png', scene: 'snes', w: 480, h: 320 }],
     react: [['', '🔥']],
   });
-  add('c21', 'me', d(2) + h(2) - 5, 'Ok respect. Is Chrono Trigger next?', { read: true });
+  add(
+    'c21',
+    'me',
+    d(2) + h(2) - 5,
+    t('Ok respect. Is Chrono Trigger next?', 'Ok, Respekt. Ist als Nächstes Chrono Trigger dran?'),
+    { read: true },
+  );
   const voice = add('c21', 'p-max', d(1) + h(9), '', {
     att: [
       {
         kind: 'voice',
         speech: speech(
-          'Hey, Chrono Trigger has the best story ever, but Zelda, A Link to the Past, saved my childhood!',
-          'en+m3',
+          t(
+            'Hey, Chrono Trigger has the best story ever, but Zelda, A Link to the Past, saved my childhood!',
+            'Hey, Chrono Trigger hat die beste Story überhaupt, aber Zelda, A Link to the Past, hat meine Kindheit gerettet!',
+          ),
+          t('en+m3', 'de+m3'),
           35,
           170,
         ),
       },
     ],
   });
-  add('c21', 'me', d(1) + h(8), 'All I am saying: the Master Sword and the Dark World soundtrack 🎵', {
-    read: true,
-    reply: voice,
-    react: [['p-max', '🔥']],
-  });
-  add('c21', 'p-max', d(1) + h(2), '↪ Forwarded from Jo: New Super Metroid speedrun time: 0:47:12 😱');
+  add(
+    'c21',
+    'me',
+    d(1) + h(8),
+    t(
+      'All I am saying: the Master Sword and the Dark World soundtrack 🎵',
+      'Ich sag nur: das Master Sword und der Soundtrack der Dunkelwelt 🎵',
+    ),
+    {
+      read: true,
+      reply: voice,
+      react: [['p-max', '🔥']],
+    },
+  );
+  add(
+    'c21',
+    'p-max',
+    d(1) + h(2),
+    t(
+      '↪ Forwarded from Jo: New Super Metroid speedrun time: 0:47:12 😱',
+      '↪ Weitergeleitet von Jo: Neue Super-Metroid-Speedrun-Zeit: 0:47:12 😱',
+    ),
+  );
   add('c21', 'p-max', h(5), '', { att: [{ kind: 'video', name: 'boss-fight.mp4', pattern: 'smptebars' }] });
-  add('c21', 'p-max', h(4), 'Retro night on Saturday? I will bring the SNES Mini 🎮', { edited: h(4) - 3 });
+  add(
+    'c21',
+    'p-max',
+    h(4),
+    t(
+      'Retro night on Saturday? I will bring the SNES Mini 🎮',
+      'Retro-Abend am Samstag? Ich bringe den SNES Mini mit 🎮',
+    ),
+    { edited: h(4) - 3 },
+  );
   add('c21', 'me', h(3), '', {
     read: true,
     att: [
       {
         kind: 'voice',
         speech: speech(
-          'Saturday works for me! I will bring the snacks and the good controllers.',
-          'en-us',
+          t(
+            'Saturday works for me! I will bring the snacks and the good controllers.',
+            'Samstag passt bei mir! Ich bringe die Snacks und die guten Controller mit.',
+          ),
+          t('en-us', 'de'),
           55,
         ),
       },
     ],
   });
-  add('c21', 'p-max', 90, '📍 Arcade Pixel, Harbour Street 12 (geo:54.3233,10.1228)');
+  add(
+    'c21',
+    'p-max',
+    90,
+    t(
+      '📍 Arcade Pixel, Harbour Street 12 (geo:54.3233,10.1228)',
+      '📍 Arcade Pixel, Hafenstraße 12 (geo:54.3233,10.1228)',
+    ),
+  );
   add('c21', 'p-max', 45, 'sram-backup.srm', {
     att: [{ kind: 'file', name: 'sram-backup.srm', mime: 'application/octet-stream', size: 8192 }],
   });
-  add('c21', 'me', 30, 'Perfect, see you Saturday 🕹️', { read: false });
+  add('c21', 'me', 30, t('Perfect, see you Saturday 🕹️', 'Perfekt, bis Samstag 🕹️'), { read: false });
 
   // c22 — the flatmates: poll-like threads, a cat.
   const poll = add(
     'c22',
     'p-nele',
     d(1) + h(2),
-    'Poll: who is in for the cleaning on Saturday? 🧹  👍 = yes, 👎 = no',
+    t(
+      'Poll: who is in for the cleaning on Saturday? 🧹  👍 = yes, 👎 = no',
+      'Umfrage: Wer ist am Samstag beim Putzen dabei? 🧹  👍 = ja, 👎 = nein',
+    ),
     {
       react: [
         ['p-ben', '👍'],
@@ -412,11 +616,18 @@ function story(): Msg[] {
       ],
     },
   );
-  add('c22', 'p-ben', d(1) + h(1), 'I can only come after 2 pm', { reply: poll });
-  add('c22', 'p-yuki', h(20), 'Bin duty this week: Ben. Next: me 🗑️');
-  const paper = add('c22', 'p-nele', h(6), 'Who is buying toilet paper?');
-  add('c22', 'me', h(6) - 1, 'ME 🧻', { read: true, reply: paper, react: [['p-nele', '🙏']] });
-  add('c22', 'p-nele', 90, 'Poll 2: pizza or kebab night?', {
+  add('c22', 'p-ben', d(1) + h(1), t('I can only come after 2 pm', 'Ich kann erst nach 14 Uhr'), {
+    reply: poll,
+  });
+  add(
+    'c22',
+    'p-yuki',
+    h(20),
+    t('Bin duty this week: Ben. Next: me 🗑️', 'Mülldienst diese Woche: Ben. Danach: ich 🗑️'),
+  );
+  const paper = add('c22', 'p-nele', h(6), t('Who is buying toilet paper?', 'Wer kauft Klopapier?'));
+  add('c22', 'me', h(6) - 1, t('ME 🧻', 'ICH 🧻'), { read: true, reply: paper, react: [['p-nele', '🙏']] });
+  add('c22', 'p-nele', 90, t('Poll 2: pizza or kebab night?', 'Umfrage 2: Pizza- oder Dönerabend?'), {
     react: [
       ['p-ben', '🍕'],
       ['p-yuki', '🍕'],
@@ -424,24 +635,30 @@ function story(): Msg[] {
       ['p-nele', '🥙'],
     ],
   });
-  add('c22', 'p-yuki', 60, 'Who let the cat in 😂', {
+  add('c22', 'p-yuki', 60, t('Who let the cat in 😂', 'Wer hat die Katze reingelassen 😂'), {
     att: [{ kind: 'image', name: 'cat.png', scene: 'cat', w: 480, h: 360 }],
     react: [['p-ben', '😂']],
   });
-  add('c22', 'p-ben', 45, 'That was me. She asked.');
+  add('c22', 'p-ben', 45, t('That was me. She asked.', 'Das war ich. Sie hat gefragt.'));
 
   // c23 — a Telegram channel-like thread.
   add(
     'c23',
     'p-harbour',
     d(3),
-    'The ferry pier stays closed until Friday. Replacement service from the west mole.',
+    t(
+      'The ferry pier stays closed until Friday. Replacement service from the west mole.',
+      'Der Fähranleger bleibt bis Freitag gesperrt. Ersatzverkehr von der Westmole.',
+    ),
   );
   add(
     'c23',
     'p-harbour',
     d(2),
-    '↪ Forwarded from Weather Service: wind force 8 from the north-west, easing from the evening. https://example.org/weather',
+    t(
+      '↪ Forwarded from Weather Service: wind force 8 from the north-west, easing from the evening. https://example.org/weather',
+      '↪ Weitergeleitet von Wetterdienst: Windstärke 8 aus Nordwest, abends nachlassend. https://example.org/weather',
+    ),
   );
   add('c23', 'p-harbour', d(1), '', {
     att: [{ kind: 'image', name: 'mole.png', scene: 'mountain', w: 480, h: 320 }],
@@ -451,12 +668,24 @@ function story(): Msg[] {
     'p-harbour',
     h(6),
     [
-      'Dear harbour community,',
-      'the summer season is coming to an end, and we would like to thank everyone who helped: setting up the festival, painting the bollards and collecting the driftwood after the storm.',
-      'Three dates are coming up in autumn: hauling out the boats on the first weekend, the work day at the west mole and the annual meeting in the clubhouse. The invitation follows separately.',
-      'Please remember to close the power and water stations after use. The keys for the showers are still with the harbour master.',
-      'If you still have photos from the festival, send them to the channel. We will turn them into a small gallery for the clubhouse.',
-      'Thanks, and see you soon by the water!',
+      t('Dear harbour community,', 'Liebe Hafengemeinschaft,'),
+      t(
+        'the summer season is coming to an end, and we would like to thank everyone who helped: setting up the festival, painting the bollards and collecting the driftwood after the storm.',
+        'die Sommersaison geht zu Ende, und wir möchten allen danken, die geholfen haben: beim Aufbau des Festes, beim Streichen der Poller und beim Sammeln des Treibguts nach dem Sturm.',
+      ),
+      t(
+        'Three dates are coming up in autumn: hauling out the boats on the first weekend, the work day at the west mole and the annual meeting in the clubhouse. The invitation follows separately.',
+        'Im Herbst stehen drei Termine an: das Auskranen der Boote am ersten Wochenende, der Arbeitstag an der Westmole und die Jahresversammlung im Vereinsheim. Die Einladung folgt separat.',
+      ),
+      t(
+        'Please remember to close the power and water stations after use. The keys for the showers are still with the harbour master.',
+        'Bitte denkt daran, die Strom- und Wasserstationen nach der Benutzung zu schließen. Die Schlüssel für die Duschen liegen weiterhin beim Hafenmeister.',
+      ),
+      t(
+        'If you still have photos from the festival, send them to the channel. We will turn them into a small gallery for the clubhouse.',
+        'Wenn ihr noch Fotos vom Fest habt, schickt sie in den Kanal. Wir machen daraus eine kleine Galerie für das Vereinsheim.',
+      ),
+      t('Thanks, and see you soon by the water!', 'Danke, und bis bald am Wasser!'),
     ].join('\n\n'),
     {
       react: [
@@ -465,10 +694,15 @@ function story(): Msg[] {
       ],
     },
   );
-  add('c23', 'p-harbour', 80, 'Erinnerung: Jahresversammlung am Freitag, 19 Uhr.');
+  add(
+    'c23',
+    'p-harbour',
+    80,
+    t('Reminder: annual meeting on Friday, 7 pm.', 'Erinnerung: Jahresversammlung am Freitag, 19 Uhr.'),
+  );
 
   // c6 — the family: a long letter, a voice note, a picture.
-  add('c6', 'p-tom', h(30), 'Fotos vom Sonntag 🏔️', {
+  add('c6', 'p-tom', h(30), t('Photos from Sunday 🏔️', 'Fotos vom Sonntag 🏔️'), {
     att: [{ kind: 'image', name: 'sonntag.png', scene: 'mountain', w: 480, h: 320 }],
     react: [
       ['p-mama', '❤️'],
@@ -480,126 +714,287 @@ function story(): Msg[] {
     'p-mama',
     h(26),
     [
-      'Dear all,',
-      "a quick note on the plan for the weekend: we meet at Grandma's around one on Saturday. I will make potato soup, and Dad is bringing the cake he praised so much last week.",
-      'Tom, please remember the chairs from the cellar, eleven people are coming this time. And Robin, if you still have the photos from the harbour, bring them on your phone, Grandma really wants to see them.',
-      'If one of you can bring milk and bread on the way, that would be great. I wrote it on the list, but I will surely forget it again.',
-      'See you Saturday, I am looking forward to it!',
+      t('Dear all,', 'Hallo ihr Lieben,'),
+      t(
+        "a quick note on the plan for the weekend: we meet at Grandma's around one on Saturday. I will make potato soup, and Dad is bringing the cake he praised so much last week.",
+        'kurz zum Plan fürs Wochenende: Wir treffen uns am Samstag gegen eins bei Oma. Ich koche Kartoffelsuppe, und Papa bringt den Kuchen mit, den er letzte Woche so gelobt hat.',
+      ),
+      t(
+        'Tom, please remember the chairs from the cellar, eleven people are coming this time. And Robin, if you still have the photos from the harbour, bring them on your phone, Grandma really wants to see them.',
+        'Tom, denk bitte an die Stühle aus dem Keller, diesmal kommen elf Leute. Und Robin, falls du noch die Fotos vom Hafen hast, bring sie auf dem Handy mit, Oma möchte sie unbedingt sehen.',
+      ),
+      t(
+        'If one of you can bring milk and bread on the way, that would be great. I wrote it on the list, but I will surely forget it again.',
+        'Wenn einer von euch unterwegs Milch und Brot mitbringen kann, wäre das super. Ich habe es auf die Liste geschrieben, vergesse es aber bestimmt wieder.',
+      ),
+      t('See you Saturday, I am looking forward to it!', 'Bis Samstag, ich freu mich!'),
     ].join('\n\n'),
   );
-  add('c6', 'me', h(25), 'Will do 👍', { read: true, react: [['p-mama', '❤️']] });
+  add('c6', 'me', h(25), t('Will do 👍', 'Mach ich 👍'), { read: true, react: [['p-mama', '❤️']] });
   add('c6', 'p-mama', h(21), '', {
     att: [
       {
         kind: 'voice',
-        speech: speech('Hello everyone, do not forget the milk, okay? See you Saturday!', 'en+f1', 55, 150),
+        speech: speech(
+          t(
+            'Hello everyone, do not forget the milk, okay? See you Saturday!',
+            'Hallo zusammen, vergesst die Milch nicht, ja? Bis Samstag!',
+          ),
+          t('en+f1', 'de+f1'),
+          55,
+          150,
+        ),
       },
     ],
   });
 
   // c4 — climbing, on WhatsApp.
-  add('c4', 'p-lee', h(30), 'Bouldering gym again on Tuesday? 🧗');
-  add('c4', 'p-jonas', h(29), 'I am in, but from 7 pm', { react: [['p-lee', '👍']] });
-  const route = add('c4', 'p-lee', h(4), 'The new blue route on the overhang is mean 😤', {
-    att: [{ kind: 'image', name: 'wall.png', scene: 'mountain', w: 480, h: 320 }],
+  add(
+    'c4',
+    'p-lee',
+    h(30),
+    t('Bouldering gym again on Tuesday? 🧗', 'Dienstag wieder in die Boulderhalle? 🧗'),
+  );
+  add('c4', 'p-jonas', h(29), t('I am in, but from 7 pm', 'Bin dabei, aber erst ab 19 Uhr'), {
+    react: [['p-lee', '👍']],
   });
-  add('c4', 'me', 95, 'I will try it on Tuesday, promise', { read: true, reply: route });
+  const route = add(
+    'c4',
+    'p-lee',
+    h(4),
+    t('The new blue route on the overhang is mean 😤', 'Die neue blaue Route am Überhang ist fies 😤'),
+    {
+      att: [{ kind: 'image', name: 'wall.png', scene: 'mountain', w: 480, h: 320 }],
+    },
+  );
+  add('c4', 'me', 95, t('I will try it on Tuesday, promise', 'Ich probier sie am Dienstag, versprochen'), {
+    read: true,
+    reply: route,
+  });
 
   // c9 — Lee.
-  add('c9', 'p-lee', d(4), 'Do you still have my rope?');
-  add('c9', 'me', d(3) + h(20), 'Yep, I will bring it on Tuesday', { read: true });
-  add('c9', 'p-lee', h(80) / 60 + 80, 'Thank you 🙏', { react: [['', '👍']] });
+  add('c9', 'p-lee', d(4), t('Do you still have my rope?', 'Hast du noch mein Seil?'));
+  add('c9', 'me', d(3) + h(20), t('Yep, I will bring it on Tuesday', 'Jep, ich bring es Dienstag mit'), {
+    read: true,
+  });
+  add('c9', 'p-lee', h(80) / 60 + 80, t('Thank you 🙏', 'Danke dir 🙏'), { react: [['', '👍']] });
 
   // c5 — Jo on XMPP, now with code, a reaction and an edit.
-  add('c5', 'p-jo', 200, 'Did the new release build on your machine?');
-  const green = add('c5', 'me', 190, 'It did, the tests are green on both runtimes.', {
-    read: true,
-    react: [['p-jo', '🎉']],
+  add(
+    'c5',
+    'p-jo',
+    200,
+    t('Did the new release build on your machine?', 'Hat das neue Release bei dir gebaut?'),
+  );
+  const green = add(
+    'c5',
+    'me',
+    190,
+    t('It did, the tests are green on both runtimes.', 'Ja, die Tests sind auf beiden Runtimes grün.'),
+    {
+      read: true,
+      react: [['p-jo', '🎉']],
+    },
+  );
+  add('c5', 'p-jo', 180, t('Nice, then I will tag it tonight.', 'Schön, dann tagge ich es heute Abend.'), {
+    reply: green,
+    edited: 175,
   });
-  add('c5', 'p-jo', 180, 'Nice, then I will tag it tonight.', { reply: green, edited: 175 });
 
   // c10 — a book club.
-  add('c10', 'p-ruth', h(130), 'Next book: “The Wall”? Or something lighter?');
-  add('c10', 'p-jo', h(125), 'Something lighter, please 😅', { react: [['p-ruth', '😂']] });
-  add('c10', 'me', 120, 'I vote for a crime novel. Just in time for autumn.', { read: true });
+  add(
+    'c10',
+    'p-ruth',
+    h(130),
+    t('Next book: “The Wall”? Or something lighter?', 'Nächstes Buch: „Die Wand“? Oder etwas Leichteres?'),
+  );
+  add('c10', 'p-jo', h(125), t('Something lighter, please 😅', 'Bitte etwas Leichteres 😅'), {
+    react: [['p-ruth', '😂']],
+  });
+  add(
+    'c10',
+    'me',
+    120,
+    t(
+      'I vote for a crime novel. Just in time for autumn.',
+      'Ich stimme für einen Krimi. Genau richtig für den Herbst.',
+    ),
+    { read: true },
+  );
 
   // c15 — a note to oneself on WhatsApp.
-  add('c15', 'me', 9, 'Remember: passport renewal appointment');
+  add(
+    'c15',
+    'me',
+    9,
+    t('Remember: passport renewal appointment', 'Nicht vergessen: Termin zur Passverlängerung'),
+  );
   add('c15', 'me', 7, 'https://example.org/forms/passport');
 
   // c13, c14 — work rooms.
-  add('c13', 'p-mia', 60, 'Draft of the release notes is in the pad.');
-  add('c13', 'p-noah', 40, 'Can we ship it with the next release?', { react: [['p-mia', '👍']] });
-  add('c13', 'p-mia', 25, 'Yes, freeze is on Thursday.');
-  add('c14', 'p-mia', 55, 'Key rotation checklist is ready.');
-  add('c14', 'p-mia', 35, 'Rotating the keys on Friday.', { react: [['', '🔑']] });
+  add(
+    'c13',
+    'p-mia',
+    60,
+    t('Draft of the release notes is in the pad.', 'Der Entwurf der Release Notes liegt im Pad.'),
+  );
+  add(
+    'c13',
+    'p-noah',
+    40,
+    t('Can we ship it with the next release?', 'Können wir es mit dem nächsten Release ausliefern?'),
+    { react: [['p-mia', '👍']] },
+  );
+  add('c13', 'p-mia', 25, t('Yes, freeze is on Thursday.', 'Ja, Freeze ist am Donnerstag.'));
+  add(
+    'c14',
+    'p-mia',
+    55,
+    t('Key rotation checklist is ready.', 'Die Checkliste für die Schlüsselrotation ist fertig.'),
+  );
+  add('c14', 'p-mia', 35, t('Rotating the keys on Friday.', 'Ich rotiere die Schlüssel am Freitag.'), {
+    react: [['', '🔑']],
+  });
 
   // c8 — Dana.
-  add('c8', 'p-dana', h(52), 'Do you have a minute for a call?');
-  add('c8', 'me', h(50), 'Tomorrow morning, does that work?', { read: true });
+  add('c8', 'p-dana', h(52), t('Do you have a minute for a call?', 'Hast du kurz Zeit für einen Anruf?'));
+  add('c8', 'me', h(50), t('Tomorrow morning, does that work?', 'Morgen früh, passt das?'), { read: true });
 
   // c12 — a note in the Signal self chat.
-  add('c12', 'me', 6, 'Buy oat milk and stamps');
+  add('c12', 'me', 6, t('Buy oat milk and stamps', 'Hafermilch und Briefmarken kaufen'));
 
   // c2 — the design room: the icon draft, a question.
-  add('c2', 'p-mia', 120, 'Here is the new icon draft.');
-  add('c2', 'p-mia', 119, 'I made the corners a bit rounder.', {
-    att: [{ kind: 'image', name: 'icon-draft.png', scene: 'icon', w: 480, h: 320 }],
+  add('c2', 'p-mia', 120, t('Here is the new icon draft.', 'Hier ist der neue Icon-Entwurf.'));
+  add(
+    'c2',
+    'p-mia',
+    119,
+    t('I made the corners a bit rounder.', 'Ich habe die Ecken etwas runder gemacht.'),
+    {
+      att: [{ kind: 'image', name: 'icon-draft.png', scene: 'icon', w: 480, h: 320 }],
+    },
+  );
+  add('c2', 'me', 100, t('Looks great, thanks!', 'Sieht super aus, danke!'), {
+    read: true,
+    react: [['p-mia', '🙌']],
   });
-  add('c2', 'me', 100, 'Looks great, thanks!', { read: true, react: [['p-mia', '🙌']] });
-  add('c2', 'p-noah', 30, 'Can we ship it with the next release?');
-  add('c2', 'p-mia', 18, 'Noah, what do you think?');
+  add(
+    'c2',
+    'p-noah',
+    30,
+    t('Can we ship it with the next release?', 'Können wir es mit dem nächsten Release ausliefern?'),
+  );
+  add('c2', 'p-mia', 18, t('Noah, what do you think?', 'Noah, was meinst du?'));
 
   // c24 — the same Sam on XMPP; the config merges it with the email chat c3.
-  add('c24', 'p-sam-xmpp', h(8), 'The ladder is in the shed, key is under the pot.');
-  add('c24', 'me', h(8) - 3, 'Thanks, picking it up on the way.', { read: true });
+  add(
+    'c24',
+    'p-sam-xmpp',
+    h(8),
+    t(
+      'The ladder is in the shed, key is under the pot.',
+      'Die Leiter steht im Schuppen, der Schlüssel liegt unter dem Topf.',
+    ),
+  );
+  add('c24', 'me', h(8) - 3, t('Thanks, picking it up on the way.', 'Danke, ich hole sie auf dem Weg ab.'), {
+    read: true,
+  });
 
   // c3 — an email chat (Delta Chat style) with a picture and a PDF in one mail.
-  const chat = { subject: 'Chat: Garden day', emailChat: true };
-  add('c3', 'p-sam', h(26), 'Are we still on for the garden day on Saturday?', chat);
-  add('c3', 'me', h(25), 'Yes! I will bring the seedlings and some coffee.', chat);
-  add('c3', 'p-sam', 70, 'Great. Could you also bring the long ladder?', chat);
-  add('c3', 'me', 60, 'Sure, it fits in the car.', chat);
-  add('c3', 'p-sam', 52, 'Perfect, see you at ten.', chat);
-  add('c3', 'p-sam', 40, 'Here is the plan for the beds, and the invoice for the seedlings.', {
-    ...chat,
-    att: [
-      { kind: 'image', name: 'garden-beds.png', scene: 'garden', w: 480, h: 320 },
-      { kind: 'file', name: 'seedlings-invoice.pdf', mime: 'application/pdf', size: 48_200 },
-    ],
-  });
+  const chat = { subject: t('Chat: Garden day', 'Chat: Gartentag'), emailChat: true };
+  add(
+    'c3',
+    'p-sam',
+    h(26),
+    t('Are we still on for the garden day on Saturday?', 'Machen wir am Samstag noch den Gartentag?'),
+    chat,
+  );
+  add(
+    'c3',
+    'me',
+    h(25),
+    t(
+      'Yes! I will bring the seedlings and some coffee.',
+      'Ja! Ich bringe die Setzlinge und etwas Kaffee mit.',
+    ),
+    chat,
+  );
+  add(
+    'c3',
+    'p-sam',
+    70,
+    t('Great. Could you also bring the long ladder?', 'Super. Kannst du auch die lange Leiter mitbringen?'),
+    chat,
+  );
+  add('c3', 'me', 60, t('Sure, it fits in the car.', 'Klar, sie passt ins Auto.'), chat);
+  add('c3', 'p-sam', 52, t('Perfect, see you at ten.', 'Perfekt, bis zehn Uhr.'), chat);
+  add(
+    'c3',
+    'p-sam',
+    40,
+    t(
+      'Here is the plan for the beds, and the invoice for the seedlings.',
+      'Hier ist der Plan für die Beete und die Rechnung für die Setzlinge.',
+    ),
+    {
+      ...chat,
+      att: [
+        { kind: 'image', name: 'garden-beds.png', scene: 'garden', w: 480, h: 320 },
+        { kind: 'file', name: 'seedlings-invoice.pdf', mime: 'application/pdf', size: 48_200 },
+      ],
+    },
+  );
 
   // c7 — an ordinary mail thread.
   add(
     'c7',
     'p-kim',
     h(80),
-    'Hi Robin, attached is the invoice for the logo package. Get in touch if you have questions.',
+    t(
+      'Hi Robin, attached is the invoice for the logo package. Get in touch if you have questions.',
+      'Hallo Robin, anbei die Rechnung für das Logopaket. Melde dich bei Fragen gern.',
+    ),
     {
-      subject: 'Invoice logo package',
+      subject: t('Invoice logo package', 'Rechnung Logopaket'),
     },
   );
-  add('c7', 'me', h(60), 'Thank you, I will transfer it by Friday.', { subject: 'Re: Invoice logo package' });
+  add(
+    'c7',
+    'me',
+    h(60),
+    t('Thank you, I will transfer it by Friday.', 'Danke, ich überweise es bis Freitag.'),
+    { subject: t('Re: Invoice logo package', 'AW: Rechnung Logopaket') },
+  );
   add(
     'c7',
     'p-kim',
     h(30),
-    'Great, thanks! One more thing: we are planning a small workshop on open-source design in autumn.\n\nWould you like to talk for 20 minutes about your experience with icon drafts?\n\nVery relaxed, with coffee and cake.',
-    { subject: 'Re: Invoice logo package' },
+    t(
+      'Great, thanks! One more thing: we are planning a small workshop on open-source design in autumn.\n\nWould you like to talk for 20 minutes about your experience with icon drafts?\n\nVery relaxed, with coffee and cake.',
+      'Super, danke! Noch etwas: Wir planen im Herbst einen kleinen Workshop zu Open-Source-Design.\n\nHättest du Lust, 20 Minuten über deine Erfahrungen mit Icon-Entwürfen zu sprechen?\n\nGanz entspannt, mit Kaffee und Kuchen.',
+    ),
+    { subject: t('Re: Invoice logo package', 'AW: Rechnung Logopaket') },
   );
 
   // c11 — a long mail conversation for the paging and the faded long body.
   const paragraph = (k: number) =>
-    `Paragraph ${k}: the nightly check of service ${k % 7} on host-${k}.example.org finished with warnings. ` +
-    'The queue depth stayed above the soft limit for several minutes and the retry counter rose twice. ' +
-    'No action is required unless the same warning appears again within the next hour.';
+    t(
+      `Paragraph ${k}: the nightly check of service ${k % 7} on host-${k}.example.org finished with warnings. The queue depth stayed above the soft limit for several minutes and the retry counter rose twice. No action is required unless the same warning appears again within the next hour.`,
+      `Absatz ${k}: Die nächtliche Prüfung von Dienst ${k % 7} auf host-${k}.example.org endete mit Warnungen. Die Warteschlange lag mehrere Minuten über dem weichen Limit und der Wiederholungszähler stieg zweimal. Es ist nichts zu tun, solange die Warnung in der nächsten Stunde nicht erneut auftritt.`,
+    );
   for (let i = 0; i < 130; i++) {
     const long = i % 9 === 0 || i % 13 === 0;
     const text = long
       ? Array.from({ length: i % 13 === 0 ? 14 : 6 }, (_, k) => paragraph(i + k)).join('\n\n')
-      : `Check ${i} on host-${i % 12}.example.org: all services healthy.`;
+      : t(
+          `Check ${i} on host-${i % 12}.example.org: all services healthy.`,
+          `Prüfung ${i} auf host-${i % 12}.example.org: alle Dienste in Ordnung.`,
+        );
     add('c11', 'p-alerts', 60 * 200 + (129 - i) * 55, text, {
-      subject: i % 20 < 10 ? 'Nightly report' : 'Disk usage warning',
+      subject:
+        i % 20 < 10
+          ? t('Nightly report', 'Nächtlicher Bericht')
+          : t('Disk usage warning', 'Warnung: Speicherplatz'),
     });
   }
   return rows;
@@ -612,7 +1007,9 @@ function previewKey(account: string, parts: Array<string | number>): string {
 }
 
 /** Write the whole demo into `dir`, replacing an earlier one. Never touches anything else there. */
-export function generateDemo(dir: string, now: number = Date.now()): DemoSummary {
+export function generateDemo(dir: string, now: number = Date.now(), lang: DemoLang = 'en'): DemoSummary {
+  const t: Tr = (en, de) => (lang === 'de' ? de : en);
+  const CONVERSATIONS = conversations(t);
   mkdirSync(dir, { recursive: true });
   for (const name of ['index.db', 'index.db-wal', 'index.db-shm', 'config.json', 'demo.json'])
     rmSync(join(dir, name), { force: true });
@@ -724,7 +1121,7 @@ export function generateDemo(dir: string, now: number = Date.now()): DemoSummary
       'INSERT OR REPLACE INTO message_reactions (message_id, reactor, emoji) VALUES (?, ?, ?)',
     );
 
-    const rows = story();
+    const rows = story(t);
     const byConversation = new Map(CONVERSATIONS.map((c) => [c[0], c]));
     const members = new Set<string>();
     for (const row of rows) {
@@ -877,6 +1274,9 @@ export function generateDemo(dir: string, now: number = Date.now()): DemoSummary
     db.close();
   }
   rmSync(join(dir, '.work'), { recursive: true, force: true });
-  writeFileSync(join(dir, 'demo.json'), `${JSON.stringify({ version: DEMO_VERSION, generatedAt: stamp })}\n`);
+  writeFileSync(
+    join(dir, 'demo.json'),
+    `${JSON.stringify({ version: DEMO_VERSION, lang, generatedAt: stamp })}\n`,
+  );
   return summary;
 }
