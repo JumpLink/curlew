@@ -71,7 +71,11 @@ export default async () => {
           pullSyncIntervalMs: 1,
         },
       );
-      await new Promise<void>((resolve) => setTimeout(resolve, 20));
+      // Waits for the second tick instead of a fixed time: a loaded CI runner can be slower than 20 ms.
+      const until = Date.now() + 5_000;
+      while (!lines.some((l) => l.includes('still running')) && Date.now() < until) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 5));
+      }
       // One sync at a time, however many intervals passed.
       expect(syncs).toBe(1);
       expect(lines.some((l) => l.includes('still running — skipping this tick'))).toBe(true);
