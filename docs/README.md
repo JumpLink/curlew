@@ -41,6 +41,7 @@ Agent- and contributor-facing docs for the curlew repo. The hard rules that load
 ## Decisions
 
 - [`adr/0016-the-window-stays-in-the-background.md`](adr/0016-the-window-stays-in-the-background.md) — hold and hide the window only where the person can get it back (proposed)
+- [`adr/0017-online-status-and-last-seen.md`](adr/0017-online-status-and-last-seen.md) — ephemeral per-thread presence, our own visibility off by default (proposed)
 
 ## Design and references
 
