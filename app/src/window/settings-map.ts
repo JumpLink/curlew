@@ -45,9 +45,3 @@ export const CONFIG_SETTINGS: Record<keyof CurlewConfig, SettingPlace> = {
   contactChoices: { kind: 'window', where: 'Contact page' },
   unknown: { kind: 'state', why: 'keys of newer builds, carried through unchanged' },
 };
-
-/** Per-backend `backends.<name>.settings` are the backend's own and have no window row. */
-export const BACKEND_SETTINGS_PLACE: SettingPlace = {
-  kind: 'file',
-  why: 'backend-specific non-secret options are edited in config.json',
-};

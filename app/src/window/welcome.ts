@@ -29,7 +29,7 @@ import {
   type WelcomePageId,
 } from './welcome-model.ts';
 
-export function markWelcomeDone(path = configPath()): void {
+function markWelcomeDone(path = configPath()): void {
   const config = loadConfig(path);
   if (config.ui.welcomeDone === true) return;
   config.ui.welcomeDone = true;

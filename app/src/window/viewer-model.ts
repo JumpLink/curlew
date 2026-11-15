@@ -15,7 +15,7 @@ export function albumPosition(index: number, count: number): string {
 }
 
 /** Fast enough to count as a swipe, in pixels per second. */
-export const SWIPE_MIN_VELOCITY = 400;
+const SWIPE_MIN_VELOCITY = 400;
 
 /**
  * Which way a swipe moves through the album: -1 to the previous item (finger moves right), +1 to

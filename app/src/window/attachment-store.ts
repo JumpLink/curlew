@@ -64,7 +64,7 @@ function cachedParts(root: string): CachedPart[] {
  * playing survives its file being unlinked, and a bubble that shows its picture holds it in
  * memory; one more tap fetches a dropped part again. Best effort: the cache is not state.
  */
-export function trimPreviews(
+function trimPreviews(
   root = previewsDir(),
   keep: readonly string[] = [],
   cap = PREVIEW_CACHE_MAX_BYTES,

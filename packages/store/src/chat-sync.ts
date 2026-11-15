@@ -138,14 +138,14 @@ export interface ChatSyncResult {
   budgetExhausted: boolean;
 }
 
-export const CHAT_HISTORY_DEPTH = 200;
-export const CHAT_MAX_MESSAGES = 5_000;
+const CHAT_HISTORY_DEPTH = 200;
+const CHAT_MAX_MESSAGES = 5_000;
 /**
  * Stored messages one full scan asks a network about by id, per chat — two `getMessages` calls
  * for Telegram, which takes 100 ids each. The bound is what keeps the cost of a scan independent
  * of how large the index has grown; `probe_seq` is what still carries it to the oldest message.
  */
-export const CHAT_PROBE_DEPTH = 200;
+const CHAT_PROBE_DEPTH = 200;
 const DEFAULT_PAGE = 100;
 
 interface Cursor {

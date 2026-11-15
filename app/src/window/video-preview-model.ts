@@ -12,7 +12,7 @@ export interface VideoCandidate {
 }
 
 /** A preview plays only while at least this much of it is on screen. */
-export const MIN_VISIBLE = 0.5;
+const MIN_VISIBLE = 0.5;
 
 /**
  * The preview that should play now, or null. The one already playing keeps playing while it still
