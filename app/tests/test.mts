@@ -12,6 +12,7 @@ import imapParse from './unit/protocol/imap-parse.test.ts';
 import mimeParse from './unit/protocol/mime-parse.test.ts';
 import bodySection from './unit/protocol/body-section.test.ts';
 import mutf7 from './unit/protocol/mutf7.test.ts';
+import abort from './unit/protocol/abort.test.ts';
 import rfc2231 from './unit/protocol/rfc2231.test.ts';
 import listParse from './unit/protocol/list-parse.test.ts';
 import searchPlan from './unit/protocol/search-plan.test.ts';
@@ -180,6 +181,7 @@ run({
   mimeParse,
   bodySection,
   mutf7,
+  abort,
   rfc2231,
   listParse,
   searchPlan,
