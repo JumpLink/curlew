@@ -3,6 +3,7 @@ import { describe, expect, it } from '@gjsify/unit';
 import {
   PULL_SYNC_INTERVAL_MS,
   PULL_SYNC_START_DELAY_MS,
+  pullSyncFailures,
   startPullSync,
 } from '../../../src/core/lib/pull-sync.ts';
 
@@ -140,6 +141,22 @@ export default async () => {
       await wait(10);
       await ticker.stop();
       expect(runs).toBe(0);
+    });
+  });
+
+  await describe('the pull sync failure lines', async () => {
+    await it('names every failed folder and account, and nothing that succeeded', async () => {
+      const lines = pullSyncFailures({
+        folders: [
+          { accountId: 'mail-a', folderPath: 'INBOX', error: null },
+          { accountId: 'mail-a', folderPath: 'Spam', error: 'NO [NONEXISTENT]' },
+        ],
+        chats: [{ backend: 'telegram', accounts: [{ accountId: 'tg-1', error: 'FLOOD_WAIT_30' }] }],
+        deliveries: [{ backend: 'whatsapp', accounts: [{ accountId: 'wa-1', error: null }] }],
+      });
+      expect(lines.length).toBe(2);
+      expect(lines[0]).toBe('mail/mail-a Spam: NO [NONEXISTENT]');
+      expect(lines[1]).toBe('telegram/tg-1: FLOOD_WAIT_30');
     });
   });
 };

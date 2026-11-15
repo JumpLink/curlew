@@ -55,6 +55,28 @@ export interface PullSyncParams {
   intervalMs?: number;
 }
 
+/** The parts of a sync result that name a failed source; structural, so this module stays free of the store. */
+export interface PullSyncOutcome {
+  folders: ReadonlyArray<{ accountId: string; folderPath: string; error: string | null }>;
+  chats: ReadonlyArray<{ backend: string; accounts: ReadonlyArray<{ accountId: string; error: string | null }> }>;
+  deliveries: ReadonlyArray<{
+    backend: string;
+    accounts: ReadonlyArray<{ accountId: string; error: string | null }>;
+  }>;
+}
+
+/**
+ * One line per failed source of a pull sync. The summary line only counts errors, and a count
+ * that repeats every 15 minutes with nothing behind it cannot be followed up.
+ */
+export function pullSyncFailures(result: PullSyncOutcome): string[] {
+  const lines: string[] = [];
+  for (const f of result.folders) if (f.error) lines.push(`mail/${f.accountId} ${f.folderPath}: ${f.error}`);
+  for (const group of [...result.chats, ...result.deliveries])
+    for (const a of group.accounts) if (a.error) lines.push(`${group.backend}/${a.accountId}: ${a.error}`);
+  return lines;
+}
+
 /** Start the pull sync timer. Nothing runs before `delayMs` has passed. */
 export function startPullSync(params: PullSyncParams): PullSyncTicker {
   const { run, log, who, signal } = params;

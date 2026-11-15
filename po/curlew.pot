@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-15 20:01+0100\n"
+"POT-Creation-Date: 2026-11-15 20:19+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -120,7 +120,7 @@ msgid "systemctl --user {verb} exited {code}"
 msgstr ""
 
 #: app/src/core/actions/chat-attachment.ts:140
-#: app/src/core/actions/daemon.ts:542
+#: app/src/core/actions/daemon.ts:543
 msgid "the attachment was not found in the index"
 msgstr ""
 
@@ -136,21 +136,21 @@ msgstr ""
 msgid "{backend} cannot fetch attachments"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:390
+#: app/src/core/actions/daemon.ts:391
 msgid "this account is paused — switch it on in Accounts to send from it"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:403
+#: app/src/core/actions/daemon.ts:404
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:425
+#: app/src/core/actions/daemon.ts:426
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:491
+#: app/src/core/actions/daemon.ts:492
 msgid "the download stalled — try again"
 msgstr ""
 
