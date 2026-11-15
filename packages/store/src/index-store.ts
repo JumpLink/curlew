@@ -352,18 +352,6 @@ export function upsertMessage(
   upsertMessages(db, accountId, folderPath, [message], indexedAt);
 }
 
-/** Update only the flags of an already-indexed message. Touches no FTS row. */
-export function updateFlags(
-  db: IndexDatabase,
-  accountId: string,
-  folderPath: string,
-  uid: number,
-  flags: { seen: boolean; flagged: boolean },
-): void {
-  db.prepare(
-    'UPDATE messages SET seen = ?, flagged = ? WHERE account_id = ? AND folder_path = ? AND uid = ?',
-  ).run(flags.seen ? 1 : 0, flags.flagged ? 1 : 0, accountId, folderPath, uid);
-}
 
 /**
  * Update the flags of many messages in one transaction: one `UPDATE … uid IN (…)` per flag

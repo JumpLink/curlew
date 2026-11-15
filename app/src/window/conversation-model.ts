@@ -167,7 +167,7 @@ export function trustRank(backend: string): number {
 }
 
 /** The most trusted choice; the first of equals keeps the list order. */
-export function mostTrustedChoice(choices: readonly ProtocolChoice[]): ProtocolChoice | null {
+function mostTrustedChoice(choices: readonly ProtocolChoice[]): ProtocolChoice | null {
   let best: ProtocolChoice | null = null;
   for (const choice of choices) {
     if (best === null || trustRank(choice.backend) < trustRank(best.backend)) best = choice;
@@ -322,7 +322,7 @@ export function attachmentLines(attachments: readonly AttachmentInfo[] | undefin
 }
 
 /** The most characters of a quoted message the quote block shows. */
-export const QUOTE_MAX_CHARS = 140;
+const QUOTE_MAX_CHARS = 140;
 
 export interface Quote {
   /** The quoted message's id, so the block can jump to it. */
@@ -433,7 +433,7 @@ export function reactionsOfferedIn(backend: string, selfChat: boolean): boolean 
 }
 
 /** How long Signal lets the person edit or delete for everyone a message they sent. */
-export const SIGNAL_CHANGE_WINDOW_MS = 24 * 60 * 60 * 1000;
+const SIGNAL_CHANGE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Whether editing or deleting `message` is still open to the person. Signal closes both a day

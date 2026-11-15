@@ -130,7 +130,7 @@ export function placeholders(n: number): string {
  * 10.3 s at 400. 120 is a little slower than the optimum and spends half the executions,
  * which are the scarcer resource (see `insertMany`).
  */
-export const PARAM_BUDGET = 120;
+const PARAM_BUDGET = 120;
 
 /**
  * `head VALUES (?, …), (?, …), …` in chunks of `budget` bound values. Every row must have the

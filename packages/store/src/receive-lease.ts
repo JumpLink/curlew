@@ -36,7 +36,7 @@ export const LEASE_HEARTBEAT_MS = 30_000;
  * Three, against the interval the holder refreshes at, NOT a fixed 30 s: a holder that refreshes
  * every 100 s must not be declared dead halfway through its own interval.
  */
-export const LEASE_STALE_HEARTBEATS = 3;
+const LEASE_STALE_HEARTBEATS = 3;
 
 /**
  * The lease's own transaction: the write lock from the first statement, and — from the

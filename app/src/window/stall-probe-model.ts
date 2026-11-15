@@ -1,6 +1,6 @@
 /** The pure half of the main-loop stall probe (`stall-probe.ts`), testable without GLib. */
 
-export const DEFAULT_STALL_MS = 50;
+const DEFAULT_STALL_MS = 50;
 
 export const stallProbeEnabled = (env: NodeJS.ProcessEnv): boolean => env.CURLEW_DEBUG_STALL === '1';
 
