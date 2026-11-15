@@ -511,11 +511,10 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
         GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => (followOpenChat(), GLib.SOURCE_REMOVE));
         return GLib.SOURCE_REMOVE;
       }
-      if (result === 'rebuild') {
-        select(entry);
-        return GLib.SOURCE_REMOVE;
-      }
       const known = new Set(currentMessages.map((m) => m.id));
+      // A late arrival (sent offline, older timestamp) is common; select() would empty the
+      // composer and pull a phone back from the list into the chat.
+      if (result === 'rebuild') conversation.show(entry, loaded, labels, true);
       currentEntry = entry;
       currentMessages = loaded;
       confirmRead(loaded.filter((m) => !known.has(m.id)));

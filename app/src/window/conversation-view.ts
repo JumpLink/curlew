@@ -82,7 +82,13 @@ import type { PickedFile } from './composer-files-model.ts';
 
 export interface ConversationView {
   page: Adw.NavigationPage;
-  show(entry: ListEntry, messages: ShownMessage[], accountLabels: Map<string, string>): void;
+  /** `keepComposer`: the same chat shown anew; the draft, reply, edit and protocol pick stay. */
+  show(
+    entry: ListEntry,
+    messages: ShownMessage[],
+    accountLabels: Map<string, string>,
+    keepComposer?: boolean,
+  ): void;
   /**
    * Merge a freshly read newest page into the open chat without rebuilding it: new messages go
    * below, edits, reactions, read marks and deletions change their rows in place. The scroll
@@ -1449,9 +1455,11 @@ export function createConversationView(
       if (diff.rebuild) return 'rebuild';
       if (diff.added.length + diff.changed.length + diff.removed.length === 0) return 'applied';
       resolveQuotes(shownEntry, [...diff.added, ...diff.changed], [...messages, ...diff.added]);
-      // Rows of a changed message are replaced where they are; the neighbours keep theirs.
+      // Rows of a changed message are replaced where they are; the neighbours keep theirs. Taken
+      // out bottom first, so each position is read before any row above it moves; put back top
+      // first below, so each lands where it was.
       const positions = new Map<string, number>();
-      for (const message of diff.changed) {
+      for (const message of [...diff.changed].reverse()) {
         const one = built.get(message.id);
         if (!one) continue;
         positions.set(message.id, (one.separator ?? one.protocolDivider ?? one.row).get_index());
@@ -1506,7 +1514,7 @@ export function createConversationView(
       }
       return 'applied';
     },
-    show(nextEntry, nextMessages, nextLabels) {
+    show(nextEntry, nextMessages, nextLabels, keepComposer = false) {
       entry = nextEntry;
       rebuildRoute(nextEntry);
       messages = foldAlbums(nextMessages);
@@ -1542,12 +1550,20 @@ export function createConversationView(
       input.setSensitive(blocked === null);
       send.set_sensitive(blocked === null);
       composerBlocked = blocked !== null;
-      input.setText('');
-      files.clear();
-      clearReply();
-      clearEdit();
+      // A rebuild of the same chat (live update) keeps what the person is writing and the
+      // protocol they picked; opening a chat starts from an empty composer.
+      const picked =
+        keepComposer && selectedChoice
+          ? choices.find((c) => JSON.stringify(c) === JSON.stringify(selectedChoice))
+          : undefined;
+      if (!keepComposer) {
+        input.setText('');
+        files.clear();
+        clearReply();
+        clearEdit();
+      }
       if (choices.length > 1) {
-        selectedChoice = defaultProtocolChoice(messages, choices);
+        selectedChoice = picked ?? defaultProtocolChoice(messages, choices);
         rebuildPicker(choices);
         picker.set_visible(true);
       } else if (only) {
