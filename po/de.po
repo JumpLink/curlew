@@ -964,7 +964,7 @@ msgid "no Background portal on this system"
 msgstr "Auf diesem System gibt es kein Hintergrund-Portal"
 
 #: app/src/core/lib/autostart-portal.ts:84
-#: app/src/window/accounts-daemon.ts:119
+#: app/src/window/accounts-daemon.ts:124
 msgid "Keep receiving messages while the window is closed"
 msgstr "Nachrichten weiter empfangen, während das Fenster geschlossen ist"
 
@@ -2134,7 +2134,7 @@ msgstr ""
 msgid "Delete Messages and Remove"
 msgstr "Nachrichten löschen und entfernen"
 
-#: app/src/window/accounts-daemon.ts:112 app/src/window/accounts-daemon.ts:122
+#: app/src/window/accounts-daemon.ts:117 app/src/window/accounts-daemon.ts:127
 msgid "Could not start the background service: {reason}"
 msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
