@@ -25,10 +25,14 @@ gjsify workspace curlew-cli build
 gjsify run app/dist/curlew.gjs.mjs accounts
 ```
 
-The bundle resolves its native addon (libsignal, for the Signal backend) by the
-absolute path it was built at, so do not move or copy a built tree — the copy
-fails at the first Signal command. `curlew-cli test:relocation` measures this
-and says so out loud; the fix is tracked in gjsify.
+The bundle carries no path of the machine that built it. Two packages cannot
+live inside it and must sit in a `node_modules` beside it:
+`@signalapp/libsignal-client` (the native addon behind Signal) and
+`@mtcute/wasm` (Telegram's crypto, read as `mtcute-simd.wasm` at run time).
+`gjsify ship` stages both from `gjsify.ship.nodeModules` in `app/package.json`,
+with only the target's own libsignal prebuild. `curlew-cli test:relocation`
+moves a built bundle with just those two packages beside it and runs both
+canaries.
 
 ### Desktop install (development)
 

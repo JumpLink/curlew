@@ -167,9 +167,11 @@ Linking, step by step:
    devices*; unlink it there to end it.
 5. Run `curlew sync`.
 
-Signal runs on **linux-x64 and macOS arm64** (libsignal is a native addon that
-curlew loads through gjsify's N-API host). On another platform the rest of
-curlew works; `accounts add signal` says libsignal did not load.
+Signal is tested on **linux-x64 and macOS arm64** (libsignal is a native addon
+that curlew loads through gjsify's N-API host; every package carries the build
+for its own target). libsignal's Linux builds need glibc: on a musl system such
+as postmarketOS or Alpine, use the Flatpak. Where libsignal does not load, the
+rest of curlew works and `accounts add signal` says so.
 
 **Signal keeps no archive.** The server holds a message for a device only until
 that device receives it, so what curlew stores is the **only copy** — its part
