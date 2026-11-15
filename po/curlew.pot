@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-15 12:53+0100\n"
+"POT-Creation-Date: 2026-11-15 15:06+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2847,11 +2847,11 @@ msgstr ""
 msgid "Flags"
 msgstr ""
 
-#: app/src/window/emoji-picker.ts:95
+#: app/src/window/emoji-picker.ts:96
 msgid "No emoji found"
 msgstr ""
 
-#: app/src/window/emoji-picker.ts:101 app/src/window/emoji-picker.ts:102
+#: app/src/window/emoji-picker.ts:102 app/src/window/emoji-picker.ts:103
 msgid "Search emoji"
 msgstr ""
 
