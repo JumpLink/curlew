@@ -59,6 +59,9 @@ address and password.
   - A protocol that cannot run on this build says so before the terms, not after.
   - The dialog names no terminal command.
   - After linking, the account shows in the list and its conversations appear.
+  - Signal on a device that also has the Signal app as the primary device: **Open Link** above
+    the QR code hands the `sgnl://linkdevice` link to Signal, and Signal offers to link. Without
+    such an app the window says no app opened the link, and **Copy Link** still works (#385).
 
 Record, per protocol, which link method you used.
 
