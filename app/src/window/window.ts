@@ -72,9 +72,12 @@ import { sendReadReceipts } from '../core/actions/read-receipt.ts';
 import { deltaChatEnabled } from '../core/actions/accounts.ts';
 import { editMessage } from '../core/actions/edit.ts';
 import { deleteMessage } from '../core/actions/delete.ts';
-import { configPath } from '@curlew/store';
+import { configPath, indexDbPath } from '@curlew/store';
+import { watchFiles } from './watch.ts';
 
 const COLLAPSE_AT = 'max-width: 720sp';
+/** At most one list reload per this many ms while the daemon writes. */
+const INDEX_WATCH_MS = 2_000;
 async function accountLabels(): Promise<Map<string, string>> {
   try {
     return await loadAccountLabels(loadAgentAccess(configPath()).backends, configPath());
@@ -450,13 +453,22 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   let suggestionsIdle = 0;
   let activationIdle = 0;
   let refreshRun = 0;
+  let loading = false;
+  let changedWhileLoading = false;
   const pendingLoad: Array<() => void> = [];
   const refresh = () => {
     stamp = listStamp();
     const run = ++refreshRun;
+    loading = true;
     // Read in slices so the window keeps painting; a newer refresh abandons this one.
     void loadConversationEntriesAsync(() => run !== refreshRun).then((loaded) => {
-      if (loaded === null || run !== refreshRun) return;
+      if (run !== refreshRun) return;
+      loading = false;
+      if (changedWhileLoading) {
+        changedWhileLoading = false;
+        GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => (indexChanged(), GLib.SOURCE_REMOVE));
+      }
+      if (loaded === null) return;
       shown = loaded;
       timed('set entries', () => sidebar.setEntries(shown, labels));
       // The duplicate scan is only a banner: it runs when the loop is idle, once per burst of refreshes.
@@ -471,6 +483,13 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
       pendingLoad.forEach((done) => done());
       pendingLoad.length = 0;
     });
+  };
+  // A change the daemon writes while the window is in front. A load still running finishes first:
+  // restarting it on every change would starve the list during a long catch-up on a slow phone.
+  const indexChanged = () => {
+    if (!window.get_mapped() || listStamp() === stamp) return;
+    if (loading) changedWhileLoading = true;
+    else refresh();
   };
   const review = () => {
     const sets = candidateSets(shown, loadConfig(configPath()).declinedMerges);
@@ -550,6 +569,26 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
       if (listStamp() !== stamp) refresh();
       return GLib.SOURCE_REMOVE;
     });
+  });
+  // A phone shows one window that never loses focus, so the activation check above never runs
+  // there: a new account's catch-up or an arriving message stayed out of the list until restart.
+  const dbPath = indexDbPath();
+  const dbName = GLib.path_get_basename(dbPath);
+  const stopIndexWatch = watchFiles(
+    GLib.path_get_dirname(dbPath),
+    [dbName, `${dbName}-wal`],
+    indexChanged,
+    INDEX_WATCH_MS,
+  );
+  const stopConfigWatch = watchFiles(
+    GLib.path_get_dirname(configPath()),
+    [GLib.path_get_basename(configPath())],
+    indexChanged,
+    INDEX_WATCH_MS,
+  );
+  window.connect('destroy', () => {
+    stopIndexWatch();
+    stopConfigWatch();
   });
   if (!labelled) {
     labelled = true;
