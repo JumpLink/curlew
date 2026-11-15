@@ -8,6 +8,7 @@ import { VERSION } from './core/version.ts';
 import {
   accountsCommand,
   addonCanaryCommand,
+  wasmCanaryCommand,
   backendsCommand,
   calendarCommand,
   checkCommand,
@@ -90,6 +91,7 @@ const parseArgs = () =>
     .command(checkCommand)
     .command(setupCommand)
     .command(addonCanaryCommand)
+    .command(wasmCanaryCommand)
     .command(windowCommand)
     .command(demoCommand)
     .demandCommand(1, 'Please provide a command — `curlew --help` lists them all.')

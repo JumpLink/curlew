@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- The release packages carry what Signal and Telegram load at run time: libsignal (only the build for the package's own platform) and Telegram's crypto wasm, without which a Telegram account never got past its first connection.
 - The conversation list follows the background service while the window is open: a newly added account's chats and newly arrived messages show within a few seconds. Before, the list only reloaded when the window got focus back, which a phone's single full-screen window never does, so a new Telegram account looked empty until Curlew was restarted.
 - A Matrix account that needs a new login no longer tells you to run `curlew accounts add matrix`; it points to Accounts (#375).
 - The terms notices of Telegram, Signal and WhatsApp are short, translatable and fit a phone-sized dialog: two to four sentences on what can happen to the account, no grant names, the details behind the terms link. The German catalogue is complete again, with no fuzzy or untranslated entry (#378, #334).

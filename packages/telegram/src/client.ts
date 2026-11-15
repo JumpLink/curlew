@@ -8,7 +8,7 @@
 
 import { _, fmt } from '@curlew/protocol';
 import { FileLocation, InputMedia, SessionConnection, type ITelegramStorageProvider, type RpcCallMiddleware } from '@mtcute/core';
-import { MemoryStorage, networkMiddlewares, TelegramClient, WebPlatform } from '@mtcute/web';
+import { MemoryStorage, networkMiddlewares, TelegramClient, WebCryptoProvider, WebPlatform } from '@mtcute/web';
 import type { LoginPrompts, TelegramApi, TelegramClientHandle, TelegramLive, TgUser } from './api.ts';
 import type { TelegramCredentials } from './credentials.ts';
 
@@ -249,6 +249,18 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
     },
   };
 };
+
+/**
+ * Load mtcute's WASM crypto the way a login does, with no network and no account. mtcute finds
+ * `mtcute-simd.wasm` beside `@mtcute/wasm` at run time, so a package that did not carry that
+ * module fails here — and in the user's first login, which is where 0.2.0's stage first showed it.
+ * Returns the SHA-256 digest length of one byte, 32 when the module loaded.
+ */
+export async function probeWasmCrypto(): Promise<number> {
+  const provider = new WebCryptoProvider();
+  await provider.initialize();
+  return provider.sha256(new Uint8Array([1])).length;
+}
 
 /**
  * A credential-free network check: open a connection, run the MTProto auth-key exchange, and make

@@ -90,6 +90,7 @@ app/src/frontends/cli/output.ts
 app/src/frontends/cli/prompt.ts
 app/src/frontends/cli/send.ts
 app/src/frontends/cli/setup.ts
+app/src/frontends/cli/wasm-canary.ts
 app/src/frontends/cli/watch.ts
 app/src/frontends/cli/window.ts
 app/src/frontends/mcp/server.ts

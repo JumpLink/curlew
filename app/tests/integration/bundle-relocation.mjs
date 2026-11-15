@@ -22,7 +22,16 @@
 // Prerequisite: `gjsify install` + `gjsify workspace curlew-cli build`, and gjs on PATH.
 // Run with: `node app/tests/integration/bundle-relocation.mjs` (or `gjsify workspace curlew-cli test:relocation`).
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import {
+  copyFileSync,
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, parse } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -182,6 +191,39 @@ if (!loaded) {
     .join('\n            ');
   console.log(`  output     ${tail}`);
 }
+
+// mtcute reads `mtcute-simd.wasm` from beside `@mtcute/wasm` at run time; the bundle cannot carry
+// it. Every package shipped without it once, so Telegram never got past its first handshake.
+// Staged the same way as the addon: the one package beside the copy, nothing else.
+const WASM_PKG = '@mtcute/wasm';
+cpSync(join(repoRoot, 'node_modules', WASM_PKG), join(scratch, 'node_modules', WASM_PKG), {
+  recursive: true,
+  dereference: true,
+});
+const wasmRun = spawnSync(gjsify, ['run', relocated, 'wasm-canary'], {
+  cwd: scratch,
+  env,
+  encoding: 'utf8',
+  timeout: 300_000,
+});
+const wasmLine = (wasmRun.stdout ?? '').split('\n').find((line) => line.includes('"canary":"wasm"'));
+let wasmReport = null;
+try {
+  wasmReport = wasmLine ? JSON.parse(wasmLine) : null;
+} catch {
+  wasmReport = null;
+}
+const wasmLoaded = wasmRun.status === 0 && wasmReport?.canary === 'wasm' && wasmReport?.sha256Bytes === 32;
+console.log(`  wasm run   exit ${wasmRun.status}${wasmLoaded ? `, ${wasmLine}` : ''}`);
+if (!wasmLoaded) {
+  const tail = [wasmRun.stdout ?? '', wasmRun.stderr ?? '']
+    .join('\n')
+    .split('\n')
+    .filter((line) => line.trim() !== '')
+    .slice(-6)
+    .join('\n            ');
+  console.log(`  output     ${tail}`);
+}
 rmSync(scratch, { recursive: true, force: true });
 
 if (baked.length > 0) {
@@ -203,9 +245,15 @@ if (!loaded) {
       'the fix landed broken. See the output above.',
   );
 }
+if (!wasmLoaded) {
+  fail(
+    `the relocated copy could not load ${WASM_PKG}'s wasm from the staged package — see the output above.`,
+  );
+}
 console.log(`OK: no absolute addon path in the bundle — none of ${repoRoot} is baked in`);
 console.log(
   `OK: the relocated copy loaded libsignal — ${report.coreExports} core / ${report.zkExports} zk exports, all four Rust bindings callable`,
 );
+console.log(`OK: the relocated copy loaded mtcute's wasm from ${WASM_PKG} beside it`);
 console.log('OK: a built curlew bundle survives being moved.');
 process.exit(0);

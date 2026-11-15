@@ -39,6 +39,7 @@
       "kind": "app",
       "name": "Curlew",
       "localeDir": "dist/locale",
+      "nodeModules": ["@signalapp/libsignal-client", "@mtcute/wasm"],
       "bundle": {
         "linux": "dist/curlew.gjs.mjs",
         "darwin": "dist/curlew.node.mjs",
@@ -182,9 +183,9 @@
     }
   },
   "optionalDependencies": {
-    "@gjsify/node-runtime-darwin-arm64": "0.64.41",
-    "@gjsify/node-runtime-darwin-x64": "0.64.41",
-    "@gjsify/node-runtime-win32-x64": "0.64.41"
+    "@gjsify/node-runtime-darwin-arm64": "0.64.42",
+    "@gjsify/node-runtime-darwin-x64": "0.64.42",
+    "@gjsify/node-runtime-win32-x64": "0.64.42"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
@@ -203,17 +204,17 @@
     "yargs": "^18.1.0",
     "qrcode-generator": "2.0.4",
     "zod": "^4.4.3",
-    "@gjsify/adwaita-app": "0.64.41"
+    "@gjsify/adwaita-app": "0.64.42"
   },
   "devDependencies": {
-    "@gjsify/cli": "0.64.41",
-    "@gjsify/mcp": "0.64.41",
-    "@gjsify/napi": "0.64.41",
-    "@gjsify/node-globals": "0.64.41",
-    "@gjsify/rolldown-native": "0.64.41",
-    "@gjsify/runtime": "0.64.41",
-    "@gjsify/unit": "0.64.41",
-    "@gjsify/ws": "0.64.41",
+    "@gjsify/cli": "0.64.42",
+    "@gjsify/mcp": "0.64.42",
+    "@gjsify/napi": "0.64.42",
+    "@gjsify/node-globals": "0.64.42",
+    "@gjsify/rolldown-native": "0.64.42",
+    "@gjsify/runtime": "0.64.42",
+    "@gjsify/unit": "0.64.42",
+    "@gjsify/ws": "0.64.42",
     "@girs/gjs": "^4.1.0",
     "@girs/glib-2.0": "^4.1.0",
     "@girs/gobject-2.0": "^4.1.0",
