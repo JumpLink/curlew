@@ -47,6 +47,7 @@ import {
   releaseReceiveLease,
   takeReceiveLease,
 } from './receive-lease.ts';
+import { num, str } from './row.ts';
 import { stableId } from './threads.ts';
 
 export interface DeliverySyncOptions {
@@ -207,14 +208,6 @@ interface KnownPeer {
 interface AccountState {
   chats: Map<string, KnownChat>;
   peers: Map<string, KnownPeer>;
-}
-
-function num(value: unknown): number | null {
-  return value === null || value === undefined ? null : Number(value);
-}
-
-function str(value: unknown): string | null {
-  return value === null || value === undefined ? null : String(value);
 }
 
 function parseAddresses(json: unknown): ParticipantAddress[] {

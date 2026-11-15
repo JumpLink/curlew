@@ -3,6 +3,7 @@
 import type { AttachmentKind, MessageRef } from '@curlew/protocol';
 import type { IndexDatabase } from './db.ts';
 import { mailAttachments, type MailAttachmentInfo } from './mail-reply.ts';
+import { num, str } from './row.ts';
 
 /** What the index knows about one attachment; the opaque handle never leaves `@curlew/store`. */
 export interface AttachmentInfo {
@@ -147,14 +148,6 @@ function kindFromMime(filename: string | null, mimeType: string | null): Attachm
   if (ext === 'mp4' || ext === 'webm' || ext === 'mkv' || ext === 'mov') return 'video';
   if (ext === 'mp3' || ext === 'ogg' || ext === 'opus' || ext === 'flac' || ext === 'wav') return 'audio';
   return 'file';
-}
-
-function str(value: unknown): string | null {
-  return value === null || value === undefined ? null : String(value);
-}
-
-function num(value: unknown): number | null {
-  return value === null || value === undefined ? null : Number(value);
 }
 
 export type { MailAttachmentInfo };

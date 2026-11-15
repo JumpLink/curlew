@@ -307,6 +307,7 @@ packages/store/src/mail-reply.ts
 packages/store/src/paths.ts
 packages/store/src/read-receipts.ts
 packages/store/src/receive-lease.ts
+packages/store/src/row.ts
 packages/store/src/schema.ts
 packages/store/src/secret-store.ts
 packages/store/src/send-files.ts
