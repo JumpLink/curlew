@@ -39,6 +39,7 @@
       "kind": "app",
       "name": "Curlew",
       "localeDir": "dist/locale",
+      "nodeModules": ["@signalapp/libsignal-client", "@mtcute/wasm"],
       "bundle": {
         "linux": "dist/curlew.gjs.mjs",
         "darwin": "dist/curlew.node.mjs",
