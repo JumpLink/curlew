@@ -190,7 +190,7 @@ class LoginPage {
         this.showChoose(step);
         return;
       case 'qr':
-        this.showQr(step.data, step.instructions);
+        this.showQr(step.data, step.instructions, step.link === true);
         return;
       case 'status':
         this.showStatus(step.message);
@@ -245,13 +245,42 @@ class LoginPage {
     this.show(scrolled(box));
   }
 
-  private showQr(data: string, instructions: string): void {
+  private showQr(data: string, instructions: string, link: boolean): void {
     const box = column();
-    box.append(qrWidget(data));
     const text = wrappedLabel(instructions);
     text.set_justify(Gtk.Justification.CENTER);
     text.set_xalign(0.5);
-    box.append(text);
+    if (link) {
+      // The screen showing the code may be the phone itself, which cannot scan it: offer the link first.
+      box.append(text);
+      const open = pillButton(_('Open Link'));
+      open.connect('clicked', () => {
+        const root = this.page.get_root();
+        new Gtk.UriLauncher({ uri: data }).launch(
+          root instanceof Gtk.Window ? root : null,
+          null,
+          (launcher, res) => {
+            try {
+              launcher?.launch_finish(res);
+            } catch (err) {
+              console.warn(`curlew: could not open the link: ${errorMessage(err)}`);
+              open.set_label(_('No App Opened the Link'));
+            }
+          },
+        );
+      });
+      box.append(open);
+      const copy = new Gtk.Button({ label: _('Copy Link'), halign: Gtk.Align.CENTER, cssClasses: ['pill'] });
+      copy.connect('clicked', () => {
+        copy.get_clipboard().set(data);
+        copy.set_label(_('Link Copied'));
+      });
+      box.append(copy);
+      box.append(qrWidget(data));
+    } else {
+      box.append(qrWidget(data));
+      box.append(text);
+    }
     box.append(new Adw.Spinner({ halign: Gtk.Align.CENTER, widthRequest: 24, heightRequest: 24 }));
     this.show(scrolled(box));
   }

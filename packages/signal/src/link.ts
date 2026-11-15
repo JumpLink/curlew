@@ -83,8 +83,11 @@ async function receiveProvisioning(
           notifyQr(
             prompter,
             url,
-            _('Scan this with the phone: Signal → Settings → Linked devices → Link new device.'),
+            _(
+              'On the phone with Signal: open the link below, or scan the code from another screen (Signal → Settings → Linked devices → Link new device).',
+            ),
             renderQr,
+            { link: true },
           ),
         onEnvelope: (envelope) => resolve({ envelope }),
         onClosed: () => resolve({ closed: true }),

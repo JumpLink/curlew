@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-15 00:20+0100\n"
+"POT-Creation-Date: 2026-11-15 01:02+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1610,7 +1610,7 @@ msgid_plural "{count} accounts"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/account-add.ts:123 app/src/window/account-add.ts:284
+#: app/src/window/account-add.ts:123 app/src/window/account-add.ts:313
 msgid "Connecting…"
 msgstr ""
 
@@ -1634,50 +1634,66 @@ msgstr ""
 msgid "Continue"
 msgstr ""
 
-#: app/src/window/account-add.ts:261
-msgid "Adding account…"
+#: app/src/window/account-add.ts:256
+msgid "Open Link"
 msgstr ""
 
-#: app/src/window/account-add.ts:269 app/src/window/media-viewer.ts:104
-msgid "Try Again"
+#: app/src/window/account-add.ts:267
+msgid "No App Opened the Link"
 msgstr ""
 
 #: app/src/window/account-add.ts:273
+msgid "Copy Link"
+msgstr ""
+
+#: app/src/window/account-add.ts:276
+msgid "Link Copied"
+msgstr ""
+
+#: app/src/window/account-add.ts:290
+msgid "Adding account…"
+msgstr ""
+
+#: app/src/window/account-add.ts:298 app/src/window/media-viewer.ts:104
+msgid "Try Again"
+msgstr ""
+
+#: app/src/window/account-add.ts:302
 msgid "Could not add the account"
 msgstr ""
 
-#: app/src/window/account-add.ts:308 app/src/window/protocols-page.ts:46
+#: app/src/window/account-add.ts:337 app/src/window/protocols-page.ts:46
 msgid "Asks you to accept terms first"
 msgstr ""
 
-#: app/src/window/account-add.ts:325
+#: app/src/window/account-add.ts:354
 msgid "Chats"
 msgstr ""
 
-#: app/src/window/account-add.ts:326
+#: app/src/window/account-add.ts:355
 msgid ""
 "Signal, WhatsApp and Telegram link this computer as another device of your "
 "account."
 msgstr ""
 
-#: app/src/window/account-add.ts:335 app/src/window/accounts-model.ts:107
+#: app/src/window/account-add.ts:364 app/src/window/accounts-model.ts:107
 #: app/src/window/conversation-list-model.ts:139
 msgid "Mail"
 msgstr ""
 
-#: app/src/window/account-add.ts:338
+#: app/src/window/account-add.ts:367
 msgid "Sign in with an address and a password"
 msgstr ""
 
-#: app/src/window/account-add.ts:344
+#: app/src/window/account-add.ts:373
 msgid "GNOME Online Accounts"
 msgstr ""
 
-#: app/src/window/account-add.ts:345
+#: app/src/window/account-add.ts:374
 msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 
-#: app/src/window/account-add.ts:363 app/src/window/accounts-page.ts:148
+#: app/src/window/account-add.ts:392 app/src/window/accounts-page.ts:148
 #: app/src/window/accounts-page.ts:174 app/src/window/welcome.ts:163
 msgid "Add Account"
 msgstr ""
@@ -3545,53 +3561,53 @@ msgstr ""
 msgid "the Signal session {account} was never linked — {hint}"
 msgstr ""
 
-#: packages/signal/src/link.ts:86
+#: packages/signal/src/link.ts:87
 msgid ""
-"Scan this with the phone: Signal → Settings → Linked devices → Link new "
-"device."
+"On the phone with Signal: open the link below, or scan the code from another "
+"screen (Signal → Settings → Linked devices → Link new device)."
 msgstr ""
 
-#: packages/signal/src/link.ts:100
+#: packages/signal/src/link.ts:103
 msgid "the provisioning connection failed ({reason}) — nothing was saved"
 msgstr ""
 
-#: packages/signal/src/link.ts:105 packages/whatsapp/src/login.ts:145
+#: packages/signal/src/link.ts:108 packages/whatsapp/src/login.ts:145
 msgid "no phone linked this device in time — nothing was saved"
 msgstr ""
 
-#: packages/signal/src/link.ts:132
+#: packages/signal/src/link.ts:135
 msgid "the phone sent an incomplete link message — nothing was saved"
 msgstr ""
 
-#: packages/signal/src/link.ts:134
+#: packages/signal/src/link.ts:137
 msgid "The phone answered. Registering this device…"
-msgstr ""
-
-#: packages/signal/src/link.ts:157
-msgid ""
-"the phone sent a number but no phone number identity key — nothing was saved"
 msgstr ""
 
 #: packages/signal/src/link.ts:160
 msgid ""
+"the phone sent a number but no phone number identity key — nothing was saved"
+msgstr ""
+
+#: packages/signal/src/link.ts:163
+msgid ""
 "the phone sent a phone number identity key but no number — nothing was saved"
 msgstr ""
 
-#: packages/signal/src/link.ts:210
+#: packages/signal/src/link.ts:213
 msgid "Signal refused the link (status {status}{detail}) — nothing was saved"
 msgstr ""
 
-#: packages/signal/src/link.ts:221
+#: packages/signal/src/link.ts:224
 msgid "Signal answered the link for a different account — nothing was saved"
 msgstr ""
 
-#: packages/signal/src/link.ts:241
+#: packages/signal/src/link.ts:244
 msgid ""
 "Linked, but the one-time keys were not published ({reason}); new contacts "
 "fall back to the last-resort key."
 msgstr ""
 
-#: packages/signal/src/link.ts:261
+#: packages/signal/src/link.ts:264
 msgid ""
 "Linked. Sync soon: Signal keeps what arrived for this device only until it "
 "is received, and the phone sends the contact list on its own."
