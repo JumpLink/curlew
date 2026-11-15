@@ -89,7 +89,7 @@ export function presentPreferences(
   toolbar.add_top_bar(new Adw.HeaderBar());
   toolbar.set_content(page);
   overlay.set_child(toolbar);
-  const dialog = new Adw.Dialog({ title: _('Preferences'), contentWidth: 520, contentHeight: 520 });
+  const dialog = new Adw.Dialog({ title: _('Preferences'), contentWidth: 520, contentHeight: 700 });
   dialog.set_child(overlay);
 
   row.connect('notify::active', () => {

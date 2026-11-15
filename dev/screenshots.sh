@@ -17,14 +17,14 @@ WORK="${CURLEW_SHOTS_DEMO:-/tmp/curlew-demo-shots}"
 # Window sizes: 900x640 for the chat motifs, 1000x700 (Flathub's maximum) for the dialog and page motifs,
 # whose content is taller; 360x740 for phone width. The shadow is cropped after the capture, so the
 # PNG is exactly the window and every wide file stays within 1000x700. The empty-state motifs use the
-# full 1000x700 so the Accounts dialog does not clip the page behind it.
+# phone width, so the Accounts dialog fills the window and does not clip the page behind it.
 # motif | window size (logical) | data set | extra environment
 # data set: demo = the demo data, off = same with every protocol and switch off,
 #           paused = the demo with the WhatsApp account paused,
 #           empty = no accounts, no index (the Accounts dialog with its daemon banner).
 MOTIFS=(
-  "conversations|900x640|demo|CURLEW_WINDOW_OPEN=c2"
-  "conversation|900x640|demo|CURLEW_WINDOW_OPEN=c1"
+  "conversations|900x640|demo|CURLEW_WINDOW_OPEN=c1"
+  "conversation|900x640|demo|CURLEW_WINDOW_OPEN=c2"
   "conversation-narrow|360x740|demo|CURLEW_WINDOW_OPEN=c1"
   "conversations-narrow|360x740|demo|"
   "contact|1000x700|demo|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_OPEN_CONTACT=1"
@@ -32,8 +32,8 @@ MOTIFS=(
   "preferences|1000x700|demo|CURLEW_WINDOW_OPEN_PREFERENCES=1"
   "preferences-off|1000x700|off|CURLEW_WINDOW_OPEN_PREFERENCES=1"
   "accounts|1000x700|demo|CURLEW_WINDOW_OPEN_ACCOUNTS=1"
-  "accounts-off|1000x700|off|CURLEW_WINDOW_OPEN_ACCOUNTS=1"
-  "accounts-empty|1000x700|empty|CURLEW_WINDOW_OPEN_ACCOUNTS=1"
+  "accounts-off|360x740|off|CURLEW_WINDOW_OPEN_ACCOUNTS=1"
+  "accounts-empty|360x740|empty|CURLEW_WINDOW_OPEN_ACCOUNTS=1"
   "protocols|1000x700|demo|CURLEW_WINDOW_OPEN_PROTOCOLS=1"
   "protocols-off|1000x700|off|CURLEW_WINDOW_OPEN_PROTOCOLS=1"
   "agent-access|1000x700|demo|CURLEW_WINDOW_OPEN_ACCESS=1"

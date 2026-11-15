@@ -179,7 +179,7 @@ export function presentContactPage(
   const dialog = new Adw.Dialog({
     title: group ? _('Group') : _('Contact'),
     contentWidth: 400,
-    contentHeight: 600,
+    contentHeight: 700,
   });
   const toasts = new Adw.ToastOverlay();
   const view = new Adw.ToolbarView();

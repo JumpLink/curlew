@@ -85,7 +85,7 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
   const dialog = new Adw.Dialog({
     title: _('Accounts'),
     contentWidth: options.width ?? 360,
-    contentHeight: options.height ?? 560,
+    contentHeight: options.height ?? 700,
   });
   dialog.set_child(overlay);
 
