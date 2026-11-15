@@ -85,7 +85,7 @@ export default async () => {
       expect(WHATSAPP_MANIFEST.syncModel).toBe('delivery-only');
       expect(WHATSAPP_MANIFEST.capabilities.e2ee).toBe(true);
       expect(WHATSAPP_MANIFEST.capabilities.edits).toBe(true);
-      expect(WHATSAPP_MANIFEST.capabilities.readReceipts).toBe(true);
+      expect(WHATSAPP_MANIFEST.capabilities.readReceipts).toBe(false);
       expect(WHATSAPP_MANIFEST.capabilities.groups).toBe(true);
       expect(WHATSAPP_MANIFEST.addressKinds.join(',')).toBe('whatsapp,phone');
       const terms = WHATSAPP_MANIFEST.terms?.summary ?? '';

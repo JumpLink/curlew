@@ -15,11 +15,12 @@
  *   `GET /v1/certificate/delivery`; nothing in this package fetches or stores one. A message
  *   therefore goes out identified — which changes nothing the recipient sees, and nothing the
  *   server does not already know: its socket is authenticated as this device.
- * - **attachments, styles, reactions, edits.** The body is the message. A reply is a `quote` of
+ * - **styles, reactions, edits.** The body is the message. Attachments are encrypted, uploaded to
+ *   the CDN and sent as pointers (`upload.ts`). A reply is a `quote` of
  *   the message it answers: its sent timestamp and its author's ACI, which is what a Signal
  *   remote id is made of.
  * - **splitting.** Past `SIGNAL_MAX_MESSAGE_BYTES` Signal sends the text as a long-message
- *   attachment; curlew sends no attachments, so a longer text is refused, never cut.
+ *   attachment; curlew does not build that one, so a longer text is refused, never cut.
  *
  * The fan-out is the part that has to be right: one ciphertext per recipient DEVICE, plus a
  * `SyncMessage.Sent` transcript to the user's own other devices — without that the phone never

@@ -25,8 +25,8 @@ export const MATRIX_MANIFEST: BackendManifest = {
     deletesOwn: true,
     // `m.thread` relations (and reply chains everywhere).
     threads: true,
-    // `m.read` receipts, for both sides.
-    readReceipts: true,
+    // Sending read receipts (MessageSender.readReceipt) is not implemented; receiving read marks is separate.
+    readReceipts: false,
     groups: true,
     // Megolm rooms are end-to-end encrypted, and this backend decrypts them where it holds the
     // room key (see the package's README section in AGENTS.md for which history that is).

@@ -100,7 +100,7 @@ export default async () => {
       expect(TELEGRAM_MANIFEST.syncModel).toBe('server-archive');
       expect(TELEGRAM_MANIFEST.capabilities.e2ee).toBe(false);
       expect(TELEGRAM_MANIFEST.capabilities.subject).toBe(false);
-      expect(TELEGRAM_MANIFEST.capabilities.edits && TELEGRAM_MANIFEST.capabilities.readReceipts).toBe(true);
+      expect(TELEGRAM_MANIFEST.capabilities.edits && !TELEGRAM_MANIFEST.capabilities.readReceipts).toBe(true);
       expect(TELEGRAM_MANIFEST.addressKinds.join(',')).toBe('telegram,phone');
       expect(TELEGRAM_MANIFEST.terms?.summary.includes('API credentials')).toBe(true);
       expect(TELEGRAM_MANIFEST.terms?.summary.includes('banned by Telegram')).toBe(true);

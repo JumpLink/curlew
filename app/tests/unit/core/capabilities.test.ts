@@ -22,20 +22,17 @@ const DELIVERED_CAPABILITIES: ReadonlyArray<{
   {
     backend: 'telegram',
     manifest: BUILTIN_PLUGINS.find((p) => p.manifest.name === 'telegram')!.manifest,
-    trueFlags:
-      'edits,reactions,editsOwn,deletesOwn,threads,readReceipts,groups,attachments,attachmentsRead,replies',
+    trueFlags: 'edits,reactions,editsOwn,deletesOwn,threads,groups,attachments,attachmentsRead,replies',
   },
   {
     backend: 'signal',
     manifest: BUILTIN_PLUGINS.find((p) => p.manifest.name === 'signal')!.manifest,
-    trueFlags:
-      'edits,reactions,editsOwn,deletesOwn,readReceipts,groups,e2ee,attachments,attachmentsRead,replies',
+    trueFlags: 'edits,reactions,editsOwn,deletesOwn,groups,e2ee,attachments,attachmentsRead,replies',
   },
   {
     backend: 'whatsapp',
     manifest: BUILTIN_PLUGINS.find((p) => p.manifest.name === 'whatsapp')!.manifest,
-    trueFlags:
-      'edits,reactions,editsOwn,deletesOwn,readReceipts,groups,e2ee,attachments,attachmentsRead,replies',
+    trueFlags: 'edits,reactions,editsOwn,deletesOwn,groups,e2ee,attachments,attachmentsRead,replies',
   },
   {
     backend: 'xmpp',
@@ -45,8 +42,7 @@ const DELIVERED_CAPABILITIES: ReadonlyArray<{
   {
     backend: 'matrix',
     manifest: BUILTIN_PLUGINS.find((p) => p.manifest.name === 'matrix')!.manifest,
-    trueFlags:
-      'edits,reactions,editsOwn,deletesOwn,threads,readReceipts,groups,e2ee,attachments,attachmentsRead,replies',
+    trueFlags: 'edits,reactions,editsOwn,deletesOwn,threads,groups,e2ee,attachments,attachmentsRead,replies',
   },
 ];
 

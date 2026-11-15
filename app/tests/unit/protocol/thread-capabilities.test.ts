@@ -36,7 +36,7 @@ export default async () => {
         deletes: true,
         replies: true,
         attachments: true,
-        readReceipts: true,
+        readReceipts: false,
         voiceNotes: false,
       });
     });
