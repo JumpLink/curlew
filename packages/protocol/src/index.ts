@@ -3,6 +3,7 @@
  */
 
 export * from './types.ts';
+export * from './abort.ts';
 export * from './errors.ts';
 export * from './i18n.ts';
 export * from './availability.ts';

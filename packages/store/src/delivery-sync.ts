@@ -21,6 +21,7 @@
  * Edits of stored messages are the one per-item statement: they are rare.
  */
 
+import { abortableSleep } from '@curlew/protocol';
 import type {
   ChatAttachment,
   ChatMessage,
@@ -976,20 +977,6 @@ function writeEvents(
     flush();
   });
   return totals;
-}
-
-/** The default wait, interruptible: a daemon that is asked to stop does not sit out its backoff. */
-function abortableSleep(ms: number, signal: AbortSignal | undefined): Promise<void> {
-  if (signal?.aborted) return Promise.resolve();
-  return new Promise<void>((resolve) => {
-    const done = () => {
-      clearTimeout(timer);
-      signal?.removeEventListener('abort', done);
-      resolve();
-    };
-    const timer = setTimeout(done, ms);
-    signal?.addEventListener('abort', done);
-  });
 }
 
 /** What `raceAbort` resolves with when the run was stopped before the work finished. */

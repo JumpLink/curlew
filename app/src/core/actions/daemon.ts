@@ -60,6 +60,7 @@ import {
   isDeliveryBackend,
   isMailBackend,
   _,
+  errText,
   fmt,
 } from '@curlew/protocol';
 import type { DeliveryProgress, DeliverySyncResult, IndexDatabase, RebuildResult } from '@curlew/store';
@@ -1145,8 +1146,4 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     outer.removeEventListener('abort', forward);
     db.close();
   }
-}
-
-function errText(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
 }

@@ -16,6 +16,7 @@
  * reconnect with backoff, release it on stop. Log lines carry names and counts, never text.
  */
 
+import { abortableSleep, errText } from '@curlew/protocol';
 import type { ChatBackend, ChatSession } from '@curlew/protocol';
 import {
   type DeliveryProgress,
@@ -90,25 +91,8 @@ export interface FollowResult {
   loggedOut: boolean;
 }
 
-function abortableSleep(ms: number, signal: AbortSignal): Promise<void> {
-  return new Promise((resolve) => {
-    if (signal.aborted) return resolve();
-    const timer = setTimeout(done, ms);
-    function done(): void {
-      clearTimeout(timer);
-      signal.removeEventListener('abort', done);
-      resolve();
-    }
-    signal.addEventListener('abort', done, { once: true });
-  });
-}
-
 class LoggedOut extends Error {
   readonly loggedOut = true;
-}
-
-function errText(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
 }
 
 /** Follow one account until `deps.signal` aborts. Never throws: the outcome is the result. */

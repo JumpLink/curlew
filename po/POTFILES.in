@@ -233,6 +233,7 @@ packages/omemo/src/storage.ts
 packages/omemo/src/types.ts
 packages/omemo/src/wire.ts
 packages/omemo/src/x3dh.ts
+packages/protocol/src/abort.ts
 packages/protocol/src/availability.ts
 packages/protocol/src/backend.ts
 packages/protocol/src/bodystructure.ts

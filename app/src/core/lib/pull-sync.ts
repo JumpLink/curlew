@@ -18,6 +18,8 @@
  * the tick and the tick stands down for it.
  */
 
+import { errText } from '@curlew/protocol';
+
 /**
  * How often the pull sync runs — the interval `contrib/systemd/curlew-sync.timer` used, because
  * that is what it replaces for a GUI-only install. A constant and not a config key: the number
@@ -85,8 +87,4 @@ export function startPullSync(params: PullSyncParams): PullSyncTicker {
       while (inFlight !== null) await inFlight;
     },
   };
-}
-
-function errText(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
 }
