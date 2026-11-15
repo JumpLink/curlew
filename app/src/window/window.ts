@@ -73,7 +73,7 @@ import { deltaChatEnabled } from '../core/actions/accounts.ts';
 import { editMessage } from '../core/actions/edit.ts';
 import { deleteMessage } from '../core/actions/delete.ts';
 import { configPath, indexDbPath } from '@curlew/store';
-import { watchFiles } from './watch.ts';
+import { pollFiles, watchFiles } from './watch.ts';
 
 const COLLAPSE_AT = 'max-width: 720sp';
 /** At most one list reload per this many ms while the daemon writes. */
@@ -611,13 +611,7 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   // A phone shows one window that never loses focus, so the activation check above never runs
   // there: a new account's catch-up or an arriving message stayed out of the list until restart.
   const dbPath = indexDbPath();
-  const dbName = GLib.path_get_basename(dbPath);
-  const stopIndexWatch = watchFiles(
-    GLib.path_get_dirname(dbPath),
-    [dbName, `${dbName}-wal`],
-    indexChanged,
-    INDEX_WATCH_MS,
-  );
+  const stopIndexWatch = pollFiles([dbPath, `${dbPath}-wal`], indexChanged, INDEX_WATCH_MS);
   const stopConfigWatch = watchFiles(
     GLib.path_get_dirname(configPath()),
     [GLib.path_get_basename(configPath())],
