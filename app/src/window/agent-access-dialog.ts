@@ -119,7 +119,7 @@ export function presentAgentAccess(parent: Gtk.Window | null): void {
   const dialog = new Adw.Dialog({
     title: _('Agent access'),
     contentWidth: 560,
-    contentHeight: 640,
+    contentHeight: 700,
   });
   dialog.set_child(overlay);
 

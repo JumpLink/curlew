@@ -40,7 +40,8 @@ function groupNames(): Record<string, string> {
 
 /** A popover that calls `onPick` with the chosen emoji; its widgets are built when it is first shown. */
 export function createEmojiPopover(onPick: (emoji: string) => void, recent?: EmojiRecent): Gtk.Popover {
-  const popover = new Gtk.Popover({ autohide: true });
+  // END keeps the right edge on the button, so the wide chooser opens inward at the window's edge.
+  const popover = new Gtk.Popover({ autohide: true, halign: Gtk.Align.END });
   let built = false;
 
   popover.connect('show', () => {
