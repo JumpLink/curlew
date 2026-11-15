@@ -14,6 +14,7 @@ import {
   listChatRooms,
   listPeerFeatures,
   listConversations,
+  newestSeq,
   openIndexDb,
   searchMessageText,
 } from '@curlew/store';
@@ -52,15 +53,46 @@ function accountIdentities(db: IndexDatabase): Map<string, string> {
  * can skip the half-second load.
  */
 export function listStamp(dbPath = indexDbPath(), cfgPath = configPath()): string {
-  const part = (path: string): string => {
+  return `${journalStamp(dbPath)}|${fileStamp(cfgPath)}`;
+}
+
+const fileStamp = (path: string): string => {
+  try {
+    const { mtimeMs, size } = statSync(path);
+    return `${mtimeMs}:${size}`;
+  } catch {
+    return '-';
+  }
+};
+
+const journalCache = new Map<string, { files: string; seq: string }>();
+
+/**
+ * The newest change-journal seq (ADR 0007): every sync writer appends to it in the transaction
+ * that changes the list. The file's mtime alone is not enough: the daemon renews its receive
+ * lease in the same file every 30 s, and a stamp on that reloaded the whole list (175 ms on the
+ * OnePlus 6T) twice a minute with nothing new. The query only runs when the files did change.
+ */
+function journalStamp(dbPath: string): string {
+  const files = `${fileStamp(dbPath)}|${fileStamp(`${dbPath}-wal`)}`;
+  const cached = journalCache.get(dbPath);
+  if (cached?.files === files) return cached.seq;
+  let seq = files;
+  if (existsSync(dbPath)) {
     try {
-      const { mtimeMs, size } = statSync(path);
-      return `${mtimeMs}:${size}`;
+      const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
+      try {
+        seq = `seq:${newestSeq(db) ?? 0}`;
+      } finally {
+        db.close();
+      }
     } catch {
-      return '-';
+      // A locked or half-written index: fall back to the file stamp, which only over-reports.
+      seq = files;
     }
-  };
-  return [dbPath, `${dbPath}-wal`, cfgPath].map(part).join('|');
+  } else seq = '-';
+  journalCache.set(dbPath, { files, seq });
+  return seq;
 }
 
 export function loadConversationEntries(dbPath = indexDbPath(), cfgPath = configPath()): ListEntry[] {
