@@ -93,7 +93,9 @@ const F = {
   quote: { id: 1, authorAci: 5, authorAciBinary: 8 },
   /** `DataMessage.Reaction`; the target author goes out in both forms, like a quote's. */
   reaction: { emoji: 1, remove: 2, targetAuthorAci: 4, targetSentTimestamp: 5, targetAuthorAciBinary: 6 },
-  sync: { sent: 1 },
+  sync: { sent: 1, request: 4 },
+  /** `SyncMessage.Request`; the only type asked for is `CONTACTS`. */
+  request: { type: 1 },
   sent: {
     timestamp: 2,
     message: 3,
@@ -103,6 +105,19 @@ const F = {
     destinationServiceIdBinary: 12,
   },
 } as const;
+
+/** `SyncMessage.Request.Type.CONTACTS`. */
+const REQUEST_CONTACTS = 1;
+
+/**
+ * `Content { syncMessage { request { type = CONTACTS } } }`: asks the primary device to upload the
+ * contact list, which it does only when asked. Signal Desktop and signal-cli send it after linking.
+ */
+export function encodeContactsRequest(): Uint8Array {
+  return new ProtoWriter()
+    .message(F.content.syncMessage, new ProtoWriter().message(F.sync.request, new ProtoWriter().uint(F.request.type, REQUEST_CONTACTS)))
+    .finish();
+}
 
 /** How often a 409/410 may send the request again before the mismatch counts as unresolvable. */
 const MAX_CORRECTIONS = 3;
@@ -222,6 +237,19 @@ export class SignalSender implements MessageSender {
 
   delete(deletion: SendingDeletion): Promise<void> {
     return this.exclusive(() => this.deleteNow(deletion));
+  }
+
+  /**
+   * Ask this account's other devices (the phone) for the contact list. Goes only to the own ACI,
+   * never to the one device it is sent from. Returns how many devices were asked.
+   */
+  requestContacts(): Promise<number> {
+    return this.exclusive(() => this.requestContactsNow());
+  }
+
+  /** `requestContacts` for a caller that already holds the store fence. */
+  requestContactsNow(): Promise<number> {
+    return this.deliver(this.account.aci, encodeContactsRequest(), Date.now(), [this.account.deviceId]);
   }
 
   /** The sent timestamp of a message of the person's own, or a refusal before anything is sent. */

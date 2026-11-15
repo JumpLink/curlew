@@ -26,7 +26,7 @@ import { existsSync } from 'node:fs';
 import { isOwnAci, listSessionAccounts, sessionPath } from './accounts.ts';
 import { SIGNAL_TRUST_ROOTS_BASE64 } from './constants.ts';
 import { SignalAttachments } from './attachments.ts';
-import { type AttachmentDownloader, httpsDownloader } from './contacts.ts';
+import { type AttachmentDownloader, httpsDownloader, shouldRequestContacts } from './contacts.ts';
 import type { AttachmentUploader } from './upload.ts';
 import { EnvelopeDecryptor } from './decrypt.ts';
 import type { ChatFetch } from './guard.ts';
@@ -103,6 +103,8 @@ export interface SignalBackendOptions {
   /** Sealed-sender trust roots (serialized public keys); Signal's production roots by default. */
   trustRoots?: readonly Uint8Array[];
   receiver?: Omit<ReceiverOptions, 'mode' | 'journal' | 'download'>;
+  /** Ask the phone for the contact list when none ever arrived. On by default; a test turns it off. */
+  requestContacts?: boolean;
 }
 
 export class SignalBackend implements DeliveryBackend, SendBackend {
@@ -319,6 +321,29 @@ export class SignalBackend implements DeliveryBackend, SendBackend {
       titles = new GroupTitles(store, source, (work) => receiver.exclusive(work));
     }
     await receiver.start();
+    // A linked device gets the contact list only by asking the phone for it. Never blocks or
+    // fails the receive: it runs behind the store fence and a failure is only logged.
+    if ((this.options.requestContacts ?? true) && shouldRequestContacts(store.contactsState(), Date.now())) {
+      void receiver
+        .exclusive(async () => {
+          const channel = await this.sendChannelFor(lib, account, { account: accountId, addresses: [] });
+          try {
+            const sender = new SignalSender(
+              { lib, store, account, fetch: channel.fetch, onClose: async () => undefined },
+              { account: accountId, addresses: [] },
+            );
+            await sender.requestContactsNow();
+            store.markContactsRequested(Date.now());
+            store.flush();
+          } finally {
+            await channel.close().catch(() => undefined);
+            if (store.pending > 0) store.reload();
+          }
+        })
+        .catch((err: unknown) => {
+          console.warn(`signal: asking the phone for the contact list failed (${err instanceof Error ? err.message : String(err)})`);
+        });
+    }
     return {
       nextBatch: async () => {
         const batch = await receiver.nextBatch();

@@ -199,6 +199,7 @@ function backendFor(
     lib: LIB,
     trustRoots: trust.publicKeys,
     connector: () => server.connector(),
+    requestContacts: false,
     download: async () => {
       throw new Error('no CDN in tests');
     },
