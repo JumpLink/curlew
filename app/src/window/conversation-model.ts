@@ -560,3 +560,45 @@ export function foldAlbums(messages: readonly ShownMessage[]): ShownMessage[] {
   }
   return folded;
 }
+
+/** What a freshly read newest page changes in the messages the open chat already shows. */
+export interface LiveChanges {
+  /** Messages after the last shown one, in order. */
+  added: ShownMessage[];
+  /** Shown messages whose content differs (edit, reaction, read state, album part). */
+  changed: ShownMessage[];
+  /** Ids of shown messages the index no longer has. */
+  removed: string[];
+  /** The page does not continue the shown messages (a gap or a late arrival): show the chat anew. */
+  rebuild: boolean;
+}
+
+const keyOf = (message: ConversationMessage): string => `${message.sentAt ?? ''}\u0000${message.id}`;
+
+/**
+ * Compares `fresh`, the newest page (already folded into albums), with `shown`, the messages on
+ * screen (older pages included). Only the part of `shown` that `fresh` covers is compared, so the
+ * older history already loaded is kept as it is.
+ */
+export function liveChanges(shown: readonly ShownMessage[], fresh: readonly ShownMessage[]): LiveChanges {
+  const none: LiveChanges = { added: [], changed: [], removed: [], rebuild: false };
+  if (fresh.length === 0 && shown.length === 0) return none;
+  const have = new Map(shown.map((m) => [m.id, m]));
+  const there = new Set(fresh.map((m) => m.id));
+  const last = shown[shown.length - 1];
+  if (!last) return { ...none, added: [...fresh] };
+  // A full page may start after the last shown message: more arrived than one page holds.
+  const anchor = fresh.findIndex((m) => m.id === last.id);
+  const lastGone = anchor === -1;
+  const bound = fresh.length < PAGE_SIZE || fresh.length === 0 ? '' : keyOf(fresh[0]!);
+  const removed = shown.filter((m) => !there.has(m.id) && keyOf(m) >= bound).map((m) => m.id);
+  const added = fresh.filter((m) => !have.has(m.id));
+  const changed = fresh.filter((m) => {
+    const old = have.get(m.id);
+    return old !== undefined && JSON.stringify(old) !== JSON.stringify(m);
+  });
+  const lastKey = keyOf(last);
+  const late = added.some((m) => keyOf(m) < lastKey);
+  const gap = lastGone && !removed.includes(last.id) && added.length > 0;
+  return { added, changed, removed, rebuild: late || gap };
+}

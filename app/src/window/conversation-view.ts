@@ -41,6 +41,7 @@ import {
   deleteHandleOf,
   editHandleOf,
   foldAlbums,
+  liveChanges,
   MAX_ALBUM_PARTS,
   newOlder,
   PAGE_SIZE,
@@ -82,6 +83,13 @@ import type { PickedFile } from './composer-files-model.ts';
 export interface ConversationView {
   page: Adw.NavigationPage;
   show(entry: ListEntry, messages: ShownMessage[], accountLabels: Map<string, string>): void;
+  /**
+   * Merge a freshly read newest page into the open chat without rebuilding it: new messages go
+   * below, edits, reactions, read marks and deletions change their rows in place. The scroll
+   * position, the composer, the selection and open popovers stay. `rebuild` means the page does not
+   * continue what is shown (call `show`), `busy` that the chat is still being built (try again).
+   */
+  update(fresh: ShownMessage[]): 'applied' | 'rebuild' | 'busy';
   /** Give the open chat its own colours and pattern; an empty look follows the app-wide setting. */
   setLook(look: Look): void;
   /** Open the emoji chooser of the composer (the screenshot hook `CURLEW_WINDOW_OPEN_EMOJI`). */
@@ -1432,6 +1440,71 @@ export function createConversationView(
       lookApplied = lookClasses(look);
       for (const name of lookApplied) toolbar.add_css_class(name);
       pattern.setPattern(look.background ?? null);
+    },
+    update(page) {
+      const shownEntry = entry;
+      if (!shownEntry) return 'rebuild';
+      if (!ready || loading || prepending) return 'busy';
+      const diff = liveChanges(messages, foldAlbums(page));
+      if (diff.rebuild) return 'rebuild';
+      if (diff.added.length + diff.changed.length + diff.removed.length === 0) return 'applied';
+      resolveQuotes(shownEntry, [...diff.added, ...diff.changed], [...messages, ...diff.added]);
+      // Rows of a changed message are replaced where they are; the neighbours keep theirs.
+      const positions = new Map<string, number>();
+      for (const message of diff.changed) {
+        const one = built.get(message.id);
+        if (!one) continue;
+        positions.set(message.id, (one.separator ?? one.protocolDivider ?? one.row).get_index());
+        if (one.separator) history.remove(one.separator);
+        if (one.protocolDivider) history.remove(one.protocolDivider);
+        history.remove(one.row);
+        built.delete(message.id);
+      }
+      const gone = new Set(diff.removed);
+      for (const id of gone) {
+        const message = messages.find((m) => m.id === id);
+        if (message) removeMessage(message);
+      }
+      const changedById = new Map(diff.changed.map((m) => [m.id, m]));
+      messages = messages.map((m) => changedById.get(m.id) ?? m);
+      messages.push(...diff.added);
+      empty.set_visible(messages.length === 0);
+      const subjects = subjectLabels(messages);
+      const starts = dayStarts(messages);
+      const senders = senderRunStarts(messages, shownEntry.kind === 'group');
+      const runs = protocolRunStarts(messages);
+      const dividers = protocolDividers(messages);
+      const build = (message: ShownMessage, position: number) =>
+        addRow(
+          message,
+          subjects.get(message.id),
+          senders.get(message.id),
+          runs.get(message.id),
+          dividers.get(message.id),
+          starts.has(message.id),
+          position,
+        );
+      // Top first: a row put back shifts only the ones below it.
+      for (const message of diff.changed) {
+        const position = positions.get(message.id);
+        if (position !== undefined) build(message, position);
+      }
+      for (const message of diff.added) build(message, -1);
+      // Whatever follows a removed message may now open a day or a run.
+      if (gone.size > 0) {
+        for (const message of messages) {
+          if (!built.has(message.id)) continue;
+          reconcile(
+            message,
+            subjects.get(message.id),
+            senders.get(message.id),
+            runs.get(message.id),
+            dividers.get(message.id),
+            starts.has(message.id),
+          );
+        }
+      }
+      return 'applied';
     },
     show(nextEntry, nextMessages, nextLabels) {
       entry = nextEntry;

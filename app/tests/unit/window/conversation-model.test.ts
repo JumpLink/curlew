@@ -22,6 +22,8 @@ import {
   deleteHandleOf,
   editHandleOf,
   foldAlbums,
+  liveChanges,
+  PAGE_SIZE,
   newOlder,
   quoteOf,
   reactHandleOf,
@@ -659,3 +661,68 @@ export default async () => {
     });
   });
 };
+
+describe('liveChanges', () => {
+  const at = (id: string, minute: number, extra: Partial<ConversationMessage> = {}): ShownMessage =>
+    ({
+      id,
+      sentAt: `2026-01-01T10:${String(minute).padStart(2, '0')}:00Z`,
+      bodyText: id,
+      fromSelf: false,
+      ...extra,
+    }) as unknown as ShownMessage;
+
+  it('reports nothing when the page is the same', async () => {
+    const shown = [at('a', 1), at('b', 2)];
+    const result = liveChanges(shown, [at('a', 1), at('b', 2)]);
+    expect(result).toStrictEqual({ added: [], changed: [], removed: [], rebuild: false });
+  });
+
+  it('appends the messages after the last shown one', async () => {
+    const result = liveChanges([at('a', 1), at('b', 2)], [at('a', 1), at('b', 2), at('c', 3), at('d', 4)]);
+    expect(result.added.map((m) => m.id)).toStrictEqual(['c', 'd']);
+    expect(result.rebuild).toBe(false);
+  });
+
+  it('keeps older messages that the new page does not cover', async () => {
+    const shown = Array.from({ length: 60 }, (_v, i) => at(`m${String(i).padStart(2, '0')}`, i));
+    const fresh = shown.slice(10).concat(at('m60', 59));
+    const result = liveChanges(shown, fresh.slice(-PAGE_SIZE));
+    expect(result.removed).toStrictEqual([]);
+    expect(result.added.map((m) => m.id)).toStrictEqual(['m60']);
+  });
+
+  it('finds an edit, a reaction and a read mark', async () => {
+    const shown = [at('a', 1), at('b', 2), at('c', 3)];
+    const fresh = [
+      at('a', 1, { bodyText: 'a2', editedAt: 'x' }),
+      at('b', 2, { reactions: [{ emoji: '👍', count: 1, own: false }] }),
+      at('c', 3, { readByPeer: true }),
+    ];
+    expect(liveChanges(shown, fresh).changed.map((m) => m.id)).toStrictEqual(['a', 'b', 'c']);
+  });
+
+  it('finds a deleted message, also when the conversation is shorter than a page', async () => {
+    const result = liveChanges([at('a', 1), at('b', 2), at('c', 3)], [at('b', 2), at('c', 3)]);
+    expect(result.removed).toStrictEqual(['a']);
+    expect(result.rebuild).toBe(false);
+  });
+
+  it('asks for a rebuild when a message arrives before the last shown one', async () => {
+    const result = liveChanges([at('a', 1), at('c', 3)], [at('a', 1), at('b', 2), at('c', 3)]);
+    expect(result.rebuild).toBe(true);
+  });
+
+  it('asks for a rebuild when the page leaves a gap', async () => {
+    const shown = [at('a', 1), at('b', 2)];
+    const fresh = Array.from({ length: PAGE_SIZE }, (_v, i) =>
+      at(`n${String(i).padStart(2, '0')}`, 10 + (i % 40)),
+    );
+    fresh.forEach((m, i) => (m.sentAt = `2026-01-02T10:${String(i).padStart(2, '0')}:00Z`));
+    expect(liveChanges(shown, fresh).rebuild).toBe(true);
+  });
+
+  it('adds everything to an empty chat', async () => {
+    expect(liveChanges([], [at('a', 1)]).added.length).toBe(1);
+  });
+});
