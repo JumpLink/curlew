@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-15 15:27+0100\n"
+"POT-Creation-Date: 2026-11-15 18:40+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -3959,6 +3959,22 @@ msgstr "Keine Signal-Sitzung für {account} — {hint}"
 #: packages/signal/src/backend.ts:203
 msgid "the Signal session {account} was never linked — {hint}"
 msgstr "Die Signal-Sitzung {account} wurde nie verknüpft — {hint}"
+
+#: packages/signal/src/lib.ts:33
+msgid ""
+"Signal needs gcompat on this system; install it and the Curlew glibc shim "
+"({reason})"
+msgstr ""
+"Signal braucht auf diesem System gcompat; installiere es und die Curlew-"
+"glibc-Shim ({reason})"
+
+#: packages/signal/src/lib.ts:36
+msgid ""
+"Signal needs libsignal's native addon, which did not load on this platform "
+"({reason})"
+msgstr ""
+"Signal braucht das native Addon von libsignal, das auf dieser Plattform "
+"nicht geladen werden konnte ({reason})"
 
 #: packages/signal/src/link.ts:87
 msgid ""

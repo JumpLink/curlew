@@ -127,6 +127,7 @@
 
 ### Added
 
+- Signal can run on a musl system such as postmarketOS: `contrib/glibc-shim` is the small library that supplies the glibc-only symbols gcompat lacks (preload it with `LD_PRELOAD`), and an unloadable libsignal there now says it needs gcompat (#403).
 - Matrix: log in with an access token as well as a password, so homeservers without password login (matrix.org) can be used. The user comes from the server's `/whoami`. Browser sign-in (SSO/OIDC) is still to come (Refs #375).
 - Telegram needs nothing from my.telegram.org any more: Curlew ships the API credentials of its own registered app, and the login first asks how to sign in — phone number and code, a QR code scanned with the Telegram app on another device, or (for advanced users) your own api_id and api_hash. A login that offers several ways now shows them as a list in the window and as a numbered menu in the terminal (#373, #374).
 
