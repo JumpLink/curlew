@@ -295,6 +295,8 @@ packages/store/src/chat-backfill.ts
 packages/store/src/chat-sync.ts
 packages/store/src/classify.ts
 packages/store/src/conversation-totals.ts
+packages/store/src/conversations-rebuild.ts
+packages/store/src/conversations-shared.ts
 packages/store/src/conversations.ts
 packages/store/src/db.ts
 packages/store/src/delivery-sync.ts
