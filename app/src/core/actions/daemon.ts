@@ -106,6 +106,7 @@ import {
   PULL_SYNC_INTERVAL_MS,
   PULL_SYNC_START_DELAY_MS,
   type PullSyncTicker,
+  pullSyncFailures,
   startPullSync,
 } from '../lib/pull-sync.ts';
 import { followAccount, type FollowResult } from './follow.ts';
@@ -865,6 +866,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
       `curlew-daemon: pull sync done (${result.added} added, ${result.updated} updated, ` +
         `${result.removed} removed, ${result.errors} error(s))`,
     );
+    for (const line of pullSyncFailures(result)) log(`curlew-daemon: pull sync failed for ${line}`);
     announce();
   };
   let pullTicker: PullSyncTicker | null = null;
