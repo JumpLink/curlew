@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-15 12:22+0100\n"
+"POT-Creation-Date: 2026-11-15 12:53+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -3794,6 +3794,18 @@ msgstr "Die Matrix-Kontodatei {account} ist unvollständig — {hint}"
 #: packages/matrix/src/backend.ts:218
 msgid "the Matrix account {account} is not usable ({reason}) — {hint}"
 msgstr "Das Matrix-Konto {account} ist nicht nutzbar ({reason}) — {hint}"
+
+#: packages/matrix/src/client.ts:186
+msgid ""
+"the device keys are out of sync with the server — add the account again in "
+"Accounts"
+msgstr ""
+"die Geräteschlüssel stimmen nicht mit dem Server überein – füge das Konto "
+"unter „Konten“ erneut hinzu"
+
+#: packages/matrix/src/client.ts:209
+msgid "this Matrix account is already connected in this process"
+msgstr "dieses Matrix-Konto ist in diesem Prozess bereits verbunden"
 
 #: packages/matrix/src/login.ts:40
 msgid "the homeserver must be a URL or a server name"

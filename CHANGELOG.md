@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- A Matrix account no longer ends up with keys the server refuses forever ("One time key … already exists"): the encryption keys are saved right after they are created, before the first sync, so stopping Curlew early cannot lose them. If the server does refuse them anyway, the account says its device keys are out of sync and asks to add it again, instead of only logging it. A second connection to the same account in one process no longer wipes the first one's key store.
 - A window opened from a notification stays open when the background service restarts: under systemd it runs in a scope of its own instead of the service's.
 
 - An open conversation shows new messages, edits, reactions, read marks and deletions as they arrive, without rebuilding the chat: your scroll position and the text you are typing stay (#392).

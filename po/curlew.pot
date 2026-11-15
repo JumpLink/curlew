@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-15 12:22+0100\n"
+"POT-Creation-Date: 2026-11-15 12:53+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3428,6 +3428,16 @@ msgstr ""
 
 #: packages/matrix/src/backend.ts:218
 msgid "the Matrix account {account} is not usable ({reason}) — {hint}"
+msgstr ""
+
+#: packages/matrix/src/client.ts:186
+msgid ""
+"the device keys are out of sync with the server — add the account again in "
+"Accounts"
+msgstr ""
+
+#: packages/matrix/src/client.ts:209
+msgid "this Matrix account is already connected in this process"
 msgstr ""
 
 #: packages/matrix/src/login.ts:40
