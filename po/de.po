@@ -3961,12 +3961,8 @@ msgid "the Signal session {account} was never linked — {hint}"
 msgstr "Die Signal-Sitzung {account} wurde nie verknüpft — {hint}"
 
 #: packages/signal/src/lib.ts:33
-msgid ""
-"Signal needs gcompat on this system; install it and the Curlew glibc shim "
-"({reason})"
-msgstr ""
-"Signal braucht auf diesem System gcompat; installiere es und die Curlew-"
-"glibc-Shim ({reason})"
+msgid "Signal needs gcompat on this system ({reason})"
+msgstr "Signal braucht auf diesem System gcompat ({reason})"
 
 #: packages/signal/src/lib.ts:36
 msgid ""

@@ -30,7 +30,7 @@ export function isMusl(): boolean {
 /** The user-facing reason libsignal did not load; names gcompat on musl. */
 export function loadFailureReason(cause: string, musl: boolean): string {
   return musl
-    ? fmt(_('Signal needs gcompat on this system; install it and the Curlew glibc shim ({reason})'), {
+    ? fmt(_('Signal needs gcompat on this system ({reason})'), {
         reason: cause,
       })
     : fmt(_("Signal needs libsignal's native addon, which did not load on this platform ({reason})"), {

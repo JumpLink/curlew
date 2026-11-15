@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-15 18:40+0100\n"
+"POT-Creation-Date: 2026-11-15 19:20+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3572,9 +3572,7 @@ msgid "the Signal session {account} was never linked — {hint}"
 msgstr ""
 
 #: packages/signal/src/lib.ts:33
-msgid ""
-"Signal needs gcompat on this system; install it and the Curlew glibc shim "
-"({reason})"
+msgid "Signal needs gcompat on this system ({reason})"
 msgstr ""
 
 #: packages/signal/src/lib.ts:36
