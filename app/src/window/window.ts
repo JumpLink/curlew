@@ -455,6 +455,8 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   let refreshRun = 0;
   let loading = false;
   let changedWhileLoading = false;
+  let liveNext = false;
+  let liveIdle = 0;
   const pendingLoad: Array<() => void> = [];
   const refresh = () => {
     stamp = listStamp();
@@ -482,12 +484,48 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
       });
       pendingLoad.forEach((done) => done());
       pendingLoad.length = 0;
+      if (liveNext) {
+        liveNext = false;
+        followOpenChat();
+      }
+    });
+  };
+  // The open chat takes what the daemon wrote: one read of the newest page per burst of changes,
+  // merged in place, so the scroll position, the composer and open menus stay as they are.
+  const followOpenChat = () => {
+    if (liveIdle || !currentEntry) return;
+    liveIdle = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+      liveIdle = 0;
+      const open = currentEntry;
+      const entry = open && shown.find((e) => e.id === open.id);
+      if (!entry || !window.get_mapped()) return GLib.SOURCE_REMOVE;
+      let loaded: ConversationMessage[];
+      try {
+        loaded = timed('live messages', () => loadConversationMessages(entry));
+      } catch {
+        return GLib.SOURCE_REMOVE;
+      }
+      const result = conversation.update(loaded);
+      if (result === 'busy') {
+        liveNext = true;
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => (followOpenChat(), GLib.SOURCE_REMOVE));
+        return GLib.SOURCE_REMOVE;
+      }
+      const known = new Set(currentMessages.map((m) => m.id));
+      // A late arrival (sent offline, older timestamp) is common; select() would empty the
+      // composer and pull a phone back from the list into the chat.
+      if (result === 'rebuild') conversation.show(entry, loaded, labels, true);
+      currentEntry = entry;
+      currentMessages = loaded;
+      confirmRead(loaded.filter((m) => !known.has(m.id)));
+      return GLib.SOURCE_REMOVE;
     });
   };
   // A change the daemon writes while the window is in front. A load still running finishes first:
   // restarting it on every change would starve the list during a long catch-up on a slow phone.
   const indexChanged = () => {
     if (!window.get_mapped() || listStamp() === stamp) return;
+    liveNext = true;
     if (loading) changedWhileLoading = true;
     else refresh();
   };
