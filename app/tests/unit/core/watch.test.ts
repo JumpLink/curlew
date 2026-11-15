@@ -5,6 +5,8 @@ import { runWatch, watchStep } from '../../../src/core/actions/watch.ts';
 import {
   type DaemonChangeSource,
   type DaemonWatchHandlers,
+  createPresenceGate,
+  type DaemonPresence,
   nextPresence,
 } from '../../../src/core/lib/daemon-watch.ts';
 import { freshDb } from '../store/fixtures.ts';
@@ -150,6 +152,59 @@ export default async () => {
       expect(nextPresence('absent', false).notice).toBe(null);
       expect(nextPresence('absent', true).readNow).toBe(true);
       expect(nextPresence('absent', false).readNow).toBe(false);
+    });
+
+    await it('keeps a short vanish from showing as absence', async () => {
+      const setup = () => {
+        const reports: DaemonPresence[] = [];
+        const timers = new Map<number, { fn: () => void; ms: number }>();
+        let next = 0;
+        const gate = createPresenceGate(
+          (p) => reports.push(p),
+          {
+            set: (fn, ms) => {
+              timers.set(++next, { fn, ms });
+              return next;
+            },
+            clear: (h) => void timers.delete(h as number),
+          },
+          10_000,
+        );
+        const fire = () => {
+          for (const [id, t] of timers) {
+            timers.delete(id);
+            t.fn();
+          }
+        };
+        return { reports, gate, fire, timers };
+      };
+      const a = setup();
+      expect(a.reports).toStrictEqual([]);
+      a.gate.owner(true);
+      a.gate.owner(false);
+      a.gate.owner(true);
+      a.fire();
+      expect(a.reports).toStrictEqual(['present']);
+      const b = setup();
+      b.gate.owner(true);
+      b.gate.owner(false);
+      b.fire();
+      expect(b.reports).toStrictEqual(['present', 'absent']);
+      const c = setup();
+      c.gate.owner(false);
+      expect(c.reports).toStrictEqual(['absent']);
+      const d = setup();
+      d.gate.expectRestart();
+      d.gate.owner(false);
+      expect(d.reports).toStrictEqual([]);
+      d.gate.owner(true);
+      d.fire();
+      expect(d.reports).toStrictEqual(['present']);
+      const e = setup();
+      e.gate.owner(true);
+      e.gate.owner(false);
+      e.gate.dispose();
+      expect(e.timers.size).toBe(0);
     });
 
     await it('follows the daemon appearing and vanishing, saying each once', async () => {

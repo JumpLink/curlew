@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-15 19:20+0100\n"
+"POT-Creation-Date: 2026-11-15 19:40+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -817,7 +817,7 @@ msgid "no Background portal on this system"
 msgstr ""
 
 #: app/src/core/lib/autostart-portal.ts:84
-#: app/src/window/accounts-daemon.ts:119
+#: app/src/window/accounts-daemon.ts:124
 msgid "Keep receiving messages while the window is closed"
 msgstr ""
 
@@ -1841,7 +1841,7 @@ msgstr ""
 msgid "Delete Messages and Remove"
 msgstr ""
 
-#: app/src/window/accounts-daemon.ts:112 app/src/window/accounts-daemon.ts:122
+#: app/src/window/accounts-daemon.ts:117 app/src/window/accounts-daemon.ts:127
 msgid "Could not start the background service: {reason}"
 msgstr ""
 

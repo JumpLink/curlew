@@ -22,9 +22,13 @@ import {
   type DaemonAccountEntry,
   parseDaemonAccountsReply,
 } from '../core/lib/daemon-bus.ts';
+import { createPresenceGate } from '../core/lib/daemon-watch.ts';
 import type { AccountsDaemonState } from './accounts-model.ts';
 
 const GET_ACCOUNTS_TIMEOUT_MS = 10_000;
+
+/** Sources following the daemon, told when the window restarts it so a short vanish is not an absence. */
+const restartListeners = new Set<() => void>();
 
 export interface AccountsDaemonSource {
   /** Follow the daemon and call `onChange` whenever the account list may have changed. */
@@ -40,6 +44,7 @@ export function restartDaemonIfRunning(): void {
   if (inSandbox()) return;
   try {
     Gio.Subprocess.new(['systemctl', '--user', 'try-restart', UNIT_NAME], Gio.SubprocessFlags.NONE);
+    for (const listener of restartListeners) listener();
   } catch {
     // No systemd user session: the next start of the daemon reads the new account list.
   }
@@ -177,6 +182,7 @@ export function gioAccountsDaemonSource(): AccountsDaemonSource {
         return () => {};
       }
 
+      // Unknown until the watcher answers: nothing is reported before that, so the page never shows an absence it has not seen.
       let present = false;
       let subscription = 0;
       let watch = 0;
@@ -189,8 +195,7 @@ export function gioAccountsDaemonSource(): AccountsDaemonSource {
           const accounts = await queryAccounts(connection);
           onChange({ present: true, accounts: entryMap(accounts) });
         } catch {
-          // The daemon vanished mid-call; the owner handler will report absence next.
-          emit();
+          // The daemon vanished mid-call; the presence gate decides whether that is an absence.
         }
       };
 
@@ -204,21 +209,32 @@ export function gioAccountsDaemonSource(): AccountsDaemonSource {
         (() => void refresh()) as unknown as Parameters<Gio.DBusConnection['signal_subscribe']>[6],
       );
 
+      const gate = createPresenceGate(
+        (presence) => {
+          present = presence === 'present';
+          if (present) void refresh();
+          else if (presence === 'absent') emit();
+        },
+        {
+          set: (callback, ms) =>
+            GLib.timeout_add(GLib.PRIORITY_DEFAULT, ms, () => (callback(), GLib.SOURCE_REMOVE)),
+          clear: (handle) => void GLib.source_remove(handle as number),
+        },
+      );
+      const onRestart = () => gate.expectRestart();
+      restartListeners.add(onRestart);
+
       watch = Gio.bus_watch_name_on_connection(
         connection,
         DAEMON_BUS_NAME,
         Gio.BusNameWatcherFlags.NONE,
-        () => {
-          present = true;
-          void refresh();
-        },
-        () => {
-          present = false;
-          emit();
-        },
+        () => gate.owner(true),
+        () => gate.owner(false),
       );
 
       return () => {
+        restartListeners.delete(onRestart);
+        gate.dispose();
         Gio.bus_unwatch_name(watch);
         connection.signal_unsubscribe(subscription);
       };
