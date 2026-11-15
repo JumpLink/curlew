@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- A window opened from a notification stays open when the background service restarts: under systemd it runs in a scope of its own instead of the service's.
+
 - An open conversation shows new messages, edits, reactions, read marks and deletions as they arrive, without rebuilding the chat: your scroll position and the text you are typing stay (#392).
 - The release packages carry what Signal and Telegram load at run time: libsignal (only the build for the package's own platform) and Telegram's crypto wasm, without which a Telegram account never got past its first connection.
 - The conversation list follows the background service while the window is open: a newly added account's chats and newly arrived messages show within a few seconds. Before, the list only reloaded when the window got focus back, which a phone's single full-screen window never does, so a new Telegram account looked empty until Curlew was restarted.
