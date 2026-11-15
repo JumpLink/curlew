@@ -2,7 +2,7 @@
  * Follow mode for a granted XMPP account (ADR 0004 §5) and for a Matrix account (ADR 0007 §5),
  * run by `curlew daemon`.
  *
- * The connection is held open with carbons on and a negative-priority presence, so the server
+ * The connection is held open with carbons on and an away, negative-priority presence, so the server
  * routes the person's chat to it. A stanza is only a WAKE-UP, though: the archive (MAM) is the
  * truth, and every wake-up runs the same `syncChats` that `curlew sync` runs, over the link that
  * is already open. So a reply is written through one path whether it arrived live, was missed

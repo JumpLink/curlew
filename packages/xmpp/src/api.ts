@@ -102,7 +102,7 @@ export interface XmppLink extends XmppApi {
   pepGet(jid: string, payload: XmlElement): Promise<XmlElement | undefined>;
   /** `<iq type='set'>` to the account's own PEP service. Throws `XmppQueryError`. */
   pepSet(payload: XmlElement): Promise<void>;
-  /** Enable carbons, then send the follow presence. Throws when the server refuses carbons. */
+  /** Enable carbons, then send the follow presence (available, show=away, priority -1: the person is not at the device when only the daemon runs). Throws when the server refuses carbons. */
   goAvailable(): Promise<void>;
   /** Called for every arrival hint (`isArrivalHint`). Returns the unsubscribe. */
   onArrival(listener: () => void): () => void;
