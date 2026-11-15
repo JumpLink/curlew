@@ -23,8 +23,8 @@ export const WHATSAPP_MANIFEST: BackendManifest = {
     deletesOwn: true,
     // Replies, but no threads or topics.
     threads: false,
-    // Delivered/read/played receipts, per message.
-    readReceipts: true,
+    // Sending read receipts (MessageSender.readReceipt) is not implemented; receiving read marks is separate.
+    readReceipts: false,
     groups: true,
     // Every chat is end-to-end encrypted (Signal protocol); this device holds its own keys.
     e2ee: true,

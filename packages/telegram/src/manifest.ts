@@ -29,8 +29,8 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
     // Forum topics in supergroups only (map.ts sets `threadRemoteId` for topic messages). A plain
     // reply chain is `replyToRemoteId`, not a thread.
     threads: true,
-    // Telegram reports how far each side has read (read_inbox / read_outbox markers).
-    readReceipts: true,
+    // Sending read receipts (MessageSender.readReceipt) is not implemented; receiving read marks is separate.
+    readReceipts: false,
     groups: true,
     // Cloud chats are encrypted client–server only. Secret chats (end-to-end) are out of scope,
     // so claiming E2EE here would be false.

@@ -22,7 +22,8 @@ export const SIGNAL_MANIFEST: BackendManifest = {
     deletesOwn: true,
     // Quoted replies (sent as `quote`), no threads.
     threads: false,
-    readReceipts: true,
+    // Sending read receipts (MessageSender.readReceipt) is not implemented; receiving read marks is separate.
+    readReceipts: false,
     groups: true,
     // Every chat is end-to-end encrypted; this device holds its own identity and session keys.
     e2ee: true,
