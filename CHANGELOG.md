@@ -5,6 +5,7 @@
 ### Fixed
 
 - An open conversation shows new messages, edits, reactions, read marks and deletions as they arrive, without rebuilding the chat: your scroll position and the text you are typing stay (#392).
+- An idle window no longer reloads the conversation list every 30 seconds while the background service is running; it reloads only when something in the list changed.
 - The release packages carry what Signal and Telegram load at run time: libsignal (only the build for the package's own platform) and Telegram's crypto wasm, without which a Telegram account never got past its first connection.
 - The conversation list follows the background service while the window is open: a newly added account's chats and newly arrived messages show within a few seconds. Before, the list only reloaded when the window got focus back, which a phone's single full-screen window never does, so a new Telegram account looked empty until Curlew was restarted.
 - A Matrix account that needs a new login no longer tells you to run `curlew accounts add matrix`; it points to Accounts (#375).
