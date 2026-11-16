@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import type { BackendContext, SendPermit } from '@curlew/protocol';
 import { isSendBackend } from '@curlew/protocol';
 import {
+  attachmentHandle,
   MATRIX_MANIFEST,
   MATRIX_MAX_MESSAGE_BYTES,
   MatrixBackend,
@@ -353,6 +354,56 @@ export default async () => {
         expect(event.url).toBe('mxc://example.org/up1');
         expect(event.info.mimetype).toBe('application/pdf');
         expect(event.info.size).toBe(9);
+      });
+    });
+
+    await it('sends an image with its size and echoes the row the sync would write', async () => {
+      await withRig(granted, async (rig) => {
+        // A PNG header for 3x2 pixels: signature, IHDR length, type, width, height.
+        const png = Uint8Array.from([
+          0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52, 0, 0, 0, 3, 0,
+          0, 0, 2, 8, 6, 0, 0, 0,
+        ]);
+        const file = join(rig.dir, 'pic.png');
+        writeFileSync(file, png);
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [ROOM],
+        });
+        const sent = await sender.send({ to: ROOM, text: '', attachments: [{ path: file }] });
+        await sender.close();
+        const event = JSON.parse(rig.http.puts()[0].body!);
+        expect(event.msgtype).toBe('m.image');
+        expect(event.info.w).toBe(3);
+        expect(event.info.h).toBe(2);
+        const echo = sent.echoAttachments?.[0];
+        expect(echo?.kind).toBe('image');
+        expect(echo?.width).toBe(3);
+        expect(echo?.height).toBe(2);
+        expect(echo?.size).toBe(png.length);
+        expect(echo?.handle).toBe(attachmentHandle('mxc://example.org/up1', png.length));
+      });
+    });
+
+    await it('sends a video as m.video and an audio file as m.audio', async () => {
+      await withRig(granted, async (rig) => {
+        const video = join(rig.dir, 'clip.mp4');
+        const audio = join(rig.dir, 'song.mp3');
+        writeFileSync(video, 'not really a video');
+        writeFileSync(audio, 'not really audio');
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [ROOM],
+        });
+        const sent = await sender.send({
+          to: ROOM,
+          text: '',
+          attachments: [{ path: video }, { path: audio }],
+        });
+        await sender.close();
+        const events = rig.http.puts().map((p) => JSON.parse(p.body!));
+        expect(events.map((e) => e.msgtype).join()).toBe('m.video,m.audio');
+        expect(sent.echoAttachments?.map((a) => a.kind).join()).toBe('video,audio');
       });
     });
 

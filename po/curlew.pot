@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 06:39+0100\n"
+"POT-Creation-Date: 2026-11-17 06:56+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3324,7 +3324,7 @@ msgstr ""
 msgid "the mail account {account} is incomplete — add it again"
 msgstr ""
 
-#: packages/imap/src/send.ts:78 packages/matrix/src/send.ts:354
+#: packages/imap/src/send.ts:78 packages/matrix/src/send.ts:378
 #: packages/signal/src/send.ts:505 packages/telegram/src/sender.ts:80
 #: packages/whatsapp/src/send.ts:415
 msgid "sending to {address} is not granted for account {account}"
@@ -3485,62 +3485,62 @@ msgid_plural "matrix: {n} events not decryptable"
 msgstr[0] ""
 msgstr[1] ""
 
-#: packages/matrix/src/send.ts:175
+#: packages/matrix/src/send.ts:185
 msgid "the homeserver refused the message to {room} ({reason})"
 msgstr ""
 
-#: packages/matrix/src/send.ts:184
+#: packages/matrix/src/send.ts:194
 msgid "the homeserver accepted the message to {room} but returned no event id"
 msgstr ""
 
-#: packages/matrix/src/send.ts:203
+#: packages/matrix/src/send.ts:213
 msgid ""
 "the homeserver did not say whether {room} is encrypted ({reason}) — nothing "
 "was sent"
 msgstr ""
 
-#: packages/matrix/src/send.ts:245
+#: packages/matrix/src/send.ts:255
 msgid ""
 "the homeserver did not list the reactions in {room} ({reason}) — nothing was "
 "sent"
 msgstr ""
 
-#: packages/matrix/src/send.ts:280
+#: packages/matrix/src/send.ts:290
 msgid "the homeserver did not redact the event in {room} ({reason})"
 msgstr ""
 
-#: packages/matrix/src/send.ts:297
+#: packages/matrix/src/send.ts:307
 msgid "the homeserver refused the file {file} ({reason})"
 msgstr ""
 
-#: packages/matrix/src/send.ts:306
+#: packages/matrix/src/send.ts:316
 msgid "the homeserver accepted the file {file} but returned no media URI"
 msgstr ""
 
-#: packages/matrix/src/send.ts:374
+#: packages/matrix/src/send.ts:398
 msgid ""
 "{room} is end-to-end encrypted and curlew cannot send encrypted messages yet "
 "— nothing was sent, send it from a Matrix client"
 msgstr ""
 
-#: packages/matrix/src/send.ts:390 packages/matrix/src/send.ts:463
-#: packages/matrix/src/send.ts:480
+#: packages/matrix/src/send.ts:414 packages/matrix/src/send.ts:516
+#: packages/matrix/src/send.ts:533
 msgid "{id} is not a Matrix event id — nothing was sent"
 msgstr ""
 
-#: packages/matrix/src/send.ts:395
+#: packages/matrix/src/send.ts:419
 msgid ""
 "a Matrix message holds at most {max} bytes of text, this one has {bytes} — "
 "shorten it"
 msgstr ""
 
-#: packages/matrix/src/send.ts:483 packages/signal/src/send.ts:260
+#: packages/matrix/src/send.ts:536 packages/signal/src/send.ts:260
 #: packages/telegram/src/sender.ts:141 packages/whatsapp/src/send.ts:165
 #: packages/xmpp/src/messages.ts:36
 msgid "only your own messages can be changed — nothing was sent"
 msgstr ""
 
-#: packages/matrix/src/send.ts:493
+#: packages/matrix/src/send.ts:546
 msgid "the edited text is too long for one Matrix message — nothing was sent"
 msgstr ""
 
