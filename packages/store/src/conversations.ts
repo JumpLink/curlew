@@ -586,10 +586,33 @@ export function setMessageText(db: IndexDatabase, messageId: string, text: strin
   return result.changes > 0;
 }
 
-const MESSAGE_COLUMNS = `id, conversation_id, backend, account_id, presentation, sender_participant_id, sender_name,
+// A chat sender's name comes from the message row, else from the peer the network told us about
+// later (Signal sends contact and profile names after the first group message).
+const MESSAGE_COLUMNS = `id, conversation_id, backend, account_id, presentation, sender_participant_id,
+              COALESCE(NULLIF(sender_name, ''), (SELECT p.display_name FROM chat_peers p
+                WHERE p.backend = conversation_messages.backend AND p.account_id = conversation_messages.account_id
+                  AND p.peer_id = conversation_messages.sender_peer_id)) AS sender_name,
+              (SELECT p.addresses_json FROM chat_peers p
+                WHERE p.backend = conversation_messages.backend AND p.account_id = conversation_messages.account_id
+                  AND p.peer_id = conversation_messages.sender_peer_id) AS peer_addresses,
               sender_kind, sender_address, from_self, sent_at, subject, seen, has_attachments,
               classification, classification_reason, folder_path, uid, remote_id, email_chat, encrypted, ${seqColumn('remote_seq')}, body,
               edited_at, reply_to_remote_id, thread_remote_id, reply_to_client_id, group_id, client_id, peer_read`;
+
+/** The phone number a chat peer is known by: shown when no name is, before an opaque id. */
+function phoneOfPeer(json: unknown): string | null {
+  if (typeof json !== 'string') return null;
+  try {
+    const parsed = JSON.parse(json) as unknown;
+    if (!Array.isArray(parsed)) return null;
+    for (const a of parsed as Array<{ kind?: unknown; value?: unknown }>) {
+      if (a?.kind === 'phone' && typeof a.value === 'string' && a.value) return a.value;
+    }
+  } catch {
+    // an unreadable address list is just no phone
+  }
+  return null;
+}
 
 function toMessage(
   db: IndexDatabase,
@@ -607,7 +630,7 @@ function toMessage(
     backend: String(r.backend),
     presentation: presentationOf(r.presentation),
     senderId: str(r.sender_participant_id),
-    senderName: str(r.sender_name),
+    senderName: str(r.sender_name) ?? phoneOfPeer(r.peer_addresses),
     senderAddress:
       senderAddress && r.sender_kind
         ? { kind: String(r.sender_kind) as ParticipantAddress['kind'], value: senderAddress }

@@ -957,6 +957,59 @@ export default async () => {
     });
   });
 
+  await describe('chat sender names resolved from chat_peers', async () => {
+    const ACI = '0db1aea9-24a4-4d21-bd55-2113b884de4b';
+
+    function seed(
+      db: ReturnType<typeof freshDb>,
+      name: string | null,
+      peerName: string | null,
+      phone?: string,
+    ): void {
+      db.prepare(
+        `INSERT INTO conversation_messages (
+           id, conversation_id, backend, account_id, presentation, sender_name, sender_kind, sender_address,
+           from_self, sent_at, seen, has_attachments, classification, classification_reason, body, remote_seq, sender_peer_id)
+         VALUES ('m1', 'g1', 'signal', 'signal-1', 'bubble', ?, 'signal', ?, 0, '2026-01-01T10:00:00Z', 1, 0,
+                 'conversational', 'known-contact', 'hi', 1, ?)`,
+      ).run(name, ACI, ACI);
+      const addresses = [{ kind: 'signal', value: ACI }, ...(phone ? [{ kind: 'phone', value: phone }] : [])];
+      db.prepare(
+        `INSERT INTO chat_peers (backend, account_id, peer_id, display_name, addresses_json, is_bot)
+         VALUES ('signal', 'signal-1', ?, ?, ?, 0)`,
+      ).run(ACI, peerName, JSON.stringify(addresses));
+    }
+
+    await it('uses the peer name that arrived after the message', async () => {
+      const db = freshDb();
+      try {
+        seed(db, null, 'Anna Example');
+        expect(getRecentMessages(db, ['g1'], { limit: 10 })[0]?.senderName).toBe('Anna Example');
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('prefers the name stored on the row, then the phone number, then nothing', async () => {
+      const db = freshDb();
+      try {
+        seed(db, 'Row Name', 'Peer Name', '+491701234567');
+        expect(getRecentMessages(db, ['g1'], { limit: 10 })[0]?.senderName).toBe('Row Name');
+        db.prepare('UPDATE conversation_messages SET sender_name = NULL').run();
+        db.prepare('UPDATE chat_peers SET display_name = NULL').run();
+        expect(getRecentMessages(db, ['g1'], { limit: 10 })[0]?.senderName).toBe('+491701234567');
+        db.prepare('UPDATE chat_peers SET addresses_json = ?').run(
+          JSON.stringify([{ kind: 'signal', value: ACI }]),
+        );
+        const bare = getRecentMessages(db, ['g1'], { limit: 10 })[0];
+        expect(bare?.senderName).toBe(null);
+        expect(bare?.senderAddress?.value).toBe(ACI);
+      } finally {
+        db.close();
+      }
+    });
+  });
+
   await describe('searchMessageText', async () => {
     function put(
       db: ReturnType<typeof freshDb>,
