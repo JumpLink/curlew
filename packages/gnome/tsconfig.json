@@ -10,6 +10,7 @@
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "types": [
+      "node",
       "@girs/gjs",
       "@girs/glib-2.0",
       "@girs/gobject-2.0",

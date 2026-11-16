@@ -23,6 +23,7 @@ import messenger from './unit/protocol/messenger.test.ts';
 import threadCapabilities from './unit/protocol/thread-capabilities.test.ts';
 import mailHeaders from './unit/protocol/mail-headers.test.ts';
 import mailForward from './unit/protocol/mail-forward.test.ts';
+import mediaProbe from './unit/protocol/media-probe.test.ts';
 
 import storePaths from './unit/store/paths.test.ts';
 import storeSecretFiles from './unit/store/secret-files.test.ts';
@@ -196,6 +197,7 @@ run({
   threadCapabilities,
   mailHeaders,
   mailForward,
+  mediaProbe,
   storePaths,
   storeSecretFiles,
   storeDownload,

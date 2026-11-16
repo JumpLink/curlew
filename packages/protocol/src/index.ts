@@ -24,3 +24,4 @@ export * from './mail-headers.ts';
 export * from './mail-forward.ts';
 export * from './sink.ts';
 export * from './transfer-decode.ts';
+export * from './media-probe.ts';
