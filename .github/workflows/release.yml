@@ -55,6 +55,13 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
+      # The tag's own sources: app/package.json names the packages, CHANGELOG.md and the extract
+      # script give the notes.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          path: src
+
       # THREE artifacts, not one: `.deb` + `.rpm` and the macOS/Windows packages come out of the
       # same container that already ran the bridge's tests, and merging them into a single upload
       # would mean a partial job failure losing the other half silently.
@@ -67,15 +74,22 @@ jobs:
 
       # Each file named individually, not just a directory check: a cli/ holding SOME files would
       # pass a non-empty check and still let `gh release create` publish an incomplete release.
-      # Names and versions are the ones ci.yml's own asserts use, derived from the TAG:
-      # `v<version>` is the tag this workflow is triggered on.
+      # Names are the ones ci.yml's own asserts use: the version in app/package.json, not the tag.
+      # A prerelease tag (`v0.2.0-rc.1`) builds the same `0.2.0` packages, so the tag only has to
+      # match that version up to its `-` suffix; a tag naming another version is refused.
       - name: Assert every artifact arrived
         env:
           TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           set -eu
           ls -la cli
-          version="${TAG#v}"
+          version=$(node -p "require('./src/app/package.json').version")
+          base="${TAG#v}"
+          base="${base%%-*}"
+          if [ "$base" != "$version" ]; then
+            echo "::error::tag $TAG does not match app/package.json version $version"
+            exit 1
+          fi
           missing=0
           for f in \
             "cli/curlew_${version}-1_amd64.deb" \
@@ -91,13 +105,6 @@ jobs:
             fi
           done
           [ "$missing" -eq 0 ]
-
-      # Release notes are the tag's own CHANGELOG section, not GitHub's PR list. The checkout is
-      # only for CHANGELOG.md and the extract script, at the tag being released.
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.tag || github.ref }}
-          path: src
 
       - name: Write the release notes and checksums
         env:
@@ -124,7 +131,10 @@ jobs:
             gh release upload "$TAG" cli/* --clobber
             gh release edit "$TAG" --notes-file notes.md
           else
-            gh release create "$TAG" cli/* --draft --title "$TAG" --notes-file notes.md
+            # A `-rc.N` style tag is marked as a prerelease, so it never shows as the latest one.
+            pre=""
+            case "$TAG" in *-*) pre="--prerelease" ;; esac
+            gh release create "$TAG" cli/* --draft $pre --title "$TAG" --notes-file notes.md
           fi
           gh release view "$TAG" --json assets --jq '.assets[].name'
 
