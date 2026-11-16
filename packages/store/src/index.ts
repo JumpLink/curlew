@@ -18,6 +18,7 @@ export * from './send-files.ts';
 export * from './conversations.ts';
 export * from './read-receipts.ts';
 export * from './conversation-totals.ts';
+export * from './secret-files.ts';
 export * from './secret-store.ts';
 export * from './chat-sync.ts';
 export * from './chat-backfill.ts';

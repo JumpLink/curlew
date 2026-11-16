@@ -25,6 +25,7 @@ import mailHeaders from './unit/protocol/mail-headers.test.ts';
 import mailForward from './unit/protocol/mail-forward.test.ts';
 
 import storePaths from './unit/store/paths.test.ts';
+import storeSecretFiles from './unit/store/secret-files.test.ts';
 import storeDownload from './unit/store/download.test.ts';
 import storeMailVoice from './unit/store/mail-voice.test.ts';
 import storeSendFiles from './unit/store/send-files.test.ts';
@@ -194,6 +195,7 @@ run({
   mailHeaders,
   mailForward,
   storePaths,
+  storeSecretFiles,
   storeDownload,
   storeMailVoice,
   storeSendFiles,
