@@ -9,6 +9,7 @@
 
 import { appendChanges } from './changes.ts';
 import { type IndexDatabase, withTransaction } from './db.ts';
+import { sweepThumbnails } from './thumbnails.ts';
 
 export interface AccountDataRemoved {
   /** Chat or mail messages deleted (both tables). */
@@ -43,6 +44,7 @@ export function deleteAccountData(db: IndexDatabase, backend: string, accountId:
       accountId,
     );
 
+    sweepThumbnails(db, `message_id IN (${msgs})`, [backend, accountId]);
     db.prepare(`DELETE FROM message_attachments WHERE message_id IN (${msgs})`).run(backend, accountId);
     db.prepare(`DELETE FROM message_reactions WHERE message_id IN (${msgs})`).run(backend, accountId);
     db.prepare('DELETE FROM conversation_messages WHERE backend = ? AND account_id = ?').run(backend, accountId);

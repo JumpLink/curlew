@@ -58,6 +58,7 @@ import {
   type LeaseTake,
 } from './receive-lease.ts';
 import { flag, num } from './row.ts';
+import { sweepThumbnailsOf, thumbnailColumns, sweepThumbnails } from './thumbnails.ts';
 import { stableId } from './threads.ts';
 
 export interface ChatSyncOptions {
@@ -300,6 +301,7 @@ class ChatBatch {
       attachment.height,
       attachment.durationMs,
       attachment.handle,
+      ...thumbnailColumns(messageId, idx, attachment),
     ]);
   }
 }
@@ -416,6 +418,7 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
   // Deletions first: other people's words the server no longer has must not outlive it here.
   deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, batch.deletedMessages);
   if (batch.deletedMessages.length > 0) {
+    sweepThumbnailsOf(db, batch.deletedMessages);
     deleteIn(db, (p) => `DELETE FROM message_attachments WHERE message_id IN (${p})`, batch.deletedMessages);
     deleteIn(db, (p) => `DELETE FROM message_reactions WHERE message_id IN (${p})`, batch.deletedMessages);
   }
@@ -428,6 +431,11 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
     deleteIn(db, (p) => `DELETE FROM ${table} WHERE conversation_id IN (${p})`, batch.deletedConversations);
   }
   if (batch.deletedConversations.length > 0) {
+    sweepThumbnails(
+      db,
+      `message_id IN (SELECT id FROM conversation_messages WHERE conversation_id IN (${placeholders(batch.deletedConversations.length)}))`,
+      batch.deletedConversations,
+    );
     db.prepare(
       `DELETE FROM message_attachments WHERE message_id IN
          (SELECT id FROM conversation_messages WHERE conversation_id IN (${placeholders(batch.deletedConversations.length)}))`,
@@ -459,7 +467,7 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
   insertMany(
     db,
     `INSERT OR IGNORE INTO message_attachments
-       (message_id, idx, filename, mime_type, size, kind, width, height, duration_ms, handle)`,
+       (message_id, idx, filename, mime_type, size, kind, width, height, duration_ms, handle, thumb_handle, thumb_state, blur_hash)`,
     batch.messageAttachments,
   );
   insertMany(
@@ -491,6 +499,7 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
   }
   deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, batch.retracted);
   if (batch.retracted.length > 0) {
+    sweepThumbnailsOf(db, batch.retracted);
     deleteIn(db, (p) => `DELETE FROM message_attachments WHERE message_id IN (${p})`, batch.retracted);
     deleteIn(db, (p) => `DELETE FROM message_reactions WHERE message_id IN (${p})`, batch.retracted);
   }

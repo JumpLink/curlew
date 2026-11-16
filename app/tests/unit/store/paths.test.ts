@@ -110,6 +110,7 @@ export default async () => {
       expect(p.attachmentsDir).toBe('/sandbox/files/attachments');
       expect(p.previewsDir).toBe('/sandbox/cache/previews');
       expect(p.avatarsDir).toBe('/sandbox/cache/avatars');
+      expect(p.thumbsDir).toBe('/sandbox/cache/thumbs');
       expect(p.sendStagingDir).toBe('/sandbox/cache/outgoing');
       expect(p.configPath).toBe('/sandbox/config/config.json');
     });

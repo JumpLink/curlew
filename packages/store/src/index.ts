@@ -14,6 +14,7 @@ export * from './classify.ts';
 export * from './threads.ts';
 export * from './mail-reply.ts';
 export * from './attachments.ts';
+export * from './thumbnails.ts';
 export * from './send-files.ts';
 export * from './conversations.ts';
 export * from './read-receipts.ts';

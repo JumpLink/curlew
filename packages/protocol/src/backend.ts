@@ -369,6 +369,12 @@ export interface ChatAttachment {
    * backend fetch the bytes later. Never leaves `@curlew/store`.
    */
   handle: string;
+  /** Inline preview bytes (JPEG) the network shipped with the message, at most 16 KiB (ADR 0017). */
+  thumbnail?: Uint8Array;
+  /** Backend-private: fetch a small preview without the full file. Never leaves `@curlew/store`. */
+  thumbHandle?: string;
+  /** The network's own blurHash, never computed by curlew. */
+  blurHash?: string;
 }
 
 /** One message in a chat. */

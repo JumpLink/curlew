@@ -4,6 +4,11 @@
   "description": "Lokale Zustandsdateien von curlew, die nicht im Repo stehen.",
   "entries": [
     {
+      "path": "$XDG_CACHE_HOME/curlew/thumbs",
+      "class": "derived",
+      "recreate": "Media thumbnails written at sync (ADR 0017); losing them costs a re-sync of posters, nothing else. Not emptied by the window."
+    },
+    {
       "path": ".gjsify-link.json",
       "class": "derived",
       "recreate": "`gjsify link <gjsify-checkout>` (ADR 0065), danach `gjsify install`; werkstatt-Konvention: Checkout ~/Projekte/.worktrees/gjsify-dev. Per .git/info/exclude ignoriert, nie committet."

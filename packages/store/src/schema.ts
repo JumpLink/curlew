@@ -22,7 +22,7 @@
 import { type IndexDatabase, withTransaction } from './db.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 
-export const SCHEMA_VERSION = 24;
+export const SCHEMA_VERSION = 25;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -482,6 +482,14 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
        WHERE EXISTS (SELECT 1 FROM messages m
                       WHERE m.account_id = folders.account_id AND m.folder_path = folders.path
                         AND m.email_chat = 1)`,
+  ],
+  // v25: media thumbnails (ADR 0017). Never the bytes: `thumb_handle` lets the window fetch the
+  // network's small preview later, `thumb_state` says what is known (NULL = not looked at, 'none',
+  // 'stored', 'failed'), `blur_hash` is the network's own 4x3 hash, the only pixels in the index.
+  25: [
+    { table: 'message_attachments', column: 'thumb_handle', type: 'TEXT' },
+    { table: 'message_attachments', column: 'thumb_state', type: 'TEXT' },
+    { table: 'message_attachments', column: 'blur_hash', type: 'TEXT' },
   ],
 };
 

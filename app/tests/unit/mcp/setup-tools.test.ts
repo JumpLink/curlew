@@ -15,7 +15,7 @@ import { describe, expect, it } from '@gjsify/unit';
 import { SETUP_STEPS, setupStatus } from '../../../src/core/actions/setup.ts';
 import type { SetupContext } from '../../../src/core/actions/setup.ts';
 import { registerSetupTools, SETUP_STEP_IDS } from '../../../src/frontends/mcp/tools/setup.ts';
-import { FAKE_PAIRING_PAYLOAD, fakeContext } from '../core/setup-fakes.ts';
+import { FAKE_PAIRING_PAYLOAD, SANDBOX, fakeContext } from '../core/setup-fakes.ts';
 import { createRecorder } from './recorder.ts';
 
 interface ToolResult {
@@ -23,10 +23,25 @@ interface ToolResult {
   isError?: boolean;
 }
 
-function callTool(name: string, params: unknown): Promise<ToolResult> {
+// The handlers build their context from the process environment (XDG_*), and a status read opens
+// the index there — and migrates it. Point every one of them at the sandbox for the call, so a
+// test run can never open (and upgrade) the real `~/.local/share/curlew/index.db`.
+const SANDBOXED_ENV = ['HOME', 'XDG_DATA_HOME', 'XDG_CONFIG_HOME', 'XDG_CACHE_HOME'] as const;
+
+async function callTool(name: string, params: unknown): Promise<ToolResult> {
   const rec = createRecorder();
   registerSetupTools(rec.server);
-  return rec.handler(name)(params) as Promise<ToolResult>;
+  const saved = SANDBOXED_ENV.map((key) => process.env[key]);
+  for (const key of SANDBOXED_ENV) process.env[key] = SANDBOX;
+  try {
+    return (await rec.handler(name)(params)) as ToolResult;
+  } finally {
+    SANDBOXED_ENV.forEach((key, i) => {
+      const value = saved[i];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    });
+  }
 }
 
 function payload(result: ToolResult): unknown {

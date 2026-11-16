@@ -19,6 +19,7 @@ import type { ChatSession } from '@curlew/protocol';
 import { appendChanges } from './changes.ts';
 import type { IndexDatabase, SqlValue } from './db.ts';
 import { insertMany, withTransaction } from './db.ts';
+import { thumbnailColumns } from './thumbnails.ts';
 
 /** Chats walked in one run, newest attachment first. */
 export const BACKFILL_CHATS = 10;
@@ -111,7 +112,10 @@ export async function backfillAttachments(
           if (stored.described || done.has(stored.id)) continue;
           for (let i = 0; i < (m.attachments?.length ?? 0); i++) {
             const a = m.attachments![i];
-            rows.push([stored.id, i, a.filename, a.mimeType, a.size, a.kind, a.width, a.height, a.durationMs, a.handle]);
+            rows.push([
+              stored.id, i, a.filename, a.mimeType, a.size, a.kind, a.width, a.height, a.durationMs, a.handle,
+              ...thumbnailColumns(stored.id, i, a),
+            ]);
             done.add(stored.id);
           }
         }
@@ -131,7 +135,7 @@ export async function backfillAttachments(
     for (const c of pending) {
       if (c.seq > covered) continue;
       if (!c.described && !done.has(c.id)) {
-        rows.push([c.id, 0, null, null, null, 'file', null, null, null, '']);
+        rows.push([c.id, 0, null, null, null, 'file', null, null, null, '', null, null, null]);
         done.add(c.id);
       }
       if (groups && !grouped.has(c.id)) {
@@ -144,7 +148,7 @@ export async function backfillAttachments(
         if (rows.length > 0) insertMany(
           db,
           `INSERT OR IGNORE INTO message_attachments
-             (message_id, idx, filename, mime_type, size, kind, width, height, duration_ms, handle)`,
+             (message_id, idx, filename, mime_type, size, kind, width, height, duration_ms, handle, thumb_handle, thumb_state, blur_hash)`,
           rows,
         );
         for (const [group, id] of groupRows) {
