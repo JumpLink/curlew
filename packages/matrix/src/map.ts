@@ -148,7 +148,7 @@ export function parseMxc(uri: string): { server: string; mediaId: string } | nul
   return match ? { server: match[1]!, mediaId: match[2]! } : null;
 }
 
-function attachmentKind(msgtype: string | null, mimeType: string | null, voice: boolean): AttachmentKind {
+export function attachmentKind(msgtype: string | null, mimeType: string | null, voice: boolean): AttachmentKind {
   if (voice) return 'voice';
   if (msgtype === 'm.image') return 'image';
   if (msgtype === 'm.video') return 'video';
@@ -173,6 +173,10 @@ function toChatAttachments(event: MxEvent): ChatAttachment[] | undefined {
   const voice = content['org.matrix.msc3245.voice'] !== undefined || content['m.voice'] !== undefined;
   const filename = str(content.filename) ?? (event.type === 'm.sticker' ? null : messageText(content, false) === null ? str(content.body) : null);
   const duration = num(info.duration) ?? num((content['org.matrix.msc1767.audio'] as Content | undefined)?.duration);
+  // The poster the sender attached (ADR 0017). An encrypted room's `thumbnail_file` needs the
+  // key, so it comes with E2EE; the file itself is skipped above for the same reason.
+  const thumbUrl = str(info.thumbnail_url);
+  const blurHash = str(info['xyz.amorgan.blurhash']);
   return [
     {
       filename,
@@ -183,6 +187,8 @@ function toChatAttachments(event: MxEvent): ChatAttachment[] | undefined {
       height: num(info.h),
       durationMs: duration === null ? null : Math.round(duration),
       handle: attachmentHandle(url, size),
+      ...(thumbUrl !== null && parseMxc(thumbUrl) ? { thumbHandle: attachmentHandle(thumbUrl, null) } : {}),
+      ...(blurHash !== null ? { blurHash } : {}),
     },
   ];
 }
