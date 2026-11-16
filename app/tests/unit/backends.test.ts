@@ -1,12 +1,10 @@
 import { describe, expect, it, on } from '@gjsify/unit';
 
 import { GnomeError, GnomeUnavailableError } from '@curlew/protocol';
-import { goa } from '../../../packages/gnome/src/libs.gjs.ts';
 import { check, listAccounts, listEvents, searchContacts } from '@curlew/gnome';
 import { getMessage, searchMail } from '@curlew/imap';
 import { runChecks } from '../../src/frontends/cli/check.ts';
 import { runtimeName } from '../../src/core/runtime.ts';
-import { mcpErrorFrom } from '../../src/frontends/mcp/types.ts';
 
 // @curlew/gnome runs the SAME gi:// implementation on every runtime (GJS native,
 // Node/Bun via @gjsify/node-gi) — the constraint is a reachable GNOME session, not the JS
@@ -35,12 +33,6 @@ const pinnedToDeadPath = env.DBUS_SESSION_BUS_ADDRESS === DEAD_BUS;
 // equally correct answer that optional.test.ts pins.
 
 export default async () => {
-  const typelibsLoad = await goa.get().then(
-    () => true,
-    () => false,
-  );
-  const nativeFailure = pinnedToDeadPath && typelibsLoad;
-
   await describe('@curlew/gnome', async () => {
     await it('check() answers with a name, a boolean and a reason', async () => {
       const result = await check();
@@ -91,42 +83,19 @@ export default async () => {
       }
     });
 
-    await it('the MCP and CLI answers for one failure read the same', async () => {
-      if (!nativeFailure) return;
-      // Same condition, same first words. `curlew check` said the stable sentence while
-      // contacts_search answered `{"error":"Goa.Client.new: <locale string>"}`; the reader
-      // of the second has no way to tell a missing bus from a missing typelib.
-      const result = await check();
-      let thrown = '';
-      try {
-        await listAccounts();
-      } catch (err) {
-        expect(err instanceof GnomeError).toBe(true);
-        thrown = mcpErrorFrom(err).content[0].text;
-      }
-      if (thrown === '') return; // a live GOA answered; nothing to compare
-      const body = JSON.parse(thrown) as { error: string };
-      expect(body.error).toMatch(/^GNOME Online Accounts .* unavailable/i);
-      expect(result.message.startsWith(body.error.slice(0, 20))).toBe(true);
-    });
-
-    await it('a GnomeError carries the GError domain and code', async () => {
-      if (!nativeFailure) return;
-      // Two fields named after a GError that nothing set were a trap: a reader would branch
-      // on `err.code` and get `undefined`. Normalised to the same thing on both runtimes —
-      // gjs reports the quark as a NUMBER (198), node-gi as the name — so a caller can tell
-      // "we gave up waiting" from "GOA said no" without matching the message.
+    await it('an unreachable account store is GnomeUnavailableError with the stable sentence', async () => {
+      if (!pinnedToDeadPath) return; // a workstation may have a live session — nothing to assert
+      // @gjsify/system-accounts answers an unreachable GOA with "no account store" (no GError
+      // crosses over), so listAccounts says it the way a missing typelib always was said.
       let caught: unknown;
       try {
         await listAccounts();
       } catch (err) {
         caught = err;
       }
-      expect(caught instanceof GnomeError).toBe(true);
-      const e = caught as GnomeError;
-      expect(typeof e.domain).toBe('string');
-      expect(e.domain).toMatch(/quark$/);
-      expect(typeof e.code).toBe('number');
+      expect(caught instanceof GnomeUnavailableError).toBe(true);
+      const result = await check();
+      expect(result.message.startsWith('GNOME Online Accounts')).toBe(true);
     });
 
     await it('data functions fail with a GnomeError naming the call, never a bare GError', async () => {
@@ -141,7 +110,7 @@ export default async () => {
           expect(Array.isArray(result)).toBe(true);
         } catch (err) {
           // Unreachable: one error type per cause — GnomeUnavailableError for a missing
-          // typelib, GnomeError for any other native failure. Unwrapped, a GJS GLib.Error is
+          // typelib or account store, GnomeError for any other native failure (EDS). Unwrapped, a GJS GLib.Error is
           // a boxed GObject and not even `instanceof Error` — the CLI could not classify it,
           // and `check()`'s message was the raw locale string.
           expect(err instanceof GnomeError || err instanceof GnomeUnavailableError).toBe(true);

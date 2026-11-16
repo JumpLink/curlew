@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- GNOME Online Accounts mail accounts are missing in the Flatpak: the Flatpak may now talk to GNOME Online Accounts, and the accounts are read over D-Bus there, so the accounts set up on the host show up in both builds. The *Add Account* row for them shows wherever they can be reached.
 - A prerelease tag such as `v0.2.0-rc.1` now produces a draft prerelease instead of failing the release workflow's artifact check: the package names come from `app/package.json`, and a tag naming another version is refused.
 - The accounts page no longer flashes "The background service is not running" while it starts or restarts: an absence shows only after the service stayed gone for 10 seconds.
 - Signal now asks the phone for the contact list after linking, so contacts appear without a message first.

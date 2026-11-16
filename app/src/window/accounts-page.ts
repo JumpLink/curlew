@@ -8,6 +8,7 @@ import Gio from 'gi://Gio?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 
+import { inSandbox } from '../core/lib/sandbox.ts';
 import { backgroundService, chatOnly } from '../core/platform.ts';
 import { DELTA_CHAT } from '../core/visibility.ts';
 import { protocolLabel } from './conversation-list-model.ts';
@@ -38,6 +39,14 @@ export function accountStatusLabel(status: AccountStatus): string {
     case 'disabled':
       return _('Off');
   }
+}
+
+/**
+ * GNOME Settings is not inside a Flatpak and there is no portal that opens it, so the shortcuts
+ * to it exist only outside a sandbox. The accounts themselves are listed in both builds.
+ */
+export function canOpenGoaSettings(): boolean {
+  return !inSandbox();
 }
 
 export function openGoaSettings(onError: (err: Error) => void): void {
@@ -97,7 +106,7 @@ function buildGroup(
 
   // One group answers everything about its protocol: the accounts, their state and, for mail
   // accounts from the system, where to manage them.
-  if (group.isGoa) {
+  if (group.isGoa && canOpenGoaSettings()) {
     const manage = new Gtk.Button({
       label: _('Manage…'),
       tooltipText: _('Open GNOME Settings → Online Accounts'),

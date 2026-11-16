@@ -6,10 +6,10 @@ import { optionalNamespace } from '../../../../packages/gnome/src/optional.ts';
 // Importing the *.gjs.ts modules here is itself the test: with a static `gi://Goa` / `gi://EBook`
 // import they cannot even be loaded on a host without those typelibs (Node, macOS), which is
 // the bug this guards — one missing optional typelib killed the whole app at startup.
-import { check, listAccounts } from '../../../../packages/gnome/src/goa.gjs.ts';
+import { check } from '../../../../packages/gnome/src/accounts.gjs.ts';
 import { searchContacts } from '../../../../packages/gnome/src/contacts.gjs.ts';
 import { listEvents } from '../../../../packages/gnome/src/calendar.gjs.ts';
-import { goa } from '../../../../packages/gnome/src/libs.gjs.ts';
+import { eds } from '../../../../packages/gnome/src/libs.gjs.ts';
 
 async function rejection(promise: Promise<unknown>): Promise<unknown> {
   try {
@@ -57,7 +57,7 @@ export default async () => {
   });
 
   await describe('@curlew/gnome without the typelibs', async () => {
-    const available = await goa.get().then(
+    const available = await eds.get().then(
       () => true,
       () => false,
     );
@@ -66,8 +66,7 @@ export default async () => {
       if (available) return; // a host with GOA: the real implementation, nothing to degrade
       const result = await check();
       expect(result.ok).toBe(false);
-      expect(result.message).toContain('Goa typelib not available');
-      expect((await rejection(listAccounts())) instanceof GnomeUnavailableError).toBe(true);
+      expect(result.message).toContain('unavailable');
     });
 
     await it('reports contacts and calendar as unavailable without a registry', async () => {

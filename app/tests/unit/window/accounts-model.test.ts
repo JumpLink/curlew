@@ -34,7 +34,6 @@ function goaAccount(over: Partial<GnomeAccount> & { id: string }): GnomeAccount 
     identity: over.id,
     presentation: over.id,
     capabilities: { mail: true, calendar: false, contacts: false, files: false },
-    auth: { oauth2: true, password: false },
     ...over,
   } as GnomeAccount;
 }

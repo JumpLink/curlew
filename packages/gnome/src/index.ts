@@ -1,7 +1,7 @@
 /**
  * @curlew/gnome entry — one implementation for every runtime.
  *
- * Native implementation over `gi://Goa`, `gi://EDataServer`, `gi://EBook`, `gi://ECal`, …
+ * Accounts through `@gjsify/system-accounts` (libgoa or D-Bus); contacts and calendar over `gi://EDataServer`, `gi://EBook`, `gi://ECal`, …
  * returning the plain DTOs from @curlew/protocol. It runs unchanged on GJS (native `gi://`)
  * and on Node/Bun, where `gi://` resolves through `@gjsify/node-gi` with GJS semantics. What it
  * needs is a GNOME session with GOA/EDS running, not a particular JS runtime.
@@ -11,6 +11,6 @@
  * with `GnomeUnavailableError`. `check()` reports it instead of throwing.
  */
 
-export { check, describeUnavailable, listAccounts } from './goa.gjs.ts';
+export { accountStoreAvailable, check, describeUnavailable, listAccounts } from './accounts.gjs.ts';
 export { searchContacts } from './contacts.gjs.ts';
 export { listEvents } from './calendar.gjs.ts';

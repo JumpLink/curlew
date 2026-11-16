@@ -14,8 +14,6 @@ import { openGoaSettings } from './accounts-page.ts';
 import { APP_ID } from './about.ts';
 import { pushProtocolsPage } from './protocols-page.ts';
 import { loadAccountsState } from './accounts-store.ts';
-import { chatOnly } from '../core/platform.ts';
-import { inSandbox } from '../core/lib/sandbox.ts';
 import { deltaChatPageText } from './email-chat-model.ts';
 import {
   applyAiChoice,
@@ -120,7 +118,6 @@ export function presentWelcome(parent: Gtk.Window | null, onClosed: () => void, 
     else navigation.push(builders.get(following)!());
   };
   const nextButton = (id: WelcomePageId) => pill(_('Next'), true, () => next(id));
-  const hostAccounts = () => !inSandbox() && !chatOnly();
 
   builders.set('intro', () =>
     statusPage(
@@ -188,7 +185,7 @@ export function presentWelcome(parent: Gtk.Window | null, onClosed: () => void, 
       nextButton('delta-chat'),
     ]);
     const enabled = new Set(deltaChatAccountIds(loadConfig(path)));
-    void loadAccountsState(path, { hostAccounts: hostAccounts() }).then(
+    void loadAccountsState(path).then(
       (load) => {
         const choices = mailAccountChoices(load);
         if (choices.length === 0) {
@@ -268,7 +265,7 @@ export function presentWelcome(parent: Gtk.Window | null, onClosed: () => void, 
       group,
       [pill(_('Start Using Curlew'), true, () => dialog.close())],
     );
-    void loadAccountsState(path, { hostAccounts: hostAccounts() }).then((load) => {
+    void loadAccountsState(path).then((load) => {
       for (const line of welcomeSummary(loadConfig(path), countAccounts(load))) {
         group.add(new Adw.ActionRow({ title: line.title, subtitle: line.value, useMarkup: false }));
       }

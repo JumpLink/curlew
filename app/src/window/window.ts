@@ -63,7 +63,6 @@ import { presentPreferences } from './preferences-dialog.ts';
 import { presentWelcome } from './welcome.ts';
 import { countAccounts, shouldShowWelcome, welcomeStartPage } from './welcome-model.ts';
 import { loadAccountsState } from './accounts-store.ts';
-import { inSandbox } from '../core/lib/sandbox.ts';
 import { loadAgentAccess } from './agent-access-store.ts';
 import { reactToMessage } from '../core/actions/react.ts';
 import { contactsForPicker } from '../core/actions/contacts.ts';
@@ -592,7 +591,7 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
     try {
       const path = configPath();
       if (loadConfig(path).ui.welcomeDone === true) return;
-      const count = countAccounts(await loadAccountsState(path, { hostAccounts: !inSandbox() }));
+      const count = countAccounts(await loadAccountsState(path));
       if (shouldShowWelcome(loadConfig(path).ui.welcomeDone, count)) welcome.activate(null);
     } catch {
       // No welcome screen is better than a broken window.

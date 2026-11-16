@@ -7,7 +7,7 @@
  * added once applies to both.
  */
 
-import { check, listAccounts } from '@curlew/gnome';
+import { accountStoreAvailable, check, listAccounts } from '@curlew/gnome';
 import type {
   AccountAddOptions,
   AccountPrompter,
@@ -45,6 +45,12 @@ import { openIndex } from './index-sync.ts';
 export async function accountsList(): Promise<GnomeAccount[]> {
   if (demoActive()) return [];
   return listAccounts();
+}
+
+/** Whether GNOME Online Accounts can be asked (libgoa or D-Bus), in and out of a sandbox. */
+export async function accountStoreReachable(): Promise<boolean> {
+  if (demoActive()) return true;
+  return accountStoreAvailable();
 }
 
 /** Probe GOA/EDS availability (the same three-state shape `curlew check` reports). */

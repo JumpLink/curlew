@@ -132,3 +132,19 @@ supporting is **unchecked**.
    needs `--filesystem=xdg-download` in a sandbox, or a portal-chosen folder.
 5. **macOS and Windows sandboxes.** What each allows for a long-running background process and for
    a shared data directory between app and CLI (a macOS App Group is the candidate; unchecked).
+
+## Addendum (2026-11-16): GOA in the Flatpak
+
+Open question 2 is reversed by the owner for release 0.2.0-rc.2: GNOME Online Accounts work inside
+the Flatpak. The manifest holds `--talk-name=org.gnome.OnlineAccounts` (the same hole Geary and
+Evolution use), and accounts are listed through `@gjsify/system-accounts`, whose D-Bus driver takes
+over where libgoa is missing: org.gnome.Platform 51 ships no Goa typelib, so the GI route cannot
+work in the sandbox. Accounts set up on the host therefore appear in both builds.
+
+- The *Add Account → GNOME Online Accounts* row shows whenever the account store answers, in and
+  out of a sandbox. Inside the Flatpak it is informational: GNOME Settings cannot be launched from
+  there and no portal opens it, so the "Manage…" shortcuts are hidden.
+- `@curlew/gnome` no longer imports `gi://Goa`; EDS (contacts, calendar) is unchanged and still
+  not reachable from the Flatpak (ADR 0005).
+- Needs a `@gjsify/system-accounts` release that contains the D-Bus driver (gjsify PR #2668).
+
