@@ -353,6 +353,23 @@ export default async () => {
       });
     });
 
+    await it('hands back the row of the sent file for a local echo', async () => {
+      await withDir(async (dir) => {
+        const a = join(dir, 'a.png');
+        writeFileSync(a, 'png');
+        const log = newLog();
+        const sender = new XmppSender(new GrantedXmppSession(fakeLink(log), PERMIT, () => 'id-1'));
+        const sent = await sender.send({ to: PEER, text: '', attachments: [{ path: a }] });
+        const row = sent.echoAttachments?.[0];
+        expect(sent.echoAttachments?.length).toBe(1);
+        expect(row?.filename).toBe('a.png');
+        expect(row?.mimeType).toBe('image/png');
+        expect(row?.size).toBe(3);
+        expect(row?.kind).toBe('image');
+        expect(row?.handle?.includes('upload.example.org/get/1/a.png')).toBe(true);
+      });
+    });
+
     await it('sends no text message after a file-only send', async () => {
       await withDir(async (dir) => {
         const a = join(dir, 'a.png');

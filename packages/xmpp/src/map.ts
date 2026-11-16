@@ -312,7 +312,7 @@ export function buildPage(
     }
     // An upload's body is its own URL: the file is the message, so the link is not also its text.
     if (links.length === 1 && text !== null && text.trim() === links[0]) text = null;
-    const attachments = attachmentsOfLinks(links);
+    const attachments = attachmentsOfLinks(links, entry.fileMeta);
     messages.set(entry.archiveId, {
       remoteId: entry.archiveId,
       seq: seqs[index],

@@ -13,6 +13,7 @@
  */
 
 import type { AttachmentKind, ChatAttachment } from '@curlew/protocol';
+import type { FileMeta } from './stanza.ts';
 
 export interface AttachmentLink {
   /** Where the bytes are: always `https:`. */
@@ -145,21 +146,38 @@ export function parseAttachmentHandle(handle: string): AttachmentLink | null {
   }
 }
 
+/** The metadata that names this link, else the only one there is for the only link. */
+function metaFor(
+  link: string,
+  parsed: AttachmentLink,
+  meta: readonly FileMeta[],
+  linkCount: number,
+): FileMeta | null {
+  const named = meta.find((m) => {
+    if (m.url === null) return false;
+    const other = parseAttachmentLink(m.url);
+    return m.url.trim() === link.trim() || (other !== null && other.fetchUrl === parsed.fetchUrl);
+  });
+  if (named) return named;
+  return linkCount === 1 && meta.length === 1 && meta[0].url === null ? meta[0] : null;
+}
+
 /** One row per link that can be fetched later; a link that cannot be (plain `http:`, a LAN host) gets none. */
-export function attachmentsOfLinks(links: readonly string[]): ChatAttachment[] {
+export function attachmentsOfLinks(links: readonly string[], meta: readonly FileMeta[] = []): ChatAttachment[] {
   const out: ChatAttachment[] = [];
   for (const link of links) {
     const parsed = parseAttachmentLink(link);
     if (parsed === null) continue;
-    const mimeType = mimeOfName(parsed.filename);
+    const declared = metaFor(link, parsed, meta, links.length);
+    const mimeType = declared?.mimeType ?? mimeOfName(parsed.filename);
     out.push({
       filename: parsed.filename,
       mimeType,
-      size: null,
+      size: declared?.size ?? null,
       kind: kindOf(mimeType),
-      width: null,
-      height: null,
-      durationMs: null,
+      width: declared?.width ?? null,
+      height: declared?.height ?? null,
+      durationMs: declared?.durationMs ?? null,
       handle: attachmentHandle(link.trim()),
     });
   }
