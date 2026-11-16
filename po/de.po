@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-16 20:22+0100\n"
+"POT-Creation-Date: 2026-11-16 22:08+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -337,7 +337,7 @@ msgstr "Nachrichten von {backend} haben keinen Betreff"
 msgid "{backend} cannot send email chat headers"
 msgstr "{backend} kann keine E-Mail-Chat-Kopfzeilen senden"
 
-#: app/src/core/actions/setup-host.ts:208
+#: app/src/core/actions/setup-host.ts:215
 msgid ""
 "neither a curlew checkout above this directory nor a `curlew` command on "
 "PATH. Clone the repo and run `gjsify install`, or install the published "

@@ -277,7 +277,7 @@ msgstr ""
 msgid "{backend} cannot send email chat headers"
 msgstr ""
 
-#: app/src/core/actions/setup-host.ts:208
+#: app/src/core/actions/setup-host.ts:215
 msgid ""
 "neither a curlew checkout above this directory nor a `curlew` command on "
 "PATH. Clone the repo and run `gjsify install`, or install the published "
