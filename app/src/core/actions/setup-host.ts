@@ -171,8 +171,15 @@ export function setupConfigPath(host: CommandRunner): string {
   return join(homeSubdir(xdgConfigHome(host)), 'config.json');
 }
 
-/** `$XDG_DATA_HOME/curlew/index.db` — the index a run reports on, never the user's in a test. */
+/**
+ * The index a run reports on: `CURLEW_DB_PATH` when set, like every other curlew command, else
+ * `$XDG_DATA_HOME/curlew/index.db`. Ignoring the override once let a test open, and migrate, the
+ * user's real index.
+ */
 export function setupIndexPath(host: CommandRunner): string {
+  const explicit = host.env('CURLEW_DB_PATH');
+  if (explicit !== undefined && explicit !== '')
+    return explicit.endsWith('.db') ? explicit : `${explicit}.db`;
   return join(homeSubdir(xdgDataHome(host)), 'index.db');
 }
 
