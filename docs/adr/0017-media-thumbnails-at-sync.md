@@ -1,6 +1,6 @@
 # ADR 0017 — media thumbnails at sync
 
-- **Status:** Proposed (2026-11-16)
+- **Status:** Accepted (2026-11-16) — thumbnails in the cache directory, 16 KiB cap, as proposed.
 - **Scope:** `@curlew/protocol` (`ChatAttachment`), `@curlew/store` (schema v25, `chat-sync.ts`,
   `attachments.ts`, `chat-backfill.ts`), every chat backend, `app` (window bubble, preview cache).
   Extends [ADR 0010](0010-attachments-across-protocols.md) (one descriptor, one handle,
