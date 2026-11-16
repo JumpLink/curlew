@@ -102,6 +102,21 @@ export default async () => {
       expect(WHATSAPP_MANIFEST.capabilities.attachments).toBe(true);
     });
 
+    await it('carries the inline jpegThumbnail of images and videos as bytes', async () => {
+      const thumb = new Uint8Array([0xff, 0xd8, 0xff, 0xd9]);
+      expect(
+        extractAttachments({ imageMessage: media({ jpegThumbnail: thumb }) })[0]?.thumbnail,
+      ).toEqualArray(thumb);
+      expect(
+        extractAttachments({ videoMessage: media({ mimetype: 'video/mp4', jpegThumbnail: thumb }) })[0]
+          ?.thumbnail,
+      ).toEqualArray(thumb);
+      expect(extractAttachments({ imageMessage: media() })[0]?.thumbnail).toBe(undefined);
+      expect(extractAttachments({ imageMessage: media({ jpegThumbnail: thumb }) })[0]?.thumbHandle).toBe(
+        undefined,
+      );
+    });
+
     await it('maps images, videos, voice notes, documents and stickers with their facts', async () => {
       const [image] = extractAttachments({ imageMessage: media({ width: 800, height: 600 }) });
       expect(image?.kind).toBe('image');

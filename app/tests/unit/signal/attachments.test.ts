@@ -58,6 +58,7 @@ type Pointer = {
   flags?: number;
   width?: number;
   height?: number;
+  blurHash?: string;
 };
 
 /** The padded, encrypted file a CDN would serve, and the pointer a sender would announce for it. */
@@ -153,6 +154,14 @@ export default async () => {
       expect(mapPointer({ ...sealed().pointer, contentType: 'application/pdf' }).attachments![0]!.kind).toBe(
         'file',
       );
+    });
+
+    await it("maps the sender's blurHash and never a thumbnail it did not receive", async () => {
+      const hash = 'LEHV6nWB2yk8pyo0adR*.7kCMdnj';
+      const [row] = mapPointer({ ...sealed().pointer, blurHash: hash }).attachments!;
+      expect(row?.blurHash).toBe(hash);
+      expect(row?.thumbnail).toBe(undefined);
+      expect(mapPointer(sealed().pointer).attachments![0]!.blurHash).toBe(undefined);
     });
 
     await it('gives a pointer without a key or a CDN address no row', async () => {

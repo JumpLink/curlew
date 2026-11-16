@@ -56,6 +56,8 @@ export interface WaMedia {
   seconds?: number | null;
   /** `audioMessage` only: a voice note rather than an audio file. */
   ptt?: boolean | null;
+  /** Inline JPEG preview of an image or video (ADR 0017). */
+  jpegThumbnail?: Uint8Array | null;
 }
 
 /** Baileys' media kinds: the one a key is derived for, so the one a download must name. */

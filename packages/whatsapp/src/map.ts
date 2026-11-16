@@ -138,7 +138,9 @@ export function extractAttachments(content: WaMessageContent | null): ChatAttach
     const type = MEDIA_TYPES[field];
     const length = toNumber(media.fileLength);
     const seconds = positive(media.seconds);
+    const preview = type === 'image' || type === 'video' || type === 'ptv' ? media.jpegThumbnail : null;
     out.push({
+      ...(preview?.byteLength ? { thumbnail: Uint8Array.from(preview) } : {}),
       filename: type === 'document' ? (media.fileName ?? null) : null,
       mimeType: media.mimetype ?? null,
       size: length,
