@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Signal stickers you receive show as pictures instead of an empty bubble.
 - A Matrix image whose file is a few bytes larger than the size in the message (as when the sending app adds photo metadata) now shows in the chat instead of as a file tile: the size the homeserver reports is the one a download is checked against.
 - Every video shows as a video box with the play button and its length, also a large chat video or a mail video, instead of a plain file tile. A large video that is already downloaded shows its first frame.
 - Signal group messages show the sender's contact or profile name, or their phone number, instead of the account UUID, also when the name arrives after the message (#425).
@@ -90,6 +91,7 @@
 
 ### Changed
 
+- Files and voice notes you send over Signal now carry their picture size and the voice-note flag, so the phone shows them like any other, and the chat shows them the same right after sending.
 - Two runs can no longer write the index at the same time: a sync takes an index-writer lease, and the one that does not get it stands down for that round and reports who holds it instead of fighting for the write lock. `contrib/systemd/curlew-sync.timer` is therefore no longer needed and can be switched off (`systemctl --user disable --now curlew-sync.timer`); it still ships for a setup that wants its own schedule.
 - CI: the Flatpak job uploads the generated manifest, runs `flatpak-builder-lint` on it and on the repo, and probes the `Xdp` typelib inside the sandbox.
 - In the Flatpak, "keep receiving" now asks the Background portal through libportal (`Xdp.Portal.request_background`) instead of calling `org.freedesktop.portal.Background` over D-Bus itself. A missing libportal typelib reads as "no Background portal on this system" and never stops the app (gjsify ADR 0101, #333).

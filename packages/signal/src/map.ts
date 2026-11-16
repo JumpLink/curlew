@@ -138,7 +138,7 @@ export function pointerOfHandle(handle: SignalAttachmentHandle): AttachmentPoint
   };
 }
 
-const VOICE_MESSAGE = 1;
+export const VOICE_MESSAGE = 1;
 
 /** What the UI shows a file of this MIME type as. */
 export function kindOfContentType(contentType: string | null): AttachmentKind {

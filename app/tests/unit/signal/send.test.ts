@@ -885,6 +885,26 @@ export default async () => {
       });
     });
 
+    await it('sends dimensions and the voice flag, and echoes them', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const png = join(rig.dir, 'maße.png');
+        const ihdr = new Uint8Array(33);
+        ihdr.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52], 0);
+        ihdr.set([0, 0, 1, 0x40, 0, 0, 0, 0xf0], 16);
+        writeFileSync(png, ihdr);
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [ALICE_ACI],
+        });
+        const sent = await sender.send({ to: ALICE_ACI, text: 'Foto', attachments: [{ path: png }] });
+        await sender.close();
+        const echo = sent.echoAttachments![0]!;
+        expect(echo.width).toBe(320);
+        expect(echo.height).toBe(240);
+        expect(echo.kind).toBe('image');
+      });
+    });
+
     await it('refuses a file that cannot be read before anything leaves', async () => {
       await withRig(GRANTED, async (rig) => {
         const sender = await rig.backend.openSender(rig.accountId, {

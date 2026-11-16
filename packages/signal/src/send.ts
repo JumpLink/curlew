@@ -35,6 +35,7 @@ import {
   _,
   type ChatAttachment,
   fmt,
+  probeMediaFile,
   type MessageSender,
   type ReplyTarget,
   type SendingDeletion,
@@ -50,7 +51,7 @@ import type * as Core from '@signalapp/libsignal-client';
 import { readFileSync } from 'node:fs';
 import type { ChatFetch, ChatResponseLike } from './guard.ts';
 import type { SignalLib } from './lib.ts';
-import { attachmentHandle, GROUP_PREFIX, kindOfContentType, messageRemoteId, parseMessageRemoteId } from './map.ts';
+import { attachmentHandle, GROUP_PREFIX, kindOfContentType, messageRemoteId, parseMessageRemoteId, VOICE_MESSAGE } from './map.ts';
 import { basicAuth, JSON_TYPE, jsonBody } from './net.ts';
 import { type DeviceAccount, fromBase64, NS, type SignalProtocolStore, toBase64 } from './protocol-store.ts';
 import { ProtoWriter } from './proto.ts';
@@ -84,7 +85,7 @@ const F = {
   content: { dataMessage: 1, syncMessage: 2, editMessage: 11 },
   data: { body: 1, attachments: 2, quote: 8, timestamp: 7, reaction: 16, delete: 17 },
   /** `AttachmentPointer`; the CDN key and number are the current form, `cdnId` the legacy one. */
-  attachment: { contentType: 2, key: 3, size: 4, digest: 6, fileName: 7, cdnNumber: 14, cdnKey: 15 },
+  attachment: { contentType: 2, key: 3, size: 4, digest: 6, fileName: 7, flags: 8, width: 9, height: 10, cdnNumber: 14, cdnKey: 15 },
   /** `EditMessage`: the sent timestamp of the message being replaced, and its new `DataMessage`. */
   edit: { targetSentTimestamp: 1, dataMessage: 2 },
   /** `DataMessage.Delete`: the sent timestamp of the message being deleted for everyone. */
@@ -337,16 +338,17 @@ export class SignalSender implements MessageSender {
         this.fetch,
         this.upload,
       );
+      const probe = probeMediaFile(file.realPath, file.contentType);
       // The network does not give this device its own message back, so the index keeps the file
       // with the handle the receive path would have written.
       echoAttachments.push({
         filename: file.filename,
         mimeType: file.contentType,
         size: uploaded.size,
-        kind: kindOfContentType(file.contentType),
-        width: null,
-        height: null,
-        durationMs: null,
+        kind: probe.voice ? 'voice' : kindOfContentType(file.contentType),
+        width: probe.width,
+        height: probe.height,
+        durationMs: probe.durationMs,
         handle: attachmentHandle({
           cdnNumber: uploaded.cdnNumber,
           cdnKey: uploaded.cdnKey,
@@ -364,7 +366,10 @@ export class SignalSender implements MessageSender {
           .bytes(F.attachment.digest, uploaded.digest)
           .string(F.attachment.fileName, file.filename)
           .uint(F.attachment.cdnNumber, uploaded.cdnNumber)
-          .string(F.attachment.cdnKey, uploaded.cdnKey),
+          .string(F.attachment.cdnKey, uploaded.cdnKey)
+          .uint(F.attachment.flags, probe.voice ? VOICE_MESSAGE : null)
+          .uint(F.attachment.width, probe.width)
+          .uint(F.attachment.height, probe.height),
       );
     }
     // A note to self is the transcript alone — the same way Signal implements Note to Self. There
