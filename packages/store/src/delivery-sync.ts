@@ -514,7 +514,7 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
       runIn(db, (p) => `DELETE FROM message_reactions WHERE message_id IN (${p})`, [...batch.deletedMessages]);
     }
     const cleared = [...batch.clearedChats, ...batch.deletedChats].map(conv);
-    runIn(db, (p) => `DELETE FROM conversation_messages WHERE conversation_id IN (${p})`, cleared);
+    // The rows hanging off a message go first: the subqueries below find them through the messages.
     if (cleared.length > 0) {
       sweepThumbnails(
         db,
@@ -530,6 +530,7 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
            (SELECT id FROM conversation_messages WHERE conversation_id IN (${placeholders(cleared.length)}))`,
       ).run(...cleared);
     }
+    runIn(db, (p) => `DELETE FROM conversation_messages WHERE conversation_id IN (${p})`, cleared);
     const gone = [...batch.deletedChats].map(conv);
     for (const table of ['chat_members', 'chat_cursors', 'conversation_participants', 'conversations']) {
       const column = table === 'conversations' ? 'id' : 'conversation_id';

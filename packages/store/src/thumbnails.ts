@@ -5,7 +5,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { copyFileSync, existsSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ChatAttachment } from '@curlew/protocol';
 
@@ -118,7 +118,7 @@ export function moveThumbnail(
   try {
     const from = thumbPath(oldId, index, root);
     if (!existsSync(from)) return;
-    copyFileSync(from, thumbPath(newId, index, root));
+    renameSync(from, thumbPath(newId, index, root));
   } catch {
     // A thumbnail that does not follow is a poster lost, not data.
   }
