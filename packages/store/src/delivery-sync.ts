@@ -32,6 +32,7 @@ import type {
 } from '@curlew/protocol';
 import { appendChanges, appendChangesTransaction } from './changes.ts';
 import { chatConversationId, classifyChatMessage, LOCAL_ECHO_PREFIX } from './chat-sync.ts';
+import { adoptEchoAttachments } from './echo-attachments.ts';
 import { conversationTotalsSql } from './conversation-totals.ts';
 import type { IndexDatabase } from './db.ts';
 import { insertMany, placeholders, type SqlValue, withTransaction } from './db.ts';
@@ -297,6 +298,9 @@ function adoptLocalEchoes(db: IndexDatabase, batch: DeliveryBatch): void {
     if (pending === undefined) continue;
     if (pending.message.text === null && typeof echo.body === 'string' && echo.body.length > 0) {
       pending.message = { ...pending.message, text: echo.body };
+    }
+    if (adoptEchoAttachments(db, String(echo.id), rowId!, batch.messageAttachments)) {
+      pending.message = { ...pending.message, hasAttachments: true };
     }
     gone.push(String(echo.id));
   }

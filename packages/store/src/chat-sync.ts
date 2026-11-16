@@ -49,6 +49,7 @@ import { appendChanges } from './changes.ts';
 import { conversationTotalsSql } from './conversation-totals.ts';
 import { insertMany, placeholders, seqColumn, type SqlValue, withTransaction } from './db.ts';
 import { upsertAccount } from './index-store.ts';
+import { adoptEchoAttachments } from './echo-attachments.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 import {
   LEASE_HEARTBEAT_MS,
@@ -410,6 +411,7 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
         const row = batch.clientIds.get(remoteId.slice(LOCAL_ECHO_PREFIX.length));
         if (!remoteId.startsWith(LOCAL_ECHO_PREFIX) || row === undefined) continue;
         adoptEchoBody(row, echo.body);
+        if (adoptEchoAttachments(db, String(echo.id), String(row[0]), batch.messageAttachments)) row[10] = 1;
         gone.push(String(echo.id));
       }
       deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, gone);
@@ -1158,6 +1160,20 @@ function adoptedByDelivered(
         conversationId: delivered.conversationId,
       },
     ]);
+  }
+  const rows: SqlValue[][] = [];
+  const has = db.prepare('SELECT 1 FROM message_attachments WHERE message_id = ?').get(delivered.id);
+  if (!has && (record.attachments?.length ?? 0) > 0) {
+    const scratch = new ChatBatch(record.backend, record.account.id);
+    record.attachments!.forEach((a, idx) => scratch.messageAttachment(delivered.id, idx, a));
+    rows.push(...scratch.messageAttachments);
+    insertMany(
+      db,
+      `INSERT OR IGNORE INTO message_attachments
+         (message_id, idx, filename, mime_type, size, kind, width, height, duration_ms, handle, thumb_handle, thumb_state, blur_hash)`,
+      rows,
+    );
+    db.prepare('UPDATE conversation_messages SET has_attachments = 1 WHERE id = ?').run(delivered.id);
   }
   return { conversationId: delivered.conversationId, messageId: delivered.id };
 }

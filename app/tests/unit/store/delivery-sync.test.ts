@@ -876,6 +876,121 @@ export default async () => {
     });
   });
 
+  await describe('the attachments of a local echo', async () => {
+    const account = { id: ACCOUNT, identity: 'Me', provider: 'Fake' };
+    const file = (over: Partial<ChatAttachment> = {}): ChatAttachment => ({
+      filename: 'pic.png',
+      mimeType: 'image/png',
+      size: 500,
+      kind: 'image',
+      width: 10,
+      height: 20,
+      durationMs: null,
+      handle: JSON.stringify({ url: 'https://upload.example.org/echo.png' }),
+      ...over,
+    });
+    const sendEcho = (db: ReturnType<typeof freshDb>) =>
+      recordSentChatMessage(db, {
+        backend: BACKEND,
+        account,
+        chatRemoteId: 'd-anna',
+        clientId: 'oid-1',
+        text: '',
+        sentAt: '2026-01-01T12:00:00.000Z',
+        attachments: [file()],
+      });
+    const delivered = (extra: Partial<ChatMessage>) =>
+      incoming(
+        'd-anna',
+        msg('anna/9', 9, null, { fromSelf: true, sender: null, clientId: 'oid-1', ...extra }),
+      );
+    const only = (db: ReturnType<typeof freshDb>) => {
+      const messages = getConversation(db, conv('d-anna'))?.messages ?? [];
+      expect(messages.length).toBe(1);
+      return messages[0];
+    };
+
+    await it('keeps the echo rows when the delivered copy has none', async () => {
+      const db = freshDb();
+      try {
+        sendEcho(db);
+        await receiveDeliveries(db, fakeBackend([[delivered({})]]));
+        const message = only(db);
+        expect(message.ref.remoteId).toBe('anna/9');
+        expect(message.hasAttachments).toBe(true);
+        const rows = loadAttachments(db, message.ref);
+        expect(rows.length).toBe(1);
+        expect(rows[0].size).toBe(500);
+        expect(rows[0].width).toBe(10);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it("lets the delivered rows win and fills what they lack from the echo's", async () => {
+      const db = freshDb();
+      try {
+        sendEcho(db);
+        const theirs = file({
+          size: null,
+          width: null,
+          height: null,
+          handle: JSON.stringify({ url: 'https://upload.example.org/theirs.png' }),
+        });
+        await receiveDeliveries(
+          db,
+          fakeBackend([[delivered({ hasAttachments: true, attachments: [theirs] })]]),
+        );
+        const message = only(db);
+        const rows = loadAttachments(db, message.ref);
+        expect(rows.length).toBe(1);
+        expect(rows[0].size).toBe(500);
+        expect(rows[0].width).toBe(10);
+        expect(rows[0].height).toBe(20);
+        expect(loadAttachmentHandle(db, message.ref, 0)).toBe(theirs.handle);
+        const left = db.prepare('SELECT COUNT(*) AS n FROM message_attachments').get() as { n?: number };
+        expect(Number(left.n)).toBe(1);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('does not overwrite a value the delivered row has', async () => {
+      const db = freshDb();
+      try {
+        sendEcho(db);
+        await receiveDeliveries(
+          db,
+          fakeBackend([[delivered({ hasAttachments: true, attachments: [file({ size: 777 })] })]]),
+        );
+        expect(loadAttachments(db, only(db).ref)[0].size).toBe(777);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('gives a delivered copy that was written first the rows of the send', async () => {
+      const db = freshDb();
+      try {
+        await receiveDeliveries(db, fakeBackend([[delivered({})]]));
+        recordSentChatMessage(db, {
+          backend: BACKEND,
+          account,
+          chatRemoteId: 'd-anna',
+          clientId: 'anna/9',
+          text: '',
+          sentAt: '2026-01-01T12:00:00.000Z',
+          attachments: [file()],
+        });
+        const message = only(db);
+        expect(message.hasAttachments).toBe(true);
+        expect(loadAttachments(db, message.ref).length).toBe(1);
+      } finally {
+        db.close();
+      }
+    });
+  });
+
   // What the bug above left in every index it ran against. The repair is a schema upgrade, so it
   // runs once, on the next open, for an index nobody will ever think to look at.
   await describe('the schema repair of orphaned echoes', async () => {
