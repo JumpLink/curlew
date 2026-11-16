@@ -36,6 +36,9 @@
     "ship": {
       "appId": "eu.jumplink.curlew",
       "binaryName": "curlew",
+      "desktopExecArgs": [
+        "window"
+      ],
       "kind": "app",
       "name": "Curlew",
       "localeDir": "dist/locale",
