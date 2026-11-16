@@ -41,6 +41,7 @@ Agent- and contributor-facing docs for the curlew repo. The hard rules that load
 ## Decisions
 
 - [`adr/0016-the-window-stays-in-the-background.md`](adr/0016-the-window-stays-in-the-background.md) — hold and hide the window only where the person can get it back (proposed)
+- [`adr/0017-media-thumbnails-at-sync.md`](adr/0017-media-thumbnails-at-sync.md) — store the preview the network ships with the message, so a big video is not a dark box (accepted)
 
 ## Design and references
 
