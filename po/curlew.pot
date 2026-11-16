@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-16 23:23+0100\n"
+"POT-Creation-Date: 2026-11-17 06:39+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3325,7 +3325,7 @@ msgid "the mail account {account} is incomplete — add it again"
 msgstr ""
 
 #: packages/imap/src/send.ts:78 packages/matrix/src/send.ts:354
-#: packages/signal/src/send.ts:500 packages/telegram/src/sender.ts:80
+#: packages/signal/src/send.ts:505 packages/telegram/src/sender.ts:80
 #: packages/whatsapp/src/send.ts:415
 msgid "sending to {address} is not granted for account {account}"
 msgstr ""
@@ -3534,7 +3534,7 @@ msgid ""
 "shorten it"
 msgstr ""
 
-#: packages/matrix/src/send.ts:483 packages/signal/src/send.ts:259
+#: packages/matrix/src/send.ts:483 packages/signal/src/send.ts:260
 #: packages/telegram/src/sender.ts:141 packages/whatsapp/src/send.ts:165
 #: packages/xmpp/src/messages.ts:36
 msgid "only your own messages can be changed — nothing was sent"
@@ -3658,91 +3658,91 @@ msgstr ""
 msgid "Signal no longer knows this device (it was unlinked) — {hint}"
 msgstr ""
 
-#: packages/signal/src/send.ts:189
+#: packages/signal/src/send.ts:190
 msgid "Signal answered {what} with something that is not JSON"
 msgstr ""
 
-#: packages/signal/src/send.ts:271 packages/signal/src/send.ts:324
+#: packages/signal/src/send.ts:272 packages/signal/src/send.ts:325
 msgid ""
 "a Signal message holds at most {max} bytes of text, this one has {bytes} — "
 "shorten it"
 msgstr ""
 
-#: packages/signal/src/send.ts:297
+#: packages/signal/src/send.ts:298
 msgid "Signal needs the emoji being taken back — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:459
+#: packages/signal/src/send.ts:464
 msgid ""
 "the message was delivered, but this account's other devices were not told "
 "about it ({reason}) — it will not appear on the phone"
 msgstr ""
 
-#: packages/signal/src/send.ts:467
+#: packages/signal/src/send.ts:472
 msgid ""
 "a note to self is stored on this account's other devices, and this account "
 "has none — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:483
+#: packages/signal/src/send.ts:488
 msgid ""
 "curlew cannot send to a Signal group: a group message needs the member list "
 "and credentials from Signal's storage service, which curlew does not sync — "
 "send it from a Signal client"
 msgstr ""
 
-#: packages/signal/src/send.ts:492
+#: packages/signal/src/send.ts:497
 msgid ""
 "{address} is not a Signal account id — use the id `conversations_list` shows "
 "for the chat, not a phone number"
 msgstr ""
 
-#: packages/signal/src/send.ts:551
+#: packages/signal/src/send.ts:556
 msgid ""
 "Signal kept disagreeing about the recipient's devices — nothing was sent; "
 "try again, or send it from a Signal client"
 msgstr ""
 
-#: packages/signal/src/send.ts:560
+#: packages/signal/src/send.ts:565
 msgid ""
 "Signal refused this device (unauthorized) — nothing was sent; the device may "
 "be unlinked"
 msgstr ""
 
-#: packages/signal/src/send.ts:564
+#: packages/signal/src/send.ts:569
 msgid "Signal wants a rate-limit challenge answered — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:567
+#: packages/signal/src/send.ts:572
 msgid "Signal refused the message ({status}) — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:659
+#: packages/signal/src/send.ts:664
 msgid "Signal has no account {address} — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:664
+#: packages/signal/src/send.ts:669
 msgid ""
 "Signal did not hand over the keys for {address} ({status}) — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:682
+#: packages/signal/src/send.ts:687
 msgid "Signal lists no device for {address} — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:702
+#: packages/signal/src/send.ts:707
 msgid ""
 "a device of {address} publishes no usable keys, so curlew cannot start a "
 "session with it — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:748
+#: packages/signal/src/send.ts:753
 msgid ""
 "the safety number of {address} changed — nothing was sent; check it with "
 "them, then send again to accept the new one"
 msgstr ""
 
-#: packages/signal/src/send.ts:774
+#: packages/signal/src/send.ts:779
 msgid ""
 "Signal reported a device mismatch ({status}) without naming a device — "
 "nothing was sent"
