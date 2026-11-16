@@ -30,6 +30,7 @@ import {
 } from './attachment-model.ts';
 import {
   type AttachmentSource,
+  cachedAttachment,
   failureText,
   fetchAttachment,
   loadPoster,
@@ -403,6 +404,13 @@ function silentPreview(host: SilentVideoHost, shown: PaintedPreview): void {
   });
 }
 
+/** A video of any size whose bytes already sit in the previews cache: its frame costs no fetch. */
+function cachedVideo(source: AttachmentSource): boolean {
+  return (
+    attachmentKind(source.info) === 'video' && isOpenable(source.info) && cachedAttachment(source) !== null
+  );
+}
+
 /** One cell of the grid: the picture or first frame when it may load unasked, else the dark cell. */
 function gridCell(
   source: AttachmentSource,
@@ -412,7 +420,7 @@ function gridCell(
 ): Gtk.Widget {
   const { info } = source;
   if (showsInline(info)) return picture(source, handlers, cell, album);
-  if (showsPoster(info)) return poster(source, handlers, cell, album);
+  if (showsPoster(info) || cachedVideo(source)) return poster(source, handlers, cell, album);
   return inlinePreview(source, handlers, attachmentKind(info), null, cell, null, album);
 }
 
@@ -467,7 +475,7 @@ export function attachmentList(
     list.append(
       showsInline(info)
         ? picture(source, handlers)
-        : showsPoster(info)
+        : showsPoster(info) || cachedVideo(source)
           ? poster(source, handlers)
           : showsVideoBox(info)
             ? inlinePreview(source, handlers, 'video', null)
