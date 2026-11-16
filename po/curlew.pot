@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-15 20:36+0100\n"
+"POT-Creation-Date: 2026-11-16 11:49+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1698,7 +1698,7 @@ msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 
 #: app/src/window/account-add.ts:405 app/src/window/accounts-page.ts:157
-#: app/src/window/accounts-page.ts:183 app/src/window/welcome.ts:161
+#: app/src/window/accounts-page.ts:183 app/src/window/welcome.ts:160
 msgid "Add Account"
 msgstr ""
 
@@ -1741,7 +1741,7 @@ msgstr ""
 msgid "Pause"
 msgstr ""
 
-#: app/src/window/account-detail.ts:145 app/src/window/welcome.ts:201
+#: app/src/window/account-detail.ts:145 app/src/window/welcome.ts:200
 msgid "Use for Delta Chat"
 msgstr ""
 
@@ -1752,7 +1752,7 @@ msgid ""
 msgstr ""
 
 #: app/src/window/account-detail.ts:152 app/src/window/protocols-page.ts:169
-#: app/src/window/welcome.ts:207
+#: app/src/window/welcome.ts:206
 msgid "Show ordinary email"
 msgstr ""
 
@@ -1850,7 +1850,7 @@ msgid "Could not start the background service: {reason}"
 msgstr ""
 
 #: app/src/window/accounts-dialog.ts:85 app/src/window/accounts-page.ts:196
-#: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:173
+#: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:172
 #: app/src/window/window.ts:133
 msgid "Accounts"
 msgstr ""
@@ -1930,7 +1930,7 @@ msgstr ""
 
 #: app/src/window/accounts-page.ts:189 app/src/window/conversation-list.ts:363
 #: app/src/window/protocols-page.ts:248 app/src/window/welcome-model.ts:102
-#: app/src/window/welcome.ts:149
+#: app/src/window/welcome.ts:148
 msgid "Protocols"
 msgstr ""
 
@@ -2406,7 +2406,7 @@ msgid "Your own picture is shown instead"
 msgstr ""
 
 #: app/src/window/conversation-list-model.ts:141
-#: app/src/window/welcome-model.ts:111 app/src/window/welcome.ts:185
+#: app/src/window/welcome-model.ts:111 app/src/window/welcome.ts:184
 msgid "Delta Chat"
 msgstr ""
 
@@ -2891,7 +2891,7 @@ msgstr ""
 msgid "Previous"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:125 app/src/window/welcome.ts:121
+#: app/src/window/media-viewer.ts:125 app/src/window/welcome.ts:120
 msgid "Next"
 msgstr ""
 
@@ -2929,7 +2929,7 @@ msgstr ""
 msgid "You can separate merged people again from the conversation list."
 msgstr ""
 
-#: app/src/window/merge-assistant.ts:90 app/src/window/welcome.ts:177
+#: app/src/window/merge-assistant.ts:90 app/src/window/welcome.ts:176
 msgid "Done"
 msgstr ""
 
@@ -2937,7 +2937,7 @@ msgstr ""
 msgid "These people have similar names. Are they the same person?"
 msgstr ""
 
-#: app/src/window/merge-assistant.ts:119 app/src/window/welcome.ts:130
+#: app/src/window/merge-assistant.ts:119 app/src/window/welcome.ts:129
 msgid "Skip"
 msgstr ""
 
@@ -3004,7 +3004,7 @@ msgid "Media"
 msgstr ""
 
 #: app/src/window/preferences-dialog.ts:74 app/src/window/welcome-model.ts:124
-#: app/src/window/welcome.ts:241
+#: app/src/window/welcome.ts:240
 msgid "AI features"
 msgstr ""
 
@@ -3014,7 +3014,7 @@ msgid ""
 "you allow it. Off: no assistant can reach your data"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:80 app/src/window/welcome.ts:253
+#: app/src/window/preferences-dialog.ts:80 app/src/window/welcome.ts:252
 msgid "AI"
 msgstr ""
 
@@ -3149,56 +3149,56 @@ msgstr[1] ""
 msgid "On"
 msgstr ""
 
-#: app/src/window/welcome.ts:108 app/src/window/welcome.ts:126
+#: app/src/window/welcome.ts:107 app/src/window/welcome.ts:125
 #: app/src/window/window.ts:140
 msgid "Welcome"
 msgstr ""
 
-#: app/src/window/welcome.ts:128
+#: app/src/window/welcome.ts:127
 msgid "Welcome to Curlew"
 msgstr ""
 
-#: app/src/window/welcome.ts:137
+#: app/src/window/welcome.ts:136
 msgid "Choose Protocols"
 msgstr ""
 
-#: app/src/window/welcome.ts:151
+#: app/src/window/welcome.ts:150
 msgid "Choose your protocols"
 msgstr ""
 
-#: app/src/window/welcome.ts:175
+#: app/src/window/welcome.ts:174
 msgid "Add your accounts"
 msgstr ""
 
-#: app/src/window/welcome.ts:194
+#: app/src/window/welcome.ts:193
 msgid ""
 "No mail account yet. Once you add one, you can switch this on in its "
 "settings."
 msgstr ""
 
-#: app/src/window/welcome.ts:243
+#: app/src/window/welcome.ts:242
 msgid ""
 "An assistant could then read and send your messages through Curlew, each "
 "time as you allow it."
 msgstr ""
 
-#: app/src/window/welcome.ts:254
+#: app/src/window/welcome.ts:253
 msgid ""
 "Off, no assistant can reach your data. You can change this at any time in "
 "Preferences."
 msgstr ""
 
-#: app/src/window/welcome.ts:264
+#: app/src/window/welcome.ts:263
 msgid "All set"
 msgstr ""
 
-#: app/src/window/welcome.ts:265
+#: app/src/window/welcome.ts:264
 msgid ""
 "You can change all of this later: accounts and protocols in Accounts, the "
 "rest in Preferences."
 msgstr ""
 
-#: app/src/window/welcome.ts:267
+#: app/src/window/welcome.ts:266
 msgid "Start Using Curlew"
 msgstr ""
 
