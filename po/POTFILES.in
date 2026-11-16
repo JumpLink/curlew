@@ -246,6 +246,7 @@ packages/protocol/src/index.ts
 packages/protocol/src/list-parse.ts
 packages/protocol/src/mail-forward.ts
 packages/protocol/src/mail-headers.ts
+packages/protocol/src/media-probe.ts
 packages/protocol/src/messenger.ts
 packages/protocol/src/mime-parse.ts
 packages/protocol/src/mutf7.ts
