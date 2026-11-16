@@ -4,7 +4,15 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from '@gjsify/unit';
 
-import { attachmentsDir, dataDir, indexDbPath, previewsDir, xdgDataHome } from '@curlew/store';
+import {
+  attachmentsDir,
+  dataDir,
+  defaultStoreDirs,
+  indexDbPath,
+  previewsDir,
+  storePaths,
+  xdgDataHome,
+} from '@curlew/store';
 
 // Every function here takes its environment as a parameter, so the promise these tests check —
 // nothing is EVER written inside the repository — is checkable without touching the real one.
@@ -49,9 +57,8 @@ export default async () => {
     });
 
     await it('FORCES a .db suffix onto an override', async () => {
-      // Not cosmetic. gjsify's node:sqlite is a libgda wrapper, and libgda appends `.db` to
-      // whatever it is given — so `index.sqlite` lands on disk as `index.sqlite.db`, and the
-      // next open makes `index.sqlite.db.db`.
+      // A naming rule of this repo: account files are found by the suffix and existing indexes
+      // carry it. (The libgda wrapper once appended `.db` itself; the libsqlite3 one does not.)
       expect(indexDbPath({ CURLEW_DB_PATH: '/tmp/mine.sqlite' })).toBe('/tmp/mine.sqlite.db');
       expect(indexDbPath({ CURLEW_DB_PATH: '/tmp/mine' })).toBe('/tmp/mine.db');
       expect(indexDbPath({ CURLEW_DB_PATH: '/tmp/mine.db' })).toBe('/tmp/mine.db');
@@ -88,6 +95,54 @@ export default async () => {
       expect(attachmentsDir({ XDG_DOWNLOAD_DIR: 'Downloads', XDG_DATA_HOME: '/d' })).toBe(
         '/d/curlew/attachments',
       );
+    });
+  });
+
+  await describe('storePaths (injected directories)', async () => {
+    const dirs = { data: '/sandbox/files', cache: '/sandbox/cache', config: '/sandbox/config' };
+
+    await it('derives everything from the given directories, with no ambient environment', async () => {
+      const p = storePaths(dirs);
+      expect(p.dataDir).toBe('/sandbox/files');
+      expect(p.indexDbPath).toBe('/sandbox/files/index.db');
+      expect(p.secretsDir).toBe('/sandbox/files/secrets');
+      expect(p.contactPicturesDir).toBe('/sandbox/files/contact-pictures');
+      expect(p.attachmentsDir).toBe('/sandbox/files/attachments');
+      expect(p.previewsDir).toBe('/sandbox/cache/previews');
+      expect(p.avatarsDir).toBe('/sandbox/cache/avatars');
+      expect(p.sendStagingDir).toBe('/sandbox/cache/outgoing');
+      expect(p.configPath).toBe('/sandbox/config/config.json');
+    });
+
+    await it('ignores XDG variables entirely', async () => {
+      const before = process.env.XDG_DATA_HOME;
+      process.env.XDG_DATA_HOME = '/should/not/matter';
+      try {
+        expect(storePaths(dirs).indexDbPath).toBe('/sandbox/files/index.db');
+      } finally {
+        if (before === undefined) delete process.env.XDG_DATA_HOME;
+        else process.env.XDG_DATA_HOME = before;
+      }
+    });
+
+    await it('uses the download directory for attachments when given', async () => {
+      expect(storePaths({ ...dirs, download: '/sandbox/dl' }).attachmentsDir).toBe('/sandbox/dl');
+    });
+
+    await it('still honours explicit CURLEW_* overrides', async () => {
+      const p = storePaths(dirs, { CURLEW_SECRETS_DIR: '/s', CURLEW_DB_PATH: '/x/idx' });
+      expect(p.secretsDir).toBe('/s');
+      expect(p.indexDbPath).toBe('/x/idx.db');
+    });
+
+    await it('is what the desktop functions resolve through', async () => {
+      const env = { XDG_DATA_HOME: '/d', XDG_CACHE_HOME: '/c', XDG_CONFIG_HOME: '/f' };
+      const dirs = defaultStoreDirs(env);
+      expect(dirs.data).toBe('/d/curlew');
+      expect(dirs.cache).toBe('/c/curlew');
+      expect(dirs.config).toBe('/f/curlew');
+      expect(dirs.download).toBe(undefined);
+      expect(indexDbPath(env)).toBe(storePaths(defaultStoreDirs(env), env).indexDbPath);
     });
   });
 };
