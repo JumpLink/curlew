@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-15 20:19+0100\n"
+"POT-Creation-Date: 2026-11-16 11:49+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1582,8 +1582,8 @@ msgid "curlew window takes no arguments."
 msgstr ""
 
 #: app/src/window/about.ts:16 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:194 app/src/window/window.ts:98
-#: app/src/window/window.ts:121
+#: app/src/window/conversation-view.ts:194 app/src/window/window.ts:97
+#: app/src/window/window.ts:120
 msgid "Curlew"
 msgstr ""
 
@@ -1610,91 +1610,95 @@ msgid_plural "{count} accounts"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/account-add.ts:123 app/src/window/account-add.ts:313
+#: app/src/window/account-add.ts:124 app/src/window/account-add.ts:314
 msgid "Connecting…"
 msgstr ""
 
-#: app/src/window/account-add.ts:139 app/src/window/protocols-page.ts:80
+#: app/src/window/account-add.ts:140 app/src/window/protocols-page.ts:80
 msgid "{protocol} is not available on this device"
 msgstr ""
 
-#: app/src/window/account-add.ts:140 app/src/window/protocols-page.ts:81
+#: app/src/window/account-add.ts:141 app/src/window/protocols-page.ts:81
 msgid "This build of Curlew cannot run it on this kind of computer yet."
 msgstr ""
 
-#: app/src/window/account-add.ts:160 app/src/window/protocols-page.ts:58
+#: app/src/window/account-add.ts:161 app/src/window/protocols-page.ts:58
 msgid "Please read this first"
 msgstr ""
 
-#: app/src/window/account-add.ts:166
+#: app/src/window/account-add.ts:167
 msgid "Accept and Continue"
 msgstr ""
 
-#: app/src/window/account-add.ts:210
+#: app/src/window/account-add.ts:211
 msgid "Continue"
 msgstr ""
 
-#: app/src/window/account-add.ts:256
+#: app/src/window/account-add.ts:257
 msgid "Open Link"
 msgstr ""
 
-#: app/src/window/account-add.ts:267
+#: app/src/window/account-add.ts:268
 msgid "No App Opened the Link"
 msgstr ""
 
-#: app/src/window/account-add.ts:273
+#: app/src/window/account-add.ts:274
 msgid "Copy Link"
 msgstr ""
 
-#: app/src/window/account-add.ts:276
+#: app/src/window/account-add.ts:277
 msgid "Link Copied"
 msgstr ""
 
-#: app/src/window/account-add.ts:290
+#: app/src/window/account-add.ts:291
 msgid "Adding account…"
 msgstr ""
 
-#: app/src/window/account-add.ts:298 app/src/window/media-viewer.ts:104
+#: app/src/window/account-add.ts:299 app/src/window/media-viewer.ts:104
 msgid "Try Again"
 msgstr ""
 
-#: app/src/window/account-add.ts:302
+#: app/src/window/account-add.ts:303
 msgid "Could not add the account"
 msgstr ""
 
-#: app/src/window/account-add.ts:337 app/src/window/protocols-page.ts:46
+#: app/src/window/account-add.ts:338 app/src/window/protocols-page.ts:46
 msgid "Asks you to accept terms first"
 msgstr ""
 
-#: app/src/window/account-add.ts:354
+#: app/src/window/account-add.ts:355
 msgid "Chats"
 msgstr ""
 
-#: app/src/window/account-add.ts:355
+#: app/src/window/account-add.ts:356
 msgid ""
 "Signal, WhatsApp and Telegram link this computer as another device of your "
 "account."
 msgstr ""
 
-#: app/src/window/account-add.ts:364 app/src/window/accounts-model.ts:107
+#: app/src/window/account-add.ts:365 app/src/window/accounts-model.ts:107
 #: app/src/window/conversation-list-model.ts:139
 msgid "Mail"
 msgstr ""
 
-#: app/src/window/account-add.ts:367
+#: app/src/window/account-add.ts:368
 msgid "Sign in with an address and a password"
 msgstr ""
 
-#: app/src/window/account-add.ts:373
+#: app/src/window/account-add.ts:380
 msgid "GNOME Online Accounts"
 msgstr ""
 
-#: app/src/window/account-add.ts:374
+#: app/src/window/account-add.ts:382
+msgid "Accounts you set up in GNOME Settings appear here by themselves"
+msgstr ""
+
+#: app/src/window/account-add.ts:383
 msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 
-#: app/src/window/account-add.ts:392 app/src/window/accounts-page.ts:148
-#: app/src/window/accounts-page.ts:174 app/src/window/welcome.ts:163
+#: app/src/window/account-add.ts:405 app/src/window/accounts-page.ts:157
+#: app/src/window/accounts-page.ts:183 app/src/window/welcome.ts:160
 msgid "Add Account"
 msgstr ""
 
@@ -1737,7 +1741,7 @@ msgstr ""
 msgid "Pause"
 msgstr ""
 
-#: app/src/window/account-detail.ts:145 app/src/window/welcome.ts:203
+#: app/src/window/account-detail.ts:145 app/src/window/welcome.ts:200
 msgid "Use for Delta Chat"
 msgstr ""
 
@@ -1748,7 +1752,7 @@ msgid ""
 msgstr ""
 
 #: app/src/window/account-detail.ts:152 app/src/window/protocols-page.ts:169
-#: app/src/window/welcome.ts:209
+#: app/src/window/welcome.ts:206
 msgid "Show ordinary email"
 msgstr ""
 
@@ -1845,9 +1849,9 @@ msgstr ""
 msgid "Could not start the background service: {reason}"
 msgstr ""
 
-#: app/src/window/accounts-dialog.ts:86 app/src/window/accounts-page.ts:187
-#: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:175
-#: app/src/window/window.ts:134
+#: app/src/window/accounts-dialog.ts:85 app/src/window/accounts-page.ts:196
+#: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:172
+#: app/src/window/window.ts:133
 msgid "Accounts"
 msgstr ""
 
@@ -1859,78 +1863,78 @@ msgstr ""
 msgid "Contacts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:31
+#: app/src/window/accounts-page.ts:32
 msgid "Connected"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:33
+#: app/src/window/accounts-page.ts:34
 msgid "Connecting"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:35
+#: app/src/window/accounts-page.ts:36
 msgid "Offline"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:37
+#: app/src/window/accounts-page.ts:38
 msgid "Daemon not running"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:39 app/src/window/preferences-dialog.ts:58
+#: app/src/window/accounts-page.ts:40 app/src/window/preferences-dialog.ts:58
 #: app/src/window/welcome-model.ts:124
 msgid "Off"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:102
+#: app/src/window/accounts-page.ts:111
 msgid "Manage…"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:103
+#: app/src/window/accounts-page.ts:112
 msgid "Open GNOME Settings → Online Accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:112
+#: app/src/window/accounts-page.ts:121
 msgid "Could not load accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:114 app/src/window/protocols-page.ts:47
+#: app/src/window/accounts-page.ts:123 app/src/window/protocols-page.ts:47
 msgid "No accounts yet"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:140
+#: app/src/window/accounts-page.ts:149
 msgid "Accounts could not be loaded"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:144
+#: app/src/window/accounts-page.ts:153
 msgid "No accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:145
+#: app/src/window/accounts-page.ts:154
 msgid "Add a chat account."
 msgstr ""
 
-#: app/src/window/accounts-page.ts:145
+#: app/src/window/accounts-page.ts:154
 msgid "Add a chat account or a mail account."
 msgstr ""
 
-#: app/src/window/accounts-page.ts:164
+#: app/src/window/accounts-page.ts:173
 msgid "Messages arrive while Curlew is open."
 msgstr ""
 
-#: app/src/window/accounts-page.ts:165
+#: app/src/window/accounts-page.ts:174
 msgid "The background service is not running, so chat accounts cannot connect."
 msgstr ""
 
-#: app/src/window/accounts-page.ts:166
+#: app/src/window/accounts-page.ts:175
 msgid "Start"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:180 app/src/window/conversation-list.ts:363
+#: app/src/window/accounts-page.ts:189 app/src/window/conversation-list.ts:363
 #: app/src/window/protocols-page.ts:248 app/src/window/welcome-model.ts:102
-#: app/src/window/welcome.ts:151
+#: app/src/window/welcome.ts:148
 msgid "Protocols"
 msgstr ""
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:138
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:137
 msgid "Agent access"
 msgstr ""
 
@@ -2402,7 +2406,7 @@ msgid "Your own picture is shown instead"
 msgstr ""
 
 #: app/src/window/conversation-list-model.ts:141
-#: app/src/window/welcome-model.ts:111 app/src/window/welcome.ts:187
+#: app/src/window/welcome-model.ts:111 app/src/window/welcome.ts:184
 msgid "Delta Chat"
 msgstr ""
 
@@ -2887,7 +2891,7 @@ msgstr ""
 msgid "Previous"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:125 app/src/window/welcome.ts:122
+#: app/src/window/media-viewer.ts:125 app/src/window/welcome.ts:120
 msgid "Next"
 msgstr ""
 
@@ -2925,7 +2929,7 @@ msgstr ""
 msgid "You can separate merged people again from the conversation list."
 msgstr ""
 
-#: app/src/window/merge-assistant.ts:90 app/src/window/welcome.ts:179
+#: app/src/window/merge-assistant.ts:90 app/src/window/welcome.ts:176
 msgid "Done"
 msgstr ""
 
@@ -2933,7 +2937,7 @@ msgstr ""
 msgid "These people have similar names. Are they the same person?"
 msgstr ""
 
-#: app/src/window/merge-assistant.ts:119 app/src/window/welcome.ts:132
+#: app/src/window/merge-assistant.ts:119 app/src/window/welcome.ts:129
 msgid "Skip"
 msgstr ""
 
@@ -3000,7 +3004,7 @@ msgid "Media"
 msgstr ""
 
 #: app/src/window/preferences-dialog.ts:74 app/src/window/welcome-model.ts:124
-#: app/src/window/welcome.ts:243
+#: app/src/window/welcome.ts:240
 msgid "AI features"
 msgstr ""
 
@@ -3010,11 +3014,11 @@ msgid ""
 "you allow it. Off: no assistant can reach your data"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:80 app/src/window/welcome.ts:255
+#: app/src/window/preferences-dialog.ts:80 app/src/window/welcome.ts:252
 msgid "AI"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:136
+#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:135
 msgid "Preferences"
 msgstr ""
 
@@ -3145,92 +3149,92 @@ msgstr[1] ""
 msgid "On"
 msgstr ""
 
-#: app/src/window/welcome.ts:109 app/src/window/welcome.ts:128
-#: app/src/window/window.ts:141
+#: app/src/window/welcome.ts:107 app/src/window/welcome.ts:125
+#: app/src/window/window.ts:140
 msgid "Welcome"
 msgstr ""
 
-#: app/src/window/welcome.ts:130
+#: app/src/window/welcome.ts:127
 msgid "Welcome to Curlew"
 msgstr ""
 
-#: app/src/window/welcome.ts:139
+#: app/src/window/welcome.ts:136
 msgid "Choose Protocols"
 msgstr ""
 
-#: app/src/window/welcome.ts:153
+#: app/src/window/welcome.ts:150
 msgid "Choose your protocols"
 msgstr ""
 
-#: app/src/window/welcome.ts:177
+#: app/src/window/welcome.ts:174
 msgid "Add your accounts"
 msgstr ""
 
-#: app/src/window/welcome.ts:196
+#: app/src/window/welcome.ts:193
 msgid ""
 "No mail account yet. Once you add one, you can switch this on in its "
 "settings."
 msgstr ""
 
-#: app/src/window/welcome.ts:245
+#: app/src/window/welcome.ts:242
 msgid ""
 "An assistant could then read and send your messages through Curlew, each "
 "time as you allow it."
 msgstr ""
 
-#: app/src/window/welcome.ts:256
+#: app/src/window/welcome.ts:253
 msgid ""
 "Off, no assistant can reach your data. You can change this at any time in "
 "Preferences."
 msgstr ""
 
-#: app/src/window/welcome.ts:266
+#: app/src/window/welcome.ts:263
 msgid "All set"
 msgstr ""
 
-#: app/src/window/welcome.ts:267
+#: app/src/window/welcome.ts:264
 msgid ""
 "You can change all of this later: accounts and protocols in Accounts, the "
 "rest in Preferences."
 msgstr ""
 
-#: app/src/window/welcome.ts:269
+#: app/src/window/welcome.ts:266
 msgid "Start Using Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:92
+#: app/src/window/window.ts:91
 msgid "Select a conversation"
 msgstr ""
 
-#: app/src/window/window.ts:93
+#: app/src/window/window.ts:92
 msgid "Pick a conversation from the list."
 msgstr ""
 
-#: app/src/window/window.ts:135
+#: app/src/window/window.ts:134
 msgid "Merge contacts…"
 msgstr ""
 
-#: app/src/window/window.ts:143
+#: app/src/window/window.ts:142
 msgid "About Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:144
+#: app/src/window/window.ts:143
 msgid "Quit"
 msgstr ""
 
-#: app/src/window/window.ts:186
+#: app/src/window/window.ts:185
 msgid "This conversation has no recipient address."
 msgstr ""
 
-#: app/src/window/window.ts:389
+#: app/src/window/window.ts:388
 msgid "Curlew (demo)"
 msgstr ""
 
-#: app/src/window/window.ts:392
+#: app/src/window/window.ts:391
 msgid "Demo data — nothing here is real"
 msgstr ""
 
-#: app/src/window/window.ts:535
+#: app/src/window/window.ts:534
 msgid "No contacts to merge"
 msgstr ""
 

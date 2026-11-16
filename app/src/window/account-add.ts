@@ -16,6 +16,7 @@ import { accountsAdd } from '../core/actions/accounts.ts';
 import { backendUnavailableReason, backendsEnable, backendsList } from '../core/actions/backends.ts';
 import { addableProtocols, mailProtocol, needsTerms, type AddableProtocol } from './account-add-model.ts';
 import { chatOnly } from '../core/platform.ts';
+import { accountStoreReachable } from '../core/actions/accounts.ts';
 import { inSandbox } from '../core/lib/sandbox.ts';
 import { restartDaemonIfRunning } from './accounts-daemon.ts';
 import { createSurfacePrompter, type PromptStep, type SurfacePrompter } from './account-prompter.ts';
@@ -367,24 +368,36 @@ export function pushAddAccountPage(deps: AddAccountDeps): void {
     own.set_subtitle(_('Sign in with an address and a password'));
     mail.add(own);
   }
-  // A Flatpak cannot see GNOME Online Accounts (ADR 0011), so the shortcut would lead nowhere.
-  if (!inSandbox() && !chatOnly()) {
-    const goa = new Adw.ActionRow({
-      title: _('GNOME Online Accounts'),
-      subtitle: _('Use an account you already set up in GNOME Settings'),
-      activatable: true,
-      useMarkup: false,
-    });
-    goa.add_prefix(new Gtk.Image({ iconName: 'avatar-default-symbolic' }));
-    goa.add_suffix(new Gtk.Image({ iconName: 'adw-external-link-symbolic' }));
-    goa.connect('activated', () => deps.openGoaSettings());
-    mail.add(goa);
-  }
-
+  // The row follows the account store: shown once GNOME Online Accounts answers (libgoa, or
+  // D-Bus in a Flatpak, ADR 0011). GNOME Settings cannot be launched from a sandbox, so there the
+  // row only says where the accounts come from.
   const content = new Adw.PreferencesPage();
   content.add(chats);
+  mail.set_visible(Boolean(mailEntry));
+  if (!chatOnly()) {
+    const sandboxed = inSandbox();
+    const goa = new Adw.ActionRow({
+      title: _('GNOME Online Accounts'),
+      subtitle: sandboxed
+        ? _('Accounts you set up in GNOME Settings appear here by themselves')
+        : _('Use an account you already set up in GNOME Settings'),
+      activatable: !sandboxed,
+      useMarkup: false,
+      visible: false,
+    });
+    goa.add_prefix(new Gtk.Image({ iconName: 'avatar-default-symbolic' }));
+    if (!sandboxed) {
+      goa.add_suffix(new Gtk.Image({ iconName: 'adw-external-link-symbolic' }));
+      goa.connect('activated', () => deps.openGoaSettings());
+    }
+    mail.add(goa);
+    void accountStoreReachable().then((reachable) => {
+      goa.set_visible(reachable);
+      mail.set_visible(Boolean(mailEntry) || reachable);
+    });
+  }
   // Chat-only platforms have no mail source at all, so the group would be empty.
-  if (mailEntry || (!inSandbox() && !chatOnly())) content.add(mail);
+  content.add(mail);
 
   const toolbar = new Adw.ToolbarView();
   toolbar.add_top_bar(new Adw.HeaderBar());

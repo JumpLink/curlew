@@ -37,8 +37,6 @@ export interface GnomeAccount {
   /** Display name shown in GNOME Settings. */
   presentation: string;
   capabilities: GnomeAccountCapabilities;
-  /** Available credential mechanisms (drives the future mail backend choice). */
-  auth: { oauth2: boolean; password: boolean };
 }
 
 /** A contact projected from an EDS address book (vCard). */

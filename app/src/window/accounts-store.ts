@@ -24,21 +24,9 @@ function enabledChatBackends(backends: BackendStatus[]): BackendStatus[] {
   return backends.filter((b) => b.enabled && b.name !== 'mail');
 }
 
-export interface LoadAccountsOptions {
-  /**
-   * Whether GNOME Online Accounts can exist at all. False in a Flatpak (ADR 0011): then their
-   * absence is the sandbox, not a failure, so no error row is shown for it.
-   */
-  hostAccounts?: boolean;
-}
-
-export async function loadAccountsState(
-  path = configPath(),
-  options: LoadAccountsOptions = {},
-): Promise<AccountsLoadState> {
+export async function loadAccountsState(path = configPath()): Promise<AccountsLoadState> {
   const { backends } = backendsList(path);
   const chatBackends = enabledChatBackends(backends);
-  const hostAccounts = options.hostAccounts ?? true;
 
   // `CURLEW_NO_HOST_ACCOUNTS=1` hides the host's GNOME Online Accounts, so a screenshot never shows
   // the real ones (the screenshot script sets it).
@@ -49,9 +37,7 @@ export async function loadAccountsState(
   ).then(
     (accounts): { accounts: GnomeAccount[]; error?: string } => ({ accounts }),
     (err: unknown): { accounts: GnomeAccount[]; error?: string } =>
-      !hostAccounts || err instanceof GnomeUnavailableError
-        ? { accounts: [] }
-        : { accounts: [], error: errorText(err) },
+      err instanceof GnomeUnavailableError ? { accounts: [] } : { accounts: [], error: errorText(err) },
   );
 
   const mailEnabled = backends.some((b) => b.name === 'mail' && b.enabled);

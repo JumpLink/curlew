@@ -8,8 +8,6 @@
 
 import { optionalNamespace } from './optional.ts';
 
-export const goa = optionalNamespace('Goa', async () => (await import('gi://Goa?version=1.0')).default);
-
 export const eds = optionalNamespace('EDataServer', async () => (await import('gi://EDataServer?version=1.2')).default);
 
 /** EBook + the contacts types it needs, with the Promise overload of `get_contacts` installed. */
