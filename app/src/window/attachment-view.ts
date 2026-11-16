@@ -25,10 +25,12 @@ import {
   showsInline,
   showsPlayer,
   showsPoster,
+  showsVideoBox,
   tileAction,
 } from './attachment-model.ts';
 import {
   type AttachmentSource,
+  cachedAttachment,
   failureText,
   fetchAttachment,
   loadPoster,
@@ -223,6 +225,17 @@ function inlinePreview(
     widthRequest: cell?.width ?? PLACEHOLDER.width,
     heightRequest: cell?.height ?? PLACEHOLDER.height,
   });
+  // The dark box of a video that shows no frame: the `osd` surface follows light and dark mode.
+  const darken = () => {
+    image.add_css_class('osd');
+    if (cell) return;
+    const { width, height } = source.info;
+    if (width && height) {
+      const size = boundedSize({ width, height });
+      image.set_size_request(size.width, size.height);
+    }
+  };
+  if (!paint && (cell || kind === 'video')) darken();
   const name = attachmentName(source.info);
   frame.set_tooltip_text(name);
   frame.update_property(
@@ -273,8 +286,9 @@ function inlinePreview(
 
   const fail = () => {
     spinner.set_visible(false);
-    if (cell) {
+    if (cell || kind === 'video') {
       image.set_paintable(null);
+      darken();
       return;
     }
     slot.remove(frame);
@@ -294,6 +308,7 @@ function inlinePreview(
         // The bubble left the window while the picture decoded; there is nothing to paint into.
         if (frame.get_root() === null) return;
         image.set_paintable(shown.paintable);
+        image.remove_css_class('osd');
         if (!cell) {
           const size = boundedSize({ width: shown.width / scale, height: shown.height / scale });
           image.set_size_request(size.width, size.height);
@@ -389,6 +404,13 @@ function silentPreview(host: SilentVideoHost, shown: PaintedPreview): void {
   });
 }
 
+/** A video of any size whose bytes already sit in the previews cache: its frame costs no fetch. */
+function cachedVideo(source: AttachmentSource): boolean {
+  return (
+    attachmentKind(source.info) === 'video' && isOpenable(source.info) && cachedAttachment(source) !== null
+  );
+}
+
 /** One cell of the grid: the picture or first frame when it may load unasked, else the dark cell. */
 function gridCell(
   source: AttachmentSource,
@@ -398,7 +420,7 @@ function gridCell(
 ): Gtk.Widget {
   const { info } = source;
   if (showsInline(info)) return picture(source, handlers, cell, album);
-  if (showsPoster(info)) return poster(source, handlers, cell, album);
+  if (showsPoster(info) || cachedVideo(source)) return poster(source, handlers, cell, album);
   return inlinePreview(source, handlers, attachmentKind(info), null, cell, null, album);
 }
 
@@ -453,11 +475,13 @@ export function attachmentList(
     list.append(
       showsInline(info)
         ? picture(source, handlers)
-        : showsPoster(info)
+        : showsPoster(info) || cachedVideo(source)
           ? poster(source, handlers)
-          : showsPlayer(info)
-            ? inset(audioPlayer(source, handlers.toast))
-            : inset(tile(source, handlers)),
+          : showsVideoBox(info)
+            ? inlinePreview(source, handlers, 'video', null)
+            : showsPlayer(info)
+              ? inset(audioPlayer(source, handlers.toast))
+              : inset(tile(source, handlers)),
     );
   }
   if (generic) list.append(inset(genericTile()));

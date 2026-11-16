@@ -1,6 +1,14 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from '@gjsify/unit';
 
-import { type CachedPart, pickEvictions } from '../../../src/window/preview-cache-model.ts';
+import {
+  type CachedPart,
+  cachedPath,
+  partDir,
+  pickEvictions,
+} from '../../../src/window/preview-cache-model.ts';
 
 const part = (name: string, bytes: number, modified: number): CachedPart => ({ name, bytes, modified });
 
@@ -25,6 +33,28 @@ export default async () => {
       const parts = [part('b', 10, 2), part('a', 10, 1)];
       pickEvictions(parts, 5);
       expect(parts.map((p) => p.name)).toStrictEqual(['b', 'a']);
+    });
+  });
+
+  await describe('cachedPath', async () => {
+    const source = {
+      ref: { accountId: 'signal-1', backend: 'signal', remoteId: 'msg-9' },
+      info: { filename: 'clip.mp4', mimeType: 'video/mp4', index: 0, size: 9_500_000 },
+    };
+
+    await it('finds a finished file regardless of size, and nothing when uncached or half-written', async () => {
+      const root = mkdtempSync(join(tmpdir(), 'curlew-cache-'));
+      try {
+        expect(cachedPath(source, root)).toBe(null);
+        const dir = partDir(source, root);
+        mkdirSync(dir);
+        writeFileSync(join(dir, 'clip.mp4.part'), 'x');
+        expect(cachedPath(source, root)).toBe(null);
+        writeFileSync(join(dir, 'clip.mp4'), 'x');
+        expect(cachedPath(source, root)).toBe(join(dir, 'clip.mp4'));
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
     });
   });
 };

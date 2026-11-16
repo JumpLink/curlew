@@ -5,7 +5,6 @@
  * when the window starts.
  */
 
-import { createHash } from 'node:crypto';
 import { readdirSync, rmSync, statSync, unlinkSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import Gdk from 'gi://Gdk?version=4.0';
@@ -19,8 +18,14 @@ import { ensurePrivateDir, previewsDir } from '@curlew/store';
 import { chatSaveAttachment } from '../core/actions/chat-attachment.ts';
 import { ATTACHMENT_BYTES } from '../core/actions/limits.ts';
 import { mailSaveAttachment } from '../core/actions/mail.ts';
-import { previewKey } from './attachment-model.ts';
-import { type CachedPart, pickEvictions, PREVIEW_CACHE_MAX_BYTES } from './preview-cache-model.ts';
+import {
+  type CachedPart,
+  cachedFile,
+  cachedPath,
+  partDir,
+  pickEvictions,
+  PREVIEW_CACHE_MAX_BYTES,
+} from './preview-cache-model.ts';
 import type { AttachmentInfo } from './conversation-model.ts';
 
 /** One fetchable part of one mail message. */
@@ -29,17 +34,16 @@ export interface AttachmentSource {
   info: AttachmentInfo;
 }
 
+/** The path of a part already in the previews cache, else null; the view's cue to show a large video's frame. */
+export function cachedAttachment(source: AttachmentSource, root = previewsDir()): string | null {
+  return cachedPath(source, root);
+}
+
 const inFlight = new Map<string, Promise<string>>();
 
 /** The window starts with no leftovers of an earlier run: they are message content. */
 export function clearPreviews(dir = previewsDir()): void {
   rmSync(dir, { recursive: true, force: true });
-}
-
-function partDir(source: AttachmentSource, root: string): string {
-  const key = previewKey(source.ref, source.info.section ?? '', source.info.index);
-  // Not GLib's checksum: it reads a C string and stops at the NUL that separates the key's fields.
-  return join(root, createHash('sha256').update(key).digest('hex'));
 }
 
 /** What the part directories under `root` hold; `pasted` is not a cache, it holds files not sent yet. */
@@ -78,14 +82,6 @@ function trimPreviews(
     }
   } catch {
     // The cache is only a convenience; a failed sweep leaves it larger, not broken.
-  }
-}
-
-function cachedFile(dir: string): string | null {
-  try {
-    return readdirSync(dir).find((name) => !name.endsWith('.part')) ?? null;
-  } catch {
-    return null;
   }
 }
 

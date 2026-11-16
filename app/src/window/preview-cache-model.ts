@@ -3,6 +3,14 @@
  * tested without a disk: the least recently written go first, and the part just fetched stays.
  */
 
+import { createHash } from 'node:crypto';
+import { readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import type { MessageRef } from '@curlew/protocol';
+
+import { previewKey } from './attachment-model.ts';
+import type { AttachmentInfo } from './conversation-model.ts';
+
 /** The cache may hold this much between window starts; a long session of videos would otherwise fill the disk. */
 export const PREVIEW_CACHE_MAX_BYTES = 1024 * 1024 * 1024;
 
@@ -32,4 +40,27 @@ export function pickEvictions(
     total -= part.bytes;
   }
   return drop;
+}
+
+/** The directory under `root` that holds one part's bytes. */
+export function partDir(source: { ref: MessageRef; info: AttachmentInfo }, root: string): string {
+  const key = previewKey(source.ref, source.info.section ?? '', source.info.index);
+  // Not GLib's checksum: it reads a C string and stops at the NUL that separates the key's fields.
+  return join(root, createHash('sha256').update(key).digest('hex'));
+}
+
+/** The finished file in a part directory, skipping a half-written `.part`; null when there is none. */
+export function cachedFile(dir: string): string | null {
+  try {
+    return readdirSync(dir).find((name) => !name.endsWith('.part')) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** The path of the part's bytes when they are already cached under `root`, else null. Never fetches. */
+export function cachedPath(source: { ref: MessageRef; info: AttachmentInfo }, root: string): string | null {
+  const dir = partDir(source, root);
+  const hit = cachedFile(dir);
+  return hit ? join(dir, hit) : null;
 }

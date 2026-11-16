@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Every video shows as a video box with the play button and its length, also a large chat video or a mail video, instead of a plain file tile. A large video that is already downloaded shows its first frame.
 - Curlew opens from the app menu in the Flatpak and the Linux packages: the menu entry starts the window instead of the command line, which exited with an error.
 - GNOME Online Accounts mail accounts are missing in the Flatpak: the Flatpak may now talk to GNOME Online Accounts, and the accounts are read over D-Bus there, so the accounts set up on the host show up in both builds. The *Add Account* row for them shows wherever they can be reached.
 - A prerelease tag such as `v0.2.0-rc.1` now produces a draft prerelease instead of failing the release workflow's artifact check: the package names come from `app/package.json`, and a tag naming another version is refused.
