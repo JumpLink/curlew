@@ -1,6 +1,6 @@
 # AGENTS.md — @curlew/store
 
-Local state: XDG paths, attachment writing, the SQLite full-text index and the sync engine.
+Local state: injected base directories (`StoreDirs`; XDG only in `desktop-paths.ts`), attachment writing, the SQLite full-text index and the sync engine.
 The repo-wide rules are in [../../AGENTS.md](../../AGENTS.md); this file is the store-specific
 layer and wins where they differ.
 
@@ -15,9 +15,11 @@ can be unit-tested on Node against a fake backend and `:memory:`. If you want to
 
 `node:*` is fine. `gi://` is not, at any depth.
 
-## SQLite here is libgda, not sqlite3
+## SQLite here: the gjsify wrapper, not Node's
 
-gjsify's `node:sqlite` is a **libgda 6.0 wrapper**. The API is `DatabaseSync`, so it looks like
+gjsify's `node:sqlite` runs on system libsqlite3 through a Vala bridge (gjsify ADR 0123), after
+starting as a **libgda 6.0 wrapper**; the table below describes the libgda days and has NOT been
+re-measured against the new backend (AP5.1 open point) — keep its rules until it is. The API is `DatabaseSync`, so it looks like
 Node's, but six behaviours leak through and every one of them will bite you.
 
 | # | Behaviour | What it forces |
@@ -31,9 +33,11 @@ Node's, but six behaviours leak through and every one of them will bite you.
 
 Two more, smaller:
 
-- **The database filename must end in `.db`.** libgda appends the suffix itself, so
-  `index.sqlite` lands on disk as `index.sqlite.db`. `indexDbPath()` enforces it; `openIndexDb()`
-  checks again.
+- **The database filename must end in `.db`.** A naming rule of this repo, no longer a SQLite
+  one: the libgda wrapper appended the suffix itself, the libsqlite3-backed `@gjsify/sqlite`
+  opens the exact path (pinned in its `database-sync.spec.ts`). Secret account files are found
+  by the suffix and existing indexes carry it. `storePaths()` enforces it; `openIndexDb()` checks
+  again.
 - **`remove_diacritics 2` folds diacritics, not `ß`.** `Grüße` indexes as `gruße`, so `grusse`
   finds nothing. Pinned by a test so it is not mistaken for a bug.
 
@@ -162,7 +166,7 @@ bodies**, and this repo is public, so a stray index file would be a permanent le
   `CURLEW_SECRETS_DIR`.
 
 `.gitignore` is the second line of defence. Not writing there is the first, and it lives in
-`paths.ts` — whose tests take the environment as a parameter precisely so this is checkable.
+`paths.ts` / `desktop-paths.ts` — whose tests take the environment as a parameter precisely so this is checkable.
 
 **Only `curlew sync` and `curlew daemon` write to the index.** A search never does. One
 mental model, and no surprise disk growth from a read. The daemon (ADR 0002) reaches the same

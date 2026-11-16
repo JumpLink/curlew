@@ -2,9 +2,10 @@
  * Opening the SQLite index through the built-in `node:sqlite`.
  *
  * Under GJS that module is supplied by gjsify's `@gjsify/sqlite`, so the same `DatabaseSync`
- * code runs on both runtimes. It is NOT a sqlite3 binding, though — it is a **libgda** wrapper,
- * and that leaks through in four ways which shape every query in this package. Read
- * `AGENTS.md` in this directory before writing SQL here.
+ * code runs on both runtimes. Under GJS it is a TypeScript layer over system libsqlite3 (a Vala
+ * bridge, gjsify ADR 0123); it replaced a libgda wrapper, and several habits of that wrapper
+ * still shape the queries in this package. Read `AGENTS.md` in this directory before writing
+ * SQL here.
  */
 
 import { DatabaseSync } from 'node:sqlite';
@@ -32,12 +33,14 @@ export interface OpenIndexOptions {
 /**
  * Open (and create) the index database.
  *
- * The path must end in `.db` — libgda appends the suffix itself, so `index.sqlite` becomes
- * `index.sqlite.db` on disk. `indexDbPath()` enforces that; this is the second line.
+ * The path must end in `.db`. That is a naming rule of this repo, not a SQLite one: the sqlite
+ * layer opens the exact path it is given (the libgda wrapper used to append `.db`; gjsify's
+ * database-sync spec pins that it no longer does). Account files in the secrets directory are
+ * found by the suffix, and existing indexes already carry it. `storePaths()` enforces it.
  */
 export function openIndexDb(path: string, options: OpenIndexOptions = {}): DatabaseSync {
   if (path !== ':memory:' && !path.endsWith('.db')) {
-    throw new Error(`index path must end in .db (libgda appends it): ${path}`);
+    throw new Error(`index path must end in .db (naming rule of this repo): ${path}`);
   }
   const db = new DatabaseSync(path, { timeout: options.busyTimeoutMs ?? INDEX_BUSY_TIMEOUT_MS });
   // One statement per exec(): gjsify's wrapper splits multi-statement strings itself and its

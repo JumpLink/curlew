@@ -3,6 +3,7 @@
  */
 
 export * from './paths.ts';
+export * from './desktop-paths.ts';
 export * from './download.ts';
 export * from './db.ts';
 export * from './schema.ts';
