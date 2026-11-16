@@ -253,6 +253,8 @@ export interface WaReaction {
 /** What `sendMessage` hands back, reduced to what the send path reads off it. */
 export interface WaSentMessage {
   key: WaMessageKey;
+  /** The content as sent, with the media pointer and key; the echo of a file is read from it. */
+  message?: WaMessageContent | null;
   /** Seconds since the epoch, as the server stamped it. */
   messageTimestamp?: WaNumber;
 }
@@ -264,6 +266,13 @@ export interface WaOutgoingFile {
   mimeType: string;
   /** Shown under a picture, a video or a document; an audio message has none. */
   caption?: string;
+  /** Pixels of a picture or video, when known; sent so the receiver can lay the bubble out. */
+  width?: number;
+  height?: number;
+  /** Whole seconds of a video or audio file; the receiver shows it as the duration. */
+  seconds?: number;
+  /** Send audio as a voice note (an Ogg Opus mono recording). */
+  voice?: boolean;
 }
 
 /**

@@ -231,12 +231,20 @@ export const createBaileysConnection: ConnectionFactory = ({ auth, fullHistory =
         // `linkPreview: null` as for a text: a caption with a URL must not fetch it from here.
         const bytes = Buffer.from(file.bytes.buffer, file.bytes.byteOffset, file.bytes.byteLength);
         const caption = file.caption === undefined ? {} : { caption: file.caption };
+        // Dimensions and duration are passed when known; Baileys measures only what is missing,
+        // and the thumbnail only when an image library is installed (it logs and goes on if not).
+        const size = file.width && file.height ? { width: file.width, height: file.height } : {};
+        const secs = file.seconds === undefined ? {} : { seconds: file.seconds };
         const content =
           file.mimeType === 'image/jpeg' || file.mimeType === 'image/png'
-            ? { image: bytes, mimetype: file.mimeType, ...caption }
+            ? { image: bytes, mimetype: file.mimeType, ...size, ...caption }
             : file.mimeType === 'video/mp4'
-              ? { video: bytes, mimetype: file.mimeType, ...caption }
-              : {
+              ? { video: bytes, mimetype: file.mimeType, ...size, ...secs, ...caption }
+              : file.voice === true
+                ? { audio: bytes, mimetype: 'audio/ogg; codecs=opus', ptt: true, ...secs }
+                : file.mimeType.startsWith('audio/')
+                  ? { audio: bytes, mimetype: file.mimeType, ...secs }
+                  : {
                   document: bytes,
                   mimetype: file.mimeType,
                   fileName: file.fileName,

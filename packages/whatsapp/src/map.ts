@@ -116,6 +116,7 @@ export function parseAttachmentHandle(handle: string): WaAttachmentHandle | null
 
 function attachmentKind(type: WaMediaType, media: WaMedia): AttachmentKind {
   if (type === 'audio') return media.ptt === true ? 'voice' : 'audio';
+  // `AttachmentKind` has no sticker kind: a sticker is a (webp) picture and shows inline.
   if (type === 'image' || type === 'sticker') return 'image';
   if (type === 'video' || type === 'ptv') return 'video';
   return media.mimetype?.startsWith('image/') ? 'image' : 'file';

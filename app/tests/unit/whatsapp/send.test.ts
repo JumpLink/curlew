@@ -272,6 +272,25 @@ export default async () => {
       });
     });
 
+    await it('returns the echo mapped like a received message, with the sent facts', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const photo = join(rig.dir, 'photo.png');
+        writeFileSync(photo, new Uint8Array([1, 2, 3]));
+        const permit: SendPermit = { account: rig.accountId, addresses: [ANNA_LID] };
+        const sender = await rig.backend.openSender(rig.accountId, permit);
+        try {
+          const result = await sender.send({ to: ANNA_LID, text: '', attachments: [{ path: photo }] });
+          const echo = result.echoAttachments ?? [];
+          expect(echo.length).toBe(1);
+          expect(echo[0].kind).toBe('image');
+          expect(echo[0].handle.includes('mediaKey')).toBe(true);
+          expect(echo[0].thumbnail?.length).toBe(2);
+        } finally {
+          await sender.close();
+        }
+      });
+    });
+
     await it('sends a text too long for a caption as a message of its own', async () => {
       await withRig(GRANTED, async (rig) => {
         const doc = join(rig.dir, 'notes.pdf');
