@@ -157,14 +157,16 @@ function attachmentKind(pointer: AttachmentPointer): AttachmentKind {
  */
 export function toChatAttachments(data: DataMessage): ChatAttachment[] | undefined {
   const out: ChatAttachment[] = [];
-  for (const pointer of data.attachments) {
+  const pointers = data.stickerPointer ? [...data.attachments, data.stickerPointer] : data.attachments;
+  for (const pointer of pointers) {
+    const isSticker = pointer === data.stickerPointer;
     const hasCdn = pointer.cdnKey || (pointer.cdnId !== null && pointer.cdnId !== 0n);
     if (!pointer.key?.byteLength || !hasCdn) continue;
     out.push({
       filename: pointer.fileName,
-      mimeType: pointer.contentType,
+      mimeType: isSticker ? (pointer.contentType ?? 'image/webp') : pointer.contentType,
       size: pointer.size,
-      kind: attachmentKind(pointer),
+      kind: isSticker ? 'image' : attachmentKind(pointer),
       width: pointer.width || null,
       height: pointer.height || null,
       durationMs: null,

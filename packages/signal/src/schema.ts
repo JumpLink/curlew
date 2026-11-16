@@ -172,6 +172,8 @@ export interface DataMessage {
   /** Display names of shared contact cards. */
   contacts: string[];
   sticker: boolean;
+  /** The sticker's image (`Sticker.data`, field 4), when the sender attached one. */
+  stickerPointer?: AttachmentPointer | null;
   /** An emoji reaction to the message its author and sent timestamp name; `remove` takes it back. */
   reaction: {
     emoji: string | null;
@@ -214,6 +216,8 @@ const KNOWN_DATA_FIELDS = new Set([
 ]);
 
 export function decodeDataMessage(f: Fields): DataMessage {
+  const stickerField = messageField(f, 11);
+  const stickerData = stickerField ? messageField(stickerField, 4) : null;
   const group = messageField(f, 15);
   const quote = messageField(f, 8);
   const reaction = messageField(f, 16);
@@ -237,7 +241,8 @@ export function decodeDataMessage(f: Fields): DataMessage {
     timestamp: numberField(f, 7),
     quote: quote ? { id: numberField(quote, 1), authorAci: serviceId(quote, 5, 8) } : null,
     contacts: repeatedMessages(f, 9).map(contactCardName),
-    sticker: messageField(f, 11) !== null,
+    sticker: stickerField !== null,
+    stickerPointer: stickerData ? decodeAttachmentPointer(stickerData) : null,
     reaction: reaction
       ? {
           emoji: stringField(reaction, 1),
@@ -417,28 +422,28 @@ export interface DataMessageInput {
     blurHash?: string;
   }>;
   reaction?: { emoji: string; remove?: boolean; targetAuthorAci: string; targetSentTimestamp: number };
+  /** A sticker whose image is this pointer (`Sticker.data`, field 4). */
+  sticker?: NonNullable<DataMessageInput['attachments']>[number];
   flags?: number;
 }
 
 export function encodeDataMessage(d: DataMessageInput): ProtoWriter {
   const w = new ProtoWriter().string(1, d.body);
-  for (const a of d.attachments ?? []) {
-    w.message(
-      2,
-      new ProtoWriter()
-        .string(2, a.contentType)
-        .bytes(3, a.key)
-        .uint(4, a.size)
-        .bytes(6, a.digest)
-        .string(7, a.fileName)
-        .uint(8, a.flags)
-        .uint(9, a.width)
-        .uint(10, a.height)
-        .string(12, a.blurHash)
-        .uint(14, a.cdnNumber)
-        .string(15, a.cdnKey),
-    );
-  }
+  const pointer = (a: NonNullable<DataMessageInput['attachments']>[number]) =>
+    new ProtoWriter()
+      .string(2, a.contentType)
+      .bytes(3, a.key)
+      .uint(4, a.size)
+      .bytes(6, a.digest)
+      .string(7, a.fileName)
+      .uint(8, a.flags)
+      .uint(9, a.width)
+      .uint(10, a.height)
+      .string(12, a.blurHash)
+      .uint(14, a.cdnNumber)
+      .string(15, a.cdnKey);
+  for (const a of d.attachments ?? []) w.message(2, pointer(a));
+  if (d.sticker) w.message(11, new ProtoWriter().message(4, pointer(d.sticker)));
   w.uint(4, d.flags);
   w.uint(7, d.timestamp);
   if (d.quote) w.message(8, new ProtoWriter().uint(1, d.quote.id).string(5, d.quote.authorAci));
