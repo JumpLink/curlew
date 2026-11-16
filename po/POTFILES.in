@@ -301,6 +301,7 @@ packages/store/src/conversations.ts
 packages/store/src/db.ts
 packages/store/src/delivery-batch.ts
 packages/store/src/delivery-sync.ts
+packages/store/src/desktop-paths.ts
 packages/store/src/download.ts
 packages/store/src/fts.ts
 packages/store/src/index-store.ts
@@ -312,6 +313,7 @@ packages/store/src/read-receipts.ts
 packages/store/src/receive-lease.ts
 packages/store/src/row.ts
 packages/store/src/schema.ts
+packages/store/src/secret-files.ts
 packages/store/src/secret-store.ts
 packages/store/src/send-files.ts
 packages/store/src/sync.ts
