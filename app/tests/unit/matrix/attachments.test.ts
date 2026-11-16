@@ -213,7 +213,7 @@ export default async () => {
       });
     });
 
-    await it('refuses over the limit, announced or streamed, and a size mismatch', async () => {
+    await it('refuses over the limit, announced or streamed', async () => {
       const routes = { [AUTH_PATH]: { status: 200, body: new Uint8Array([1, 2, 3, 4, 5, 6]) } };
       await withBackend(routes, async (backend, accountId, http) => {
         // Announced bigger than the limit: no request at all.
@@ -225,13 +225,25 @@ export default async () => {
         expect(
           await failure(fetchWith(backend, accountId, attachmentHandle(MXC, null), new MemorySink(), 4)),
         ).not.toBe(null);
-        // Announced 5, arrived 6.
-        expect(
-          await failure(fetchWith(backend, accountId, attachmentHandle(MXC, 5), new MemorySink())),
-        ).not.toBe(null);
+        // The event announced 5, the homeserver served 6: the event's size is only a hint.
+        expect((await fetchWith(backend, accountId, attachmentHandle(MXC, 5), new MemorySink())).size).toBe(
+          6,
+        );
         // No announcement, within the limit: fine.
         const sink = new MemorySink();
         expect((await fetchWith(backend, accountId, attachmentHandle(MXC, null), sink)).size).toBe(6);
+      });
+    });
+
+    await it('refuses a body shorter than the homeserver declared', async () => {
+      const routes = {
+        [AUTH_PATH]: { status: 200, body: new Uint8Array([1, 2, 3]), headers: { 'content-length': '5' } },
+      };
+      await withBackend(routes, async (backend, accountId) => {
+        const message = await failure(
+          fetchWith(backend, accountId, attachmentHandle(MXC, 3), new MemorySink()),
+        );
+        expect(message).not.toBe(null);
       });
     });
 

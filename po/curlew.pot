@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-16 20:23+0100\n"
+"POT-Creation-Date: 2026-11-16 20:50+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3374,7 +3374,7 @@ msgstr ""
 msgid "this Matrix attachment cannot be found any more"
 msgstr ""
 
-#: packages/matrix/src/attachments.ts:114
+#: packages/matrix/src/attachments.ts:119
 msgid ""
 "the Matrix attachment arrived with {actual} bytes, not the announced "
 "{announced}"
