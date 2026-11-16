@@ -318,6 +318,76 @@ export default async () => {
       });
     });
 
+    await it('sends video, audio and an Ogg Opus mono voice note as what they are', async () => {
+      await withRig({}, async (rig) => {
+        const ogg = (channels: number) => {
+          const page = (granule: number, segments: number[], body: number[]) => {
+            const h = new Uint8Array(27 + segments.length + body.length);
+            h.set([0x4f, 0x67, 0x67, 0x53, 0, 0]);
+            new DataView(h.buffer).setUint32(6, granule, true);
+            h[26] = segments.length;
+            h.set(segments, 27);
+            h.set(body, 27 + segments.length);
+            return h;
+          };
+          const head = [...'OpusHead']
+            .map((c) => c.charCodeAt(0))
+            .concat([1, channels, 0, 0, 0x80, 0xbb, 0, 0, 0, 0, 0]);
+          const first = page(0, [head.length], head);
+          const last = page(96000, [], []);
+          const out = new Uint8Array(first.length + last.length);
+          out.set(first);
+          out.set(last, first.length);
+          return out;
+        };
+        const files: Record<string, Uint8Array> = {
+          'clip.mp4': new Uint8Array([0, 0, 0, 8, 0x66, 0x74, 0x79, 0x70, 1, 2, 3, 4]),
+          'song.mp3': new Uint8Array([0x49, 0x44, 0x33, 3, 0, 0, 0, 0]),
+          'note.ogg': ogg(1),
+          'music.ogg': ogg(2),
+        };
+        const paths = Object.entries(files).map(([name, bytes]) => {
+          const p = join(rig.dir, name);
+          writeFileSync(p, bytes);
+          return p;
+        });
+        const out = await sendMessage({
+          accountId: ACCOUNT,
+          to: '1001',
+          attachments: paths,
+          frontend: 'window',
+          dbPath: join(rig.dir, 'index.db'),
+          configPath: rig.configPath,
+          writeLogPath: join(rig.dir, 'writes.log'),
+          backend: rig.backend,
+        });
+        const sent = rig.fake.clients[0].files;
+        const by = (name: string) => sent.find((f) => f.fileName === name)!;
+        expect(by('clip.mp4').as).toBe('video');
+        expect(by('clip.mp4').asPhoto).toBe(false);
+        expect(by('song.mp3').as).toBe('audio');
+        expect(by('note.ogg').as).toBe('voice');
+        expect(by('note.ogg').duration).toBe(2);
+        expect(by('music.ogg').as).toBe('audio');
+        // The sent messages come back as attachments, so the window shows them at once.
+        expect(out.attachments?.length).toBe(4);
+      });
+    });
+
+    await it('echoes a sent photo as a received attachment, with its own handle', async () => {
+      await withRig({}, async (rig) => {
+        const photo = join(rig.dir, 'cat.png');
+        writeFileSync(photo, new Uint8Array([1, 2, 3, 4]));
+        const sender = await rig.backend.openSender(ACCOUNT, { account: ACCOUNT, addresses: ['1001'] });
+        const sent = await sender.send({ to: '1001', text: 'x', attachments: [{ path: photo }] });
+        const echo = sent.echoAttachments ?? [];
+        expect(echo.length).toBe(1);
+        expect(echo[0].kind).toBe('image');
+        expect(typeof echo[0].handle).toBe('string');
+        await sender.close();
+      });
+    });
+
     await it('refuses a bad file before a byte is sent', async () => {
       await withRig({}, async (rig) => {
         const base = {

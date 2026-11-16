@@ -3686,7 +3686,7 @@ msgid "the mail account {account} is incomplete — add it again"
 msgstr "Das E-Mail-Konto {account} ist unvollständig — füge es erneut hinzu"
 
 #: packages/imap/src/send.ts:78 packages/matrix/src/send.ts:378
-#: packages/signal/src/send.ts:505 packages/telegram/src/sender.ts:80
+#: packages/signal/src/send.ts:505 packages/telegram/src/sender.ts:82
 #: packages/whatsapp/src/send.ts:415
 msgid "sending to {address} is not granted for account {account}"
 msgstr "Das Senden an {address} ist für Konto {account} nicht freigegeben"
@@ -3920,7 +3920,7 @@ msgstr ""
 "kürze sie"
 
 #: packages/matrix/src/send.ts:536 packages/signal/src/send.ts:260
-#: packages/telegram/src/sender.ts:141 packages/whatsapp/src/send.ts:165
+#: packages/telegram/src/sender.ts:143 packages/whatsapp/src/send.ts:165
 #: packages/xmpp/src/messages.ts:36
 msgid "only your own messages can be changed — nothing was sent"
 msgstr ""
@@ -4431,12 +4431,12 @@ msgstr ""
 "eingeschränkt oder gesperrt werden. curlew liest deine Chats und sendet nur, "
 "was du ihm aufträgst."
 
-#: packages/telegram/src/sender.ts:51
+#: packages/telegram/src/sender.ts:53
 msgid "{id} is not a message of this Telegram chat — nothing was sent"
 msgstr ""
 "{id} ist keine Nachricht dieses Telegram-Chats – es wurde nichts gesendet"
 
-#: packages/telegram/src/sender.ts:97 packages/telegram/src/sender.ts:152
+#: packages/telegram/src/sender.ts:99 packages/telegram/src/sender.ts:154
 msgid ""
 "a Telegram message holds at most {max} characters, this one has {length} — "
 "shorten it"
@@ -4444,7 +4444,7 @@ msgstr ""
 "Eine Telegram-Nachricht fasst höchstens {max} Zeichen, diese hat {length} — "
 "kürze sie"
 
-#: packages/telegram/src/sender.ts:128
+#: packages/telegram/src/sender.ts:130
 msgid ""
 "Telegram allows reactions here only with Premium (for example in Saved "
 "Messages)"
@@ -4452,7 +4452,7 @@ msgstr ""
 "Telegram erlaubt Reaktionen hier nur mit Premium (zum Beispiel in "
 "„Gespeicherte Nachrichten“)"
 
-#: packages/telegram/src/sender.ts:131
+#: packages/telegram/src/sender.ts:133
 msgid "this chat does not allow that reaction"
 msgstr "Dieser Chat erlaubt diese Reaktion nicht"
 
