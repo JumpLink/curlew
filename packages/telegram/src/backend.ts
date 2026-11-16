@@ -70,6 +70,7 @@ function withStoreClose(client: TelegramClientHandle, store: SecretStore): Teleg
     getMessages: (chatId, messageIds) => client.getMessages(chatId, messageIds),
     openMedia: (chatId, messageId) => client.openMedia(chatId, messageId),
     openAvatar: (chatId) => client.openAvatar(chatId),
+    openThumbnail: (chatId, messageId, type) => client.openThumbnail(chatId, messageId, type),
     destroy: async () => {
       try {
         await client.destroy();

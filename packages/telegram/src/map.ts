@@ -15,7 +15,14 @@ import type {
   ParticipantAddress,
 } from '@curlew/protocol';
 import { normalizeAddress } from '@curlew/protocol';
-import type { TgDialog, TgMedia, TgMessage, TgPeer } from './api.ts';
+import type { TgDialog, TgMedia, TgMessage, TgPeer, TgThumbnail } from './api.ts';
+import { strippedToJpeg } from './stripped-jpeg.ts';
+
+/** The store drops an inline preview above this (ADR 0017); a stripped JPEG is far below it. */
+const MAX_INLINE_THUMBNAIL_BYTES = 16 * 1024;
+
+/** Telegram's fetchable picture sizes, smallest first. `i` (inline), `j` (vector) and `v` (video) are not among them. */
+const THUMB_ORDER = ['s', 'a', 'm', 'b', 'x', 'c', 'y', 'd', 'w'];
 
 /** Media that is a file a person sent. A link preview (`webpage`), a poll or a dice roll is not. */
 const FILE_MEDIA = new Set(['photo', 'video', 'audio', 'voice', 'document', 'sticker', 'paid']);
@@ -47,15 +54,55 @@ export function parseAttachmentHandle(handle: string): { chatId: number; message
   }
 }
 
+/** The backend-private handle of one preview size of a message's media. */
+export function thumbHandle(chatId: number, messageId: number, thumb: string): string {
+  return JSON.stringify({ chatId, messageId, thumb });
+}
+
+/** The ids and size letter behind a stored thumbnail handle, or null when it is not one. */
+export function parseThumbHandle(handle: string): { chatId: number; messageId: number; thumb: string } | null {
+  try {
+    const value: unknown = JSON.parse(handle);
+    if (typeof value !== 'object' || value === null) return null;
+    const { chatId, messageId, thumb } = value as Record<string, unknown>;
+    if (!Number.isSafeInteger(chatId) || !Number.isSafeInteger(messageId)) return null;
+    if (typeof thumb !== 'string' || thumb === '') return null;
+    return { chatId: chatId as number, messageId: messageId as number, thumb };
+  } catch {
+    return null;
+  }
+}
+
+/** The preview a message ships inline (an expanded stripped JPEG), else the smallest size to fetch. */
+function thumbnailFields(
+  thumbnails: ReadonlyArray<TgThumbnail> | undefined,
+  chatId: number,
+  messageId: number,
+): Pick<ChatAttachment, 'thumbnail' | 'thumbHandle'> {
+  if (!thumbnails || thumbnails.length === 0) return {};
+  for (const t of thumbnails) {
+    if (t.raw?._ !== 'photoStrippedSize' || !t.raw.bytes) continue;
+    const jpeg = strippedToJpeg(t.raw.bytes);
+    if (jpeg !== null && jpeg.byteLength <= MAX_INLINE_THUMBNAIL_BYTES) return { thumbnail: jpeg };
+  }
+  const rank = (type: string) => THUMB_ORDER.indexOf(type);
+  const smallest = thumbnails
+    .filter((t) => rank(t.type) >= 0)
+    .sort((a, b) => rank(a.type) - rank(b.type))[0];
+  return smallest ? { thumbHandle: thumbHandle(chatId, messageId, smallest.type) } : {};
+}
+
 /** The one file a message carries, or none: a link preview, a poll or paid media has nothing to fetch. */
-function toChatAttachments(message: TgMessage): ChatAttachment[] | undefined {
+export function toChatAttachments(message: TgMessage): ChatAttachment[] | undefined {
   const media = message.media;
   if (media === null || media.type === 'paid' || !FILE_MEDIA.has(media.type)) return undefined;
   // A photo is always re-encoded to JPEG by Telegram and carries no MIME type of its own.
   const mimeType = media.type === 'photo' ? 'image/jpeg' : (media.mimeType ?? null);
   return [
     {
-      filename: media.fileName ?? null,
+      // An animated sticker (Lottie) is no picture the window can decode, so it stays a file tile; it
+      // gets a name so the tile has a label, and its preview comes from the thumbnail below.
+      filename: media.fileName ?? (mimeType === 'application/x-tgsticker' ? 'sticker.tgs' : null),
       mimeType,
       size: media.fileSize ?? null,
       kind: attachmentKind(media, mimeType),
@@ -63,6 +110,7 @@ function toChatAttachments(message: TgMessage): ChatAttachment[] | undefined {
       height: media.height ?? null,
       durationMs: typeof media.duration === 'number' ? Math.round(media.duration * 1000) : null,
       handle: attachmentHandle(message.chat.id, message.id),
+      ...thumbnailFields(media.thumbnails, message.chat.id, message.id),
     },
   ];
 }
