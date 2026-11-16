@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-16 20:50+0100\n"
+"POT-Creation-Date: 2026-11-16 22:08+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -918,7 +918,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/core/lib/message-notifications.ts:197
-#: app/src/window/attachment-view.ts:105
+#: app/src/window/attachment-view.ts:107
 msgid "Open"
 msgstr ""
 
@@ -2198,37 +2198,37 @@ msgstr ""
 msgid "A quiet pattern behind the messages"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:105
+#: app/src/window/attachment-view.ts:107
 msgid "Play"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:110 app/src/window/audio-player.ts:59
+#: app/src/window/attachment-view.ts:112 app/src/window/audio-player.ts:59
 #: app/src/window/media-viewer.ts:64
 msgid "Save as…"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:128 app/src/window/audio-player.ts:136
+#: app/src/window/attachment-view.ts:130 app/src/window/audio-player.ts:136
 #: app/src/window/audio-player.ts:163
 msgid "Could not fetch the attachment: {error}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:151 app/src/window/attachment-view.ts:160
+#: app/src/window/attachment-view.ts:153 app/src/window/attachment-view.ts:162
 #: app/src/window/conversation-list-model.ts:503
-#: app/src/window/conversation-model.ts:312
-#: app/src/window/conversation-model.ts:317
+#: app/src/window/conversation-model.ts:318
+#: app/src/window/conversation-model.ts:323
 msgid "Attachment"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:243 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:246 app/src/window/media-viewer.ts:230
 msgid "Video: {name}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:243 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:246 app/src/window/media-viewer.ts:230
 msgid "Image: {name}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:490
-#: app/src/window/conversation-model.ts:320
+#: app/src/window/attachment-view.ts:549
+#: app/src/window/conversation-model.ts:326
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] ""
@@ -2395,7 +2395,7 @@ msgstr ""
 msgid "Members the app knows"
 msgstr ""
 
-#: app/src/window/contact-page.ts:403 app/src/window/conversation-model.ts:354
+#: app/src/window/contact-page.ts:403 app/src/window/conversation-model.ts:360
 msgid "{count} person"
 msgid_plural "{count} people"
 msgstr[0] ""
@@ -2592,34 +2592,34 @@ msgstr ""
 msgid "Unknown sender"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:303
+#: app/src/window/conversation-model.ts:309
 msgid "{kind}: {name}"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:308
+#: app/src/window/conversation-model.ts:314
 msgid "Image"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:309
+#: app/src/window/conversation-model.ts:315
 msgid "Video"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:310
+#: app/src/window/conversation-model.ts:316
 msgid "Audio"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:311
+#: app/src/window/conversation-model.ts:317
 msgid "File"
 msgstr ""
 
-#: app/src/window/conversation-model.ts:352
+#: app/src/window/conversation-model.ts:358
 msgid "You and {count} other"
 msgid_plural "You and {count} others"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-model.ts:353
-#: app/src/window/conversation-model.ts:366
+#: app/src/window/conversation-model.ts:359
+#: app/src/window/conversation-model.ts:372
 #: app/src/window/conversation-view.ts:749
 msgid "You"
 msgstr ""

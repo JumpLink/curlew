@@ -1089,7 +1089,7 @@ msgstr[0] "{n} weiterer Chat hat neue Nachrichten"
 msgstr[1] "{n} weitere Chats haben neue Nachrichten"
 
 #: app/src/core/lib/message-notifications.ts:197
-#: app/src/window/attachment-view.ts:105
+#: app/src/window/attachment-view.ts:107
 msgid "Open"
 msgstr "Öffnen"
 
@@ -2505,37 +2505,37 @@ msgstr "Chat-Hintergrund"
 msgid "A quiet pattern behind the messages"
 msgstr "Ein dezentes Muster hinter den Nachrichten"
 
-#: app/src/window/attachment-view.ts:105
+#: app/src/window/attachment-view.ts:107
 msgid "Play"
 msgstr "Abspielen"
 
-#: app/src/window/attachment-view.ts:110 app/src/window/audio-player.ts:59
+#: app/src/window/attachment-view.ts:112 app/src/window/audio-player.ts:59
 #: app/src/window/media-viewer.ts:64
 msgid "Save as…"
 msgstr "Speichern unter…"
 
-#: app/src/window/attachment-view.ts:128 app/src/window/audio-player.ts:136
+#: app/src/window/attachment-view.ts:130 app/src/window/audio-player.ts:136
 #: app/src/window/audio-player.ts:163
 msgid "Could not fetch the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
-#: app/src/window/attachment-view.ts:151 app/src/window/attachment-view.ts:160
+#: app/src/window/attachment-view.ts:153 app/src/window/attachment-view.ts:162
 #: app/src/window/conversation-list-model.ts:503
-#: app/src/window/conversation-model.ts:312
-#: app/src/window/conversation-model.ts:317
+#: app/src/window/conversation-model.ts:318
+#: app/src/window/conversation-model.ts:323
 msgid "Attachment"
 msgstr "Anhang"
 
-#: app/src/window/attachment-view.ts:243 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:246 app/src/window/media-viewer.ts:230
 msgid "Video: {name}"
 msgstr "Video: {name}"
 
-#: app/src/window/attachment-view.ts:243 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:246 app/src/window/media-viewer.ts:230
 msgid "Image: {name}"
 msgstr "Bild: {name}"
 
-#: app/src/window/attachment-view.ts:490
-#: app/src/window/conversation-model.ts:320
+#: app/src/window/attachment-view.ts:549
+#: app/src/window/conversation-model.ts:326
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] "und {n} weiterer Anhang"
@@ -2702,7 +2702,7 @@ msgstr "Nicht verschlüsselt"
 msgid "Members the app knows"
 msgstr "Mitglieder, die die App kennt"
 
-#: app/src/window/contact-page.ts:403 app/src/window/conversation-model.ts:354
+#: app/src/window/contact-page.ts:403 app/src/window/conversation-model.ts:360
 msgid "{count} person"
 msgid_plural "{count} people"
 msgstr[0] "{count} Person"
@@ -2903,34 +2903,34 @@ msgstr "Weiter über {protocol}"
 msgid "Unknown sender"
 msgstr "Unbekannter Absender"
 
-#: app/src/window/conversation-model.ts:303
+#: app/src/window/conversation-model.ts:309
 msgid "{kind}: {name}"
 msgstr "{kind}: {name}"
 
-#: app/src/window/conversation-model.ts:308
+#: app/src/window/conversation-model.ts:314
 msgid "Image"
 msgstr "Bild"
 
-#: app/src/window/conversation-model.ts:309
+#: app/src/window/conversation-model.ts:315
 msgid "Video"
 msgstr "Video"
 
-#: app/src/window/conversation-model.ts:310
+#: app/src/window/conversation-model.ts:316
 msgid "Audio"
 msgstr "Audio"
 
-#: app/src/window/conversation-model.ts:311
+#: app/src/window/conversation-model.ts:317
 msgid "File"
 msgstr "Datei"
 
-#: app/src/window/conversation-model.ts:352
+#: app/src/window/conversation-model.ts:358
 msgid "You and {count} other"
 msgid_plural "You and {count} others"
 msgstr[0] "Du und {count} weitere Person"
 msgstr[1] "Du und {count} weitere Personen"
 
-#: app/src/window/conversation-model.ts:353
-#: app/src/window/conversation-model.ts:366
+#: app/src/window/conversation-model.ts:359
+#: app/src/window/conversation-model.ts:372
 #: app/src/window/conversation-view.ts:749
 msgid "You"
 msgstr "Du"

@@ -289,6 +289,12 @@ export interface AttachmentInfo {
    * must not offer to fetch an attachment the backend cannot serve (spec item 4).
    */
   backendCanFetch?: boolean;
+  /** A small preview picture the index stored at sync (ADR 0017); null when the file is gone. */
+  thumbPath?: string | null;
+  /** The part's blurHash, the poster of last resort. */
+  blurHash?: string | null;
+  /** True when a backend can still fetch the thumbnail on its own. */
+  thumbFetchable?: boolean;
 }
 
 /** A message as the view shows it, with the attachment parts the index lists for it. */

@@ -131,6 +131,7 @@ app/src/window/attachment-store.ts
 app/src/window/attachment-view.ts
 app/src/window/audio-player.ts
 app/src/window/avatar-store.ts
+app/src/window/blur-hash.ts
 app/src/window/chat-background.ts
 app/src/window/chat-doodles.ts
 app/src/window/chat-motifs.ts
@@ -318,6 +319,7 @@ packages/store/src/secret-store.ts
 packages/store/src/send-files.ts
 packages/store/src/sync.ts
 packages/store/src/threads.ts
+packages/store/src/thumbnails.ts
 packages/telegram/src/accounts.ts
 packages/telegram/src/api.ts
 packages/telegram/src/attachments.ts

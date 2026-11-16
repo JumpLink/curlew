@@ -3,7 +3,6 @@ import type { AttachmentKind } from '../../../src/window/attachment-model.ts';
 
 import {
   attachmentKind,
-  AUTO_FETCH_VIDEO_MAX_BYTES,
   boundedSize,
   durationLabel,
   effectiveMime,
@@ -14,6 +13,7 @@ import {
   isStickerOnly,
   playbackFraction,
   playbackLabel,
+  posterSource,
   previewKey,
   shouldAutoFetch,
   showsInline,
@@ -144,22 +144,28 @@ export default async () => {
       backendCanFetch: true,
     };
 
-    await it('shows the first frame of a small chat video', async () => {
-      expect(showsPoster({ ...clip, size: 1_000_000 })).toBe(true);
-      expect(showsPoster({ ...clip, size: AUTO_FETCH_VIDEO_MAX_BYTES })).toBe(true);
+    await it('shows a poster when a thumbnail or blurHash is stored', async () => {
+      expect(showsPoster({ ...clip, size: 1_000_000, thumbPath: '/t/a.jpg' })).toBe(true);
+      expect(showsPoster({ ...clip, size: 99_000_000, blurHash: 'LEHV6nWB2yk8pyo0adR*.7kCMdnj' })).toBe(true);
     });
 
-    await it('keeps the tile for big, unsized, unfetchable and non-video parts', async () => {
-      expect(showsPoster({ ...clip, size: AUTO_FETCH_VIDEO_MAX_BYTES + 1 })).toBe(false);
-      expect(showsPoster({ ...clip, size: null })).toBe(false);
-      expect(showsPoster({ ...clip, size: 1000, fetchable: false })).toBe(false);
-      expect(showsPoster({ ...clip, size: 1000, mimeType: 'image/png', filename: 'a.png' })).toBe(false);
-    });
-
-    await it('never fetches a mail video unasked', async () => {
-      expect(showsPoster({ filename: 'clip.mp4', mimeType: 'video/mp4', section: '2', size: 1000 })).toBe(
+    await it('never fetches a video for its frame: no thumbnail, no poster', async () => {
+      expect(showsPoster({ ...clip, size: 1000 })).toBe(false);
+      expect(showsPoster({ ...clip, size: 1000, thumbPath: '/t/a.jpg', fetchable: false })).toBe(false);
+      expect(showsPoster({ ...clip, thumbPath: '/t/a.jpg', mimeType: 'image/png', filename: 'a.png' })).toBe(
         false,
       );
+    });
+
+    await it('prefers the cached file, then the thumbnail, then the blurHash, then the dark box', async () => {
+      const both = { thumbPath: '/t/a.jpg', blurHash: 'LEHV6nWB2yk8pyo0adR*.7kCMdnj' };
+      expect(posterSource(both, '/c/v.mp4')).toStrictEqual({ from: 'file', path: '/c/v.mp4' });
+      expect(posterSource(both, null)).toStrictEqual({ from: 'thumb', path: '/t/a.jpg' });
+      expect(posterSource({ thumbPath: null, blurHash: both.blurHash })).toStrictEqual({
+        from: 'blur',
+        hash: both.blurHash,
+      });
+      expect(posterSource({ thumbPath: null, blurHash: null })).toStrictEqual({ from: 'none' });
     });
   });
 
@@ -174,7 +180,7 @@ export default async () => {
 
     await it('takes every openable video, whatever its size', async () => {
       expect(showsVideoBox({ ...clip, size: 1000 })).toBe(true);
-      expect(showsVideoBox({ ...clip, size: AUTO_FETCH_VIDEO_MAX_BYTES + 1 })).toBe(true);
+      expect(showsVideoBox({ ...clip, size: 99_000_000 })).toBe(true);
       expect(showsVideoBox({ ...clip, size: null })).toBe(true);
       expect(showsVideoBox({ filename: 'clip.mp4', mimeType: 'video/mp4', section: '2', size: 1000 })).toBe(
         true,
