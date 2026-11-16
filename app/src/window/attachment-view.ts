@@ -24,6 +24,7 @@ import {
   leadsWithMedia,
   showsInline,
   showsPlayer,
+  posterSource,
   showsPoster,
   showsVideoBox,
   tileAction,
@@ -35,6 +36,7 @@ import {
   fetchAttachment,
   loadPoster,
   loadTexture,
+  stillTexture,
   openWithDesktop,
   saveCopyAs,
 } from './attachment-store.ts';
@@ -207,6 +209,7 @@ function inlinePreview(
   cell: GridCell | null = null,
   painted: ((shown: PaintedPreview) => void) | null = null,
   album?: readonly AlbumItem[],
+  still: ((scale: number) => Promise<Painted | null>) | null = null,
 ): Gtk.Widget {
   // A lone picture fills the bubble's width (the bubble hugs its widest part); a grid cell has its size.
   const slot = new Gtk.Box({ halign: cell ? Gtk.Align.START : Gtk.Align.FILL, hexpand: !cell });
@@ -235,7 +238,7 @@ function inlinePreview(
       image.set_size_request(size.width, size.height);
     }
   };
-  if (!paint && (cell || kind === 'video')) darken();
+  if (!paint && !still && (cell || kind === 'video')) darken();
   const name = attachmentName(source.info);
   frame.set_tooltip_text(name);
   frame.update_property(
@@ -297,8 +300,32 @@ function inlinePreview(
     fallback.set_margin_end(12);
     slot.append(fallback);
   };
+  let settled = false;
+  // A stored thumbnail or blurHash stands in without any fetch (ADR 0017): for a video it is the
+  // poster, for an image the placeholder until the full picture is decoded.
+  const paintStill = (): void => {
+    if (!still) return;
+    const scale = frame.get_scale_factor();
+    void still(scale)
+      .then((shown) => {
+        if (!shown || settled || frame.get_root() === null) return;
+        image.set_paintable(shown.paintable);
+        image.remove_css_class('osd');
+        if (!cell) {
+          const size = boundedSize({ width: shown.width / scale, height: shown.height / scale });
+          image.set_size_request(size.width, size.height);
+        }
+      })
+      .catch(() => {
+        if (!paint && !settled && frame.get_root() !== null) fail();
+      });
+  };
   const load = (): void => {
-    if (!paint) return;
+    if (!paint) {
+      paintStill();
+      return;
+    }
+    paintStill();
     spinner.set_visible(true);
     // The box the bubble gives a picture, in the pixels the texture is decoded at.
     const scale = frame.get_scale_factor();
@@ -307,6 +334,7 @@ function inlinePreview(
       .then(({ path, shown }) => {
         // The bubble left the window while the picture decoded; there is nothing to paint into.
         if (frame.get_root() === null) return;
+        settled = true;
         image.set_paintable(shown.paintable);
         image.remove_css_class('osd');
         if (!cell) {
@@ -318,10 +346,11 @@ function inlinePreview(
       })
       .catch(() => {
         if (frame.get_root() === null) return;
+        settled = true;
         fail();
       });
   };
-  if (paint) handlers.whenVisible(frame, load);
+  if (paint || still) handlers.whenVisible(frame, load);
   return slot;
 }
 
@@ -346,7 +375,24 @@ function picture(
     cell,
     null,
     album,
+    stillOf(source.info, box),
   );
+}
+
+/** The stored thumbnail or blurHash of a part as a painted still; null when it has neither. */
+function stillOf(
+  info: AttachmentInfo,
+  box: { width: number; height: number },
+): ((scale: number) => Promise<Painted | null>) | null {
+  if (!info.thumbPath && !info.blurHash) return null;
+  return async (scale) => {
+    const texture = await stillTexture(info, { width: box.width * scale, height: box.height * scale });
+    if (!texture) return null;
+    // The frame is the part's own shape; the small picture is only scaled up into it.
+    const width = info.width && info.height ? info.width * scale : texture.get_width();
+    const height = info.width && info.height ? info.height * scale : texture.get_height();
+    return { paintable: texture, width, height };
+  };
 }
 
 function poster(
@@ -355,17 +401,30 @@ function poster(
   cell: GridCell | null = null,
   album?: readonly AlbumItem[],
 ): Gtk.Widget {
+  const box = {
+    width: cell?.width ?? BUBBLE_MAX_IMAGE_WIDTH,
+    height: cell?.height ?? BUBBLE_MAX_IMAGE_HEIGHT,
+  };
+  // Never fetch a whole video for its frame: the cached file when there is one, else the stored still.
+  const cached = posterSource(source.info, cachedAttachment(source)).from === 'file';
   return inlinePreview(
     source,
     handlers,
     'video',
-    async (path) => {
-      const frame = await loadPoster(path);
-      return { paintable: frame, width: frame.get_intrinsic_width(), height: frame.get_intrinsic_height() };
-    },
+    cached
+      ? async (path) => {
+          const frame = await loadPoster(path);
+          return {
+            paintable: frame,
+            width: frame.get_intrinsic_width(),
+            height: frame.get_intrinsic_height(),
+          };
+        }
+      : null,
     cell,
-    cell || !handlers.silentVideo ? null : (shown) => silentPreview(handlers.silentVideo!, shown),
+    cell || !handlers.silentVideo || !cached ? null : (shown) => silentPreview(handlers.silentVideo!, shown),
     album,
+    cached ? null : stillOf(source.info, box),
   );
 }
 

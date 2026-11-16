@@ -52,6 +52,7 @@ import {
   takeReceiveLease,
 } from './receive-lease.ts';
 import { num, str } from './row.ts';
+import { moveThumbnail, sweepThumbnails, sweepThumbnailsOf } from './thumbnails.ts';
 
 export { deliveredMessageId };
 
@@ -374,7 +375,7 @@ function mergeChat(db: IndexDatabase, batch: DeliveryBatch, from: string, into: 
   const attachments = db
     .prepare(
       `SELECT m.id AS old_id, m.remote_id, a.idx, a.filename, a.mime_type, a.size, a.kind,
-              a.width, a.height, a.duration_ms, a.handle
+              a.width, a.height, a.duration_ms, a.handle, a.thumb_handle, a.thumb_state, a.blur_hash
          FROM message_attachments a
          JOIN conversation_messages m ON m.id = a.message_id
         WHERE m.conversation_id = ?`,
@@ -391,11 +392,14 @@ function mergeChat(db: IndexDatabase, batch: DeliveryBatch, from: string, into: 
       height: unknown;
       duration_ms: unknown;
       handle: unknown;
+      thumb_handle: unknown;
+      thumb_state: unknown;
+      blur_hash: unknown;
     }>;
   insertMany(
     db,
     `INSERT OR IGNORE INTO message_attachments
-       (message_id, idx, filename, mime_type, size, kind, width, height, duration_ms, handle)`,
+       (message_id, idx, filename, mime_type, size, kind, width, height, duration_ms, handle, thumb_handle, thumb_state, blur_hash)`,
     attachments.map(
       (r) =>
         [
@@ -409,9 +413,17 @@ function mergeChat(db: IndexDatabase, batch: DeliveryBatch, from: string, into: 
           r.height,
           r.duration_ms,
           r.handle,
+          r.thumb_handle,
+          r.thumb_state,
+          r.blur_hash,
         ] as SqlValue[],
     ),
   );
+  for (const r of attachments) {
+    if (r.thumb_state === 'stored') {
+      moveThumbnail(String(r.old_id), deliveredMessageId(backend, accountId, into, String(r.remote_id)), Number(r.idx));
+    }
+  }
   const reactions = db
     .prepare(
       `SELECT m.remote_id, r.reactor, r.emoji FROM message_reactions r
@@ -497,12 +509,18 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
     // Deletions first: words the user or the sender took back must not outlive that here.
     runIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, [...batch.deletedMessages]);
     if (batch.deletedMessages.size > 0) {
+      sweepThumbnailsOf(db, [...batch.deletedMessages]);
       runIn(db, (p) => `DELETE FROM message_attachments WHERE message_id IN (${p})`, [...batch.deletedMessages]);
       runIn(db, (p) => `DELETE FROM message_reactions WHERE message_id IN (${p})`, [...batch.deletedMessages]);
     }
     const cleared = [...batch.clearedChats, ...batch.deletedChats].map(conv);
-    runIn(db, (p) => `DELETE FROM conversation_messages WHERE conversation_id IN (${p})`, cleared);
+    // The rows hanging off a message go first: the subqueries below find them through the messages.
     if (cleared.length > 0) {
+      sweepThumbnails(
+        db,
+        `message_id IN (SELECT id FROM conversation_messages WHERE conversation_id IN (${placeholders(cleared.length)}))`,
+        cleared,
+      );
       db.prepare(
         `DELETE FROM message_reactions WHERE message_id IN
            (SELECT id FROM conversation_messages WHERE conversation_id IN (${placeholders(cleared.length)}))`,
@@ -512,6 +530,7 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
            (SELECT id FROM conversation_messages WHERE conversation_id IN (${placeholders(cleared.length)}))`,
       ).run(...cleared);
     }
+    runIn(db, (p) => `DELETE FROM conversation_messages WHERE conversation_id IN (${p})`, cleared);
     const gone = [...batch.deletedChats].map(conv);
     for (const table of ['chat_members', 'chat_cursors', 'conversation_participants', 'conversations']) {
       const column = table === 'conversations' ? 'id' : 'conversation_id';
@@ -549,7 +568,7 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
     insertMany(
       db,
       `INSERT OR IGNORE INTO message_attachments
-         (message_id, idx, filename, mime_type, size, kind, width, height, duration_ms, handle)`,
+         (message_id, idx, filename, mime_type, size, kind, width, height, duration_ms, handle, thumb_handle, thumb_state, blur_hash)`,
       batch.messageAttachments,
     );
     for (const [id, edit] of batch.edits) {

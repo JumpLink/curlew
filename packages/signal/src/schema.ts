@@ -136,6 +136,8 @@ export interface AttachmentPointer {
   width: number | null;
   height: number | null;
   caption: string | null;
+  /** The sender's own blurHash (field 12 `blurHash`), at most a few dozen characters. */
+  blurHash: string | null;
 }
 
 export function decodeAttachmentPointer(f: Fields): AttachmentPointer {
@@ -152,6 +154,7 @@ export function decodeAttachmentPointer(f: Fields): AttachmentPointer {
     width: numberField(f, 9),
     height: numberField(f, 10),
     caption: stringField(f, 11),
+    blurHash: stringField(f, 12),
   };
 }
 
@@ -411,6 +414,7 @@ export interface DataMessageInput {
     flags?: number;
     width?: number;
     height?: number;
+    blurHash?: string;
   }>;
   reaction?: { emoji: string; remove?: boolean; targetAuthorAci: string; targetSentTimestamp: number };
   flags?: number;
@@ -430,6 +434,7 @@ export function encodeDataMessage(d: DataMessageInput): ProtoWriter {
         .uint(8, a.flags)
         .uint(9, a.width)
         .uint(10, a.height)
+        .string(12, a.blurHash)
         .uint(14, a.cdnNumber)
         .string(15, a.cdnKey),
     );

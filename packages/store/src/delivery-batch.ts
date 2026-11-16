@@ -8,6 +8,7 @@ import type {
 } from '@curlew/protocol';
 import { chatConversationId } from './chat-sync.ts';
 import type { SqlValue } from './db.ts';
+import { thumbnailColumns } from './thumbnails.ts';
 import { stableId } from './threads.ts';
 
 export interface KnownChat {
@@ -117,6 +118,7 @@ export class DeliveryBatch {
       attachment.height,
       attachment.durationMs,
       attachment.handle,
+      ...thumbnailColumns(messageId, idx, attachment),
     ]);
   }
 

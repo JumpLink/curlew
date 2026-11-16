@@ -47,6 +47,7 @@ import storeChangeAppends from './unit/store/change-appends.test.ts';
 import storeConcurrency from './unit/store/concurrency.test.ts';
 import storeAccountData from './unit/store/account-data.test.ts';
 import storeUpgradeBaseline from './unit/store/upgrade-baseline.test.ts';
+import storeThumbnails from './unit/store/thumbnails.test.ts';
 
 import telegram from './unit/telegram/telegram.test.ts';
 import signal from './unit/signal/signal.test.ts';
@@ -122,6 +123,7 @@ import windowSelection from './unit/window/selection-model.test.ts';
 import windowAttachment from './unit/window/attachment-model.test.ts';
 import windowMediaGrid from './unit/window/media-grid-model.test.ts';
 import windowPreviewCache from './unit/window/preview-cache-model.test.ts';
+import windowBlurHash from './unit/window/blur-hash.test.ts';
 import windowComposerEmoji from './unit/window/composer-emoji.test.ts';
 import windowRichText from './unit/window/rich-text-model.test.ts';
 import windowViewer from './unit/window/viewer-model.test.ts';
@@ -217,6 +219,7 @@ run({
   storeConcurrency,
   storeAccountData,
   storeUpgradeBaseline,
+  storeThumbnails,
   telegram,
   signal,
   signalSend,
@@ -295,6 +298,7 @@ run({
   windowAttachment,
   windowMediaGrid,
   windowPreviewCache,
+  windowBlurHash,
   windowComposerEmoji,
   windowRichText,
   windowViewer,

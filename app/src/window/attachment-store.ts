@@ -15,6 +15,7 @@ import Gtk from 'gi://Gtk?version=4.0';
 import type { MessageRef } from '@curlew/protocol';
 import { ensurePrivateDir, previewsDir } from '@curlew/store';
 
+import { decodeBlurHash } from './blur-hash.ts';
 import { chatSaveAttachment } from '../core/actions/chat-attachment.ts';
 import { ATTACHMENT_BYTES } from '../core/actions/limits.ts';
 import { mailSaveAttachment } from '../core/actions/mail.ts';
@@ -163,6 +164,35 @@ export function loadTexture(path: string, max?: { width: number; height: number 
     });
   });
 }
+
+/**
+ * The still stored for a part at sync (ADR 0017): its thumbnail file, else its blurHash drawn
+ * small. Null when it has neither; rejects when the thumbnail does not decode.
+ */
+export async function stillTexture(
+  info: Pick<AttachmentInfo, 'thumbPath' | 'blurHash'>,
+  max: { width: number; height: number },
+): Promise<Gdk.Texture | null> {
+  if (info.thumbPath) {
+    try {
+      return await loadTexture(info.thumbPath, max);
+    } catch {
+      // A damaged thumbnail falls through to the blurHash.
+    }
+  }
+  if (!info.blurHash) return null;
+  const pixels = decodeBlurHash(info.blurHash, BLUR_SIZE, BLUR_SIZE);
+  if (!pixels) return null;
+  return Gdk.MemoryTexture.new(
+    BLUR_SIZE,
+    BLUR_SIZE,
+    Gdk.MemoryFormat.R8G8B8A8,
+    GLib.Bytes.new(pixels),
+    BLUR_SIZE * 4,
+  );
+}
+
+const BLUR_SIZE = 32;
 
 /** How long a video may take to show its first frame before the bubble keeps its tile. */
 const POSTER_TIMEOUT_MS = 10_000;

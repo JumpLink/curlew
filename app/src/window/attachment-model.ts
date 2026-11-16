@@ -77,15 +77,28 @@ export function shouldAutoFetch(info: AttachmentInfo): boolean {
   );
 }
 
-/** A chat video is fetched on its own, to show its first frame, only up to this size (ADR 0010). */
-export const AUTO_FETCH_VIDEO_MAX_BYTES = 8_000_000;
+/** What a video's poster is painted from (ADR 0017); a video is never fetched whole to get one. */
+export type PosterSource =
+  | { from: 'file'; path: string }
+  | { from: 'thumb'; path: string }
+  | { from: 'blur'; hash: string }
+  | { from: 'none' };
 
-/** Whether the bubble shows a video's first frame (true) or a tile (false). */
+/** Cached full file, else the thumbnail stored at sync, else the blurHash, else the dark box. */
+export function posterSource(
+  info: Pick<AttachmentInfo, 'thumbPath' | 'blurHash'>,
+  cachedPath: string | null = null,
+): PosterSource {
+  if (cachedPath) return { from: 'file', path: cachedPath };
+  if (info.thumbPath) return { from: 'thumb', path: info.thumbPath };
+  if (info.blurHash) return { from: 'blur', hash: info.blurHash };
+  return { from: 'none' };
+}
+
+/** Whether a video's bubble has a picture without any fetch: a stored thumbnail or a blurHash. */
 export function showsPoster(info: AttachmentInfo): boolean {
   if (!isOpenable(info) || attachmentKind(info) !== 'video') return false;
-  // Showing the frame means fetching the whole video unasked: only a chat part of known, small size.
-  if (info.section !== undefined && info.section !== '') return false;
-  return info.size !== null && info.size !== undefined && info.size <= AUTO_FETCH_VIDEO_MAX_BYTES;
+  return posterSource(info).from !== 'none';
 }
 
 /** Whether a video gets a video box (dark frame, play symbol, length) rather than a file tile: any video that can be opened. */

@@ -88,6 +88,8 @@ export interface ShownAttachment {
   height: number | null;
   /** `message_save_attachment` can download it. */
   fetchable: boolean;
+  /** A preview picture is stored; the picture itself and its handle stay in the store. */
+  hasThumbnail: boolean;
   filename?: string | null;
 }
 
@@ -130,6 +132,7 @@ export async function conversationsShow(params: ConversationShowParams): Promise
         width: a.width,
         height: a.height,
         fetchable: a.fetchable,
+        hasThumbnail: a.thumbPath !== null,
         ...(params.includeBodies ? { filename: a.filename } : {}),
       }));
       return attachments.length > 0 ? { ...message, attachments } : message;

@@ -38,6 +38,7 @@ export interface StorePaths {
   attachmentsDir: string;
   previewsDir: string;
   avatarsDir: string;
+  thumbsDir: string;
   sendStagingDir: string;
   configPath: string;
 }
@@ -78,6 +79,7 @@ export function storePaths(dirs: StoreDirs, env: NodeJS.ProcessEnv = {}): StoreP
     attachmentsDir: pick('ATTACHMENTS_DIR', dirs.download || join(data, 'attachments')),
     previewsDir: pick('PREVIEWS_DIR', join(dirs.cache, 'previews')),
     avatarsDir: pick('AVATARS_DIR', join(dirs.cache, 'avatars')),
+    thumbsDir: pick('THUMBS_DIR', join(dirs.cache, 'thumbs')),
     sendStagingDir: pick('STAGING_DIR', join(dirs.cache, 'outgoing')),
     configPath: pick('CONFIG', join(dirs.config, 'config.json')),
   };

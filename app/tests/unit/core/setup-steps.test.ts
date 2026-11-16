@@ -27,6 +27,7 @@ import {
 } from '../../../src/core/actions/setup.ts';
 import type { Autostart } from '../../../src/core/actions/autostart.ts';
 import { systemdAutostart } from '../../../src/core/actions/autostart.ts';
+import { setupIndexPath } from '../../../src/core/actions/setup-host.ts';
 import type { SetupContext, SetupStepState } from '../../../src/core/actions/setup.ts';
 import { FAKE_PAIRING_PAYLOAD, SANDBOX, fakeContext, fakeHost, fakePrompter } from './setup-fakes.ts';
 
@@ -49,6 +50,14 @@ function stage(name: string): (typeof SETUP_STEPS)[number] {
 }
 
 export default async function setupSteps(): Promise<void> {
+  describe('the index a run reports on', () => {
+    it('honours CURLEW_DB_PATH like every other command, and falls back to the XDG data home', () => {
+      expect(setupIndexPath(fakeHost({ CURLEW_DB_PATH: '/tmp/x/index.db' }))).toBe('/tmp/x/index.db');
+      expect(setupIndexPath(fakeHost({ CURLEW_DB_PATH: '/tmp/x/index' }))).toBe('/tmp/x/index.db');
+      expect(setupIndexPath(fakeHost({ XDG_DATA_HOME: '/tmp/data' }))).toBe('/tmp/data/curlew/index.db');
+    });
+  });
+
   describe('which curlew is being set up', () => {
     it('finds the checkout above the working directory', () => {
       const host = fakeHost({ PWD: '/src/curlew/app/src' });

@@ -4,6 +4,7 @@ import type { AttachmentKind, MessageRef } from '@curlew/protocol';
 import type { IndexDatabase } from './db.ts';
 import { mailAttachments, type MailAttachmentInfo } from './mail-reply.ts';
 import { num, str } from './row.ts';
+import { storedThumbPath } from './thumbnails.ts';
 
 /** What the index knows about one attachment; the opaque handle never leaves `@curlew/store`. */
 export interface AttachmentInfo {
@@ -23,6 +24,12 @@ export interface AttachmentInfo {
   sticker?: boolean;
   /** True when a chat attachment row has a non-empty backend handle and can be fetched. */
   fetchable: boolean;
+  /** The stored thumbnail file (ADR 0017), null when none is stored or the file is gone. */
+  thumbPath: string | null;
+  /** The network's own blurHash, null when it sent none. */
+  blurHash: string | null;
+  /** The network offers a small preview to fetch (`thumb_handle`) that is not stored yet. */
+  thumbFetchable: boolean;
 }
 
 /** Load every attachment descriptor for a message; routes by `ref.backend`. */
@@ -46,6 +53,9 @@ export function loadAttachments(db: IndexDatabase, ref: MessageRef): AttachmentI
         durationMs: voice ? mark.durationMs : null,
         ...(mark?.content === 'sticker' && kind === 'image' ? { sticker: true } : {}),
         fetchable: false,
+        thumbPath: null,
+        blurHash: null,
+        thumbFetchable: false,
       };
     });
   }
@@ -81,7 +91,8 @@ function chatAttachments(db: IndexDatabase, ref: MessageRef): AttachmentInfo[] {
   if (!ref.remoteId) return [];
   const rows = db
     .prepare(
-      `SELECT a.idx, a.filename, a.mime_type, a.size, a.kind, a.width, a.height, a.duration_ms, a.handle
+      `SELECT a.idx, a.filename, a.mime_type, a.size, a.kind, a.width, a.height, a.duration_ms, a.handle,
+              a.message_id, a.thumb_handle, a.thumb_state, a.blur_hash
          FROM message_attachments a
          JOIN conversation_messages m ON m.id = a.message_id
         WHERE m.backend = ? AND m.account_id = ? AND m.remote_id = ?
@@ -97,6 +108,10 @@ function chatAttachments(db: IndexDatabase, ref: MessageRef): AttachmentInfo[] {
       height: unknown;
       duration_ms: unknown;
       handle: unknown;
+      message_id: unknown;
+      thumb_handle: unknown;
+      thumb_state: unknown;
+      blur_hash: unknown;
     }>;
   return rows.map((r) => ({
     index: Number(r.idx),
@@ -108,6 +123,9 @@ function chatAttachments(db: IndexDatabase, ref: MessageRef): AttachmentInfo[] {
     height: num(r.height),
     durationMs: num(r.duration_ms),
     fetchable: typeof r.handle === 'string' && r.handle !== '',
+    thumbPath: storedThumbPath(String(r.message_id), Number(r.idx), r.thumb_state),
+    blurHash: str(r.blur_hash),
+    thumbFetchable: typeof r.thumb_handle === 'string' && r.thumb_handle !== '' && r.thumb_state !== 'stored',
   }));
 }
 

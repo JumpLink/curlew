@@ -99,6 +99,11 @@ export default async () => {
           expect(count(db, 'messages')).toBe(1);
           expect(count(db, 'mail_receipts_sent')).toBe(1);
           expect(count(db, 'accounts')).toBe(2);
+          const cols = (
+            db.prepare('PRAGMA table_info(message_attachments)').all() as Array<{ name: string }>
+          ).map((c) => c.name);
+          for (const name of ['thumb_handle', 'thumb_state', 'blur_hash'])
+            expect(cols.includes(name)).toBe(true);
         } finally {
           db.close();
         }

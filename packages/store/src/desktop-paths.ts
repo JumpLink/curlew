@@ -93,6 +93,15 @@ export function avatarsDir(env: NodeJS.ProcessEnv = process.env): string {
 }
 
 /**
+ * Where sync keeps the media thumbnails the networks ship with a message (ADR 0017). Derived, like
+ * `previewsDir`, but a sibling the window does NOT empty at start: losing one costs a re-sync of a
+ * poster. It holds message content, so it is private (0700).
+ */
+export function thumbsDir(env: NodeJS.ProcessEnv = process.env): string {
+  return desktop(env).thumbsDir;
+}
+
+/**
  * Where the daemon copies the files a send handed it as descriptors, one 0700 directory per call,
  * removed when the call ends. The cache home and not `$XDG_RUNTIME_DIR`: that one is tmpfs, and a
  * 60 MB video would sit in RAM.

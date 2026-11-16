@@ -598,6 +598,40 @@ export default async () => {
         expect(
           Number((db.prepare('SELECT COUNT(*) AS n FROM message_attachments').get() as { n?: number }).n),
         ).toBe(0);
+
+        await receiveDeliveries(
+          db,
+          fakeBackend([
+            [
+              incoming(
+                'd-anna',
+                msg('d-anna/2', 2, 'again', {
+                  hasAttachments: true,
+                  attachments: [
+                    {
+                      filename: 'b.jpg',
+                      mimeType: 'image/jpeg',
+                      size: 1000,
+                      kind: 'image',
+                      width: null,
+                      height: null,
+                      durationMs: null,
+                      handle: '{"id":"b"}',
+                    },
+                  ],
+                }),
+              ),
+            ],
+          ]),
+        );
+        expect(
+          Number((db.prepare('SELECT COUNT(*) AS n FROM message_attachments').get() as { n?: number }).n),
+        ).toBe(1);
+        await receiveDeliveries(db, fakeBackend([[{ type: 'chat-cleared', chatRemoteId: 'd-anna' }]]));
+        expect(getConversation(db, conv('d-anna'))?.messages.length).toBe(0);
+        expect(
+          Number((db.prepare('SELECT COUNT(*) AS n FROM message_attachments').get() as { n?: number }).n),
+        ).toBe(0);
       } finally {
         db.close();
       }

@@ -134,6 +134,7 @@ export function pointerOfHandle(handle: SignalAttachmentHandle): AttachmentPoint
     width: null,
     height: null,
     caption: null,
+    blurHash: null,
   };
 }
 
@@ -167,6 +168,7 @@ export function toChatAttachments(data: DataMessage): ChatAttachment[] | undefin
       width: pointer.width || null,
       height: pointer.height || null,
       durationMs: null,
+      ...(pointer.blurHash ? { blurHash: pointer.blurHash } : {}),
       handle: attachmentHandle({
         cdnNumber: pointer.cdnNumber,
         cdnKey: pointer.cdnKey || null,
