@@ -985,6 +985,7 @@ export default async () => {
       try {
         seed(db, null, 'Anna Example');
         expect(getRecentMessages(db, ['g1'], { limit: 10 })[0]?.senderName).toBe('Anna Example');
+        expect(latestMessagePreviews(db, ['g1']).get('g1')?.senderName).toBe('Anna Example');
       } finally {
         db.close();
       }

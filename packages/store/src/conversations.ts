@@ -339,7 +339,10 @@ export function latestMessagePreviews(
     const rows = db
       .prepare(
         `SELECT m.conversation_id, m.sent_at, m.from_self, substr(m.body, 1, ${PREVIEW_BODY_CHARS}) AS body,
-                m.subject, m.has_attachments, m.sender_name
+                m.subject, m.has_attachments,
+                COALESCE(NULLIF(m.sender_name, ''), (SELECT p.display_name FROM chat_peers p
+                  WHERE p.backend = m.backend AND p.account_id = m.account_id
+                    AND p.peer_id = m.sender_peer_id)) AS sender_name
            FROM conversation_messages m
           WHERE m.conversation_id IN (${chunk.map(() => '?').join(',')})
             AND m.rowid = (SELECT n.rowid FROM conversation_messages n
