@@ -5,6 +5,8 @@
 ### Fixed
 
 - Signal stickers you receive show as pictures instead of an empty bubble.
+- XMPP images show in the chat like Matrix and Signal ones: an image whose size the message does not state is fetched on its own (up to 2 MB), the size and dimensions the sender declares (XEP-0447, SIMS) are used, and a failed download keeps the file tile instead of removing it.
+- A file you send over XMPP shows at once with its real type, size and dimensions, and the copy the server returns keeps them instead of turning into a second, empty message.
 - A Matrix image whose file is a few bytes larger than the size in the message (as when the sending app adds photo metadata) now shows in the chat instead of as a file tile: the size the homeserver reports is the one a download is checked against.
 - Every video shows as a video box with the play button and its length, also a large chat video or a mail video, instead of a plain file tile. A large video that is already downloaded shows its first frame.
 - Signal group messages show the sender's contact or profile name, or their phone number, instead of the account UUID, also when the name arrives after the message (#425).

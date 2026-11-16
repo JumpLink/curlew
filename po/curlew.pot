@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 06:56+0100\n"
+"POT-Creation-Date: 2026-11-17 07:13+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -918,7 +918,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/core/lib/message-notifications.ts:197
-#: app/src/window/attachment-view.ts:107
+#: app/src/window/attachment-view.ts:108
 msgid "Open"
 msgstr ""
 
@@ -2198,36 +2198,36 @@ msgstr ""
 msgid "A quiet pattern behind the messages"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:107
+#: app/src/window/attachment-view.ts:108
 msgid "Play"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:112 app/src/window/audio-player.ts:59
+#: app/src/window/attachment-view.ts:113 app/src/window/audio-player.ts:59
 #: app/src/window/media-viewer.ts:64
 msgid "Save as…"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:130 app/src/window/audio-player.ts:136
+#: app/src/window/attachment-view.ts:131 app/src/window/audio-player.ts:136
 #: app/src/window/audio-player.ts:163
 msgid "Could not fetch the attachment: {error}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:153 app/src/window/attachment-view.ts:162
+#: app/src/window/attachment-view.ts:154 app/src/window/attachment-view.ts:163
 #: app/src/window/conversation-list-model.ts:503
 #: app/src/window/conversation-model.ts:318
 #: app/src/window/conversation-model.ts:323
 msgid "Attachment"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:246 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:247 app/src/window/media-viewer.ts:230
 msgid "Video: {name}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:246 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:247 app/src/window/media-viewer.ts:230
 msgid "Image: {name}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:549
+#: app/src/window/attachment-view.ts:553
 #: app/src/window/conversation-model.ts:326
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"

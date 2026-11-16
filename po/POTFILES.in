@@ -305,6 +305,7 @@ packages/store/src/delivery-batch.ts
 packages/store/src/delivery-sync.ts
 packages/store/src/desktop-paths.ts
 packages/store/src/download.ts
+packages/store/src/echo-attachments.ts
 packages/store/src/fts.ts
 packages/store/src/index-store.ts
 packages/store/src/index.ts

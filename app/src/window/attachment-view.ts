@@ -20,6 +20,7 @@ import {
   durationLabel,
   effectiveMime,
   isGridMedia,
+  autoFetchLimit,
   isOpenable,
   leadsWithMedia,
   showsInline,
@@ -287,7 +288,10 @@ function inlinePreview(
   });
   frame.add_controller(keys);
 
-  const fail = () => {
+  const fail = (error?: unknown) => {
+    console.warn(
+      `attachment ${source.info.filename ?? '(unnamed)'} could not be shown inline: ${failureText(error)}`,
+    );
     spinner.set_visible(false);
     if (cell || kind === 'video') {
       image.set_paintable(null);
@@ -316,8 +320,8 @@ function inlinePreview(
           image.set_size_request(size.width, size.height);
         }
       })
-      .catch(() => {
-        if (!paint && !settled && frame.get_root() !== null) fail();
+      .catch((error: unknown) => {
+        if (!paint && !settled && frame.get_root() !== null) fail(error);
       });
   };
   const load = (): void => {
@@ -329,7 +333,7 @@ function inlinePreview(
     spinner.set_visible(true);
     // The box the bubble gives a picture, in the pixels the texture is decoded at.
     const scale = frame.get_scale_factor();
-    void fetchAttachment(source)
+    void fetchAttachment(source, undefined, kind === 'image' ? autoFetchLimit(source.info) : undefined)
       .then((path) => paint(path, scale).then((shown) => ({ path, shown })))
       .then(({ path, shown }) => {
         // The bubble left the window while the picture decoded; there is nothing to paint into.
@@ -344,10 +348,10 @@ function inlinePreview(
         spinner.set_visible(false);
         painted?.({ path, image, frame, playSymbol, paintable: shown.paintable });
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (frame.get_root() === null) return;
         settled = true;
-        fail();
+        fail(error);
       });
   };
   if (paint || still) handlers.whenVisible(frame, load);
