@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- A Matrix image whose file is a few bytes larger than the size in the message (as when the sending app adds photo metadata) now shows in the chat instead of as a file tile: the size the homeserver reports is the one a download is checked against.
 - Every video shows as a video box with the play button and its length, also a large chat video or a mail video, instead of a plain file tile. A large video that is already downloaded shows its first frame.
 - Signal group messages show the sender's contact or profile name, or their phone number, instead of the account UUID, also when the name arrives after the message (#425).
 - Curlew opens from the app menu in the Flatpak and the Linux packages: the menu entry starts the window instead of the command line, which exited with an error.

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-16 19:57+0100\n"
+"POT-Creation-Date: 2026-11-16 20:22+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -3738,7 +3738,7 @@ msgstr "der Homeserver hat den Download abgewiesen ({reason})"
 msgid "this Matrix attachment cannot be found any more"
 msgstr "dieser Matrix-Anhang ist nicht mehr zu finden"
 
-#: packages/matrix/src/attachments.ts:114
+#: packages/matrix/src/attachments.ts:119
 msgid ""
 "the Matrix attachment arrived with {actual} bytes, not the announced "
 "{announced}"

@@ -88,8 +88,10 @@ export class MatrixAttachments implements AttachmentFetcher {
       if (handle.size !== null && handle.size > options.maxBytes) throw tooLarge(options.maxBytes);
 
       const response = await this.download(mxc.server, mxc.mediaId, options.signal);
-      const declared = Number(response.headers.get('content-length'));
-      if (Number.isFinite(declared) && declared > options.maxBytes) throw tooLarge(options.maxBytes);
+      const length = response.headers.get('content-length');
+      const declared = Number(length);
+      const hasDeclared = length !== null && length.trim() !== '' && Number.isFinite(declared);
+      if (hasDeclared && declared > options.maxBytes) throw tooLarge(options.maxBytes);
 
       let size = 0;
       const take = async (chunk: Uint8Array): Promise<void> => {
@@ -109,11 +111,14 @@ export class MatrixAttachments implements AttachmentFetcher {
         await take(new Uint8Array(await response.arrayBuffer()));
       }
 
-      if (handle.size !== null && handle.size !== size) {
+      // The size in the event is only the sending client's hint: clients add or strip metadata
+      // after writing it (an EXIF block makes a photo ~90 bytes larger), and the file is still
+      // whole. The homeserver's own length is the one a short read is measured against.
+      if (hasDeclared && declared !== size) {
         throw new Error(
           fmt(_('the Matrix attachment arrived with {actual} bytes, not the announced {announced}'), {
             actual: String(size),
-            announced: String(handle.size),
+            announced: String(declared),
           }),
         );
       }
