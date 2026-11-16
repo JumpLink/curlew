@@ -19,6 +19,7 @@ import {
   showsInline,
   showsPlayer,
   showsPoster,
+  showsVideoBox,
   shownAttachments,
   tileAction,
 } from '../../../src/window/attachment-model.ts';
@@ -159,6 +160,30 @@ export default async () => {
       expect(showsPoster({ filename: 'clip.mp4', mimeType: 'video/mp4', section: '2', size: 1000 })).toBe(
         false,
       );
+    });
+  });
+
+  await describe('showsVideoBox', async () => {
+    const clip = {
+      filename: 'clip.mp4',
+      mimeType: 'video/mp4',
+      index: 0,
+      fetchable: true,
+      backendCanFetch: true,
+    };
+
+    await it('takes every openable video, whatever its size', async () => {
+      expect(showsVideoBox({ ...clip, size: 1000 })).toBe(true);
+      expect(showsVideoBox({ ...clip, size: AUTO_FETCH_VIDEO_MAX_BYTES + 1 })).toBe(true);
+      expect(showsVideoBox({ ...clip, size: null })).toBe(true);
+      expect(showsVideoBox({ filename: 'clip.mp4', mimeType: 'video/mp4', section: '2', size: 1000 })).toBe(
+        true,
+      );
+    });
+
+    await it('leaves unopenable videos and other kinds to the tile', async () => {
+      expect(showsVideoBox({ ...clip, fetchable: false })).toBe(false);
+      expect(showsVideoBox({ ...clip, mimeType: 'image/png', filename: 'a.png' })).toBe(false);
     });
   });
 

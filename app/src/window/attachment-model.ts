@@ -88,6 +88,11 @@ export function showsPoster(info: AttachmentInfo): boolean {
   return info.size !== null && info.size !== undefined && info.size <= AUTO_FETCH_VIDEO_MAX_BYTES;
 }
 
+/** Whether a video gets a video box (dark frame, play symbol, length) rather than a file tile: any video that can be opened. */
+export function showsVideoBox(info: AttachmentInfo): boolean {
+  return isOpenable(info) && attachmentKind(info) === 'video';
+}
+
 /** Whether the bubble shows the picture itself (true) or a tile (false). */
 export function showsInline(info: AttachmentInfo): boolean {
   if (!isOpenable(info) || attachmentKind(info) !== 'image') return false;
@@ -186,7 +191,7 @@ export function isGridMedia(info: AttachmentInfo): boolean {
 export function leadsWithMedia(shown: readonly AttachmentInfo[]): boolean {
   const first = shown[0];
   if (!first) return false;
-  if (showsInline(first) || showsPoster(first)) return true;
+  if (showsInline(first) || showsVideoBox(first)) return true;
   return isGridMedia(first) && shown.filter(isGridMedia).length > 1;
 }
 

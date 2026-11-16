@@ -25,6 +25,7 @@ import {
   showsInline,
   showsPlayer,
   showsPoster,
+  showsVideoBox,
   tileAction,
 } from './attachment-model.ts';
 import {
@@ -223,6 +224,17 @@ function inlinePreview(
     widthRequest: cell?.width ?? PLACEHOLDER.width,
     heightRequest: cell?.height ?? PLACEHOLDER.height,
   });
+  // The dark box of a video that shows no frame: the `osd` surface follows light and dark mode.
+  const darken = () => {
+    image.add_css_class('osd');
+    if (cell) return;
+    const { width, height } = source.info;
+    if (width && height) {
+      const size = boundedSize({ width, height });
+      image.set_size_request(size.width, size.height);
+    }
+  };
+  if (!paint && (cell || kind === 'video')) darken();
   const name = attachmentName(source.info);
   frame.set_tooltip_text(name);
   frame.update_property(
@@ -273,8 +285,9 @@ function inlinePreview(
 
   const fail = () => {
     spinner.set_visible(false);
-    if (cell) {
+    if (cell || kind === 'video') {
       image.set_paintable(null);
+      darken();
       return;
     }
     slot.remove(frame);
@@ -294,6 +307,7 @@ function inlinePreview(
         // The bubble left the window while the picture decoded; there is nothing to paint into.
         if (frame.get_root() === null) return;
         image.set_paintable(shown.paintable);
+        image.remove_css_class('osd');
         if (!cell) {
           const size = boundedSize({ width: shown.width / scale, height: shown.height / scale });
           image.set_size_request(size.width, size.height);
@@ -455,9 +469,11 @@ export function attachmentList(
         ? picture(source, handlers)
         : showsPoster(info)
           ? poster(source, handlers)
-          : showsPlayer(info)
-            ? inset(audioPlayer(source, handlers.toast))
-            : inset(tile(source, handlers)),
+          : showsVideoBox(info)
+            ? inlinePreview(source, handlers, 'video', null)
+            : showsPlayer(info)
+              ? inset(audioPlayer(source, handlers.toast))
+              : inset(tile(source, handlers)),
     );
   }
   if (generic) list.append(inset(genericTile()));
