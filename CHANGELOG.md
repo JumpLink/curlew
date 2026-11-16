@@ -136,6 +136,7 @@
 
 ### Added
 
+- Images, videos and voice notes you send over WhatsApp go out with their size, length and the voice-note flag, so other clients lay them out and play them as received ones, and they show in your own chat like a received message right after sending.
 - Videos and images show a small preview picture in the chat right away, without downloading the file: WhatsApp's own thumbnail and Signal's blurHash are kept when the message arrives (ADR 0017). A video is no longer downloaded whole just to show its first frame.
 - Signal can run on a musl system such as postmarketOS: `contrib/glibc-shim` is the small library that supplies the glibc-only symbols gcompat lacks (preload it with `LD_PRELOAD`), and an unloadable libsignal there now says it needs gcompat (#403).
 - Matrix: log in with an access token as well as a password, so homeservers without password login (matrix.org) can be used. The user comes from the server's `/whoami`. Browser sign-in (SSO/OIDC) is still to come (Refs #375).

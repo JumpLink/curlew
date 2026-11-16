@@ -35,8 +35,9 @@
  * connection: there the daemon's own receive loop is already journalling it (`journal: null`).
  */
 
-import { _, fmt } from '@curlew/protocol';
+import { _, fmt, probeMediaFile } from '@curlew/protocol';
 import type {
+  ChatAttachment,
   DeliveryEvent,
   MessageSender,
   ReplyTarget,
@@ -55,7 +56,7 @@ import { SERVER_ACK, toNumber } from './api.ts';
 import { subscribeMapped } from './events.ts';
 import { chatKindOf, parseJid, sendableJid } from './jid.ts';
 import type { EventJournal } from './journal.ts';
-import { remoteMessageId, type WhatsAppMapper } from './map.ts';
+import { extractAttachments, remoteMessageId, type WhatsAppMapper } from './map.ts';
 
 /**
  * The longest text one message may carry. curlew refuses more rather than splitting it.
@@ -273,15 +274,23 @@ export class WhatsAppSender implements MessageSender {
     const text = message.text.trim().length === 0 ? undefined : message.text;
     const caption = text !== undefined && text.length <= WHATSAPP_MAX_CAPTION_CHARS ? text : undefined;
     let first: WaSentMessage | undefined;
+    const echo: ChatAttachment[] = [];
     for (const [index, file] of files.entries()) {
       try {
+        const probe = probeMediaFile(file.realPath, file.contentType);
         const sent = await this.socket.sendFile(to, {
           bytes: readFileSync(file.realPath),
           fileName: file.filename,
           mimeType: file.contentType,
+          ...(probe.width !== null && probe.height !== null ? { width: probe.width, height: probe.height } : {}),
+          ...(probe.durationMs === null ? {} : { seconds: Math.max(1, Math.round(probe.durationMs / 1000)) }),
+          ...(probe.voice ? { voice: true } : {}),
           ...(index === 0 && caption !== undefined ? { caption } : {}),
         });
         first ??= sent;
+        // Mapped like a received message of the same kind, from the message Baileys built, so the
+        // echo carries the real handle (and the thumbnail when the message has one).
+        echo.push(...extractAttachments(sent.message ?? null));
       } catch (error) {
         if (index === 0) throw error;
         throw new Error(
@@ -301,6 +310,7 @@ export class WhatsAppSender implements MessageSender {
       to,
       first!,
       files.map((file) => ({ filename: file.filename, size: file.size })),
+      echo,
     );
   }
 
@@ -310,6 +320,7 @@ export class WhatsAppSender implements MessageSender {
     to: string,
     sent: WaSentMessage,
     attachments: Array<{ filename: string; size: number }>,
+    echoAttachments: ChatAttachment[] = [],
   ): Promise<SentMessage> {
     const id = sent.key.id;
     if (!id) {
@@ -355,6 +366,7 @@ export class WhatsAppSender implements MessageSender {
       chatRemoteId: this.mapper.resolver.chatId(sent.key.remoteJid, sent.key.remoteJidAlt) ?? to,
       encrypted: true,
       ...(attachments.length === 0 ? {} : { attachments }),
+      ...(echoAttachments.length === 0 ? {} : { echoAttachments }),
       ...(warnings.length === 0 ? {} : { warning: warnings.join('; ') }),
     };
   }

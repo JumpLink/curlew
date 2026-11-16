@@ -198,9 +198,28 @@ export class FakeSendSocket extends FakeEvents implements WaSendSocketHandle {
   }
 
   async sendFile(jid: string, file: WaOutgoingFile): Promise<WaSentMessage> {
-    return this.deliver(jid, { conversation: file.caption ?? '' }, (id) => {
+    const sent = this.deliver(jid, { conversation: file.caption ?? '' }, (id) => {
       this.files.push({ jid, file, id });
     });
+    // What Baileys hands back: the content as built, with the CDN pointer and key.
+    const media = {
+      url: 'https://example.invalid/m',
+      mediaKey: new Uint8Array(32).fill(7),
+      fileLength: file.bytes.byteLength,
+      mimetype: file.voice === true ? 'audio/ogg; codecs=opus' : file.mimeType,
+      ...(file.width ? { width: file.width, height: file.height } : {}),
+      ...(file.seconds === undefined ? {} : { seconds: file.seconds }),
+      ...(file.voice === true ? { ptt: true } : {}),
+    };
+    const field =
+      file.voice === true || file.mimeType.startsWith('audio/')
+        ? 'audioMessage'
+        : file.mimeType.startsWith('image/')
+          ? 'imageMessage'
+          : file.mimeType.startsWith('video/')
+            ? 'videoMessage'
+            : 'documentMessage';
+    return { ...sent, message: { [field]: { ...media, jpegThumbnail: new Uint8Array([9, 9]) } } };
   }
 
   private deliver(
