@@ -99,6 +99,20 @@ export function posterSource(
   return { from: 'none' };
 }
 
+/**
+ * Whether the bubble should fetch the part's thumbnail by its thumb handle now (ADR 0017 §2): a
+ * chat image or video whose network offers one that is not stored, once per window run (`attempted`
+ * covers a first failure too). Never the file itself; mail has no handle; an XMPP https link never
+ * offers one, so it is never prefetched.
+ */
+export function shouldFetchThumb(info: AttachmentInfo, attempted: boolean): boolean {
+  if (attempted || info.thumbFetchable !== true || info.thumbPath) return false;
+  if (info.backendCanFetch !== true || info.index === undefined) return false;
+  if (info.section !== undefined && info.section !== '') return false;
+  const kind = attachmentKind(info);
+  return kind === 'image' || kind === 'video';
+}
+
 /** Whether a video's bubble has a picture without any fetch: a stored thumbnail or a blurHash. */
 export function showsPoster(info: AttachmentInfo): boolean {
   if (!isOpenable(info) || attachmentKind(info) !== 'video') return false;

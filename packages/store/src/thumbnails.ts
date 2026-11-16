@@ -7,7 +7,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { ChatAttachment } from '@curlew/protocol';
+import type { AttachmentKind, ChatAttachment, MessageRef } from '@curlew/protocol';
 
 import type { IndexDatabase } from './db.ts';
 import { placeholders, type SqlValue } from './db.ts';
@@ -16,6 +16,14 @@ import { ensurePrivateDir } from './download.ts';
 
 /** Inline bytes above this are dropped, not re-encoded. */
 export const THUMBNAIL_MAX_BYTES = 16 * 1024;
+
+/**
+ * A thumbnail fetched by its handle (ADR 0017 §2) may be this big. It is higher than the inline cap
+ * on purpose: inline bytes ride in every message at sync, so a gallery of them must stay small, while
+ * a fetched one is a single download of whatever size the network chose (Matrix and Telegram
+ * thumbnails run to a few tens of KiB, sometimes more) and is only fetched when its bubble shows.
+ */
+export const THUMBNAIL_FETCH_MAX_BYTES = 256 * 1024;
 
 /** A blurHash is at most this long (4x3 components take 28 characters). */
 export const BLUR_HASH_MAX_CHARS = 40;
@@ -122,4 +130,50 @@ export function moveThumbnail(
   } catch {
     // A thumbnail that does not follow is a poster lost, not data.
   }
+}
+
+/** What the index knows to fetch one attachment's thumbnail: the handle never leaves store and daemon. */
+export interface ThumbTarget {
+  messageId: string;
+  index: number;
+  kind: AttachmentKind;
+  /** Backend-private. */
+  handle: string;
+  state: string | null;
+}
+
+/**
+ * The thumbnail handle of one chat attachment, or null when none is offered, the thumbnail is
+ * already stored, or it is `'none'`. A `'failed'` row is a target again: the caller limits retries.
+ */
+export function loadThumbTarget(db: IndexDatabase, ref: MessageRef, index: number): ThumbTarget | null {
+  if (ref.backend === 'mail' || !ref.remoteId) return null;
+  const row = db
+    .prepare(
+      `SELECT a.message_id, a.kind, a.thumb_handle, a.thumb_state FROM message_attachments a
+         JOIN conversation_messages m ON m.id = a.message_id
+        WHERE m.backend = ? AND m.account_id = ? AND m.remote_id = ? AND a.idx = ?`,
+    )
+    .get(ref.backend, ref.accountId, ref.remoteId, index) as
+    | { message_id?: unknown; kind?: unknown; thumb_handle?: unknown; thumb_state?: unknown }
+    | undefined;
+  if (typeof row?.thumb_handle !== 'string' || row.thumb_handle === '') return null;
+  const state = typeof row.thumb_state === 'string' ? row.thumb_state : null;
+  if (state === 'stored' || state === 'none') return null;
+  return {
+    messageId: String(row.message_id),
+    index,
+    kind: (typeof row.kind === 'string' ? row.kind : 'image') as AttachmentKind,
+    handle: row.thumb_handle,
+    state,
+  };
+}
+
+/** Record how a thumbnail fetch ended. */
+export function setThumbState(db: IndexDatabase, messageId: string, index: number, state: ThumbState): void {
+  db.prepare('UPDATE message_attachments SET thumb_state = ? WHERE message_id = ? AND idx = ?').run(
+    state,
+    messageId,
+    index,
+  );
 }

@@ -17,8 +17,10 @@ import { ensurePrivateDir, previewsDir } from '@curlew/store';
 
 import { decodeBlurHash } from './blur-hash.ts';
 import { chatSaveAttachment } from '../core/actions/chat-attachment.ts';
+import { chatFetchThumbnail } from '../core/actions/chat-thumbnail.ts';
 import { ATTACHMENT_BYTES } from '../core/actions/limits.ts';
 import { mailSaveAttachment } from '../core/actions/mail.ts';
+import { previewKey, shouldFetchThumb } from './attachment-model.ts';
 import {
   type CachedPart,
   cachedFile,
@@ -41,6 +43,41 @@ export function cachedAttachment(source: AttachmentSource, root = previewsDir())
 }
 
 const inFlight = new Map<string, Promise<string>>();
+
+/** Parts whose thumbnail was tried in this window run: a failure is retried on the next run, not now. */
+const thumbAttempts = new Set<string>();
+const thumbInFlight = new Map<string, Promise<string | null>>();
+
+function thumbKey(source: AttachmentSource): string {
+  return previewKey(source.ref, '', source.info.index);
+}
+
+/** Whether the part's thumbnail should be fetched by its handle now (ADR 0017 §2). */
+export function wantsThumbnail(source: AttachmentSource): boolean {
+  return shouldFetchThumb(source.info, thumbAttempts.has(thumbKey(source)));
+}
+
+/**
+ * Fetches the part's THUMBNAIL (never the file) and records its path on the info, so the bubble
+ * repaints from it. Null when the fetch failed: the poster stays blurHash or dark box.
+ */
+export function fetchThumbnail(source: AttachmentSource): Promise<string | null> {
+  const key = thumbKey(source);
+  const running = thumbInFlight.get(key);
+  if (running) return running;
+  if (!wantsThumbnail(source)) return Promise.resolve(source.info.thumbPath ?? null);
+  thumbAttempts.add(key);
+  const fetching = chatFetchThumbnail({ ref: source.ref, index: source.info.index as number })
+    .then((path) => {
+      source.info.thumbPath = path;
+      source.info.thumbFetchable = false;
+      return path;
+    })
+    .catch(() => null)
+    .finally(() => thumbInFlight.delete(key));
+  thumbInFlight.set(key, fetching);
+  return fetching;
+}
 
 /** The window starts with no leftovers of an earlier run: they are message content. */
 export function clearPreviews(dir = previewsDir()): void {
