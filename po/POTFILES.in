@@ -66,6 +66,7 @@ app/src/core/lib/pull-sync.ts
 app/src/core/lib/sandbox.ts
 app/src/core/lib/search-scope.ts
 app/src/core/lib/window-launch.ts
+app/src/core/lib/wire-mismatch.ts
 app/src/core/markdown.ts
 app/src/core/platform.ts
 app/src/core/runtime.ts
@@ -170,6 +171,7 @@ app/src/window/settings-map.ts
 app/src/window/stall-probe-model.ts
 app/src/window/stall-probe.ts
 app/src/window/terms-widgets.ts
+app/src/window/update-banner.ts
 app/src/window/video-preview-model.ts
 app/src/window/video-preview.ts
 app/src/window/viewer-model.ts

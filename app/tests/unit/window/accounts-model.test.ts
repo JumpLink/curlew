@@ -339,3 +339,52 @@ export default async () => {
     });
   });
 };
+
+describe('daemon wire mismatch', () => {
+  it('classifies a newer daemon as the window being older', async () => {
+    const { parseDaemonAccountsReply, DAEMON_WIRE_VERSION, DaemonWireMismatchError } =
+      await import('../../../src/core/lib/daemon-bus.ts');
+    let caught: unknown;
+    try {
+      parseDaemonAccountsReply(JSON.stringify({ v: DAEMON_WIRE_VERSION + 1, accounts: [] }));
+    } catch (error) {
+      caught = error;
+    }
+    expect(caught instanceof DaemonWireMismatchError).toBe(true);
+    expect((caught as { side: string }).side).toBe('window-older');
+  });
+
+  it('classifies an older daemon as the daemon being older', async () => {
+    const { parseDaemonSendReply, DAEMON_WIRE_VERSION } = await import('../../../src/core/lib/daemon-bus.ts');
+    let caught: unknown;
+    try {
+      parseDaemonSendReply(JSON.stringify({ v: DAEMON_WIRE_VERSION - 1, kind: 'not-followed' }));
+    } catch (error) {
+      caught = error;
+    }
+    expect((caught as { side: string }).side).toBe('daemon-older');
+  });
+
+  it('settles the dialog on a mismatch with the side that is behind', async () => {
+    const { DaemonWireMismatchError } = await import('../../../src/core/lib/daemon-bus.ts');
+    const { stateAfterQueryError } = await import('../../../src/window/accounts-model.ts');
+    const state = stateAfterQueryError(new DaemonWireMismatchError('x', '99'), false);
+    expect(state?.present).toBe(true);
+    expect(state?.mismatch).toBe('window-older');
+  });
+
+  it('settles the dialog on a timeout and ignores any other error', async () => {
+    const { stateAfterQueryError } = await import('../../../src/window/accounts-model.ts');
+    const timeout = stateAfterQueryError(new Error('slow'), true);
+    expect(timeout?.present).toBe(true);
+    expect(timeout?.mismatch).toBe(undefined);
+    expect(stateAfterQueryError(new Error('gone'), false)).toBe(null);
+  });
+
+  it('leaves loading with an absence when the bus never reported', async () => {
+    const { settledDaemonState } = await import('../../../src/window/accounts-model.ts');
+    expect(settledDaemonState(null).present).toBe(false);
+    const known: AccountsDaemonState = { present: true, accounts: new Map() };
+    expect(settledDaemonState(known)).toBe(known);
+  });
+});

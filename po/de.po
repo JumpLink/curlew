@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 07:49+0100\n"
+"POT-Creation-Date: 2026-11-17 08:55+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -972,17 +972,17 @@ msgid "no Background portal on this system"
 msgstr "Auf diesem System gibt es kein Hintergrund-Portal"
 
 #: app/src/core/lib/autostart-portal.ts:84
-#: app/src/window/accounts-daemon.ts:124
+#: app/src/window/accounts-daemon.ts:125
 msgid "Keep receiving messages while the window is closed"
 msgstr "Nachrichten weiter empfangen, während das Fenster geschlossen ist"
 
-#: app/src/core/lib/daemon-access-client.ts:78
+#: app/src/core/lib/daemon-access-client.ts:79
 msgid "the running curlew daemon did not answer the access prompt ({reason})"
 msgstr ""
 "Der laufende curlew-Daemon hat die Zugriffsrückfrage nicht beantwortet "
 "({reason})"
 
-#: app/src/core/lib/daemon-bus.ts:235
+#: app/src/core/lib/daemon-bus.ts:265
 msgid ""
 "the running curlew daemon speaks send protocol {theirs} and this curlew "
 "speaks {ours} — nothing was sent; restart it with `systemctl --user restart "
@@ -992,7 +992,7 @@ msgstr ""
 "spricht {ours} — es wurde nichts gesendet; starte ihn mit `systemctl --user "
 "restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:272
+#: app/src/core/lib/daemon-bus.ts:303
 msgid ""
 "the caller speaks send protocol {theirs} and this curlew daemon speaks "
 "{ours} — nothing was sent; restart it with `systemctl --user restart curlew-"
@@ -1002,7 +1002,7 @@ msgstr ""
 "{ours} — es wurde nichts gesendet; starte ihn mit `systemctl --user restart "
 "curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:448
+#: app/src/core/lib/daemon-bus.ts:480
 msgid ""
 "the caller speaks attachment protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -1010,7 +1010,7 @@ msgstr ""
 "Der Aufrufer spricht Anhangsprotokoll {theirs}, dieser curlew-Daemon spricht "
 "{ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:479
+#: app/src/core/lib/daemon-bus.ts:512
 msgid ""
 "the running curlew daemon speaks attachment protocol {theirs} and this "
 "curlew speaks {ours} — restart it with `systemctl --user restart curlew-"
@@ -1019,7 +1019,7 @@ msgstr ""
 "Der laufende curlew-Daemon spricht Anhangsprotokoll {theirs}, dieses curlew "
 "spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:630
+#: app/src/core/lib/daemon-bus.ts:666
 msgid ""
 "the caller speaks access protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -1027,7 +1027,7 @@ msgstr ""
 "Der Aufrufer spricht Zugriffsprotokoll {theirs}, dieser curlew-Daemon "
 "spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:667
+#: app/src/core/lib/daemon-bus.ts:704
 msgid ""
 "the running curlew daemon speaks access protocol {theirs} and this curlew "
 "speaks {ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -1035,13 +1035,13 @@ msgstr ""
 "Der laufende curlew-Daemon spricht Zugriffsprotokoll {theirs}, dieses curlew "
 "spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-send-client.ts:112
+#: app/src/core/lib/daemon-send-client.ts:113
 #: packages/imap/src/attachments.ts:101 packages/imap/src/attachments.ts:123
 #: packages/store/src/send-files.ts:99
 msgid "attachment {path} cannot be read"
 msgstr "Anhang {path} kann nicht gelesen werden"
 
-#: app/src/core/lib/daemon-send-client.ts:151
+#: app/src/core/lib/daemon-send-client.ts:152
 msgid ""
 "the running curlew daemon does not understand this send — nothing was sent; "
 "restart it with `systemctl --user restart curlew-daemon`"
@@ -1049,7 +1049,7 @@ msgstr ""
 "Der laufende curlew-Daemon versteht dieses Senden nicht — es wurde nichts "
 "gesendet; starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-send-client.ts:160
+#: app/src/core/lib/daemon-send-client.ts:161
 msgid ""
 "the running curlew daemon did not answer ({reason}); it may have sent the "
 "message — look at the chat before sending it again"
@@ -1058,7 +1058,7 @@ msgstr ""
 "Nachricht möglicherweise gesendet — sieh in den Chat, bevor du sie erneut "
 "sendest"
 
-#: app/src/core/lib/daemon-send-client.ts:201
+#: app/src/core/lib/daemon-send-client.ts:202
 msgid ""
 "the running curlew daemon did not answer the attachment fetch ({reason})"
 msgstr ""
@@ -1855,8 +1855,8 @@ msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
 #: app/src/window/about.ts:16 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:196 app/src/window/window.ts:98
-#: app/src/window/window.ts:121
+#: app/src/window/conversation-view.ts:196 app/src/window/window.ts:99
+#: app/src/window/window.ts:122
 msgid "Curlew"
 msgstr "Curlew"
 
@@ -1953,7 +1953,7 @@ msgstr ""
 "Signal, WhatsApp und Telegram verknüpfen diesen Computer als weiteres Gerät "
 "deines Kontos."
 
-#: app/src/window/account-add.ts:365 app/src/window/accounts-model.ts:107
+#: app/src/window/account-add.ts:365 app/src/window/accounts-model.ts:132
 #: app/src/window/conversation-list-model.ts:139
 msgid "Mail"
 msgstr "E-Mail"
@@ -2146,21 +2146,29 @@ msgstr ""
 msgid "Delete Messages and Remove"
 msgstr "Nachrichten löschen und entfernen"
 
-#: app/src/window/accounts-daemon.ts:117 app/src/window/accounts-daemon.ts:127
+#: app/src/window/accounts-daemon.ts:118 app/src/window/accounts-daemon.ts:128
 msgid "Could not start the background service: {reason}"
 msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
-#: app/src/window/accounts-dialog.ts:85 app/src/window/accounts-page.ts:196
+#: app/src/window/accounts-dialog.ts:91 app/src/window/accounts-page.ts:196
 #: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:172
-#: app/src/window/window.ts:134
+#: app/src/window/window.ts:135
 msgid "Accounts"
 msgstr "Konten"
 
-#: app/src/window/accounts-model.ts:108
+#: app/src/window/accounts-model.ts:110 app/src/window/update-banner.ts:35
+msgid "Curlew was updated. Restart it to continue."
+msgstr "Curlew wurde aktualisiert. Starte es neu, um fortzufahren."
+
+#: app/src/window/accounts-model.ts:111
+msgid "The background service is out of date. Restart it to continue."
+msgstr "Der Hintergrunddienst ist veraltet. Starte ihn neu, um fortzufahren."
+
+#: app/src/window/accounts-model.ts:133
 msgid "Calendar"
 msgstr "Kalender"
 
-#: app/src/window/accounts-model.ts:109
+#: app/src/window/accounts-model.ts:134
 msgid "Contacts"
 msgstr "Kontakte"
 
@@ -2237,7 +2245,7 @@ msgstr "Starten"
 msgid "Protocols"
 msgstr "Protokolle"
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:138
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:139
 msgid "Agent access"
 msgstr "Agentenzugriff"
 
@@ -3365,7 +3373,7 @@ msgstr ""
 msgid "AI"
 msgstr "KI"
 
-#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:136
+#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:137
 msgid "Preferences"
 msgstr "Einstellungen"
 
@@ -3411,6 +3419,10 @@ msgstr[1] "{count} ausgewählt"
 #: app/src/window/terms-widgets.ts:22
 msgid "I understand and accept the risk for my account"
 msgstr "Ich verstehe das Risiko für mein Konto und nehme es in Kauf"
+
+#: app/src/window/update-banner.ts:36
+msgid "Restart"
+msgstr "Neu starten"
 
 #: app/src/window/voice-recorder.ts:78 app/src/window/voice-recorder.ts:81
 #: app/src/window/voice-recorder.ts:94
@@ -3515,7 +3527,7 @@ msgid "On"
 msgstr "An"
 
 #: app/src/window/welcome.ts:107 app/src/window/welcome.ts:125
-#: app/src/window/window.ts:141
+#: app/src/window/window.ts:142
 msgid "Welcome"
 msgstr "Willkommen"
 
@@ -3575,39 +3587,39 @@ msgstr ""
 msgid "Start Using Curlew"
 msgstr "Curlew benutzen"
 
-#: app/src/window/window.ts:92
+#: app/src/window/window.ts:93
 msgid "Select a conversation"
 msgstr "Unterhaltung auswählen"
 
-#: app/src/window/window.ts:93
+#: app/src/window/window.ts:94
 msgid "Pick a conversation from the list."
 msgstr "Wähle eine Unterhaltung aus der Liste."
 
-#: app/src/window/window.ts:135
+#: app/src/window/window.ts:136
 msgid "Merge contacts…"
 msgstr "Kontakte zusammenführen…"
 
-#: app/src/window/window.ts:143
+#: app/src/window/window.ts:144
 msgid "About Curlew"
 msgstr "Über Curlew"
 
-#: app/src/window/window.ts:144
+#: app/src/window/window.ts:145
 msgid "Quit"
 msgstr "Beenden"
 
-#: app/src/window/window.ts:188
+#: app/src/window/window.ts:189
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:403
+#: app/src/window/window.ts:408
 msgid "Curlew (demo)"
 msgstr "Curlew (Demo)"
 
-#: app/src/window/window.ts:406
+#: app/src/window/window.ts:411
 msgid "Demo data — nothing here is real"
 msgstr "Demo-Daten – nichts hier ist echt"
 
-#: app/src/window/window.ts:549
+#: app/src/window/window.ts:554
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 
