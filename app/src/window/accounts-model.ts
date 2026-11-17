@@ -12,7 +12,7 @@ import { _ } from '@curlew/protocol';
 
 import { backendAvailable, currentPlatform } from '../core/platform.ts';
 import type { BackendStatus } from '../core/backends/registry.ts';
-import type { DaemonAccountEntry, DaemonAccountState } from '../core/lib/daemon-bus.ts';
+import { wireMismatchOf, type DaemonAccountEntry, type DaemonAccountState } from '../core/lib/daemon-bus.ts';
 import { protocolIcon, protocolLabel } from './conversation-list-model.ts';
 
 /** `disabled`: the person switched the account off, so there is no state to follow. */
@@ -84,6 +84,31 @@ export interface AccountsLoadState {
 export interface AccountsDaemonState {
   present: boolean;
   accounts: ReadonlyMap<string, DaemonAccountEntry>;
+  /** The daemon answered in a wire version this build does not speak; which side is behind. */
+  mismatch?: 'daemon-older' | 'window-older';
+}
+
+/** What the dialog knows once the bus never answered: the page leaves its spinner for the absence page. */
+export function settledDaemonState(current: AccountsDaemonState | null): AccountsDaemonState {
+  return current ?? { present: false, accounts: new Map() };
+}
+
+/**
+ * What a failed `GetAccounts` means for the dialog: a mismatch and a timeout both settle it (the
+ * daemon is there), anything else is left to the presence gate (null).
+ */
+export function stateAfterQueryError(error: unknown, timedOut: boolean): AccountsDaemonState | null {
+  const mismatch = wireMismatchOf(error);
+  if (mismatch) return { present: true, accounts: new Map(), mismatch: mismatch.side };
+  if (timedOut) return { present: true, accounts: new Map() };
+  return null;
+}
+
+/** What the Accounts page says when the two sides of the bus cannot talk. */
+export function mismatchMessage(side: 'daemon-older' | 'window-older'): string {
+  return side === 'window-older'
+    ? _('Curlew was updated. Restart it to continue.')
+    : _('The background service is out of date. Restart it to continue.');
 }
 
 const PROTOCOL_ORDER = ['mail', 'xmpp', 'signal', 'matrix', 'telegram', 'whatsapp'];

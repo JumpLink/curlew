@@ -13,6 +13,7 @@ import { demoActive } from '../core/demo/active.ts';
 import type { ConversationMessage } from '@curlew/protocol';
 
 import { indexAccountLabels, loadAccountLabels } from './account-labels.ts';
+import { createUpdateBanner } from './update-banner.ts';
 import { presentAccounts } from './accounts-dialog.ts';
 import { runDeliveryDaemon } from '../core/actions/daemon.ts';
 import { indexSync } from '../core/actions/index-sync.ts';
@@ -385,7 +386,11 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   const stage = new Gtk.Overlay({ child: split });
   stage.add_overlay(viewer.widget);
   const toasts = new Adw.ToastOverlay({ child: stage });
-  window.set_content(toasts);
+  const column = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
+  toasts.set_vexpand(true);
+  column.append(createUpdateBanner(app));
+  column.append(toasts);
+  window.set_content(column);
   // No systemd or session bus here: the window receives while it is open (ADR 0002 stays the loop)
   // and runs the periodic pull sync itself (ADR 0002 §8) — the action's own ticker is off, because
   // two tickers in one process would hold the index-writer lease under the same holder.

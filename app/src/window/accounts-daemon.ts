@@ -22,8 +22,9 @@ import {
   type DaemonAccountEntry,
   parseDaemonAccountsReply,
 } from '../core/lib/daemon-bus.ts';
+import { reportWireMismatch } from '../core/lib/wire-mismatch.ts';
 import { createPresenceGate } from '../core/lib/daemon-watch.ts';
-import type { AccountsDaemonState } from './accounts-model.ts';
+import { stateAfterQueryError, type AccountsDaemonState } from './accounts-model.ts';
 
 const GET_ACCOUNTS_TIMEOUT_MS = 10_000;
 
@@ -127,6 +128,19 @@ async function startDaemonThroughPortal(): Promise<void> {
     throw new Error(fmt(_('Could not start the background service: {reason}'), { reason: result.reason }));
 }
 
+function isTimeout(error: unknown): boolean {
+  return error instanceof GLib.Error && error.matches(Gio.io_error_quark(), Gio.IOErrorEnum.TIMED_OUT);
+}
+
+/** Restart the background service so it speaks this build's wire version, as the window asks. */
+export async function restartDaemon(): Promise<void> {
+  if (demoActive()) return;
+  if (backgroundService() === 'while-open' || inSandbox()) return startDaemon();
+  const restarted = await systemctl(['restart', UNIT_NAME]);
+  if (!restarted.ok) return startDaemon();
+  for (const listener of restartListeners) listener();
+}
+
 function entryMap(accounts: DaemonAccountEntry[]): Map<string, DaemonAccountEntry> {
   const map = new Map<string, DaemonAccountEntry>();
   for (const account of accounts) map.set(`${account.backend}/${account.accountId}`, account);
@@ -194,8 +208,11 @@ export function gioAccountsDaemonSource(): AccountsDaemonSource {
         try {
           const accounts = await queryAccounts(connection);
           onChange({ present: true, accounts: entryMap(accounts) });
-        } catch {
-          // The daemon vanished mid-call; the presence gate decides whether that is an absence.
+        } catch (error) {
+          reportWireMismatch(error);
+          // A mismatch or a silent daemon settles the dialog; a vanished one is the presence gate's call.
+          const settled = stateAfterQueryError(error, isTimeout(error));
+          if (settled) onChange(settled);
         }
       };
 

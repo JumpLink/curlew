@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- A window left open across an update no longer shows the Accounts dialog's spinner forever when the background service restarted with a newer protocol: the window says "Curlew was updated. Restart it to continue." with a Restart button, the Accounts dialog shows the same message, and the dialog also stops waiting when the service never answers.
 - Signal stickers you receive show as pictures instead of an empty bubble.
 - XMPP images show in the chat like Matrix and Signal ones: an image whose size the message does not state is fetched on its own (up to 2 MB), the size and dimensions the sender declares (XEP-0447, SIMS) are used, and a failed download keeps the file tile instead of removing it.
 - A file you send over XMPP shows at once with its real type, size and dimensions, and the copy the server returns keeps them instead of turning into a second, empty message.

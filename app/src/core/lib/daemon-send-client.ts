@@ -34,6 +34,7 @@ import {
   parseDaemonSendReply,
   toDaemonWire,
 } from './daemon-bus.ts';
+import { parseReporting } from './wire-mismatch.ts';
 
 /** How a send reaches a daemon. Injected by tests; `gioDaemonSendClient` is the real one. */
 export interface DaemonSendClient {
@@ -163,7 +164,7 @@ export function gioDaemonSendClient(): DaemonSendClient {
           ),
         );
       }
-      return parseDaemonSendReply(json);
+      return parseReporting(() => parseDaemonSendReply(json));
     },
     fetchAttachment: async (request) => {
       let connection: Gio.DBusConnection;
@@ -203,7 +204,7 @@ export function gioDaemonSendClient(): DaemonSendClient {
           ),
         );
       }
-      return parseDaemonFetchAttachmentReply(json);
+      return parseReporting(() => parseDaemonFetchAttachmentReply(json));
     },
     fetchAvatars: async (request) => {
       let connection: Gio.DBusConnection;
@@ -238,7 +239,7 @@ export function gioDaemonSendClient(): DaemonSendClient {
         if (meansNoDaemon(error) || reasonOf(error).includes('UnknownMethod')) return null;
         throw new Error(`the running curlew daemon did not answer the avatar fetch (${reasonOf(error)})`);
       }
-      return parseDaemonFetchAvatarsReply(json);
+      return parseReporting(() => parseDaemonFetchAvatarsReply(json));
     },
   };
 }

@@ -77,6 +77,33 @@ export const DAEMON_SEND_TIMEOUT_MS = 120_000;
 export const DAEMON_WIRE_VERSION = 8;
 
 /**
+ * The two sides of the bus speak different wire versions: a window that outlived an update talks
+ * to a restarted daemon, or the other way round. Not a defect to retry — one side must restart.
+ */
+export class DaemonWireMismatchError extends Error {
+  readonly theirs: string;
+  readonly ours: string;
+
+  constructor(message: string, theirs: string) {
+    super(message);
+    this.name = 'DaemonWireMismatchError';
+    this.theirs = theirs;
+    this.ours = String(DAEMON_WIRE_VERSION);
+  }
+
+  /** Which side is behind: the daemon (older than this build) or this build (older than the daemon). */
+  get side(): 'daemon-older' | 'window-older' {
+    const theirs = Number(this.theirs);
+    return Number.isFinite(theirs) && theirs > DAEMON_WIRE_VERSION ? 'window-older' : 'daemon-older';
+  }
+}
+
+/** The mismatch an error is, or null. */
+export function wireMismatchOf(error: unknown): DaemonWireMismatchError | null {
+  return error instanceof DaemonWireMismatchError ? error : null;
+}
+
+/**
  * What the daemon accepts as attachments of one send. The largest per-file limit of any sender
  * (WhatsApp) and the files-per-message limit they all share: the senders still apply their own,
  * stricter ones to the copy; this one only stops a caller from filling the disk through the bus.
@@ -208,7 +235,10 @@ export function parseDaemonAccountsReply(json: string): DaemonAccountsReply {
   }
   const reply = value as Partial<DaemonAccountsReply> | null;
   if (typeof reply !== 'object' || reply === null || reply.v !== DAEMON_WIRE_VERSION) {
-    throw new Error('the curlew daemon answered an account list this curlew does not speak');
+    throw new DaemonWireMismatchError(
+      'the curlew daemon answered an account list this curlew does not speak',
+      typeof reply === 'object' && reply !== null ? String(reply.v) : 'unknown',
+    );
   }
   if (!Array.isArray(reply.accounts)) throw new Error('the curlew daemon answered no account list');
   return reply as DaemonAccountsReply;
@@ -229,13 +259,14 @@ export function parseDaemonSendReply(json: string): DaemonSendReply {
   if (typeof value !== 'object' || value === null) throw new Error('the curlew daemon answered no object');
   const reply = value as Partial<DaemonSendReply>;
   if (reply.v !== DAEMON_WIRE_VERSION) {
-    throw new Error(
+    throw new DaemonWireMismatchError(
       fmt(
         _(
           'the running curlew daemon speaks send protocol {theirs} and this curlew speaks {ours} — nothing was sent; restart it with `systemctl --user restart curlew-daemon`',
         ),
         { theirs: String(reply.v), ours: String(DAEMON_WIRE_VERSION) },
       ),
+        String(reply.v),
     );
   }
   switch (reply.kind) {
@@ -266,13 +297,14 @@ export function parseDaemonSendWire(json: string): DaemonSendWire {
   if (typeof value !== 'object' || value === null) throw new Error('the send request is not an object');
   const request = value as Partial<DaemonSendWire>;
   if (request.v !== DAEMON_WIRE_VERSION) {
-    throw new Error(
+    throw new DaemonWireMismatchError(
       fmt(
         _(
           'the caller speaks send protocol {theirs} and this curlew daemon speaks {ours} — nothing was sent; restart it with `systemctl --user restart curlew-daemon`',
         ),
         { theirs: String(request.v), ours: String(DAEMON_WIRE_VERSION) },
       ),
+        String(request.v),
     );
   }
   for (const field of ['backend', 'account', 'capability', 'to'] as const) {
@@ -442,13 +474,14 @@ export function parseDaemonFetchAttachmentRequest(json: string): DaemonFetchAtta
     throw new Error('the attachment fetch request is not an object');
   const request = value as Partial<DaemonFetchAttachmentRequest>;
   if (request.v !== DAEMON_WIRE_VERSION) {
-    throw new Error(
+    throw new DaemonWireMismatchError(
       fmt(
         _(
           'the caller speaks attachment protocol {theirs} and this curlew daemon speaks {ours} — restart it with `systemctl --user restart curlew-daemon`',
         ),
         { theirs: String(request.v), ours: String(DAEMON_WIRE_VERSION) },
       ),
+        String(request.v),
     );
   }
   for (const field of ['backend', 'account', 'remoteId'] as const) {
@@ -473,13 +506,14 @@ export function parseDaemonFetchAttachmentReply(json: string): DaemonFetchAttach
   if (typeof value !== 'object' || value === null) throw new Error('the curlew daemon answered no object');
   const reply = value as Partial<DaemonFetchAttachmentReply>;
   if (reply.v !== DAEMON_WIRE_VERSION) {
-    throw new Error(
+    throw new DaemonWireMismatchError(
       fmt(
         _(
           'the running curlew daemon speaks attachment protocol {theirs} and this curlew speaks {ours} — restart it with `systemctl --user restart curlew-daemon`',
         ),
         { theirs: String(reply.v), ours: String(DAEMON_WIRE_VERSION) },
       ),
+        String(reply.v),
     );
   }
   switch (reply.kind) {
@@ -546,7 +580,8 @@ export function parseDaemonFetchAvatarsRequest(json: string): DaemonFetchAvatars
   }
   if (typeof value !== 'object' || value === null) throw new Error('the avatar request is not an object');
   const request = value as Partial<DaemonFetchAvatarsRequest>;
-  if (request.v !== DAEMON_WIRE_VERSION) throw new Error('the avatar request speaks another protocol version');
+  if (request.v !== DAEMON_WIRE_VERSION)
+    throw new DaemonWireMismatchError('the avatar request speaks another protocol version', String(request.v));
   for (const field of ['backend', 'account'] as const) {
     if (typeof request[field] !== 'string' || request[field] === '')
       throw new Error(`the avatar request has no ${field}`);
@@ -572,7 +607,8 @@ export function parseDaemonFetchAvatarsReply(json: string): DaemonFetchAvatarsRe
   }
   if (typeof value !== 'object' || value === null) throw new Error('the curlew daemon answered no object');
   const reply = value as Partial<DaemonFetchAvatarsReply> & { avatars?: unknown; message?: unknown };
-  if (reply.v !== DAEMON_WIRE_VERSION) throw new Error('the running curlew daemon speaks another protocol version');
+  if (reply.v !== DAEMON_WIRE_VERSION)
+    throw new DaemonWireMismatchError('the running curlew daemon speaks another protocol version', String(reply.v));
   switch (reply.kind) {
     case 'fetched': {
       const avatars = reply.avatars;
@@ -624,13 +660,14 @@ export function parseDaemonAccessRequest(json: string): DaemonAccessRequest {
   if (typeof value !== 'object' || value === null) throw new Error('the access request is not an object');
   const request = value as Partial<DaemonAccessRequest>;
   if (request.v !== DAEMON_WIRE_VERSION) {
-    throw new Error(
+    throw new DaemonWireMismatchError(
       fmt(
         _(
           'the caller speaks access protocol {theirs} and this curlew daemon speaks {ours} — restart it with `systemctl --user restart curlew-daemon`',
         ),
         { theirs: String(request.v), ours: String(DAEMON_WIRE_VERSION) },
       ),
+        String(request.v),
     );
   }
   for (const field of ['account', 'session'] as const) {
@@ -661,13 +698,14 @@ export function parseDaemonAccessReply(json: string): AccessReply {
   if (typeof value !== 'object' || value === null) throw new Error('the curlew daemon answered no object');
   const reply = value as Partial<DaemonAccessReply>;
   if (reply.v !== DAEMON_WIRE_VERSION) {
-    throw new Error(
+    throw new DaemonWireMismatchError(
       fmt(
         _(
           'the running curlew daemon speaks access protocol {theirs} and this curlew speaks {ours} — restart it with `systemctl --user restart curlew-daemon`',
         ),
         { theirs: String(reply.v), ours: String(DAEMON_WIRE_VERSION) },
       ),
+        String(reply.v),
     );
   }
   const reasons = reply.allowed === true ? ALLOW_REASONS : ACCESS_REASONS;

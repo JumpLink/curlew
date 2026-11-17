@@ -22,6 +22,7 @@ import {
   DAEMON_WIRE_VERSION,
   parseDaemonAccessReply,
 } from './daemon-bus.ts';
+import { parseReporting } from './wire-mismatch.ts';
 
 const NO_PROMPT_SERVICE = [
   'org.freedesktop.DBus.Error.ServiceUnknown',
@@ -80,7 +81,7 @@ export function gioAccessClient(): AccessPort {
           }),
         );
       }
-      return parseDaemonAccessReply(json);
+      return parseReporting(() => parseDaemonAccessReply(json));
     },
   };
 }

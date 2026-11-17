@@ -9,7 +9,13 @@ import type Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 import { configPath } from '@curlew/store';
 
-import { buildProtocolGroups, type AccountsDaemonState, type AccountsPageState } from './accounts-model.ts';
+import {
+  buildProtocolGroups,
+  mismatchMessage,
+  settledDaemonState,
+  type AccountsDaemonState,
+  type AccountsPageState,
+} from './accounts-model.ts';
 import { pushAddAccountPage } from './account-add.ts';
 import { pushAccountPage } from './account-detail.ts';
 import { pushProtocolsPage } from './protocols-page.ts';
@@ -98,6 +104,10 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
 
   const render = () => {
     if (!open || !loadState || !daemonState) return;
+    if (daemonState.mismatch) {
+      page.showError(mismatchMessage(daemonState.mismatch));
+      return;
+    }
     const state: AccountsPageState = buildProtocolGroups(loadState, daemonState);
     shown = state;
     page.show(state);
@@ -138,6 +148,11 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
   };
 
   page.showLoading();
+  // The source answers on its own, but a bus that never reports must not keep the spinner up.
+  GLib.timeout_add(GLib.PRIORITY_DEFAULT, 15_000, () => {
+    if (open && !daemonState) onDaemon(settledDaemonState(daemonState));
+    return GLib.SOURCE_REMOVE;
+  });
   const stopDaemon = gioAccountsDaemonSource().start(onDaemon);
   void reload();
 
