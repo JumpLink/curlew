@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 08:55+0100\n"
+"POT-Creation-Date: 2026-11-17 09:19+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -120,7 +120,7 @@ msgid "systemctl --user {verb} exited {code}"
 msgstr ""
 
 #: app/src/core/actions/chat-attachment.ts:140
-#: app/src/core/actions/daemon.ts:580
+#: app/src/core/actions/daemon.ts:581
 msgid "the attachment was not found in the index"
 msgstr ""
 
@@ -140,25 +140,25 @@ msgstr ""
 
 #: app/src/core/actions/chat-thumbnail.ts:109
 #: app/src/core/actions/chat-thumbnail.ts:150
-#: app/src/core/actions/daemon.ts:555
+#: app/src/core/actions/daemon.ts:556
 msgid "the attachment has no thumbnail to fetch"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:392
+#: app/src/core/actions/daemon.ts:393
 msgid "this account is paused — switch it on in Accounts to send from it"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:405
+#: app/src/core/actions/daemon.ts:406
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:427
+#: app/src/core/actions/daemon.ts:428
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:493
+#: app/src/core/actions/daemon.ts:494
 msgid "the download stalled — try again"
 msgstr ""
 
@@ -825,7 +825,7 @@ msgid "no Background portal on this system"
 msgstr ""
 
 #: app/src/core/lib/autostart-portal.ts:84
-#: app/src/window/accounts-daemon.ts:125
+#: app/src/window/accounts-daemon.ts:128
 msgid "Keep receiving messages while the window is closed"
 msgstr ""
 
@@ -1853,7 +1853,7 @@ msgstr ""
 msgid "Delete Messages and Remove"
 msgstr ""
 
-#: app/src/window/accounts-daemon.ts:118 app/src/window/accounts-daemon.ts:128
+#: app/src/window/accounts-daemon.ts:121 app/src/window/accounts-daemon.ts:131
 msgid "Could not start the background service: {reason}"
 msgstr ""
 

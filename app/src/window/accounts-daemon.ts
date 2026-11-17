@@ -24,6 +24,7 @@ import {
 } from '../core/lib/daemon-bus.ts';
 import { reportWireMismatch } from '../core/lib/wire-mismatch.ts';
 import { createPresenceGate } from '../core/lib/daemon-watch.ts';
+import { createRestartCoalescer } from '../core/lib/restart-coalescer.ts';
 import { stateAfterQueryError, type AccountsDaemonState } from './accounts-model.ts';
 
 const GET_ACCOUNTS_TIMEOUT_MS = 10_000;
@@ -36,6 +37,13 @@ export interface AccountsDaemonSource {
   start(onChange: (state: AccountsDaemonState) => void): () => void;
 }
 
+const tryRestart = createRestartCoalescer(async () => {
+  for (const listener of restartListeners) listener();
+  // Waits for systemctl, which returns when the stop and the start are done: the next restart
+  // never overlaps a stop that is still running.
+  await systemctl(['try-restart', UNIT_NAME]);
+});
+
 /** The daemon reads its account list once at start, so a change to it takes effect on a restart. */
 export function restartDaemonIfRunning(): void {
   if (demoActive()) return;
@@ -43,12 +51,7 @@ export function restartDaemonIfRunning(): void {
   if (backgroundService() === 'while-open') return;
   // A sandbox has no systemd: the Background portal starts the daemon at the next login.
   if (inSandbox()) return;
-  try {
-    Gio.Subprocess.new(['systemctl', '--user', 'try-restart', UNIT_NAME], Gio.SubprocessFlags.NONE);
-    for (const listener of restartListeners) listener();
-  } catch {
-    // No systemd user session: the next start of the daemon reads the new account list.
-  }
+  tryRestart();
 }
 
 /** Run `systemctl --user` and resolve with whether it succeeded, plus what it said on stderr. */

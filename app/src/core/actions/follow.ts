@@ -291,8 +291,20 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
 
   // A lost lease (an index that was busy too long, a holder that took over) is not the end of the
   // account: stopping it would leave a daemon that runs but receives nothing, and exits 0.
-  while (await acquire()) {
-    if (!(await followHeld())) break;
+  // An account never drops out silently: whatever throws in a round is logged and the account
+  // goes back to waiting for its lease, until the signal ends it.
+  while (!signal.aborted) {
+    try {
+      if (!(await acquire())) break;
+      if (!(await followHeld())) break;
+    } catch (err) {
+      try {
+        log(`curlew-daemon: ${who} failed (${errText(err)}) — retrying`);
+      } catch {
+        // A log sink that throws must not end the account either.
+      }
+      await sleep(interval).catch(() => {});
+    }
   }
   return result;
 }

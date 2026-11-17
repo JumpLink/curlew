@@ -101,5 +101,52 @@ export default async () => {
         rmSync(dir, { recursive: true, force: true });
       }
     });
+
+    await it('leaves no unhandled rejection behind when the token is refused', async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-matrix-unhandled-'));
+      const store = SecretStore.open(join(dir, 'unhandled.db'));
+      const json = (status: number, body: unknown): Response =>
+        new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+      const fetch = (async (input: RequestInfo | URL): Promise<Response> => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        if (url.includes('/sync')) return json(401, { errcode: 'M_UNKNOWN_TOKEN', error: 'gone' });
+        if (url.endsWith('/filter')) return json(200, { filter_id: 'f1' });
+        if (url.includes('/pushrules')) return json(200, { global: {} });
+        if (url.includes('/capabilities')) return json(200, { capabilities: {} });
+        if (url.endsWith('/versions')) return json(200, { versions: ['v1.11'] });
+        if (url.includes('/keys/upload'))
+          return json(200, { one_time_key_counts: { signed_curve25519: 50 } });
+        return json(404, { errcode: 'M_NOT_FOUND', error: 'not found' });
+      }) as typeof globalThis.fetch;
+      const unhandled: unknown[] = [];
+      const onUnhandled = (reason: unknown): void => {
+        unhandled.push(reason);
+      };
+      process.on('unhandledRejection', onUnhandled);
+      try {
+        let failed = false;
+        try {
+          await connectMatrixClient({
+            homeserver: 'https://matrix.example.org',
+            userId: ME,
+            deviceId: 'DEVICE',
+            accessToken: 'synthetic-token',
+            store,
+            accountId: accountIdFor(ME),
+            fetch,
+          });
+        } catch {
+          failed = true;
+        }
+        expect(failed).toBe(true);
+        await new Promise((r) => setTimeout(r, 200));
+        expect(unhandled.length).toBe(0);
+        claimAccount(accountIdFor(ME))();
+      } finally {
+        process.off('unhandledRejection', onUnhandled);
+        store.close();
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
   });
 };

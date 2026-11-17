@@ -24,8 +24,25 @@
  * is exactly what a window derived from the taker's interval allowed.
  */
 
+import { existsSync } from 'node:fs';
 import type { IndexDatabase } from './db.ts';
 import { withTransaction } from './db.ts';
+
+/**
+ * Is the process behind a holder string still there? Holders are `<pid>` (daemon, sync) or
+ * `sync-<pid>`; anything else (a test's `pid-1`, another host) cannot be judged and counts as alive,
+ * so only the lease's own expiry can free it. Without `/proc` (not Linux) nothing can be judged
+ * either. A reused pid reads as alive: the expiry covers that, as it always did. Inside a Flatpak
+ * every instance has its own pid namespace, so a live holder in another instance would look dead:
+ * there, too, only the expiry decides.
+ */
+export function holderIsAlive(holder: string): boolean {
+  const match = /^(?:sync-)?(\d+)$/.exec(holder);
+  if (match === null) return true;
+  if (!existsSync('/proc/self')) return true;
+  if (existsSync('/.flatpak-info') || process.env.FLATPAK_ID) return true;
+  return existsSync(`/proc/${match[1]}`);
+}
 
 /** How often a holder refreshes its lease. */
 export const LEASE_HEARTBEAT_MS = 30_000;
@@ -113,6 +130,7 @@ export function takeReceiveLease(
   holder: string,
   now: Date,
   intervalMs: number = LEASE_HEARTBEAT_MS,
+  isAlive: (holder: string) => boolean = holderIsAlive,
 ): LeaseTake {
   return withLeaseTransaction(db, (): LeaseTake => {
     const row = db
@@ -124,7 +142,9 @@ export function takeReceiveLease(
       | undefined;
     const incumbent = row ? String(row.holder) : null;
     const heartbeatAt = row ? String(row.heartbeat_at) : null;
-    if (incumbent !== null && incumbent !== holder && isFresh(row?.expires_at, now)) {
+    // A holder whose process is gone on this host holds nothing, fresh expiry or not: a restarted
+    // daemon would otherwise wait out the dead one's 90 s.
+    if (incumbent !== null && incumbent !== holder && isFresh(row?.expires_at, now) && isAlive(incumbent)) {
       return { acquired: false, holder: incumbent, heartbeatAt };
     }
     db.prepare(
@@ -157,6 +177,21 @@ export function refreshReceiveLease(
          WHERE backend = ? AND account_id = ? AND holder = ?`,
     ).run(now.toISOString(), expiresAt(now, intervalMs), backend, accountId, holder);
     return true;
+  });
+}
+
+/**
+ * Drop every lease a holder still has — the daemon's last act, for a stop that raced an account
+ * loop which never reached its own release. Returns how many rows went.
+ */
+export function releaseAllReceiveLeases(db: IndexDatabase, holder: string): number {
+  return withLeaseTransaction(db, (): number => {
+    const row = db.prepare('SELECT COUNT(*) AS n FROM receive_leases WHERE holder = ?').get(holder) as
+      | { n?: unknown }
+      | undefined;
+    const n = Number(row?.n ?? 0);
+    if (n > 0) db.prepare('DELETE FROM receive_leases WHERE holder = ?').run(holder);
+    return n;
   });
 }
 
