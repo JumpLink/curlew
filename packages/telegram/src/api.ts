@@ -249,6 +249,11 @@ export interface TelegramClientHandle extends TelegramApi {
   editMessage(chatId: number, messageId: number, text: string): Promise<void>;
   /** Delete the person's own message `messageId` of the chat for everyone (revoke). */
   deleteMessage(chatId: number, messageId: number): Promise<void>;
+  /**
+   * Mark the chat read up to `messageId`. Telegram shows the other person that the chat was read,
+   * so a sender only calls it while read receipts are on.
+   */
+  readHistory(chatId: number, messageId: number): Promise<void>;
   connect(): Promise<void>;
   /** Present only on a client made with `live: true`. */
   readonly live?: TelegramLive;

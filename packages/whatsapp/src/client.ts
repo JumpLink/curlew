@@ -9,12 +9,13 @@
  * The RECEIVE socket (`createBaileysSocket`) is read-only, and why that holds (Baileys
  * 7.0.0-rc14, file references into its source):
  *   - No send path is reachable: `WaSocketHandle` exposes events, the pairing-code request and
- *     `end` — not `sendMessage`, `readMessages`, `sendPresenceUpdate` or `chatModify`.
+ *     `end` — not `sendMessage`, `readMessages` (a granted send view has it, see `markRead`), `sendPresenceUpdate` or `chatModify`.
  *   - `markOnlineOnConnect: false`: on open, Baileys announces `unavailable` instead of
  *     `available` (Socket/chats.ts, the `connection.update` handler), so contacts never see
  *     this device online, and the phone keeps getting its notifications.
- *   - Read receipts are sent only by `readMessages` (Socket/messages-send.ts), which nothing
- *     calls. What Baileys does send for every delivered message is the DELIVERY receipt —
+ *   - Read receipts are sent only by `readMessages` (Socket/messages-send.ts), which only a granted
+ *     send view calls, and only while read receipts are switched on; the receive socket never.
+ *     What Baileys does send for every delivered message is the DELIVERY receipt —
  *     type `inactive` while not online (Socket/messages-recv.ts, `handleMessage`) — the grey
  *     double tick every linked device sends, and the signal for the server to forget the
  *     message. Without it the server would re-deliver forever.
@@ -276,6 +277,9 @@ export const createBaileysConnection: ConnectionFactory = ({ auth, fullHistory =
         const sent = await sock.sendMessage(jid, { delete: { remoteJid: jid, fromMe: true, id } });
         if (!sent) throw new Error(_('WhatsApp did not take the deletion — nothing was sent'));
         return sent;
+      },
+      markRead: async (jid, id, participant) => {
+        await sock.readMessages([{ remoteJid: jid, id, fromMe: false, ...(participant ? { participant } : {}) }]);
       },
       // See `WaConnection.openSend`: the connection's owner closes it, never a send view.
       end: () => {},

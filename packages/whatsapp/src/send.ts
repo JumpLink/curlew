@@ -45,6 +45,7 @@ import type {
   SendingEdit,
   SendingMessage,
   SendingReaction,
+  SendingReadSync,
   SendPermit,
   SenderFeatures,
   SentMessage,
@@ -122,6 +123,7 @@ export class WhatsAppSender implements MessageSender {
     reactions: true,
     edits: true,
     deletes: true,
+    readSync: true,
   };
   private readonly socket: WaSendSocketHandle;
   private readonly mapper: WhatsAppMapper;
@@ -192,6 +194,18 @@ export class WhatsAppSender implements MessageSender {
     this.requireJournal();
     await this.socket.ready();
     await this.socket.deleteMessage(to, id);
+  }
+
+  /**
+   * WhatsApp has no private read marker: reading one of its chats here is the blue tick for the
+   * other person too. So the caller only asks while read receipts are switched on (ADR 0004).
+   */
+  async readSync(sync: SendingReadSync): Promise<void> {
+    const to = this.recipient(sync.to);
+    if (sync.target.fromSelf === true) return;
+    this.requireJournal();
+    await this.socket.ready();
+    await this.socket.markRead(to, sync.target.remoteId);
   }
 
   async react(reaction: SendingReaction): Promise<void> {

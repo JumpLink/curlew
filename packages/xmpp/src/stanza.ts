@@ -42,6 +42,7 @@ export const NS = {
   moderate: 'urn:xmpp:message-moderate:1',
   moderateLegacy: 'urn:xmpp:message-moderate:0',
   sid: 'urn:xmpp:sid:0',
+  mds: 'urn:xmpp:mds:displayed:0',
   oob: 'jabber:x:oob',
   sfs: 'urn:xmpp:sfs:0',
   fileMetadata: 'urn:xmpp:file:metadata:0',
@@ -590,6 +591,47 @@ export function retractionMessage(spec: { to: string; id: string; target: string
     xml('fallback', { xmlns: NS.fallback, for: NS.retract }),
     xml('body', {}, RETRACT_FALLBACK),
     xml('store', { xmlns: NS.hints }),
+  );
+}
+
+/**
+ * Mark Displayed Synchronization (XEP-0490): the person's own PEP item for one chat, keyed by the
+ * chat's bare JID, naming the newest archived message they read. Only the account's own devices
+ * can read the node (whitelist), so the peer learns nothing. `options` asks for the node
+ * configuration the XEP wants; a server that rejects it gets the plain publish.
+ */
+export function mdsPublish(spec: { chat: string; stanzaId: string; by: string; options: boolean }) {
+  return xml(
+    'iq',
+    { type: 'set' },
+    xml(
+      'pubsub',
+      { xmlns: NS.pubsub },
+      xml(
+        'publish',
+        { node: NS.mds },
+        xml(
+          'item',
+          { id: spec.chat },
+          xml('displayed', { xmlns: NS.mds }, xml('stanza-id', { xmlns: NS.sid, id: spec.stanzaId, by: spec.by })),
+        ),
+      ),
+      spec.options
+        ? xml(
+            'publish-options',
+            {},
+            xml(
+              'x',
+              { xmlns: NS.data, type: 'submit' },
+              xml('field', { var: 'FORM_TYPE', type: 'hidden' }, xml('value', {}, 'http://jabber.org/protocol/pubsub#publish-options')),
+              xml('field', { var: 'pubsub#persist_items' }, xml('value', {}, 'true')),
+              xml('field', { var: 'pubsub#max_items' }, xml('value', {}, 'max')),
+              xml('field', { var: 'pubsub#send_last_published_item' }, xml('value', {}, 'never')),
+              xml('field', { var: 'pubsub#access_model' }, xml('value', {}, 'whitelist')),
+            ),
+          )
+        : null,
+    ),
   );
 }
 

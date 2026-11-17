@@ -28,6 +28,7 @@ import {
   type SendingEdit,
   type SendingMessage,
   type SendingReaction,
+  type SendingReadSync,
   type SendPermit,
   type SenderFeatures,
   type SentMessage,
@@ -125,6 +126,8 @@ export interface MatrixSendApi {
   sendEdit(roomId: string, eventId: string, text: string, txnId: string): Promise<string>;
   /** Redact one event: takes a reaction back, or deletes a message for everyone. */
   redact(roomId: string, eventId: string, txnId: string): Promise<void>;
+  /** POST a PRIVATE read receipt (`m.read.private`) up to `eventId`: only the person's own devices see it. */
+  sendPrivateReadReceipt(roomId: string, eventId: string): Promise<void>;
 }
 
 /** One reaction of the person: the event that carries it and its emoji. */
@@ -218,6 +221,21 @@ export function matrixSendApi(session: MatrixSendSession): MatrixSendApi {
     },
     async sendText(roomId, text, txnId, replyTo) {
       return putEvent(roomId, { msgtype: 'm.text', body: text, ...relation(replyTo) }, txnId);
+    },
+    async sendPrivateReadReceipt(roomId, eventId) {
+      const response = await session.fetch(
+        `${room(roomId)}/receipt/m.read.private/${encodeURIComponent(eventId)}`,
+        { method: 'POST', headers: { ...auth, 'Content-Type': 'application/json' }, body: '{}' },
+      );
+      if (!response.ok) {
+        const errcode = await errcodeOf(response);
+        throw new Error(
+          fmt(_('the homeserver refused the read marker in {room} ({reason})'), {
+            room: roomId,
+            reason: reasonOf(response, errcode),
+          }),
+        );
+      }
     },
     async sendReaction(roomId, eventId, key, txnId) {
       return putEvent(
@@ -360,6 +378,7 @@ export class MatrixSender implements MessageSender {
     reactions: true,
     edits: true,
     deletes: true,
+    readSync: true,
   };
   private readonly api: MatrixSendApi;
   private readonly permit: SendPermit;
@@ -555,6 +574,19 @@ export class MatrixSender implements MessageSender {
     const eventId = this.ownEvent(deletion.target);
     await this.requireClear(roomId);
     await this.api.redact(roomId, eventId, nextTxnId());
+  }
+
+  /**
+   * How far the person read, for their own devices only: a PRIVATE receipt, which the homeserver
+   * never shows to other members. Not message content, so an encrypted room needs no refusal.
+   */
+  async readSync(sync: SendingReadSync): Promise<void> {
+    const roomId = this.roomId(sync.to);
+    const eventId = sync.target.remoteId;
+    if (!EVENT_ID.test(eventId)) {
+      throw new Error(fmt(_('{id} is not a Matrix event id — nothing was sent'), { id: eventId }));
+    }
+    await this.api.sendPrivateReadReceipt(roomId, eventId);
   }
 
   async close(): Promise<void> {

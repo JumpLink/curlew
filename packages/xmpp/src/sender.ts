@@ -17,6 +17,7 @@ import type {
   SendingDeletion,
   SendingEdit,
   SendingReaction,
+  SendingReadSync,
   SentMessage,
 } from '@curlew/protocol';
 import { probeMediaFile } from '@curlew/protocol';
@@ -78,6 +79,7 @@ export class XmppSender implements MessageSender {
     reactions: true,
     edits: true,
     deletes: true,
+    readSync: true,
   };
   private readonly session: GrantedXmppSession;
 
@@ -137,6 +139,11 @@ export class XmppSender implements MessageSender {
 
   async delete(deletion: SendingDeletion): Promise<void> {
     await this.session.retract(deletion.to, this.ownId(deletion.target));
+  }
+
+  /** The archive id of the newest message read: what XEP-0490 names, not the sender's own id. */
+  async readSync(sync: SendingReadSync): Promise<void> {
+    await this.session.markDisplayed(sync.to, sync.target.remoteId);
   }
 
   private ownId(target: ReplyTarget): string {

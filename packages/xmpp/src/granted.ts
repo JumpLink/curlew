@@ -12,11 +12,11 @@ import type { ChatSession, SendPermit } from '@curlew/protocol';
 import { normalizeAddress } from '@curlew/protocol';
 import { aesGcmEncrypt, toHex } from '@curlew/omemo';
 import { randomUUID } from 'node:crypto';
-import type { XmppApi, XmppLink } from './api.ts';
+import { type XmppApi, type XmppLink, XmppQueryError } from './api.ts';
 import { readOnly } from './client.ts';
 import { MESSAGES } from './messages.ts';
 import type { EncryptedStanza } from './omemo-stanza.ts';
-import { bareJid } from './stanza.ts';
+import { bareJid, mdsPublish } from './stanza.ts';
 import { type DecryptEntries, XmppChatSession } from './session.ts';
 import { checkedSlotUrl } from './upload.ts';
 
@@ -169,6 +169,27 @@ export class GrantedXmppSession {
     if (text.length > MAX_TEXT_CHARS) throw new Error(MESSAGES.tooLong(MAX_TEXT_CHARS));
     if (await this.omemo?.encrypts(chatJid)) throw new Error(MESSAGES.changeNotEncrypted);
     await this.link.sendCorrection(chatJid, this.newId(), targetId, text);
+  }
+
+  /**
+   * Tell the person's own other clients how far they read this chat (XEP-0490, a PEP item only the
+   * account itself can read). A server without PEP, or without the node, is not an error: the
+   * read position simply stays on this device.
+   */
+  async markDisplayed(to: string, stanzaId: string): Promise<void> {
+    const chat = this.recipient(to);
+    const by = bareJid(this.link.jid);
+    try {
+      try {
+        await this.link.pepSet(mdsPublish({ chat, stanzaId, by, options: true }));
+      } catch (error) {
+        if (!(error instanceof XmppQueryError) || !['conflict', 'precondition-not-met', 'bad-request'].includes(error.condition)) throw error;
+        await this.link.pepSet(mdsPublish({ chat, stanzaId, by, options: false }));
+      }
+    } catch (error) {
+      if (error instanceof XmppQueryError && ['service-unavailable', 'feature-not-implemented'].includes(error.condition)) return;
+      throw error;
+    }
   }
 
   /** Takes one of the person's own messages of a 1:1 chat back for everyone (XEP-0424); not in an OMEMO chat. */

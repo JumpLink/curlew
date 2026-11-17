@@ -20,6 +20,7 @@ import type {
   SendingMessage,
   SendingReaction,
   SendingReadReceipt,
+  SendingReadSync,
   SentMessage,
   SmtpTarget,
 } from '@curlew/protocol';
@@ -27,6 +28,9 @@ import { buildMessage, sendMessage, type OutgoingMessage, type SmtpAccount } fro
 import { _, fmt } from '@curlew/protocol';
 import { readAttachments } from './attachments.ts';
 import { sentCopyWarning, type SentCopyFiler } from './sent-copy.ts';
+
+/** Sets \Seen on `uids` in the mailbox `target` points at; the backend owns the IMAP connection. */
+export type SeenMarker = (to: string, folder: string, uids: number[]) => Promise<void>;
 import { resolveSmtpTargets } from './targets.ts';
 
 /** `'none'` exists for a loopback dummy server; `@curlew/smtp` allows it on 127.0.0.1 only. */
@@ -59,16 +63,29 @@ export class MailSender implements MessageSender {
     edits: true,
     deletes: true,
     readReceipts: true,
+    readSync: true,
   };
   private readonly target: SmtpTarget;
   private readonly permit: SendPermit;
   private readonly fileCopy: SentCopyFiler | undefined;
+  private readonly markSeen: SeenMarker | undefined;
 
   /** `fileCopy`: keeps the sent copy in the Sent mailbox (#108); absent, nothing is filed. */
-  constructor(target: SmtpTarget, permit: SendPermit, fileCopy?: SentCopyFiler) {
+  constructor(target: SmtpTarget, permit: SendPermit, fileCopy?: SentCopyFiler, markSeen?: SeenMarker) {
     this.target = target;
     this.permit = permit;
     this.fileCopy = fileCopy;
+    this.markSeen = markSeen;
+  }
+
+  /** `\Seen` on the person's own mailbox: nothing reaches the sender of the mail. */
+  async readSync(sync: SendingReadSync): Promise<void> {
+    const to = this.address(sync.to);
+    const uids = sync.uids ?? [];
+    if (uids.length === 0) return;
+    if (!sync.folder) return;
+    if (!this.markSeen) throw new Error(_('marking mail as read is not available here'));
+    await this.markSeen(to, sync.folder, uids);
   }
 
   /** The address exactly as the permit spells it, or a refusal — the permit is the second check. */
@@ -231,6 +248,7 @@ export async function openMailSender(
   accountId: string,
   permit: SendPermit,
   fileCopy?: SentCopyFiler,
+  markSeen?: SeenMarker,
 ): Promise<MessageSender> {
   const target = (await resolveSmtpTargets(accountId)).find((t) => t.accountId === accountId);
   if (!target) {
@@ -240,5 +258,5 @@ export async function openMailSender(
       }),
     );
   }
-  return new MailSender(target, permit, fileCopy);
+  return new MailSender(target, permit, fileCopy, markSeen);
 }

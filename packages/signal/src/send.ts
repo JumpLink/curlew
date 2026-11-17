@@ -42,6 +42,7 @@ import {
   type SendingEdit,
   type SendingMessage,
   type SendingReaction,
+  type SendingReadSync,
   type SendPermit,
   type SenderFeatures,
   type SentMessage,
@@ -94,7 +95,9 @@ const F = {
   quote: { id: 1, authorAci: 5, authorAciBinary: 8 },
   /** `DataMessage.Reaction`; the target author goes out in both forms, like a quote's. */
   reaction: { emoji: 1, remove: 2, targetAuthorAci: 4, targetSentTimestamp: 5, targetAuthorAciBinary: 6 },
-  sync: { sent: 1, request: 4 },
+  sync: { sent: 1, request: 4, read: 5 },
+  /** `SyncMessage.Read`: which message was read, by author and sent timestamp; the author in both forms. */
+  read: { timestamp: 2, senderAci: 3, senderAciBinary: 4 },
   /** `SyncMessage.Request`; the only type asked for is `CONTACTS`. */
   request: { type: 1 },
   sent: {
@@ -117,6 +120,22 @@ const REQUEST_CONTACTS = 1;
 export function encodeContactsRequest(): Uint8Array {
   return new ProtoWriter()
     .message(F.content.syncMessage, new ProtoWriter().message(F.sync.request, new ProtoWriter().uint(F.request.type, REQUEST_CONTACTS)))
+    .finish();
+}
+
+/** `Content { syncMessage { read { senderAci, timestamp } } }`: this account read that message. */
+export function encodeReadSync(senderAci: string, timestamp: number): Uint8Array {
+  return new ProtoWriter()
+    .message(
+      F.content.syncMessage,
+      new ProtoWriter().message(
+        F.sync.read,
+        new ProtoWriter()
+          .uint(F.read.timestamp, timestamp)
+          .string(F.read.senderAci, senderAci)
+          .bytes(F.read.senderAciBinary, uuidToBytes(senderAci)),
+      ),
+    )
     .finish();
 }
 
@@ -203,6 +222,7 @@ export class SignalSender implements MessageSender {
     reactions: true,
     edits: true,
     deletes: true,
+    readSync: true,
   };
   private readonly lib: SignalLib;
   private readonly store: SignalProtocolStore;
@@ -238,6 +258,26 @@ export class SignalSender implements MessageSender {
 
   delete(deletion: SendingDeletion): Promise<void> {
     return this.exclusive(() => this.deleteNow(deletion));
+  }
+
+  readSync(sync: SendingReadSync): Promise<void> {
+    return this.exclusive(() => this.readSyncNow(sync));
+  }
+
+  /**
+   * `Content { syncMessage { read { senderAci, timestamp } } }` to this account's OTHER devices
+   * only. It is a transcript, not a receipt: nothing goes to the peer, who is never asked.
+   */
+  private async readSyncNow(sync: SendingReadSync): Promise<void> {
+    this.recipient(sync.to);
+    const { authorAci, sentTimestamp } = parseMessageRemoteId(sync.target.remoteId);
+    const delivered = await this.deliver(
+      this.account.aci,
+      encodeReadSync(authorAci, sentTimestamp),
+      Date.now(),
+      [this.account.deviceId],
+    );
+    if (delivered === 0) throw new Error(_('this account has no other Signal device to tell — nothing was sent'));
   }
 
   /**

@@ -300,6 +300,11 @@ export interface WaSendSocketHandle {
   editMessage(jid: string, id: string, text: string): Promise<WaSentMessage>;
   /** Delete the person's own message `id` of the chat for everyone (revoke). */
   deleteMessage(jid: string, id: string): Promise<WaSentMessage>;
+  /**
+   * Mark the chat's incoming message `id` read: the one write that tells the OTHER person (the
+   * blue ticks), so a sender only calls it while read receipts are on.
+   */
+  markRead(jid: string, id: string, participant?: string): Promise<void>;
   /** Close without logging out, exactly like `WaSocketHandle.end`. */
   end(): void;
 }
