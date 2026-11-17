@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 14:30+0100\n"
+"POT-Creation-Date: 2026-11-17 15:06+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1097,7 +1097,7 @@ msgstr[0] "{n} weiterer Chat hat neue Nachrichten"
 msgstr[1] "{n} weitere Chats haben neue Nachrichten"
 
 #: app/src/core/lib/message-notifications.ts:197
-#: app/src/window/attachment-view.ts:131
+#: app/src/window/attachment-view.ts:132
 msgid "Open"
 msgstr "Öffnen"
 
@@ -2017,7 +2017,7 @@ msgstr "Dieses Konto pausieren?"
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: app/src/window/account-detail.ts:125 app/src/window/audio-player.ts:88
+#: app/src/window/account-detail.ts:125 app/src/window/audio-player.ts:112
 msgid "Pause"
 msgstr "Pause"
 
@@ -2525,75 +2525,83 @@ msgstr "Chat-Hintergrund"
 msgid "A quiet pattern behind the messages"
 msgstr "Ein dezentes Muster hinter den Nachrichten"
 
-#: app/src/window/attachment-store.ts:81
+#: app/src/window/attachment-store.ts:86
 msgid "the account is signed out"
 msgstr "das Konto ist abgemeldet"
 
-#: app/src/window/attachment-view.ts:117 app/src/window/attachment-view.ts:327
+#: app/src/window/attachment-view.ts:118 app/src/window/attachment-view.ts:328
 msgid "Sign in again to load this image"
 msgstr "Melde dich erneut an, um dieses Bild zu laden"
 
-#: app/src/window/attachment-view.ts:118
+#: app/src/window/attachment-view.ts:119
 msgid "Sign in again to load this file"
 msgstr "Melde dich erneut an, um diese Datei zu laden"
 
-#: app/src/window/attachment-view.ts:123
+#: app/src/window/attachment-view.ts:124 app/src/window/audio-player.ts:80
 msgid "Sign in again to download this"
 msgstr "Melde dich erneut an, um dies herunterzuladen"
 
-#: app/src/window/attachment-view.ts:131
+#: app/src/window/attachment-view.ts:132
 msgid "Play"
 msgstr "Abspielen"
 
-#: app/src/window/attachment-view.ts:136 app/src/window/audio-player.ts:59
+#: app/src/window/attachment-view.ts:137 app/src/window/audio-player.ts:66
 #: app/src/window/media-viewer.ts:64
 msgid "Save as…"
 msgstr "Speichern unter…"
 
-#: app/src/window/attachment-view.ts:160 app/src/window/audio-player.ts:136
-#: app/src/window/audio-player.ts:163
+#: app/src/window/attachment-view.ts:161 app/src/window/audio-player.ts:161
+#: app/src/window/audio-player.ts:189
 msgid "Could not fetch the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
-#: app/src/window/attachment-view.ts:184 app/src/window/attachment-view.ts:193
+#: app/src/window/attachment-view.ts:185 app/src/window/attachment-view.ts:194
 #: app/src/window/conversation-list-model.ts:526
 #: app/src/window/conversation-model.ts:318
 #: app/src/window/conversation-model.ts:323
 msgid "Attachment"
 msgstr "Anhang"
 
-#: app/src/window/attachment-view.ts:277 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:278 app/src/window/media-viewer.ts:230
 msgid "Video: {name}"
 msgstr "Video: {name}"
 
-#: app/src/window/attachment-view.ts:277 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:278 app/src/window/media-viewer.ts:230
 msgid "Image: {name}"
 msgstr "Bild: {name}"
 
-#: app/src/window/attachment-view.ts:327
+#: app/src/window/attachment-view.ts:328
 msgid "Sign in again to load this video"
 msgstr "Melde dich erneut an, um dieses Video zu laden"
 
-#: app/src/window/attachment-view.ts:624
+#: app/src/window/attachment-view.ts:625
 #: app/src/window/conversation-model.ts:326
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] "und {n} weiterer Anhang"
 msgstr[1] "und {n} weitere Anhänge"
 
-#: app/src/window/audio-player.ts:30
+#: app/src/window/audio-player.ts:37
 msgid "Play voice message"
 msgstr "Sprachnachricht abspielen"
 
-#: app/src/window/audio-player.ts:30
+#: app/src/window/audio-player.ts:37
 msgid "Play {name}"
 msgstr "{name} abspielen"
 
-#: app/src/window/audio-player.ts:48
+#: app/src/window/audio-player.ts:55
 msgid "Position"
 msgstr "Position"
 
-#: app/src/window/audio-player.ts:109
+#: app/src/window/audio-player.ts:77
+msgid "Sign in again to play this voice message"
+msgstr "Melde dich erneut an, um diese Sprachnachricht abzuspielen"
+
+#: app/src/window/audio-player.ts:77
+msgid "Sign in again to play this"
+msgstr "Melde dich erneut an, um dies abzuspielen"
+
+#: app/src/window/audio-player.ts:133
 msgid "Could not play the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgespielt werden: {error}"
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 14:30+0100\n"
+"POT-Creation-Date: 2026-11-17 15:06+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -926,7 +926,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/core/lib/message-notifications.ts:197
-#: app/src/window/attachment-view.ts:131
+#: app/src/window/attachment-view.ts:132
 msgid "Open"
 msgstr ""
 
@@ -1745,7 +1745,7 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
-#: app/src/window/account-detail.ts:125 app/src/window/audio-player.ts:88
+#: app/src/window/account-detail.ts:125 app/src/window/audio-player.ts:112
 msgid "Pause"
 msgstr ""
 
@@ -2218,75 +2218,83 @@ msgstr ""
 msgid "A quiet pattern behind the messages"
 msgstr ""
 
-#: app/src/window/attachment-store.ts:81
+#: app/src/window/attachment-store.ts:86
 msgid "the account is signed out"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:117 app/src/window/attachment-view.ts:327
+#: app/src/window/attachment-view.ts:118 app/src/window/attachment-view.ts:328
 msgid "Sign in again to load this image"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:118
+#: app/src/window/attachment-view.ts:119
 msgid "Sign in again to load this file"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:123
+#: app/src/window/attachment-view.ts:124 app/src/window/audio-player.ts:80
 msgid "Sign in again to download this"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:131
+#: app/src/window/attachment-view.ts:132
 msgid "Play"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:136 app/src/window/audio-player.ts:59
+#: app/src/window/attachment-view.ts:137 app/src/window/audio-player.ts:66
 #: app/src/window/media-viewer.ts:64
 msgid "Save as…"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:160 app/src/window/audio-player.ts:136
-#: app/src/window/audio-player.ts:163
+#: app/src/window/attachment-view.ts:161 app/src/window/audio-player.ts:161
+#: app/src/window/audio-player.ts:189
 msgid "Could not fetch the attachment: {error}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:184 app/src/window/attachment-view.ts:193
+#: app/src/window/attachment-view.ts:185 app/src/window/attachment-view.ts:194
 #: app/src/window/conversation-list-model.ts:526
 #: app/src/window/conversation-model.ts:318
 #: app/src/window/conversation-model.ts:323
 msgid "Attachment"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:277 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:278 app/src/window/media-viewer.ts:230
 msgid "Video: {name}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:277 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:278 app/src/window/media-viewer.ts:230
 msgid "Image: {name}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:327
+#: app/src/window/attachment-view.ts:328
 msgid "Sign in again to load this video"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:624
+#: app/src/window/attachment-view.ts:625
 #: app/src/window/conversation-model.ts:326
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/audio-player.ts:30
+#: app/src/window/audio-player.ts:37
 msgid "Play voice message"
 msgstr ""
 
-#: app/src/window/audio-player.ts:30
+#: app/src/window/audio-player.ts:37
 msgid "Play {name}"
 msgstr ""
 
-#: app/src/window/audio-player.ts:48
+#: app/src/window/audio-player.ts:55
 msgid "Position"
 msgstr ""
 
-#: app/src/window/audio-player.ts:109
+#: app/src/window/audio-player.ts:77
+msgid "Sign in again to play this voice message"
+msgstr ""
+
+#: app/src/window/audio-player.ts:77
+msgid "Sign in again to play this"
+msgstr ""
+
+#: app/src/window/audio-player.ts:133
 msgid "Could not play the attachment: {error}"
 msgstr ""
 

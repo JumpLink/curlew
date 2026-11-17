@@ -5,8 +5,15 @@ import Adw from 'gi://Adw?version=1';
 import Gtk from 'gi://Gtk?version=4.0';
 import { _, fmt } from '@curlew/protocol';
 
-import { attachmentKind, playbackFraction, playbackLabel } from './attachment-model.ts';
-import { type AttachmentSource, failureText, fetchAttachment, saveCopyAs } from './attachment-store.ts';
+import { attachmentKind, isSignedOutFailure, playbackFraction, playbackLabel } from './attachment-model.ts';
+import {
+  type AttachmentSource,
+  blockedBySignOut,
+  failureText,
+  fetchAttachment,
+  noteFetchFailure,
+  saveCopyAs,
+} from './attachment-store.ts';
 import { attachmentLine } from './conversation-model.ts';
 
 /** Only one part plays at a time: starting another one pauses this. */
@@ -62,6 +69,23 @@ export function audioPlayer(source: AttachmentSource, toast: (text: string) => v
   save.add_css_class('flat');
   save.add_css_class('circular');
   content.append(save);
+
+  // A signed-out account cannot load the part: say so where the time stands and offer nothing that would fail.
+  let blocked = false;
+  const showSignedOut = (): void => {
+    blocked = true;
+    time.set_label(voice ? _('Sign in again to play this voice message') : _('Sign in again to play this'));
+    for (const button of [play, save]) {
+      button.set_sensitive(false);
+      button.set_tooltip_text(_('Sign in again to download this'));
+    }
+  };
+  /** True when `err` came from a dead session; the player then shows the hint instead of a toast. */
+  const signedOutFailure = (err: unknown): boolean => {
+    if (!noteFetchFailure(source.ref, err) && !isSignedOutFailure(err)) return false;
+    if (box.get_root() !== null) showSignedOut();
+    return true;
+  };
 
   let media: Gtk.MediaFile | null = null;
   let fetching = false;
@@ -132,12 +156,13 @@ export function audioPlayer(source: AttachmentSource, toast: (text: string) => v
         if (current && current !== handle) current.pause();
         file.play();
       })
-      .catch((err: unknown) =>
-        toast(fmt(_('Could not fetch the attachment: {error}'), { error: failureText(err) })),
-      )
+      .catch((err: unknown) => {
+        if (signedOutFailure(err)) return;
+        toast(fmt(_('Could not fetch the attachment: {error}'), { error: failureText(err) }));
+      })
       .finally(() => {
         fetching = false;
-        play.set_sensitive(true);
+        if (!blocked) play.set_sensitive(true);
       });
   });
 
@@ -159,13 +184,16 @@ export function audioPlayer(source: AttachmentSource, toast: (text: string) => v
     const window = save.get_root() as Gtk.Window | null;
     void fetchAttachment(source)
       .then((file) => saveCopyAs(window, file, GLib.path_get_basename(file)))
-      .catch((err: unknown) =>
-        toast(fmt(_('Could not fetch the attachment: {error}'), { error: failureText(err) })),
-      )
+      .catch((err: unknown) => {
+        if (signedOutFailure(err)) return;
+        toast(fmt(_('Could not fetch the attachment: {error}'), { error: failureText(err) }));
+      })
       .finally(() => {
-        if (save.get_root() !== null) save.set_sensitive(true);
+        if (save.get_root() !== null && !blocked) save.set_sensitive(true);
       });
   });
+
+  if (blockedBySignOut(source)) showSignedOut();
 
   // A voice note is short: it stops at a width that reads as a player, not as a wide download bar.
   return new Adw.Clamp({ maximumSize: 300, tighteningThreshold: 300, child: box, halign: Gtk.Align.START });

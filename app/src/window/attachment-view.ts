@@ -38,6 +38,7 @@ import {
   failureText,
   fetchAttachment,
   fetchThumbnail,
+  blockedBySignOut,
   isSignedOut,
   noteFetchFailure,
   loadPoster,
@@ -144,7 +145,7 @@ function tile(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Widge
     }
   }
 
-  applyState(isSignedOut(source.ref));
+  applyState(blockedBySignOut(source));
   if (openable) {
     // The button is blocked while the part is fetched, so a second click cannot start a second fetch.
     const run = (button: Gtk.Button, work: (path: string, window: Gtk.Window | null) => Promise<unknown>) => {
@@ -163,7 +164,7 @@ function tile(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Widge
         // the tree has no state left to restore.
         .finally(() => {
           if (button.get_root() !== null)
-            button.set_sensitive(rowState(info, isSignedOut(source.ref)).canFetch);
+            button.set_sensitive(rowState(info, blockedBySignOut(source)).canFetch);
         });
     };
     open!.connect('clicked', () => {

@@ -57,6 +57,11 @@ export function isSignedOut(ref: MessageRef, now = Date.now()): boolean {
   return signedOut.isSignedOut(accountKey(ref), now);
 }
 
+/** Whether the part cannot be had at all: its account is signed out and no copy is cached. */
+export function blockedBySignOut(source: AttachmentSource, now = Date.now()): boolean {
+  return isSignedOut(source.ref, now) && cachedAttachment(source) === null;
+}
+
 /** Marks the account when `err` is a dead-session failure; mail has its own sign-in and is never marked. */
 export function noteFetchFailure(ref: MessageRef, err: unknown, now = Date.now()): boolean {
   if (ref.backend === 'mail' || !isSignedOutFailure(err)) return false;
