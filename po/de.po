@@ -171,10 +171,8 @@ msgstr "{backend} kann keine Anhänge abrufen"
 #: app/src/core/actions/chat-thumbnail.ts:109
 #: app/src/core/actions/chat-thumbnail.ts:150
 #: app/src/core/actions/daemon.ts:555
-#, fuzzy
-#| msgid "the attachment has no fetchable handle"
 msgid "the attachment has no thumbnail to fetch"
-msgstr "Der Anhang hat keinen abrufbaren Handle"
+msgstr "Der Anhang hat kein abrufbares Vorschaubild"
 
 #: app/src/core/actions/daemon.ts:392
 msgid "this account is paused — switch it on in Accounts to send from it"
