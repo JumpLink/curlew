@@ -104,6 +104,7 @@ export default async () => {
           ).map((c) => c.name);
           for (const name of ['thumb_handle', 'thumb_state', 'blur_hash'])
             expect(cols.includes(name)).toBe(true);
+          expect(count(db, 'conversation_read_state')).toBe(0);
         } finally {
           db.close();
         }

@@ -22,7 +22,7 @@
 import { type IndexDatabase, withTransaction } from './db.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 
-export const SCHEMA_VERSION = 25;
+export const SCHEMA_VERSION = 26;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -490,6 +490,17 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
     { table: 'message_attachments', column: 'thumb_handle', type: 'TEXT' },
     { table: 'message_attachments', column: 'thumb_state', type: 'TEXT' },
     { table: 'message_attachments', column: 'blur_hash', type: 'TEXT' },
+  ],
+  // v26: the person's own read position, apart from the network's. A separate table because the
+  // rebuild replaces every mail conversation row and a sync rewrites `seen`: nothing a sync
+  // writes may hold state that only exists here. `read_through` is the `sent_at` of the newest
+  // incoming message the person has read; `marked_unread` shows the conversation as unread
+  // until it is read again.
+  26: [
+    `CREATE TABLE IF NOT EXISTS conversation_read_state (
+       conversation_id TEXT PRIMARY KEY,
+       read_through TEXT,
+       marked_unread INTEGER NOT NULL DEFAULT 0)`,
   ],
 };
 

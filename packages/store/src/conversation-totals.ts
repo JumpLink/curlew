@@ -8,14 +8,19 @@
  * text is the SET half, or the two copies drift and a conversation's header depends on which
  * engine wrote it.
  *
+ * A conversation the person marked unread counts at least one (`conversation_read_state`).
+ *
  * `schema.ts` carries a third copy inside the v12 upgrade. That one is historical: a migration
  * is a record of what the binary of that day ran, so it must not follow this helper.
  */
 export function conversationTotalsSql(where: string): string {
   return `UPDATE conversations SET
        message_count = (SELECT COUNT(*) FROM conversation_messages m WHERE m.conversation_id = conversations.id),
-       unread_count = (SELECT COUNT(*) FROM conversation_messages m
-                        WHERE m.conversation_id = conversations.id AND m.from_self = 0 AND m.seen = 0),
+       unread_count = MAX(
+         (SELECT COUNT(*) FROM conversation_messages m
+           WHERE m.conversation_id = conversations.id AND m.from_self = 0 AND m.seen = 0),
+         (SELECT COUNT(*) FROM conversation_read_state r
+           WHERE r.conversation_id = conversations.id AND r.marked_unread = 1)),
        first_message_at = (SELECT MIN(sent_at) FROM conversation_messages m WHERE m.conversation_id = conversations.id),
        last_message_at = (SELECT MAX(sent_at) FROM conversation_messages m WHERE m.conversation_id = conversations.id),
        has_attachments = (SELECT COUNT(*) > 0 FROM conversation_messages m

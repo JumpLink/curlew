@@ -23,6 +23,7 @@ import { insertMany, type SqlValue, withTransaction } from './db.ts';
 import { messageBody } from './index-store.ts';
 import { buildThreads, normalizeSubject, stableId, type ThreadMember } from './threads.ts';
 import { str } from './row.ts';
+import { loadLocalReadStates, readLocally } from './local-read.ts';
 import { MAIL_BACKEND, PENDING_DELETE, PENDING_DELETE_TTL_MS, setOwnReaction } from './conversations-shared.ts';
 
 export interface RebuildOptions {
@@ -483,6 +484,7 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
     .all(MAIL_BACKEND) as Array<Record<string, unknown>>) {
     echoed.set(String(r.id), { body: r.body as SqlValue, editedAt: r.edited_at as SqlValue });
   }
+  const localRead = loadLocalReadStates(db);
   const directory = new ParticipantDirectory(options.contacts ?? []);
   const threads = buildThreads(rows);
 
@@ -533,7 +535,8 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
         classification: verdict.classification,
         reason: verdict.reason,
       });
-      if (!fromSelf && !row.seen) unread++;
+      const seenHere = row.seen || (!fromSelf && readLocally(row.sentAt, localRead.get(conversationId)?.readThrough ?? null));
+      if (!fromSelf && !seenHere) unread++;
       if (row.hasAttachment) attachments = true;
 
       const id = stableId('m-', conversationId, row.messageId ?? row.key);
@@ -552,7 +555,7 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
         fromSelf ? 1 : 0,
         row.sentAt,
         row.subject,
-        row.seen ? 1 : 0,
+        seenHere ? 1 : 0,
         row.hasAttachment ? 1 : 0,
         verdict.classification,
         verdict.reason,
@@ -582,7 +585,7 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
       first.sentAt,
       last.sentAt,
       thread.members.length,
-      unread,
+      localRead.get(conversationId)?.markedUnread ? Math.max(unread, 1) : unread,
       attachments ? 1 : 0,
       thread.members.some((row) => row.emailChat) ? 1 : 0,
     ]);
