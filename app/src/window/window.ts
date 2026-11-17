@@ -629,8 +629,15 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   GLib.timeout_add(GLib.PRIORITY_DEFAULT_IDLE, 500, () => {
     const open = currentEntry;
     const entry = open && shown.find((e) => e.id === open.id);
+    // On a phone the split is collapsed and going back shows the list while the chat stays current.
+    const chatShown = !split.collapsed || split.show_content;
     const watching =
-      entry && window.is_active && window.get_mapped() && conversation.isAtEnd() && keptUnread !== entry.id;
+      entry &&
+      window.is_active &&
+      window.get_mapped() &&
+      chatShown &&
+      conversation.isAtEnd() &&
+      keptUnread !== entry.id;
     if (!entry || !watching || entry.unread === 0) {
       lookedSince = 0;
       return GLib.SOURCE_CONTINUE;
