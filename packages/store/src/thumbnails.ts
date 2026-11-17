@@ -60,7 +60,7 @@ export function cleanBlurHash(hash: string | undefined): string | null {
 /**
  * The `[thumb_handle, thumb_state, blur_hash]` values for one attachment row. Inline bytes within
  * the cap are written to the thumbs directory right here (`'stored'`); a larger or empty blob is
- * dropped (`'none'`); a handle alone leaves the state NULL for the window to fetch.
+ * dropped (`'none'`); a handle alone leaves the state NULL for the window to fetch; neither is `'none'`.
  */
 export function thumbnailColumns(
   messageId: string,
@@ -83,7 +83,9 @@ export function thumbnailColumns(
     }
     if (handle === null) return [null, 'none', blur];
   }
-  return [handle, null, blur];
+  // Nothing to fetch and nothing inline: looked at, and the network has none. NULL would mean "not
+  // looked at" and keep the row a backfill candidate for ever (ADR 0017 §7).
+  return [handle, handle === null ? 'none' : null, blur];
 }
 
 function unlinkQuietly(path: string): void {
