@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 07:34+0100\n"
+"POT-Creation-Date: 2026-11-17 07:49+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -150,7 +150,7 @@ msgid "systemctl --user {verb} exited {code}"
 msgstr "systemctl --user {verb} endete mit {code}"
 
 #: app/src/core/actions/chat-attachment.ts:140
-#: app/src/core/actions/daemon.ts:543
+#: app/src/core/actions/daemon.ts:580
 msgid "the attachment was not found in the index"
 msgstr "Der Anhang wurde im Index nicht gefunden"
 
@@ -159,25 +159,33 @@ msgid "the attachment has no fetchable handle"
 msgstr "Der Anhang hat keinen abrufbaren Handle"
 
 #: app/src/core/actions/chat-attachment.ts:179
+#: app/src/core/actions/chat-thumbnail.ts:134
 msgid "no account {account} for {backend}"
 msgstr "Kein Konto {account} für {backend}"
 
 #: app/src/core/actions/chat-attachment.ts:186
+#: app/src/core/actions/chat-thumbnail.ts:138
 msgid "{backend} cannot fetch attachments"
 msgstr "{backend} kann keine Anhänge abrufen"
 
-#: app/src/core/actions/daemon.ts:391
+#: app/src/core/actions/chat-thumbnail.ts:109
+#: app/src/core/actions/chat-thumbnail.ts:150
+#: app/src/core/actions/daemon.ts:555
+msgid "the attachment has no thumbnail to fetch"
+msgstr "Der Anhang hat kein abrufbares Vorschaubild"
+
+#: app/src/core/actions/daemon.ts:392
 msgid "this account is paused — switch it on in Accounts to send from it"
 msgstr ""
 "dieses Konto ist pausiert — schalte es unter Konten ein, um davon zu senden"
 
-#: app/src/core/actions/daemon.ts:404
+#: app/src/core/actions/daemon.ts:405
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 "{capability} ist nicht die Berechtigung, unter der {backend} sendet — es "
 "wurde nichts gesendet"
 
-#: app/src/core/actions/daemon.ts:426
+#: app/src/core/actions/daemon.ts:427
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
@@ -185,7 +193,7 @@ msgstr ""
 "Der laufende curlew-Daemon konnte keinen Sender öffnen ({reason}) — es wurde "
 "nichts gesendet"
 
-#: app/src/core/actions/daemon.ts:492
+#: app/src/core/actions/daemon.ts:493
 msgid "the download stalled — try again"
 msgstr "Der Download ist hängen geblieben — versuche es noch einmal"
 
@@ -994,7 +1002,7 @@ msgstr ""
 "{ours} — es wurde nichts gesendet; starte ihn mit `systemctl --user restart "
 "curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:442
+#: app/src/core/lib/daemon-bus.ts:448
 msgid ""
 "the caller speaks attachment protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -1002,7 +1010,7 @@ msgstr ""
 "Der Aufrufer spricht Anhangsprotokoll {theirs}, dieser curlew-Daemon spricht "
 "{ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:471
+#: app/src/core/lib/daemon-bus.ts:479
 msgid ""
 "the running curlew daemon speaks attachment protocol {theirs} and this "
 "curlew speaks {ours} — restart it with `systemctl --user restart curlew-"
@@ -1011,7 +1019,7 @@ msgstr ""
 "Der laufende curlew-Daemon spricht Anhangsprotokoll {theirs}, dieses curlew "
 "spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:622
+#: app/src/core/lib/daemon-bus.ts:630
 msgid ""
 "the caller speaks access protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -1019,7 +1027,7 @@ msgstr ""
 "Der Aufrufer spricht Zugriffsprotokoll {theirs}, dieser curlew-Daemon "
 "spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:659
+#: app/src/core/lib/daemon-bus.ts:667
 msgid ""
 "the running curlew daemon speaks access protocol {theirs} and this curlew "
 "speaks {ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -1089,7 +1097,7 @@ msgstr[0] "{n} weiterer Chat hat neue Nachrichten"
 msgstr[1] "{n} weitere Chats haben neue Nachrichten"
 
 #: app/src/core/lib/message-notifications.ts:197
-#: app/src/window/attachment-view.ts:108
+#: app/src/window/attachment-view.ts:110
 msgid "Open"
 msgstr "Öffnen"
 
@@ -2505,36 +2513,36 @@ msgstr "Chat-Hintergrund"
 msgid "A quiet pattern behind the messages"
 msgstr "Ein dezentes Muster hinter den Nachrichten"
 
-#: app/src/window/attachment-view.ts:108
+#: app/src/window/attachment-view.ts:110
 msgid "Play"
 msgstr "Abspielen"
 
-#: app/src/window/attachment-view.ts:113 app/src/window/audio-player.ts:59
+#: app/src/window/attachment-view.ts:115 app/src/window/audio-player.ts:59
 #: app/src/window/media-viewer.ts:64
 msgid "Save as…"
 msgstr "Speichern unter…"
 
-#: app/src/window/attachment-view.ts:131 app/src/window/audio-player.ts:136
+#: app/src/window/attachment-view.ts:133 app/src/window/audio-player.ts:136
 #: app/src/window/audio-player.ts:163
 msgid "Could not fetch the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
-#: app/src/window/attachment-view.ts:154 app/src/window/attachment-view.ts:163
+#: app/src/window/attachment-view.ts:156 app/src/window/attachment-view.ts:165
 #: app/src/window/conversation-list-model.ts:503
 #: app/src/window/conversation-model.ts:318
 #: app/src/window/conversation-model.ts:323
 msgid "Attachment"
 msgstr "Anhang"
 
-#: app/src/window/attachment-view.ts:247 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:249 app/src/window/media-viewer.ts:230
 msgid "Video: {name}"
 msgstr "Video: {name}"
 
-#: app/src/window/attachment-view.ts:247 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:249 app/src/window/media-viewer.ts:230
 msgid "Image: {name}"
 msgstr "Bild: {name}"
 
-#: app/src/window/attachment-view.ts:553
+#: app/src/window/attachment-view.ts:564
 #: app/src/window/conversation-model.ts:326
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"

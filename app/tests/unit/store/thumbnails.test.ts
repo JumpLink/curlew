@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -8,6 +8,9 @@ import {
   chatConversationId,
   getConversation,
   loadAttachments,
+  loadThumbTarget,
+  setThumbState,
+  THUMBNAIL_FETCH_MAX_BYTES,
   storedThumbPath,
   syncChats,
   THUMBNAIL_MAX_BYTES,
@@ -15,6 +18,8 @@ import {
   thumbPath,
   previewsDir,
 } from '@curlew/store';
+import type { AttachmentFetcher } from '@curlew/protocol';
+import { storeThumbnail } from '../../../src/core/actions/chat-thumbnail.ts';
 import { BEN, chatMessage, FakeChatBackend } from './chat-fixtures.ts';
 import { freshDb } from './fixtures.ts';
 
@@ -169,6 +174,98 @@ export default async () => {
           backend.chats.get('1002')!.messages = [];
           await syncChats(db, backend, { fullScan: true, probeDepth: 5 });
           expect(existsSync(thumbPath(message.id, 0, root))).toBe(false);
+        } finally {
+          db.close();
+        }
+      });
+    });
+  });
+
+  await describe('thumbnail handle fetch', async () => {
+    const fetcherOf = (bytes: Uint8Array | Error, seen: string[] = []): AttachmentFetcher => ({
+      fetchAttachment: async (_account, attachment, sink) => {
+        seen.push(attachment.handle);
+        if (bytes instanceof Error) throw bytes;
+        await sink.write(bytes);
+        sink.close();
+        return { mimeType: 'image/jpeg', size: bytes.length };
+      },
+    });
+
+    await it('looks up the thumb handle, not the file handle, and flags the part fetchable', async () => {
+      await withThumbsDir(async () => {
+        const { db, message } = await syncOne(photo({ thumbHandle: 'thumb-h' }));
+        try {
+          const target = loadThumbTarget(db, message.ref, 0);
+          expect(target?.handle).toBe('thumb-h');
+          expect(target?.state).toBe(null);
+          expect(loadAttachments(db, message.ref)[0]?.thumbFetchable).toBe(true);
+        } finally {
+          db.close();
+        }
+      });
+    });
+
+    await it('stores the bytes 0600, marks stored, and stops offering the handle', async () => {
+      await withThumbsDir(async (root) => {
+        const { db, message } = await syncOne(photo({ thumbHandle: 'thumb-h' }));
+        try {
+          const seen: string[] = [];
+          const stored = await storeThumbnail(db, fetcherOf(TINY, seen), message.ref, 0, { root });
+          expect(seen).toStrictEqual(['thumb-h']);
+          expect(stored?.path).toBe(thumbPath(message.id, 0, root));
+          expect(readFileSync(thumbPath(message.id, 0, root)).length).toBe(TINY.length);
+          expect(statSync(thumbPath(message.id, 0, root)).mode & 0o777).toBe(0o600);
+          expect(loadThumbTarget(db, message.ref, 0)).toBe(null);
+          const [part] = loadAttachments(db, message.ref);
+          expect(part?.thumbPath).toBe(thumbPath(message.id, 0, root));
+          expect(part?.thumbFetchable).toBe(false);
+        } finally {
+          db.close();
+        }
+      });
+    });
+
+    await it('marks failed on a fetch error and keeps the handle for one retry', async () => {
+      await withThumbsDir(async (root) => {
+        const { db, message } = await syncOne(photo({ thumbHandle: 'thumb-h' }));
+        try {
+          let thrown = false;
+          await storeThumbnail(db, fetcherOf(new Error('offline')), message.ref, 0, { root }).catch(() => {
+            thrown = true;
+          });
+          expect(thrown).toBe(true);
+          expect(existsSync(thumbPath(message.id, 0, root))).toBe(false);
+          expect(loadThumbTarget(db, message.ref, 0)?.state).toBe('failed');
+          expect(loadAttachments(db, message.ref)[0]?.thumbFetchable).toBe(true);
+          setThumbState(db, message.id, 0, 'none');
+          expect(loadThumbTarget(db, message.ref, 0)).toBe(null);
+        } finally {
+          db.close();
+        }
+      });
+    });
+
+    await it('has nothing to fetch without a handle, and caps fetched thumbnails above the inline cap', async () => {
+      await withThumbsDir(async (root) => {
+        const { db, message } = await syncOne(photo({ thumbnail: TINY }));
+        try {
+          expect(await storeThumbnail(db, fetcherOf(TINY), message.ref, 0, { root })).toBe(null);
+        } finally {
+          db.close();
+        }
+        expect(THUMBNAIL_FETCH_MAX_BYTES > THUMBNAIL_MAX_BYTES).toBe(true);
+      });
+    });
+
+    await it('never puts a handle into the window DTO', async () => {
+      await withThumbsDir(async () => {
+        const { db, message } = await syncOne(photo({ thumbHandle: 'thumb-h' }));
+        try {
+          const json = JSON.stringify(loadAttachments(db, message.ref));
+          expect(json.includes('thumb-h')).toBe(false);
+          expect(json.includes('fileId')).toBe(false);
+          expect(json.includes('"thumbHandle"')).toBe(false);
         } finally {
           db.close();
         }

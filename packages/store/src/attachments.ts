@@ -125,7 +125,10 @@ function chatAttachments(db: IndexDatabase, ref: MessageRef): AttachmentInfo[] {
     fetchable: typeof r.handle === 'string' && r.handle !== '',
     thumbPath: storedThumbPath(String(r.message_id), Number(r.idx), r.thumb_state),
     blurHash: str(r.blur_hash),
-    thumbFetchable: typeof r.thumb_handle === 'string' && r.thumb_handle !== '' && r.thumb_state !== 'stored',
+    thumbFetchable:
+      typeof r.thumb_handle === 'string' &&
+      r.thumb_handle !== '' &&
+      (r.thumb_state === null || r.thumb_state === undefined || r.thumb_state === 'failed'),
   }));
 }
 

@@ -35,9 +35,11 @@ import {
   cachedAttachment,
   failureText,
   fetchAttachment,
+  fetchThumbnail,
   loadPoster,
   loadTexture,
   stillTexture,
+  wantsThumbnail,
   openWithDesktop,
   saveCopyAs,
 } from './attachment-store.ts';
@@ -239,7 +241,7 @@ function inlinePreview(
       image.set_size_request(size.width, size.height);
     }
   };
-  if (!paint && !still && (cell || kind === 'video')) darken();
+  if (!paint && !(source.info.thumbPath || source.info.blurHash) && (cell || kind === 'video')) darken();
   const name = attachmentName(source.info);
   frame.set_tooltip_text(name);
   frame.update_property(
@@ -324,12 +326,21 @@ function inlinePreview(
         if (!paint && !settled && frame.get_root() !== null) fail(error);
       });
   };
-  const load = (): void => {
-    if (!paint) {
+  // A thumbnail the network offers is fetched by its handle first, then painted; the full file of an
+  // image is fetched alongside and wins when it arrives.
+  const ensureStill = (): void => {
+    if (!wantsThumbnail(source)) {
       paintStill();
       return;
     }
-    paintStill();
+    void fetchThumbnail(source).then(paintStill);
+  };
+  const load = (): void => {
+    if (!paint) {
+      ensureStill();
+      return;
+    }
+    ensureStill();
     spinner.set_visible(true);
     // The box the bubble gives a picture, in the pixels the texture is decoded at.
     const scale = frame.get_scale_factor();
@@ -388,7 +399,7 @@ function stillOf(
   info: AttachmentInfo,
   box: { width: number; height: number },
 ): ((scale: number) => Promise<Painted | null>) | null {
-  if (!info.thumbPath && !info.blurHash) return null;
+  if (!info.thumbPath && !info.blurHash && !info.thumbFetchable) return null;
   return async (scale) => {
     const texture = await stillTexture(info, { width: box.width * scale, height: box.height * scale });
     if (!texture) return null;

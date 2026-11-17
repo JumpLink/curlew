@@ -74,7 +74,7 @@ export const DAEMON_FETCH_TIMEOUT_MS = 120_000;
 export const DAEMON_SEND_TIMEOUT_MS = 120_000;
 
 /** The wire version. Bump it when a field stops being optional or changes meaning. */
-export const DAEMON_WIRE_VERSION = 7;
+export const DAEMON_WIRE_VERSION = 8;
 
 /**
  * What the daemon accepts as attachments of one send. The largest per-file limit of any sender
@@ -411,6 +411,12 @@ export interface DaemonFetchAttachmentRequest {
   index: number;
   /** Max bytes before the fetch is aborted. */
   maxBytes: number;
+  /**
+   * Fetch the attachment's thumbnail handle (ADR 0017 §2), not the file: the daemon stores it in the
+   * thumbs directory, sets `thumb_state`, and answers with that path. Wire v8: a v7 daemon would
+   * ignore the flag and download the whole file, so the version gate refuses the pair instead.
+   */
+  thumb?: boolean;
 }
 
 /** What the daemon answers for one attachment fetch. */
@@ -451,6 +457,8 @@ export function parseDaemonFetchAttachmentRequest(json: string): DaemonFetchAtta
   }
   if (!isCount(request.index, 0)) throw new Error('the attachment fetch request has no index');
   if (!isCount(request.maxBytes, 1)) throw new Error('the attachment fetch request has no maxBytes');
+  if (request.thumb !== undefined && typeof request.thumb !== 'boolean')
+    throw new Error('the attachment fetch request has a malformed thumb flag');
   return request as DaemonFetchAttachmentRequest;
 }
 

@@ -18,6 +18,7 @@ import {
   posterSource,
   previewKey,
   shouldAutoFetch,
+  shouldFetchThumb,
   showsInline,
   showsPlayer,
   showsPoster,
@@ -347,6 +348,34 @@ export default async () => {
       expect(playbackFraction(-5, 30_000)).toBe(0);
       expect(playbackFraction(5_000, null)).toBe(0);
       expect(playbackFraction(5_000, 0)).toBe(0);
+    });
+  });
+
+  await describe('shouldFetchThumb', async () => {
+    const clip = {
+      filename: 'clip.mp4',
+      mimeType: 'video/mp4',
+      index: 0,
+      fetchable: true,
+      backendCanFetch: true,
+      thumbFetchable: true,
+      thumbPath: null,
+    };
+    await it('fetches the thumbnail of an image or video that offers one', async () => {
+      expect(shouldFetchThumb(clip, false)).toBe(true);
+      expect(shouldFetchThumb({ ...clip, filename: 'a.jpg', mimeType: 'image/jpeg' }, false)).toBe(true);
+    });
+    await it('tries once per window run, success or failure', async () => {
+      expect(shouldFetchThumb(clip, true)).toBe(false);
+    });
+    await it('skips a stored thumbnail, no handle, mail and non-media', async () => {
+      expect(shouldFetchThumb({ ...clip, thumbPath: '/t/a.jpg' }, false)).toBe(false);
+      expect(shouldFetchThumb({ ...clip, thumbFetchable: false }, false)).toBe(false);
+      expect(shouldFetchThumb({ ...clip, section: '2' }, false)).toBe(false);
+      expect(shouldFetchThumb({ ...clip, backendCanFetch: false }, false)).toBe(false);
+      expect(shouldFetchThumb({ ...clip, filename: 'a.pdf', mimeType: 'application/pdf' }, false)).toBe(
+        false,
+      );
     });
   });
 };

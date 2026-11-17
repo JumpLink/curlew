@@ -6,6 +6,7 @@ app/src/core/actions/autostart.ts
 app/src/core/actions/backends.ts
 app/src/core/actions/calendar.ts
 app/src/core/actions/chat-attachment.ts
+app/src/core/actions/chat-thumbnail.ts
 app/src/core/actions/contacts.ts
 app/src/core/actions/conversations.ts
 app/src/core/actions/daemon.ts

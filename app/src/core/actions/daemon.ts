@@ -121,6 +121,7 @@ import { deleteThrough } from './delete.ts';
 import { editThrough } from './edit.ts';
 import { reactThrough } from './react.ts';
 import { sendThrough } from './send.ts';
+import { storeThumbnail } from './chat-thumbnail.ts';
 
 /** How often a running daemon looks whether another process moved the journal (ADR 0007 §2). */
 export const CHANGE_POLL_MS = 2_000;
@@ -532,6 +533,42 @@ export function createDaemonFetchHandler(options: DaemonFetchHandlerOptions): Da
       accountId: request.account,
       remoteId: request.remoteId,
     };
+    if (request.thumb === true) {
+      try {
+        const stored = await withStallDeadline(stallTimeoutMs, NO_SINK, async (guarded, signal) => {
+          const fetcher = await backend.openAttachments(request.account);
+          return storeThumbnail(db, fetcher, ref, request.index, {
+            signal,
+            wrap: (real) => ({
+              write: (chunk) => {
+                void guarded.write(chunk);
+                return real.write(chunk);
+              },
+              close: () => real.close(),
+            }),
+          });
+        });
+        if (stored === null) {
+          return {
+            v: DAEMON_WIRE_VERSION,
+            kind: 'failed',
+            message: _('the attachment has no thumbnail to fetch'),
+          };
+        }
+        log(`curlew-daemon: fetched thumbnail for ${who} (${stored.bytes} bytes)`);
+        return {
+          v: DAEMON_WIRE_VERSION,
+          kind: 'fetched',
+          path: stored.path,
+          filename: basename(stored.path),
+          bytes: stored.bytes,
+          mimeType: stored.mimeType ?? 'image/jpeg',
+        };
+      } catch (error) {
+        log(`curlew-daemon: thumbnail fetch for ${who} failed: ${errText(error)}`);
+        return { v: DAEMON_WIRE_VERSION, kind: 'failed', message: errText(error) };
+      }
+    }
     const infos = loadAttachments(db, ref);
     const info = infos.find((a) => a.index === request.index);
     const handle = info === undefined ? null : loadAttachmentHandle(db, ref, request.index);
