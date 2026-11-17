@@ -140,6 +140,7 @@
 
 ### Added
 
+- Reading a conversation marks it read in Curlew itself: when the window is active and the newest message is in view, the unread badge goes away and stays away after the next sync, also for mail and for chats whose network does not report reads. *Mark as Read* and *Mark as Unread* are in the conversation list's selection bar (right click a row). The setting `ui.syncReadState` (default on) is reserved for syncing this to your other devices (#441).
 - Images, videos and voice notes you send over WhatsApp go out with their size, length and the voice-note flag, so other clients lay them out and play them as received ones, and they show in your own chat like a received message right after sending.
 - Matrix videos and images show their poster (the homeserver's thumbnail or the sender's blurHash), and files you send are posted as image, video, audio or voice note with their size and length, so other apps show them properly and your own chat shows them like a received one.
 - Telegram photos, videos and stickers show a small preview in the chat right away, and an animated sticker (`.tgs`) gets a name and its preview instead of a bare file tile.
