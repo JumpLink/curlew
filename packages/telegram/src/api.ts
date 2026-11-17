@@ -53,6 +53,18 @@ export interface TgMedia {
   readonly height?: number | null | undefined;
   /** Seconds. */
   readonly duration?: number | null | undefined;
+  /** The small previews Telegram ships with the media, if it has any. */
+  readonly thumbnails?: ReadonlyArray<TgThumbnail> | undefined;
+}
+
+/**
+ * One preview size of a media, as mtcute's `Thumbnail` reports it: `type` is Telegram's size letter
+ * (`s`, `m`, `x`, … for a picture, `v` for a video preview) and `raw` the TL object, whose
+ * `photoStrippedSize` carries the inline JPEG bytes.
+ */
+export interface TgThumbnail {
+  readonly type: string;
+  readonly raw?: { readonly _: string; readonly bytes?: Uint8Array } | undefined;
 }
 
 /** A media file being downloaded: what the message says it is, and its bytes in order. */
@@ -144,6 +156,11 @@ export interface TelegramApi {
   openMedia(chatId: number, messageId: number): Promise<TgMediaDownload | null>;
   /** The small profile picture of a chat, as bytes in order. Null when it has none or is not visible to us. */
   openAvatar(chatId: number): Promise<AsyncIterable<Uint8Array> | null>;
+  /**
+   * One preview size (`TgThumbnail.type`) of the media of a message, as JPEG bytes in order. Null
+   * when the message, the media or that size is gone.
+   */
+  openThumbnail(chatId: number, messageId: number, type: string): Promise<AsyncIterable<Uint8Array> | null>;
   destroy(): Promise<void>;
 }
 
@@ -196,6 +213,12 @@ export interface TgOutgoingFile {
   readonly contentType: string;
   readonly caption?: string;
   readonly asPhoto: boolean;
+  /** Send as a video, an audio file or a voice note instead of a document. Not with `asPhoto`. */
+  readonly as?: 'video' | 'audio' | 'voice';
+  readonly width?: number;
+  readonly height?: number;
+  /** Seconds. */
+  readonly duration?: number;
   /** The id of a message in the same chat this one answers. */
   readonly replyTo?: number;
 }

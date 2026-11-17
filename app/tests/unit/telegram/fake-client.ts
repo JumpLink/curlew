@@ -6,6 +6,7 @@ import type {
   TgChat,
   TgDialog,
   TgDialogsParams,
+  TgMedia,
   TgMediaDownload,
   TgMessage,
   TgOutgoingFile,
@@ -231,6 +232,19 @@ export class FakeClient implements TelegramClientHandle {
     };
   }
 
+  async openThumbnail(
+    chatId: number,
+    messageId: number,
+    type: string,
+  ): Promise<AsyncIterable<Uint8Array> | null> {
+    this.calls.push(`openThumbnail:${chatId}/${messageId}/${type}`);
+    const chunks = this.script.mediaBytes?.get(`${chatId}/${messageId}/${type}`);
+    if (!chunks) return null;
+    return (async function* () {
+      for (const chunk of chunks) yield chunk;
+    })();
+  }
+
   async openAvatar(chatId: number): Promise<AsyncIterable<Uint8Array> | null> {
     this.calls.push(`openAvatar:${chatId}`);
     const chunks = this.script.avatarBytes?.get(chatId);
@@ -280,6 +294,10 @@ export class FakeClient implements TelegramClientHandle {
     size: number;
     caption?: string;
     asPhoto: boolean;
+    as?: 'video' | 'audio' | 'voice';
+    width?: number;
+    height?: number;
+    duration?: number;
     replyTo?: number;
   }> = [];
 
@@ -290,11 +308,26 @@ export class FakeClient implements TelegramClientHandle {
       fileName: file.fileName,
       size: file.bytes.byteLength,
       asPhoto: file.asPhoto,
+      ...(file.as === undefined ? {} : { as: file.as }),
+      ...(file.width === undefined ? {} : { width: file.width }),
+      ...(file.height === undefined ? {} : { height: file.height }),
+      ...(file.duration === undefined ? {} : { duration: file.duration }),
       ...(file.caption === undefined ? {} : { caption: file.caption }),
       ...(file.replyTo === undefined ? {} : { replyTo: file.replyTo }),
     });
     const chat = (this.script.dialogs ?? []).find((d) => d.peer.id === chatId)?.peer ?? user(chatId, 'Peer');
-    return tgMessage(chat, this.nextSentId++, 'me', file.caption ?? '');
+    const media: TgMedia = file.asPhoto
+      ? { type: 'photo', fileSize: file.bytes.byteLength }
+      : {
+          type: file.as ?? 'document',
+          fileName: file.fileName,
+          mimeType: file.contentType,
+          fileSize: file.bytes.byteLength,
+          ...(file.width === undefined ? {} : { width: file.width }),
+          ...(file.height === undefined ? {} : { height: file.height }),
+          ...(file.duration === undefined ? {} : { duration: file.duration }),
+        };
+    return tgMessage(chat, this.nextSentId++, 'me', file.caption ?? '', { media });
   }
 
   async login(prompts: LoginPrompts, method: 'phone' | 'qr' = 'phone'): Promise<TgUser> {

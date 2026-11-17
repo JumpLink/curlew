@@ -14,7 +14,7 @@ import {
   fmt,
 } from '@curlew/protocol';
 import type { TelegramApi } from './api.ts';
-import { parseAttachmentHandle } from './map.ts';
+import { parseAttachmentHandle, parseThumbHandle } from './map.ts';
 
 export class TelegramAttachments implements AttachmentFetcher {
   private readonly api: TelegramApi;
@@ -30,6 +30,8 @@ export class TelegramAttachments implements AttachmentFetcher {
     options: { maxBytes: number; signal?: AbortSignal },
   ): Promise<{ mimeType: string | null; size: number }> {
     try {
+      const thumb = parseThumbHandle(attachment.handle);
+      if (thumb !== null) return await this.fetchThumbnail(thumb, sink, options);
       const ids = parseAttachmentHandle(attachment.handle);
       if (ids === null) throw new Error(_('this Telegram attachment cannot be found any more'));
       const download = await this.api.openMedia(ids.chatId, ids.messageId);
@@ -59,6 +61,24 @@ export class TelegramAttachments implements AttachmentFetcher {
     } finally {
       await this.api.destroy().catch(() => {});
     }
+  }
+
+  /** One small preview picture (ADR 0017): always JPEG, never the full file. */
+  private async fetchThumbnail(
+    thumb: { chatId: number; messageId: number; thumb: string },
+    sink: ByteSink,
+    options: { maxBytes: number; signal?: AbortSignal },
+  ): Promise<{ mimeType: string | null; size: number }> {
+    const chunks = await this.api.openThumbnail(thumb.chatId, thumb.messageId, thumb.thumb);
+    if (chunks === null) throw new Error(_('this Telegram attachment cannot be found any more'));
+    let size = 0;
+    for await (const chunk of chunks) {
+      options.signal?.throwIfAborted();
+      size += chunk.byteLength;
+      if (size > options.maxBytes) throw tooLarge(options.maxBytes);
+      await sink.write(chunk);
+    }
+    return { mimeType: 'image/jpeg', size };
   }
 }
 

@@ -11,7 +11,9 @@
 import {
   _,
   fmt,
+  type ChatAttachment,
   type MessageSender,
+  probeMediaFile,
   type ReplyTarget,
   type SendingDeletion,
   type SendingEdit,
@@ -24,7 +26,7 @@ import {
 import { inspectSendFiles } from '@curlew/store';
 import { readFileSync } from 'node:fs';
 import type { TelegramClientHandle } from './api.ts';
-import { remoteMessageId } from './map.ts';
+import { remoteMessageId, toChatAttachments } from './map.ts';
 
 /** Telegram's limit for one text message. curlew refuses longer text rather than split it. */
 export const TELEGRAM_MAX_MESSAGE_CHARS = 4096;
@@ -177,18 +179,26 @@ export class TelegramSender implements MessageSender {
     const text = message.text.trim().length === 0 ? undefined : message.text;
     const caption = text !== undefined && text.length <= TELEGRAM_MAX_CAPTION_CHARS ? text : undefined;
     let first: Awaited<ReturnType<TelegramClientHandle['sendFile']>> | undefined;
+    const echo: ChatAttachment[] = [];
     for (const [index, file] of files.entries()) {
+      const asPhoto =
+        (file.contentType === 'image/jpeg' || file.contentType === 'image/png') && file.size <= PHOTO_MAX_BYTES;
+      const probe = asPhoto ? null : probeMediaFile(file.realPath, file.contentType);
+      const as = asPhoto ? undefined : sendAs(file.contentType, probe);
       const sent = await this.client.sendFile(chatId, {
         bytes: readFileSync(file.realPath),
         fileName: file.filename,
         contentType: file.contentType,
-        asPhoto:
-          (file.contentType === 'image/jpeg' || file.contentType === 'image/png') &&
-          file.size <= PHOTO_MAX_BYTES,
+        asPhoto,
+        ...(as === undefined ? {} : { as }),
+        ...(as !== undefined && probe?.width ? { width: probe.width } : {}),
+        ...(as !== undefined && probe?.height ? { height: probe.height } : {}),
+        ...(as !== undefined && probe?.durationMs ? { duration: Math.round(probe.durationMs / 1000) } : {}),
         ...(index === 0 && caption !== undefined ? { caption } : {}),
         ...(index === 0 && replyTo !== undefined ? { replyTo } : {}),
       });
       first ??= sent;
+      echo.push(...(toChatAttachments(sent) ?? []));
     }
     if (text !== undefined && caption === undefined) await this.client.sendText(chatId, text);
     return {
@@ -197,10 +207,19 @@ export class TelegramSender implements MessageSender {
       sentAt: first!.date.toISOString(),
       chatRemoteId: String(chatId),
       attachments: files.map((f) => ({ filename: f.filename, size: f.size })),
+      ...(echo.length > 0 ? { echoAttachments: echo } : {}),
     };
   }
 
   async close(): Promise<void> {
     await this.onClose();
   }
+}
+
+/** How a non-photo file goes out: a voice note (Ogg Opus, mono), a video, an audio file, else a document. */
+function sendAs(contentType: string, probe: { voice: boolean } | null): 'video' | 'audio' | 'voice' | undefined {
+  if (probe?.voice) return 'voice';
+  if (contentType.startsWith('video/')) return 'video';
+  if (contentType.startsWith('audio/')) return 'audio';
+  return undefined;
 }

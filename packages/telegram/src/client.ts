@@ -7,9 +7,16 @@
  */
 
 import { _, fmt } from '@curlew/protocol';
-import { FileLocation, InputMedia, SessionConnection, type ITelegramStorageProvider, type RpcCallMiddleware } from '@mtcute/core';
+import {
+  FileLocation,
+  InputMedia,
+  SessionConnection,
+  type InputMediaLike,
+  type ITelegramStorageProvider,
+  type RpcCallMiddleware,
+} from '@mtcute/core';
 import { MemoryStorage, networkMiddlewares, TelegramClient, WebCryptoProvider, WebPlatform } from '@mtcute/web';
-import type { LoginPrompts, TelegramApi, TelegramClientHandle, TelegramLive, TgUser } from './api.ts';
+import type { LoginPrompts, TelegramApi, TelegramClientHandle, TelegramLive, TgOutgoingFile, TgUser } from './api.ts';
 import type { TelegramCredentials } from './credentials.ts';
 
 export interface ClientOptions {
@@ -171,7 +178,7 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
     network: { middlewares: telegramMiddlewares() },
   });
   // Structural check of the reads mtcute's client satisfies as it is; `openMedia` is built below.
-  const api: Omit<TelegramApi, 'openMedia' | 'openAvatar' | 'destroy'> = client;
+  const api: Omit<TelegramApi, 'openMedia' | 'openAvatar' | 'openThumbnail' | 'destroy'> = client;
   return {
     getMe: () => api.getMe(),
     iterDialogs: (params) => api.iterDialogs(params),
@@ -183,6 +190,13 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
       // Contacts, polls, link previews and paid media have no file of their own to download.
       if (!media || !(media instanceof FileLocation)) return null;
       return { media, chunks: client.downloadAsIterable(media) };
+    },
+    openThumbnail: async (chatId, messageId, type) => {
+      const [message] = await client.getMessages(chatId, [messageId]);
+      const media = message?.media;
+      if (!media || !('getThumbnail' in media) || typeof media.getThumbnail !== 'function') return null;
+      const thumb = media.getThumbnail(type);
+      return thumb ? client.downloadAsIterable(thumb) : null;
     },
     openAvatar: async (chatId) => {
       // `getChat` only knows groups and channels and throws for a person, so a positive id (a user)
@@ -207,13 +221,7 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
     sendFile: (chatId, file) =>
       client.sendMedia(
         chatId,
-        file.asPhoto
-          ? InputMedia.photo(file.bytes, { caption: file.caption })
-          : InputMedia.document(file.bytes, {
-              fileName: file.fileName,
-              fileMime: file.contentType,
-              caption: file.caption,
-            }),
+        outgoingMedia(file),
         file.replyTo === undefined ? undefined : { replyTo: file.replyTo },
       ),
     ...(live === true ? { live: mtcuteLive(client) } : {}),
@@ -249,6 +257,34 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
     },
   };
 };
+
+/** The mtcute input for one file: a photo, a video, an audio file, a voice note or a document. */
+function outgoingMedia(file: TgOutgoingFile): InputMediaLike {
+  const named = { fileName: file.fileName, fileMime: file.contentType, caption: file.caption };
+  if (file.asPhoto) return InputMedia.photo(file.bytes, { caption: file.caption });
+  if (file.as === 'video') {
+    return InputMedia.video(file.bytes, {
+      ...named,
+      supportsStreaming: true,
+      ...(file.duration === undefined ? {} : { duration: file.duration }),
+      ...(file.width === undefined ? {} : { width: file.width }),
+      ...(file.height === undefined ? {} : { height: file.height }),
+    });
+  }
+  if (file.as === 'voice') {
+    return InputMedia.voice(file.bytes, {
+      ...named,
+      ...(file.duration === undefined ? {} : { duration: file.duration }),
+    });
+  }
+  if (file.as === 'audio') {
+    return InputMedia.audio(file.bytes, {
+      ...named,
+      ...(file.duration === undefined ? {} : { duration: file.duration }),
+    });
+  }
+  return InputMedia.document(file.bytes, named);
+}
 
 /**
  * Load mtcute's WASM crypto the way a login does, with no network and no account. mtcute finds

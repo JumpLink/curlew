@@ -8,6 +8,8 @@ import { isAttachmentFetcherBackend } from '@curlew/protocol';
 import {
   attachmentHandle,
   parseAttachmentHandle,
+  parseThumbHandle,
+  thumbHandle,
   TELEGRAM_MANIFEST,
   TelegramBackend,
   toChatMessage,
@@ -122,12 +124,77 @@ export default async () => {
       expect(video?.kind).toBe('video');
       expect(video?.durationMs).toBe(12000);
 
-      // An animated sticker is not a picture the window can show: it stays a file.
-      expect(toChatMessage(MEDIA.sticker)?.attachments?.[0]?.kind).toBe('file');
+      // An animated sticker is not a picture the window can decode: a file tile with a name.
+      const sticker = toChatMessage(MEDIA.sticker)?.attachments?.[0];
+      expect(sticker?.kind).toBe('file');
+      expect(sticker?.filename).toBe('sticker.tgs');
       // Paid media is locked: flagged, but there is nothing to fetch.
       const paid = toChatMessage(MEDIA.paid);
       expect(paid?.hasAttachments).toBe(true);
       expect(paid?.attachments === undefined).toBe(true);
+    });
+
+    await it('maps thumbnails: stripped bytes inline, else the smallest size as a handle', async () => {
+      const stripped = bytes(1, 40, 50, 0xaa, 0xbb);
+      const inline = toChatMessage(
+        tgMessage(ANNA, 30, ANNA, '', {
+          media: {
+            type: 'video',
+            mimeType: 'video/mp4',
+            thumbnails: [
+              { type: 'm', raw: { _: 'photoSize' } },
+              { type: 'i', raw: { _: 'photoStrippedSize', bytes: stripped } },
+            ],
+          },
+        }),
+      )?.attachments?.[0];
+      const jpeg = inline?.thumbnail;
+      expect(jpeg !== undefined).toBe(true);
+      expect(jpeg![0]).toBe(0xff);
+      expect(jpeg![1]).toBe(0xd8);
+      expect(jpeg![164]).toBe(40);
+      expect(jpeg![166]).toBe(50);
+      expect(jpeg![jpeg!.length - 1]).toBe(0xd9);
+      expect(inline?.thumbHandle === undefined).toBe(true);
+
+      const sized = toChatMessage(
+        tgMessage(ANNA, 31, ANNA, '', {
+          media: {
+            type: 'video',
+            mimeType: 'video/mp4',
+            thumbnails: [
+              { type: 'x', raw: { _: 'photoSize' } },
+              { type: 's', raw: { _: 'photoSize' } },
+              { type: 'v', raw: { _: 'videoSize' } },
+            ],
+          },
+        }),
+      )?.attachments?.[0];
+      expect(sized?.thumbnail === undefined).toBe(true);
+      expect(parseThumbHandle(sized!.thumbHandle!)).toStrictEqual({
+        chatId: 1001,
+        messageId: 31,
+        thumb: 's',
+      });
+    });
+
+    await it('fetches a thumbnail by its handle', async () => {
+      const media = new Map([['1001/31/s', [bytes(7, 7, 7)]]]);
+      await withBackend(media, async (backend, fake) => {
+        const sink = new MemorySink();
+        const result = await (
+          await backend.openAttachments(ACCOUNT)
+        ).fetchAttachment(
+          { backend: 'telegram', accountId: ACCOUNT },
+          { kind: 'video', handle: thumbHandle(1001, 31, 's') },
+          sink,
+          { maxBytes: 1000 },
+        );
+        expect(result.size).toBe(3);
+        expect(result.mimeType).toBe('image/jpeg');
+        expect(fake.clients[0].calls.includes('openThumbnail:1001/31/s')).toBe(true);
+        expect(fake.clients[0].destroyed).toBe(1);
+      });
     });
 
     await it('reads back only the handles it wrote', async () => {
