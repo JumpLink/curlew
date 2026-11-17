@@ -120,7 +120,7 @@ msgid "systemctl --user {verb} exited {code}"
 msgstr ""
 
 #: app/src/core/actions/chat-attachment.ts:140
-#: app/src/core/actions/daemon.ts:581
+#: app/src/core/actions/daemon.ts:623
 msgid "the attachment was not found in the index"
 msgstr ""
 
@@ -140,25 +140,29 @@ msgstr ""
 
 #: app/src/core/actions/chat-thumbnail.ts:109
 #: app/src/core/actions/chat-thumbnail.ts:150
-#: app/src/core/actions/daemon.ts:556
+#: app/src/core/actions/daemon.ts:598
 msgid "the attachment has no thumbnail to fetch"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:393
+#: app/src/core/actions/daemon.ts:395
 msgid "this account is paused — switch it on in Accounts to send from it"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:406
+#: app/src/core/actions/daemon.ts:408
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:428
+#: app/src/core/actions/daemon.ts:430
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:494
+#: app/src/core/actions/daemon.ts:488
+msgid "this account is paused"
+msgstr ""
+
+#: app/src/core/actions/daemon.ts:536
 msgid "the download stalled — try again"
 msgstr ""
 
@@ -833,69 +837,69 @@ msgstr ""
 msgid "the running curlew daemon did not answer the access prompt ({reason})"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:265
+#: app/src/core/lib/daemon-bus.ts:269
 msgid ""
 "the running curlew daemon speaks send protocol {theirs} and this curlew "
 "speaks {ours} — nothing was sent; restart it with `systemctl --user restart "
 "curlew-daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:303
+#: app/src/core/lib/daemon-bus.ts:307
 msgid ""
 "the caller speaks send protocol {theirs} and this curlew daemon speaks "
 "{ours} — nothing was sent; restart it with `systemctl --user restart curlew-"
 "daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:480
+#: app/src/core/lib/daemon-bus.ts:484
 msgid ""
 "the caller speaks attachment protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:512
+#: app/src/core/lib/daemon-bus.ts:516
 msgid ""
 "the running curlew daemon speaks attachment protocol {theirs} and this "
 "curlew speaks {ours} — restart it with `systemctl --user restart curlew-"
 "daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:666
+#: app/src/core/lib/daemon-bus.ts:741
 msgid ""
 "the caller speaks access protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-bus.ts:704
+#: app/src/core/lib/daemon-bus.ts:779
 msgid ""
 "the running curlew daemon speaks access protocol {theirs} and this curlew "
 "speaks {ours} — restart it with `systemctl --user restart curlew-daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-send-client.ts:113
+#: app/src/core/lib/daemon-send-client.ts:121
 #: packages/imap/src/attachments.ts:101 packages/imap/src/attachments.ts:123
 #: packages/store/src/send-files.ts:99
 msgid "attachment {path} cannot be read"
 msgstr ""
 
-#: app/src/core/lib/daemon-send-client.ts:152
+#: app/src/core/lib/daemon-send-client.ts:160
 msgid ""
 "the running curlew daemon does not understand this send — nothing was sent; "
 "restart it with `systemctl --user restart curlew-daemon`"
 msgstr ""
 
-#: app/src/core/lib/daemon-send-client.ts:161
+#: app/src/core/lib/daemon-send-client.ts:169
 msgid ""
 "the running curlew daemon did not answer ({reason}); it may have sent the "
 "message — look at the chat before sending it again"
 msgstr ""
 
-#: app/src/core/lib/daemon-send-client.ts:202
+#: app/src/core/lib/daemon-send-client.ts:210
 msgid ""
 "the running curlew daemon did not answer the attachment fetch ({reason})"
 msgstr ""
 
-#: app/src/core/lib/daemon-send-service.ts:237
+#: app/src/core/lib/daemon-send-service.ts:262
 msgid "the daemon could not take the attachments ({reason}) — nothing was sent"
 msgstr ""
 
@@ -1590,8 +1594,8 @@ msgid "curlew window takes no arguments."
 msgstr ""
 
 #: app/src/window/about.ts:16 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:196 app/src/window/window.ts:107
-#: app/src/window/window.ts:237
+#: app/src/window/conversation-view.ts:196 app/src/window/window.ts:109
+#: app/src/window/window.ts:239
 msgid "Curlew"
 msgstr ""
 
@@ -1859,7 +1863,7 @@ msgstr ""
 
 #: app/src/window/accounts-dialog.ts:93 app/src/window/accounts-page.ts:206
 #: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:172
-#: app/src/window/window.ts:250
+#: app/src/window/window.ts:252
 msgid "Accounts"
 msgstr ""
 
@@ -1895,7 +1899,7 @@ msgstr ""
 msgid "Daemon not running"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:41 app/src/window/preferences-dialog.ts:58
+#: app/src/window/accounts-page.ts:41 app/src/window/preferences-dialog.ts:69
 #: app/src/window/welcome-model.ts:124
 msgid "Off"
 msgstr ""
@@ -1954,7 +1958,7 @@ msgstr ""
 msgid "Protocols"
 msgstr ""
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:254
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:256
 msgid "Agent access"
 msgstr ""
 
@@ -2645,7 +2649,7 @@ msgid "Review"
 msgstr ""
 
 #: app/src/window/conversation-list.ts:634
-#: app/src/window/preferences-dialog.ts:45
+#: app/src/window/preferences-dialog.ts:46
 msgid "Conversations"
 msgstr ""
 
@@ -3029,68 +3033,78 @@ msgstr ""
 msgid "The address book could not be read"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:41
+#: app/src/window/preferences-dialog.ts:42
 msgid "Show all emails"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:49
+#: app/src/window/preferences-dialog.ts:50
 msgid "Send read receipts"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:50
+#: app/src/window/preferences-dialog.ts:52
 msgid ""
-"Tell a Delta Chat contact when you have read their message, if they asked "
-"for it"
+"Tell the other person when you have read their message. On Delta Chat only "
+"if they asked for it"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:56
+#: app/src/window/preferences-dialog.ts:58
+msgid "Sync read state to your other devices"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:60
+msgid ""
+"Your other devices show what you have read here. On Telegram and WhatsApp "
+"the other person sees it too, so there only with read receipts on"
+msgstr ""
+
+#: app/src/window/preferences-dialog.ts:67
 msgid "Message notifications"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:57
+#: app/src/window/preferences-dialog.ts:68
 msgid "What a desktop notification for a new chat message shows"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:58
+#: app/src/window/preferences-dialog.ts:69
 msgid "Sender and text"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:58
+#: app/src/window/preferences-dialog.ts:69
 msgid "Sender only"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:61
+#: app/src/window/preferences-dialog.ts:72
 msgid "Notifications"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:64
+#: app/src/window/preferences-dialog.ts:75
 msgid "Play videos silently in chats"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:65
+#: app/src/window/preferences-dialog.ts:76
 msgid "A video in a conversation plays muted while it is on screen"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:71
+#: app/src/window/preferences-dialog.ts:82
 msgid "Media"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:74 app/src/window/welcome-model.ts:124
+#: app/src/window/preferences-dialog.ts:85 app/src/window/welcome-model.ts:124
 #: app/src/window/welcome.ts:240
 msgid "AI features"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:76
+#: app/src/window/preferences-dialog.ts:87
 msgid ""
 "Let AI assistants read and send your messages through Curlew, each time as "
 "you allow it. Off: no assistant can reach your data"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:80 app/src/window/welcome.ts:252
+#: app/src/window/preferences-dialog.ts:91 app/src/window/welcome.ts:252
 msgid "AI"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:252
+#: app/src/window/preferences-dialog.ts:103 app/src/window/window.ts:254
 msgid "Preferences"
 msgstr ""
 
@@ -3222,7 +3236,7 @@ msgid "On"
 msgstr ""
 
 #: app/src/window/welcome.ts:107 app/src/window/welcome.ts:125
-#: app/src/window/window.ts:257
+#: app/src/window/window.ts:259
 msgid "Welcome"
 msgstr ""
 
@@ -3274,47 +3288,47 @@ msgstr ""
 msgid "Start Using Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:101
+#: app/src/window/window.ts:103
 msgid "Select a conversation"
 msgstr ""
 
-#: app/src/window/window.ts:102
+#: app/src/window/window.ts:104
 msgid "Pick a conversation from the list."
 msgstr ""
 
-#: app/src/window/window.ts:142
+#: app/src/window/window.ts:144
 msgid "Resize the conversation list"
 msgstr ""
 
-#: app/src/window/window.ts:144
+#: app/src/window/window.ts:146
 msgid "Drag to resize the conversation list. Double-click to reset."
 msgstr ""
 
-#: app/src/window/window.ts:251
+#: app/src/window/window.ts:253
 msgid "Merge contacts…"
 msgstr ""
 
-#: app/src/window/window.ts:259
+#: app/src/window/window.ts:261
 msgid "About Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:260
+#: app/src/window/window.ts:262
 msgid "Quit"
 msgstr ""
 
-#: app/src/window/window.ts:309
+#: app/src/window/window.ts:311
 msgid "This conversation has no recipient address."
 msgstr ""
 
-#: app/src/window/window.ts:529
+#: app/src/window/window.ts:554
 msgid "Curlew (demo)"
 msgstr ""
 
-#: app/src/window/window.ts:532
+#: app/src/window/window.ts:557
 msgid "Demo data — nothing here is real"
 msgstr ""
 
-#: app/src/window/window.ts:675
+#: app/src/window/window.ts:700
 msgid "No contacts to merge"
 msgstr ""
 

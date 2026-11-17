@@ -24,6 +24,7 @@ app/src/core/actions/omemo.ts
 app/src/core/actions/people.ts
 app/src/core/actions/react.ts
 app/src/core/actions/read-receipt.ts
+app/src/core/actions/read-sync.ts
 app/src/core/actions/search-access.ts
 app/src/core/actions/send.ts
 app/src/core/actions/setup-host.ts
@@ -168,6 +169,7 @@ app/src/window/preview-cache-model.ts
 app/src/window/protocols-page.ts
 app/src/window/qr-image.ts
 app/src/window/reaction-placement-model.ts
+app/src/window/read-sync-scheduler.ts
 app/src/window/rich-text-model.ts
 app/src/window/selection-model.ts
 app/src/window/settings-map.ts

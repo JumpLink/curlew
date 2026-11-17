@@ -48,13 +48,17 @@ export function presentPreferences(
   if (!chatOnly()) group.add(row);
   const receipts = new Adw.SwitchRow({
     title: _('Send read receipts'),
-    subtitle: _('Tell a Delta Chat contact when you have read their message, if they asked for it'),
+    subtitle: _(
+      'Tell the other person when you have read their message. On Delta Chat only if they asked for it',
+    ),
     active: loadConfig(path).ui.sendReadReceipts === true,
   });
   group.add(receipts);
   const syncRead = new Adw.SwitchRow({
     title: _('Sync read state to your other devices'),
-    subtitle: _('Your other devices show what you have read here. It does not tell the other person'),
+    subtitle: _(
+      'Your other devices show what you have read here. On Telegram and WhatsApp the other person sees it too, so there only with read receipts on',
+    ),
     active: loadConfig(path).ui.syncReadState !== false,
   });
   group.add(syncRead);
