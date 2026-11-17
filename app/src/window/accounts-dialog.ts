@@ -4,6 +4,7 @@
  */
 
 import Adw from 'gi://Adw?version=1';
+import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import type Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
@@ -21,6 +22,7 @@ import { pushAccountPage } from './account-detail.ts';
 import { pushProtocolsPage } from './protocols-page.ts';
 import { createAccountsPage, openGoaSettings } from './accounts-page.ts';
 import { gioAccountsDaemonSource, startDaemon } from './accounts-daemon.ts';
+import { restartForMismatch } from './mismatch-restart.ts';
 import { loadAccountsState } from './accounts-store.ts';
 
 export interface AccountsDialogOptions {
@@ -105,7 +107,18 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
   const render = () => {
     if (!open || !loadState || !daemonState) return;
     if (daemonState.mismatch) {
-      page.showError(mismatchMessage(daemonState.mismatch));
+      const side = daemonState.mismatch;
+      const app = Gio.Application.get_default();
+      page.showError(
+        mismatchMessage(side),
+        app
+          ? () => {
+              void restartForMismatch(app, side).then((ok) => {
+                if (!ok) render();
+              });
+            }
+          : undefined,
+      );
       return;
     }
     const state: AccountsPageState = buildProtocolGroups(loadState, daemonState);

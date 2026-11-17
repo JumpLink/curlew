@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 11:54+0100\n"
+"POT-Creation-Date: 2026-11-17 13:05+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1705,8 +1705,8 @@ msgstr ""
 msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 
-#: app/src/window/account-add.ts:405 app/src/window/accounts-page.ts:157
-#: app/src/window/accounts-page.ts:183 app/src/window/welcome.ts:160
+#: app/src/window/account-add.ts:405 app/src/window/accounts-page.ts:167
+#: app/src/window/accounts-page.ts:193 app/src/window/welcome.ts:160
 msgid "Add Account"
 msgstr ""
 
@@ -1857,13 +1857,13 @@ msgstr ""
 msgid "Could not start the background service: {reason}"
 msgstr ""
 
-#: app/src/window/accounts-dialog.ts:91 app/src/window/accounts-page.ts:196
+#: app/src/window/accounts-dialog.ts:93 app/src/window/accounts-page.ts:206
 #: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:172
 #: app/src/window/window.ts:249
 msgid "Accounts"
 msgstr ""
 
-#: app/src/window/accounts-model.ts:110 app/src/window/update-banner.ts:35
+#: app/src/window/accounts-model.ts:110
 msgid "Curlew was updated. Restart it to continue."
 msgstr ""
 
@@ -1879,72 +1879,76 @@ msgstr ""
 msgid "Contacts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:32
+#: app/src/window/accounts-page.ts:33
 msgid "Connected"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:34
+#: app/src/window/accounts-page.ts:35
 msgid "Connecting"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:36
+#: app/src/window/accounts-page.ts:37
 msgid "Offline"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:38
+#: app/src/window/accounts-page.ts:39
 msgid "Daemon not running"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:40 app/src/window/preferences-dialog.ts:58
+#: app/src/window/accounts-page.ts:41 app/src/window/preferences-dialog.ts:58
 #: app/src/window/welcome-model.ts:124
 msgid "Off"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:111
+#: app/src/window/accounts-page.ts:112
 msgid "Manage…"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:112
+#: app/src/window/accounts-page.ts:113
 msgid "Open GNOME Settings → Online Accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:121
+#: app/src/window/accounts-page.ts:122
 msgid "Could not load accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:123 app/src/window/protocols-page.ts:47
+#: app/src/window/accounts-page.ts:124 app/src/window/protocols-page.ts:47
 msgid "No accounts yet"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:149
+#: app/src/window/accounts-page.ts:150
 msgid "Accounts could not be loaded"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:153
+#: app/src/window/accounts-page.ts:153 app/src/window/update-banner.ts:18
+msgid "Restart"
+msgstr ""
+
+#: app/src/window/accounts-page.ts:163
 msgid "No accounts"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:154
+#: app/src/window/accounts-page.ts:164
 msgid "Add a chat account."
 msgstr ""
 
-#: app/src/window/accounts-page.ts:154
+#: app/src/window/accounts-page.ts:164
 msgid "Add a chat account or a mail account."
 msgstr ""
 
-#: app/src/window/accounts-page.ts:173
+#: app/src/window/accounts-page.ts:183
 msgid "Messages arrive while Curlew is open."
 msgstr ""
 
-#: app/src/window/accounts-page.ts:174
+#: app/src/window/accounts-page.ts:184
 msgid "The background service is not running, so chat accounts cannot connect."
 msgstr ""
 
-#: app/src/window/accounts-page.ts:175
+#: app/src/window/accounts-page.ts:185
 msgid "Start"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:189 app/src/window/conversation-list.ts:365
+#: app/src/window/accounts-page.ts:199 app/src/window/conversation-list.ts:365
 #: app/src/window/protocols-page.ts:248 app/src/window/welcome-model.ts:102
 #: app/src/window/welcome.ts:148
 msgid "Protocols"
@@ -3099,10 +3103,6 @@ msgstr[1] ""
 
 #: app/src/window/terms-widgets.ts:22
 msgid "I understand and accept the risk for my account"
-msgstr ""
-
-#: app/src/window/update-banner.ts:36
-msgid "Restart"
 msgstr ""
 
 #: app/src/window/voice-recorder.ts:78 app/src/window/voice-recorder.ts:81

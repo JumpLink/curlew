@@ -23,7 +23,8 @@ export interface AccountsPage {
   /** Until both the accounts and the daemon have answered, so no half-true state flashes by. */
   showLoading(): void;
   show(state: AccountsPageState): void;
-  showError(message: string): void;
+  /** `onRestart` adds the suggested Restart button of a wire mismatch; without it the page offers none. */
+  showError(message: string, onRestart?: () => void): void;
 }
 
 export function accountStatusLabel(status: AccountStatus): string {
@@ -148,6 +149,15 @@ export function createAccountsPage(
     iconName: 'dialog-warning-symbolic',
     title: _('Accounts could not be loaded'),
   });
+  const restartButton = new Gtk.Button({
+    label: _('Restart'),
+    halign: Gtk.Align.CENTER,
+    cssClasses: ['suggested-action', 'pill'],
+    visible: false,
+  });
+  let onRestartClicked: (() => void) | null = null;
+  restartButton.connect('clicked', () => onRestartClicked?.());
+  errorPage.set_child(restartButton);
   const emptyPage = new Adw.StatusPage({
     iconName: 'user-info-symbolic',
     title: _('No accounts'),
@@ -213,7 +223,9 @@ export function createAccountsPage(
     showLoading() {
       stack.set_visible_child_name('loading');
     },
-    showError(message) {
+    showError(message, onRestart) {
+      onRestartClicked = onRestart ?? null;
+      restartButton.set_visible(onRestart !== undefined);
       errorPage.set_description(message);
       stack.set_visible_child_name('error');
     },
