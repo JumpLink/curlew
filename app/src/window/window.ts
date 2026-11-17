@@ -125,7 +125,7 @@ export interface WindowOptions {
  * the split view's min and max width to the dragged value. It shows only while the split is not
  * collapsed, where the list has a width of its own.
  */
-function createSidebarHandle(split: Adw.NavigationSplitView, page: Gtk.Widget): Gtk.Widget {
+function createSidebarHandle(split: Adw.NavigationSplitView, page: Gtk.Widget): Gtk.Widget[] {
   const HANDLE = 8;
   const rtl = Gtk.Widget.get_default_direction() === Gtk.TextDirection.RTL;
   const handle = new Gtk.Box({
@@ -156,23 +156,37 @@ function createSidebarHandle(split: Adw.NavigationSplitView, page: Gtk.Widget): 
     else config.ui.sidebarWidth = wanted;
     saveConfig(config, configPath());
   };
-  const set = (width: number | undefined) => {
-    wanted = width === undefined ? undefined : clampSidebarWidth(width, split.get_width());
-    apply(wanted);
-  };
-  apply(wanted);
-
-  // The edge follows the list's real width; a narrower window re-clamps a dragged width.
-  handle.add_tick_callback(() => {
+  // The edge follows the list's real width, read after layout: only when the window resizes, the
+  // split collapses or the width changes, never per frame.
+  let pending = 0;
+  const update = () => {
+    pending = 0;
     handle.set_visible(!split.collapsed);
-    if (split.collapsed) return GLib.SOURCE_CONTINUE;
+    if (split.collapsed) return GLib.SOURCE_REMOVE;
     apply(wanted);
     const edge = rtl ? split.get_width() - page.get_width() : page.get_width();
     const margin = Math.max(0, Math.round(edge - HANDLE / 2));
     if (rtl) {
       if (handle.marginEnd !== margin) handle.set_margin_end(margin);
     } else if (handle.marginStart !== margin) handle.set_margin_start(margin);
-    return GLib.SOURCE_CONTINUE;
+    return GLib.SOURCE_REMOVE;
+  };
+  const updateSoon = () => {
+    if (pending === 0) pending = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, update);
+  };
+  const set = (width: number | undefined) => {
+    wanted = width === undefined ? undefined : clampSidebarWidth(width, split.get_width());
+    apply(wanted);
+    updateSoon();
+  };
+  apply(wanted);
+  split.connect('notify::collapsed', updateSoon);
+  // An invisible, untargetable sibling the size of the split view: its resize is the window's.
+  const probe = new Gtk.DrawingArea({ canTarget: false, canFocus: false });
+  probe.connect('resize', updateSoon);
+  handle.connect('destroy', () => {
+    if (pending !== 0) GLib.source_remove(pending);
+    pending = 0;
   });
 
   const drag = new Gtk.GestureDrag();
@@ -209,7 +223,7 @@ function createSidebarHandle(split: Adw.NavigationSplitView, page: Gtk.Widget): 
     return true;
   });
   handle.add_controller(keys);
-  return handle;
+  return [probe, handle];
 }
 
 export function createWindow(app: Adw.Application, options: WindowOptions = {}): Adw.ApplicationWindow {
@@ -485,7 +499,7 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   // The viewer is a sibling of the split view, over it, as in Fractal; the toasts sit above both.
   const stage = new Gtk.Overlay({ child: split });
   stage.add_overlay(viewer.widget);
-  stage.add_overlay(createSidebarHandle(split, sidebar.page));
+  for (const overlay of createSidebarHandle(split, sidebar.page)) stage.add_overlay(overlay);
   const toasts = new Adw.ToastOverlay({ child: stage });
   const column = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
   toasts.set_vexpand(true);
