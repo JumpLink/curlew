@@ -19,5 +19,68 @@
     "packaging:install": "sh scripts/install-packaging.sh",
     "i18n:extract": "./dev/i18n.sh extract",
     "i18n:compile": "./dev/i18n.sh compile"
+  },
+  "homepage": "https://jumplink.eu/curlew/",
+  "devDependencies": {
+    "@gjsify/cli": "0.64.46"
+  },
+  "gjsify": {
+    "site": {
+      "metainfo": "app/data/eu.jumplink.curlew.metainfo.xml",
+      "base": "/curlew/",
+      "url": "https://jumplink.eu/curlew/",
+      "languages": [
+        "en",
+        "de"
+      ],
+      "defaultLanguage": "en",
+      "repository": "JumpLink/curlew",
+      "icon": "app/data/icons/hicolor/scalable/apps/eu.jumplink.curlew.svg",
+      "releaseAssets": true,
+      "pageTranslations": "site/po",
+      "privacy": {
+        "statements": {
+          "en": "docs/store/privacy.md",
+          "de": "docs/store/privacy.de.md"
+        }
+      },
+      "legalNotice": {
+        "statements": {
+          "en": "docs/store/legal-notice.md",
+          "de": "docs/store/legal-notice.de.md"
+        }
+      },
+      "developerUrl": "https://jumplink.eu/",
+      "relatedApps": [
+        {
+          "url": "https://jumplink.eu/beifahrer/"
+        },
+        {
+          "url": "https://jumplink.eu/steuererklaerung/"
+        },
+        {
+          "url": "https://jumplink.eu/Learn6502/"
+        }
+      ],
+      "support": [
+        {
+          "kind": "GitHub Sponsors",
+          "url": "https://github.com/sponsors/JumpLink"
+        },
+        {
+          "kind": "Liberapay",
+          "url": "https://liberapay.com/JumpLink"
+        },
+        {
+          "kind": "PayPal",
+          "url": "https://paypal.me/JumpLink"
+        },
+        {
+          "kind": "sepa",
+          "name": "JumpLink - Pascal Garber",
+          "iban": "DE94100101232090324020"
+        }
+      ]
+    }
   }
 }

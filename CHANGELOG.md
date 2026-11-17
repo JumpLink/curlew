@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Curlew has a website at <https://jumplink.eu/curlew/> (English and German) with downloads, screenshots, a privacy statement, the legal notice and a support page. The About dialog links to it, to the source code, the privacy statement and the legal notice, and, where the build allows it, to a Support page.
+
 ### Fixed
 
 - An image or file of a signed-out account (for example a Matrix token the server revoked) says "Sign in again to load this image" instead of silently turning into a plain file row, and its open and save buttons are greyed out. One refused download marks the account's other attachments for five minutes, so they no longer each ask the server.

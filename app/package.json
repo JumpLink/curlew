@@ -41,8 +41,12 @@
       ],
       "kind": "app",
       "name": "Curlew",
+      "channel": "web",
       "localeDir": "dist/locale",
-      "nodeModules": ["@signalapp/libsignal-client", "@mtcute/wasm"],
+      "nodeModules": [
+        "@signalapp/libsignal-client",
+        "@mtcute/wasm"
+      ],
       "bundle": {
         "linux": "dist/curlew.gjs.mjs",
         "darwin": "dist/curlew.node.mjs",
@@ -72,7 +76,7 @@
         "share/icons/hicolor/scalable/apps/curlew-protocol-whatsapp.svg": "data/protocol-icons/hicolor/scalable/apps/curlew-protocol-whatsapp.svg",
         "share/icons/hicolor/scalable/apps/curlew-protocol-xmpp.svg": "data/protocol-icons/hicolor/scalable/apps/curlew-protocol-xmpp.svg"
       },
-      "homepageUrl": "https://github.com/JumpLink/curlew",
+      "homepageUrl": "https://jumplink.eu/curlew/",
       "bugtrackerUrl": "https://github.com/JumpLink/curlew/issues",
       "vcsBrowserUrl": "https://github.com/JumpLink/curlew",
       "bundledTypelibs": {
@@ -208,7 +212,8 @@
     "yargs": "^18.1.0",
     "qrcode-generator": "2.0.4",
     "zod": "^4.4.3",
-    "@gjsify/adwaita-app": "0.64.46"
+    "@gjsify/adwaita-app": "0.64.46",
+    "@gjsify/distribution": "0.64.46"
   },
   "devDependencies": {
     "@gjsify/cli": "0.64.46",

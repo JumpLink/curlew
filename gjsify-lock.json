@@ -1,13 +1,14 @@
 {
   "lockfileVersion": 4,
   "requested": [
+    "@gjsify/cli@0.64.46",
     "@modelcontextprotocol/sdk@^1.30.0",
     "dotenv@^17.4.2",
     "yargs@^18.1.0",
     "qrcode-generator@2.0.4",
     "zod@^4.4.3",
     "@gjsify/adwaita-app@0.64.46",
-    "@gjsify/cli@0.64.46",
+    "@gjsify/distribution@0.64.46",
     "@gjsify/mcp@0.64.46",
     "@gjsify/napi@0.64.46",
     "@gjsify/node-globals@0.64.46",
@@ -6630,6 +6631,11 @@
       "version": "0.64.46",
       "resolved": "https://registry.npmjs.org/@gjsify/diagnostics_channel/-/diagnostics_channel-0.64.46.tgz",
       "integrity": "sha512-XAE5JeNjKOBpyf472veEWrFYtnSygF9RZ2iFb3nXG/7G9oWGJgSRKBWpqoh0I6Uu9z7lYBEERcA32sYNPrRkIQ=="
+    },
+    "node_modules/@gjsify/distribution": {
+      "version": "0.64.46",
+      "resolved": "https://registry.npmjs.org/@gjsify/distribution/-/distribution-0.64.46.tgz",
+      "integrity": "sha512-uSPNG41fTYbSyvdJ4xifFXDl1LDma3fLWUuFdoOUOuvo1qD8au0gvQgIa5ycGZiS2UUND80WqHNXJqIscXbNBA=="
     },
     "node_modules/@gjsify/dns": {
       "version": "0.64.46",
@@ -17797,10 +17803,10 @@
       "resolved": "https://registry.npmjs.org/router/-/router-2.2.0.tgz",
       "integrity": "sha512-nLTrUKm2UyiL7rlhapu/Zl45FwNgkZGaCpZbIHajDYgwlJCOzLSk+cIPAnsEqV955GjILJnKbdQC1nVPz+gAYQ==",
       "dependencies": {
-        "debug": "^4.4.0",
         "depd": "^2.0.0",
-        "is-promise": "^4.0.0",
+        "debug": "^4.4.0",
         "parseurl": "^1.3.3",
+        "is-promise": "^4.0.0",
         "path-to-regexp": "^8.0.0"
       }
     },

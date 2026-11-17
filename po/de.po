@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 18:04+0100\n"
+"POT-Creation-Date: 2026-11-17 18:49+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1858,19 +1858,35 @@ msgstr "Das Fenster öffnen (Regeln für den Agentenzugriff)"
 msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
-#: app/src/window/about.ts:16 app/src/window/appearance-rows.ts:126
+#: app/src/window/about.ts:37 app/src/window/appearance-rows.ts:126
 #: app/src/window/conversation-view.ts:196 app/src/window/window.ts:109
 #: app/src/window/window.ts:239
 msgid "Curlew"
 msgstr "Curlew"
 
-#: app/src/window/about.ts:21
+#: app/src/window/about.ts:42
 msgid "© 2026 Pascal Garber"
 msgstr "© 2026 Pascal Garber"
 
-#: app/src/window/about.ts:22
+#: app/src/window/about.ts:43
 msgid "Chats across messengers"
 msgstr "Chats über alle Messenger"
+
+#: app/src/window/about.ts:48
+msgid "Support"
+msgstr "Unterstützen"
+
+#: app/src/window/about.ts:49
+msgid "Source code"
+msgstr "Quellcode"
+
+#: app/src/window/about.ts:50
+msgid "Privacy"
+msgstr "Datenschutz"
+
+#: app/src/window/about.ts:51
+msgid "Legal notice"
+msgstr "Impressum"
 
 #: app/src/window/account-add-model.ts:106
 msgid "Needs Mail to be switched on"
@@ -5076,6 +5092,13 @@ msgid ""
 msgstr ""
 "{count} Geräte von {jid} tragen diesen Fingerabdruck, er benennt also keines "
 "— nichts wurde geändert"
+
+#~ msgid ""
+#~ "Tell a Delta Chat contact when you have read their message, if they asked "
+#~ "for it"
+#~ msgstr ""
+#~ "Sag einer Delta-Chat-Kontaktperson, dass du ihre Nachricht gelesen hast, "
+#~ "wenn sie darum gebeten hat"
 
 #
 #~ msgid ""

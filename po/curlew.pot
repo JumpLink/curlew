@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 18:04+0100\n"
+"POT-Creation-Date: 2026-11-17 18:49+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1593,18 +1593,34 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr ""
 
-#: app/src/window/about.ts:16 app/src/window/appearance-rows.ts:126
+#: app/src/window/about.ts:37 app/src/window/appearance-rows.ts:126
 #: app/src/window/conversation-view.ts:196 app/src/window/window.ts:109
 #: app/src/window/window.ts:239
 msgid "Curlew"
 msgstr ""
 
-#: app/src/window/about.ts:21
+#: app/src/window/about.ts:42
 msgid "© 2026 Pascal Garber"
 msgstr ""
 
-#: app/src/window/about.ts:22
+#: app/src/window/about.ts:43
 msgid "Chats across messengers"
+msgstr ""
+
+#: app/src/window/about.ts:48
+msgid "Support"
+msgstr ""
+
+#: app/src/window/about.ts:49
+msgid "Source code"
+msgstr ""
+
+#: app/src/window/about.ts:50
+msgid "Privacy"
+msgstr ""
+
+#: app/src/window/about.ts:51
+msgid "Legal notice"
 msgstr ""
 
 #: app/src/window/account-add-model.ts:106
