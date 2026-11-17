@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 13:05+0100\n"
+"POT-Creation-Date: 2026-11-17 17:36+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -926,7 +926,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/core/lib/message-notifications.ts:197
-#: app/src/window/attachment-view.ts:110
+#: app/src/window/attachment-view.ts:132
 msgid "Open"
 msgstr ""
 
@@ -1590,8 +1590,8 @@ msgid "curlew window takes no arguments."
 msgstr ""
 
 #: app/src/window/about.ts:16 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:196 app/src/window/window.ts:106
-#: app/src/window/window.ts:236
+#: app/src/window/conversation-view.ts:196 app/src/window/window.ts:107
+#: app/src/window/window.ts:237
 msgid "Curlew"
 msgstr ""
 
@@ -1745,7 +1745,7 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
-#: app/src/window/account-detail.ts:125 app/src/window/audio-player.ts:88
+#: app/src/window/account-detail.ts:125 app/src/window/audio-player.ts:112
 msgid "Pause"
 msgstr ""
 
@@ -1859,7 +1859,7 @@ msgstr ""
 
 #: app/src/window/accounts-dialog.ts:93 app/src/window/accounts-page.ts:206
 #: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:172
-#: app/src/window/window.ts:249
+#: app/src/window/window.ts:250
 msgid "Accounts"
 msgstr ""
 
@@ -1954,7 +1954,7 @@ msgstr ""
 msgid "Protocols"
 msgstr ""
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:253
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:254
 msgid "Agent access"
 msgstr ""
 
@@ -2218,55 +2218,83 @@ msgstr ""
 msgid "A quiet pattern behind the messages"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:110
+#: app/src/window/attachment-store.ts:86
+msgid "the account is signed out"
+msgstr ""
+
+#: app/src/window/attachment-view.ts:118 app/src/window/attachment-view.ts:328
+msgid "Sign in again to load this image"
+msgstr ""
+
+#: app/src/window/attachment-view.ts:119
+msgid "Sign in again to load this file"
+msgstr ""
+
+#: app/src/window/attachment-view.ts:124 app/src/window/audio-player.ts:80
+msgid "Sign in again to download this"
+msgstr ""
+
+#: app/src/window/attachment-view.ts:132
 msgid "Play"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:115 app/src/window/audio-player.ts:59
+#: app/src/window/attachment-view.ts:137 app/src/window/audio-player.ts:66
 #: app/src/window/media-viewer.ts:64
 msgid "Save as…"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:133 app/src/window/audio-player.ts:136
-#: app/src/window/audio-player.ts:163
+#: app/src/window/attachment-view.ts:161 app/src/window/audio-player.ts:161
+#: app/src/window/audio-player.ts:189
 msgid "Could not fetch the attachment: {error}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:156 app/src/window/attachment-view.ts:165
+#: app/src/window/attachment-view.ts:185 app/src/window/attachment-view.ts:194
 #: app/src/window/conversation-list-model.ts:526
 #: app/src/window/conversation-model.ts:318
 #: app/src/window/conversation-model.ts:323
 msgid "Attachment"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:249 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:278 app/src/window/media-viewer.ts:230
 msgid "Video: {name}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:249 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:278 app/src/window/media-viewer.ts:230
 msgid "Image: {name}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:564
+#: app/src/window/attachment-view.ts:328
+msgid "Sign in again to load this video"
+msgstr ""
+
+#: app/src/window/attachment-view.ts:625
 #: app/src/window/conversation-model.ts:326
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/audio-player.ts:30
+#: app/src/window/audio-player.ts:37
 msgid "Play voice message"
 msgstr ""
 
-#: app/src/window/audio-player.ts:30
+#: app/src/window/audio-player.ts:37
 msgid "Play {name}"
 msgstr ""
 
-#: app/src/window/audio-player.ts:48
+#: app/src/window/audio-player.ts:55
 msgid "Position"
 msgstr ""
 
-#: app/src/window/audio-player.ts:109
+#: app/src/window/audio-player.ts:77
+msgid "Sign in again to play this voice message"
+msgstr ""
+
+#: app/src/window/audio-player.ts:77
+msgid "Sign in again to play this"
+msgstr ""
+
+#: app/src/window/audio-player.ts:133
 msgid "Could not play the attachment: {error}"
 msgstr ""
 
@@ -3062,7 +3090,7 @@ msgstr ""
 msgid "AI"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:251
+#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:252
 msgid "Preferences"
 msgstr ""
 
@@ -3194,7 +3222,7 @@ msgid "On"
 msgstr ""
 
 #: app/src/window/welcome.ts:107 app/src/window/welcome.ts:125
-#: app/src/window/window.ts:256
+#: app/src/window/window.ts:257
 msgid "Welcome"
 msgstr ""
 
@@ -3246,47 +3274,47 @@ msgstr ""
 msgid "Start Using Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:100
+#: app/src/window/window.ts:101
 msgid "Select a conversation"
 msgstr ""
 
-#: app/src/window/window.ts:101
+#: app/src/window/window.ts:102
 msgid "Pick a conversation from the list."
 msgstr ""
 
-#: app/src/window/window.ts:141
+#: app/src/window/window.ts:142
 msgid "Resize the conversation list"
 msgstr ""
 
-#: app/src/window/window.ts:143
+#: app/src/window/window.ts:144
 msgid "Drag to resize the conversation list. Double-click to reset."
 msgstr ""
 
-#: app/src/window/window.ts:250
+#: app/src/window/window.ts:251
 msgid "Merge contacts…"
 msgstr ""
 
-#: app/src/window/window.ts:258
+#: app/src/window/window.ts:259
 msgid "About Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:259
+#: app/src/window/window.ts:260
 msgid "Quit"
 msgstr ""
 
-#: app/src/window/window.ts:303
+#: app/src/window/window.ts:309
 msgid "This conversation has no recipient address."
 msgstr ""
 
-#: app/src/window/window.ts:523
+#: app/src/window/window.ts:529
 msgid "Curlew (demo)"
 msgstr ""
 
-#: app/src/window/window.ts:526
+#: app/src/window/window.ts:532
 msgid "Demo data — nothing here is real"
 msgstr ""
 
-#: app/src/window/window.ts:669
+#: app/src/window/window.ts:675
 msgid "No contacts to merge"
 msgstr ""
 
@@ -3412,21 +3440,21 @@ msgid ""
 "{reason}"
 msgstr ""
 
-#: packages/matrix/src/attachments.ts:45 packages/signal/src/attachments.ts:30
+#: packages/matrix/src/attachments.ts:46
+msgid "the homeserver refused the download ({reason})"
+msgstr ""
+
+#: packages/matrix/src/attachments.ts:52 packages/signal/src/attachments.ts:30
 #: packages/telegram/src/attachments.ts:86
 #: packages/whatsapp/src/attachments.ts:25 packages/xmpp/src/attachments.ts:28
 msgid "the attachment is larger than the limit of {limit} bytes"
 msgstr ""
 
-#: packages/matrix/src/attachments.ts:67 packages/matrix/src/attachments.ts:74
-msgid "the homeserver refused the download ({reason})"
-msgstr ""
-
-#: packages/matrix/src/attachments.ts:87
+#: packages/matrix/src/attachments.ts:90
 msgid "this Matrix attachment cannot be found any more"
 msgstr ""
 
-#: packages/matrix/src/attachments.ts:119
+#: packages/matrix/src/attachments.ts:122
 msgid ""
 "the Matrix attachment arrived with {actual} bytes, not the announced "
 "{announced}"

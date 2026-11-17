@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 13:05+0100\n"
+"POT-Creation-Date: 2026-11-17 15:06+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1097,7 +1097,7 @@ msgstr[0] "{n} weiterer Chat hat neue Nachrichten"
 msgstr[1] "{n} weitere Chats haben neue Nachrichten"
 
 #: app/src/core/lib/message-notifications.ts:197
-#: app/src/window/attachment-view.ts:110
+#: app/src/window/attachment-view.ts:132
 msgid "Open"
 msgstr "Öffnen"
 
@@ -1855,8 +1855,8 @@ msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
 #: app/src/window/about.ts:16 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:196 app/src/window/window.ts:106
-#: app/src/window/window.ts:236
+#: app/src/window/conversation-view.ts:196 app/src/window/window.ts:107
+#: app/src/window/window.ts:237
 msgid "Curlew"
 msgstr "Curlew"
 
@@ -2017,7 +2017,7 @@ msgstr "Dieses Konto pausieren?"
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: app/src/window/account-detail.ts:125 app/src/window/audio-player.ts:88
+#: app/src/window/account-detail.ts:125 app/src/window/audio-player.ts:112
 msgid "Pause"
 msgstr "Pause"
 
@@ -2152,7 +2152,7 @@ msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
 #: app/src/window/accounts-dialog.ts:93 app/src/window/accounts-page.ts:206
 #: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:172
-#: app/src/window/window.ts:249
+#: app/src/window/window.ts:250
 msgid "Accounts"
 msgstr "Konten"
 
@@ -2249,7 +2249,7 @@ msgstr "Starten"
 msgid "Protocols"
 msgstr "Protokolle"
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:253
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:254
 msgid "Agent access"
 msgstr "Agentenzugriff"
 
@@ -2525,55 +2525,83 @@ msgstr "Chat-Hintergrund"
 msgid "A quiet pattern behind the messages"
 msgstr "Ein dezentes Muster hinter den Nachrichten"
 
-#: app/src/window/attachment-view.ts:110
+#: app/src/window/attachment-store.ts:86
+msgid "the account is signed out"
+msgstr "das Konto ist abgemeldet"
+
+#: app/src/window/attachment-view.ts:118 app/src/window/attachment-view.ts:328
+msgid "Sign in again to load this image"
+msgstr "Melde dich erneut an, um dieses Bild zu laden"
+
+#: app/src/window/attachment-view.ts:119
+msgid "Sign in again to load this file"
+msgstr "Melde dich erneut an, um diese Datei zu laden"
+
+#: app/src/window/attachment-view.ts:124 app/src/window/audio-player.ts:80
+msgid "Sign in again to download this"
+msgstr "Melde dich erneut an, um dies herunterzuladen"
+
+#: app/src/window/attachment-view.ts:132
 msgid "Play"
 msgstr "Abspielen"
 
-#: app/src/window/attachment-view.ts:115 app/src/window/audio-player.ts:59
+#: app/src/window/attachment-view.ts:137 app/src/window/audio-player.ts:66
 #: app/src/window/media-viewer.ts:64
 msgid "Save as…"
 msgstr "Speichern unter…"
 
-#: app/src/window/attachment-view.ts:133 app/src/window/audio-player.ts:136
-#: app/src/window/audio-player.ts:163
+#: app/src/window/attachment-view.ts:161 app/src/window/audio-player.ts:161
+#: app/src/window/audio-player.ts:189
 msgid "Could not fetch the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
-#: app/src/window/attachment-view.ts:156 app/src/window/attachment-view.ts:165
+#: app/src/window/attachment-view.ts:185 app/src/window/attachment-view.ts:194
 #: app/src/window/conversation-list-model.ts:526
 #: app/src/window/conversation-model.ts:318
 #: app/src/window/conversation-model.ts:323
 msgid "Attachment"
 msgstr "Anhang"
 
-#: app/src/window/attachment-view.ts:249 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:278 app/src/window/media-viewer.ts:230
 msgid "Video: {name}"
 msgstr "Video: {name}"
 
-#: app/src/window/attachment-view.ts:249 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:278 app/src/window/media-viewer.ts:230
 msgid "Image: {name}"
 msgstr "Bild: {name}"
 
-#: app/src/window/attachment-view.ts:564
+#: app/src/window/attachment-view.ts:328
+msgid "Sign in again to load this video"
+msgstr "Melde dich erneut an, um dieses Video zu laden"
+
+#: app/src/window/attachment-view.ts:625
 #: app/src/window/conversation-model.ts:326
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] "und {n} weiterer Anhang"
 msgstr[1] "und {n} weitere Anhänge"
 
-#: app/src/window/audio-player.ts:30
+#: app/src/window/audio-player.ts:37
 msgid "Play voice message"
 msgstr "Sprachnachricht abspielen"
 
-#: app/src/window/audio-player.ts:30
+#: app/src/window/audio-player.ts:37
 msgid "Play {name}"
 msgstr "{name} abspielen"
 
-#: app/src/window/audio-player.ts:48
+#: app/src/window/audio-player.ts:55
 msgid "Position"
 msgstr "Position"
 
-#: app/src/window/audio-player.ts:109
+#: app/src/window/audio-player.ts:77
+msgid "Sign in again to play this voice message"
+msgstr "Melde dich erneut an, um diese Sprachnachricht abzuspielen"
+
+#: app/src/window/audio-player.ts:77
+msgid "Sign in again to play this"
+msgstr "Melde dich erneut an, um dies abzuspielen"
+
+#: app/src/window/audio-player.ts:133
 msgid "Could not play the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgespielt werden: {error}"
 
@@ -3393,7 +3421,7 @@ msgstr ""
 msgid "AI"
 msgstr "KI"
 
-#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:251
+#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:252
 msgid "Preferences"
 msgstr "Einstellungen"
 
@@ -3543,7 +3571,7 @@ msgid "On"
 msgstr "An"
 
 #: app/src/window/welcome.ts:107 app/src/window/welcome.ts:125
-#: app/src/window/window.ts:256
+#: app/src/window/window.ts:257
 msgid "Welcome"
 msgstr "Willkommen"
 
@@ -3603,49 +3631,49 @@ msgstr ""
 msgid "Start Using Curlew"
 msgstr "Curlew benutzen"
 
-#: app/src/window/window.ts:100
+#: app/src/window/window.ts:101
 msgid "Select a conversation"
 msgstr "Unterhaltung auswählen"
 
-#: app/src/window/window.ts:101
+#: app/src/window/window.ts:102
 msgid "Pick a conversation from the list."
 msgstr "Wähle eine Unterhaltung aus der Liste."
 
-#: app/src/window/window.ts:141
+#: app/src/window/window.ts:142
 msgid "Resize the conversation list"
 msgstr "Breite der Unterhaltungsliste ändern"
 
-#: app/src/window/window.ts:143
+#: app/src/window/window.ts:144
 msgid "Drag to resize the conversation list. Double-click to reset."
 msgstr ""
 "Ziehen, um die Breite der Unterhaltungsliste zu ändern. Doppelklick setzt "
 "sie zurück."
 
-#: app/src/window/window.ts:250
+#: app/src/window/window.ts:251
 msgid "Merge contacts…"
 msgstr "Kontakte zusammenführen…"
 
-#: app/src/window/window.ts:258
+#: app/src/window/window.ts:259
 msgid "About Curlew"
 msgstr "Über Curlew"
 
-#: app/src/window/window.ts:259
+#: app/src/window/window.ts:260
 msgid "Quit"
 msgstr "Beenden"
 
-#: app/src/window/window.ts:303
+#: app/src/window/window.ts:309
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:523
+#: app/src/window/window.ts:529
 msgid "Curlew (demo)"
 msgstr "Curlew (Demo)"
 
-#: app/src/window/window.ts:526
+#: app/src/window/window.ts:532
 msgid "Demo data — nothing here is real"
 msgstr "Demo-Daten – nichts hier ist echt"
 
-#: app/src/window/window.ts:669
+#: app/src/window/window.ts:675
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 
@@ -3778,21 +3806,21 @@ msgstr ""
 "Die Nachricht wurde gesendet, aber ihre Kopie konnte nicht im Ordner "
 "„Gesendet“ gespeichert werden: {reason}"
 
-#: packages/matrix/src/attachments.ts:45 packages/signal/src/attachments.ts:30
+#: packages/matrix/src/attachments.ts:46
+msgid "the homeserver refused the download ({reason})"
+msgstr "der Homeserver hat den Download abgewiesen ({reason})"
+
+#: packages/matrix/src/attachments.ts:52 packages/signal/src/attachments.ts:30
 #: packages/telegram/src/attachments.ts:86
 #: packages/whatsapp/src/attachments.ts:25 packages/xmpp/src/attachments.ts:28
 msgid "the attachment is larger than the limit of {limit} bytes"
 msgstr "der Anhang ist größer als das Limit von {limit} Bytes"
 
-#: packages/matrix/src/attachments.ts:67 packages/matrix/src/attachments.ts:74
-msgid "the homeserver refused the download ({reason})"
-msgstr "der Homeserver hat den Download abgewiesen ({reason})"
-
-#: packages/matrix/src/attachments.ts:87
+#: packages/matrix/src/attachments.ts:90
 msgid "this Matrix attachment cannot be found any more"
 msgstr "dieser Matrix-Anhang ist nicht mehr zu finden"
 
-#: packages/matrix/src/attachments.ts:119
+#: packages/matrix/src/attachments.ts:122
 msgid ""
 "the Matrix attachment arrived with {actual} bytes, not the announced "
 "{announced}"

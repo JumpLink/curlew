@@ -1,4 +1,5 @@
 import { describe, expect, it } from '@gjsify/unit';
+import { SIGNED_OUT_TTL_MS, SignedOutRegistry } from '../../../src/window/signed-out-model.ts';
 import type { AttachmentKind } from '../../../src/window/attachment-model.ts';
 
 import {
@@ -12,6 +13,8 @@ import {
   isGridMedia,
   leadsWithMedia,
   isOpenable,
+  isSignedOutFailure,
+  rowState,
   isStickerOnly,
   playbackFraction,
   playbackLabel,
@@ -376,6 +379,59 @@ export default async () => {
       expect(shouldFetchThumb({ ...clip, filename: 'a.pdf', mimeType: 'application/pdf' }, false)).toBe(
         false,
       );
+    });
+  });
+  await describe('signed-out attachments', async () => {
+    await it('knows a dead session by flag or by the homeserver text', async () => {
+      expect(isSignedOutFailure(Object.assign(new Error('x'), { loggedOut: true }))).toBe(true);
+      expect(isSignedOutFailure(new Error('the homeserver refused the download (M_UNKNOWN_TOKEN)'))).toBe(
+        true,
+      );
+      expect(isSignedOutFailure(new Error('the homeserver refused the download (HTTP 401)'))).toBe(true);
+      expect(isSignedOutFailure('soft_logout')).toBe(true);
+    });
+    await it('does not mistake other failures for one', async () => {
+      expect(isSignedOutFailure(new Error('the homeserver refused the download (M_NOT_FOUND)'))).toBe(false);
+      expect(isSignedOutFailure(new Error('HTTP 4010'))).toBe(false);
+      expect(isSignedOutFailure(new Error('the attachment is larger than the limit'))).toBe(false);
+    });
+    await it('hints and locks a fetchable row of a signed-out account only', async () => {
+      const info = {
+        filename: 'a.png',
+        mimeType: 'image/png',
+        fetchable: true,
+        backendCanFetch: true,
+        index: 0,
+      };
+      expect(rowState(info, true).signInHint).toBe(true);
+      expect(rowState(info, true).canFetch).toBe(false);
+      expect(rowState(info, false).signInHint).toBe(false);
+      expect(rowState(info, false).canFetch).toBe(true);
+      expect(rowState({ ...info, backendCanFetch: false }, true).signInHint).toBe(false);
+    });
+  });
+  await describe('signed-out registry', async () => {
+    const entry = (state: string) => ({ backend: 'matrix', accountId: 'm1', state, since: '' }) as never;
+    await it('marks before any fetch when the daemon says logged-out', async () => {
+      const r = new SignedOutRegistry();
+      expect(r.isSignedOut('matrix/m1')).toBe(false);
+      expect(r.applyDaemon([entry('logged-out')]).length).toBe(1);
+      expect(r.isSignedOut('matrix/m1', Date.now() + 10 * SIGNED_OUT_TTL_MS)).toBe(true);
+    });
+    await it('clears as soon as the daemon reports another state', async () => {
+      const r = new SignedOutRegistry();
+      r.applyDaemon([entry('logged-out')]);
+      expect(r.applyDaemon([entry('connected')]).length).toBe(1);
+      expect(r.isSignedOut('matrix/m1')).toBe(false);
+      r.noteFailure('matrix/m1');
+      r.applyDaemon([entry('reconnecting')]);
+      expect(r.isSignedOut('matrix/m1')).toBe(false);
+    });
+    await it('lets a refused fetch expire when no daemon state is known', async () => {
+      const r = new SignedOutRegistry();
+      r.noteFailure('matrix/m1', 1000);
+      expect(r.isSignedOut('matrix/m1', 1000 + SIGNED_OUT_TTL_MS - 1)).toBe(true);
+      expect(r.isSignedOut('matrix/m1', 1000 + SIGNED_OUT_TTL_MS)).toBe(false);
     });
   });
 };

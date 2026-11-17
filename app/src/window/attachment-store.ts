@@ -12,7 +12,7 @@ import GdkPixbuf from 'gi://GdkPixbuf?version=2.0';
 import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
-import type { MessageRef } from '@curlew/protocol';
+import { _, type MessageRef } from '@curlew/protocol';
 import { ensurePrivateDir, previewsDir } from '@curlew/store';
 
 import { decodeBlurHash } from './blur-hash.ts';
@@ -20,7 +20,7 @@ import { chatSaveAttachment } from '../core/actions/chat-attachment.ts';
 import { chatFetchThumbnail } from '../core/actions/chat-thumbnail.ts';
 import { ATTACHMENT_BYTES } from '../core/actions/limits.ts';
 import { mailSaveAttachment } from '../core/actions/mail.ts';
-import { previewKey, shouldFetchThumb } from './attachment-model.ts';
+import { isSignedOutFailure, previewKey, shouldFetchThumb } from './attachment-model.ts';
 import {
   type CachedPart,
   cachedFile,
@@ -30,6 +30,8 @@ import {
   PREVIEW_CACHE_MAX_BYTES,
 } from './preview-cache-model.ts';
 import type { AttachmentInfo } from './conversation-model.ts';
+import type { DaemonAccountEntry } from '../core/lib/daemon-bus.ts';
+import { accountKeyOf, SignedOutRegistry } from './signed-out-model.ts';
 
 /** One fetchable part of one mail message. */
 export interface AttachmentSource {
@@ -43,6 +45,48 @@ export function cachedAttachment(source: AttachmentSource, root = previewsDir())
 }
 
 const inFlight = new Map<string, Promise<string>>();
+
+const signedOut = new SignedOutRegistry();
+
+function accountKey(ref: MessageRef): string {
+  return accountKeyOf(ref.backend, ref.accountId);
+}
+
+/** Whether the account is known to be signed out (the daemon said so, or a fetch was refused), so no part tries. */
+export function isSignedOut(ref: MessageRef, now = Date.now()): boolean {
+  return signedOut.isSignedOut(accountKey(ref), now);
+}
+
+/** Whether the part cannot be had at all: its account is signed out and no copy is cached. */
+export function blockedBySignOut(source: AttachmentSource, now = Date.now()): boolean {
+  return isSignedOut(source.ref, now) && cachedAttachment(source) === null;
+}
+
+/** Marks the account when `err` is a dead-session failure; mail has its own sign-in and is never marked. */
+export function noteFetchFailure(ref: MessageRef, err: unknown, now = Date.now()): boolean {
+  if (ref.backend === 'mail' || !isSignedOutFailure(err)) return false;
+  signedOut.noteFailure(accountKey(ref), now);
+  return true;
+}
+
+/** Forgets what was learned about the account. */
+export function clearSignedOut(ref: MessageRef): void {
+  signedOut.clear(accountKey(ref));
+}
+
+/** Feeds the daemon's account states in; a logged-out account is marked before any fetch, any other state clears it. */
+export function applyDaemonAccounts(accounts: Iterable<DaemonAccountEntry>): string[] {
+  return signedOut.applyDaemon(accounts);
+}
+
+/** Thrown instead of fetching when the account is already known to be signed out. */
+export class SignedOutError extends Error {
+  readonly loggedOut = true;
+  constructor() {
+    super(_('the account is signed out'));
+    this.name = 'SignedOutError';
+  }
+}
 
 /** Parts whose thumbnail was tried in this window run: a failure is retried on the next run, not now. */
 const thumbAttempts = new Set<string>();
@@ -65,7 +109,8 @@ export function fetchThumbnail(source: AttachmentSource): Promise<string | null>
   const key = thumbKey(source);
   const running = thumbInFlight.get(key);
   if (running) return running;
-  if (!wantsThumbnail(source)) return Promise.resolve(source.info.thumbPath ?? null);
+  if (!wantsThumbnail(source) || isSignedOut(source.ref))
+    return Promise.resolve(source.info.thumbPath ?? null);
   thumbAttempts.add(key);
   const fetching = chatFetchThumbnail({ ref: source.ref, index: source.info.index as number })
     .then((path) => {
@@ -73,7 +118,10 @@ export function fetchThumbnail(source: AttachmentSource): Promise<string | null>
       source.info.thumbFetchable = false;
       return path;
     })
-    .catch(() => null)
+    .catch((err: unknown) => {
+      noteFetchFailure(source.ref, err);
+      return null;
+    })
     .finally(() => thumbInFlight.delete(key));
   thumbInFlight.set(key, fetching);
   return fetching;
@@ -140,6 +188,7 @@ export function fetchAttachment(
   if (hit) return Promise.resolve(join(dir, hit));
   const running = inFlight.get(dir);
   if (running) return running;
+  if (isSignedOut(ref)) return Promise.reject(new SignedOutError());
   const fetching = (async () => {
     ensurePrivateDir(dir);
     for (const name of readdirSync(dir)) unlinkSync(join(dir, name));
@@ -161,7 +210,12 @@ export function fetchAttachment(
           });
     trimPreviews(root, [basename(dir)]);
     return saved.path;
-  })().finally(() => inFlight.delete(dir));
+  })()
+    .catch((err: unknown) => {
+      noteFetchFailure(ref, err);
+      throw err;
+    })
+    .finally(() => inFlight.delete(dir));
   inFlight.set(dir, fetching);
   return fetching;
 }

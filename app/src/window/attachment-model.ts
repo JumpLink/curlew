@@ -244,3 +244,27 @@ export function playbackFraction(positionMs: number, totalMs: number | null | un
   if (!totalMs || !Number.isFinite(totalMs) || totalMs <= 0) return 0;
   return Math.min(1, Math.max(0, positionMs / totalMs));
 }
+
+/** Texts a homeserver or daemon gives for a dead session; the daemon path carries only the message. */
+const SIGNED_OUT_TEXT = /M_UNKNOWN_TOKEN|M_MISSING_TOKEN|soft_logout|HTTP 401\b/i;
+
+/** Whether a failed fetch says the account is signed out (a dead token), not that the network or file failed. */
+export function isSignedOutFailure(err: unknown): boolean {
+  if (typeof err === 'object' && err !== null && (err as { loggedOut?: unknown }).loggedOut === true) {
+    return true;
+  }
+  return SIGNED_OUT_TEXT.test(err instanceof Error ? err.message : String(err));
+}
+
+export interface RowState {
+  /** The row says the account must sign in again instead of its type and size. */
+  signInHint: boolean;
+  /** The row offers open, play and save. */
+  canFetch: boolean;
+}
+
+/** What a file row shows and offers, given whether its account is known to be signed out. */
+export function rowState(info: AttachmentInfo, signedOut: boolean): RowState {
+  const blocked = signedOut && isOpenable(info);
+  return { signInHint: blocked, canFetch: !blocked };
+}

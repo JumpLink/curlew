@@ -180,12 +180,14 @@ export function gioAccountsDaemonSource(): AccountsDaemonSource {
       if (demoActive()) {
         // No daemon in demo mode: every made-up account shows as connected.
         const since = new Date().toISOString();
+        // Screenshots of the signed-out hint: `backend/account`, comma separated.
+        const demoSignedOut = new Set((process.env.CURLEW_DEMO_SIGNED_OUT ?? '').split(',').filter(Boolean));
         const accounts = new Map<string, DaemonAccountEntry>();
         for (const a of DEMO_ACCOUNTS)
           accounts.set(`${a.provider}/${a.id}`, {
             backend: a.provider,
             accountId: a.id,
-            state: 'connected',
+            state: demoSignedOut.has(`${a.provider}/${a.id}`) ? 'logged-out' : 'connected',
             since,
           });
         onChange({ present: true, accounts });
