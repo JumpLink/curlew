@@ -3596,14 +3596,12 @@ msgid "Pick a conversation from the list."
 msgstr "Wähle eine Unterhaltung aus der Liste."
 
 #: app/src/window/window.ts:141
-#, fuzzy
-#| msgid "Filter conversations"
 msgid "Resize the conversation list"
-msgstr "Unterhaltungen filtern"
+msgstr "Breite der Unterhaltungsliste ändern"
 
 #: app/src/window/window.ts:143
 msgid "Drag to resize the conversation list. Double-click to reset."
-msgstr ""
+msgstr "Ziehen, um die Breite der Unterhaltungsliste zu ändern. Doppelklick setzt sie zurück."
 
 #: app/src/window/window.ts:250
 msgid "Merge contacts…"
