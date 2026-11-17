@@ -63,7 +63,7 @@ export interface UiConfig {
   sendReadReceipts?: boolean;
   /**
    * Sync what you read to your other devices without telling the sender, where the protocol allows.
-   * Unset: on. No network effect yet: the local read state works without it.
+   * Unset: on. Telegram and WhatsApp have no private form and follow `sendReadReceipts` instead.
    */
   syncReadState?: boolean;
   /** The first-run welcome screen was finished or skipped. Unset: not yet, so it may show. */

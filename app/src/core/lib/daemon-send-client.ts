@@ -26,11 +26,14 @@ import {
   type DaemonFetchAttachmentReply,
   type DaemonFetchAttachmentRequest,
   type DaemonFetchAvatarsReply,
+  type DaemonSyncReadReply,
+  type DaemonSyncReadRequest,
   type DaemonFetchAvatarsRequest,
   type DaemonSendReply,
   type DaemonSendRequest,
   parseDaemonFetchAttachmentReply,
   parseDaemonFetchAvatarsReply,
+  parseDaemonSyncReadReply,
   parseDaemonSendReply,
   toDaemonWire,
 } from './daemon-bus.ts';
@@ -47,6 +50,11 @@ export interface DaemonSendClient {
    * the method: either way the caller keeps the initials.
    */
   fetchAvatars(request: DaemonFetchAvatarsRequest): Promise<DaemonFetchAvatarsReply | null>;
+  /**
+   * Ask the daemon to push a read position to the person's own devices. `null` when there is no
+   * daemon, or it is too old to know the method: the position stays local, nothing is lost.
+   */
+  syncRead(request: DaemonSyncReadRequest): Promise<DaemonSyncReadReply | null>;
 }
 
 /**
@@ -240,6 +248,41 @@ export function gioDaemonSendClient(): DaemonSendClient {
         throw new Error(`the running curlew daemon did not answer the avatar fetch (${reasonOf(error)})`);
       }
       return parseReporting(() => parseDaemonFetchAvatarsReply(json));
+    },
+    syncRead: async (request) => {
+      let connection: Gio.DBusConnection;
+      try {
+        connection = Gio.bus_get_sync(Gio.BusType.SESSION, null);
+      } catch {
+        return null;
+      }
+      let json: string;
+      try {
+        json = await new Promise<string>((resolve, reject) => {
+          connection.call(
+            DAEMON_BUS_NAME,
+            DAEMON_OBJECT_PATH,
+            DAEMON_INTERFACE,
+            'SyncRead',
+            new GLib.Variant('(s)', [JSON.stringify(request)]),
+            new GLib.VariantType('(s)'),
+            Gio.DBusCallFlags.NO_AUTO_START,
+            DAEMON_FETCH_TIMEOUT_MS,
+            null,
+            (_source, result) => {
+              try {
+                resolve((connection.call_finish(result!).recursiveUnpack() as [string])[0]);
+              } catch (error) {
+                reject(error as Error);
+              }
+            },
+          );
+        });
+      } catch (error) {
+        if (meansNoDaemon(error) || reasonOf(error).includes('UnknownMethod')) return null;
+        throw new Error(`the running curlew daemon did not answer the read sync (${reasonOf(error)})`);
+      }
+      return parseReporting(() => parseDaemonSyncReadReply(json));
     },
   };
 }

@@ -10,6 +10,8 @@ import {
   MATRIX_MANIFEST,
   MATRIX_MAX_MESSAGE_BYTES,
   MatrixBackend,
+  MatrixSender,
+  matrixSendApi,
   readOnlyFetch,
   sendRefusal,
 } from '@curlew/matrix';
@@ -251,6 +253,58 @@ export default async () => {
           sendRefusal('PUT', `${HS}/rooms/${encodeRoom(ROOM)}/send/m.room.encrypted/t1`, [ROOM]) !== null,
         ).toBe(true);
       });
+    });
+
+    await it('permits the private read receipt in a granted room and nothing wider', async () => {
+      const receipt = (room: string, type: string): string =>
+        `${HS}/rooms/${encodeRoom(room)}/receipt/${type}/$e`;
+      expect(sendRefusal('POST', receipt(ROOM, 'm.read.private'), [ROOM])).toBe(null);
+      expect(sendRefusal('POST', receipt(OTHER, 'm.read.private'), [ROOM]) !== null).toBe(true);
+      // The public receipt and the fully-read marker tell the other members: still refused.
+      expect(sendRefusal('POST', receipt(ROOM, 'm.read'), [ROOM]) !== null).toBe(true);
+      expect(sendRefusal('POST', receipt(ROOM, 'm.fully_read'), [ROOM]) !== null).toBe(true);
+    });
+
+    await it('syncs the read position with one POST of m.read.private', async () => {
+      const calls: Call[] = [];
+      const api = matrixSendApi({
+        homeserver: HOMESERVER,
+        accessToken: 'tok',
+        userId: ME,
+        fetch: (async (url: unknown, init?: RequestInit) => {
+          calls.push({
+            method: init?.method ?? 'GET',
+            url: String(url),
+            body: (init?.body as string) ?? null,
+          });
+          return new Response('{}', { status: 200 });
+        }) as typeof globalThis.fetch,
+      });
+      const sender = new MatrixSender(api, { account: 'matrix-me', addresses: [ROOM] }, async () => {});
+      expect(sender.features.readSync).toBe(true);
+      await sender.readSync?.({
+        to: ROOM,
+        target: { remoteId: '$ev1:example.org', fromSelf: false },
+        sentAt: '2026-09-01T10:00:00Z',
+      });
+      expect(calls.length).toBe(1);
+      expect(calls[0].method).toBe('POST');
+      expect(calls[0].url).toBe(
+        `${HS}/rooms/${encodeRoom(ROOM)}/receipt/m.read.private/${encodeURIComponent('$ev1:example.org')}`,
+      );
+      expect(calls[0].body).toBe('{}');
+      let refused = false;
+      try {
+        await sender.readSync?.({
+          to: OTHER,
+          target: { remoteId: '$ev1:example.org' },
+          sentAt: '2026-09-01T10:00:00Z',
+        });
+      } catch {
+        refused = true;
+      }
+      expect(refused).toBe(true);
+      expect(calls.length).toBe(1);
     });
 
     await it('sends to a room id without a server part (room version 12)', async () => {

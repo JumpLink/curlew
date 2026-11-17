@@ -43,6 +43,10 @@ export const DAEMON_INTERFACE_XML = `<node>
       <arg type="s" name="request_json" direction="in"/>
       <arg type="s" name="reply_json" direction="out"/>
     </method>
+    <method name="SyncRead">
+      <arg type="s" name="request_json" direction="in"/>
+      <arg type="s" name="reply_json" direction="out"/>
+    </method>
     <method name="RequestAccess">
       <arg type="s" name="request_json" direction="in"/>
       <arg type="s" name="reply_json" direction="out"/>
@@ -628,6 +632,77 @@ export function parseDaemonFetchAvatarsReply(json: string): DaemonFetchAvatarsRe
       if (typeof reply.message !== 'string')
         throw new Error('the curlew daemon reported a problem without saying what it was');
       return reply as DaemonFetchAvatarsReply;
+    default:
+      throw new Error(`the curlew daemon answered an unknown reply kind ${String(reply.kind)}`);
+  }
+}
+
+/**
+ * The person read a chat up to a message: push that to their own devices through the session the
+ * daemon holds (#441). Names no text and no recipient but the chat. New in the same wire version:
+ * an old daemon answers `UnknownMethod`, which the caller reads as "not synced".
+ */
+export interface DaemonSyncReadRequest {
+  v: number;
+  backend: string;
+  account: string;
+  /** The chat, as the index holds it (`ListEntry.target`). */
+  to: string;
+  /** The newest message that was read. */
+  target: { remoteId: string; clientId?: string; fromSelf?: boolean };
+  /** Its `sent_at` (ISO). */
+  sentAt: string;
+}
+
+export type DaemonSyncReadReply =
+  | { v: number; kind: 'synced' }
+  | { v: number; kind: 'not-followed' }
+  | { v: number; kind: 'refused'; message: string }
+  | { v: number; kind: 'failed'; message: string };
+
+/** Read a `SyncRead` request off the wire, or throw. */
+export function parseDaemonSyncReadRequest(json: string): DaemonSyncReadRequest {
+  let value: unknown;
+  try {
+    value = JSON.parse(json);
+  } catch (error) {
+    throw new Error('the read-sync request is not JSON', { cause: error });
+  }
+  if (typeof value !== 'object' || value === null) throw new Error('the read-sync request is not an object');
+  const request = value as Partial<DaemonSyncReadRequest>;
+  if (request.v !== DAEMON_WIRE_VERSION)
+    throw new DaemonWireMismatchError('the read-sync request speaks another protocol version', String(request.v));
+  for (const field of ['backend', 'account', 'to', 'sentAt'] as const) {
+    if (typeof request[field] !== 'string' || request[field] === '')
+      throw new Error(`the read-sync request has no ${field}`);
+  }
+  const target = request.target;
+  if (typeof target !== 'object' || target === null || typeof target.remoteId !== 'string' || target.remoteId === '')
+    throw new Error('the read-sync request names no message');
+  return request as DaemonSyncReadRequest;
+}
+
+/** Read a `SyncRead` reply off the wire, or throw. */
+export function parseDaemonSyncReadReply(json: string): DaemonSyncReadReply {
+  let value: unknown;
+  try {
+    value = JSON.parse(json);
+  } catch (error) {
+    throw new Error('the curlew daemon answered something that is not JSON', { cause: error });
+  }
+  if (typeof value !== 'object' || value === null) throw new Error('the curlew daemon answered no object');
+  const reply = value as Partial<DaemonSyncReadReply> & { message?: unknown };
+  if (reply.v !== DAEMON_WIRE_VERSION)
+    throw new DaemonWireMismatchError('the running curlew daemon speaks another protocol version', String(reply.v));
+  switch (reply.kind) {
+    case 'synced':
+    case 'not-followed':
+      return reply as DaemonSyncReadReply;
+    case 'refused':
+    case 'failed':
+      if (typeof reply.message !== 'string')
+        throw new Error('the curlew daemon reported a problem without saying what it was');
+      return reply as DaemonSyncReadReply;
     default:
       throw new Error(`the curlew daemon answered an unknown reply kind ${String(reply.kind)}`);
   }

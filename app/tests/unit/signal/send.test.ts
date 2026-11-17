@@ -724,6 +724,34 @@ export default async () => {
       });
     });
 
+    await it('syncs the read position as a SyncMessage.Read to the own devices only', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [ALICE_ACI],
+        });
+        expect(sender.features.readSync).toBe(true);
+        try {
+          await sender.readSync?.({
+            to: ALICE_ACI,
+            target: { remoteId: `${ALICE_ACI.toUpperCase()}:1700000000123`, fromSelf: false },
+            sentAt: '2026-09-01T10:00:00Z',
+          });
+          // Only the account's other devices: nothing for Alice, no data message.
+          expect(rig.server.delivered.length).toBe(2);
+          for (const copy of rig.server.delivered) {
+            expect(copy.content.dataMessage ?? null).toBe(null);
+            const read = copy.content.syncMessage?.read ?? [];
+            expect(read.length).toBe(1);
+            expect(read[0].senderAci).toBe(ALICE_ACI);
+            expect(read[0].timestamp).toBe(1700000000123);
+          }
+        } finally {
+          await sender.close();
+        }
+      });
+    });
+
     await it('edits and deletes with an EditMessage and a Delete, own messages only', async () => {
       await withRig(GRANTED, async (rig) => {
         const sender = await rig.backend.openSender(rig.accountId, {

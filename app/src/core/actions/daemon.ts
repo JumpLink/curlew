@@ -102,6 +102,7 @@ import {
   type DaemonFetchHandler,
   type DaemonSendHandler,
   type DaemonSendService,
+  type DaemonSyncReadHandler,
 } from '../lib/daemon-send-service.ts';
 import {
   PULL_SYNC_INTERVAL_MS,
@@ -122,6 +123,7 @@ import { deleteThrough } from './delete.ts';
 import { editThrough } from './edit.ts';
 import { reactThrough } from './react.ts';
 import { sendThrough } from './send.ts';
+import { readSyncThrough } from './read-sync.ts';
 import { storeThumbnail } from './chat-thumbnail.ts';
 
 /** How often a running daemon looks whether another process moved the journal (ADR 0007 §2). */
@@ -468,6 +470,46 @@ export function createDaemonSendHandler(options: DaemonSendHandlerOptions): Daem
       return { v: DAEMON_WIRE_VERSION, kind: 'failed', message: errText(error) } satisfies DaemonSendReply;
     } finally {
       // Only what this send opened: the session's own connection stays up and receiving.
+      await sender.close().catch(() => {});
+    }
+  };
+}
+
+/**
+ * Answer one `SyncRead` off the session bus (#441): the person's read position, pushed to their own
+ * devices on the connection the daemon already holds. Same gates as a send: paused account and
+ * sessions without a sender are refused or handed back; the permit names the one chat.
+ */
+export function createDaemonSyncReadHandler(options: DaemonSendHandlerOptions): DaemonSyncReadHandler {
+  const { log, sessions, isPaused } = options;
+  return async (request) => {
+    const who = sessionKey(request.backend, request.account);
+    if (isPaused?.(request.backend, request.account)) {
+      return { v: DAEMON_WIRE_VERSION, kind: 'refused', message: _('this account is paused') };
+    }
+    const session = sessions.get(who);
+    if (session === undefined || session.openSender === undefined) {
+      return { v: DAEMON_WIRE_VERSION, kind: 'not-followed' };
+    }
+    let sender: MessageSender;
+    try {
+      sender = await session.openSender({ account: request.account, addresses: [request.to] });
+    } catch (error) {
+      return { v: DAEMON_WIRE_VERSION, kind: 'failed', message: errText(error) };
+    }
+    try {
+      const done = await readSyncThrough(sender, {
+        to: request.to,
+        target: { ...request.target, fromSelf: false },
+        sentAt: request.sentAt,
+      });
+      if (!done) return { v: DAEMON_WIRE_VERSION, kind: 'failed', message: 'this network has no read sync' };
+      log(`curlew-daemon: read position synced for ${who} on its open connection`);
+      return { v: DAEMON_WIRE_VERSION, kind: 'synced' };
+    } catch (error) {
+      log(`curlew-daemon: a read sync for ${who} did not complete`);
+      return { v: DAEMON_WIRE_VERSION, kind: 'failed', message: errText(error) };
+    } finally {
       await sender.close().catch(() => {});
     }
   };
@@ -966,6 +1008,12 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
               access: (request) => accessBroker.request(request),
               fetch: createDaemonFetchHandler({ db, fetchBackends, log }),
               avatars: createDaemonAvatarsHandler({ backends: fetchBackends, sessions, log }),
+              syncRead: createDaemonSyncReadHandler({
+                sessions,
+                log,
+                isPaused: (backend, accountId) =>
+                  isAccountPaused(loadConfig(accessConfigPath), backend, accountId),
+              }),
               onSessionEnd: (session) => {
                 accessBroker.endSession(session);
                 log('curlew-daemon: an agent session ended — its temporary access grants are gone');

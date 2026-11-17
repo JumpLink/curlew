@@ -16,10 +16,7 @@ export const UI_SETTINGS: Record<keyof UiConfig, SettingPlace> = {
   notifications: { kind: 'window', where: 'Preferences, Notifications' },
   playVideosSilently: { kind: 'window', where: 'Preferences, Media' },
   sendReadReceipts: { kind: 'window', where: 'Preferences, Conversations' },
-  syncReadState: {
-    kind: 'file',
-    why: 'no network effect yet, so no switch is offered; the sync of read state wires it',
-  },
+  syncReadState: { kind: 'window', where: 'Preferences, Conversations' },
   accentColor: { kind: 'window', where: 'Preferences, Appearance' },
   primaryColor: { kind: 'window', where: 'Preferences, Appearance' },
   colorScheme: { kind: 'window', where: 'Preferences, Appearance' },

@@ -114,6 +114,7 @@ function fakeDaemon(reply: DaemonFetchAttachmentReply | null): DaemonSendClient 
     send: async () => null,
     fetchAttachment: async () => reply,
     fetchAvatars: async () => null,
+    syncRead: async () => null,
   };
 }
 

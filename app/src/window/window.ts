@@ -78,6 +78,8 @@ import { reactToMessage } from '../core/actions/react.ts';
 import { contactsForPicker } from '../core/actions/contacts.ts';
 import { sendMessage } from '../core/actions/send.ts';
 import { sendReadReceipts } from '../core/actions/read-receipt.ts';
+import { syncReadState } from '../core/actions/read-sync.ts';
+import { createReadSyncScheduler } from './read-sync-scheduler.ts';
 import { deltaChatEnabled } from '../core/actions/accounts.ts';
 import { editMessage } from '../core/actions/edit.ts';
 import { deleteMessage } from '../core/actions/delete.ts';
@@ -412,6 +414,28 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
     },
     (entry) => openContact(entry),
   );
+  // The local read position is the window's; the network half goes out after a quiet moment (#441).
+  const readSync = createReadSyncScheduler(
+    {
+      set: (run, ms) =>
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, ms, () => {
+          run();
+          return GLib.SOURCE_REMOVE;
+        }),
+      clear: (handle) => GLib.source_remove(handle as number),
+    },
+    (line) => console.warn(line),
+  );
+  const scheduleReadSync = (picked: readonly ListEntry[]): void => {
+    if (loadConfig().ui.syncReadState === false) return;
+    for (const e of picked.flatMap((p) => (p.members.length > 0 ? p.members : [p]))) {
+      const to = e.target;
+      if (to === null) continue;
+      readSync.schedule(e.id, () =>
+        syncReadState({ accountId: e.accountId, conversationIds: e.conversationIds, to, frontend: 'window' }),
+      );
+    }
+  };
   // Opening a Delta Chat conversation answers the receipts its messages asked for (setting permitting).
   const confirmRead = (messages: readonly ConversationMessage[]): void => {
     if (loadConfig().ui.sendReadReceipts !== true) return;
@@ -479,6 +503,7 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
       const ids = picked.flatMap((e) => (e.members.length > 0 ? e.members : [e]).map((m) => m.id));
       try {
         recordConversationRead(ids, read);
+        if (read) scheduleReadSync(picked);
       } catch {
         // A busy index must not break the list; the next try works.
       }
@@ -777,6 +802,7 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
         (entry.members.length > 0 ? entry.members : [entry]).map((m) => m.id),
         true,
       );
+      scheduleReadSync([entry]);
       refresh();
     } catch {
       // Busy index: tried again on the next tick.
@@ -794,6 +820,7 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
     INDEX_WATCH_MS,
   );
   window.connect('destroy', () => {
+    readSync.cancelAll();
     stopIndexWatch();
     stopConfigWatch();
   });

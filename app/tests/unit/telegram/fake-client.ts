@@ -270,6 +270,14 @@ export class FakeClient implements TelegramClientHandle {
     this.edited.push({ chatId, messageId, text });
   }
 
+  /** Every `readHistory` call, in order. */
+  readonly read: Array<{ chatId: number; messageId: number }> = [];
+
+  async readHistory(chatId: number, messageId: number): Promise<void> {
+    this.calls.push(`readHistory:${chatId}`);
+    this.read.push({ chatId, messageId });
+  }
+
   async deleteMessage(chatId: number, messageId: number): Promise<void> {
     this.calls.push(`deleteMessage:${chatId}`);
     this.deleted.push({ chatId, messageId });
