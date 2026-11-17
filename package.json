@@ -22,8 +22,7 @@
   },
   "homepage": "https://jumplink.eu/curlew/",
   "devDependencies": {
-    "@gjsify/cli": "0.64.46",
-    "@gjsify/site": "0.64.46"
+    "@gjsify/cli": "0.64.46"
   },
   "gjsify": {
     "site": {

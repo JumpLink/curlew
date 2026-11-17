@@ -41,6 +41,7 @@
       ],
       "kind": "app",
       "name": "Curlew",
+      "channel": "web",
       "localeDir": "dist/locale",
       "nodeModules": [
         "@signalapp/libsignal-client",

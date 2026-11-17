@@ -57,9 +57,10 @@ if (result.status !== 0 || target !== 'gjs') process.exit(result.status ?? 1);
 
 // The window is a second bundle next to the CLI (`curlew window` imports it), GJS only: GTK stays
 // out of the CLI bundle, and the catalogue directory above is shared because both sit in dist/.
+// `--channel web`: every package Curlew ships (Flatpak, deb, rpm, the zips) may link to Support.
 const windowBuild = spawnSync(
   'gjsify',
-  ['build', 'src/window/main.ts', '--app', 'gjs', '--outfile', 'dist/window.gjs.mjs'],
+  ['build', 'src/window/main.ts', '--app', 'gjs', '--outfile', 'dist/window.gjs.mjs', '--channel', 'web'],
   { stdio: 'inherit' },
 );
 process.exit(windowBuild.status ?? 1);

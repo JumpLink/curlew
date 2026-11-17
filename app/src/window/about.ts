@@ -9,7 +9,7 @@ import Adw from 'gi://Adw?version=1';
 import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
-import { donationsAllowed } from '@gjsify/distribution';
+import { supportPath } from '@gjsify/distribution';
 import { _ } from '@curlew/protocol';
 
 import { VERSION } from '../core/version.ts';
@@ -45,7 +45,7 @@ export function installAboutAction(app: Adw.Application): void {
       issueUrl: `${REPOSITORY}/issues`,
       licenseType: Gtk.License.AGPL_3_0,
     });
-    if (donationsAllowed()) dialog.add_link(_('Support'), SUPPORT_URL);
+    if (supportPath() === 'external-link') dialog.add_link(_('Support'), SUPPORT_URL);
     dialog.add_link(_('Source code'), REPOSITORY);
     dialog.add_link(_('Privacy'), `${WEBSITE}${lang}/privacy/`);
     dialog.add_link(_('Legal notice'), `${WEBSITE}${lang}/legal-notice/`);

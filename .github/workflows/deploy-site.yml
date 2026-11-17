@@ -64,6 +64,13 @@ jobs:
       - name: Install dependencies
         run: gjsify install --immutable
 
+      # The generator is added here, not in package.json: its own @girs versions would re-hoist the
+      # app's typings and break the type check. The runner's lockfile change is thrown away.
+      - name: Add the site generator
+        run: |
+          VERSION=$(node -p "require('./package.json').devDependencies['@gjsify/cli']")
+          gjsify install -D "@gjsify/site@$VERSION"
+
       # Without the token the release lookup shares the runner IP's anonymous rate limit, gets a 403
       # and the page ships with no downloads; the build only warns.
       - name: Build the site
