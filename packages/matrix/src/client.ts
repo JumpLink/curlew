@@ -455,6 +455,9 @@ async function connectGuarded(session: MatrixSession, release: () => void): Prom
     // keys forever). Keys the crypto makes later are covered by the checkpoints after each sync.
     await save();
     const synced = firstSync(sdk, client);
+    // If `startClient` throws first (dead token), nobody awaits `synced`, and its later rejection
+    // would surface as an unhandled promise rejection; the await below still sees it.
+    synced.catch(() => {});
     running = true;
     await client.startClient({
       initialSyncLimit: 1,
