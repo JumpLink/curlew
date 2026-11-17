@@ -12,7 +12,7 @@ import GdkPixbuf from 'gi://GdkPixbuf?version=2.0';
 import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
-import type { MessageRef } from '@curlew/protocol';
+import { _, type MessageRef } from '@curlew/protocol';
 import { ensurePrivateDir, previewsDir } from '@curlew/store';
 
 import { decodeBlurHash } from './blur-hash.ts';
@@ -20,7 +20,7 @@ import { chatSaveAttachment } from '../core/actions/chat-attachment.ts';
 import { chatFetchThumbnail } from '../core/actions/chat-thumbnail.ts';
 import { ATTACHMENT_BYTES } from '../core/actions/limits.ts';
 import { mailSaveAttachment } from '../core/actions/mail.ts';
-import { previewKey, shouldFetchThumb } from './attachment-model.ts';
+import { isSignedOutFailure, previewKey, shouldFetchThumb } from './attachment-model.ts';
 import {
   type CachedPart,
   cachedFile,
@@ -44,6 +44,44 @@ export function cachedAttachment(source: AttachmentSource, root = previewsDir())
 
 const inFlight = new Map<string, Promise<string>>();
 
+/** How long one refused session marks the rest of its account's parts: long enough to spare the server, short enough to recover after a sign-in. */
+export const SIGNED_OUT_TTL_MS = 5 * 60_000;
+const signedOutAccounts = new Map<string, number>();
+
+function accountKey(ref: MessageRef): string {
+  return `${ref.backend}/${ref.accountId}`;
+}
+
+/** Whether a fetch of this account already failed for a dead session, so no part tries again. */
+export function isSignedOut(ref: MessageRef, now = Date.now()): boolean {
+  const since = signedOutAccounts.get(accountKey(ref));
+  if (since === undefined) return false;
+  if (now - since < SIGNED_OUT_TTL_MS) return true;
+  signedOutAccounts.delete(accountKey(ref));
+  return false;
+}
+
+/** Marks the account when `err` is a dead-session failure; mail has its own sign-in and is never marked. */
+export function noteFetchFailure(ref: MessageRef, err: unknown, now = Date.now()): boolean {
+  if (ref.backend === 'mail' || !isSignedOutFailure(err)) return false;
+  signedOutAccounts.set(accountKey(ref), now);
+  return true;
+}
+
+/** Forgets what was learned about the account, for when its state changed. */
+export function clearSignedOut(ref: MessageRef): void {
+  signedOutAccounts.delete(accountKey(ref));
+}
+
+/** Thrown instead of fetching when the account is already known to be signed out. */
+export class SignedOutError extends Error {
+  readonly loggedOut = true;
+  constructor() {
+    super(_('the account is signed out'));
+    this.name = 'SignedOutError';
+  }
+}
+
 /** Parts whose thumbnail was tried in this window run: a failure is retried on the next run, not now. */
 const thumbAttempts = new Set<string>();
 const thumbInFlight = new Map<string, Promise<string | null>>();
@@ -65,7 +103,8 @@ export function fetchThumbnail(source: AttachmentSource): Promise<string | null>
   const key = thumbKey(source);
   const running = thumbInFlight.get(key);
   if (running) return running;
-  if (!wantsThumbnail(source)) return Promise.resolve(source.info.thumbPath ?? null);
+  if (!wantsThumbnail(source) || isSignedOut(source.ref))
+    return Promise.resolve(source.info.thumbPath ?? null);
   thumbAttempts.add(key);
   const fetching = chatFetchThumbnail({ ref: source.ref, index: source.info.index as number })
     .then((path) => {
@@ -73,7 +112,10 @@ export function fetchThumbnail(source: AttachmentSource): Promise<string | null>
       source.info.thumbFetchable = false;
       return path;
     })
-    .catch(() => null)
+    .catch((err: unknown) => {
+      noteFetchFailure(source.ref, err);
+      return null;
+    })
     .finally(() => thumbInFlight.delete(key));
   thumbInFlight.set(key, fetching);
   return fetching;
@@ -140,6 +182,7 @@ export function fetchAttachment(
   if (hit) return Promise.resolve(join(dir, hit));
   const running = inFlight.get(dir);
   if (running) return running;
+  if (isSignedOut(ref)) return Promise.reject(new SignedOutError());
   const fetching = (async () => {
     ensurePrivateDir(dir);
     for (const name of readdirSync(dir)) unlinkSync(join(dir, name));
@@ -161,7 +204,12 @@ export function fetchAttachment(
           });
     trimPreviews(root, [basename(dir)]);
     return saved.path;
-  })().finally(() => inFlight.delete(dir));
+  })()
+    .catch((err: unknown) => {
+      noteFetchFailure(ref, err);
+      throw err;
+    })
+    .finally(() => inFlight.delete(dir));
   inFlight.set(dir, fetching);
   return fetching;
 }

@@ -12,6 +12,8 @@ import {
   isGridMedia,
   leadsWithMedia,
   isOpenable,
+  isSignedOutFailure,
+  rowState,
   isStickerOnly,
   playbackFraction,
   playbackLabel,
@@ -376,6 +378,35 @@ export default async () => {
       expect(shouldFetchThumb({ ...clip, filename: 'a.pdf', mimeType: 'application/pdf' }, false)).toBe(
         false,
       );
+    });
+  });
+  await describe('signed-out attachments', async () => {
+    await it('knows a dead session by flag or by the homeserver text', async () => {
+      expect(isSignedOutFailure(Object.assign(new Error('x'), { loggedOut: true }))).toBe(true);
+      expect(isSignedOutFailure(new Error('the homeserver refused the download (M_UNKNOWN_TOKEN)'))).toBe(
+        true,
+      );
+      expect(isSignedOutFailure(new Error('the homeserver refused the download (HTTP 401)'))).toBe(true);
+      expect(isSignedOutFailure('soft_logout')).toBe(true);
+    });
+    await it('does not mistake other failures for one', async () => {
+      expect(isSignedOutFailure(new Error('the homeserver refused the download (M_NOT_FOUND)'))).toBe(false);
+      expect(isSignedOutFailure(new Error('HTTP 4010'))).toBe(false);
+      expect(isSignedOutFailure(new Error('the attachment is larger than the limit'))).toBe(false);
+    });
+    await it('hints and locks a fetchable row of a signed-out account only', async () => {
+      const info = {
+        filename: 'a.png',
+        mimeType: 'image/png',
+        fetchable: true,
+        backendCanFetch: true,
+        index: 0,
+      };
+      expect(rowState(info, true).signInHint).toBe(true);
+      expect(rowState(info, true).canFetch).toBe(false);
+      expect(rowState(info, false).signInHint).toBe(false);
+      expect(rowState(info, false).canFetch).toBe(true);
+      expect(rowState({ ...info, backendCanFetch: false }, true).signInHint).toBe(false);
     });
   });
 };

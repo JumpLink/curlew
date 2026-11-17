@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- An image or file of a signed-out account (for example a Matrix token the server revoked) says "Sign in again to load this image" instead of silently turning into a plain file row, and its open and save buttons are greyed out. One refused download marks the account's other attachments for five minutes, so they no longer each ask the server.
 - The Accounts dialog offers a Restart button when the window or the background service outlived an update, so you no longer have to close the dialog to reach the banner behind it. The banner names the side that is behind, and both buttons run the same restart.
 - A group chat no longer loses its composer: Telegram groups and channels send to the chat, and a Signal, WhatsApp or XMPP group, which Curlew cannot send to yet, shows the composer greyed out with the reason ("Sending to Signal groups is not supported yet") instead of no composer at all.
 - The conversation list keeps its width of 320 to 400 pixels in a window of about 900 pixels instead of taking most of it and clipping the chat: the selection bar's buttons wrap instead of setting the list's minimum width.

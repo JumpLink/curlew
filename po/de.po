@@ -1097,7 +1097,7 @@ msgstr[0] "{n} weiterer Chat hat neue Nachrichten"
 msgstr[1] "{n} weitere Chats haben neue Nachrichten"
 
 #: app/src/core/lib/message-notifications.ts:197
-#: app/src/window/attachment-view.ts:110
+#: app/src/window/attachment-view.ts:131
 msgid "Open"
 msgstr "Öffnen"
 
@@ -2525,36 +2525,52 @@ msgstr "Chat-Hintergrund"
 msgid "A quiet pattern behind the messages"
 msgstr "Ein dezentes Muster hinter den Nachrichten"
 
-#: app/src/window/attachment-view.ts:110
+#: app/src/window/attachment-store.ts:80
+msgid "the account is signed out"
+msgstr "das Konto ist abgemeldet"
+
+#: app/src/window/attachment-view.ts:117
+msgid "Sign in again to load this image"
+msgstr "Melde dich erneut an, um dieses Bild zu laden"
+
+#: app/src/window/attachment-view.ts:118
+msgid "Sign in again to load this file"
+msgstr "Melde dich erneut an, um diese Datei zu laden"
+
+#: app/src/window/attachment-view.ts:123
+msgid "Sign in again to download this"
+msgstr "Melde dich erneut an, um dies herunterzuladen"
+
+#: app/src/window/attachment-view.ts:131
 msgid "Play"
 msgstr "Abspielen"
 
-#: app/src/window/attachment-view.ts:115 app/src/window/audio-player.ts:59
+#: app/src/window/attachment-view.ts:136 app/src/window/audio-player.ts:59
 #: app/src/window/media-viewer.ts:64
 msgid "Save as…"
 msgstr "Speichern unter…"
 
-#: app/src/window/attachment-view.ts:133 app/src/window/audio-player.ts:136
+#: app/src/window/attachment-view.ts:160 app/src/window/audio-player.ts:136
 #: app/src/window/audio-player.ts:163
 msgid "Could not fetch the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
-#: app/src/window/attachment-view.ts:156 app/src/window/attachment-view.ts:165
+#: app/src/window/attachment-view.ts:184 app/src/window/attachment-view.ts:193
 #: app/src/window/conversation-list-model.ts:526
 #: app/src/window/conversation-model.ts:318
 #: app/src/window/conversation-model.ts:323
 msgid "Attachment"
 msgstr "Anhang"
 
-#: app/src/window/attachment-view.ts:249 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:277 app/src/window/media-viewer.ts:230
 msgid "Video: {name}"
 msgstr "Video: {name}"
 
-#: app/src/window/attachment-view.ts:249 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:277 app/src/window/media-viewer.ts:230
 msgid "Image: {name}"
 msgstr "Bild: {name}"
 
-#: app/src/window/attachment-view.ts:564
+#: app/src/window/attachment-view.ts:592
 #: app/src/window/conversation-model.ts:326
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
@@ -3778,21 +3794,21 @@ msgstr ""
 "Die Nachricht wurde gesendet, aber ihre Kopie konnte nicht im Ordner "
 "„Gesendet“ gespeichert werden: {reason}"
 
-#: packages/matrix/src/attachments.ts:45 packages/signal/src/attachments.ts:30
+#: packages/matrix/src/attachments.ts:46
+msgid "the homeserver refused the download ({reason})"
+msgstr "der Homeserver hat den Download abgewiesen ({reason})"
+
+#: packages/matrix/src/attachments.ts:52 packages/signal/src/attachments.ts:30
 #: packages/telegram/src/attachments.ts:86
 #: packages/whatsapp/src/attachments.ts:25 packages/xmpp/src/attachments.ts:28
 msgid "the attachment is larger than the limit of {limit} bytes"
 msgstr "der Anhang ist größer als das Limit von {limit} Bytes"
 
-#: packages/matrix/src/attachments.ts:67 packages/matrix/src/attachments.ts:74
-msgid "the homeserver refused the download ({reason})"
-msgstr "der Homeserver hat den Download abgewiesen ({reason})"
-
-#: packages/matrix/src/attachments.ts:87
+#: packages/matrix/src/attachments.ts:90
 msgid "this Matrix attachment cannot be found any more"
 msgstr "dieser Matrix-Anhang ist nicht mehr zu finden"
 
-#: packages/matrix/src/attachments.ts:119
+#: packages/matrix/src/attachments.ts:122
 msgid ""
 "the Matrix attachment arrived with {actual} bytes, not the announced "
 "{announced}"

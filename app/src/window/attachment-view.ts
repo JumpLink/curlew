@@ -22,7 +22,9 @@ import {
   isGridMedia,
   autoFetchLimit,
   isOpenable,
+  isSignedOutFailure,
   leadsWithMedia,
+  rowState,
   showsInline,
   showsPlayer,
   posterSource,
@@ -36,6 +38,8 @@ import {
   failureText,
   fetchAttachment,
   fetchThumbnail,
+  isSignedOut,
+  noteFetchFailure,
   loadPoster,
   loadTexture,
   stillTexture,
@@ -89,8 +93,9 @@ function tile(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Widge
   text.append(
     new Gtk.Label({ label: name, xalign: 0, ellipsize: Pango.EllipsizeMode.MIDDLE, maxWidthChars: 28 }),
   );
+  const plain = sizeText(info);
   const detail = new Gtk.Label({
-    label: sizeText(info),
+    label: plain,
     xalign: 0,
     ellipsize: Pango.EllipsizeMode.END,
     maxWidthChars: 28,
@@ -102,6 +107,22 @@ function tile(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Widge
 
   const openable = isOpenable(info);
   const action = tileAction(kind);
+  const buttons: Gtk.Button[] = [];
+  // A signed-out account cannot load anything: say so and offer nothing that would fail.
+  const applyState = (signedOut: boolean): void => {
+    const state = rowState(info, signedOut);
+    detail.set_label(
+      state.signInHint
+        ? kind === 'image'
+          ? _('Sign in again to load this image')
+          : _('Sign in again to load this file')
+        : plain,
+    );
+    for (const button of buttons) {
+      button.set_sensitive(state.canFetch);
+      if (!state.canFetch) button.set_tooltip_text(_('Sign in again to download this'));
+    }
+  };
   let open: Gtk.Button | null = null;
   let save: Gtk.Button | null = null;
   if (openable) {
@@ -116,12 +137,14 @@ function tile(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Widge
       valign: Gtk.Align.CENTER,
     });
     for (const button of [open, save]) {
+      buttons.push(button);
       button.add_css_class('flat');
       button.add_css_class('circular');
       box.append(button);
     }
   }
 
+  applyState(isSignedOut(source.ref));
   if (openable) {
     // The button is blocked while the part is fetched, so a second click cannot start a second fetch.
     const run = (button: Gtk.Button, work: (path: string, window: Gtk.Window | null) => Promise<unknown>) => {
@@ -129,13 +152,18 @@ function tile(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Widge
       const window = button.get_root() as Gtk.Window | null;
       void fetchAttachment(source)
         .then((path) => work(path, window))
-        .catch((err: unknown) =>
-          handlers.toast(fmt(_('Could not fetch the attachment: {error}'), { error: failureText(err) })),
-        )
+        .catch((err: unknown) => {
+          if (noteFetchFailure(source.ref, err) || isSignedOutFailure(err)) {
+            if (button.get_root() !== null) applyState(true);
+            return;
+          }
+          handlers.toast(fmt(_('Could not fetch the attachment: {error}'), { error: failureText(err) }));
+        })
         // The window may have been closed while the part was fetched; a button that is gone from
         // the tree has no state left to restore.
         .finally(() => {
-          if (button.get_root() !== null) button.set_sensitive(true);
+          if (button.get_root() !== null)
+            button.set_sensitive(rowState(info, isSignedOut(source.ref)).canFetch);
         });
     };
     open!.connect('clicked', () => {

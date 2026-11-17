@@ -41,6 +41,13 @@ async function errcodeOf(response: Response): Promise<string | null> {
   }
 }
 
+/** A refusal for the message; a dead token is marked `loggedOut` so callers can tell it from a flaky server. */
+function refusal(reason: string, status: number, errcode: string | null): Error {
+  const error = new Error(fmt(_('the homeserver refused the download ({reason})'), { reason }));
+  if (errcode === 'M_UNKNOWN_TOKEN' || status === 401) (error as { loggedOut?: boolean }).loggedOut = true;
+  return error;
+}
+
 function tooLarge(maxBytes: number): Error {
   return new Error(fmt(_('the attachment is larger than the limit of {limit} bytes'), { limit: String(maxBytes) }));
 }
@@ -63,16 +70,12 @@ export class MatrixAttachments implements AttachmentFetcher {
     const errcode = await errcodeOf(first);
     // A server older than 1.11 does not know the endpoint at all.
     if (first.status !== 404 || (errcode !== null && errcode !== 'M_UNRECOGNIZED')) {
-      throw new Error(
-        fmt(_('the homeserver refused the download ({reason})'), { reason: errcode ?? `HTTP ${first.status}` }),
-      );
+      throw refusal(errcode ?? `HTTP ${first.status}`, first.status, errcode);
     }
     const legacy = await this.session.fetch(`${base}${LEGACY}/${path}?allow_redirect=true`, init);
     if (legacy.ok) return legacy;
     const legacyCode = await errcodeOf(legacy);
-    throw new Error(
-      fmt(_('the homeserver refused the download ({reason})'), { reason: legacyCode ?? `HTTP ${legacy.status}` }),
-    );
+    throw refusal(legacyCode ?? `HTTP ${legacy.status}`, legacy.status, legacyCode);
   }
 
   async fetchAttachment(

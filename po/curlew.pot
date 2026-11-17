@@ -926,7 +926,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/core/lib/message-notifications.ts:197
-#: app/src/window/attachment-view.ts:110
+#: app/src/window/attachment-view.ts:131
 msgid "Open"
 msgstr ""
 
@@ -2218,36 +2218,52 @@ msgstr ""
 msgid "A quiet pattern behind the messages"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:110
+#: app/src/window/attachment-store.ts:80
+msgid "the account is signed out"
+msgstr ""
+
+#: app/src/window/attachment-view.ts:117
+msgid "Sign in again to load this image"
+msgstr ""
+
+#: app/src/window/attachment-view.ts:118
+msgid "Sign in again to load this file"
+msgstr ""
+
+#: app/src/window/attachment-view.ts:123
+msgid "Sign in again to download this"
+msgstr ""
+
+#: app/src/window/attachment-view.ts:131
 msgid "Play"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:115 app/src/window/audio-player.ts:59
+#: app/src/window/attachment-view.ts:136 app/src/window/audio-player.ts:59
 #: app/src/window/media-viewer.ts:64
 msgid "Save as…"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:133 app/src/window/audio-player.ts:136
+#: app/src/window/attachment-view.ts:160 app/src/window/audio-player.ts:136
 #: app/src/window/audio-player.ts:163
 msgid "Could not fetch the attachment: {error}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:156 app/src/window/attachment-view.ts:165
+#: app/src/window/attachment-view.ts:184 app/src/window/attachment-view.ts:193
 #: app/src/window/conversation-list-model.ts:526
 #: app/src/window/conversation-model.ts:318
 #: app/src/window/conversation-model.ts:323
 msgid "Attachment"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:249 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:277 app/src/window/media-viewer.ts:230
 msgid "Video: {name}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:249 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:277 app/src/window/media-viewer.ts:230
 msgid "Image: {name}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:564
+#: app/src/window/attachment-view.ts:592
 #: app/src/window/conversation-model.ts:326
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
@@ -3412,21 +3428,21 @@ msgid ""
 "{reason}"
 msgstr ""
 
-#: packages/matrix/src/attachments.ts:45 packages/signal/src/attachments.ts:30
+#: packages/matrix/src/attachments.ts:46
+msgid "the homeserver refused the download ({reason})"
+msgstr ""
+
+#: packages/matrix/src/attachments.ts:52 packages/signal/src/attachments.ts:30
 #: packages/telegram/src/attachments.ts:86
 #: packages/whatsapp/src/attachments.ts:25 packages/xmpp/src/attachments.ts:28
 msgid "the attachment is larger than the limit of {limit} bytes"
 msgstr ""
 
-#: packages/matrix/src/attachments.ts:67 packages/matrix/src/attachments.ts:74
-msgid "the homeserver refused the download ({reason})"
-msgstr ""
-
-#: packages/matrix/src/attachments.ts:87
+#: packages/matrix/src/attachments.ts:90
 msgid "this Matrix attachment cannot be found any more"
 msgstr ""
 
-#: packages/matrix/src/attachments.ts:119
+#: packages/matrix/src/attachments.ts:122
 msgid ""
 "the Matrix attachment arrived with {actual} bytes, not the announced "
 "{announced}"
