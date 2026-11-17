@@ -107,9 +107,11 @@ already deletes `message_attachments`); a deleted conversation likewise.
 
 ### 7. Backfill
 
-Rows with `thumb_state` NULL and a video or image `kind` are candidates. `backfillAttachments`
-already walks history for rewindable sessions and writes descriptor rows; it writes thumbnails in
-the same pass, bounded by the same `BACKFILL_CHATS`/`BACKFILL_PAGES`. Telegram, Matrix and XMPP
+Rows with `thumb_state` and `thumb_handle` both NULL and a video or image `kind` are candidates;
+NULL means "pre-v25, never looked at", so a row the walk passes without a thumbnail becomes
+`'none'` and leaves the set. `backfillAttachments` walks history for rewindable sessions, also for
+messages that already have descriptor rows, and writes thumbnails in the same pass, bounded by the
+same `BACKFILL_CHATS`/`BACKFILL_PAGES`. Telegram, Matrix and XMPP
 are rewindable, so their old videos gain posters over a few syncs. WhatsApp and Signal keep no
 archive, so pre-v25 rows there keep the dark box forever — the same trade ADR 0010 §2 took.
 

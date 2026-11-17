@@ -12,6 +12,11 @@
  * set, so the next run starts where this one stopped. A message the network no longer shows with
  * an attachment gets a placeholder row (no handle), which also takes it out of the set; the tile
  * then says "Attachment" and offers no download, which is all that is known.
+ *
+ * ADR 0017 §7 adds a second kind of candidate: a message that already has descriptor rows but whose
+ * image or video was stored before thumbnails (`thumb_state` and `thumb_handle` both NULL). The walk
+ * fills in the thumbnail columns of those rows; a row the network gives no thumbnail for becomes
+ * `'none'`, which takes it out of the set.
  */
 
 import { isChatRateLimitedError } from '@curlew/protocol';
@@ -35,6 +40,8 @@ interface Candidate {
   chatId: string;
   /** It already has descriptor rows: only its album is missing. */
   described: boolean;
+  /** An image or video row of it has no thumbnail state yet. */
+  needsThumb: boolean;
 }
 
 function candidates(
@@ -46,12 +53,18 @@ function candidates(
   const rows = db
     .prepare(
       `SELECT m.id, m.conversation_id, m.remote_id, m.remote_seq, c.chat_id,
-              EXISTS (SELECT 1 FROM message_attachments a WHERE a.message_id = m.id) AS described
+              EXISTS (SELECT 1 FROM message_attachments a WHERE a.message_id = m.id) AS described,
+              EXISTS (SELECT 1 FROM message_attachments a WHERE a.message_id = m.id
+                         AND a.kind IN ('image', 'video')
+                         AND a.thumb_state IS NULL AND a.thumb_handle IS NULL) AS needs_thumb
          FROM conversation_messages m
          JOIN chat_cursors c ON c.conversation_id = m.conversation_id
         WHERE m.backend = ? AND m.account_id = ? AND m.has_attachments = 1
           AND m.remote_id IS NOT NULL AND m.remote_seq IS NOT NULL
-          AND (NOT EXISTS (SELECT 1 FROM message_attachments a WHERE a.message_id = m.id)${
+          AND (NOT EXISTS (SELECT 1 FROM message_attachments a WHERE a.message_id = m.id)
+               OR EXISTS (SELECT 1 FROM message_attachments a WHERE a.message_id = m.id
+                            AND a.kind IN ('image', 'video')
+                            AND a.thumb_state IS NULL AND a.thumb_handle IS NULL)${
             groups ? ' OR m.group_id IS NULL' : ''
           })
         ORDER BY m.sent_at DESC`,
@@ -68,6 +81,7 @@ function candidates(
       seq: Number(r.remote_seq),
       chatId: String(r.chat_id),
       described: Number(r.described) === 1,
+      needsThumb: Number(r.needs_thumb) === 1,
     });
     byChat.set(conversationId, list);
   }
@@ -94,6 +108,8 @@ export async function backfillAttachments(
     const byRemote = new Map(pending.map((c) => [c.remoteId, c]));
     const rows: SqlValue[][] = [];
     const done = new Set<string>();
+    const thumbRows: SqlValue[][] = [];
+    const thumbDone = new Set<string>();
     const groupRows: SqlValue[][] = [];
     const grouped = new Set<string>();
     let after = pending[0].seq - 1;
@@ -108,6 +124,13 @@ export async function backfillAttachments(
           if (groups && !grouped.has(stored.id)) {
             grouped.add(stored.id);
             groupRows.push([m.groupId ?? '', stored.id]);
+          }
+          if (stored.described && stored.needsThumb && !thumbDone.has(stored.id)) {
+            thumbDone.add(stored.id);
+            for (let i = 0; i < (m.attachments?.length ?? 0); i++) {
+              const [handle, state, blur] = thumbnailColumns(stored.id, i, m.attachments![i]);
+              thumbRows.push([handle, state ?? (handle === null ? 'none' : null), blur, stored.id, i]);
+            }
           }
           if (stored.described || done.has(stored.id)) continue;
           for (let i = 0; i < (m.attachments?.length ?? 0); i++) {
@@ -131,6 +154,13 @@ export async function backfillAttachments(
       onError(err);
       stop = isChatRateLimitedError(err);
     }
+    // A described row the walk passed without a thumbnail for: the network has none to offer.
+    for (const c of pending) {
+      if (c.needsThumb && c.seq <= covered && !thumbDone.has(c.id)) {
+        thumbDone.add(c.id);
+        thumbRows.push([null, 'none', null, c.id, -1]);
+      }
+    }
     // What the walk passed without finding an attachment on it: the network no longer has one.
     for (const c of pending) {
       if (c.seq > covered) continue;
@@ -143,7 +173,7 @@ export async function backfillAttachments(
         groupRows.push(['', c.id]);
       }
     }
-    if (rows.length > 0 || groupRows.length > 0) {
+    if (rows.length > 0 || groupRows.length > 0 || thumbRows.length > 0) {
       withTransaction(db, () => {
         if (rows.length > 0) insertMany(
           db,
@@ -151,12 +181,20 @@ export async function backfillAttachments(
              (message_id, idx, filename, mime_type, size, kind, width, height, duration_ms, handle, thumb_handle, thumb_state, blur_hash)`,
           rows,
         );
+        for (const [handle, state, blur, id, idx] of thumbRows) {
+          // `idx` -1: every thumbnail-less image or video row of the message.
+          db.prepare(
+            `UPDATE message_attachments SET thumb_handle = ?, thumb_state = ?, blur_hash = COALESCE(?, blur_hash)
+              WHERE message_id = ? AND thumb_state IS NULL AND thumb_handle IS NULL
+                AND kind IN ('image', 'video') AND (? = -1 OR idx = ?)`,
+          ).run(handle, state, blur, id, idx, idx);
+        }
         for (const [group, id] of groupRows) {
           db.prepare('UPDATE conversation_messages SET group_id = ? WHERE id = ?').run(group, id);
         }
         appendChanges(db, [{ kind: 'messages', backend, accountId, conversationId: pending[0].conversationId }]);
       });
-      described += done.size;
+      described += done.size + thumbDone.size;
     }
     if (stop) break;
   }

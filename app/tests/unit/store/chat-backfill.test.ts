@@ -295,5 +295,50 @@ export default async () => {
         db.close();
       }
     });
+
+    await it('gives a described image stored before thumbnails its thumbnail handle', async () => {
+      const db = freshDb();
+      try {
+        const backend = new FakeChatBackend();
+        backend.addChat({ remoteId: '1001', kind: 'direct', title: 'Anna Example', members: [ANNA] });
+        backend.post(
+          '1001',
+          chatMessage('1001', 1, ANNA, null, { hasAttachments: true, attachments: [PHOTO] }),
+          chatMessage('1001', 2, ANNA, null, { hasAttachments: true, attachments: [PHOTO] }),
+        );
+        await syncChats(db, backend, NOW);
+        // What an index from before thumbnails holds: described rows, thumbnail state never set.
+        db.prepare('UPDATE message_attachments SET thumb_state = NULL, thumb_handle = NULL').run();
+        expect(loadAttachments(db, ref('1001', 1))[0].thumbFetchable).toBe(false);
+
+        // The network shows a thumbnail for the first one only.
+        const messages = backend.chats.get('1001')!.messages;
+        messages[0].attachments = [
+          { ...PHOTO, thumbHandle: '{"t":1}', blurHash: 'LEHV6nWB2yk8pyo0adR*.7kCMdnj' },
+        ];
+        backend.rewindable = true;
+        await syncChats(db, backend, NOW);
+
+        const first = loadAttachments(db, ref('1001', 1))[0];
+        expect(first.thumbFetchable).toBe(true);
+        expect(first.blurHash).toBe('LEHV6nWB2yk8pyo0adR*.7kCMdnj');
+        // The second has none: it is settled as 'none', which takes it out of the candidate set.
+        const second = loadAttachments(db, ref('1001', 2))[0];
+        expect(second.thumbFetchable).toBe(false);
+        const state = (seq: number) =>
+          (
+            db
+              .prepare(
+                `SELECT a.thumb_state FROM message_attachments a
+                   JOIN conversation_messages m ON m.id = a.message_id WHERE m.remote_seq = ?`,
+              )
+              .get(seq) as { thumb_state: string | null }
+          ).thumb_state;
+        expect(state(1)).toBe(null);
+        expect(state(2)).toBe('none');
+      } finally {
+        db.close();
+      }
+    });
   });
 };
