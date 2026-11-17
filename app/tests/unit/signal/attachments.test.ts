@@ -164,6 +164,29 @@ export default async () => {
       expect(mapPointer(sealed().pointer).attachments![0]!.blurHash).toBe(undefined);
     });
 
+    await it('maps a received sticker as an image row with a fetchable handle', async () => {
+      const mapper = new SignalMapper(OWN_ACI, groupIdOf);
+      const { pointer } = sealed();
+      const content = decodeContent(
+        encodeContent({
+          dataMessage: { timestamp: 1, sticker: { ...pointer, contentType: 'image/webp' } },
+        }),
+      );
+      const [event] = mapper.map(content, { senderAci: ALICE_ACI, timestamp: 1, groupId: null }).events;
+      if (event?.type !== 'message') throw new Error('expected a message');
+      expect(event.message.hasAttachments).toBe(true);
+      const row = event.message.attachments![0]!;
+      expect(row.kind).toBe('image');
+      expect(row.mimeType).toBe('image/webp');
+      expect(parseAttachmentHandle(row.handle)?.cdnKey).toBe('synthetic-key');
+    });
+
+    await it('maps a voice-note flag to the voice kind with no duration', async () => {
+      const row = mapPointer({ ...sealed().pointer, flags: 1, contentType: 'audio/ogg' }).attachments![0]!;
+      expect(row.kind).toBe('voice');
+      expect(row.durationMs).toBe(null);
+    });
+
     await it('gives a pointer without a key or a CDN address no row', async () => {
       const { pointer } = sealed();
       expect(mapPointer({ ...pointer, key: undefined }).attachments).toBe(undefined);
