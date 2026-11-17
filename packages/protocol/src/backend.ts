@@ -915,6 +915,11 @@ export interface SenderFeatures {
    * cannot is never asked to. Absent means false.
    */
   readReceipts?: boolean;
+  /**
+   * The sender can tell the person's OWN other devices how far they read a chat
+   * (`MessageSender.readSync`), without telling the peer. Absent means false.
+   */
+  readSync?: boolean;
 }
 
 /** A file to send with a message, by absolute path. Only the sender that claims `attachments` reads it. */
@@ -1003,6 +1008,23 @@ export interface SendingReadReceipt {
   target: ReplyTarget;
 }
 
+/**
+ * The person read the chat `to` up to `target`: pushed to their own devices, never to the peer
+ * (Matrix `m.read.private`, Signal `SyncMessage.Read`, XMPP MDS, IMAP `\Seen`). Telegram and
+ * WhatsApp have no private form: their sender only gets this when read receipts are switched on.
+ */
+export interface SendingReadSync {
+  to: string;
+  /** The newest message that was read. */
+  target: ReplyTarget;
+  /** Its `sent_at` as the index holds it (ISO). Signal's read sync names messages by timestamp. */
+  sentAt: string;
+  /** Mail: every UID read, all of the one mailbox the chat lives in. Other protocols ignore it. */
+  uids?: number[];
+  /** Mail: the mailbox (wire name) those UIDs belong to. */
+  folder?: string;
+}
+
 /** What a send returned. `id` is the network's own id and what the write log records (ADR 0004 §7). */
 export interface SentMessage {
   /** The address it went to, exactly as the permit spelled it. */
@@ -1050,6 +1072,8 @@ export interface MessageSender {
   delete?(deletion: SendingDeletion): Promise<void>;
   /** Present exactly when `features.readReceipts` is true. */
   readReceipt?(receipt: SendingReadReceipt): Promise<void>;
+  /** Present exactly when `features.readSync` is true. */
+  readSync?(sync: SendingReadSync): Promise<void>;
   close(): Promise<void>;
 }
 

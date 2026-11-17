@@ -200,6 +200,17 @@ export class ImapClient {
     };
   }
 
+  /**
+   * Mark `uids` of the SELECTED mailbox as read (`UID STORE … +FLAGS (\Seen)`). Only ever called
+   * after a SELECT: the read-state sync is the one path that sets \Seen on purpose.
+   */
+  async storeSeen(uids: number[]): Promise<void> {
+    if (uids.length === 0) return;
+    const set = uids.map((u) => Math.trunc(u)).join(',');
+    const r = await this.command(`UID STORE ${set} +FLAGS.SILENT (\\Seen)`);
+    if (!r.ok) throw new GnomeError('IMAP UID STORE \\Seen failed');
+  }
+
   /** Open a mailbox read-only. Cannot set \Seen even by accident. */
   async examine(path: string): Promise<MailboxStatus> {
     const r = await this.command(`EXAMINE ${quoteImapString(path)}`);

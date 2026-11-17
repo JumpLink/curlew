@@ -1,6 +1,7 @@
 /** App-wide presentation settings; agent permissions stay in their own dialog. */
 
 import Adw from 'gi://Adw?version=1';
+import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 import { configPath } from '@curlew/store';
@@ -47,10 +48,20 @@ export function presentPreferences(
   if (!chatOnly()) group.add(row);
   const receipts = new Adw.SwitchRow({
     title: _('Send read receipts'),
-    subtitle: _('Tell a Delta Chat contact when you have read their message, if they asked for it'),
+    subtitle: _(
+      'Tell the other person when you have read their message. On Delta Chat only if they asked for it',
+    ),
     active: loadConfig(path).ui.sendReadReceipts === true,
   });
   group.add(receipts);
+  const syncRead = new Adw.SwitchRow({
+    title: _('Sync read state to your other devices'),
+    subtitle: _(
+      'Your other devices show what you have read here. On Telegram and WhatsApp the other person sees it too, so there only with read receipts on',
+    ),
+    active: loadConfig(path).ui.syncReadState !== false,
+  });
+  group.add(syncRead);
   const modes = ['preview', 'sender', 'off'] as const;
   const notifications = new Adw.ComboRow({
     title: _('Message notifications'),
@@ -115,6 +126,17 @@ export function presentPreferences(
       );
     }
   });
+  syncRead.connect('notify::active', () => {
+    try {
+      const config = loadConfig(path);
+      config.ui.syncReadState = syncRead.get_active();
+      saveConfig(config, path);
+    } catch (err) {
+      overlay.add_toast(
+        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
+      );
+    }
+  });
   videos.connect('notify::active', () => {
     try {
       const config = loadConfig(path);
@@ -151,4 +173,7 @@ export function presentPreferences(
     }
   });
   dialog.present(parent);
+  // The screenshot hook `CURLEW_PREFERENCES_SCROLL_TO_SYNC=1` brings the read-state switch into view.
+  if (process.env.CURLEW_PREFERENCES_SCROLL_TO_SYNC === '1')
+    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 500, () => (syncRead.grab_focus(), GLib.SOURCE_REMOVE));
 }

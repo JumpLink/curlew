@@ -217,6 +217,9 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
     editMessage: async (chatId, messageId, text) => {
       await client.editMessage({ chatId, message: messageId, text });
     },
+    readHistory: async (chatId, messageId) => {
+      await client.readHistory(chatId, { maxId: messageId });
+    },
     deleteMessage: (chatId, messageId) => client.deleteMessagesById(chatId, [messageId], { revoke: true }),
     sendFile: (chatId, file) =>
       client.sendMedia(

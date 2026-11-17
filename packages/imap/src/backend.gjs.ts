@@ -316,7 +316,27 @@ export class ImapBackend implements MailBackend, SendBackend {
    * The permit is checked again on every send; this method reads no password.
    */
   async openSender(accountId: string, permit: SendPermit): Promise<MessageSender> {
-    return openMailSender(accountId, permit, (raw, id) => this.fileSent(accountId, raw, id));
+    return openMailSender(
+      accountId,
+      permit,
+      (raw, id) => this.fileSent(accountId, raw, id),
+      (_to, folder, uids) => this.markSeen(accountId, folder, uids),
+    );
+  }
+
+  /** Own IMAP connection per sync, like the sent copy: SELECT the mailbox, then `\Seen` the UIDs. */
+  private async markSeen(accountId: string, folder: string, uids: number[]): Promise<void> {
+    const target = (await this.allTargets()).find((t) => t.accountId === accountId);
+    if (!target) throw new Error(`no mail account with id ${accountId}`);
+    const client = new ImapClient();
+    await client.connect(target);
+    try {
+      await client.login(target.user, await target.getPassword());
+      await client.select(folder);
+      await client.storeSeen(uids);
+    } finally {
+      await client.logout();
+    }
   }
 
   /** Own IMAP connection per copy: the send path holds none, and the daemon's is not ours to use. */

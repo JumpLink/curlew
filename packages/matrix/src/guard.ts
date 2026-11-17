@@ -66,6 +66,12 @@ const SEND = new RegExp(String.raw`${CLIENT}/rooms/([^/]+)/send/m\.(?:room\.mess
 /** Taking a reaction back: `PUT /rooms/{roomId}/redact/{eventId}/{txnId}`. */
 const REDACT = new RegExp(String.raw`${CLIENT}/rooms/([^/]+)/redact/[^/]+/[^/]+$`);
 
+/**
+ * A PRIVATE read receipt: `POST /rooms/{roomId}/receipt/m.read.private/{eventId}`. Only the
+ * private type: `m.read` would tell the other members (ADR 0004, amended).
+ */
+const PRIVATE_RECEIPT = new RegExp(String.raw`${CLIENT}/rooms/([^/]+)/receipt/m\.read\.private/[^/]+$`);
+
 /** The media upload: `POST /_matrix/media/v3/upload`, outside the `/client/` tree. */
 const UPLOAD = /^\/_matrix\/media\/(?:v3|r0|v1)\/upload$/;
 
@@ -84,6 +90,18 @@ export function sendRefusal(method: string, url: string, rooms: readonly string[
       if (UPLOAD.test(new URL(url).pathname)) return null;
     } catch {
       return `not a URL: ${url}`;
+    }
+  }
+  if (method.toUpperCase() === 'POST') {
+    let parsed: URL;
+    try {
+      parsed = new URL(url);
+    } catch {
+      return `not a URL: ${url}`;
+    }
+    const match = PRIVATE_RECEIPT.exec(parsed.pathname);
+    if (match) {
+      return rooms.includes(decodeURIComponent(match[1])) ? null : 'a read marker in a room no grant names';
     }
   }
   if (method.toUpperCase() === 'PUT') {

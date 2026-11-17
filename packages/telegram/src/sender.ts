@@ -19,6 +19,7 @@ import {
   type SendingEdit,
   type SendingMessage,
   type SendingReaction,
+  type SendingReadSync,
   type SendPermit,
   type SenderFeatures,
   type SentMessage,
@@ -64,6 +65,7 @@ export class TelegramSender implements MessageSender {
     reactions: true,
     edits: true,
     deletes: true,
+    readSync: true,
   };
   private readonly client: TelegramClientHandle;
   private readonly permit: SendPermit;
@@ -158,6 +160,13 @@ export class TelegramSender implements MessageSender {
       );
     }
     await this.client.editMessage(chatId, number, edit.text);
+  }
+
+  /** Marks the chat read up to the newest read message (Telegram has no private form; ADR 0004). */
+  async readSync(sync: SendingReadSync): Promise<void> {
+    const chatId = this.chatId(sync.to);
+    if (sync.target.fromSelf === true) return;
+    await this.client.readHistory(chatId, replyNumber(chatId, sync.target.remoteId));
   }
 
   /** Deletes one of the person's own messages for everyone. */

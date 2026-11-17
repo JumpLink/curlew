@@ -24,6 +24,8 @@ import {
   type DaemonAccessRequest,
   type DaemonFetchAttachmentReply,
   type DaemonFetchAvatarsReply,
+  type DaemonSyncReadReply,
+  type DaemonSyncReadRequest,
   type DaemonFetchAvatarsRequest,
   type DaemonFetchAttachmentRequest,
   type DaemonSendReply,
@@ -33,6 +35,7 @@ import {
   parseDaemonAccessRequest,
   parseDaemonFetchAttachmentRequest,
   parseDaemonFetchAvatarsRequest,
+  parseDaemonSyncReadRequest,
   parseDaemonSendWire,
   planFdFiles,
 } from './daemon-bus.ts';
@@ -47,6 +50,9 @@ export type DaemonFetchHandler = (request: DaemonFetchAttachmentRequest) => Prom
 
 /** Answer one avatar fetch. Never throws: every outcome is a reply. */
 export type DaemonAvatarsHandler = (request: DaemonFetchAvatarsRequest) => Promise<DaemonFetchAvatarsReply>;
+
+/** Answer one read-state sync. Never throws: every outcome is a reply. */
+export type DaemonSyncReadHandler = (request: DaemonSyncReadRequest) => Promise<DaemonSyncReadReply>;
 
 /** Answer one access question (ADR 0009). Never throws: every outcome is a reply. */
 export type DaemonAccessHandler = (request: DaemonAccessRequest) => Promise<AccessReply>;
@@ -71,6 +77,8 @@ export interface PublishOptions {
   fetch?: DaemonFetchHandler;
   /** Serves `FetchAvatars`. Absent: the method answers `UnknownMethod`. */
   avatars?: DaemonAvatarsHandler;
+  /** Serves `SyncRead`. Absent: the method answers `UnknownMethod`. */
+  syncRead?: DaemonSyncReadHandler;
   /** A caller that asked left the bus: its session is over and so are its grants. */
   onSessionEnd?: (session: string) => void;
 }
@@ -159,6 +167,23 @@ export function publishDaemonSend(
         },
         (error: unknown) => {
           log(`curlew-daemon: the access handler threw — ${reasonOf(error)}`);
+          invocation.return_dbus_error('org.freedesktop.DBus.Error.Failed', reasonOf(error));
+        },
+      );
+      return;
+    }
+    if (method === 'SyncRead' && options.syncRead) {
+      let request: DaemonSyncReadRequest;
+      try {
+        request = parseDaemonSyncReadRequest((params.recursiveUnpack() as [string])[0]);
+      } catch (error) {
+        invocation.return_dbus_error('org.freedesktop.DBus.Error.InvalidArgs', reasonOf(error));
+        return;
+      }
+      options.syncRead(request).then(
+        (reply) => invocation.return_value(new GLib.Variant('(s)', [JSON.stringify(reply)])),
+        (error: unknown) => {
+          log(`curlew-daemon: the read-sync handler threw — ${reasonOf(error)}`);
           invocation.return_dbus_error('org.freedesktop.DBus.Error.Failed', reasonOf(error));
         },
       );
