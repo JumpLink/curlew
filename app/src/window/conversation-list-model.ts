@@ -314,6 +314,8 @@ const SEND_KIND: Readonly<Record<string, AddressKind>> = {
  */
 export function targetOf(conversation: Conversation, room: RoomFacts | null = null): string | null {
   if (conversation.backend === 'matrix') return room?.chatId ?? null;
+  // A Telegram group or channel is sent to by its marked chat id (negative), as the index stores it.
+  if (conversation.backend === 'telegram' && conversation.kind === 'group') return room?.chatId ?? null;
   if (conversation.kind !== 'direct' || conversation.participants.length !== 1) return null;
   const kind = SEND_KIND[conversation.backend];
   if (kind === undefined) return null;
@@ -339,7 +341,9 @@ export function toEntry(
     target:
       conversation.backend === 'matrix'
         ? targetOf(conversation, room)
-        : (selfAddressOf(conversation, identity) ?? targetOf(conversation)),
+        : conversation.backend === 'telegram' && conversation.kind === 'group'
+          ? targetOf(conversation, room)
+          : (selfAddressOf(conversation, identity) ?? targetOf(conversation)),
     emailChat: conversation.emailChat,
     room: conversation.backend === 'matrix' ? room : null,
     ...(peerFeatures ? { peerFeatures } : {}),
@@ -370,7 +374,8 @@ function personOf(conversation: Conversation, identity?: string): string | null 
 }
 
 /**
- * Why the composer cannot be used in this conversation, or null when it can. An encrypted Matrix
+ * Why the composer cannot be used in this conversation, or null when it can. A group no backend
+ * can send to yet (Signal, WhatsApp, XMPP) says so instead of losing the composer. An encrypted Matrix
  * room is the one case: curlew has no way to encrypt, and a cleartext message there would be
  * readable by the server and defeat what the room's members chose (the send path refuses it too;
  * this only says so before anyone types). Unknown encryption is not a block — the sender asks the
@@ -382,7 +387,25 @@ export function composerBlock(entry: ListEntry): string | null {
       protocol: protocolLabel(entry.pin),
     });
   }
-  return entry.room?.encrypted === true ? _('Encrypted rooms are not supported yet') : null;
+  if (entry.room?.encrypted === true) return _('Encrypted rooms are not supported yet');
+  return unsupportedGroup(entry);
+}
+
+/** The line for a group chat nothing can send to yet; null for a chat that can send, or mail, which keeps its own rules. */
+function unsupportedGroup(entry: ListEntry): string | null {
+  if (canSend(entry) || entry.kind !== 'group') return null;
+  switch (entry.backend) {
+    case 'signal':
+      return _('Sending to Signal groups is not supported yet');
+    case 'whatsapp':
+      return _('Sending to WhatsApp groups is not supported yet');
+    case 'telegram':
+      return _('This Telegram chat is not ready to send to yet');
+    case 'xmpp':
+      return _('Sending to XMPP groups is not supported yet');
+    default:
+      return null;
+  }
 }
 
 /** True when the composer has at least one carrier it can send through. */

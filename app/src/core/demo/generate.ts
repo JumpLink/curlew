@@ -1081,6 +1081,11 @@ export function generateDemo(dir: string, now: number = Date.now(), lang: DemoLa
     cursor.run('c18', '!libadwaita:example.org', 'group', 1, 0, 2310);
     cursor.run('c19', '!typescript:example.org', 'group', 1, 0, 8420);
     cursor.run('c20', '!gjsify:example.org', 'group', 1, 0, 184);
+    // A Telegram group's chat id is its negative marked id; the composer sends to it as is.
+    db.prepare(
+      `INSERT OR REPLACE INTO chat_cursors (conversation_id, backend, account_id, chat_id, kind)
+       VALUES ('c23', 'telegram', 'telegram-demo1', '-1001234567', 'group')`,
+    ).run();
 
     const participant = db.prepare('INSERT OR REPLACE INTO participants (id, display_name) VALUES (?, ?)');
     const address = db.prepare(
