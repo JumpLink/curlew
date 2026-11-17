@@ -20,8 +20,10 @@ import { readFileSync } from 'node:fs';
 
 import {
   _,
+  type ChatAttachment,
   fmt,
   type MessageSender,
+  probeMediaFile,
   type SendingDeletion,
   type SendingEdit,
   type SendingMessage,
@@ -31,6 +33,8 @@ import {
   type SentMessage,
 } from '@curlew/protocol';
 import { inspectSendFiles, type SendFile } from '@curlew/store';
+
+import { attachmentHandle, attachmentKind } from './map.ts';
 
 /**
  * The longest text one message may carry. curlew refuses more rather than splitting it.
@@ -79,13 +83,19 @@ export interface MatrixSendSession {
 
 /** One file event: its `msgtype` follows the type, the caption (if any) is the body. */
 export interface FileEvent {
-  msgtype: 'm.image' | 'm.file';
+  msgtype: 'm.image' | 'm.video' | 'm.audio' | 'm.file';
   /** `mxc://` URI the upload returned. */
   url: string;
   filename: string;
   size: number;
   contentType: string;
   caption?: string;
+  width?: number;
+  height?: number;
+  /** Milliseconds, as `info.duration` takes them. */
+  durationMs?: number;
+  /** An Ogg Opus mono voice note (MSC3245). */
+  voice?: boolean;
   /** The event this one answers (`m.in_reply_to`). */
   replyTo?: string;
 }
@@ -318,7 +328,21 @@ export function matrixSendApi(session: MatrixSendSession): MatrixSendApi {
           body: file.caption ?? file.filename,
           filename: file.filename,
           url: file.url,
-          info: { mimetype: file.contentType, size: file.size },
+          info: {
+            mimetype: file.contentType,
+            size: file.size,
+            ...(file.width !== undefined ? { w: file.width } : {}),
+            ...(file.height !== undefined ? { h: file.height } : {}),
+            ...(file.durationMs !== undefined ? { duration: file.durationMs } : {}),
+          },
+          ...(file.voice === true
+            ? {
+                'org.matrix.msc3245.voice': {},
+                ...(file.durationMs !== undefined
+                  ? { 'org.matrix.msc1767.audio': { duration: file.durationMs } }
+                  : {}),
+              }
+            : {}),
           ...relation(file.replyTo),
         },
         txnId,
@@ -423,21 +447,49 @@ export class MatrixSender implements MessageSender {
   ): Promise<SentMessage> {
     const caption = message.text.trim().length === 0 ? undefined : message.text;
     let first: string | undefined;
+    const echoAttachments: ChatAttachment[] = [];
     for (const [index, file] of files.entries()) {
+      const probe = probeMediaFile(file.realPath, file.contentType);
+      const major = file.contentType.split('/')[0];
+      const msgtype = probe.voice
+        ? 'm.audio'
+        : major === 'image'
+          ? 'm.image'
+          : major === 'video'
+            ? 'm.video'
+            : major === 'audio'
+              ? 'm.audio'
+              : 'm.file';
+      const durationMs = probe.durationMs === null ? undefined : Math.round(probe.durationMs);
       const url = await this.api.uploadFile(readFileSync(file.realPath), file.contentType, file.filename);
       const eventId = await this.api.sendFile(
         roomId,
         {
-          msgtype: file.contentType.startsWith('image/') ? 'm.image' : 'm.file',
+          msgtype,
           url,
           filename: file.filename,
           size: file.size,
           contentType: file.contentType,
+          ...(probe.width !== null ? { width: probe.width } : {}),
+          ...(probe.height !== null ? { height: probe.height } : {}),
+          ...(durationMs !== undefined ? { durationMs } : {}),
+          ...(probe.voice ? { voice: true } : {}),
           ...(index === 0 && caption !== undefined ? { caption } : {}),
           ...(index === 0 && message.replyTo !== undefined ? { replyTo: message.replyTo.remoteId } : {}),
         },
         nextTxnId(),
       );
+      // The same row the sync writes for this event, so the delivered copy adopts the echo cleanly.
+      echoAttachments.push({
+        filename: file.filename,
+        mimeType: file.contentType,
+        size: file.size,
+        kind: attachmentKind(msgtype, file.contentType, probe.voice),
+        width: probe.width,
+        height: probe.height,
+        durationMs: durationMs ?? null,
+        handle: attachmentHandle(url, file.size),
+      });
       first ??= eventId;
     }
     return {
@@ -447,6 +499,7 @@ export class MatrixSender implements MessageSender {
       chatRemoteId: roomId,
       encrypted: false,
       attachments: files.map((f) => ({ filename: f.filename, size: f.size })),
+      echoAttachments,
     };
   }
 

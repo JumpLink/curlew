@@ -145,6 +145,41 @@ export default async () => {
       expect(sticker?.filename).toBe(null);
     });
 
+    await it('maps the poster handle and blurHash of a video, and downloads the poster like a file', async () => {
+      const thumb = 'mxc://example.org/poster1';
+      const video = map(
+        file({
+          msgtype: 'm.video',
+          body: 'c.mp4',
+          info: {
+            mimetype: 'video/mp4',
+            size: 9,
+            duration: 4000,
+            thumbnail_url: thumb,
+            'xyz.amorgan.blurhash': 'LEHV6nWB2yk8pyo0adR*.7kCMdnj',
+          },
+        }),
+      )?.attachments?.[0];
+      expect(video?.thumbHandle).toBe(attachmentHandle(thumb, null));
+      expect(video?.blurHash).toBe('LEHV6nWB2yk8pyo0adR*.7kCMdnj');
+      // An encrypted-room poster (`thumbnail_file`) and a foreign URL give none.
+      const none = map(file({ info: { mimetype: 'video/mp4', thumbnail_url: 'https://example.org/x' } }))
+        ?.attachments?.[0];
+      expect(none?.thumbHandle === undefined).toBe(true);
+
+      const routes = {
+        '/_matrix/client/v1/media/download/example.org/poster1': {
+          status: 200,
+          body: new Uint8Array([7, 8, 9]),
+        },
+      };
+      await withBackend(routes, async (backend, accountId) => {
+        const sink = new MemorySink();
+        const result = await fetchWith(backend, accountId, video!.thumbHandle!, sink);
+        expect(result.size).toBe(3);
+      });
+    });
+
     await it('gives an encrypted or url-less file no attachment row', async () => {
       const encrypted = map(file({ url: undefined, file: { url: MXC, key: {}, iv: 'x', hashes: {} } }));
       expect(encrypted?.attachments === undefined).toBe(true);
