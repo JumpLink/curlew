@@ -43,6 +43,11 @@ export const NS = {
   moderateLegacy: 'urn:xmpp:message-moderate:0',
   sid: 'urn:xmpp:sid:0',
   oob: 'jabber:x:oob',
+  sfs: 'urn:xmpp:sfs:0',
+  fileMetadata: 'urn:xmpp:file:metadata:0',
+  reference: 'urn:xmpp:reference:0',
+  sims: 'urn:xmpp:sims:1',
+  jingleFile: 'urn:xmpp:jingle:apps:file-transfer:5',
   reply: 'urn:xmpp:reply:0',
   reactions: 'urn:xmpp:reactions:0',
   fallback: 'urn:xmpp:fallback:0',
@@ -239,6 +244,52 @@ export function parseFin(fin: XmlElement | undefined): MamFin {
   };
 }
 
+/** One file's metadata as the sender declared it; `url` is the source it names, when it names one. */
+export interface FileMeta {
+  url: string | null;
+  mimeType: string | null;
+  size: number | null;
+  width: number | null;
+  height: number | null;
+  durationMs: number | null;
+}
+
+function positive(text: string | null | undefined): number | null {
+  const n = Number(text?.trim());
+  return text && Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+}
+
+function metaOf(file: XmlElement | undefined, url: string | null): FileMeta | null {
+  if (!file) return null;
+  const meta: FileMeta = {
+    url,
+    mimeType: file.getChildText('media-type')?.trim() || null,
+    size: positive(file.getChildText('size')),
+    width: positive(file.getChildText('width')),
+    height: positive(file.getChildText('height')),
+    durationMs: positive(file.getChildText('length')),
+  };
+  return meta.mimeType || meta.size || meta.width || meta.height || meta.durationMs ? meta : null;
+}
+
+/** XEP-0447 file-sharing and the older SIMS references of a message. */
+export function fileMetaOf(message: XmlElement): FileMeta[] {
+  const out: FileMeta[] = [];
+  for (const sharing of message.getChildren('file-sharing', NS.sfs)) {
+    const url = sharing.getChild('sources')?.getChildren('url-data')[0]?.attrs.target ?? null;
+    const meta = metaOf(sharing.getChild('file', NS.fileMetadata), url);
+    if (meta) out.push(meta);
+  }
+  for (const reference of message.getChildren('reference', NS.reference)) {
+    const sims = reference.getChild('media-sharing', NS.sims);
+    if (!sims) continue;
+    const url = sims.getChild('sources')?.getChildren('reference')[0]?.attrs.uri ?? null;
+    const meta = metaOf(sims.getChild('file', NS.jingleFile), url);
+    if (meta) out.push(meta);
+  }
+  return out;
+}
+
 /** One archived stanza, reduced to what the index needs. */
 export interface ArchivedEntry {
   /** The archive's id for it — for a MUC archive also the room's stanza-id. */
@@ -260,6 +311,8 @@ export interface ArchivedEntry {
   tombstone: boolean;
   /** Out-of-band URLs (XEP-0066) — what HTTP upload attachments are. */
   attachmentUrls: string[];
+  /** What the stanza says about its files (XEP-0447 / XEP-0446, XEP-0385 SIMS); absent when it says nothing. */
+  fileMeta?: FileMeta[];
   /** XEP-0461: the id of the message this one replies to. */
   replyToId: string | null;
   /** XEP-0444: the message reacted to and the person's whole set of emoji for it (may be empty). */
@@ -390,6 +443,7 @@ export function parseMamResult(
   });
   const occupant = message.getChild('x', NS.mucUser)?.getChild('item')?.attrs.jid;
   const omemo = omemoOf(message);
+  const fileMeta = fileMetaOf(message);
   return {
     archiveId: result.attrs.id,
     stampMs: stampOf(forwarded),
@@ -403,6 +457,7 @@ export function parseMamResult(
     retract: retractOf(message),
     tombstone: isTombstone(message),
     attachmentUrls: oob,
+    ...(fileMeta.length > 0 ? { fileMeta } : {}),
     replyToId: message.getChild('reply', NS.reply)?.attrs.id ?? null,
     reactions: reactionsOf(message),
     encrypted:

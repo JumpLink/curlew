@@ -16,6 +16,7 @@ import {
 import {
   accountIdFor,
   assignSeqs,
+  attachmentsOfLinks,
   buildPage,
   type ChatContext,
   discoverEndpoints,
@@ -205,6 +206,37 @@ export default async () => {
       });
       expect(upload.attachmentUrls.join()).toBe('https://upload.example.org/x.jpg');
       expect(upload.replyToId).toBe('s1');
+      expect(upload.fileMeta).toBe(undefined);
+      const sfs = entry({
+        id: 'a7b',
+        at: at(7),
+        from: ANNA,
+        body: 'https://upload.example.org/y.jpg',
+        extra:
+          `<x xmlns="${NS.oob}"><url>https://upload.example.org/y.jpg</url></x>` +
+          `<file-sharing xmlns="${NS.sfs}"><file xmlns="${NS.fileMetadata}"><media-type>image/jpeg</media-type>` +
+          `<size>4096</size><width>640</width><height>480</height></file>` +
+          `<sources><url-data xmlns="http://jabber.org/protocol/url-data" target="https://upload.example.org/y.jpg"/></sources></file-sharing>`,
+      });
+      expect(sfs.fileMeta?.[0].size).toBe(4096);
+      expect(sfs.fileMeta?.[0].width).toBe(640);
+      expect(sfs.fileMeta?.[0].url).toBe('https://upload.example.org/y.jpg');
+      const sims = entry({
+        id: 'a7c',
+        at: at(7),
+        from: ANNA,
+        body: 'https://upload.example.org/z.mp4',
+        extra:
+          `<reference xmlns="${NS.reference}" type="data"><media-sharing xmlns="${NS.sims}">` +
+          `<file xmlns="${NS.jingleFile}"><media-type>video/mp4</media-type><size>9000</size><length>1500</length></file>` +
+          `<sources><reference xmlns="${NS.reference}" uri="https://upload.example.org/z.mp4" type="data"/></sources></media-sharing></reference>`,
+      });
+      expect(sims.fileMeta?.[0].mimeType).toBe('video/mp4');
+      expect(sims.fileMeta?.[0].durationMs).toBe(1500);
+      const [mapped] = attachmentsOfLinks(['https://upload.example.org/y.jpg'], sfs.fileMeta);
+      expect(mapped.size).toBe(4096);
+      expect(mapped.height).toBe(480);
+      expect(mapped.mimeType).toBe('image/jpeg');
       const omemo = entry({
         id: 'a8',
         at: at(8),

@@ -2,7 +2,9 @@ import { describe, expect, it } from '@gjsify/unit';
 import type { AttachmentKind } from '../../../src/window/attachment-model.ts';
 
 import {
+  AUTO_FETCH_IMAGE_MAX_BYTES,
   attachmentKind,
+  autoFetchLimit,
   boundedSize,
   durationLabel,
   effectiveMime,
@@ -101,7 +103,7 @@ export default async () => {
       };
       expect(shouldAutoFetch({ ...chat, size: 1_000_000 })).toBe(true);
       expect(shouldAutoFetch({ ...chat, size: 3_000_000 })).toBe(false);
-      expect(shouldAutoFetch({ ...chat, size: null })).toBe(false);
+      expect(shouldAutoFetch({ ...chat, size: null })).toBe(true);
       expect(shouldAutoFetch({ ...chat, size: 1000, backendCanFetch: false })).toBe(false);
       expect(shouldAutoFetch({ ...chat, size: 1000, mimeType: 'application/pdf', filename: 'a.pdf' })).toBe(
         false,
@@ -125,7 +127,19 @@ export default async () => {
       };
       expect(showsInline({ ...chat, size: 1_000_000 })).toBe(true);
       expect(showsInline({ ...chat, size: 5_000_000 })).toBe(false);
-      expect(showsInline({ ...chat, size: null })).toBe(false);
+      expect(showsInline({ ...chat, size: null })).toBe(true);
+    });
+
+    await it('caps an unknown-size chat image fetch', async () => {
+      const chat = {
+        filename: 'x.png',
+        mimeType: 'image/png',
+        index: 0,
+        fetchable: true,
+        backendCanFetch: true,
+      };
+      expect(autoFetchLimit({ ...chat, size: null })).toBe(AUTO_FETCH_IMAGE_MAX_BYTES);
+      expect(autoFetchLimit({ ...chat, size: 1000 })).toBe(undefined);
     });
 
     await it('leaves huge images, other kinds and unfetchable parts to the tile', async () => {

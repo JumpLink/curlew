@@ -9,6 +9,7 @@
 import { readFileSync } from 'node:fs';
 
 import type {
+  ChatAttachment,
   MessageSender,
   ReplyTarget,
   SenderFeatures,
@@ -18,7 +19,9 @@ import type {
   SendingReaction,
   SentMessage,
 } from '@curlew/protocol';
+import { probeMediaFile } from '@curlew/protocol';
 import { inspectSendFiles } from '@curlew/store';
+import { attachmentsOfLinks } from './attachment-link.ts';
 import type { GrantedXmppSession, SentChat } from './granted.ts';
 import { MESSAGES } from './messages.ts';
 
@@ -29,6 +32,27 @@ function sent(sentChat: SentChat): SentMessage {
     sentAt: sentChat.sentAt,
     chatRemoteId: sentChat.chatJid,
     encrypted: sentChat.encrypted,
+  };
+}
+
+/** The row the index holds for a file just sent: what a received copy of the same link maps to, plus what we know. */
+function echoOf(
+  link: string | undefined,
+  file: { realPath: string; contentType: string; size: number },
+): ChatAttachment | null {
+  if (link === undefined) return null;
+  const [row] = attachmentsOfLinks([link]);
+  if (row === undefined) return null;
+  const probe = probeMediaFile(file.realPath, file.contentType);
+  const major = file.contentType.split('/')[0];
+  return {
+    ...row,
+    mimeType: file.contentType,
+    size: file.size,
+    kind: major === 'image' || major === 'video' || major === 'audio' ? major : 'file',
+    width: probe.width,
+    height: probe.height,
+    durationMs: probe.durationMs,
   };
 }
 
@@ -78,14 +102,17 @@ export class XmppSender implements MessageSender {
     if (files.length === 0) return sent(await this.session.send(message.to, message.text, undefined, answers));
     let first: SentMessage | undefined;
     for (const file of files) {
-      const out = sent(
-        await this.session.sendFile(message.to, {
-          bytes: readFileSync(file.realPath),
-          filename: file.filename,
-          contentType: file.contentType,
-        }),
-      );
-      first ??= { ...out, attachments: files.map((f) => ({ filename: f.filename, size: f.size })) };
+      const chat = await this.session.sendFile(message.to, {
+        bytes: readFileSync(file.realPath),
+        filename: file.filename,
+        contentType: file.contentType,
+      });
+      const echo = echoOf(chat.link, file);
+      first ??= {
+        ...sent(chat),
+        attachments: files.map((f) => ({ filename: f.filename, size: f.size })),
+        ...(echo === null ? {} : { echoAttachments: [echo] }),
+      };
     }
     if (message.text.trim().length > 0) await this.session.send(message.to, message.text, undefined, answers);
     return first!;

@@ -92,7 +92,11 @@ function trimPreviews(
  * cap is the highest one the actions allow, not the 25 MB default meant for an agent: a phone video
  * is often bigger than that.
  */
-export function fetchAttachment(source: AttachmentSource, root = previewsDir()): Promise<string> {
+export function fetchAttachment(
+  source: AttachmentSource,
+  root = previewsDir(),
+  maxBytes: number = ATTACHMENT_BYTES.max,
+): Promise<string> {
   const { ref, info } = source;
   const dir = partDir(source, root);
   const hit = cachedFile(dir);
@@ -110,13 +114,13 @@ export function fetchAttachment(source: AttachmentSource, root = previewsDir()):
             ...(ref.folder ? { folder: ref.folder } : {}),
             section: info.section,
             directory: dir,
-            maxBytes: ATTACHMENT_BYTES.max,
+            maxBytes,
           })
         : await chatSaveAttachment({
             ref,
             index: info.index as number,
             directory: dir,
-            maxBytes: ATTACHMENT_BYTES.max,
+            maxBytes,
           });
     trimPreviews(root, [basename(dir)]);
     return saved.path;

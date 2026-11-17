@@ -35,6 +35,8 @@ export interface SentChat {
   sentAt: string;
   /** Whether it went out under OMEMO. False means the peer has none, never a fallback (§7). */
   encrypted: boolean;
+  /** For a file: the link as the peer received it (with the `aesgcm://` key fragment under OMEMO). */
+  link?: string;
 }
 
 /** A file for `sendFile`: the bytes are read already, the name is shown to the peer. */
@@ -218,7 +220,7 @@ export class GrantedXmppSession {
       });
       await this.link.putFile(slot, file);
       await this.link.sendChat(chatJid, originId, slot.getUrl, slot.getUrl);
-      return { chatJid, originId, sentAt: now().toISOString(), encrypted: false };
+      return { chatJid, originId, sentAt: now().toISOString(), encrypted: false, link: slot.getUrl };
     }
     const omemo = this.omemo!;
     const key = crypto.getRandomValues(new Uint8Array(32));
@@ -230,10 +232,11 @@ export class GrantedXmppSession {
     await this.link.putFile(slot, { bytes, contentType, filename: file.filename });
     const link = checkedSlotUrl(slot.getUrl);
     if (link === null) throw new Error(MESSAGES.uploadBadSlot(file.filename));
-    const encrypted = await omemo.encrypt(chatJid, `aesgcm:${link.slice('https:'.length)}#${toHex(iv)}${toHex(key)}`);
+    const aesgcmLink = `aesgcm:${link.slice('https:'.length)}#${toHex(iv)}${toHex(key)}`;
+    const encrypted = await omemo.encrypt(chatJid, aesgcmLink);
     if (encrypted === null) throw new Error(MESSAGES.encryptionLost(chatJid));
     await this.link.sendEncrypted(chatJid, originId, encrypted, MESSAGES.omemoFallback);
-    return { chatJid, originId, sentAt: now().toISOString(), encrypted: true };
+    return { chatJid, originId, sentAt: now().toISOString(), encrypted: true, link: aesgcmLink };
   }
 
   /** The bare JID to send to, or a throw: the permit is re-checked on every send (ADR 0004 §5). */

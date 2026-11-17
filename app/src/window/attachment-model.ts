@@ -66,15 +66,19 @@ export const INLINE_IMAGE_MAX_BYTES = 12_000_000;
 /** A chat image is fetched on its own only up to this size; a larger one waits for a tap (ADR 0010). */
 export const AUTO_FETCH_IMAGE_MAX_BYTES = 2_000_000;
 
-/** Whether a chat image is small enough to be fetched without a tap once its bubble is in view. */
+/**
+ * Whether a chat image is small enough to be fetched without a tap once its bubble is in view.
+ * An image of unknown size is tried too, under the same cap (see {@link autoFetchLimit}): the
+ * fetch aborts past it and the bubble then shows the tile.
+ */
 export function shouldAutoFetch(info: AttachmentInfo): boolean {
-  return (
-    isOpenable(info) &&
-    attachmentKind(info) === 'image' &&
-    info.size !== null &&
-    info.size !== undefined &&
-    info.size <= AUTO_FETCH_IMAGE_MAX_BYTES
-  );
+  if (!isOpenable(info) || attachmentKind(info) !== 'image') return false;
+  return info.size === null || info.size === undefined || info.size <= AUTO_FETCH_IMAGE_MAX_BYTES;
+}
+
+/** The byte cap for fetching a part unasked: set only when its size is not known beforehand. */
+export function autoFetchLimit(info: AttachmentInfo): number | undefined {
+  return info.size === null || info.size === undefined ? AUTO_FETCH_IMAGE_MAX_BYTES : undefined;
 }
 
 /** What a video's poster is painted from (ADR 0017); a video is never fetched whole to get one. */
