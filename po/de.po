@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 10:12+0100\n"
+"POT-Creation-Date: 2026-11-17 11:54+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2536,7 +2536,7 @@ msgid "Could not fetch the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
 #: app/src/window/attachment-view.ts:156 app/src/window/attachment-view.ts:165
-#: app/src/window/conversation-list-model.ts:503
+#: app/src/window/conversation-list-model.ts:526
 #: app/src/window/conversation-model.ts:318
 #: app/src/window/conversation-model.ts:323
 msgid "Attachment"
@@ -2644,7 +2644,7 @@ msgid "The newest chat decides"
 msgstr "Der neueste Chat entscheidet"
 
 #: app/src/window/contact-page.ts:264 app/src/window/contact-page.ts:279
-#: app/src/window/conversation-list-model.ts:444
+#: app/src/window/conversation-list-model.ts:467
 msgid "Automatic"
 msgstr "Automatisch"
 
@@ -2758,8 +2758,8 @@ msgid "Yesterday"
 msgstr "Gestern"
 
 #: app/src/window/conversation-list-model.ts:273
-#: app/src/window/conversation-list-model.ts:711
-#: app/src/window/conversation-list-model.ts:936
+#: app/src/window/conversation-list-model.ts:734
+#: app/src/window/conversation-list-model.ts:959
 msgid "Note to self"
 msgstr "Notiz an mich"
 
@@ -2773,44 +2773,60 @@ msgstr[1] "Unbenannte Gruppe · {count} Mitglieder"
 msgid "Unnamed conversation"
 msgstr "Unbenannte Unterhaltung"
 
-#: app/src/window/conversation-list-model.ts:381
+#: app/src/window/conversation-list-model.ts:386
 msgid "Only via {protocol}, which has no address for this person"
 msgstr "Nur über {protocol}, das keine Adresse für diese Person hat"
 
-#: app/src/window/conversation-list-model.ts:385
+#: app/src/window/conversation-list-model.ts:390
 msgid "Encrypted rooms are not supported yet"
 msgstr "Verschlüsselte Räume werden noch nicht unterstützt"
 
-#: app/src/window/conversation-list-model.ts:440
-#: app/src/window/conversation-list-model.ts:459
+#: app/src/window/conversation-list-model.ts:399
+msgid "Sending to Signal groups is not supported yet"
+msgstr "Das Senden an Signal-Gruppen wird noch nicht unterstützt"
+
+#: app/src/window/conversation-list-model.ts:401
+msgid "Sending to WhatsApp groups is not supported yet"
+msgstr "Das Senden an WhatsApp-Gruppen wird noch nicht unterstützt"
+
+#: app/src/window/conversation-list-model.ts:403
+msgid "This Telegram chat is not ready to send to yet"
+msgstr "An diesen Telegram-Chat kann noch nicht gesendet werden"
+
+#: app/src/window/conversation-list-model.ts:405
+msgid "Sending to XMPP groups is not supported yet"
+msgstr "Das Senden an XMPP-Gruppen wird noch nicht unterstützt"
+
+#: app/src/window/conversation-list-model.ts:463
+#: app/src/window/conversation-list-model.ts:482
 msgid "Only via {protocol}"
 msgstr "Nur über {protocol}"
 
-#: app/src/window/conversation-list-model.ts:506
+#: app/src/window/conversation-list-model.ts:529
 msgid "You: {text}"
 msgstr "Du: {text}"
 
-#: app/src/window/conversation-list-model.ts:508
+#: app/src/window/conversation-list-model.ts:531
 msgid "{name}: {text}"
 msgstr "{name}: {text}"
 
-#: app/src/window/conversation-list-model.ts:538
+#: app/src/window/conversation-list-model.ts:561
 msgid "Public room · {count} member"
 msgid_plural "Public room · {count} members"
 msgstr[0] "Öffentlicher Raum · {count} Mitglied"
 msgstr[1] "Öffentlicher Raum · {count} Mitglieder"
 
-#: app/src/window/conversation-list-model.ts:539
+#: app/src/window/conversation-list-model.ts:562
 msgid "Room · {count} member"
 msgid_plural "Room · {count} members"
 msgstr[0] "Raum · {count} Mitglied"
 msgstr[1] "Raum · {count} Mitglieder"
 
-#: app/src/window/conversation-list-model.ts:871
+#: app/src/window/conversation-list-model.ts:894
 msgid "People"
 msgstr "Personen"
 
-#: app/src/window/conversation-list-model.ts:872
+#: app/src/window/conversation-list-model.ts:895
 msgid "Groups"
 msgstr "Gruppen"
 
@@ -3601,7 +3617,9 @@ msgstr "Breite der Unterhaltungsliste ändern"
 
 #: app/src/window/window.ts:143
 msgid "Drag to resize the conversation list. Double-click to reset."
-msgstr "Ziehen, um die Breite der Unterhaltungsliste zu ändern. Doppelklick setzt sie zurück."
+msgstr ""
+"Ziehen, um die Breite der Unterhaltungsliste zu ändern. Doppelklick setzt "
+"sie zurück."
 
 #: app/src/window/window.ts:250
 msgid "Merge contacts…"

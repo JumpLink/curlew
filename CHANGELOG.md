@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- A group chat no longer loses its composer: Telegram groups and channels send to the chat, and a Signal, WhatsApp or XMPP group, which Curlew cannot send to yet, shows the composer greyed out with the reason ("Sending to Signal groups is not supported yet") instead of no composer at all.
 - The conversation list keeps its width of 320 to 400 pixels in a window of about 900 pixels instead of taking most of it and clipping the chat: the selection bar's buttons wrap instead of setting the list's minimum width.
 - A window left open across an update no longer shows the Accounts dialog's spinner forever when the background service restarted with a newer protocol: the window says "Curlew was updated. Restart it to continue." with a Restart button, the Accounts dialog shows the same message, and the dialog also stops waiting when the service never answers.
 - The background service takes over a receive lease whose holder process is gone instead of waiting for it to expire, releases its leases on shutdown, and keeps retrying an account whose round fails instead of dropping it. Rapid account changes restart the service once instead of once per change, and a Matrix token the server refuses no longer leaves an unhandled rejection.

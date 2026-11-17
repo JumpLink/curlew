@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 10:12+0100\n"
+"POT-Creation-Date: 2026-11-17 11:54+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2229,7 +2229,7 @@ msgid "Could not fetch the attachment: {error}"
 msgstr ""
 
 #: app/src/window/attachment-view.ts:156 app/src/window/attachment-view.ts:165
-#: app/src/window/conversation-list-model.ts:503
+#: app/src/window/conversation-list-model.ts:526
 #: app/src/window/conversation-model.ts:318
 #: app/src/window/conversation-model.ts:323
 msgid "Attachment"
@@ -2337,7 +2337,7 @@ msgid "The newest chat decides"
 msgstr ""
 
 #: app/src/window/contact-page.ts:264 app/src/window/contact-page.ts:279
-#: app/src/window/conversation-list-model.ts:444
+#: app/src/window/conversation-list-model.ts:467
 msgid "Automatic"
 msgstr ""
 
@@ -2451,8 +2451,8 @@ msgid "Yesterday"
 msgstr ""
 
 #: app/src/window/conversation-list-model.ts:273
-#: app/src/window/conversation-list-model.ts:711
-#: app/src/window/conversation-list-model.ts:936
+#: app/src/window/conversation-list-model.ts:734
+#: app/src/window/conversation-list-model.ts:959
 msgid "Note to self"
 msgstr ""
 
@@ -2466,44 +2466,60 @@ msgstr[1] ""
 msgid "Unnamed conversation"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:381
+#: app/src/window/conversation-list-model.ts:386
 msgid "Only via {protocol}, which has no address for this person"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:385
+#: app/src/window/conversation-list-model.ts:390
 msgid "Encrypted rooms are not supported yet"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:440
-#: app/src/window/conversation-list-model.ts:459
+#: app/src/window/conversation-list-model.ts:399
+msgid "Sending to Signal groups is not supported yet"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:401
+msgid "Sending to WhatsApp groups is not supported yet"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:403
+msgid "This Telegram chat is not ready to send to yet"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:405
+msgid "Sending to XMPP groups is not supported yet"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:463
+#: app/src/window/conversation-list-model.ts:482
 msgid "Only via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:506
+#: app/src/window/conversation-list-model.ts:529
 msgid "You: {text}"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:508
+#: app/src/window/conversation-list-model.ts:531
 msgid "{name}: {text}"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:538
+#: app/src/window/conversation-list-model.ts:561
 msgid "Public room · {count} member"
 msgid_plural "Public room · {count} members"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-list-model.ts:539
+#: app/src/window/conversation-list-model.ts:562
 msgid "Room · {count} member"
 msgid_plural "Room · {count} members"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-list-model.ts:871
+#: app/src/window/conversation-list-model.ts:894
 msgid "People"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:872
+#: app/src/window/conversation-list-model.ts:895
 msgid "Groups"
 msgstr ""
 

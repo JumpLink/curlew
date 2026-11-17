@@ -143,6 +143,19 @@ export default async () => {
       });
     });
 
+    await it('sends to a group by its negative marked chat id, end to end', async () => {
+      const group = '-1001234567';
+      await withRig(
+        { grants: [{ capability: 'telegram.send', target: `${ACCOUNT}/${group}` }] },
+        async (rig) => {
+          const out = await send(rig, group, 'Hallo Gruppe');
+          expect(out.target).toBe(`${ACCOUNT}/${group}`);
+          expect(rig.fake.clients[0].sent.length).toBe(1);
+          expect(rig.fake.clients[0].sent[0].chatId).toBe(-1001234567);
+        },
+      );
+    });
+
     await it('refuses text over 4096 characters instead of splitting it', async () => {
       await withRig(granted, async (rig) => {
         expect(await refused(send(rig, '1001', 'x'.repeat(TELEGRAM_MAX_MESSAGE_CHARS + 1)))).toBe(true);

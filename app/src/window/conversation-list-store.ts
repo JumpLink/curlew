@@ -29,6 +29,11 @@ import { type ListEntry, toEntries, withPreviews } from './conversation-list-mod
 
 // Mail is two orders of magnitude bigger than chat: one shared limit let 480 newsletters push every
 // chat but a handful out of the list. Chats are listed whole, mail by its own limit.
+/** The chat rows the list needs: Matrix rooms and Telegram groups, whose composer sends to the chat id. */
+function chatRooms(db: IndexDatabase) {
+  return new Map([...listChatRooms(db, 'matrix'), ...listChatRooms(db, 'telegram')]);
+}
+
 const CHAT_LIMIT = 5000;
 const MAIL_LIMIT = 500;
 
@@ -130,7 +135,7 @@ export function loadConversationEntries(dbPath = indexDbPath(), cfgPath = config
           convs,
           ui.showAllEmails,
           accountIdentities(db),
-          listChatRooms(db, 'matrix'),
+          chatRooms(db),
           mergedPeople,
           pins,
           contactChoices,
@@ -216,7 +221,7 @@ export async function loadConversationEntriesAsync(
         conversations.filter((conversation) => !switchedOff(conversation.backend)),
         ui.showAllEmails,
         accountIdentities(db),
-        listChatRooms(db, 'matrix'),
+        chatRooms(db),
         mergedPeople,
         pins,
         contactChoices,

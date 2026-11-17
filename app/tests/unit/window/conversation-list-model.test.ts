@@ -390,6 +390,54 @@ export default async () => {
       expect(targetOf(c, null)).toBe(null);
     });
 
+    it('targets a Telegram group by its marked chat id and a direct chat by the user id', () => {
+      const group = conversation({ id: 't1', backend: 'telegram', accountId: 'telegram-1', kind: 'group' });
+      const room = { chatId: '-1001234567', public: null, encrypted: null, memberCount: null };
+      expect(targetOf(group, room)).toBe('-1001234567');
+      expect(targetOf(group, null)).toBe(null);
+      const direct = conversation({
+        id: 't2',
+        backend: 'telegram',
+        accountId: 'telegram-1',
+        participants: [
+          {
+            id: 'p',
+            displayName: 'Ida',
+            addresses: [{ kind: 'telegram', value: '515151' }],
+            contactUid: null,
+          },
+        ],
+      });
+      expect(targetOf(direct)).toBe('515151');
+      const e = toEntry(group, undefined, room);
+      expect(e.target).toBe('-1001234567');
+      expect(canSend(e)).toBe(true);
+      expect(composerBlock(e)).toBe(null);
+    });
+
+    it('keeps the composer, blocked with a reason, in a group nothing can send to', () => {
+      const signal = toEntry(
+        conversation({ id: 's1', backend: 'signal', accountId: 'signal-1', kind: 'group' }),
+      );
+      expect(signal.target).toBe(null);
+      expect(canSend(signal)).toBe(false);
+      expect(composerBlock(signal)).toBe('Sending to Signal groups is not supported yet');
+      const wa = toEntry(
+        conversation({ id: 'w1', backend: 'whatsapp', accountId: 'whatsapp-1', kind: 'group' }),
+      );
+      expect(composerBlock(wa)).toBe('Sending to WhatsApp groups is not supported yet');
+      const matrix = toEntry(conversation({ id: 'm9', backend: 'matrix', kind: 'group' }), undefined, {
+        chatId: '!r:example.org',
+        public: null,
+        encrypted: null,
+        memberCount: null,
+      });
+      expect(canSend(matrix)).toBe(true);
+      expect(composerBlock(matrix)).toBe(null);
+      const mail = toEntry(conversation({ id: 'x1', backend: 'mail', accountId: 'mail-1', kind: 'group' }));
+      expect(composerBlock(mail)).toBe(null);
+    });
+
     it('blocks the composer only in a room known to be encrypted', () => {
       const room = (encrypted: boolean | null) => ({
         chatId: '!r',

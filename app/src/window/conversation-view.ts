@@ -1548,10 +1548,10 @@ export function createConversationView(
       const blocked = composerBlock(nextEntry);
       // A blocked composer stays visible but insensitive, so the hint can say why.
       const sendable = canSend(nextEntry);
-      composer.set_visible(sendable);
+      composer.set_visible(sendable || blocked !== null);
       const roomLine = blocked ?? roomHint(nextEntry);
       hint.set_label(roomLine ?? '');
-      hint.set_visible(sendable && roomLine !== null);
+      hint.set_visible((sendable || blocked !== null) && roomLine !== null);
       input.setSensitive(blocked === null);
       send.set_sensitive(blocked === null);
       composerBlocked = blocked !== null;
