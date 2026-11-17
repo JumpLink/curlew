@@ -5,6 +5,7 @@ import { join } from 'node:path';
 
 import type { ChatBackend } from '@curlew/protocol';
 import { PLUGIN_API_VERSION } from '@curlew/protocol';
+import { takeReceiveLease } from '@curlew/store';
 import { GrantedXmppSession } from '@curlew/xmpp';
 import type { XmppLink } from '@curlew/xmpp';
 
@@ -129,6 +130,51 @@ export default async () => {
         expect(events.indexOf('close 1')).toBeLessThan(events.indexOf('open 2'));
         expect(leaseHolder(db)).toBe('pid-me');
 
+        controller.abort();
+        await running;
+      } finally {
+        controller.abort();
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('retries after a round throws instead of dropping the account', async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-follow-'));
+      const db = freshDb();
+      const controller = new AbortController();
+      const logs: string[] = [];
+      let thrown = false;
+      let opened = 0;
+      // Somebody else holds the account, so the first round waits and reports it.
+      expect(takeReceiveLease(db, 'xmpp', ACCOUNT, 'pid-other', new Date(), 60_000).acquired).toBe(true);
+      try {
+        const running = followAccount({
+          db,
+          backend,
+          open: async () => {
+            opened += 1;
+            return new GrantedXmppSession(fakeLink(), GRANT, () => 'oid');
+          },
+          permit: GRANT,
+          signal: controller.signal,
+          log: (line) => logs.push(line),
+          onProgress: (event) => {
+            if (event.type === 'lease-waiting' && !thrown) {
+              thrown = true;
+              throw new Error('boom');
+            }
+          },
+          onWrite: () => {},
+          holder: 'pid-me',
+          leaseIntervalMs: 30,
+          minGapMs: 0,
+          writeLogPath: join(dir, 'write.log'),
+        });
+        await until(() => logs.some((l) => l.includes('retrying')));
+        expect(logs.some((l) => l.includes('failed (boom) — retrying'))).toBe(true);
+        db.prepare('DELETE FROM receive_leases WHERE account_id = ?').run(ACCOUNT);
+        await until(() => opened === 1);
+        expect(opened).toBe(1);
         controller.abort();
         await running;
       } finally {
