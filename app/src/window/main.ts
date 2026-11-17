@@ -122,6 +122,12 @@ const application = new AdwaitaApp({
         2000,
         () => (window.activate_action('open-bubble-menu', null), GLib.SOURCE_REMOVE),
       );
+    if (process.env.CURLEW_WINDOW_OPEN_ABOUT === '1')
+      GLib.timeout_add(
+        GLib.PRIORITY_DEFAULT,
+        1500,
+        () => (app.activate_action('about', null), GLib.SOURCE_REMOVE),
+      );
     if (process.env.CURLEW_WINDOW_OPEN_MENU === '1')
       GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => {
         const find = (widget: Gtk.Widget | null): Gtk.MenuButton | null => {
