@@ -75,6 +75,7 @@ import {
   avatarsDir,
   previewsDir,
   receiveDeliveries,
+  releaseAllReceiveLeases,
   resolveDownloadPath,
 } from '@curlew/store';
 import { MatrixBackend } from '@curlew/matrix';
@@ -1183,6 +1184,13 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     sendService?.close();
     sessions.clear();
     outer.removeEventListener('abort', forward);
+    // A stop that raced an account loop (one still opening its link) never reached that loop's own
+    // release; give back whatever this process still holds so the next daemon need not wait.
+    try {
+      releaseAllReceiveLeases(db, String(process.pid));
+    } catch {
+      // A busy index leaves them to expire — or to be reclaimed, the pid being gone.
+    }
     db.close();
   }
 }

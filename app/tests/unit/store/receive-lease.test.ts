@@ -1,10 +1,12 @@
 import { describe, expect, it } from '@gjsify/unit';
 
 import {
+  holderIsAlive,
   LEASE_HEARTBEAT_MS,
   type IndexDatabase,
   migrate,
   refreshReceiveLease,
+  releaseAllReceiveLeases,
   SCHEMA_VERSION,
   releaseReceiveLease,
   takeReceiveLease,
@@ -103,6 +105,72 @@ export default async () => {
         expect(leaseRows(db)).toBe(0);
         // Releasing what is not there is not an error, just nothing to do.
         expect(releaseReceiveLease(db, BACKEND, ACCOUNT, 'pid-1')).toBe(false);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('reclaims a fresh lease whose holder process is gone', async () => {
+      const db = freshDb();
+      try {
+        takeReceiveLease(db, BACKEND, ACCOUNT, '1961617', T0);
+        // Fresh by the clock, but the process is dead: the successor takes it at once.
+        const dead = takeReceiveLease(
+          db,
+          BACKEND,
+          ACCOUNT,
+          '1971085',
+          at(1_000),
+          LEASE_HEARTBEAT_MS,
+          () => false,
+        );
+        expect(dead.acquired).toBe(true);
+        expect(leaseHolder(db, ACCOUNT)).toBe('1971085');
+        // A `sync-` holder is judged the same way.
+        takeReceiveLease(db, BACKEND, 'wa-2', 'sync-1961617', T0);
+        expect(
+          takeReceiveLease(db, BACKEND, 'wa-2', '1971085', at(1_000), LEASE_HEARTBEAT_MS, () => false)
+            .acquired,
+        ).toBe(true);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('does not reclaim a fresh lease of a live process', async () => {
+      const db = freshDb();
+      try {
+        takeReceiveLease(db, BACKEND, ACCOUNT, '1961617', T0);
+        const live = takeReceiveLease(
+          db,
+          BACKEND,
+          ACCOUNT,
+          '1971085',
+          at(1_000),
+          LEASE_HEARTBEAT_MS,
+          () => true,
+        );
+        expect(live.acquired).toBe(false);
+        expect(leaseHolder(db, ACCOUNT)).toBe('1961617');
+        // The default check: this very process is alive, a holder that is no pid cannot be judged.
+        expect(holderIsAlive(String(process.pid))).toBe(true);
+        expect(holderIsAlive(`sync-${process.pid}`)).toBe(true);
+        expect(holderIsAlive('pid-1')).toBe(true);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('releases every lease a holder still has, and no one else’s', async () => {
+      const db = freshDb();
+      try {
+        takeReceiveLease(db, BACKEND, 'a', 'pid-1', T0);
+        takeReceiveLease(db, BACKEND, 'b', 'pid-1', T0);
+        takeReceiveLease(db, BACKEND, 'c', 'pid-2', T0);
+        expect(releaseAllReceiveLeases(db, 'pid-1')).toBe(2);
+        expect(leaseRows(db)).toBe(1);
+        expect(leaseHolder(db, 'c')).toBe('pid-2');
+        expect(releaseAllReceiveLeases(db, 'pid-1')).toBe(0);
       } finally {
         db.close();
       }
