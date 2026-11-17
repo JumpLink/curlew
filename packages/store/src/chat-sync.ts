@@ -46,6 +46,7 @@ import type {
 import type { IndexDatabase } from './db.ts';
 import { backfillAttachments } from './chat-backfill.ts';
 import { appendChanges } from './changes.ts';
+import { applyLocalRead } from './local-read.ts';
 import { conversationTotalsSql } from './conversation-totals.ts';
 import { insertMany, placeholders, seqColumn, type SqlValue, withTransaction } from './db.ts';
 import { upsertAccount } from './index-store.ts';
@@ -535,6 +536,8 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
                    ELSE 0 END
      WHERE backend = ? AND account_id = ? AND remote_seq IS NOT NULL`,
   ).run(batch.backend, batch.accountId);
+  // What the person read here survives the network marker moving (or not moving).
+  applyLocalRead(db, 'backend = ? AND account_id = ?', [batch.backend, batch.accountId]);
   db.prepare(
     conversationTotalsSql(
       `backend = ? AND account_id = ?

@@ -653,6 +653,14 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
     );
     runIn(
       db,
+      (p) => `UPDATE conversation_messages SET seen = 1
+                WHERE from_self = 0 AND seen = 0 AND conversation_id IN (${p})
+                  AND sent_at <= (SELECT r.read_through FROM conversation_read_state r
+                                   WHERE r.conversation_id = conversation_messages.conversation_id)`,
+      touched.map(conv),
+    );
+    runIn(
+      db,
       (p) => conversationTotalsSql(`id IN (${p})`),
       touched.map(conv),
     );

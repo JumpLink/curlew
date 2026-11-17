@@ -18,6 +18,7 @@ export * from './thumbnails.ts';
 export * from './send-files.ts';
 export * from './conversations.ts';
 export * from './read-receipts.ts';
+export * from './local-read.ts';
 export * from './conversation-totals.ts';
 export * from './secret-files.ts';
 export * from './secret-store.ts';
