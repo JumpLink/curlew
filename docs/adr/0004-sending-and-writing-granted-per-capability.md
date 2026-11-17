@@ -514,3 +514,7 @@ caps size per file and in total, and every refusal comes before a connection exi
 permission prompt lists the file names, so the person sees what would leave. The write log records
 names and sizes, never content. Every other backend refuses attachments, and the daemon's bus send
 refuses them too, so the wire format is unchanged. §1, §3, §6 and §7 stand.
+
+## Amendment (2026-11-17, read-state sync)
+
+The person's read position now goes to their OWN devices (`ui.syncReadState`, on by default; #441). It rides on the existing `<backend>.send` capability and the permit of the one chat; each guard permits exactly the new request and nothing wider. Matrix: `POST …/receipt/m.read.private/{eventId}` in a permitted room (`m.read` and `m.fully_read` stay refused, as they tell other members). Signal: a `SyncMessage.Read` to the own ACI, which already was a permitted recipient; the guard is unchanged. XMPP: one PEP publish to `urn:xmpp:mds:displayed:0`, only the account itself reads it. IMAP: `UID STORE … +FLAGS.SILENT (\Seen)` on the person's own mailbox over a connection of its own. Telegram and WhatsApp marks are visible to the other person, so they go only while `ui.sendReadReceipts` is on (WhatsApp's guard gains `markRead` for the permitted chat). Only the window asks; MCP and the CLI gain no tool, so no agent grant is involved. §1, §3, §6 and §7 stand.

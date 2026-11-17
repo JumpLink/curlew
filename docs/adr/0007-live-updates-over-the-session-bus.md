@@ -216,6 +216,10 @@ crash isolation (WASM out of memory, a native addon fault) is a separate decisio
 - The bus carries ids, counts and states. The rule that keeps it that way is the log-line rule,
   and the test that pins the account-id derivation (ADR 0002 §6) now protects the bus as well.
 
+## Amendment (2026-11-17, `SyncRead`)
+
+The bus gains one method, `SyncRead`, so the read position of a Signal or WhatsApp chat is pushed on the connection the daemon already holds (the account must not be opened twice). It follows `FetchAvatars`: an older daemon answers `UnknownMethod`, the client treats that as "no daemon" and uses a sender of its own, so `DAEMON_WIRE_VERSION` stays at 8. The request carries ids and a timestamp, never message text. Matrix, XMPP, Telegram and mail do not use it; the window process writes directly.
+
 ## References
 
 - ADR 0002 §4–§6 — the lease, the debounced rebuild, the log-line rule

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 17:36+0100\n"
+"POT-Creation-Date: 2026-11-17 18:04+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3404,29 +3404,33 @@ msgstr ""
 msgid "the mail account {account} is incomplete — add it again"
 msgstr ""
 
-#: packages/imap/src/send.ts:78 packages/matrix/src/send.ts:378
-#: packages/signal/src/send.ts:505 packages/telegram/src/sender.ts:82
-#: packages/whatsapp/src/send.ts:415
+#: packages/imap/src/send.ts:87
+msgid "marking mail as read is not available here"
+msgstr ""
+
+#: packages/imap/src/send.ts:95 packages/matrix/src/send.ts:397
+#: packages/signal/src/send.ts:545 packages/telegram/src/sender.ts:84
+#: packages/whatsapp/src/send.ts:429
 msgid "sending to {address} is not granted for account {account}"
 msgstr ""
 
-#: packages/imap/src/send.ts:144
+#: packages/imap/src/send.ts:161
 msgid "only a Delta Chat message can be reacted to by mail"
 msgstr ""
 
-#: packages/imap/src/send.ts:161
+#: packages/imap/src/send.ts:178
 msgid "only your own Delta Chat messages can be changed by mail"
 msgstr ""
 
-#: packages/imap/src/send.ts:170
+#: packages/imap/src/send.ts:187
 msgid "an edited message cannot be empty"
 msgstr ""
 
-#: packages/imap/src/send.ts:208
+#: packages/imap/src/send.ts:225
 msgid "only a Delta Chat message gets a read receipt by mail"
 msgstr ""
 
-#: packages/imap/src/send.ts:238
+#: packages/imap/src/send.ts:256
 msgid "no mail account {account} with SMTP — `curlew accounts list` shows them"
 msgstr ""
 
@@ -3565,62 +3569,66 @@ msgid_plural "matrix: {n} events not decryptable"
 msgstr[0] ""
 msgstr[1] ""
 
-#: packages/matrix/src/send.ts:185
+#: packages/matrix/src/send.ts:188
 msgid "the homeserver refused the message to {room} ({reason})"
 msgstr ""
 
-#: packages/matrix/src/send.ts:194
+#: packages/matrix/src/send.ts:197
 msgid "the homeserver accepted the message to {room} but returned no event id"
 msgstr ""
 
-#: packages/matrix/src/send.ts:213
+#: packages/matrix/src/send.ts:216
 msgid ""
 "the homeserver did not say whether {room} is encrypted ({reason}) — nothing "
 "was sent"
 msgstr ""
 
-#: packages/matrix/src/send.ts:255
+#: packages/matrix/src/send.ts:233
+msgid "the homeserver refused the read marker in {room} ({reason})"
+msgstr ""
+
+#: packages/matrix/src/send.ts:273
 msgid ""
 "the homeserver did not list the reactions in {room} ({reason}) — nothing was "
 "sent"
 msgstr ""
 
-#: packages/matrix/src/send.ts:290
+#: packages/matrix/src/send.ts:308
 msgid "the homeserver did not redact the event in {room} ({reason})"
 msgstr ""
 
-#: packages/matrix/src/send.ts:307
+#: packages/matrix/src/send.ts:325
 msgid "the homeserver refused the file {file} ({reason})"
 msgstr ""
 
-#: packages/matrix/src/send.ts:316
+#: packages/matrix/src/send.ts:334
 msgid "the homeserver accepted the file {file} but returned no media URI"
 msgstr ""
 
-#: packages/matrix/src/send.ts:398
+#: packages/matrix/src/send.ts:417
 msgid ""
 "{room} is end-to-end encrypted and curlew cannot send encrypted messages yet "
 "— nothing was sent, send it from a Matrix client"
 msgstr ""
 
-#: packages/matrix/src/send.ts:414 packages/matrix/src/send.ts:516
-#: packages/matrix/src/send.ts:533
+#: packages/matrix/src/send.ts:433 packages/matrix/src/send.ts:535
+#: packages/matrix/src/send.ts:552 packages/matrix/src/send.ts:587
 msgid "{id} is not a Matrix event id — nothing was sent"
 msgstr ""
 
-#: packages/matrix/src/send.ts:419
+#: packages/matrix/src/send.ts:438
 msgid ""
 "a Matrix message holds at most {max} bytes of text, this one has {bytes} — "
 "shorten it"
 msgstr ""
 
-#: packages/matrix/src/send.ts:536 packages/signal/src/send.ts:260
-#: packages/telegram/src/sender.ts:143 packages/whatsapp/src/send.ts:165
+#: packages/matrix/src/send.ts:555 packages/signal/src/send.ts:300
+#: packages/telegram/src/sender.ts:145 packages/whatsapp/src/send.ts:167
 #: packages/xmpp/src/messages.ts:36
 msgid "only your own messages can be changed — nothing was sent"
 msgstr ""
 
-#: packages/matrix/src/send.ts:546
+#: packages/matrix/src/send.ts:565
 msgid "the edited text is too long for one Matrix message — nothing was sent"
 msgstr ""
 
@@ -3738,91 +3746,95 @@ msgstr ""
 msgid "Signal no longer knows this device (it was unlinked) — {hint}"
 msgstr ""
 
-#: packages/signal/src/send.ts:190
+#: packages/signal/src/send.ts:209
 msgid "Signal answered {what} with something that is not JSON"
 msgstr ""
 
-#: packages/signal/src/send.ts:272 packages/signal/src/send.ts:325
+#: packages/signal/src/send.ts:280
+msgid "this account has no other Signal device to tell — nothing was sent"
+msgstr ""
+
+#: packages/signal/src/send.ts:312 packages/signal/src/send.ts:365
 msgid ""
 "a Signal message holds at most {max} bytes of text, this one has {bytes} — "
 "shorten it"
 msgstr ""
 
-#: packages/signal/src/send.ts:298
+#: packages/signal/src/send.ts:338
 msgid "Signal needs the emoji being taken back — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:464
+#: packages/signal/src/send.ts:504
 msgid ""
 "the message was delivered, but this account's other devices were not told "
 "about it ({reason}) — it will not appear on the phone"
 msgstr ""
 
-#: packages/signal/src/send.ts:472
+#: packages/signal/src/send.ts:512
 msgid ""
 "a note to self is stored on this account's other devices, and this account "
 "has none — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:488
+#: packages/signal/src/send.ts:528
 msgid ""
 "curlew cannot send to a Signal group: a group message needs the member list "
 "and credentials from Signal's storage service, which curlew does not sync — "
 "send it from a Signal client"
 msgstr ""
 
-#: packages/signal/src/send.ts:497
+#: packages/signal/src/send.ts:537
 msgid ""
 "{address} is not a Signal account id — use the id `conversations_list` shows "
 "for the chat, not a phone number"
 msgstr ""
 
-#: packages/signal/src/send.ts:556
+#: packages/signal/src/send.ts:596
 msgid ""
 "Signal kept disagreeing about the recipient's devices — nothing was sent; "
 "try again, or send it from a Signal client"
 msgstr ""
 
-#: packages/signal/src/send.ts:565
+#: packages/signal/src/send.ts:605
 msgid ""
 "Signal refused this device (unauthorized) — nothing was sent; the device may "
 "be unlinked"
 msgstr ""
 
-#: packages/signal/src/send.ts:569
+#: packages/signal/src/send.ts:609
 msgid "Signal wants a rate-limit challenge answered — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:572
+#: packages/signal/src/send.ts:612
 msgid "Signal refused the message ({status}) — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:664
+#: packages/signal/src/send.ts:704
 msgid "Signal has no account {address} — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:669
+#: packages/signal/src/send.ts:709
 msgid ""
 "Signal did not hand over the keys for {address} ({status}) — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:687
+#: packages/signal/src/send.ts:727
 msgid "Signal lists no device for {address} — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:707
+#: packages/signal/src/send.ts:747
 msgid ""
 "a device of {address} publishes no usable keys, so curlew cannot start a "
 "session with it — nothing was sent"
 msgstr ""
 
-#: packages/signal/src/send.ts:753
+#: packages/signal/src/send.ts:793
 msgid ""
 "the safety number of {address} changed — nothing was sent; check it with "
 "them, then send again to accept the new one"
 msgstr ""
 
-#: packages/signal/src/send.ts:779
+#: packages/signal/src/send.ts:819
 msgid ""
 "Signal reported a device mismatch ({status}) without naming a device — "
 "nothing was sent"
@@ -3937,22 +3949,22 @@ msgstr ""
 msgid "the Telegram session {account} is not usable ({reason}) — {hint}"
 msgstr ""
 
-#: packages/telegram/src/client.ts:233
+#: packages/telegram/src/client.ts:236
 msgid "That code was not accepted — try again."
 msgstr ""
 
-#: packages/telegram/src/client.ts:233
+#: packages/telegram/src/client.ts:236
 msgid "Wrong password — try again."
 msgstr ""
 
-#: packages/telegram/src/client.ts:249
+#: packages/telegram/src/client.ts:252
 msgid ""
 "Telegram asks for an email login setup first — finish it in an official app"
 msgstr ""
 
 #. TRANSLATORS: {channel} is Telegram's own word for the route it used ("sms", "app", …),
 #. and arrives untranslated from the server.
-#: packages/telegram/src/client.ts:253
+#: packages/telegram/src/client.ts:256
 msgid "Telegram sent the login code via {channel}."
 msgstr ""
 
@@ -4027,23 +4039,23 @@ msgid ""
 "you tell it to."
 msgstr ""
 
-#: packages/telegram/src/sender.ts:53
+#: packages/telegram/src/sender.ts:54
 msgid "{id} is not a message of this Telegram chat — nothing was sent"
 msgstr ""
 
-#: packages/telegram/src/sender.ts:99 packages/telegram/src/sender.ts:154
+#: packages/telegram/src/sender.ts:101 packages/telegram/src/sender.ts:156
 msgid ""
 "a Telegram message holds at most {max} characters, this one has {length} — "
 "shorten it"
 msgstr ""
 
-#: packages/telegram/src/sender.ts:130
+#: packages/telegram/src/sender.ts:132
 msgid ""
 "Telegram allows reactions here only with Premium (for example in Saved "
 "Messages)"
 msgstr ""
 
-#: packages/telegram/src/sender.ts:133
+#: packages/telegram/src/sender.ts:135
 msgid "this chat does not allow that reaction"
 msgstr ""
 
@@ -4087,23 +4099,23 @@ msgstr ""
 msgid "the WhatsApp connection is not open — no pictures"
 msgstr ""
 
-#: packages/whatsapp/src/client.ts:163
+#: packages/whatsapp/src/client.ts:164
 msgid "the WhatsApp connection closed: {reason}"
 msgstr ""
 
-#: packages/whatsapp/src/client.ts:225 packages/whatsapp/src/client.ts:254
+#: packages/whatsapp/src/client.ts:226 packages/whatsapp/src/client.ts:255
 msgid "WhatsApp did not take the message — nothing was sent"
 msgstr ""
 
-#: packages/whatsapp/src/client.ts:262
+#: packages/whatsapp/src/client.ts:263
 msgid "WhatsApp did not take the reaction — nothing was sent"
 msgstr ""
 
-#: packages/whatsapp/src/client.ts:272
+#: packages/whatsapp/src/client.ts:273
 msgid "WhatsApp did not take the edit — nothing was sent"
 msgstr ""
 
-#: packages/whatsapp/src/client.ts:277
+#: packages/whatsapp/src/client.ts:278
 msgid "WhatsApp did not take the deletion — nothing was sent"
 msgstr ""
 
@@ -4167,75 +4179,75 @@ msgstr ""
 msgid "WhatsApp logged this device out ({reason}) — {hint}"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:177 packages/whatsapp/src/send.ts:232
+#: packages/whatsapp/src/send.ts:179 packages/whatsapp/src/send.ts:246
 msgid ""
 "a WhatsApp message holds at most {max} bytes of text, this one has {bytes} — "
 "shorten it"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:199
+#: packages/whatsapp/src/send.ts:213
 msgid "a reaction needs an emoji, or null to take it back"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:215 packages/whatsapp/src/send.ts:245
+#: packages/whatsapp/src/send.ts:229 packages/whatsapp/src/send.ts:259
 msgid ""
 "a message that arrived while curlew was connected could not be written down "
 "({reason}) — nothing was sent"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:254
+#: packages/whatsapp/src/send.ts:268
 msgid "a reply to a WhatsApp message cannot carry files"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:297
+#: packages/whatsapp/src/send.ts:311
 msgid "{sent} of {total} files were sent, then {file} failed: {reason}"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:329
+#: packages/whatsapp/src/send.ts:343
 msgid ""
 "WhatsApp returned no id for the message — it may have been sent; look at the "
 "chat before sending it again"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:340
+#: packages/whatsapp/src/send.ts:354
 msgid ""
 "WhatsApp did not confirm the message within {seconds} s — it was handed "
 "over, but look at the chat before sending it again"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:350
+#: packages/whatsapp/src/send.ts:364
 msgid ""
 "the message was sent, but a message that arrived at the same time could not "
 "be written down ({reason}) — it may be missing from the chat"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:399
+#: packages/whatsapp/src/send.ts:413
 msgid ""
 "curlew does not send status updates or broadcasts — send a message to a "
 "person instead"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:405
+#: packages/whatsapp/src/send.ts:419
 msgid ""
 "curlew cannot send to a WhatsApp group: a group message is encrypted for "
 "every member, and curlew keeps no member list to do that with — send it from "
 "WhatsApp"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:429
+#: packages/whatsapp/src/send.ts:443
 msgid ""
 "{address} names one device of a person, not the person — drop the `:"
 "<device>` and use the id `conversations_list` shows for the chat"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:437
+#: packages/whatsapp/src/send.ts:451
 msgid ""
 "{address} is a phone number, not a WhatsApp chat id — a chat is filed under "
 "the LID whenever curlew knows one, so use the id `conversations_list` shows "
 "for the chat"
 msgstr ""
 
-#: packages/whatsapp/src/send.ts:444
+#: packages/whatsapp/src/send.ts:458
 msgid ""
 "{address} is not a WhatsApp chat id — use the id `conversations_list` shows "
 "for the chat (`<digits>@lid` or `<digits>@s.whatsapp.net`)"

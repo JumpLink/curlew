@@ -146,6 +146,7 @@
 
 ### Added
 
+- Where you read a conversation is shared with your own other devices (#441): a Matrix private read receipt, a Signal read sync to your own devices, the XMPP displayed marker (XEP-0490) and `\Seen` on your mail. Nobody else is told. Telegram and WhatsApp show a read marker to the other person, so they follow *Send read receipts*. *Sync read state to your other devices* in Preferences turns it off.
 - Drag the edge between the conversation list and the chat to resize the list (280 to 600 pixels, the chat keeps at least 360); double-click or Home resets it, the arrow keys nudge it, and the width is remembered.
 
 - Reading a conversation marks it read in Curlew itself: when the window is active and the newest message is in view, the unread badge goes away and stays away after the next sync, also for mail and for chats whose network does not report reads. *Mark as Read* and *Mark as Unread* are in the conversation list's selection bar (right click a row). The setting `ui.syncReadState` (default on) is reserved for syncing this to your other devices (#441).
