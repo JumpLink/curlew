@@ -165,6 +165,7 @@ import conversationsAttachments from './unit/core/conversations-attachments.test
 import messageNotices from './unit/core/message-notices.test.ts';
 import windowLaunch from './unit/core/window-launch.test.ts';
 import follow from './unit/core/follow.test.ts';
+import restartCoalescer from './unit/core/restart-coalescer.test.ts';
 import deliveries from './unit/core/deliveries.test.ts';
 import setup from './unit/core/setup.test.ts';
 import setupSteps from './unit/core/setup-steps.test.ts';
@@ -336,6 +337,7 @@ run({
   windowLaunch,
   watch,
   follow,
+  restartCoalescer,
   deliveries,
   setup,
   setupSteps,
