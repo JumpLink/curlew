@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 08:49+0100\n"
+"POT-Creation-Date: 2026-11-17 08:55+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2156,14 +2156,13 @@ msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 msgid "Accounts"
 msgstr "Konten"
 
-#: app/src/window/accounts-model.ts:110 app/src/window/update-banner.ts:30
+#: app/src/window/accounts-model.ts:110 app/src/window/update-banner.ts:35
 msgid "Curlew was updated. Restart it to continue."
 msgstr "Curlew wurde aktualisiert. Starte es neu, um fortzufahren."
 
 #: app/src/window/accounts-model.ts:111
 msgid "The background service is out of date. Restart it to continue."
-msgstr ""
-"Der Hintergrunddienst ist veraltet. Starte ihn neu, um fortzufahren."
+msgstr "Der Hintergrunddienst ist veraltet. Starte ihn neu, um fortzufahren."
 
 #: app/src/window/accounts-model.ts:133
 msgid "Calendar"
@@ -3421,7 +3420,7 @@ msgstr[1] "{count} ausgewählt"
 msgid "I understand and accept the risk for my account"
 msgstr "Ich verstehe das Risiko für mein Konto und nehme es in Kauf"
 
-#: app/src/window/update-banner.ts:31
+#: app/src/window/update-banner.ts:36
 msgid "Restart"
 msgstr "Neu starten"
 

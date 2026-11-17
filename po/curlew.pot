@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 08:49+0100\n"
+"POT-Creation-Date: 2026-11-17 08:55+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1863,7 +1863,7 @@ msgstr ""
 msgid "Accounts"
 msgstr ""
 
-#: app/src/window/accounts-model.ts:110 app/src/window/update-banner.ts:30
+#: app/src/window/accounts-model.ts:110 app/src/window/update-banner.ts:35
 msgid "Curlew was updated. Restart it to continue."
 msgstr ""
 
@@ -3085,7 +3085,7 @@ msgstr[1] ""
 msgid "I understand and accept the risk for my account"
 msgstr ""
 
-#: app/src/window/update-banner.ts:31
+#: app/src/window/update-banner.ts:36
 msgid "Restart"
 msgstr ""
 
