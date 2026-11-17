@@ -16,6 +16,8 @@ import {
   indexDbPath,
   loadAttachments,
   mailReplyTarget,
+  markConversationRead,
+  markConversationUnread,
   openIndexDb,
   setMessageText,
   setOwnReaction,
@@ -62,6 +64,19 @@ export function recordOwnEdit(messageId: string, text: string, dbPath = indexDbP
   const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
   try {
     setMessageText(db, messageId, text);
+  } finally {
+    db.close();
+  }
+}
+
+/** The person read (or marked unread) these conversations: the local read position, kept apart from the network's. */
+export function recordConversationRead(ids: readonly string[], read: boolean, dbPath = indexDbPath()): void {
+  const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
+  try {
+    for (const id of ids) {
+      if (read) markConversationRead(db, id);
+      else markConversationUnread(db, id);
+    }
   } finally {
     db.close();
   }

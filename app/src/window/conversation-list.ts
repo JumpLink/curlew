@@ -45,6 +45,8 @@ import { mergeSummary, prunePicks, selectionTitle, selectionTools, togglePick } 
 export interface PeopleTools {
   merge(personIds: string[]): void;
   unmerge(personIds: string[]): void;
+  /** Mark the picked conversations read or unread; the window writes the index and refreshes. */
+  setRead(entries: ListEntry[], read: boolean): void;
   /** Open the merge assistant, from the banner. */
   review(): void;
   /** Open the picker for a conversation with someone who has none yet. */
@@ -507,7 +509,11 @@ export function createConversationList(
   const mergeButton = new Gtk.Button({ label: _('Merge') });
   mergeButton.add_css_class('suggested-action');
   const unmergeButton = new Gtk.Button({ label: _('Separate') });
+  const readButton = new Gtk.Button({ label: _('Mark as Read') });
+  const unreadButton = new Gtk.Button({ label: _('Mark as Unread') });
   const tools = new Gtk.Box({ spacing: 12, halign: Gtk.Align.CENTER });
+  tools.append(readButton);
+  tools.append(unreadButton);
   tools.append(unmergeButton);
   tools.append(mergeButton);
   const actions = new Gtk.ActionBar();
@@ -519,6 +525,8 @@ export function createConversationList(
     pickTitle.set_title(selectionTitle(picked.size));
     mergeButton.set_sensitive(state.canMerge);
     unmergeButton.set_visible(state.canUnmerge);
+    readButton.set_sensitive(picked.size > 0);
+    unreadButton.set_sensitive(picked.size > 0);
   };
   const setPicking = (on: boolean) => {
     picking = on;
@@ -596,6 +604,13 @@ export function createConversationList(
     });
     dialog.present(page);
   });
+  const setRead = (read: boolean) => {
+    const chosen = picks();
+    setPicking(false);
+    people.setRead(chosen, read);
+  };
+  readButton.connect('clicked', () => setRead(true));
+  unreadButton.connect('clicked', () => setRead(false));
   unmergeButton.connect('clicked', () => {
     const state = selectionTools(picks());
     setPicking(false);

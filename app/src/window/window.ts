@@ -44,6 +44,7 @@ import { createConversationList } from './conversation-list.ts';
 import { composeMailReply, senderNameOf } from './conversation-model.ts';
 import {
   threadCapabilitiesFor,
+  recordConversationRead,
   recordOwnReaction,
   recordOwnEdit,
   recordOwnDeletion,
@@ -178,6 +179,8 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   };
 
   let currentEntry: ListEntry | null = null;
+  // The open chat the person marked unread by hand stays unread until another one is opened.
+  let keptUnread: string | null = null;
   let currentMessages: ConversationMessage[] = [];
   const conversation = createConversationView(
     async (text, choice, files, replyTo) => {
@@ -307,6 +310,7 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   };
   const select = (entry: ListEntry) => {
     currentEntry = entry;
+    keptUnread = null;
     currentMessages = timed('load messages', () => loadConversationMessages(entry));
     timed('conversation.show', () => conversation.show(entry, currentMessages, labels));
     timed('setLook', () =>
@@ -348,6 +352,17 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
     },
     unmerge: (ids) => {
       peopleUnmerge(ids);
+      refresh();
+    },
+    setRead: (picked, read) => {
+      const ids = picked.flatMap((e) => (e.members.length > 0 ? e.members : [e]).map((m) => m.id));
+      try {
+        recordConversationRead(ids, read);
+      } catch {
+        // A busy index must not break the list; the next try works.
+      }
+      if (!read && currentEntry && picked.some((e) => e.id === currentEntry?.id))
+        keptUnread = currentEntry.id;
       refresh();
     },
     review: () => review(),
@@ -606,6 +621,34 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
       if (listStamp() !== stamp) refresh();
       return GLib.SOURCE_REMOVE;
     });
+  });
+  // Reading the open chat marks it read: window active, newest message in view, a moment of looking.
+  // A poll, not a signal, so a message that lands while the person watches the end counts as read too.
+  const READ_AFTER_MS = 1500;
+  let lookedSince = 0;
+  GLib.timeout_add(GLib.PRIORITY_DEFAULT_IDLE, 500, () => {
+    const open = currentEntry;
+    const entry = open && shown.find((e) => e.id === open.id);
+    const watching =
+      entry && window.is_active && window.get_mapped() && conversation.isAtEnd() && keptUnread !== entry.id;
+    if (!entry || !watching || entry.unread === 0) {
+      lookedSince = 0;
+      return GLib.SOURCE_CONTINUE;
+    }
+    const now = GLib.get_monotonic_time() / 1000;
+    if (lookedSince === 0) lookedSince = now;
+    if (now - lookedSince < READ_AFTER_MS) return GLib.SOURCE_CONTINUE;
+    lookedSince = 0;
+    try {
+      recordConversationRead(
+        (entry.members.length > 0 ? entry.members : [entry]).map((m) => m.id),
+        true,
+      );
+      refresh();
+    } catch {
+      // Busy index: tried again on the next tick.
+    }
+    return GLib.SOURCE_CONTINUE;
   });
   // A phone shows one window that never loses focus, so the activation check above never runs
   // there: a new account's catch-up or an arriving message stayed out of the list until restart.

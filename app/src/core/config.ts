@@ -59,6 +59,11 @@ export interface UiConfig {
   chatBackground?: string;
   /** Confirm to a Delta Chat peer that a message was read, when it asked for that. Unset: off. */
   sendReadReceipts?: boolean;
+  /**
+   * Sync what you read to your other devices without telling the sender, where the protocol allows.
+   * Unset: on. No network effect yet: the local read state works without it.
+   */
+  syncReadState?: boolean;
   /** The first-run welcome screen was finished or skipped. Unset: not yet, so it may show. */
   welcomeDone?: boolean;
   /**
@@ -323,6 +328,9 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   const sendReadReceipts = (rawUi as Record<string, unknown>).sendReadReceipts;
   if (sendReadReceipts !== undefined && typeof sendReadReceipts !== 'boolean')
     throw new Error('config.ui.sendReadReceipts must be true or false');
+  const syncReadState = (rawUi as Record<string, unknown>).syncReadState;
+  if (syncReadState !== undefined && typeof syncReadState !== 'boolean')
+    throw new Error('config.ui.syncReadState must be true or false');
   const playVideosSilently = (rawUi as Record<string, unknown>).playVideosSilently;
   if (playVideosSilently !== undefined && typeof playVideosSilently !== 'boolean')
     throw new Error('config.ui.playVideosSilently must be true or false');
@@ -363,6 +371,7 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     notifications,
     ...(playVideosSilently === undefined ? {} : { playVideosSilently }),
     ...(sendReadReceipts === undefined ? {} : { sendReadReceipts }),
+    ...(syncReadState === undefined ? {} : { syncReadState }),
     ...(accentColor === undefined ? {} : { accentColor }),
     ...(primaryColor === undefined ? {} : { primaryColor }),
     ...(colorScheme === undefined ? {} : { colorScheme }),

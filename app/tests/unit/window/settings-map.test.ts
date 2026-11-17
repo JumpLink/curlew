@@ -13,6 +13,7 @@ const FULL = {
     notifications: 'sender',
     playVideosSilently: true,
     sendReadReceipts: true,
+    syncReadState: true,
     accentColor: 'teal',
     primaryColor: 'blue',
     colorScheme: 'dark',

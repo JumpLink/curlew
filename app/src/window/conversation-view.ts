@@ -102,6 +102,8 @@ export interface ConversationView {
   openEmoji(): void;
   /** Open the context menu of the newest bubble (the stall-measurement hook `CURLEW_WINDOW_OPEN_BUBBLE`). */
   openBubbleMenu(): void;
+  /** Is the newest message in view? The window marks the chat read only then. */
+  isAtEnd(): boolean;
 }
 
 const ROWS_PER_TURN = 8;
@@ -1435,6 +1437,9 @@ export function createConversationView(
   let lookApplied: string[] = [];
   return {
     page,
+    isAtEnd() {
+      return ready && atEnd;
+    },
     openBubbleMenu() {
       openNewestBubble();
     },
