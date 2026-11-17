@@ -114,6 +114,7 @@ import deltaChatOptin from './unit/core/delta-chat-optin.test.ts';
 import plainMailOff from './unit/core/plain-mail-off.test.ts';
 import peopleMergeTest from './unit/core/people-merge.test.ts';
 import windowAccounts from './unit/window/accounts-model.test.ts';
+import windowMismatchRestart from './unit/window/mismatch-restart.test.ts';
 import windowConversationList from './unit/window/conversation-list-model.test.ts';
 import windowSearchScope from './unit/window/search-scope.test.ts';
 import windowCandidates from './unit/window/merge-candidates-model.test.ts';
@@ -281,6 +282,7 @@ run({
   aiSwitch,
   windowAgentAccess,
   windowAccounts,
+  windowMismatchRestart,
   accountRemove,
   accountToggle,
   pauseAccounts,
