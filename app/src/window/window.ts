@@ -5,6 +5,7 @@
  */
 
 import Adw from 'gi://Adw?version=1';
+import Gdk from 'gi://Gdk?version=4.0';
 import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
@@ -13,6 +14,12 @@ import { demoActive } from '../core/demo/active.ts';
 import type { ConversationMessage } from '@curlew/protocol';
 
 import { indexAccountLabels, loadAccountLabels } from './account-labels.ts';
+import {
+  SIDEBAR_DEFAULT_MAX,
+  SIDEBAR_DEFAULT_MIN,
+  SIDEBAR_STEP,
+  clampSidebarWidth,
+} from './sidebar-width.ts';
 import { createUpdateBanner } from './update-banner.ts';
 import { presentAccounts } from './accounts-dialog.ts';
 import { runDeliveryDaemon } from '../core/actions/daemon.ts';
@@ -112,6 +119,113 @@ export interface WindowOptions {
   open?: string;
 }
 
+/**
+ * A thin handle on the edge between the list and the chat: drag to resize, double-click or Home to
+ * reset, Left/Right to nudge. Adw.NavigationSplitView has no resize of its own, so the handle sets
+ * the split view's min and max width to the dragged value. It shows only while the split is not
+ * collapsed, where the list has a width of its own.
+ */
+function createSidebarHandle(split: Adw.NavigationSplitView, page: Gtk.Widget): Gtk.Widget[] {
+  const HANDLE = 8;
+  const rtl = Gtk.Widget.get_default_direction() === Gtk.TextDirection.RTL;
+  const handle = new Gtk.Box({
+    accessibleRole: Gtk.AccessibleRole.SEPARATOR,
+    halign: rtl ? Gtk.Align.END : Gtk.Align.START,
+    widthRequest: HANDLE,
+    focusable: true,
+    cursor: Gdk.Cursor.new_from_name('col-resize', null),
+    visible: false,
+  });
+  handle.update_property(
+    [Gtk.AccessibleProperty.LABEL],
+    [GLib.Variant.new_string(_('Resize the conversation list'))],
+  );
+  handle.set_tooltip_text(_('Drag to resize the conversation list. Double-click to reset.'));
+
+  let wanted = loadConfig(configPath()).ui.sidebarWidth;
+  const apply = (width: number | undefined) => {
+    const next = width === undefined ? undefined : clampSidebarWidth(width, split.get_width());
+    const min = next ?? SIDEBAR_DEFAULT_MIN;
+    const max = next ?? SIDEBAR_DEFAULT_MAX;
+    if (split.minSidebarWidth !== min) split.set_min_sidebar_width(min);
+    if (split.maxSidebarWidth !== max) split.set_max_sidebar_width(max);
+  };
+  const save = () => {
+    const config = loadConfig(configPath());
+    if (wanted === undefined) delete config.ui.sidebarWidth;
+    else config.ui.sidebarWidth = wanted;
+    saveConfig(config, configPath());
+  };
+  // The edge follows the list's real width, read after layout: only when the window resizes, the
+  // split collapses or the width changes, never per frame.
+  let pending = 0;
+  const update = () => {
+    pending = 0;
+    handle.set_visible(!split.collapsed);
+    if (split.collapsed) return GLib.SOURCE_REMOVE;
+    apply(wanted);
+    const edge = rtl ? split.get_width() - page.get_width() : page.get_width();
+    const margin = Math.max(0, Math.round(edge - HANDLE / 2));
+    if (rtl) {
+      if (handle.marginEnd !== margin) handle.set_margin_end(margin);
+    } else if (handle.marginStart !== margin) handle.set_margin_start(margin);
+    return GLib.SOURCE_REMOVE;
+  };
+  const updateSoon = () => {
+    if (pending === 0) pending = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, update);
+  };
+  const set = (width: number | undefined) => {
+    wanted = width === undefined ? undefined : clampSidebarWidth(width, split.get_width());
+    apply(wanted);
+    updateSoon();
+  };
+  apply(wanted);
+  split.connect('notify::collapsed', updateSoon);
+  // An invisible, untargetable sibling the size of the split view: its resize is the window's.
+  const probe = new Gtk.DrawingArea({ canTarget: false, canFocus: false });
+  probe.connect('resize', updateSoon);
+  handle.connect('destroy', () => {
+    if (pending !== 0) GLib.source_remove(pending);
+    pending = 0;
+  });
+
+  const drag = new Gtk.GestureDrag();
+  let startX = 0;
+  drag.connect('drag-begin', (_g, x) => {
+    startX = x;
+    handle.grab_focus();
+  });
+  drag.connect('drag-update', (_g, offsetX) => {
+    // The handle moves under the pointer, so read the pointer in the split view's coordinates.
+    const [ok, x] = handle.translate_coordinates(split, startX + offsetX, 0);
+    if (ok) set(rtl ? split.get_width() - x : x);
+  });
+  drag.connect('drag-end', save);
+  handle.add_controller(drag);
+
+  const click = new Gtk.GestureClick();
+  click.connect('pressed', (_g, presses) => {
+    if (presses !== 2) return;
+    set(undefined);
+    save();
+  });
+  handle.add_controller(click);
+
+  const keys = new Gtk.EventControllerKey();
+  keys.connect('key-pressed', (_c, keyval) => {
+    const current = page.get_width();
+    const sign = rtl ? -1 : 1;
+    if (keyval === Gdk.KEY_Left) set(current - sign * SIDEBAR_STEP);
+    else if (keyval === Gdk.KEY_Right) set(current + sign * SIDEBAR_STEP);
+    else if (keyval === Gdk.KEY_Home) set(undefined);
+    else return false;
+    save();
+    return true;
+  });
+  handle.add_controller(keys);
+  return [probe, handle];
+}
+
 export function createWindow(app: Adw.Application, options: WindowOptions = {}): Adw.ApplicationWindow {
   return timed('createWindow', () => createWindowInner(app, options));
 }
@@ -126,8 +240,8 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   });
 
   const split = new Adw.NavigationSplitView({
-    minSidebarWidth: 320,
-    maxSidebarWidth: 400,
+    minSidebarWidth: SIDEBAR_DEFAULT_MIN,
+    maxSidebarWidth: SIDEBAR_DEFAULT_MAX,
     sidebarWidthFraction: 0.35,
   });
 
@@ -385,6 +499,7 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   // The viewer is a sibling of the split view, over it, as in Fractal; the toasts sit above both.
   const stage = new Gtk.Overlay({ child: split });
   stage.add_overlay(viewer.widget);
+  for (const overlay of createSidebarHandle(split, sidebar.page)) stage.add_overlay(overlay);
   const toasts = new Adw.ToastOverlay({ child: stage });
   const column = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
   toasts.set_vexpand(true);

@@ -22,6 +22,7 @@ const FULL = {
     ai: true,
     emailChatHintSeen: ['mail-a'],
     searchScope: 'names',
+    sidebarWidth: 420,
     recentEmoji: ['😀'],
   },
   mailAccounts: { 'mail-a': { deltaChat: true } },

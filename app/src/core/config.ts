@@ -57,6 +57,8 @@ export interface UiConfig {
   colorScheme?: string;
   /** `doodles` or `none`. Unset: `doodles`. */
   chatBackground?: string;
+  /** The width in pixels the person dragged the conversation list to (280 to 600). Unset: the default 320 to 400. */
+  sidebarWidth?: number;
   /** Confirm to a Delta Chat peer that a message was read, when it asked for that. Unset: off. */
   sendReadReceipts?: boolean;
   /**
@@ -361,6 +363,15 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   const searchScope = (rawUi as Record<string, unknown>).searchScope;
   if (searchScope !== undefined && !isSearchScope(searchScope))
     throw new Error(`config.ui.searchScope must be one of ${SEARCH_SCOPES.join(', ')}`);
+  const sidebarWidth = (rawUi as Record<string, unknown>).sidebarWidth;
+  if (
+    sidebarWidth !== undefined &&
+    (typeof sidebarWidth !== 'number' ||
+      !Number.isFinite(sidebarWidth) ||
+      sidebarWidth < 280 ||
+      sidebarWidth > 600)
+  )
+    throw new Error('config.ui.sidebarWidth must be a number from 280 to 600');
   const recentRaw = (rawUi as Record<string, unknown>).recentEmoji;
   const recentEmoji = Array.isArray(recentRaw)
     ? recentRaw.filter((one): one is string => typeof one === 'string')
@@ -379,6 +390,7 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     ...(welcomeDone === undefined ? {} : { welcomeDone }),
     ...(emailChatHintSeen === undefined || emailChatHintSeen.length === 0 ? {} : { emailChatHintSeen }),
     ...(searchScope === undefined ? {} : { searchScope }),
+    ...(sidebarWidth === undefined ? {} : { sidebarWidth: Math.round(sidebarWidth) }),
     ...(recentEmoji === undefined || recentEmoji.length === 0 ? {} : { recentEmoji }),
   };
 

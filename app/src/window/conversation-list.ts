@@ -511,7 +511,8 @@ export function createConversationList(
   const unmergeButton = new Gtk.Button({ label: _('Separate') });
   const readButton = new Gtk.Button({ label: _('Mark as Read') });
   const unreadButton = new Gtk.Button({ label: _('Mark as Unread') });
-  const tools = new Gtk.Box({ spacing: 12, halign: Gtk.Align.CENTER });
+  // Wraps, so four labelled buttons do not set the sidebar's minimum width.
+  const tools = new Adw.WrapBox({ childSpacing: 12, lineSpacing: 6, halign: Gtk.Align.CENTER });
   tools.append(readButton);
   tools.append(unreadButton);
   tools.append(unmergeButton);
