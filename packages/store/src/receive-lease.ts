@@ -32,15 +32,17 @@ import { withTransaction } from './db.ts';
  * Is the process behind a holder string still there? Holders are `<pid>` (daemon, sync) or
  * `sync-<pid>`; anything else (a test's `pid-1`, another host) cannot be judged and counts as alive,
  * so only the lease's own expiry can free it. Without `/proc` (not Linux) nothing can be judged
- * either. A reused pid reads as alive: the expiry covers that, as it always did.
+ * either. A reused pid reads as alive: the expiry covers that, as it always did. Inside a Flatpak
+ * every instance has its own pid namespace, so a live holder in another instance would look dead:
+ * there, too, only the expiry decides.
  */
 export function holderIsAlive(holder: string): boolean {
   const match = /^(?:sync-)?(\d+)$/.exec(holder);
   if (match === null) return true;
   if (!existsSync('/proc/self')) return true;
+  if (existsSync('/.flatpak-info') || process.env.FLATPAK_ID) return true;
   return existsSync(`/proc/${match[1]}`);
 }
-
 
 /** How often a holder refreshes its lease. */
 export const LEASE_HEARTBEAT_MS = 30_000;
