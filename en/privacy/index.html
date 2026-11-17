@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy – Curlew</title>
+<meta name="description" content="What Curlew does with data.">
+<link rel="canonical" href="https://jumplink.eu/curlew/en/privacy/">
+<link rel="alternate" hreflang="en" href="https://jumplink.eu/curlew/en/privacy/">
+<link rel="alternate" hreflang="de" href="https://jumplink.eu/curlew/de/privacy/">
+<link rel="alternate" hreflang="x-default" href="https://jumplink.eu/curlew/en/privacy/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Privacy – Curlew">
+<meta property="og:description" content="What Curlew does with data.">
+<meta property="og:url" content="https://jumplink.eu/curlew/en/privacy/">
+<meta property="og:site_name" content="Curlew">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="de_DE">
+<meta property="og:image" content="https://jumplink.eu/curlew/og-en.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Privacy – Curlew">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Privacy – Curlew">
+<meta name="twitter:description" content="What Curlew does with data.">
+<meta name="twitter:image" content="https://jumplink.eu/curlew/og-en.png">
+<meta name="theme-color" content="#f66151" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#a51d2d" media="(prefers-color-scheme: dark)">
+<link rel="icon" type="image/svg+xml" href="/curlew/eu.jumplink.curlew.svg">
+
+
+<style>:root{--brand-light:#f66151;--band-fg-light:#10233b;--brand-dark:#a51d2d;--band-fg-dark:#ffffff}</style>
+<link rel="stylesheet" href="/curlew/assets/site-b6b57cf5.css">
+<script type="module" src="/curlew/assets/site-5efa9115.js"></script>
+</head>
+<body>
+<div class="topbar">
+<div class="bar-inner">
+<a class="bar-brand" href="/curlew/en/">
+<img src="/curlew/eu.jumplink.curlew.svg" alt="" width="24" height="24">
+<span>Curlew</span>
+</a>
+<div class="bar-end">
+
+<nav class="bar-languages" aria-label="Language"><ul><li><span aria-current="true">EN</span></li><li><a href="/curlew/de/privacy/" hreflang="de" lang="de">DE</a></li></ul></nav>
+<a class="bar-link" href="https://github.com/JumpLink/curlew"><svg class="icon" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="M5.6 11.8 2 8l3.6-3.8M10.4 4.2 14 8l-3.6 3.8M9.4 2.6 6.6 13.4"/></svg><span>GitHub</span></a>
+</div>
+</div>
+</div>
+<header class="masthead">
+<div class="hero-inner">
+<div class="hero-icon" style="--icon-url:url(/curlew/eu.jumplink.curlew.svg)"><img src="/curlew/eu.jumplink.curlew.svg" alt="" width="128" height="128"></div>
+<div class="hero-text">
+<h1>Privacy</h1>
+<p class="hero-by">Curlew</p>
+</div>
+</div>
+</header>
+<main>
+<div class="column privacy-statement">
+<p class="privacy-hosting">This page is a static file: no cookie, no analytics, nothing from a third party. Whoever serves it may keep ordinary web-server access logs of the request.</p>
+<h2>Privacy statement</h2>
+<p>Curlew is a messenger that runs on your own computer. It has no server of its own, so there is nobody at Curlew who could receive your data. This page says what the app stores, where it connects, and what it never does. The app is open source (<a href="https://github.com/JumpLink/curlew">github.com/JumpLink/curlew</a>); every point below can be checked in the code, and the technical detail is in <a href="https://github.com/JumpLink/curlew/tree/main/docs/privacy"><code>docs/privacy/</code></a>.</p>
+<h3>What Curlew does</h3>
+<p>Curlew brings your mail and your chats from Telegram, Signal, WhatsApp, Matrix and XMPP into one list. For that it logs in to the accounts <strong>you</strong> add and shows what those services deliver.</p>
+<h3>No telemetry, no Curlew server</h3>
+<ul><li>Curlew sends no usage data, crash reports or analytics anywhere, and has no account of its own.</li><li>It talks only to the servers of the accounts you add: your mail provider (IMAP and SMTP), your Matrix homeserver, your XMPP server, and the Signal, Telegram and WhatsApp services.</li><li>The messenger services and your mail provider handle your data under their own privacy policies. Curlew does not control them.</li></ul>
+<h3>What is stored on your computer</h3>
+<ul><li><strong>The index</strong>: the messages of your accounts (mail headers and plain-text bodies, chat messages) in one local database under <code>$XDG_DATA_HOME/curlew/</code>, readable only by you. It is never uploaded.</li><li><strong>Sessions and passwords</strong>: the login sessions of the chat accounts and the passwords of XMPP and mail accounts you type into Curlew are kept in files readable only by you under the same folder. Mail accounts from GNOME Online Accounts (Linux) are read from the system when needed; Curlew does not store those credentials.</li><li><strong>Settings</strong>: your choices (enabled accounts, accepted terms, agent access rules) are in <code>$XDG_CONFIG_HOME/curlew/config.json</code>.</li><li><strong>Downloads</strong>: attachments you save go to your download folder.</li></ul>
+<p>You can delete all of this by removing those folders. Removing a copy from the index does not delete the message at the service it came from.</p>
+<h3>Where the app connects besides your accounts</h3>
+<ul><li><strong>Mail server discovery.</strong> When you add a mail account by address, Curlew looks up the server settings: it asks <code>autoconfig.&lt;your mail domain&gt;</code>, <code>&lt;your mail domain&gt;/.well-known/autoconfig</code> and the public Mozilla Thunderbird configuration database (<code>autoconfig.thunderbird.net</code>). These requests carry the domain of the address you entered, and nothing else. Nothing happens until you add a mail account.</li><li><strong>Links.</strong> Links you click open in your own browser or app; Curlew does not load them itself. The &quot;Open Link&quot; button when linking Signal hands the link to another app on your device.</li></ul>
+<h3>AI assistants (off by default)</h3>
+<p>Curlew can offer your messages to an AI assistant through a local MCP server (<code>curlew mcp</code>), but only when you switch AI on in the preferences. It is off by default; while it is off, every agent request is denied. When it is on, the server talks to the assistant on your own computer over standard input and output, not over the network, and you decide per account and contact whether the assistant may read, send, or must ask you first. Which assistant you connect, and what it does with what it reads, is governed by that assistant&#39;s provider, not by Curlew.</p>
+<h3>Your rights and contact</h3>
+<p>You can look at, export and delete your data yourself, because it is on your computer. For questions about this statement, write to pascal@jumplink.eu. The responsible person is named in the <a href="https://jumplink.eu/curlew/en/legal-notice/">legal notice</a>.</p>
+<p class="support-back"><a href="/curlew/en/">Back to Curlew</a></p>
+</div>
+</main>
+<footer class="footer">
+<div class="footer-inner">
+<nav class="footer-languages" aria-label="Language"><ul><li><span aria-current="true">English</span></li><li><a href="/curlew/de/privacy/" hreflang="de" lang="de">Deutsch</a></li></ul></nav>
+<p class="footer-source"><a href="https://github.com/JumpLink/curlew"><svg class="icon" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="M5.6 11.8 2 8l3.6-3.8M10.4 4.2 14 8l-3.6 3.8M9.4 2.6 6.6 13.4"/></svg><span>Source code</span></a></p>
+<p class="footer-license">Curlew is licensed under AGPL-3.0-or-later. This page reproduces text licensed under CC0-1.0.</p>
+<p class="footer-made"><a href="https://github.com/gjsify/gjsify">Made with gjsify</a></p>
+<ul class="footer-legal"><li><a href="/curlew/en/legal-notice/">Legal Notice</a></li><li><a href="/curlew/en/privacy/">Privacy</a></li></ul>
+</div>
+</footer>
+</body>
+</html>

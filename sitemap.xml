@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://jumplink.eu/curlew/en/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://jumplink.eu/curlew/en/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://jumplink.eu/curlew/de/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://jumplink.eu/curlew/en/"/>
+  </url>
+  <url>
+    <loc>https://jumplink.eu/curlew/de/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://jumplink.eu/curlew/en/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://jumplink.eu/curlew/de/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://jumplink.eu/curlew/en/"/>
+  </url>
+  <url>
+    <loc>https://jumplink.eu/curlew/en/support/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://jumplink.eu/curlew/en/support/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://jumplink.eu/curlew/de/support/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://jumplink.eu/curlew/en/support/"/>
+  </url>
+  <url>
+    <loc>https://jumplink.eu/curlew/de/support/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://jumplink.eu/curlew/en/support/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://jumplink.eu/curlew/de/support/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://jumplink.eu/curlew/en/support/"/>
+  </url>
+  <url>
+    <loc>https://jumplink.eu/curlew/en/privacy/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://jumplink.eu/curlew/en/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://jumplink.eu/curlew/de/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://jumplink.eu/curlew/en/privacy/"/>
+  </url>
+  <url>
+    <loc>https://jumplink.eu/curlew/de/privacy/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://jumplink.eu/curlew/en/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://jumplink.eu/curlew/de/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://jumplink.eu/curlew/en/privacy/"/>
+  </url>
+  <url>
+    <loc>https://jumplink.eu/curlew/en/legal-notice/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://jumplink.eu/curlew/en/legal-notice/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://jumplink.eu/curlew/de/legal-notice/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://jumplink.eu/curlew/en/legal-notice/"/>
+  </url>
+  <url>
+    <loc>https://jumplink.eu/curlew/de/legal-notice/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://jumplink.eu/curlew/en/legal-notice/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://jumplink.eu/curlew/de/legal-notice/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://jumplink.eu/curlew/en/legal-notice/"/>
+  </url>
+</urlset>

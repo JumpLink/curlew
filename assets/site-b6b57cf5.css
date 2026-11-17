@@ -1,0 +1,1976 @@
+/*
+ * One stylesheet for the whole page, driven by the tokens below. The app's own colours only ever
+ * reach `--brand`, which paints the masthead; every other surface is the site's own neutral
+ * palette, so a pale brand colour cannot make the body text unreadable.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  --brand: var(--brand-light, #84bbfd);
+  /* Text on the brand. A colour cannot be measured in CSS, so the generator measures the app's
+   * `<branding>` against near-black and white and writes the winner into `--band-fg-*`; these
+   * fallbacks belong to the two default brand colours above. */
+  --band-fg: var(--band-fg-light, #10233b);
+  /* Pills, dividers and hover fills drawn on the brand: the text colour, thinned. */
+  --band-line: color-mix(in srgb, var(--band-fg) 18%, transparent);
+  --band-tint: color-mix(in srgb, var(--band-fg) 10%, transparent);
+
+  --bg: #fff;
+  --surface: #f6f5f4;
+  --fg: #1d1d20;
+  --muted: #5e5c64;
+  --line: rgb(0 0 0 / 0.1);
+  --accent: var(--accent-light, #1c71d8);
+  --accent-fg: var(--accent-fg-light, #fff);
+  --shadow: 0 8px 24px rgb(0 0 0 / 0.14);
+  /* Lifts the screenshot off the brand band without drawing a card around it. */
+  --shot-shadow: 0 0.75rem 2rem rgb(0 0 0 / 0.25);
+
+  --radius: 10px;
+  --radius-lg: 14px;
+  --max: 64rem;
+  --text: 45rem;
+  --shot-h: 28rem;
+
+  font-family: "Adwaita Sans", Inter, "Segoe UI", system-ui, -apple-system, "Cantarell", sans-serif;
+  line-height: 1.5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --brand: var(--brand-dark, #1a5fb4);
+    --band-fg: var(--band-fg-dark, #fff);
+    --bg: #1a1a1c;
+    --surface: #26262a;
+    --fg: #f6f5f4;
+    --muted: #b6b4b1;
+    --line: rgb(255 255 255 / 0.11);
+    --accent: var(--accent-dark, #3584e4);
+    --accent-fg: var(--accent-fg-dark, #fff);
+    --shadow: 0 8px 24px rgb(0 0 0 / 0.5);
+    --shot-shadow: 0 0.75rem 2rem rgb(0 0 0 / 0.45);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+a {
+  color: inherit;
+}
+
+img,
+picture {
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--display-font, inherit);
+  line-height: 1.2;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.icon {
+  display: block;
+  width: 1em;
+  height: 1em;
+  flex: none;
+}
+
+/* One content width for the whole page: the bar, the hero, the facts, the text and the footer all
+ * start and end on the same two lines. */
+.bar-inner,
+.hero-inner,
+.badges,
+.column,
+.footer-inner {
+  width: min(100% - 2rem, var(--max));
+  margin-inline: auto;
+}
+
+/* Masthead: bar, hero, facts and screenshots on the app's own colour */
+
+.masthead {
+  background: var(--brand);
+  color: var(--band-fg);
+}
+
+main {
+  padding-block-start: 2.5rem;
+}
+
+/* The bar is painted in the same colour as the masthead below it, so at rest the two read as one
+ * surface and, once it sticks over the text, it is already an opaque bar — no script has to notice
+ * the moment it detaches. */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--brand);
+  color: var(--band-fg);
+}
+
+.bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 3.5rem;
+}
+
+/* Scrolling shrinks the bar and lifts it off the page — driven by the scroll position itself, so
+ * no script is involved. A browser without scroll-driven animations keeps the resting bar, which
+ * is legible at every scroll position because it is opaque. */
+@supports (animation-timeline: scroll()) {
+  .topbar,
+  .bar-inner {
+    animation: linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0 6rem;
+  }
+
+  .topbar {
+    animation-name: bar-detach;
+  }
+
+  .bar-inner {
+    animation-name: bar-compact;
+  }
+
+  /* The shrinking is the motion here; the shadow alone still marks the detached bar. */
+  @media (prefers-reduced-motion: reduce) {
+    .bar-inner {
+      animation-name: none;
+    }
+  }
+}
+
+@keyframes bar-detach {
+  to {
+    box-shadow: 0 1px 12px rgb(0 0 0 / 0.22);
+  }
+}
+
+@keyframes bar-compact {
+  to {
+    min-height: 2.75rem;
+  }
+}
+
+.bar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.bar-brand img {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.bar-end {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-inline-start: auto;
+}
+
+/* On the brand colour the muted greys of the text column would be unreadable, so the bar fades its
+ * own text colour instead and restores it fully on hover. */
+.bar-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  text-decoration: none;
+  opacity: 0.75;
+}
+
+.bar-link:hover,
+.bar-languages a:hover {
+  opacity: 1;
+}
+
+.bar-languages ul,
+.footer-languages ul,
+.card-list,
+.os-group ul,
+.tags,
+.carousel-track,
+.footer-legal,
+.languages-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bar-languages ul,
+.footer-languages ul {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.bar-languages a {
+  text-decoration: none;
+  opacity: 0.75;
+}
+
+.footer-languages a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.bar-languages [aria-current],
+.footer-languages [aria-current] {
+  font-weight: 700;
+}
+
+.hero-inner {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+  padding-block: 2.5rem 1.75rem;
+}
+
+.hero-icon {
+  position: relative;
+  flex: none;
+  isolation: isolate;
+}
+
+/* The soft glow: the icon again, blown up and blurred behind itself. */
+.hero-icon::before {
+  content: "";
+  position: absolute;
+  inset: -18%;
+  z-index: -1;
+  background-image: var(--icon-url);
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(26px) saturate(1.5);
+  opacity: 0.55;
+}
+
+.hero-icon img {
+  display: block;
+  width: 7rem;
+  height: 7rem;
+}
+
+.hero-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  letter-spacing: -0.02em;
+}
+
+.hero-by {
+  margin: 0.25rem 0 0;
+  opacity: 0.8;
+}
+
+/* Buttons and the download split */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.15rem;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: color-mix(in srgb, var(--accent) 88%, var(--fg));
+}
+
+.button .icon {
+  font-size: 1.1em;
+}
+
+.download {
+  flex: none;
+  margin-inline-start: auto;
+  min-width: 0;
+}
+
+.download-split {
+  display: flex;
+  gap: 2px;
+}
+
+.download-cta {
+  border-radius: var(--radius);
+}
+
+/* Only a CTA with the toggle beside it gives up its right corners: without a release there is no
+ * split, just the button to the source or the releases. */
+.download-split .download-cta {
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.download-toggle {
+  padding-inline: 0.6rem;
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+/* The accent would have to be contrasted against the app's colour, which is unknowable here. The
+ * band's text colour was already measured against it, so the button inverts that pair and is
+ * readable on any brand. */
+.masthead .download .button {
+  background: var(--band-fg);
+  color: var(--brand);
+}
+
+.masthead .download .button:hover {
+  background: color-mix(in srgb, var(--band-fg) 86%, var(--brand));
+}
+
+/* Badges */
+
+/* One equal column per fact, however many facts there are, spread over the hero's width. */
+.badges {
+  display: grid;
+  grid-template-columns: repeat(var(--badge-count, 4), minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+  list-style: none;
+  padding: 1.25rem 0 0.5rem;
+  border-block-start: 1px solid var(--band-line);
+}
+
+/* Three fixed rows — pill, value, label — so a badge whose pill is taller (the platform glyphs) or
+ * that carries no value at all still lands its label on the neighbours' line. */
+.badge {
+  display: grid;
+  grid-template-rows: 2.75rem minmax(1.5rem, auto) auto;
+  align-items: center;
+  justify-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  text-align: center;
+}
+
+.badge-pill {
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  background: var(--band-tint);
+  font-size: 1.15rem;
+}
+
+/* The platform badge draws one glyph per system, so its chip grows into a pill instead. A
+ * Firefox and a Chromium glyph are only distinguishable at a size the others do not need. */
+.badge-platforms {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.6rem;
+}
+
+.badge:has(.badge-platforms) .badge-pill {
+  width: auto;
+  min-width: 2.5rem;
+  height: 2.75rem;
+  padding-inline: 0.85rem;
+}
+
+/* Hovering or tabbing to a platform brings up the colour that system is known by; at rest they all
+ * share the band's text colour, so the row stays one row and not a fruit salad. */
+.platform {
+  color: inherit;
+  transition: color 150ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .platform {
+    transition: none;
+  }
+}
+
+.platform:hover {
+  color: var(--platform-color);
+}
+
+/* A glyph is not focusable and a touch screen cannot hover, so there the colours are simply on. */
+@media (hover: none) {
+  .platform {
+    color: var(--platform-color);
+  }
+}
+
+.platform-linux {
+  --platform-color: #f5c211;
+}
+
+.platform-darwin {
+  --platform-color: #d9d9dd;
+}
+
+.platform-win32 {
+  --platform-color: #3584e4;
+}
+
+.platform-android {
+  --platform-color: #3ddc84;
+}
+
+.platform-web {
+  --platform-color: #62a0ea;
+}
+
+.platform-firefox {
+  --platform-color: #ff7139;
+}
+
+.platform-chromium {
+  --platform-color: #4285f4;
+}
+
+/* The row is reserved even when a badge has no value, so every label sits on the same line. */
+.badge-value {
+  grid-row: 2;
+  line-height: 1.5;
+  font-weight: 700;
+  font-size: 0.95rem;
+  /* A long licence id must wrap inside the badge instead of widening the row. */
+  overflow-wrap: anywhere;
+}
+
+.badge-label {
+  grid-row: 3;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+/* Screenshot band — the bottom of the masthead, whose colour it already sits on. */
+
+.band {
+  padding-block: 1.5rem 3rem;
+}
+
+.carousel {
+  display: block;
+  position: relative;
+}
+
+/* One slide fills the track, so the snapped screenshot is centred and no neighbour peeks in. */
+.carousel-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.slide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+}
+
+/* Shrink-wrapped around the screenshot: the rounded corners and the shadow belong to the image,
+ * not to a box the letterboxed image sits in. */
+.slide figure {
+  margin: 0;
+  width: fit-content;
+  max-width: 86vw;
+  margin-inline: auto;
+  position: relative;
+}
+
+/* A fixed track height keeps mixed aspect ratios from resizing the band slide by slide; a shot
+ * that does not fill it sits centred rather than stretched. */
+.slide picture {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--shot-h);
+}
+
+/* `--shot-w` is the CSS width this screenshot's renditions were cut for: at that width a 2560px
+ * source is a 2× image, and above it the browser would be upscaling. Width and max-height
+ * together shrink-wrap the artwork — `object-fit: contain` would letterbox it instead, and the
+ * shadow would then be drawn around the empty strip. Both are maxima on an `auto` box, and the
+ * height cap is `--shot-h`, not `100%`: the figure is `fit-content`, and in that intrinsic pass a
+ * percentage max-height counts as none, so the figure took the full width while the image was
+ * capped in height — a portrait shot (a browser popup) came out squashed. */
+.slide img {
+  width: auto;
+  max-width: min(100%, var(--shot-w, 100%));
+  height: auto;
+  max-height: var(--shot-h);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shot-shadow);
+}
+
+/* A window shot carries its own rounded corners and shadow (like on Flathub): show it as it is. */
+.slide picture[data-frame="none"] img,
+.lightbox picture[data-frame="none"] img {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.slide figcaption {
+  margin-top: 0.85rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.slide-expand,
+.carousel-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(8px);
+  color: var(--fg);
+  cursor: pointer;
+  padding: 0;
+}
+
+.slide-expand {
+  position: absolute;
+  inset-block-start: 0.6rem;
+  inset-inline-end: 0.6rem;
+  width: 2rem;
+  height: 2rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.slide:hover .slide-expand,
+.slide-expand:focus-visible {
+  opacity: 1;
+}
+
+.carousel-arrow {
+  position: absolute;
+  inset-block-start: calc(var(--shot-h) / 2);
+  translate: 0 -50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.1rem;
+  z-index: 1;
+}
+
+/* At the edges of the band: a screenshot shrink-wraps to its own aspect, so there is no image edge
+ * to pin them to that would not move from slide to slide. */
+.carousel-prev {
+  inset-inline-start: clamp(0.75rem, 3vw, 2.5rem);
+}
+
+.carousel-next {
+  inset-inline-end: clamp(0.75rem, 3vw, 2.5rem);
+}
+
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.carousel-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: currentcolor;
+  opacity: 0.35;
+  cursor: pointer;
+}
+
+.carousel-dot[aria-current="true"] {
+  opacity: 1;
+}
+
+.lightbox {
+  border: none;
+  padding: 0;
+  max-width: 100vw;
+  max-height: 100vh;
+  width: 100vw;
+  height: 100vh;
+  background: transparent;
+  color: #fff;
+}
+
+.lightbox::backdrop {
+  background: rgb(0 0 0 / 0.94);
+}
+
+.lightbox figure {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  margin: 0;
+  padding: 1.5rem;
+}
+
+/* The cloned figure loses the .slide sizing rules, so the lightbox caps it itself. */
+.lightbox picture {
+  display: flex;
+  min-height: 0;
+  max-width: 100%;
+}
+
+/* The clone keeps the picture's `--shot-w`, so the full-screen view stops at the same width the
+ * renditions were cut for instead of upscaling the file the browser already fetched. */
+.lightbox img {
+  width: min(100%, var(--shot-w, 100%));
+  height: auto;
+  /* Leaves room for the figure padding, the gap and the caption. */
+  max-height: calc(100vh - 8rem);
+  object-fit: contain;
+  border-radius: var(--radius-lg);
+}
+
+.lightbox figcaption {
+  text-align: center;
+}
+
+.lightbox .dialog-close {
+  position: absolute;
+  inset-block-start: 1rem;
+  inset-inline-end: 1rem;
+  color: #fff;
+}
+
+/* Text column */
+
+.about h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+}
+
+.about p {
+  color: var(--fg);
+}
+
+.about ul {
+  padding-inline-start: 1.25rem;
+}
+
+.card {
+  display: block;
+  margin-block: 2rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.release-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.release-head h2,
+.release-head h3 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.date-pill {
+  flex: none;
+  margin: 0;
+  padding: 0.1rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.release-body ul {
+  padding-inline-start: 1.25rem;
+}
+
+.release-body.clamped {
+  max-height: 11rem;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, #000 60%, transparent);
+}
+
+.release-more {
+  margin-top: 0.5rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.older summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.older summary::-webkit-details-marker {
+  display: none;
+}
+
+.summary-chevron {
+  margin-inline-start: auto;
+  color: var(--muted);
+}
+
+.older[open] .summary-chevron {
+  rotate: 180deg;
+}
+
+.release-old {
+  margin-top: 1.5rem;
+}
+
+/* Link cards, also the download rows */
+
+.links h2,
+.support h2 {
+  font-size: 1.15rem;
+}
+
+.card-list,
+.os-group ul {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.card-list li + li,
+.os-group li + li {
+  border-top: 1px solid var(--line);
+}
+
+.card-list a,
+.target a,
+.target-link {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.7rem 1rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.card-list a:hover,
+.target a:hover {
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+}
+
+/* A target that is announced but cannot be downloaded yet: same row, no hover, muted. */
+.target-link {
+  cursor: default;
+}
+
+.target-link .target-icon,
+.target-link .target-name {
+  opacity: 0.6;
+}
+
+.link-icon,
+.target-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.link-text,
+.target-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.link-title,
+.target-name {
+  font-weight: 600;
+}
+
+.link-url,
+.target-meta {
+  color: var(--muted);
+  font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link-external {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--muted);
+}
+
+.target-size {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tags */
+
+.tags-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem 3rem;
+  margin-block: 2rem;
+}
+
+.tag-group h3 {
+  margin: 0 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tags li {
+  padding: 0.15rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.85rem;
+}
+
+/* Dialogs */
+
+.download-dialog,
+.support-dialog {
+  width: 34rem;
+  max-width: min(34rem, calc(100vw - 2rem));
+  max-height: 85vh;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+  color: var(--fg);
+  overflow: auto;
+}
+
+.download-dialog::backdrop,
+.support-dialog::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+
+.dialog-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.dialog-head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.dialog-close {
+  display: inline-flex;
+  padding: 0.4rem;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.dialog-close:hover {
+  background: var(--surface);
+  color: var(--fg);
+}
+
+/* One block per part of the product, in the order the parts have to be installed in. */
+.component + .component {
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
+.component-head {
+  padding: 1rem 1.25rem 0;
+}
+
+.component-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.component-step {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.component-summary {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.os-tabs {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.9rem 1.25rem 0;
+}
+
+.os-tab {
+  display: inline-flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.os-tab .icon {
+  font-size: 1.1rem;
+}
+
+.os-tab[aria-selected="true"] {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.os-groups {
+  padding: 0 1.25rem;
+}
+
+.os-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.1rem 0 0.5rem;
+  font-size: 0.95rem;
+}
+
+/* With tabs visible the group heading only repeats the selected tab. */
+.os-tabs:not([hidden]) ~ .os-groups .os-title {
+  display: none;
+}
+
+.os-tabs:not([hidden]) ~ .os-groups .os-group ul {
+  margin-top: 1rem;
+}
+
+.os-note {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.dialog-foot {
+  margin: 1rem 0 0;
+  padding: 0 1.25rem 1.25rem;
+  font-size: 0.9rem;
+}
+
+.dialog-foot a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Without JavaScript the dialog is not a modal but a panel: everything stays reachable. */
+app-download:not([data-enhanced]) dialog,
+app-support:not([data-enhanced]) dialog {
+  display: block;
+  position: static;
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  margin-block-start: 1rem;
+  overflow: visible;
+}
+
+app-download:not([data-enhanced]) .dialog-head,
+app-support:not([data-enhanced]) .dialog-head {
+  position: static;
+}
+
+app-download:not([data-enhanced]) .download-toggle {
+  display: none;
+}
+
+app-download:not([data-enhanced]) .download-cta {
+  border-radius: var(--radius);
+}
+
+/* The inline panel is taller than the name, so the hero reads top down, not centred. */
+.hero-inner:has(app-download:not([data-enhanced])) {
+  align-items: flex-start;
+}
+
+.support {
+  margin-block: 2rem;
+}
+
+app-support {
+  display: block;
+}
+
+.support-intro {
+  margin-block: 0 1.5rem;
+}
+
+.support-back {
+  margin-block: 1.5rem 0;
+}
+
+/* Related apps: same card list as the links, with the app's own icon */
+
+.related {
+  margin-block: 2rem;
+}
+
+.related h2 {
+  font-size: 1.15rem;
+}
+
+.related-list {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+  list-style: none;
+  padding: 0;
+}
+
+.related-list li + li {
+  border-top: 1px solid var(--line);
+}
+
+.related-list a {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.related-list a:hover {
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+}
+
+.related-icon {
+  flex: none;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.related-icon-blank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  color: var(--muted);
+}
+
+.related-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.related-name {
+  font-weight: 600;
+}
+
+.related-summary {
+  color: var(--muted);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+/* Extension page: a store listing in the site's own tokens */
+
+.ext-short {
+  margin: 0.5rem 0 0;
+  max-width: 40rem;
+  opacity: 0.9;
+}
+
+.ext-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 17rem;
+  gap: 2rem;
+  align-items: start;
+}
+
+.ext-facts {
+  grid-column: 2;
+  grid-row: 1;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.ext-main {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.ext-facts h2 {
+  margin-block: 0 0.75rem;
+  font-size: 1.05rem;
+}
+
+.ext-facts dl {
+  margin: 0;
+}
+
+.ext-fact + .ext-fact {
+  margin-block-start: 0.75rem;
+}
+
+.ext-fact dt {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.ext-fact dd {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-wrap: anywhere;
+}
+
+.pair .card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  text-decoration: none;
+  color: inherit;
+}
+
+.pair .card:hover {
+  background: color-mix(in srgb, var(--fg) 6%, var(--surface));
+}
+
+.pair .link-external {
+  margin-inline-start: auto;
+  flex: none;
+}
+
+.ext-section {
+  margin-block-start: 2rem;
+}
+
+.pair + .ext-section {
+  margin-block-start: 1.5rem;
+}
+
+.ext-section h3 {
+  font-size: 1rem;
+  margin-block: 1.25rem 0.5rem;
+}
+
+.ext-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-block: 0 0.5rem;
+}
+
+.ext-perms {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.ext-perm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.65rem 1rem;
+  background: var(--surface);
+}
+
+.ext-perm + .ext-perm {
+  border-top: 1px solid var(--line);
+}
+
+.ext-perm code {
+  align-self: flex-start;
+  font-size: 0.8rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.ext-perm-why,
+.ext-perm-only {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.ext-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ext-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.9rem;
+}
+
+.ext-chip small {
+  color: var(--muted);
+}
+
+.component-more {
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 760px) {
+  .ext-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+
+  .ext-facts,
+  .ext-main {
+    grid-column: 1;
+  }
+
+  .ext-facts {
+    grid-row: 1;
+  }
+
+  .ext-main {
+    grid-row: 2;
+  }
+}
+
+/* Footer */
+
+.footer {
+  margin-top: 3rem;
+  padding-block: 2rem 3rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.footer-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.footer p {
+  margin: 0;
+}
+
+.footer-source a,
+.footer-made a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+}
+
+/* The language picker shown when no page has been chosen yet. */
+
+.root main {
+  width: min(100% - 2rem, var(--text));
+  margin-inline: auto;
+  padding-block: 4rem;
+  text-align: center;
+}
+
+.languages-list {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+/* Breakpoints */
+
+@media (max-width: 1000px) {
+  :root {
+    --shot-h: 22rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero-inner {
+    flex-wrap: wrap;
+    padding-block: 2.25rem 1.5rem;
+  }
+
+  .download {
+    flex: 1 1 100%;
+    margin-inline-start: 0;
+  }
+
+  .download-split {
+    width: 100%;
+  }
+
+  .download-cta {
+    flex: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  :root {
+    --shot-h: 15rem;
+  }
+
+  /* A portrait phone shot would be tiny in a 15rem track. When any slide has one, the track is as
+   * tall for all of them (no jump between slides) and landscape slides sit centred in it. */
+  .carousel[data-portrait] {
+    --shot-h: min(70svh, 40rem);
+  }
+
+  .carousel[data-portrait] .slide {
+    display: flex;
+    align-items: center;
+  }
+
+  .carousel[data-portrait] .slide:not([data-portrait]) picture {
+    height: 15rem;
+  }
+
+  .hero-inner {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  /* Two columns on a phone; an odd last badge takes the whole final row instead of hanging left. */
+  .badges {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.1rem 1rem;
+  }
+
+  .badges[data-odd] .badge:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .band {
+    padding-block: 1.75rem;
+  }
+
+  .carousel-arrow {
+    display: none;
+  }
+
+  .card {
+    padding: 1rem 1.1rem;
+  }
+
+  .release-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+
+  .tags-section {
+    gap: 1.25rem;
+  }
+
+  .os-tab span:not(.icon) {
+    font-size: 0.7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel-track {
+    scroll-behavior: auto;
+  }
+
+  .slide-expand {
+    transition: none;
+  }
+}
+
+/* Bank transfer card in the support dialog */
+
+.card-list .sepa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.25rem;
+  padding: 1rem;
+}
+
+.sepa-text {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.sepa-text h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.sepa-details {
+  margin: 0;
+}
+
+.sepa-row {
+  padding-block: 0.3rem;
+}
+
+.sepa-row dt {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.sepa-row dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.sepa-value {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.9rem;
+  user-select: all;
+}
+
+.sepa-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.sepa-copy[hidden] {
+  display: none;
+}
+
+.sepa-copy:hover {
+  background: color-mix(in srgb, var(--fg) 6%, var(--bg));
+}
+
+.sepa-qr {
+  flex: none;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Scanners need dark modules on a light ground: the SVG carries its own white quiet zone in both themes. */
+.qr {
+  display: block;
+  width: 9.5rem;
+  height: 9.5rem;
+  border-radius: 8px;
+}
+
+.sepa-qr figcaption {
+  margin-top: 0.4rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+/* Blog */
+
+.bar-link[aria-current="page"] {
+  opacity: 1;
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+
+.post-list {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.post-card {
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.post-card h2,
+.post-card h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.post-card h2 a,
+.post-card h3 a {
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.post-card h2 a:hover,
+.post-card h3 a:hover {
+  color: var(--accent);
+}
+
+.post-card > p:last-child {
+  margin-block-end: 0;
+}
+
+.post-meta {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.post-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tag {
+  display: inline-block;
+  padding: 0.05rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.tag:hover {
+  color: var(--accent);
+}
+
+.post-feed a,
+.post-back a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.post-feed {
+  margin-block: 1.5rem 0;
+}
+
+.post-empty {
+  color: var(--muted);
+}
+
+.blog,
+.post,
+.cv {
+  max-width: var(--text);
+}
+
+.post-head {
+  margin-block-end: 2rem;
+}
+
+.post-back {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+}
+
+.post-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+}
+
+.post-body pre {
+  overflow-x: auto;
+  padding: 1rem;
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.post-body blockquote {
+  margin-inline: 0;
+  padding-inline-start: 1rem;
+  border-inline-start: 3px solid var(--line);
+  color: var(--muted);
+}
+
+.post-support {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-block-start: 2.5rem;
+  padding: 1.25rem;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.post-support p {
+  margin: 0;
+}
+
+.latest-posts {
+  margin-block: 2.5rem;
+}
+
+.latest-posts h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+}
+
+/* Developer site */
+
+.developer-avatar img {
+  border-radius: var(--radius-lg);
+}
+
+.developer-cv {
+  margin-block-start: 1.5rem;
+}
+
+.developer-apps {
+  margin-block: 2.5rem;
+}
+
+/* CV */
+
+.cv-head {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-block-end: 2rem;
+}
+
+.cv-avatar {
+  flex: none;
+  border-radius: var(--radius-lg);
+}
+
+.cv-label {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+
+.cv-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.cv-contact li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.cv-section {
+  margin-block: 2rem;
+}
+
+.cv-section h2 {
+  margin: 0 0 0.75rem;
+  padding-block-end: 0.25rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 1.35rem;
+}
+
+.cv-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cv-entry + .cv-entry {
+  margin-block-start: 1.25rem;
+}
+
+.cv-entry h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.cv-entry p {
+  margin: 0.25rem 0 0;
+}
+
+.cv-period {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.cv-highlights {
+  margin: 0.4rem 0 0;
+  padding-inline-start: 1.25rem;
+}
+
+.cv-entry .tags {
+  margin-block-start: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .cv-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* On paper the CV is the page: no bar, no footer, no colour, links spelled out where it matters. */
+@media print {
+  :root {
+    color-scheme: light;
+  }
+
+  .topbar,
+  .footer,
+  .post-feed,
+  .post-back {
+    display: none;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  main {
+    padding: 0;
+  }
+
+  .column {
+    width: auto;
+    max-width: none;
+  }
+
+  .cv a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .cv-section,
+  .cv-entry {
+    break-inside: avoid;
+  }
+
+  .tags li,
+  .tag {
+    border-color: #999;
+    background: none;
+  }
+}
+
+/* Brand icons (platforms and browsers). Every part is a `.b1…bN` path filled from `--c1…--c6`.
+ * At rest those are `currentColor`; hovering or focusing the control around the icon (or the icon
+ * itself) switches them to the brand's own colours `--brand-1…6`. The selected OS tab stays plain:
+ * its background is the accent colour, which the marks would clash with. Forced colours and touch
+ * screens without hover keep everything on `currentColor`. */
+.icon-brand {
+  --c1: currentColor;
+  --c2: currentColor;
+  --c3: currentColor;
+  --c4: currentColor;
+  --c5: currentColor;
+  --c6: currentColor;
+}
+
+.icon-brand .b1 { fill: var(--c1); }
+.icon-brand .b2 { fill: var(--c2); }
+.icon-brand .b3 { fill: var(--c3); }
+.icon-brand .b4 { fill: var(--c4); }
+.icon-brand .b5 { fill: var(--c5); }
+.icon-brand .b6 { fill: var(--c6); }
+
+.icon-brand [class^="b"] {
+  transition: fill 150ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icon-brand [class^="b"] {
+    transition: none;
+  }
+}
+
+.icon-chromium { --brand-1: #ea4335; --brand-2: #34a853; --brand-3: #fbbc04; --brand-4: #4285f4; }
+.icon-firefox { --brand-1: #ff9500; --brand-2: #7542e5; }
+
+/* Fox and globe share `currentColor` at rest and would merge into one blob, so the globe stays
+ * translucent until the brand colours switch on. */
+.icon-firefox .b2 { fill-opacity: var(--globe-opacity, 0.35); transition: fill 150ms ease, fill-opacity 150ms ease; }
+.icon-macos { --brand-1: #61bb46; --brand-2: #fdb827; --brand-3: #f5821f; --brand-4: #e03a3e; --brand-5: #963d97; --brand-6: #009ddc; }
+.icon-windows { --brand-1: #f25022; --brand-2: #7fba00; --brand-3: #00a4ef; --brand-4: #ffb900; }
+.icon-safari { --brand-1: #1b9ef0; --brand-2: #ff3b30; --brand-3: #9a9aa0; }
+.icon-edge { --brand-1: #0a7fd6; --brand-2: #35c1f1; }
+.icon-android { --brand-1: #3ddc84; }
+.icon-linux { --brand-1: #1c1c1c; --brand-2: #f4f4f4; --brand-3: #f5a000; }
+
+/* Marks that are dark by nature need a lighter shade on a dark page. */
+@media (prefers-color-scheme: dark) {
+  .icon-safari { --brand-3: #e8e8e8; }
+  .icon-linux { --brand-1: #8a8a96; }
+}
+
+@media (forced-colors: none) {
+  .icon-brand.is-colour,
+  :is(a, button, .ext-chip, .os-tab):focus-visible .icon-brand,
+  .icon-brand:focus-visible {
+    --c1: var(--brand-1);
+    --c2: var(--brand-2, currentColor);
+    --c3: var(--brand-3, currentColor);
+    --c4: var(--brand-4, currentColor);
+    --c5: var(--brand-5, currentColor);
+    --c6: var(--brand-6, currentColor);
+    --globe-opacity: 1;
+  }
+
+  @media (hover: hover) {
+    :is(a, button, .ext-chip):hover .icon-brand,
+    .os-tab:not([aria-selected="true"]):hover .icon-brand,
+    .icon-brand.platform:hover {
+      --c1: var(--brand-1);
+      --c2: var(--brand-2, currentColor);
+      --c3: var(--brand-3, currentColor);
+      --c4: var(--brand-4, currentColor);
+      --c5: var(--brand-5, currentColor);
+      --c6: var(--brand-6, currentColor);
+    --globe-opacity: 1;
+    }
+  }
+}

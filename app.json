@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "id": "eu.jumplink.curlew",
+  "name": {
+    "en": "Curlew",
+    "de": "Curlew"
+  },
+  "summary": {
+    "en": "Chats across messengers",
+    "de": "Chats über alle Messenger"
+  },
+  "icon": "https://jumplink.eu/curlew/eu.jumplink.curlew.svg",
+  "url": "https://jumplink.eu/curlew/",
+  "languages": [
+    "en",
+    "de"
+  ],
+  "developer": {
+    "id": "eu.jumplink",
+    "name": "Pascal Garber"
+  }
+}
