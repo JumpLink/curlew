@@ -13,6 +13,9 @@ Mail is one protocol among the others, and it can show mail threads as email cha
 Chat style. AI assistants can work with your messages through an [MCP](https://modelcontextprotocol.io)
 server, but that is an option, and it is off until you turn it on.
 
+Website: <https://jumplink.eu/curlew/>. Curlew is free; if it is useful to you, you can
+[support its development](https://jumplink.eu/curlew/en/support/).
+
 ## Screenshots
 
 <!-- Produced by dev/screenshots.sh into docs/screenshots/ (see docs/screenshots/README.md). -->
