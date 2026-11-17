@@ -28,6 +28,10 @@ export const UI_SETTINGS: Record<keyof UiConfig, SettingPlace> = {
   ai: { kind: 'window', where: 'Preferences, AI' },
   emailChatHintSeen: { kind: 'state', why: 'set when the email-chat hint is dismissed' },
   searchScope: { kind: 'window', where: 'Conversation list, search scope' },
+  sidebarWidth: {
+    kind: 'state',
+    why: 'set when the edge of the conversation list is dragged; double-click resets it',
+  },
   recentEmoji: { kind: 'state', why: 'set when an emoji is picked in the emoji picker' },
 };
 

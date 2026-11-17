@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- The conversation list keeps its width of 320 to 400 pixels in a window of about 900 pixels instead of taking most of it and clipping the chat: the selection bar's buttons wrap instead of setting the list's minimum width.
 - A window left open across an update no longer shows the Accounts dialog's spinner forever when the background service restarted with a newer protocol: the window says "Curlew was updated. Restart it to continue." with a Restart button, the Accounts dialog shows the same message, and the dialog also stops waiting when the service never answers.
 - The background service takes over a receive lease whose holder process is gone instead of waiting for it to expire, releases its leases on shutdown, and keeps retrying an account whose round fails instead of dropping it. Rapid account changes restart the service once instead of once per change, and a Matrix token the server refuses no longer leaves an unhandled rejection.
 - Signal stickers you receive show as pictures instead of an empty bubble.
@@ -141,6 +142,8 @@
 - CI now starts every built artifact on its own OS: the macOS (arm64, Intel) and Windows zips, the Windows MSI after a quiet install, the `.deb` on Debian and Ubuntu, the `.rpm` on Fedora and the Flatpak each run `--version` and `conversations list` against an empty home, instead of only checking that the file exists.
 
 ### Added
+
+- Drag the edge between the conversation list and the chat to resize the list (280 to 600 pixels, the chat keeps at least 360); double-click or Home resets it, the arrow keys nudge it, and the width is remembered.
 
 - Reading a conversation marks it read in Curlew itself: when the window is active and the newest message is in view, the unread badge goes away and stays away after the next sync, also for mail and for chats whose network does not report reads. *Mark as Read* and *Mark as Unread* are in the conversation list's selection bar (right click a row). The setting `ui.syncReadState` (default on) is reserved for syncing this to your other devices (#441).
 - Images, videos and voice notes you send over WhatsApp go out with their size, length and the voice-note flag, so other clients lay them out and play them as received ones, and they show in your own chat like a received message right after sending.

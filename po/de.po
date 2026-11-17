@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 09:19+0100\n"
+"POT-Creation-Date: 2026-11-17 09:45+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1855,8 +1855,8 @@ msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
 #: app/src/window/about.ts:16 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:196 app/src/window/window.ts:99
-#: app/src/window/window.ts:122
+#: app/src/window/conversation-view.ts:196 app/src/window/window.ts:106
+#: app/src/window/window.ts:222
 msgid "Curlew"
 msgstr "Curlew"
 
@@ -2011,7 +2011,7 @@ msgstr "Dieses Konto pausieren?"
 #: app/src/window/account-remove-model.ts:71
 #: app/src/window/agent-access-page.ts:234
 #: app/src/window/conversation-list.ts:503
-#: app/src/window/conversation-list.ts:595
+#: app/src/window/conversation-list.ts:596
 #: app/src/window/conversation-view.ts:767 app/src/window/protocols-page.ts:66
 #: app/src/window/protocols-page.ts:142
 msgid "Cancel"
@@ -2152,7 +2152,7 @@ msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
 #: app/src/window/accounts-dialog.ts:91 app/src/window/accounts-page.ts:196
 #: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:172
-#: app/src/window/window.ts:135
+#: app/src/window/window.ts:235
 msgid "Accounts"
 msgstr "Konten"
 
@@ -2245,7 +2245,7 @@ msgstr "Starten"
 msgid "Protocols"
 msgstr "Protokolle"
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:139
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:239
 msgid "Agent access"
 msgstr "Agentenzugriff"
 
@@ -2878,7 +2878,7 @@ msgid "New conversation"
 msgstr "Neue Unterhaltung"
 
 #: app/src/window/conversation-list.ts:509
-#: app/src/window/conversation-list.ts:596
+#: app/src/window/conversation-list.ts:597
 #: app/src/window/merge-assistant.ts:116
 msgid "Merge"
 msgstr "Zusammenführen"
@@ -2891,11 +2891,11 @@ msgstr "Als gelesen markieren"
 msgid "Mark as Unread"
 msgstr "Als ungelesen markieren"
 
-#: app/src/window/conversation-list.ts:592
+#: app/src/window/conversation-list.ts:593
 msgid "Merge these people?"
 msgstr "Diese Personen zusammenführen?"
 
-#: app/src/window/conversation-list.ts:593
+#: app/src/window/conversation-list.ts:594
 msgid ""
 "Their chats become one conversation. Nothing is deleted, and you can "
 "separate them again."
@@ -2903,16 +2903,16 @@ msgstr ""
 "Ihre Chats werden zu einer Unterhaltung. Nichts wird gelöscht, und du kannst "
 "sie wieder trennen."
 
-#: app/src/window/conversation-list.ts:626
+#: app/src/window/conversation-list.ts:627
 msgid "Review"
 msgstr "Prüfen"
 
-#: app/src/window/conversation-list.ts:633
+#: app/src/window/conversation-list.ts:634
 #: app/src/window/preferences-dialog.ts:45
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:655
+#: app/src/window/conversation-list.ts:656
 msgid "{count} possible duplicate"
 msgid_plural "{count} possible duplicates"
 msgstr[0] "{count} mögliches Duplikat"
@@ -3373,7 +3373,7 @@ msgstr ""
 msgid "AI"
 msgstr "KI"
 
-#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:137
+#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:237
 msgid "Preferences"
 msgstr "Einstellungen"
 
@@ -3527,7 +3527,7 @@ msgid "On"
 msgstr "An"
 
 #: app/src/window/welcome.ts:107 app/src/window/welcome.ts:125
-#: app/src/window/window.ts:142
+#: app/src/window/window.ts:242
 msgid "Welcome"
 msgstr "Willkommen"
 
@@ -3587,39 +3587,49 @@ msgstr ""
 msgid "Start Using Curlew"
 msgstr "Curlew benutzen"
 
-#: app/src/window/window.ts:93
+#: app/src/window/window.ts:100
 msgid "Select a conversation"
 msgstr "Unterhaltung auswählen"
 
-#: app/src/window/window.ts:94
+#: app/src/window/window.ts:101
 msgid "Pick a conversation from the list."
 msgstr "Wähle eine Unterhaltung aus der Liste."
 
-#: app/src/window/window.ts:136
+#: app/src/window/window.ts:141
+#, fuzzy
+#| msgid "Filter conversations"
+msgid "Resize the conversation list"
+msgstr "Unterhaltungen filtern"
+
+#: app/src/window/window.ts:143
+msgid "Drag to resize the conversation list. Double-click to reset."
+msgstr ""
+
+#: app/src/window/window.ts:236
 msgid "Merge contacts…"
 msgstr "Kontakte zusammenführen…"
 
-#: app/src/window/window.ts:144
+#: app/src/window/window.ts:244
 msgid "About Curlew"
 msgstr "Über Curlew"
 
-#: app/src/window/window.ts:145
+#: app/src/window/window.ts:245
 msgid "Quit"
 msgstr "Beenden"
 
-#: app/src/window/window.ts:189
+#: app/src/window/window.ts:289
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:408
+#: app/src/window/window.ts:509
 msgid "Curlew (demo)"
 msgstr "Curlew (Demo)"
 
-#: app/src/window/window.ts:411
+#: app/src/window/window.ts:512
 msgid "Demo data — nothing here is real"
 msgstr "Demo-Daten – nichts hier ist echt"
 
-#: app/src/window/window.ts:554
+#: app/src/window/window.ts:655
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 
