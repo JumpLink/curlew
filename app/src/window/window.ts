@@ -63,7 +63,8 @@ import {
 } from './conversation-store.ts';
 import { pickedNames } from './composer-files-model.ts';
 import { voiceNoteOf } from './voice-recorder-model.ts';
-import { clearPreviews } from './attachment-store.ts';
+import { applyDaemonAccounts, clearPreviews } from './attachment-store.ts';
+import { gioAccountsDaemonSource } from './accounts-daemon.ts';
 import { createConversationView } from './conversation-view.ts';
 import { createMediaViewer } from './media-viewer.ts';
 import { presentNewConversation } from './new-conversation.ts';
@@ -261,6 +262,11 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
 
   // Fetched attachments are message content; an earlier run's leftovers go before this one's.
   if (!process.env.CURLEW_PREVIEWS_DIR) clearPreviews();
+  // A logged-out account's attachments say so without a fetch; the mark goes when the daemon reports it again.
+  const stopAccountWatch = gioAccountsDaemonSource().start((state) =>
+    applyDaemonAccounts(state.accounts.values()),
+  );
+  window.connect('destroy', stopAccountWatch);
   const viewer = createMediaViewer(
     (title) => toasts.add_toast(new Adw.Toast({ title, timeout: 4 })),
     (shown) => split.set_sensitive(!shown),

@@ -30,6 +30,8 @@ import {
   PREVIEW_CACHE_MAX_BYTES,
 } from './preview-cache-model.ts';
 import type { AttachmentInfo } from './conversation-model.ts';
+import type { DaemonAccountEntry } from '../core/lib/daemon-bus.ts';
+import { accountKeyOf, SignedOutRegistry } from './signed-out-model.ts';
 
 /** One fetchable part of one mail message. */
 export interface AttachmentSource {
@@ -44,33 +46,32 @@ export function cachedAttachment(source: AttachmentSource, root = previewsDir())
 
 const inFlight = new Map<string, Promise<string>>();
 
-/** How long one refused session marks the rest of its account's parts: long enough to spare the server, short enough to recover after a sign-in. */
-export const SIGNED_OUT_TTL_MS = 5 * 60_000;
-const signedOutAccounts = new Map<string, number>();
+const signedOut = new SignedOutRegistry();
 
 function accountKey(ref: MessageRef): string {
-  return `${ref.backend}/${ref.accountId}`;
+  return accountKeyOf(ref.backend, ref.accountId);
 }
 
-/** Whether a fetch of this account already failed for a dead session, so no part tries again. */
+/** Whether the account is known to be signed out (the daemon said so, or a fetch was refused), so no part tries. */
 export function isSignedOut(ref: MessageRef, now = Date.now()): boolean {
-  const since = signedOutAccounts.get(accountKey(ref));
-  if (since === undefined) return false;
-  if (now - since < SIGNED_OUT_TTL_MS) return true;
-  signedOutAccounts.delete(accountKey(ref));
-  return false;
+  return signedOut.isSignedOut(accountKey(ref), now);
 }
 
 /** Marks the account when `err` is a dead-session failure; mail has its own sign-in and is never marked. */
 export function noteFetchFailure(ref: MessageRef, err: unknown, now = Date.now()): boolean {
   if (ref.backend === 'mail' || !isSignedOutFailure(err)) return false;
-  signedOutAccounts.set(accountKey(ref), now);
+  signedOut.noteFailure(accountKey(ref), now);
   return true;
 }
 
-/** Forgets what was learned about the account, for when its state changed. */
+/** Forgets what was learned about the account. */
 export function clearSignedOut(ref: MessageRef): void {
-  signedOutAccounts.delete(accountKey(ref));
+  signedOut.clear(accountKey(ref));
+}
+
+/** Feeds the daemon's account states in; a logged-out account is marked before any fetch, any other state clears it. */
+export function applyDaemonAccounts(accounts: Iterable<DaemonAccountEntry>): string[] {
+  return signedOut.applyDaemon(accounts);
 }
 
 /** Thrown instead of fetching when the account is already known to be signed out. */

@@ -172,6 +172,7 @@ app/src/window/rich-text-model.ts
 app/src/window/selection-model.ts
 app/src/window/settings-map.ts
 app/src/window/sidebar-width.ts
+app/src/window/signed-out-model.ts
 app/src/window/stall-probe-model.ts
 app/src/window/stall-probe.ts
 app/src/window/terms-widgets.ts

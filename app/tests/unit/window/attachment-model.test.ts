@@ -1,4 +1,5 @@
 import { describe, expect, it } from '@gjsify/unit';
+import { SIGNED_OUT_TTL_MS, SignedOutRegistry } from '../../../src/window/signed-out-model.ts';
 import type { AttachmentKind } from '../../../src/window/attachment-model.ts';
 
 import {
@@ -407,6 +408,30 @@ export default async () => {
       expect(rowState(info, false).signInHint).toBe(false);
       expect(rowState(info, false).canFetch).toBe(true);
       expect(rowState({ ...info, backendCanFetch: false }, true).signInHint).toBe(false);
+    });
+  });
+  await describe('signed-out registry', async () => {
+    const entry = (state: string) => ({ backend: 'matrix', accountId: 'm1', state, since: '' }) as never;
+    await it('marks before any fetch when the daemon says logged-out', async () => {
+      const r = new SignedOutRegistry();
+      expect(r.isSignedOut('matrix/m1')).toBe(false);
+      expect(r.applyDaemon([entry('logged-out')]).length).toBe(1);
+      expect(r.isSignedOut('matrix/m1', Date.now() + 10 * SIGNED_OUT_TTL_MS)).toBe(true);
+    });
+    await it('clears as soon as the daemon reports another state', async () => {
+      const r = new SignedOutRegistry();
+      r.applyDaemon([entry('logged-out')]);
+      expect(r.applyDaemon([entry('connected')]).length).toBe(1);
+      expect(r.isSignedOut('matrix/m1')).toBe(false);
+      r.noteFailure('matrix/m1');
+      r.applyDaemon([entry('reconnecting')]);
+      expect(r.isSignedOut('matrix/m1')).toBe(false);
+    });
+    await it('lets a refused fetch expire when no daemon state is known', async () => {
+      const r = new SignedOutRegistry();
+      r.noteFailure('matrix/m1', 1000);
+      expect(r.isSignedOut('matrix/m1', 1000 + SIGNED_OUT_TTL_MS - 1)).toBe(true);
+      expect(r.isSignedOut('matrix/m1', 1000 + SIGNED_OUT_TTL_MS)).toBe(false);
     });
   });
 };

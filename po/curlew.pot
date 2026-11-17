@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 13:05+0100\n"
+"POT-Creation-Date: 2026-11-17 14:30+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1590,8 +1590,8 @@ msgid "curlew window takes no arguments."
 msgstr ""
 
 #: app/src/window/about.ts:16 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:196 app/src/window/window.ts:106
-#: app/src/window/window.ts:236
+#: app/src/window/conversation-view.ts:196 app/src/window/window.ts:107
+#: app/src/window/window.ts:237
 msgid "Curlew"
 msgstr ""
 
@@ -1859,7 +1859,7 @@ msgstr ""
 
 #: app/src/window/accounts-dialog.ts:93 app/src/window/accounts-page.ts:206
 #: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:172
-#: app/src/window/window.ts:249
+#: app/src/window/window.ts:250
 msgid "Accounts"
 msgstr ""
 
@@ -1954,7 +1954,7 @@ msgstr ""
 msgid "Protocols"
 msgstr ""
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:253
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:254
 msgid "Agent access"
 msgstr ""
 
@@ -2218,11 +2218,11 @@ msgstr ""
 msgid "A quiet pattern behind the messages"
 msgstr ""
 
-#: app/src/window/attachment-store.ts:80
+#: app/src/window/attachment-store.ts:81
 msgid "the account is signed out"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:117
+#: app/src/window/attachment-view.ts:117 app/src/window/attachment-view.ts:327
 msgid "Sign in again to load this image"
 msgstr ""
 
@@ -2263,7 +2263,11 @@ msgstr ""
 msgid "Image: {name}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:592
+#: app/src/window/attachment-view.ts:327
+msgid "Sign in again to load this video"
+msgstr ""
+
+#: app/src/window/attachment-view.ts:624
 #: app/src/window/conversation-model.ts:326
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
@@ -3078,7 +3082,7 @@ msgstr ""
 msgid "AI"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:251
+#: app/src/window/preferences-dialog.ts:92 app/src/window/window.ts:252
 msgid "Preferences"
 msgstr ""
 
@@ -3210,7 +3214,7 @@ msgid "On"
 msgstr ""
 
 #: app/src/window/welcome.ts:107 app/src/window/welcome.ts:125
-#: app/src/window/window.ts:256
+#: app/src/window/window.ts:257
 msgid "Welcome"
 msgstr ""
 
@@ -3262,47 +3266,47 @@ msgstr ""
 msgid "Start Using Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:100
+#: app/src/window/window.ts:101
 msgid "Select a conversation"
 msgstr ""
 
-#: app/src/window/window.ts:101
+#: app/src/window/window.ts:102
 msgid "Pick a conversation from the list."
 msgstr ""
 
-#: app/src/window/window.ts:141
+#: app/src/window/window.ts:142
 msgid "Resize the conversation list"
 msgstr ""
 
-#: app/src/window/window.ts:143
+#: app/src/window/window.ts:144
 msgid "Drag to resize the conversation list. Double-click to reset."
 msgstr ""
 
-#: app/src/window/window.ts:250
+#: app/src/window/window.ts:251
 msgid "Merge contacts…"
 msgstr ""
 
-#: app/src/window/window.ts:258
+#: app/src/window/window.ts:259
 msgid "About Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:259
+#: app/src/window/window.ts:260
 msgid "Quit"
 msgstr ""
 
-#: app/src/window/window.ts:303
+#: app/src/window/window.ts:309
 msgid "This conversation has no recipient address."
 msgstr ""
 
-#: app/src/window/window.ts:523
+#: app/src/window/window.ts:529
 msgid "Curlew (demo)"
 msgstr ""
 
-#: app/src/window/window.ts:526
+#: app/src/window/window.ts:532
 msgid "Demo data — nothing here is real"
 msgstr ""
 
-#: app/src/window/window.ts:669
+#: app/src/window/window.ts:675
 msgid "No contacts to merge"
 msgstr ""
 

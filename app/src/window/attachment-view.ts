@@ -318,6 +318,36 @@ function inlinePreview(
   });
   frame.add_controller(keys);
 
+  // A cell or video that cannot load for a dead session says so, instead of staying a bare dark box.
+  let noted = false;
+  const signedOutNote = (): void => {
+    if (noted) return;
+    noted = true;
+    const hint =
+      kind === 'video' ? _('Sign in again to load this video') : _('Sign in again to load this image');
+    const note = new Gtk.Box({
+      orientation: Gtk.Orientation.VERTICAL,
+      spacing: 4,
+      halign: Gtk.Align.CENTER,
+      valign: Gtk.Align.CENTER,
+      canTarget: false,
+    });
+    note.append(new Gtk.Image({ iconName: 'dialog-password-symbolic', pixelSize: 24 }));
+    const label = new Gtk.Label({
+      label: hint,
+      wrap: true,
+      justify: Gtk.Justification.CENTER,
+      maxWidthChars: 18,
+      marginStart: 6,
+      marginEnd: 6,
+    });
+    label.add_css_class('caption');
+    note.append(label);
+    frame.add_overlay(note);
+    frame.set_tooltip_text(`${name}\n${hint}`);
+    playSymbol?.set_visible(false);
+  };
+
   const fail = (error?: unknown) => {
     console.warn(
       `attachment ${source.info.filename ?? '(unnamed)'} could not be shown inline: ${failureText(error)}`,
@@ -326,6 +356,7 @@ function inlinePreview(
     if (cell || kind === 'video') {
       image.set_paintable(null);
       darken();
+      if (isSignedOutFailure(error) || isSignedOut(source.ref)) signedOutNote();
       return;
     }
     slot.remove(frame);
@@ -393,6 +424,7 @@ function inlinePreview(
         fail(error);
       });
   };
+  if (!paint && !still && isSignedOut(source.ref)) signedOutNote();
   if (paint || still) handlers.whenVisible(frame, load);
   return slot;
 }
