@@ -1,0 +1,83 @@
+name: Deploy site
+
+# Builds the landing page (`gjsify site build`, generated from the AppStream metainfo and the
+# gjsify.site block in package.json) and publishes it to the gh-pages branch, which serves
+# https://jumplink.eu/curlew/.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "package.json"
+      - "app/data/**"
+      - "docs/screenshots/**"
+      - "docs/store/privacy*.md"
+      - "docs/store/legal-notice*.md"
+      - "site/po/**"
+      - "gjsify-lock.json"
+      - ".github/workflows/deploy-site.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-site
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # `gjsify site` runs on gjs, which ubuntu-latest lacks; same container as ci.yml.
+    container:
+      image: fedora:44
+    steps:
+      # The AVIF and WebP loaders are what the site build needs to read and resize screenshots;
+      # librsvg renders the icon.
+      - name: Install system prerequisites
+        run: >
+          dnf install -y --setopt=install_weak_deps=False
+          git tar xz findutils rsync gjs json-glib libsoup3 gdk-pixbuf2 librsvg2 avif-pixbuf-loader webp-pixbuf-loader
+
+      - uses: actions/checkout@v4
+
+      - name: Trust the checkout
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      # Node 24: gjsify's native install-backend prebuilds target node 24.
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Cache gjsify tarball store
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/gjsify/tarballs
+          key: gjsify-tarballs-${{ hashFiles('gjsify-lock.json') }}
+          restore-keys: gjsify-tarballs-
+
+      - name: Bootstrap the gjsify CLI
+        run: |
+          VERSION=$(node -p "require('./package.json').devDependencies['@gjsify/cli']")
+          npm install -g "@gjsify/cli@$VERSION"
+
+      - name: Install dependencies
+        run: gjsify install --immutable
+
+      # Without the token the release lookup shares the runner IP's anonymous rate limit, gets a 403
+      # and the page ships with no downloads; the build only warns.
+      - name: Build the site
+        run: npx gjsify site build --out _site
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Pages is served without Jekyll; the marker has to survive every deploy.
+      - name: Keep .nojekyll
+        run: touch _site/.nojekyll
+
+      - name: Deploy to gh-pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: _site
+          branch: gh-pages
+          clean: true
