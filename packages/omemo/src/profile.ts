@@ -67,6 +67,3 @@ export const LEGACY_PROFILE: OmemoProfile = {
   preKeyCount: 100,
   preKeyRefillThreshold: 75,
 };
-
-/** The namespace of OMEMO 2, recognised only to mark a message `undecryptable: v2` (ADR §1). */
-export const OMEMO_2_NAMESPACE = 'urn:xmpp:omemo:2';
