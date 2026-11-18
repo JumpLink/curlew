@@ -76,6 +76,7 @@ app/src/core/runtime.ts
 app/src/core/version.ts
 app/src/core/visibility.ts
 app/src/core/write-log.ts
+app/src/dispatch.ts
 app/src/frontends/cli/accounts.ts
 app/src/frontends/cli/addon-canary.ts
 app/src/frontends/cli/backends.ts
