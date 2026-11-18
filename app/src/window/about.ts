@@ -16,12 +16,12 @@ import { VERSION } from '../core/version.ts';
 
 export const APP_ID = 'eu.jumplink.curlew';
 
-export const WEBSITE = 'https://jumplink.eu/curlew/';
-export const SUPPORT_URL = `${WEBSITE}en/support/`;
-export const REPOSITORY = 'https://github.com/JumpLink/curlew';
+const WEBSITE = 'https://jumplink.eu/curlew/';
+const SUPPORT_URL = `${WEBSITE}en/support/`;
+const REPOSITORY = 'https://github.com/JumpLink/curlew';
 
 /** The site language for the person's UI: the first preferred language the site has pages in, else English. */
-export function siteLanguage(candidates: readonly string[]): 'en' | 'de' {
+function siteLanguage(candidates: readonly string[]): 'en' | 'de' {
   for (const raw of candidates) {
     const language = raw.split(/[._@:-]/)[0]?.toLowerCase();
     if (language === 'de' || language === 'en') return language;
