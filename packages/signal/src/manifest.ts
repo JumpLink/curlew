@@ -51,7 +51,7 @@ export const SIGNAL_MANIFEST: BackendManifest = {
     // would resolve once, in English, for the whole process.
     get summary() {
       return _(
-        'curlew connects to Signal as a linked device, like Signal Desktop. It is not an official Signal client and Signal does not support it, so Signal could block it at any time. curlew reads your messages and sends only what you tell it to. Signal keeps no archive: what curlew receives exists only on this device.',
+        'Curlew connects to Signal as a linked device, like Signal Desktop. It is not an official Signal client and Signal does not support it, so Signal could block it at any time. Curlew reads your messages and sends only what you tell it to. Signal keeps no archive: what Curlew receives exists only on this device.',
       );
     },
     url: 'https://signal.org/legal/',

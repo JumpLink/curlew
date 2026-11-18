@@ -52,7 +52,7 @@ export const WHATSAPP_MANIFEST: BackendManifest = {
     // would resolve once, in English, for the whole process.
     get summary() {
       return _(
-        "curlew connects to WhatsApp as a linked device through Baileys, an unofficial client. This violates WhatsApp's Terms of Service, so WhatsApp can ban your phone number, temporarily or for good. Enable it only if you accept that risk. curlew reads your messages and sends only what you tell it to. WhatsApp keeps no archive: what curlew receives exists only on this device.",
+        "Curlew connects to WhatsApp as a linked device through Baileys, an unofficial client. This violates WhatsApp's Terms of Service, so WhatsApp can ban your phone number, temporarily or for good. Enable it only if you accept that risk. Curlew reads your messages and sends only what you tell it to. WhatsApp keeps no archive: what Curlew receives exists only on this device.",
       );
     },
     url: 'https://www.whatsapp.com/legal/terms-of-service',

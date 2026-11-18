@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-18 13:35+0100\n"
+"POT-Creation-Date: 2026-11-18 22:28+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1723,7 +1723,7 @@ msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 
 #: app/src/window/account-add.ts:408 app/src/window/accounts-page.ts:167
-#: app/src/window/accounts-page.ts:193 app/src/window/welcome.ts:160
+#: app/src/window/accounts-page.ts:193 app/src/window/welcome.ts:165
 msgid "Add Account"
 msgstr ""
 
@@ -1766,7 +1766,7 @@ msgstr ""
 msgid "Pause"
 msgstr ""
 
-#: app/src/window/account-detail.ts:145 app/src/window/welcome.ts:200
+#: app/src/window/account-detail.ts:145 app/src/window/welcome.ts:205
 msgid "Use for Delta Chat"
 msgstr ""
 
@@ -1777,7 +1777,7 @@ msgid ""
 msgstr ""
 
 #: app/src/window/account-detail.ts:152 app/src/window/protocols-page.ts:169
-#: app/src/window/welcome.ts:206
+#: app/src/window/welcome.ts:211
 msgid "Show ordinary email"
 msgstr ""
 
@@ -1875,7 +1875,7 @@ msgid "Could not start the background service: {reason}"
 msgstr ""
 
 #: app/src/window/accounts-dialog.ts:93 app/src/window/accounts-page.ts:206
-#: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:172
+#: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:177
 #: app/src/window/window.ts:252
 msgid "Accounts"
 msgstr ""
@@ -1967,7 +1967,7 @@ msgstr ""
 
 #: app/src/window/accounts-page.ts:199 app/src/window/conversation-list.ts:365
 #: app/src/window/protocols-page.ts:248 app/src/window/welcome-model.ts:102
-#: app/src/window/welcome.ts:148
+#: app/src/window/welcome.ts:153
 msgid "Protocols"
 msgstr ""
 
@@ -2471,7 +2471,7 @@ msgid "Your own picture is shown instead"
 msgstr ""
 
 #: app/src/window/conversation-list-model.ts:141
-#: app/src/window/welcome-model.ts:111 app/src/window/welcome.ts:184
+#: app/src/window/welcome-model.ts:111 app/src/window/welcome.ts:189
 msgid "Delta Chat"
 msgstr ""
 
@@ -2980,7 +2980,7 @@ msgstr ""
 msgid "Previous"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:124 app/src/window/welcome.ts:120
+#: app/src/window/media-viewer.ts:124 app/src/window/welcome.ts:125
 msgid "Next"
 msgstr ""
 
@@ -3018,7 +3018,7 @@ msgstr ""
 msgid "You can separate merged people again from the conversation list."
 msgstr ""
 
-#: app/src/window/merge-assistant.ts:90 app/src/window/welcome.ts:176
+#: app/src/window/merge-assistant.ts:90 app/src/window/welcome.ts:181
 msgid "Done"
 msgstr ""
 
@@ -3026,7 +3026,7 @@ msgstr ""
 msgid "These people have similar names. Are they the same person?"
 msgstr ""
 
-#: app/src/window/merge-assistant.ts:119 app/src/window/welcome.ts:129
+#: app/src/window/merge-assistant.ts:119 app/src/window/welcome.ts:134
 msgid "Skip"
 msgstr ""
 
@@ -3103,7 +3103,7 @@ msgid "Media"
 msgstr ""
 
 #: app/src/window/preferences-dialog.ts:100 app/src/window/welcome-model.ts:124
-#: app/src/window/welcome.ts:240
+#: app/src/window/welcome.ts:245
 msgid "AI features"
 msgstr ""
 
@@ -3113,7 +3113,7 @@ msgid ""
 "you allow it. Off: no assistant can reach your data"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:106 app/src/window/welcome.ts:252
+#: app/src/window/preferences-dialog.ts:106 app/src/window/welcome.ts:257
 msgid "AI"
 msgstr ""
 
@@ -3248,56 +3248,56 @@ msgstr[1] ""
 msgid "On"
 msgstr ""
 
-#: app/src/window/welcome.ts:107 app/src/window/welcome.ts:125
+#: app/src/window/welcome.ts:112 app/src/window/welcome.ts:130
 #: app/src/window/window.ts:259
 msgid "Welcome"
 msgstr ""
 
-#: app/src/window/welcome.ts:127
+#: app/src/window/welcome.ts:132
 msgid "Welcome to Curlew"
 msgstr ""
 
-#: app/src/window/welcome.ts:136
+#: app/src/window/welcome.ts:141
 msgid "Choose Protocols"
 msgstr ""
 
-#: app/src/window/welcome.ts:150
+#: app/src/window/welcome.ts:155
 msgid "Choose your protocols"
 msgstr ""
 
-#: app/src/window/welcome.ts:174
+#: app/src/window/welcome.ts:179
 msgid "Add your accounts"
 msgstr ""
 
-#: app/src/window/welcome.ts:193
+#: app/src/window/welcome.ts:198
 msgid ""
 "No mail account yet. Once you add one, you can switch this on in its "
 "settings."
 msgstr ""
 
-#: app/src/window/welcome.ts:242
+#: app/src/window/welcome.ts:247
 msgid ""
 "An assistant could then read and send your messages through Curlew, each "
 "time as you allow it."
 msgstr ""
 
-#: app/src/window/welcome.ts:253
+#: app/src/window/welcome.ts:258
 msgid ""
 "Off, no assistant can reach your data. You can change this at any time in "
 "Preferences."
 msgstr ""
 
-#: app/src/window/welcome.ts:263
+#: app/src/window/welcome.ts:268
 msgid "All set"
 msgstr ""
 
-#: app/src/window/welcome.ts:264
+#: app/src/window/welcome.ts:269
 msgid ""
 "You can change all of this later: accounts and protocols in Accounts, the "
 "rest in Preferences."
 msgstr ""
 
-#: app/src/window/welcome.ts:266
+#: app/src/window/welcome.ts:271
 msgid "Start Using Curlew"
 msgstr ""
 
@@ -3754,10 +3754,10 @@ msgstr ""
 
 #: packages/signal/src/manifest.ts:54
 msgid ""
-"curlew connects to Signal as a linked device, like Signal Desktop. It is not "
+"Curlew connects to Signal as a linked device, like Signal Desktop. It is not "
 "an official Signal client and Signal does not support it, so Signal could "
-"block it at any time. curlew reads your messages and sends only what you "
-"tell it to. Signal keeps no archive: what curlew receives exists only on "
+"block it at any time. Curlew reads your messages and sends only what you "
+"tell it to. Signal keeps no archive: what Curlew receives exists only on "
 "this device."
 msgstr ""
 
@@ -4059,10 +4059,10 @@ msgstr ""
 
 #: packages/telegram/src/manifest.ts:60
 msgid ""
-"curlew connects to Telegram as a third-party client through the official "
-"API, using the API credentials of curlew's own registered app. You can use "
+"Curlew connects to Telegram as a third-party client through the official "
+"API, using the API credentials of Curlew's own registered app. You can use "
 "your own instead when you log in. An account that misuses the API can be "
-"limited or banned by Telegram. curlew reads your chats and sends only what "
+"limited or banned by Telegram. Curlew reads your chats and sends only what "
 "you tell it to."
 msgstr ""
 
@@ -4190,11 +4190,11 @@ msgstr ""
 
 #: packages/whatsapp/src/manifest.ts:55
 msgid ""
-"curlew connects to WhatsApp as a linked device through Baileys, an "
+"Curlew connects to WhatsApp as a linked device through Baileys, an "
 "unofficial client. This violates WhatsApp's Terms of Service, so WhatsApp "
 "can ban your phone number, temporarily or for good. Enable it only if you "
-"accept that risk. curlew reads your messages and sends only what you tell it "
-"to. WhatsApp keeps no archive: what curlew receives exists only on this "
+"accept that risk. Curlew reads your messages and sends only what you tell it "
+"to. WhatsApp keeps no archive: what Curlew receives exists only on this "
 "device."
 msgstr ""
 
