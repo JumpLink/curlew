@@ -354,21 +354,22 @@ export class XmppConnection implements XmppLink {
     }
   }
 
-  async pepSet(payload: Element): Promise<void> {
+  /** Runs one IQ and reports a failure as its RFC 6120 condition, never the stanza. */
+  private async query<T>(run: () => Promise<T>): Promise<T> {
     try {
-      await this.iq.set(payload, undefined, QUERY_TIMEOUT_MS);
+      return await run();
     } catch (err) {
       throw queryError(err);
     }
   }
 
+  async pepSet(payload: Element): Promise<void> {
+    await this.query(() => this.iq.set(payload, undefined, QUERY_TIMEOUT_MS));
+  }
+
   async goAvailable() {
-    try {
-      await this.iq.set(carbonsEnable(), undefined, QUERY_TIMEOUT_MS);
-    } catch (err) {
-      // Without carbons a priority -1 session receives nothing live; following would be a lie.
-      throw queryError(err);
-    }
+    // Without carbons a priority -1 session receives nothing live; following would be a lie.
+    await this.query(() => this.iq.set(carbonsEnable(), undefined, QUERY_TIMEOUT_MS));
     await this.entity.send(followPresence());
     this.startKeepAlive();
   }
@@ -396,11 +397,7 @@ export class XmppConnection implements XmppLink {
   }
 
   async roster() {
-    try {
-      return parseRoster(await this.iq.get(rosterQuery(), undefined, QUERY_TIMEOUT_MS));
-    } catch (err) {
-      throw queryError(err);
-    }
+    return this.query(async () => parseRoster(await this.iq.get(rosterQuery(), undefined, QUERY_TIMEOUT_MS)));
   }
 
   async bookmarks() {
@@ -418,11 +415,7 @@ export class XmppConnection implements XmppLink {
   }
 
   async features(jid: string) {
-    try {
-      return parseDiscoFeatures(await this.iq.get(discoInfoQuery(), jid, QUERY_TIMEOUT_MS));
-    } catch (err) {
-      throw queryError(err);
-    }
+    return this.query(async () => parseDiscoFeatures(await this.iq.get(discoInfoQuery(), jid, QUERY_TIMEOUT_MS)));
   }
 
   async avatar(jid: string) {
