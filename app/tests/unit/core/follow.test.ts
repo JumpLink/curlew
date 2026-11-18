@@ -16,7 +16,11 @@ import { until } from '../wait.ts';
 const ACCOUNT = 'xmpp-lease1';
 const GRANT = { account: ACCOUNT, addresses: ['owner@example.org'] };
 
-function fakeLink(onClose: () => void = () => {}, onArrival?: (fire: () => void) => void): XmppLink {
+function fakeLink(
+  onClose: () => void = () => {},
+  onArrival?: (fire: () => void) => void,
+  onClosedHook?: (fire: (reason: string) => void) => void,
+): XmppLink {
   return {
     jid: 'bot@example.org',
     roster: async () => [],
@@ -41,7 +45,7 @@ function fakeLink(onClose: () => void = () => {}, onArrival?: (fire: () => void)
       onArrival?.(listener);
       return () => {};
     },
-    onClosed: () => {},
+    onClosed: (listener) => onClosedHook?.(listener),
   };
 }
 
@@ -257,6 +261,62 @@ export default async () => {
         controller.abort();
         await running;
       } finally {
+        controller.abort();
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('does not pile abort listeners up across reconnects', async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-follow-'));
+      const db = freshDb();
+      const controller = new AbortController();
+      const proto = EventTarget.prototype;
+      const add = proto.addEventListener;
+      const remove = proto.removeEventListener;
+      let net = 0;
+      let opened = 0;
+      proto.addEventListener = function (this: EventTarget, type: string, ...rest: never[]) {
+        if (type === 'abort' && this !== controller.signal) net += 1;
+        return (add as (...a: unknown[]) => void).call(this, type, ...rest);
+      } as typeof add;
+      proto.removeEventListener = function (this: EventTarget, type: string, ...rest: never[]) {
+        if (type === 'abort' && this !== controller.signal) net -= 1;
+        return (remove as (...a: unknown[]) => void).call(this, type, ...rest);
+      } as typeof remove;
+      try {
+        const running = followAccount({
+          db,
+          backend,
+          open: async () => {
+            opened += 1;
+            return new GrantedXmppSession(
+              fakeLink(undefined, undefined, (fire) => {
+                if (opened < 3) setTimeout(() => fire('gone'), 5);
+              }),
+              GRANT,
+              () => 'oid',
+            );
+          },
+          permit: GRANT,
+          signal: controller.signal,
+          log: () => {},
+          onWrite: () => {},
+          holder: 'pid-me',
+          leaseIntervalMs: 1000,
+          minGapMs: 0,
+          sleep: async () => {},
+          writeLogPath: join(dir, 'write.log'),
+        });
+        await until(() => opened >= 3);
+        const during = net;
+        controller.abort();
+        await running;
+        expect(opened >= 3).toBe(true);
+        // One live link holds at most its own listener, however often it reconnected.
+        expect(during <= 2).toBe(true);
+      } finally {
+        proto.addEventListener = add;
+        proto.removeEventListener = remove;
         controller.abort();
         rmSync(dir, { recursive: true, force: true });
       }

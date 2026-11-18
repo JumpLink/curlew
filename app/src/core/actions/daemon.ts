@@ -48,6 +48,7 @@ import { readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import {
   type ByteSink,
+  type ChatBackend,
   type ChatSession,
   type DeliverySession,
   type MessageBackend,
@@ -111,7 +112,7 @@ import {
   pullSyncFailures,
   startPullSync,
 } from '../lib/pull-sync.ts';
-import { followAccount, type FollowResult } from './follow.ts';
+import { followAccount, type FollowLink, type FollowResult } from './follow.ts';
 import {
   indexSync,
   openIndex,
@@ -127,7 +128,7 @@ import { readSyncThrough } from './read-sync.ts';
 import { storeThumbnail } from './chat-thumbnail.ts';
 
 /** How often a running daemon looks whether another process moved the journal (ADR 0007 §2). */
-export const CHANGE_POLL_MS = 2_000;
+const CHANGE_POLL_MS = 2_000;
 
 /** How long the conversations wait for the last written batch before they are rebuilt. */
 export const REBUILD_DEBOUNCE_MS = 30_000;
@@ -137,7 +138,7 @@ export const REBUILD_DEBOUNCE_MS = 30_000;
  * connection otherwise leaves the window's tile on its spinner for as long as the protocol library
  * takes to notice (mtcute: about 22 minutes).
  */
-export const FETCH_STALL_MS = 45_000;
+const FETCH_STALL_MS = 45_000;
 
 export interface DaemonParams {
   /** The index to write; the default is the user's. `:memory:` is a test's. */
@@ -235,32 +236,29 @@ export interface DaemonResult {
   followed: FollowResult[];
 }
 
-/** The registry's Matrix backend when the config enables it (the daemon follows it), else `null`. */
-export function createMatrixBackend(config: CurlewConfig): MatrixBackend | null {
+/** The registry's backend `name` when the config enables it and it is a `T` (the daemon follows it), else `null`. */
+function createEnabled<T>(
+  config: CurlewConfig,
+  name: string,
+  kind: abstract new (...args: never[]) => T,
+): T | null {
   const registry = builtinRegistry();
-  if (!registry.enabled(config).some((plugin) => plugin.manifest.name === 'matrix')) return null;
-  const created = registry.create(config, 'matrix', backendContext('matrix', config));
-  return created instanceof MatrixBackend ? created : null;
+  if (!registry.enabled(config).some((plugin) => plugin.manifest.name === name)) return null;
+  const created = registry.create(config, name, backendContext(name, config));
+  return created instanceof kind ? created : null;
 }
 
-/** The registry's Telegram backend when the config enables it (the daemon follows it), else `null`. */
-export function createTelegramBackend(config: CurlewConfig): TelegramBackend | null {
-  const registry = builtinRegistry();
-  if (!registry.enabled(config).some((plugin) => plugin.manifest.name === 'telegram')) return null;
-  const created = registry.create(config, 'telegram', backendContext('telegram', config));
-  return created instanceof TelegramBackend ? created : null;
-}
-
-/** The registry's XMPP backend when the config enables it (the daemon follows it), else `null`. */
-export function createEnabledXmppBackend(config: CurlewConfig): XmppBackend | null {
-  const registry = builtinRegistry();
-  if (!registry.enabled(config).some((plugin) => plugin.manifest.name === 'xmpp')) return null;
-  const created = registry.create(config, 'xmpp', backendContext('xmpp', config));
-  return created instanceof XmppBackend ? created : null;
+/** The ids of `backend`'s accounts, narrowed to `accountId` when one is given. */
+async function followedAccountIds(
+  backend: { listAccounts(): Promise<{ id: string }[]> } | null,
+  accountId: string | undefined,
+): Promise<string[]> {
+  if (backend === null) return [];
+  return (await backend.listAccounts()).map((a) => a.id).filter((id) => !accountId || id === accountId);
 }
 
 /** The enabled delivery-only backends — what a daemon receives and what a `sync` stands down for. */
-export function deliveryBackends(config: ReturnType<typeof loadConfig>): MessageBackend[] {
+function deliveryBackends(config: ReturnType<typeof loadConfig>): MessageBackend[] {
   const registry = builtinRegistry();
   return registry
     .enabled(config)
@@ -774,27 +772,13 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     }
     return true;
   });
-  const xmpp = params.xmpp === undefined ? createEnabledXmppBackend(config) : params.xmpp;
-  const xmppAccounts =
-    xmpp === null
-      ? []
-      : (await xmpp.listAccounts())
-          .map((a) => a.id)
-          .filter((id) => !params.accountId || id === params.accountId);
-  const matrix = params.matrix === undefined ? createMatrixBackend(config) : params.matrix;
-  const matrixAccounts =
-    matrix === null
-      ? []
-      : (await matrix.listAccounts())
-          .map((a) => a.id)
-          .filter((id) => !params.accountId || id === params.accountId);
-  const telegram = params.telegram === undefined ? createTelegramBackend(config) : params.telegram;
-  const telegramAccounts =
-    telegram === null
-      ? []
-      : (await telegram.listAccounts())
-          .map((a) => a.id)
-          .filter((id) => !params.accountId || id === params.accountId);
+  const xmpp = params.xmpp === undefined ? createEnabled(config, 'xmpp', XmppBackend) : params.xmpp;
+  const xmppAccounts = await followedAccountIds(xmpp, params.accountId);
+  const matrix = params.matrix === undefined ? createEnabled(config, 'matrix', MatrixBackend) : params.matrix;
+  const matrixAccounts = await followedAccountIds(matrix, params.accountId);
+  const telegram =
+    params.telegram === undefined ? createEnabled(config, 'telegram', TelegramBackend) : params.telegram;
+  const telegramAccounts = await followedAccountIds(telegram, params.accountId);
   /**
    * No account to follow — the normal state of a fresh install, NOT a reason to end the run
    * (ADR 0002 §8). It used to throw, and that made the background service `failed` on every
@@ -1043,73 +1027,46 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
           fetchBackends.set(key, backend);
         }
       };
-    const following = Promise.all(
-      xmppAccounts.map((accountId) =>
-        followAccount({
-          db,
-          backend: xmpp as XmppBackend,
-          open: (id, permit) => (xmpp as XmppBackend).openGranted(id, permit, { decrypt: true }),
-          permit: { account: accountId, addresses: [] },
-          signal,
-          log,
-          onWrite: () => {
-            schedule();
-            announce();
-          },
-          onProgress: progress,
-          onSession: onFollowSession(xmpp as MessageBackend),
-          holder: String(process.pid),
-          writeLogPath: params.writeLogPath,
-        }),
-      ),
+    const followAll = (
+      backend: ChatBackend & MessageBackend,
+      backendName: string,
+      accounts: readonly string[],
+      open: (id: string, permit: SendPermit) => Promise<FollowLink>,
+    ): Promise<FollowResult[]> =>
+      Promise.all(
+        accounts.map((accountId) =>
+          followAccount({
+            db,
+            backend,
+            backendName,
+            accountId,
+            open,
+            permit: { account: accountId, addresses: [] },
+            signal,
+            log,
+            onWrite: () => {
+              schedule();
+              announce();
+            },
+            onProgress: progress,
+            onSession: onFollowSession(backend),
+            holder: String(process.pid),
+            writeLogPath: params.writeLogPath,
+          }),
+        ),
+      );
+    const following = followAll(xmpp as XmppBackend, 'xmpp', xmppAccounts, (id, permit) =>
+      (xmpp as XmppBackend).openGranted(id, permit, { decrypt: true }),
     ).then((done) => {
       followed = done;
     });
-    const followingMatrix = Promise.all(
-      matrixAccounts.map((accountId) =>
-        followAccount({
-          db,
-          backend: matrix as MatrixBackend,
-          backendName: 'matrix',
-          accountId,
-          open: (id) => (matrix as MatrixBackend).connectLive(id),
-          permit: { account: accountId, addresses: [] },
-          signal,
-          log,
-          onWrite: () => {
-            schedule();
-            announce();
-          },
-          onProgress: progress,
-          onSession: onFollowSession(matrix as MessageBackend),
-          holder: String(process.pid),
-          writeLogPath: params.writeLogPath,
-        }),
-      ),
+    const followingMatrix = followAll(matrix as MatrixBackend, 'matrix', matrixAccounts, (id) =>
+      (matrix as MatrixBackend).connectLive(id),
     ).then((done) => {
       followedMatrix = done;
     });
-    const followingTelegram = Promise.all(
-      telegramAccounts.map((accountId) =>
-        followAccount({
-          db,
-          backend: telegram as TelegramBackend,
-          backendName: 'telegram',
-          accountId,
-          open: (id) => (telegram as TelegramBackend).connectLive(id),
-          permit: { account: accountId, addresses: [] },
-          signal,
-          log,
-          onWrite: () => {
-            schedule();
-            announce();
-          },
-          onProgress: progress,
-          onSession: onFollowSession(telegram as MessageBackend),
-          holder: String(process.pid),
-          writeLogPath: params.writeLogPath,
-        }),
-      ),
+    const followingTelegram = followAll(telegram as TelegramBackend, 'telegram', telegramAccounts, (id) =>
+      (telegram as TelegramBackend).connectLive(id),
     ).then((done) => {
       followedTelegram = done;
     });

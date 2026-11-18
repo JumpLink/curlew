@@ -67,7 +67,7 @@ export interface CommandRunner {
  * that predates it or on a runtime that does not take the ESM path, and a missing banner is a
  * clear error at the unit stage, never a silently wrong path.
  */
-export function currentBundlePath(): string | null {
+function currentBundlePath(): string | null {
   const url = (globalThis as { __gjsifyBundleUrl?: unknown }).__gjsifyBundleUrl;
   if (typeof url !== 'string' || !url.startsWith('file:')) return null;
   try {

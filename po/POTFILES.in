@@ -27,6 +27,7 @@ app/src/core/actions/read-receipt.ts
 app/src/core/actions/read-sync.ts
 app/src/core/actions/search-access.ts
 app/src/core/actions/send.ts
+app/src/core/actions/sender-write.ts
 app/src/core/actions/setup-host.ts
 app/src/core/actions/setup-unit.ts
 app/src/core/actions/setup.ts

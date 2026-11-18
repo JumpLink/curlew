@@ -62,7 +62,7 @@ export function unitPath(runner: string, home: string): string {
  * `curlew setup` wrote this copy and what to verify — a person reading the installed file has
  * to know the paths in it are theirs and that a check exists.
  */
-export const UNIT_TEMPLATE = `# Written by \`curlew setup\`. The paths below are this machine's.
+const UNIT_TEMPLATE = `# Written by \`curlew setup\`. The paths below are this machine's.
 # ${SHIPPED_UNIT_REL} is the same unit, written for a checkout at ~/curlew.
 # Verify: systemd-analyze --user verify <this file>
 [Unit]

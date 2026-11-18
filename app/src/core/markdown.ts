@@ -20,7 +20,7 @@ export type Segment =
 export const MAX_CHUNK_CHARS = 7000;
 
 /** Images per call; further ones stay as plain links. */
-export const MAX_IMAGES = 8;
+const MAX_IMAGES = 8;
 
 export const MESSAGE_FORMATS = ['plain', 'markdown'] as const;
 export type MessageFormat = (typeof MESSAGE_FORMATS)[number];
