@@ -9,6 +9,7 @@
 
 ### Fixed
 
+- The buttons at the bottom of the welcome pages (Delta Chat, AI, summary) no longer sit on the window edge, and the Signal, Telegram and WhatsApp notices write the app name as "Curlew".
 - The macOS and Windows packages open the window: they shipped only a GJS window that Node cannot load, so `curlew window` said it needed GJS and starting the app printed "Please provide a command". They now carry a Node build of the window, and opening the app, `curlew window` and `curlew demo` show it (#466).
 - Images and videos that Telegram, Matrix and XMPP chats held before thumbnails existed get their preview over the next few syncs instead of keeping the dark box.
 - An image or file of a signed-out account (for example a Matrix token the server revoked) says "Sign in again to load this image" instead of silently turning into a plain file row, and its open and save buttons are greyed out. One refused download marks the account's other attachments for five minutes, so they no longer each ask the server.

@@ -57,7 +57,7 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
     // what every frontend already does, so nothing else changes.
     get summary() {
       return _(
-        "curlew connects to Telegram as a third-party client through the official API, using the API credentials of curlew's own registered app. You can use your own instead when you log in. An account that misuses the API can be limited or banned by Telegram. curlew reads your chats and sends only what you tell it to.",
+        "Curlew connects to Telegram as a third-party client through the official API, using the API credentials of Curlew's own registered app. You can use your own instead when you log in. An account that misuses the API can be limited or banned by Telegram. Curlew reads your chats and sends only what you tell it to.",
       );
     },
     url: 'https://core.telegram.org/api/terms',

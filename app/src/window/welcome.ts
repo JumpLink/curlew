@@ -81,7 +81,12 @@ function formPage(
   const toolbar = new Adw.ToolbarView();
   toolbar.add_top_bar(new Adw.HeaderBar({ showEndTitleButtons: false }));
   toolbar.set_content(content);
-  toolbar.add_bottom_bar(actions(...buttons));
+  const bar = actions(...buttons);
+  bar.set_margin_top(12);
+  bar.set_margin_bottom(24);
+  bar.set_margin_start(12);
+  bar.set_margin_end(12);
+  toolbar.add_bottom_bar(bar);
   return new Adw.NavigationPage({ title, tag, child: toolbar });
 }
 
