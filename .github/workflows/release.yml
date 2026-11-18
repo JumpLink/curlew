@@ -8,7 +8,7 @@ name: Release
 # a commit whose tests, type check or lint did not pass.
 #
 # The CLI's own packages are built there too, not here: ci.yml ships `ship-deb-rpm` (`.deb`,
-# `.rpm`) and `ship-macos-windows` (both `macos-app-zip`s, `windows-dir-zip`, `.msi`) as uploaded
+# `.rpm`) and `ship-macos` (`.zip` + `.dmg` per arch, signed and notarised) and `ship-windows` (`windows-dir-zip` + `.msi` per arch) as uploaded
 # artifacts, and the `release` job below only attaches them. Both assemble on the SAME
 # `fedora:44` container: `gjsify ship`'s darwin/windows targets are not host-bound to assemble,
 # only to run, so `gjsify install --os darwin --cpu arm64 --immutable` followed by `gjsify ship
@@ -44,6 +44,12 @@ concurrency:
 jobs:
   build:
     uses: ./.github/workflows/ci.yml
+    # A branch dispatch signs too when the secrets are there, so signing is rehearsed before a tag;
+    # only a release REQUIRES them.
+    with:
+      sign: true
+      release: ${{ startsWith(github.ref, 'refs/tags/v') || (inputs.publish && inputs.tag != '') }}
+    secrets: inherit
 
   release:
     needs: build
@@ -96,8 +102,12 @@ jobs:
             "cli/curlew-${version}-1.x86_64.rpm" \
             "cli/curlew-${version}-1.macos.arm64.zip" \
             "cli/curlew-${version}-1.macos.x86_64.zip" \
+            "cli/curlew-${version}-1.arm64.dmg" \
+            "cli/curlew-${version}-1.x86_64.dmg" \
             "cli/curlew-${version}-1.windows.x64.zip" \
             "cli/curlew-${version}-1.x64.msi" \
+            "cli/curlew-${version}-1.windows.arm64.zip" \
+            "cli/curlew-${version}-1.arm64.msi" \
             "cli/eu.jumplink.curlew-${version}-1.x86_64.flatpak"; do
             if [ ! -s "$f" ]; then
               echo "::error::missing or empty artifact: $f"
@@ -138,19 +148,13 @@ jobs:
           fi
           gh release view "$TAG" --json assets --jq '.assets[].name'
 
-      # macOS (arm64 + x64, `macos-app-zip`) and Windows (x64, `windows-dir-zip` + `.msi`) ARE
-      # attached now, from `cli/` above — assembling them does not need a Mac or a Windows runner
-      # (see the header), only naming the target so `gjsify install` does not skip the
-      # `optionalDependencies` runtime it would otherwise stage with no interpreter in it. What this
-      # does NOT do is RUN the Mach-O or PE payload: that is verified on its own OS or not at all, so
-      # a `macos-latest` / `windows-latest` job staying absent is a gap in verification, not in the
-      # release's contents. Those two packages also ship with EVERY account backend unavailable —
-      # GOA and EDS are Linux-only GObject-Introspection libraries the `--app node` bundle cannot
-      # load — see README.md's Releasing section for what that means for a person running them.
+      # macOS (arm64 + x64, `.zip` + `.dmg`) and Windows (x64 + arm64, `windows-dir-zip` + `.msi`)
+      # are attached from `cli/` above. Both assemble on Linux; macOS is only packed on a Mac,
+      # because `codesign`, `notarytool` and `hdiutil` exist nowhere else (ci.yml's `macos` job).
+      # That job signs with a Developer ID, notarises, staples the `.dmg` and checks each package
+      # against Gatekeeper; a tag run FAILS without the five APPLE_* secrets instead of publishing
+      # unsigned, and a branch dispatch rehearses signing when they are there.
+      # These packages ship with EVERY account backend unavailable that needs GOA or EDS (Linux-only
+      # GObject-Introspection libraries the `--app node` bundle cannot load) — see README.md.
       #
-      # UNSIGNED on both, by design (ADR 0024 § A13 in gjsify) — this is a legitimate deliverable,
-      # not a placeholder. Where signing would attach, on a runner that actually holds the identity:
-      #   macOS   — `gjsify ship darwin --arch <arch> --skip-build --target macos-app-zip --sign
-      #             <identity>` (Developer ID; `--notarize <keychain-profile>` on top of that)
-      #   Windows — same shape, `--sign <certificate thumbprint or PFX path>` reaching `signtool`
-      #             (UNVERIFIED upstream: no run in gjsify has ever invoked it)
+      # Windows is still UNSIGNED (the signing service is not validated yet): SmartScreen warns.

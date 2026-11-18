@@ -3,8 +3,8 @@
 
 A tag `v*` pushed to the repo (`git tag v0.2.0 && git push --tags`) builds every
 installable format and attaches them to a **draft** GitHub release:
-[`.deb`/`.rpm`](../../.github/workflows/ci.yml), the Flatpak, and [macOS (arm64 + x64) /
-Windows (x64)](../../.github/workflows/ci.yml) packages, plus a `SHA256SUMS` file, via
+[`.deb`/`.rpm`](../../.github/workflows/ci.yml), the Flatpak, and [macOS (arm64 + x64, `.zip` and `.dmg`) /
+Windows (x64 + arm64, `.zip` and `.msi`)](../../.github/workflows/ci.yml) packages, plus a `SHA256SUMS` file, via
 [`release.yml`](../../.github/workflows/release.yml). The release notes are the version's section
 of [`CHANGELOG.md`](../../CHANGELOG.md), not generated notes. Read the draft, then publish it by
 hand. `workflow_dispatch` re-cuts artifacts for an existing tag without moving it (`tag` +
@@ -66,18 +66,28 @@ Local verification, mirroring what CI does on `fedora:44`:
 ```bash
 gjsify workspace curlew-cli build:node   # darwin/win32 ship `dist/curlew.node.mjs` and `dist/window.node.mjs`
 gjsify install --os darwin --cpu arm64 --immutable
-(cd app && gjsify ship darwin --arch arm64 --skip-build --target macos-app-zip)
+# macOS: stage here, pack on a Mac (hdiutil/codesign/notarytool are macOS-only)
+(cd app && gjsify ship darwin --arch arm64 --skip-build --stage --target macos-app-zip,macos-app-dmg --out ship/stage-arm64)
+# on the Mac: gjsify ship --from-stage <dir>/stage --expect-target darwin-arm64 --target macos-app-zip,macos-app-dmg [--sign <identity> --notarize gjsify-notary]
 gjsify install --os win32 --cpu x64 --immutable
 (cd app && gjsify ship windows --arch x64 --skip-build --target windows-dir-zip,msi)
+gjsify install --os win32 --cpu arm64 --immutable
+(cd app && gjsify ship windows --arch arm64 --skip-build --target windows-dir-zip,msi)
 (cd app && gjsify ship linux --stage)   # needs gir1.2-*/typelib packages to assert .deb/.rpm fully
 gjsify install   # back to the plain install afterwards
 ```
 
-Signing status: the macOS and Windows packages are **unsigned today**. No
-signing identity is wired into the release workflow yet (gjsify ADR 0024 § A13
-describes the unsigned deliverable). Expect Gatekeeper and SmartScreen
-warnings. Where signing would attach, on a runner that holds the identity:
+Signing status:
 
-- macOS — `gjsify ship darwin --arch <arch> --skip-build --target macos-app-zip --sign <identity>` (Developer ID; `--notarize <keychain-profile>` on top)
-- Windows — same shape, `--sign <certificate thumbprint or PFX path>` reaching `signtool` (unverified upstream: no gjsify run has invoked it)
+- **macOS** is signed with the Developer ID Application certificate, notarised, and the `.dmg`
+  stapled. ci.yml's `macos` job packs both arches from the Linux stage, then checks `codesign
+  --verify --deep --strict`, `spctl` with the quarantine bit set and `stapler validate`. It signs
+  only when all five repo secrets exist: `APPLE_DEVELOPER_ID_P12_BASE64`,
+  `APPLE_DEVELOPER_ID_P12_PASSWORD`, `APPLE_NOTARY_KEY_P8`, `APPLE_NOTARY_KEY_ID`,
+  `APPLE_NOTARY_ISSUER_ID`. A push or PR packs unsigned with a notice; a branch dispatch of
+  `release.yml` rehearses signing; a release tag **fails** without them rather than publishing
+  unsigned. Hub notes: the workspace's `docs/workstation/apple-signing.md`.
+- **Windows** is **unsigned** (the signing service is not validated yet). Expect SmartScreen
+  warnings. Signing would attach as `--sign <certificate thumbprint or PFX path>` reaching
+  `signtool` (unverified upstream: no gjsify run has invoked it).
 
