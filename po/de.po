@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-18 09:35+0100\n"
+"POT-Creation-Date: 2026-11-18 13:35+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1339,19 +1339,19 @@ msgstr ""
 msgid "Restrict to one account id (e.g. signal-…); omit for all"
 msgstr "Auf eine Konto-ID beschränken (z. B. signal-…); ohne Angabe alle"
 
-#: app/src/frontends/cli/demo.ts:12
+#: app/src/frontends/cli/demo.ts:14
 msgid ""
 "Open the window on made-up demo data (same as CURLEW_DEMO=1 curlew window)"
 msgstr ""
 "Das Fenster mit erfundenen Demo-Daten öffnen (wie CURLEW_DEMO=1 curlew "
 "window)"
 
-#: app/src/frontends/cli/demo.ts:16 app/src/frontends/cli/window.ts:18
+#: app/src/frontends/cli/demo.ts:23 app/src/frontends/cli/window.ts:25
 msgid "The window needs GJS (GTK 4 and libadwaita); this is the Node.js build."
 msgstr ""
 "Das Fenster braucht GJS (GTK 4 und libadwaita); dies ist der Node.js-Build."
 
-#: app/src/frontends/cli/demo.ts:20
+#: app/src/frontends/cli/demo.ts:27
 msgid "curlew demo takes no arguments."
 msgstr "curlew demo nimmt keine Argumente."
 
@@ -1847,11 +1847,11 @@ msgstr ""
 "Beginnt nach dieser Journal-Nummer; Standard ist der neueste Eintrag, es "
 "erscheinen also nur neue Änderungen"
 
-#: app/src/frontends/cli/window.ts:14
+#: app/src/frontends/cli/window.ts:16
 msgid "Open the window (agent access rules)"
 msgstr "Das Fenster öffnen (Regeln für den Agentenzugriff)"
 
-#: app/src/frontends/cli/window.ts:23
+#: app/src/frontends/cli/window.ts:30
 msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
