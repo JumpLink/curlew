@@ -175,8 +175,14 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
   });
   dialog.present(parent);
   if (options.openProtocols)
-    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => (openProtocols(), GLib.SOURCE_REMOVE));
+    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => {
+      if (open) openProtocols();
+      return GLib.SOURCE_REMOVE;
+    });
   const openAdd = options.openAdd;
   if (openAdd)
-    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => (openAddPage(openAdd), GLib.SOURCE_REMOVE));
+    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => {
+      if (open) openAddPage(openAdd);
+      return GLib.SOURCE_REMOVE;
+    });
 }
