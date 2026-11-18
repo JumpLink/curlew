@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-18 08:01+0100\n"
+"POT-Creation-Date: 2026-11-18 08:18+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -4608,25 +4608,25 @@ msgstr ""
 msgid "the WhatsApp attachment does not match its announced checksum"
 msgstr "der WhatsApp-Anhang passt nicht zur angekündigten Prüfsumme"
 
-#: packages/whatsapp/src/backend.ts:143
+#: packages/whatsapp/src/backend.ts:144
 msgid "no WhatsApp account {account}"
 msgstr "kein WhatsApp-Konto {account}"
 
-#: packages/whatsapp/src/backend.ts:165
+#: packages/whatsapp/src/backend.ts:166
 msgid "no WhatsApp session for {account} — {hint}"
 msgstr "Keine WhatsApp-Sitzung für {account} — {hint}"
 
-#: packages/whatsapp/src/backend.ts:175
+#: packages/whatsapp/src/backend.ts:176
 msgid "the WhatsApp session {account} was never linked — {hint}"
 msgstr "Die WhatsApp-Sitzung {account} wurde nie verknüpft — {hint}"
 
-#: packages/whatsapp/src/backend.ts:280
+#: packages/whatsapp/src/backend.ts:281
 msgid "the WhatsApp connection for {account} is not open — nothing was sent"
 msgstr ""
 "Die WhatsApp-Verbindung für {account} ist nicht offen — es wurde nichts "
 "gesendet"
 
-#: packages/whatsapp/src/backend.ts:344
+#: packages/whatsapp/src/backend.ts:345
 msgid "the WhatsApp connection is not open — no pictures"
 msgstr "Die WhatsApp-Verbindung ist nicht offen — keine Bilder"
 
@@ -4634,20 +4634,20 @@ msgstr "Die WhatsApp-Verbindung ist nicht offen — keine Bilder"
 msgid "the WhatsApp connection closed: {reason}"
 msgstr "Die WhatsApp-Verbindung wurde geschlossen: {reason}"
 
-#: packages/whatsapp/src/client.ts:226 packages/whatsapp/src/client.ts:255
+#: packages/whatsapp/src/client.ts:227 packages/whatsapp/src/client.ts:256
 msgid "WhatsApp did not take the message — nothing was sent"
 msgstr "WhatsApp hat die Nachricht nicht angenommen — es wurde nichts gesendet"
 
-#: packages/whatsapp/src/client.ts:263
+#: packages/whatsapp/src/client.ts:264
 msgid "WhatsApp did not take the reaction — nothing was sent"
 msgstr "WhatsApp hat die Reaktion nicht angenommen — es wurde nichts gesendet"
 
-#: packages/whatsapp/src/client.ts:273
+#: packages/whatsapp/src/client.ts:274
 msgid "WhatsApp did not take the edit — nothing was sent"
 msgstr ""
 "WhatsApp hat die Bearbeitung nicht angenommen — es wurde nichts gesendet"
 
-#: packages/whatsapp/src/client.ts:278
+#: packages/whatsapp/src/client.ts:279
 msgid "WhatsApp did not take the deletion — nothing was sent"
 msgstr "WhatsApp hat die Löschung nicht angenommen — es wurde nichts gesendet"
 
