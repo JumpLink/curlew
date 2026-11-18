@@ -8,7 +8,7 @@ name: Release
 # a commit whose tests, type check or lint did not pass.
 #
 # The CLI's own packages are built there too, not here: ci.yml ships `ship-deb-rpm` (`.deb`,
-# `.rpm`) and `ship-macos` (`.zip` + `.dmg` per arch, signed and notarised) and `ship-windows` (`windows-dir-zip` + `.msi`) as uploaded
+# `.rpm`) and `ship-macos` (`.zip` + `.dmg` per arch, signed and notarised) and `ship-windows` (`windows-dir-zip` + `.msi` per arch) as uploaded
 # artifacts, and the `release` job below only attaches them. Both assemble on the SAME
 # `fedora:44` container: `gjsify ship`'s darwin/windows targets are not host-bound to assemble,
 # only to run, so `gjsify install --os darwin --cpu arm64 --immutable` followed by `gjsify ship
@@ -106,6 +106,8 @@ jobs:
             "cli/curlew-${version}-1.x86_64.dmg" \
             "cli/curlew-${version}-1.windows.x64.zip" \
             "cli/curlew-${version}-1.x64.msi" \
+            "cli/curlew-${version}-1.windows.arm64.zip" \
+            "cli/curlew-${version}-1.arm64.msi" \
             "cli/eu.jumplink.curlew-${version}-1.x86_64.flatpak"; do
             if [ ! -s "$f" ]; then
               echo "::error::missing or empty artifact: $f"
@@ -146,7 +148,7 @@ jobs:
           fi
           gh release view "$TAG" --json assets --jq '.assets[].name'
 
-      # macOS (arm64 + x64, `.zip` + `.dmg`) and Windows (x64, `windows-dir-zip` + `.msi`)
+      # macOS (arm64 + x64, `.zip` + `.dmg`) and Windows (x64 + arm64, `windows-dir-zip` + `.msi`)
       # are attached from `cli/` above. Both assemble on Linux; macOS is only packed on a Mac,
       # because `codesign`, `notarytool` and `hdiutil` exist nowhere else (ci.yml's `macos` job).
       # That job signs with a Developer ID, notarises, staples the `.dmg` and checks each package
