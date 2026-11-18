@@ -897,6 +897,35 @@ export default async () => {
       }
     });
 
+    await it('removes the attachment rows of a chat that left the list', async () => {
+      const backend = new FakeChatBackend();
+      backend.addChat({ remoteId: '1002', kind: 'direct', title: 'Ben', members: [BEN] });
+      backend.post(
+        '1002',
+        chatMessage('1002', 1, BEN, 'look', {
+          hasAttachments: true,
+          attachments: [photo('a.jpg')],
+        }),
+      );
+      const db = freshDb();
+      const id = chatConversationId('telegram', ACCOUNT, '1002');
+      try {
+        await syncChats(db, backend);
+        const message = getConversation(db, id)?.messages[0];
+        expect(loadAttachments(db, message!.ref).length).toBe(1);
+        backend.chats.delete('1002');
+        await syncChats(db, backend, { fullScan: true });
+        expect(
+          count(db, 'SELECT COUNT(*) AS n FROM conversation_messages WHERE conversation_id = ?', id),
+        ).toBe(0);
+        expect(
+          count(db, 'SELECT COUNT(*) AS n FROM message_attachments WHERE message_id = ?', message!.id),
+        ).toBe(0);
+      } finally {
+        db.close();
+      }
+    });
+
     await it('removes attachment rows when a message is deleted on the server', async () => {
       const backend = new FakeChatBackend();
       backend.canProbe = true;

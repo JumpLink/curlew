@@ -416,14 +416,7 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
     runIn(db, (p) => `DELETE FROM message_attachments WHERE message_id IN (${p})`, batch.deletedMessages);
     runIn(db, (p) => `DELETE FROM message_reactions WHERE message_id IN (${p})`, batch.deletedMessages);
   }
-  for (const table of [
-    'conversation_messages',
-    'chat_members',
-    'chat_cursors',
-    'conversation_participants',
-  ]) {
-    runIn(db, (p) => `DELETE FROM ${table} WHERE conversation_id IN (${p})`, batch.deletedConversations);
-  }
+  // The rows hanging off a message go first: the subqueries find them through the messages.
   if (batch.deletedConversations.length > 0) {
     sweepThumbnails(
       db,
@@ -438,6 +431,14 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
       `DELETE FROM message_reactions WHERE message_id IN
          (SELECT id FROM conversation_messages WHERE conversation_id IN (${placeholders(batch.deletedConversations.length)}))`,
     ).run(...batch.deletedConversations);
+  }
+  for (const table of [
+    'conversation_messages',
+    'chat_members',
+    'chat_cursors',
+    'conversation_participants',
+  ]) {
+    runIn(db, (p) => `DELETE FROM ${table} WHERE conversation_id IN (${p})`, batch.deletedConversations);
   }
   runIn(db, (p) => `DELETE FROM conversations WHERE id IN (${p})`, batch.deletedConversations);
 
