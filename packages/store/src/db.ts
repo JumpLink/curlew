@@ -125,6 +125,22 @@ export function placeholders(n: number): string {
   return Array.from({ length: n }, () => '?').join(', ');
 }
 
+/** Ids per `… IN (…)` statement, for the same reason `insertMany` batches. */
+export const IN_CHUNK = 100;
+
+/** Run `sql(placeholders)` once per chunk of `ids`, with `lead` bound before each chunk. */
+export function runIn(
+  db: IndexDatabase,
+  sql: (placeholders: string) => string,
+  ids: readonly string[],
+  ...lead: SqlValue[]
+): void {
+  for (let i = 0; i < ids.length; i += IN_CHUNK) {
+    const chunk = ids.slice(i, i + IN_CHUNK);
+    db.prepare(sql(placeholders(chunk.length))).run(...lead, ...chunk);
+  }
+}
+
 /**
  * Bound values per multi-row INSERT. Measured, not guessed: gjsify's libgda wrapper re-parses
  * the statement per execution at a cost that grows roughly with the square of its parameter

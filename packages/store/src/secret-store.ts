@@ -17,7 +17,7 @@
 
 import { DatabaseSync } from 'node:sqlite';
 import { dirname } from 'node:path';
-import { INDEX_BUSY_TIMEOUT_MS, insertMany, placeholders, withTransaction } from './db.ts';
+import { INDEX_BUSY_TIMEOUT_MS, insertMany, runIn, withTransaction } from './db.ts';
 import { type SecretFiles, secretFiles } from './secret-files.ts';
 
 /** One change: a value to write, or null to delete the key. */
@@ -26,9 +26,6 @@ export interface SecretChange {
   key: string;
   value: string | null;
 }
-
-/** Keys per `DELETE … IN (…)`, for the same reason `insertMany` batches. */
-const DELETE_CHUNK = 100;
 
 export class SecretStore {
   private readonly db: DatabaseSync;
@@ -119,12 +116,12 @@ export class SecretStore {
     // the normal case, not an exotic one.
     const write = () => {
       for (const [namespace, keys] of deletes) {
-        for (let i = 0; i < keys.length; i += DELETE_CHUNK) {
-          const chunk = keys.slice(i, i + DELETE_CHUNK);
-          this.db
-            .prepare(`DELETE FROM secrets WHERE namespace = ? AND key IN (${placeholders(chunk.length)})`)
-            .run(namespace, ...chunk);
-        }
+        runIn(
+          this.db,
+          (p) => `DELETE FROM secrets WHERE namespace = ? AND key IN (${p})`,
+          keys,
+          namespace,
+        );
       }
       insertMany(
         this.db,

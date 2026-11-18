@@ -35,7 +35,7 @@ import { chatConversationId, classifyChatMessage, LOCAL_ECHO_PREFIX } from './ch
 import { adoptEchoAttachments } from './echo-attachments.ts';
 import { conversationTotalsSql } from './conversation-totals.ts';
 import type { IndexDatabase } from './db.ts';
-import { insertMany, placeholders, type SqlValue, withTransaction } from './db.ts';
+import { IN_CHUNK, insertMany, placeholders, runIn, type SqlValue, withTransaction } from './db.ts';
 import {
   type AccountState,
   DeliveryBatch,
@@ -232,20 +232,6 @@ function loadState(db: IndexDatabase, backend: string, accountId: string): Accou
   };
 }
 
-
-const IN_CHUNK = 100;
-
-function runIn(
-  db: IndexDatabase,
-  sql: (placeholders: string) => string,
-  ids: readonly string[],
-  ...lead: SqlValue[]
-): void {
-  for (let i = 0; i < ids.length; i += IN_CHUNK) {
-    const chunk = ids.slice(i, i + IN_CHUNK);
-    db.prepare(sql(placeholders(chunk.length))).run(...lead, ...chunk);
-  }
-}
 
 /**
  * The delivered copy of a message curlew sent replaces the local echo written at send time.
