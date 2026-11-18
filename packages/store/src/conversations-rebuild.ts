@@ -22,7 +22,7 @@ import type { IndexDatabase } from './db.ts';
 import { insertMany, type SqlValue, withTransaction } from './db.ts';
 import { messageBody } from './index-store.ts';
 import { buildThreads, normalizeSubject, stableId, type ThreadMember } from './threads.ts';
-import { str } from './row.ts';
+import { parseParticipantAddresses, str } from './row.ts';
 import { loadLocalReadStates, readLocally } from './local-read.ts';
 import { MAIL_BACKEND, PENDING_DELETE, PENDING_DELETE_TTL_MS, setOwnReaction } from './conversations-shared.ts';
 
@@ -268,26 +268,13 @@ function loadChatPeers(db: IndexDatabase): ChatPeerRow[] {
       'SELECT backend, account_id, peer_id, display_name, addresses_json FROM chat_peers ORDER BY backend, account_id, peer_id',
     )
     .all() as Array<Record<string, unknown>>;
-  return rows.map((r) => {
-    let addresses: ParticipantAddress[] = [];
-    try {
-      const parsed = JSON.parse(String(r.addresses_json ?? '[]')) as unknown;
-      if (Array.isArray(parsed)) {
-        addresses = parsed.filter(
-          (a): a is ParticipantAddress => typeof a?.kind === 'string' && typeof a?.value === 'string',
-        );
-      }
-    } catch {
-      // Written with JSON.stringify by syncChats; a damaged row gets a participant without addresses.
-    }
-    return {
-      backend: String(r.backend),
-      accountId: String(r.account_id),
-      peerId: String(r.peer_id),
-      name: str(r.display_name),
-      addresses,
-    };
-  });
+  return rows.map((r) => ({
+    backend: String(r.backend),
+    accountId: String(r.account_id),
+    peerId: String(r.peer_id),
+    name: str(r.display_name),
+    addresses: parseParticipantAddresses(r.addresses_json),
+  }));
 }
 
 /** A derived table the rebuild keeps equal to computed rows, writing only the difference. */

@@ -22,7 +22,7 @@ import { conversationVerdict, type MessageVerdict, type SenderOverrides } from '
 import type { IndexDatabase } from './db.ts';
 import { placeholders, seqColumn } from './db.ts';
 import { messageBody } from './index-store.ts';
-import { str, tri } from './row.ts';
+import { parseParticipantAddresses, str, tri } from './row.ts';
 import { MAIL_BACKEND, PENDING_DELETE, setOwnReaction } from './conversations-shared.ts';
 export { setOwnReaction };
 export { rebuildConversations, type RebuildOptions, type RebuildResult } from './conversations-rebuild.ts';
@@ -605,16 +605,7 @@ const MESSAGE_COLUMNS = `id, conversation_id, backend, account_id, presentation,
 /** The phone number a chat peer is known by: shown when no name is, before an opaque id. */
 function phoneOfPeer(json: unknown): string | null {
   if (typeof json !== 'string') return null;
-  try {
-    const parsed = JSON.parse(json) as unknown;
-    if (!Array.isArray(parsed)) return null;
-    for (const a of parsed as Array<{ kind?: unknown; value?: unknown }>) {
-      if (a?.kind === 'phone' && typeof a.value === 'string' && a.value) return a.value;
-    }
-  } catch {
-    // an unreadable address list is just no phone
-  }
-  return null;
+  return parseParticipantAddresses(json).find((a) => a.kind === 'phone' && a.value)?.value ?? null;
 }
 
 function toMessage(

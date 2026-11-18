@@ -52,7 +52,7 @@ import {
   releaseReceiveLease,
   takeReceiveLease,
 } from './receive-lease.ts';
-import { num, str } from './row.ts';
+import { num, parseParticipantAddresses, str } from './row.ts';
 import { moveThumbnail, sweepThumbnails, sweepThumbnailsOf } from './thumbnails.ts';
 
 export { deliveredMessageId };
@@ -199,20 +199,6 @@ export interface DeliverySyncResult {
   failed: boolean;
 }
 
-function parseAddresses(json: unknown): ParticipantAddress[] {
-  try {
-    const parsed = JSON.parse(String(json ?? '[]')) as unknown;
-    return Array.isArray(parsed)
-      ? parsed.filter(
-          (a): a is ParticipantAddress => typeof a?.kind === 'string' && typeof a?.value === 'string',
-        )
-      : [];
-  } catch {
-    // Written with JSON.stringify by this engine or `syncChats`; a damaged row starts empty.
-    return [];
-  }
-}
-
 function loadState(db: IndexDatabase, backend: string, accountId: string): AccountState {
   const chatRows = db
     .prepare(
@@ -238,7 +224,7 @@ function loadState(db: IndexDatabase, backend: string, accountId: string): Accou
         String(r.peer_id),
         {
           displayName: str(r.display_name),
-          addresses: parseAddresses(r.addresses_json),
+          addresses: parseParticipantAddresses(r.addresses_json),
           bot: Number(r.is_bot) === 1,
         },
       ]),
