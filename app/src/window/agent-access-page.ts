@@ -162,7 +162,7 @@ export function createAgentAccessPage(
     parts.push(widget);
   };
 
-  const ruleRow = (rule: RuleView, group: AccountView): Adw.ExpanderRow => {
+  const ruleRow = (rule: RuleView): Adw.ExpanderRow => {
     const key = keyOf(rule);
     const row = new Adw.ExpanderRow({
       title: ruleTitle(rule, _('Whole account')),
@@ -203,7 +203,6 @@ export function createAgentAccessPage(
       });
       row.add_row(combo.row);
     }
-    void group;
     return row;
   };
 
@@ -324,8 +323,8 @@ export function createAgentAccessPage(
       for (const account of state.groups) {
         const group = new Adw.PreferencesGroup({ title: account.label });
         if (account.label !== account.account) group.set_description(account.account);
-        if (account.whole) group.add(ruleRow(account.whole, account));
-        for (const contact of account.contacts) group.add(ruleRow(contact, account));
+        if (account.whole) group.add(ruleRow(account.whole));
+        for (const contact of account.contacts) group.add(ruleRow(contact));
         add(group);
       }
       if (state.groups.length === 0) {
