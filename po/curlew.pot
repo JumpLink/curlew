@@ -1638,99 +1638,99 @@ msgid_plural "{count} accounts"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/account-add.ts:120 app/src/window/account-add.ts:310
+#: app/src/window/account-add.ts:124 app/src/window/account-add.ts:317
 msgid "Connecting…"
 msgstr ""
 
-#: app/src/window/account-add.ts:136 app/src/window/protocols-page.ts:80
+#: app/src/window/account-add.ts:142 app/src/window/protocols-page.ts:80
 msgid "{protocol} is not available on this device"
 msgstr ""
 
-#: app/src/window/account-add.ts:137 app/src/window/protocols-page.ts:81
+#: app/src/window/account-add.ts:143 app/src/window/protocols-page.ts:81
 msgid "This build of Curlew cannot run it on this kind of computer yet."
 msgstr ""
 
-#: app/src/window/account-add.ts:157 app/src/window/protocols-page.ts:58
+#: app/src/window/account-add.ts:163 app/src/window/protocols-page.ts:58
 msgid "Please read this first"
 msgstr ""
 
-#: app/src/window/account-add.ts:163
+#: app/src/window/account-add.ts:169
 msgid "Accept and Continue"
 msgstr ""
 
-#: app/src/window/account-add.ts:207
+#: app/src/window/account-add.ts:213
 msgid "Continue"
 msgstr ""
 
-#: app/src/window/account-add.ts:253
+#: app/src/window/account-add.ts:259
 msgid "Open Link"
 msgstr ""
 
-#: app/src/window/account-add.ts:264
+#: app/src/window/account-add.ts:270
 msgid "No App Opened the Link"
 msgstr ""
 
-#: app/src/window/account-add.ts:270
+#: app/src/window/account-add.ts:276
 msgid "Copy Link"
 msgstr ""
 
-#: app/src/window/account-add.ts:273
+#: app/src/window/account-add.ts:279
 msgid "Link Copied"
 msgstr ""
 
-#: app/src/window/account-add.ts:287
+#: app/src/window/account-add.ts:293
 msgid "Adding account…"
 msgstr ""
 
-#: app/src/window/account-add.ts:295 app/src/window/media-viewer.ts:103
+#: app/src/window/account-add.ts:301 app/src/window/media-viewer.ts:103
 msgid "Try Again"
 msgstr ""
 
-#: app/src/window/account-add.ts:299
+#: app/src/window/account-add.ts:305
 msgid "Could not add the account"
 msgstr ""
 
-#: app/src/window/account-add.ts:334 app/src/window/protocols-page.ts:46
+#: app/src/window/account-add.ts:341 app/src/window/protocols-page.ts:46
 msgid "Asks you to accept terms first"
 msgstr ""
 
-#: app/src/window/account-add.ts:351
+#: app/src/window/account-add.ts:358
 msgid "Chats"
 msgstr ""
 
-#: app/src/window/account-add.ts:352
+#: app/src/window/account-add.ts:359
 msgid ""
 "Signal, WhatsApp and Telegram link this computer as another device of your "
 "account."
 msgstr ""
 
-#: app/src/window/account-add.ts:361 app/src/window/accounts-model.ts:132
+#: app/src/window/account-add.ts:368 app/src/window/accounts-model.ts:132
 #: app/src/window/conversation-list-model.ts:139
 msgid "Mail"
 msgstr ""
 
-#: app/src/window/account-add.ts:364
+#: app/src/window/account-add.ts:371
 msgid "Sign in with an address and a password"
 msgstr ""
 
-#: app/src/window/account-add.ts:376
+#: app/src/window/account-add.ts:383
 msgid "GNOME Online Accounts"
 msgstr ""
 
-#: app/src/window/account-add.ts:378
+#: app/src/window/account-add.ts:385
 msgid "Accounts you set up in GNOME Settings appear here by themselves"
 msgstr ""
 
-#: app/src/window/account-add.ts:379
+#: app/src/window/account-add.ts:386
 msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 
-#: app/src/window/account-add.ts:401 app/src/window/accounts-page.ts:167
+#: app/src/window/account-add.ts:408 app/src/window/accounts-page.ts:167
 #: app/src/window/accounts-page.ts:193 app/src/window/welcome.ts:160
 msgid "Add Account"
 msgstr ""
 
-#: app/src/window/account-detail.ts:79 app/src/window/agent-access-page.ts:218
+#: app/src/window/account-detail.ts:79 app/src/window/agent-access-page.ts:217
 #: app/src/window/contact-page.ts:393
 msgid "Account"
 msgstr ""
@@ -1757,7 +1757,7 @@ msgstr ""
 #: app/src/window/account-remove-model.ts:24
 #: app/src/window/account-remove-model.ts:37
 #: app/src/window/account-remove-model.ts:71
-#: app/src/window/agent-access-page.ts:234
+#: app/src/window/agent-access-page.ts:233
 #: app/src/window/conversation-list.ts:503
 #: app/src/window/conversation-list.ts:596
 #: app/src/window/conversation-view.ts:767 app/src/window/protocols-page.ts:66
@@ -2044,65 +2044,65 @@ msgid ""
 msgstr ""
 
 #: app/src/window/agent-access-page.ts:199
-#: app/src/window/agent-access-page.ts:227
+#: app/src/window/agent-access-page.ts:226
 msgid "Read messages"
 msgstr ""
 
 #: app/src/window/agent-access-page.ts:199
-#: app/src/window/agent-access-page.ts:228
+#: app/src/window/agent-access-page.ts:227
 msgid "Send messages"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:211
+#: app/src/window/agent-access-page.ts:210
 msgid "Add a rule"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:223
+#: app/src/window/agent-access-page.ts:222
 msgid "Account id"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:226
+#: app/src/window/agent-access-page.ts:225
 msgid "Contact address (empty = the whole account)"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:236
+#: app/src/window/agent-access-page.ts:235
 msgid "Add"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:287
+#: app/src/window/agent-access-page.ts:286
 msgid "The configuration could not be read"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:299
+#: app/src/window/agent-access-page.ts:298
 msgid ""
 "Your own commands and this window are never restricted, and your own "
 "addresses are always allowed. These rules decide what an AI agent may read "
 "and send."
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:303
+#: app/src/window/agent-access-page.ts:302
 msgid "Ask when no rule applies"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:304
+#: app/src/window/agent-access-page.ts:303
 msgid "Off: an agent request without a rule is refused without asking"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:313
+#: app/src/window/agent-access-page.ts:312
 msgid "Send files without asking"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:314
+#: app/src/window/agent-access-page.ts:313
 msgid ""
 "Off: an agent that sends files is always asked first, even where a rule "
 "allows sending"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:332
+#: app/src/window/agent-access-page.ts:331
 msgid "No rules yet"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:337
+#: app/src/window/agent-access-page.ts:336
 msgid "Add rule"
 msgstr ""
 
@@ -3344,7 +3344,7 @@ msgstr ""
 msgid "Demo data — nothing here is real"
 msgstr ""
 
-#: app/src/window/window.ts:700
+#: app/src/window/window.ts:706
 msgid "No contacts to merge"
 msgstr ""
 
