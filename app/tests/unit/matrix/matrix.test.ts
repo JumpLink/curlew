@@ -765,6 +765,40 @@ export default async () => {
       }
     });
 
+    await it('keeps every placeholder in the ledger when one retry request fails', async () => {
+      const api = new FakeMatrixApi();
+      api.addRoom({ roomId: '!e:example.org', name: 'Encrypted', direct: false });
+      const first = undecryptable(ANNA, at(1));
+      const second = undecryptable(ANNA, at(2));
+      api.post('!e:example.org', first, second);
+      api.decryptsNow.set(first.eventId, { ...text(ANNA, first.ts, 'lesbar'), eventId: first.eventId });
+      const realFetch = api.fetchEvent.bind(api);
+      api.fetchEvent = async (roomId, eventId) => {
+        if (eventId === second.eventId) throw new Error('offline');
+        return realFetch(roomId, eventId);
+      };
+      let stored = new Map([['!e:example.org', [first.eventId, second.eventId]]]);
+      const ledger = {
+        load: () => new Map(stored),
+        save: (l: ReadonlyMap<string, readonly string[]>) => {
+          stored = new Map([...l].map(([room, ids]) => [room, [...ids]]));
+        },
+      };
+      const session = new MatrixChatSession(api, ledger);
+      let failed = false;
+      try {
+        await session.revisions();
+      } catch {
+        failed = true;
+      }
+      expect(failed).toBe(true);
+      await session.close();
+      // The caller never saw the first revision, so its placeholder must still be retried.
+      expect([...(stored.get('!e:example.org') ?? [])].sort().join()).toBe(
+        [first.eventId, second.eventId].sort().join(),
+      );
+    });
+
     await it('logs in with an access token: user and device come from /whoami', async () => {
       const dir = tempDir();
       const calls: string[] = [];

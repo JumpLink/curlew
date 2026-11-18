@@ -95,6 +95,9 @@ export class MatrixChatSession implements ChatSession {
   async revisions(): Promise<ChatRevision[]> {
     const revisions: ChatRevision[] = [];
     let budget = RETRY_PER_RUN;
+    // The ledger is changed only once every fetch succeeded: a throw discards the revisions
+    // computed so far (the caller never sees them), so the placeholders must stay for the next run.
+    const settled: Array<[Set<string>, string, string]> = [];
     for (const [roomId, ids] of this.ledger) {
       if (budget <= 0) break;
       const edits: ChatEdit[] = [];
@@ -105,8 +108,7 @@ export class MatrixChatSession implements ChatSession {
         budget--;
         const event = await this.api.fetchEvent(roomId, eventId);
         if (event?.undecryptable) continue;
-        ids.delete(eventId);
-        this.ledgerChanged = true;
+        settled.push([ids, roomId, eventId]);
         const message = event ? toChatMessage(event, this.api.userId, new Map()) : null;
         if (event && message) {
           edits.push({
@@ -129,10 +131,14 @@ export class MatrixChatSession implements ChatSession {
           });
         }
       }
-      if (ids.size === 0) this.ledger.delete(roomId);
       if (edits.length > 0 || deleted.length > 0) {
         revisions.push({ chatRemoteId: roomId, edits, retracted: deleted });
       }
+    }
+    for (const [ids, roomId, eventId] of settled) {
+      ids.delete(eventId);
+      this.ledgerChanged = true;
+      if (ids.size === 0) this.ledger.delete(roomId);
     }
     return revisions;
   }
