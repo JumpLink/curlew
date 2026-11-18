@@ -6,13 +6,20 @@
 import { _ } from '@curlew/protocol';
 import type { CommandModule } from 'yargs';
 
+import { hasWindowBundle } from '../../dispatch.ts';
+
 export const demoCommand: CommandModule = {
   command: 'demo',
   get describe() {
     return _('Open the window on made-up demo data (same as CURLEW_DEMO=1 curlew window)');
   },
   handler: async () => {
-    if (typeof (globalThis as { imports?: unknown }).imports === 'undefined') {
+    if (
+      !hasWindowBundle({
+        gjs: typeof (globalThis as { imports?: unknown }).imports !== 'undefined',
+        platform: process.platform,
+      })
+    ) {
       console.error(_('The window needs GJS (GTK 4 and libadwaita); this is the Node.js build.'));
       process.exitCode = 1;
       return;

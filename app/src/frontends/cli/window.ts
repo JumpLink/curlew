@@ -8,13 +8,20 @@
 import { _ } from '@curlew/protocol';
 import type { CommandModule } from 'yargs';
 
+import { hasWindowBundle } from '../../dispatch.ts';
+
 export const windowCommand: CommandModule = {
   command: 'window',
   get describe() {
     return _('Open the window (agent access rules)');
   },
   handler: async () => {
-    if (typeof (globalThis as { imports?: unknown }).imports === 'undefined') {
+    if (
+      !hasWindowBundle({
+        gjs: typeof (globalThis as { imports?: unknown }).imports !== 'undefined',
+        platform: process.platform,
+      })
+    ) {
       console.error(_('The window needs GJS (GTK 4 and libadwaita); this is the Node.js build.'));
       process.exitCode = 1;
       return;

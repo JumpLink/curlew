@@ -2,6 +2,7 @@ import 'dotenv/config';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
+import { pickHandover } from './dispatch.ts';
 import { initI18n } from './core/lib/i18n.ts';
 import { VERSION } from './core/version.ts';
 
@@ -41,23 +42,16 @@ if (hideBin(process.argv)[0] !== 'mcp') initI18n();
 
 // The window runs a GtkApplication, which cannot nest inside the GLib.MainLoop the command
 // handlers below run in (its `activate` never fires). So a plain `curlew window` hands over before
-// the parser and the loop exist; `windowCommand` stays registered for `--help` and for Node.
-if (
-  typeof (globalThis as { imports?: unknown }).imports !== 'undefined' &&
-  hideBin(process.argv).length === 1 &&
-  hideBin(process.argv)[0] === 'window'
-) {
-  await import(new URL('./window.gjs.mjs', import.meta.url).href);
-}
-
-// `curlew demo` is `CURLEW_DEMO=1 curlew window`, for the same reason.
-if (
-  typeof (globalThis as { imports?: unknown }).imports !== 'undefined' &&
-  hideBin(process.argv).length === 1 &&
-  hideBin(process.argv)[0] === 'demo'
-) {
-  process.env.CURLEW_DEMO = '1';
-  await import(new URL('./window.gjs.mjs', import.meta.url).href);
+// the parser and the loop exist; `windowCommand` stays registered for `--help` and for Node on
+// Linux. `curlew demo` is `CURLEW_DEMO=1 curlew window`, for the same reason. On macOS and Windows
+// (Node) the launcher passes no argument, so that opens the window too (dispatch.ts).
+const handover = pickHandover(hideBin(process.argv), {
+  gjs: typeof (globalThis as { imports?: unknown }).imports !== 'undefined',
+  platform: process.platform,
+});
+if (handover) {
+  if (handover.demo) process.env.CURLEW_DEMO = '1';
+  await import(new URL(handover.bundle, import.meta.url).href);
 }
 
 function reportError(err: unknown): void {
