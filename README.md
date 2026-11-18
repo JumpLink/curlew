@@ -87,9 +87,12 @@ and Evolution Data Server are a feature of the Linux host build only.
 
 - **Flatpak** (Linux): CI builds one on every release, with network and display access and nothing
   else. Flathub is not published yet ([ADR 0011](docs/adr/0011-same-app-inside-and-outside-a-sandbox.md)).
-- **Windows** and **macOS**: unsigned packages are attached to each
-  [GitHub release](https://github.com/JumpLink/curlew/releases). Opening Curlew shows the window.
-  Chat only: GNOME accounts do not exist there.
+- **macOS** (Apple silicon and Intel): a `.dmg` and a `.zip` per architecture, signed with a
+  Developer ID and notarised, attached to each
+  [GitHub release](https://github.com/JumpLink/curlew/releases).
+- **Windows** (x64; ARM64 Windows runs it under emulation): a `.zip` and an `.msi`, attached to each
+  release. They are not signed yet, so SmartScreen warns on first start.
+- On both, opening Curlew shows the window. Chat only: GNOME accounts do not exist there.
 - **`.deb` / `.rpm`** (x86_64): attached to each release as well.
 
 How the artifacts are built: [docs/guide/releasing.md](docs/guide/releasing.md).

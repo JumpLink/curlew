@@ -10,6 +10,15 @@ on:
   # declare it (docs: "For a workflow to be reusable, the values in `on` must include
   # `workflow_call`"), and the release run would fail before its first step.
   workflow_call:
+    inputs:
+      sign:
+        description: "Sign and notarise the macOS packages when the Apple secrets are there"
+        type: boolean
+        default: false
+      release:
+        description: "This run is a release: signing is then required, not just attempted"
+        type: boolean
+        default: false
 
 # Node-free gjsify toolchain (mirrors the buchhaltung/bauplaner CI). Everything runs on the
 # gjsify stack pinned in app/package.json: `gjsify install --immutable` (from gjsify-lock.json),
@@ -219,19 +228,27 @@ jobs:
       # bundle they ship has no `gi://`, so GOA/EDS are unavailable there: these packages offer the
       # chat protocols only, and the app hides mail (`app/src/core/platform.ts`, see README.md's
       # Releasing section) — the Linux `.deb`/`.rpm` above is the only package with mail.
-      - name: Package macOS (arm64)
-        run: gjsify install --os darwin --cpu arm64 --immutable
+      # `codesign`, `notarytool` and `hdiutil` exist only on a Mac, so macOS is only STAGED here and
+      # the `macos` job below packs, signs and notarises it. `--from-stage` is the split: a stage
+      # carries its own closure and needs no project on the other side. Tarred because
+      # `upload-artifact` drops the executable bit and flattens symlinks, and a `.app` with either
+      # gone does not launch.
+      - name: Stage macOS (arm64 + x64)
+        run: |
+          set -eu
+          for arch in arm64 x64; do
+            gjsify install --os darwin --cpu "$arch" --immutable
+            (cd app && gjsify ship darwin --arch "$arch" --skip-build --stage \
+              --target macos-app-zip,macos-app-dmg --out "ship/stage-$arch")
+            tar -C "app/ship/stage-$arch" -cf "macos-stage-$arch.tar" stage
+          done
 
-      - name: Ship macOS (arm64)
-        working-directory: app
-        run: gjsify ship darwin --arch arm64 --skip-build --target macos-app-zip
-
-      - name: Package macOS (x64)
-        run: gjsify install --os darwin --cpu x64 --immutable
-
-      - name: Ship macOS (x64)
-        working-directory: app
-        run: gjsify ship darwin --arch x64 --skip-build --target macos-app-zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-stage
+          path: macos-stage-*.tar
+          retention-days: 1
+          compression-level: 0
 
       # `msi` needs `wixl` (msitools, installed above); `windows-dir-zip` needs nothing `ship` does
       # not write itself.
@@ -242,15 +259,13 @@ jobs:
         working-directory: app
         run: gjsify ship windows --arch x64 --skip-build --target windows-dir-zip,msi
 
-      - name: Assert the macOS and Windows artifacts arrived
+      - name: Assert the Windows artifacts arrived
         working-directory: app/ship/out
         run: |
           set -eu
           ls -la
           version=$(node -p "require('$GITHUB_WORKSPACE/app/package.json').version")
           for f in \
-            "curlew-${version}-1.macos.arm64.zip" \
-            "curlew-${version}-1.macos.x86_64.zip" \
             "curlew-${version}-1.windows.x64.zip" \
             "curlew-${version}-1.x64.msi"; do
             if [ ! -s "$f" ]; then
@@ -271,7 +286,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ship-macos-windows
+          name: ship-windows
           path: |
             app/ship/out/*.zip
             app/ship/out/*.msi
@@ -368,6 +383,184 @@ jobs:
           path: app/ship/out/*.flatpak
           compression-level: 0
 
+  # ── macOS: pack, sign and notarise ───────────────────────────────────────────────────────────
+  # Packs the stages above into a `.zip` and a `.dmg` per arch. The identity is a Developer ID
+  # Application certificate (direct distribution), the notary credential an App Store Connect API
+  # key. Repo secrets:
+  #   APPLE_DEVELOPER_ID_P12_BASE64   the certificate + private key, `base64 -w0`
+  #   APPLE_DEVELOPER_ID_P12_PASSWORD its export password
+  #   APPLE_NOTARY_KEY_P8             the `AuthKey_<id>.p8` file, as text
+  #   APPLE_NOTARY_KEY_ID             the key id
+  #   APPLE_NOTARY_ISSUER_ID          the issuer UUID
+  # Read only when the caller passes `sign` (release.yml does): a push or a PR packs UNSIGNED, which
+  # still proves the stage packs on macOS without four notary submissions per commit. A RELEASE does
+  # not run without them: an unsigned `.app` is refused by Gatekeeper on every Mac.
+  macos:
+    name: macOS packages
+    needs: build-and-test
+    runs-on: macos-latest
+    env:
+      P12_BASE64: ${{ inputs.sign && secrets.APPLE_DEVELOPER_ID_P12_BASE64 || '' }}
+      P12_PASSWORD: ${{ inputs.sign && secrets.APPLE_DEVELOPER_ID_P12_PASSWORD || '' }}
+      NOTARY_KEY_P8: ${{ inputs.sign && secrets.APPLE_NOTARY_KEY_P8 || '' }}
+      NOTARY_KEY_ID: ${{ inputs.sign && secrets.APPLE_NOTARY_KEY_ID || '' }}
+      NOTARY_ISSUER_ID: ${{ inputs.sign && secrets.APPLE_NOTARY_ISSUER_ID || '' }}
+    steps:
+      # All five or none: a partial set packs unsigned with a notice naming what is missing,
+      # rather than failing half-way through the keychain import. A release fails instead.
+      - name: Decide whether to sign
+        env:
+          RELEASE: ${{ inputs.release }}
+        run: |
+          set -eu
+          missing=""
+          for v in P12_BASE64 P12_PASSWORD NOTARY_KEY_P8 NOTARY_KEY_ID NOTARY_ISSUER_ID; do
+            eval "val=\${$v:-}"
+            [ -n "$val" ] || missing="$missing $v"
+          done
+          if [ -z "$missing" ]; then
+            echo "CAN_SIGN=1" >> "$GITHUB_ENV"
+          elif [ "$RELEASE" = "true" ]; then
+            echo "::error::a release needs the secrets behind:$missing"
+            exit 1
+          else
+            echo "::notice::not signing, missing:$missing"
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      # The same version that assembled the stage — the CLI warns when the two phases differ,
+      # because a version difference can change the artifact's bytes.
+      - name: Bootstrap the gjsify CLI
+        run: |
+          VERSION=$(node -p "require('./app/package.json').devDependencies['@gjsify/cli']")
+          npm install -g "@gjsify/cli@$VERSION"
+
+      - name: Download the macOS stages
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-stage
+
+      # A throwaway keychain, unlocked for the job. `codesign` cannot prompt on a runner, so the
+      # key's partition list is opened to it up front; without that the signature fails with
+      # errSecInternalComponent. It is also the DEFAULT keychain because `notarytool` reads the
+      # default one and gjsify passes it no `--keychain`.
+      - name: Import the signing identity
+        if: ${{ env.CAN_SIGN == '1' }}
+        run: |
+          set -eu
+          keychain="$RUNNER_TEMP/build.keychain-db"
+          password=$(openssl rand -base64 24)
+          printf '%s' "$P12_BASE64" | base64 --decode > "$RUNNER_TEMP/identity.p12"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          security import "$RUNNER_TEMP/identity.p12" -k "$keychain" -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$password" "$keychain" >/dev/null
+          security list-keychains -d user -s "$keychain" login.keychain-db
+          security default-keychain -d user -s "$keychain"
+          rm -f "$RUNNER_TEMP/identity.p12"
+          identity=$(security find-identity -v -p codesigning "$keychain" | awk '/Developer ID Application/ { print $2; exit }')
+          [ -n "$identity" ] || { echo "::error::no Developer ID Application identity in the .p12"; exit 1; }
+          echo "SIGN_IDENTITY=$identity" >> "$GITHUB_ENV"
+
+      - name: Store the notary credential
+        if: ${{ env.CAN_SIGN == '1' }}
+        run: |
+          set -eu
+          printf '%s\n' "$NOTARY_KEY_P8" > "$RUNNER_TEMP/notary.p8"
+          chmod 600 "$RUNNER_TEMP/notary.p8"
+          xcrun notarytool store-credentials gjsify-notary \
+            --key "$RUNNER_TEMP/notary.p8" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID"
+          rm -f "$RUNNER_TEMP/notary.p8"
+
+      - name: Pack the macOS zips and dmgs
+        run: |
+          set -eu
+          if [ -z "${SIGN_IDENTITY:-}" ]; then
+            echo "::notice::not signing — packing UNSIGNED macOS packages"
+            sign=""
+          else
+            sign="--sign $SIGN_IDENTITY --notarize gjsify-notary"
+          fi
+          mkdir out
+          for arch in arm64 x64; do
+            mkdir "pack-$arch"
+            tar -C "pack-$arch" -xf "macos-stage-$arch.tar"
+            # shellcheck disable=SC2086
+            gjsify ship --from-stage "pack-$arch/stage" --expect-target "darwin-$arch" \
+              --target macos-app-zip,macos-app-dmg --out "ship-$arch" $sign
+            cp "ship-$arch"/out/*.zip "ship-$arch"/out/*.dmg out/
+          done
+          ls -la out
+
+      # Asserted by name because `ship` exits 0 after writing nothing when every target is filtered
+      # away. macOS labels x64 as `x86_64`. Signed, each `.app` and each `.dmg` is judged by
+      # Gatekeeper with the quarantine bit a browser download carries: a signed-but-not-notarised
+      # app passes `codesign --verify` and is refused there. Unsigned, the dmg is still mounted
+      # to prove it holds the app.
+      - name: Assert and check the macOS packages
+        run: |
+          set -eu
+          missing=0
+          version=$(node -p "require('./app/package.json').version")
+          for arch in arm64 x86_64; do
+            zip="out/curlew-$version-1.macos.$arch.zip"
+            dmg="out/curlew-$version-1.$arch.dmg"
+            for f in "$zip" "$dmg"; do
+              if [ ! -s "$f" ]; then
+                echo "::error::missing or empty artifact: $f"
+                missing=1
+              fi
+            done
+            [ "$missing" -eq 0 ] || continue
+            mnt=$(mktemp -d)
+            hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "$dmg" >/dev/null
+            ls -d "$mnt"/*.app || { echo "::error::the $arch dmg holds no .app"; missing=1; }
+            hdiutil detach "$mnt" >/dev/null
+            [ -n "${SIGN_IDENTITY:-}" ] || continue
+            [ "$missing" -eq 0 ] || continue
+            quarantine="0083;$(printf %x "$(date +%s)");Safari;"
+            check="check-$arch"
+            rm -rf "$check" && mkdir "$check"
+            ditto -x -k "$zip" "$check"
+            app=$(ls -d "$check"/*.app)
+            codesign --verify --deep --strict "$app"
+            xattr -w com.apple.quarantine "$quarantine" "$app"
+            spctl --assess --type execute -vv "$app" 2>&1 | tee "$check.log"
+            grep -q "source=Notarized Developer ID" "$check.log" || {
+              echo "::error::curlew $arch is signed but Gatekeeper does not see it as notarised"
+              missing=1
+            }
+            xcrun stapler validate "$dmg"
+            xattr -w com.apple.quarantine "$quarantine" "$dmg"
+            spctl --assess --type open --context context:primary-signature -vv "$dmg" 2>&1 | tee "$check.log"
+            grep -q "source=Notarized Developer ID" "$check.log" || {
+              echo "::error::the curlew $arch dmg is not seen as notarised"
+              missing=1
+            }
+            rm -rf "$check" "$check.log"
+          done
+          [ "$missing" -eq 0 ]
+
+      - name: Remove the signing keychain
+        if: ${{ always() && env.CAN_SIGN == '1' }}
+        run: |
+          security default-keychain -d user -s login.keychain-db || true
+          security delete-keychain "$RUNNER_TEMP/build.keychain-db" || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ship-macos
+          path: out/*
+          compression-level: 0
+          if-no-files-found: error
+
   # Start every built artifact on the OS it is for. `build-and-test` only ASSEMBLES the macOS and
   # Windows payloads on Linux, and the `.deb`/`.rpm` were never installed anywhere; a file that
   # exists is not a program that starts. Each job unpacks what the packaging job uploaded, runs
@@ -375,7 +568,7 @@ jobs:
   # network): that opens the index and starts the bridge stack, so a missing native or a bad
   # bundle path fails here. The "Open the window" step below proves the window.
   start-macos-windows:
-    needs: build-and-test
+    needs: [build-and-test, macos]
     strategy:
       fail-fast: false
       matrix:
@@ -386,6 +579,7 @@ jobs:
             zip: "*.macos.x86_64.zip"
           - os: windows-latest
             zip: "*.windows.x64.zip"
+            msi: "*.x64.msi"
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -393,7 +587,12 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: ship-macos-windows
+          name: ship-macos
+          path: ship
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ship-windows
           path: ship
 
       - name: Unpack
@@ -462,7 +661,7 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           set -eu
-          msi=$(ls ship/*.msi | head -1)
+          msi=$(ls ship/${{ matrix.msi }} | head -1)
           powershell -NoProfile -Command "\$p = Start-Process msiexec.exe -ArgumentList '/i','$(cygpath -w "$PWD/$msi")','/qn','/l*v','msi.log' -Wait -PassThru; exit \$p.ExitCode" || { tail -50 msi.log; exit 1; }
           bin=$(find "/c/Program Files" "/c/Program Files (x86)" "$LOCALAPPDATA" -iname 'curlew.exe' 2>/dev/null | head -1)
           if [ -z "$bin" ]; then
