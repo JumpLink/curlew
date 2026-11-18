@@ -35,7 +35,7 @@ import { chatConversationId, classifyChatMessage, LOCAL_ECHO_PREFIX } from './ch
 import { adoptEchoAttachments } from './echo-attachments.ts';
 import { conversationTotalsSql } from './conversation-totals.ts';
 import type { IndexDatabase } from './db.ts';
-import { insertMany, placeholders, type SqlValue, withTransaction } from './db.ts';
+import { IN_CHUNK, insertMany, placeholders, runIn, type SqlValue, withTransaction } from './db.ts';
 import {
   type AccountState,
   DeliveryBatch,
@@ -52,7 +52,7 @@ import {
   releaseReceiveLease,
   takeReceiveLease,
 } from './receive-lease.ts';
-import { num, str } from './row.ts';
+import { num, parseParticipantAddresses, str } from './row.ts';
 import { moveThumbnail, sweepThumbnails, sweepThumbnailsOf } from './thumbnails.ts';
 
 export { deliveredMessageId };
@@ -199,20 +199,6 @@ export interface DeliverySyncResult {
   failed: boolean;
 }
 
-function parseAddresses(json: unknown): ParticipantAddress[] {
-  try {
-    const parsed = JSON.parse(String(json ?? '[]')) as unknown;
-    return Array.isArray(parsed)
-      ? parsed.filter(
-          (a): a is ParticipantAddress => typeof a?.kind === 'string' && typeof a?.value === 'string',
-        )
-      : [];
-  } catch {
-    // Written with JSON.stringify by this engine or `syncChats`; a damaged row starts empty.
-    return [];
-  }
-}
-
 function loadState(db: IndexDatabase, backend: string, accountId: string): AccountState {
   const chatRows = db
     .prepare(
@@ -238,7 +224,7 @@ function loadState(db: IndexDatabase, backend: string, accountId: string): Accou
         String(r.peer_id),
         {
           displayName: str(r.display_name),
-          addresses: parseAddresses(r.addresses_json),
+          addresses: parseParticipantAddresses(r.addresses_json),
           bot: Number(r.is_bot) === 1,
         },
       ]),
@@ -246,20 +232,6 @@ function loadState(db: IndexDatabase, backend: string, accountId: string): Accou
   };
 }
 
-
-const IN_CHUNK = 100;
-
-function runIn(
-  db: IndexDatabase,
-  sql: (placeholders: string) => string,
-  ids: readonly string[],
-  ...lead: SqlValue[]
-): void {
-  for (let i = 0; i < ids.length; i += IN_CHUNK) {
-    const chunk = ids.slice(i, i + IN_CHUNK);
-    db.prepare(sql(placeholders(chunk.length))).run(...lead, ...chunk);
-  }
-}
 
 /**
  * The delivered copy of a message curlew sent replaces the local echo written at send time.

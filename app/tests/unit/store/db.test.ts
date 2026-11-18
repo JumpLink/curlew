@@ -2,9 +2,11 @@ import { describe, expect, it } from '@gjsify/unit';
 
 import {
   IndexTooNewError,
+  IN_CHUNK,
   insertMany,
   migrate,
   openIndexDb,
+  runIn,
   SCHEMA_VERSION,
   seqColumn,
   type IndexDatabase,
@@ -214,6 +216,40 @@ export default async () => {
         expect(thrown).not.toBeNull();
         expect(thrown!.found).toBe(999);
         expect(thrown!.supported).toBe(SCHEMA_VERSION);
+      });
+    });
+  });
+
+  await describe('runIn', async () => {
+    const remaining = (db: IndexDatabase): number =>
+      Number((db.prepare('SELECT COUNT(*) AS n FROM t').get() as { n: number }).n);
+    const seed = (db: IndexDatabase, count: number): string[] => {
+      db.exec('CREATE TABLE t (id TEXT PRIMARY KEY, ns TEXT)');
+      const ids = Array.from({ length: count }, (_, i) => `id${i}`);
+      insertMany(
+        db,
+        'INSERT INTO t (id, ns)',
+        ids.map((id) => [id, 'a']),
+      );
+      return ids;
+    };
+
+    for (const count of [0, 1, IN_CHUNK - 1, IN_CHUNK, IN_CHUNK + 1, IN_CHUNK * 2 + 1]) {
+      await it(`deletes every id for ${count} ids around the chunk size`, async () => {
+        withDb((db) => {
+          const ids = seed(db, count + 5);
+          runIn(db, (p) => `DELETE FROM t WHERE id IN (${p})`, ids.slice(0, count));
+          expect(remaining(db)).toBe(5);
+        });
+      });
+    }
+
+    await it('binds the lead values before every chunk', async () => {
+      withDb((db) => {
+        const ids = seed(db, IN_CHUNK + 3);
+        db.prepare("INSERT INTO t (id, ns) VALUES ('other', 'b')").run();
+        runIn(db, (p) => `DELETE FROM t WHERE ns = ? AND id IN (${p})`, [...ids, 'other'], 'a');
+        expect(remaining(db)).toBe(1);
       });
     });
   });

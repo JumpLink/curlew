@@ -48,7 +48,7 @@ import { backfillAttachments } from './chat-backfill.ts';
 import { appendChanges } from './changes.ts';
 import { applyLocalRead } from './local-read.ts';
 import { conversationTotalsSql } from './conversation-totals.ts';
-import { insertMany, placeholders, seqColumn, type SqlValue, withTransaction } from './db.ts';
+import { insertMany, placeholders, runIn, seqColumn, type SqlValue, withTransaction } from './db.ts';
 import { upsertAccount } from './index-store.ts';
 import { adoptEchoAttachments } from './echo-attachments.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
@@ -314,15 +314,6 @@ function chatSummary(chat: ChatInfo): { classification: Classification; reason: 
     : { classification: 'conversational', reason: 'chat-member' };
 }
 
-const DELETE_CHUNK = 100;
-
-function deleteIn(db: IndexDatabase, sql: (placeholders: string) => string, ids: readonly string[]): void {
-  for (let i = 0; i < ids.length; i += DELETE_CHUNK) {
-    const chunk = ids.slice(i, i + DELETE_CHUNK);
-    db.prepare(sql(placeholders(chunk.length))).run(...chunk);
-  }
-}
-
 /**
  * A message already in the index: its row id, the network's sequence, and the network's own id —
  * the last because a probe asks the network in ITS terms, not the index's.
@@ -415,24 +406,17 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
         if (adoptEchoAttachments(db, String(echo.id), String(row[0]), batch.messageAttachments)) row[10] = 1;
         gone.push(String(echo.id));
       }
-      deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, gone);
+      runIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, gone);
     }
   }
   // Deletions first: other people's words the server no longer has must not outlive it here.
-  deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, batch.deletedMessages);
+  runIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, batch.deletedMessages);
   if (batch.deletedMessages.length > 0) {
     sweepThumbnailsOf(db, batch.deletedMessages);
-    deleteIn(db, (p) => `DELETE FROM message_attachments WHERE message_id IN (${p})`, batch.deletedMessages);
-    deleteIn(db, (p) => `DELETE FROM message_reactions WHERE message_id IN (${p})`, batch.deletedMessages);
+    runIn(db, (p) => `DELETE FROM message_attachments WHERE message_id IN (${p})`, batch.deletedMessages);
+    runIn(db, (p) => `DELETE FROM message_reactions WHERE message_id IN (${p})`, batch.deletedMessages);
   }
-  for (const table of [
-    'conversation_messages',
-    'chat_members',
-    'chat_cursors',
-    'conversation_participants',
-  ]) {
-    deleteIn(db, (p) => `DELETE FROM ${table} WHERE conversation_id IN (${p})`, batch.deletedConversations);
-  }
+  // The rows hanging off a message go first: the subqueries find them through the messages.
   if (batch.deletedConversations.length > 0) {
     sweepThumbnails(
       db,
@@ -448,7 +432,15 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
          (SELECT id FROM conversation_messages WHERE conversation_id IN (${placeholders(batch.deletedConversations.length)}))`,
     ).run(...batch.deletedConversations);
   }
-  deleteIn(db, (p) => `DELETE FROM conversations WHERE id IN (${p})`, batch.deletedConversations);
+  for (const table of [
+    'conversation_messages',
+    'chat_members',
+    'chat_cursors',
+    'conversation_participants',
+  ]) {
+    runIn(db, (p) => `DELETE FROM ${table} WHERE conversation_id IN (${p})`, batch.deletedConversations);
+  }
+  runIn(db, (p) => `DELETE FROM conversations WHERE id IN (${p})`, batch.deletedConversations);
 
   // A replace resets the aggregates to their defaults; the UPDATE below recomputes them in
   // the same transaction.
@@ -500,13 +492,13 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
       `UPDATE conversation_messages SET body = ?, edited_at = ? WHERE conversation_id = ? AND remote_id = ?${bySender}`,
     ).run(...edit);
   }
-  deleteIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, batch.retracted);
+  runIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, batch.retracted);
   if (batch.retracted.length > 0) {
     sweepThumbnailsOf(db, batch.retracted);
-    deleteIn(db, (p) => `DELETE FROM message_attachments WHERE message_id IN (${p})`, batch.retracted);
-    deleteIn(db, (p) => `DELETE FROM message_reactions WHERE message_id IN (${p})`, batch.retracted);
+    runIn(db, (p) => `DELETE FROM message_attachments WHERE message_id IN (${p})`, batch.retracted);
+    runIn(db, (p) => `DELETE FROM message_reactions WHERE message_id IN (${p})`, batch.retracted);
   }
-  deleteIn(db, (p) => `DELETE FROM message_reactions WHERE event_id IN (${p})`, batch.retractedReactions);
+  runIn(db, (p) => `DELETE FROM message_reactions WHERE event_id IN (${p})`, batch.retractedReactions);
   for (const [conversationId, r] of batch.reactions) {
     const messageId = stableId('m-', conversationId, r.remoteId);
     const reactor = r.reactor ?? '';
