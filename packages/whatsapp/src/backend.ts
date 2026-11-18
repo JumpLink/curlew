@@ -122,6 +122,7 @@ export class WhatsAppBackend implements DeliveryBackend, SendBackend {
     try {
       session = this.openSession(accountId);
     } catch {
+      // No readable session: nothing is recognised as the account's own address.
       return false;
     }
     try {

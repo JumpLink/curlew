@@ -257,6 +257,7 @@ async function testLogin(account: OwnMailAccount): Promise<void> {
   try {
     await client.login(account.imap.user, account.password);
   } finally {
+    // A failed logout must not replace the login result (or its error) the caller waits for.
     await client.logout().catch(() => {});
   }
 }

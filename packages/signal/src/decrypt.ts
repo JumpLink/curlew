@@ -17,6 +17,7 @@
  *   acknowledged before a crash) is `duplicate`, and only acknowledged.
  */
 
+import { errText } from '@curlew/protocol';
 import type * as Core from '@signalapp/libsignal-client';
 import type { SignalLib } from './lib.ts';
 import type { SignalProtocolStore } from './protocol-store.ts';
@@ -230,7 +231,7 @@ export class EnvelopeDecryptor {
       plaintext = unpadPlaintext(padded);
       content = decodeContent(plaintext);
     } catch (err) {
-      parseError = err instanceof Error ? err.message : String(err);
+      parseError = errText(err);
     }
     if (content?.senderKeyDistribution) {
       await S.processSenderKeyDistributionMessage(

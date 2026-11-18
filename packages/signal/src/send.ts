@@ -34,6 +34,7 @@
 import {
   _,
   type ChatAttachment,
+  errText,
   fmt,
   probeMediaFile,
   type MessageSender,
@@ -193,13 +194,22 @@ export interface SignalSendSession {
   exclusive?: <T>(send: () => Promise<T>) => Promise<T>;
 }
 
+/** Refuses text over Signal's limit before anything is uploaded or sent. */
+function checkTextLength(text: string): void {
+  const bytes = UTF8.encode(text).length;
+  if (bytes > SIGNAL_MAX_MESSAGE_BYTES) {
+    throw new Error(
+      fmt(_('a Signal message holds at most {max} bytes of text, this one has {bytes} — shorten it'), {
+        max: String(SIGNAL_MAX_MESSAGE_BYTES),
+        bytes: String(bytes),
+      }),
+    );
+  }
+}
+
 /** A status, never the response body: that can quote the message or name other people. */
 function statusOf(response: ChatResponseLike): string {
   return `HTTP ${response.status}`;
-}
-
-function reasonOf(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 function parseJson<T>(response: ChatResponseLike, what: string): T {
@@ -306,15 +316,7 @@ export class SignalSender implements MessageSender {
   private async editNow(edit: SendingEdit): Promise<void> {
     const aci = this.recipient(edit.to);
     const target = this.ownTimestamp(edit.target);
-    const bytes = UTF8.encode(edit.text).length;
-    if (bytes > SIGNAL_MAX_MESSAGE_BYTES) {
-      throw new Error(
-        fmt(_('a Signal message holds at most {max} bytes of text, this one has {bytes} — shorten it'), {
-          max: String(SIGNAL_MAX_MESSAGE_BYTES),
-          bytes: String(bytes),
-        }),
-      );
-    }
+    checkTextLength(edit.text);
     const timestamp = Date.now();
     const dataMessage = new ProtoWriter().string(F.data.body, edit.text).uint(F.data.timestamp, timestamp);
     await this.transmit(aci, dataMessage, timestamp, target);
@@ -359,15 +361,7 @@ export class SignalSender implements MessageSender {
       perFile: SIGNAL_MAX_FILE_BYTES,
       count: SIGNAL_MAX_FILES,
     });
-    const bytes = UTF8.encode(message.text).length;
-    if (bytes > SIGNAL_MAX_MESSAGE_BYTES) {
-      throw new Error(
-        fmt(_('a Signal message holds at most {max} bytes of text, this one has {bytes} — shorten it'), {
-          max: String(SIGNAL_MAX_MESSAGE_BYTES),
-          bytes: String(bytes),
-        }),
-      );
-    }
+    checkTextLength(message.text);
     // Every file is uploaded before anything is sent, so a failed upload means nothing went out.
     const pointers: ProtoWriter[] = [];
     const echoAttachments: ChatAttachment[] = [];
@@ -412,9 +406,6 @@ export class SignalSender implements MessageSender {
           .uint(F.attachment.height, probe.height),
       );
     }
-    // A note to self is the transcript alone — the same way Signal implements Note to Self. There
-    // is no `DataMessage` to oneself: it would arrive back as a message from this device.
-    const own = aci === this.account.aci;
     // The sent timestamp is the message's identity on this network, together with its author.
     const timestamp = Date.now();
     const dataMessage = new ProtoWriter()
@@ -503,7 +494,7 @@ export class SignalSender implements MessageSender {
         _(
           "the message was delivered, but this account's other devices were not told about it ({reason}) — it will not appear on the phone",
         ),
-        { reason: reasonOf(error) },
+        { reason: errText(error) },
       );
     }
     if (own && delivered === 0) {

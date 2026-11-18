@@ -13,6 +13,7 @@ import {
   type AccountRef,
   type AttachmentFetcher,
   type ByteSink,
+  errText,
   type FetchableAttachment,
   fmt,
 } from '@curlew/protocol';
@@ -72,7 +73,7 @@ export class SignalAttachments implements AttachmentFetcher {
     } catch (err) {
       throw new Error(
         fmt(_('the Signal attachment could not be verified ({reason})'), {
-          reason: err instanceof Error ? err.message : String(err),
+          reason: errText(err),
         }),
       );
     }

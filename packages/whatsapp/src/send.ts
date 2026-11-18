@@ -35,7 +35,7 @@
  * connection: there the daemon's own receive loop is already journalling it (`journal: null`).
  */
 
-import { _, fmt, probeMediaFile } from '@curlew/protocol';
+import { _, errText, fmt, probeMediaFile } from '@curlew/protocol';
 import type {
   ChatAttachment,
   DeliveryEvent,
@@ -105,10 +105,6 @@ export interface WhatsAppSendSession {
   onClose: () => Promise<void> | void;
   /** How long to wait for `SERVER_ACK`; tests shorten it. */
   ackMs?: number;
-}
-
-function reasonOf(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 export class WhatsAppSender implements MessageSender {
@@ -312,7 +308,7 @@ export class WhatsAppSender implements MessageSender {
             sent: String(index),
             total: String(files.length),
             file: file.filename,
-            reason: reasonOf(error),
+            reason: errText(error),
           }),
           { cause: error },
         );
@@ -473,7 +469,7 @@ export class WhatsAppSender implements MessageSender {
     try {
       this.journal.append(events);
     } catch (err) {
-      this.journalError ??= reasonOf(err);
+      this.journalError ??= errText(err);
     }
   }
 

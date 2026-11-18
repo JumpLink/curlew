@@ -9,7 +9,7 @@
  */
 
 import { readdirSync } from 'node:fs';
-import { _, fmt } from '@curlew/protocol';
+import { _, errText, fmt } from '@curlew/protocol';
 import type * as Core from '@signalapp/libsignal-client';
 import type * as Zk from '@signalapp/libsignal-client/dist/zkgroup/index.js';
 
@@ -51,7 +51,7 @@ export function loadSignalLib(): Promise<SignalLib> {
       return { core, zk };
     } catch (err) {
       loading = null;
-      throw new Error(loadFailureReason(err instanceof Error ? err.message : String(err), isMusl()));
+      throw new Error(loadFailureReason(errText(err), isMusl()));
     }
   })();
   return loading;
