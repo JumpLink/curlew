@@ -36,6 +36,7 @@ import {
 import { inspectSendFiles, type SendFile } from '@curlew/store';
 
 import { attachmentHandle, attachmentKind } from './map.ts';
+import { errcodeOf } from './errcode.ts';
 
 /**
  * The longest text one message may carry. curlew refuses more rather than splitting it.
@@ -138,16 +139,6 @@ export interface OwnReaction {
 
 /** How many pages of reactions (100 each) are read to find the person's own. */
 const RELATION_PAGES = 5;
-
-/** The homeserver's `errcode`, or null when the body is not a Matrix error. */
-async function errcodeOf(response: Response): Promise<string | null> {
-  try {
-    const body = (await response.json()) as { errcode?: unknown };
-    return typeof body.errcode === 'string' ? body.errcode : null;
-  } catch {
-    return null;
-  }
-}
 
 /** `M_FORBIDDEN` or `HTTP 503` — never the response body, which can quote the message. */
 function reasonOf(response: Response, errcode: string | null): string {
