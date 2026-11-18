@@ -1,11 +1,7 @@
 import { describe, expect, it } from '@gjsify/unit';
 
 import { createRestartCoalescer } from '../../../src/core/lib/restart-coalescer.ts';
-
-async function until(done: () => boolean, ms = 2000): Promise<void> {
-  const end = Date.now() + ms;
-  while (!done() && Date.now() < end) await new Promise((r) => setTimeout(r, 5));
-}
+import { until } from '../wait.ts';
 
 export default async () => {
   await describe('restart coalescer', async () => {
