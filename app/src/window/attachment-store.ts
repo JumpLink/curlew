@@ -69,11 +69,6 @@ export function noteFetchFailure(ref: MessageRef, err: unknown, now = Date.now()
   return true;
 }
 
-/** Forgets what was learned about the account. */
-export function clearSignedOut(ref: MessageRef): void {
-  signedOut.clear(accountKey(ref));
-}
-
 /** Feeds the daemon's account states in; a logged-out account is marked before any fetch, any other state clears it. */
 export function applyDaemonAccounts(accounts: Iterable<DaemonAccountEntry>): string[] {
   return signedOut.applyDaemon(accounts);
