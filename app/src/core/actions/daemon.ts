@@ -48,6 +48,7 @@ import { readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import {
   type ByteSink,
+  type ChatBackend,
   type ChatSession,
   type DeliverySession,
   type MessageBackend,
@@ -111,7 +112,7 @@ import {
   pullSyncFailures,
   startPullSync,
 } from '../lib/pull-sync.ts';
-import { followAccount, type FollowResult } from './follow.ts';
+import { followAccount, type FollowLink, type FollowResult } from './follow.ts';
 import {
   indexSync,
   openIndex,
@@ -1026,73 +1027,46 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
           fetchBackends.set(key, backend);
         }
       };
-    const following = Promise.all(
-      xmppAccounts.map((accountId) =>
-        followAccount({
-          db,
-          backend: xmpp as XmppBackend,
-          open: (id, permit) => (xmpp as XmppBackend).openGranted(id, permit, { decrypt: true }),
-          permit: { account: accountId, addresses: [] },
-          signal,
-          log,
-          onWrite: () => {
-            schedule();
-            announce();
-          },
-          onProgress: progress,
-          onSession: onFollowSession(xmpp as MessageBackend),
-          holder: String(process.pid),
-          writeLogPath: params.writeLogPath,
-        }),
-      ),
+    const followAll = (
+      backend: ChatBackend & MessageBackend,
+      backendName: string,
+      accounts: readonly string[],
+      open: (id: string, permit: SendPermit) => Promise<FollowLink>,
+    ): Promise<FollowResult[]> =>
+      Promise.all(
+        accounts.map((accountId) =>
+          followAccount({
+            db,
+            backend,
+            backendName,
+            accountId,
+            open,
+            permit: { account: accountId, addresses: [] },
+            signal,
+            log,
+            onWrite: () => {
+              schedule();
+              announce();
+            },
+            onProgress: progress,
+            onSession: onFollowSession(backend),
+            holder: String(process.pid),
+            writeLogPath: params.writeLogPath,
+          }),
+        ),
+      );
+    const following = followAll(xmpp as XmppBackend, 'xmpp', xmppAccounts, (id, permit) =>
+      (xmpp as XmppBackend).openGranted(id, permit, { decrypt: true }),
     ).then((done) => {
       followed = done;
     });
-    const followingMatrix = Promise.all(
-      matrixAccounts.map((accountId) =>
-        followAccount({
-          db,
-          backend: matrix as MatrixBackend,
-          backendName: 'matrix',
-          accountId,
-          open: (id) => (matrix as MatrixBackend).connectLive(id),
-          permit: { account: accountId, addresses: [] },
-          signal,
-          log,
-          onWrite: () => {
-            schedule();
-            announce();
-          },
-          onProgress: progress,
-          onSession: onFollowSession(matrix as MessageBackend),
-          holder: String(process.pid),
-          writeLogPath: params.writeLogPath,
-        }),
-      ),
+    const followingMatrix = followAll(matrix as MatrixBackend, 'matrix', matrixAccounts, (id) =>
+      (matrix as MatrixBackend).connectLive(id),
     ).then((done) => {
       followedMatrix = done;
     });
-    const followingTelegram = Promise.all(
-      telegramAccounts.map((accountId) =>
-        followAccount({
-          db,
-          backend: telegram as TelegramBackend,
-          backendName: 'telegram',
-          accountId,
-          open: (id) => (telegram as TelegramBackend).connectLive(id),
-          permit: { account: accountId, addresses: [] },
-          signal,
-          log,
-          onWrite: () => {
-            schedule();
-            announce();
-          },
-          onProgress: progress,
-          onSession: onFollowSession(telegram as MessageBackend),
-          holder: String(process.pid),
-          writeLogPath: params.writeLogPath,
-        }),
-      ),
+    const followingTelegram = followAll(telegram as TelegramBackend, 'telegram', telegramAccounts, (id) =>
+      (telegram as TelegramBackend).connectLive(id),
     ).then((done) => {
       followedTelegram = done;
     });
