@@ -373,7 +373,7 @@ jobs:
   # exists is not a program that starts. Each job unpacks what the packaging job uploaded, runs
   # `--version`, then `conversations list` against an EMPTY home (no account, no daemon, no
   # network): that opens the index and starts the bridge stack, so a missing native or a bad
-  # bundle path fails here. It does not prove the window.
+  # bundle path fails here. The "Open the window" step below proves the window.
   start-macos-windows:
     needs: build-and-test
     strategy:
@@ -433,6 +433,29 @@ jobs:
           export HOME="$home" USERPROFILE="$home" XDG_CONFIG_HOME="$home/.config" XDG_DATA_HOME="$home/.local/share" XDG_CACHE_HOME="$home/.cache"
           "$CURLEW_BIN" --version
           "$CURLEW_BIN" conversations list
+
+      # The window, headless-safe: demo data in a scratch directory (no account, no network), the
+      # launcher's own no-argument start, and `CURLEW_WINDOW_QUIT_AFTER_MS` so the process ends
+      # itself. Fails on a non-zero exit, or when the window never reached the screen.
+      - name: Open the window (demo data, quits itself)
+        timeout-minutes: 3
+        run: |
+          set -u
+          home=$(mktemp -d)
+          export HOME="$home" USERPROFILE="$home" XDG_CONFIG_HOME="$home/.config" XDG_DATA_HOME="$home/.local/share" XDG_CACHE_HOME="$home/.cache"
+          export CURLEW_DB_PATH="$home/index.db" CURLEW_CONFIG="$home/config.json" CURLEW_PREVIEWS_DIR="$home/previews" CURLEW_DATA_DIR="$home/data" CURLEW_SECRETS_DIR="$home/secrets" CURLEW_THUMBS_DIR="$home/thumbs" CURLEW_AVATARS_DIR="$home/avatars" CURLEW_NO_HOST_ACCOUNTS=1
+          export CURLEW_DEMO=1 CURLEW_WINDOW_QUIT_AFTER_MS=4000
+          code=0
+          "$CURLEW_BIN" > window.log 2>&1 || code=$?
+          cat window.log
+          if [ "$code" -ne 0 ]; then
+            echo "::error::the window exited with $code"
+            exit 1
+          fi
+          if ! grep -q 'curlew window: shown' window.log; then
+            echo "::error::the window never reported being shown"
+            exit 1
+          fi
 
       # The Windows installer, not only the zip: install quietly, then start what it installed.
       - name: Install the MSI and start the installed binary

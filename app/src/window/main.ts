@@ -75,6 +75,8 @@ const application = new AdwaitaApp({
       search: process.env.CURLEW_WINDOW_SEARCH || undefined,
       openScope: process.env.CURLEW_WINDOW_OPEN_SCOPE === '1',
     });
+    // The line CI waits for: the packaged macOS and Windows window got as far as being drawn.
+    window.connect('map', () => console.log('curlew window: shown'));
     // A notification opens a chat over the bus: `app.open-conversation` hands the id to the window.
     const open = new Gio.SimpleAction({
       name: 'open-conversation',
