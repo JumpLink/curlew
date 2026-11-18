@@ -4,7 +4,7 @@
 A tag `v*` pushed to the repo (`git tag v0.2.0 && git push --tags`) builds every
 installable format and attaches them to a **draft** GitHub release:
 [`.deb`/`.rpm`](../../.github/workflows/ci.yml), the Flatpak, and [macOS (arm64 + x64, `.zip` and `.dmg`) /
-Windows (x64 + arm64, `.zip` and `.msi`)](../../.github/workflows/ci.yml) packages, plus a `SHA256SUMS` file, via
+Windows (x64, `.zip` and `.msi`; ARM64 Windows runs it under emulation)](../../.github/workflows/ci.yml) packages, plus a `SHA256SUMS` file, via
 [`release.yml`](../../.github/workflows/release.yml). The release notes are the version's section
 of [`CHANGELOG.md`](../../CHANGELOG.md), not generated notes. Read the draft, then publish it by
 hand. `workflow_dispatch` re-cuts artifacts for an existing tag without moving it (`tag` +
@@ -71,8 +71,6 @@ gjsify install --os darwin --cpu arm64 --immutable
 # on the Mac: gjsify ship --from-stage <dir>/stage --expect-target darwin-arm64 --target macos-app-zip,macos-app-dmg [--sign <identity> --notarize gjsify-notary]
 gjsify install --os win32 --cpu x64 --immutable
 (cd app && gjsify ship windows --arch x64 --skip-build --target windows-dir-zip,msi)
-gjsify install --os win32 --cpu arm64 --immutable
-(cd app && gjsify ship windows --arch arm64 --skip-build --target windows-dir-zip,msi)
 (cd app && gjsify ship linux --stage)   # needs gir1.2-*/typelib packages to assert .deb/.rpm fully
 gjsify install   # back to the plain install afterwards
 ```

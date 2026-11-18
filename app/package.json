@@ -193,7 +193,6 @@
   "optionalDependencies": {
     "@gjsify/node-runtime-darwin-arm64": "0.64.46",
     "@gjsify/node-runtime-darwin-x64": "0.64.46",
-    "@gjsify/node-runtime-win32-arm64": "0.64.46",
     "@gjsify/node-runtime-win32-x64": "0.64.46"
   },
   "dependencies": {

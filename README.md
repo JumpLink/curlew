@@ -90,8 +90,8 @@ and Evolution Data Server are a feature of the Linux host build only.
 - **macOS** (Apple silicon and Intel): a `.dmg` and a `.zip` per architecture, signed with a
   Developer ID and notarised, attached to each
   [GitHub release](https://github.com/JumpLink/curlew/releases).
-- **Windows** (x64 and ARM64): a `.zip` and an `.msi` per architecture, attached to each release.
-  They are not signed yet, so SmartScreen warns on first start.
+- **Windows** (x64; ARM64 Windows runs it under emulation): a `.zip` and an `.msi`, attached to each
+  release. They are not signed yet, so SmartScreen warns on first start.
 - On both, opening Curlew shows the window. Chat only: GNOME accounts do not exist there.
 - **`.deb` / `.rpm`** (x86_64): attached to each release as well.
 

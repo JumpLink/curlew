@@ -4,7 +4,6 @@
 
 ### Added
 
-- Windows ARM64 package (zip and MSI).
 - macOS disk images (`.dmg`) for Apple silicon and Intel. The macOS packages are signed with a Developer ID and notarised, so Gatekeeper opens them without a warning.
 - Curlew has a website at <https://jumplink.eu/curlew/> (English and German) with downloads, screenshots, a privacy statement, the legal notice and a support page. The About dialog links to it, to the source code, the privacy statement and the legal notice, and, where the build allows it, to a Support page.
 
