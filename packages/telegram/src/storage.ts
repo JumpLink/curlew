@@ -222,14 +222,18 @@ class SecretStoreDriver extends MemoryStorageDriver implements IStorageDriver {
   save(only?: readonly string[]): void {
     const current = this.snapshot();
     const changes: SecretChange[] = [];
+    const written: Snapshot = new Map();
     for (const [namespace, now] of current) {
       if (only && !only.includes(namespace)) continue;
       const before = this.persisted.get(namespace) ?? new Map<string, string>();
       for (const [key, value] of now) if (before.get(key) !== value) changes.push({ namespace, key, value });
       for (const key of before.keys()) if (!now.has(key)) changes.push({ namespace, key, value: null });
-      this.persisted.set(namespace, now);
+      written.set(namespace, now);
     }
     this.store.apply(changes);
+    // Only after the write succeeded: a failed apply must leave the diff to be found again by
+    // the next save, not mark it as already on disk.
+    for (const [namespace, now] of written) this.persisted.set(namespace, now);
   }
 
   saveAuthKeys(): void {
