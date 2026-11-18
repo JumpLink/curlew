@@ -235,28 +235,25 @@ export interface DaemonResult {
   followed: FollowResult[];
 }
 
-/** The registry's Matrix backend when the config enables it (the daemon follows it), else `null`. */
-function createMatrixBackend(config: CurlewConfig): MatrixBackend | null {
+/** The registry's backend `name` when the config enables it and it is a `T` (the daemon follows it), else `null`. */
+function createEnabled<T>(
+  config: CurlewConfig,
+  name: string,
+  kind: abstract new (...args: never[]) => T,
+): T | null {
   const registry = builtinRegistry();
-  if (!registry.enabled(config).some((plugin) => plugin.manifest.name === 'matrix')) return null;
-  const created = registry.create(config, 'matrix', backendContext('matrix', config));
-  return created instanceof MatrixBackend ? created : null;
+  if (!registry.enabled(config).some((plugin) => plugin.manifest.name === name)) return null;
+  const created = registry.create(config, name, backendContext(name, config));
+  return created instanceof kind ? created : null;
 }
 
-/** The registry's Telegram backend when the config enables it (the daemon follows it), else `null`. */
-function createTelegramBackend(config: CurlewConfig): TelegramBackend | null {
-  const registry = builtinRegistry();
-  if (!registry.enabled(config).some((plugin) => plugin.manifest.name === 'telegram')) return null;
-  const created = registry.create(config, 'telegram', backendContext('telegram', config));
-  return created instanceof TelegramBackend ? created : null;
-}
-
-/** The registry's XMPP backend when the config enables it (the daemon follows it), else `null`. */
-function createEnabledXmppBackend(config: CurlewConfig): XmppBackend | null {
-  const registry = builtinRegistry();
-  if (!registry.enabled(config).some((plugin) => plugin.manifest.name === 'xmpp')) return null;
-  const created = registry.create(config, 'xmpp', backendContext('xmpp', config));
-  return created instanceof XmppBackend ? created : null;
+/** The ids of `backend`'s accounts, narrowed to `accountId` when one is given. */
+async function followedAccountIds(
+  backend: { listAccounts(): Promise<{ id: string }[]> } | null,
+  accountId: string | undefined,
+): Promise<string[]> {
+  if (backend === null) return [];
+  return (await backend.listAccounts()).map((a) => a.id).filter((id) => !accountId || id === accountId);
 }
 
 /** The enabled delivery-only backends — what a daemon receives and what a `sync` stands down for. */
@@ -774,27 +771,13 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
     }
     return true;
   });
-  const xmpp = params.xmpp === undefined ? createEnabledXmppBackend(config) : params.xmpp;
-  const xmppAccounts =
-    xmpp === null
-      ? []
-      : (await xmpp.listAccounts())
-          .map((a) => a.id)
-          .filter((id) => !params.accountId || id === params.accountId);
-  const matrix = params.matrix === undefined ? createMatrixBackend(config) : params.matrix;
-  const matrixAccounts =
-    matrix === null
-      ? []
-      : (await matrix.listAccounts())
-          .map((a) => a.id)
-          .filter((id) => !params.accountId || id === params.accountId);
-  const telegram = params.telegram === undefined ? createTelegramBackend(config) : params.telegram;
-  const telegramAccounts =
-    telegram === null
-      ? []
-      : (await telegram.listAccounts())
-          .map((a) => a.id)
-          .filter((id) => !params.accountId || id === params.accountId);
+  const xmpp = params.xmpp === undefined ? createEnabled(config, 'xmpp', XmppBackend) : params.xmpp;
+  const xmppAccounts = await followedAccountIds(xmpp, params.accountId);
+  const matrix = params.matrix === undefined ? createEnabled(config, 'matrix', MatrixBackend) : params.matrix;
+  const matrixAccounts = await followedAccountIds(matrix, params.accountId);
+  const telegram =
+    params.telegram === undefined ? createEnabled(config, 'telegram', TelegramBackend) : params.telegram;
+  const telegramAccounts = await followedAccountIds(telegram, params.accountId);
   /**
    * No account to follow — the normal state of a fresh install, NOT a reason to end the run
    * (ADR 0002 §8). It used to throw, and that made the background service `failed` on every
