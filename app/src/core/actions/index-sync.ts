@@ -115,8 +115,8 @@ export interface SyncParams {
  * mechanism: that lease is already a cross-process lock measured on both runtimes, and it
  * already survives a SIGKILLed holder by expiry instead of by a cleanup path.
  */
-export const INDEX_LEASE_BACKEND = 'index';
-export const INDEX_LEASE_ACCOUNT = 'sync';
+const INDEX_LEASE_BACKEND = 'index';
+const INDEX_LEASE_ACCOUNT = 'sync';
 
 export type IndexLeaseRun<T> =
   | { ran: true; value: T }

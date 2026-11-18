@@ -127,7 +127,7 @@ import { readSyncThrough } from './read-sync.ts';
 import { storeThumbnail } from './chat-thumbnail.ts';
 
 /** How often a running daemon looks whether another process moved the journal (ADR 0007 §2). */
-export const CHANGE_POLL_MS = 2_000;
+const CHANGE_POLL_MS = 2_000;
 
 /** How long the conversations wait for the last written batch before they are rebuilt. */
 export const REBUILD_DEBOUNCE_MS = 30_000;
@@ -137,7 +137,7 @@ export const REBUILD_DEBOUNCE_MS = 30_000;
  * connection otherwise leaves the window's tile on its spinner for as long as the protocol library
  * takes to notice (mtcute: about 22 minutes).
  */
-export const FETCH_STALL_MS = 45_000;
+const FETCH_STALL_MS = 45_000;
 
 export interface DaemonParams {
   /** The index to write; the default is the user's. `:memory:` is a test's. */
@@ -236,7 +236,7 @@ export interface DaemonResult {
 }
 
 /** The registry's Matrix backend when the config enables it (the daemon follows it), else `null`. */
-export function createMatrixBackend(config: CurlewConfig): MatrixBackend | null {
+function createMatrixBackend(config: CurlewConfig): MatrixBackend | null {
   const registry = builtinRegistry();
   if (!registry.enabled(config).some((plugin) => plugin.manifest.name === 'matrix')) return null;
   const created = registry.create(config, 'matrix', backendContext('matrix', config));
@@ -244,7 +244,7 @@ export function createMatrixBackend(config: CurlewConfig): MatrixBackend | null 
 }
 
 /** The registry's Telegram backend when the config enables it (the daemon follows it), else `null`. */
-export function createTelegramBackend(config: CurlewConfig): TelegramBackend | null {
+function createTelegramBackend(config: CurlewConfig): TelegramBackend | null {
   const registry = builtinRegistry();
   if (!registry.enabled(config).some((plugin) => plugin.manifest.name === 'telegram')) return null;
   const created = registry.create(config, 'telegram', backendContext('telegram', config));
@@ -252,7 +252,7 @@ export function createTelegramBackend(config: CurlewConfig): TelegramBackend | n
 }
 
 /** The registry's XMPP backend when the config enables it (the daemon follows it), else `null`. */
-export function createEnabledXmppBackend(config: CurlewConfig): XmppBackend | null {
+function createEnabledXmppBackend(config: CurlewConfig): XmppBackend | null {
   const registry = builtinRegistry();
   if (!registry.enabled(config).some((plugin) => plugin.manifest.name === 'xmpp')) return null;
   const created = registry.create(config, 'xmpp', backendContext('xmpp', config));
@@ -260,7 +260,7 @@ export function createEnabledXmppBackend(config: CurlewConfig): XmppBackend | nu
 }
 
 /** The enabled delivery-only backends — what a daemon receives and what a `sync` stands down for. */
-export function deliveryBackends(config: ReturnType<typeof loadConfig>): MessageBackend[] {
+function deliveryBackends(config: ReturnType<typeof loadConfig>): MessageBackend[] {
   const registry = builtinRegistry();
   return registry
     .enabled(config)

@@ -13,7 +13,7 @@ import { WAIT_TIMEOUT_S } from './wait-reply.ts';
 import { MAX_CHUNK_CHARS, MESSAGE_FORMATS, type MessageFormat } from '../markdown.ts';
 
 /** The longest text one XMPP message may carry (`@curlew/xmpp` refuses more). */
-export const XMPP_MAX_MESSAGE_CHARS = 8_000;
+const XMPP_MAX_MESSAGE_CHARS = 8_000;
 
 /**
  * Telegram's limit, as `TELEGRAM_MAX_MESSAGE_CHARS` in `@curlew/telegram`. Repeated here because the

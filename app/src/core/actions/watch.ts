@@ -19,9 +19,9 @@ import {
 } from '../lib/daemon-watch.ts';
 
 /** How often `watch` looks at the journal when no daemon wakes it. */
-export const WATCH_POLL_MS = 2_000;
+const WATCH_POLL_MS = 2_000;
 /** With a daemon the signal wakes it; this is only the net under a lost one. */
-export const WATCH_SAFETY_MS = 30_000;
+const WATCH_SAFETY_MS = 30_000;
 const PAGE = 500;
 
 /** The journal moved past this reader: everything it shows has to be read again. */

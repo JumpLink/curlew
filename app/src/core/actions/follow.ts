@@ -34,7 +34,7 @@ import { appendWriteLog } from '../write-log.ts';
 import { SEND_CAPABILITY } from './send.ts';
 
 /** The least time between two catch-ups of one account. */
-export const FOLLOW_MIN_GAP_MS = 1_000;
+const FOLLOW_MIN_GAP_MS = 1_000;
 
 /**
  * What follow mode needs from an open connection: a chat session over it, a hint when something

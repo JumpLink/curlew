@@ -135,11 +135,11 @@ export function unitDir(ctx: SetupContext): string {
   return systemdUserUnitDir(ctx.host);
 }
 
-export function unitFilePathFor(ctx: SetupContext): string {
+function unitFilePathFor(ctx: SetupContext): string {
   return unitFilePath(unitDir(ctx));
 }
 
-export function unitPaths(ctx: SetupContext): UnitPaths {
+function unitPaths(ctx: SetupContext): UnitPaths {
   return unitPathsFor({
     mode: ctx.mode,
     home: ctx.host.home(),
@@ -600,7 +600,7 @@ function indexedMessages(ctx: SetupContext): number {
 // ── 6. the daemon ────────────────────────────────────────────────────────────
 
 /** How long the smoke run receives before it asks itself to stop. */
-export const SETUP_DAEMON_SMOKE_SECONDS = 30;
+const SETUP_DAEMON_SMOKE_SECONDS = 30;
 
 function autostartOf(ctx: SetupContext): Autostart {
   return ctx.autostart ?? systemdAutostart(ctx.host);
@@ -891,7 +891,7 @@ export interface SetupStatus {
   readonly remaining: string[];
 }
 
-export function setupReadiness(ctx: SetupContext): SetupReadiness {
+function setupReadiness(ctx: SetupContext): SetupReadiness {
   return {
     mode: ctx.mode,
     checkout: ctx.checkout,
@@ -1102,7 +1102,7 @@ export const defaultLink = async (backend: string, prompter: SetupPrompter): Pro
  * network call, and a report that cannot answer offline cannot answer at all — so the fact
  * travels through the sync that already made the contact.
  */
-export async function droppedBackend(ctx: SetupContext): Promise<string | null> {
+async function droppedBackend(ctx: SetupContext): Promise<string | null> {
   return ctx.loggedOutBackend === undefined ? defaultDroppedBackend(ctx) : ctx.loggedOutBackend();
 }
 
@@ -1128,6 +1128,6 @@ const defaultDroppedBackend = async (ctx: SetupContext): Promise<string | null> 
   }
 };
 
-export function linkedCount(ctx: SetupContext, backend: string): Promise<number> {
+function linkedCount(ctx: SetupContext, backend: string): Promise<number> {
   return ctx.countAccounts === undefined ? defaultCountAccounts(ctx, backend) : ctx.countAccounts(backend);
 }
