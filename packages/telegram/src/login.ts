@@ -100,6 +100,7 @@ async function recoverFailedLogin(
   // Read BEFORE closing — this is the only moment the file can still be asked. An account Telegram
   // already NAMED is the same evidence, and it survives a `current_user` that was never written.
   const keep = accountId !== null || holdsSignIn(store);
+  // Best effort: the original login failure is what the user needs to see.
   await client.destroy().catch(() => {});
   try {
     store.close();

@@ -135,6 +135,7 @@ export class XmppBackend implements ChatBackend, SendBackend {
     try {
       await requireArchive(api);
     } catch (err) {
+      // Cleanup after a failed setup must not hide that failure.
       await api.close().catch(() => {});
       throw err;
     }
@@ -158,6 +159,7 @@ export class XmppBackend implements ChatBackend, SendBackend {
       omemo = await openOmemo(link, store, link.jid);
     } catch (err) {
       store.close();
+      // Cleanup after a failed setup must not hide that failure.
       await link.close().catch(() => {});
       throw err;
     }
@@ -200,6 +202,7 @@ export class XmppBackend implements ChatBackend, SendBackend {
       });
     } catch (err) {
       store.close();
+      // Cleanup after a failed setup must not hide that failure.
       await link.close().catch(() => {});
       throw err;
     }

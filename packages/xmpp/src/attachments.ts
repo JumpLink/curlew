@@ -50,6 +50,7 @@ export class XmppAttachments implements AttachmentFetcher {
       const response = await this.fetchFn(url, { method: 'GET', redirect: 'manual', signal });
       const location = response.headers.get('location');
       if (response.status >= 300 && response.status < 400 && location) {
+        // Only frees the socket of a redirect we already follow.
         await response.body?.cancel().catch(() => {});
         url = new URL(location, url).href;
         continue;

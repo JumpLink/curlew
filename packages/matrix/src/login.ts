@@ -150,6 +150,7 @@ export async function loginMatrix(
           fetchFn,
           logger: quietLogger(),
         });
+        // Best effort: the original login failure is what the user needs to see.
         await orphan.logout(true).catch(() => {});
       }
     }
