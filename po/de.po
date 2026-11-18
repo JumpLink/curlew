@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-17 18:49+0100\n"
+"POT-Creation-Date: 2026-11-18 08:01+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -3805,8 +3805,8 @@ msgid "marking mail as read is not available here"
 msgstr "Mails als gelesen zu markieren ist hier nicht möglich"
 
 #: packages/imap/src/send.ts:95 packages/matrix/src/send.ts:397
-#: packages/signal/src/send.ts:545 packages/telegram/src/sender.ts:84
-#: packages/whatsapp/src/send.ts:429
+#: packages/signal/src/send.ts:536 packages/telegram/src/sender.ts:84
+#: packages/whatsapp/src/send.ts:425
 msgid "sending to {address} is not granted for account {account}"
 msgstr "Das Senden an {address} ist für Konto {account} nicht freigegeben"
 
@@ -3847,7 +3847,7 @@ msgstr ""
 msgid "the homeserver refused the download ({reason})"
 msgstr "der Homeserver hat den Download abgewiesen ({reason})"
 
-#: packages/matrix/src/attachments.ts:52 packages/signal/src/attachments.ts:30
+#: packages/matrix/src/attachments.ts:52 packages/signal/src/attachments.ts:31
 #: packages/telegram/src/attachments.ts:86
 #: packages/whatsapp/src/attachments.ts:25 packages/xmpp/src/attachments.ts:28
 msgid "the attachment is larger than the limit of {limit} bytes"
@@ -4042,8 +4042,8 @@ msgstr ""
 "Eine Matrix-Nachricht fasst höchstens {max} Byte Text, diese hat {bytes} — "
 "kürze sie"
 
-#: packages/matrix/src/send.ts:555 packages/signal/src/send.ts:300
-#: packages/telegram/src/sender.ts:145 packages/whatsapp/src/send.ts:167
+#: packages/matrix/src/send.ts:555 packages/signal/src/send.ts:310
+#: packages/telegram/src/sender.ts:145 packages/whatsapp/src/send.ts:163
 #: packages/xmpp/src/messages.ts:36
 msgid "only your own messages can be changed — nothing was sent"
 msgstr ""
@@ -4055,24 +4055,24 @@ msgstr ""
 "der bearbeitete Text ist zu lang für eine Matrix-Nachricht — es wurde nichts "
 "gesendet"
 
-#: packages/signal/src/attachments.ts:37
+#: packages/signal/src/attachments.ts:38
 msgid "Signal did not deliver the file ({reason})"
 msgstr "Signal hat die Datei nicht geliefert ({reason})"
 
-#: packages/signal/src/attachments.ts:38
+#: packages/signal/src/attachments.ts:39
 #: packages/whatsapp/src/attachments.ts:40
 msgid "download failed"
 msgstr "Download fehlgeschlagen"
 
-#: packages/signal/src/attachments.ts:57
+#: packages/signal/src/attachments.ts:58
 msgid "this Signal attachment cannot be found any more"
 msgstr "dieser Signal-Anhang ist nicht mehr zu finden"
 
-#: packages/signal/src/attachments.ts:74
+#: packages/signal/src/attachments.ts:75
 msgid "the Signal attachment could not be verified ({reason})"
 msgstr "der Signal-Anhang konnte nicht verifiziert werden ({reason})"
 
-#: packages/signal/src/attachments.ts:81
+#: packages/signal/src/attachments.ts:82
 msgid ""
 "the Signal attachment arrived with {actual} bytes, not the announced "
 "{announced}"
@@ -4198,17 +4198,7 @@ msgstr "verknüpfe es mit `curlew accounts add signal` neu"
 msgid "Signal no longer knows this device (it was unlinked) — {hint}"
 msgstr "Signal kennt dieses Gerät nicht mehr (es wurde entkoppelt) — {hint}"
 
-#: packages/signal/src/send.ts:209
-msgid "Signal answered {what} with something that is not JSON"
-msgstr "Signal hat {what} mit etwas beantwortet, das kein JSON ist"
-
-#: packages/signal/src/send.ts:280
-msgid "this account has no other Signal device to tell — nothing was sent"
-msgstr ""
-"Dieses Konto hat kein anderes Signal-Gerät, dem es das mitteilen könnte — es "
-"wurde nichts gesendet"
-
-#: packages/signal/src/send.ts:312 packages/signal/src/send.ts:365
+#: packages/signal/src/send.ts:202
 msgid ""
 "a Signal message holds at most {max} bytes of text, this one has {bytes} — "
 "shorten it"
@@ -4216,12 +4206,22 @@ msgstr ""
 "Eine Signal-Nachricht fasst höchstens {max} Byte Text, diese hat {bytes} — "
 "kürze sie"
 
-#: packages/signal/src/send.ts:338
+#: packages/signal/src/send.ts:219
+msgid "Signal answered {what} with something that is not JSON"
+msgstr "Signal hat {what} mit etwas beantwortet, das kein JSON ist"
+
+#: packages/signal/src/send.ts:290
+msgid "this account has no other Signal device to tell — nothing was sent"
+msgstr ""
+"Dieses Konto hat kein anderes Signal-Gerät, dem es das mitteilen könnte — es "
+"wurde nichts gesendet"
+
+#: packages/signal/src/send.ts:340
 msgid "Signal needs the emoji being taken back — nothing was sent"
 msgstr ""
 "Signal braucht das Emoji, das zurückgenommen wird — es wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:504
+#: packages/signal/src/send.ts:495
 msgid ""
 "the message was delivered, but this account's other devices were not told "
 "about it ({reason}) — it will not appear on the phone"
@@ -4229,7 +4229,7 @@ msgstr ""
 "Die Nachricht wurde zugestellt, aber die anderen Geräte dieses Kontos haben "
 "nichts davon erfahren ({reason}) — auf dem Telefon erscheint sie nicht"
 
-#: packages/signal/src/send.ts:512
+#: packages/signal/src/send.ts:503
 msgid ""
 "a note to self is stored on this account's other devices, and this account "
 "has none — nothing was sent"
@@ -4237,7 +4237,7 @@ msgstr ""
 "Eine Notiz an dich selbst wird auf den anderen Geräten dieses Kontos "
 "gespeichert, und dieses Konto hat keine — es wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:528
+#: packages/signal/src/send.ts:519
 msgid ""
 "curlew cannot send to a Signal group: a group message needs the member list "
 "and credentials from Signal's storage service, which curlew does not sync — "
@@ -4247,7 +4247,7 @@ msgstr ""
 "braucht die Mitgliederliste und Zugangsdaten aus Signals Storage Service, "
 "den curlew nicht synchronisiert — sende sie aus einem Signal-Client"
 
-#: packages/signal/src/send.ts:537
+#: packages/signal/src/send.ts:528
 msgid ""
 "{address} is not a Signal account id — use the id `conversations_list` shows "
 "for the chat, not a phone number"
@@ -4255,7 +4255,7 @@ msgstr ""
 "{address} ist keine Signal-Konto-ID — nimm die ID, die `conversations_list` "
 "für den Chat anzeigt, keine Telefonnummer"
 
-#: packages/signal/src/send.ts:596
+#: packages/signal/src/send.ts:587
 msgid ""
 "Signal kept disagreeing about the recipient's devices — nothing was sent; "
 "try again, or send it from a Signal client"
@@ -4263,7 +4263,7 @@ msgstr ""
 "Signal war sich über die Geräte des Empfängers dauerhaft uneinig — es wurde "
 "nichts gesendet; versuche es erneut oder sende aus einem Signal-Client"
 
-#: packages/signal/src/send.ts:605
+#: packages/signal/src/send.ts:596
 msgid ""
 "Signal refused this device (unauthorized) — nothing was sent; the device may "
 "be unlinked"
@@ -4271,33 +4271,33 @@ msgstr ""
 "Signal hat dieses Gerät abgewiesen (nicht autorisiert) — es wurde nichts "
 "gesendet; das Gerät ist möglicherweise entkoppelt"
 
-#: packages/signal/src/send.ts:609
+#: packages/signal/src/send.ts:600
 msgid "Signal wants a rate-limit challenge answered — nothing was sent"
 msgstr ""
 "Signal verlangt die Antwort auf eine Ratenbegrenzungs-Abfrage — es wurde "
 "nichts gesendet"
 
-#: packages/signal/src/send.ts:612
+#: packages/signal/src/send.ts:603
 msgid "Signal refused the message ({status}) — nothing was sent"
 msgstr ""
 "Signal hat die Nachricht abgelehnt ({status}) — es wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:704
+#: packages/signal/src/send.ts:695
 msgid "Signal has no account {address} — nothing was sent"
 msgstr "Signal kennt kein Konto {address} — es wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:709
+#: packages/signal/src/send.ts:700
 msgid ""
 "Signal did not hand over the keys for {address} ({status}) — nothing was sent"
 msgstr ""
 "Signal hat die Schlüssel für {address} nicht herausgegeben ({status}) — es "
 "wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:727
+#: packages/signal/src/send.ts:718
 msgid "Signal lists no device for {address} — nothing was sent"
 msgstr "Signal führt kein Gerät für {address} — es wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:747
+#: packages/signal/src/send.ts:738
 msgid ""
 "a device of {address} publishes no usable keys, so curlew cannot start a "
 "session with it — nothing was sent"
@@ -4305,7 +4305,7 @@ msgstr ""
 "Ein Gerät von {address} veröffentlicht keine brauchbaren Schlüssel, also "
 "kann curlew keine Sitzung damit beginnen — es wurde nichts gesendet"
 
-#: packages/signal/src/send.ts:793
+#: packages/signal/src/send.ts:784
 msgid ""
 "the safety number of {address} changed — nothing was sent; check it with "
 "them, then send again to accept the new one"
@@ -4314,7 +4314,7 @@ msgstr ""
 "gesendet; prüfe sie gemeinsam mit der Person und sende dann erneut, um die "
 "neue zu akzeptieren"
 
-#: packages/signal/src/send.ts:819
+#: packages/signal/src/send.ts:810
 msgid ""
 "Signal reported a device mismatch ({status}) without naming a device — "
 "nothing was sent"
@@ -4731,7 +4731,7 @@ msgstr "verknüpfe es mit `curlew accounts add whatsapp` neu"
 msgid "WhatsApp logged this device out ({reason}) — {hint}"
 msgstr "WhatsApp hat dieses Gerät abgemeldet ({reason}) — {hint}"
 
-#: packages/whatsapp/src/send.ts:179 packages/whatsapp/src/send.ts:246
+#: packages/whatsapp/src/send.ts:175 packages/whatsapp/src/send.ts:242
 msgid ""
 "a WhatsApp message holds at most {max} bytes of text, this one has {bytes} — "
 "shorten it"
@@ -4739,11 +4739,11 @@ msgstr ""
 "Eine WhatsApp-Nachricht fasst höchstens {max} Byte Text, diese hat {bytes} — "
 "kürze sie"
 
-#: packages/whatsapp/src/send.ts:213
+#: packages/whatsapp/src/send.ts:209
 msgid "a reaction needs an emoji, or null to take it back"
 msgstr "eine Reaktion braucht ein Emoji, oder null zum Zurücknehmen"
 
-#: packages/whatsapp/src/send.ts:229 packages/whatsapp/src/send.ts:259
+#: packages/whatsapp/src/send.ts:225 packages/whatsapp/src/send.ts:255
 msgid ""
 "a message that arrived while curlew was connected could not be written down "
 "({reason}) — nothing was sent"
@@ -4751,16 +4751,16 @@ msgstr ""
 "Eine Nachricht, die eintraf, während curlew verbunden war, konnte nicht "
 "festgehalten werden ({reason}) — es wurde nichts gesendet"
 
-#: packages/whatsapp/src/send.ts:268
+#: packages/whatsapp/src/send.ts:264
 msgid "a reply to a WhatsApp message cannot carry files"
 msgstr "eine Antwort auf eine WhatsApp-Nachricht kann keine Dateien tragen"
 
-#: packages/whatsapp/src/send.ts:311
+#: packages/whatsapp/src/send.ts:307
 msgid "{sent} of {total} files were sent, then {file} failed: {reason}"
 msgstr ""
 "{sent} von {total} Dateien wurden gesendet, dann scheiterte {file}: {reason}"
 
-#: packages/whatsapp/src/send.ts:343
+#: packages/whatsapp/src/send.ts:339
 msgid ""
 "WhatsApp returned no id for the message — it may have been sent; look at the "
 "chat before sending it again"
@@ -4768,7 +4768,7 @@ msgstr ""
 "WhatsApp hat keine ID für die Nachricht zurückgegeben — sie wurde "
 "möglicherweise gesendet; sieh in den Chat, bevor du sie erneut sendest"
 
-#: packages/whatsapp/src/send.ts:354
+#: packages/whatsapp/src/send.ts:350
 msgid ""
 "WhatsApp did not confirm the message within {seconds} s — it was handed "
 "over, but look at the chat before sending it again"
@@ -4776,7 +4776,7 @@ msgstr ""
 "WhatsApp hat die Nachricht nicht innerhalb von {seconds} s bestätigt — sie "
 "wurde übergeben, aber sieh in den Chat, bevor du sie erneut sendest"
 
-#: packages/whatsapp/src/send.ts:364
+#: packages/whatsapp/src/send.ts:360
 msgid ""
 "the message was sent, but a message that arrived at the same time could not "
 "be written down ({reason}) — it may be missing from the chat"
@@ -4785,7 +4785,7 @@ msgstr ""
 "konnte nicht festgehalten werden ({reason}) — sie fehlt möglicherweise im "
 "Chat"
 
-#: packages/whatsapp/src/send.ts:413
+#: packages/whatsapp/src/send.ts:409
 msgid ""
 "curlew does not send status updates or broadcasts — send a message to a "
 "person instead"
@@ -4793,7 +4793,7 @@ msgstr ""
 "curlew sendet keine Statusmeldungen oder Broadcasts — sende stattdessen eine "
 "Nachricht an eine Person"
 
-#: packages/whatsapp/src/send.ts:419
+#: packages/whatsapp/src/send.ts:415
 msgid ""
 "curlew cannot send to a WhatsApp group: a group message is encrypted for "
 "every member, and curlew keeps no member list to do that with — send it from "
@@ -4803,7 +4803,7 @@ msgstr ""
 "für jedes Mitglied verschlüsselt, und curlew führt dafür keine "
 "Mitgliederliste — sende sie aus WhatsApp"
 
-#: packages/whatsapp/src/send.ts:443
+#: packages/whatsapp/src/send.ts:439
 msgid ""
 "{address} names one device of a person, not the person — drop the `:"
 "<device>` and use the id `conversations_list` shows for the chat"
@@ -4811,7 +4811,7 @@ msgstr ""
 "{address} benennt ein Gerät einer Person, nicht die Person — lass das `:"
 "<device>` weg und nimm die ID, die `conversations_list` für den Chat anzeigt"
 
-#: packages/whatsapp/src/send.ts:451
+#: packages/whatsapp/src/send.ts:447
 msgid ""
 "{address} is a phone number, not a WhatsApp chat id — a chat is filed under "
 "the LID whenever curlew knows one, so use the id `conversations_list` shows "
@@ -4821,7 +4821,7 @@ msgstr ""
 "unter der LID geführt, sobald curlew eine kennt, nimm also die ID, die "
 "`conversations_list` für den Chat anzeigt"
 
-#: packages/whatsapp/src/send.ts:458
+#: packages/whatsapp/src/send.ts:454
 msgid ""
 "{address} is not a WhatsApp chat id — use the id `conversations_list` shows "
 "for the chat (`<digits>@lid` or `<digits>@s.whatsapp.net`)"
