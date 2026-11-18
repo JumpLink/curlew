@@ -180,6 +180,8 @@ export function carriersOf(entries: readonly ListEntry[]): string[] {
   return [...all];
 }
 
+const two = (n: number) => String(n).padStart(2, '0');
+
 /**
  * A short time for the title line: `14:05` today, "Yesterday", else the ISO date. Locale-neutral
  * on purpose, so a German and an English window agree except for the one word.
@@ -188,7 +190,6 @@ export function shortTime(iso: string | null, now: Date = new Date()): string {
   if (!iso) return '';
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return '';
-  const two = (n: number) => String(n).padStart(2, '0');
   const day = (d: Date) => `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`;
   if (day(at) === day(now)) return `${two(at.getHours())}:${two(at.getMinutes())}`;
   const yesterday = new Date(now);
@@ -201,7 +202,6 @@ export function clockTime(iso: string | null): string {
   if (!iso) return '';
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return '';
-  const two = (n: number) => String(n).padStart(2, '0');
   return `${two(at.getHours())}:${two(at.getMinutes())}`;
 }
 
