@@ -3485,7 +3485,7 @@ msgstr ""
 msgid "this Matrix attachment cannot be found any more"
 msgstr ""
 
-#: packages/matrix/src/attachments.ts:113
+#: packages/matrix/src/attachments.ts:119
 msgid ""
 "the Matrix attachment arrived with {actual} bytes, not the announced "
 "{announced}"
@@ -4050,7 +4050,7 @@ msgstr ""
 msgid "Telegram user {id}"
 msgstr ""
 
-#: packages/telegram/src/login.ts:118
+#: packages/telegram/src/login.ts:119
 msgid ""
 "{reason} — Telegram HAD authorized this session, so its file is kept at "
 "{pending} and NOT deleted. Move it to {target}, or delete it and log in "
@@ -4313,19 +4313,19 @@ msgstr ""
 msgid "the file is not on a public https server"
 msgstr ""
 
-#: packages/xmpp/src/attachments.ts:60
+#: packages/xmpp/src/attachments.ts:61
 msgid "too many redirects"
 msgstr ""
 
-#: packages/xmpp/src/attachments.ts:70
+#: packages/xmpp/src/attachments.ts:71
 msgid "this XMPP attachment cannot be found any more"
 msgstr ""
 
-#: packages/xmpp/src/attachments.ts:107
+#: packages/xmpp/src/attachments.ts:114
 msgid "the encrypted attachment is too short"
 msgstr ""
 
-#: packages/xmpp/src/attachments.ts:118
+#: packages/xmpp/src/attachments.ts:125
 msgid "the encrypted attachment could not be verified"
 msgstr ""
 
