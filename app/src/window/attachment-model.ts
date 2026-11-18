@@ -1,6 +1,7 @@
 /** Pure rules for showing a message's attachments: what kind they are, how big, which are shown. */
 
 import type { AttachmentInfo } from './conversation-model.ts';
+import { errorMessage } from '@curlew/protocol';
 
 export type AttachmentKind = 'image' | 'video' | 'audio' | 'voice' | 'file';
 
@@ -253,7 +254,7 @@ export function isSignedOutFailure(err: unknown): boolean {
   if (typeof err === 'object' && err !== null && (err as { loggedOut?: unknown }).loggedOut === true) {
     return true;
   }
-  return SIGNED_OUT_TEXT.test(err instanceof Error ? err.message : String(err));
+  return SIGNED_OUT_TEXT.test(errorMessage(err));
 }
 
 export interface RowState {

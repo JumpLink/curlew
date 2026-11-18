@@ -10,12 +10,11 @@ import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import GObject from 'gi://GObject?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
-import { _, fmt } from '@curlew/protocol';
+import { _, fmt, errorMessage } from '@curlew/protocol';
 
 import type { AttachmentKind } from './attachment-model.ts';
 import {
   type AttachmentSource,
-  failureText,
   fetchAttachment,
   loadTexture,
   openWithDesktop,
@@ -172,7 +171,7 @@ export function createMediaViewer(
     const shown = current;
     if (!shown?.path) return;
     saveCopyAs(window, shown.path, GLib.path_get_basename(shown.path)).catch((err: unknown) =>
-      toast(fmt(_('Could not save the attachment: {error}'), { error: failureText(err) })),
+      toast(fmt(_('Could not save the attachment: {error}'), { error: errorMessage(err) })),
     );
   };
 
@@ -180,7 +179,7 @@ export function createMediaViewer(
     const shown = current;
     if (!shown?.path) return;
     openWithDesktop(window, shown.path, true).catch((err: unknown) =>
-      toast(fmt(_('Could not open the attachment: {error}'), { error: failureText(err) })),
+      toast(fmt(_('Could not open the attachment: {error}'), { error: errorMessage(err) })),
     );
   };
 
@@ -256,7 +255,7 @@ export function createMediaViewer(
       })
       .catch((err: unknown) => {
         if (mine !== run || toolbar.get_root() === null) return;
-        failed.set_description(failureText(err));
+        failed.set_description(errorMessage(err));
         stack.set_visible_child_name('error');
       });
   };

@@ -15,6 +15,7 @@ import {
   emptyMessage,
   offeredContacts,
 } from './new-conversation-model.ts';
+import { errorMessage } from '@curlew/protocol';
 
 export function presentNewConversation(
   parent: Gtk.Widget | null,
@@ -99,7 +100,7 @@ export function presentNewConversation(
       (err: unknown) => {
         if (mine !== generation) return;
         empty.set_title(_('The address book could not be read'));
-        empty.set_description(err instanceof Error ? err.message : String(err));
+        empty.set_description(errorMessage(err));
         stack.set_visible_child_name('empty');
       },
     );

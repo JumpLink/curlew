@@ -10,7 +10,7 @@ import Adw from 'gi://Adw?version=1';
 import Gdk from 'gi://Gdk?version=4.0';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
-import { _, fmt } from '@curlew/protocol';
+import { _, fmt, errorMessage } from '@curlew/protocol';
 
 import { accountsAdd } from '../core/actions/accounts.ts';
 import { backendUnavailableReason, backendsEnable, backendsList } from '../core/actions/backends.ts';
@@ -41,10 +41,6 @@ export interface AddAccountDeps {
 
 /** The widest a QR code is drawn, so it fits a phone-sized window with its margins. */
 const QR_MAX_PIXELS = 260;
-
-function errorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
-}
 
 function scrolled(child: Gtk.Widget): Gtk.ScrolledWindow {
   const clamp = new Adw.Clamp({ maximumSize: 420, tighteningThreshold: 320, child });

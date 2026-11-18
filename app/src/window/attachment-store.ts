@@ -369,8 +369,3 @@ export function openWithDesktop(parent: Gtk.Window | null, path: string, ask = f
     });
   });
 }
-
-/** An error's text for a toast; never the part's content or a credential. */
-export function failureText(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
-}

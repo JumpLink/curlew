@@ -6,7 +6,7 @@ import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import Pango from 'gi://Pango?version=1.0';
-import { _, fmt, _n } from '@curlew/protocol';
+import { _, fmt, _n, errorMessage } from '@curlew/protocol';
 import type { MessageRef } from '@curlew/protocol';
 
 import { audioPlayer } from './audio-player.ts';
@@ -35,7 +35,6 @@ import {
 import {
   type AttachmentSource,
   cachedAttachment,
-  failureText,
   fetchAttachment,
   fetchThumbnail,
   blockedBySignOut,
@@ -158,7 +157,7 @@ function tile(source: AttachmentSource, handlers: AttachmentHandlers): Gtk.Widge
             if (button.get_root() !== null) applyState(true);
             return;
           }
-          handlers.toast(fmt(_('Could not fetch the attachment: {error}'), { error: failureText(err) }));
+          handlers.toast(fmt(_('Could not fetch the attachment: {error}'), { error: errorMessage(err) }));
         })
         // The window may have been closed while the part was fetched; a button that is gone from
         // the tree has no state left to restore.
@@ -351,7 +350,7 @@ function inlinePreview(
 
   const fail = (error?: unknown) => {
     console.warn(
-      `attachment ${source.info.filename ?? '(unnamed)'} could not be shown inline: ${failureText(error)}`,
+      `attachment ${source.info.filename ?? '(unnamed)'} could not be shown inline: ${errorMessage(error)}`,
     );
     spinner.set_visible(false);
     if (cell || kind === 'video') {

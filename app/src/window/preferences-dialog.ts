@@ -3,7 +3,7 @@
 import Adw from 'gi://Adw?version=1';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
-import { _ } from '@curlew/protocol';
+import { _, errorMessage } from '@curlew/protocol';
 import { configPath } from '@curlew/store';
 
 import { chatOnly } from '../core/platform.ts';
@@ -23,9 +23,7 @@ function appearanceStore(path: string, overlay: Adw.ToastOverlay): AppearanceSto
         Object.assign(config.ui, change);
         saveConfig(config, path);
       } catch (err) {
-        overlay.add_toast(
-          new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
-        );
+        overlay.add_toast(new Adw.Toast({ title: errorMessage(err), timeout: 6 }));
       }
     },
   };
@@ -110,9 +108,7 @@ export function presentPreferences(
       saveConfig(config, path);
       onChanged();
     } catch (err) {
-      overlay.add_toast(
-        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
-      );
+      overlay.add_toast(new Adw.Toast({ title: errorMessage(err), timeout: 6 }));
     }
   });
   receipts.connect('notify::active', () => {
@@ -121,9 +117,7 @@ export function presentPreferences(
       config.ui.sendReadReceipts = receipts.get_active();
       saveConfig(config, path);
     } catch (err) {
-      overlay.add_toast(
-        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
-      );
+      overlay.add_toast(new Adw.Toast({ title: errorMessage(err), timeout: 6 }));
     }
   });
   syncRead.connect('notify::active', () => {
@@ -132,9 +126,7 @@ export function presentPreferences(
       config.ui.syncReadState = syncRead.get_active();
       saveConfig(config, path);
     } catch (err) {
-      overlay.add_toast(
-        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
-      );
+      overlay.add_toast(new Adw.Toast({ title: errorMessage(err), timeout: 6 }));
     }
   });
   videos.connect('notify::active', () => {
@@ -144,9 +136,7 @@ export function presentPreferences(
       saveConfig(config, path);
       refreshSilentVideos();
     } catch (err) {
-      overlay.add_toast(
-        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
-      );
+      overlay.add_toast(new Adw.Toast({ title: errorMessage(err), timeout: 6 }));
     }
   });
   ai.connect('notify::active', () => {
@@ -156,9 +146,7 @@ export function presentPreferences(
       saveConfig(config, path);
       onAiChanged();
     } catch (err) {
-      overlay.add_toast(
-        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
-      );
+      overlay.add_toast(new Adw.Toast({ title: errorMessage(err), timeout: 6 }));
     }
   });
   notifications.connect('notify::selected', () => {
@@ -167,9 +155,7 @@ export function presentPreferences(
       config.ui.notifications = modes[notifications.get_selected()] ?? 'preview';
       saveConfig(config, path);
     } catch (err) {
-      overlay.add_toast(
-        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
-      );
+      overlay.add_toast(new Adw.Toast({ title: errorMessage(err), timeout: 6 }));
     }
   });
   dialog.present(parent);

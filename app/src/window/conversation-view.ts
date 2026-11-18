@@ -6,7 +6,7 @@ import GLib from 'gi://GLib?version=2.0';
 import GObject from 'gi://GObject?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import Pango from 'gi://Pango?version=1.0';
-import { _, fmt, parseForwarded } from '@curlew/protocol';
+import { _, fmt, parseForwarded, errorMessage } from '@curlew/protocol';
 import type { ThreadCapabilities, ThreadFacts, ThreadFeature } from '@curlew/protocol';
 import type { ConversationMessage, MessageReaction, ReplyTarget } from '@curlew/protocol';
 import { configPath, type MessageCursor } from '@curlew/store';
@@ -720,7 +720,7 @@ export function createConversationView(
         overlay.add_toast(
           new Adw.Toast({
             title: fmt(_('Reaction not sent: {error}'), {
-              error: err instanceof Error ? err.message : String(err),
+              error: errorMessage(err),
             }),
             timeout: 6,
           }),
@@ -783,7 +783,7 @@ export function createConversationView(
           overlay.add_toast(
             new Adw.Toast({
               title: fmt(_('Message not deleted: {error}'), {
-                error: err instanceof Error ? err.message : String(err),
+                error: errorMessage(err),
               }),
               timeout: 6,
             }),
@@ -1267,7 +1267,7 @@ export function createConversationView(
         overlay.add_toast(
           new Adw.Toast({
             title: fmt(_('Could not load older messages: {error}'), {
-              error: err instanceof Error ? err.message : String(err),
+              error: errorMessage(err),
             }),
             timeout: 6,
           }),
@@ -1368,7 +1368,7 @@ export function createConversationView(
           overlay.add_toast(
             new Adw.Toast({
               title: fmt(_('Message not edited: {error}'), {
-                error: err instanceof Error ? err.message : String(err),
+                error: errorMessage(err),
               }),
               timeout: 6,
             }),
@@ -1415,7 +1415,7 @@ export function createConversationView(
         // The text and the files stay where they are, so "Retry" sends the same message again.
         const toast = new Adw.Toast({
           title: fmt(_('Message not sent: {error}'), {
-            error: err instanceof Error ? err.message : String(err),
+            error: errorMessage(err),
           }),
           buttonLabel: _('Retry'),
           timeout: 10,
