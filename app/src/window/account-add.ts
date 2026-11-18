@@ -102,6 +102,7 @@ class LoginPage {
   private current: Gtk.Widget | null = null;
   private prompter: SurfacePrompter | null = null;
   private serial = 0;
+  private closed = false;
 
   constructor(
     private readonly deps: AddAccountDeps,
@@ -111,8 +112,11 @@ class LoginPage {
     toolbar.add_top_bar(new Adw.HeaderBar());
     toolbar.set_content(this.stack);
     this.page = new Adw.NavigationPage({ title: protocol.label, child: toolbar });
-    deps.navigation.connect('popped', (_nav: Adw.NavigationView, popped: Adw.NavigationPage) => {
-      if (popped === this.page) this.prompter?.cancel();
+    const popped = deps.navigation.connect('popped', (nav: Adw.NavigationView, gone: Adw.NavigationPage) => {
+      if (gone !== this.page) return;
+      this.closed = true;
+      this.prompter?.cancel();
+      nav.disconnect(popped);
     });
   }
 
@@ -120,6 +124,8 @@ class LoginPage {
     this.showStatus(_('Connecting…'));
     // Asked before the terms: nobody should accept a risk for a backend that cannot start here.
     const reason = await backendUnavailableReason(this.protocol.backend);
+    // Leaving the page while the check ran must not start a login nobody is looking at.
+    if (this.closed) return;
     if (reason !== null) {
       console.warn(`curlew: ${this.protocol.backend} is unavailable: ${reason}`);
       this.showUnavailable();
@@ -304,6 +310,7 @@ class LoginPage {
   }
 
   private async run(): Promise<void> {
+    if (this.closed) return;
     this.prompter?.cancel();
     const prompter = createSurfacePrompter({ present: (step) => this.showStep(step) });
     this.prompter = prompter;
