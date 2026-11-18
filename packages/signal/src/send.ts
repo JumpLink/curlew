@@ -34,6 +34,7 @@
 import {
   _,
   type ChatAttachment,
+  errText,
   fmt,
   probeMediaFile,
   type MessageSender,
@@ -196,10 +197,6 @@ export interface SignalSendSession {
 /** A status, never the response body: that can quote the message or name other people. */
 function statusOf(response: ChatResponseLike): string {
   return `HTTP ${response.status}`;
-}
-
-function reasonOf(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 function parseJson<T>(response: ChatResponseLike, what: string): T {
@@ -503,7 +500,7 @@ export class SignalSender implements MessageSender {
         _(
           "the message was delivered, but this account's other devices were not told about it ({reason}) — it will not appear on the phone",
         ),
-        { reason: reasonOf(error) },
+        { reason: errText(error) },
       );
     }
     if (own && delivered === 0) {

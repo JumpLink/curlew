@@ -6,7 +6,7 @@
  * reading its manifest touch no native code, so curlew starts on a platform without the addon.
  */
 
-import { _, fmt, visibleAccounts } from '@curlew/protocol';
+import { _, errText, fmt, visibleAccounts } from '@curlew/protocol';
 import type {
   AttachmentFetcher,
   AccountPrompter,
@@ -341,7 +341,7 @@ export class SignalBackend implements DeliveryBackend, SendBackend {
           }
         })
         .catch((err: unknown) => {
-          console.warn(`signal: asking the phone for the contact list failed (${err instanceof Error ? err.message : String(err)})`);
+          console.warn(`signal: asking the phone for the contact list failed (${errText(err)})`);
         });
     }
     return {

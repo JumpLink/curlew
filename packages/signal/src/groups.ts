@@ -14,7 +14,7 @@
  * retry window passes, and the failure is reported once per session.
  */
 
-import type { DeliveryEvent } from '@curlew/protocol';
+import { type DeliveryEvent, errText } from '@curlew/protocol';
 import { SIGNAL_ROOT_CA_PEM, SIGNAL_SERVER_PUBLIC_PARAMS_BASE64, SIGNAL_STORAGE_HOST } from './constants.ts';
 import { type ChatFetch, GroupsViolation, storageRefusal } from './guard.ts';
 import type { SignalLib } from './lib.ts';
@@ -322,7 +322,7 @@ export class GroupTitles {
       try {
         name = await withDeadline(this.source(key), this.deadlineMs);
       } catch (err) {
-        this.firstProblem ??= `a Signal group's name could not be fetched (${err instanceof Error ? err.message : String(err)})`;
+        this.firstProblem ??= `a Signal group's name could not be fetched (${errText(err)})`;
         await this.write(chatId, { r: cached?.r ?? null, t: cached?.t ?? null, at: this.now() });
         continue;
       }

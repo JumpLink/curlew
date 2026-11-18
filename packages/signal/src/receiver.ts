@@ -44,7 +44,7 @@
  * either: each change becomes a notice in the direct chat with that contact.
  */
 
-import { _, fmt } from '@curlew/protocol';
+import { _, errText, fmt } from '@curlew/protocol';
 import type { DeliveryEvent, DeliveryMode, DeliveryOutcome, DeliverySession } from '@curlew/protocol';
 import type { AttachmentDownloader } from './contacts.ts';
 import { readContactsSync } from './contacts.ts';
@@ -428,7 +428,7 @@ export class SignalReceiver implements DeliverySession {
           this.contactsProblem = null;
           this.store.markContactsSynced?.(Date.now());
         } catch (err) {
-          this.contactsProblem = `the contact list from the phone could not be read (${err instanceof Error ? err.message : String(err)})`;
+          this.contactsProblem = `the contact list from the phone could not be read (${errText(err)})`;
         }
       }
     }
@@ -480,7 +480,7 @@ export class SignalReceiver implements DeliverySession {
       this.pendingAcks = [];
       void this.stop({
         caughtUp: false,
-        error: `the receive journal or the session file cannot be written (${err instanceof Error ? err.message : String(err)}) — nothing was acknowledged`,
+        error: `the receive journal or the session file cannot be written (${errText(err)}) — nothing was acknowledged`,
       });
       return false;
     }

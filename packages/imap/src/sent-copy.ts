@@ -8,7 +8,7 @@
  */
 
 import type { FolderInfo } from '@curlew/protocol';
-import { _, fmt } from '@curlew/protocol';
+import { _, errText, fmt } from '@curlew/protocol';
 
 /** The three IMAP operations the filing needs; the GJS client implements them. */
 export interface SentFolderSession {
@@ -52,6 +52,6 @@ export async function fileSentCopy(
 /** One sentence for the person: the mail went out, only the copy did not get filed. */
 export function sentCopyWarning(error: unknown): string {
   return fmt(_('The message was sent, but its copy could not be saved to the Sent folder: {reason}'), {
-    reason: error instanceof Error ? error.message : String(error),
+    reason: errText(error),
   });
 }

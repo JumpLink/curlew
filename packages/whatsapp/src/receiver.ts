@@ -20,7 +20,7 @@
  * anything.
  */
 
-import { _, fmt } from '@curlew/protocol';
+import { _, errText, fmt } from '@curlew/protocol';
 import type { DeliveryEvent, DeliveryMode, DeliveryOutcome, DeliverySession } from '@curlew/protocol';
 import type { WaEventMap, WaSocketHandle } from './api.ts';
 import { disconnectReason, disconnectStatus, LOGGED_OUT } from './api.ts';
@@ -205,7 +205,7 @@ export class WhatsAppReceiver implements DeliverySession {
         this.wake();
         this.finish({
           caughtUp: false,
-          error: `the receive journal cannot be written (${err instanceof Error ? err.message : String(err)})`,
+          error: `the receive journal cannot be written (${errText(err)})`,
         });
         return;
       }

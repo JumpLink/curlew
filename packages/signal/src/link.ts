@@ -18,7 +18,7 @@
  * printed apart from the QR code itself.
  */
 
-import { _, fmt, notifyQr } from '@curlew/protocol';
+import { _, errText, fmt, notifyQr } from '@curlew/protocol';
 import type { AccountPrompter, BackendAccount, BackendContext } from '@curlew/protocol';
 import { ensurePrivateDir, SecretStore } from '@curlew/store';
 import type * as Core from '@signalapp/libsignal-client';
@@ -243,7 +243,7 @@ export async function linkSignal(
           _(
             'Linked, but the one-time keys were not published ({reason}); new contacts fall back to the last-resort key.',
           ),
-          { reason: err instanceof Error ? err.message : String(err) },
+          { reason: errText(err) },
         ),
       );
     }
