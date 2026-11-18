@@ -20,6 +20,7 @@ import { followAccount } from '../../../src/core/actions/follow.ts';
 import { runDeliveryDaemon } from '../../../src/core/actions/daemon.ts';
 import { freshDb } from '../store/fixtures.ts';
 import { ANNA, FakeMatrixApi, ME, seedAccount, text } from './fake-api.ts';
+import { until } from '../wait.ts';
 
 /**
  * Matrix follow mode (ADR 0007 §5): the loop around a held connection, and — against a fake
@@ -33,11 +34,6 @@ const NO_CONFIG = join(tmpdir(), 'curlew-matrix-follow-test-no-config', 'config.
 
 function tempDir(): string {
   return mkdtempSync(join(tmpdir(), 'curlew-matrix-follow-'));
-}
-
-async function until(done: () => boolean, ms = 3000): Promise<void> {
-  const end = Date.now() + ms;
-  while (!done() && Date.now() < end) await new Promise((r) => setTimeout(r, 10));
 }
 
 /** A fake client whose sync loop the test drives: `arrive` is a new event, `end` the loop giving up. */

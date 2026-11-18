@@ -12,6 +12,7 @@ import { followAccount } from '../../../src/core/actions/follow.ts';
 import { runDeliveryDaemon } from '../../../src/core/actions/daemon.ts';
 import { freshDb } from '../store/fixtures.ts';
 import { fakeFactory, type FakeClient, ME, tgMessage, user } from './fake-client.ts';
+import { until } from '../wait.ts';
 
 /**
  * Telegram follow mode: updates are only a wake-up, the read-only chat sync writes, the lease is
@@ -26,11 +27,6 @@ const prompter = () => {
   const queue = ['+49 170 0000000', '12345', 'correct horse'];
   return { ask: async () => queue.shift() ?? '', notify: () => {} };
 };
-
-async function until(done: () => boolean, ms = 3000): Promise<void> {
-  const end = Date.now() + ms;
-  while (!done() && Date.now() < end) await new Promise((r) => setTimeout(r, 10));
-}
 
 async function rig(
   body: (r: { dir: string; backend: TelegramBackend; clients: FakeClient[] }) => Promise<void>,

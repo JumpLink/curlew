@@ -40,6 +40,22 @@ Agent- and contributor-facing docs for the curlew repo. The hard rules that load
 
 ## Decisions
 
+- [`adr/0001-multi-protocol-messenger.md`](adr/0001-multi-protocol-messenger.md) — curlew is a multi-protocol messenger; mail is one backend (accepted)
+- [`adr/0002-receiving-daemon.md`](adr/0002-receiving-daemon.md) — the receiving daemon and the lease that keeps two of them apart (accepted)
+- [`adr/0003-degraded-link-state-is-user-visible.md`](adr/0003-degraded-link-state-is-user-visible.md) — a degraded linked-device state is stated, not summarised (accepted)
+- [`adr/0004-deletions-below-the-window-are-probed-by-id.md`](adr/0004-deletions-below-the-window-are-probed-by-id.md) — deletions below the re-read window are probed by id (accepted)
+- [`adr/0004-sending-and-writing-granted-per-capability.md`](adr/0004-sending-and-writing-granted-per-capability.md) — sending and writing, granted per capability (accepted)
+- [`adr/0005-calendars-and-contacts-without-goa-eds.md`](adr/0005-calendars-and-contacts-without-goa-eds.md) — calendars and contacts without GOA/EDS (accepted)
+- [`adr/0006-omemo-end-to-end-encryption.md`](adr/0006-omemo-end-to-end-encryption.md) — OMEMO end-to-end encryption for XMPP (accepted)
+- [`adr/0007-live-updates-over-the-session-bus.md`](adr/0007-live-updates-over-the-session-bus.md) — change journal in the index, wake-up on the session bus (accepted)
+- [`adr/0008-grants-restrict-agents-not-the-person.md`](adr/0008-grants-restrict-agents-not-the-person.md) — grants restrict agents, not the person (accepted)
+- [`adr/0009-agent-access-per-account-and-contact.md`](adr/0009-agent-access-per-account-and-contact.md) — agent access per account and contact (accepted)
+- [`adr/0010-attachments-across-protocols.md`](adr/0010-attachments-across-protocols.md) — attachments across protocols (accepted)
+- [`adr/0011-same-app-inside-and-outside-a-sandbox.md`](adr/0011-same-app-inside-and-outside-a-sandbox.md) — one app, inside and outside a sandbox (accepted)
+- [`adr/0012-voice-note-transcripts.md`](adr/0012-voice-note-transcripts.md) — transcripts of received voice notes (proposed)
+- [`adr/0013-appearance.md`](adr/0013-appearance.md) — accent, chat background, floating bars (proposed)
+- [`adr/0014-delta-chat-is-a-protocol.md`](adr/0014-delta-chat-is-a-protocol.md) — Delta Chat is a protocol, opt-in per mail account (proposed)
+- [`adr/0015-capabilities-per-thread.md`](adr/0015-capabilities-per-thread.md) — capabilities are per thread and person (proposed)
 - [`adr/0016-the-window-stays-in-the-background.md`](adr/0016-the-window-stays-in-the-background.md) — hold and hide the window only where the person can get it back (proposed)
 - [`adr/0017-media-thumbnails-at-sync.md`](adr/0017-media-thumbnails-at-sync.md) — store the preview the network ships with the message, so a big video is not a dark box (accepted)
 

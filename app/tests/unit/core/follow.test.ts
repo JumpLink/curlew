@@ -11,6 +11,7 @@ import type { XmppLink } from '@curlew/xmpp';
 
 import { followAccount } from '../../../src/core/actions/follow.ts';
 import { freshDb } from '../store/fixtures.ts';
+import { until } from '../wait.ts';
 
 const ACCOUNT = 'xmpp-lease1';
 const GRANT = { account: ACCOUNT, addresses: ['owner@example.org'] };
@@ -56,11 +57,6 @@ const backend: ChatBackend = {
     throw new Error('not used');
   },
 };
-
-async function until(done: () => boolean, ms = 3000): Promise<void> {
-  const end = Date.now() + ms;
-  while (!done() && Date.now() < end) await new Promise((r) => setTimeout(r, 10));
-}
 
 /** The index with `BEGIN IMMEDIATE` failing `busy.left` times — what a busy index looks like. */
 function busyable(db: ReturnType<typeof freshDb>, busy: { left: number }) {
