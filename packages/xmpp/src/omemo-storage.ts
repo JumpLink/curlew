@@ -71,18 +71,6 @@ const REGISTRATION_ID = 'registration';
 const CURRENT_SIGNED_PREKEY_ID = 'current';
 const NEXT_PREKEY_ID = 'next-id';
 
-/** Every namespace this adapter owns — what `curlew omemo reset` would clear. */
-export const OMEMO_NAMESPACES: readonly string[] = [
-  DEVICE_NAMESPACE,
-  SIGNED_PREKEY_NAMESPACE,
-  PREKEY_NAMESPACE,
-  SESSION_NAMESPACE,
-  IDENTITY_NAMESPACE,
-  DEVICE_LIST_NAMESPACE,
-  PLAINTEXT_NAMESPACE,
-  IDENTITY_CHANGE_NAMESPACE,
-];
-
 /**
  * An {@link OmemoStorage} on one account's `SecretStore`.
  *

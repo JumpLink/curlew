@@ -270,6 +270,32 @@ export default async () => {
       });
     });
 
+    await it('closes the response stream when the download is refused midway', async () => {
+      let cancelled = false;
+      const stream = new ReadableStream<Uint8Array>({
+        pull(controller) {
+          controller.enqueue(new Uint8Array([1, 2, 3, 4, 5, 6]));
+        },
+        cancel() {
+          cancelled = true;
+        },
+      });
+      const http = (async () => new Response(stream, { status: 200 })) as unknown as typeof globalThis.fetch;
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-matrix-attach-'));
+      try {
+        const accountId = seedAccount(dir);
+        const context: BackendContext = { settings: {}, env: {}, secretsDir: dir };
+        const backend = new MatrixBackend(context, fakeConnector(new FakeMatrixApi()), http);
+        const message = await failure(
+          fetchWith(backend, accountId, attachmentHandle(MXC, null), new MemorySink(), 4),
+        );
+        expect(message).not.toBe(null);
+        expect(cancelled).toBe(true);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
     await it('refuses a body shorter than the homeserver declared', async () => {
       const routes = {
         [AUTH_PATH]: { status: 200, body: new Uint8Array([1, 2, 3]), headers: { 'content-length': '5' } },

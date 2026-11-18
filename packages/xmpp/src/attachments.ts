@@ -50,6 +50,7 @@ export class XmppAttachments implements AttachmentFetcher {
       const response = await this.fetchFn(url, { method: 'GET', redirect: 'manual', signal });
       const location = response.headers.get('location');
       if (response.status >= 300 && response.status < 400 && location) {
+        // Only frees the socket of a redirect we already follow.
         await response.body?.cancel().catch(() => {});
         url = new URL(location, url).href;
         continue;
@@ -88,10 +89,16 @@ export class XmppAttachments implements AttachmentFetcher {
     };
     const reader = response.body?.getReader();
     if (reader) {
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        await take(value);
+      try {
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          await take(value);
+        }
+      } catch (err) {
+        // A refused or aborted download must not leave the connection open behind it.
+        await reader.cancel().catch(() => {});
+        throw err;
       }
     } else {
       await take(new Uint8Array(await response.arrayBuffer()));

@@ -97,13 +97,3 @@ export function selectBundleKeys(
     preKey: preKey.publicKey,
   };
 }
-
-/** Whether the bundle needs topping up with fresh prekeys. */
-export function needsPreKeyRefill(bundle: DeviceBundle, profile: OmemoProfile = LEGACY_PROFILE): boolean {
-  return bundle.preKeys.length < profile.preKeyRefillThreshold;
-}
-
-/** Whether two bundles advertise the same identity key. */
-export function sameIdentity(a: DeviceBundle, b: DeviceBundle): boolean {
-  return bytesEqual(a.identityKey, b.identityKey);
-}

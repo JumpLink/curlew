@@ -510,6 +510,32 @@ export default async () => {
       store.close();
     });
 
+    await it('a failed write is retried by the next save, not marked as written', async () => {
+      const store = SecretStore.open(':memory:');
+      const apply = store.apply.bind(store);
+      let failNext = true;
+      store.apply = (changes) => {
+        if (failNext) {
+          failNext = false;
+          throw new Error('disk full');
+        }
+        apply(changes);
+      };
+      const storage = new SecretStoreStorage(store);
+      await storage.driver.load();
+      await storage.kv.set('a', new Uint8Array([1]));
+      let failed = false;
+      try {
+        storage.driver.save();
+      } catch {
+        failed = true;
+      }
+      expect(failed).toBe(true);
+      storage.driver.save();
+      expect(store.load('mtcute.kv').get('a')).toBe('AQ==');
+      store.close();
+    });
+
     // mtcute's `asyncResettable` leaves `finished` FALSE when the wrapped promise rejects and
     // resets `_prepare` on every `disconnect()`, so a session is loaded again after a failed
     // connect. A `load()` that consumed its own "already loaded" flag before it read anything

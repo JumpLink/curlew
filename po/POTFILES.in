@@ -219,6 +219,7 @@ packages/matrix/src/attachments.ts
 packages/matrix/src/avatars.ts
 packages/matrix/src/backend.ts
 packages/matrix/src/client.ts
+packages/matrix/src/errcode.ts
 packages/matrix/src/guard.ts
 packages/matrix/src/idb-snapshot.ts
 packages/matrix/src/index.ts

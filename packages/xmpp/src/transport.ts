@@ -132,6 +132,7 @@ export function websocketLinks(hostMeta: unknown): string[] {
 export async function discoverEndpoints(domain: string, deps: DiscoveryDeps): Promise<Endpoint[]> {
   const [direct, hostMeta, starttls] = await Promise.all([
     srv(deps, `_xmpps-client._tcp.${domain}`),
+    // host-meta is an optional extra route: its absence is not an error.
     deps.fetchJson(`https://${domain}/.well-known/host-meta.json`).catch(() => null),
     srv(deps, `_xmpp-client._tcp.${domain}`),
   ]);

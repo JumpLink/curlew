@@ -31,7 +31,6 @@ import {
   utf8ToBytes,
   type BundleKeys,
   type DeviceAddress,
-  type DeviceId,
   type OmemoProfile,
   type OmemoStorage,
   type RandomSource,

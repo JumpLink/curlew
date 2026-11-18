@@ -237,18 +237,6 @@ export interface EncryptedStanza {
 }
 
 /**
- * Parse the `<encrypted>` child of a message, or undefined when there is none or it is broken.
- *
- * Only the legacy namespace parses. A `urn:xmpp:omemo:2` element is a different grammar — the
- * keys live in an `<keys jid='…'>` group per recipient — and misreading it as this one would
- * produce blobs addressed to nobody. {@link omemoVersionOf} is what tells the two apart.
- */
-export function parseEncrypted(message: XmlElement): EncryptedStanza | undefined {
-  const encrypted = message.getChild('encrypted', NS.omemoLegacy);
-  return encrypted === undefined ? undefined : parseEncryptedElement(encrypted);
-}
-
-/**
  * The same, for an `<encrypted>` element already in hand — what `ArchivedEntry.omemo` carries.
  *
  * The caller has established the namespace by then (`ArchivedEntry.omemo.version`), so this one

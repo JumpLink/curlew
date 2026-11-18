@@ -59,8 +59,3 @@ export function parseAddressKey(key: string): DeviceAddress | undefined {
   if (!Number.isInteger(deviceId) || deviceId < 1 || deviceId > MAX_DEVICE_ID) return undefined;
   return { jid: key.slice(0, split), deviceId };
 }
-
-/** Whether two addresses name the same device. */
-export function sameAddress(a: DeviceAddress, b: DeviceAddress): boolean {
-  return a.jid === b.jid && a.deviceId === b.deviceId;
-}

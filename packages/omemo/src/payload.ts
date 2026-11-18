@@ -74,15 +74,3 @@ export async function decryptPayload(
   const tag = keyMaterial.subarray(profile.payloadKeyLength);
   return aesGcmDecrypt(key, iv, concatBytes(ciphertext, tag));
 }
-
-/** Split `key || tag` into its halves, for a caller that needs them apart. */
-export function splitKeyMaterial(
-  keyMaterial: Uint8Array,
-  profile: OmemoProfile = LEGACY_PROFILE,
-): { readonly key: Uint8Array; readonly tag: Uint8Array } {
-  assertLength('key material', keyMaterial, profile.payloadKeyLength + profile.payloadTagLength);
-  return {
-    key: keyMaterial.subarray(0, profile.payloadKeyLength),
-    tag: keyMaterial.subarray(profile.payloadKeyLength),
-  };
-}

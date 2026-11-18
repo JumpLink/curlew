@@ -15,6 +15,7 @@ import {
   type FetchableAttachment,
   fmt,
 } from '@curlew/protocol';
+import { errcodeOf } from './errcode.ts';
 import { parseAttachmentHandle, parseMxc } from './map.ts';
 
 /** The authenticated media endpoint (Matrix 1.11) and the legacy one older servers still serve. */
@@ -29,16 +30,6 @@ export interface MatrixAttachmentsSession {
   fetch: typeof globalThis.fetch;
   /** Releases the account file once the fetch is done. */
   onClose?: () => void;
-}
-
-/** The homeserver's `errcode`, or null when the body is not a Matrix error. */
-async function errcodeOf(response: Response): Promise<string | null> {
-  try {
-    const body = (await response.json()) as { errcode?: unknown };
-    return typeof body.errcode === 'string' ? body.errcode : null;
-  } catch {
-    return null;
-  }
 }
 
 /** A refusal for the message; a dead token is marked `loggedOut` so callers can tell it from a flaky server. */
@@ -105,10 +96,16 @@ export class MatrixAttachments implements AttachmentFetcher {
       };
       const reader = response.body?.getReader();
       if (reader) {
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          await take(value);
+        try {
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            await take(value);
+          }
+        } catch (err) {
+          // A refused or aborted download must not leave the connection open behind it.
+          await reader.cancel().catch(() => {});
+          throw err;
         }
       } else {
         await take(new Uint8Array(await response.arrayBuffer()));
