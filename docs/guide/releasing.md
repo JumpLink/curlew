@@ -19,6 +19,16 @@ Introspection libraries those need do not exist on macOS or Windows. A
 platform-native credential and sync layer for mail, contacts and calendar
 is open work, not a bug in these packages.
 
+**The window on macOS and Windows.** Those packages run `curlew.node.mjs`, so the window is a
+second `--app node` bundle, `dist/window.node.mjs`, that reaches GTK through node-gi (the Linux
+packages ship `dist/window.gjs.mjs`, which Node cannot load because of its `gi://` imports). The
+Finder and Start-menu launchers pass no argument, so on macOS and Windows a bare `curlew` opens the
+window, and so do `curlew window` and `curlew demo`; any other argument stays the CLI. On Linux a
+bare `curlew` stays the CLI. The rule is [`dispatch.ts`](../../app/src/dispatch.ts). `gjsify ship`
+stages all of `dist/`, so the zips also carry the unused `window.gjs.mjs`. CI opens the window of
+every macOS and Windows package on demo data (`CURLEW_DEMO=1 CURLEW_WINDOW_QUIT_AFTER_MS=4000`) in
+the `start-macos-windows` job.
+
 ### Flatpak
 
 CI builds a Flatpak (`ship-flatpak` artifact, `gjsify ship linux --target flatpak`). It is the
@@ -54,7 +64,7 @@ a secret.
 Local verification, mirroring what CI does on `fedora:44`:
 
 ```bash
-gjsify workspace curlew-cli build:node   # darwin/win32 ship `dist/curlew.node.mjs`
+gjsify workspace curlew-cli build:node   # darwin/win32 ship `dist/curlew.node.mjs` and `dist/window.node.mjs`
 gjsify install --os darwin --cpu arm64 --immutable
 (cd app && gjsify ship darwin --arch arm64 --skip-build --target macos-app-zip)
 gjsify install --os win32 --cpu x64 --immutable
