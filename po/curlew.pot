@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-18 08:18+0100\n"
+"POT-Creation-Date: 2026-11-18 08:42+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -930,7 +930,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/core/lib/message-notifications.ts:197
-#: app/src/window/attachment-view.ts:132
+#: app/src/window/attachment-view.ts:131
 msgid "Open"
 msgstr ""
 
@@ -1638,99 +1638,99 @@ msgid_plural "{count} accounts"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/account-add.ts:124 app/src/window/account-add.ts:314
+#: app/src/window/account-add.ts:124 app/src/window/account-add.ts:317
 msgid "Connecting…"
 msgstr ""
 
-#: app/src/window/account-add.ts:140 app/src/window/protocols-page.ts:80
+#: app/src/window/account-add.ts:142 app/src/window/protocols-page.ts:80
 msgid "{protocol} is not available on this device"
 msgstr ""
 
-#: app/src/window/account-add.ts:141 app/src/window/protocols-page.ts:81
+#: app/src/window/account-add.ts:143 app/src/window/protocols-page.ts:81
 msgid "This build of Curlew cannot run it on this kind of computer yet."
 msgstr ""
 
-#: app/src/window/account-add.ts:161 app/src/window/protocols-page.ts:58
+#: app/src/window/account-add.ts:163 app/src/window/protocols-page.ts:58
 msgid "Please read this first"
 msgstr ""
 
-#: app/src/window/account-add.ts:167
+#: app/src/window/account-add.ts:169
 msgid "Accept and Continue"
 msgstr ""
 
-#: app/src/window/account-add.ts:211
+#: app/src/window/account-add.ts:213
 msgid "Continue"
 msgstr ""
 
-#: app/src/window/account-add.ts:257
+#: app/src/window/account-add.ts:259
 msgid "Open Link"
 msgstr ""
 
-#: app/src/window/account-add.ts:268
+#: app/src/window/account-add.ts:270
 msgid "No App Opened the Link"
 msgstr ""
 
-#: app/src/window/account-add.ts:274
+#: app/src/window/account-add.ts:276
 msgid "Copy Link"
 msgstr ""
 
-#: app/src/window/account-add.ts:277
+#: app/src/window/account-add.ts:279
 msgid "Link Copied"
 msgstr ""
 
-#: app/src/window/account-add.ts:291
+#: app/src/window/account-add.ts:293
 msgid "Adding account…"
 msgstr ""
 
-#: app/src/window/account-add.ts:299 app/src/window/media-viewer.ts:104
+#: app/src/window/account-add.ts:301 app/src/window/media-viewer.ts:103
 msgid "Try Again"
 msgstr ""
 
-#: app/src/window/account-add.ts:303
+#: app/src/window/account-add.ts:305
 msgid "Could not add the account"
 msgstr ""
 
-#: app/src/window/account-add.ts:338 app/src/window/protocols-page.ts:46
+#: app/src/window/account-add.ts:341 app/src/window/protocols-page.ts:46
 msgid "Asks you to accept terms first"
 msgstr ""
 
-#: app/src/window/account-add.ts:355
+#: app/src/window/account-add.ts:358
 msgid "Chats"
 msgstr ""
 
-#: app/src/window/account-add.ts:356
+#: app/src/window/account-add.ts:359
 msgid ""
 "Signal, WhatsApp and Telegram link this computer as another device of your "
 "account."
 msgstr ""
 
-#: app/src/window/account-add.ts:365 app/src/window/accounts-model.ts:132
+#: app/src/window/account-add.ts:368 app/src/window/accounts-model.ts:132
 #: app/src/window/conversation-list-model.ts:139
 msgid "Mail"
 msgstr ""
 
-#: app/src/window/account-add.ts:368
+#: app/src/window/account-add.ts:371
 msgid "Sign in with an address and a password"
 msgstr ""
 
-#: app/src/window/account-add.ts:380
+#: app/src/window/account-add.ts:383
 msgid "GNOME Online Accounts"
 msgstr ""
 
-#: app/src/window/account-add.ts:382
+#: app/src/window/account-add.ts:385
 msgid "Accounts you set up in GNOME Settings appear here by themselves"
 msgstr ""
 
-#: app/src/window/account-add.ts:383
+#: app/src/window/account-add.ts:386
 msgid "Use an account you already set up in GNOME Settings"
 msgstr ""
 
-#: app/src/window/account-add.ts:405 app/src/window/accounts-page.ts:167
+#: app/src/window/account-add.ts:408 app/src/window/accounts-page.ts:167
 #: app/src/window/accounts-page.ts:193 app/src/window/welcome.ts:160
 msgid "Add Account"
 msgstr ""
 
-#: app/src/window/account-detail.ts:79 app/src/window/agent-access-page.ts:218
+#: app/src/window/account-detail.ts:79 app/src/window/agent-access-page.ts:217
 #: app/src/window/contact-page.ts:393
 msgid "Account"
 msgstr ""
@@ -1757,7 +1757,7 @@ msgstr ""
 #: app/src/window/account-remove-model.ts:24
 #: app/src/window/account-remove-model.ts:37
 #: app/src/window/account-remove-model.ts:71
-#: app/src/window/agent-access-page.ts:234
+#: app/src/window/agent-access-page.ts:233
 #: app/src/window/conversation-list.ts:503
 #: app/src/window/conversation-list.ts:596
 #: app/src/window/conversation-view.ts:767 app/src/window/protocols-page.ts:66
@@ -1765,7 +1765,7 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
-#: app/src/window/account-detail.ts:125 app/src/window/audio-player.ts:112
+#: app/src/window/account-detail.ts:125 app/src/window/audio-player.ts:111
 msgid "Pause"
 msgstr ""
 
@@ -1915,7 +1915,7 @@ msgstr ""
 msgid "Daemon not running"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:41 app/src/window/preferences-dialog.ts:69
+#: app/src/window/accounts-page.ts:41 app/src/window/preferences-dialog.ts:84
 #: app/src/window/welcome-model.ts:124
 msgid "Off"
 msgstr ""
@@ -2044,65 +2044,65 @@ msgid ""
 msgstr ""
 
 #: app/src/window/agent-access-page.ts:199
-#: app/src/window/agent-access-page.ts:227
+#: app/src/window/agent-access-page.ts:226
 msgid "Read messages"
 msgstr ""
 
 #: app/src/window/agent-access-page.ts:199
-#: app/src/window/agent-access-page.ts:228
+#: app/src/window/agent-access-page.ts:227
 msgid "Send messages"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:211
+#: app/src/window/agent-access-page.ts:210
 msgid "Add a rule"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:223
+#: app/src/window/agent-access-page.ts:222
 msgid "Account id"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:226
+#: app/src/window/agent-access-page.ts:225
 msgid "Contact address (empty = the whole account)"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:236
+#: app/src/window/agent-access-page.ts:235
 msgid "Add"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:287
+#: app/src/window/agent-access-page.ts:286
 msgid "The configuration could not be read"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:299
+#: app/src/window/agent-access-page.ts:298
 msgid ""
 "Your own commands and this window are never restricted, and your own "
 "addresses are always allowed. These rules decide what an AI agent may read "
 "and send."
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:303
+#: app/src/window/agent-access-page.ts:302
 msgid "Ask when no rule applies"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:304
+#: app/src/window/agent-access-page.ts:303
 msgid "Off: an agent request without a rule is refused without asking"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:313
+#: app/src/window/agent-access-page.ts:312
 msgid "Send files without asking"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:314
+#: app/src/window/agent-access-page.ts:313
 msgid ""
 "Off: an agent that sends files is always asked first, even where a rule "
 "allows sending"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:332
+#: app/src/window/agent-access-page.ts:331
 msgid "No rules yet"
 msgstr ""
 
-#: app/src/window/agent-access-page.ts:337
+#: app/src/window/agent-access-page.ts:336
 msgid "Add rule"
 msgstr ""
 
@@ -2238,83 +2238,83 @@ msgstr ""
 msgid "A quiet pattern behind the messages"
 msgstr ""
 
-#: app/src/window/attachment-store.ts:86
+#: app/src/window/attachment-store.ts:81
 msgid "the account is signed out"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:118 app/src/window/attachment-view.ts:328
+#: app/src/window/attachment-view.ts:117 app/src/window/attachment-view.ts:327
 msgid "Sign in again to load this image"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:119
+#: app/src/window/attachment-view.ts:118
 msgid "Sign in again to load this file"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:124 app/src/window/audio-player.ts:80
+#: app/src/window/attachment-view.ts:123 app/src/window/audio-player.ts:79
 msgid "Sign in again to download this"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:132
+#: app/src/window/attachment-view.ts:131
 msgid "Play"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:137 app/src/window/audio-player.ts:66
-#: app/src/window/media-viewer.ts:64
+#: app/src/window/attachment-view.ts:136 app/src/window/audio-player.ts:65
+#: app/src/window/media-viewer.ts:63
 msgid "Save as…"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:161 app/src/window/audio-player.ts:161
-#: app/src/window/audio-player.ts:189
+#: app/src/window/attachment-view.ts:160 app/src/window/audio-player.ts:160
+#: app/src/window/audio-player.ts:188
 msgid "Could not fetch the attachment: {error}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:185 app/src/window/attachment-view.ts:194
+#: app/src/window/attachment-view.ts:184 app/src/window/attachment-view.ts:193
 #: app/src/window/conversation-list-model.ts:526
 #: app/src/window/conversation-model.ts:318
 #: app/src/window/conversation-model.ts:323
 msgid "Attachment"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:278 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:277 app/src/window/media-viewer.ts:229
 msgid "Video: {name}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:278 app/src/window/media-viewer.ts:230
+#: app/src/window/attachment-view.ts:277 app/src/window/media-viewer.ts:229
 msgid "Image: {name}"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:328
+#: app/src/window/attachment-view.ts:327
 msgid "Sign in again to load this video"
 msgstr ""
 
-#: app/src/window/attachment-view.ts:625
+#: app/src/window/attachment-view.ts:624
 #: app/src/window/conversation-model.ts:326
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/audio-player.ts:37
+#: app/src/window/audio-player.ts:36
 msgid "Play voice message"
 msgstr ""
 
-#: app/src/window/audio-player.ts:37
+#: app/src/window/audio-player.ts:36
 msgid "Play {name}"
 msgstr ""
 
-#: app/src/window/audio-player.ts:55
+#: app/src/window/audio-player.ts:54
 msgid "Position"
 msgstr ""
 
-#: app/src/window/audio-player.ts:77
+#: app/src/window/audio-player.ts:76
 msgid "Sign in again to play this voice message"
 msgstr ""
 
-#: app/src/window/audio-player.ts:77
+#: app/src/window/audio-player.ts:76
 msgid "Sign in again to play this"
 msgstr ""
 
-#: app/src/window/audio-player.ts:133
+#: app/src/window/audio-player.ts:132
 msgid "Could not play the attachment: {error}"
 msgstr ""
 
@@ -2498,7 +2498,7 @@ msgstr ""
 msgid "WhatsApp"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:196
+#: app/src/window/conversation-list-model.ts:197
 msgid "Yesterday"
 msgstr ""
 
@@ -2632,7 +2632,7 @@ msgid "Search"
 msgstr ""
 
 #: app/src/window/conversation-list.ts:492
-#: app/src/window/new-conversation.ts:25
+#: app/src/window/new-conversation.ts:26
 msgid "New conversation"
 msgstr ""
 
@@ -2665,7 +2665,7 @@ msgid "Review"
 msgstr ""
 
 #: app/src/window/conversation-list.ts:634
-#: app/src/window/preferences-dialog.ts:46
+#: app/src/window/preferences-dialog.ts:61
 msgid "Conversations"
 msgstr ""
 
@@ -2955,51 +2955,51 @@ msgstr ""
 msgid "Show more"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:53
+#: app/src/window/media-viewer.ts:52
 msgid "Back"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:54 app/src/window/media-viewer.ts:300
+#: app/src/window/media-viewer.ts:53 app/src/window/media-viewer.ts:299
 msgid "Fullscreen"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:63
+#: app/src/window/media-viewer.ts:62
 msgid "Copy image"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:65
+#: app/src/window/media-viewer.ts:64
 msgid "Open with…"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:68 app/src/window/media-viewer.ts:72
+#: app/src/window/media-viewer.ts:67 app/src/window/media-viewer.ts:71
 msgid "Attachment Actions"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:102
+#: app/src/window/media-viewer.ts:101
 msgid "Could not load the attachment"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:124
+#: app/src/window/media-viewer.ts:123
 msgid "Previous"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:125 app/src/window/welcome.ts:120
+#: app/src/window/media-viewer.ts:124 app/src/window/welcome.ts:120
 msgid "Next"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:175
+#: app/src/window/media-viewer.ts:174
 msgid "Could not save the attachment: {error}"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:183
+#: app/src/window/media-viewer.ts:182
 msgid "Could not open the attachment: {error}"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:194
+#: app/src/window/media-viewer.ts:193
 msgid "Image copied"
 msgstr ""
 
-#: app/src/window/media-viewer.ts:300
+#: app/src/window/media-viewer.ts:299
 msgid "Leave fullscreen"
 msgstr ""
 
@@ -3041,86 +3041,86 @@ msgstr ""
 msgid "No contacts with an XMPP or mail address"
 msgstr ""
 
-#: app/src/window/new-conversation.ts:30
+#: app/src/window/new-conversation.ts:31
 msgid "Search contacts"
 msgstr ""
 
-#: app/src/window/new-conversation.ts:101
+#: app/src/window/new-conversation.ts:102
 msgid "The address book could not be read"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:42
+#: app/src/window/preferences-dialog.ts:57
 msgid "Show all emails"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:50
+#: app/src/window/preferences-dialog.ts:65
 msgid "Send read receipts"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:52
+#: app/src/window/preferences-dialog.ts:67
 msgid ""
 "Tell the other person when you have read their message. On Delta Chat only "
 "if they asked for it"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:58
+#: app/src/window/preferences-dialog.ts:73
 msgid "Sync read state to your other devices"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:60
+#: app/src/window/preferences-dialog.ts:75
 msgid ""
 "Your other devices show what you have read here. On Telegram and WhatsApp "
 "the other person sees it too, so there only with read receipts on"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:67
+#: app/src/window/preferences-dialog.ts:82
 msgid "Message notifications"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:68
+#: app/src/window/preferences-dialog.ts:83
 msgid "What a desktop notification for a new chat message shows"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:69
+#: app/src/window/preferences-dialog.ts:84
 msgid "Sender and text"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:69
+#: app/src/window/preferences-dialog.ts:84
 msgid "Sender only"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:72
+#: app/src/window/preferences-dialog.ts:87
 msgid "Notifications"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:75
+#: app/src/window/preferences-dialog.ts:90
 msgid "Play videos silently in chats"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:76
+#: app/src/window/preferences-dialog.ts:91
 msgid "A video in a conversation plays muted while it is on screen"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:82
+#: app/src/window/preferences-dialog.ts:97
 msgid "Media"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:85 app/src/window/welcome-model.ts:124
+#: app/src/window/preferences-dialog.ts:100 app/src/window/welcome-model.ts:124
 #: app/src/window/welcome.ts:240
 msgid "AI features"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:87
+#: app/src/window/preferences-dialog.ts:102
 msgid ""
 "Let AI assistants read and send your messages through Curlew, each time as "
 "you allow it. Off: no assistant can reach your data"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:91 app/src/window/welcome.ts:252
+#: app/src/window/preferences-dialog.ts:106 app/src/window/welcome.ts:252
 msgid "AI"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:103 app/src/window/window.ts:254
+#: app/src/window/preferences-dialog.ts:118 app/src/window/window.ts:254
 msgid "Preferences"
 msgstr ""
 
@@ -3344,7 +3344,7 @@ msgstr ""
 msgid "Demo data — nothing here is real"
 msgstr ""
 
-#: app/src/window/window.ts:700
+#: app/src/window/window.ts:706
 msgid "No contacts to merge"
 msgstr ""
 

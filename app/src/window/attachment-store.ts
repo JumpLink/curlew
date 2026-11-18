@@ -69,11 +69,6 @@ export function noteFetchFailure(ref: MessageRef, err: unknown, now = Date.now()
   return true;
 }
 
-/** Forgets what was learned about the account. */
-export function clearSignedOut(ref: MessageRef): void {
-  signedOut.clear(accountKey(ref));
-}
-
 /** Feeds the daemon's account states in; a logged-out account is marked before any fetch, any other state clears it. */
 export function applyDaemonAccounts(accounts: Iterable<DaemonAccountEntry>): string[] {
   return signedOut.applyDaemon(accounts);
@@ -368,9 +363,4 @@ export function openWithDesktop(parent: Gtk.Window | null, path: string, ask = f
       }
     });
   });
-}
-
-/** An error's text for a toast; never the part's content or a credential. */
-export function failureText(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
 }

@@ -4,7 +4,12 @@
  * them inline rather than failing the whole page.
  */
 
-import { GnomeUnavailableError, type BackendAccount, type GnomeAccount } from '@curlew/protocol';
+import {
+  GnomeUnavailableError,
+  type BackendAccount,
+  type GnomeAccount,
+  errorMessage,
+} from '@curlew/protocol';
 import { isOwnAccountId } from '@curlew/imap';
 import { configPath } from '@curlew/store';
 
@@ -15,10 +20,6 @@ import { chatOnly } from '../core/platform.ts';
 import type { BackendStatus } from '../core/backends/registry.ts';
 import { loadAccountLabels } from './account-labels.ts';
 import type { AccountsLoadState } from './accounts-model.ts';
-
-function errorText(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
-}
 
 function enabledChatBackends(backends: BackendStatus[]): BackendStatus[] {
   return backends.filter((b) => b.enabled && b.name !== 'mail');
@@ -37,7 +38,7 @@ export async function loadAccountsState(path = configPath()): Promise<AccountsLo
   ).then(
     (accounts): { accounts: GnomeAccount[]; error?: string } => ({ accounts }),
     (err: unknown): { accounts: GnomeAccount[]; error?: string } =>
-      err instanceof GnomeUnavailableError ? { accounts: [] } : { accounts: [], error: errorText(err) },
+      err instanceof GnomeUnavailableError ? { accounts: [] } : { accounts: [], error: errorMessage(err) },
   );
 
   const mailEnabled = backends.some((b) => b.name === 'mail' && b.enabled);
@@ -57,7 +58,7 @@ export async function loadAccountsState(path = configPath()): Promise<AccountsLo
       (err: unknown): { backend: string; accounts: BackendAccount[]; error: string } => ({
         backend: backend.name,
         accounts: [],
-        error: errorText(err),
+        error: errorMessage(err),
       }),
     ),
   );

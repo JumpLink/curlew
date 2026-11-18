@@ -1,3 +1,4 @@
+import { errorMessage } from '@curlew/protocol';
 /**
  * Debounce for pushing the read position to the person's own devices (#441): one pending sync
  * per conversation, run once the position has been quiet for `delayMs`. A failure is logged and
@@ -33,7 +34,7 @@ export function createReadSyncScheduler(
         timers.set(() => {
           pending.delete(key);
           run().catch((error: unknown) => {
-            log(`read sync for ${key} failed: ${error instanceof Error ? error.message : String(error)}`);
+            log(`read sync for ${key} failed: ${errorMessage(error)}`);
           });
         }, delayMs),
       );

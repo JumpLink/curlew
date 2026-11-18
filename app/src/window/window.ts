@@ -622,6 +622,7 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   let changedWhileLoading = false;
   let liveNext = false;
   let liveIdle = 0;
+  let liveRetry = 0;
   const pendingLoad: Array<() => void> = [];
   const refresh = () => {
     stamp = listStamp();
@@ -673,7 +674,12 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
       const result = conversation.update(loaded);
       if (result === 'busy') {
         liveNext = true;
-        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => (followOpenChat(), GLib.SOURCE_REMOVE));
+        if (liveRetry) GLib.source_remove(liveRetry);
+        liveRetry = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => {
+          liveRetry = 0;
+          followOpenChat();
+          return GLib.SOURCE_REMOVE;
+        });
         return GLib.SOURCE_REMOVE;
       }
       const known = new Set(currentMessages.map((m) => m.id));
@@ -717,8 +723,10 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
       return GLib.SOURCE_REMOVE;
     });
   });
+  let searchHook = 0;
   if (options.search !== undefined)
-    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 800, () => {
+    searchHook = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 800, () => {
+      searchHook = 0;
       sidebar.showSearch(options.search!, options.openScope === true);
       return GLib.SOURCE_REMOVE;
     });
@@ -777,7 +785,7 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   // A poll, not a signal, so a message that lands while the person watches the end counts as read too.
   const READ_AFTER_MS = 1500;
   let lookedSince = 0;
-  GLib.timeout_add(GLib.PRIORITY_DEFAULT_IDLE, 500, () => {
+  const readPoll = GLib.timeout_add(GLib.PRIORITY_DEFAULT_IDLE, 500, () => {
     const open = currentEntry;
     const entry = open && shown.find((e) => e.id === open.id);
     // On a phone the split is collapsed and going back shows the list while the chat stays current.
@@ -820,6 +828,9 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
     INDEX_WATCH_MS,
   );
   window.connect('destroy', () => {
+    // Nothing may fire into the destroyed window: the poll, the retries and the pending idles.
+    for (const id of [readPoll, liveRetry, searchHook, suggestionsIdle, activationIdle, liveIdle])
+      if (id !== 0) GLib.source_remove(id);
     readSync.cancelAll();
     stopIndexWatch();
     stopConfigWatch();

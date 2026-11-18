@@ -3,13 +3,12 @@
 import GLib from 'gi://GLib?version=2.0';
 import Adw from 'gi://Adw?version=1';
 import Gtk from 'gi://Gtk?version=4.0';
-import { _, fmt } from '@curlew/protocol';
+import { _, fmt, errorMessage } from '@curlew/protocol';
 
 import { attachmentKind, isSignedOutFailure, playbackFraction, playbackLabel } from './attachment-model.ts';
 import {
   type AttachmentSource,
   blockedBySignOut,
-  failureText,
   fetchAttachment,
   noteFetchFailure,
   saveCopyAs,
@@ -158,7 +157,7 @@ export function audioPlayer(source: AttachmentSource, toast: (text: string) => v
       })
       .catch((err: unknown) => {
         if (signedOutFailure(err)) return;
-        toast(fmt(_('Could not fetch the attachment: {error}'), { error: failureText(err) }));
+        toast(fmt(_('Could not fetch the attachment: {error}'), { error: errorMessage(err) }));
       })
       .finally(() => {
         fetching = false;
@@ -186,7 +185,7 @@ export function audioPlayer(source: AttachmentSource, toast: (text: string) => v
       .then((file) => saveCopyAs(window, file, GLib.path_get_basename(file)))
       .catch((err: unknown) => {
         if (signedOutFailure(err)) return;
-        toast(fmt(_('Could not fetch the attachment: {error}'), { error: failureText(err) }));
+        toast(fmt(_('Could not fetch the attachment: {error}'), { error: errorMessage(err) }));
       })
       .finally(() => {
         if (save.get_root() !== null && !blocked) save.set_sensitive(true);

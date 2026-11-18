@@ -13,7 +13,7 @@ import GLib from 'gi://GLib?version=2.0';
 import GObject from 'gi://GObject?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import Pango from 'gi://Pango?version=1.0';
-import { _, fmt } from '@curlew/protocol';
+import { _, fmt, errorMessage } from '@curlew/protocol';
 import { ensurePrivateDir, previewsDir } from '@curlew/store';
 
 import { MAX_PICKED_FILES, mergePicked, pastedImageName, type PickedFile } from './composer-files-model.ts';
@@ -162,7 +162,7 @@ export function createComposerFiles(options: ComposerFilesOptions): ComposerFile
         for (let i = 0; i < (model?.get_n_items() ?? 0); i++) files.push(model!.get_item(i) as Gio.File);
         addFiles(files);
       } catch (err) {
-        if (!dismissed(err)) options.toast(err instanceof Error ? err.message : String(err));
+        if (!dismissed(err)) options.toast(errorMessage(err));
       }
     });
   });
@@ -197,7 +197,7 @@ export function createComposerFiles(options: ComposerFilesOptions): ComposerFile
           const list = clipboard.read_value_finish(res) as Gdk.FileList;
           addFiles(list.get_files());
         } catch (err) {
-          options.toast(err instanceof Error ? err.message : String(err));
+          options.toast(errorMessage(err));
         }
       });
       return true;
@@ -208,7 +208,7 @@ export function createComposerFiles(options: ComposerFilesOptions): ComposerFile
           const texture = clipboard.read_texture_finish(res);
           if (texture) add([{ ...savePasted(texture), temporary: true }]);
         } catch (err) {
-          options.toast(err instanceof Error ? err.message : String(err));
+          options.toast(errorMessage(err));
         }
       });
       return true;

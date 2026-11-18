@@ -3,7 +3,7 @@
 import Adw from 'gi://Adw?version=1';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
-import { _ } from '@curlew/protocol';
+import { _, errorMessage } from '@curlew/protocol';
 import { configPath } from '@curlew/store';
 
 import { chatOnly } from '../core/platform.ts';
@@ -23,12 +23,27 @@ function appearanceStore(path: string, overlay: Adw.ToastOverlay): AppearanceSto
         Object.assign(config.ui, change);
         saveConfig(config, path);
       } catch (err) {
-        overlay.add_toast(
-          new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
-        );
+        overlay.add_toast(new Adw.Toast({ title: errorMessage(err), timeout: 6 }));
       }
     },
   };
+}
+
+/** Loads the config, applies one change, saves it and runs `after`; a failure becomes a toast. */
+function persist(
+  path: string,
+  overlay: Adw.ToastOverlay,
+  change: (config: ReturnType<typeof loadConfig>) => void,
+  after?: () => void,
+): void {
+  try {
+    const config = loadConfig(path);
+    change(config);
+    saveConfig(config, path);
+    after?.();
+  } catch (err) {
+    overlay.add_toast(new Adw.Toast({ title: errorMessage(err), timeout: 6 }));
+  }
 }
 
 export function presentPreferences(
@@ -103,75 +118,51 @@ export function presentPreferences(
   const dialog = new Adw.Dialog({ title: _('Preferences'), contentWidth: 520, contentHeight: 700 });
   dialog.set_child(overlay);
 
-  row.connect('notify::active', () => {
-    try {
-      const config = loadConfig(path);
-      config.ui.showAllEmails = row.get_active();
-      saveConfig(config, path);
-      onChanged();
-    } catch (err) {
-      overlay.add_toast(
-        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
-      );
-    }
-  });
-  receipts.connect('notify::active', () => {
-    try {
-      const config = loadConfig(path);
+  row.connect('notify::active', () =>
+    persist(
+      path,
+      overlay,
+      (config) => {
+        config.ui.showAllEmails = row.get_active();
+      },
+      onChanged,
+    ),
+  );
+  receipts.connect('notify::active', () =>
+    persist(path, overlay, (config) => {
       config.ui.sendReadReceipts = receipts.get_active();
-      saveConfig(config, path);
-    } catch (err) {
-      overlay.add_toast(
-        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
-      );
-    }
-  });
-  syncRead.connect('notify::active', () => {
-    try {
-      const config = loadConfig(path);
+    }),
+  );
+  syncRead.connect('notify::active', () =>
+    persist(path, overlay, (config) => {
       config.ui.syncReadState = syncRead.get_active();
-      saveConfig(config, path);
-    } catch (err) {
-      overlay.add_toast(
-        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
-      );
-    }
-  });
-  videos.connect('notify::active', () => {
-    try {
-      const config = loadConfig(path);
-      config.ui.playVideosSilently = videos.get_active();
-      saveConfig(config, path);
-      refreshSilentVideos();
-    } catch (err) {
-      overlay.add_toast(
-        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
-      );
-    }
-  });
-  ai.connect('notify::active', () => {
-    try {
-      const config = loadConfig(path);
-      config.ui.ai = ai.get_active();
-      saveConfig(config, path);
-      onAiChanged();
-    } catch (err) {
-      overlay.add_toast(
-        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
-      );
-    }
-  });
-  notifications.connect('notify::selected', () => {
-    try {
-      const config = loadConfig(path);
+    }),
+  );
+  videos.connect('notify::active', () =>
+    persist(
+      path,
+      overlay,
+      (config) => {
+        config.ui.playVideosSilently = videos.get_active();
+      },
+      refreshSilentVideos,
+    ),
+  );
+  ai.connect('notify::active', () =>
+    persist(
+      path,
+      overlay,
+      (config) => {
+        config.ui.ai = ai.get_active();
+      },
+      onAiChanged,
+    ),
+  );
+  notifications.connect('notify::selected', () =>
+    persist(path, overlay, (config) => {
       config.ui.notifications = modes[notifications.get_selected()] ?? 'preview';
-      saveConfig(config, path);
-    } catch (err) {
-      overlay.add_toast(
-        new Adw.Toast({ title: err instanceof Error ? err.message : String(err), timeout: 6 }),
-      );
-    }
-  });
+    }),
+  );
   dialog.present(parent);
   // The screenshot hook `CURLEW_PREFERENCES_SCROLL_TO_SYNC=1` brings the read-state switch into view.
   if (process.env.CURLEW_PREFERENCES_SCROLL_TO_SYNC === '1')

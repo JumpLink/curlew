@@ -5,10 +5,10 @@
 
 export const SIDEBAR_DEFAULT_MIN = 320;
 export const SIDEBAR_DEFAULT_MAX = 400;
-export const SIDEBAR_FLOOR = 280;
-export const SIDEBAR_CEILING = 600;
+const SIDEBAR_FLOOR = 280;
+const SIDEBAR_CEILING = 600;
 /** The chat needs this much beside the list, or its composer and bubbles are clipped. */
-export const CONTENT_FLOOR = 360;
+const CONTENT_FLOOR = 360;
 /** One arrow-key press on the handle moves the edge this far. */
 export const SIDEBAR_STEP = 16;
 

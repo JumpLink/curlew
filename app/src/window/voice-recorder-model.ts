@@ -1,7 +1,7 @@
 /** Pure rules for recording a voice note: its name, its limits and how the composer reads it back. */
 
 import { durationLabel } from './attachment-model.ts';
-import type { PickedFile } from './composer-files-model.ts';
+import { fileStamp, type PickedFile } from './composer-files-model.ts';
 
 /** A note shorter than this is a slip of the finger and is dropped. */
 export const MIN_VOICE_MS = 500;
@@ -11,8 +11,7 @@ export const MAX_VOICE_MS = 5 * 60 * 1000;
 
 /** The name a recording is saved under: sortable, Ogg because that is what the container holds. */
 export function voiceNoteName(at: Date): string {
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `voice-${at.getFullYear()}-${p(at.getMonth() + 1)}-${p(at.getDate())}-${p(at.getHours())}${p(at.getMinutes())}${p(at.getSeconds())}.ogg`;
+  return `voice-${fileStamp(at)}.ogg`;
 }
 
 /** Whether a finished recording is worth sending; the length is clamped to the limit. */

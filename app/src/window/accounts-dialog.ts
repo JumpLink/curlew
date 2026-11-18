@@ -7,7 +7,7 @@ import Adw from 'gi://Adw?version=1';
 import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import type Gtk from 'gi://Gtk?version=4.0';
-import { _ } from '@curlew/protocol';
+import { _, errorMessage } from '@curlew/protocol';
 import { configPath } from '@curlew/store';
 
 import {
@@ -145,7 +145,7 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
       if (!open) return;
       render();
     } catch (err) {
-      page.showError(err instanceof Error ? err.message : String(err));
+      page.showError(errorMessage(err));
     } finally {
       loading = false;
       if (again && open) {
@@ -175,8 +175,14 @@ export function presentAccounts(parent: Gtk.Window | null, options: AccountsDial
   });
   dialog.present(parent);
   if (options.openProtocols)
-    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => (openProtocols(), GLib.SOURCE_REMOVE));
+    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => {
+      if (open) openProtocols();
+      return GLib.SOURCE_REMOVE;
+    });
   const openAdd = options.openAdd;
   if (openAdd)
-    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => (openAddPage(openAdd), GLib.SOURCE_REMOVE));
+    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => {
+      if (open) openAddPage(openAdd);
+      return GLib.SOURCE_REMOVE;
+    });
 }

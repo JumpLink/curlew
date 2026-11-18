@@ -6,7 +6,7 @@
 
 import Adw from 'gi://Adw?version=1';
 import type Gtk from 'gi://Gtk?version=4.0';
-import { _ } from '@curlew/protocol';
+import { _, errorMessage } from '@curlew/protocol';
 import { configPath, indexDbPath, openIndexDb } from '@curlew/store';
 import { existsSync } from 'node:fs';
 
@@ -51,7 +51,7 @@ export function presentAgentAccess(parent: Gtk.Window | null): void {
       try {
         result = updateAgentAccess(edit, path);
       } catch (err) {
-        result = { ok: false, error: 'invalid', detail: err instanceof Error ? err.message : String(err) };
+        result = { ok: false, error: 'invalid', detail: errorMessage(err) };
       }
       // The file is the truth: show what is in it now, also after a refusal.
       void reload();
@@ -72,7 +72,7 @@ export function presentAgentAccess(parent: Gtk.Window | null): void {
       try {
         state = loadAgentAccess(path);
       } catch (err) {
-        page.showError(err instanceof Error ? err.message : String(err));
+        page.showError(errorMessage(err));
         return;
       }
       // Names from the index are looked up per refresh: they change as the daemon syncs.

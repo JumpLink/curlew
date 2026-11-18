@@ -32,10 +32,15 @@ export function mergePicked(
   return { files, skipped };
 }
 
+/** A sortable local timestamp for generated file names: `2026-11-18-142530`. */
+export function fileStamp(at: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${at.getFullYear()}-${p(at.getMonth() + 1)}-${p(at.getDate())}-${p(at.getHours())}${p(at.getMinutes())}${p(at.getSeconds())}`;
+}
+
 /** The name a pasted picture is saved under: sortable, no characters a file manager dislikes. */
 export function pastedImageName(at: Date): string {
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `pasted-image-${at.getFullYear()}-${p(at.getMonth() + 1)}-${p(at.getDate())}-${p(at.getHours())}${p(at.getMinutes())}${p(at.getSeconds())}.png`;
+  return `pasted-image-${fileStamp(at)}.png`;
 }
 
 /** The file names, as the local copy of a message without text shows them. */
