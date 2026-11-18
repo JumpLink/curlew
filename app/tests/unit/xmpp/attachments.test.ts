@@ -76,6 +76,7 @@ interface Served {
   status?: number;
   headers?: Record<string, string>;
   body?: Uint8Array;
+  stream?: ReadableStream<Uint8Array>;
 }
 
 /** A fake file server: one scripted answer per URL, the requests it saw recorded. */
@@ -85,7 +86,7 @@ function fakeFetch(routes: Record<string, Served>) {
     seen.push({ url: String(input), redirect: init?.redirect });
     const route = routes[String(input)];
     if (!route) return new Response(null, { status: 404 });
-    return new Response((route.body ?? new Uint8Array()) as BodyInit | undefined, {
+    return new Response((route.stream ?? route.body ?? new Uint8Array()) as BodyInit | undefined, {
       status: route.status ?? 200,
       headers: route.headers,
     });
@@ -259,6 +260,23 @@ export default async () => {
       });
       await withBackend({ [url]: { body: PLAIN } }, async (fetch) => {
         expect(await failure(fetch(url, new MemorySink(), 4))).not.toBe(null);
+      });
+    });
+
+    await it('closes the response stream when the download outgrows the limit', async () => {
+      const url = 'https://files.example.org/up/endless.bin';
+      let cancelled = false;
+      const stream = new ReadableStream<Uint8Array>({
+        pull(controller) {
+          controller.enqueue(PLAIN);
+        },
+        cancel() {
+          cancelled = true;
+        },
+      });
+      await withBackend({ [url]: { stream } }, async (fetch) => {
+        expect(await failure(fetch(url, new MemorySink(), 4))).not.toBe(null);
+        expect(cancelled).toBe(true);
       });
     });
 

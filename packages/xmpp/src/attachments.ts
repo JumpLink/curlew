@@ -89,10 +89,16 @@ export class XmppAttachments implements AttachmentFetcher {
     };
     const reader = response.body?.getReader();
     if (reader) {
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        await take(value);
+      try {
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          await take(value);
+        }
+      } catch (err) {
+        // A refused or aborted download must not leave the connection open behind it.
+        await reader.cancel().catch(() => {});
+        throw err;
       }
     } else {
       await take(new Uint8Array(await response.arrayBuffer()));
