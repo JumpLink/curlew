@@ -216,11 +216,17 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
             }
           };
 
+          // The abort listener is taken off again when the link closes first: one is added per
+          // reconnect, and a long-lived account would otherwise pile them up on `live`.
+          let dropAbortListener = (): void => {};
           const closed = new Promise<{ reason: string; loggedOut: boolean }>((resolve) => {
-            session?.onClosed((reason, loggedOut) => resolve({ reason, loggedOut: loggedOut === true }));
-            live.addEventListener('abort', () => resolve({ reason: 'stopped', loggedOut: false }), {
-              once: true,
+            const onAbort = (): void => resolve({ reason: 'stopped', loggedOut: false });
+            dropAbortListener = () => live.removeEventListener('abort', onAbort);
+            session?.onClosed((reason, loggedOut) => {
+              dropAbortListener();
+              resolve({ reason, loggedOut: loggedOut === true });
             });
+            live.addEventListener('abort', onAbort, { once: true });
           });
           const unsubscribe = session.onArrival(() => {
             log(`curlew-daemon: ${who} arrival hint — catching up`);
@@ -248,6 +254,7 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
           attempt = 0;
           await catchUp();
           const end = await closed;
+          dropAbortListener();
           unsubscribe();
           if (live.aborted) break;
           if (end.loggedOut) throw new LoggedOut(end.reason);
