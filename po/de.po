@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-18 09:00+0100\n"
+"POT-Creation-Date: 2026-11-18 09:35+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -3801,7 +3801,7 @@ msgstr "Das E-Mail-Konto {account} ist unvollständig — füge es erneut hinzu"
 msgid "marking mail as read is not available here"
 msgstr "Mails als gelesen zu markieren ist hier nicht möglich"
 
-#: packages/imap/src/send.ts:95 packages/matrix/src/send.ts:397
+#: packages/imap/src/send.ts:95 packages/matrix/src/send.ts:388
 #: packages/signal/src/send.ts:536 packages/telegram/src/sender.ts:84
 #: packages/whatsapp/src/send.ts:425
 msgid "sending to {address} is not granted for account {account}"
@@ -3840,21 +3840,21 @@ msgstr ""
 "Die Nachricht wurde gesendet, aber ihre Kopie konnte nicht im Ordner "
 "„Gesendet“ gespeichert werden: {reason}"
 
-#: packages/matrix/src/attachments.ts:46
+#: packages/matrix/src/attachments.ts:37
 msgid "the homeserver refused the download ({reason})"
 msgstr "der Homeserver hat den Download abgewiesen ({reason})"
 
-#: packages/matrix/src/attachments.ts:52 packages/signal/src/attachments.ts:31
+#: packages/matrix/src/attachments.ts:43 packages/signal/src/attachments.ts:31
 #: packages/telegram/src/attachments.ts:86
 #: packages/whatsapp/src/attachments.ts:25 packages/xmpp/src/attachments.ts:28
 msgid "the attachment is larger than the limit of {limit} bytes"
 msgstr "der Anhang ist größer als das Limit von {limit} Bytes"
 
-#: packages/matrix/src/attachments.ts:90
+#: packages/matrix/src/attachments.ts:81
 msgid "this Matrix attachment cannot be found any more"
 msgstr "dieser Matrix-Anhang ist nicht mehr zu finden"
 
-#: packages/matrix/src/attachments.ts:122
+#: packages/matrix/src/attachments.ts:113
 msgid ""
 "the Matrix attachment arrived with {actual} bytes, not the announced "
 "{announced}"
@@ -3973,17 +3973,17 @@ msgid_plural "matrix: {n} events not decryptable"
 msgstr[0] "matrix: {n} Ereignis nicht entschlüsselbar"
 msgstr[1] "matrix: {n} Ereignisse nicht entschlüsselbar"
 
-#: packages/matrix/src/send.ts:188
+#: packages/matrix/src/send.ts:179
 msgid "the homeserver refused the message to {room} ({reason})"
 msgstr "Der Homeserver hat die Nachricht an {room} abgewiesen ({reason})"
 
-#: packages/matrix/src/send.ts:197
+#: packages/matrix/src/send.ts:188
 msgid "the homeserver accepted the message to {room} but returned no event id"
 msgstr ""
 "Der Homeserver hat die Nachricht an {room} angenommen, aber keine Event-ID "
 "zurückgegeben"
 
-#: packages/matrix/src/send.ts:216
+#: packages/matrix/src/send.ts:207
 msgid ""
 "the homeserver did not say whether {room} is encrypted ({reason}) — nothing "
 "was sent"
@@ -3991,11 +3991,11 @@ msgstr ""
 "Der Homeserver hat nicht mitgeteilt, ob {room} verschlüsselt ist ({reason}) "
 "— es wurde nichts gesendet"
 
-#: packages/matrix/src/send.ts:233
+#: packages/matrix/src/send.ts:224
 msgid "the homeserver refused the read marker in {room} ({reason})"
 msgstr "Der Homeserver hat die Lesemarkierung in {room} abgewiesen ({reason})"
 
-#: packages/matrix/src/send.ts:273
+#: packages/matrix/src/send.ts:264
 msgid ""
 "the homeserver did not list the reactions in {room} ({reason}) — nothing was "
 "sent"
@@ -4003,21 +4003,21 @@ msgstr ""
 "Der Homeserver hat die Reaktionen in {room} nicht aufgelistet ({reason}) — "
 "es wurde nichts gesendet"
 
-#: packages/matrix/src/send.ts:308
+#: packages/matrix/src/send.ts:299
 msgid "the homeserver did not redact the event in {room} ({reason})"
 msgstr "Der Homeserver hat das Ereignis in {room} nicht entfernt ({reason})"
 
-#: packages/matrix/src/send.ts:325
+#: packages/matrix/src/send.ts:316
 msgid "the homeserver refused the file {file} ({reason})"
 msgstr "der Homeserver hat die Datei {file} abgewiesen ({reason})"
 
-#: packages/matrix/src/send.ts:334
+#: packages/matrix/src/send.ts:325
 msgid "the homeserver accepted the file {file} but returned no media URI"
 msgstr ""
 "der Homeserver hat die Datei {file} angenommen, aber keine Medien-URI "
 "zurückgegeben"
 
-#: packages/matrix/src/send.ts:417
+#: packages/matrix/src/send.ts:408
 msgid ""
 "{room} is end-to-end encrypted and curlew cannot send encrypted messages yet "
 "— nothing was sent, send it from a Matrix client"
@@ -4026,12 +4026,12 @@ msgstr ""
 "verschlüsselten Nachrichten senden — es wurde nichts gesendet, sende sie aus "
 "einem Matrix-Client"
 
-#: packages/matrix/src/send.ts:433 packages/matrix/src/send.ts:535
-#: packages/matrix/src/send.ts:552 packages/matrix/src/send.ts:587
+#: packages/matrix/src/send.ts:424 packages/matrix/src/send.ts:526
+#: packages/matrix/src/send.ts:543 packages/matrix/src/send.ts:578
 msgid "{id} is not a Matrix event id — nothing was sent"
 msgstr "{id} ist keine Matrix-Event-ID — es wurde nichts gesendet"
 
-#: packages/matrix/src/send.ts:438
+#: packages/matrix/src/send.ts:429
 msgid ""
 "a Matrix message holds at most {max} bytes of text, this one has {bytes} — "
 "shorten it"
@@ -4039,14 +4039,14 @@ msgstr ""
 "Eine Matrix-Nachricht fasst höchstens {max} Byte Text, diese hat {bytes} — "
 "kürze sie"
 
-#: packages/matrix/src/send.ts:555 packages/signal/src/send.ts:310
+#: packages/matrix/src/send.ts:546 packages/signal/src/send.ts:310
 #: packages/telegram/src/sender.ts:145 packages/whatsapp/src/send.ts:163
 #: packages/xmpp/src/messages.ts:36
 msgid "only your own messages can be changed — nothing was sent"
 msgstr ""
 "nur eigene Nachrichten können geändert werden — es wurde nichts gesendet"
 
-#: packages/matrix/src/send.ts:565
+#: packages/matrix/src/send.ts:556
 msgid "the edited text is too long for one Matrix message — nothing was sent"
 msgstr ""
 "der bearbeitete Text ist zu lang für eine Matrix-Nachricht — es wurde nichts "
