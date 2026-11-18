@@ -155,6 +155,7 @@ export async function discoverServers(
     try {
       body = await fetchText(url);
     } catch {
+      // A failing candidate URL is normal (most providers publish only one); try the next.
       body = null;
     }
     if (!body) continue;

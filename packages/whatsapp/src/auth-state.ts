@@ -58,6 +58,7 @@ export function readOwnAddress(store: SecretStore): string | null {
       lid: typeof me?.lid === 'string' ? me.lid : null,
     });
   } catch {
+    // Unreadable credentials are the same as none: no own address is known.
     return null;
   }
 }

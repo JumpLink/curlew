@@ -110,6 +110,7 @@ export function parseAttachmentHandle(handle: string): WaAttachmentHandle | null
     if (length !== null && (typeof length !== 'number' || !Number.isSafeInteger(length) || length < 0)) return null;
     return { type, mediaKey, directPath: path, url: link, sha256: digest, length };
   } catch {
+    // Not JSON: a malformed handle is an unusable one, reported as such by the caller.
     return null;
   }
 }

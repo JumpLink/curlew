@@ -173,6 +173,7 @@ export const createBaileysConnection: ConnectionFactory = ({ auth, fullHistory =
       // Hand over what Baileys still buffers BEFORE closing: `end()` destroys the buffer, and
       // the messages in it were already acknowledged — the server will not send them again.
       sock.ev.flush();
+      // Closing an already dead socket may reject; there is nothing left to clean up.
       void sock.end(undefined).catch(() => {});
     },
   };
