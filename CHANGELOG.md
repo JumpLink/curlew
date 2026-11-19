@@ -9,6 +9,7 @@
 
 ### Fixed
 
+- The welcome screen shows on a first start on GNOME too: the accounts of GNOME Online Accounts no longer count as accounts Curlew already holds, so it was never shown on a desktop that had any.
 - The buttons at the bottom of the welcome pages (Delta Chat, AI, summary) no longer sit on the window edge, and the Signal, Telegram and WhatsApp notices write the app name as "Curlew".
 - The macOS and Windows packages open the window: they shipped only a GJS window that Node cannot load, so `curlew window` said it needed GJS and starting the app printed "Please provide a command". They now carry a Node build of the window, and opening the app, `curlew window` and `curlew demo` show it (#466).
 - Images and videos that Telegram, Matrix and XMPP chats held before thumbnails existed get their preview over the next few syncs instead of keeping the dark box.

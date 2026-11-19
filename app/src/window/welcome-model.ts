@@ -135,8 +135,17 @@ export function countAccounts(load: AccountsLoadState): number {
 }
 
 /**
- * Show the screen on a first start only. Somebody who already has accounts is an existing user and
- * never sees it on its own; the flag, not the account count, keeps it away after a removal.
+ * The accounts Curlew itself holds: its own mail and every chat protocol. The GNOME Online
+ * Accounts are the desktop's, so a fresh install on GNOME already sees them and is still new.
+ */
+export function countOwnAccounts(load: AccountsLoadState): number {
+  return countAccounts(load) - load.goaAccounts.accounts.length;
+}
+
+/**
+ * Show the screen on a first start only. Somebody who already holds accounts in Curlew is an
+ * existing user and never sees it on its own; the flag, not the account count, keeps it away
+ * after a removal.
  */
 export function shouldShowWelcome(welcomeDone: boolean | undefined, accountCount: number): boolean {
   return welcomeDone !== true && accountCount === 0;
