@@ -1,6 +1,6 @@
 {
   "name": "curlew-cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "AGPL-3.0-or-later",
   "private": true,
   "type": "module",
@@ -143,6 +143,11 @@
       },
       "contentRating": "oars-1.1",
       "releases": [
+        {
+          "version": "0.2.1",
+          "date": "2026-11-19",
+          "description": "Download pages now show the macOS packages as signed and notarised, and the screenshots come in light and dark."
+        },
         {
           "version": "0.2.0",
           "date": "2026-11-19",

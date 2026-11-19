@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1 — 2026-11-19
+
+A packaging release; the app itself is unchanged from 0.2.0.
+
+- Every package now ships with its release record, so the download page shows the macOS `.dmg` and
+  `.zip` as signed and notarised (they already were in 0.2.0; the page could not tell).
+- Screenshots keep the window's rounded corners and shadow and come in a light and a dark variant.
+
 ## 0.2.0 — 2026-11-19
 
 The first public release.
