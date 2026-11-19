@@ -10,6 +10,7 @@ Agent- and contributor-facing docs for the curlew repo. The hard rules that load
 
 ## Android
 
+- [`android/p5-measurement.md`](android/p5-measurement.md) — what runs under NativeScript, per package
 - [`android/target-gap.md`](android/target-gap.md) — measured gaps of the NativeScript target (widgets, enums, namespaces), the measuring command
 
 ## Guide
@@ -58,6 +59,7 @@ Agent- and contributor-facing docs for the curlew repo. The hard rules that load
 - [`adr/0015-capabilities-per-thread.md`](adr/0015-capabilities-per-thread.md) — capabilities are per thread and person (proposed)
 - [`adr/0016-the-window-stays-in-the-background.md`](adr/0016-the-window-stays-in-the-background.md) — hold and hide the window only where the person can get it back (proposed)
 - [`adr/0017-media-thumbnails-at-sync.md`](adr/0017-media-thumbnails-at-sync.md) — store the preview the network ships with the message, so a big video is not a dark box (accepted)
+- [`adr/0018-mail-transport-is-a-byte-stream-port.md`](adr/0018-mail-transport-is-a-byte-stream-port.md) — the IMAP client talks to a byte-stream port, sending is its own entry, Android waits for Gio TLS (proposed)
 
 ## Design and references
 

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import type { DeliverySession, MessageBackend, MessageSender, SendingReadSync } from '@curlew/protocol';
-import { MailSender } from '@curlew/imap';
+import { MailSender } from '@curlew/imap/send';
 import { GrantedXmppSession, mdsPublish, XmppQueryError, type XmppLink } from '@curlew/xmpp';
 import { chatConversationId, rebuildConversations, syncChats } from '@curlew/store';
 import { openIndex } from '../../../src/core/actions/index-sync.ts';

@@ -3,7 +3,8 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSyn
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { MAIL_MANIFEST, MailSender, contentTypeFor, readAttachments } from '@curlew/imap';
+import { MAIL_MANIFEST, contentTypeFor, readAttachments } from '@curlew/imap';
+import { MailSender } from '@curlew/imap/send';
 import type { MessageBackend, SendPermit, SmtpTarget } from '@curlew/protocol';
 
 import { sendAsAgent, sendMessage } from '../../../src/core/actions/send.ts';

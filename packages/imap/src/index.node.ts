@@ -3,7 +3,8 @@
  */
 
 export { searchMail, getMessage, listFolders, listParts, fetchPart, ImapBackend } from './unavailable.ts';
-export { isOwnMailAddress, MailSender, openMailSender } from './send.ts';
+export { ImapClient } from './client.ts';
+export { isOwnMailAddress } from './own-address.ts';
 export { contentTypeFor, readAttachments } from './attachments.ts';
 export { MAIL_MANIFEST } from './manifest.ts';
 export { isOwnAccountId } from './own-accounts.ts';

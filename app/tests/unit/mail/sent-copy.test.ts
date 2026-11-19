@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import { MailSender, fileSentCopy, providerFilesSentMail } from '@curlew/imap';
+import { fileSentCopy, providerFilesSentMail } from '@curlew/imap';
+import { MailSender } from '@curlew/imap/send';
 import type { SentFolderSession } from '@curlew/imap';
 import type { FolderInfo, SendPermit, SmtpTarget } from '@curlew/protocol';
 

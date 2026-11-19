@@ -4,7 +4,8 @@
 
 export { searchMail, getMessage, listFolders, listParts, fetchPart } from './messages.gjs.ts';
 export { ImapBackend } from './backend.gjs.ts';
-export { isOwnMailAddress, MailSender, openMailSender } from './send.ts';
+export { ImapClient } from './client.ts';
+export { isOwnMailAddress } from './own-address.ts';
 export { contentTypeFor, readAttachments } from './attachments.ts';
 export { MAIL_MANIFEST } from './manifest.ts';
 export { isOwnAccountId } from './own-accounts.ts';
