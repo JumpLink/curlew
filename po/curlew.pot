@@ -3431,33 +3431,33 @@ msgstr ""
 msgid "the mail account {account} is incomplete — add it again"
 msgstr ""
 
-#: packages/imap/src/send.ts:87
+#: packages/imap/src/send.ts:78
 msgid "marking mail as read is not available here"
 msgstr ""
 
-#: packages/imap/src/send.ts:95 packages/matrix/src/send.ts:388
+#: packages/imap/src/send.ts:86 packages/matrix/src/send.ts:388
 #: packages/signal/src/send.ts:536 packages/telegram/src/sender.ts:84
 #: packages/whatsapp/src/send.ts:425
 msgid "sending to {address} is not granted for account {account}"
 msgstr ""
 
-#: packages/imap/src/send.ts:161
+#: packages/imap/src/send.ts:152
 msgid "only a Delta Chat message can be reacted to by mail"
 msgstr ""
 
-#: packages/imap/src/send.ts:178
+#: packages/imap/src/send.ts:169
 msgid "only your own Delta Chat messages can be changed by mail"
 msgstr ""
 
-#: packages/imap/src/send.ts:187
+#: packages/imap/src/send.ts:178
 msgid "an edited message cannot be empty"
 msgstr ""
 
-#: packages/imap/src/send.ts:225
+#: packages/imap/src/send.ts:216
 msgid "only a Delta Chat message gets a read receipt by mail"
 msgstr ""
 
-#: packages/imap/src/send.ts:256
+#: packages/imap/src/send.ts:241
 msgid "no mail account {account} with SMTP — `curlew accounts list` shows them"
 msgstr ""
 

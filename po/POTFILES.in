@@ -202,12 +202,16 @@ packages/imap/src/add-account.ts
 packages/imap/src/attachments.ts
 packages/imap/src/autoconfig.ts
 packages/imap/src/backend.gjs.ts
-packages/imap/src/client.gjs.ts
+packages/imap/src/client.ts
 packages/imap/src/index.gjs.ts
 packages/imap/src/index.node.ts
 packages/imap/src/manifest.ts
 packages/imap/src/messages.gjs.ts
 packages/imap/src/own-accounts.ts
+packages/imap/src/own-address.ts
+packages/imap/src/send-backend.gjs.ts
+packages/imap/src/send-entry.gjs.ts
+packages/imap/src/send-entry.node.ts
 packages/imap/src/send.ts
 packages/imap/src/sent-copy.ts
 packages/imap/src/system-targets.ts
@@ -251,6 +255,7 @@ packages/protocol/src/abort.ts
 packages/protocol/src/availability.ts
 packages/protocol/src/backend.ts
 packages/protocol/src/bodystructure.ts
+packages/protocol/src/byte-stream.ts
 packages/protocol/src/encoding.ts
 packages/protocol/src/errors.ts
 packages/protocol/src/i18n.ts

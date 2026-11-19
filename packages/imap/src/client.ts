@@ -1,17 +1,17 @@
 /**
- * Minimal IMAP client (GJS-only): connect, login, select, list, search, fetch.
+ * Minimal IMAP client: connect, login, select, list, search, fetch.
  *
  * Speaks the subset of RFC 3501 this project needs. All response and MIME parsing lives in the
- * pure @curlew/protocol modules — this file is socket plumbing and command sequencing only.
+ * pure @curlew/protocol modules — this file is command sequencing only, over the `ByteStream`
+ * the opener hands it (ADR 0018). No `gi://`: it runs against a scripted stream on every runtime.
  *
  * Privacy: the password is pulled from the target's `getPassword()` thunk at login and never
  * logged, stored, or returned. Every body read uses BODY.PEEK, so nothing here can set \Seen.
  */
 
-import GLib from 'gi://GLib?version=2.0';
-import type Gio from 'gi://Gio?version=2.0';
-
 import {
+  ByteReader,
+  type ByteStream,
   bytesToLatin1,
   buildSearchPlan,
   type FolderInfo,
@@ -19,6 +19,7 @@ import {
   imapLiteralPlaceholder,
   type LiteralSink,
   type MailSearchCriteria,
+  type MailStreamOpener,
   type MailTarget,
   parseFolderList,
   parseSearchUids,
@@ -27,7 +28,6 @@ import {
   renderSearchPlan,
   type SearchPart,
 } from '@curlew/protocol';
-import { ByteReader, openTlsStream } from './transport.gjs.ts';
 
 export interface ImapResponse {
   ok: boolean;
@@ -53,16 +53,20 @@ export interface FetchStreamResult {
 }
 
 export class ImapClient {
-  private conn!: Gio.IOStream;
+  private readonly open: MailStreamOpener;
+  private conn!: ByteStream;
   private reader!: ByteReader;
-  private output!: Gio.OutputStream;
   private tag = 0;
   private capabilities = new Set<string>();
 
+  /** `open` is the platform's transport; the client never picks one itself. */
+  constructor(open: MailStreamOpener) {
+    this.open = open;
+  }
+
   async connect(target: MailTarget): Promise<void> {
-    this.conn = await openTlsStream(target);
-    this.reader = new ByteReader(this.conn.get_input_stream());
-    this.output = this.conn.get_output_stream();
+    this.conn = await this.open(target);
+    this.reader = new ByteReader(this.conn);
     const greeting = await this.reader.readLine();
     if (!greeting || !/^\*\s+(OK|PREAUTH)/i.test(greeting)) {
       throw new GnomeError(`unexpected IMAP greeting from ${target.host}`);
@@ -81,11 +85,11 @@ export class ImapClient {
   }
 
   private async write(text: string): Promise<void> {
-    await this.output.write_all_async(new TextEncoder().encode(text), GLib.PRIORITY_DEFAULT, null);
+    await this.conn.write(new TextEncoder().encode(text));
   }
 
   private async writeBytes(bytes: Uint8Array): Promise<void> {
-    await this.output.write_all_async(bytes, GLib.PRIORITY_DEFAULT, null);
+    await this.conn.write(bytes);
   }
 
   /** Read a tagged response, inlining server literals as `\0idx\0` placeholders. */
@@ -381,7 +385,7 @@ export class ImapClient {
       // ignore — we are tearing down anyway
     }
     try {
-      this.conn.close(null);
+      await this.conn.close();
     } catch {
       // ignore
     }

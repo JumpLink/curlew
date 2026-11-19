@@ -83,8 +83,10 @@ export class ImapBackend {
   async connect(): Promise<never> {
     throw new GnomeUnavailableError(GJS_REQUIRED_MESSAGE);
   }
+}
 
-  /** The send port exists on both entries so the app type-checks; sending needs the GJS socket. */
+/** The send port exists on both entries so the app type-checks; sending needs the GJS socket. */
+export class ImapSendBackend extends ImapBackend {
   async openSender(_accountId: string, _permit: SendPermit): Promise<MessageSender> {
     throw new GnomeUnavailableError(GJS_REQUIRED_MESSAGE);
   }

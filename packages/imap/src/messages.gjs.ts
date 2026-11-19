@@ -37,7 +37,8 @@ import {
   tokenizeImapList,
   walkBodyStructure,
 } from '@curlew/protocol';
-import { ImapClient, type ImapResponse } from './client.gjs.ts';
+import { ImapClient, type ImapResponse } from './client.ts';
+import { openTlsStream } from './transport.gjs.ts';
 import { resolveMailTargets } from './targets.ts';
 
 const DEFAULT_LIMIT = 25;
@@ -80,7 +81,7 @@ function toSummary(items: ImapValue[], folder: string, accountId: string): MailS
 
 async function connectAndLogin(target: MailTarget): Promise<ImapClient> {
   const password = await target.getPassword();
-  const client = new ImapClient();
+  const client = new ImapClient(openTlsStream);
   await client.connect(target);
   await client.login(target.user, password);
   return client;
