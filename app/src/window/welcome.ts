@@ -194,8 +194,13 @@ export function presentWelcome(parent: Gtk.Window | null, onClosed: () => void, 
       (load) => {
         const choices = mailAccountChoices(load);
         if (choices.length === 0) {
-          group.set_description(
-            _('No mail account yet. Once you add one, you can switch this on in its settings.'),
+          group.add(
+            new Adw.ActionRow({
+              title: _('No mail account yet'),
+              subtitle: _('Once you add one, you can switch this on in its settings.'),
+              iconName: 'mail-unread-symbolic',
+              useMarkup: false,
+            }),
           );
           return;
         }

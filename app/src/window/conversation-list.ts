@@ -486,7 +486,8 @@ export function createConversationList(
   const searchToggle = new Gtk.ToggleButton({ iconName: 'system-search-symbolic' });
   searchToggle.set_tooltip_text(_('Search'));
   searchToggle.bind_property('active', searchBar, 'search-mode-enabled', GObject.BindingFlags.BIDIRECTIONAL);
-  const header = new Adw.HeaderBar();
+  // No title: the sidebar is narrow and the buttons leave no room, so it would truncate on macOS.
+  const header = new Adw.HeaderBar({ titleWidget: new Gtk.Box() });
   const composeButton = new Gtk.Button({
     iconName: 'chat-message-new-symbolic',
     tooltipText: _('New conversation'),

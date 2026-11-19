@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-18 22:28+0100\n"
+"POT-Creation-Date: 2026-11-19 09:32+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2027,8 +2027,8 @@ msgstr "Dieses Konto pausieren?"
 #: app/src/window/account-remove-model.ts:37
 #: app/src/window/account-remove-model.ts:71
 #: app/src/window/agent-access-page.ts:233
-#: app/src/window/conversation-list.ts:503
-#: app/src/window/conversation-list.ts:596
+#: app/src/window/conversation-list.ts:504
+#: app/src/window/conversation-list.ts:597
 #: app/src/window/conversation-view.ts:767 app/src/window/protocols-page.ts:66
 #: app/src/window/protocols-page.ts:142
 msgid "Cancel"
@@ -2038,7 +2038,7 @@ msgstr "Abbrechen"
 msgid "Pause"
 msgstr "Pause"
 
-#: app/src/window/account-detail.ts:145 app/src/window/welcome.ts:205
+#: app/src/window/account-detail.ts:145 app/src/window/welcome.ts:210
 msgid "Use for Delta Chat"
 msgstr "Für Delta Chat verwenden"
 
@@ -2051,7 +2051,7 @@ msgstr ""
 "hat, sieht eine gewöhnliche E-Mail."
 
 #: app/src/window/account-detail.ts:152 app/src/window/protocols-page.ts:169
-#: app/src/window/welcome.ts:211
+#: app/src/window/welcome.ts:216
 msgid "Show ordinary email"
 msgstr "Gewöhnliche E-Mails anzeigen"
 
@@ -2701,7 +2701,7 @@ msgstr "Automatisch"
 msgid "Picture"
 msgstr "Bild"
 
-#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:511
+#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:512
 msgid "Separate"
 msgstr "Trennen"
 
@@ -2937,30 +2937,30 @@ msgstr "Nichts passt zur Suche und den Filtern."
 msgid "Search"
 msgstr "Suchen"
 
-#: app/src/window/conversation-list.ts:492
+#: app/src/window/conversation-list.ts:493
 #: app/src/window/new-conversation.ts:26
 msgid "New conversation"
 msgstr "Neue Unterhaltung"
 
-#: app/src/window/conversation-list.ts:509
-#: app/src/window/conversation-list.ts:597
+#: app/src/window/conversation-list.ts:510
+#: app/src/window/conversation-list.ts:598
 #: app/src/window/merge-assistant.ts:116
 msgid "Merge"
 msgstr "Zusammenführen"
 
-#: app/src/window/conversation-list.ts:512
+#: app/src/window/conversation-list.ts:513
 msgid "Mark as Read"
 msgstr "Als gelesen markieren"
 
-#: app/src/window/conversation-list.ts:513
+#: app/src/window/conversation-list.ts:514
 msgid "Mark as Unread"
 msgstr "Als ungelesen markieren"
 
-#: app/src/window/conversation-list.ts:593
+#: app/src/window/conversation-list.ts:594
 msgid "Merge these people?"
 msgstr "Diese Personen zusammenführen?"
 
-#: app/src/window/conversation-list.ts:594
+#: app/src/window/conversation-list.ts:595
 msgid ""
 "Their chats become one conversation. Nothing is deleted, and you can "
 "separate them again."
@@ -2968,16 +2968,16 @@ msgstr ""
 "Ihre Chats werden zu einer Unterhaltung. Nichts wird gelöscht, und du kannst "
 "sie wieder trennen."
 
-#: app/src/window/conversation-list.ts:627
+#: app/src/window/conversation-list.ts:628
 msgid "Review"
 msgstr "Prüfen"
 
-#: app/src/window/conversation-list.ts:634
+#: app/src/window/conversation-list.ts:635
 #: app/src/window/preferences-dialog.ts:61
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:656
+#: app/src/window/conversation-list.ts:657
 msgid "{count} possible duplicate"
 msgid_plural "{count} possible duplicates"
 msgstr[0] "{count} mögliches Duplikat"
@@ -3435,7 +3435,7 @@ msgid "Media"
 msgstr "Medien"
 
 #: app/src/window/preferences-dialog.ts:100 app/src/window/welcome-model.ts:124
-#: app/src/window/welcome.ts:245
+#: app/src/window/welcome.ts:250
 msgid "AI features"
 msgstr "KI-Funktionen"
 
@@ -3447,7 +3447,7 @@ msgstr ""
 "KI-Assistenten dürfen über Curlew deine Nachrichten lesen und senden, "
 "jeweils so, wie du es erlaubst. Aus: Kein Assistent erreicht deine Daten"
 
-#: app/src/window/preferences-dialog.ts:106 app/src/window/welcome.ts:257
+#: app/src/window/preferences-dialog.ts:106 app/src/window/welcome.ts:262
 msgid "AI"
 msgstr "KI"
 
@@ -3494,7 +3494,11 @@ msgid_plural "{count} selected"
 msgstr[0] "{count} ausgewählt"
 msgstr[1] "{count} ausgewählt"
 
-#: app/src/window/terms-widgets.ts:22
+#: app/src/window/terms-widgets.ts:13
+msgid "{protocol} Terms of Service"
+msgstr "Nutzungsbedingungen von {protocol}"
+
+#: app/src/window/terms-widgets.ts:25
 msgid "I understand and accept the risk for my account"
 msgstr "Ich verstehe das Risiko für mein Konto und nehme es in Kauf"
 
@@ -3621,15 +3625,17 @@ msgstr "Wähle deine Protokolle"
 msgid "Add your accounts"
 msgstr "Füge deine Konten hinzu"
 
-#: app/src/window/welcome.ts:198
-msgid ""
-"No mail account yet. Once you add one, you can switch this on in its "
-"settings."
-msgstr ""
-"Noch kein Mail-Konto. Sobald du eines hinzufügst, kannst du das in dessen "
-"Einstellungen einschalten."
+#: app/src/window/welcome.ts:199
+msgid "No mail account yet"
+msgstr "Noch kein Mail-Konto"
 
-#: app/src/window/welcome.ts:247
+#: app/src/window/welcome.ts:200
+msgid "Once you add one, you can switch this on in its settings."
+msgstr ""
+"Sobald du eines hinzufügst, kannst du das in dessen Einstellungen "
+"einschalten."
+
+#: app/src/window/welcome.ts:252
 msgid ""
 "An assistant could then read and send your messages through Curlew, each "
 "time as you allow it."
@@ -3637,7 +3643,7 @@ msgstr ""
 "Ein Assistent könnte dann über Curlew deine Nachrichten lesen und senden, "
 "jeweils so, wie du es erlaubst."
 
-#: app/src/window/welcome.ts:258
+#: app/src/window/welcome.ts:263
 msgid ""
 "Off, no assistant can reach your data. You can change this at any time in "
 "Preferences."
@@ -3645,11 +3651,11 @@ msgstr ""
 "Aus: Kein Assistent erreicht deine Daten. Du kannst das jederzeit in den "
 "Einstellungen ändern."
 
-#: app/src/window/welcome.ts:268
+#: app/src/window/welcome.ts:273
 msgid "All set"
 msgstr "Alles bereit"
 
-#: app/src/window/welcome.ts:269
+#: app/src/window/welcome.ts:274
 msgid ""
 "You can change all of this later: accounts and protocols in Accounts, the "
 "rest in Preferences."
@@ -3657,7 +3663,7 @@ msgstr ""
 "Du kannst all das später ändern: Konten und Protokolle unter Konten, den "
 "Rest in den Einstellungen."
 
-#: app/src/window/welcome.ts:271
+#: app/src/window/welcome.ts:276
 msgid "Start Using Curlew"
 msgstr "Curlew benutzen"
 

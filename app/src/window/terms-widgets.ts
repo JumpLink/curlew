@@ -5,11 +5,14 @@
 
 import Gtk from 'gi://Gtk?version=4.0';
 import Pango from 'gi://Pango?version=1.0';
-import { _ } from '@curlew/protocol';
+import { _, fmt } from '@curlew/protocol';
 
-/** The link to the full terms. A long URL is shortened in the middle instead of widening the page. */
-export function termsLinkButton(uri: string, halign: Gtk.Align): Gtk.LinkButton {
-  const label = new Gtk.Label({ label: uri, ellipsize: Pango.EllipsizeMode.MIDDLE });
+/** The link to the full terms, under a short name; the URL stays in the tooltip. */
+export function termsLinkButton(uri: string, protocol: string, halign: Gtk.Align): Gtk.LinkButton {
+  const label = new Gtk.Label({
+    label: fmt(_('{protocol} Terms of Service'), { protocol }),
+    ellipsize: Pango.EllipsizeMode.END,
+  });
   return new Gtk.LinkButton({ uri, child: label, halign, tooltipText: uri });
 }
 
