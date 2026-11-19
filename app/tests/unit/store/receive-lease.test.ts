@@ -4,6 +4,7 @@ import {
   holderIsAlive,
   LEASE_HEARTBEAT_MS,
   type IndexDatabase,
+  type ProcessProbe,
   migrate,
   refreshReceiveLease,
   releaseAllReceiveLeases,
@@ -25,6 +26,11 @@ import { freshDb } from './fixtures.ts';
 const BACKEND = 'whatsapp';
 const ACCOUNT = 'wa-1';
 const T0 = new Date('2026-09-29T10:00:00.000Z');
+
+/** A probe over a fake process table: pid → `<boot>/<start>`; absent pids are gone. */
+const probeOf = (table: Record<number, string>): ProcessProbe => ({
+  stamp: (pid) => (pid in table ? { state: 'present', id: table[pid]! } : { state: 'gone' }),
+});
 
 const at = (ms: number) => new Date(T0.getTime() + ms);
 
@@ -110,11 +116,18 @@ export default async () => {
       }
     });
 
-    await it('reclaims a fresh lease whose holder process is gone', async () => {
+    await it('reclaims a fresh lease whose holder process is gone, prefixed holders too', async () => {
       const db = freshDb();
       try {
-        takeReceiveLease(db, BACKEND, ACCOUNT, '1961617', T0);
-        // Fresh by the clock, but the process is dead: the successor takes it at once.
+        takeReceiveLease(
+          db,
+          BACKEND,
+          ACCOUNT,
+          '1961617',
+          T0,
+          LEASE_HEARTBEAT_MS,
+          probeOf({ 1961617: 'b/10' }),
+        );
         const dead = takeReceiveLease(
           db,
           BACKEND,
@@ -122,16 +135,18 @@ export default async () => {
           '1971085',
           at(1_000),
           LEASE_HEARTBEAT_MS,
-          () => false,
+          probeOf({}),
         );
         expect(dead.acquired).toBe(true);
         expect(leaseHolder(db, ACCOUNT)).toBe('1971085');
-        // A `sync-` holder is judged the same way.
-        takeReceiveLease(db, BACKEND, 'wa-2', 'sync-1961617', T0);
-        expect(
-          takeReceiveLease(db, BACKEND, 'wa-2', '1971085', at(1_000), LEASE_HEARTBEAT_MS, () => false)
-            .acquired,
-        ).toBe(true);
+        for (const prefixed of ['sync-1961617', 'send-1961617']) {
+          const acct = `wa-${prefixed}`;
+          takeReceiveLease(db, BACKEND, acct, prefixed, T0, LEASE_HEARTBEAT_MS, probeOf({ 1961617: 'b/10' }));
+          expect(
+            takeReceiveLease(db, BACKEND, acct, '1971085', at(1_000), LEASE_HEARTBEAT_MS, probeOf({}))
+              .acquired,
+          ).toBe(true);
+        }
       } finally {
         db.close();
       }
@@ -140,22 +155,93 @@ export default async () => {
     await it('does not reclaim a fresh lease of a live process', async () => {
       const db = freshDb();
       try {
-        takeReceiveLease(db, BACKEND, ACCOUNT, '1961617', T0);
-        const live = takeReceiveLease(
+        const live = probeOf({ 1961617: 'b/10' });
+        takeReceiveLease(db, BACKEND, ACCOUNT, '1961617', T0, LEASE_HEARTBEAT_MS, live);
+        const take = takeReceiveLease(db, BACKEND, ACCOUNT, '1971085', at(1_000), LEASE_HEARTBEAT_MS, live);
+        expect(take.acquired).toBe(false);
+        expect(leaseHolder(db, ACCOUNT)).toBe('1961617');
+        expect(holderIsAlive(String(process.pid), null)).toBe(true);
+        expect(holderIsAlive(`sync-${process.pid}`, null)).toBe(true);
+        expect(holderIsAlive('pid-1', null)).toBe(true);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('reclaims when the pid was reused by another process or boot', async () => {
+      const db = freshDb();
+      try {
+        takeReceiveLease(
+          db,
+          BACKEND,
+          ACCOUNT,
+          '1961617',
+          T0,
+          LEASE_HEARTBEAT_MS,
+          probeOf({ 1961617: 'b/10' }),
+        );
+        expect(holderIsAlive('1961617', 'b/10', probeOf({ 1961617: 'b/99' }))).toBe(false);
+        expect(holderIsAlive('1961617', 'b/10', probeOf({ 1961617: 'other/10' }))).toBe(false);
+        const take = takeReceiveLease(
           db,
           BACKEND,
           ACCOUNT,
           '1971085',
           at(1_000),
           LEASE_HEARTBEAT_MS,
-          () => true,
+          probeOf({ 1961617: 'b/99' }),
         );
-        expect(live.acquired).toBe(false);
-        expect(leaseHolder(db, ACCOUNT)).toBe('1961617');
-        // The default check: this very process is alive, a holder that is no pid cannot be judged.
-        expect(holderIsAlive(String(process.pid))).toBe(true);
-        expect(holderIsAlive(`sync-${process.pid}`)).toBe(true);
-        expect(holderIsAlive('pid-1')).toBe(true);
+        expect(take.acquired).toBe(true);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('keeps the heartbeat rule for holders it cannot judge', async () => {
+      const db = freshDb();
+      try {
+        const unknown: ProcessProbe = { stamp: () => ({ state: 'unknown' }) };
+        takeReceiveLease(db, BACKEND, ACCOUNT, '1961617', T0, LEASE_HEARTBEAT_MS, unknown);
+        // another pid namespace / no /proc: alive until expiry
+        expect(
+          takeReceiveLease(db, BACKEND, ACCOUNT, '1971085', at(1_000), LEASE_HEARTBEAT_MS, unknown).acquired,
+        ).toBe(false);
+        // a foreign host's holder id is no pid at all
+        takeReceiveLease(db, BACKEND, 'wa-f', 'otherhost:1961617', T0, LEASE_HEARTBEAT_MS, probeOf({}));
+        expect(
+          takeReceiveLease(db, BACKEND, 'wa-f', '1971085', at(1_000), LEASE_HEARTBEAT_MS, probeOf({}))
+            .acquired,
+        ).toBe(false);
+        expect(
+          takeReceiveLease(db, BACKEND, 'wa-f', '1971085', at(200_000), LEASE_HEARTBEAT_MS, probeOf({}))
+            .acquired,
+        ).toBe(true);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('reads an old-format row (no stamp) as alive while the pid exists, dead once gone', async () => {
+      const db = freshDb();
+      try {
+        db.prepare(
+          'INSERT INTO receive_leases (backend, account_id, holder, heartbeat_at, expires_at, holder_stamp) VALUES (?, ?, ?, ?, ?, NULL)',
+        ).run(BACKEND, ACCOUNT, '1961617', T0.toISOString(), at(90_000).toISOString());
+        expect(
+          takeReceiveLease(
+            db,
+            BACKEND,
+            ACCOUNT,
+            '1971085',
+            at(1_000),
+            LEASE_HEARTBEAT_MS,
+            probeOf({ 1961617: 'b/10' }),
+          ).acquired,
+        ).toBe(false);
+        expect(
+          takeReceiveLease(db, BACKEND, ACCOUNT, '1971085', at(1_000), LEASE_HEARTBEAT_MS, probeOf({}))
+            .acquired,
+        ).toBe(true);
       } finally {
         db.close();
       }

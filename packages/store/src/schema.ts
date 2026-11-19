@@ -22,7 +22,7 @@
 import { type IndexDatabase, withTransaction } from './db.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 
-export const SCHEMA_VERSION = 26;
+export const SCHEMA_VERSION = 27;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -502,6 +502,9 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
        read_through TEXT,
        marked_unread INTEGER NOT NULL DEFAULT 0)`,
   ],
+  // v27: who a receive lease belongs to, beyond the pid: `<boot id>/<start time>` of the holder, so
+  // a successor can tell a dead holder (or a reused pid) from a live one at once. NULL = an old row.
+  27: [{ table: 'receive_leases', column: 'holder_stamp', type: 'TEXT' }],
 };
 
 function columnsOf(db: IndexDatabase, table: string): Set<string> {
