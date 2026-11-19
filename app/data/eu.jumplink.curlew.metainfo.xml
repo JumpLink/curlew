@@ -59,32 +59,62 @@
   </keywords>
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/JumpLink/curlew/v0.2.0/docs/screenshots/conversations.en.light.png</image>
-      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/v0.2.0/docs/screenshots/conversations.de.light.png</image>
+      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversations.en.light.png</image>
+      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversations.de.light.png</image>
+      <caption>One chat per person, across every messenger</caption>
+      <caption xml:lang="de">Ein Chat pro Person, über alle Messenger</caption>
+    </screenshot>
+    <screenshot environment="gnome:dark">
+      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversations.en.dark.png</image>
+      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversations.de.dark.png</image>
       <caption>One chat per person, across every messenger</caption>
       <caption xml:lang="de">Ein Chat pro Person, über alle Messenger</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/JumpLink/curlew/v0.2.0/docs/screenshots/conversation.en.light.png</image>
-      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/v0.2.0/docs/screenshots/conversation.de.light.png</image>
+      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversation.en.light.png</image>
+      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversation.de.light.png</image>
+      <caption>Messages from several messengers in one conversation</caption>
+      <caption xml:lang="de">Nachrichten mehrerer Messenger in einer Unterhaltung</caption>
+    </screenshot>
+    <screenshot environment="gnome:dark">
+      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversation.en.dark.png</image>
+      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversation.de.dark.png</image>
       <caption>Messages from several messengers in one conversation</caption>
       <caption xml:lang="de">Nachrichten mehrerer Messenger in einer Unterhaltung</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/JumpLink/curlew/v0.2.0/docs/screenshots/contact.en.light.png</image>
-      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/v0.2.0/docs/screenshots/contact.de.light.png</image>
+      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/contact.en.light.png</image>
+      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/contact.de.light.png</image>
+      <caption>One person, every way to reach them</caption>
+      <caption xml:lang="de">Eine Person, alle Wege, sie zu erreichen</caption>
+    </screenshot>
+    <screenshot environment="gnome:dark">
+      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/contact.en.dark.png</image>
+      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/contact.de.dark.png</image>
       <caption>One person, every way to reach them</caption>
       <caption xml:lang="de">Eine Person, alle Wege, sie zu erreichen</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/JumpLink/curlew/v0.2.0/docs/screenshots/accounts.en.light.png</image>
-      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/v0.2.0/docs/screenshots/accounts.de.light.png</image>
+      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/accounts.en.light.png</image>
+      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/accounts.de.light.png</image>
+      <caption>Your accounts and protocols</caption>
+      <caption xml:lang="de">Deine Konten und Protokolle</caption>
+    </screenshot>
+    <screenshot environment="gnome:dark">
+      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/accounts.en.dark.png</image>
+      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/accounts.de.dark.png</image>
       <caption>Your accounts and protocols</caption>
       <caption xml:lang="de">Deine Konten und Protokolle</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/JumpLink/curlew/v0.2.0/docs/screenshots/conversation-narrow.en.light.png</image>
-      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/v0.2.0/docs/screenshots/conversation-narrow.de.light.png</image>
+      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversation-narrow.en.light.png</image>
+      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversation-narrow.de.light.png</image>
+      <caption>The same on a phone-sized screen</caption>
+      <caption xml:lang="de">Dasselbe auf einem Bildschirm in Handygröße</caption>
+    </screenshot>
+    <screenshot environment="gnome:dark">
+      <image>https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversation-narrow.en.dark.png</image>
+      <image xml:lang="de">https://raw.githubusercontent.com/JumpLink/curlew/main/docs/screenshots/conversation-narrow.de.dark.png</image>
       <caption>The same on a phone-sized screen</caption>
       <caption xml:lang="de">Dasselbe auf einem Bildschirm in Handygröße</caption>
     </screenshot>
