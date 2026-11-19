@@ -7,6 +7,7 @@ Agent- and contributor-facing docs for the curlew repo. The hard rules that load
 - [`project/overview.md`](project/overview.md) — what curlew is, high-level architecture, origin
 - [`project/package-layout.md`](project/package-layout.md) — package map, import rules, the `*.gjs.ts` split
 - [`project/runtime.md`](project/runtime.md) — build, test and run commands; gjsify workspace rules
+- [`project/history-before-0.2.0.md`](project/history-before-0.2.0.md) — the development changelog up to the first release
 
 ## Android
 
