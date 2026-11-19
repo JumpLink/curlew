@@ -41,6 +41,7 @@ function fake(
       capabilities: () => ({ services: ['mail'], credentials: ['password'] }),
       listAccounts: async (service) => list.filter((a) => !service || a.services.includes(service)),
       getMailSettings: async (a) => settings[a.id] ?? { kind: 'unavailable', reason: 'not-supported' },
+      getDavSettings: async () => ({ kind: 'unavailable', reason: 'not-supported' }),
       getCredentials: async (a, purpose) => {
         asked.push(`${a.id}:${purpose}`);
         return credentials;
@@ -169,6 +170,7 @@ export default async () => {
         capabilities: () => ({ services: [], credentials: [] }),
         listAccounts: async () => [],
         getMailSettings: async () => ({ kind: 'unavailable', reason: 'no-account-store' }),
+        getDavSettings: async () => ({ kind: 'unavailable', reason: 'no-account-store' }),
         getCredentials: async () => ({ kind: 'unavailable', reason: 'no-account-store' }),
       };
       expect((await systemMailTargets(empty)).length).toBe(0);

@@ -149,6 +149,7 @@ For each account:
 ## Results
 
 Write `ok`, `fail #<issue>` or `skip` in each cell. Put the build or commit under the table.
+Copy the table into its own file per build; recorded runs: [v0.2.0-rc.5](run-through-0.2.0-rc.5.md).
 
 | Step | Host | Flatpak | Notes |
 |---|---|---|---|

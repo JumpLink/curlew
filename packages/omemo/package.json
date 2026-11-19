@@ -15,6 +15,6 @@
     "src"
   ],
   "dependencies": {
-    "@gjsify/xeddsa": "0.64.46"
+    "@gjsify/xeddsa": "0.64.49"
   }
 }

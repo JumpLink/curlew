@@ -57,6 +57,7 @@ function systemStore(addresses: string[]): () => Promise<SystemAccounts> {
     capabilities: () => ({ services: ['mail'], credentials: ['password'] }),
     listAccounts: async () => accounts,
     getMailSettings: async (a) => settings(a),
+    getDavSettings: async () => ({ kind: 'unavailable', reason: 'not-supported' }),
     getCredentials: async () => ({ kind: 'password', secret: 'system-secret' }),
   };
   return async () => store;
@@ -66,6 +67,7 @@ const noStore = async (): Promise<SystemAccounts> => ({
   capabilities: () => ({ services: [], credentials: [] }),
   listAccounts: async () => [],
   getMailSettings: async () => ({ kind: 'unavailable', reason: 'no-account-store' }),
+  getDavSettings: async () => ({ kind: 'unavailable', reason: 'no-account-store' }),
   getCredentials: async () => ({ kind: 'unavailable', reason: 'no-account-store' }),
 });
 
