@@ -186,7 +186,7 @@ jobs:
           ls -la
           version=$(node -p "require('$GITHUB_WORKSPACE/app/package.json').version")
           for f in "curlew_${version}-1_amd64.deb" "curlew-${version}-1.x86_64.rpm"; do
-            if [ ! -s "$f" ]; then
+            if [ ! -s "$f" ] || [ ! -s "$f.gjsify-release.json" ]; then
               echo "::error::missing or empty artifact: $f"
               exit 1
             fi
@@ -268,7 +268,7 @@ jobs:
           for f in \
             "curlew-${version}-1.windows.x64.zip" \
             "curlew-${version}-1.x64.msi"; do
-            if [ ! -s "$f" ]; then
+            if [ ! -s "$f" ] || [ ! -s "$f.gjsify-release.json" ]; then
               echo "::error::missing or empty artifact: $f"
               exit 1
             fi
@@ -280,6 +280,8 @@ jobs:
           path: |
             app/ship/out/*.deb
             app/ship/out/*.rpm
+            app/ship/out/*.deb.gjsify-release.json
+            app/ship/out/*.rpm.gjsify-release.json
           # Already-compressed packages; the default level 6 would spend minutes re-compressing
           # them on the way up and again on the way down for no gain.
           compression-level: 0
@@ -290,6 +292,8 @@ jobs:
           path: |
             app/ship/out/*.zip
             app/ship/out/*.msi
+            app/ship/out/*.zip.gjsify-release.json
+            app/ship/out/*.msi.gjsify-release.json
           compression-level: 0
 
   # The same app inside a sandbox (ADR 0011). The payload was staged in `build-and-test`; this job
@@ -380,7 +384,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ship-flatpak
-          path: app/ship/out/*.flatpak
+          path: |
+            app/ship/out/*.flatpak
+            app/ship/out/*.flatpak.gjsify-release.json
           compression-level: 0
 
   # ── macOS: pack, sign and notarise ───────────────────────────────────────────────────────────
@@ -495,7 +501,7 @@ jobs:
             # shellcheck disable=SC2086
             gjsify ship --from-stage "pack-$arch/stage" --expect-target "darwin-$arch" \
               --target macos-app-zip,macos-app-dmg --out "ship-$arch" $sign
-            cp "ship-$arch"/out/*.zip "ship-$arch"/out/*.dmg out/
+            cp "ship-$arch"/out/*.zip "ship-$arch"/out/*.dmg "ship-$arch"/out/*.gjsify-release.json out/
           done
           ls -la out
 
@@ -513,7 +519,7 @@ jobs:
             zip="out/curlew-$version-1.macos.$arch.zip"
             dmg="out/curlew-$version-1.$arch.dmg"
             for f in "$zip" "$dmg"; do
-              if [ ! -s "$f" ]; then
+              if [ ! -s "$f" ] || [ ! -s "$f.gjsify-release.json" ]; then
                 echo "::error::missing or empty artifact: $f"
                 missing=1
               fi

@@ -107,8 +107,8 @@ jobs:
             "cli/curlew-${version}-1.windows.x64.zip" \
             "cli/curlew-${version}-1.x64.msi" \
             "cli/eu.jumplink.curlew-${version}-1.x86_64.flatpak"; do
-            if [ ! -s "$f" ]; then
-              echo "::error::missing or empty artifact: $f"
+            if [ ! -s "$f" ] || [ ! -s "$f.gjsify-release.json" ]; then
+              echo "::error::missing or empty artifact or release record: $f"
               missing=1
             fi
           done
@@ -120,7 +120,7 @@ jobs:
         run: |
           set -eu
           src/scripts/changelog-section.sh "$TAG" src/CHANGELOG.md > notes.md
-          (cd cli && sha256sum -- * | grep -v ' SHA256SUMS$' > SHA256SUMS)
+          (cd cli && sha256sum -- * | grep -v -e ' SHA256SUMS$' -e '\.gjsify-release\.json$' > SHA256SUMS)
           cat cli/SHA256SUMS
 
       # A DRAFT: nobody can download an artifact before the maintainer has looked at the release
