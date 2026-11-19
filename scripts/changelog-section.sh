@@ -10,7 +10,7 @@ version="${version#v}"
 
 extract() {
   awk -v want="$1" '
-    /^## / { if (on) exit; h = substr($0, 4); sub(/[ \t]+$/, "", h); on = (h == want); next }
+    /^## / { if (on) exit; h = substr($0, 4); sub(/[ \t]+$/, "", h); sub(/ +(—|-) +[0-9]{4}-[0-9]{2}-[0-9]{2}$/, "", h); on = (h == want); next }
     on { print }
   ' "$file"
 }

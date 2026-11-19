@@ -31,6 +31,8 @@ check "tag with v" "$(printf '### Fixed\n\n- two fix')" "$("$dir/changelog-secti
 check "bare version" "- one thing" "$("$dir/changelog-section.sh" 0.1.0 "$tmp/c.md")"
 check "prerelease falls back" "$(printf '### Fixed\n\n- two fix')" "$("$dir/changelog-section.sh" v0.2.0-rc.1 "$tmp/c.md")"
 check "unknown falls back to Unreleased" "$(printf '### Added\n\n- unreleased thing')" "$("$dir/changelog-section.sh" v9.9.9 "$tmp/c.md")"
+printf '# C\n\n## 1.1.0 \xe2\x80\x94 2026-11-19\n\n- dated\n\n## 1.0.0\n\n- old\n' > "$tmp/d.md"
+check "dated heading" "- dated" "$("$dir/changelog-section.sh" v1.1.0 "$tmp/d.md")"
 printf '# C\n\n## 1.0.0\n\n' > "$tmp/e.md"
 if "$dir/changelog-section.sh" v1.0.0 "$tmp/e.md" 2>/dev/null; then echo "FAIL empty"; fail=1; else echo "ok   empty fails"; fi
 exit "$fail"
