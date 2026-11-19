@@ -6,6 +6,7 @@ import {
   applyAiChoice,
   applyDeltaChatChoice,
   countAccounts,
+  countOwnAccounts,
   mailAccountChoices,
   shouldShowWelcome,
   welcomePages,
@@ -35,6 +36,11 @@ export default async () => {
     it('counts mail, GNOME and chat accounts', () => {
       expect(countAccounts(load(0, 0, 0))).toBe(0);
       expect(countAccounts(load(1, 2, 3))).toBe(6);
+    });
+
+    it('does not count the GNOME accounts of the desktop as Curlew accounts', () => {
+      expect(countOwnAccounts(load(3, 0, 0))).toBe(0);
+      expect(countOwnAccounts(load(3, 1, 2))).toBe(3);
     });
 
     it('walks intro, protocols, accounts, Delta Chat, AI and ends with a summary', () => {
