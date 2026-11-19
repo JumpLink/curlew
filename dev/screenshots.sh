@@ -14,9 +14,9 @@ HEADLESS="${HEADLESS_RUN:-$HOME/Projekte/werkstatt/scripts/headless-run}"
 OUT="$ROOT/docs/screenshots"
 WORK="${CURLEW_SHOTS_DEMO:-/tmp/curlew-demo-shots}"
 
-# Window sizes: 900x640 for the chat motifs, 1000x700 (Flathub's maximum) for the dialog and page motifs,
-# whose content is taller; 360x740 for phone width. The shadow is cropped after the capture, so the
-# PNG is exactly the window and every wide file stays within 1000x700. The empty-state motifs use the
+# Window sizes: 900x640 for the chat motifs, 968x668 for the dialog and page motifs, whose content is
+# taller; 360x740 for phone width. The PNG keeps the rounded corners and the 16 px shadow on a
+# transparent background, so every wide file stays within Flathub's 1000x700. The empty-state motifs use the
 # phone width, so the Accounts dialog fills the window and does not clip the page behind it.
 # motif | window size (logical) | data set | extra environment
 # data set: demo = the demo data, off = same with every protocol and switch off,
@@ -27,23 +27,23 @@ MOTIFS=(
   "conversation|900x640|demo|CURLEW_WINDOW_OPEN=c2"
   "conversation-narrow|360x740|demo|CURLEW_WINDOW_OPEN=c1"
   "conversations-narrow|360x740|demo|"
-  "contact|1000x700|demo|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_OPEN_CONTACT=1"
-  "group|1000x700|demo|CURLEW_WINDOW_OPEN=c4 CURLEW_WINDOW_OPEN_CONTACT=1"
-  "preferences|1000x700|demo|CURLEW_WINDOW_OPEN_PREFERENCES=1"
-  "preferences-off|1000x700|off|CURLEW_WINDOW_OPEN_PREFERENCES=1"
-  "accounts|1000x700|demo|CURLEW_WINDOW_OPEN_ACCOUNTS=1"
+  "contact|968x668|demo|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_OPEN_CONTACT=1"
+  "group|968x668|demo|CURLEW_WINDOW_OPEN=c4 CURLEW_WINDOW_OPEN_CONTACT=1"
+  "preferences|968x668|demo|CURLEW_WINDOW_OPEN_PREFERENCES=1"
+  "preferences-off|968x668|off|CURLEW_WINDOW_OPEN_PREFERENCES=1"
+  "accounts|968x668|demo|CURLEW_WINDOW_OPEN_ACCOUNTS=1"
   "accounts-off|360x740|off|CURLEW_WINDOW_OPEN_ACCOUNTS=1"
   "accounts-empty|360x740|empty|CURLEW_WINDOW_OPEN_ACCOUNTS=1"
-  "protocols|1000x700|demo|CURLEW_WINDOW_OPEN_PROTOCOLS=1"
-  "protocols-off|1000x700|off|CURLEW_WINDOW_OPEN_PROTOCOLS=1"
-  "agent-access|1000x700|demo|CURLEW_WINDOW_OPEN_ACCESS=1"
+  "protocols|968x668|demo|CURLEW_WINDOW_OPEN_PROTOCOLS=1"
+  "protocols-off|968x668|off|CURLEW_WINDOW_OPEN_PROTOCOLS=1"
+  "agent-access|968x668|demo|CURLEW_WINDOW_OPEN_ACCESS=1"
   "welcome|360x740|empty|CURLEW_WINDOW_OPEN_WELCOME=1"
   "welcome-delta-chat|360x740|demo|CURLEW_WINDOW_OPEN_WELCOME=delta-chat"
   "email-chat|900x640|demo|CURLEW_WINDOW_OPEN=c3"
   "composer-emoji|900x640|demo|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_OPEN_EMOJI=1"
   "reactions|900x640|demo|CURLEW_WINDOW_OPEN=c25"
   "reactions-narrow|360x740|demo|CURLEW_WINDOW_OPEN=c25"
-  "contact-merged|1000x700|demo|CURLEW_WINDOW_OPEN=c3 CURLEW_WINDOW_OPEN_CONTACT=1"
+  "contact-merged|968x668|demo|CURLEW_WINDOW_OPEN=c3 CURLEW_WINDOW_OPEN_CONTACT=1"
   "account-paused|900x640|paused|CURLEW_WINDOW_OPEN_ACCOUNT=whatsapp/whatsapp-demo1"
 )
 
@@ -127,9 +127,9 @@ for m in "${MOTIFS[@]}"; do
         timeout 170 "$HEADLESS" --size 1300x1000 --shot-delay 10 "${dark[@]}" --window-shot "$file" -- \
         gjsify run app/dist/window.gjs.mjs >/dev/null 2>&1 || true
       if [ -s "$file" ]; then
-        # Crop the shadow: the fully opaque area is the window itself.
-        box="$(magick "$file" -alpha extract -threshold 99% -format '%@' info:)"
-        magick "$file" -crop "$box" +repage -strip "$file"
+        # Keep the rounded corners and the shadow, so the window sits on any page background
+        # (light or dark); trim only the empty margin around it.
+        magick "$file" -alpha set -bordercolor none -border 1 -trim +repage -strip "$file"
         echo "ok   $(basename "$file")"
       else
         echo "FAIL $(basename "$file")" >&2

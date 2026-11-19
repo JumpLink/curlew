@@ -22,8 +22,8 @@ Website: <https://jumplink.eu/curlew/>. Curlew is free; if it is useful to you, 
 
 | | |
 |---|---|
-| ![The chat list](docs/screenshots/conversations.en.light.png) | ![A conversation](docs/screenshots/conversation.en.light.png) |
-| ![A contact across messengers](docs/screenshots/contact.en.light.png) | ![Accounts](docs/screenshots/accounts.en.light.png) |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/conversations.en.dark.png"><img alt="The chat list" src="docs/screenshots/conversations.en.light.png"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/conversation.en.dark.png"><img alt="A conversation" src="docs/screenshots/conversation.en.light.png"></picture> |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/contact.en.dark.png"><img alt="A contact across messengers" src="docs/screenshots/contact.en.light.png"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/accounts.en.dark.png"><img alt="Accounts" src="docs/screenshots/accounts.en.light.png"></picture> |
 
 The narrow layout for phones and small windows: `docs/screenshots/conversation-narrow.en.light.png`.
 Dark mode and German variants sit next to these files.
