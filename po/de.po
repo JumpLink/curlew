@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-20 06:32+0100\n"
+"POT-Creation-Date: 2026-11-19 09:32+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1856,7 +1856,7 @@ msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
 #: app/src/window/about.ts:37 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:196 app/src/window/window.ts:109
+#: app/src/window/conversation-view.ts:198 app/src/window/window.ts:109
 #: app/src/window/window.ts:239
 msgid "Curlew"
 msgstr "Curlew"
@@ -2027,9 +2027,9 @@ msgstr "Dieses Konto pausieren?"
 #: app/src/window/account-remove-model.ts:37
 #: app/src/window/account-remove-model.ts:71
 #: app/src/window/agent-access-page.ts:233
-#: app/src/window/conversation-list.ts:504
-#: app/src/window/conversation-list.ts:597
-#: app/src/window/conversation-view.ts:767 app/src/window/protocols-page.ts:66
+#: app/src/window/conversation-list.ts:503
+#: app/src/window/conversation-list.ts:596
+#: app/src/window/conversation-view.ts:769 app/src/window/protocols-page.ts:66
 #: app/src/window/protocols-page.ts:142
 msgid "Cancel"
 msgstr "Abbrechen"
@@ -2038,7 +2038,7 @@ msgstr "Abbrechen"
 msgid "Pause"
 msgstr "Pause"
 
-#: app/src/window/account-detail.ts:145 app/src/window/welcome.ts:224
+#: app/src/window/account-detail.ts:145 app/src/window/welcome.ts:205
 msgid "Use for Delta Chat"
 msgstr "Für Delta Chat verwenden"
 
@@ -2051,7 +2051,7 @@ msgstr ""
 "hat, sieht eine gewöhnliche E-Mail."
 
 #: app/src/window/account-detail.ts:152 app/src/window/protocols-page.ts:169
-#: app/src/window/welcome.ts:230
+#: app/src/window/welcome.ts:211
 msgid "Show ordinary email"
 msgstr "Gewöhnliche E-Mails anzeigen"
 
@@ -2701,7 +2701,7 @@ msgstr "Automatisch"
 msgid "Picture"
 msgstr "Bild"
 
-#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:512
+#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:511
 msgid "Separate"
 msgstr "Trennen"
 
@@ -2779,7 +2779,6 @@ msgstr "Stattdessen wird dein eigenes Bild gezeigt"
 
 #: app/src/window/conversation-list-model.ts:141
 #: app/src/window/welcome-model.ts:111 app/src/window/welcome.ts:189
-#: app/src/window/welcome.ts:208
 msgid "Delta Chat"
 msgstr "Delta Chat"
 
@@ -2938,30 +2937,30 @@ msgstr "Nichts passt zur Suche und den Filtern."
 msgid "Search"
 msgstr "Suchen"
 
-#: app/src/window/conversation-list.ts:493
+#: app/src/window/conversation-list.ts:492
 #: app/src/window/new-conversation.ts:26
 msgid "New conversation"
 msgstr "Neue Unterhaltung"
 
-#: app/src/window/conversation-list.ts:510
-#: app/src/window/conversation-list.ts:598
+#: app/src/window/conversation-list.ts:509
+#: app/src/window/conversation-list.ts:597
 #: app/src/window/merge-assistant.ts:116
 msgid "Merge"
 msgstr "Zusammenführen"
 
-#: app/src/window/conversation-list.ts:513
+#: app/src/window/conversation-list.ts:512
 msgid "Mark as Read"
 msgstr "Als gelesen markieren"
 
-#: app/src/window/conversation-list.ts:514
+#: app/src/window/conversation-list.ts:513
 msgid "Mark as Unread"
 msgstr "Als ungelesen markieren"
 
-#: app/src/window/conversation-list.ts:594
+#: app/src/window/conversation-list.ts:593
 msgid "Merge these people?"
 msgstr "Diese Personen zusammenführen?"
 
-#: app/src/window/conversation-list.ts:595
+#: app/src/window/conversation-list.ts:594
 msgid ""
 "Their chats become one conversation. Nothing is deleted, and you can "
 "separate them again."
@@ -2969,23 +2968,23 @@ msgstr ""
 "Ihre Chats werden zu einer Unterhaltung. Nichts wird gelöscht, und du kannst "
 "sie wieder trennen."
 
-#: app/src/window/conversation-list.ts:628
+#: app/src/window/conversation-list.ts:627
 msgid "Review"
 msgstr "Prüfen"
 
-#: app/src/window/conversation-list.ts:635
+#: app/src/window/conversation-list.ts:634
 #: app/src/window/preferences-dialog.ts:61
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:657
+#: app/src/window/conversation-list.ts:656
 msgid "{count} possible duplicate"
 msgid_plural "{count} possible duplicates"
 msgstr[0] "{count} mögliches Duplikat"
 msgstr[1] "{count} mögliche Duplikate"
 
 #: app/src/window/conversation-model.ts:144
-#: app/src/window/conversation-view.ts:1405
+#: app/src/window/conversation-view.ts:1431
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -3021,157 +3020,157 @@ msgstr[1] "Du und {count} weitere Personen"
 
 #: app/src/window/conversation-model.ts:359
 #: app/src/window/conversation-model.ts:372
-#: app/src/window/conversation-view.ts:751
+#: app/src/window/conversation-view.ts:753
 msgid "You"
 msgstr "Du"
 
-#: app/src/window/conversation-view.ts:202
+#: app/src/window/conversation-view.ts:204
 msgid "Choose how to reach this person"
 msgstr "Erreichbarkeit dieser Person wählen"
 
-#: app/src/window/conversation-view.ts:215
-#: app/src/window/conversation-view.ts:1530
+#: app/src/window/conversation-view.ts:217
+#: app/src/window/conversation-view.ts:1556
 msgid "Contact details"
 msgstr "Kontaktdetails"
 
-#: app/src/window/conversation-view.ts:234
+#: app/src/window/conversation-view.ts:236
 msgid "No messages yet"
 msgstr "Noch keine Nachrichten"
 
-#: app/src/window/conversation-view.ts:243
-#: app/src/window/conversation-view.ts:535
+#: app/src/window/conversation-view.ts:245
+#: app/src/window/conversation-view.ts:537
 msgid "Write a message"
 msgstr "Nachricht schreiben"
 
-#: app/src/window/conversation-view.ts:254
+#: app/src/window/conversation-view.ts:256
 msgid "Send message"
 msgstr "Nachricht senden"
 
-#: app/src/window/conversation-view.ts:267
+#: app/src/window/conversation-view.ts:269
 msgid "Cancel reply"
 msgstr "Antwort abbrechen"
 
-#: app/src/window/conversation-view.ts:280
+#: app/src/window/conversation-view.ts:282
 msgid "Cancel editing"
 msgstr "Bearbeiten abbrechen"
 
-#: app/src/window/conversation-view.ts:293
+#: app/src/window/conversation-view.ts:295
 msgid "Got It"
 msgstr "Verstanden"
 
-#: app/src/window/conversation-view.ts:355
+#: app/src/window/conversation-view.ts:357
 msgid "Conversation"
 msgstr "Unterhaltung"
 
-#: app/src/window/conversation-view.ts:501
+#: app/src/window/conversation-view.ts:503
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 "{protocol} kann keine Dateien senden; die angehängten Dateien wurden entfernt"
 
-#: app/src/window/conversation-view.ts:553
+#: app/src/window/conversation-view.ts:555
 msgid "Send via {protocol}"
 msgstr "Senden über {protocol}"
 
-#: app/src/window/conversation-view.ts:658
+#: app/src/window/conversation-view.ts:660
 msgid "Show the quoted message"
 msgstr "Zitierte Nachricht anzeigen"
 
-#: app/src/window/conversation-view.ts:665
-#: app/src/window/conversation-view.ts:697
+#: app/src/window/conversation-view.ts:667
+#: app/src/window/conversation-view.ts:699
 msgid "Reply to {author}: {excerpt}"
 msgstr "Antwort auf {author}: {excerpt}"
 
-#: app/src/window/conversation-view.ts:680
+#: app/src/window/conversation-view.ts:682
 msgid "The quoted message is no longer in the history"
 msgstr "Die zitierte Nachricht ist nicht mehr im Verlauf"
 
-#: app/src/window/conversation-view.ts:722
+#: app/src/window/conversation-view.ts:724
 msgid "Reaction not sent: {error}"
 msgstr "Reaktion nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:750
+#: app/src/window/conversation-view.ts:752
 msgid "Edit message"
 msgstr "Nachricht bearbeiten"
 
-#: app/src/window/conversation-view.ts:754
+#: app/src/window/conversation-view.ts:756
 msgid "Editing your message: {excerpt}"
 msgstr "Eigene Nachricht bearbeiten: {excerpt}"
 
-#: app/src/window/conversation-view.ts:762
+#: app/src/window/conversation-view.ts:764
 msgid "Delete message?"
 msgstr "Nachricht löschen?"
 
-#: app/src/window/conversation-view.ts:763
+#: app/src/window/conversation-view.ts:765
 msgid "This will remove the message for everyone in the chat."
 msgstr "Dadurch wird die Nachricht für alle im Chat entfernt."
 
-#: app/src/window/conversation-view.ts:768
+#: app/src/window/conversation-view.ts:770
 msgid "Delete for everyone"
 msgstr "Für alle löschen"
 
-#: app/src/window/conversation-view.ts:785
+#: app/src/window/conversation-view.ts:787
 msgid "Message not deleted: {error}"
 msgstr "Nachricht nicht gelöscht: {error}"
 
-#: app/src/window/conversation-view.ts:851
+#: app/src/window/conversation-view.ts:852
 msgid "Reply"
 msgstr "Antworten"
 
-#: app/src/window/conversation-view.ts:852
+#: app/src/window/conversation-view.ts:853
 msgid "Edit"
 msgstr "Bearbeiten"
-
-#: app/src/window/conversation-view.ts:853
-msgid "Delete"
-msgstr "Löschen"
 
 #: app/src/window/conversation-view.ts:854
 msgid "Copy"
 msgstr "Kopieren"
 
-#: app/src/window/conversation-view.ts:975
+#: app/src/window/conversation-view.ts:855
+msgid "Delete"
+msgstr "Löschen"
+
+#: app/src/window/conversation-view.ts:999
 msgid "Forwarded from {sender}"
 msgstr "Weitergeleitet von {sender}"
 
-#: app/src/window/conversation-view.ts:976
+#: app/src/window/conversation-view.ts:1000
 msgid "Forwarded"
 msgstr "Weitergeleitet"
 
-#: app/src/window/conversation-view.ts:990
+#: app/src/window/conversation-view.ts:1014
 msgid "Encrypted message: it cannot be shown here"
 msgstr "Verschlüsselte Nachricht: Sie kann hier nicht angezeigt werden"
 
-#: app/src/window/conversation-view.ts:991
+#: app/src/window/conversation-view.ts:1015
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:1034
-#: app/src/window/conversation-view.ts:1182
+#: app/src/window/conversation-view.ts:1059
+#: app/src/window/conversation-view.ts:1208
 msgid "edited"
 msgstr "bearbeitet"
 
-#: app/src/window/conversation-view.ts:1044
-#: app/src/window/conversation-view.ts:1045
+#: app/src/window/conversation-view.ts:1069
+#: app/src/window/conversation-view.ts:1070
 msgid "Read"
 msgstr "Gelesen"
 
-#: app/src/window/conversation-view.ts:1269
+#: app/src/window/conversation-view.ts:1295
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:1370
+#: app/src/window/conversation-view.ts:1396
 msgid "Message not edited: {error}"
 msgstr "Nachricht nicht bearbeitet: {error}"
 
-#: app/src/window/conversation-view.ts:1417
+#: app/src/window/conversation-view.ts:1443
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:1420
+#: app/src/window/conversation-view.ts:1446
 msgid "Retry"
 msgstr "Erneut versuchen"
 
-#: app/src/window/conversation-view.ts:1530
+#: app/src/window/conversation-view.ts:1556
 msgid "Group details"
 msgstr "Gruppendetails"
 
@@ -3436,7 +3435,7 @@ msgid "Media"
 msgstr "Medien"
 
 #: app/src/window/preferences-dialog.ts:100 app/src/window/welcome-model.ts:124
-#: app/src/window/welcome.ts:264
+#: app/src/window/welcome.ts:245
 msgid "AI features"
 msgstr "KI-Funktionen"
 
@@ -3448,7 +3447,7 @@ msgstr ""
 "KI-Assistenten dürfen über Curlew deine Nachrichten lesen und senden, "
 "jeweils so, wie du es erlaubst. Aus: Kein Assistent erreicht deine Daten"
 
-#: app/src/window/preferences-dialog.ts:106 app/src/window/welcome.ts:276
+#: app/src/window/preferences-dialog.ts:106 app/src/window/welcome.ts:257
 msgid "AI"
 msgstr "KI"
 
@@ -3495,11 +3494,7 @@ msgid_plural "{count} selected"
 msgstr[0] "{count} ausgewählt"
 msgstr[1] "{count} ausgewählt"
 
-#: app/src/window/terms-widgets.ts:13
-msgid "{protocol} Terms of Service"
-msgstr "Nutzungsbedingungen von {protocol}"
-
-#: app/src/window/terms-widgets.ts:25
+#: app/src/window/terms-widgets.ts:22
 msgid "I understand and accept the risk for my account"
 msgstr "Ich verstehe das Risiko für mein Konto und nehme es in Kauf"
 
@@ -3626,17 +3621,15 @@ msgstr "Wähle deine Protokolle"
 msgid "Add your accounts"
 msgstr "Füge deine Konten hinzu"
 
-#: app/src/window/welcome.ts:200
-msgid "No mail account yet"
-msgstr "Noch kein Mail-Konto"
-
-#: app/src/window/welcome.ts:201
-msgid "Once you add one, you can switch this on in its settings."
+#: app/src/window/welcome.ts:198
+msgid ""
+"No mail account yet. Once you add one, you can switch this on in its "
+"settings."
 msgstr ""
-"Sobald du eines hinzufügst, kannst du das in dessen Einstellungen "
-"einschalten."
+"Noch kein Mail-Konto. Sobald du eines hinzufügst, kannst du das in dessen "
+"Einstellungen einschalten."
 
-#: app/src/window/welcome.ts:266
+#: app/src/window/welcome.ts:247
 msgid ""
 "An assistant could then read and send your messages through Curlew, each "
 "time as you allow it."
@@ -3644,7 +3637,7 @@ msgstr ""
 "Ein Assistent könnte dann über Curlew deine Nachrichten lesen und senden, "
 "jeweils so, wie du es erlaubst."
 
-#: app/src/window/welcome.ts:277
+#: app/src/window/welcome.ts:258
 msgid ""
 "Off, no assistant can reach your data. You can change this at any time in "
 "Preferences."
@@ -3652,11 +3645,11 @@ msgstr ""
 "Aus: Kein Assistent erreicht deine Daten. Du kannst das jederzeit in den "
 "Einstellungen ändern."
 
-#: app/src/window/welcome.ts:287
+#: app/src/window/welcome.ts:268
 msgid "All set"
 msgstr "Alles bereit"
 
-#: app/src/window/welcome.ts:288
+#: app/src/window/welcome.ts:269
 msgid ""
 "You can change all of this later: accounts and protocols in Accounts, the "
 "rest in Preferences."
@@ -3664,7 +3657,7 @@ msgstr ""
 "Du kannst all das später ändern: Konten und Protokolle unter Konten, den "
 "Rest in den Einstellungen."
 
-#: app/src/window/welcome.ts:290
+#: app/src/window/welcome.ts:271
 msgid "Start Using Curlew"
 msgstr "Curlew benutzen"
 
@@ -5096,6 +5089,20 @@ msgid ""
 msgstr ""
 "{count} Geräte von {jid} tragen diesen Fingerabdruck, er benennt also keines "
 "— nichts wurde geändert"
+
+#: app/src/window/terms-widgets.ts:13
+msgid "{protocol} Terms of Service"
+msgstr "Nutzungsbedingungen von {protocol}"
+
+#: app/src/window/welcome.ts:200
+msgid "No mail account yet"
+msgstr "Noch kein Mail-Konto"
+
+#: app/src/window/welcome.ts:201
+msgid "Once you add one, you can switch this on in its settings."
+msgstr ""
+"Sobald du eines hinzufügst, kannst du das in dessen Einstellungen "
+"einschalten."
 
 #~ msgid ""
 #~ "Tell a Delta Chat contact when you have read their message, if they asked "

@@ -74,6 +74,8 @@ import { isStickerOnly, leadsWithMedia, shownAttachments, type AttachmentKind } 
 import { hasRichText, richMarkup } from './rich-text-model.ts';
 import type { AttachmentSource } from './attachment-store.ts';
 import { fadedOverlay } from './fade-bin.ts';
+import { bubbleMenuEntries } from './bubble-menu-model.ts';
+import { selectableForPointerOnly } from './bubble-select.ts';
 import { createComposerFiles } from './composer-files.ts';
 import { createVoiceRecorder } from './voice-recorder.ts';
 import { createComposerInput } from './composer-input.ts';
@@ -838,20 +840,42 @@ export function createConversationView(
         }
         box.append(emojis);
       }
-      const entryButton = (label: string, action: () => void): void => {
-        const button = new Gtk.Button({ label });
+      const actions = new Gtk.FlowBox({
+        selectionMode: Gtk.SelectionMode.NONE,
+        activateOnSingleClick: false,
+        homogeneous: true,
+        minChildrenPerLine: 1,
+        maxChildrenPerLine: 4,
+        halign: Gtk.Align.CENTER,
+      });
+      const run: Record<string, [string, () => void]> = {
+        reply: [_('Reply'), () => draft && startReply(draft)],
+        edit: [_('Edit'), () => editHandle && startEdit(message, editHandle)],
+        copy: [_('Copy'), () => card.get_clipboard().set(text)],
+        delete: [_('Delete'), () => deleteHandle && confirmDelete(message, deleteHandle)],
+      };
+      for (const entry of bubbleMenuEntries({
+        reply: !!draft,
+        edit: !!editHandle,
+        delete: !!deleteHandle,
+        copy: !!text,
+      })) {
+        const [label, action] = run[entry.id]!;
+        const content = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 4 });
+        content.append(new Gtk.Image({ iconName: entry.icon }));
+        content.append(new Gtk.Label({ label, ellipsize: Pango.EllipsizeMode.END }));
+        const button = new Gtk.Button({ child: content });
         button.add_css_class('flat');
-        (button.get_child() as Gtk.Label).set_xalign(0);
+        if (entry.destructive) button.add_css_class('error');
+        button.update_property([Gtk.AccessibleProperty.LABEL], [label]);
         button.connect('clicked', () => {
           popover.popdown();
           action();
         });
-        box.append(button);
-      };
-      if (draft) entryButton(_('Reply'), () => startReply(draft));
-      if (editHandle) entryButton(_('Edit'), () => startEdit(message, editHandle));
-      if (deleteHandle) entryButton(_('Delete'), () => confirmDelete(message, deleteHandle));
-      if (text) entryButton(_('Copy'), () => card.get_clipboard().set(text));
+        actions.append(button);
+        actions.get_last_child()?.set_focusable(false);
+      }
+      if (actions.get_first_child()) box.append(actions);
       popover.set_parent(card);
       const spot = new Gdk.Rectangle({ x: Math.round(x), y: Math.round(y), width: 1, height: 1 });
       popover.set_pointing_to(spot);
@@ -1011,6 +1035,7 @@ export function createConversationView(
         selectable: true,
         maxWidthChars: textWidth,
       });
+      selectableForPointerOnly(label);
       setBodyText(label, preview.clipped ? `${preview.text} …` : preview.text);
       body = label;
       bubble.append(padded(fadedOverlay(label, preview.clipped, () => setBodyText(label, full))));
@@ -1172,6 +1197,7 @@ export function createConversationView(
       selectable: true,
       maxWidthChars: 56,
     });
+    selectableForPointerOnly(body);
     setBodyText(body, preview.clipped ? `${preview.text} …` : preview.text);
     one.bubble.insert_before(
       padded(fadedOverlay(body, preview.clipped, () => setBodyText(body, text))),
