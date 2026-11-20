@@ -9,6 +9,8 @@
  * Pure: no `gi://`, no `node:*`. The runtime port a backend implements is in `backend.ts`.
  */
 
+import type { Mention } from './mention.ts';
+
 /**
  * Version of the plugin API a backend was written against.
  *
@@ -286,6 +288,8 @@ export interface ConversationMessage {
    * messages, on networks with read receipts — whether the other side has read it.
    */
   editedAt?: string | null;
+  /** Named people in the text (chat backends that deliver mentions), as UTF-16 ranges of it. */
+  mentions?: Mention[];
   replyToRemoteId?: string | null;
   /** The reply's target as its sender wrote it — matches the id a message was sent with. */
   replyToClientId?: string | null;

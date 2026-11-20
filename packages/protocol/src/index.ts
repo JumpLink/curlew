@@ -19,6 +19,7 @@ export * from './bodystructure.ts';
 export * from './safe-filename.ts';
 export * from './backend.ts';
 export * from './messenger.ts';
+export * from './mention.ts';
 export * from './thread-capabilities.ts';
 export * from './mail-headers.ts';
 export * from './mail-forward.ts';

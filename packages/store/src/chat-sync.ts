@@ -29,7 +29,7 @@
  * participant directory (address book first), set-based.
  */
 
-import { isChatRateLimitedError } from '@curlew/protocol';
+import { isChatRateLimitedError, mentionsToJson } from '@curlew/protocol';
 import type {
   ChatAttachment,
   ChatBackend,
@@ -260,7 +260,7 @@ class ChatBatch {
 
   edit(conversationId: string, edit: ChatEdit): void {
     this.changed.add(conversationId);
-    const row: SqlValue[] = [edit.text, edit.editedAt, conversationId, edit.remoteId];
+    const row: SqlValue[] = [edit.text, mentionsToJson(edit.mentions), edit.editedAt, conversationId, edit.remoteId];
     if (edit.senderRemoteId !== undefined) row.push(edit.senderRemoteId ?? '', edit.senderRemoteId ?? '');
     this.edits.push(row);
   }
@@ -456,7 +456,7 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
     `INSERT OR REPLACE INTO conversation_messages
        (id, conversation_id, backend, account_id, presentation, sender_name, sender_kind,
         sender_address, from_self, sent_at, has_attachments, classification, classification_reason,
-        remote_id, body, remote_seq, sender_peer_id, edited_at, reply_to_remote_id, thread_remote_id, reply_to_client_id, group_id, client_id)`,
+        remote_id, body, remote_seq, sender_peer_id, edited_at, reply_to_remote_id, thread_remote_id, reply_to_client_id, group_id, client_id, mentions_json)`,
     batch.messages,
   );
   insertMany(
@@ -487,9 +487,9 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
   for (const edit of batch.edits) {
     // With a sender: the user's own message matches '', anyone else's its peer id.
     const bySender =
-      edit.length > 4 ? ` AND ((from_self = 1 AND ? = '') OR (from_self = 0 AND sender_peer_id = ?))` : '';
+      edit.length > 5 ? ` AND ((from_self = 1 AND ? = '') OR (from_self = 0 AND sender_peer_id = ?))` : '';
     db.prepare(
-      `UPDATE conversation_messages SET body = ?, edited_at = ? WHERE conversation_id = ? AND remote_id = ?${bySender}`,
+      `UPDATE conversation_messages SET body = ?, mentions_json = ?, edited_at = ? WHERE conversation_id = ? AND remote_id = ?${bySender}`,
     ).run(...edit);
   }
   runIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, batch.retracted);
@@ -605,6 +605,7 @@ function messageRow(
     // '' = this message was looked at and is no album member (see the v15 upgrade).
     m.groupId ?? '',
     m.clientId ?? null,
+    mentionsToJson(m.mentions),
   ];
 }
 

@@ -9,6 +9,7 @@
  * the index, so correcting a sender never writes here — only `curlew sync` does.
  */
 
+import { mentionsFromJson, normalizeMentions } from '@curlew/protocol';
 import type {
   Classification,
   ClassificationReason,
@@ -600,7 +601,7 @@ const MESSAGE_COLUMNS = `id, conversation_id, backend, account_id, presentation,
                   AND p.peer_id = conversation_messages.sender_peer_id) AS peer_addresses,
               sender_kind, sender_address, from_self, sent_at, subject, seen, has_attachments,
               classification, classification_reason, folder_path, uid, remote_id, email_chat, encrypted, ${seqColumn('remote_seq')}, body,
-              edited_at, reply_to_remote_id, thread_remote_id, reply_to_client_id, group_id, client_id, peer_read`;
+              edited_at, reply_to_remote_id, thread_remote_id, reply_to_client_id, group_id, client_id, peer_read, mentions_json`;
 
 /** The phone number a chat peer is known by: shown when no name is, before an opaque id. */
 function phoneOfPeer(json: unknown): string | null {
@@ -659,6 +660,8 @@ function toMessage(
     message.threadRemoteId = str(r.thread_remote_id);
     message.groupId = str(r.group_id) || null;
     message.clientId = str(r.client_id);
+    const mentions = mentionsFromJson(str(r.mentions_json));
+    if (mentions) message.mentions = mentions;
     if (message.fromSelf) message.readByPeer = Number(r.peer_read) === 1;
   } else if (message.fromSelf && r.email_chat !== undefined && Number(r.email_chat) === 1) {
     message.readByPeer = Number(r.peer_read) === 1;
@@ -678,6 +681,11 @@ function toMessage(
     const cap = options.maxBodyChars;
     message.bodyText = body !== null && cap !== undefined && body.length > cap ? body.slice(0, cap) : body;
     message.bodyTruncated = body !== null && cap !== undefined && body.length > cap;
+    if (message.mentions && message.bodyTruncated) {
+      const kept = normalizeMentions(message.bodyText ?? '', message.mentions);
+      if (kept) message.mentions = kept;
+      else delete message.mentions;
+    }
   }
   return message;
 }
