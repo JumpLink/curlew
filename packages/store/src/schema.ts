@@ -22,7 +22,7 @@
 import { type IndexDatabase, withTransaction } from './db.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 
-export const SCHEMA_VERSION = 27;
+export const SCHEMA_VERSION = 28;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -505,6 +505,9 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
   // v27: who a receive lease belongs to, beyond the pid: `<boot id>/<start time>` of the holder, so
   // a successor can tell a dead holder (or a reused pid) from a live one at once. NULL = an old row.
   27: [{ table: 'receive_leases', column: 'holder_stamp', type: 'TEXT' }],
+  // v28: the mentions of a chat message — UTF-16 ranges of its text and the protocol user ids,
+  // as JSON. NULL = none stored (an older message, or a network that delivers none).
+  28: [{ table: 'conversation_messages', column: 'mentions_json', type: 'TEXT' }],
 };
 
 function columnsOf(db: IndexDatabase, table: string): Set<string> {

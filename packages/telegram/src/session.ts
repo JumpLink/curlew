@@ -35,6 +35,7 @@ export function asChatRateLimited(err: unknown): ChatRateLimitedError | null {
 
 function page(
   raw: ReadonlyArray<TgMessage>,
+  selfId: number | null,
   afterSeq: number | null,
   exhausted: boolean,
   reachedStart: boolean,
@@ -42,7 +43,7 @@ function page(
   const fresh = afterSeq === null ? raw : raw.filter((m) => m.id > afterSeq);
   const ordered = [...fresh].sort((a, b) => a.id - b.id);
   return {
-    messages: ordered.map(toChatMessage).filter((m) => m !== null),
+    messages: ordered.map((m) => toChatMessage(m, selfId)).filter((m) => m !== null),
     reactions: ordered.flatMap(toChatReactions),
     highestSeq: ordered.length > 0 ? ordered[ordered.length - 1].id : null,
     lowestSeq: ordered.length > 0 ? ordered[0].id : null,
@@ -56,8 +57,19 @@ export class TelegramChatSession implements ChatSession {
   readonly groupsMedia = true;
   private readonly api: TelegramApi;
 
+  private self: Promise<number | null> | null = null;
+
   constructor(api: TelegramApi) {
     this.api = api;
+  }
+
+  /** The account's own user id, asked once; null when it cannot be had (a mention is then just not marked as yours). */
+  private selfId(): Promise<number | null> {
+    this.self ??= this.api.getMe().then(
+      (me) => me.id,
+      () => null,
+    );
+    return this.self;
   }
 
   /**
@@ -116,7 +128,7 @@ export class TelegramChatSession implements ChatSession {
         collected.push(...chunk);
         lowestId = Math.min(lowestId ?? Infinity, ...chunk.map((m) => m.id));
       }
-      return page(collected, null, true, reachedStart);
+      return page(collected, await this.selfId(), null, true, reachedStart);
     }
     // Oldest first, starting AT the offset id — hence the +1, so `afterSeq` itself is excluded.
     // Asking for more than the cap would make a capped answer look like "nothing left", so `ask`
@@ -129,7 +141,7 @@ export class TelegramChatSession implements ChatSession {
         reverse: true,
       }),
     );
-    return page(raw, afterSeq, raw.length < ask, false);
+    return page(raw, await this.selfId(), afterSeq, raw.length < ask, false);
   }
 
   /**

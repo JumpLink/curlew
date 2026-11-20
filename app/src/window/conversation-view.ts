@@ -8,12 +8,13 @@ import Gtk from 'gi://Gtk?version=4.0';
 import Pango from 'gi://Pango?version=1.0';
 import { _, fmt, parseForwarded, errorMessage } from '@curlew/protocol';
 import type { ThreadCapabilities, ThreadFacts, ThreadFeature } from '@curlew/protocol';
-import type { ConversationMessage, MessageReaction, ReplyTarget } from '@curlew/protocol';
+import type { ConversationMessage, Mention, MessageReaction, ReplyTarget } from '@curlew/protocol';
 import { configPath, type MessageCursor } from '@curlew/store';
 
 import { loadConfig, saveConfig } from '../core/config.ts';
 import { emailChatHint, shouldShowEmailChatHint, withHintSeen } from './email-chat-model.ts';
 import { hasContactPage } from './contact-page.ts';
+import { clipMentions, mentionIndex, mentionMarkup, trimWithMentions } from './mention-model.ts';
 import { showPicture, showSenderPicture } from './contact-picture.ts';
 import type { ListEntry } from './conversation-list-model.ts';
 import {
@@ -114,7 +115,44 @@ const ROWS_PER_TURN = 8;
 // Sets a bubble's text: links and light Markdown as markup, anything else as it came. The markup
 // is well-formed by construction (every character is escaped, every tag closed), and it can use
 // `<a>`, which `Pango.parse_markup` does not know, so it is not pre-checked.
-function setBodyText(label: Gtk.Label, text: string): void {
+/** What a bubble needs to make its mentions work: the name a person is known by, and what a click does. */
+interface MentionHooks {
+  nameOf: (mention: Mention) => string | null;
+  open: (mention: Mention, name: string) => void;
+}
+
+// What each mention link of a label stands for. The `activate-link` handler is connected once per
+// label; a later `setBodyText` (the "show more" expansion) only swaps the entry.
+const mentionLinks = new WeakMap<
+  Gtk.Label,
+  { targets: Mention[]; shown: Map<number, string>; hooks: MentionHooks }
+>();
+
+function setBodyText(
+  label: Gtk.Label,
+  text: string,
+  mentions?: readonly Mention[],
+  hooks?: MentionHooks,
+): void {
+  if (mentions?.length && hooks) {
+    const built = mentionMarkup(text, mentions, hooks.nameOf);
+    if (built.targets.length > 0) {
+      const known = mentionLinks.has(label);
+      mentionLinks.set(label, { targets: built.targets, shown: new Map(), hooks });
+      if (!known) {
+        label.connect('activate-link', (_label, uri) => {
+          const n = mentionIndex(uri);
+          const entry = mentionLinks.get(label);
+          const target = n === null ? undefined : entry?.targets[n];
+          if (!entry || !target) return false;
+          entry.hooks.open(target, entry.hooks.nameOf(target) ?? '');
+          return true;
+        });
+      }
+      label.set_markup(built.markup);
+      return;
+    }
+  }
   if (hasRichText(text)) label.set_markup(richMarkup(text));
   else {
     label.set_use_markup(false);
@@ -157,8 +195,26 @@ export function createConversationView(
   openMedia: (source: AttachmentSource, kind: AttachmentKind, album?: readonly AlbumItem[]) => void,
   onRoute: (entry: ListEntry, backend: string | null) => void,
   onContact: (entry: ListEntry) => void,
+  mentionTools: {
+    nameOf: (backend: string, mention: Mention) => string | null;
+    open: (backend: string, mention: Mention, name: string) => void;
+  },
 ): ConversationView {
   let entry: ListEntry | null = null;
+  const mentionHooks = (message: ShownMessage): MentionHooks => ({
+    nameOf: (m) => mentionTools.nameOf(message.backend, m),
+    open: (m, name) => mentionTools.open(message.backend, m, name),
+  });
+  // Mentions index the stored text; they hold only while the bubble shows exactly that text.
+  const mentionsOfBubble = (
+    message: ShownMessage,
+    forwarded: boolean,
+    written: string | null | undefined,
+  ): Mention[] | undefined => {
+    if (forwarded || message.notice || !message.mentions?.length || !written) return undefined;
+    const trimmed = trimWithMentions(message.bodyText ?? '', message.mentions);
+    return trimmed.text === written ? trimmed.mentions : undefined;
+  };
   // The open thread decides what its controls offer (ADR 0015), not the backend alone.
   const threadCan =
     (feature: ThreadFeature) =>
@@ -1016,6 +1072,7 @@ export function createConversationView(
     let body: Gtk.Label | null = null;
     if (written || (!listed && !generic)) {
       const preview = bubbleText(full);
+      const named = mentionsOfBubble(message, forwarded !== null, written);
       const label = new Gtk.Label({
         xalign: 0,
         wrap: true,
@@ -1025,9 +1082,13 @@ export function createConversationView(
         maxWidthChars: textWidth,
       });
       selectableForPointerOnly(label);
-      setBodyText(label, preview.clipped ? `${preview.text} …` : preview.text);
+      const hooks = mentionHooks(message);
+      const mentions = clipMentions(named, preview.text.length);
+      setBodyText(label, preview.clipped ? `${preview.text} …` : preview.text, mentions, hooks);
       body = label;
-      bubble.append(padded(fadedOverlay(label, preview.clipped, () => setBodyText(label, full))));
+      bubble.append(
+        padded(fadedOverlay(label, preview.clipped, () => setBodyText(label, full, named, hooks))),
+      );
     }
     showReactions();
     // A bubble of only media shows its chips in a row under it, a bubble with text keeps them inside.
@@ -1187,9 +1248,16 @@ export function createConversationView(
       maxWidthChars: 56,
     });
     selectableForPointerOnly(body);
-    setBodyText(body, preview.clipped ? `${preview.text} …` : preview.text);
+    const trimmed = trimWithMentions(message.bodyText ?? '', message.mentions);
+    const hooks = mentionHooks(message);
+    setBodyText(
+      body,
+      preview.clipped ? `${preview.text} …` : preview.text,
+      clipMentions(trimmed.mentions, preview.text.length),
+      hooks,
+    );
     one.bubble.insert_before(
-      padded(fadedOverlay(body, preview.clipped, () => setBodyText(body, text))),
+      padded(fadedOverlay(body, preview.clipped, () => setBodyText(body, text, trimmed.mentions, hooks))),
       one.reactions.get_parent() === one.bubble ? one.reactions : one.meta,
     );
     one.body = body;

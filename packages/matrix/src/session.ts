@@ -114,6 +114,7 @@ export class MatrixChatSession implements ChatSession {
           edits.push({
             remoteId: eventId,
             text: message.text,
+            mentions: message.mentions,
             // Not an edit by a person: the text was there all along, only unreadable.
             editedAt: null,
             senderRemoteId: message.fromSelf ? null : event.sender,
@@ -121,11 +122,12 @@ export class MatrixChatSession implements ChatSession {
           continue;
         }
         deleted.push(eventId);
-        const edit = event ? editOf(event) : null;
+        const edit = event ? editOf(event, this.api.userId) : null;
         if (event && edit) {
           edits.push({
             remoteId: edit.target,
             text: edit.text,
+            mentions: edit.mentions,
             editedAt: new Date(event.ts).toISOString(),
             senderRemoteId: event.sender === this.api.userId ? null : event.sender,
           });

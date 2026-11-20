@@ -186,6 +186,8 @@ export interface DataMessage {
   /** A group admin's delete: the author and sent timestamp of the removed message. */
   adminDelete: { authorAci: string | null; timestamp: number | null } | null;
   pollQuestion: string | null;
+  /** The people the body names (`BodyRange.mentionAci`): UTF-16 start and length into `body`, each over a U+FFFC. */
+  mentions?: Array<{ start: number; length: number; aci: string }>;
   isViewOnce: boolean;
   /** A reply to a story, a gift badge, a payment, a group call notice: not a written message. */
   special: 'story-reply' | 'gift' | 'payment' | 'group-call' | 'poll-vote' | 'pin' | null;
@@ -259,6 +261,12 @@ export function decodeDataMessage(f: Fields): DataMessage {
         }
       : null,
     pollQuestion: poll ? stringField(poll, 1) : null,
+    mentions: repeatedMessages(f, 18).flatMap((range) => {
+      const aci = serviceId(range, 3, 5);
+      const start = numberField(range, 1);
+      const length = numberField(range, 2);
+      return aci && start !== null && length !== null ? [{ start, length, aci }] : [];
+    }),
     isViewOnce: boolField(f, 14) ?? false,
     special,
     profileKey: bytesField(f, 6),
@@ -403,6 +411,8 @@ export function decodeContent(bytes: Uint8Array): Content {
 
 export interface DataMessageInput {
   body?: string;
+  /** Mention ranges over U+FFFC placeholders (`BodyRange.mentionAci`). */
+  mentions?: Array<{ start: number; length: number; aci: string }>;
   timestamp?: number;
   groupMasterKey?: Uint8Array;
   groupRevision?: number;
@@ -429,6 +439,8 @@ export interface DataMessageInput {
 
 export function encodeDataMessage(d: DataMessageInput): ProtoWriter {
   const w = new ProtoWriter().string(1, d.body);
+  for (const m of d.mentions ?? [])
+    w.message(18, new ProtoWriter().uint(1, m.start).uint(2, m.length).string(3, m.aci));
   const pointer = (a: NonNullable<DataMessageInput['attachments']>[number]) =>
     new ProtoWriter()
       .string(2, a.contentType)

@@ -321,8 +321,10 @@ export default async () => {
         seedMessage(db, CHAT_BACKEND, HANDLE);
         const backend = fakeChatBackend({
           fetchAttachment: async (_account, _attachment, sink) => {
-            for (let i = 0; i < 4; i++) {
-              await new Promise((r) => setTimeout(r, 15));
+            // Total (8 x 50ms) outlasts the stall window, so only progress keeps it alive;
+            // each gap has 6x headroom, enough for a loaded CI runner to slip a timer.
+            for (let i = 0; i < 8; i++) {
+              await new Promise((r) => setTimeout(r, 50));
               await sink.write(new Uint8Array([1, 2]));
             }
             sink.close();
@@ -330,7 +332,7 @@ export default async () => {
           },
         });
         const fetchBackends = new Map([[sessionKey(CHAT_BACKEND, ACCOUNT), backend]]);
-        const handler = createDaemonFetchHandler({ db, fetchBackends, log, stallTimeoutMs: 40 });
+        const handler = createDaemonFetchHandler({ db, fetchBackends, log, stallTimeoutMs: 300 });
         const reply = await handler(fetchRequest());
         expect(reply.kind).toBe('fetched');
       } finally {

@@ -19,6 +19,7 @@
 
 import type { FolderInfo } from './list-parse.ts';
 import type { AutomationHeaders } from './mail-headers.ts';
+import type { Mention } from './mention.ts';
 import type { BackendManifest, ParticipantAddress } from './messenger.ts';
 import type { MailAddress } from './types.ts';
 
@@ -389,6 +390,8 @@ export interface ChatMessage {
   sender: ChatPeer | null;
   fromSelf: boolean;
   text: string | null;
+  /** Named people in `text`, as UTF-16 ranges of it; absent when the network delivered none. */
+  mentions?: Mention[];
   hasAttachments: boolean;
   /** Attachment metadata for the window; the bytes stay on the network until fetched. */
   attachments?: ChatAttachment[];
@@ -483,6 +486,8 @@ export interface ChatReaction {
 export interface ChatEdit {
   remoteId: string;
   text: string | null;
+  /** Mentions of the new text; absent clears the old ones. */
+  mentions?: Mention[];
   editedAt: string | null;
   /**
    * Who made the edit, for networks where an edit is an event anyone could send (Matrix
@@ -680,7 +685,15 @@ export type DeliveryEvent =
       seen: boolean;
     }
   /** A message was edited. Applies to a stored message only; an edit of one never stored is dropped. */
-  | { type: 'edit'; chatRemoteId: string; remoteId: string; text: string | null; editedAt: string | null }
+  | {
+      type: 'edit';
+      chatRemoteId: string;
+      remoteId: string;
+      text: string | null;
+      /** Mentions of the new text; absent clears the old ones. */
+      mentions?: Mention[];
+      editedAt: string | null;
+    }
   /** A message was deleted (revoked for everyone, or deleted for the user on another device). */
   | { type: 'delete'; chatRemoteId: string; remoteId: string }
   /**

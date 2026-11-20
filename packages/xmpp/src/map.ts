@@ -22,8 +22,9 @@ import type {
   ChatMessage,
   ChatPeer,
   ParticipantAddress,
+  Mention,
 } from '@curlew/protocol';
-import { normalizeAddress } from '@curlew/protocol';
+import { normalizeAddress, normalizeMentions } from '@curlew/protocol';
 import { attachmentsOfLinks } from './attachment-link.ts';
 import { type ArchivedEntry, bareJid, leadingQuote, resourceOf } from './stanza.ts';
 
@@ -100,6 +101,19 @@ export function isFromSelf(context: ChatContext, entry: ArchivedEntry): boolean 
   if (context.kind === 'direct') return bareJid(entry.from) === context.selfJid;
   if (entry.occupantJid) return entry.occupantJid === context.selfJid;
   return context.selfNick !== null && resourceOf(entry.from) === context.selfNick;
+}
+
+/** The XEP-0372 mentions of an entry, when `text` is still the body they were counted in. */
+export function mentionsOf(context: ChatContext, entry: ArchivedEntry, text: string | null): Mention[] | undefined {
+  if (!text || text !== entry.body || !entry.mentions?.length) return undefined;
+  return normalizeMentions(
+    text,
+    entry.mentions.map((m) => {
+      const jid = bareJid(m.jid);
+      const range = { start: m.start, end: m.end, userId: m.jid };
+      return jid === context.selfJid ? { ...range, self: true } : range;
+    }),
+  );
 }
 
 function senderOf(context: ChatContext, entry: ArchivedEntry): ChatPeer | null {
@@ -289,10 +303,11 @@ export function buildPage(
       if (!original || authorKey(context, entry) !== authorKey(context, original)) return;
       const text = entry.encrypted ? null : entry.body;
       const editedAt = iso(entry.stampMs);
+      const mentions = entry.encrypted ? undefined : mentionsOf(context, entry, text);
       const inPage = messages.get(original.archiveId);
-      if (inPage) messages.set(original.archiveId, { ...inPage, text, editedAt });
+      if (inPage) messages.set(original.archiveId, { ...inPage, text, mentions, editedAt });
       else if (!retracted.has(original.archiveId)) {
-        edits.set(original.archiveId, { remoteId: original.archiveId, text, editedAt });
+        edits.set(original.archiveId, { remoteId: original.archiveId, text, mentions, editedAt });
       }
       return;
     }
@@ -325,6 +340,7 @@ export function buildPage(
       // rather than what they wrote, so no text is indexed — `omemo-archive.ts` has already
       // replaced the body of everything it could read.
       text,
+      mentions: inferred || links.length > 0 ? undefined : mentionsOf(context, entry, text),
       hasAttachments: links.length > 0,
       ...(attachments.length > 0 ? { attachments } : {}),
       replyToRemoteId: reply ? reply.archiveId : null,

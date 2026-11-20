@@ -21,7 +21,7 @@
  * Edits of stored messages are the one per-item statement: they are rare.
  */
 
-import { abortableSleep } from '@curlew/protocol';
+import { abortableSleep, mentionsToJson } from '@curlew/protocol';
 import type {
   DeliveryBackend,
   DeliveryEvent,
@@ -308,6 +308,7 @@ function messageRow(batch: DeliveryBatch, id: string, pending: PendingMessage): 
     m.replyToRemoteId,
     m.threadRemoteId,
     pending.peerRead ? 1 : 0,
+    mentionsToJson(m.mentions),
   ];
 }
 
@@ -317,7 +318,7 @@ function messageRow(batch: DeliveryBatch, id: string, pending: PendingMessage): 
  */
 const MESSAGE_COLUMNS = `id, conversation_id, backend, account_id, presentation, sender_name, sender_kind,
   sender_address, from_self, sent_at, seen, has_attachments, classification, classification_reason,
-  remote_id, body, remote_seq, sender_peer_id, edited_at, reply_to_remote_id, thread_remote_id, peer_read, reply_to_client_id, client_id`;
+  remote_id, body, remote_seq, sender_peer_id, edited_at, reply_to_remote_id, thread_remote_id, peer_read, reply_to_client_id, client_id, mentions_json`;
 
 /**
  * Move a chat stored under `from` into `into` — one chat the network addressed two ways (a
@@ -538,7 +539,7 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
       `INSERT OR REPLACE INTO conversation_messages
          (id, conversation_id, backend, account_id, presentation, sender_name, sender_kind,
           sender_address, from_self, sent_at, seen, has_attachments, classification, classification_reason,
-          remote_id, body, remote_seq, sender_peer_id, edited_at, reply_to_remote_id, thread_remote_id, peer_read)`,
+          remote_id, body, remote_seq, sender_peer_id, edited_at, reply_to_remote_id, thread_remote_id, peer_read, mentions_json)`,
       [...batch.messages].map(([id, pending]) => messageRow(batch, id, pending)),
     );
     insertMany(
@@ -548,8 +549,9 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
       batch.messageAttachments,
     );
     for (const [id, edit] of batch.edits) {
-      db.prepare('UPDATE conversation_messages SET body = ?, edited_at = ? WHERE id = ?').run(
+      db.prepare('UPDATE conversation_messages SET body = ?, mentions_json = ?, edited_at = ? WHERE id = ?').run(
         edit.text,
+        mentionsToJson(edit.mentions),
         edit.editedAt,
         id,
       );

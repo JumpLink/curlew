@@ -38,7 +38,8 @@ import { aiEnabled, deltaChatAccountIds, loadConfig, saveConfig } from '../core/
 import { DEFAULT_SEARCH_SCOPE } from '../core/lib/search-scope.ts';
 import { candidateSets } from './merge-candidates-model.ts';
 import { timed } from './stall-probe.ts';
-import { presentContactPage } from './contact-page.ts';
+import { hasContactPage, presentContactPage } from './contact-page.ts';
+import { mentionEntry, mentionName } from './mention-model.ts';
 import { presentMergeAssistant } from './merge-assistant.ts';
 import {
   peopleChoose,
@@ -413,6 +414,23 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
       if (again) select(again);
     },
     (entry) => openContact(entry),
+    {
+      nameOf: (backend, mention) => mentionName(shown, backend, mention),
+      open: (backend, mention, name) => {
+        const person = mentionEntry(shown, backend, mention);
+        if (person && hasContactPage(person)) {
+          openContact(person);
+          return;
+        }
+        // Someone the index has no chat with: just who the network says it is.
+        const dialog = new Adw.AlertDialog({
+          heading: name || mention.userId,
+          body: name ? mention.userId : _('No further details are known about this person.'),
+        });
+        dialog.add_response('close', _('Close'));
+        dialog.present(window);
+      },
+    },
   );
   // The local read position is the window's; the network half goes out after a quiet moment (#441).
   const readSync = createReadSyncScheduler(

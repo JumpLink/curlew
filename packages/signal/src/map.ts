@@ -24,8 +24,15 @@
  * the index counts unread per chat, and a wrong guess would mark unseen messages read.
  */
 
-import { _ } from '@curlew/protocol';
-import type { AttachmentKind, ChatAttachment, ChatMessage, ChatPeer, DeliveryEvent } from '@curlew/protocol';
+import { _, applyMentionLabels } from '@curlew/protocol';
+import type {
+  AttachmentKind,
+  ChatAttachment,
+  ChatMessage,
+  ChatPeer,
+  DeliveryEvent,
+  Mention,
+} from '@curlew/protocol';
 import {
   type AttachmentPointer,
   type Content,
@@ -281,6 +288,7 @@ export class SignalMapper {
         chatRemoteId: chat.id,
         remoteId: messageRemoteId(context.senderAci, content.editMessage.targetSentTimestamp),
         text: edited.text,
+        mentions: edited.mentions,
         editedAt: new Date(context.timestamp).toISOString(),
       });
       return out;
@@ -336,7 +344,10 @@ export class SignalMapper {
           type: 'edit',
           chatRemoteId: chat.id,
           remoteId: messageRemoteId(this.ownAci, sent.editMessage.targetSentTimestamp),
-          text: this.messageText(sent.editMessage.dataMessage).text,
+          ...(() => {
+            const edited = this.messageText(sent.editMessage.dataMessage);
+            return { text: edited.text, mentions: edited.mentions };
+          })(),
           editedAt: sent.timestamp !== null ? new Date(sent.timestamp).toISOString() : null,
         });
       }
@@ -369,7 +380,7 @@ export class SignalMapper {
   }
 
   /** The text a list shows for a message, and whether a file came with it. Null text: nothing written. */
-  messageText(data: DataMessage): { text: string | null; hasAttachments: boolean } {
+  messageText(data: DataMessage): { text: string | null; hasAttachments: boolean; mentions?: Mention[] } {
     const first = data.attachments[0];
     const text =
       data.body ??
@@ -377,7 +388,22 @@ export class SignalMapper {
       first?.fileName ??
       data.pollQuestion ??
       (data.contacts.length > 0 ? data.contacts.filter(Boolean).join(', ') || null : null);
-    return { text, hasAttachments: data.attachments.length > 0 || data.sticker || data.contacts.length > 0 };
+    const hasAttachments = data.attachments.length > 0 || data.sticker || data.contacts.length > 0;
+    // Only the body carries ranges; a caption or file name used as the text has none.
+    if (text === null || text !== data.body || !data.mentions?.length) return { text, hasAttachments };
+    // The ranges sit over U+FFFC placeholders. Signal does not send the names: the stored text
+    // gets a short stand-in, which the window swaps for the person's name once it knows it.
+    const applied = applyMentionLabels(
+      text,
+      data.mentions.map((m) => ({
+        start: m.start,
+        end: m.start + m.length,
+        userId: m.aci,
+        ...(this.isOwnServiceId(m.aci) ? { self: true } : {}),
+        label: `@${m.aci.replace(/^PNI:/, '').slice(0, 8)}`,
+      })),
+    );
+    return applied.mentions ? { text: applied.text, hasAttachments, mentions: applied.mentions } : { text, hasAttachments };
   }
 
   private data(
@@ -430,7 +456,7 @@ export class SignalMapper {
       (DataMessageFlags.END_SESSION |
         DataMessageFlags.EXPIRATION_TIMER_UPDATE |
         DataMessageFlags.PROFILE_KEY_UPDATE);
-    const { text, hasAttachments } = this.messageText(data);
+    const { text, hasAttachments, mentions } = this.messageText(data);
     if (housekeeping && text === null && !hasAttachments) return;
     if (text === null && !hasAttachments) return;
     const message: ChatMessage = {
@@ -446,6 +472,7 @@ export class SignalMapper {
       // normally matches only a send from curlew's other device — a safety net, not the rule.
       clientId: fromSelf ? messageRemoteId(authorAci, sentAt) : null,
       text,
+      mentions,
       hasAttachments,
       attachments: toChatAttachments(data),
       replyToRemoteId:

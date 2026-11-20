@@ -35,6 +35,8 @@ export interface WaMessageKey {
 
 export interface WaContextInfo {
   stanzaId?: string | null;
+  /** The people the text names: their JIDs; the text carries `@<user part>` for each. */
+  mentionedJid?: ReadonlyArray<string> | null;
 }
 
 /** A media message: every one of them may carry a caption and a reply context. */

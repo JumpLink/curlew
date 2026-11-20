@@ -10,11 +10,12 @@ import type {
   ChatAttachment,
   ChatInfo,
   ChatMessage,
+  Mention,
   ChatPeer,
   ChatReaction,
   ParticipantAddress,
 } from '@curlew/protocol';
-import { normalizeAddress } from '@curlew/protocol';
+import { normalizeAddress, normalizeMentions } from '@curlew/protocol';
 import type { TgDialog, TgMedia, TgMessage, TgPeer, TgThumbnail } from './api.ts';
 import { strippedToJpeg } from './stripped-jpeg.ts';
 
@@ -202,7 +203,22 @@ export function toChatReactions(message: TgMessage): ChatReaction[] {
 }
 
 /** One message, or null for a service notice (joins, pins, title changes). */
-export function toChatMessage(message: TgMessage): ChatMessage | null {
+/**
+ * The named people in a message: `text_mention` entities (a person without a handle, named by
+ * id). A plain `@username` mention is a handle in the text, not an id, so it stays plain text.
+ */
+export function mentionsOf(message: TgMessage, selfId: number | null): Mention[] | undefined {
+  const found: Mention[] = [];
+  for (const e of message.entities ?? []) {
+    const userId = e.params?.userId;
+    if (e.kind !== 'text_mention' || typeof userId !== 'number') continue;
+    const range = { start: e.offset, end: e.offset + e.length, userId: String(userId) };
+    found.push(userId === selfId ? { ...range, self: true } : range);
+  }
+  return normalizeMentions(message.text, found);
+}
+
+export function toChatMessage(message: TgMessage, selfId: number | null = null): ChatMessage | null {
   if (message.isService) return null;
   const chatId = message.chat.id;
   const sender = message.sender.type === 'anonymous' ? null : message.sender;
@@ -220,6 +236,7 @@ export function toChatMessage(message: TgMessage): ChatMessage | null {
     // Chat-qualified: echoes are matched per account, and a channel's message ids repeat others'.
     clientId: fromSelf ? remoteMessageId(chatId, message.id) : null,
     text: message.text || null,
+    mentions: mentionsOf(message, selfId),
     hasAttachments: message.media !== null && FILE_MEDIA.has(message.media.type),
     attachments: toChatAttachments(message),
     replyToRemoteId: reply?.id ? remoteMessageId(chatId, reply.id) : null,

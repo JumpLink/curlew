@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-20 07:39+0100\n"
+"POT-Creation-Date: 2026-11-20 14:43+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -1856,8 +1856,8 @@ msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
 #: app/src/window/about.ts:37 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:199 app/src/window/window.ts:109
-#: app/src/window/window.ts:239
+#: app/src/window/conversation-view.ts:255 app/src/window/window.ts:110
+#: app/src/window/window.ts:240
 msgid "Curlew"
 msgstr "Curlew"
 
@@ -2029,7 +2029,7 @@ msgstr "Dieses Konto pausieren?"
 #: app/src/window/agent-access-page.ts:233
 #: app/src/window/conversation-list.ts:505
 #: app/src/window/conversation-list.ts:598
-#: app/src/window/conversation-view.ts:770 app/src/window/protocols-page.ts:66
+#: app/src/window/conversation-view.ts:826 app/src/window/protocols-page.ts:66
 #: app/src/window/protocols-page.ts:142
 msgid "Cancel"
 msgstr "Abbrechen"
@@ -2169,7 +2169,7 @@ msgstr "Der Hintergrunddienst ließ sich nicht starten: {reason}"
 
 #: app/src/window/accounts-dialog.ts:93 app/src/window/accounts-page.ts:206
 #: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:177
-#: app/src/window/window.ts:252
+#: app/src/window/window.ts:253
 msgid "Accounts"
 msgstr "Konten"
 
@@ -2266,7 +2266,7 @@ msgstr "Starten"
 msgid "Protocols"
 msgstr "Protokolle"
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:256
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:257
 msgid "Agent access"
 msgstr "Agentenzugriff"
 
@@ -2989,7 +2989,7 @@ msgstr[0] "{count} mögliches Duplikat"
 msgstr[1] "{count} mögliche Duplikate"
 
 #: app/src/window/conversation-model.ts:144
-#: app/src/window/conversation-view.ts:1420
+#: app/src/window/conversation-view.ts:1488
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -3025,157 +3025,157 @@ msgstr[1] "Du und {count} weitere Personen"
 
 #: app/src/window/conversation-model.ts:359
 #: app/src/window/conversation-model.ts:372
-#: app/src/window/conversation-view.ts:754
+#: app/src/window/conversation-view.ts:810
 msgid "You"
 msgstr "Du"
 
-#: app/src/window/conversation-view.ts:205
+#: app/src/window/conversation-view.ts:261
 msgid "Choose how to reach this person"
 msgstr "Erreichbarkeit dieser Person wählen"
 
-#: app/src/window/conversation-view.ts:218
-#: app/src/window/conversation-view.ts:1545
+#: app/src/window/conversation-view.ts:274
+#: app/src/window/conversation-view.ts:1613
 msgid "Contact details"
 msgstr "Kontaktdetails"
 
-#: app/src/window/conversation-view.ts:237
+#: app/src/window/conversation-view.ts:293
 msgid "No messages yet"
 msgstr "Noch keine Nachrichten"
 
-#: app/src/window/conversation-view.ts:246
-#: app/src/window/conversation-view.ts:538
+#: app/src/window/conversation-view.ts:302
+#: app/src/window/conversation-view.ts:594
 msgid "Write a message"
 msgstr "Nachricht schreiben"
 
-#: app/src/window/conversation-view.ts:257
+#: app/src/window/conversation-view.ts:313
 msgid "Send message"
 msgstr "Nachricht senden"
 
-#: app/src/window/conversation-view.ts:270
+#: app/src/window/conversation-view.ts:326
 msgid "Cancel reply"
 msgstr "Antwort abbrechen"
 
-#: app/src/window/conversation-view.ts:283
+#: app/src/window/conversation-view.ts:339
 msgid "Cancel editing"
 msgstr "Bearbeiten abbrechen"
 
-#: app/src/window/conversation-view.ts:296
+#: app/src/window/conversation-view.ts:352
 msgid "Got It"
 msgstr "Verstanden"
 
-#: app/src/window/conversation-view.ts:358
+#: app/src/window/conversation-view.ts:414
 msgid "Conversation"
 msgstr "Unterhaltung"
 
-#: app/src/window/conversation-view.ts:504
+#: app/src/window/conversation-view.ts:560
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 "{protocol} kann keine Dateien senden; die angehängten Dateien wurden entfernt"
 
-#: app/src/window/conversation-view.ts:556
+#: app/src/window/conversation-view.ts:612
 msgid "Send via {protocol}"
 msgstr "Senden über {protocol}"
 
-#: app/src/window/conversation-view.ts:661
+#: app/src/window/conversation-view.ts:717
 msgid "Show the quoted message"
 msgstr "Zitierte Nachricht anzeigen"
 
-#: app/src/window/conversation-view.ts:668
-#: app/src/window/conversation-view.ts:700
+#: app/src/window/conversation-view.ts:724
+#: app/src/window/conversation-view.ts:756
 msgid "Reply to {author}: {excerpt}"
 msgstr "Antwort auf {author}: {excerpt}"
 
-#: app/src/window/conversation-view.ts:683
+#: app/src/window/conversation-view.ts:739
 msgid "The quoted message is no longer in the history"
 msgstr "Die zitierte Nachricht ist nicht mehr im Verlauf"
 
-#: app/src/window/conversation-view.ts:725
+#: app/src/window/conversation-view.ts:781
 msgid "Reaction not sent: {error}"
 msgstr "Reaktion nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:753
+#: app/src/window/conversation-view.ts:809
 msgid "Edit message"
 msgstr "Nachricht bearbeiten"
 
-#: app/src/window/conversation-view.ts:757
+#: app/src/window/conversation-view.ts:813
 msgid "Editing your message: {excerpt}"
 msgstr "Eigene Nachricht bearbeiten: {excerpt}"
 
-#: app/src/window/conversation-view.ts:765
+#: app/src/window/conversation-view.ts:821
 msgid "Delete message?"
 msgstr "Nachricht löschen?"
 
-#: app/src/window/conversation-view.ts:766
+#: app/src/window/conversation-view.ts:822
 msgid "This will remove the message for everyone in the chat."
 msgstr "Dadurch wird die Nachricht für alle im Chat entfernt."
 
-#: app/src/window/conversation-view.ts:771
+#: app/src/window/conversation-view.ts:827
 msgid "Delete for everyone"
 msgstr "Für alle löschen"
 
-#: app/src/window/conversation-view.ts:788
+#: app/src/window/conversation-view.ts:844
 msgid "Message not deleted: {error}"
 msgstr "Nachricht nicht gelöscht: {error}"
 
-#: app/src/window/conversation-view.ts:845
+#: app/src/window/conversation-view.ts:901
 msgid "Reply"
 msgstr "Antworten"
 
-#: app/src/window/conversation-view.ts:846
+#: app/src/window/conversation-view.ts:902
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: app/src/window/conversation-view.ts:847
+#: app/src/window/conversation-view.ts:903
 msgid "Copy"
 msgstr "Kopieren"
 
-#: app/src/window/conversation-view.ts:848
+#: app/src/window/conversation-view.ts:904
 msgid "Delete"
 msgstr "Löschen"
 
-#: app/src/window/conversation-view.ts:988
+#: app/src/window/conversation-view.ts:1044
 msgid "Forwarded from {sender}"
 msgstr "Weitergeleitet von {sender}"
 
-#: app/src/window/conversation-view.ts:989
+#: app/src/window/conversation-view.ts:1045
 msgid "Forwarded"
 msgstr "Weitergeleitet"
 
-#: app/src/window/conversation-view.ts:1003
+#: app/src/window/conversation-view.ts:1059
 msgid "Encrypted message: it cannot be shown here"
 msgstr "Verschlüsselte Nachricht: Sie kann hier nicht angezeigt werden"
 
-#: app/src/window/conversation-view.ts:1004
+#: app/src/window/conversation-view.ts:1060
 msgid "No text body"
 msgstr "Kein Textinhalt"
 
-#: app/src/window/conversation-view.ts:1048
-#: app/src/window/conversation-view.ts:1197
+#: app/src/window/conversation-view.ts:1109
+#: app/src/window/conversation-view.ts:1265
 msgid "edited"
 msgstr "bearbeitet"
 
-#: app/src/window/conversation-view.ts:1058
-#: app/src/window/conversation-view.ts:1059
+#: app/src/window/conversation-view.ts:1119
+#: app/src/window/conversation-view.ts:1120
 msgid "Read"
 msgstr "Gelesen"
 
-#: app/src/window/conversation-view.ts:1284
+#: app/src/window/conversation-view.ts:1352
 msgid "Could not load older messages: {error}"
 msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
 
-#: app/src/window/conversation-view.ts:1385
+#: app/src/window/conversation-view.ts:1453
 msgid "Message not edited: {error}"
 msgstr "Nachricht nicht bearbeitet: {error}"
 
-#: app/src/window/conversation-view.ts:1432
+#: app/src/window/conversation-view.ts:1500
 msgid "Message not sent: {error}"
 msgstr "Nachricht nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:1435
+#: app/src/window/conversation-view.ts:1503
 msgid "Retry"
 msgstr "Erneut versuchen"
 
-#: app/src/window/conversation-view.ts:1545
+#: app/src/window/conversation-view.ts:1613
 msgid "Group details"
 msgstr "Gruppendetails"
 
@@ -3456,7 +3456,7 @@ msgstr ""
 msgid "AI"
 msgstr "KI"
 
-#: app/src/window/preferences-dialog.ts:118 app/src/window/window.ts:254
+#: app/src/window/preferences-dialog.ts:118 app/src/window/window.ts:255
 msgid "Preferences"
 msgstr "Einstellungen"
 
@@ -3464,7 +3464,7 @@ msgstr "Einstellungen"
 msgid "Accept and Turn On"
 msgstr "Zustimmen und einschalten"
 
-#: app/src/window/protocols-page.ts:83
+#: app/src/window/protocols-page.ts:83 app/src/window/window.ts:430
 msgid "Close"
 msgstr "Schließen"
 
@@ -3610,7 +3610,7 @@ msgid "On"
 msgstr "An"
 
 #: app/src/window/welcome.ts:112 app/src/window/welcome.ts:130
-#: app/src/window/window.ts:259
+#: app/src/window/window.ts:260
 msgid "Welcome"
 msgstr "Willkommen"
 
@@ -3672,49 +3672,53 @@ msgstr ""
 msgid "Start Using Curlew"
 msgstr "Curlew benutzen"
 
-#: app/src/window/window.ts:103
+#: app/src/window/window.ts:104
 msgid "Select a conversation"
 msgstr "Unterhaltung auswählen"
 
-#: app/src/window/window.ts:104
+#: app/src/window/window.ts:105
 msgid "Pick a conversation from the list."
 msgstr "Wähle eine Unterhaltung aus der Liste."
 
-#: app/src/window/window.ts:144
+#: app/src/window/window.ts:145
 msgid "Resize the conversation list"
 msgstr "Breite der Unterhaltungsliste ändern"
 
-#: app/src/window/window.ts:146
+#: app/src/window/window.ts:147
 msgid "Drag to resize the conversation list. Double-click to reset."
 msgstr ""
 "Ziehen, um die Breite der Unterhaltungsliste zu ändern. Doppelklick setzt "
 "sie zurück."
 
-#: app/src/window/window.ts:253
+#: app/src/window/window.ts:254
 msgid "Merge contacts…"
 msgstr "Kontakte zusammenführen…"
 
-#: app/src/window/window.ts:261
+#: app/src/window/window.ts:262
 msgid "About Curlew"
 msgstr "Über Curlew"
 
-#: app/src/window/window.ts:262
+#: app/src/window/window.ts:263
 msgid "Quit"
 msgstr "Beenden"
 
-#: app/src/window/window.ts:311
+#: app/src/window/window.ts:312
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:554
+#: app/src/window/window.ts:428
+msgid "No further details are known about this person."
+msgstr "Über diese Person ist nichts Weiteres bekannt."
+
+#: app/src/window/window.ts:572
 msgid "Curlew (demo)"
 msgstr "Curlew (Demo)"
 
-#: app/src/window/window.ts:557
+#: app/src/window/window.ts:575
 msgid "Demo data — nothing here is real"
 msgstr "Demo-Daten – nichts hier ist echt"
 
-#: app/src/window/window.ts:706
+#: app/src/window/window.ts:724
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 
@@ -4194,7 +4198,7 @@ msgstr ""
 "und sendet nur, was du ihm aufträgst. Signal führt kein Archiv: Was Curlew "
 "empfängt, existiert nur auf diesem Gerät."
 
-#: packages/signal/src/map.ts:54
+#: packages/signal/src/map.ts:61
 msgid "this message has no Signal id to reply to"
 msgstr "diese Nachricht hat keine Signal-Kennung, auf die man antworten kann"
 
@@ -4634,7 +4638,7 @@ msgstr ""
 "Die WhatsApp-Verbindung für {account} ist nicht offen — es wurde nichts "
 "gesendet"
 
-#: packages/whatsapp/src/backend.ts:345
+#: packages/whatsapp/src/backend.ts:347
 msgid "the WhatsApp connection is not open — no pictures"
 msgstr "Die WhatsApp-Verbindung ist nicht offen — keine Bilder"
 

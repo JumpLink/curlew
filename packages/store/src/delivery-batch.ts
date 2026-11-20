@@ -4,6 +4,7 @@ import type {
   ChatPeer,
   DeliveryChat,
   DeliveryEvent,
+  Mention,
   ParticipantAddress,
 } from '@curlew/protocol';
 import { chatConversationId } from './chat-sync.ts';
@@ -55,7 +56,7 @@ export class DeliveryBatch {
   readonly clearedChats = new Set<string>();
   readonly edits = new Map<
     string,
-    { text: string | null; editedAt: string | null; conversationId: string }
+    { text: string | null; mentions: Mention[] | undefined; editedAt: string | null; conversationId: string }
   >();
   readonly peerRead = new Set<string>();
   /** The last reaction of each person to each message, keyed `<row id>\0<reactor>`; a null emoji takes it back. */
@@ -199,10 +200,11 @@ export class DeliveryBatch {
         const id = this.rowId(event.chatRemoteId, event.remoteId);
         const pending = this.messages.get(id);
         if (pending) {
-          pending.message = { ...pending.message, text: event.text, editedAt: event.editedAt };
+          pending.message = { ...pending.message, text: event.text, mentions: event.mentions, editedAt: event.editedAt };
         } else if (!this.deletedMessages.has(id)) {
           this.edits.set(id, {
             text: event.text,
+            mentions: event.mentions,
             editedAt: event.editedAt,
             conversationId: this.conversationId(event.chatRemoteId),
           });

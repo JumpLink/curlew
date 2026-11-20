@@ -91,6 +91,14 @@ export default async () => {
           };
           expect(Number(version.value)).toBe(SCHEMA_VERSION);
           expect(count(db, 'conversation_messages')).toBe(2);
+          const columns = (
+            db.prepare('PRAGMA table_info(conversation_messages)').all() as Array<{ name: string }>
+          ).map((c) => c.name);
+          expect(columns.includes('mentions_json')).toBe(true);
+          const mentionsOf = db
+            .prepare('SELECT mentions_json AS j FROM conversation_messages')
+            .all() as Array<{ j: unknown }>;
+          expect(mentionsOf.every((r) => r.j === null)).toBe(true);
           const bodies = (
             db.prepare('SELECT body FROM conversation_messages ORDER BY id').all() as Array<{ body: string }>
           ).map((r) => r.body);

@@ -735,6 +735,35 @@ export default async () => {
     });
   });
 
+  await describe('mentions', async () => {
+    await it('are stored with the message, survive a re-read, and an edit without them clears them', async () => {
+      const backend = telegramFixture();
+      const db = freshDb();
+      try {
+        await syncChats(db, backend);
+        const chat = backend.chats.get('1001');
+        if (!chat) throw new Error('fixture chat missing');
+        chat.messages[0] = {
+          ...chat.messages[0],
+          text: 'Hallo Anna!',
+          mentions: [{ start: 6, end: 10, userId: '77' }],
+        };
+        await syncChats(db, backend, { fullScan: true });
+        const stored = getConversation(db, DIRECT, { includeBodies: true })?.messages[0];
+        expect(stored?.bodyText).toBe('Hallo Anna!');
+        expect(stored?.mentions).toStrictEqual([{ start: 6, end: 10, userId: '77' }]);
+        // A message that never had mentions reads as before.
+        expect(getConversation(db, DIRECT, { includeBodies: true })?.messages[1]?.mentions).toBe(undefined);
+
+        chat.messages[0] = { ...chat.messages[0], text: 'Hallo!', mentions: undefined };
+        await syncChats(db, backend, { fullScan: true });
+        expect(getConversation(db, DIRECT, { includeBodies: true })?.messages[0]?.mentions).toBe(undefined);
+      } finally {
+        db.close();
+      }
+    });
+  });
+
   await describe('the local echo of a sent message', async () => {
     /** Send a message locally, then let the archive echo it back under the same client id. */
     async function sendThenSync(archivedText: string | null) {
