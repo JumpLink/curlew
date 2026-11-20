@@ -53,6 +53,7 @@ jobs:
           openssl
           msitools
           gettext
+          glib2-devel
 
       - uses: actions/checkout@v4
 
@@ -171,26 +172,47 @@ jobs:
       - name: Keep only the app bundles in dist
         run: find app/dist -maxdepth 1 -type f ! -name curlew.gjs.mjs ! -name window.gjs.mjs -delete
 
-      - name: Package the bridge (.deb + .rpm)
+      # `linux-tar-flatpak` is the tarball a FlatPark package downloads: FlatPark pins it by
+      # checksum and wraps it as extra-data, so the user's machine fetches it from the release.
+      # It comes out of the same stage as the packages, so the six bundled linux-x64 native
+      # prebuilds (`gjsify.ship.bundledTypelibs`) ride along. `glib2-devel` (installed above)
+      # brings `glib-compile-schemas`, the one host tool this format needs.
+      - name: Package the bridge (.deb + .rpm + FlatPark tarball)
         working-directory: app
-        run: gjsify ship linux --skip-build --target deb,rpm
+        run: gjsify ship linux --skip-build --target deb,rpm,linux-tar-flatpak
 
       # `ship` exits 0 after writing NOTHING when every target is filtered away, so each file is
       # asserted by name rather than assumed. `amd64` and `x86_64`, not `all`/`noarch`: the bundle
       # carries the linux-x64 native prebuilds (`gjsify.ship.bundledTypelibs`), so the packages
       # are for that architecture only, which is also what lets apt/dnf refuse them elsewhere.
-      - name: Assert the two packages arrived
+      - name: Assert the packages and the tarball arrived
         working-directory: app/ship/out
         run: |
           set -eu
           ls -la
           version=$(node -p "require('$GITHUB_WORKSPACE/app/package.json').version")
-          for f in "curlew_${version}-1_amd64.deb" "curlew-${version}-1.x86_64.rpm"; do
+          for f in "curlew_${version}-1_amd64.deb" "curlew-${version}-1.x86_64.rpm" "curlew-${version}-linux-x86_64-flatpak.tar.gz"; do
             if [ ! -s "$f" ] || [ ! -s "$f.gjsify-release.json" ]; then
               echo "::error::missing or empty artifact: $f"
               exit 1
             fi
           done
+
+      # What must never be in a package a stranger installs: anything from a developer machine.
+      # The tarball is built here from a clean checkout; this fails if local data (databases,
+      # config, secrets, a data directory) nevertheless reached it, and checks that the six
+      # bundled native prebuilds did.
+      - name: The tarball holds the app and nothing local
+        working-directory: app/ship/out
+        run: |
+          set -eu
+          tar -tzf curlew-*-linux-x86_64-flatpak.tar.gz > /tmp/list.txt
+          wc -l /tmp/list.txt
+          if grep -E '\.sqlite|(^|/)config\.json$|(^|/)\.env($|\.)|\.local/share|(^|/)\.cache(/|$)|(^|/)\.config(/|$)|(^|/)(curlew-data|data-dir)(/|$)' /tmp/list.txt; then
+            echo "::error::the tarball holds a file that belongs to no public package"; exit 1
+          fi
+          n=$(grep -c '\.so\($\|\.\)' /tmp/list.txt || true)
+          [ "$n" -ge 6 ] || { echo "::error::expected the six bundled native libraries, found $n .so files"; exit 1; }
 
       # The Flatpak's first half. `ship` renders the app icon into the sizes a Flatpak needs
       # through `gjs`, which this job has and the Flatpak container (Freedesktop SDK) does not, so
@@ -280,8 +302,10 @@ jobs:
           path: |
             app/ship/out/*.deb
             app/ship/out/*.rpm
+            app/ship/out/*-flatpak.tar.gz
             app/ship/out/*.deb.gjsify-release.json
             app/ship/out/*.rpm.gjsify-release.json
+            app/ship/out/*-flatpak.tar.gz.gjsify-release.json
           # Already-compressed packages; the default level 6 would spend minutes re-compressing
           # them on the way up and again on the way down for no gain.
           compression-level: 0
