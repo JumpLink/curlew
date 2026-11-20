@@ -8,49 +8,31 @@
  */
 
 import { GNOME_CLIENT_NAME, GOA_UNAVAILABLE_MESSAGE, NO_ACCOUNTS_MESSAGE } from '@curlew/protocol';
-import { errorMessage, GnomeUnavailableError } from '@curlew/protocol';
+import { errorMessage, GnomeUnavailableError, probeAccountStore, sharedHostAccounts } from '@curlew/protocol';
 import type { GnomeAccount, GnomeCheckResult } from '@curlew/protocol';
 import type { Account, SystemAccounts } from '@gjsify/system-accounts';
+import { existsSync } from 'node:fs';
 import { getRegistry } from './eds.gjs.ts';
 import { isGnomeFailure } from './errors.ts';
 
-let shared: Promise<SystemAccounts> | undefined;
-
 /**
  * The host's account store. Loaded on first use: the `&optional` GI import inside the package
- * costs a top-level await, which only the code that really asks for accounts should pay.
+ * costs a top-level await, which only the code that really asks for accounts should pay. The
+ * load is shared with @curlew/imap and holds the missing-Goa warning (see protocol).
  */
 function hostAccounts(): Promise<SystemAccounts> {
-  shared ??= import('@gjsify/system-accounts').then((m) => m.createSystemAccounts());
-  shared.catch(() => {
-    shared = undefined;
-  });
-  return shared;
+  return sharedHostAccounts(() => import('@gjsify/system-accounts').then((m) => m.createSystemAccounts()));
 }
 
-/**
- * Whether the store really answers. `capabilities()` only says what the driver could serve, and
- * `listAccounts()` answers an empty list for an unreachable bus as for an empty store, so the
- * one honest probe is a question about an account that cannot exist: `no-account-store` means
- * the daemon is out of reach, `unknown-account` means it answered.
- */
-async function probe(accounts: SystemAccounts): Promise<boolean> {
-  if (accounts.capabilities().services.length === 0) return false;
-  const answer = await accounts.getMailSettings({
-    id: 'curlew-probe',
-    provider: '',
-    providerName: '',
-    identity: '',
-    label: '',
-    services: [],
-  });
-  return !('reason' in answer) || answer.reason !== 'no-account-store';
+/** Whether this process runs in a Flatpak sandbox, where Evolution Data Server is absent by design. */
+export function inSandbox(): boolean {
+  return existsSync('/.flatpak-info') || Boolean(process.env.FLATPAK_ID);
 }
 
 /** Whether an account store can be asked at all (GOA reachable, by libgoa or over D-Bus). */
 export async function accountStoreAvailable(): Promise<boolean> {
   try {
-    return await probe(await hostAccounts());
+    return await probeAccountStore(await hostAccounts());
   } catch {
     return false;
   }
@@ -80,7 +62,7 @@ async function reachableStore(): Promise<SystemAccounts> {
   } catch (err) {
     throw new GnomeUnavailableError(`account store not available: ${errorMessage(err)}`);
   }
-  if (!(await probe(accounts))) {
+  if (!(await probeAccountStore(accounts))) {
     throw new GnomeUnavailableError('no account store on this host (GNOME Online Accounts not reachable)');
   }
   return accounts;
@@ -149,6 +131,15 @@ export async function check(): Promise<GnomeCheckResult> {
     await getRegistry();
   } catch (err) {
     edsDetail = errorMessage(err);
+  }
+
+  if (edsDetail && inSandbox() && (await accountStoreAvailable())) {
+    const n = list.length;
+    return {
+      name: GNOME_CLIENT_NAME,
+      ok: true,
+      message: `OK (${n} account(s) via GNOME Online Accounts; Evolution Data Server is not available in this build)`,
+    };
   }
 
   if (list.length === 0) {
