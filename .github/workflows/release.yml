@@ -15,6 +15,10 @@ name: Release
 # darwin --arch arm64 --skip-build --target macos-app-zip` on that same container is the whole
 # difference — no second toolchain.
 #
+# The FlatPark tarball (`curlew-<v>-linux-x86_64-flatpak.tar.gz` + its record) is packed beside
+# the `.deb`/`.rpm` and attached like them; SHA256SUMS covers it. TODO: once Curlew is listed on
+# FlatPark, add a `flatpark/publish-action@v1` job after `release` (see beifahrer's release.yml).
+#
 # The Flatpak is built by ci.yml's `flatpak` job and ships as the `ship-flatpak` artifact. It has
 # no GOA hole, by decision: it is the chat client (docs/adr/0011-same-app-inside-and-outside-a-sandbox.md).
 on:
@@ -100,6 +104,7 @@ jobs:
           for f in \
             "cli/curlew_${version}-1_amd64.deb" \
             "cli/curlew-${version}-1.x86_64.rpm" \
+            "cli/curlew-${version}-linux-x86_64-flatpak.tar.gz" \
             "cli/curlew-${version}-1.macos.arm64.zip" \
             "cli/curlew-${version}-1.macos.x86_64.zip" \
             "cli/curlew-${version}-1.arm64.dmg" \
