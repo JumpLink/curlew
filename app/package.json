@@ -1,6 +1,6 @@
 {
   "name": "curlew-cli",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "license": "AGPL-3.0-or-later",
   "private": true,
   "type": "module",
@@ -138,11 +138,16 @@
         "GOA"
       ],
       "branding": {
-        "accentLight": "#e01b24",
-        "accentDark": "#a51d2d"
+        "accentLight": "#e5d5b9",
+        "accentDark": "#63452c"
       },
       "contentRating": "oars-1.1",
       "releases": [
+        {
+          "version": "0.2.2",
+          "date": "2026-11-20",
+          "description": "Touch scrolling no longer selects message text, the message menu fits narrow screens, and the background service resumes at once after a restart."
+        },
         {
           "version": "0.2.1",
           "date": "2026-11-19",

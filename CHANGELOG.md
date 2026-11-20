@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.2 — 2026-11-20
+
+Fixes from the first days of use.
+
+- Scrolling a chat with a finger no longer selects message text; mouse and touchpad can still
+  select it (#464).
+- The long-press menu of a message is one compact row of icon buttons that fits a phone-width
+  window (#465).
+- The background service takes over receiving at once after a crash or restart instead of waiting
+  about 90 seconds (#399).
+- The sidebar no longer shows a cut-off "Conversations" title in a narrow window (#468).
+- The welcome screen's Delta Chat page without a mail account no longer leaves a large gap (#479),
+  and Terms of Service links name their messenger instead of being cut off (#480).
+- The Flatpak no longer warns about GNOME Online Accounts on start when they are reachable (#478),
+  and `check` no longer reports GNOME as failed there for the missing Evolution Data Server (#422).
+
 ## 0.2.1 — 2026-11-19
 
 A packaging release; the app itself is unchanged from 0.2.0.
