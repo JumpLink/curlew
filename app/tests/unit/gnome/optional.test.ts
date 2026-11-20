@@ -1,7 +1,12 @@
 import { describe, expect, it } from '@gjsify/unit';
-import { GnomeUnavailableError } from '@curlew/protocol';
+import {
+  GnomeUnavailableError,
+  holdOptionalGiWarnings,
+  resetSharedHostAccounts,
+  sharedHostAccounts,
+} from '@curlew/protocol';
 
-import { holdOptionalGiWarnings, optionalNamespace } from '../../../../packages/gnome/src/optional.ts';
+import { optionalNamespace } from '../../../../packages/gnome/src/optional.ts';
 
 // Importing the *.gjs.ts modules here is itself the test: with a static `gi://Goa` / `gi://EBook`
 // import they cannot even be loaded on a host without those typelibs (Node, macOS), which is
@@ -89,6 +94,45 @@ export default async () => {
       const seen = await capture(false);
       expect(seen.length).toBe(1);
       expect(seen[0]!.level).toBe('warn');
+    });
+  });
+
+  await describe('shared host accounts', async () => {
+    const line = 'optional GI namespace Goa 1.0 is not available (typelib search path /x)';
+    const store = (reason?: string) => ({
+      capabilities: () => ({ services: ['mail'] }),
+      getMailSettings: async () => ({ reason: reason ?? 'unknown-account' }),
+    });
+    const run = async (reason: string | undefined) => {
+      resetSharedHostAccounts();
+      const seen: string[] = [];
+      const { warn, debug } = console;
+      console.warn = (...a: unknown[]) => void seen.push(`warn:${String(a[0])}`);
+      console.debug = (...a: unknown[]) => void seen.push(`debug:${String(a[0])}`);
+      try {
+        // the Goa shim warns once, in whichever loader runs first
+        const first = () => sharedHostAccounts(async () => (console.warn(line), store(reason)));
+        const second = () => sharedHostAccounts(async () => store(reason));
+        await Promise.all([first(), second()]);
+        resetSharedHostAccounts();
+        await Promise.all([second(), first()]);
+      } finally {
+        console.warn = warn;
+        console.debug = debug;
+        resetSharedHostAccounts();
+      }
+      return seen;
+    };
+
+    await it('emits no warning from either loader, in either order, when the probe answers', async () => {
+      const seen = await run(undefined);
+      expect(seen.filter((l) => l.startsWith('warn:')).length).toBe(0);
+      expect(seen.filter((l) => l.startsWith('debug:')).length).toBe(1);
+    });
+
+    await it('warns when the store does not answer', async () => {
+      const seen = await run('no-account-store');
+      expect(seen.filter((l) => l.startsWith('warn:')).length).toBe(1);
     });
   });
 

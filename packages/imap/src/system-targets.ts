@@ -9,22 +9,19 @@
  * never cached, logged or put in an error here.
  */
 
-import { GnomeError, type MailTarget, type SmtpTarget } from '@curlew/protocol';
+import { GnomeError, sharedHostAccounts, type MailTarget, type SmtpTarget } from '@curlew/protocol';
 import type { Account, CredentialPurpose, MailSettings, SystemAccounts, Unavailable } from '@gjsify/system-accounts';
 
 // The package's own guard sits in the entry that carries the top-level await; the check is a
 // property test, so it lives here instead.
 const isUnavailable = (value: MailSettings | Unavailable): value is Unavailable => 'reason' in value;
 
-let shared: Promise<SystemAccounts> | undefined;
-
 /**
  * The host's account store. Loaded on first use: the `&optional` GI import inside the package
  * costs a top-level await, which only the code that really asks for accounts should pay.
  */
 export function hostAccounts(): Promise<SystemAccounts> {
-  shared ??= import('@gjsify/system-accounts').then((m) => m.createSystemAccounts());
-  return shared;
+  return sharedHostAccounts(() => import('@gjsify/system-accounts').then((m) => m.createSystemAccounts()));
 }
 
 /** The password for one login. OAuth2 accounts (Google, Microsoft) are not supported by mail yet. */

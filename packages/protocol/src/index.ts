@@ -26,3 +26,4 @@ export * from './sink.ts';
 export * from './transfer-decode.ts';
 export * from './media-probe.ts';
 export * from './byte-stream.ts';
+export * from './host-accounts.ts';
