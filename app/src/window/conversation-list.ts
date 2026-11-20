@@ -190,7 +190,8 @@ function sectionRow(section: Section, collapsed: boolean): Gtk.ListBoxRow {
   title.add_css_class('dim-label');
   box.append(title);
   // Collapsed, the section still says it holds something unread (Fractal's section_row).
-  if (collapsed && section.unread > 0) {
+  // The Unread group always shows its count: that number is what the group is for.
+  if ((collapsed || section.id === 'unread') && section.unread > 0) {
     const count = new Gtk.Label({ label: unreadText(section.unread) });
     count.add_css_class('numeric');
     count.add_css_class('dim-label');

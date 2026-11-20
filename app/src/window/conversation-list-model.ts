@@ -14,7 +14,7 @@ import { choiceFor, groupKey, type ContactChoices } from '../core/contact-choice
 import type { SearchScope } from '../core/lib/search-scope.ts';
 import { carrierOf, DELTA_CHAT } from '../core/visibility.ts';
 
-export type SectionId = 'people' | 'groups';
+export type SectionId = 'unread' | 'people' | 'groups';
 
 /** A conversation reduced to what a row needs. */
 export interface ListEntry {
@@ -890,15 +890,22 @@ export function buildSections(entries: ListEntry[], filter: ListFilter = NO_FILT
       return field === undefined ? entry : { ...entry, preview: field };
     })
     .sort(newestFirst);
-  const defs: Array<{ id: SectionId; title: string; kind: Conversation['kind'] }> = [
-    { id: 'people', title: _('People'), kind: 'direct' },
-    { id: 'groups', title: _('Groups'), kind: 'group' },
+  // Everything unread comes first, across protocols and merged contacts; a row sits in exactly one
+  // section, so reading a conversation moves it back to People or Groups.
+  const unread = shown.filter((entry) => entry.unread > 0);
+  const read = shown.filter((entry) => entry.unread === 0);
+  const defs: Array<{ id: SectionId; title: string; rows: ListEntry[] }> = [
+    { id: 'unread', title: _('Unread'), rows: unread },
+    { id: 'people', title: _('People'), rows: read.filter((entry) => entry.kind === 'direct') },
+    { id: 'groups', title: _('Groups'), rows: read.filter((entry) => entry.kind === 'group') },
   ];
   return defs
-    .map(({ id, title, kind }) => {
-      const own = shown.filter((entry) => entry.kind === kind);
-      return { id, title, entries: own, unread: own.filter((entry) => entry.unread > 0).length };
-    })
+    .map(({ id, title, rows }) => ({
+      id,
+      title,
+      entries: rows,
+      unread: rows.filter((entry) => entry.unread > 0).length,
+    }))
     .filter((section) => section.entries.length > 0);
 }
 
