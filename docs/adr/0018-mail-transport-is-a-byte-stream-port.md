@@ -116,9 +116,10 @@ entry import it from `@curlew/imap/send`.
 ## Consequences
 
 - The command sequencing of the IMAP client is tested for the first time.
-- `@curlew/imap` still has a Node stub. The client is pure, but the backend files import the Gio
-  opener directly. Injecting the opener into `ImapBackend` is the next step and removes the reason
-  for the `*.gjs.ts` suffix on `backend` and `messages`.
+- `@curlew/imap` has no Node stub (follow-up, 2026-11-20). `ImapBackend` and the mail functions
+  take the opener from the caller; `backend.ts` and `messages.ts` lost the `.gjs` suffix; the
+  entries differ only in the exported `openTlsStream` (Gio, or `node:tls` in `transport.node.ts`,
+  implicit TLS only). `app` injects it, tests inject a scripted stream.
 - SMTP on Android stays out of reach until gjsify has `node:net` and `node:tls` for NativeScript,
   or until `@curlew/smtp` gets a transport on the same port. v1 is read-only, so this is not on
   the path.
@@ -130,8 +131,7 @@ entry import it from `@curlew/imap/send`.
 1. gjsify ADR 0117 stage 2: glib-networking and OpenSSL in the sysroot, the
    `@gjsify/gi-runtime-android-tls` add-on, `@gjsify/tls-trust` on Android. Needs the owner's OK
    for the sysroot release.
-2. Inject the opener into `ImapBackend` and the `messages` functions, so the registry picks the
-   transport and the package loses its Node stub.
+2. ~~Inject the opener into `ImapBackend` and the `messages` functions~~ Done 2026-11-20.
 3. A device run on the `NsGi_API_36` emulator: `openTlsStream` against a loopback TLS server with
    a test CA, then against a public IMAP greeting. Record handshake time and APK size per ABI.
 4. STARTTLS stays rejected. Not part of this step.

@@ -1,5 +1,5 @@
 /**
- * Mail operations over IMAP (GJS-only): folders, search, message fetch, parts, attachments.
+ * Mail operations over IMAP: folders, search, message fetch, parts, attachments.
  *
  * Privacy, enforced structurally: `searchMail` returns header/metadata summaries only — there
  * is no code path here that can attach a body to a search result. Bodies come solely from
@@ -25,6 +25,7 @@ import {
   type MailMessageDTO,
   type MailPartDTO,
   type MailSummaryDTO,
+  type MailStreamOpener,
   type MailTarget,
   parseEnvelope,
   type ParsedEnvelope,
@@ -38,8 +39,16 @@ import {
   walkBodyStructure,
 } from '@curlew/protocol';
 import { ImapClient, type ImapResponse } from './client.ts';
-import { openTlsStream } from './transport.gjs.ts';
 import { resolveMailTargets } from './targets.ts';
+
+/**
+ * What the mail functions need from the platform: the transport, and optionally where accounts come
+ * from (the person's own accounts and the system's by default; a test names its own).
+ */
+export interface MailSource {
+  opener: MailStreamOpener;
+  resolveTargets?: (accountId?: string) => Promise<MailTarget[]>;
+}
 
 const DEFAULT_LIMIT = 25;
 const DEFAULT_MAX_BODY_CHARS = 50_000;
@@ -79,17 +88,17 @@ function toSummary(items: ImapValue[], folder: string, accountId: string): MailS
   return summaryFields(fetch, parseEnvelope(fetch.envelope), folder, accountId);
 }
 
-async function connectAndLogin(target: MailTarget): Promise<ImapClient> {
+async function connectAndLogin(source: MailSource, target: MailTarget): Promise<ImapClient> {
   const password = await target.getPassword();
-  const client = new ImapClient(openTlsStream);
+  const client = new ImapClient(source.opener);
   await client.connect(target);
   await client.login(target.user, password);
   return client;
 }
 
 /** Resolve the accounts to work on, with a message that says what to do about it if there are none. */
-async function requireTargets(accountId?: string): Promise<MailTarget[]> {
-  const targets = await resolveMailTargets(accountId);
+async function requireTargets(source: MailSource, accountId?: string): Promise<MailTarget[]> {
+  const targets = await (source.resolveTargets ?? resolveMailTargets)(accountId);
   if (targets.length === 0) {
     throw new GnomeError(
       accountId
@@ -140,8 +149,8 @@ async function pickFolders(client: ImapClient, options: SearchMailOptions): Prom
 /**
  * Search messages across accounts and mailboxes, newest first. Header/metadata only.
  */
-export async function searchMail(options: SearchMailOptions): Promise<MailSummaryDTO[]> {
-  const targets = await requireTargets(options.accountId);
+export async function searchMail(source: MailSource, options: SearchMailOptions): Promise<MailSummaryDTO[]> {
+  const targets = await requireTargets(source, options.accountId);
   const limit = options.limit ?? DEFAULT_LIMIT;
   const summaries: MailSummaryDTO[] = [];
   let connected = 0;
@@ -150,7 +159,7 @@ export async function searchMail(options: SearchMailOptions): Promise<MailSummar
   for (const target of targets) {
     let client: ImapClient;
     try {
-      client = await connectAndLogin(target);
+      client = await connectAndLogin(source, target);
       connected++;
     } catch (err) {
       lastError = err;
@@ -192,8 +201,8 @@ export async function searchMail(options: SearchMailOptions): Promise<MailSummar
 }
 
 /** List every mailbox of every (or one) account. */
-export async function listFolders(accountId?: string): Promise<FolderDTO[]> {
-  const targets = await requireTargets(accountId);
+export async function listFolders(source: MailSource, accountId?: string): Promise<FolderDTO[]> {
+  const targets = await requireTargets(source, accountId);
   const out: FolderDTO[] = [];
   let connected = 0;
   let lastError: unknown = null;
@@ -201,7 +210,7 @@ export async function listFolders(accountId?: string): Promise<FolderDTO[]> {
   for (const target of targets) {
     let client: ImapClient;
     try {
-      client = await connectAndLogin(target);
+      client = await connectAndLogin(source, target);
       connected++;
     } catch (err) {
       lastError = err;
@@ -235,12 +244,13 @@ export async function listFolders(accountId?: string): Promise<FolderDTO[]> {
 
 /** Open one account and resolve the mailbox a UID lives in. Shared by the per-message commands. */
 async function openMessageContext(
+  source: MailSource,
   accountId: string,
   folderSpec: string | undefined,
 ): Promise<{ client: ImapClient; target: MailTarget; folderPath: string }> {
   if (!accountId) throw new GnomeError('an accountId is required — it identifies the mail server');
-  const [target] = await requireTargets(accountId);
-  const client = await connectAndLogin(target);
+  const [target] = await requireTargets(source, accountId);
+  const client = await connectAndLogin(source, target);
   try {
     let folderPath = 'INBOX';
     if (folderSpec && folderSpec.toUpperCase() !== 'INBOX') {
@@ -260,8 +270,8 @@ async function openMessageContext(
  * Fetch one message in full: summary + cc + plain-text body (truncated to maxBodyChars) +
  * attachment metadata. Attachment bytes are never returned.
  */
-export async function getMessage(options: GetMessageOptions): Promise<MailMessageDTO> {
-  const { client, target, folderPath } = await openMessageContext(options.accountId, options.folder);
+export async function getMessage(source: MailSource, options: GetMessageOptions): Promise<MailMessageDTO> {
+  const { client, target, folderPath } = await openMessageContext(source, options.accountId, options.folder);
   const maxBodyChars = options.maxBodyChars ?? DEFAULT_MAX_BODY_CHARS;
   try {
     const response = await client.fetchFull(options.uid);
@@ -294,8 +304,8 @@ export async function getMessage(options: GetMessageOptions): Promise<MailMessag
 }
 
 /** Fetch one message's BODYSTRUCTURE and report its parts, each with its fetchable section. */
-export async function listParts(options: ListPartsOptions): Promise<MailPartDTO[]> {
-  const { client } = await openMessageContext(options.accountId, options.folder);
+export async function listParts(source: MailSource, options: ListPartsOptions): Promise<MailPartDTO[]> {
+  const { client } = await openMessageContext(source, options.accountId, options.folder);
   try {
     const response = await client.fetchStructure(options.uid);
     if (!response.ok) throw new GnomeError(`IMAP FETCH of uid ${options.uid} failed`);
@@ -341,10 +351,11 @@ function findBodyStructure(items: ImapValue[]): ImapValue {
  * guessing, and so an oversized part is refused before a byte is transferred.
  */
 export async function fetchPart(
+  source: MailSource,
   options: FetchPartOptions,
   makeSink: (info: FetchPartInfo) => LiteralSink | Promise<LiteralSink>,
 ): Promise<{ info: FetchPartInfo; bytes: number }> {
-  const { client } = await openMessageContext(options.accountId, options.folder);
+  const { client } = await openMessageContext(source, options.accountId, options.folder);
   try {
     const response = await client.fetchStructure(options.uid);
     if (!response.ok) throw new GnomeError(`IMAP FETCH of uid ${options.uid} failed`);

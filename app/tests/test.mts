@@ -88,6 +88,7 @@ import smtpMessage from './unit/smtp/message.test.ts';
 import smtpSend from './unit/smtp/send.test.ts';
 import mailSend from './unit/mail/send.test.ts';
 import mailImapClient from './unit/mail/imap-client.test.ts';
+import mailMessages from './unit/mail/messages.test.ts';
 import mailEntryGraph from './unit/mail/entry-graph.test.ts';
 import byteStream from './unit/protocol/byte-stream.test.ts';
 import mailSentCopy from './unit/mail/sent-copy.test.ts';
@@ -268,6 +269,7 @@ run({
   smtpSend,
   mailSend,
   mailImapClient,
+  mailMessages,
   mailEntryGraph,
   byteStream,
   mailSentCopy,

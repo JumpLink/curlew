@@ -4,18 +4,14 @@
   "license": "LGPL-3.0-or-later",
   "private": true,
   "type": "module",
-  "description": "IMAP over a byte-stream port (Gio TLS sockets on GJS): a minimal RFC 3501 client, and mail search / single-message fetch. GJS-only (the Node entry is an unavailable stub); all response and MIME parsing lives in @curlew/protocol. Sending is the separate ./send entry.",
+  "description": "IMAP over a byte-stream port (Gio TLS sockets on GJS, node:tls on Node): a minimal RFC 3501 client, and mail search / single-message fetch. The opener is injected; all response and MIME parsing lives in @curlew/protocol. Sending is the separate ./send entry.",
   "exports": {
     ".": {
       "browser": "./src/index.gjs.ts",
       "node": "./src/index.node.ts",
       "default": "./src/index.node.ts"
     },
-    "./send": {
-      "browser": "./src/send-entry.gjs.ts",
-      "node": "./src/send-entry.node.ts",
-      "default": "./src/send-entry.node.ts"
-    }
+    "./send": "./src/send-entry.ts"
   },
   "scripts": {
     "check": "tsc --noEmit --project tsconfig.json"

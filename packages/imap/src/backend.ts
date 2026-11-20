@@ -1,5 +1,7 @@
 /**
- * The IMAP implementation of the `MailBackend` port (GJS-only).
+ * The IMAP implementation of the `MailBackend` port.
+ *
+ * The connection comes from an injected `MailStreamOpener` (ADR 0018), so this file names no socket.
  *
  * This is the adapter that lets `@curlew/store` run the sync engine without ever importing
  * `gi://`. Everything IMAP-shaped stays on this side of the port; the engine sees only plain
@@ -17,6 +19,7 @@ import {
   type BackendSession,
   type FolderInfo,
   type MailBackend,
+  type MailStreamOpener,
   type MailTarget,
   decodeBytes,
   extractBodySection,
@@ -40,7 +43,6 @@ import {
   walkBodyStructure,
 } from '@curlew/protocol';
 import { ImapClient, type ImapResponse } from './client.ts';
-import { openTlsStream } from './transport.gjs.ts';
 import { addMailAccount } from './add-account.ts';
 import { readOwnAccounts, removeOwnAccount, type OwnMailAccount } from './own-accounts.ts';
 import { mailSecretsDir, resolveMailTargets } from './targets.ts';
@@ -242,8 +244,8 @@ async function fetchText(url: string): Promise<string | null> {
 }
 
 /** Prove the server accepts the login before the account is saved. */
-async function testLogin(account: OwnMailAccount): Promise<void> {
-  const client = new ImapClient(openTlsStream);
+async function testLogin(opener: MailStreamOpener, account: OwnMailAccount): Promise<void> {
+  const client = new ImapClient(opener);
   await client.connect({
     accountId: 'login-test',
     host: account.imap.host,
@@ -265,10 +267,12 @@ export class ImapBackend implements MailBackend {
   readonly manifest = MAIL_MANIFEST;
   readonly kind = 'mailbox' as const;
   private targets: MailTarget[] | null = null;
+  private readonly opener: MailStreamOpener;
   private readonly context: Pick<BackendContext, 'secretsDir' | 'disabledAccounts'>;
 
   /** Without a context (the CLI's direct reads) the accounts live where the registry would put them. */
-  constructor(context?: Pick<BackendContext, 'secretsDir' | 'disabledAccounts'>) {
+  constructor(opener: MailStreamOpener, context?: Pick<BackendContext, 'secretsDir' | 'disabledAccounts'>) {
+    this.opener = opener;
     this.context = context ?? { secretsDir: mailSecretsDir() };
   }
 
@@ -290,7 +294,10 @@ export class ImapBackend implements MailBackend {
 
   /** Add an account Curlew holds itself: no GNOME Online Accounts needed, so it works in a Flatpak. */
   async addAccount(prompter: AccountPrompter): Promise<BackendAccount> {
-    const account = await addMailAccount(this.context.secretsDir, prompter, { fetchText, testLogin });
+    const account = await addMailAccount(this.context.secretsDir, prompter, {
+      fetchText,
+      testLogin: (account) => testLogin(this.opener, account),
+    });
     this.targets = null;
     return account;
   }
@@ -304,7 +311,7 @@ export class ImapBackend implements MailBackend {
   async connect(accountId: string): Promise<BackendSession> {
     const target = (await this.allTargets()).find((t) => t.accountId === accountId);
     if (!target) throw new Error(`no mail account with id ${accountId}`);
-    const client = new ImapClient(openTlsStream);
+    const client = new ImapClient(this.opener);
     await client.connect(target);
     await client.login(target.user, await target.getPassword());
     return new ImapBackendSession(client);
@@ -314,7 +321,7 @@ export class ImapBackend implements MailBackend {
   protected async markSeen(accountId: string, folder: string, uids: number[]): Promise<void> {
     const target = (await this.allTargets()).find((t) => t.accountId === accountId);
     if (!target) throw new Error(`no mail account with id ${accountId}`);
-    const client = new ImapClient(openTlsStream);
+    const client = new ImapClient(this.opener);
     await client.connect(target);
     try {
       await client.login(target.user, await target.getPassword());
@@ -329,7 +336,7 @@ export class ImapBackend implements MailBackend {
   protected async fileSent(accountId: string, raw: Uint8Array, messageId: string): Promise<SentCopyOutcome> {
     const target = (await this.allTargets()).find((t) => t.accountId === accountId);
     if (!target) throw new Error(`no mail account with id ${accountId}`);
-    const client = new ImapClient(openTlsStream);
+    const client = new ImapClient(this.opener);
     await client.connect(target);
     try {
       await client.login(target.user, await target.getPassword());
