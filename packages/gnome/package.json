@@ -20,8 +20,8 @@
     "@girs/ecal-2.0": "^4.1.0",
     "@girs/edataserver-1.2": "^4.1.0",
     "@girs/icalglib-3.0": "^4.1.0",
-    "@gjsify/node-gi": "0.64.49",
-    "@gjsify/system-accounts": "0.64.49",
+    "@gjsify/node-gi": "0.64.51",
+    "@gjsify/system-accounts": "0.64.51",
     "@curlew/protocol": "*"
   }
 }

@@ -28,7 +28,7 @@
     "@girs/glib-2.0": "^4.1.0",
     "@curlew/protocol": "*",
     "@curlew/smtp": "*",
-    "@gjsify/system-accounts": "0.64.49",
+    "@gjsify/system-accounts": "0.64.51",
     "@curlew/store": "*"
   }
 }
