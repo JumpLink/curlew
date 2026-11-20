@@ -139,6 +139,7 @@ app/src/window/audio-player.ts
 app/src/window/avatar-store.ts
 app/src/window/blur-hash.ts
 app/src/window/bubble-menu-model.ts
+app/src/window/bubble-menu.ts
 app/src/window/bubble-select.ts
 app/src/window/chat-background.ts
 app/src/window/chat-doodles.ts

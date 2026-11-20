@@ -3,22 +3,33 @@ import Gtk from 'gi://Gtk?version=4.0';
 
 import { selectableFor } from './bubble-menu-model.ts';
 
-/**
- * A touch drag over a selectable label starts a selection instead of scrolling. The label stays
- * selectable for mouse and touchpad, and turns unselectable while a touch is on it; Copy lives in
- * the long-press menu.
- */
+const guarded = new WeakSet<Gtk.Label>();
+
+/** Marks a body label as selectable by pointer only; `guardTouchSelection` flips it per press. */
 export function selectableForPointerOnly(label: Gtk.Label): void {
-  const sync = (controller: Gtk.EventController): void => {
-    const touch = controller.get_current_event_device()?.get_source() === Gdk.InputSource.TOUCHSCREEN;
-    const want = selectableFor(touch);
-    if (label.get_selectable() !== want) label.set_selectable(want);
-  };
+  guarded.add(label);
+}
+
+function setSelectable(widget: Gtk.Widget, want: boolean): void {
+  if (widget instanceof Gtk.Label && guarded.has(widget) && widget.get_selectable() !== want) {
+    widget.set_selectable(want);
+  }
+  for (let child = widget.get_first_child(); child; child = child.get_next_sibling()) {
+    setSelectable(child, want);
+  }
+}
+
+/**
+ * A touch drag over a selectable label starts a selection instead of scrolling. A capture-phase press on
+ * the bubble runs before any label sees the press: it reads the device and turns selection off for a
+ * touchscreen, on for mouse and touchpad. Copy stays in the long-press menu.
+ */
+export function guardTouchSelection(card: Gtk.Widget): void {
   const click = new Gtk.GestureClick({ button: 0, propagationPhase: Gtk.PropagationPhase.CAPTURE });
-  click.connect('pressed', () => sync(click));
-  const motion = new Gtk.EventControllerMotion({ propagationPhase: Gtk.PropagationPhase.CAPTURE });
-  motion.connect('enter', () => sync(motion));
-  motion.connect('motion', () => sync(motion));
-  label.add_controller(click);
-  label.add_controller(motion);
+  click.connect('pressed', () => {
+    const touch = click.get_current_event_device()?.get_source() === Gdk.InputSource.TOUCHSCREEN;
+    setSelectable(card, selectableFor(touch));
+  });
+  click.connect('stopped', () => setSelectable(card, true));
+  card.add_controller(click);
 }

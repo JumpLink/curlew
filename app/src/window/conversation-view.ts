@@ -75,7 +75,8 @@ import { hasRichText, richMarkup } from './rich-text-model.ts';
 import type { AttachmentSource } from './attachment-store.ts';
 import { fadedOverlay } from './fade-bin.ts';
 import { bubbleMenuEntries } from './bubble-menu-model.ts';
-import { selectableForPointerOnly } from './bubble-select.ts';
+import { bubbleActionRow } from './bubble-menu.ts';
+import { guardTouchSelection, selectableForPointerOnly } from './bubble-select.ts';
 import { createComposerFiles } from './composer-files.ts';
 import { createVoiceRecorder } from './voice-recorder.ts';
 import { createComposerInput } from './composer-input.ts';
@@ -840,42 +841,29 @@ export function createConversationView(
         }
         box.append(emojis);
       }
-      const actions = new Gtk.FlowBox({
-        selectionMode: Gtk.SelectionMode.NONE,
-        activateOnSingleClick: false,
-        homogeneous: true,
-        minChildrenPerLine: 1,
-        maxChildrenPerLine: 4,
-        halign: Gtk.Align.CENTER,
-      });
       const run: Record<string, [string, () => void]> = {
         reply: [_('Reply'), () => draft && startReply(draft)],
         edit: [_('Edit'), () => editHandle && startEdit(message, editHandle)],
         copy: [_('Copy'), () => card.get_clipboard().set(text)],
         delete: [_('Delete'), () => deleteHandle && confirmDelete(message, deleteHandle)],
       };
-      for (const entry of bubbleMenuEntries({
+      const entries = bubbleMenuEntries({
         reply: !!draft,
         edit: !!editHandle,
         delete: !!deleteHandle,
         copy: !!text,
-      })) {
+      }).map((entry) => {
         const [label, action] = run[entry.id]!;
-        const content = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 4 });
-        content.append(new Gtk.Image({ iconName: entry.icon }));
-        content.append(new Gtk.Label({ label, ellipsize: Pango.EllipsizeMode.END }));
-        const button = new Gtk.Button({ child: content });
-        button.add_css_class('flat');
-        if (entry.destructive) button.add_css_class('error');
-        button.update_property([Gtk.AccessibleProperty.LABEL], [label]);
-        button.connect('clicked', () => {
-          popover.popdown();
-          action();
-        });
-        actions.append(button);
-        actions.get_last_child()?.set_focusable(false);
-      }
-      if (actions.get_first_child()) box.append(actions);
+        return {
+          ...entry,
+          label,
+          run: () => {
+            popover.popdown();
+            action();
+          },
+        };
+      });
+      if (entries.length > 0) box.append(bubbleActionRow(entries));
       popover.set_parent(card);
       const spot = new Gdk.Rectangle({ x: Math.round(x), y: Math.round(y), width: 1, height: 1 });
       popover.set_pointing_to(spot);
@@ -905,6 +893,7 @@ export function createConversationView(
     );
     card.add_controller(longPress);
     card.add_controller(click);
+    guardTouchSelection(card);
   };
 
   // The emoji under a bubble, wrapping; the person's own is tinted with the accent colour.
