@@ -24,24 +24,68 @@
  * is exactly what a window derived from the taker's interval allowed.
  */
 
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import type { IndexDatabase } from './db.ts';
 import { withTransaction } from './db.ts';
 
 /**
- * Is the process behind a holder string still there? Holders are `<pid>` (daemon, sync) or
- * `sync-<pid>`; anything else (a test's `pid-1`, another host) cannot be judged and counts as alive,
- * so only the lease's own expiry can free it. Without `/proc` (not Linux) nothing can be judged
- * either. A reused pid reads as alive: the expiry covers that, as it always did. Inside a Flatpak
- * every instance has its own pid namespace, so a live holder in another instance would look dead:
- * there, too, only the expiry decides.
+ * What a probe can say about a pid on THIS host: no such process, a process with an identity
+ * (`<boot id>/<start time>`, which a reused pid does not share), or "cannot judge" (no `/proc`,
+ * or a Flatpak, where every instance has its own pid namespace and a live holder in another
+ * instance would look gone).
  */
-export function holderIsAlive(holder: string): boolean {
-  const match = /^(?:sync-)?(\d+)$/.exec(holder);
-  if (match === null) return true;
-  if (!existsSync('/proc/self')) return true;
-  if (existsSync('/.flatpak-info') || process.env.FLATPAK_ID) return true;
-  return existsSync(`/proc/${match[1]}`);
+export type ProcessStamp = { state: 'gone' } | { state: 'unknown' } | { state: 'present'; id: string | null };
+
+/** The port tests inject: how the lease learns whether a pid is still the process that wrote it. */
+export interface ProcessProbe {
+  stamp(pid: number): ProcessStamp;
+}
+
+/** Holders are `<pid>` (daemon), `sync-<pid>` or `send-<pid>`; anything else cannot be judged. */
+export function holderPid(holder: string): number | null {
+  const match = /^(?:sync-|send-)?(\d+)$/.exec(holder);
+  return match === null ? null : Number(match[1]);
+}
+
+export const procProbe: ProcessProbe = {
+  stamp(pid: number): ProcessStamp {
+    if (!existsSync('/proc/self')) return { state: 'unknown' };
+    if (existsSync('/.flatpak-info') || process.env.FLATPAK_ID) return { state: 'unknown' };
+    let stat: string;
+    try {
+      stat = readFileSync(`/proc/${pid}/stat`, 'utf8');
+    } catch (error) {
+      const code = (error as { code?: string }).code;
+      return code === 'ENOENT' || code === 'ESRCH' ? { state: 'gone' } : { state: 'unknown' };
+    }
+    // Field 2 (comm) may hold spaces and parens: count from the LAST ')'. Field 22 is the start time.
+    const fields = stat.slice(stat.lastIndexOf(')') + 2).split(' ');
+    const started = fields[19];
+    if (!started) return { state: 'present', id: null };
+    let boot = '';
+    try {
+      boot = readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim();
+    } catch {
+      return { state: 'present', id: null };
+    }
+    return { state: 'present', id: `${boot}/${started}` };
+  },
+};
+
+/**
+ * Is the process behind a lease row still the one that took it? Unjudgeable holders (other
+ * hosts, odd ids, old rows without a stamp for a pid that exists) count as alive: only the
+ * lease's own expiry frees them. A pid that is gone, or that now belongs to a process with
+ * another start time or boot, is dead.
+ */
+export function holderIsAlive(holder: string, recorded: string | null, probe: ProcessProbe = procProbe): boolean {
+  const pid = holderPid(holder);
+  if (pid === null) return true;
+  const seen = probe.stamp(pid);
+  if (seen.state === 'unknown') return true;
+  if (seen.state === 'gone') return false;
+  if (recorded === null || seen.id === null) return true;
+  return seen.id === recorded;
 }
 
 /** How often a holder refreshes its lease. */
@@ -130,27 +174,34 @@ export function takeReceiveLease(
   holder: string,
   now: Date,
   intervalMs: number = LEASE_HEARTBEAT_MS,
-  isAlive: (holder: string) => boolean = holderIsAlive,
+  probe: ProcessProbe = procProbe,
 ): LeaseTake {
   return withLeaseTransaction(db, (): LeaseTake => {
     const row = db
       .prepare(
-        'SELECT holder, heartbeat_at, expires_at FROM receive_leases WHERE backend = ? AND account_id = ?',
+        'SELECT holder, heartbeat_at, expires_at, holder_stamp FROM receive_leases WHERE backend = ? AND account_id = ?',
       )
       .get(backend, accountId) as
-      | { holder?: unknown; heartbeat_at?: unknown; expires_at?: unknown }
+      | { holder?: unknown; heartbeat_at?: unknown; expires_at?: unknown; holder_stamp?: unknown }
       | undefined;
     const incumbent = row ? String(row.holder) : null;
     const heartbeatAt = row ? String(row.heartbeat_at) : null;
     // A holder whose process is gone on this host holds nothing, fresh expiry or not: a restarted
     // daemon would otherwise wait out the dead one's 90 s.
-    if (incumbent !== null && incumbent !== holder && isFresh(row?.expires_at, now) && isAlive(incumbent)) {
+    if (
+      incumbent !== null &&
+      incumbent !== holder && isFresh(row?.expires_at, now) &&
+      holderIsAlive(incumbent, row?.holder_stamp == null ? null : String(row.holder_stamp), probe)
+    ) {
       return { acquired: false, holder: incumbent, heartbeatAt };
     }
+    const pid = holderPid(holder);
+    const own = pid === null ? null : probe.stamp(pid);
+    const stamp = own !== null && own.state === 'present' ? own.id : null;
     db.prepare(
-      `INSERT OR REPLACE INTO receive_leases (backend, account_id, holder, heartbeat_at, expires_at)
-         VALUES (?, ?, ?, ?, ?)`,
-    ).run(backend, accountId, holder, now.toISOString(), expiresAt(now, intervalMs));
+      `INSERT OR REPLACE INTO receive_leases (backend, account_id, holder, heartbeat_at, expires_at, holder_stamp)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+    ).run(backend, accountId, holder, now.toISOString(), expiresAt(now, intervalMs), stamp);
     return { acquired: true };
   });
 }
