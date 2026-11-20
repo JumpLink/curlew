@@ -1,3 +1,10 @@
+app-android/app/app.ts
+app-android/app/engine.ts
+app-android/app/gi-real.ts
+app-android/app/media-probe-stub.ts
+app-android/app/probe.ts
+app-android/app/views/main.ts
+app-android/app/window.ts
 app/src/core/access-broker.ts
 app/src/core/access.ts
 app/src/core/actions/access.ts
@@ -217,6 +224,7 @@ packages/imap/src/send-backend.ts
 packages/imap/src/send-entry.ts
 packages/imap/src/send.ts
 packages/imap/src/sent-copy.ts
+packages/imap/src/stream-entry.gjs.ts
 packages/imap/src/system-targets.ts
 packages/imap/src/targets.ts
 packages/imap/src/transport.gjs.ts

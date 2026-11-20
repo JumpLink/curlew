@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Dark-mode overrides of the values/colors.xml trio; see the note there. -->
+    <color name="ns_primary">#A7C8FF</color>
+    <color name="ns_primaryDark">#E1E2E9</color>
+    <color name="ns_accent">#A7C8FF</color>
+</resources>

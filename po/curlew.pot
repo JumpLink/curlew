@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-20 14:43+0100\n"
+"POT-Creation-Date: 2026-11-20 18:31+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,6 +17,17 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: app-android/app/window.ts:18 app/src/window/about.ts:37
+#: app/src/window/appearance-rows.ts:126
+#: app/src/window/conversation-view.ts:255 app/src/window/window.ts:110
+#: app/src/window/window.ts:240
+msgid "Curlew"
+msgstr ""
+
+#: app-android/app/window.ts:19
+msgid "IMAP over TLS probe"
+msgstr ""
 
 #: app/src/core/access.ts:117
 msgid ""
@@ -1588,12 +1599,6 @@ msgstr ""
 
 #: app/src/frontends/cli/window.ts:30
 msgid "curlew window takes no arguments."
-msgstr ""
-
-#: app/src/window/about.ts:37 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:255 app/src/window/window.ts:110
-#: app/src/window/window.ts:240
-msgid "Curlew"
 msgstr ""
 
 #: app/src/window/about.ts:42

@@ -1,0 +1,32 @@
+{
+  "name": "@curlew/app-android",
+  "private": true,
+  "version": "0.0.1",
+  "license": "AGPL-3.0-or-later",
+  "description": "Android shell (NativeScript, route D) for Curlew: proves IMAP over Gio TLS, nothing else yet",
+  "main": "app/app.ts",
+  "scripts": {
+    "sync:theme": "cp node_modules/@gjsify/adwaita-nativescript/src/theme/adwaita.css app/adwaita.css",
+    "build": "npm run sync:theme && ns build android",
+    "start": "npm run sync:theme && ns run android"
+  },
+  "dependencies": {
+    "@gjsify/adwaita-gobject-native": "^0.64.51",
+    "@gjsify/adwaita-nativescript": "^0.64.51",
+    "@gjsify/app-settings": "^0.64.51",
+    "@gjsify/gi-runtime-android": "^0.64.51",
+    "@gjsify/native-fs-bridge": "^0.64.51",
+    "@gjsify/gi-runtime-android-tls": "^0.64.51",
+    "@gjsify/node-gi": "^0.64.51",
+    "@nativescript/core": "9.1.0-alpha.11"
+  },
+  "devDependencies": {
+    "@gjsify/nativescript-vite": "^0.64.51",
+    "@nativescript/android": "9.1.1",
+    "@nativescript/types": "~9.0.0",
+    "@nativescript/vite": "8.0.0-alpha.57",
+    "nativescript": "9.1.0-alpha.10",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.16"
+  }
+}
