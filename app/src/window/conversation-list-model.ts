@@ -890,14 +890,13 @@ export function buildSections(entries: ListEntry[], filter: ListFilter = NO_FILT
       return field === undefined ? entry : { ...entry, preview: field };
     })
     .sort(newestFirst);
-  // Everything unread comes first, across protocols and merged contacts; a row sits in exactly one
-  // section, so reading a conversation moves it back to People or Groups.
-  const unread = shown.filter((entry) => entry.unread > 0);
-  const read = shown.filter((entry) => entry.unread === 0);
+  // Everything unread comes first, across protocols and merged contacts. Unread is a view on top,
+  // not a home: the row stays in People or Groups too, so nobody has to look in two places for a
+  // person (the same holds for favourites, #484).
   const defs: Array<{ id: SectionId; title: string; rows: ListEntry[] }> = [
-    { id: 'unread', title: _('Unread'), rows: unread },
-    { id: 'people', title: _('People'), rows: read.filter((entry) => entry.kind === 'direct') },
-    { id: 'groups', title: _('Groups'), rows: read.filter((entry) => entry.kind === 'group') },
+    { id: 'unread', title: _('Unread'), rows: shown.filter((entry) => entry.unread > 0) },
+    { id: 'people', title: _('People'), rows: shown.filter((entry) => entry.kind === 'direct') },
+    { id: 'groups', title: _('Groups'), rows: shown.filter((entry) => entry.kind === 'group') },
   ];
   return defs
     .map(({ id, title, rows }) => ({
