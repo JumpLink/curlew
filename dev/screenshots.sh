@@ -96,6 +96,11 @@ for l in "${LANGS[@]}"; do
   echo '{"ui":{"welcomeDone":true}}' >"$W/empty/config.json"
 done
 
+# One headless session for the whole run: the jobs go to dev/screenshots-session.sh, which waits for
+# a stable frame per shot instead of a fixed delay. Light and dark share the session.
+JOBS="$WORK/jobs.tsv"
+: >"$JOBS"
+files=()
 for m in "${MOTIFS[@]}"; do
   IFS='|' read -r name size data extra <<<"$m"
   [ -z "$ONLY" ] || [ "$ONLY" = "$name" ] || continue
@@ -108,33 +113,29 @@ for m in "${MOTIFS[@]}"; do
     fi
     if [ "$data" = empty ]; then
       # Not demo mode: an empty index and config, so there is nothing to list.
-      dataenv=(CURLEW_DB_PATH="$W/empty/index.db" CURLEW_CONFIG="$config"
-        CURLEW_PREVIEWS_DIR="$W/empty/previews" CURLEW_AVATARS_DIR="$W/empty/avatars"
-        CURLEW_DATA_DIR="$W/empty" CURLEW_SECRETS_DIR="$W/empty/secrets")
+      dataenv="CURLEW_DB_PATH=$W/empty/index.db CURLEW_CONFIG=$config CURLEW_PREVIEWS_DIR=$W/empty/previews CURLEW_AVATARS_DIR=$W/empty/avatars CURLEW_DATA_DIR=$W/empty CURLEW_SECRETS_DIR=$W/empty/secrets"
     else
-      dataenv=(CURLEW_DEMO=1 CURLEW_DEMO_DIR="$W/$data")
+      dataenv="CURLEW_DEMO=1 CURLEW_DEMO_DIR=$W/$data"
     fi
     locale="en_US.UTF-8"; [ "$l" = de ] && locale="de_DE.UTF-8"
     for s in "${SCHEMES[@]}"; do
-      dark=(); [ "$s" = dark ] && dark=(--dark)
       file="$OUT/$name.$l.$s.png"
-      # headless-run exits 1 even when the image is written, so the file is the verdict. No
-      # CURLEW_WINDOW_QUIT_AFTER_MS: it would end the window before the shot delay is over.
-      rm -f "$file"
-      # shellcheck disable=SC2086
-      env "${dataenv[@]}" CURLEW_WINDOW_SIZE="$size" CURLEW_NO_HOST_ACCOUNTS=1 CURLEW_DEMO_QUIET=1 $extra \
-        LC_ALL="$locale" LANG="$locale" LANGUAGE="$l" \
-        timeout 170 "$HEADLESS" --size 1300x1000 --shot-delay 10 "${dark[@]}" --window-shot "$file" -- \
-        gjsify run app/dist/window.gjs.mjs >/dev/null 2>&1 || true
-      if [ -s "$file" ]; then
-        # Keep the rounded corners and the shadow, so the window sits on any page background
-        # (light or dark); trim only the empty margin around it.
-        magick "$file" -alpha set -bordercolor none -border 1 -trim +repage -strip "$file"
-        echo "ok   $(basename "$file")"
-      else
-        echo "FAIL $(basename "$file")" >&2
-      fi
+      files+=("$file")
+      # No CURLEW_WINDOW_QUIT_AFTER_MS: it would end the window before the shot is taken.
+      printf '%s\t%s\t%s\n' "$file" "$s" "$dataenv CURLEW_WINDOW_SIZE=$size CURLEW_NO_HOST_ACCOUNTS=1 CURLEW_DEMO_QUIET=1 $extra LC_ALL=$locale LANG=$locale LANGUAGE=$l" >>"$JOBS"
     done
   done
 done
-dev/screenshots.sh --check ${ONLY:+--only "$ONLY"}
+
+# The session exits 0 even when a shot failed; the file is the verdict.
+timeout 3600 "$HEADLESS" --size 1300x1000 -- "$ROOT/dev/screenshots-session.sh" "$JOBS" >/dev/null 2>&1 || true
+for file in "${files[@]}"; do
+  if [ -s "$file" ]; then
+    # Keep the rounded corners and the shadow, so the window sits on any page background
+    # (light or dark); trim only the empty margin around it.
+    magick "$file" -alpha set -bordercolor none -border 1 -trim +repage -strip "$file"
+    echo "ok   $(basename "$file")"
+  else
+    echo "FAIL $(basename "$file")" >&2
+  fi
+done
