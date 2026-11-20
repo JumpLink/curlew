@@ -55,9 +55,11 @@ desktop. Minimal chrome, one decision per screen.
 - **In the mode**: a tap toggles a row; every row shows a check circle in place of its
   badge; the header shows the count ("2 selected", de "2 ausgewählt") and a *Cancel*
   button; Escape or Back leaves the mode.
-- **Tools** sit in a bottom action bar and act on the selection: *Merge* (de
-  "Zusammenführen", enabled from two people), *Mark as read*, *Pin*, *Archive* — each as
-  far as it exists. Merge shows the avatars and protocols that would join, confirms once,
+- **Tools** sit in one row in a bottom action bar and act on the selection. Each is a flat
+  button with a symbolic icon over a short caption (tooltip and accessible label carry the
+  full name): *Read* and *Unread* (mark as read / unread), *Separate* (only while a picked
+  row was merged by hand), and *Merge* (de "Zusammenführen", suggested-action styled,
+  enabled from two people). The row fits 360 px. Merge shows the avatars and protocols that would join, confirms once,
   and leaves the mode on the merged row.
 
 ### The merge assistant (guided)

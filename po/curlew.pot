@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-20 19:56+0100\n"
+"POT-Creation-Date: 2026-11-20 20:35+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1761,7 +1761,7 @@ msgstr ""
 #: app/src/window/account-remove-model.ts:71
 #: app/src/window/agent-access-page.ts:233
 #: app/src/window/conversation-list.ts:505
-#: app/src/window/conversation-list.ts:599
+#: app/src/window/conversation-list.ts:615
 #: app/src/window/conversation-view.ts:826 app/src/window/protocols-page.ts:66
 #: app/src/window/protocols-page.ts:142
 msgid "Cancel"
@@ -2399,7 +2399,7 @@ msgstr ""
 msgid "Picture"
 msgstr ""
 
-#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:513
+#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:530
 msgid "Separate"
 msgstr ""
 
@@ -2571,6 +2571,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/window/conversation-list-model.ts:898
+#: app/src/window/conversation-list.ts:532
 msgid "Unread"
 msgstr ""
 
@@ -2643,40 +2644,46 @@ msgstr ""
 msgid "New conversation"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:511
-#: app/src/window/conversation-list.ts:600
+#: app/src/window/conversation-list.ts:527
+#: app/src/window/conversation-list.ts:616
 #: app/src/window/merge-assistant.ts:116
 msgid "Merge"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:514
+#: app/src/window/conversation-list.ts:531
+#: app/src/window/conversation-view.ts:1119
+#: app/src/window/conversation-view.ts:1120
+msgid "Read"
+msgstr ""
+
+#: app/src/window/conversation-list.ts:531
 msgid "Mark as Read"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:515
+#: app/src/window/conversation-list.ts:532
 msgid "Mark as Unread"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:596
+#: app/src/window/conversation-list.ts:612
 msgid "Merge these people?"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:597
+#: app/src/window/conversation-list.ts:613
 msgid ""
 "Their chats become one conversation. Nothing is deleted, and you can "
 "separate them again."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:630
+#: app/src/window/conversation-list.ts:646
 msgid "Review"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:637
+#: app/src/window/conversation-list.ts:653
 #: app/src/window/preferences-dialog.ts:61
 msgid "Conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:659
+#: app/src/window/conversation-list.ts:675
 msgid "{count} possible duplicate"
 msgid_plural "{count} possible duplicates"
 msgstr[0] ""
@@ -2845,11 +2852,6 @@ msgstr ""
 #: app/src/window/conversation-view.ts:1109
 #: app/src/window/conversation-view.ts:1265
 msgid "edited"
-msgstr ""
-
-#: app/src/window/conversation-view.ts:1119
-#: app/src/window/conversation-view.ts:1120
-msgid "Read"
 msgstr ""
 
 #: app/src/window/conversation-view.ts:1352
