@@ -192,7 +192,11 @@ export default async () => {
         waMessage(ANNA_LID, 'A3', 1, text('Ja'), { fromMe: true, status: 4 }),
         false,
       );
-      expect(own.map((e) => e.type).join(',')).toBe('message,peer-read');
+      // The peer is named before the message: an own message may be the first the chat has.
+      expect(own.map((e) => e.type).join(',')).toBe('chat,message,peer-read');
+      expect(own[0]).toMatchObject({ type: 'chat', chat: { remoteId: ANNA_LID, kind: 'direct' } });
+      expect(own[0].type === 'chat' && own[0].chat.members?.[0]?.remoteId).toBe(ANNA_LID);
+      expect(own[0].type === 'chat' && own[0].chat.members?.[0]?.displayName).toBe(null);
       const [group] = mapper.message(
         waMessage(GROUP, 'G1', 2, text('Salat?'), { participant: BEN_LID, pushName: 'Ben' }),
         false,

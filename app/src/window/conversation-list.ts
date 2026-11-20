@@ -527,6 +527,7 @@ export function createConversationList(
     const state = selectionTools(picks());
     pickTitle.set_title(selectionTitle(picked.size));
     mergeButton.set_sensitive(state.canMerge);
+    mergeButton.set_tooltip_text(state.mergeBlock);
     unmergeButton.set_visible(state.canUnmerge);
     readButton.set_sensitive(picked.size > 0);
     unreadButton.set_sensitive(picked.size > 0);

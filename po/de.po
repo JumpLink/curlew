@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-20 18:31+0100\n"
+"POT-Creation-Date: 2026-11-20 18:23+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -11,17 +11,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-
-#: app-android/app/window.ts:18 app/src/window/about.ts:37
-#: app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:255 app/src/window/window.ts:110
-#: app/src/window/window.ts:240
-msgid "Curlew"
-msgstr "Curlew"
-
-#: app-android/app/window.ts:19
-msgid "IMAP over TLS probe"
-msgstr "IMAP-über-TLS-Test"
 
 #: app/src/core/access.ts:117
 msgid ""
@@ -1866,6 +1855,12 @@ msgstr "Das Fenster öffnen (Regeln für den Agentenzugriff)"
 msgid "curlew window takes no arguments."
 msgstr "curlew window nimmt keine Argumente."
 
+#: app/src/window/about.ts:37 app/src/window/appearance-rows.ts:126
+#: app/src/window/conversation-view.ts:255 app/src/window/window.ts:110
+#: app/src/window/window.ts:240
+msgid "Curlew"
+msgstr "Curlew"
+
 #: app/src/window/about.ts:42
 msgid "© 2026 Pascal Garber"
 msgstr "© 2026 Pascal Garber"
@@ -2033,7 +2028,7 @@ msgstr "Dieses Konto pausieren?"
 #: app/src/window/account-remove-model.ts:71
 #: app/src/window/agent-access-page.ts:233
 #: app/src/window/conversation-list.ts:505
-#: app/src/window/conversation-list.ts:598
+#: app/src/window/conversation-list.ts:599
 #: app/src/window/conversation-view.ts:826 app/src/window/protocols-page.ts:66
 #: app/src/window/protocols-page.ts:142
 msgid "Cancel"
@@ -2953,7 +2948,7 @@ msgid "New conversation"
 msgstr "Neue Unterhaltung"
 
 #: app/src/window/conversation-list.ts:511
-#: app/src/window/conversation-list.ts:599
+#: app/src/window/conversation-list.ts:600
 #: app/src/window/merge-assistant.ts:116
 msgid "Merge"
 msgstr "Zusammenführen"
@@ -2966,11 +2961,11 @@ msgstr "Als gelesen markieren"
 msgid "Mark as Unread"
 msgstr "Als ungelesen markieren"
 
-#: app/src/window/conversation-list.ts:595
+#: app/src/window/conversation-list.ts:596
 msgid "Merge these people?"
 msgstr "Diese Personen zusammenführen?"
 
-#: app/src/window/conversation-list.ts:596
+#: app/src/window/conversation-list.ts:597
 msgid ""
 "Their chats become one conversation. Nothing is deleted, and you can "
 "separate them again."
@@ -2978,16 +2973,16 @@ msgstr ""
 "Ihre Chats werden zu einer Unterhaltung. Nichts wird gelöscht, und du kannst "
 "sie wieder trennen."
 
-#: app/src/window/conversation-list.ts:629
+#: app/src/window/conversation-list.ts:630
 msgid "Review"
 msgstr "Prüfen"
 
-#: app/src/window/conversation-list.ts:636
+#: app/src/window/conversation-list.ts:637
 #: app/src/window/preferences-dialog.ts:61
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:658
+#: app/src/window/conversation-list.ts:659
 msgid "{count} possible duplicate"
 msgid_plural "{count} possible duplicates"
 msgstr[0] "{count} mögliches Duplikat"
@@ -3503,6 +3498,19 @@ msgid "{count} selected"
 msgid_plural "{count} selected"
 msgstr[0] "{count} ausgewählt"
 msgstr[1] "{count} ausgewählt"
+
+#: app/src/window/selection-model.ts:40
+msgid "Groups cannot be merged"
+msgstr "Gruppen lassen sich nicht zusammenführen"
+
+#: app/src/window/selection-model.ts:42
+msgid "{name} has no person yet, so it cannot be merged"
+msgstr ""
+"{name} gehört noch zu keiner Person und lässt sich nicht zusammenführen"
+
+#: app/src/window/selection-model.ts:43
+msgid "Select at least two people to merge"
+msgstr "Wähle mindestens zwei Personen zum Zusammenführen"
 
 #: app/src/window/terms-widgets.ts:13
 msgid "{protocol} Terms of Service"
@@ -5109,6 +5117,10 @@ msgid ""
 msgstr ""
 "{count} Geräte von {jid} tragen diesen Fingerabdruck, er benennt also keines "
 "— nichts wurde geändert"
+
+#: app-android/app/window.ts:19
+msgid "IMAP over TLS probe"
+msgstr "IMAP-über-TLS-Test"
 
 #~ msgid ""
 #~ "No mail account yet. Once you add one, you can switch this on in its "

@@ -1018,6 +1018,18 @@ export interface SentChatRecord {
 }
 
 /**
+ * The kind of address a direct chat's remote id is, per backend, for a chat curlew creates by
+ * sending: the composer finds its target by that kind, so a Telegram peer filed as `jid` had a
+ * participant but nothing to send to.
+ */
+const SENT_PEER_KIND: Readonly<Record<string, ChatPeer['addresses'][number]['kind']>> = {
+  telegram: 'telegram',
+  signal: 'signal',
+  whatsapp: 'whatsapp',
+  xmpp: 'jid',
+};
+
+/**
  * Store a message curlew itself just sent as the account's own message of a direct chat (ADR 0004
  * §5). Creates the conversation when the chat is new to the index. The row carries a local remote
  * id; the next sync that meets the network's copy (by `clientId`) deletes it, so nothing is
@@ -1056,7 +1068,7 @@ function recordSentRows(
     batch.member(conversationId, {
       remoteId: chatRemoteId,
       displayName: null,
-      addresses: [{ kind: 'jid', value: chatRemoteId }],
+      addresses: [{ kind: SENT_PEER_KIND[backend] ?? 'jid', value: chatRemoteId }],
       bot: false,
     });
   }
