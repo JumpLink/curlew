@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-20 18:23+0100\n"
+"POT-Creation-Date: 2026-11-20 22:43+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,6 +17,17 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: app-android/app/window.ts:18 app/src/window/about.ts:37
+#: app/src/window/appearance-rows.ts:126
+#: app/src/window/conversation-view.ts:255 app/src/window/window.ts:110
+#: app/src/window/window.ts:240
+msgid "Curlew"
+msgstr ""
+
+#: app-android/app/window.ts:19
+msgid "IMAP over TLS probe"
+msgstr ""
 
 #: app/src/core/access.ts:117
 msgid ""
@@ -1590,12 +1601,6 @@ msgstr ""
 msgid "curlew window takes no arguments."
 msgstr ""
 
-#: app/src/window/about.ts:37 app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:255 app/src/window/window.ts:110
-#: app/src/window/window.ts:240
-msgid "Curlew"
-msgstr ""
-
 #: app/src/window/about.ts:42
 msgid "© 2026 Pascal Garber"
 msgstr ""
@@ -1756,7 +1761,7 @@ msgstr ""
 #: app/src/window/account-remove-model.ts:71
 #: app/src/window/agent-access-page.ts:233
 #: app/src/window/conversation-list.ts:509
-#: app/src/window/conversation-list.ts:603
+#: app/src/window/conversation-list.ts:620
 #: app/src/window/conversation-view.ts:826 app/src/window/protocols-page.ts:66
 #: app/src/window/protocols-page.ts:142
 msgid "Cancel"
@@ -2394,7 +2399,7 @@ msgstr ""
 msgid "Picture"
 msgstr ""
 
-#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:517
+#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:534
 msgid "Separate"
 msgstr ""
 
@@ -2566,6 +2571,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/window/conversation-list-model.ts:897
+#: app/src/window/conversation-list.ts:536
 msgid "Unread"
 msgstr ""
 
@@ -2638,40 +2644,46 @@ msgstr ""
 msgid "New conversation"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:515
-#: app/src/window/conversation-list.ts:604
+#: app/src/window/conversation-list.ts:531
+#: app/src/window/conversation-list.ts:621
 #: app/src/window/merge-assistant.ts:116
 msgid "Merge"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:518
+#: app/src/window/conversation-list.ts:535
+#: app/src/window/conversation-view.ts:1119
+#: app/src/window/conversation-view.ts:1120
+msgid "Read"
+msgstr ""
+
+#: app/src/window/conversation-list.ts:535
 msgid "Mark as Read"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:519
+#: app/src/window/conversation-list.ts:536
 msgid "Mark as Unread"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:600
+#: app/src/window/conversation-list.ts:617
 msgid "Merge these people?"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:601
+#: app/src/window/conversation-list.ts:618
 msgid ""
 "Their chats become one conversation. Nothing is deleted, and you can "
 "separate them again."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:634
+#: app/src/window/conversation-list.ts:651
 msgid "Review"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:641
+#: app/src/window/conversation-list.ts:658
 #: app/src/window/preferences-dialog.ts:61
 msgid "Conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:663
+#: app/src/window/conversation-list.ts:680
 msgid "{count} possible duplicate"
 msgid_plural "{count} possible duplicates"
 msgstr[0] ""
@@ -2840,11 +2852,6 @@ msgstr ""
 #: app/src/window/conversation-view.ts:1109
 #: app/src/window/conversation-view.ts:1265
 msgid "edited"
-msgstr ""
-
-#: app/src/window/conversation-view.ts:1119
-#: app/src/window/conversation-view.ts:1120
-msgid "Read"
 msgstr ""
 
 #: app/src/window/conversation-view.ts:1352
@@ -3160,6 +3167,18 @@ msgid "{count} selected"
 msgid_plural "{count} selected"
 msgstr[0] ""
 msgstr[1] ""
+
+#: app/src/window/selection-model.ts:40
+msgid "Groups cannot be merged"
+msgstr ""
+
+#: app/src/window/selection-model.ts:42
+msgid "{name} has no person yet, so it cannot be merged"
+msgstr ""
+
+#: app/src/window/selection-model.ts:43
+msgid "Select at least two people to merge"
+msgstr ""
 
 #: app/src/window/terms-widgets.ts:13
 msgid "{protocol} Terms of Service"
@@ -4506,20 +4525,4 @@ msgstr ""
 msgid ""
 "{count} devices of {jid} carry that fingerprint, so it does not name one — "
 "nothing changed"
-msgstr ""
-
-#: app-android/app/window.ts:19
-msgid "IMAP over TLS probe"
-msgstr ""
-
-#: app/src/window/selection-model.ts:40
-msgid "Groups cannot be merged"
-msgstr ""
-
-#: app/src/window/selection-model.ts:42
-msgid "{name} has no person yet, so it cannot be merged"
-msgstr ""
-
-#: app/src/window/selection-model.ts:43
-msgid "Select at least two people to merge"
 msgstr ""
