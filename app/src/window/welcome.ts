@@ -194,8 +194,27 @@ export function presentWelcome(parent: Gtk.Window | null, onClosed: () => void, 
       (load) => {
         const choices = mailAccountChoices(load);
         if (choices.length === 0) {
-          group.set_description(
-            _('No mail account yet. Once you add one, you can switch this on in its settings.'),
+          // Empty state under the explanation, centred in the space left, not a lone row.
+          const empty = new Adw.StatusPage({
+            iconName: 'mail-unread-symbolic',
+            title: _('No mail account yet'),
+            description: _('Once you add one, you can switch this on in its settings.'),
+            vexpand: true,
+          });
+          empty.add_css_class('compact');
+          const body = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
+          const intro = new Adw.PreferencesPage();
+          const introGroup = new Adw.PreferencesGroup({
+            title: _('Delta Chat'),
+            description: deltaChatPageText(),
+          });
+          intro.add(introGroup);
+          intro.set_vexpand(false);
+          body.append(intro);
+          body.append(empty);
+          const toolbar = page.get_child() as Adw.ToolbarView;
+          toolbar.set_content(
+            new Gtk.ScrolledWindow({ child: body, hscrollbarPolicy: Gtk.PolicyType.NEVER }),
           );
           return;
         }

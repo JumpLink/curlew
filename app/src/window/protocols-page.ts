@@ -58,7 +58,7 @@ function askTerms(
   const dialog = new Adw.AlertDialog({ heading: _('Please read this first'), body: terms.summary });
   const extra = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 12 });
   if (terms.url) {
-    extra.append(termsLinkButton(terms.url, Gtk.Align.CENTER));
+    extra.append(termsLinkButton(terms.url, protocol.label, Gtk.Align.CENTER));
   }
   const risk = riskCheckButton();
   extra.append(risk);

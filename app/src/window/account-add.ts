@@ -163,7 +163,7 @@ class LoginPage {
     box.append(wrappedLabel(_('Please read this first'), ['title-2']));
     box.append(wrappedLabel(terms.summary));
     if (terms.url) {
-      box.append(termsLinkButton(terms.url, Gtk.Align.START));
+      box.append(termsLinkButton(terms.url, this.protocol.label, Gtk.Align.START));
     }
     const risk = riskCheckButton();
     const accept = pillButton(_('Accept and Continue'));
