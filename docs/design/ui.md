@@ -295,7 +295,7 @@ tagged `xml:lang`, default settings, the window alone, at most 1000×700 logical
 content (`example.org`), a one-sentence caption without a full stop.
 
 One script renders all of them, EN/DE × light/dark, against a private synthetic index and config
-in `/tmp/curlew-demo-shots` (never the real ones), under `scripts/headless-run`:
+in `/tmp/curlew-demo-shots` (never the real ones), under `scripts/headless-run` (one headless session for the whole run, waiting for a stable frame instead of a fixed delay; ~8.5 s per shot instead of ~45 s):
 
 ```bash
 dev/screenshots.sh --build            # all motifs → docs/screenshots/<motif>.<lang>.<scheme>.png
