@@ -1,0 +1,28 @@
+// You can add your native dependencies here
+dependencies {
+  // No com.google.android.material: the UI is native Adwaita widgets
+  // (@gjsify/adwaita-nativescript) on plain AppCompat/framework views.
+  // AndroidX Activity is required by NativeScript for OnBackPressedDispatcher
+  implementation 'androidx.activity:activity:1.9.3'
+}
+
+android {
+  compileSdkVersion 35
+  buildToolsVersion "35"
+  // ndkVersion ""
+
+  defaultConfig {
+    minSdkVersion 24
+    targetSdkVersion 35
+
+    // Version Information
+    versionCode 1
+    versionName "1.0.0"
+
+    generatedDensities = []
+  }
+
+  aaptOptions {
+    additionalParameters "--no-version-vectors"
+  }
+}

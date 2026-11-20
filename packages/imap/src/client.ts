@@ -128,6 +128,13 @@ export class ImapClient {
     return `a${++this.tag}`;
   }
 
+  /** Ask the server for its capabilities (valid before login); the sorted tokens, upper case. */
+  async capability(): Promise<string[]> {
+    const res = await this.command('CAPABILITY');
+    if (!res.ok) throw new GnomeError(`IMAP CAPABILITY failed: ${res.status || 'no status'}`);
+    return [...this.capabilities].sort();
+  }
+
   private async command(cmd: string): Promise<ImapResponse> {
     const tag = this.nextTag();
     await this.write(`${tag} ${cmd}\r\n`);

@@ -17,7 +17,7 @@ case "${1:-}" in
 extract)
     # `--from-code` matters: without it xgettext refuses any non-ASCII msgid, and an English
     # source string with a typographic dash in it is already non-ASCII.
-    find app/src packages/*/src -type f -name '*.ts' \
+    find app/src app-android/app packages/*/src -type f -name '*.ts' \
         -not -name '*.spec.ts' -not -name '*.test.ts' | LC_ALL=C sort > po/POTFILES.in
     xgettext \
         --files-from=po/POTFILES.in \

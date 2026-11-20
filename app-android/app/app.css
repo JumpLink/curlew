@@ -1,0 +1,3 @@
+/* The Libadwaita look for the widgets, copied out of @gjsify/adwaita-nativescript by `sync:theme`
+   (a tracked copy would drift). NativeScript's @import wants a file inside the app dir. */
+@import '~/adwaita.css';

@@ -11,6 +11,7 @@
       "node": "./src/index.node.ts",
       "default": "./src/index.node.ts"
     },
+    "./stream": "./src/stream-entry.gjs.ts",
     "./send": "./src/send-entry.ts"
   },
   "scripts": {

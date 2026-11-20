@@ -1,0 +1,34 @@
+# NativeScript
+hooks/
+node_modules/
+platforms/
+.ns-vite-build/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+.idea
+.cloud
+.project
+tmp/
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# mdx results
+app/mdx/*.xml
+
+# Copied out of @gjsify/adwaita-nativescript by `sync:theme` before every build
+app/adwaita.css
