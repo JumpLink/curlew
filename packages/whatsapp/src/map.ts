@@ -372,9 +372,15 @@ export class WhatsAppMapper {
       // comes back by it and drops the local echo written at send time, instead of showing two.
       clientId: fromSelf ? remoteMessageId(key.id) : null,
     };
-    const events: DeliveryEvent[] = [
-      { type: 'message', chatRemoteId: chatId, chatKind: kind, message, seen: fromSelf || seen },
-    ];
+    const events: DeliveryEvent[] = [];
+    // A direct chat that starts with our own message (opened on the phone) names its peer here:
+    // no incoming message will, and no chat report is guaranteed to come first. The push name of
+    // our own message is ours, not the peer's.
+    if (fromSelf && kind === 'direct') {
+      const peer = this.resolver.peer(key.remoteJid, key.remoteJidAlt, null);
+      if (peer) events.push({ type: 'chat', chat: { remoteId: chatId, kind, title: null, members: [peer] } });
+    }
+    events.push({ type: 'message', chatRemoteId: chatId, chatKind: kind, message, seen: fromSelf || seen });
     if (fromSelf && (raw.status ?? 0) >= STATUS_READ) {
       events.push({ type: 'peer-read', chatRemoteId: chatId, remoteIds: [message.remoteId] });
     }

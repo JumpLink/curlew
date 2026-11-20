@@ -3,7 +3,7 @@
  * bottom bar offers for the rows picked (docs/design/contacts.md, "Selection mode").
  */
 
-import { _n, fmt } from '@curlew/protocol';
+import { _, _n, fmt } from '@curlew/protocol';
 
 import { type ListEntry, carriersOf, protocolLabel } from './conversation-list-model.ts';
 
@@ -16,6 +16,8 @@ export function selectionTitle(count: number): string {
 export interface SelectionTools {
   /** Two or more people, and nothing that is not a person (a group, the note to self). */
   canMerge: boolean;
+  /** Why Merge is unavailable, for its tooltip; null when it is available. */
+  mergeBlock: string | null;
   /** At least one picked row was merged by hand; unmerging undoes that grouping. */
   canUnmerge: boolean;
   /** Every directory participant the picked rows stand for. */
@@ -25,11 +27,20 @@ export interface SelectionTools {
 export function selectionTools(picked: readonly ListEntry[]): SelectionTools {
   const personIds = [...new Set(picked.flatMap((entry) => entry.personIds))].sort();
   const allPeople = picked.length > 0 && picked.every((entry) => entry.personIds.length > 0);
+  const canMerge = allPeople && picked.length >= 2;
   return {
-    canMerge: allPeople && picked.length >= 2,
+    canMerge,
+    mergeBlock: canMerge ? null : mergeBlockOf(picked),
     canUnmerge: picked.some((entry) => entry.manual),
     personIds,
   };
+}
+
+function mergeBlockOf(picked: readonly ListEntry[]): string {
+  if (picked.some((entry) => entry.kind === 'group')) return _('Groups cannot be merged');
+  const unknown = picked.find((entry) => entry.personIds.length === 0);
+  if (unknown) return fmt(_('{name} has no person yet, so it cannot be merged'), { name: unknown.title });
+  return _('Select at least two people to merge');
 }
 
 /** One line per picked person for the confirmation: the name, then the networks it joins. */

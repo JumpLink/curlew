@@ -45,6 +45,19 @@ export default async () => {
       expect(selectionTools([ana, group]).canMerge).toBe(false);
     });
 
+    it('says why merge is unavailable', () => {
+      const ana = entry({ id: 'a', personIds: ['p-ana'] });
+      const bo = entry({ id: 'b', personIds: ['p-bo'] });
+      const nobody = entry({ id: 'n', title: 'Chat Example', personIds: [] });
+      const group = entry({ id: 'g', kind: 'group' });
+      expect(selectionTools([ana, bo]).mergeBlock).toBe(null);
+      expect(selectionTools([ana]).mergeBlock).toBe('Select at least two people to merge');
+      expect(selectionTools([ana, group]).mergeBlock).toBe('Groups cannot be merged');
+      expect(selectionTools([ana, nobody]).mergeBlock).toBe(
+        'Chat Example has no person yet, so it cannot be merged',
+      );
+    });
+
     it('offers unmerge only when a picked row was merged by hand', () => {
       const plain = entry({ id: 'a', personIds: ['p-ana'] });
       const joined = entry({ id: 'b', personIds: ['p-bo', 'p-bob'], manual: true });

@@ -795,6 +795,26 @@ export default async () => {
       }
     });
 
+    await it('files the peer of a chat opened by a send under its own network kind', async () => {
+      const db = freshDb();
+      try {
+        const { conversationId } = recordSentChatMessage(db, {
+          backend: 'telegram',
+          account: { id: ACCOUNT, identity: '@me_example', provider: 'Telegram' },
+          chatRemoteId: '1003',
+          clientId: 'oid-9',
+          text: 'erste Nachricht',
+          sentAt: '2026-08-01T10:00:00.000Z',
+        });
+        rebuildConversations(db);
+        const conversation = listConversations(db).find((c) => c.id === conversationId);
+        expect(conversation?.participants.length).toBe(1);
+        expect(conversation?.participants[0].addresses.map((a) => a.kind)).toStrictEqual(['telegram']);
+      } finally {
+        db.close();
+      }
+    });
+
     await it('stores the files of a sent message, so the chat can show them', async () => {
       const db = freshDb();
       try {
