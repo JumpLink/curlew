@@ -645,9 +645,23 @@ export default async () => {
         entry({ id: 'new', lastMessageAt: '2026-02-01T00:00:00Z' }),
         entry({ id: 'g1', kind: 'group', lastMessageAt: '2026-01-05T00:00:00Z', unread: 1 }),
       ]);
-      expect(sections.map((s) => s.id).join(',')).toBe('people,groups');
-      expect(ids(sections[0]!.entries).join(',')).toBe('new,old,none');
-      expect(sections[1]!.unread).toBe(1);
+      expect(sections.map((s) => s.id).join(',')).toBe('unread,people');
+      expect(ids(sections[0]!.entries).join(',')).toBe('g1');
+      expect(ids(sections[1]!.entries).join(',')).toBe('new,old,none');
+      expect(sections[0]!.unread).toBe(1);
+    });
+
+    it('puts unread conversations of every kind first, newest first, and only there', () => {
+      const sections = buildSections([
+        entry({ id: 'p-read', lastMessageAt: '2026-03-01T00:00:00Z' }),
+        entry({ id: 'p-old', unread: 2, lastMessageAt: '2026-01-01T00:00:00Z' }),
+        entry({ id: 'g-new', kind: 'group', unread: 1, lastMessageAt: '2026-02-01T00:00:00Z' }),
+        entry({ id: 'g-read', kind: 'group', lastMessageAt: '2026-02-02T00:00:00Z' }),
+      ]);
+      expect(sections.map((s) => s.id).join(',')).toBe('unread,people,groups');
+      expect(ids(sections[0]!.entries).join(',')).toBe('g-new,p-old');
+      expect(ids(sections[1]!.entries).join(',')).toBe('p-read');
+      expect(ids(sections[2]!.entries).join(',')).toBe('g-read');
     });
 
     it('leaves out empty sections', () => {

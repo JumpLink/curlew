@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-20 07:01+0100\n"
+"POT-Creation-Date: 2026-11-20 07:39+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -2027,8 +2027,8 @@ msgstr "Dieses Konto pausieren?"
 #: app/src/window/account-remove-model.ts:37
 #: app/src/window/account-remove-model.ts:71
 #: app/src/window/agent-access-page.ts:233
-#: app/src/window/conversation-list.ts:504
-#: app/src/window/conversation-list.ts:597
+#: app/src/window/conversation-list.ts:505
+#: app/src/window/conversation-list.ts:598
 #: app/src/window/conversation-view.ts:770 app/src/window/protocols-page.ts:66
 #: app/src/window/protocols-page.ts:142
 msgid "Cancel"
@@ -2260,7 +2260,7 @@ msgstr ""
 msgid "Start"
 msgstr "Starten"
 
-#: app/src/window/accounts-page.ts:199 app/src/window/conversation-list.ts:365
+#: app/src/window/accounts-page.ts:199 app/src/window/conversation-list.ts:366
 #: app/src/window/protocols-page.ts:248 app/src/window/welcome-model.ts:102
 #: app/src/window/welcome.ts:153
 msgid "Protocols"
@@ -2701,7 +2701,7 @@ msgstr "Automatisch"
 msgid "Picture"
 msgstr "Bild"
 
-#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:512
+#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:513
 msgid "Separate"
 msgstr "Trennen"
 
@@ -2809,7 +2809,7 @@ msgstr "Gestern"
 
 #: app/src/window/conversation-list-model.ts:273
 #: app/src/window/conversation-list-model.ts:734
-#: app/src/window/conversation-list-model.ts:959
+#: app/src/window/conversation-list-model.ts:966
 msgid "Note to self"
 msgstr "Notiz an mich"
 
@@ -2872,57 +2872,61 @@ msgid_plural "Room · {count} members"
 msgstr[0] "Raum · {count} Mitglied"
 msgstr[1] "Raum · {count} Mitglieder"
 
-#: app/src/window/conversation-list-model.ts:894
+#: app/src/window/conversation-list-model.ts:898
+msgid "Unread"
+msgstr "Ungelesen"
+
+#: app/src/window/conversation-list-model.ts:899
 msgid "People"
 msgstr "Personen"
 
-#: app/src/window/conversation-list-model.ts:895
+#: app/src/window/conversation-list-model.ts:900
 msgid "Groups"
 msgstr "Gruppen"
 
-#: app/src/window/conversation-list.ts:236
+#: app/src/window/conversation-list.ts:237
 msgid "Add an account"
 msgstr "Konto hinzufügen"
 
-#: app/src/window/conversation-list.ts:244
 #: app/src/window/conversation-list.ts:245
+#: app/src/window/conversation-list.ts:246
 msgid "Search conversations"
 msgstr "Unterhaltungen durchsuchen"
 
-#: app/src/window/conversation-list.ts:249
+#: app/src/window/conversation-list.ts:250
 msgid "Everything"
 msgstr "Alles"
 
-#: app/src/window/conversation-list.ts:250
+#: app/src/window/conversation-list.ts:251
 msgid "Names and numbers"
 msgstr "Namen und Nummern"
 
-#: app/src/window/conversation-list.ts:251
+#: app/src/window/conversation-list.ts:252
 msgid "Messages"
 msgstr "Nachrichten"
 
-#: app/src/window/conversation-list.ts:255
-#: app/src/window/conversation-list.ts:259
+#: app/src/window/conversation-list.ts:256
+#: app/src/window/conversation-list.ts:260
 msgid "Search in"
 msgstr "Suchen in"
 
-#: app/src/window/conversation-list.ts:280
+#: app/src/window/conversation-list.ts:281
 msgid "Filter conversations"
 msgstr "Unterhaltungen filtern"
 
-#: app/src/window/conversation-list.ts:388
+#: app/src/window/conversation-list.ts:389
 msgid "Clear filters"
 msgstr "Filter zurücksetzen"
 
-#: app/src/window/conversation-list.ts:414
+#: app/src/window/conversation-list.ts:415
 msgid "No conversations yet"
 msgstr "Noch keine Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:414
+#: app/src/window/conversation-list.ts:415
 msgid "No matches"
 msgstr "Keine Treffer"
 
-#: app/src/window/conversation-list.ts:416
+#: app/src/window/conversation-list.ts:417
 msgid ""
 "Conversations appear here once an account is added and its messages have "
 "arrived."
@@ -2930,38 +2934,38 @@ msgstr ""
 "Unterhaltungen erscheinen hier, sobald ein Konto hinzugefügt wurde und seine "
 "Nachrichten angekommen sind."
 
-#: app/src/window/conversation-list.ts:422
+#: app/src/window/conversation-list.ts:423
 msgid "Nothing fits the search and filters."
 msgstr "Nichts passt zur Suche und den Filtern."
 
-#: app/src/window/conversation-list.ts:487
+#: app/src/window/conversation-list.ts:488
 msgid "Search"
 msgstr "Suchen"
 
-#: app/src/window/conversation-list.ts:493
+#: app/src/window/conversation-list.ts:494
 #: app/src/window/new-conversation.ts:26
 msgid "New conversation"
 msgstr "Neue Unterhaltung"
 
-#: app/src/window/conversation-list.ts:510
-#: app/src/window/conversation-list.ts:598
+#: app/src/window/conversation-list.ts:511
+#: app/src/window/conversation-list.ts:599
 #: app/src/window/merge-assistant.ts:116
 msgid "Merge"
 msgstr "Zusammenführen"
 
-#: app/src/window/conversation-list.ts:513
+#: app/src/window/conversation-list.ts:514
 msgid "Mark as Read"
 msgstr "Als gelesen markieren"
 
-#: app/src/window/conversation-list.ts:514
+#: app/src/window/conversation-list.ts:515
 msgid "Mark as Unread"
 msgstr "Als ungelesen markieren"
 
-#: app/src/window/conversation-list.ts:594
+#: app/src/window/conversation-list.ts:595
 msgid "Merge these people?"
 msgstr "Diese Personen zusammenführen?"
 
-#: app/src/window/conversation-list.ts:595
+#: app/src/window/conversation-list.ts:596
 msgid ""
 "Their chats become one conversation. Nothing is deleted, and you can "
 "separate them again."
@@ -2969,16 +2973,16 @@ msgstr ""
 "Ihre Chats werden zu einer Unterhaltung. Nichts wird gelöscht, und du kannst "
 "sie wieder trennen."
 
-#: app/src/window/conversation-list.ts:628
+#: app/src/window/conversation-list.ts:629
 msgid "Review"
 msgstr "Prüfen"
 
-#: app/src/window/conversation-list.ts:635
+#: app/src/window/conversation-list.ts:636
 #: app/src/window/preferences-dialog.ts:61
 msgid "Conversations"
 msgstr "Unterhaltungen"
 
-#: app/src/window/conversation-list.ts:657
+#: app/src/window/conversation-list.ts:658
 msgid "{count} possible duplicate"
 msgid_plural "{count} possible duplicates"
 msgstr[0] "{count} mögliches Duplikat"
