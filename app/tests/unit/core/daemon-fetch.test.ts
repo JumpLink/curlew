@@ -197,7 +197,8 @@ export default async () => {
         expect(new Uint8Array(readFileSync(reply.path))).toStrictEqual(data);
         expect(lines.some((l) => l.includes('fetched attachment'))).toBe(true);
       } finally {
-        process.env.CURLEW_PREVIEWS_DIR = previous;
+        if (previous === undefined) delete process.env.CURLEW_PREVIEWS_DIR;
+        else process.env.CURLEW_PREVIEWS_DIR = previous;
         db.close();
         rmSync(dir, { recursive: true, force: true });
       }
@@ -219,7 +220,8 @@ export default async () => {
         if (reply.kind !== 'fetched') return;
         expect(reply.bytes).toBe(data.length);
       } finally {
-        process.env.CURLEW_PREVIEWS_DIR = previous;
+        if (previous === undefined) delete process.env.CURLEW_PREVIEWS_DIR;
+        else process.env.CURLEW_PREVIEWS_DIR = previous;
         db.close();
         rmSync(dir, { recursive: true, force: true });
       }

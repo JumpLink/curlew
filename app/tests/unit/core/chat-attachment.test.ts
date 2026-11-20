@@ -140,7 +140,9 @@ async function withWorld(body: (world: World) => Promise<void>): Promise<void> {
       attachmentsDir,
     });
   } finally {
-    process.env.CURLEW_ATTACHMENTS_DIR = previousAttachments;
+    // Assigning undefined would store the string "undefined", a relative path that later tests write into.
+    if (previousAttachments === undefined) delete process.env.CURLEW_ATTACHMENTS_DIR;
+    else process.env.CURLEW_ATTACHMENTS_DIR = previousAttachments;
     rmSync(dir, { recursive: true, force: true });
   }
 }
