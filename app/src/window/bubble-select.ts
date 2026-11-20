@@ -30,6 +30,7 @@ export function guardTouchSelection(card: Gtk.Widget): void {
     const touch = click.get_current_event_device()?.get_source() === Gdk.InputSource.TOUCHSCREEN;
     setSelectable(card, selectableFor(touch));
   });
-  click.connect('stopped', () => setSelectable(card, true));
+  // No reset on `stopped`: it fires once a touch drag passes the click threshold, i.e. mid-scroll,
+  // and would hand the drag back to the label. The next press decides again for its own device.
   card.add_controller(click);
 }
