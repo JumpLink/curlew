@@ -40,6 +40,14 @@ export default async () => {
       expect(client.has('special-use')).toBe(true);
     });
 
+    await it('lists the capabilities the server answers to CAPABILITY', async () => {
+      const { client, stream } = await connected((w) =>
+        w.includes('CAPABILITY') ? `* CAPABILITY IMAP4rev1 IDLE\r\n${tagOf(w)} OK done\r\n` : undefined,
+      );
+      expect(await client.capability()).toStrictEqual(['IDLE', 'IMAP4REV1', 'SPECIAL-USE']);
+      expect(stream.written[0]).toBe('a1 CAPABILITY\r\n');
+    });
+
     await it('refuses a server that does not greet with OK', async () => {
       await expect(connected(() => undefined, '* BYE busy\r\n')).rejects.toThrow(/unexpected IMAP greeting/);
     });
