@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-20 06:41+0100\n"
+"POT-Creation-Date: 2026-11-20 07:00+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1755,8 +1755,8 @@ msgstr ""
 #: app/src/window/account-remove-model.ts:37
 #: app/src/window/account-remove-model.ts:71
 #: app/src/window/agent-access-page.ts:233
-#: app/src/window/conversation-list.ts:503
-#: app/src/window/conversation-list.ts:596
+#: app/src/window/conversation-list.ts:504
+#: app/src/window/conversation-list.ts:597
 #: app/src/window/conversation-view.ts:767 app/src/window/protocols-page.ts:66
 #: app/src/window/protocols-page.ts:142
 msgid "Cancel"
@@ -1766,7 +1766,7 @@ msgstr ""
 msgid "Pause"
 msgstr ""
 
-#: app/src/window/account-detail.ts:145 app/src/window/welcome.ts:205
+#: app/src/window/account-detail.ts:145 app/src/window/welcome.ts:224
 msgid "Use for Delta Chat"
 msgstr ""
 
@@ -1777,7 +1777,7 @@ msgid ""
 msgstr ""
 
 #: app/src/window/account-detail.ts:152 app/src/window/protocols-page.ts:169
-#: app/src/window/welcome.ts:211
+#: app/src/window/welcome.ts:230
 msgid "Show ordinary email"
 msgstr ""
 
@@ -2394,7 +2394,7 @@ msgstr ""
 msgid "Picture"
 msgstr ""
 
-#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:511
+#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:512
 msgid "Separate"
 msgstr ""
 
@@ -2472,6 +2472,7 @@ msgstr ""
 
 #: app/src/window/conversation-list-model.ts:141
 #: app/src/window/welcome-model.ts:111 app/src/window/welcome.ts:189
+#: app/src/window/welcome.ts:208
 msgid "Delta Chat"
 msgstr ""
 
@@ -2628,45 +2629,45 @@ msgstr ""
 msgid "Search"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:492
+#: app/src/window/conversation-list.ts:493
 #: app/src/window/new-conversation.ts:26
 msgid "New conversation"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:509
-#: app/src/window/conversation-list.ts:597
+#: app/src/window/conversation-list.ts:510
+#: app/src/window/conversation-list.ts:598
 #: app/src/window/merge-assistant.ts:116
 msgid "Merge"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:512
+#: app/src/window/conversation-list.ts:513
 msgid "Mark as Read"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:513
+#: app/src/window/conversation-list.ts:514
 msgid "Mark as Unread"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:593
+#: app/src/window/conversation-list.ts:594
 msgid "Merge these people?"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:594
+#: app/src/window/conversation-list.ts:595
 msgid ""
 "Their chats become one conversation. Nothing is deleted, and you can "
 "separate them again."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:627
+#: app/src/window/conversation-list.ts:628
 msgid "Review"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:634
+#: app/src/window/conversation-list.ts:635
 #: app/src/window/preferences-dialog.ts:61
 msgid "Conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:656
+#: app/src/window/conversation-list.ts:657
 msgid "{count} possible duplicate"
 msgid_plural "{count} possible duplicates"
 msgstr[0] ""
@@ -3103,7 +3104,7 @@ msgid "Media"
 msgstr ""
 
 #: app/src/window/preferences-dialog.ts:100 app/src/window/welcome-model.ts:124
-#: app/src/window/welcome.ts:245
+#: app/src/window/welcome.ts:264
 msgid "AI features"
 msgstr ""
 
@@ -3113,7 +3114,7 @@ msgid ""
 "you allow it. Off: no assistant can reach your data"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:106 app/src/window/welcome.ts:257
+#: app/src/window/preferences-dialog.ts:106 app/src/window/welcome.ts:276
 msgid "AI"
 msgstr ""
 
@@ -3156,7 +3157,11 @@ msgid_plural "{count} selected"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/terms-widgets.ts:22
+#: app/src/window/terms-widgets.ts:13
+msgid "{protocol} Terms of Service"
+msgstr ""
+
+#: app/src/window/terms-widgets.ts:25
 msgid "I understand and accept the risk for my account"
 msgstr ""
 
@@ -3269,35 +3274,37 @@ msgstr ""
 msgid "Add your accounts"
 msgstr ""
 
-#: app/src/window/welcome.ts:198
-msgid ""
-"No mail account yet. Once you add one, you can switch this on in its "
-"settings."
+#: app/src/window/welcome.ts:200
+msgid "No mail account yet"
 msgstr ""
 
-#: app/src/window/welcome.ts:247
+#: app/src/window/welcome.ts:201
+msgid "Once you add one, you can switch this on in its settings."
+msgstr ""
+
+#: app/src/window/welcome.ts:266
 msgid ""
 "An assistant could then read and send your messages through Curlew, each "
 "time as you allow it."
 msgstr ""
 
-#: app/src/window/welcome.ts:258
+#: app/src/window/welcome.ts:277
 msgid ""
 "Off, no assistant can reach your data. You can change this at any time in "
 "Preferences."
 msgstr ""
 
-#: app/src/window/welcome.ts:268
+#: app/src/window/welcome.ts:287
 msgid "All set"
 msgstr ""
 
-#: app/src/window/welcome.ts:269
+#: app/src/window/welcome.ts:288
 msgid ""
 "You can change all of this later: accounts and protocols in Accounts, the "
 "rest in Preferences."
 msgstr ""
 
-#: app/src/window/welcome.ts:271
+#: app/src/window/welcome.ts:290
 msgid "Start Using Curlew"
 msgstr ""
 
@@ -4491,16 +4498,4 @@ msgstr ""
 msgid ""
 "{count} devices of {jid} carry that fingerprint, so it does not name one — "
 "nothing changed"
-msgstr ""
-
-#: app/src/window/terms-widgets.ts:13
-msgid "{protocol} Terms of Service"
-msgstr ""
-
-#: app/src/window/welcome.ts:200
-msgid "No mail account yet"
-msgstr ""
-
-#: app/src/window/welcome.ts:201
-msgid "Once you add one, you can switch this on in its settings."
 msgstr ""
