@@ -5,7 +5,7 @@
  */
 
 import type { MessageSender, SendBackend, SendPermit } from '@curlew/protocol';
-import { ImapBackend } from './backend.gjs.ts';
+import { ImapBackend } from './backend.ts';
 import { openMailSender } from './send.ts';
 
 export class ImapSendBackend extends ImapBackend implements SendBackend {

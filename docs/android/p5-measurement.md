@@ -16,7 +16,7 @@ Measured 2026-11-16 against gjsify `packages/` (worktree `gjsify-p5`) and this r
 | Package (entry) | Imports |
 |---|---|
 | `@curlew/store` (`index.ts`) | `node:fs`, `node:os`, `node:path`, `node:sqlite` |
-| `@curlew/imap` (`index.gjs.ts`) | `gi://GLib`, `gi://Gio` (`SocketClient`, streams), `@gjsify/system-accounts`, plus `node:*` via store |
+| `@curlew/imap` (`index.gjs.ts`) | `gi://GLib`, `gi://Gio` (`SocketClient`, streams, only in `transport.gjs.ts`), `@gjsify/system-accounts`, plus `node:*` via store |
 | `@curlew/smtp` (only through the `@curlew/imap/send` entry since ADR 0018) | `nodemailer` (needs `node:net`, `node:tls`, `node:stream`, `node:crypto`) |
 | app window layer | `gi://Gtk/Adw/Gdk/Gio/GLib/GObject/Pango/Graphene/GdkPixbuf/Xdp`, `node:fs/path/crypto/os/child_process/tty/zlib/url/stream/readline` |
 

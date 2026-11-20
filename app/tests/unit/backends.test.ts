@@ -1,8 +1,7 @@
-import { describe, expect, it, on } from '@gjsify/unit';
+import { describe, expect, it } from '@gjsify/unit';
 
 import { GnomeError, GnomeUnavailableError } from '@curlew/protocol';
 import { check, listAccounts, listEvents, searchContacts } from '@curlew/gnome';
-import { getMessage, searchMail } from '@curlew/imap';
 import { runChecks } from '../../src/frontends/cli/check.ts';
 import { runtimeName } from '../../src/core/runtime.ts';
 
@@ -21,9 +20,6 @@ import { runtimeName } from '../../src/core/runtime.ts';
 //
 // The second failure kind — a MISSING TYPELIB — is asserted in `gnome/optional.test.ts`: the
 // typelibs load on first use, so it surfaces as a `GnomeUnavailableError` on either runtime.
-//
-// @curlew/imap still resolves to its "unavailable" stub on Node (GJS-only, unchanged by
-// this refactor), so its half stays Node-only.
 const DEAD_BUS = 'unix:path=/nonexistent';
 const env = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env ?? {};
 const pinnedToDeadPath = env.DBUS_SESSION_BUS_ADDRESS === DEAD_BUS;
@@ -117,15 +113,6 @@ export default async () => {
           expect(err instanceof Error && err.message.length > 0).toBe(true);
         }
       }
-    });
-  });
-
-  await on('Node.js', async () => {
-    await describe('@curlew/imap (Node stub)', async () => {
-      await it('mail functions throw instead of returning empty results', async () => {
-        await expect(searchMail({})).rejects.toThrow(/GJS runtime/i);
-        await expect(getMessage({ accountId: 'x', uid: '1' })).rejects.toThrow(/GJS runtime/i);
-      });
     });
   });
 };

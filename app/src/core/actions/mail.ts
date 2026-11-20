@@ -7,7 +7,15 @@
  * time. Every read is BODY.PEEK, so none of this marks mail as seen.
  */
 
-import { fetchPart, getMessage, listFolders, listParts, searchMail } from '@curlew/imap';
+import {
+  type MailSource,
+  fetchPart,
+  getMessage,
+  listFolders,
+  listParts,
+  openTlsStream,
+  searchMail,
+} from '@curlew/imap';
 import type {
   FolderDTO,
   MailMessageDTO,
@@ -21,6 +29,9 @@ import { loadConfig } from '../config.ts';
 import type { AgentAccess } from './access.ts';
 import { requireMessageRead } from './message-access.ts';
 import { ATTACHMENT_BYTES, BODY_CHARS, capLimit, MAIL_LIMIT } from './limits.ts';
+
+/** The transport of this runtime; the accounts come from the person's own and the system's. */
+const MAIL_SOURCE: MailSource = { opener: openTlsStream };
 
 /** Mail search params; folder defaults to INBOX, and no account means all of them. */
 export interface MailSearchParams {
@@ -82,7 +93,7 @@ export interface MailSaveAttachmentParams {
 
 /** Search mail headers/metadata; caps the count so a caller can't dump a mailbox. */
 export async function mailSearch(params: MailSearchParams = {}): Promise<MailSummaryDTO[]> {
-  return searchMail({
+  return searchMail(MAIL_SOURCE, {
     accountId: params.accountId,
     folder: params.folder,
     allFolders: params.allFolders,
@@ -104,7 +115,7 @@ export async function mailSearch(params: MailSearchParams = {}): Promise<MailSum
 
 /** Fetch one full message (body + attachment metadata); caps the body length. */
 export async function mailGetMessage(params: MailGetMessageParams): Promise<MailMessageDTO> {
-  const message = await getMessage({
+  const message = await getMessage(MAIL_SOURCE, {
     accountId: params.accountId,
     uid: params.uid,
     folder: params.folder,
@@ -118,12 +129,12 @@ export async function mailGetMessage(params: MailGetMessageParams): Promise<Mail
 
 /** List the mailboxes of one or every account, with their resolved roles. */
 export async function mailListFolders(accountId?: string): Promise<FolderDTO[]> {
-  return listFolders(accountId);
+  return listFolders(MAIL_SOURCE, accountId);
 }
 
 /** List one message's parts, each with the section needed to save it. */
 export async function mailListParts(params: MailListPartsParams): Promise<MailPartDTO[]> {
-  return listParts(params);
+  return listParts(MAIL_SOURCE, params);
 }
 
 /**
@@ -137,7 +148,7 @@ export async function mailListParts(params: MailListPartsParams): Promise<MailPa
 export async function mailSaveAttachment(params: MailSaveAttachmentParams): Promise<SaveAttachmentResult> {
   if (params.agent) {
     // Headers only: a few characters of body are all the gate's fetch needs.
-    const message = await getMessage({
+    const message = await getMessage(MAIL_SOURCE, {
       accountId: params.accountId,
       uid: params.uid,
       folder: params.folder,
@@ -150,6 +161,7 @@ export async function mailSaveAttachment(params: MailSaveAttachmentParams): Prom
 
   let file: FileSink | null = null;
   const { info } = await fetchPart(
+    MAIL_SOURCE,
     {
       accountId: params.accountId,
       uid: params.uid,

@@ -52,7 +52,7 @@ export default async () => {
     }
 
     await it('the send entry is where the SMTP stack comes in', async () => {
-      const { files, bare } = reach(src, 'send-entry.gjs.ts');
+      const { files, bare } = reach(src, 'send-entry.ts');
       expect(files.has('send.ts')).toBe(true);
       expect(bare.has('@curlew/smtp')).toBe(true);
     });
@@ -61,6 +61,20 @@ export default async () => {
       const { files } = reach(src, 'index.gjs.ts');
       const withGi = [...files].filter((f) => /from\s+'gi:\/\//.test(readFileSync(join(src, f), 'utf8')));
       expect(withGi).toStrictEqual(['transport.gjs.ts']);
+    });
+
+    await it('the Node entry and the send entry reach no Gio at all', async () => {
+      for (const entry of ['index.node.ts', 'send-entry.ts']) {
+        const { files } = reach(src, entry);
+        const withGi = [...files].filter((f) => /from\s+'gi:\/\//.test(readFileSync(join(src, f), 'utf8')));
+        expect(withGi).toStrictEqual([]);
+      }
+    });
+
+    await it('backend and messages name no socket: the opener is injected', async () => {
+      for (const file of ['backend.ts', 'messages.ts']) {
+        expect(/transport\.(gjs|node)\.ts/.test(readFileSync(join(src, file), 'utf8'))).toBe(false);
+      }
     });
   });
 };
