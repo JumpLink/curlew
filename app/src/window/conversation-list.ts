@@ -224,7 +224,8 @@ export function createConversationList(
   let hits: ReadonlyMap<string, string> = new Map();
   let scope: SearchScope = people.searchScope();
   const refs = new Map<Gtk.ListBoxRow, RowRef>();
-  const checks = new Map<string, { row: Gtk.ListBoxRow; check: Gtk.CheckButton }>();
+  // One conversation can show in two sections (Unread and People), so an id maps to every row of it.
+  const checks = new Map<string, Array<{ row: Gtk.ListBoxRow; check: Gtk.CheckButton }>>();
   let picking = false;
   const picked = new Set<string>();
 
@@ -442,9 +443,12 @@ export function createConversationList(
         queue.push(() => {
           const { row, check } = entryRow(entry, labels, picking, picked.has(entry.id));
           refs.set(row, { kind: 'entry', entry });
-          checks.set(entry.id, { row, check });
+          const seen = checks.get(entry.id);
+          if (seen) seen.push({ row, check });
+          else checks.set(entry.id, [{ row, check }]);
           list.append(row);
-          if (!picking && entry.id === selectedId) list.select_row(row);
+          // The first row of the open conversation carries the mark; a second one would steal it.
+          if (!picking && entry.id === selectedId && !seen) list.select_row(row);
         });
       }
     }
@@ -553,10 +557,12 @@ export function createConversationList(
     if (!on) picked.clear();
     // Single selection marks the open conversation; a selection mode has no such mark.
     list.set_selection_mode(on ? Gtk.SelectionMode.NONE : Gtk.SelectionMode.SINGLE);
-    for (const [id, { row, check }] of checks) {
-      check.set_visible(on);
-      check.set_active(picked.has(id));
-      if (!on && id === selectedId) list.select_row(row);
+    for (const [id, rows] of checks) {
+      for (const { check } of rows) {
+        check.set_visible(on);
+        check.set_active(picked.has(id));
+      }
+      if (!on && id === selectedId) list.select_row(rows[0]!.row);
     }
     bars.set_visible_child_name(on ? 'picking' : 'normal');
     toolbar.set_reveal_bottom_bars(on);
@@ -564,8 +570,7 @@ export function createConversationList(
   };
   function pick(entry: ListEntry): void {
     togglePick(picked, entry.id);
-    const shown = checks.get(entry.id);
-    if (shown) shown.check.set_active(picked.has(entry.id));
+    for (const { check } of checks.get(entry.id) ?? []) check.set_active(picked.has(entry.id));
     refreshTools();
   }
   const rowAt = (y: number): ListEntry | null => {
