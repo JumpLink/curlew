@@ -20,8 +20,9 @@ import type {
   ChatInfo,
   ChatMessage,
   ChatPeer,
+  Mention,
 } from '@curlew/protocol';
-import { normalizeAddress } from '@curlew/protocol';
+import { normalizeAddress, normalizeMentions } from '@curlew/protocol';
 import type { MxEvent, MxRoom } from './api.ts';
 
 /**
@@ -207,15 +208,79 @@ export function messageText(content: Content, reply: boolean): string | null {
   return reply ? stripReplyFallback(body) : body;
 }
 
+const HTML_ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: '\u00a0' };
+
+function decodeEntities(html: string): string {
+  return html.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, name: string) => {
+    if (name[0] === '#') {
+      const code = name[1] === 'x' || name[1] === 'X' ? parseInt(name.slice(2), 16) : parseInt(name.slice(1), 10);
+      return Number.isInteger(code) && code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole;
+    }
+    return HTML_ENTITIES[name.toLowerCase()] ?? whole;
+  });
+}
+
+/** The user a pill link names: `https://matrix.to/#/@user:server` or `matrix:u/user:server`. */
+function pillUser(href: string): string | null {
+  const web = /^https:\/\/matrix\.to\/#\/([^?]+)/i.exec(href);
+  const uri = /^matrix:u\/([^?]+)/i.exec(href);
+  let id: string;
+  try {
+    if (web) id = decodeURIComponent(web[1]);
+    else if (uri) id = `@${decodeURIComponent(uri[1])}`;
+    else return null;
+  } catch {
+    return null;
+  }
+  return /^@[^:\s]+:\S+$/.test(id) ? id : null;
+}
+
+/**
+ * The people a message names, as ranges of its plain `text`. A mention is a pill in the
+ * `formatted_body` (a `matrix.to` link to a user) whose link text is found in `text`, in order;
+ * with `m.mentions.user_ids` present, only the users it lists count. A mention with no pill or
+ * whose text is not in the body has no place to show, so it is not offered (the text reads as
+ * before).
+ */
+export function mentionsOf(content: Content, text: string | null, selfUserId: string): Mention[] | undefined {
+  if (text === null || str(content.format) !== 'org.matrix.custom.html') return undefined;
+  const formatted = str(content.formatted_body);
+  if (formatted === null) return undefined;
+  const meta = content['m.mentions'];
+  const listed =
+    meta && typeof meta === 'object' && Array.isArray((meta as Content).user_ids)
+      ? new Set(((meta as Content).user_ids as unknown[]).filter((v): v is string => typeof v === 'string'))
+      : null;
+  const html = formatted.replace(/<mx-reply>[\s\S]*?<\/mx-reply>/i, '');
+  const found: Mention[] = [];
+  let cursor = 0;
+  for (const match of html.matchAll(/<a\s[^>]*?href\s*=\s*(?:"([^"]*)"|'([^']*)')[^>]*>([\s\S]*?)<\/a>/gi)) {
+    const userId = pillUser(decodeEntities(match[1] ?? match[2] ?? ''));
+    if (userId === null || (listed !== null && !listed.has(userId))) continue;
+    const label = decodeEntities(match[3].replace(/<[^>]*>/g, ''));
+    if (label === '') continue;
+    const start = text.indexOf(label, cursor);
+    if (start < 0) continue;
+    cursor = start + label.length;
+    found.push(userId === selfUserId ? { start, end: cursor, userId, self: true } : { start, end: cursor, userId });
+  }
+  return normalizeMentions(text, found);
+}
+
 /** An edit: the event replaces an earlier one's content. */
-export function editOf(event: MxEvent): { target: string; text: string | null } | null {
+export function editOf(
+  event: MxEvent,
+  selfUserId = '',
+): { target: string; text: string | null; mentions?: Mention[] } | null {
   if (event.type !== 'm.room.message' || event.redacted || event.undecryptable !== null) return null;
   const rel = relatesTo(event.content);
   if (rel?.rel_type !== 'm.replace') return null;
   const target = str(rel.event_id);
   const fresh = event.content['m.new_content'];
   if (!target || !fresh || typeof fresh !== 'object') return null;
-  return { target, text: messageText(fresh as Content, false) };
+  const text = messageText(fresh as Content, false);
+  const mentions = mentionsOf(fresh as Content, text, selfUserId);
+  return mentions ? { target, text, mentions } : { target, text };
 }
 
 /** A reaction: an `m.annotation` of a message, whose key is the emoji. */
@@ -260,6 +325,7 @@ export function toChatMessage(
       : null;
   const fromSelf = event.sender === selfUserId;
   const msgtype = str(event.content.msgtype);
+  const text = encrypted ? UNDECRYPTABLE_TEXT : messageText(event.content, replyTo !== null);
   return {
     remoteId: event.eventId,
     seq: seqOf(event.ts),
@@ -272,7 +338,8 @@ export function toChatMessage(
     // brings the server's copy of the same event. Only own events — someone else's message has
     // no local row to replace, and a foreign id here would be a way to delete one.
     clientId: fromSelf ? event.eventId : null,
-    text: encrypted ? UNDECRYPTABLE_TEXT : messageText(event.content, replyTo !== null),
+    text,
+    mentions: encrypted ? undefined : mentionsOf(event.content, text, selfUserId),
     hasAttachments:
       !encrypted && (event.type === 'm.sticker' || (msgtype !== null && FILE_MSGTYPES.has(msgtype))),
     attachments: encrypted ? undefined : toChatAttachments(event),
@@ -326,13 +393,14 @@ export function mapEvents(
       });
       continue;
     }
-    const edit = editOf(event);
+    const edit = editOf(event, selfUserId);
     if (edit) {
       const editedAt = new Date(event.ts).toISOString();
       const own = byId.get(edit.target);
       if (own) {
         if (own.sender === event.sender) {
           own.message.text = edit.text;
+          own.message.mentions = edit.mentions;
           own.message.editedAt = editedAt;
         }
       } else {
@@ -344,6 +412,7 @@ export function mapEvents(
           edits.set(key, {
             remoteId: edit.target,
             text: edit.text,
+            mentions: edit.mentions,
             editedAt,
             senderRemoteId: event.sender === selfUserId ? null : event.sender,
           });

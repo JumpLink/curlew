@@ -303,7 +303,9 @@ export class WhatsAppBackend implements DeliveryBackend, SendBackend {
       ? null
       : (this.options.createConnection ?? createBaileysConnection);
     const createSocket = this.options.createSocket;
-    const mapper = new WhatsAppMapper(new JidResolver(auth.lidLookup()));
+    const mapper = new WhatsAppMapper(new JidResolver(auth.lidLookup()), (jid) =>
+      isOwnJid(auth.state.creds.me, jid),
+    );
     let journal: FileJournal;
     try {
       journal = FileJournal.open(journalPath(path));

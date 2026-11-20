@@ -9,6 +9,7 @@
  * `client.ts` sends what is built here and hands back what arrived.
  */
 
+import { codePointToUtf16 } from '@curlew/protocol';
 import xml from '@xmpp/xml';
 
 /** The slice of an ltx element the parsers read. */
@@ -291,8 +292,68 @@ export function fileMetaOf(message: XmlElement): FileMeta[] {
   return out;
 }
 
+function safeDecode(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+/** A XEP-0372 mention reference: the person's JID and where the name is in the (stripped) body, UTF-16. */
+export interface MentionRef {
+  start: number;
+  end: number;
+  jid: string;
+}
+
+/**
+ * The XEP-0372 `type='mention'` references of a message. `begin`/`end` count Unicode code points
+ * of the ORIGINAL body; they are moved past a removed reply fallback and converted to UTF-16 of
+ * `stripped`, the body that is stored. A reference that touches removed text is dropped.
+ */
+export function mentionRefsOf(message: XmlElement, stripped: string | null): MentionRef[] {
+  const original = message.getChildText('body');
+  if (original === null || stripped === null) return [];
+  const removed = new Set<number>();
+  for (const f of message.getChildren('fallback', NS.fallback).filter((x) => x.attrs.for === NS.reply)) {
+    for (const b of f.getChildren('body')) {
+      const start = Number(b.attrs.start);
+      const end = Number(b.attrs.end);
+      if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end <= start) continue;
+      for (let i = start; i < end; i++) removed.add(i);
+    }
+  }
+  const chars = Array.from(original);
+  // `stripReplyFallback` also drops one leading newline after the cut.
+  const kept: number[] = [];
+  chars.forEach((_, i) => {
+    if (!removed.has(i)) kept.push(i);
+  });
+  const lead = removed.size > 0 && chars[kept[0]] === '\n' ? 1 : 0;
+  const newIndex = new Map<number, number>();
+  kept.slice(lead).forEach((orig, n) => newIndex.set(orig, n));
+  const out: MentionRef[] = [];
+  for (const ref of message.getChildren('reference', NS.reference)) {
+    if (ref.attrs.type !== 'mention') continue;
+    const uri = String(ref.attrs.uri ?? '');
+    const begin = Number(ref.attrs.begin);
+    const end = Number(ref.attrs.end);
+    if (!uri.startsWith('xmpp:') || !Number.isInteger(begin) || !Number.isInteger(end) || begin < 0 || end <= begin || end > chars.length) continue;
+    const from = newIndex.get(begin);
+    const last = newIndex.get(end - 1);
+    if (from === undefined || last === undefined || last - from !== end - 1 - begin) continue;
+    const jid = uri.slice(5).split('?')[0];
+    if (!jid) continue;
+    out.push({ start: codePointToUtf16(stripped, from), end: codePointToUtf16(stripped, last + 1), jid: safeDecode(jid) });
+  }
+  return out;
+}
+
 /** One archived stanza, reduced to what the index needs. */
 export interface ArchivedEntry {
+  /** XEP-0372 mentions in `body`; absent when there are none. */
+  mentions?: MentionRef[];
   /** The archive's id for it — for a MUC archive also the room's stanza-id. */
   archiveId: string;
   /** Archive time in ms since the epoch, or null when the result carried no delay stamp. */
@@ -445,6 +506,8 @@ export function parseMamResult(
   const occupant = message.getChild('x', NS.mucUser)?.getChild('item')?.attrs.jid;
   const omemo = omemoOf(message);
   const fileMeta = fileMetaOf(message);
+  const body = stripReplyFallback(message, message.getChildText('body'));
+  const mentionRefs = mentionRefsOf(message, body);
   return {
     archiveId: result.attrs.id,
     stampMs: stampOf(forwarded),
@@ -453,7 +516,8 @@ export function parseMamResult(
     type: message.attrs.type ?? null,
     id: message.attrs.id ?? null,
     originId: message.getChild('origin-id', NS.sid)?.attrs.id ?? null,
-    body: stripReplyFallback(message, message.getChildText('body')),
+    body,
+    ...(mentionRefs.length > 0 ? { mentions: mentionRefs } : {}),
     replaceId: message.getChild('replace', NS.correct)?.attrs.id ?? null,
     retract: retractOf(message),
     tombstone: isTombstone(message),

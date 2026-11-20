@@ -83,6 +83,14 @@ export interface TgReactionCount {
   readonly order: number | null;
 }
 
+/** One formatting entity; curlew reads only the named-person mentions. */
+export interface TgEntity {
+  readonly offset: number;
+  readonly length: number;
+  readonly kind: string;
+  readonly params: { readonly kind: string; readonly userId?: number };
+}
+
 export interface TgMessage {
   readonly id: number;
   readonly date: Date;
@@ -93,6 +101,8 @@ export interface TgMessage {
   /** Joins, pins, title changes — notices, not something a person wrote. */
   readonly isService: boolean;
   readonly text: string;
+  /** Mentions by name (`text_mention`), as mtcute reports them: UTF-16 offset and length of `text`. */
+  readonly entities?: ReadonlyArray<TgEntity>;
   readonly media: TgMedia | null;
   readonly replyToMessage: TgRepliedMessage | null;
   readonly isTopicMessage: boolean;

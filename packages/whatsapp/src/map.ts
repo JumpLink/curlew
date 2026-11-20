@@ -11,7 +11,16 @@
  */
 
 import { Buffer } from 'node:buffer';
-import type { AttachmentKind, ChatAttachment, ChatInfo, ChatMessage, ChatPeer, DeliveryEvent } from '@curlew/protocol';
+import { normalizeMentions } from '@curlew/protocol';
+import type {
+  AttachmentKind,
+  ChatAttachment,
+  ChatInfo,
+  ChatMessage,
+  ChatPeer,
+  DeliveryEvent,
+  Mention,
+} from '@curlew/protocol';
 import type {
   WaChat,
   WaContact,
@@ -53,6 +62,33 @@ export interface ExtractedContent {
   hasAttachments: boolean;
   /** The id of the message this one replies to, within the same chat. */
   replyTo: string | null;
+  /** The people the text names, when the sender's `mentionedJid` matches `@<number>` in it. */
+  mentions?: Mention[];
+}
+
+/**
+ * Where each mentioned person is in the text. WhatsApp writes `@<user part of the JID>` into the
+ * text and lists the JIDs beside it; the number stays as the stand-in (the window swaps it for
+ * the person's name when it knows one). A JID whose `@number` is not in the text is not shown.
+ */
+export function mentionsOf(
+  text: string | null,
+  jids: ReadonlyArray<string> | null | undefined,
+  isOwn: (jid: string) => boolean = () => false,
+): Mention[] | undefined {
+  if (!text || !jids?.length) return undefined;
+  const found: Mention[] = [];
+  for (const jid of jids) {
+    const user = parseJid(jid)?.user;
+    if (!user) continue;
+    const token = `@${user}`;
+    for (let at = text.indexOf(token); at >= 0; at = text.indexOf(token, at + token.length)) {
+      if (/\d/.test(text[at + token.length] ?? '')) continue;
+      const range = { start: at, end: at + token.length, userId: jid };
+      found.push(isOwn(jid) ? { ...range, self: true } : range);
+    }
+  }
+  return normalizeMentions(text, found);
 }
 
 const MEDIA = [
@@ -164,9 +200,13 @@ export function extractAttachments(content: WaMessageContent | null): ChatAttach
 }
 
 /** What a person wrote, or null for content that is not a message (a reaction, housekeeping). */
-export function extractContent(content: WaMessageContent | null): ExtractedContent | null {
+export function extractContent(
+  content: WaMessageContent | null,
+  isOwn?: (jid: string) => boolean,
+): ExtractedContent | null {
   if (!content) return null;
   let text: string | null = content.conversation ?? content.extendedTextMessage?.text ?? null;
+  let named = text !== null ? content.extendedTextMessage?.contextInfo?.mentionedJid : undefined;
   let replyTo = content.extendedTextMessage?.contextInfo?.stanzaId ?? null;
   let hasAttachments = false;
   for (const kind of MEDIA) {
@@ -174,6 +214,7 @@ export function extractContent(content: WaMessageContent | null): ExtractedConte
     if (!media) continue;
     hasAttachments = true;
     // A document's file name is what a list shows when there is no caption.
+    if (text === null && media.caption) named = media.contextInfo?.mentionedJid;
     text ??= media.caption ?? (kind === 'documentMessage' ? (media.fileName ?? null) : null);
     replyTo ??= media.contextInfo?.stanzaId ?? null;
   }
@@ -199,7 +240,9 @@ export function extractContent(content: WaMessageContent | null): ExtractedConte
   const poll = content.pollCreationMessage ?? content.pollCreationMessageV2 ?? content.pollCreationMessageV3;
   if (poll) text ??= poll.name ?? null;
   if (!text?.trim() && !hasAttachments) return null;
-  return { text: text?.trim() ? text : null, hasAttachments, replyTo: replyTo || null };
+  const shown = text?.trim() ? text : null;
+  const mentions = mentionsOf(shown, named, isOwn);
+  return { text: shown, hasAttachments, replyTo: replyTo || null, ...(mentions ? { mentions } : {}) };
 }
 
 function iso(seconds: number | null): string | null {
@@ -218,9 +261,12 @@ export function remoteMessageId(messageId: string): string {
 /** Turns Baileys' events into delivery events, learning JID pairs as it goes. */
 export class WhatsAppMapper {
   readonly resolver: JidResolver;
+  private readonly isOwn: (jid: string) => boolean;
 
-  constructor(resolver: JidResolver = new JidResolver()) {
+  /** `isOwn` tells whether a JID is the account itself, so a mention of it can be marked as yours. */
+  constructor(resolver: JidResolver = new JidResolver(), isOwn: (jid: string) => boolean = () => false) {
     this.resolver = resolver;
+    this.isOwn = isOwn;
   }
 
   /**
@@ -266,7 +312,7 @@ export class WhatsAppMapper {
       if (protocol.type === REVOKE)
         return [{ type: 'delete', chatRemoteId: chatId, remoteId: remoteMessageId(target) }];
       if (protocol.type === MESSAGE_EDIT) {
-        const edited = extractContent(unwrapContent(protocol.editedMessage));
+        const edited = extractContent(unwrapContent(protocol.editedMessage), this.isOwn);
         const ms = toNumber(protocol.timestampMs);
         const at = ms !== null ? new Date(ms).toISOString() : iso(toNumber(raw.messageTimestamp));
         return [
@@ -275,6 +321,7 @@ export class WhatsAppMapper {
             chatRemoteId: chatId,
             remoteId: remoteMessageId(target),
             text: edited?.text ?? null,
+            mentions: edited?.mentions,
             editedAt: at,
           },
         ];
@@ -299,7 +346,7 @@ export class WhatsAppMapper {
         },
       ];
     }
-    const extracted = extractContent(content);
+    const extracted = extractContent(content, this.isOwn);
     if (!extracted) return [];
     const attachments = extractAttachments(content);
 
@@ -315,6 +362,7 @@ export class WhatsAppMapper {
       sender,
       fromSelf,
       text: extracted.text,
+      mentions: extracted.mentions,
       hasAttachments: extracted.hasAttachments,
       attachments: attachments.length > 0 ? attachments : undefined,
       replyToRemoteId: extracted.replyTo ? remoteMessageId(extracted.replyTo) : null,
