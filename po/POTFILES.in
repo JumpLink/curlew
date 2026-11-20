@@ -258,6 +258,7 @@ packages/protocol/src/bodystructure.ts
 packages/protocol/src/byte-stream.ts
 packages/protocol/src/encoding.ts
 packages/protocol/src/errors.ts
+packages/protocol/src/host-accounts.ts
 packages/protocol/src/i18n.ts
 packages/protocol/src/imap-parse.ts
 packages/protocol/src/index.ts
