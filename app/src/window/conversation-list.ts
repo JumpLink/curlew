@@ -508,13 +508,29 @@ export function createConversationList(
   bars.add_named(header, 'normal');
   bars.add_named(pickHeader, 'picking');
 
-  const mergeButton = new Gtk.Button({ label: _('Merge') });
+  // One flat button per tool: a symbolic icon over a short caption, so four of them fit 360 px.
+  const toolButton = (icon: string, caption: string, tooltip: string): Gtk.Button => {
+    const content = new Gtk.Box({
+      orientation: Gtk.Orientation.VERTICAL,
+      spacing: 2,
+      halign: Gtk.Align.CENTER,
+    });
+    content.append(new Gtk.Image({ iconName: icon }));
+    const label = new Gtk.Label({ label: caption });
+    label.add_css_class('caption');
+    content.append(label);
+    const button = new Gtk.Button({ child: content, tooltipText: tooltip, hexpand: true });
+    button.add_css_class('flat');
+    button.update_property([Gtk.AccessibleProperty.LABEL], [tooltip]);
+    return button;
+  };
+  const mergeButton = toolButton('insert-link-symbolic', _('Merge'), _('Merge'));
+  mergeButton.remove_css_class('flat');
   mergeButton.add_css_class('suggested-action');
-  const unmergeButton = new Gtk.Button({ label: _('Separate') });
-  const readButton = new Gtk.Button({ label: _('Mark as Read') });
-  const unreadButton = new Gtk.Button({ label: _('Mark as Unread') });
-  // Wraps, so four labelled buttons do not set the sidebar's minimum width.
-  const tools = new Adw.WrapBox({ childSpacing: 12, lineSpacing: 6, halign: Gtk.Align.CENTER });
+  const unmergeButton = toolButton('edit-cut-symbolic', _('Separate'), _('Separate'));
+  const readButton = toolButton('mail-read-symbolic', _('Read'), _('Mark as Read'));
+  const unreadButton = toolButton('mail-unread-symbolic', _('Unread'), _('Mark as Unread'));
+  const tools = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, spacing: 6, homogeneous: true });
   tools.append(readButton);
   tools.append(unreadButton);
   tools.append(unmergeButton);
