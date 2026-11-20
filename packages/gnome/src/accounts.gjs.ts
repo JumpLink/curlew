@@ -11,8 +11,10 @@ import { GNOME_CLIENT_NAME, GOA_UNAVAILABLE_MESSAGE, NO_ACCOUNTS_MESSAGE } from 
 import { errorMessage, GnomeUnavailableError } from '@curlew/protocol';
 import type { GnomeAccount, GnomeCheckResult } from '@curlew/protocol';
 import type { Account, SystemAccounts } from '@gjsify/system-accounts';
+import { existsSync } from 'node:fs';
 import { getRegistry } from './eds.gjs.ts';
 import { isGnomeFailure } from './errors.ts';
+import { holdOptionalGiWarnings } from './optional.ts';
 
 let shared: Promise<SystemAccounts> | undefined;
 
@@ -21,11 +23,35 @@ let shared: Promise<SystemAccounts> | undefined;
  * costs a top-level await, which only the code that really asks for accounts should pay.
  */
 function hostAccounts(): Promise<SystemAccounts> {
-  shared ??= import('@gjsify/system-accounts').then((m) => m.createSystemAccounts());
+  shared ??= loadHostAccounts();
   shared.catch(() => {
     shared = undefined;
   });
   return shared;
+}
+
+/**
+ * The package's `&optional` Goa import warns when the typelib is missing, which is the normal
+ * state in a Flatpak where the D-Bus driver answers instead. The warning is held until the
+ * store has been asked: debug when it answers, a warning only when neither route works.
+ */
+async function loadHostAccounts(): Promise<SystemAccounts> {
+  const { value, release } = await holdOptionalGiWarnings(() =>
+    import('@gjsify/system-accounts').then((m) => m.createSystemAccounts()),
+  );
+  let answered = false;
+  try {
+    answered = await probe(value);
+  } catch {
+    // unreachable: the held warning is the honest one
+  }
+  release(answered);
+  return value;
+}
+
+/** Whether this process runs in a Flatpak sandbox, where Evolution Data Server is absent by design. */
+export function inSandbox(): boolean {
+  return existsSync('/.flatpak-info') || Boolean(process.env.FLATPAK_ID);
 }
 
 /**
@@ -149,6 +175,15 @@ export async function check(): Promise<GnomeCheckResult> {
     await getRegistry();
   } catch (err) {
     edsDetail = errorMessage(err);
+  }
+
+  if (edsDetail && inSandbox() && (await accountStoreAvailable())) {
+    const n = list.length;
+    return {
+      name: GNOME_CLIENT_NAME,
+      ok: true,
+      message: `OK (${n} account(s) via GNOME Online Accounts; Evolution Data Server is not available in this build)`,
+    };
   }
 
   if (list.length === 0) {

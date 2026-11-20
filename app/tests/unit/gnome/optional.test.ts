@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@gjsify/unit';
 import { GnomeUnavailableError } from '@curlew/protocol';
 
-import { optionalNamespace } from '../../../../packages/gnome/src/optional.ts';
+import { holdOptionalGiWarnings, optionalNamespace } from '../../../../packages/gnome/src/optional.ts';
 
 // Importing the *.gjs.ts modules here is itself the test: with a static `gi://Goa` / `gi://EBook`
 // import they cannot even be loaded on a host without those typelibs (Node, macOS), which is
@@ -53,6 +53,42 @@ export default async () => {
       await rejection(ns.get());
       await rejection(ns.get());
       expect(calls).toBe(1);
+    });
+  });
+
+  await describe('held optional-GI warnings', async () => {
+    const line = 'optional GI namespace Goa 1.0 is not available (typelib search path /x)';
+    const capture = async (answered: boolean) => {
+      const seen: { level: string; text: string }[] = [];
+      const { warn, debug } = console;
+      console.debug = (...a: unknown[]) => void seen.push({ level: 'debug', text: String(a[0]) });
+      try {
+        const held = await holdOptionalGiWarnings(async () => {
+          console.warn(line);
+          console.warn('something else');
+          return 7;
+        });
+        console.warn = (...a: unknown[]) => void seen.push({ level: 'warn', text: String(a[0]) });
+        expect(held.value).toBe(7);
+        held.release(answered);
+      } finally {
+        console.warn = warn;
+        console.debug = debug;
+      }
+      return seen;
+    };
+
+    await it('demotes the warning to debug when another route answered', async () => {
+      const seen = await capture(true);
+      expect(seen.length).toBe(1);
+      expect(seen[0]!.level).toBe('debug');
+      expect(seen[0]!.text).toContain('Goa 1.0');
+    });
+
+    await it('keeps it a warning when nothing answered', async () => {
+      const seen = await capture(false);
+      expect(seen.length).toBe(1);
+      expect(seen[0]!.level).toBe('warn');
     });
   });
 

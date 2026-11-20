@@ -31,3 +31,40 @@ export function optionalNamespace<T>(label: string, load: () => Promise<T>): Opt
     },
   };
 }
+
+const OPTIONAL_GI_WARNING = /^optional GI namespace /;
+
+/**
+ * Run `load` while holding back the bundler's "optional GI namespace … is not available" warning.
+ *
+ * The shim warns at module evaluation, before anyone knows whether the missing typelib matters.
+ * `release(true)` demotes the held lines to debug (another route answered, as the D-Bus driver
+ * does in a Flatpak); `release(false)` prints them as the warnings they were. Other warnings pass
+ * through untouched.
+ */
+export async function holdOptionalGiWarnings<T>(
+  load: () => Promise<T>,
+): Promise<{ value: T; release: (answered: boolean) => void }> {
+  const held: unknown[][] = [];
+  const original = console.warn;
+  console.warn = (...args: unknown[]) => {
+    if (typeof args[0] === 'string' && OPTIONAL_GI_WARNING.test(args[0])) held.push(args);
+    else original.apply(console, args);
+  };
+  let value: T;
+  try {
+    value = await load();
+  } catch (err) {
+    console.warn = original;
+    for (const args of held) original.apply(console, args);
+    throw err;
+  }
+  console.warn = original;
+  return {
+    value,
+    release(answered) {
+      for (const args of held) (answered ? console.debug : console.warn).apply(console, args);
+      held.length = 0;
+    },
+  };
+}
