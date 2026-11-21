@@ -432,20 +432,26 @@ function snippetAround(text: string | null, needle: string): string | null {
 }
 
 /**
- * Every message of one conversation matching `text`, newest first — what the conversation view
+ * Every message of one conversation (or of a merged person's conversations) matching `text`, newest first — what the conversation view
  * steps through. The same key and the same matching as {@link searchMessageText}, so the list
  * and the hits in the conversation never disagree.
  */
-export function searchConversationMessageIds(db: IndexDatabase, conversationId: string, text: string): string[] {
+export function searchConversationMessageIds(
+  db: IndexDatabase,
+  conversationIds: string | readonly string[],
+  text: string,
+): string[] {
   const needle = normaliseSearchText(text);
   if (needle === '') return [];
+  const ids = typeof conversationIds === 'string' ? [conversationIds] : conversationIds;
+  if (ids.length === 0) return [];
   const rows = db
     .prepare(
       `SELECT id FROM conversation_messages
-        WHERE conversation_id = ? AND (${KEY_MATCH})
+        WHERE conversation_id IN (${placeholders(ids.length)}) AND (${KEY_MATCH})
         ORDER BY sent_at DESC, id DESC`,
     )
-    .all(conversationId, `%${needle}%`, rawPattern(text), rawPattern(text)) as Array<{ id: string }>;
+    .all(...ids, `%${needle}%`, rawPattern(text), rawPattern(text)) as Array<{ id: string }>;
   return rows.map((r) => String(r.id));
 }
 
