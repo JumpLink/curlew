@@ -20,7 +20,7 @@ B1 work, none fixable in `app/package.json` alone:
 
 - Manifest: `toplevel-unnecessary-branch`. The generator (`gjsify ship`) writes a toplevel `branch`; Flathub wants it removed. Fix in gjsify, or drop it when copying the manifest to the Flathub repo.
 - Repo: `metainfo-missing-screenshots`, `appstream-screenshots-not-mirrored-in-ostree`. Flathub's own build mirrors screenshots; a local `flatpak-builder` run cannot. Expected to vanish on Flathub, to be confirmed in the first review.
-- Repo: `appstream-failed-validation` (`releases-info-missing`), although the source metainfo lists `0.2.0` and passes `appstreamcli`. The composed metainfo in the repo apparently lost the releases block; find out which step drops it.
+- Repo: `appstream-failed-validation` (`releases-info-missing`), although the source metainfo lists `0.2.0` and passes `appstreamcli`. Cause was `gjsify ship` rendering its own metainfo; `gjsify.ship.metainfo` now makes it stage the hand-written file verbatim, so add each release to that file only.
 
 The `Xdp` typelib probe passes in the sandbox (`Xdp ok`): the GNOME 51 runtime ships libportal.
 
