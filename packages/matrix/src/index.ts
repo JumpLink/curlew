@@ -8,6 +8,7 @@ export * from './guard.ts';
 export * from './idb-snapshot.ts';
 export * from './map.ts';
 export * from './send.ts';
+export * from './attachment-crypto.ts';
 export * from './attachments.ts';
 export * from './avatars.ts';
 export * from './session.ts';

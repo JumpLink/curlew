@@ -1,5 +1,5 @@
 /**
- * The Matrix backend's send path: a plain-text `m.room.message`, or files (an upload and one
+ * The Matrix backend's send path: a text `m.room.message`, or files (an upload and one
  * `m.image`/`m.file` event each), into a room a grant names, behind a saved `matrix.send` grant.
  *
  * The address is the room id exactly as the index and `conversations_list` hold the chat's remote
@@ -7,13 +7,20 @@
  * there. Matrix has no second spelling for a room that curlew ever shows — an alias is a label
  * the server resolves, not the chat's identity — so there is nothing to choose between.
  *
- * Plain HTTP, not matrix-js-sdk's `sendEvent`. The SDK would encrypt by itself in an encrypted
- * room, which is exactly the thing this build must not do silently, and it needs a sync loop and
- * a crypto store to do it. One PUT needs none of that: no sync, no WASM crypto, no IndexedDB, and
- * the whole path is unit-testable with a fake fetch on both runtimes.
+ * TWO transports, chosen per room (ADR 0019):
+ *   - A CLEAR room: plain HTTP, one PUT per event. No sync loop, no WASM crypto, no IndexedDB,
+ *     and the whole path is unit-testable with a fake fetch on both runtimes.
+ *   - An ENCRYPTED room: the `MatrixEncrypt` surface of a live client, which is the only thing
+ *     that holds the Megolm session. Without one — no daemon running — the send is REFUSED.
+ *
+ * What never happens is the third option: an encrypted room does not get a cleartext event. The
+ * room is asked before every content event, a `true` is cached (encryption cannot be turned off
+ * again), an unclear answer refuses, and `putEvent` itself throws rather than PUT an
+ * `m.room.message` into a room it knows is encrypted. A reaction, a redaction and a read receipt
+ * stay in the clear because Matrix has no encrypted form of them.
  *
  * The permit is checked here again, before anything leaves, and the guarded fetch underneath
- * allows only this one endpoint for only these rooms: a bug above cannot widen a grant.
+ * allows only these endpoints for only these rooms: a bug above cannot widen a grant.
  */
 
 import { readFileSync } from 'node:fs';
@@ -35,6 +42,8 @@ import {
 } from '@curlew/protocol';
 import { inspectSendFiles, type SendFile } from '@curlew/store';
 
+import type { MatrixEncrypt } from './api.ts';
+import { type EncryptedFile, encryptAttachment } from './attachment-crypto.ts';
 import { attachmentHandle, attachmentKind } from './map.ts';
 import { errcodeOf } from './errcode.ts';
 
@@ -86,8 +95,10 @@ export interface MatrixSendSession {
 /** One file event: its `msgtype` follows the type, the caption (if any) is the body. */
 export interface FileEvent {
   msgtype: 'm.image' | 'm.video' | 'm.audio' | 'm.file';
-  /** `mxc://` URI the upload returned. */
-  url: string;
+  /** `mxc://` URI the upload returned — a CLEAR room only; an encrypted one carries `file`. */
+  url?: string;
+  /** The uploaded ciphertext and its key, for an encrypted room. Exactly one of the two is set. */
+  file?: EncryptedFile;
   filename: string;
   size: number;
   contentType: string;
@@ -111,13 +122,28 @@ const relation = (replyTo: string | undefined): object =>
 
 /** The requests a send makes. An interface so a test can answer them without HTTP. */
 export interface MatrixSendApi {
-  /** Does the room have `m.room.encryption` state? Then nothing is sent. */
+  /**
+   * Whether this api could encrypt at all: true when a live client with the crypto store is
+   * behind it. False means an encrypted room is refused instead of sent (ADR 0019 §1).
+   */
+  readonly canEncrypt: boolean;
+  /**
+   * Must events in this room be encrypted? The crypto's own persistent flag first, the room's
+   * `m.room.encryption` state as the fallback. Throws when the answer is unclear — a send then
+   * fails rather than guessing cleartext.
+   */
   isEncrypted(roomId: string): Promise<boolean>;
-  /** PUT one `m.room.message`; resolves with the event id the homeserver assigned. */
+  /** Send one `m.room.message`, encrypted where the room asks for it; resolves with the event id. */
   sendText(roomId: string, text: string, txnId: string, replyTo?: string): Promise<string>;
   /** Upload the bytes to the media repository; resolves with the `mxc://` URI. */
   uploadFile(bytes: Uint8Array, contentType: string, filename: string): Promise<string>;
-  /** PUT one `m.image` or `m.file` event for an uploaded file. */
+  /**
+   * Encrypt the bytes, upload the ciphertext, and resolve with the `file` object the event has to
+   * carry instead of `url` — for a room that is encrypted (ADR 0019 §6). The media repository is
+   * not encrypted, so a file there is only as private as this.
+   */
+  uploadEncryptedFile(bytes: Uint8Array, filename: string): Promise<EncryptedFile>;
+  /** Send one `m.image` or `m.file` event for an uploaded file, encrypted where the room asks. */
   sendFile(roomId: string, file: FileEvent, txnId: string): Promise<string>;
   /** PUT one `m.reaction` (an `m.annotation` with `key`) on `eventId`; resolves with its event id. */
   sendReaction(roomId: string, eventId: string, key: string, txnId: string): Promise<string>;
@@ -157,17 +183,64 @@ export function nextTxnId(): string {
   return `curlew-${Date.now()}-${txnCounter}-${Math.floor(Math.random() * 1e9)}`;
 }
 
-/** The HTTP implementation. The only place this package builds a send request. */
-export function matrixSendApi(session: MatrixSendSession): MatrixSendApi {
+/** The content event type: the one thing that is never sent in the clear in an encrypted room. */
+const MESSAGE = 'm.room.message';
+
+/** What the person is told when an encrypted room has nobody to encrypt for it. */
+function noCryptoHere(roomId: string): Error {
+  return new Error(
+    fmt(
+      _(
+        '{room} is end-to-end encrypted, and encrypted messages are sent by the curlew daemon, which is not running — start it and send again; nothing was sent',
+      ),
+      { room: roomId },
+    ),
+  );
+}
+
+/**
+ * The implementation. The only place this package builds a send request.
+ *
+ * `encrypt` is the live client's surface (ADR 0019 §1) and is absent without one: then an
+ * encrypted room is refused. The two transports are chosen HERE, per event and per room, so no
+ * caller can pick the wrong one: `sendText`, `sendEdit` and `sendFile` all pass through
+ * `putMessage`, which asks the room before it decides.
+ */
+export function matrixSendApi(session: MatrixSendSession, encrypt?: MatrixEncrypt): MatrixSendApi {
   const base = session.homeserver.replace(/\/+$/, '');
   const room = (roomId: string): string => `${base}${V3}/rooms/${encodeURIComponent(roomId)}`;
   const auth = { Authorization: `Bearer ${session.accessToken}` };
+  /**
+   * Rooms this api has PROVEN encrypted. A `true` never expires: encryption cannot be turned off
+   * again, so the answer stays right however long this api lives — and it is also what the
+   * `putEvent` backstop below reads.
+   */
+  const provenEncrypted = new Set<string>();
+  /**
+   * Rooms this api has seen NO `m.room.encryption` in. Remembered only because the answer is
+   * asked twice per send — once by the sender, which refuses a room it cannot encrypt before it
+   * builds or uploads anything, and once by `putMessage`, which decides the transport.
+   *
+   * Safe because this api is built per granted sender handle (`openSender` in backend.ts) and a
+   * handle is opened and closed around ONE send operation: the answer cannot go stale between
+   * two messages, because two messages never share it.
+   */
+  const provenClear = new Set<string>();
   const putEvent = async (
     roomId: string,
     content: object,
     txnId: string,
-    type = 'm.room.message',
+    type = MESSAGE,
   ): Promise<string> => {
+    // The backstop for the one rule of ADR 0019 §2. Every content event reaches the wire through
+    // `putMessage`, which has already asked; this catches a future path that forgets to.
+    if (type === MESSAGE && provenEncrypted.has(roomId)) {
+      throw new Error(
+        fmt(_('{room} is end-to-end encrypted — refusing to send a readable message there'), {
+          room: roomId,
+        }),
+      );
+    }
     const response = await session.fetch(`${room(roomId)}/send/${type}/${encodeURIComponent(txnId)}`, {
       method: 'PUT',
       headers: { ...auth, 'Content-Type': 'application/json' },
@@ -190,28 +263,81 @@ export function matrixSendApi(session: MatrixSendSession): MatrixSendApi {
     }
     return body.event_id;
   };
-  return {
-    async isEncrypted(roomId) {
-      // A GET passes the read-only gate unchanged; the state event exists exactly in an
-      // encrypted room. M_NOT_FOUND is the server saying there is none.
-      const response = await session.fetch(`${room(roomId)}/state/m.room.encryption`, {
-        method: 'GET',
-        headers: auth,
-      });
-      if (response.ok) return true;
+  const isEncrypted = async (roomId: string): Promise<boolean> => {
+    if (provenEncrypted.has(roomId)) return true;
+    if (provenClear.has(roomId)) return false;
+    // The crypto's flag is persistent and cannot be downgraded, so its `true` is proof. Its
+    // `false` is not: a room this device has not synced answers false too, hence the state read.
+    if (encrypt !== undefined && (await encrypt.knownEncrypted(roomId))) {
+      provenEncrypted.add(roomId);
+      return true;
+    }
+    // A GET passes the read-only gate unchanged; the state event exists exactly in an
+    // encrypted room. M_NOT_FOUND is the server saying there is none.
+    const response = await session.fetch(`${room(roomId)}/state/m.room.encryption`, {
+      method: 'GET',
+      headers: auth,
+    });
+    if (response.ok) {
+      provenEncrypted.add(roomId);
+      return true;
+    }
+    const errcode = await errcodeOf(response);
+    if (errcode === 'M_NOT_FOUND') {
+      provenClear.add(roomId);
+      return false;
+    }
+    // Anything else — not joined, server down — is NOT "unencrypted". Refusing here is the
+    // safe answer: a message not sent can be sent again, a cleartext one cannot be taken back.
+    throw new Error(
+      fmt(_('the homeserver did not say whether {room} is encrypted ({reason}) — nothing was sent'), {
+        room: roomId,
+        reason: reasonOf(response, errcode),
+      }),
+    );
+  };
+  const uploadFile = async (bytes: Uint8Array, contentType: string, filename: string): Promise<string> => {
+    const response = await session.fetch(`${base}${UPLOAD}?filename=${encodeURIComponent(filename)}`, {
+      method: 'POST',
+      headers: { ...auth, 'Content-Type': contentType },
+      // A file read from disk is never backed by a SharedArrayBuffer, which is all the cast drops.
+      body: bytes as Uint8Array<ArrayBuffer>,
+    });
+    if (!response.ok) {
       const errcode = await errcodeOf(response);
-      if (errcode === 'M_NOT_FOUND') return false;
-      // Anything else — not joined, server down — is NOT "unencrypted". Refusing here is the
-      // safe answer: a message not sent can be sent again, a cleartext one cannot be taken back.
       throw new Error(
-        fmt(_('the homeserver did not say whether {room} is encrypted ({reason}) — nothing was sent'), {
-          room: roomId,
+        fmt(_('the homeserver refused the file {file} ({reason})'), {
+          file: filename,
           reason: reasonOf(response, errcode),
         }),
       );
-    },
+    }
+    const body = (await response.json()) as { content_uri?: unknown };
+    if (typeof body.content_uri !== 'string' || !body.content_uri.startsWith('mxc://')) {
+      throw new Error(
+        fmt(_('the homeserver accepted the file {file} but returned no media URI'), { file: filename }),
+      );
+    }
+    return body.content_uri;
+  };
+  /**
+   * One content event. The room decides the transport: the live client's crypto where it is
+   * encrypted, the plain PUT where it provably is not, and a refusal where the answer is unclear
+   * or nothing here can encrypt.
+   */
+  const putMessage = async (roomId: string, content: object, txnId: string): Promise<string> => {
+    if (!(await isEncrypted(roomId))) return putEvent(roomId, content, txnId);
+    if (encrypt === undefined) throw noCryptoHere(roomId);
+    // Device lists and the room key first, so the ciphertext is not built against a stale set of
+    // devices and the first message of a session does not wait with the event already in hand.
+    await encrypt.prepare(roomId);
+    return encrypt.sendMessage(roomId, content as Record<string, unknown>);
+  };
+  return {
+    canEncrypt: encrypt !== undefined,
+    isEncrypted,
     async sendText(roomId, text, txnId, replyTo) {
-      return putEvent(roomId, { msgtype: 'm.text', body: text, ...relation(replyTo) }, txnId);
+      return putMessage(roomId, { msgtype: 'm.text', body: text, ...relation(replyTo) }, txnId);
     },
     async sendPrivateReadReceipt(roomId, eventId) {
       const response = await session.fetch(
@@ -237,7 +363,9 @@ export function matrixSendApi(session: MatrixSendSession): MatrixSendApi {
       );
     },
     async sendEdit(roomId, eventId, text, txnId) {
-      return putEvent(
+      // An edit carries the new text, so it is a content event like the first one: encrypted
+      // where the room is encrypted, and never a cleartext replacement of a ciphertext message.
+      return putMessage(
         roomId,
         {
           msgtype: 'm.text',
@@ -303,40 +431,30 @@ export function matrixSendApi(session: MatrixSendSession): MatrixSendApi {
         );
       }
     },
-    async uploadFile(bytes, contentType, filename) {
-      const response = await session.fetch(`${base}${UPLOAD}?filename=${encodeURIComponent(filename)}`, {
-        method: 'POST',
-        headers: { ...auth, 'Content-Type': contentType },
-        // A file read from disk is never backed by a SharedArrayBuffer, which is all the cast drops.
-        body: bytes as Uint8Array<ArrayBuffer>,
-      });
-      if (!response.ok) {
-        const errcode = await errcodeOf(response);
-        throw new Error(
-          fmt(_('the homeserver refused the file {file} ({reason})'), {
-            file: filename,
-            reason: reasonOf(response, errcode),
-          }),
-        );
-      }
-      const body = (await response.json()) as { content_uri?: unknown };
-      if (typeof body.content_uri !== 'string' || !body.content_uri.startsWith('mxc://')) {
-        throw new Error(
-          fmt(_('the homeserver accepted the file {file} but returned no media URI'), { file: filename }),
-        );
-      }
-      return body.content_uri;
+    uploadFile,
+    async uploadEncryptedFile(bytes, filename) {
+      const { ciphertext, file } = await encryptAttachment(bytes);
+      // The repository sees opaque bytes and the real type stays inside the event, so the upload
+      // announces none. The file NAME is sent as before: the server already knows it from the
+      // request a clear upload makes, and a client that hides it shows "Encrypted file" instead.
+      const url = await uploadFile(ciphertext, 'application/octet-stream', filename);
+      return { url, ...file };
     },
     async sendFile(roomId, file, txnId) {
+      if (file.url === undefined && file.file === undefined) {
+        throw new Error(_('a Matrix file event needs an uploaded file — nothing was sent'));
+      }
       // Since client-server v1.10 `body` may be a caption and `filename` then names the file;
       // without a caption the body is the file name, which every client understands.
-      return putEvent(
+      return putMessage(
         roomId,
         {
           msgtype: file.msgtype,
           body: file.caption ?? file.filename,
           filename: file.filename,
-          url: file.url,
+          // `url` in a clear room, `file` in an encrypted one — the spec allows exactly one, and
+          // a client that reads the wrong field would download bytes it has no key for.
+          ...(file.file === undefined ? { url: file.url } : { file: file.file }),
           info: {
             mimetype: file.contentType,
             size: file.size,
@@ -395,22 +513,18 @@ export class MatrixSender implements MessageSender {
   }
 
   /**
-   * Refuses an encrypted room. Before the PUT, and the reason this build refuses rather than falls
-   * back: an encrypted room is one the people in it believe nobody else can read. A cleartext event
-   * there is readable by the server forever and shows up as a broken one in every client. This
-   * build cannot encrypt (no Megolm session here), so the only honest answer is no.
+   * Whether this room's content events must be encrypted — asked BEFORE anything is built, so a
+   * room nothing here can encrypt is refused while the message is still only a string.
+   *
+   * The refusal matters as much as the encryption: an encrypted room is one the people in it
+   * believe nobody else can read. A cleartext event there is readable by the server forever and
+   * shows up as a broken message in every client, so "send it in the clear instead" is not an
+   * option this code has (ADR 0019 §2).
    */
-  private async requireClear(roomId: string): Promise<void> {
-    if (await this.api.isEncrypted(roomId)) {
-      throw new Error(
-        fmt(
-          _(
-            '{room} is end-to-end encrypted and curlew cannot send encrypted messages yet — nothing was sent, send it from a Matrix client',
-          ),
-          { room: roomId },
-        ),
-      );
-    }
+  private async mustEncrypt(roomId: string): Promise<boolean> {
+    if (!(await this.api.isEncrypted(roomId))) return false;
+    if (!this.api.canEncrypt) throw noCryptoHere(roomId);
+    return true;
   }
 
   async send(message: SendingMessage): Promise<SentMessage> {
@@ -432,17 +546,17 @@ export class MatrixSender implements MessageSender {
         }),
       );
     }
-    await this.requireClear(roomId);
-    if (files.length > 0) return this.sendFiles(roomId, message, files);
+    const encrypted = await this.mustEncrypt(roomId);
+    if (files.length > 0) return this.sendFiles(roomId, message, files, encrypted);
     const eventId = await this.api.sendText(roomId, message.text, nextTxnId(), replyTo);
     return {
       target: message.to,
       id: eventId,
-      // The PUT answers with the event id and nothing else; the local clock is what the caller
+      // The send answers with the event id and nothing else; the local clock is what the caller
       // gets, and what it passes back as `since` when it waits for a reply.
       sentAt: new Date().toISOString(),
       chatRemoteId: roomId,
-      encrypted: false,
+      encrypted,
     };
   }
 
@@ -454,6 +568,7 @@ export class MatrixSender implements MessageSender {
     roomId: string,
     message: SendingMessage,
     files: readonly SendFile[],
+    encrypted: boolean,
   ): Promise<SentMessage> {
     const caption = message.text.trim().length === 0 ? undefined : message.text;
     let first: string | undefined;
@@ -471,12 +586,18 @@ export class MatrixSender implements MessageSender {
               ? 'm.audio'
               : 'm.file';
       const durationMs = probe.durationMs === null ? undefined : Math.round(probe.durationMs);
-      const url = await this.api.uploadFile(readFileSync(file.realPath), file.contentType, file.filename);
+      const bytes = readFileSync(file.realPath);
+      // In an encrypted room the repository must never see the file itself: it is encrypted with
+      // its own key, and that key exists only in the (encrypted) event — and in the handle below.
+      const encryptedFile = encrypted ? await this.api.uploadEncryptedFile(bytes, file.filename) : null;
+      const url = encryptedFile
+        ? encryptedFile.url
+        : await this.api.uploadFile(bytes, file.contentType, file.filename);
       const eventId = await this.api.sendFile(
         roomId,
         {
           msgtype,
-          url,
+          ...(encryptedFile ? { file: encryptedFile } : { url }),
           filename: file.filename,
           size: file.size,
           contentType: file.contentType,
@@ -498,7 +619,7 @@ export class MatrixSender implements MessageSender {
         width: probe.width,
         height: probe.height,
         durationMs: durationMs ?? null,
-        handle: attachmentHandle(url, file.size),
+        handle: attachmentHandle(url, file.size, encryptedFile ?? undefined),
       });
       first ??= eventId;
     }
@@ -507,7 +628,7 @@ export class MatrixSender implements MessageSender {
       id: first!,
       sentAt: new Date().toISOString(),
       chatRemoteId: roomId,
-      encrypted: false,
+      encrypted,
       attachments: files.map((f) => ({ filename: f.filename, size: f.size })),
       echoAttachments,
     };
@@ -518,6 +639,10 @@ export class MatrixSender implements MessageSender {
    * several, so the others are redacted first, and giving an emoji already there sends nothing.
    * Taking it back redacts the reaction events that carry it (all of the person's, when `previous`
    * is not named). The homeserver's own list says which events those are.
+   *
+   * Cleartext even in an encrypted room, and not a leak this code could avoid: Matrix has no
+   * encrypted reaction (the emoji and the event it sits on are server-visible by design, which is
+   * why every client shows them in an encrypted room), so there is nothing here to refuse.
    */
   async react(reaction: SendingReaction): Promise<void> {
     const roomId = this.roomId(reaction.to);
@@ -525,7 +650,6 @@ export class MatrixSender implements MessageSender {
     if (!EVENT_ID.test(target)) {
       throw new Error(fmt(_('{id} is not a Matrix event id — nothing was sent'), { id: target }));
     }
-    await this.requireClear(roomId);
     const own = await this.api.ownReactions(roomId, target);
     const keep = reaction.emoji;
     for (const mine of own) {
@@ -548,22 +672,27 @@ export class MatrixSender implements MessageSender {
     return target.remoteId;
   }
 
-  /** Replaces the text of one of the person's own messages; the new content rides an `m.replace` event. */
+  /**
+   * Replaces the text of one of the person's own messages; the new content rides an `m.replace`
+   * event — which carries the text, so it is encrypted wherever the first one was.
+   */
   async edit(edit: SendingEdit): Promise<void> {
     const roomId = this.roomId(edit.to);
     const eventId = this.ownEvent(edit.target);
     if (UTF8.encode(edit.text).length > MATRIX_MAX_MESSAGE_BYTES) {
       throw new Error(_('the edited text is too long for one Matrix message — nothing was sent'));
     }
-    await this.requireClear(roomId);
+    await this.mustEncrypt(roomId);
     await this.api.sendEdit(roomId, eventId, edit.text, nextTxnId());
   }
 
-  /** Deletes one of the person's own messages for everyone, by redaction. */
+  /**
+   * Deletes one of the person's own messages for everyone, by redaction. A redaction is cleartext
+   * in every room: it names an event and removes it, and Matrix has no encrypted form of that.
+   */
   async delete(deletion: SendingDeletion): Promise<void> {
     const roomId = this.roomId(deletion.to);
     const eventId = this.ownEvent(deletion.target);
-    await this.requireClear(roomId);
     await this.api.redact(roomId, eventId, nextTxnId());
   }
 

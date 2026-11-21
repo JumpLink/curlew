@@ -7,19 +7,36 @@ import type { BackendContext, SendPermit } from '@curlew/protocol';
 import { isSendBackend } from '@curlew/protocol';
 import {
   attachmentHandle,
+  decryptAttachment,
+  encryptAttachment,
+  encryptedSendRoom,
+  liveFetch,
   MATRIX_MANIFEST,
   MATRIX_MAX_MESSAGE_BYTES,
   MatrixBackend,
   MatrixSender,
+  MatrixSendWindows,
   matrixSendApi,
+  parseAttachmentHandle,
+  parseEncryptedFile,
   readOnlyFetch,
+  refusals,
   sendRefusal,
 } from '@curlew/matrix';
 import { chatConversationId, getConversation, rebuildConversations, syncChats } from '@curlew/store';
 
 import { openIndex } from '../../../src/core/actions/index.ts';
 import { sendAsAgent } from '../../../src/core/actions/send.ts';
-import { ANNA, FakeMatrixApi, fakeConnector, HOMESERVER, ME, seedAccount, text } from './fake-api.ts';
+import {
+  ANNA,
+  FakeEncrypt,
+  FakeMatrixApi,
+  fakeConnector,
+  HOMESERVER,
+  ME,
+  seedAccount,
+  text,
+} from './fake-api.ts';
 
 /**
  * The Matrix send path without a homeserver: the grant, the permit, the one PUT it makes, the
@@ -512,7 +529,7 @@ export default async () => {
       );
     });
 
-    await it('refuses a reaction in an encrypted or foreign room and to something that is no event', async () => {
+    await it('reacts in an encrypted room too, and refuses a foreign room or a non-event', async () => {
       await withRig(
         granted,
         async (rig) => {
@@ -520,10 +537,11 @@ export default async () => {
             account: rig.accountId,
             addresses: [ROOM],
           });
-          await sender.react!({ to: ROOM, target: { remoteId: '$m:example.org' }, emoji: '👍' }).then(
-            () => expect('sent').toBe('refused'),
-            () => {},
-          );
+          // Matrix has no encrypted reaction: the emoji and its target are server-visible in
+          // every client, so there is nothing here to refuse and nothing to encrypt (ADR 0019 §4).
+          await sender.react!({ to: ROOM, target: { remoteId: '$m:example.org' }, emoji: '👍' });
+          expect(rig.http.puts().length).toBe(1);
+          expect(rig.http.puts()[0].url).toContain('/send/m.reaction/');
           await sender.react!({ to: OTHER, target: { remoteId: '$m:example.org' }, emoji: '👍' }).then(
             () => expect('sent').toBe('refused'),
             () => {},
@@ -532,7 +550,7 @@ export default async () => {
             () => expect('sent').toBe('refused'),
             () => {},
           );
-          expect(rig.http.puts().length).toBe(0);
+          expect(rig.http.puts().length).toBe(1);
         },
         { encrypted: [ROOM] },
       );
@@ -581,7 +599,7 @@ export default async () => {
       });
     });
 
-    await it('refuses to edit or delete in an encrypted room', async () => {
+    await it('refuses an edit it cannot encrypt, and deletes anyway', async () => {
       await withRig(
         granted,
         async (rig) => {
@@ -590,15 +608,14 @@ export default async () => {
             addresses: [ROOM],
           });
           const mine = { remoteId: '$m:example.org', fromSelf: true };
-          await sender.edit!({ to: ROOM, target: mine, text: 'x' }).then(
-            () => expect('sent').toBe('refused'),
-            () => {},
-          );
-          await sender.delete!({ to: ROOM, target: mine }).then(
-            () => expect('sent').toBe('refused'),
-            () => {},
-          );
+          // An edit carries text, so it must be encrypted — and this sender has no crypto.
+          const reason = await reasonOf(sender.edit!({ to: ROOM, target: mine, text: 'x' }));
+          expect(reason.includes('end-to-end encrypted')).toBe(true);
           expect(rig.http.puts().length).toBe(0);
+          // A redaction is cleartext in every room: it names an event and removes it.
+          await sender.delete!({ to: ROOM, target: mine });
+          expect(rig.http.puts().length).toBe(1);
+          expect(rig.http.puts()[0].url).toContain('/redact/');
         },
         { encrypted: [ROOM] },
       );
@@ -704,12 +721,13 @@ export default async () => {
       expect(sent.length).toBe(0);
     });
 
-    await it('refuses an encrypted room and sends nothing into it', async () => {
+    await it('refuses an encrypted room without crypto, naming the daemon', async () => {
       await withRig(
         granted,
         async (rig) => {
           const reason = await reasonOf(send(rig, ROOM, 'Hallo'));
           expect(reason.includes('end-to-end encrypted')).toBe(true);
+          expect(reason.includes('daemon')).toBe(true);
           expect(reason.includes(ROOM)).toBe(true);
           expect(rig.http.puts().length).toBe(0);
         },
@@ -717,7 +735,7 @@ export default async () => {
       );
 
       // The guarded transport names `m.room.message` literally, so a granted handle could not
-      // put a Megolm event through even if the check above were gone.
+      // put a Megolm event through its own fetch: that one endpoint is a send window's alone.
       expect(
         sendRefusal('PUT', `${HS}/rooms/${encodeRoom(ROOM)}/send/m.room.encrypted/t1`, [ROOM]) !== null,
       ).toBe(true);
@@ -800,6 +818,206 @@ export default async () => {
           db.close();
         }
       });
+    });
+  });
+
+  /**
+   * The same send path with the live client's crypto in hand (ADR 0019). The crypto is a fake —
+   * no WASM, no sync, no IndexedDB — and that is enough to pin the one property that matters:
+   * what reaches the plain fetch, and what does not.
+   */
+  await describe('Matrix sending, encrypted', async () => {
+    const withCrypto = (
+      options: FakeHttpOptions = {},
+      rooms: readonly string[] = [],
+    ): { http: FakeHttp; encrypt: FakeEncrypt; sender: MatrixSender } => {
+      const http = fakeHttp(options);
+      const encrypt = new FakeEncrypt(rooms);
+      const api = matrixSendApi(
+        { homeserver: HOMESERVER, accessToken: 'tok', userId: ME, fetch: http.fetch },
+        encrypt,
+      );
+      const sender = new MatrixSender(api, { account: 'matrix-me', addresses: [ROOM] }, async () => {});
+      return { http, encrypt, sender };
+    };
+    const messagePuts = (http: FakeHttp): Call[] =>
+      http.puts().filter((c) => c.url.includes('/send/m.room.message/'));
+
+    await it('encrypts the message and puts no cleartext event at all', async () => {
+      const { http, encrypt, sender } = withCrypto({ encrypted: [ROOM] });
+      const sent = await sender.send({ to: ROOM, text: 'Nur für dich' });
+      expect(sent.encrypted).toBe(true);
+      expect(sent.id).toBe('$enc1:example.org');
+      // The one guarantee: not a single `m.room.message` on the wire of this transport.
+      expect(messagePuts(http).length).toBe(0);
+      expect(encrypt.sent.length).toBe(1);
+      expect(encrypt.sent[0].roomId).toBe(ROOM);
+      expect(encrypt.sent[0].content).toStrictEqual({ msgtype: 'm.text', body: 'Nur für dich' });
+      // Device lists and the room key first, so the event is not built against a stale set.
+      expect(encrypt.prepared).toStrictEqual([ROOM]);
+    });
+
+    await it("trusts the crypto's own flag and asks the homeserver nothing", async () => {
+      // A room the client has synced: the crypto knows, so the state GET is not needed at all.
+      const { http, encrypt, sender } = withCrypto({}, [ROOM]);
+      const sent = await sender.send({ to: ROOM, text: 'Hallo' });
+      expect(sent.encrypted).toBe(true);
+      expect(encrypt.sent.length).toBe(1);
+      expect(http.gets().length).toBe(0);
+    });
+
+    await it('still asks the homeserver when the crypto says no, and then sends in the clear', async () => {
+      const { http, encrypt, sender } = withCrypto();
+      const sent = await sender.send({ to: ROOM, text: 'Hallo' });
+      expect(sent.encrypted).toBe(false);
+      // `false` from the crypto is not proof: a room it has not seen answers false too (§3).
+      expect(http.gets().length).toBe(1);
+      expect(new URL(http.gets()[0].url).pathname).toBe(
+        `${V3}/rooms/${encodeRoom(ROOM)}/state/m.room.encryption`,
+      );
+      expect(messagePuts(http).length).toBe(1);
+      expect(encrypt.sent.length).toBe(0);
+    });
+
+    await it('refuses rather than guess when the homeserver does not answer', async () => {
+      const { http, encrypt, sender } = withCrypto({ stateStatus: 502 });
+      const reason = await reasonOf(sender.send({ to: ROOM, text: 'Hallo' }));
+      expect(reason.includes('did not say whether')).toBe(true);
+      expect(http.puts().length).toBe(0);
+      expect(encrypt.sent.length).toBe(0);
+    });
+
+    await it('edits through the crypto and redacts in the clear', async () => {
+      const { http, encrypt, sender } = withCrypto({ encrypted: [ROOM] });
+      const mine = { remoteId: '$m:example.org', fromSelf: true };
+      await sender.edit!({ to: ROOM, target: mine, text: 'Fixed' });
+      expect(messagePuts(http).length).toBe(0);
+      expect(encrypt.sent.length).toBe(1);
+      expect(encrypt.sent[0].content['m.relates_to']).toStrictEqual({
+        rel_type: 'm.replace',
+        event_id: '$m:example.org',
+      });
+      expect(encrypt.sent[0].content['m.new_content']).toStrictEqual({
+        msgtype: 'm.text',
+        body: 'Fixed',
+      });
+      await sender.delete!({ to: ROOM, target: mine });
+      expect(http.puts().length).toBe(1);
+      expect(http.puts()[0].url).toContain('/redact/');
+    });
+
+    await it('uploads the ciphertext and carries the key in the event, never a url', async () => {
+      const dir = mkdtempSync(join(tmpdir(), 'curlew-matrix-e2ee-'));
+      try {
+        const file = join(dir, 'secret.txt');
+        const plaintext = 'the plain bytes nobody but the room may read';
+        writeFileSync(file, plaintext);
+        const { http, encrypt, sender } = withCrypto({ encrypted: [ROOM] });
+        const sent = await sender.send({ to: ROOM, text: '', attachments: [{ path: file }] });
+        expect(sent.encrypted).toBe(true);
+        expect(messagePuts(http).length).toBe(0);
+        expect(encrypt.sent.length).toBe(1);
+
+        // What the media repository got is not the file: same length, different bytes.
+        expect(http.uploads.length).toBe(1);
+        const ciphertext = http.uploads[0];
+        const plainBytes = readFileSync(file);
+        expect(ciphertext.length).toBe(plainBytes.length);
+        expect(Array.from(ciphertext).join() === Array.from(plainBytes).join()).toBe(false);
+        // And the upload announces no type: the real one stays inside the encrypted event.
+        const upload = http.calls.find((c) => c.method === 'POST')!;
+        expect(upload.url.includes('filename=secret.txt')).toBe(true);
+
+        // The event points at the ciphertext with a `file` object and has no `url` field at all.
+        const content = encrypt.sent[0].content;
+        expect('url' in content).toBe(false);
+        const parsed = parseEncryptedFile(content.file);
+        expect(parsed !== null).toBe(true);
+        expect(parsed!.url).toBe('mxc://example.org/up1');
+        expect(parsed!.v).toBe('v2');
+        expect(parsed!.key.alg).toBe('A256CTR');
+        // The key in the event decrypts exactly those bytes — hash check included.
+        const back = await decryptAttachment(ciphertext, parsed!);
+        expect(new TextDecoder().decode(back)).toBe(plaintext);
+        // The echo keeps the key, so the window can open the file it just sent.
+        const handle = sent.echoAttachments?.[0].handle;
+        expect(parseAttachmentHandle(handle!)?.file?.key.k).toBe(parsed!.key.k);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    await it('tampered ciphertext is an error, not a decryption attempt', async () => {
+      const { ciphertext, file } = await encryptAttachment(new TextEncoder().encode('hello'));
+      const flipped = Uint8Array.from(ciphertext);
+      flipped[0] ^= 0xff;
+      const full = { ...file, url: 'mxc://example.org/x' };
+      const reason = await reasonOf(decryptAttachment(flipped, full));
+      expect(reason.includes('does not match the hash')).toBe(true);
+      // The untouched bytes still come back, so the check is not refusing everything.
+      expect(new TextDecoder().decode(await decryptAttachment(ciphertext, full))).toBe('hello');
+    });
+
+    await it('the send window is the only way an encrypted event reaches the live fetch', async () => {
+      const seen: string[] = [];
+      const inner = (async (input: string | URL | Request) => {
+        seen.push(String(input));
+        return new Response(JSON.stringify({ event_id: '$e:example.org' }), { status: 200 });
+      }) as typeof globalThis.fetch;
+      const windows = new MatrixSendWindows();
+      const live = liveFetch(inner, windows);
+      const put = (roomId: string): Promise<Response> =>
+        live(`${HS}/rooms/${encodeRoom(roomId)}/send/m.room.encrypted/t1`, { method: 'PUT' });
+
+      // No window: the live client is read-only to the byte, as it was before ADR 0019.
+      const before = refusals.length;
+      expect(await refused(put(ROOM))).toBe(true);
+      expect(seen.length).toBe(0);
+
+      const close = windows.openFor([ROOM]);
+      expect((await put(ROOM)).ok).toBe(true);
+      expect(seen.length).toBe(1);
+      // Only the permit's rooms, and only this one endpoint.
+      expect(await refused(put(OTHER))).toBe(true);
+      expect(seen.length).toBe(1);
+
+      close();
+      expect(await refused(put(ROOM))).toBe(true);
+      expect(seen.length).toBe(1);
+      // No refused encrypted send landed in the read-only ledger: that one is the sync's own
+      // proof it was never asked to write, and a failed send must not fail a sync beside it.
+      expect(refusals.length).toBe(before);
+
+      // A cleartext message is a different matter: the window does not cover that endpoint at
+      // all, so it falls to the read-only gate — refused, and written into the ledger as such.
+      expect(
+        await refused(live(`${HS}/rooms/${encodeRoom(ROOM)}/send/m.room.message/t1`, { method: 'PUT' })),
+      ).toBe(true);
+      expect(seen.length).toBe(1);
+      expect(refusals.length).toBe(before + 1);
+      // A GET still passes, untouched by any of this.
+      expect((await live(`${HS}/rooms/${encodeRoom(ROOM)}/messages`)).ok).toBe(true);
+    });
+
+    await it('a window covers what it was opened for, and several may be open', async () => {
+      const windows = new MatrixSendWindows();
+      expect(windows.refusalFor(ROOM) !== null).toBe(true);
+      const closeA = windows.openFor([ROOM]);
+      const closeB = windows.openFor([OTHER]);
+      expect(windows.refusalFor(ROOM)).toBe(null);
+      expect(windows.refusalFor(OTHER)).toBe(null);
+      expect(windows.refusalFor('!third:example.org') !== null).toBe(true);
+      closeA();
+      expect(windows.refusalFor(ROOM) !== null).toBe(true);
+      expect(windows.refusalFor(OTHER)).toBe(null);
+      closeB();
+      closeB();
+      expect(windows.refusalFor(OTHER) !== null).toBe(true);
+      // The room ids an encrypted PUT names, and nothing else on the client's fetch.
+      expect(encryptedSendRoom('PUT', `${HS}/rooms/${encodeRoom(ROOM)}/send/m.room.encrypted/t1`)).toBe(ROOM);
+      expect(encryptedSendRoom('PUT', `${HS}/rooms/${encodeRoom(ROOM)}/send/m.room.message/t1`)).toBe(null);
+      expect(encryptedSendRoom('GET', `${HS}/rooms/${encodeRoom(ROOM)}/messages`)).toBe(null);
+      expect(encryptedSendRoom('PUT', 'not a url')).toBe(null);
     });
   });
 };

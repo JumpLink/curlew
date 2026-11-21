@@ -230,6 +230,7 @@ packages/imap/src/transport.gjs.ts
 packages/imap/src/transport.node.ts
 packages/matrix/src/accounts.ts
 packages/matrix/src/api.ts
+packages/matrix/src/attachment-crypto.ts
 packages/matrix/src/attachments.ts
 packages/matrix/src/avatars.ts
 packages/matrix/src/backend.ts

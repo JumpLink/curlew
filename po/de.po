@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-21 11:09+0100\n"
+"POT-Creation-Date: 2026-11-21 11:40+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -161,7 +161,7 @@ msgid "systemctl --user {verb} exited {code}"
 msgstr "systemctl --user {verb} endete mit {code}"
 
 #: app/src/core/actions/chat-attachment.ts:140
-#: app/src/core/actions/daemon.ts:621
+#: app/src/core/actions/daemon.ts:629
 msgid "the attachment was not found in the index"
 msgstr "Der Anhang wurde im Index nicht gefunden"
 
@@ -181,22 +181,22 @@ msgstr "{backend} kann keine Anhänge abrufen"
 
 #: app/src/core/actions/chat-thumbnail.ts:109
 #: app/src/core/actions/chat-thumbnail.ts:150
-#: app/src/core/actions/daemon.ts:596
+#: app/src/core/actions/daemon.ts:604
 msgid "the attachment has no thumbnail to fetch"
 msgstr "Der Anhang hat kein abrufbares Vorschaubild"
 
-#: app/src/core/actions/daemon.ts:393
+#: app/src/core/actions/daemon.ts:401
 msgid "this account is paused — switch it on in Accounts to send from it"
 msgstr ""
 "dieses Konto ist pausiert — schalte es unter Konten ein, um davon zu senden"
 
-#: app/src/core/actions/daemon.ts:406
+#: app/src/core/actions/daemon.ts:414
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 "{capability} ist nicht die Berechtigung, unter der {backend} sendet — es "
 "wurde nichts gesendet"
 
-#: app/src/core/actions/daemon.ts:428
+#: app/src/core/actions/daemon.ts:436
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
@@ -204,11 +204,11 @@ msgstr ""
 "Der laufende curlew-Daemon konnte keinen Sender öffnen ({reason}) — es wurde "
 "nichts gesendet"
 
-#: app/src/core/actions/daemon.ts:486
+#: app/src/core/actions/daemon.ts:494
 msgid "this account is paused"
 msgstr "Dieses Konto ist pausiert"
 
-#: app/src/core/actions/daemon.ts:534
+#: app/src/core/actions/daemon.ts:542
 msgid "the download stalled — try again"
 msgstr "Der Download ist hängen geblieben — versuche es noch einmal"
 
@@ -2578,7 +2578,7 @@ msgid "Could not fetch the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
 #: app/src/window/attachment-view.ts:184 app/src/window/attachment-view.ts:193
-#: app/src/window/conversation-list-model.ts:526
+#: app/src/window/conversation-list-model.ts:527
 #: app/src/window/conversation-model.ts:318
 #: app/src/window/conversation-model.ts:323
 msgid "Attachment"
@@ -2698,7 +2698,7 @@ msgid "The newest chat decides"
 msgstr "Der neueste Chat entscheidet"
 
 #: app/src/window/contact-page.ts:264 app/src/window/contact-page.ts:279
-#: app/src/window/conversation-list-model.ts:467
+#: app/src/window/conversation-list-model.ts:468
 msgid "Automatic"
 msgstr "Automatisch"
 
@@ -2813,8 +2813,8 @@ msgid "Yesterday"
 msgstr "Gestern"
 
 #: app/src/window/conversation-list-model.ts:273
-#: app/src/window/conversation-list-model.ts:734
-#: app/src/window/conversation-list-model.ts:965
+#: app/src/window/conversation-list-model.ts:735
+#: app/src/window/conversation-list-model.ts:966
 msgid "Note to self"
 msgstr "Notiz an mich"
 
@@ -2828,65 +2828,61 @@ msgstr[1] "Unbenannte Gruppe · {count} Mitglieder"
 msgid "Unnamed conversation"
 msgstr "Unbenannte Unterhaltung"
 
-#: app/src/window/conversation-list-model.ts:386
+#: app/src/window/conversation-list-model.ts:388
 msgid "Only via {protocol}, which has no address for this person"
 msgstr "Nur über {protocol}, das keine Adresse für diese Person hat"
 
-#: app/src/window/conversation-list-model.ts:390
-msgid "Encrypted rooms are not supported yet"
-msgstr "Verschlüsselte Räume werden noch nicht unterstützt"
-
-#: app/src/window/conversation-list-model.ts:399
+#: app/src/window/conversation-list-model.ts:400
 msgid "Sending to Signal groups is not supported yet"
 msgstr "Das Senden an Signal-Gruppen wird noch nicht unterstützt"
 
-#: app/src/window/conversation-list-model.ts:401
+#: app/src/window/conversation-list-model.ts:402
 msgid "Sending to WhatsApp groups is not supported yet"
 msgstr "Das Senden an WhatsApp-Gruppen wird noch nicht unterstützt"
 
-#: app/src/window/conversation-list-model.ts:403
+#: app/src/window/conversation-list-model.ts:404
 msgid "This Telegram chat is not ready to send to yet"
 msgstr "An diesen Telegram-Chat kann noch nicht gesendet werden"
 
-#: app/src/window/conversation-list-model.ts:405
+#: app/src/window/conversation-list-model.ts:406
 msgid "Sending to XMPP groups is not supported yet"
 msgstr "Das Senden an XMPP-Gruppen wird noch nicht unterstützt"
 
-#: app/src/window/conversation-list-model.ts:463
-#: app/src/window/conversation-list-model.ts:482
+#: app/src/window/conversation-list-model.ts:464
+#: app/src/window/conversation-list-model.ts:483
 msgid "Only via {protocol}"
 msgstr "Nur über {protocol}"
 
-#: app/src/window/conversation-list-model.ts:529
+#: app/src/window/conversation-list-model.ts:530
 msgid "You: {text}"
 msgstr "Du: {text}"
 
-#: app/src/window/conversation-list-model.ts:531
+#: app/src/window/conversation-list-model.ts:532
 msgid "{name}: {text}"
 msgstr "{name}: {text}"
 
-#: app/src/window/conversation-list-model.ts:561
+#: app/src/window/conversation-list-model.ts:562
 msgid "Public room · {count} member"
 msgid_plural "Public room · {count} members"
 msgstr[0] "Öffentlicher Raum · {count} Mitglied"
 msgstr[1] "Öffentlicher Raum · {count} Mitglieder"
 
-#: app/src/window/conversation-list-model.ts:562
+#: app/src/window/conversation-list-model.ts:563
 msgid "Room · {count} member"
 msgid_plural "Room · {count} members"
 msgstr[0] "Raum · {count} Mitglied"
 msgstr[1] "Raum · {count} Mitglieder"
 
-#: app/src/window/conversation-list-model.ts:897
+#: app/src/window/conversation-list-model.ts:898
 #: app/src/window/conversation-list.ts:541
 msgid "Unread"
 msgstr "Ungelesen"
 
-#: app/src/window/conversation-list-model.ts:898
+#: app/src/window/conversation-list-model.ts:899
 msgid "People"
 msgstr "Personen"
 
-#: app/src/window/conversation-list-model.ts:899
+#: app/src/window/conversation-list-model.ts:900
 msgid "Groups"
 msgstr "Gruppen"
 
@@ -3855,7 +3851,7 @@ msgstr "Das E-Mail-Konto {account} ist unvollständig — füge es erneut hinzu"
 msgid "marking mail as read is not available here"
 msgstr "Mails als gelesen zu markieren ist hier nicht möglich"
 
-#: packages/imap/src/send.ts:86 packages/matrix/src/send.ts:388
+#: packages/imap/src/send.ts:86 packages/matrix/src/send.ts:506
 #: packages/signal/src/send.ts:536 packages/telegram/src/sender.ts:84
 #: packages/whatsapp/src/send.ts:425
 msgid "sending to {address} is not granted for account {account}"
@@ -3894,21 +3890,50 @@ msgstr ""
 "Die Nachricht wurde gesendet, aber ihre Kopie konnte nicht im Ordner "
 "„Gesendet“ gespeichert werden: {reason}"
 
-#: packages/matrix/src/attachments.ts:37
+#: packages/matrix/src/attachment-crypto.ts:101
+msgid ""
+"this runtime has no WebCrypto — an encrypted attachment cannot be prepared"
+msgstr ""
+"diese Laufzeitumgebung hat kein WebCrypto — ein verschlüsselter Anhang kann "
+"nicht vorbereitet werden"
+
+#: packages/matrix/src/attachment-crypto.ts:122
+msgid "WebCrypto exported no key material for the attachment"
+msgstr "WebCrypto hat kein Schlüsselmaterial für den Anhang exportiert"
+
+#: packages/matrix/src/attachment-crypto.ts:163
+msgid "the encrypted attachment carries no SHA-256 — it cannot be verified"
+msgstr ""
+"der verschlüsselte Anhang enthält keinen SHA-256 — er kann nicht verifiziert "
+"werden"
+
+#: packages/matrix/src/attachment-crypto.ts:169
+msgid ""
+"the downloaded media does not match the hash in the event — it was not "
+"decrypted"
+msgstr ""
+"die heruntergeladene Datei passt nicht zum Hash im Ereignis — sie wurde "
+"nicht entschlüsselt"
+
+#: packages/matrix/src/attachment-crypto.ts:172
+msgid "the encrypted attachment has no 16-byte counter block"
+msgstr "der verschlüsselte Anhang hat keinen 16-Byte-Zählerblock"
+
+#: packages/matrix/src/attachments.ts:43
 msgid "the homeserver refused the download ({reason})"
 msgstr "der Homeserver hat den Download abgewiesen ({reason})"
 
-#: packages/matrix/src/attachments.ts:43 packages/signal/src/attachments.ts:31
+#: packages/matrix/src/attachments.ts:49 packages/signal/src/attachments.ts:31
 #: packages/telegram/src/attachments.ts:86
 #: packages/whatsapp/src/attachments.ts:25 packages/xmpp/src/attachments.ts:28
 msgid "the attachment is larger than the limit of {limit} bytes"
 msgstr "der Anhang ist größer als das Limit von {limit} Bytes"
 
-#: packages/matrix/src/attachments.ts:81
+#: packages/matrix/src/attachments.ts:87
 msgid "this Matrix attachment cannot be found any more"
 msgstr "dieser Matrix-Anhang ist nicht mehr zu finden"
 
-#: packages/matrix/src/attachments.ts:119
+#: packages/matrix/src/attachments.ts:131
 msgid ""
 "the Matrix attachment arrived with {actual} bytes, not the announced "
 "{announced}"
@@ -3920,56 +3945,56 @@ msgstr ""
 msgid "the picture is larger than the limit of {limit} bytes"
 msgstr "das Bild ist größer als das Limit von {limit} Bytes"
 
-#: packages/matrix/src/backend.ts:61
+#: packages/matrix/src/backend.ts:70
 msgid "add the account again in Accounts"
 msgstr "füge das Konto unter „Konten“ erneut hinzu"
 
-#: packages/matrix/src/backend.ts:67
+#: packages/matrix/src/backend.ts:76
 msgid "How do you want to log in to Matrix?"
 msgstr "Wie möchtest du dich bei Matrix anmelden?"
 
-#: packages/matrix/src/backend.ts:68 packages/matrix/src/backend.ts:78
+#: packages/matrix/src/backend.ts:77 packages/matrix/src/backend.ts:87
 #: packages/xmpp/src/backend.ts:53
 msgid "Password"
 msgstr "Passwort"
 
-#: packages/matrix/src/backend.ts:68
+#: packages/matrix/src/backend.ts:77
 msgid "Your Matrix user and password"
 msgstr "Dein Matrix-Benutzer und dein Passwort"
 
-#: packages/matrix/src/backend.ts:71
+#: packages/matrix/src/backend.ts:80
 msgid "Access Token"
 msgstr "Zugangstoken"
 
-#: packages/matrix/src/backend.ts:72
+#: packages/matrix/src/backend.ts:81
 msgid "For servers without password login, such as matrix.org"
 msgstr "Für Server ohne Anmeldung mit Passwort, etwa matrix.org"
 
-#: packages/matrix/src/backend.ts:75
+#: packages/matrix/src/backend.ts:84
 msgid "Access token"
 msgstr "Zugangstoken"
 
-#: packages/matrix/src/backend.ts:76
+#: packages/matrix/src/backend.ts:85
 msgid "Homeserver (URL like https://matrix.example.org, or the server name)"
 msgstr "Homeserver (URL wie https://matrix.example.org oder der Servername)"
 
-#: packages/matrix/src/backend.ts:77
+#: packages/matrix/src/backend.ts:86
 msgid "Matrix user (@name:example.org)"
 msgstr "Matrix-Benutzer (@name:example.org)"
 
-#: packages/matrix/src/backend.ts:150
+#: packages/matrix/src/backend.ts:159
 msgid "no Matrix account {account} — {hint}"
 msgstr "Kein Matrix-Konto {account} — {hint}"
 
-#: packages/matrix/src/backend.ts:157
+#: packages/matrix/src/backend.ts:166
 msgid "the Matrix account file {account} is incomplete — {hint}"
 msgstr "Die Matrix-Kontodatei {account} ist unvollständig — {hint}"
 
-#: packages/matrix/src/backend.ts:218
+#: packages/matrix/src/backend.ts:247
 msgid "the Matrix account {account} is not usable ({reason}) — {hint}"
 msgstr "Das Matrix-Konto {account} ist nicht nutzbar ({reason}) — {hint}"
 
-#: packages/matrix/src/client.ts:186
+#: packages/matrix/src/client.ts:193
 msgid ""
 "the device keys are out of sync with the server — add the account again in "
 "Accounts"
@@ -3977,9 +4002,14 @@ msgstr ""
 "die Geräteschlüssel stimmen nicht mit dem Server überein – füge das Konto "
 "unter „Konten“ erneut hinzu"
 
-#: packages/matrix/src/client.ts:209
+#: packages/matrix/src/client.ts:216
 msgid "this Matrix account is already connected in this process"
 msgstr "dieses Matrix-Konto ist in diesem Prozess bereits verbunden"
+
+#: packages/matrix/src/client.ts:522
+msgid "this device does not know the room {room} yet — nothing was sent"
+msgstr ""
+"dieses Gerät kennt den Raum {room} noch nicht — es wurde nichts gesendet"
 
 #: packages/matrix/src/login.ts:40
 msgid "the homeserver must be a URL or a server name"
@@ -4027,17 +4057,34 @@ msgid_plural "matrix: {n} events not decryptable"
 msgstr[0] "matrix: {n} Ereignis nicht entschlüsselbar"
 msgstr[1] "matrix: {n} Ereignisse nicht entschlüsselbar"
 
-#: packages/matrix/src/send.ts:179
+#: packages/matrix/src/send.ts:194
+msgid ""
+"{room} is end-to-end encrypted, and encrypted messages are sent by the "
+"curlew daemon, which is not running — start it and send again; nothing was "
+"sent"
+msgstr ""
+"{room} ist Ende-zu-Ende-verschlüsselt, und verschlüsselte Nachrichten sendet "
+"der curlew-Daemon, der nicht läuft — starte ihn und sende erneut; es wurde "
+"nichts gesendet"
+
+#: packages/matrix/src/send.ts:239
+msgid ""
+"{room} is end-to-end encrypted — refusing to send a readable message there"
+msgstr ""
+"{room} ist Ende-zu-Ende-verschlüsselt — eine lesbare Nachricht wird dort "
+"nicht gesendet"
+
+#: packages/matrix/src/send.ts:252
 msgid "the homeserver refused the message to {room} ({reason})"
 msgstr "Der Homeserver hat die Nachricht an {room} abgewiesen ({reason})"
 
-#: packages/matrix/src/send.ts:188
+#: packages/matrix/src/send.ts:261
 msgid "the homeserver accepted the message to {room} but returned no event id"
 msgstr ""
 "Der Homeserver hat die Nachricht an {room} angenommen, aber keine Event-ID "
 "zurückgegeben"
 
-#: packages/matrix/src/send.ts:207
+#: packages/matrix/src/send.ts:293
 msgid ""
 "the homeserver did not say whether {room} is encrypted ({reason}) — nothing "
 "was sent"
@@ -4045,11 +4092,21 @@ msgstr ""
 "Der Homeserver hat nicht mitgeteilt, ob {room} verschlüsselt ist ({reason}) "
 "— es wurde nichts gesendet"
 
-#: packages/matrix/src/send.ts:224
+#: packages/matrix/src/send.ts:309
+msgid "the homeserver refused the file {file} ({reason})"
+msgstr "der Homeserver hat die Datei {file} abgewiesen ({reason})"
+
+#: packages/matrix/src/send.ts:318
+msgid "the homeserver accepted the file {file} but returned no media URI"
+msgstr ""
+"der Homeserver hat die Datei {file} angenommen, aber keine Medien-URI "
+"zurückgegeben"
+
+#: packages/matrix/src/send.ts:350
 msgid "the homeserver refused the read marker in {room} ({reason})"
 msgstr "Der Homeserver hat die Lesemarkierung in {room} abgewiesen ({reason})"
 
-#: packages/matrix/src/send.ts:264
+#: packages/matrix/src/send.ts:392
 msgid ""
 "the homeserver did not list the reactions in {room} ({reason}) — nothing was "
 "sent"
@@ -4057,35 +4114,22 @@ msgstr ""
 "Der Homeserver hat die Reaktionen in {room} nicht aufgelistet ({reason}) — "
 "es wurde nichts gesendet"
 
-#: packages/matrix/src/send.ts:299
+#: packages/matrix/src/send.ts:427
 msgid "the homeserver did not redact the event in {room} ({reason})"
 msgstr "Der Homeserver hat das Ereignis in {room} nicht entfernt ({reason})"
 
-#: packages/matrix/src/send.ts:316
-msgid "the homeserver refused the file {file} ({reason})"
-msgstr "der Homeserver hat die Datei {file} abgewiesen ({reason})"
-
-#: packages/matrix/src/send.ts:325
-msgid "the homeserver accepted the file {file} but returned no media URI"
+#: packages/matrix/src/send.ts:445
+msgid "a Matrix file event needs an uploaded file — nothing was sent"
 msgstr ""
-"der Homeserver hat die Datei {file} angenommen, aber keine Medien-URI "
-"zurückgegeben"
+"ein Matrix-Dateiereignis braucht eine hochgeladene Datei — es wurde nichts "
+"gesendet"
 
-#: packages/matrix/src/send.ts:408
-msgid ""
-"{room} is end-to-end encrypted and curlew cannot send encrypted messages yet "
-"— nothing was sent, send it from a Matrix client"
-msgstr ""
-"{room} ist Ende-zu-Ende-verschlüsselt und curlew kann noch keine "
-"verschlüsselten Nachrichten senden — es wurde nichts gesendet, sende sie aus "
-"einem Matrix-Client"
-
-#: packages/matrix/src/send.ts:424 packages/matrix/src/send.ts:526
-#: packages/matrix/src/send.ts:543 packages/matrix/src/send.ts:578
+#: packages/matrix/src/send.ts:538 packages/matrix/src/send.ts:651
+#: packages/matrix/src/send.ts:667 packages/matrix/src/send.ts:707
 msgid "{id} is not a Matrix event id — nothing was sent"
 msgstr "{id} ist keine Matrix-Event-ID — es wurde nichts gesendet"
 
-#: packages/matrix/src/send.ts:429
+#: packages/matrix/src/send.ts:543
 msgid ""
 "a Matrix message holds at most {max} bytes of text, this one has {bytes} — "
 "shorten it"
@@ -4093,14 +4137,14 @@ msgstr ""
 "Eine Matrix-Nachricht fasst höchstens {max} Byte Text, diese hat {bytes} — "
 "kürze sie"
 
-#: packages/matrix/src/send.ts:546 packages/signal/src/send.ts:310
+#: packages/matrix/src/send.ts:670 packages/signal/src/send.ts:310
 #: packages/telegram/src/sender.ts:145 packages/whatsapp/src/send.ts:163
 #: packages/xmpp/src/messages.ts:36
 msgid "only your own messages can be changed — nothing was sent"
 msgstr ""
 "nur eigene Nachrichten können geändert werden — es wurde nichts gesendet"
 
-#: packages/matrix/src/send.ts:556
+#: packages/matrix/src/send.ts:683
 msgid "the edited text is too long for one Matrix message — nothing was sent"
 msgstr ""
 "der bearbeitete Text ist zu lang für eine Matrix-Nachricht — es wurde nichts "
@@ -5143,6 +5187,17 @@ msgid ""
 msgstr ""
 "{count} Geräte von {jid} tragen diesen Fingerabdruck, er benennt also keines "
 "— nichts wurde geändert"
+
+#~ msgid "Encrypted rooms are not supported yet"
+#~ msgstr "Verschlüsselte Räume werden noch nicht unterstützt"
+
+#~ msgid ""
+#~ "{room} is end-to-end encrypted and curlew cannot send encrypted messages "
+#~ "yet — nothing was sent, send it from a Matrix client"
+#~ msgstr ""
+#~ "{room} ist Ende-zu-Ende-verschlüsselt und curlew kann noch keine "
+#~ "verschlüsselten Nachrichten senden — es wurde nichts gesendet, sende sie "
+#~ "aus einem Matrix-Client"
 
 #~ msgid ""
 #~ "No mail account yet. Once you add one, you can switch this on in its "

@@ -6,6 +6,7 @@
 import type {
   MatrixApi,
   MatrixConnector,
+  MatrixEncrypt,
   MatrixSession,
   MxEvent,
   MxMessagesPage,
@@ -120,6 +121,48 @@ export class FakeMatrixApi implements MatrixApi {
 
   async close(): Promise<void> {
     this.closed++;
+  }
+}
+
+/**
+ * A fake `MatrixEncrypt`: the live client's crypto without a client. It records what it was asked
+ * to prepare and what it was asked to send, and it never lets a message reach the plain fetch —
+ * which is exactly the property the send path must have in an encrypted room.
+ *
+ * `rooms` are the rooms it KNOWS are encrypted, as the real crypto's persistent flag would; a room
+ * outside it answers false, which is the real surface's "not proof of the opposite".
+ */
+export class FakeEncrypt implements MatrixEncrypt {
+  readonly prepared: string[] = [];
+  readonly sent: Array<{ roomId: string; content: Record<string, unknown> }> = [];
+  readonly windows: Array<{ rooms: readonly string[]; open: boolean }> = [];
+  private readonly rooms: Set<string>;
+  private counter = 0;
+
+  constructor(rooms: readonly string[] = []) {
+    this.rooms = new Set(rooms);
+  }
+
+  async knownEncrypted(roomId: string): Promise<boolean> {
+    return this.rooms.has(roomId);
+  }
+
+  async prepare(roomId: string): Promise<void> {
+    this.prepared.push(roomId);
+  }
+
+  async sendMessage(roomId: string, content: Record<string, unknown>): Promise<string> {
+    this.counter += 1;
+    this.sent.push({ roomId, content });
+    return `$enc${this.counter}:example.org`;
+  }
+
+  openSendWindow(rooms: readonly string[]): () => void {
+    const window = { rooms: [...rooms], open: true };
+    this.windows.push(window);
+    return () => {
+      window.open = false;
+    };
   }
 }
 

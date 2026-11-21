@@ -11,10 +11,10 @@ export const MATRIX_MANIFEST: BackendManifest = {
   displayName: 'Matrix (matrix-js-sdk, Rust crypto as WebAssembly)',
   pluginApi: PLUGIN_API_VERSION,
   // What the NETWORK can do, not what curlew does with it. Curlew reads, and with a
-  // `matrix.send` grant sends plain-text `m.room.message`s and files (`m.image`/`m.file`) — so none of these flags is a
-  // promise that curlew can send that shape: no edit, no reaction, no threaded send, no
-  // receipt, and `e2ee: true` means this backend DECRYPTS, never that it encrypts (an
-  // encrypted room is refused, see send.ts).
+  // `matrix.send` grant sends `m.room.message`s, files, edits, reactions and redactions — in a
+  // clear room over plain HTTP, in an encrypted one through the daemon's live client, which is
+  // the only process holding the crypto store (ADR 0019). No threaded send. A room that asks for
+  // encryption is never sent to in the clear: without a daemon such a send is refused (send.ts).
   capabilities: {
     // `m.replace` relations.
     edits: true,
@@ -33,8 +33,9 @@ export const MATRIX_MANIFEST: BackendManifest = {
     e2ee: true,
     subject: false,
     folders: false,
-    // Unencrypted files only, both ways: `openAttachments` downloads an `mxc://` file a person
-    // tapped, and a send uploads one to the media repository and posts it as `m.image`/`m.file`.
+    // Both ways, clear or encrypted: `openAttachments` downloads an `mxc://` file a person
+    // tapped (decrypting it where the event carried a key), and a send uploads one to the media
+    // repository — the ciphertext in an encrypted room — and posts it as `m.image`/`m.file`.
     attachments: true,
     attachmentsRead: true,
     // A room's or a direct chat's picture, as a thumbnail from the homeserver.
@@ -47,6 +48,12 @@ export const MATRIX_MANIFEST: BackendManifest = {
   syncModel: 'server-archive',
   native: false,
   addressKinds: ['matrix'],
+  // An encrypted send writes the crypto store the receive path has open — the Megolm session it
+  // creates or rotates, and the one-time keys it spends. Two processes in that store wipe each
+  // other (ADR 0019 §1), so the app routes a send to the daemon holding the account instead of
+  // opening a second client. A clear room needs none of it, but the route is per account, not
+  // per room, and asking the daemon costs one call that is answered `not-followed` at worst.
+  sendSharesReceiveState: true,
   // Matrix is an open protocol with a client-server API meant for third-party clients; the only
   // terms are the ones of the homeserver the user already has an account on.
   terms: null,

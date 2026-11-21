@@ -8,7 +8,8 @@
   [Amendment (2026-10-30, signal)](#amendment-2026-10-30-signal) and
   [Amendment (2026-10-30, whatsapp)](#amendment-2026-10-30-whatsapp) and
   [Amendment (2026-10-30, daemon send)](#amendment-2026-10-30-daemon-send) and
-  [Amendment (2026-11-05, mail attachments)](#amendment-2026-11-05-mail-attachments); §2, §4 and §5
+  [Amendment (2026-11-05, mail attachments)](#amendment-2026-11-05-mail-attachments) and
+  [Amendment (2026-11-21, matrix e2ee send)](#amendment-2026-11-21-matrix-e2ee-send); §2, §4 and §5
   amended by [ADR 0008](0008-grants-restrict-agents-not-the-person.md)
 - **Scope:** `@gjsify/mcp` (the gate), `app` (config, MCP server, `curlew send`, `curlew daemon`),
   `@curlew/xmpp`, `@curlew/protocol` (calendar port), `@curlew/gnome` (EDS calendar driver)
@@ -518,3 +519,32 @@ refuses them too, so the wire format is unchanged. §1, §3, §6 and §7 stand.
 ## Amendment (2026-11-17, read-state sync)
 
 The person's read position now goes to their OWN devices (`ui.syncReadState`, on by default; #441). It rides on the existing `<backend>.send` capability and the permit of the one chat; each guard permits exactly the new request and nothing wider. Matrix: `POST …/receipt/m.read.private/{eventId}` in a permitted room (`m.read` and `m.fully_read` stay refused, as they tell other members). Signal: a `SyncMessage.Read` to the own ACI, which already was a permitted recipient; the guard is unchanged. XMPP: one PEP publish to `urn:xmpp:mds:displayed:0`, only the account itself reads it. IMAP: `UID STORE … +FLAGS.SILENT (\Seen)` on the person's own mailbox over a connection of its own. Telegram and WhatsApp marks are visible to the other person, so they go only while `ui.sendReadReceipts` is on (WhatsApp's guard gains `markRead` for the permitted chat). Only the window asks; MCP and the CLI gain no tool, so no agent grant is involved. §1, §3, §6 and §7 stand.
+
+## Amendment (2026-11-21, matrix e2ee send)
+
+`matrix.send` now reaches encrypted rooms, and the refusal the matrix amendment above describes is
+gone. [ADR 0019](0019-one-process-encrypts-matrix-sends.md) holds the reasoning; what changes for
+this ADR is the transport under the permit, not the permit:
+
+- The capability, its target format and the double check stay as §1-§4 describe them. The sender is
+  still opened only through `MatrixBackend.openSender` (or the session's, see below), and it still
+  re-checks its `SendPermit` before it touches the network.
+- An encrypted room's **content event** (`m.room.message`, a file, an edit of either) no longer
+  goes out over the cleartext `sendFetch`. It is encrypted to Megolm by the live client of the
+  process that holds the account, which is `curlew daemon`. `MATRIX_MANIFEST` therefore declares
+  `sendSharesReceiveState: true`, so a send is offered to the daemon first, exactly as Signal's and
+  WhatsApp's are. Without a running daemon an encrypted room is refused with that sentence; an
+  unencrypted room is unaffected and keeps the direct HTTP send.
+- The read guard stays closed. `readOnlyFetch` still refuses every write; `sendFetch` still names
+  `m.room.message` and `m.reaction` literally, so the cleartext transport cannot carry an
+  `m.room.encrypted` either. The encrypted `PUT` rides a **send window** on the live client's own
+  fetch: while a sender handle is open it permits `PUT …/send/m.room.encrypted/{txnId}` for that
+  permit's rooms and nothing else, and the handle's `close()` ends it.
+- Reactions, redactions and the private read receipt stay cleartext in an encrypted room, because
+  Matrix defines them that way — the server has to see the relation to apply it. They carry an
+  event id and an emoji, never a body.
+- Attachments in an encrypted room are encrypted by curlew before the upload, and the event carries
+  the spec's `file` object instead of a plain `url`. The per-file key sits in the attachment handle
+  in the index, next to the decrypted text that index already holds.
+
+§1 (the format), §3 (the gate), §6 and §7 stand.
