@@ -1047,6 +1047,32 @@ export default async () => {
       }
     });
 
+    await it('finds rows without a key literally and fills them in slices', async () => {
+      const db = freshDb();
+      try {
+        const insert = db.prepare(
+          `INSERT INTO conversation_messages (
+             id, conversation_id, backend, account_id, presentation,
+             from_self, sent_at, seen, has_attachments, classification, classification_reason, body)
+           VALUES (?, ?, 'signal', 'signal-1', 'bubble', 0, ?, 1, 0, 'conversational', 'known-contact', ?)`,
+        );
+        for (let i = 0; i < 1200; i++) insert.run(`m${i}`, 'c1', '2026-01-01T10:00:00Z', `filler ${i}`);
+        insert.run('hit', 'c2', '2026-01-02T10:00:00Z', 'the GTK-JS port');
+        expect(searchMessageText(db, 'GTK-JS').map((h) => h.conversationId)).toStrictEqual(['c2']);
+        expect(searchMessageText(db, 'gtk.js')).toStrictEqual([]);
+        expect(fillSearchKeys(db)).toBe(500);
+        let rest = 0;
+        for (let n = 1; n > 0; ) {
+          n = fillSearchKeys(db);
+          rest += n;
+        }
+        expect(rest).toBe(701);
+        expect(searchMessageText(db, 'gtk.js').map((h) => h.conversationId)).toStrictEqual(['c2']);
+      } finally {
+        db.close();
+      }
+    });
+
     await it('matches across punctuation, separators, case and diacritics', async () => {
       const db = freshDb();
       try {
@@ -1101,7 +1127,7 @@ export default async () => {
         insert.run('needle', 'c7', '2030-01-01T00:00:00Z', 'the GTK-JS port');
         db.exec('COMMIT');
         const t0 = Date.now();
-        const filled = fillSearchKeys(db);
+        const filled = fillSearchKeys(db, Number.POSITIVE_INFINITY);
         const fillMs = Date.now() - t0;
         expect(filled).toBe(150_001);
         const t1 = Date.now();

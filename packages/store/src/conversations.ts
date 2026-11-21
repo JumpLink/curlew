@@ -380,6 +380,17 @@ const HIT_CHARS = 150;
 const HIT_SCAN_LIMIT = 1000;
 
 /**
+ * A row whose key is not computed yet (right after the v29 upgrade, while `fillSearchKeys`
+ * catches up in the background) falls back to the literal match the search had before, so it
+ * is found by its exact spelling instead of not at all.
+ */
+const KEY_MATCH = `search_key LIKE ? OR (search_key IS NULL AND (body LIKE ? ESCAPE '\\' OR subject LIKE ? ESCAPE '\\'))`;
+
+function rawPattern(text: string): string {
+  return `%${text.trim().replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+}
+
+/**
  * The newest message per conversation whose body or subject matches `text`, newest first. Both
  * sides are reduced to the normalised key of `search-key.ts` (case and diacritics folded,
  * punctuation and separators dropped), so `gtk.js` finds `GTK-JS`. Mail bodies are not here (they
@@ -390,14 +401,15 @@ export function searchMessageText(db: IndexDatabase, text: string): TextHit[] {
   const needle = normaliseSearchText(text);
   if (needle === '') return [];
   const pattern = `%${needle}%`;
+  const raw = rawPattern(text);
   const rows = db
     .prepare(
       `SELECT conversation_id, sent_at, subject, body
          FROM conversation_messages
-        WHERE search_key LIKE ?
+        WHERE ${KEY_MATCH}
         ORDER BY sent_at DESC, id DESC LIMIT ${HIT_SCAN_LIMIT}`,
     )
-    .all(pattern) as Array<Record<string, unknown>>;
+    .all(pattern, raw, raw) as Array<Record<string, unknown>>;
   const hits = new Map<string, TextHit>();
   for (const r of rows) {
     const id = String(r.conversation_id);
@@ -430,10 +442,10 @@ export function searchConversationMessageIds(db: IndexDatabase, conversationId: 
   const rows = db
     .prepare(
       `SELECT id FROM conversation_messages
-        WHERE conversation_id = ? AND search_key LIKE ?
+        WHERE conversation_id = ? AND (${KEY_MATCH})
         ORDER BY sent_at DESC, id DESC`,
     )
-    .all(conversationId, `%${needle}%`) as Array<{ id: string }>;
+    .all(conversationId, `%${needle}%`, rawPattern(text), rawPattern(text)) as Array<{ id: string }>;
   return rows.map((r) => String(r.id));
 }
 

@@ -1275,7 +1275,7 @@ export function generateDemo(dir: string, now: number = Date.now(), lang: DemoLa
          message_count = (SELECT COUNT(*) FROM conversation_messages WHERE conversation_id = conversations.id)
        WHERE EXISTS (SELECT 1 FROM conversation_messages WHERE conversation_id = conversations.id)`,
     );
-    fillSearchKeys(db);
+    fillSearchKeys(db, Number.POSITIVE_INFINITY);
   } finally {
     db.close();
   }

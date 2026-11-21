@@ -2,15 +2,21 @@ import type { IndexDatabase } from './db.ts';
 import { searchKey } from './search-key.ts';
 
 const FILL_CHUNK = 100;
+/** How many rows one call fills by default: a write's own rows plus a slice of any backlog. */
+const FILL_DEFAULT_LIMIT = 500;
+
+export const SEARCH_KEY_MISSING_INDEX = `CREATE INDEX IF NOT EXISTS conversation_messages_search_key_missing
+  ON conversation_messages (id) WHERE search_key IS NULL`;
 
 /**
  * Compute `search_key` for every message row that lacks one. A write path that inserts or edits
  * a body leaves the column NULL (an `INSERT OR REPLACE` resets it, an edit sets it NULL) and
  * calls this at the end of its transaction, so a key is never stale and no insert statement has
  * to know about it. Idempotent; a row with neither subject nor body gets the empty key and is
- * not visited again. Returns how many rows it filled.
+ * not visited again. Fills at most `limit` rows, so the backlog after the v29 upgrade drains a
+ * slice per write instead of blocking one. Returns how many rows it filled.
  */
-export function fillSearchKeys(db: IndexDatabase, limit = Number.POSITIVE_INFINITY): number {
+export function fillSearchKeys(db: IndexDatabase, limit = FILL_DEFAULT_LIMIT): number {
   let filled = 0;
   while (filled < limit) {
     const rows = db

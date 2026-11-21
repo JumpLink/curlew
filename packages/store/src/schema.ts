@@ -21,7 +21,7 @@
 
 import { type IndexDatabase, withTransaction } from './db.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
-import { fillSearchKeys } from './search-key-fill.ts';
+import { SEARCH_KEY_MISSING_INDEX } from './search-key-fill.ts';
 
 export const SCHEMA_VERSION = 29;
 
@@ -582,7 +582,11 @@ export function migrate(db: IndexDatabase): void {
     for (let v = from + 1; v <= SCHEMA_VERSION; v++) {
       for (const step of UPGRADES[v] ?? []) applyStep(db, step);
     }
-    if (from < 29) fillSearchKeys(db);
+    // Partial index: the NULL-key rows are what `fillSearchKeys` looks for after every write;
+    // without it each write scans the whole table. Created here, not in STATEMENTS, because an
+    // older index gains the column only in the upgrade step above. The backfill itself is not
+    // done here: it would block startup; write paths and the rebuild fill in short slices.
+    db.exec(SEARCH_KEY_MISSING_INDEX);
     db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('schema_version', ?)`).run(
       String(SCHEMA_VERSION),
     );
