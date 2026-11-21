@@ -11,7 +11,7 @@ Measured 2026-11-20 on the `NsGi_API_36` emulator (x86_64, debug build) with the
 |---|---|---|
 | imap.gmail.com:993, greeting + CAPABILITY + LOGOUT | pass (15 tokens) | greeting 1571 ms, total 1617 ms |
 | imap.fastmail.com:993, greeting + CAPABILITY + LOGOUT | pass (20 tokens) | greeting 1757 ms, total 2063 ms |
-| expired.badssl.com:443 | handshake rejected ("Unacceptable TLS certificate"); under `giReal` it fails with "Connection reset by peer" instead of the certificate error | 1234 ms |
+| expired.badssl.com:443 | handshake rejected ("Unacceptable TLS certificate"), also under `giReal` with gjsify 0.64.54 from npm | 1234 ms |
 | self-signed.badssl.com:443 | handshake rejected | 1250 ms |
 
 Times include DNS and the first handshake in a cold process; one run each, emulator network.
