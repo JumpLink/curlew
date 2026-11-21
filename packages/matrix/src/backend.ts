@@ -19,7 +19,7 @@ import type {
 } from '@curlew/protocol';
 import { removeSecretFiles, SecretStore } from '@curlew/store';
 import { existsSync } from 'node:fs';
-import type { MatrixApi, MatrixLoginPrompts } from './api.ts';
+import type { MatrixApi, MatrixEncrypt, MatrixLoginPrompts } from './api.ts';
 import {
   type AccountRecord,
   accountPath,
@@ -55,6 +55,15 @@ export interface MatrixLiveConnection {
   chatSession(): ChatSession;
   onArrival(listener: () => void): () => void;
   onClosed(listener: (reason: string, loggedOut: boolean) => void): void;
+  /**
+   * A sender that can encrypt, because this connection holds the crypto store (ADR 0019 §1): the
+   * daemon exports it over the session bus, so a send from the window or the CLI reaches the one
+   * process that can turn a message into an `m.room.encrypted`.
+   *
+   * Closing the sender closes its send window and its own secret-file handle, never this
+   * connection.
+   */
+  openSender(permit: SendPermit): Promise<MessageSender>;
   close(): Promise<void>;
 }
 
@@ -163,21 +172,41 @@ export class MatrixBackend implements ChatBackend, SendBackend {
   /**
    * The only way to get a send path: one PUT endpoint, for the permit's rooms only.
    *
-   * No matrix-js-sdk, no sync and no crypto store — a send needs the homeserver URL and the
-   * access token, nothing else. The read session built by `connect` has no sender and no way to
-   * reach one: its fetch is `readOnlyFetch`, which refuses the send PUT for every room.
+   * No matrix-js-sdk and no sync — a cleartext send needs the homeserver URL and the access
+   * token, nothing else. The read session built by `connect` has no sender and no way to reach
+   * one: its fetch is `readOnlyFetch`, which refuses the send PUT for every room.
+   *
+   * `encrypt` is the live client's crypto, present only on the sender the daemon's own connection
+   * hands out (ADR 0019 §1). Without it an encrypted room is refused, never sent in the clear.
    */
-  async openSender(accountId: string, permit: SendPermit): Promise<MessageSender> {
+  private async senderOver(
+    accountId: string,
+    permit: SendPermit,
+    encrypt?: MatrixEncrypt,
+  ): Promise<MessageSender> {
     const { store, record, accessToken } = this.openAccount(accountId);
-    const api = matrixSendApi({
-      homeserver: record.homeserver,
-      accessToken,
-      userId: record.userId,
-      fetch: sendFetch(this.httpFetch, permit.addresses),
-    });
+    // Opened before the first request and closed with the sender: the live client's transport
+    // stays read-only outside this window, for every room outside the permit (ADR 0019 §5).
+    const closeWindow = encrypt?.openSendWindow(permit.addresses) ?? ((): void => {});
+    const api = matrixSendApi(
+      {
+        homeserver: record.homeserver,
+        accessToken,
+        userId: record.userId,
+        // The plain transport, for everything the crypto does not carry: the media upload (the
+        // ciphertext is just bytes), reactions, redactions, receipts, and the reads a send needs.
+        fetch: sendFetch(this.httpFetch, permit.addresses),
+      },
+      encrypt,
+    );
     return new MatrixSender(api, permit, async () => {
+      closeWindow();
       store.close();
     });
+  }
+
+  async openSender(accountId: string, permit: SendPermit): Promise<MessageSender> {
+    return this.senderOver(accountId, permit);
   }
 
   /**
@@ -248,6 +277,10 @@ export class MatrixBackend implements ChatBackend, SendBackend {
         ),
       onArrival: (listener) => live?.onArrival(listener) ?? (() => {}),
       onClosed: (listener) => live?.onClosed((end) => listener(end.reason, end.loggedOut)),
+      // The sender of THIS connection: the same plain transport as `openSender`, plus the crypto
+      // of the client that is already running. It opens its own secret-file handle, so closing it
+      // leaves this connection's one alone.
+      openSender: (permit) => this.senderOver(accountId, permit, api.encrypt),
       close: async () => {
         try {
           await api.close();

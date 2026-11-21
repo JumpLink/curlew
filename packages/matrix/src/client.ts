@@ -11,9 +11,14 @@
  * the SDK's sync until the first complete response (`PREPARED`) — room list, read receipts, and
  * every room key queued for this device since the last run, handed to the crypto — and saves the
  * crypto store before any history is read. `close` saves it again after the loop has stopped.
+ *
+ * This client is also the only thing that can ENCRYPT (ADR 0019): the Megolm session lives in the
+ * crypto store it opened, so a send into an encrypted room is routed here and goes out through
+ * `encrypt`. The transport stays shut while nothing is being sent — `liveFetch` opens the one
+ * `m.room.encrypted` endpoint only for the rooms of a granted sender, only while it is open.
  */
 
-import { _ } from '@curlew/protocol';
+import { _, fmt } from '@curlew/protocol';
 import type { SecretStore } from '@curlew/store';
 import {
   IDBCursor,
@@ -29,8 +34,10 @@ import {
   IDBVersionChangeEvent,
 } from 'fake-indexeddb';
 import type { MatrixClient, MatrixEvent, Room, SyncState } from 'matrix-js-sdk';
-import type { MatrixApi, MatrixLive, MxEvent, MxMessagesPage, MxRoom } from './api.ts';
-import { readOnlyFetch, ReadOnlyViolation, refusals } from './guard.ts';
+// Not re-exported from the package root, and types only: the content shape `sendEvent` takes.
+import type { RoomMessageEventContent } from 'matrix-js-sdk/lib/@types/events.js';
+import type { MatrixApi, MatrixEncrypt, MatrixLive, MxEvent, MxMessagesPage, MxRoom } from './api.ts';
+import { liveFetch, MatrixSendWindows, ReadOnlyViolation, refusals } from './guard.ts';
 import { IndexedDbSnapshot } from './idb-snapshot.ts';
 import { roomFactsOf } from './map.ts';
 import { sdkLogLevel, sdkLogLine, type SdkLogLevel } from './redact.ts';
@@ -342,6 +349,24 @@ function liveOf(
   };
 }
 
+/**
+ * Who a message is encrypted FOR (ADR 0019 §4): every device of every joined member, verified or
+ * not — the default of Element Web and of every client that does not make the person verify first.
+ *
+ * Both values happen to be the SDK's own defaults; they are set anyway, because "which devices can
+ * read this" is not a thing to inherit silently. The other choice (`OnlySignedDevices`) drops
+ * unverified devices from the key sharing, which means a message the person sent and their own
+ * second client cannot read. That belongs behind a per-account setting the person turns on, not
+ * here.
+ */
+async function setTrustPolicy(client: MatrixClient): Promise<void> {
+  const crypto = client.getCrypto();
+  if (crypto === undefined) throw new Error('the Matrix crypto did not start — nothing was sent or read');
+  const { AllDevicesIsolationMode } = await import('matrix-js-sdk/lib/crypto-api/index.js');
+  crypto.globalBlacklistUnverifiedDevices = false;
+  crypto.setDeviceIsolationMode(new AllDevicesIsolationMode(false));
+}
+
 /** The one place matrix-js-sdk is constructed. */
 export const connectMatrixClient: MatrixConnector = async (session) => {
   const release = claimAccount(session.accountId);
@@ -423,6 +448,9 @@ async function connectGuarded(session: MatrixSession, release: () => void): Prom
     }
   }
 
+  // Closed by construction: read-only until `openSendWindow` is called, which only a granted
+  // sender does, for only its permit's rooms, for only as long as it is open (ADR 0019 §5).
+  const windows = new MatrixSendWindows();
   const client = sdk.createClient({
     baseUrl: session.homeserver,
     accessToken: session.accessToken,
@@ -430,7 +458,7 @@ async function connectGuarded(session: MatrixSession, release: () => void): Prom
     deviceId: session.deviceId,
     logger: quietLogger(),
     store: new CheckpointStore(),
-    fetchFn: readOnlyFetch(watchedFetch),
+    fetchFn: liveFetch(watchedFetch, windows),
   });
   let running = false;
   try {
@@ -449,6 +477,7 @@ async function connectGuarded(session: MatrixSession, release: () => void): Prom
       silent: LoggerLevel.Error,
     };
     if (Tracing.isAvailable()) new Tracing(cryptoLevel[sdkLogLevel()]).turnOn();
+    await setTrustPolicy(client);
     // The crypto just made a new Olm account and queued its one-time keys; they go to the server
     // during the first sync. Save now, so a process killed before the first checkpoint cannot
     // come back with a different account for the same device id (the server would refuse its
@@ -486,8 +515,47 @@ async function connectGuarded(session: MatrixSession, release: () => void): Prom
 
   const mapper = client.getEventMapper();
   const live = liveOf(sdk, client, (l) => conflictListeners.add(l));
+  const roomOf = (roomId: string): Room => {
+    const room = client.getRoom(roomId);
+    if (room === null) {
+      throw new Error(
+        fmt(_('this device does not know the room {room} yet — nothing was sent'), { room: roomId }),
+      );
+    }
+    return room;
+  };
+  const encrypt: MatrixEncrypt = {
+    knownEncrypted: async (roomId) => {
+      healthy();
+      const crypto = client.getCrypto();
+      if (crypto === undefined) return false;
+      return crypto.isEncryptionEnabledInRoom(roomId);
+    },
+    prepare: async (roomId) => {
+      healthy();
+      client.getCrypto()?.prepareToEncrypt(roomOf(roomId));
+    },
+    sendMessage: async (roomId, content) => {
+      healthy();
+      // `sendEvent` encrypts by itself when the room is encrypted, and only then; this call site
+      // never decides it. The cast is the SDK's typed event map, which wants a literal content
+      // shape where curlew has already built the object.
+      const response = await client.sendEvent(
+        roomId,
+        sdk.EventType.RoomMessage,
+        content as unknown as RoomMessageEventContent,
+      );
+      // A save right after the send: `sendEvent` created or rotated the Megolm session, and a
+      // process that died now would come back with a session the recipients already have.
+      await save();
+      healthy();
+      return response.event_id;
+    },
+    openSendWindow: (rooms) => windows.openFor(rooms),
+  };
   return {
     live,
+    encrypt,
     userId: session.userId,
     listRooms: async () => {
       const direct = directRoomIds(client);

@@ -5,7 +5,10 @@
  * with synthetic events fills them in a test. That is what lets the mapping and the session be
  * unit-tested on Node and GJS with no homeserver, no account and no WASM.
  *
- * Read-only by construction: nothing here can send, join, redact or mark anything read.
+ * Read-only by construction, with ONE exception: `MatrixEncrypt`, which only a live client can
+ * implement, because only the process holding the crypto store can produce an `m.room.encrypted`
+ * (ADR 0019). It is optional, and a fake leaves it out — everything else here still runs with no
+ * homeserver, no account and no WASM.
  */
 
 /**
@@ -82,6 +85,48 @@ export interface MatrixLive {
   onClosed(listener: (end: { reason: string; loggedOut: boolean }) => void): void;
 }
 
+/**
+ * The encrypting surface of a LIVE client (ADR 0019 §1): the Megolm session lives in the crypto
+ * store, so the one process that opened it is the only one that can turn a message into an
+ * `m.room.encrypted`. A sender built over plain HTTP has no such surface and refuses an encrypted
+ * room instead of sending cleartext.
+ *
+ * Nothing here decides WHETHER a send is allowed — the permit and the send window do that; this
+ * is only the encryption itself. The media upload is not here either: it is the same POST in an
+ * encrypted room as in a clear one (ciphertext is still bytes), so it stays on the granted
+ * sender's own transport, which is the only one allowed to upload at all.
+ */
+export interface MatrixEncrypt {
+  /**
+   * True when the crypto KNOWS this room is encrypted. That flag is persistent and cannot be
+   * downgraded, so it is proof of encryption and survives a room whose state is not loaded.
+   *
+   * `false` is NOT proof of the opposite: a room the client has not seen answers false too. So a
+   * caller that gets false must still ask the room's state before it sends anything in the clear
+   * (ADR 0019 §3).
+   */
+  knownEncrypted(roomId: string): Promise<boolean>;
+  /**
+   * Fetch the members' device lists and share the room key, before the content event is built.
+   * Only a head start: the send encrypts on its own too, this keeps the first message of a
+   * session from waiting for the whole key exchange with the event already in hand.
+   */
+  prepare(roomId: string): Promise<void>;
+  /**
+   * Send one `m.room.message` through the live client, which encrypts it because the room asks
+   * for it. Resolves with the event id the homeserver assigned.
+   *
+   * Only this one event type: a reaction, a redaction and a receipt are cleartext in Matrix by
+   * design, and they keep using the plain HTTP path.
+   */
+  sendMessage(roomId: string, content: Record<string, unknown>): Promise<string>;
+  /**
+   * Open the send window for these rooms (ADR 0019 §5): until the returned function is called,
+   * the live client's own fetch may PUT an `m.room.encrypted` into them, and nothing else.
+   */
+  openSendWindow(rooms: readonly string[]): () => void;
+}
+
 export interface MatrixApi {
   /** The logged-in user, `@local:server`. */
   readonly userId: string;
@@ -96,6 +141,8 @@ export interface MatrixApi {
   fetchEvent(roomId: string, eventId: string): Promise<MxEvent | null>;
   /** Present on a real client: its sync loop keeps running until `close`. */
   readonly live?: MatrixLive;
+  /** Present on a real client: it holds the crypto store, so it can encrypt a send. */
+  readonly encrypt?: MatrixEncrypt;
   /** Stop syncing and persist the crypto store. Throws when the store could not be saved. */
   close(): Promise<void>;
 }

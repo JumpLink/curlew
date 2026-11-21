@@ -24,8 +24,15 @@
  * (and the media upload that precedes a file) for exactly the room ids that permit names and falls back to `refusal` for everything else.
  * Two consequences worth the duplication: the sync client, which is the only thing matrix-js-sdk
  * ever touches, has no reachable send endpoint at all; and because the rule names the event type
- * `m.room.message` literally, even a granted handle cannot PUT an `m.room.encrypted` — the
- * second line of defence behind the sender's own encryption check.
+ * `m.room.message` literally, even a granted handle cannot PUT an `m.room.encrypted` — a
+ * cleartext handle cannot fake one.
+ *
+ * An ENCRYPTED send is the one thing that cannot use a second wrapper: only the live client holds
+ * the Megolm session, so the ciphertext leaves through the client's own transport (ADR 0019).
+ * `MatrixSendWindows` is how: a window opened for one permit's rooms, for as long as that sender
+ * is open, which allows the single endpoint `PUT …/send/m.room.encrypted/…` and nothing else. The
+ * window closes with the sender, so the sync client is back to read-only the moment the send is
+ * done.
  *
  * Pure: functions over (method, URL), so they are unit-tested on both runtimes.
  */
@@ -62,6 +69,9 @@ export function refusal(method: string, url: string): string | null {
 
 /** The endpoint a send uses: `PUT /rooms/{roomId}/send/m.room.message/{txnId}`, or `m.reaction` for a reaction. */
 const SEND = new RegExp(String.raw`${CLIENT}/rooms/([^/]+)/send/m\.(?:room\.message|reaction)/[^/]+$`);
+
+/** The one endpoint a send window opens: `PUT /rooms/{roomId}/send/m.room.encrypted/{txnId}`. */
+const SEND_ENCRYPTED = new RegExp(String.raw`${CLIENT}/rooms/([^/]+)/send/m\.room\.encrypted/[^/]+$`);
 
 /** Taking a reaction back: `PUT /rooms/{roomId}/redact/{eventId}/{txnId}`. */
 const REDACT = new RegExp(String.raw`${CLIENT}/rooms/([^/]+)/redact/[^/]+/[^/]+$`);
@@ -121,6 +131,51 @@ export function sendRefusal(method: string, url: string, rooms: readonly string[
   return refusal(method, url);
 }
 
+/**
+ * The room an encrypted send names, or null when the request is not one. The whole shape is
+ * matched, so nothing else on the live client's fetch is ever decided by a send window.
+ */
+export function encryptedSendRoom(method: string, url: string): string | null {
+  if (method.toUpperCase() !== 'PUT') return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+  const match = SEND_ENCRYPTED.exec(parsed.pathname);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+/**
+ * The send windows open on ONE live client (ADR 0019 §5): while a granted sender is open, the
+ * client's fetch may PUT an `m.room.encrypted` into that permit's rooms, and nothing else changes.
+ *
+ * A window is a set of room ids plus the moment it closes — not a rule — so the widening lasts
+ * exactly as long as the handle that asked for it and covers exactly what that handle was granted.
+ * Several may be open at once (two senders on one followed account); a room any of them names is
+ * allowed, which is the same answer as asking each in turn.
+ */
+export class MatrixSendWindows {
+  private readonly open = new Set<ReadonlySet<string>>();
+
+  /** Open a window for these rooms; calling the result closes it. Closing twice is fine. */
+  openFor(rooms: readonly string[]): () => void {
+    const window: ReadonlySet<string> = new Set(rooms);
+    this.open.add(window);
+    return () => {
+      this.open.delete(window);
+    };
+  }
+
+  /** Why an encrypted event for `roomId` is refused right now, or null when a window covers it. */
+  refusalFor(roomId: string): string | null {
+    if (this.open.size === 0) return 'an encrypted event with no send window open';
+    for (const window of this.open) if (window.has(roomId)) return null;
+    return 'an encrypted event for a room no open send window names';
+  }
+}
+
 export class ReadOnlyViolation extends Error {
   constructor(reason: string) {
     super(`curlew is read-only: refused to send ${reason}`);
@@ -169,4 +224,29 @@ export function sendFetch(
 ): typeof globalThis.fetch {
   const permitted = [...rooms];
   return guardedFetch(inner, (method, url) => sendRefusal(method, url, permitted), null);
+}
+
+/**
+ * Wrap the LIVE client's fetch: the read-only gate, plus the one encrypted send PUT while a
+ * window for that room is open (ADR 0019 §5). Everything else is decided by `refusal` exactly as
+ * before, so a client with no window open is read-only to the byte.
+ *
+ * A refused encrypted send is NOT written into `refusals`, for the reason `sendFetch` gives: the
+ * ledger is the sync's own proof it was never asked to write, and a send that fails must fail its
+ * call, not the sync sharing the process.
+ */
+export function liveFetch(
+  inner: typeof globalThis.fetch,
+  windows: MatrixSendWindows,
+): typeof globalThis.fetch {
+  const readOnly = guardedFetch(inner, refusal, refusals);
+  return (input, init) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    const method = init?.method ?? (typeof input === 'object' && 'method' in input ? input.method : 'GET');
+    const room = encryptedSendRoom(method, url);
+    if (room === null) return readOnly(input, init);
+    const reason = windows.refusalFor(room);
+    if (reason) return Promise.reject(new ReadOnlyViolation(reason));
+    return inner(input, init);
+  };
 }
