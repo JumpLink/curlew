@@ -1,6 +1,13 @@
 {
   "whitelist-plugins-usages": true,
   "whitelist": [
+    "androidx.sqlite.driver.bundled:BundledSQLiteDriver",
+    "androidx.sqlite.driver:AndroidSQLiteDriver",
+    "androidx.sqlite:SQLiteDriver",
+    "androidx.sqlite:SQLiteConnection",
+    "androidx.sqlite:SQLiteStatement",
+    "androidx.sqlite:SQLiteException",
+    "androidx.sqlite:SQLite",
     "androidx.core.view:WindowCompat",
     "androidx.core.view:WindowInsetsControllerCompat",
     "androidx.core.view:WindowInsetsCompat",

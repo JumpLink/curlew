@@ -4,6 +4,10 @@ dependencies {
   // (@gjsify/adwaita-nativescript) on plain AppCompat/framework views.
   // AndroidX Activity is required by NativeScript for OnBackPressedDispatcher
   implementation 'androidx.activity:activity:1.9.3'
+  // node:sqlite on Android (@gjsify/native-sqlite-bridge): the interfaces and the bundled driver
+  // (SQLite with FTS5 from the AAR, not the OS image's). 2.6.2 is the floor.
+  implementation 'androidx.sqlite:sqlite:2.7.1'
+  implementation 'androidx.sqlite:sqlite-bundled:2.7.1'
 }
 
 android {

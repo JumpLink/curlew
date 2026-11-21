@@ -12,6 +12,7 @@ export default defineNativescriptConfig(
     resolve: {
       alias: {
         "@curlew/protocol": pkg("protocol/src/index.ts"),
+        "@curlew/store/index-db": pkg("store/src/index-db-entry.ts"),
         "@curlew/imap/stream": pkg("imap/src/stream-entry.gjs.ts"),
       },
     },

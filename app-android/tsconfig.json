@@ -17,6 +17,7 @@
       "~/*": ["./app/*"],
       "@/*": ["./app/*"],
       "@curlew/protocol": ["../packages/protocol/src/index.ts"],
+      "@curlew/store/index-db": ["../packages/store/src/index-db-entry.ts"],
       "@curlew/imap/stream": ["../packages/imap/src/stream-entry.gjs.ts"]
     }
   },

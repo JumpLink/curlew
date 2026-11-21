@@ -36,4 +36,4 @@ arm64-v8a 50.2 MB, x86_64 53.1 MB. ABIs are restricted to those two in `data/And
 
 ## Still open
 
-Login, the store (AP5.1) and the window layer (AP5.3) are unproven on Android.
+Login and the window layer (AP5.3) are unproven on Android. The store (AP5.1) is proven on `:memory:`: see [ap51-store-probe.md](ap51-store-probe.md).
