@@ -9,7 +9,7 @@
  */
 
 import { localeCandidates } from '@curlew/protocol';
-import { migrate, openIndexDb } from '@curlew/store';
+import { fillSearchKeys, migrate, openIndexDb } from '@curlew/store';
 import { createHash } from 'node:crypto';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -1275,6 +1275,7 @@ export function generateDemo(dir: string, now: number = Date.now(), lang: DemoLa
          message_count = (SELECT COUNT(*) FROM conversation_messages WHERE conversation_id = conversations.id)
        WHERE EXISTS (SELECT 1 FROM conversation_messages WHERE conversation_id = conversations.id)`,
     );
+    fillSearchKeys(db);
   } finally {
     db.close();
   }

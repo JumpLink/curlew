@@ -21,8 +21,9 @@
 
 import { type IndexDatabase, withTransaction } from './db.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
+import { fillSearchKeys } from './search-key-fill.ts';
 
-export const SCHEMA_VERSION = 28;
+export const SCHEMA_VERSION = 29;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -508,6 +509,10 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
   // v28: the mentions of a chat message — UTF-16 ranges of its text and the protocol user ids,
   // as JSON. NULL = none stored (an older message, or a network that delivers none).
   28: [{ table: 'conversation_messages', column: 'mentions_json', type: 'TEXT' }],
+  // v29: the normalised search key (`searchKey`: folded, punctuation and separators removed) the
+  // window's message search matches against. NULL = not computed yet; `fillSearchKeys` fills it
+  // after every write, and `migrate` backfills the existing rows in batches.
+  29: [{ table: 'conversation_messages', column: 'search_key', type: 'TEXT' }],
 };
 
 function columnsOf(db: IndexDatabase, table: string): Set<string> {
@@ -577,6 +582,7 @@ export function migrate(db: IndexDatabase): void {
     for (let v = from + 1; v <= SCHEMA_VERSION; v++) {
       for (const step of UPGRADES[v] ?? []) applyStep(db, step);
     }
+    if (from < 29) fillSearchKeys(db);
     db.prepare(`INSERT OR REPLACE INTO schema_meta (key, value) VALUES ('schema_version', ?)`).run(
       String(SCHEMA_VERSION),
     );

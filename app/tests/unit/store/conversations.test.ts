@@ -13,8 +13,10 @@ import {
   migrate,
   openIndexDb,
   participantIdsOfTarget,
+  fillSearchKeys,
   rebuildConversations,
   SCHEMA_VERSION,
+  searchConversationMessageIds,
   searchMessageText,
   setMessageText,
   syncIndex,
@@ -1026,6 +1028,7 @@ export default async () => {
            from_self, sent_at, subject, seen, has_attachments, classification, classification_reason, body)
          VALUES (?, ?, 'signal', 'signal-1', 'bubble', 0, ?, ?, 1, 0, 'conversational', 'known-contact', ?)`,
       ).run(id, conversation, sentAt, subject, body);
+      fillSearchKeys(db);
     }
 
     await it('finds the newest matching message per conversation, case-insensitively', async () => {
@@ -1044,6 +1047,73 @@ export default async () => {
       }
     });
 
+    await it('matches across punctuation, separators, case and diacritics', async () => {
+      const db = freshDb();
+      try {
+        put(db, 'a1', 'c1', '2026-01-01T10:00:00Z', 'We port GTK-JS to the new runtime');
+        put(db, 'a2', 'c2', '2026-01-02T10:00:00Z', 'Über die Brücke');
+        for (const q of ['gtk.js', 'gtk-js', 'gtk js', 'GTKJS', ' gtk / js ']) {
+          expect(searchMessageText(db, q).map((h) => h.conversationId)).toStrictEqual(['c1']);
+        }
+        expect(searchMessageText(db, 'ÜBER').map((h) => h.conversationId)).toStrictEqual(['c2']);
+        expect(searchMessageText(db, 'brucke').map((h) => h.conversationId)).toStrictEqual(['c2']);
+        expect(searchMessageText(db, '...')).toStrictEqual([]);
+        expect(searchMessageText(db, 'gtk.js')[0]?.snippet).toBe('We port GTK-JS to the new runtime');
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('keeps the key current after an edit and lists every hit of one conversation newest first', async () => {
+      const db = freshDb();
+      try {
+        put(db, 'a1', 'c1', '2026-01-01T10:00:00Z', 'foo bar');
+        put(db, 'a2', 'c1', '2026-01-02T10:00:00Z', 'Foo-Bar again');
+        put(db, 'a3', 'c2', '2026-01-03T10:00:00Z', 'foobar elsewhere');
+        expect(searchConversationMessageIds(db, 'c1', 'foo.bar')).toStrictEqual(['a2', 'a1']);
+        db.prepare('UPDATE conversation_messages SET remote_seq = 1 WHERE id = ?').run('a1');
+        setMessageText(db, 'a1', 'changed');
+        expect(searchConversationMessageIds(db, 'c1', 'foo.bar')).toStrictEqual(['a2']);
+        expect(searchConversationMessageIds(db, 'c1', ' ')).toStrictEqual([]);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('backfills existing rows on upgrade and stays fast on 150k rows', async () => {
+      const db = freshDb();
+      try {
+        const insert = db.prepare(
+          `INSERT INTO conversation_messages (
+             id, conversation_id, backend, account_id, presentation,
+             from_self, sent_at, seen, has_attachments, classification, classification_reason, body)
+           VALUES (?, ?, 'signal', 'signal-1', 'bubble', 0, ?, 1, 0, 'conversational', 'known-contact', ?)`,
+        );
+        db.exec('BEGIN');
+        for (let i = 0; i < 150_000; i++) {
+          insert.run(
+            `m${i}`,
+            `c${i % 500}`,
+            new Date(1_700_000_000_000 + i * 1000).toISOString(),
+            `message ${i} about lunch plans, nothing special`,
+          );
+        }
+        insert.run('needle', 'c7', '2030-01-01T00:00:00Z', 'the GTK-JS port');
+        db.exec('COMMIT');
+        const t0 = Date.now();
+        const filled = fillSearchKeys(db);
+        const fillMs = Date.now() - t0;
+        expect(filled).toBe(150_001);
+        const t1 = Date.now();
+        const hits = searchMessageText(db, 'gtk.js');
+        const queryMs = Date.now() - t1;
+        expect(hits.map((h) => h.conversationId)).toStrictEqual(['c7']);
+        console.log(`# search-key backfill of 150001 rows: ${fillMs} ms; query: ${queryMs} ms`);
+      } finally {
+        db.close();
+      }
+    });
+
     await it('cuts a snippet around the match and treats % and _ literally', async () => {
       const db = freshDb();
       try {
@@ -1053,7 +1123,8 @@ export default async () => {
         expect(hit?.snippet.includes('needle')).toBe(true);
         expect(hit?.snippet.length).toBeLessThanOrEqual(150);
         expect(searchMessageText(db, '50%').map((h) => h.conversationId)).toStrictEqual(['c2']);
-        expect(searchMessageText(db, '5_%')).toStrictEqual([]);
+        expect(searchMessageText(db, '5_%').map((h) => h.conversationId)).toStrictEqual(['c2']);
+        expect(searchMessageText(db, '7_%')).toStrictEqual([]);
         expect(searchMessageText(db, '  ')).toStrictEqual([]);
       } finally {
         db.close();

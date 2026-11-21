@@ -35,6 +35,7 @@ import { chatConversationId, classifyChatMessage, LOCAL_ECHO_PREFIX } from './ch
 import { adoptEchoAttachments } from './echo-attachments.ts';
 import { conversationTotalsSql } from './conversation-totals.ts';
 import type { IndexDatabase } from './db.ts';
+import { fillSearchKeys } from './search-key-fill.ts';
 import { IN_CHUNK, insertMany, placeholders, runIn, type SqlValue, withTransaction } from './db.ts';
 import {
   type AccountState,
@@ -549,7 +550,7 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
       batch.messageAttachments,
     );
     for (const [id, edit] of batch.edits) {
-      db.prepare('UPDATE conversation_messages SET body = ?, mentions_json = ?, edited_at = ? WHERE id = ?').run(
+      db.prepare('UPDATE conversation_messages SET search_key = NULL, body = ?, mentions_json = ?, edited_at = ? WHERE id = ?').run(
         edit.text,
         mentionsToJson(edit.mentions),
         edit.editedAt,
@@ -625,6 +626,7 @@ function writeBatchRows(db: IndexDatabase, batch: DeliveryBatch, syncedAt: strin
       ` ON CONFLICT(conversation_id) DO UPDATE SET kind = excluded.kind, last_seq = excluded.last_seq,
          last_sync_at = excluded.last_sync_at`,
     );
+    fillSearchKeys(db);
     runIn(
       db,
       (p) => `UPDATE conversation_messages SET seen = 1
@@ -698,6 +700,7 @@ function writeEvents(
       batch.apply(event);
     }
     flush();
+    fillSearchKeys(db);
   });
   return totals;
 }

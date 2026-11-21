@@ -20,6 +20,7 @@ import { normalizeAddress } from '@curlew/protocol';
 import { classifyMail, conversationVerdict, type MessageVerdict } from './classify.ts';
 import type { IndexDatabase } from './db.ts';
 import { insertMany, type SqlValue, withTransaction } from './db.ts';
+import { fillSearchKeys } from './search-key-fill.ts';
 import { messageBody } from './index-store.ts';
 import { buildThreads, normalizeSubject, stableId, type ThreadMember } from './threads.ts';
 import { parseParticipantAddresses, str } from './row.ts';
@@ -645,6 +646,10 @@ export function rebuildConversations(db: IndexDatabase, options: RebuildOptions 
     [MAIL_BACKEND],
   );
   sync(MAIL_MESSAGES, messageRows, 'backend = ?', [MAIL_BACKEND]);
+  // Replaced rows came back without a search key; compute them in short transactions too.
+  for (let n = 1; n > 0; ) {
+    n = withTransaction(db, () => fillSearchKeys(db, 500));
+  }
   for (const [target, emoji] of reactions.own) setOwnReaction(db, target, emoji);
 
   // Chats: point every message and membership at the rebuilt directory. A chat conversation
