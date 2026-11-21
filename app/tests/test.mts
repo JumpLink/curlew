@@ -140,7 +140,6 @@ import windowAppearance from './unit/window/appearance.test.ts';
 import windowChatMotifs from './unit/window/chat-motifs.test.ts';
 import windowVideoPreview from './unit/window/video-preview-model.test.ts';
 import windowConversation from './unit/window/conversation-model.test.ts';
-import windowReactionPlacement from './unit/window/reaction-placement-model.test.ts';
 import windowNewConversation from './unit/window/new-conversation-model.test.ts';
 import windowComposerFiles from './unit/window/composer-files-model.test.ts';
 import windowVoiceRecorder from './unit/window/voice-recorder-model.test.ts';
@@ -311,7 +310,6 @@ run({
   windowEmojiModel,
   coreDemo,
   windowConversation,
-  windowReactionPlacement,
   windowNewConversation,
   windowComposerFiles,
   windowVoiceRecorder,

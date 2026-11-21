@@ -67,9 +67,9 @@ person looks the same, a new reaction replaces the old), reaction chips, replies
 edit and delete, read receipts, typing, presence, attachments, the profile view, and later calls
 (one call button and one call view, whatever the technology).
 
-Reaction chips: a bubble of only media (picture, gallery, clip, voice note, file without a caption)
-shows them in a row under the bubble, aligned to its side; a bubble with text keeps them inside, above
-the time. The rule is `reactionPlacement` in `reaction-placement-model.ts`. The time stays in the bubble.
+Reaction chips: always in a row under the bubble, aligned to its side and tucked in 8 px from its
+edge, for text and media alike (as WhatsApp and Signal do); the bubble holds only the message and
+its time.
 
 ## Profile view: per person
 
