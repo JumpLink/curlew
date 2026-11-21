@@ -6,6 +6,7 @@ import GLib from 'gi://GLib?version=2.0';
 import GObject from 'gi://GObject?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import Pango from 'gi://Pango?version=1.0';
+import { ComposerBar } from '@gjsify/adwaita-extended';
 import { _, fmt, parseForwarded, errorMessage } from '@curlew/protocol';
 import type { ThreadCapabilities, ThreadFacts, ThreadFeature } from '@curlew/protocol';
 import type { ConversationMessage, Mention, MessageReaction, ReplyTarget } from '@curlew/protocol';
@@ -79,7 +80,7 @@ import { bubbleActionRow } from './bubble-menu.ts';
 import { guardTouchSelection, selectableForPointerOnly } from './bubble-select.ts';
 import { createComposerFiles } from './composer-files.ts';
 import { createVoiceRecorder } from './voice-recorder.ts';
-import { createComposerInput } from './composer-input.ts';
+import { createEmojiButton } from './composer-input.ts';
 import { timed } from './stall-probe.ts';
 import type { PickedFile } from './composer-files-model.ts';
 
@@ -303,25 +304,34 @@ export function createConversationView(
   empty.add_css_class('compact');
   backdrop.add_overlay(empty);
 
-  const composer = new Gtk.Box({ spacing: 6, marginStart: 6, marginEnd: 6, marginTop: 6, marginBottom: 6 });
-  const input = createComposerInput(_('Write a message'));
+  // The rounded bar: attach and voice at the start, emoji and carrier at the end, then send.
+  const composer = new ComposerBar();
+  const input = composer.entry;
+  input.setPlaceholder(_('Write a message'));
+  input.setAccessibleLabel(_('Write a message'));
+  input.setLines(1, 5);
+  const emojiButton = createEmojiButton(input);
   const picker = new Gtk.MenuButton({
     iconName: 'network-transmit-receive-symbolic',
     tooltipText: protocolLabel(''),
     visible: false,
+    valign: Gtk.Align.END,
   });
   picker.add_css_class('circular');
   picker.add_css_class('flat');
   const pickerBox = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 4 });
   const pickerPopover = new Gtk.Popover({ autohide: true, child: pickerBox });
   picker.set_popover(pickerPopover);
-  const send = new Gtk.Button({ iconName: 'mail-send-symbolic', tooltipText: _('Send message') });
-  send.add_css_class('suggested-action');
-  send.add_css_class('circular');
-  composer.append(input.widget);
-  composer.append(input.emoji);
-  composer.append(picker);
-  composer.append(send);
+  const SEND_ACTION = { iconName: 'mail-send-symbolic', label: _('Send message') };
+  const send = composer.actionButton;
+  send.setAction(SEND_ACTION);
+  composer.addEnd(emojiButton);
+  composer.addEnd(picker);
+  // A read-only field offers no emoji either.
+  const setInputSensitive = (on: boolean): void => {
+    input.setSensitive(on);
+    emojiButton.set_visible(on);
+  };
 
   // What the next message answers: the quote's look, one line, and a way to drop it again.
   const replyBar = new Gtk.Box({ spacing: 6, marginStart: 12, marginEnd: 6, marginTop: 6, visible: false });
@@ -377,24 +387,24 @@ export function createConversationView(
     toast: (text) => overlay.add_toast(new Adw.Toast({ title: text, timeout: 4 })),
     onChange: () => {},
     dropOn: content,
-    pasteInto: input.view,
+    pasteInto: input.textView,
   });
-  composer.prepend(files.button);
+  composer.addStart(files.button);
   const recorder = createVoiceRecorder({
     toast: (text) => overlay.add_toast(new Adw.Toast({ title: text, timeout: 4 })),
     onRecorded: (file) => files.addRecorded(file),
   });
-  composer.insert_child_after(recorder.button, files.button);
+  composer.addStart(recorder.button);
   // The buttons stay at the bottom edge while the field grows upward.
-  for (const part of [files.button, recorder.button, input.emoji, picker, send])
-    part.set_valign(Gtk.Align.END);
+  for (const part of [files.button, recorder.button]) part.set_valign(Gtk.Align.END);
   // Everything the person types into rides in one bottom bar, so the history can run beneath it.
   const compose = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
   // Each part is a card of its own, so it stays legible over the messages scrolling beneath it.
-  const pill = new Gtk.Box({ marginStart: 12, marginEnd: 12, marginTop: 6, marginBottom: 8 });
-  pill.add_css_class('card');
-  pill.add_css_class('curlew-surface');
-  pill.append(composer);
+  composer.set_margin_start(12);
+  composer.set_margin_end(12);
+  composer.set_margin_top(6);
+  composer.set_margin_bottom(8);
+  composer.add_css_class('curlew-surface');
   // The card is the surface and the part keeps its own margins as padding inside it.
   const floating = (part: Gtk.Widget): Gtk.Box => {
     const card = new Gtk.Box({ marginStart: 12, marginEnd: 12, marginTop: 4, visible: part.get_visible() });
@@ -406,7 +416,7 @@ export function createConversationView(
   };
   hint.set_margin_bottom(4);
   for (const part of [hint, files.strip, replyBar, editBar]) compose.append(floating(part));
-  compose.append(pill);
+  compose.append(composer);
   const toolbar = new Adw.ToolbarView({ extendContentToBottomEdge: true });
   toolbar.add_top_bar(header);
 
@@ -1587,7 +1597,7 @@ export function createConversationView(
     if (edit) {
       if (!text || sending) return;
       sending = true;
-      input.setSensitive(false);
+      setInputSensitive(false);
       send.set_sensitive(false);
       send.set_child(new Adw.Spinner());
       const { message, originalText, handle } = edit;
@@ -1614,16 +1624,16 @@ export function createConversationView(
         })
         .finally(() => {
           sending = false;
-          input.setSensitive(true);
+          setInputSensitive(true);
           send.set_sensitive(true);
-          send.set_icon_name('mail-send-symbolic');
+          send.setAction(SEND_ACTION);
           input.grabFocus();
         });
       return;
     }
     if ((!text && picked.length === 0) || sending || !entry || !selectedChoice) return;
     sending = true;
-    input.setSensitive(false);
+    setInputSensitive(false);
     send.set_sensitive(false);
     // An upload takes a while: the button shows that something is happening.
     send.set_child(new Adw.Spinner());
@@ -1663,14 +1673,15 @@ export function createConversationView(
       })
       .finally(() => {
         sending = false;
-        input.setSensitive(true);
+        setInputSensitive(true);
         send.set_sensitive(true);
-        send.set_icon_name('mail-send-symbolic');
+        send.setAction(SEND_ACTION);
         input.grabFocus();
       });
   };
   send.connect('clicked', submit);
-  input.onSubmit(submit);
+  // A signal registered through `registerClass` is not in the generated signatures.
+  (input as GObject.Object).connect('submit' as never, () => submit());
 
   let lookApplied: string[] = [];
   return {
@@ -1683,7 +1694,7 @@ export function createConversationView(
       openNewestBubble();
     },
     openEmoji() {
-      timed('open emoji picker', () => input.emoji.popup());
+      timed('open emoji picker', () => emojiButton.popup());
     },
     setLook(look) {
       for (const name of lookApplied) toolbar.remove_css_class(name);
@@ -1792,7 +1803,7 @@ export function createConversationView(
       const roomLine = blocked ?? roomHint(nextEntry);
       hint.set_label(roomLine ?? '');
       hint.set_visible((sendable || blocked !== null) && roomLine !== null);
-      input.setSensitive(blocked === null);
+      setInputSensitive(blocked === null);
       send.set_sensitive(blocked === null);
       composerBlocked = blocked !== null;
       // A rebuild of the same chat (live update) keeps what the person is writing and the
