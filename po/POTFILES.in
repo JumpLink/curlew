@@ -179,7 +179,6 @@ app/src/window/preferences-dialog.ts
 app/src/window/preview-cache-model.ts
 app/src/window/protocols-page.ts
 app/src/window/qr-image.ts
-app/src/window/reaction-placement-model.ts
 app/src/window/read-sync-scheduler.ts
 app/src/window/rich-text-model.ts
 app/src/window/selection-model.ts
@@ -346,6 +345,8 @@ packages/store/src/read-receipts.ts
 packages/store/src/receive-lease.ts
 packages/store/src/row.ts
 packages/store/src/schema.ts
+packages/store/src/search-key-fill.ts
+packages/store/src/search-key.ts
 packages/store/src/secret-files.ts
 packages/store/src/secret-store.ts
 packages/store/src/send-files.ts

@@ -9,7 +9,7 @@ import Pango from 'gi://Pango?version=1.0';
 import { _, fmt, parseForwarded, errorMessage } from '@curlew/protocol';
 import type { ThreadCapabilities, ThreadFacts, ThreadFeature } from '@curlew/protocol';
 import type { ConversationMessage, Mention, MessageReaction, ReplyTarget } from '@curlew/protocol';
-import { configPath, type MessageCursor } from '@curlew/store';
+import { configPath, findSearchMatches, normaliseSearchText, type MessageCursor } from '@curlew/store';
 
 import { loadConfig, saveConfig } from '../core/config.ts';
 import { emailChatHint, shouldShowEmailChatHint, withHintSeen } from './email-chat-model.ts';
@@ -65,7 +65,6 @@ import {
   type ReactionChange,
   type ReplyDraft,
 } from './conversation-model.ts';
-import { reactionPlacement } from './reaction-placement-model.ts';
 import { attachmentList, type AttachmentHandlers } from './attachment-view.ts';
 import { type Look, lookClasses } from '../core/lib/appearance.ts';
 import { ChatBackground } from './chat-background.ts';
@@ -108,6 +107,11 @@ export interface ConversationView {
   openBubbleMenu(): void;
   /** Is the newest message in view? The window marks the chat read only then. */
   isAtEnd(): boolean;
+  /**
+   * The text being searched and the ids of this chat's matching messages, newest first. Shows
+   * "n of m" with previous/next and jumps to the newest match; empty `ids` or '' ends the search.
+   */
+  setSearch(text: string, ids: readonly string[]): void;
 }
 
 const ROWS_PER_TURN = 8;
@@ -251,6 +255,7 @@ export function createConversationView(
   // quote shows them, and a click on it pages back until the real row exists.
   const quoteTargets = new Map<string, ShownMessage>();
   let jumpTo: string | null = null;
+  let pendingFlash: string | null = null;
 
   const title = new Adw.WindowTitle({ title: _('Curlew') });
   const header = new Adw.HeaderBar();
@@ -404,6 +409,45 @@ export function createConversationView(
   compose.append(pill);
   const toolbar = new Adw.ToolbarView({ extendContentToBottomEdge: true });
   toolbar.add_top_bar(header);
+
+  // Stepping through the matches of the sidebar's search. The counter ellipsizes, so the bar never
+  // raises the minimum width of the content page.
+  let searchText = '';
+  let hitIds: string[] = [];
+  let hitAt = 0;
+  let pendingJump = false;
+  const hitCounter = new Gtk.Label({
+    xalign: 0,
+    hexpand: true,
+    ellipsize: Pango.EllipsizeMode.END,
+    marginStart: 6,
+  });
+  hitCounter.add_css_class('heading');
+  const olderHit = new Gtk.Button({
+    iconName: 'go-up-symbolic',
+    tooltipText: _('Next match'),
+    valign: Gtk.Align.CENTER,
+  });
+  olderHit.add_css_class('flat');
+  olderHit.update_property([Gtk.AccessibleProperty.LABEL], [_('Next match')]);
+  const newerHit = new Gtk.Button({
+    iconName: 'go-down-symbolic',
+    tooltipText: _('Previous match'),
+    valign: Gtk.Align.CENTER,
+  });
+  newerHit.add_css_class('flat');
+  newerHit.update_property([Gtk.AccessibleProperty.LABEL], [_('Previous match')]);
+  const endSearch = new Gtk.Button({
+    iconName: 'window-close-symbolic',
+    tooltipText: _('Stop stepping through matches'),
+    valign: Gtk.Align.CENTER,
+  });
+  endSearch.add_css_class('flat');
+  endSearch.update_property([Gtk.AccessibleProperty.LABEL], [_('Stop stepping through matches')]);
+  const hitBar = new Gtk.Box({ spacing: 2, visible: false });
+  hitBar.add_css_class('toolbar');
+  for (const part of [hitCounter, olderHit, newerHit, endSearch]) hitBar.append(part);
+  toolbar.add_top_bar(hitBar);
   toolbar.add_bottom_bar(compose);
   toolbar.set_content(content);
   // The header stays solid, as in Telegram, so a message never runs under its title. The composer
@@ -746,6 +790,114 @@ export function createConversationView(
     adjustment.set_value(top);
   };
 
+  // Matches inside the bubbles: the label's own text is searched, so rich text and mentions line up.
+  const markHits = (label: Gtk.Label | null, needle: string): void => {
+    if (!label) return;
+    if (needle === '') {
+      label.set_attributes(null);
+      return;
+    }
+    const shown = label.get_text();
+    const found = findSearchMatches(shown, needle, true);
+    if (found.length === 0) {
+      label.set_attributes(null);
+      return;
+    }
+    const bytes = (text: string): number => new TextEncoder().encode(text).length;
+    const list = new Pango.AttrList();
+    for (const { start, end } of found) {
+      const from = bytes(shown.slice(0, start));
+      const to = from + bytes(shown.slice(start, end));
+      for (const attr of [
+        Pango.attr_background_new(0xffff, 0xc000, 0x2000),
+        Pango.attr_background_alpha_new(0x6000),
+        Pango.attr_weight_new(Pango.Weight.BOLD),
+      ]) {
+        attr.start_index = from;
+        attr.end_index = to;
+        list.insert(attr);
+      }
+    }
+    label.set_attributes(list);
+  };
+  const markAllHits = (): void => {
+    const needle = normaliseSearchText(searchText);
+    for (const [id, one] of built) markHits(one.body, hitIds.includes(id) ? needle : '');
+  };
+  let flashed: Gtk.ListBoxRow | null = null;
+  let flashTimer = 0;
+  const stopFlash = (): void => {
+    if (flashTimer !== 0) GLib.source_remove(flashTimer);
+    flashTimer = 0;
+    flashed?.unset_state_flags(Gtk.StateFlags.SELECTED);
+    flashed = null;
+  };
+  // The row takes the theme's selection look for a moment: no CSS of our own.
+  const flash = (row: Gtk.ListBoxRow): void => {
+    stopFlash();
+    flashed = row;
+    row.set_state_flags(Gtk.StateFlags.SELECTED, false);
+    flashTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1500, () => {
+      flashTimer = 0;
+      stopFlash();
+      return GLib.SOURCE_REMOVE;
+    });
+  };
+  const showHitPosition = (): void => {
+    const text = fmt(_('{current} of {total}'), { current: String(hitAt + 1), total: String(hitIds.length) });
+    hitCounter.set_label(text);
+    hitCounter.update_property([Gtk.AccessibleProperty.LABEL], [text]);
+  };
+  const goToHit = (at: number): void => {
+    if (hitIds.length === 0) return;
+    hitAt = ((at % hitIds.length) + hitIds.length) % hitIds.length;
+    showHitPosition();
+    const id = hitIds[hitAt]!;
+    scrollToMessage(id);
+    pendingFlash = id;
+    markAllHits();
+    const row = built.get(id)?.row;
+    if (row) {
+      pendingFlash = null;
+      flash(row);
+    }
+  };
+  const setSearch = (text: string, ids: readonly string[]): void => {
+    searchText = text;
+    hitIds = [...ids];
+    hitAt = 0;
+    pendingJump = false;
+    pendingFlash = null;
+    hitBar.set_visible(hitIds.length > 0);
+    if (hitIds.length === 0) stopFlash();
+    markAllHits();
+    if (hitIds.length === 0) return;
+    showHitPosition();
+    if (ready) goToHit(0);
+    else pendingJump = true;
+  };
+  endSearch.connect('clicked', () => setSearch('', []));
+  olderHit.connect('clicked', () => goToHit(hitAt + 1));
+  newerHit.connect('clicked', () => goToHit(hitAt - 1));
+  const hitKeys = new Gtk.ShortcutController();
+  hitKeys.set_scope(Gtk.ShortcutScope.GLOBAL);
+  for (const [keys, step] of [
+    ['<Control>g', 1],
+    ['<Control><Shift>g', -1],
+  ] as const) {
+    hitKeys.add_shortcut(
+      new Gtk.Shortcut({
+        trigger: Gtk.ShortcutTrigger.parse_string(keys),
+        action: Gtk.CallbackAction.new(() => {
+          if (hitIds.length === 0 || !page.get_mapped()) return false;
+          goToHit(hitAt + step);
+          return true;
+        }),
+      }),
+    );
+  }
+  page.add_controller(hitKeys);
+
   const startReply = (draft: ReplyDraft<ProtocolChoice>): void => {
     selectChoice(draft.choice);
     clearReply();
@@ -958,14 +1110,13 @@ export function createConversationView(
     reactions: readonly MessageReaction[],
     showReactions: () => void,
   ): Gtk.Widget => {
-    const flow = new Gtk.FlowBox({
-      selectionMode: Gtk.SelectionMode.NONE,
-      homogeneous: false,
-      minChildrenPerLine: 1,
-      maxChildrenPerLine: 20,
-      columnSpacing: 4,
-      rowSpacing: 4,
-      halign: Gtk.Align.START,
+    // A wrap box, not a flow box: its natural width is its chips', so the row sits flush with the
+    // bubble's edge on either side.
+    const flow = new Adw.WrapBox({
+      childSpacing: 4,
+      lineSpacing: 4,
+      align: message.fromSelf ? 1 : 0,
+      halign: message.fromSelf ? Gtk.Align.END : Gtk.Align.START,
     });
     for (const reaction of reactions) {
       const { text, tooltip } = reactionChip(reaction);
@@ -1091,9 +1242,6 @@ export function createConversationView(
       );
     }
     showReactions();
-    // A bubble of only media shows its chips in a row under it, a bubble with text keeps them inside.
-    const below = reactionPlacement(message) === 'below';
-    if (!below) bubble.append(padded(reactions));
     const time = new Gtk.Label({ label: clockTime(message.sentAt), xalign: 1 });
     time.add_css_class('caption');
     time.add_css_class('dim-label');
@@ -1134,16 +1282,16 @@ export function createConversationView(
     });
     // A long message stops short of the pane's full width on a wide window, so a line stays readable.
     const side = message.fromSelf ? Gtk.Align.END : Gtk.Align.START;
-    let shownCard: Gtk.Widget = card;
-    if (below) {
-      const column = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 4 });
-      card.set_halign(side);
-      reactions.set_halign(side);
-      column.append(card);
-      column.append(reactions);
-      shownCard = column;
-    }
-    const clamp = new Adw.Clamp({ maximumSize: 560, tighteningThreshold: 560, child: shownCard });
+    // Reaction chips sit under the bubble on its side, tucked in from the edge like the messengers
+    // people know, so the bubble holds only the message and its time.
+    const column = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 2 });
+    card.set_halign(side);
+    reactions.set_halign(side);
+    reactions.set_margin_start(8);
+    reactions.set_margin_end(8);
+    column.append(card);
+    column.append(reactions);
+    const clamp = new Adw.Clamp({ maximumSize: 560, tighteningThreshold: 560, child: column });
     row.set_child(clamp);
     row.set_halign(message.fromSelf ? Gtk.Align.END : Gtk.Align.START);
     const separator = startsDay ? daySeparator(dayOf(message)) : null;
@@ -1258,7 +1406,7 @@ export function createConversationView(
     );
     one.bubble.insert_before(
       padded(fadedOverlay(body, preview.clipped, () => setBodyText(body, text, trimmed.mentions, hooks))),
-      one.reactions.get_parent() === one.bubble ? one.reactions : one.meta,
+      one.meta,
     );
     one.body = body;
     if (message.editedAt && !one.edited) {
@@ -1326,11 +1474,18 @@ export function createConversationView(
           if (built.has(wanted) || exhausted) {
             jumpTo = null;
             scrollToMessage(wanted);
+            markAllHits();
+            if (pendingFlash === wanted) {
+              pendingFlash = null;
+              const row = built.get(wanted)?.row;
+              if (row) flash(row);
+            }
             return;
           }
           loadPage();
           return;
         }
+        markAllHits();
         if (nearTop()) loadPage();
       });
     };
@@ -1523,6 +1678,7 @@ export function createConversationView(
     isAtEnd() {
       return ready && atEnd;
     },
+    setSearch,
     openBubbleMenu() {
       openNewestBubble();
     },
@@ -1621,6 +1777,7 @@ export function createConversationView(
         hintSeen = undefined;
       }
       chatBanner.set_revealed(shouldShowEmailChatHint(nextEntry, hintSeen));
+      if (!keepComposer) setSearch('', []);
       history.remove_all();
       built.clear();
       empty.set_visible(nextMessages.length === 0);
@@ -1703,7 +1860,10 @@ export function createConversationView(
         afterLayout(run, () => {
           adjustment.set_value(adjustment.get_upper());
           ready = true;
-          if (nearTop()) loadPage();
+          if (pendingJump) {
+            pendingJump = false;
+            goToHit(0);
+          } else if (nearTop()) loadPage();
         });
         return GLib.SOURCE_REMOVE;
       });

@@ -17,6 +17,8 @@ export * from './attachments.ts';
 export * from './thumbnails.ts';
 export * from './send-files.ts';
 export * from './conversations.ts';
+export * from './search-key.ts';
+export * from './search-key-fill.ts';
 export * from './read-receipts.ts';
 export * from './local-read.ts';
 export * from './conversation-totals.ts';
