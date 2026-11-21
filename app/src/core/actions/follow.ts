@@ -17,7 +17,7 @@
  */
 
 import { abortableSleep, errText } from '@curlew/protocol';
-import type { ChatBackend, ChatSession } from '@curlew/protocol';
+import type { ChatBackend, ChatSession, MessageSender } from '@curlew/protocol';
 import {
   type DeliveryProgress,
   type IndexDatabase,
@@ -47,6 +47,12 @@ export interface FollowLink {
   /** `loggedOut`: the network dropped this device — retrying cannot help. */
   onClosed(listener: (reason: string, loggedOut?: boolean) => void): void;
   goAvailable?(): Promise<void>;
+  /**
+   * A sender on THIS connection, for a backend whose send needs the state this link holds: the
+   * Matrix crypto store, which only the process that opened it can encrypt with (ADR 0019 §1).
+   * Handed to `onSendable` so the daemon can answer a send off the session bus with it.
+   */
+  openSender?(permit: SendPermit): Promise<MessageSender>;
   close(): Promise<void>;
 }
 
@@ -75,6 +81,12 @@ export interface FollowDeps {
   onProgress?: (event: DeliveryProgress) => void;
   /** Called when a chat session is opened or closed, so the daemon can route fetches to it. */
   onSession?: (account: { backend: string; accountId: string }, session: ChatSession | null) => void;
+  /**
+   * Called with the open link itself, and with null the moment it is gone, so the daemon can
+   * route a send over the bus to it. Separate from `onSession`, which hands out a read session:
+   * a send needs the connection, not a history walk over it.
+   */
+  onSendable?: (account: { backend: string; accountId: string }, link: FollowLink | null) => void;
   now?: () => Date;
   sleep?: (ms: number) => Promise<void>;
   leaseIntervalMs?: number;
@@ -251,6 +263,7 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
           log(`curlew-daemon: ${who} connected`);
           progress({ type: 'connected' });
           deps.onSession?.({ backend: backendName, accountId }, link.chatSession());
+          deps.onSendable?.({ backend: backendName, accountId }, link);
           attempt = 0;
           await catchUp();
           const end = await closed;
@@ -275,6 +288,9 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
           wait = Math.min(wait * 2, RECONNECT_CAP_MS);
         } finally {
           deps.onSession?.({ backend: backendName, accountId }, null);
+          // Before the link is closed: a send that arrives now must be told `not-followed` and
+          // kept by the caller, not handed to a connection that is going down.
+          deps.onSendable?.({ backend: backendName, accountId }, null);
           if (session) await session.close().catch(() => {});
           await pending;
         }

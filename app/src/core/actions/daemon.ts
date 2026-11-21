@@ -336,9 +336,17 @@ export function sessionKey(backend: string, accountId: string): string {
   return `${backend}/${accountId}`;
 }
 
+/**
+ * What a send off the bus needs of an open connection, whoever holds it: a delivery session
+ * (WhatsApp, Signal) and a chat backend's live link (Matrix, ADR 0019 §1) both offer it, and
+ * nothing else of either is used here. Keeping the type this small is what lets the two kinds
+ * share one map.
+ */
+export type SendableLive = Pick<DeliverySession, 'openSender' | 'openAvatars'>;
+
 export interface DaemonSendHandlerOptions {
   /** The live sessions of this run, keyed by `sessionKey` — the map `onSession` keeps up to date. */
-  sessions: ReadonlyMap<string, DeliverySession>;
+  sessions: ReadonlyMap<string, SendableLive>;
   log: (line: string) => void;
   /** Is this account paused right now? A paused account refuses a send that was already queued. */
   isPaused?: (backend: string, accountId: string) => boolean;
@@ -660,7 +668,7 @@ export interface DaemonAvatarsHandlerOptions {
   /** The backends of the accounts this run holds, keyed by `sessionKey`; those with `openAvatars` serve pictures. */
   backends: ReadonlyMap<string, MessageBackend>;
   /** The live delivery sessions, keyed the same way: the way to pictures on a network that allows one connection (WhatsApp). */
-  sessions?: ReadonlyMap<string, DeliverySession>;
+  sessions?: ReadonlyMap<string, SendableLive>;
   log: (line: string) => void;
   /** Where the pictures are cached; `avatarsDir()` when unset. */
   root?: string;
@@ -852,7 +860,9 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
   // The sessions this run is holding, so a send asked for over the bus reaches the connection that
   // is already up. A reconnect hands over `null` and then the new session, so a send during one
   // finds nothing and is told `not-followed` rather than going out on a connection that is gone.
-  const sessions = new Map<string, DeliverySession>();
+  // Both kinds live here: the delivery sessions `receiveDeliveries` opens, and the follow links of
+  // the chat backends whose send needs the open connection (Matrix encryption, ADR 0019 §1).
+  const sessions = new Map<string, SendableLive>();
   // The backends that can fetch attachments for every account this run holds, chat or delivery.
   const fetchBackends = new Map<
     string,
@@ -1027,6 +1037,21 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
           fetchBackends.set(key, backend);
         }
       };
+    /**
+     * A follow link that can send on itself goes into `sessions`, so `Send` off the bus is
+     * answered on the connection that is already up — for Matrix the only one that can encrypt.
+     * A link without `openSender` is not registered at all: the caller is then told
+     * `not-followed` and sends on its own path, which is what every backend did before.
+     */
+    const onFollowSendable = (
+      account: { backend: string; accountId: string },
+      link: FollowLink | null,
+    ): void => {
+      const key = sessionKey(account.backend, account.accountId);
+      if (link === null) sessions.delete(key);
+      else if (link.openSender !== undefined)
+        sessions.set(key, { openSender: (permit) => link.openSender!(permit) });
+    };
     const followAll = (
       backend: ChatBackend & MessageBackend,
       backendName: string,
@@ -1050,6 +1075,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
             },
             onProgress: progress,
             onSession: onFollowSession(backend),
+            onSendable: onFollowSendable,
             holder: String(process.pid),
             writeLogPath: params.writeLogPath,
           }),

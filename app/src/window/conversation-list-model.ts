@@ -375,11 +375,13 @@ function personOf(conversation: Conversation, identity?: string): string | null 
 
 /**
  * Why the composer cannot be used in this conversation, or null when it can. A group no backend
- * can send to yet (Signal, WhatsApp, XMPP) says so instead of losing the composer. An encrypted Matrix
- * room is the one case: curlew has no way to encrypt, and a cleartext message there would be
- * readable by the server and defeat what the room's members chose (the send path refuses it too;
- * this only says so before anyone types). Unknown encryption is not a block — the sender asks the
- * homeserver again right before the send.
+ * can send to yet (Signal, WhatsApp, XMPP) says so instead of losing the composer.
+ *
+ * An encrypted Matrix room is NOT blocked here any more (ADR 0019): the send is routed to the
+ * daemon's live client, which encrypts it. Whether that daemon is running is not known in this
+ * model and changes while the window is open, so the one place that can answer it answers it —
+ * the send path, which refuses with a sentence naming the daemon rather than sending cleartext.
+ * Greying the composer out on a guess would hide a room the person can in fact write in.
  */
 export function composerBlock(entry: ListEntry): string | null {
   if (entry.pin !== null && protocolChoices(entry).length === 0) {
@@ -387,7 +389,6 @@ export function composerBlock(entry: ListEntry): string | null {
       protocol: protocolLabel(entry.pin),
     });
   }
-  if (entry.room?.encrypted === true) return _('Encrypted rooms are not supported yet');
   return unsupportedGroup(entry);
 }
 

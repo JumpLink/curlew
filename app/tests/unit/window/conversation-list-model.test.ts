@@ -438,14 +438,16 @@ export default async () => {
       expect(composerBlock(mail)).toBe(null);
     });
 
-    it('blocks the composer only in a room known to be encrypted', () => {
+    it('keeps the composer in an encrypted room, which the daemon can send to', () => {
       const room = (encrypted: boolean | null) => ({
         chatId: '!r',
         public: false,
         encrypted,
         memberCount: 2,
       });
-      expect(composerBlock(entry({ id: 'a', room: room(true) }))).not.toBe(null);
+      // Since ADR 0019 an encrypted room is sendable: the send is routed to the daemon's live
+      // client. Whether one runs is not knowable here, so the send path answers it, not the list.
+      expect(composerBlock(entry({ id: 'a', room: room(true) }))).toBe(null);
       expect(composerBlock(entry({ id: 'b', room: room(false) }))).toBe(null);
       expect(composerBlock(entry({ id: 'c', room: room(null) }))).toBe(null);
       expect(composerBlock(entry({ id: 'd' }))).toBe(null);
