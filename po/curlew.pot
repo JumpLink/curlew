@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-21 09:06+0100\n"
+"POT-Creation-Date: 2026-11-21 09:23+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3386,15 +3386,15 @@ msgstr ""
 msgid "No further details are known about this person."
 msgstr ""
 
-#: app/src/window/window.ts:581
+#: app/src/window/window.ts:582
 msgid "Curlew (demo)"
 msgstr ""
 
-#: app/src/window/window.ts:584
+#: app/src/window/window.ts:585
 msgid "Demo data — nothing here is real"
 msgstr ""
 
-#: app/src/window/window.ts:733
+#: app/src/window/window.ts:734
 msgid "No contacts to merge"
 msgstr ""
 
