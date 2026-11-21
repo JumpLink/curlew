@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-21 11:09+0100\n"
+"POT-Creation-Date: 2026-11-21 07:41+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,8 +20,8 @@ msgstr ""
 
 #: app-android/app/window.ts:18 app/src/window/about.ts:37
 #: app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:260 app/src/window/window.ts:111
-#: app/src/window/window.ts:241
+#: app/src/window/conversation-view.ts:255 app/src/window/window.ts:110
+#: app/src/window/window.ts:240
 msgid "Curlew"
 msgstr ""
 
@@ -131,7 +131,7 @@ msgid "systemctl --user {verb} exited {code}"
 msgstr ""
 
 #: app/src/core/actions/chat-attachment.ts:140
-#: app/src/core/actions/daemon.ts:621
+#: app/src/core/actions/daemon.ts:629
 msgid "the attachment was not found in the index"
 msgstr ""
 
@@ -151,29 +151,29 @@ msgstr ""
 
 #: app/src/core/actions/chat-thumbnail.ts:109
 #: app/src/core/actions/chat-thumbnail.ts:150
-#: app/src/core/actions/daemon.ts:596
+#: app/src/core/actions/daemon.ts:604
 msgid "the attachment has no thumbnail to fetch"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:393
+#: app/src/core/actions/daemon.ts:401
 msgid "this account is paused — switch it on in Accounts to send from it"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:406
+#: app/src/core/actions/daemon.ts:414
 msgid "{capability} is not what {backend} sends under — nothing was sent"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:428
+#: app/src/core/actions/daemon.ts:436
 msgid ""
 "the running curlew daemon could not open a sender ({reason}) — nothing was "
 "sent"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:486
+#: app/src/core/actions/daemon.ts:494
 msgid "this account is paused"
 msgstr ""
 
-#: app/src/core/actions/daemon.ts:534
+#: app/src/core/actions/daemon.ts:542
 msgid "the download stalled — try again"
 msgstr ""
 
@@ -1760,9 +1760,9 @@ msgstr ""
 #: app/src/window/account-remove-model.ts:37
 #: app/src/window/account-remove-model.ts:71
 #: app/src/window/agent-access-page.ts:233
-#: app/src/window/conversation-list.ts:512
-#: app/src/window/conversation-list.ts:625
-#: app/src/window/conversation-view.ts:978 app/src/window/protocols-page.ts:66
+#: app/src/window/conversation-list.ts:509
+#: app/src/window/conversation-list.ts:622
+#: app/src/window/conversation-view.ts:826 app/src/window/protocols-page.ts:66
 #: app/src/window/protocols-page.ts:142
 msgid "Cancel"
 msgstr ""
@@ -1881,7 +1881,7 @@ msgstr ""
 
 #: app/src/window/accounts-dialog.ts:93 app/src/window/accounts-page.ts:206
 #: app/src/window/welcome-model.ts:104 app/src/window/welcome.ts:177
-#: app/src/window/window.ts:254
+#: app/src/window/window.ts:253
 msgid "Accounts"
 msgstr ""
 
@@ -1970,13 +1970,13 @@ msgstr ""
 msgid "Start"
 msgstr ""
 
-#: app/src/window/accounts-page.ts:199 app/src/window/conversation-list.ts:370
+#: app/src/window/accounts-page.ts:199 app/src/window/conversation-list.ts:367
 #: app/src/window/protocols-page.ts:248 app/src/window/welcome-model.ts:102
 #: app/src/window/welcome.ts:153
 msgid "Protocols"
 msgstr ""
 
-#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:258
+#: app/src/window/agent-access-dialog.ts:120 app/src/window/window.ts:257
 msgid "Agent access"
 msgstr ""
 
@@ -2271,7 +2271,7 @@ msgid "Could not fetch the attachment: {error}"
 msgstr ""
 
 #: app/src/window/attachment-view.ts:184 app/src/window/attachment-view.ts:193
-#: app/src/window/conversation-list-model.ts:526
+#: app/src/window/conversation-list-model.ts:527
 #: app/src/window/conversation-model.ts:318
 #: app/src/window/conversation-model.ts:323
 msgid "Attachment"
@@ -2391,7 +2391,7 @@ msgid "The newest chat decides"
 msgstr ""
 
 #: app/src/window/contact-page.ts:264 app/src/window/contact-page.ts:279
-#: app/src/window/conversation-list-model.ts:467
+#: app/src/window/conversation-list-model.ts:468
 msgid "Automatic"
 msgstr ""
 
@@ -2399,7 +2399,7 @@ msgstr ""
 msgid "Picture"
 msgstr ""
 
-#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:539
+#: app/src/window/contact-page.ts:315 app/src/window/conversation-list.ts:536
 msgid "Separate"
 msgstr ""
 
@@ -2506,8 +2506,8 @@ msgid "Yesterday"
 msgstr ""
 
 #: app/src/window/conversation-list-model.ts:273
-#: app/src/window/conversation-list-model.ts:734
-#: app/src/window/conversation-list-model.ts:965
+#: app/src/window/conversation-list-model.ts:735
+#: app/src/window/conversation-list-model.ts:966
 msgid "Note to self"
 msgstr ""
 
@@ -2521,176 +2521,172 @@ msgstr[1] ""
 msgid "Unnamed conversation"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:386
+#: app/src/window/conversation-list-model.ts:388
 msgid "Only via {protocol}, which has no address for this person"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:390
-msgid "Encrypted rooms are not supported yet"
-msgstr ""
-
-#: app/src/window/conversation-list-model.ts:399
+#: app/src/window/conversation-list-model.ts:400
 msgid "Sending to Signal groups is not supported yet"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:401
+#: app/src/window/conversation-list-model.ts:402
 msgid "Sending to WhatsApp groups is not supported yet"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:403
+#: app/src/window/conversation-list-model.ts:404
 msgid "This Telegram chat is not ready to send to yet"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:405
+#: app/src/window/conversation-list-model.ts:406
 msgid "Sending to XMPP groups is not supported yet"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:463
-#: app/src/window/conversation-list-model.ts:482
+#: app/src/window/conversation-list-model.ts:464
+#: app/src/window/conversation-list-model.ts:483
 msgid "Only via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:529
+#: app/src/window/conversation-list-model.ts:530
 msgid "You: {text}"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:531
+#: app/src/window/conversation-list-model.ts:532
 msgid "{name}: {text}"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:561
+#: app/src/window/conversation-list-model.ts:562
 msgid "Public room · {count} member"
 msgid_plural "Public room · {count} members"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-list-model.ts:562
+#: app/src/window/conversation-list-model.ts:563
 msgid "Room · {count} member"
 msgid_plural "Room · {count} members"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/src/window/conversation-list-model.ts:897
-#: app/src/window/conversation-list.ts:541
+#: app/src/window/conversation-list-model.ts:898
+#: app/src/window/conversation-list.ts:538
 msgid "Unread"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:898
+#: app/src/window/conversation-list-model.ts:899
 msgid "People"
 msgstr ""
 
-#: app/src/window/conversation-list-model.ts:899
+#: app/src/window/conversation-list-model.ts:900
 msgid "Groups"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:240
+#: app/src/window/conversation-list.ts:238
 msgid "Add an account"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:248
-#: app/src/window/conversation-list.ts:249
+#: app/src/window/conversation-list.ts:246
+#: app/src/window/conversation-list.ts:247
 msgid "Search conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:253
+#: app/src/window/conversation-list.ts:251
 msgid "Everything"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:254
+#: app/src/window/conversation-list.ts:252
 msgid "Names and numbers"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:255
+#: app/src/window/conversation-list.ts:253
 msgid "Messages"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:259
-#: app/src/window/conversation-list.ts:263
+#: app/src/window/conversation-list.ts:257
+#: app/src/window/conversation-list.ts:261
 msgid "Search in"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:284
+#: app/src/window/conversation-list.ts:282
 msgid "Filter conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:393
+#: app/src/window/conversation-list.ts:390
 msgid "Clear filters"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:419
+#: app/src/window/conversation-list.ts:416
 msgid "No conversations yet"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:419
+#: app/src/window/conversation-list.ts:416
 msgid "No matches"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:421
+#: app/src/window/conversation-list.ts:418
 msgid ""
 "Conversations appear here once an account is added and its messages have "
 "arrived."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:427
+#: app/src/window/conversation-list.ts:424
 msgid "Nothing fits the search and filters."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:495
+#: app/src/window/conversation-list.ts:492
 msgid "Search"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:501
+#: app/src/window/conversation-list.ts:498
 #: app/src/window/new-conversation.ts:26
 msgid "New conversation"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:536
-#: app/src/window/conversation-list.ts:626
+#: app/src/window/conversation-list.ts:533
+#: app/src/window/conversation-list.ts:623
 #: app/src/window/merge-assistant.ts:116
 msgid "Merge"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:540
-#: app/src/window/conversation-view.ts:1267
-#: app/src/window/conversation-view.ts:1268
+#: app/src/window/conversation-list.ts:537
+#: app/src/window/conversation-view.ts:1119
+#: app/src/window/conversation-view.ts:1120
 msgid "Read"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:540
+#: app/src/window/conversation-list.ts:537
 msgid "Mark as Read"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:541
+#: app/src/window/conversation-list.ts:538
 msgid "Mark as Unread"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:622
+#: app/src/window/conversation-list.ts:619
 msgid "Merge these people?"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:623
+#: app/src/window/conversation-list.ts:620
 msgid ""
 "Their chats become one conversation. Nothing is deleted, and you can "
 "separate them again."
 msgstr ""
 
-#: app/src/window/conversation-list.ts:656
+#: app/src/window/conversation-list.ts:653
 msgid "Review"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:663
+#: app/src/window/conversation-list.ts:660
 #: app/src/window/preferences-dialog.ts:61
 msgid "Conversations"
 msgstr ""
 
-#: app/src/window/conversation-list.ts:685
+#: app/src/window/conversation-list.ts:682
 msgid "{count} possible duplicate"
 msgid_plural "{count} possible duplicates"
 msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:144
-#: app/src/window/conversation-view.ts:1643
+#: app/src/window/conversation-view.ts:1488
 msgid "Continuing via {protocol}"
 msgstr ""
 
@@ -2726,170 +2722,151 @@ msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:359
 #: app/src/window/conversation-model.ts:372
-#: app/src/window/conversation-view.ts:962
+#: app/src/window/conversation-view.ts:810
 msgid "You"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:266
+#: app/src/window/conversation-view.ts:261
 msgid "Choose how to reach this person"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:279
-#: app/src/window/conversation-view.ts:1769
+#: app/src/window/conversation-view.ts:274
+#: app/src/window/conversation-view.ts:1613
 msgid "Contact details"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:298
+#: app/src/window/conversation-view.ts:293
 msgid "No messages yet"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:307
-#: app/src/window/conversation-view.ts:638
+#: app/src/window/conversation-view.ts:302
+#: app/src/window/conversation-view.ts:594
 msgid "Write a message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:318
+#: app/src/window/conversation-view.ts:313
 msgid "Send message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:331
+#: app/src/window/conversation-view.ts:326
 msgid "Cancel reply"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:344
+#: app/src/window/conversation-view.ts:339
 msgid "Cancel editing"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:357
+#: app/src/window/conversation-view.ts:352
 msgid "Got It"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:428
-#: app/src/window/conversation-view.ts:432
-msgid "Next match"
-msgstr ""
-
-#: app/src/window/conversation-view.ts:435
-#: app/src/window/conversation-view.ts:439
-msgid "Previous match"
-msgstr ""
-
-#: app/src/window/conversation-view.ts:442
-#: app/src/window/conversation-view.ts:446
-msgid "Stop stepping through matches"
-msgstr ""
-
-#: app/src/window/conversation-view.ts:458
+#: app/src/window/conversation-view.ts:414
 msgid "Conversation"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:604
+#: app/src/window/conversation-view.ts:560
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:656
+#: app/src/window/conversation-view.ts:612
 msgid "Send via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:761
+#: app/src/window/conversation-view.ts:717
 msgid "Show the quoted message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:768
-#: app/src/window/conversation-view.ts:908
+#: app/src/window/conversation-view.ts:724
+#: app/src/window/conversation-view.ts:756
 msgid "Reply to {author}: {excerpt}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:783
+#: app/src/window/conversation-view.ts:739
 msgid "The quoted message is no longer in the history"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:847
-msgid "{current} of {total}"
-msgstr ""
-
-#: app/src/window/conversation-view.ts:933
+#: app/src/window/conversation-view.ts:781
 msgid "Reaction not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:961
+#: app/src/window/conversation-view.ts:809
 msgid "Edit message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:965
+#: app/src/window/conversation-view.ts:813
 msgid "Editing your message: {excerpt}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:973
+#: app/src/window/conversation-view.ts:821
 msgid "Delete message?"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:974
+#: app/src/window/conversation-view.ts:822
 msgid "This will remove the message for everyone in the chat."
 msgstr ""
 
-#: app/src/window/conversation-view.ts:979
+#: app/src/window/conversation-view.ts:827
 msgid "Delete for everyone"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:996
+#: app/src/window/conversation-view.ts:844
 msgid "Message not deleted: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1053
+#: app/src/window/conversation-view.ts:901
 msgid "Reply"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1054
+#: app/src/window/conversation-view.ts:902
 msgid "Edit"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1055
+#: app/src/window/conversation-view.ts:903
 msgid "Copy"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1056
+#: app/src/window/conversation-view.ts:904
 msgid "Delete"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1195
+#: app/src/window/conversation-view.ts:1044
 msgid "Forwarded from {sender}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1196
+#: app/src/window/conversation-view.ts:1045
 msgid "Forwarded"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1210
+#: app/src/window/conversation-view.ts:1059
 msgid "Encrypted message: it cannot be shown here"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1211
+#: app/src/window/conversation-view.ts:1060
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1257
-#: app/src/window/conversation-view.ts:1413
+#: app/src/window/conversation-view.ts:1109
+#: app/src/window/conversation-view.ts:1265
 msgid "edited"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1507
+#: app/src/window/conversation-view.ts:1352
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1608
+#: app/src/window/conversation-view.ts:1453
 msgid "Message not edited: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1655
+#: app/src/window/conversation-view.ts:1500
 msgid "Message not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1658
+#: app/src/window/conversation-view.ts:1503
 msgid "Retry"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1769
+#: app/src/window/conversation-view.ts:1613
 msgid "Group details"
 msgstr ""
 
@@ -3148,7 +3125,7 @@ msgstr ""
 msgid "AI"
 msgstr ""
 
-#: app/src/window/preferences-dialog.ts:118 app/src/window/window.ts:256
+#: app/src/window/preferences-dialog.ts:118 app/src/window/window.ts:255
 msgid "Preferences"
 msgstr ""
 
@@ -3156,7 +3133,7 @@ msgstr ""
 msgid "Accept and Turn On"
 msgstr ""
 
-#: app/src/window/protocols-page.ts:83 app/src/window/window.ts:431
+#: app/src/window/protocols-page.ts:83 app/src/window/window.ts:430
 msgid "Close"
 msgstr ""
 
@@ -3296,7 +3273,7 @@ msgid "On"
 msgstr ""
 
 #: app/src/window/welcome.ts:112 app/src/window/welcome.ts:130
-#: app/src/window/window.ts:261
+#: app/src/window/window.ts:260
 msgid "Welcome"
 msgstr ""
 
@@ -3350,51 +3327,51 @@ msgstr ""
 msgid "Start Using Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:105
+#: app/src/window/window.ts:104
 msgid "Select a conversation"
 msgstr ""
 
-#: app/src/window/window.ts:106
+#: app/src/window/window.ts:105
 msgid "Pick a conversation from the list."
 msgstr ""
 
-#: app/src/window/window.ts:146
+#: app/src/window/window.ts:145
 msgid "Resize the conversation list"
 msgstr ""
 
-#: app/src/window/window.ts:148
+#: app/src/window/window.ts:147
 msgid "Drag to resize the conversation list. Double-click to reset."
 msgstr ""
 
-#: app/src/window/window.ts:255
+#: app/src/window/window.ts:254
 msgid "Merge contacts…"
 msgstr ""
 
-#: app/src/window/window.ts:263
+#: app/src/window/window.ts:262
 msgid "About Curlew"
 msgstr ""
 
-#: app/src/window/window.ts:264
+#: app/src/window/window.ts:263
 msgid "Quit"
 msgstr ""
 
-#: app/src/window/window.ts:313
+#: app/src/window/window.ts:312
 msgid "This conversation has no recipient address."
 msgstr ""
 
-#: app/src/window/window.ts:429
+#: app/src/window/window.ts:428
 msgid "No further details are known about this person."
 msgstr ""
 
-#: app/src/window/window.ts:582
+#: app/src/window/window.ts:572
 msgid "Curlew (demo)"
 msgstr ""
 
-#: app/src/window/window.ts:585
+#: app/src/window/window.ts:575
 msgid "Demo data — nothing here is real"
 msgstr ""
 
-#: app/src/window/window.ts:734
+#: app/src/window/window.ts:724
 msgid "No contacts to merge"
 msgstr ""
 
@@ -3488,7 +3465,7 @@ msgstr ""
 msgid "marking mail as read is not available here"
 msgstr ""
 
-#: packages/imap/src/send.ts:86 packages/matrix/src/send.ts:388
+#: packages/imap/src/send.ts:86 packages/matrix/src/send.ts:506
 #: packages/signal/src/send.ts:536 packages/telegram/src/sender.ts:84
 #: packages/whatsapp/src/send.ts:425
 msgid "sending to {address} is not granted for account {account}"
@@ -3524,21 +3501,44 @@ msgid ""
 "{reason}"
 msgstr ""
 
-#: packages/matrix/src/attachments.ts:37
+#: packages/matrix/src/attachment-crypto.ts:101
+msgid ""
+"this runtime has no WebCrypto — an encrypted attachment cannot be prepared"
+msgstr ""
+
+#: packages/matrix/src/attachment-crypto.ts:122
+msgid "WebCrypto exported no key material for the attachment"
+msgstr ""
+
+#: packages/matrix/src/attachment-crypto.ts:163
+msgid "the encrypted attachment carries no SHA-256 — it cannot be verified"
+msgstr ""
+
+#: packages/matrix/src/attachment-crypto.ts:169
+msgid ""
+"the downloaded media does not match the hash in the event — it was not "
+"decrypted"
+msgstr ""
+
+#: packages/matrix/src/attachment-crypto.ts:172
+msgid "the encrypted attachment has no 16-byte counter block"
+msgstr ""
+
+#: packages/matrix/src/attachments.ts:43
 msgid "the homeserver refused the download ({reason})"
 msgstr ""
 
-#: packages/matrix/src/attachments.ts:43 packages/signal/src/attachments.ts:31
+#: packages/matrix/src/attachments.ts:49 packages/signal/src/attachments.ts:31
 #: packages/telegram/src/attachments.ts:86
 #: packages/whatsapp/src/attachments.ts:25 packages/xmpp/src/attachments.ts:28
 msgid "the attachment is larger than the limit of {limit} bytes"
 msgstr ""
 
-#: packages/matrix/src/attachments.ts:81
+#: packages/matrix/src/attachments.ts:87
 msgid "this Matrix attachment cannot be found any more"
 msgstr ""
 
-#: packages/matrix/src/attachments.ts:119
+#: packages/matrix/src/attachments.ts:131
 msgid ""
 "the Matrix attachment arrived with {actual} bytes, not the announced "
 "{announced}"
@@ -3549,63 +3549,67 @@ msgstr ""
 msgid "the picture is larger than the limit of {limit} bytes"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:61
+#: packages/matrix/src/backend.ts:70
 msgid "add the account again in Accounts"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:67
+#: packages/matrix/src/backend.ts:76
 msgid "How do you want to log in to Matrix?"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:68 packages/matrix/src/backend.ts:78
+#: packages/matrix/src/backend.ts:77 packages/matrix/src/backend.ts:87
 #: packages/xmpp/src/backend.ts:53
 msgid "Password"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:68
+#: packages/matrix/src/backend.ts:77
 msgid "Your Matrix user and password"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:71
+#: packages/matrix/src/backend.ts:80
 msgid "Access Token"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:72
+#: packages/matrix/src/backend.ts:81
 msgid "For servers without password login, such as matrix.org"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:75
+#: packages/matrix/src/backend.ts:84
 msgid "Access token"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:76
+#: packages/matrix/src/backend.ts:85
 msgid "Homeserver (URL like https://matrix.example.org, or the server name)"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:77
+#: packages/matrix/src/backend.ts:86
 msgid "Matrix user (@name:example.org)"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:150
+#: packages/matrix/src/backend.ts:159
 msgid "no Matrix account {account} — {hint}"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:157
+#: packages/matrix/src/backend.ts:166
 msgid "the Matrix account file {account} is incomplete — {hint}"
 msgstr ""
 
-#: packages/matrix/src/backend.ts:218
+#: packages/matrix/src/backend.ts:247
 msgid "the Matrix account {account} is not usable ({reason}) — {hint}"
 msgstr ""
 
-#: packages/matrix/src/client.ts:186
+#: packages/matrix/src/client.ts:193
 msgid ""
 "the device keys are out of sync with the server — add the account again in "
 "Accounts"
 msgstr ""
 
-#: packages/matrix/src/client.ts:209
+#: packages/matrix/src/client.ts:216
 msgid "this Matrix account is already connected in this process"
+msgstr ""
+
+#: packages/matrix/src/client.ts:522
+msgid "this device does not know the room {room} yet — nothing was sent"
 msgstr ""
 
 #: packages/matrix/src/login.ts:40
@@ -3649,66 +3653,76 @@ msgid_plural "matrix: {n} events not decryptable"
 msgstr[0] ""
 msgstr[1] ""
 
-#: packages/matrix/src/send.ts:179
+#: packages/matrix/src/send.ts:194
+msgid ""
+"{room} is end-to-end encrypted, and encrypted messages are sent by the "
+"curlew daemon, which is not running — start it and send again; nothing was "
+"sent"
+msgstr ""
+
+#: packages/matrix/src/send.ts:239
+msgid ""
+"{room} is end-to-end encrypted — refusing to send a readable message there"
+msgstr ""
+
+#: packages/matrix/src/send.ts:252
 msgid "the homeserver refused the message to {room} ({reason})"
 msgstr ""
 
-#: packages/matrix/src/send.ts:188
+#: packages/matrix/src/send.ts:261
 msgid "the homeserver accepted the message to {room} but returned no event id"
 msgstr ""
 
-#: packages/matrix/src/send.ts:207
+#: packages/matrix/src/send.ts:293
 msgid ""
 "the homeserver did not say whether {room} is encrypted ({reason}) — nothing "
 "was sent"
 msgstr ""
 
-#: packages/matrix/src/send.ts:224
+#: packages/matrix/src/send.ts:309
+msgid "the homeserver refused the file {file} ({reason})"
+msgstr ""
+
+#: packages/matrix/src/send.ts:318
+msgid "the homeserver accepted the file {file} but returned no media URI"
+msgstr ""
+
+#: packages/matrix/src/send.ts:350
 msgid "the homeserver refused the read marker in {room} ({reason})"
 msgstr ""
 
-#: packages/matrix/src/send.ts:264
+#: packages/matrix/src/send.ts:392
 msgid ""
 "the homeserver did not list the reactions in {room} ({reason}) — nothing was "
 "sent"
 msgstr ""
 
-#: packages/matrix/src/send.ts:299
+#: packages/matrix/src/send.ts:427
 msgid "the homeserver did not redact the event in {room} ({reason})"
 msgstr ""
 
-#: packages/matrix/src/send.ts:316
-msgid "the homeserver refused the file {file} ({reason})"
+#: packages/matrix/src/send.ts:445
+msgid "a Matrix file event needs an uploaded file — nothing was sent"
 msgstr ""
 
-#: packages/matrix/src/send.ts:325
-msgid "the homeserver accepted the file {file} but returned no media URI"
-msgstr ""
-
-#: packages/matrix/src/send.ts:408
-msgid ""
-"{room} is end-to-end encrypted and curlew cannot send encrypted messages yet "
-"— nothing was sent, send it from a Matrix client"
-msgstr ""
-
-#: packages/matrix/src/send.ts:424 packages/matrix/src/send.ts:526
-#: packages/matrix/src/send.ts:543 packages/matrix/src/send.ts:578
+#: packages/matrix/src/send.ts:538 packages/matrix/src/send.ts:651
+#: packages/matrix/src/send.ts:667 packages/matrix/src/send.ts:707
 msgid "{id} is not a Matrix event id — nothing was sent"
 msgstr ""
 
-#: packages/matrix/src/send.ts:429
+#: packages/matrix/src/send.ts:543
 msgid ""
 "a Matrix message holds at most {max} bytes of text, this one has {bytes} — "
 "shorten it"
 msgstr ""
 
-#: packages/matrix/src/send.ts:546 packages/signal/src/send.ts:310
+#: packages/matrix/src/send.ts:670 packages/signal/src/send.ts:310
 #: packages/telegram/src/sender.ts:145 packages/whatsapp/src/send.ts:163
 #: packages/xmpp/src/messages.ts:36
 msgid "only your own messages can be changed — nothing was sent"
 msgstr ""
 
-#: packages/matrix/src/send.ts:556
+#: packages/matrix/src/send.ts:683
 msgid "the edited text is too long for one Matrix message — nothing was sent"
 msgstr ""
 
@@ -4544,4 +4558,33 @@ msgstr ""
 msgid ""
 "{count} devices of {jid} carry that fingerprint, so it does not name one — "
 "nothing changed"
+msgstr ""
+
+#: app/src/window/conversation-list-model.ts:390
+msgid "Encrypted rooms are not supported yet"
+msgstr ""
+
+#: app/src/window/conversation-view.ts:428
+#: app/src/window/conversation-view.ts:432
+msgid "Next match"
+msgstr ""
+
+#: app/src/window/conversation-view.ts:435
+#: app/src/window/conversation-view.ts:439
+msgid "Previous match"
+msgstr ""
+
+#: app/src/window/conversation-view.ts:442
+#: app/src/window/conversation-view.ts:446
+msgid "Stop stepping through matches"
+msgstr ""
+
+#: app/src/window/conversation-view.ts:847
+msgid "{current} of {total}"
+msgstr ""
+
+#: packages/matrix/src/send.ts:408
+msgid ""
+"{room} is end-to-end encrypted and curlew cannot send encrypted messages yet "
+"— nothing was sent, send it from a Matrix client"
 msgstr ""
