@@ -97,6 +97,7 @@ import mailSystemTargets from './unit/mail/system-targets.test.ts';
 import mailAutoconfig from './unit/mail/autoconfig.test.ts';
 import mailOwnAccounts from './unit/mail/own-accounts.test.ts';
 import mailAddAccount from './unit/mail/add-account.test.ts';
+import mailTransportTls from './unit/mail/transport-tls.test.ts';
 import telegramSend from './unit/telegram/send.test.ts';
 import telegramFollow from './unit/telegram/follow.test.ts';
 import telegramAttachments from './unit/telegram/attachments.test.ts';
@@ -278,6 +279,7 @@ run({
   mailAutoconfig,
   mailOwnAccounts,
   mailAddAccount,
+  mailTransportTls,
   telegramSend,
   telegramFollow,
   telegramAttachments,

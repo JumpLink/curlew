@@ -73,15 +73,23 @@ class TlsByteStream implements ByteStream {
   }
 }
 
+/** Test seam: extra trust anchors (PEM). Production callers pass nothing and get Node's defaults. */
+export interface TlsStreamOptions {
+  ca?: string;
+}
+
 /** Open a TLS connection to the target's IMAP port. */
-export async function openTlsStream(target: MailTarget): Promise<ByteStream> {
+export async function openTlsStream(target: MailTarget, options: TlsStreamOptions = {}): Promise<ByteStream> {
   if (!target.implicitTls) {
     throw new GnomeError(
       `account ${target.accountId} uses STARTTLS (port ${target.port}); only implicit TLS (993) is supported currently`,
     );
   }
   const socket = await new Promise<tls.TLSSocket>((resolve, reject) => {
-    const s = tls.connect({ host: target.host, port: target.port, servername: target.host }, () => resolve(s));
+    const s = tls.connect(
+      { host: target.host, port: target.port, servername: target.host, ...(options.ca ? { ca: options.ca } : {}) },
+      () => resolve(s),
+    );
     s.once('error', reject);
   });
   return new TlsByteStream(socket);
