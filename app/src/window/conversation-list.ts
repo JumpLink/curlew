@@ -520,7 +520,9 @@ export function createConversationList(
       halign: Gtk.Align.CENTER,
     });
     content.append(new Gtk.Image({ iconName: icon }));
-    const label = new Gtk.Label({ label: caption });
+    // The box is homogeneous, so the longest caption ("Zusammenführen") times four would set the
+    // sidebar's minimum width; ellipsizing keeps it at icon size, the tooltip carries the full name.
+    const label = new Gtk.Label({ label: caption, ellipsize: 3 });
     label.add_css_class('caption');
     content.append(label);
     const button = new Gtk.Button({ child: content, tooltipText: tooltip, hexpand: true });
