@@ -65,7 +65,6 @@ import {
   type ReactionChange,
   type ReplyDraft,
 } from './conversation-model.ts';
-import { reactionPlacement } from './reaction-placement-model.ts';
 import { attachmentList, type AttachmentHandlers } from './attachment-view.ts';
 import { type Look, lookClasses } from '../core/lib/appearance.ts';
 import { ChatBackground } from './chat-background.ts';
@@ -1111,14 +1110,13 @@ export function createConversationView(
     reactions: readonly MessageReaction[],
     showReactions: () => void,
   ): Gtk.Widget => {
-    const flow = new Gtk.FlowBox({
-      selectionMode: Gtk.SelectionMode.NONE,
-      homogeneous: false,
-      minChildrenPerLine: 1,
-      maxChildrenPerLine: 20,
-      columnSpacing: 4,
-      rowSpacing: 4,
-      halign: Gtk.Align.START,
+    // A wrap box, not a flow box: its natural width is its chips', so the row sits flush with the
+    // bubble's edge on either side.
+    const flow = new Adw.WrapBox({
+      childSpacing: 4,
+      lineSpacing: 4,
+      align: message.fromSelf ? 1 : 0,
+      halign: message.fromSelf ? Gtk.Align.END : Gtk.Align.START,
     });
     for (const reaction of reactions) {
       const { text, tooltip } = reactionChip(reaction);
@@ -1244,9 +1242,6 @@ export function createConversationView(
       );
     }
     showReactions();
-    // A bubble of only media shows its chips in a row under it, a bubble with text keeps them inside.
-    const below = reactionPlacement(message) === 'below';
-    if (!below) bubble.append(padded(reactions));
     const time = new Gtk.Label({ label: clockTime(message.sentAt), xalign: 1 });
     time.add_css_class('caption');
     time.add_css_class('dim-label');
@@ -1287,16 +1282,16 @@ export function createConversationView(
     });
     // A long message stops short of the pane's full width on a wide window, so a line stays readable.
     const side = message.fromSelf ? Gtk.Align.END : Gtk.Align.START;
-    let shownCard: Gtk.Widget = card;
-    if (below) {
-      const column = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 4 });
-      card.set_halign(side);
-      reactions.set_halign(side);
-      column.append(card);
-      column.append(reactions);
-      shownCard = column;
-    }
-    const clamp = new Adw.Clamp({ maximumSize: 560, tighteningThreshold: 560, child: shownCard });
+    // Reaction chips sit under the bubble on its side, tucked in from the edge like the messengers
+    // people know, so the bubble holds only the message and its time.
+    const column = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 2 });
+    card.set_halign(side);
+    reactions.set_halign(side);
+    reactions.set_margin_start(8);
+    reactions.set_margin_end(8);
+    column.append(card);
+    column.append(reactions);
+    const clamp = new Adw.Clamp({ maximumSize: 560, tighteningThreshold: 560, child: column });
     row.set_child(clamp);
     row.set_halign(message.fromSelf ? Gtk.Align.END : Gtk.Align.START);
     const separator = startsDay ? daySeparator(dayOf(message)) : null;
@@ -1411,7 +1406,7 @@ export function createConversationView(
     );
     one.bubble.insert_before(
       padded(fadedOverlay(body, preview.clipped, () => setBodyText(body, text, trimmed.mentions, hooks))),
-      one.reactions.get_parent() === one.bubble ? one.reactions : one.meta,
+      one.meta,
     );
     one.body = body;
     if (message.editedAt && !one.edited) {

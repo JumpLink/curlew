@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-21 09:23+0100\n"
+"POT-Creation-Date: 2026-11-21 11:09+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: app-android/app/window.ts:18 app/src/window/about.ts:37
 #: app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:261 app/src/window/window.ts:111
+#: app/src/window/conversation-view.ts:260 app/src/window/window.ts:111
 #: app/src/window/window.ts:241
 msgid "Curlew"
 msgstr ""
@@ -1762,7 +1762,7 @@ msgstr ""
 #: app/src/window/agent-access-page.ts:233
 #: app/src/window/conversation-list.ts:512
 #: app/src/window/conversation-list.ts:625
-#: app/src/window/conversation-view.ts:979 app/src/window/protocols-page.ts:66
+#: app/src/window/conversation-view.ts:978 app/src/window/protocols-page.ts:66
 #: app/src/window/protocols-page.ts:142
 msgid "Cancel"
 msgstr ""
@@ -2651,8 +2651,8 @@ msgid "Merge"
 msgstr ""
 
 #: app/src/window/conversation-list.ts:540
-#: app/src/window/conversation-view.ts:1272
-#: app/src/window/conversation-view.ts:1273
+#: app/src/window/conversation-view.ts:1267
+#: app/src/window/conversation-view.ts:1268
 msgid "Read"
 msgstr ""
 
@@ -2690,7 +2690,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:144
-#: app/src/window/conversation-view.ts:1648
+#: app/src/window/conversation-view.ts:1643
 msgid "Continuing via {protocol}"
 msgstr ""
 
@@ -2726,170 +2726,170 @@ msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:359
 #: app/src/window/conversation-model.ts:372
-#: app/src/window/conversation-view.ts:963
+#: app/src/window/conversation-view.ts:962
 msgid "You"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:267
+#: app/src/window/conversation-view.ts:266
 msgid "Choose how to reach this person"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:280
-#: app/src/window/conversation-view.ts:1774
+#: app/src/window/conversation-view.ts:279
+#: app/src/window/conversation-view.ts:1769
 msgid "Contact details"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:299
+#: app/src/window/conversation-view.ts:298
 msgid "No messages yet"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:308
-#: app/src/window/conversation-view.ts:639
+#: app/src/window/conversation-view.ts:307
+#: app/src/window/conversation-view.ts:638
 msgid "Write a message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:319
+#: app/src/window/conversation-view.ts:318
 msgid "Send message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:332
+#: app/src/window/conversation-view.ts:331
 msgid "Cancel reply"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:345
+#: app/src/window/conversation-view.ts:344
 msgid "Cancel editing"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:358
+#: app/src/window/conversation-view.ts:357
 msgid "Got It"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:429
-#: app/src/window/conversation-view.ts:433
+#: app/src/window/conversation-view.ts:428
+#: app/src/window/conversation-view.ts:432
 msgid "Next match"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:436
-#: app/src/window/conversation-view.ts:440
+#: app/src/window/conversation-view.ts:435
+#: app/src/window/conversation-view.ts:439
 msgid "Previous match"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:443
-#: app/src/window/conversation-view.ts:447
+#: app/src/window/conversation-view.ts:442
+#: app/src/window/conversation-view.ts:446
 msgid "Stop stepping through matches"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:459
+#: app/src/window/conversation-view.ts:458
 msgid "Conversation"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:605
+#: app/src/window/conversation-view.ts:604
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:657
+#: app/src/window/conversation-view.ts:656
 msgid "Send via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:762
+#: app/src/window/conversation-view.ts:761
 msgid "Show the quoted message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:769
-#: app/src/window/conversation-view.ts:909
+#: app/src/window/conversation-view.ts:768
+#: app/src/window/conversation-view.ts:908
 msgid "Reply to {author}: {excerpt}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:784
+#: app/src/window/conversation-view.ts:783
 msgid "The quoted message is no longer in the history"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:848
+#: app/src/window/conversation-view.ts:847
 msgid "{current} of {total}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:934
+#: app/src/window/conversation-view.ts:933
 msgid "Reaction not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:962
+#: app/src/window/conversation-view.ts:961
 msgid "Edit message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:966
+#: app/src/window/conversation-view.ts:965
 msgid "Editing your message: {excerpt}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:974
+#: app/src/window/conversation-view.ts:973
 msgid "Delete message?"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:975
+#: app/src/window/conversation-view.ts:974
 msgid "This will remove the message for everyone in the chat."
 msgstr ""
 
-#: app/src/window/conversation-view.ts:980
+#: app/src/window/conversation-view.ts:979
 msgid "Delete for everyone"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:997
+#: app/src/window/conversation-view.ts:996
 msgid "Message not deleted: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1054
+#: app/src/window/conversation-view.ts:1053
 msgid "Reply"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1055
+#: app/src/window/conversation-view.ts:1054
 msgid "Edit"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1056
+#: app/src/window/conversation-view.ts:1055
 msgid "Copy"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1057
+#: app/src/window/conversation-view.ts:1056
 msgid "Delete"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1197
+#: app/src/window/conversation-view.ts:1195
 msgid "Forwarded from {sender}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1198
+#: app/src/window/conversation-view.ts:1196
 msgid "Forwarded"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1212
+#: app/src/window/conversation-view.ts:1210
 msgid "Encrypted message: it cannot be shown here"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1213
+#: app/src/window/conversation-view.ts:1211
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1262
-#: app/src/window/conversation-view.ts:1418
+#: app/src/window/conversation-view.ts:1257
+#: app/src/window/conversation-view.ts:1413
 msgid "edited"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1512
+#: app/src/window/conversation-view.ts:1507
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1613
+#: app/src/window/conversation-view.ts:1608
 msgid "Message not edited: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1660
+#: app/src/window/conversation-view.ts:1655
 msgid "Message not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1663
+#: app/src/window/conversation-view.ts:1658
 msgid "Retry"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1774
+#: app/src/window/conversation-view.ts:1769
 msgid "Group details"
 msgstr ""
 
