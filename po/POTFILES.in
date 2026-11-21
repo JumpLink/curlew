@@ -348,6 +348,8 @@ packages/store/src/read-receipts.ts
 packages/store/src/receive-lease.ts
 packages/store/src/row.ts
 packages/store/src/schema.ts
+packages/store/src/search-key-fill.ts
+packages/store/src/search-key.ts
 packages/store/src/secret-files.ts
 packages/store/src/secret-store.ts
 packages/store/src/send-files.ts
