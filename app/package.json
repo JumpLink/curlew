@@ -142,23 +142,7 @@
         "accentDark": "#63452c"
       },
       "contentRating": "oars-1.1",
-      "releases": [
-        {
-          "version": "0.2.2",
-          "date": "2026-11-20",
-          "description": "Touch scrolling no longer selects message text, the message menu fits narrow screens, and the background service resumes at once after a restart."
-        },
-        {
-          "version": "0.2.1",
-          "date": "2026-11-19",
-          "description": "Download pages now show the macOS packages as signed and notarised, and the screenshots come in light and dark."
-        },
-        {
-          "version": "0.2.0",
-          "date": "2026-11-19",
-          "description": "The first release: one list for mail, Telegram, Signal, WhatsApp, Matrix and XMPP, with email chats in the Delta Chat style, optional AI access that is off by default, and a new look for the chat list."
-        }
-      ],
+      "metainfo": "data/eu.jumplink.curlew.metainfo.xml",
       "flatpak": {
         "runtimeVersion": "51",
         "finishArgs": [
@@ -201,9 +185,9 @@
     }
   },
   "optionalDependencies": {
-    "@gjsify/node-runtime-darwin-arm64": "0.64.51",
-    "@gjsify/node-runtime-darwin-x64": "0.64.51",
-    "@gjsify/node-runtime-win32-x64": "0.64.51"
+    "@gjsify/node-runtime-darwin-arm64": "0.64.54",
+    "@gjsify/node-runtime-darwin-x64": "0.64.54",
+    "@gjsify/node-runtime-win32-x64": "0.64.54"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
@@ -222,18 +206,18 @@
     "yargs": "^18.1.0",
     "qrcode-generator": "2.0.4",
     "zod": "^4.4.3",
-    "@gjsify/adwaita-app": "0.64.51",
-    "@gjsify/distribution": "0.64.51"
+    "@gjsify/adwaita-app": "0.64.54",
+    "@gjsify/distribution": "0.64.54"
   },
   "devDependencies": {
-    "@gjsify/cli": "0.64.51",
-    "@gjsify/mcp": "0.64.51",
-    "@gjsify/napi": "0.64.51",
-    "@gjsify/node-globals": "0.64.51",
-    "@gjsify/rolldown-native": "0.64.51",
-    "@gjsify/runtime": "0.64.51",
-    "@gjsify/unit": "0.64.51",
-    "@gjsify/ws": "0.64.51",
+    "@gjsify/cli": "0.64.54",
+    "@gjsify/mcp": "0.64.54",
+    "@gjsify/napi": "0.64.54",
+    "@gjsify/node-globals": "0.64.54",
+    "@gjsify/rolldown-native": "0.64.54",
+    "@gjsify/runtime": "0.64.54",
+    "@gjsify/unit": "0.64.54",
+    "@gjsify/ws": "0.64.54",
     "@girs/gjs": "^4.1.0",
     "@girs/glib-2.0": "^4.1.0",
     "@girs/gobject-2.0": "^4.1.0",
