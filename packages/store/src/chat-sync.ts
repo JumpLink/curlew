@@ -44,6 +44,7 @@ import type {
   ClassificationReason,
 } from '@curlew/protocol';
 import type { IndexDatabase } from './db.ts';
+import { fillSearchKeys } from './search-key-fill.ts';
 import { backfillAttachments } from './chat-backfill.ts';
 import { appendChanges } from './changes.ts';
 import { applyLocalRead } from './local-read.ts';
@@ -489,9 +490,10 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
     const bySender =
       edit.length > 5 ? ` AND ((from_self = 1 AND ? = '') OR (from_self = 0 AND sender_peer_id = ?))` : '';
     db.prepare(
-      `UPDATE conversation_messages SET body = ?, mentions_json = ?, edited_at = ? WHERE conversation_id = ? AND remote_id = ?${bySender}`,
+      `UPDATE conversation_messages SET search_key = NULL, body = ?, mentions_json = ?, edited_at = ? WHERE conversation_id = ? AND remote_id = ?${bySender}`,
     ).run(...edit);
   }
+  fillSearchKeys(db);
   runIn(db, (p) => `DELETE FROM conversation_messages WHERE id IN (${p})`, batch.retracted);
   if (batch.retracted.length > 0) {
     sweepThumbnailsOf(db, batch.retracted);
@@ -1159,7 +1161,8 @@ function adoptedByDelivered(
 ): { conversationId: string; messageId: string } {
   const empty = delivered.body === null || delivered.body === undefined || delivered.body === '';
   if (empty && record.text.length > 0) {
-    db.prepare('UPDATE conversation_messages SET body = ? WHERE id = ?').run(record.text, delivered.id);
+    db.prepare('UPDATE conversation_messages SET search_key = NULL, body = ? WHERE id = ?').run(record.text, delivered.id);
+    fillSearchKeys(db);
     appendChanges(db, [
       {
         kind: 'messages',

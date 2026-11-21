@@ -22,6 +22,8 @@ import type {
 import { conversationVerdict, type MessageVerdict, type SenderOverrides } from './classify.ts';
 import type { IndexDatabase } from './db.ts';
 import { placeholders, seqColumn } from './db.ts';
+import { fillSearchKeys } from './search-key-fill.ts';
+import { findSearchMatches, normaliseSearchText } from './search-key.ts';
 import { messageBody } from './index-store.ts';
 import { parseParticipantAddresses, str, tri } from './row.ts';
 import { MAIL_BACKEND, PENDING_DELETE, setOwnReaction } from './conversations-shared.ts';
@@ -378,58 +380,94 @@ const HIT_CHARS = 150;
 const HIT_SCAN_LIMIT = 1000;
 
 /**
- * The newest message per conversation whose body or subject contains `text`, newest first. SQLite
- * folds only ASCII case, so "ä" does not match "Ä"; mail bodies are not here (they are in the
- * full-text index), only mail subjects. Window-only, like `latestMessagePreviews`.
+ * A row whose key is not computed yet (right after the v29 upgrade, while `fillSearchKeys`
+ * catches up in the background) falls back to the literal match the search had before, so it
+ * is found by its exact spelling instead of not at all.
+ */
+const KEY_MATCH = `search_key LIKE ? OR (search_key IS NULL AND (body LIKE ? ESCAPE '\\' OR subject LIKE ? ESCAPE '\\'))`;
+
+function rawPattern(text: string): string {
+  return `%${text.trim().replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+}
+
+/**
+ * The newest message per conversation whose body or subject matches `text`, newest first. Both
+ * sides are reduced to the normalised key of `search-key.ts` (case and diacritics folded,
+ * punctuation and separators dropped), so `gtk.js` finds `GTK-JS`. Mail bodies are not here (they
+ * are in the full-text index), only mail subjects and unsent drafts. Window-only, like
+ * `latestMessagePreviews`.
  */
 export function searchMessageText(db: IndexDatabase, text: string): TextHit[] {
-  const needle = text.trim();
+  const needle = normaliseSearchText(text);
   if (needle === '') return [];
-  const pattern = `%${needle.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  const pattern = `%${needle}%`;
+  const raw = rawPattern(text);
   const rows = db
     .prepare(
-      `SELECT conversation_id, sent_at, subject,
-              substr(body, max(1, instr(lower(body), lower(?)) - ${HIT_LEAD_CHARS}), ${HIT_CHARS}) AS around
+      `SELECT conversation_id, sent_at, subject, body
          FROM conversation_messages
-        WHERE body LIKE ? ESCAPE '\\' OR subject LIKE ? ESCAPE '\\'
+        WHERE ${KEY_MATCH}
         ORDER BY sent_at DESC, id DESC LIMIT ${HIT_SCAN_LIMIT}`,
     )
-    .all(needle, pattern, pattern) as Array<Record<string, unknown>>;
-  const lower = needle.toLowerCase();
+    .all(pattern, raw, raw) as Array<Record<string, unknown>>;
   const hits = new Map<string, TextHit>();
   for (const r of rows) {
     const id = String(r.conversation_id);
     if (hits.has(id)) continue;
-    const around = str(r.around);
-    const snippet = around !== null && around.toLowerCase().includes(lower) ? around : str(r.subject);
+    const snippet = snippetAround(str(r.body), needle) ?? snippetAround(str(r.subject), needle);
     if (snippet === null) continue;
     hits.set(id, { conversationId: id, sentAt: str(r.sent_at), snippet });
   }
-  for (const hit of searchDraftBodies(db, needle, pattern)) if (!hits.has(hit.conversationId)) hits.set(hit.conversationId, hit);
-  return [...hits.values()].sort((a, b) => (a.sentAt ?? '') < (b.sentAt ?? '') ? 1 : -1);
+  for (const hit of searchDraftBodies(db, needle)) if (!hits.has(hit.conversationId)) hits.set(hit.conversationId, hit);
+  return [...hits.values()].sort((a, b) => ((a.sentAt ?? '') < (b.sentAt ?? '') ? 1 : -1));
+}
+
+/** The line around the first match of `needle` in `text`, or null when it is not there. */
+function snippetAround(text: string | null, needle: string): string | null {
+  if (text === null) return null;
+  const [m] = findSearchMatches(text, needle);
+  if (!m) return null;
+  const start = Math.max(0, m.start - HIT_LEAD_CHARS);
+  return text.slice(start, start + HIT_CHARS);
+}
+
+/**
+ * Every message of one conversation matching `text`, newest first — what the conversation view
+ * steps through. The same key and the same matching as {@link searchMessageText}, so the list
+ * and the hits in the conversation never disagree.
+ */
+export function searchConversationMessageIds(db: IndexDatabase, conversationId: string, text: string): string[] {
+  const needle = normaliseSearchText(text);
+  if (needle === '') return [];
+  const rows = db
+    .prepare(
+      `SELECT id FROM conversation_messages
+        WHERE conversation_id = ? AND (${KEY_MATCH})
+        ORDER BY sent_at DESC, id DESC`,
+    )
+    .all(conversationId, `%${needle}%`, rawPattern(text), rawPattern(text)) as Array<{ id: string }>;
+  return rows.map((r) => String(r.id));
 }
 
 /**
  * Unsent drafts: mail in a folder with the `drafts` role. Their body sits in the full-text index
- * rather than on the message row, so the plain scan above misses it. Window-only, like the rest.
+ * rather than on the message row, so the key scan above misses it. There are few drafts, so the
+ * match is made in code with the same normaliser.
  */
-function searchDraftBodies(db: IndexDatabase, needle: string, pattern: string): TextHit[] {
+function searchDraftBodies(db: IndexDatabase, needle: string): TextHit[] {
   const rows = db
     .prepare(
-      `SELECT cm.conversation_id, cm.sent_at, cm.subject, substr(f.body, max(1, instr(lower(f.body), lower(?)) - ${HIT_LEAD_CHARS}), ${HIT_CHARS}) AS around
+      `SELECT cm.conversation_id, cm.sent_at, cm.subject, f.body AS body
          FROM conversation_messages cm
          JOIN folders fo ON fo.account_id = cm.account_id AND fo.path = cm.folder_path AND fo.role = 'drafts'
          JOIN messages m ON m.account_id = cm.account_id AND m.folder_path = cm.folder_path AND m.uid = cm.uid
          JOIN messages_fts f ON f.rowid = m.id
-        WHERE f.body LIKE ? ESCAPE '\\'
         ORDER BY cm.sent_at DESC, cm.id DESC LIMIT ${HIT_SCAN_LIMIT}`,
     )
-    .all(needle, pattern) as Array<Record<string, unknown>>;
-  const lower = needle.toLowerCase();
+    .all() as Array<Record<string, unknown>>;
   const found: TextHit[] = [];
   for (const r of rows) {
-    const around = str(r.around);
-    const snippet = around !== null && around.toLowerCase().includes(lower) ? around : str(r.subject);
+    const snippet = snippetAround(str(r.body), needle);
     if (snippet !== null) found.push({ conversationId: String(r.conversation_id), sentAt: str(r.sent_at), snippet });
   }
   return found;
@@ -584,9 +622,10 @@ export function setMessageText(db: IndexDatabase, messageId: string, text: strin
   // A mail's edited text lives on its row too (the original stays in the FTS table).
   const result = db
     .prepare(
-      "UPDATE conversation_messages SET body = ?, edited_at = ? WHERE id = ? AND (remote_seq IS NOT NULL OR backend = 'mail')",
+      "UPDATE conversation_messages SET search_key = NULL, body = ?, edited_at = ? WHERE id = ? AND (remote_seq IS NOT NULL OR backend = 'mail')",
     )
     .run(text, new Date().toISOString(), messageId);
+  if (result.changes > 0) fillSearchKeys(db);
   return result.changes > 0;
 }
 
