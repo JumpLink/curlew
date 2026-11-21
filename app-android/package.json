@@ -11,17 +11,17 @@
     "start": "npm run sync:theme && ns run android"
   },
   "dependencies": {
-    "@gjsify/adwaita-gobject-native": "^0.64.51",
-    "@gjsify/adwaita-nativescript": "^0.64.51",
-    "@gjsify/app-settings": "^0.64.51",
-    "@gjsify/gi-runtime-android": "^0.64.51",
-    "@gjsify/native-fs-bridge": "^0.64.51",
-    "@gjsify/gi-runtime-android-tls": "^0.64.51",
-    "@gjsify/node-gi": "^0.64.51",
+    "@gjsify/adwaita-gobject-native": "^0.64.54",
+    "@gjsify/adwaita-nativescript": "^0.64.54",
+    "@gjsify/app-settings": "^0.64.54",
+    "@gjsify/gi-runtime-android": "^0.64.54",
+    "@gjsify/native-fs-bridge": "^0.64.54",
+    "@gjsify/gi-runtime-android-tls": "^0.64.54",
+    "@gjsify/node-gi": "^0.64.54",
     "@nativescript/core": "9.1.0-alpha.11"
   },
   "devDependencies": {
-    "@gjsify/nativescript-vite": "^0.64.51",
+    "@gjsify/nativescript-vite": "^0.64.54",
     "@nativescript/android": "9.1.1",
     "@nativescript/types": "~9.0.0",
     "@nativescript/vite": "8.0.0-alpha.57",

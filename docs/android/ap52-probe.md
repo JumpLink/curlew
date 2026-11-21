@@ -11,7 +11,7 @@ Measured 2026-11-20 on the `NsGi_API_36` emulator (x86_64, debug build) with the
 |---|---|---|
 | imap.gmail.com:993, greeting + CAPABILITY + LOGOUT | pass (15 tokens) | greeting 1571 ms, total 1617 ms |
 | imap.fastmail.com:993, greeting + CAPABILITY + LOGOUT | pass (20 tokens) | greeting 1757 ms, total 2063 ms |
-| expired.badssl.com:443 | handshake rejected ("Unacceptable TLS certificate") | 1234 ms |
+| expired.badssl.com:443 | handshake rejected ("Unacceptable TLS certificate"); under `giReal` it fails with "Connection reset by peer" instead of the certificate error | 1234 ms |
 | self-signed.badssl.com:443 | handshake rejected | 1250 ms |
 
 Times include DNS and the first handshake in a cold process; one run each, emulator network.
@@ -24,11 +24,10 @@ arm64-v8a 50.2 MB, x86_64 53.1 MB. ABIs are restricted to those two in `data/And
 
 ## Gaps found
 
-- `node:fs` is not bridged beyond `fs/promises`; `@curlew/protocol`'s `media-probe.ts` needs
-  `openSync`/`readSync`. The shell stubs that module (`vite.config.ts`, `app/media-probe-stub.ts`).
-- The nativescript vite preset maps `gi://Gio`/`gi://GLib` to the widget renderer's sparse arm (no
-  `SocketClient`) or to an empty module, with no switch for real Gio. The shell resolves both to
-  `@gjsify/node-gi` itself (`vite.config.ts` plugin `curlew-real-gi`).
+- `node:fs` was not bridged beyond `fs/promises`; `@curlew/protocol`'s `media-probe.ts` needs
+  `openSync`/`readSync`. Fixed in gjsify 0.64.53 (`@gjsify/native-fs-bridge`); `fstatSync` (used by `media-probe.ts`) follows in 0.64.54; the shell's stub is gone.
+- The nativescript vite preset had no switch for real Gio beside the widget renderer. Fixed in
+  gjsify 0.64.53: the shell sets `giReal: ["Gio", "GLib"]` in `vite.config.ts`.
 - Fixed at the Curlew boundary: `@curlew/imap/stream` is a narrow entry without `@curlew/store` and
   `@gjsify/system-accounts`; `ImapClient.capability()` is public.
 

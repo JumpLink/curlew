@@ -1,7 +1,5 @@
 app-android/app/app.ts
 app-android/app/engine.ts
-app-android/app/gi-real.ts
-app-android/app/media-probe-stub.ts
 app-android/app/probe.ts
 app-android/app/views/main.ts
 app-android/app/window.ts
