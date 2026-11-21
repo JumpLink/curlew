@@ -1,10 +1,11 @@
-import { type MailTarget } from "@curlew/protocol";
+import { type MailTarget, probeMediaFile } from "@curlew/protocol";
+import { File, knownFolders, path } from "@nativescript/core";
 import { ImapClient, openTlsStream } from "@curlew/imap/stream";
 
 export interface ProbeResult {
   host: string;
   port: number;
-  kind: "imap" | "reject";
+  kind: "imap" | "reject" | "media";
   ok: boolean;
   ms: number;
   detail: string;
@@ -54,6 +55,39 @@ export async function probeReject(host: string, port = 443): Promise<ProbeResult
   }
 }
 
+const PNG_WIDTH = 3;
+const PNG_HEIGHT = 2;
+
+/** A PNG signature plus an IHDR chunk (3x2, 8-bit RGB), generated in code; no pixel data is needed to probe. */
+function pngHeader(): Uint8Array {
+  const b = new Uint8Array(33);
+  b.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52]);
+  const v = new DataView(b.buffer);
+  v.setUint32(16, PNG_WIDTH);
+  v.setUint32(20, PNG_HEIGHT);
+  b[24] = 8;
+  b[25] = 2;
+  return b;
+}
+
+/** Writes a known PNG to the cache dir and runs the real `probeMediaFile` (openSync, fstatSync, readSync) on it. */
+export function probeMediaOnDisk(): ProbeResult {
+  const t0 = Date.now();
+  const file = path.join(knownFolders.temp().path, "curlew-probe.png");
+  try {
+    const bytes = pngHeader();
+    // NativeScript's File.writeSync wants a Java byte[], not a typed array.
+    const java = Array.create("byte", bytes.length);
+    bytes.forEach((v, i) => { java[i] = v > 127 ? v - 256 : v; });
+    File.fromPath(file).writeSync(java);
+    const r = probeMediaFile(file, "application/octet-stream");
+    const ok = r.width === PNG_WIDTH && r.height === PNG_HEIGHT;
+    return { host: "media-probe", port: 0, kind: "media", ok, ms: Date.now() - t0, detail: `type=png size=${bytes.length}B detected=${r.width}x${r.height} expected=${PNG_WIDTH}x${PNG_HEIGHT}` };
+  } catch (e) {
+    return { host: "media-probe", port: 0, kind: "media", ok: false, ms: Date.now() - t0, detail: String((e as Error)?.message ?? e) };
+  }
+}
+
 export async function runProbes(onResult: (line: string) => void): Promise<void> {
   const emit = (r: ProbeResult) => {
     const line = `${PREFIX} ${r.ok ? "PASS" : "FAIL"} ${r.kind} ${r.host}:${r.port} ${r.ms}ms ${r.detail}`;
@@ -66,6 +100,7 @@ export async function runProbes(onResult: (line: string) => void): Promise<void>
   onResult(info);
   for (const host of ["imap.gmail.com", "imap.fastmail.com"]) emit(await probeImap(host));
   for (const host of ["expired.badssl.com", "self-signed.badssl.com"]) emit(await probeReject(host));
+  emit(probeMediaOnDisk());
   console.log(`${PREFIX} DONE`);
   onResult(`${PREFIX} DONE`);
 }
