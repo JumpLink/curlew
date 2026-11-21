@@ -24,6 +24,7 @@ import type {
 } from '@curlew/protocol';
 import { normalizeAddress, normalizeMentions } from '@curlew/protocol';
 import type { MxEvent, MxRoom } from './api.ts';
+import { type EncryptedFile, parseEncryptedFile } from './attachment-crypto.ts';
 
 /**
  * The chat sequence of an event: its `origin_server_ts` in milliseconds, like the other chat
@@ -124,20 +125,29 @@ function num(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
 }
 
-/** The backend-private handle: the `mxc://` URI, and the size the sender announced. */
-export function attachmentHandle(mxc: string, size: number | null): string {
-  return JSON.stringify({ mxc, size });
+/**
+ * The backend-private handle: the `mxc://` URI, the size the sender announced, and for a file
+ * from an encrypted room the `file` object that carries its key.
+ *
+ * The key HAS to be here. The media repository hands the ciphertext to anyone who knows the URI,
+ * and the only copy of the key is inside the encrypted event — which the index does not keep. A
+ * handle without it names bytes nobody can read again.
+ */
+export function attachmentHandle(mxc: string, size: number | null, file?: EncryptedFile): string {
+  return JSON.stringify({ mxc, size, ...(file === undefined ? {} : { file }) });
 }
 
 /** What a stored handle names, or null when it is not one this backend wrote. */
-export function parseAttachmentHandle(handle: string): { mxc: string; size: number | null } | null {
+export function parseAttachmentHandle(
+  handle: string,
+): { mxc: string; size: number | null; file: EncryptedFile | null } | null {
   try {
     const value: unknown = JSON.parse(handle);
     if (typeof value !== 'object' || value === null) return null;
-    const { mxc, size } = value as Record<string, unknown>;
+    const { mxc, size, file } = value as Record<string, unknown>;
     if (typeof mxc !== 'string' || !parseMxc(mxc)) return null;
     if (size !== null && (typeof size !== 'number' || !Number.isSafeInteger(size) || size < 0)) return null;
-    return { mxc, size };
+    return { mxc, size, file: file === undefined ? null : parseEncryptedFile(file) };
   } catch {
     return null;
   }
@@ -159,14 +169,16 @@ export function attachmentKind(msgtype: string | null, mimeType: string | null, 
 }
 
 /**
- * The one file an unencrypted event carries. An encrypted file (`content.file`, no `url`) gets
- * none: its bytes are ciphertext until the key in the event is applied, which comes with E2EE.
+ * The one file an event carries — `content.url` in a clear room, `content.file` in an encrypted
+ * one. The encrypted case keeps the key in the handle, because the event is the only place it
+ * ever exists (ADR 0019 §6); without it the stored handle would name bytes nobody can read.
  */
 function toChatAttachments(event: MxEvent): ChatAttachment[] | undefined {
   const content = event.content;
   const msgtype = str(content.msgtype);
   if (event.type !== 'm.sticker' && !(msgtype && FILE_MSGTYPES.has(msgtype))) return undefined;
-  const url = str(content.url);
+  const encryptedFile = parseEncryptedFile(content.file);
+  const url = encryptedFile?.url ?? str(content.url);
   if (url === null || !parseMxc(url)) return undefined;
   const info = content.info && typeof content.info === 'object' ? (content.info as Content) : {};
   const mimeType = str(info.mimetype);
@@ -174,9 +186,9 @@ function toChatAttachments(event: MxEvent): ChatAttachment[] | undefined {
   const voice = content['org.matrix.msc3245.voice'] !== undefined || content['m.voice'] !== undefined;
   const filename = str(content.filename) ?? (event.type === 'm.sticker' ? null : messageText(content, false) === null ? str(content.body) : null);
   const duration = num(info.duration) ?? num((content['org.matrix.msc1767.audio'] as Content | undefined)?.duration);
-  // The poster the sender attached (ADR 0017). An encrypted room's `thumbnail_file` needs the
-  // key, so it comes with E2EE; the file itself is skipped above for the same reason.
-  const thumbUrl = str(info.thumbnail_url);
+  // The poster the sender attached (ADR 0017), encrypted alongside the file in an encrypted room.
+  const thumbFile = parseEncryptedFile(info.thumbnail_file);
+  const thumbUrl = thumbFile?.url ?? str(info.thumbnail_url);
   const blurHash = str(info['xyz.amorgan.blurhash']);
   return [
     {
@@ -187,8 +199,10 @@ function toChatAttachments(event: MxEvent): ChatAttachment[] | undefined {
       width: num(info.w),
       height: num(info.h),
       durationMs: duration === null ? null : Math.round(duration),
-      handle: attachmentHandle(url, size),
-      ...(thumbUrl !== null && parseMxc(thumbUrl) ? { thumbHandle: attachmentHandle(thumbUrl, null) } : {}),
+      handle: attachmentHandle(url, size, encryptedFile ?? undefined),
+      ...(thumbUrl !== null && parseMxc(thumbUrl)
+        ? { thumbHandle: attachmentHandle(thumbUrl, null, thumbFile ?? undefined) }
+        : {}),
       ...(blurHash !== null ? { blurHash } : {}),
     },
   ];

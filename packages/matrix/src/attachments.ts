@@ -5,6 +5,11 @@
  * Plain HTTP GETs through the read-only gate — no sync, no crypto store. The own homeserver is
  * always the one asked, even for a file that lives on another: it proxies and caches remote
  * media, and it is the one server this account already trusts with its token.
+ *
+ * A file from an encrypted room is ciphertext in the repository; its key travelled in the
+ * encrypted event and sits in the handle (`attachment-crypto.ts`). That download is verified
+ * against the hash from the event and decrypted here — still no crypto store, because the file
+ * key is not a Megolm key.
  */
 
 import {
@@ -15,6 +20,7 @@ import {
   type FetchableAttachment,
   fmt,
 } from '@curlew/protocol';
+import { decryptAttachment } from './attachment-crypto.ts';
 import { errcodeOf } from './errcode.ts';
 import { parseAttachmentHandle, parseMxc } from './map.ts';
 
@@ -87,12 +93,18 @@ export class MatrixAttachments implements AttachmentFetcher {
       const hasDeclared = length !== null && length.trim() !== '' && Number.isFinite(declared);
       if (hasDeclared && declared > options.maxBytes) throw tooLarge(options.maxBytes);
 
+      // An encrypted file cannot be streamed: the hash covers the WHOLE ciphertext, and bytes
+      // handed on before it was checked are bytes the sink already has. So it is buffered —
+      // against the same `maxBytes` the stream is — verified, decrypted, and only then written.
+      const encrypted = handle.file;
+      const ciphertext: Uint8Array[] = [];
       let size = 0;
       const take = async (chunk: Uint8Array): Promise<void> => {
         options.signal?.throwIfAborted();
         size += chunk.byteLength;
         if (size > options.maxBytes) throw tooLarge(options.maxBytes);
-        await sink.write(chunk);
+        if (encrypted) ciphertext.push(chunk);
+        else await sink.write(chunk);
       };
       const reader = response.body?.getReader();
       if (reader) {
@@ -121,6 +133,19 @@ export class MatrixAttachments implements AttachmentFetcher {
             announced: String(declared),
           }),
         );
+      }
+      if (encrypted) {
+        const joined = new Uint8Array(size);
+        let at = 0;
+        for (const chunk of ciphertext) {
+          joined.set(chunk, at);
+          at += chunk.byteLength;
+        }
+        const plaintext = await decryptAttachment(joined, encrypted);
+        await sink.write(plaintext);
+        // The media repository serves ciphertext as `application/octet-stream`; the real type is
+        // the one the event announced, which the stored attachment row already carries.
+        return { mimeType: null, size: plaintext.byteLength };
       }
       return { mimeType: response.headers.get('content-type')?.split(';')[0]?.trim() || null, size };
     } finally {

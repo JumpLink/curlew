@@ -7,6 +7,7 @@ import type { BackendContext, ByteSink } from '@curlew/protocol';
 import { isAttachmentFetcherBackend } from '@curlew/protocol';
 import {
   attachmentHandle,
+  encryptAttachment,
   MATRIX_MANIFEST,
   MatrixBackend,
   parseAttachmentHandle,
@@ -180,9 +181,18 @@ export default async () => {
       });
     });
 
-    await it('gives an encrypted or url-less file no attachment row', async () => {
-      const encrypted = map(file({ url: undefined, file: { url: MXC, key: {}, iv: 'x', hashes: {} } }));
-      expect(encrypted?.attachments === undefined).toBe(true);
+    await it('maps an encrypted file with its key, and nothing without a usable one', async () => {
+      // An encrypted room's file has `file` instead of `url`, and the key rides in the handle —
+      // the event is the only place it exists, and the index does not keep events (ADR 0019 §6).
+      const { file: key } = await encryptAttachment(new Uint8Array([1, 2, 3]));
+      const encrypted = map(file({ url: undefined, file: { url: MXC, ...key } }))?.attachments?.[0];
+      expect(encrypted?.handle).toBe(attachmentHandle(MXC, 5, { url: MXC, ...key }));
+      expect(parseAttachmentHandle(encrypted!.handle)?.file?.key.k).toBe(key.key.k);
+      // A `file` object missing the key or the URI names bytes nobody could read: no row at all.
+      expect(
+        map(file({ url: undefined, file: { url: MXC, key: {}, iv: 'x', hashes: {} } }))?.attachments ===
+          undefined,
+      ).toBe(true);
       expect(map(file({ url: 'https://example.org/x' }))?.attachments === undefined).toBe(true);
       expect(
         map(event('m.room.message', ANNA, T0, { msgtype: 'm.text', body: 'hi' }))?.attachments === undefined,
@@ -190,8 +200,16 @@ export default async () => {
     });
 
     await it('reads back only the handles it wrote', async () => {
-      expect(parseAttachmentHandle(attachmentHandle(MXC, 12))).toStrictEqual({ mxc: MXC, size: 12 });
-      expect(parseAttachmentHandle(attachmentHandle(MXC, null))).toStrictEqual({ mxc: MXC, size: null });
+      expect(parseAttachmentHandle(attachmentHandle(MXC, 12))).toStrictEqual({
+        mxc: MXC,
+        size: 12,
+        file: null,
+      });
+      expect(parseAttachmentHandle(attachmentHandle(MXC, null))).toStrictEqual({
+        mxc: MXC,
+        size: null,
+        file: null,
+      });
       for (const bad of [
         '',
         'nope',
@@ -218,6 +236,31 @@ export default async () => {
         expect(http.calls[0]!.method).toBe('GET');
         expect(http.calls[0]!.url.startsWith(`${HOMESERVER}${AUTH_PATH}`)).toBe(true);
         expect(http.calls[0]!.auth).toBe('Bearer synthetic-token');
+      });
+    });
+
+    await it('verifies and decrypts a file from an encrypted room, and refuses swapped bytes', async () => {
+      const plaintext = new TextEncoder().encode('what only the room may read');
+      const { ciphertext, file: key } = await encryptAttachment(plaintext);
+      const handle = attachmentHandle(MXC, ciphertext.byteLength, { url: MXC, ...key });
+      await withBackend({ [AUTH_PATH]: { status: 200, body: ciphertext } }, async (backend, accountId) => {
+        const sink = new MemorySink();
+        const result = await fetchWith(backend, accountId, handle, sink);
+        expect(result.size).toBe(plaintext.byteLength);
+        // The repository serves `application/octet-stream`; the real type is the event's.
+        expect(result.mimeType).toBe(null);
+        expect(new TextDecoder().decode(sink.chunks[0])).toBe('what only the room may read');
+      });
+
+      // The hash in the event binds the key to those bytes: other bytes are an error, and the
+      // sink stays empty rather than receiving something nobody wrote.
+      const swapped = Uint8Array.from(ciphertext);
+      swapped[0] ^= 0xff;
+      await withBackend({ [AUTH_PATH]: { status: 200, body: swapped } }, async (backend, accountId) => {
+        const sink = new MemorySink();
+        const message = await failure(fetchWith(backend, accountId, handle, sink));
+        expect(message?.includes('does not match the hash')).toBe(true);
+        expect(sink.size).toBe(0);
       });
     });
 
