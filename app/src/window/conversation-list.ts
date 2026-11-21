@@ -53,6 +53,8 @@ export interface PeopleTools {
   compose(): void;
   /** Conversation id → a line of message text that contains `text`; read from the index. */
   searchText(text: string): ReadonlyMap<string, string>;
+  /** The message text now being searched ('' = none), so an open conversation can follow it. */
+  searchChanged(text: string): void;
   /** The saved search scope, read once when the list is built. */
   searchScope(): SearchScope;
   /** The person picked another scope; the window saves it. */
@@ -309,6 +311,7 @@ export function createConversationList(
       scope !== 'names' && query.trim().length >= MIN_TEXT_QUERY
         ? people.searchText(query.trim())
         : new Map();
+    people.searchChanged(hits.size > 0 ? query.trim() : '');
     rebuild();
   };
   let group: Gtk.CheckButton | null = null;

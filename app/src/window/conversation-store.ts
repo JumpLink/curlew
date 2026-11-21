@@ -19,10 +19,13 @@ import {
   markConversationRead,
   markConversationUnread,
   openIndexDb,
+  searchConversationMessageIds,
   setMessageText,
   setOwnReaction,
   type MailReplyTarget,
 } from '@curlew/store';
+
+import { existsSync } from 'node:fs';
 
 import { loadConfig } from '../core/config.ts';
 import { backendsList } from '../core/actions/backends.ts';
@@ -179,5 +182,20 @@ export function loadMailReplyTarget(
     return mailReplyTarget(db, message.ref);
   } finally {
     db.close();
+  }
+}
+
+/** Ids of the messages of `entry` matching `text`, newest first; empty on no index or a failed read. */
+export function loadSearchMatchIds(entry: ListEntry, text: string, dbPath = indexDbPath()): string[] {
+  if (!existsSync(dbPath)) return [];
+  try {
+    const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
+    try {
+      return searchConversationMessageIds(db, entry.conversationIds, text);
+    } finally {
+      db.close();
+    }
+  } catch {
+    return [];
   }
 }

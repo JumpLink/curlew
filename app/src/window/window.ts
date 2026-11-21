@@ -33,6 +33,7 @@ import {
   loadConversationEntriesAsync,
   searchConversationText,
 } from './conversation-list-store.ts';
+import { loadSearchMatchIds } from './conversation-store.ts';
 import { choiceOfEntry, type ListEntry } from './conversation-list-model.ts';
 import { aiEnabled, deltaChatAccountIds, loadConfig, saveConfig } from '../core/config.ts';
 import { DEFAULT_SEARCH_SCOPE } from '../core/lib/search-scope.ts';
@@ -471,11 +472,14 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
       }
     }
   };
+  // The text the sidebar is searching for; an opened conversation steps through its matches.
+  let activeSearch = '';
   const select = (entry: ListEntry) => {
     currentEntry = entry;
     keptUnread = null;
     currentMessages = timed('load messages', () => loadConversationMessages(entry));
     timed('conversation.show', () => conversation.show(entry, currentMessages, labels));
+    conversation.setSearch(activeSearch, activeSearch === '' ? [] : loadSearchMatchIds(entry, activeSearch));
     timed('setLook', () =>
       conversation.setLook(lookOf(choiceOfEntry(loadConfig().contactChoices, entry)?.choice)),
     );
@@ -490,6 +494,7 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
     currentEntry = entry;
     currentMessages = [];
     conversation.show(entry, currentMessages, labels);
+    conversation.setSearch('', []);
     conversation.setLook(lookOf(choiceOfEntry(loadConfig().contactChoices, entry)?.choice));
     split.set_content(conversation.page);
     split.set_show_content(true);
@@ -532,6 +537,11 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
     review: () => review(),
     compose: () => startConversation(),
     searchText: (text) => searchConversationText(text),
+    searchChanged: (text) => {
+      activeSearch = text;
+      if (currentEntry)
+        conversation.setSearch(text, text === '' ? [] : loadSearchMatchIds(currentEntry, text));
+    },
     searchScope: () => loadConfig(configPath()).ui.searchScope ?? DEFAULT_SEARCH_SCOPE,
     setSearchScope: (scope) => {
       const config = loadConfig(configPath());
