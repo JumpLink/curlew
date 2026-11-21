@@ -95,4 +95,4 @@ No `dlopen`, no JIT, no runtime-loaded code. Consequences:
 - iOS real GI is unproven and needs macOS CI; planning iOS against the subset keeps it off the path.
 - `secret-store` relies on POSIX modes; sandbox storage is already private, but the encryption-key
   story (Keystore / Keychain) is undecided.
-- This report is source analysis plus an import probe. The AP5.2 transport now runs on an emulator: see [ap52-probe.md](ap52-probe.md).
+- This report is source analysis plus an import probe. The AP5.2 transport now runs on an emulator: see [ap52-probe.md](ap52-probe.md). The AP5.1 store probe is in [ap51-store-probe.md](ap51-store-probe.md).

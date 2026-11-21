@@ -335,6 +335,7 @@ packages/store/src/desktop-paths.ts
 packages/store/src/download.ts
 packages/store/src/echo-attachments.ts
 packages/store/src/fts.ts
+packages/store/src/index-db-entry.ts
 packages/store/src/index-store.ts
 packages/store/src/index.ts
 packages/store/src/local-echo.ts

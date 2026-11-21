@@ -7,7 +7,9 @@
     "@gjsify/gi-runtime-android@^0.64.54",
     "@gjsify/native-fs-bridge@^0.64.54",
     "@gjsify/gi-runtime-android-tls@^0.64.54",
+    "@gjsify/native-sqlite-bridge@^0.64.54",
     "@gjsify/node-gi@^0.64.54",
+    "@gjsify/sqlite@^0.64.54",
     "@nativescript/core@9.1.0-alpha.11",
     "@gjsify/nativescript-vite@^0.64.54",
     "@nativescript/android@9.1.1",
@@ -1638,6 +1640,28 @@
       "resolved": "https://registry.npmjs.org/@gjsify/native-platform/-/native-platform-0.64.54.tgz",
       "integrity": "sha512-v/owHsybgAVgqnYr13YJWJWG9aVI6FQJUMVDyyBAcdN+Hxzz5GNxmpzqXEESrXMoYHuh4FS7r+Tu2zSWsUqA3g=="
     },
+    "node_modules/@gjsify/native-sqlite-bridge": {
+      "version": "0.64.55",
+      "resolved": "https://registry.npmjs.org/@gjsify/native-sqlite-bridge/-/native-sqlite-bridge-0.64.55.tgz",
+      "integrity": "sha512-FJSn+jSSsbv+CwXEWONPP1aPhRe6aA4lIkDrHhds9HXxo3N2D/sGpWKyS8PLdVY/H2sWOIlpMe4Pp0zr3Mi5Ig==",
+      "dependencies": {
+        "@gjsify/sqlite-native": "0.64.55",
+        "@gjsify/native-platform": "0.64.55"
+      },
+      "peerDependencies": {
+        "@nativescript/core": "*"
+      },
+      "peerDependenciesMeta": {
+        "@nativescript/core": {
+          "optional": true
+        }
+      }
+    },
+    "node_modules/@gjsify/native-sqlite-bridge/node_modules/@gjsify/native-platform": {
+      "version": "0.64.55",
+      "resolved": "https://registry.npmjs.org/@gjsify/native-platform/-/native-platform-0.64.55.tgz",
+      "integrity": "sha512-nUcIz3IzBkFi2Dam0SgIZ1pOrDGPgAfqGTxwdZ7qHYzoY13KK6bwRGRCcRvT32XJfEWxDMY4jmBRnY777UI4LQ=="
+    },
     "node_modules/@gjsify/nativescript-vite": {
       "version": "0.64.54",
       "resolved": "https://registry.npmjs.org/@gjsify/nativescript-vite/-/nativescript-vite-0.64.54.tgz",
@@ -1744,6 +1768,19 @@
         }
       }
     },
+    "node_modules/@gjsify/rolldown-plugin-gjsify/node_modules/@gjsify/utils": {
+      "version": "0.64.54",
+      "resolved": "https://registry.npmjs.org/@gjsify/utils/-/utils-0.64.54.tgz",
+      "integrity": "sha512-Bn2wzTF8sW1v1Fv4A7wBNcFZfi1Pav1hgbpscZFctTC1RYMFnHSsgn9wbZVmz90ws/vXtA0/OYOw6IAgjYa0Wg==",
+      "dependencies": {
+        "@girs/gjs": "5.4.0",
+        "@girs/gio-2.0": "5.4.0",
+        "@girs/glib-2.0": "5.4.0",
+        "@girs/pango-1.0": "5.4.0",
+        "@girs/giounix-2.0": "5.4.0",
+        "@girs/pangocairo-1.0": "5.4.0"
+      }
+    },
     "node_modules/@gjsify/rolldown-plugin-pnp": {
       "version": "0.64.54",
       "resolved": "https://registry.npmjs.org/@gjsify/rolldown-plugin-pnp/-/rolldown-plugin-pnp-0.64.54.tgz",
@@ -1757,10 +1794,134 @@
         }
       }
     },
+    "node_modules/@gjsify/sqlite": {
+      "version": "0.64.55",
+      "resolved": "https://registry.npmjs.org/@gjsify/sqlite/-/sqlite-0.64.55.tgz",
+      "integrity": "sha512-tUjPjA2Oc0A1bEafp1qsqYXXhOVIugiN8aRjBMMf2pLf7h101atLEVvwkY9erETLzm658L3Eus4wVtaQGSsDpg==",
+      "dependencies": {
+        "@girs/glib-2.0": "5.4.0",
+        "@gjsify/sqlite-native": "0.64.55"
+      },
+      "peerDependencies": {
+        "@gjsify/native-sqlite-bridge": "0.64.55"
+      },
+      "peerDependenciesMeta": {
+        "@gjsify/native-sqlite-bridge": {
+          "optional": true
+        }
+      }
+    },
+    "node_modules/@gjsify/sqlite-native": {
+      "version": "0.64.55",
+      "resolved": "https://registry.npmjs.org/@gjsify/sqlite-native/-/sqlite-native-0.64.55.tgz",
+      "integrity": "sha512-pomiFSt/+wVLRmI3oXObxsdIACX1uFNIBkC1jFDlEdsDlvZK649KEIc98NAQlNCntLgUMI1jwqsmJ5g1meYBeQ==",
+      "dependencies": {
+        "@girs/gjs": "5.4.0",
+        "@gjsify/utils": "0.64.55",
+        "@girs/glib-2.0": "5.4.0",
+        "@girs/gobject-2.0": "5.4.0"
+      },
+      "optionalDependencies": {
+        "@gjsify/sqlite-native-linux-x64": "0.64.55",
+        "@gjsify/sqlite-native-darwin-x64": "0.64.55",
+        "@gjsify/sqlite-native-linux-arm64": "0.64.55",
+        "@gjsify/sqlite-native-linux-ppc64": "0.64.55",
+        "@gjsify/sqlite-native-linux-s390x": "0.64.55",
+        "@gjsify/sqlite-native-darwin-arm64": "0.64.55",
+        "@gjsify/sqlite-native-linux-riscv64": "0.64.55"
+      }
+    },
+    "node_modules/@gjsify/sqlite-native-darwin-arm64": {
+      "version": "0.64.55",
+      "resolved": "https://registry.npmjs.org/@gjsify/sqlite-native-darwin-arm64/-/sqlite-native-darwin-arm64-0.64.55.tgz",
+      "integrity": "sha512-NcNHqMo3+IK/aZAb+GEWqqoMUkgV1IeGRrUWXUYfkZm2qR495giMCdRw6pu+NV5hdHDwuDzKoT0c12g6GOodpw==",
+      "os": [
+        "darwin"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "optional": true
+    },
+    "node_modules/@gjsify/sqlite-native-darwin-x64": {
+      "version": "0.64.55",
+      "resolved": "https://registry.npmjs.org/@gjsify/sqlite-native-darwin-x64/-/sqlite-native-darwin-x64-0.64.55.tgz",
+      "integrity": "sha512-EorHdKoYYj/Lalo3AAZyJLAkEaM5OVPd+XvAXromrEq/PLlj2rSNTRnOADeZP2J0VqeL+rqpfFlebmNRYhrnHw==",
+      "os": [
+        "darwin"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "optional": true
+    },
+    "node_modules/@gjsify/sqlite-native-linux-arm64": {
+      "version": "0.64.55",
+      "resolved": "https://registry.npmjs.org/@gjsify/sqlite-native-linux-arm64/-/sqlite-native-linux-arm64-0.64.55.tgz",
+      "integrity": "sha512-SHsp4fIVq3VUUVKqr+WaXP5qu6EqY3xfGFbTiGUlChb/rnuSrs+Mo9eM1mlmWh3wBwJNAFBLycQNBmZZQcEmNA==",
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "optional": true
+    },
+    "node_modules/@gjsify/sqlite-native-linux-ppc64": {
+      "version": "0.64.55",
+      "resolved": "https://registry.npmjs.org/@gjsify/sqlite-native-linux-ppc64/-/sqlite-native-linux-ppc64-0.64.55.tgz",
+      "integrity": "sha512-BSbaeG9LM/wiycnG9Hb4lmoClzGMoLEtZKVfKNt0MFK0F7Sv6E4bG1gG34AIzGJVQdHZwbjYByDEEXyLrF+0cw==",
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "ppc64"
+      ],
+      "optional": true
+    },
+    "node_modules/@gjsify/sqlite-native-linux-riscv64": {
+      "version": "0.64.55",
+      "resolved": "https://registry.npmjs.org/@gjsify/sqlite-native-linux-riscv64/-/sqlite-native-linux-riscv64-0.64.55.tgz",
+      "integrity": "sha512-C/A++f6AdoKtEAc/XAGq+KRccPEz61NLEjyWOeXrKqUDkHe3Z1xMja0usaLd/qaIaK2E88oovfsiFs19puFZdA==",
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "riscv64"
+      ],
+      "libc": [
+        "glibc"
+      ],
+      "optional": true
+    },
+    "node_modules/@gjsify/sqlite-native-linux-s390x": {
+      "version": "0.64.55",
+      "resolved": "https://registry.npmjs.org/@gjsify/sqlite-native-linux-s390x/-/sqlite-native-linux-s390x-0.64.55.tgz",
+      "integrity": "sha512-ZMHXqkuN7J48AVGDLDoE0r0VMZARc8p4VbBjFR3rTqJYB3AnIkSXSEP+Ope5gf2d/1QaKJBmnWGMA4NQUkwgjw==",
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "s390x"
+      ],
+      "optional": true
+    },
+    "node_modules/@gjsify/sqlite-native-linux-x64": {
+      "version": "0.64.55",
+      "resolved": "https://registry.npmjs.org/@gjsify/sqlite-native-linux-x64/-/sqlite-native-linux-x64-0.64.55.tgz",
+      "integrity": "sha512-TXCEB5BZ8Tn/okQLQxVMJ+yNsBHWPc82Gbk8D4LWNaYjWyIOkWafX0aYvDED3PTIL35KJZw1Tfq9AqaBGTOPLg==",
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "optional": true
+    },
     "node_modules/@gjsify/utils": {
-      "version": "0.64.54",
-      "resolved": "https://registry.npmjs.org/@gjsify/utils/-/utils-0.64.54.tgz",
-      "integrity": "sha512-Bn2wzTF8sW1v1Fv4A7wBNcFZfi1Pav1hgbpscZFctTC1RYMFnHSsgn9wbZVmz90ws/vXtA0/OYOw6IAgjYa0Wg==",
+      "version": "0.64.55",
+      "resolved": "https://registry.npmjs.org/@gjsify/utils/-/utils-0.64.55.tgz",
+      "integrity": "sha512-O4/zee0+ZE6M5lWvAdzXrp6KIScHMYtoQGUMYc+if4mXlu/9shHtN7NkETmCsZ4/QJjT805jkjp+9Nus3DpCfQ==",
       "dependencies": {
         "@girs/gjs": "5.4.0",
         "@girs/gio-2.0": "5.4.0",

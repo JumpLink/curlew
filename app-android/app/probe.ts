@@ -1,11 +1,12 @@
 import { type MailTarget, probeMediaFile } from "@curlew/protocol";
 import { File, knownFolders, path } from "@nativescript/core";
 import { ImapClient, openTlsStream } from "@curlew/imap/stream";
+import { migrate, openIndexDb, probeFts5, searchIndex, upsertAccount, upsertFolder, upsertMessages } from "@curlew/store/index-db";
 
 export interface ProbeResult {
   host: string;
   port: number;
-  kind: "imap" | "reject" | "media";
+  kind: "imap" | "reject" | "media" | "store";
   ok: boolean;
   ms: number;
   detail: string;
@@ -88,6 +89,41 @@ export function probeMediaOnDisk(): ProbeResult {
   }
 }
 
+const STORE_BODY = "Energieberatung für das Dach, Termin im März";
+
+/** The real index code on `:memory:`: open, migrate, probeFts5, insert one message, FTS search. */
+export function probeStore(): ProbeResult {
+  const t0 = Date.now();
+  const steps: string[] = [];
+  try {
+    const db = openIndexDb(":memory:");
+    steps.push("open");
+    migrate(db);
+    const tables = (db.prepare("SELECT count(*) AS n FROM sqlite_master WHERE type = 'table'").get() as { n: number }).n;
+    steps.push(`migrate tables=${tables}`);
+    probeFts5(db);
+    steps.push("probeFts5");
+    upsertAccount(db, { id: "probe", identity: "probe", provider: "probe" });
+    upsertFolder(db, { accountId: "probe", path: "INBOX", name: "INBOX", role: null });
+    upsertMessages(db, "probe", "INBOX", [{
+      uid: 1, messageId: "<probe@example.invalid>", subject: "Probe", sender: "a@example.invalid", recipients: "b@example.invalid",
+      date: "2026-11-21T10:00:00Z", internalDate: "2026-11-21T10:00:00Z", size: STORE_BODY.length, seen: false, flagged: false,
+      hasAttachment: false, attachments: [], bodyText: STORE_BODY,
+      from: [{ name: null, email: "a@example.invalid" }], to: [{ name: null, email: "b@example.invalid" }], cc: [],
+      inReplyTo: null, references: [], automation: { listId: null, listUnsubscribe: null, autoSubmitted: null, precedence: null }, emailChat: false,
+    }], "2026-11-21T10:00:00Z");
+    const rows = (db.prepare("SELECT count(*) AS n FROM messages").get() as { n: number }).n;
+    steps.push(`insert messages=${rows}`);
+    const hits = searchIndex(db, { query: "marz" }).length;
+    const miss = searchIndex(db, { query: "gibtesnicht" }).length;
+    steps.push(`fts hits=${hits} (marz) miss=${miss}`);
+    db.close();
+    return { host: "store", port: 0, kind: "store", ok: rows === 1 && hits === 1 && miss === 0, ms: Date.now() - t0, detail: `:memory: ${steps.join(", ")}` };
+  } catch (e) {
+    return { host: "store", port: 0, kind: "store", ok: false, ms: Date.now() - t0, detail: `:memory: after [${steps.join(", ")}]: ${String((e as Error)?.stack ?? e)}` };
+  }
+}
+
 export async function runProbes(onResult: (line: string) => void): Promise<void> {
   const emit = (r: ProbeResult) => {
     const line = `${PREFIX} ${r.ok ? "PASS" : "FAIL"} ${r.kind} ${r.host}:${r.port} ${r.ms}ms ${r.detail}`;
@@ -101,6 +137,7 @@ export async function runProbes(onResult: (line: string) => void): Promise<void>
   for (const host of ["imap.gmail.com", "imap.fastmail.com"]) emit(await probeImap(host));
   for (const host of ["expired.badssl.com", "self-signed.badssl.com"]) emit(await probeReject(host));
   emit(probeMediaOnDisk());
+  emit(probeStore());
   console.log(`${PREFIX} DONE`);
   onResult(`${PREFIX} DONE`);
 }
