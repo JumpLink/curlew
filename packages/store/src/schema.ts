@@ -23,7 +23,7 @@ import { type IndexDatabase, withTransaction } from './db.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 import { SEARCH_KEY_MISSING_INDEX } from './search-key-fill.ts';
 
-export const SCHEMA_VERSION = 29;
+export const SCHEMA_VERSION = 30;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -513,6 +513,26 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
   // window's message search matches against. NULL = not computed yet; `fillSearchKeys` fills it
   // after every write, and `migrate` backfills the existing rows in batches.
   29: [{ table: 'conversation_messages', column: 'search_key', type: 'TEXT' }],
+  // v30: the person's mute and favourite flags (ADR 0020), apart from `conversations` for the v26
+  // reason. The `remote_*` columns mirror what the network last reported; `*_pending_at` marks a
+  // local write the network has not acknowledged. The favourite columns land with the mute ones so
+  // favourites need no schema change.
+  30: [
+    `CREATE TABLE IF NOT EXISTS conversation_flags (
+       conversation_id TEXT PRIMARY KEY,
+       muted INTEGER NOT NULL DEFAULT 0,
+       muted_until TEXT,
+       muted_at TEXT,
+       favourite INTEGER NOT NULL DEFAULT 0,
+       favourite_at TEXT,
+       mute_pending_at TEXT,
+       favourite_pending_at TEXT,
+       remote_muted INTEGER,
+       remote_muted_until TEXT,
+       remote_favourite INTEGER,
+       remote_at TEXT)`,
+    'CREATE INDEX IF NOT EXISTS conversation_flags_favourite ON conversation_flags (favourite)',
+  ],
 };
 
 function columnsOf(db: IndexDatabase, table: string): Set<string> {

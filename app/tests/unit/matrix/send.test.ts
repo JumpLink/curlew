@@ -307,6 +307,59 @@ export default async () => {
       expect(calls.length).toBe(1);
     });
 
+    await it('permits the room mute rule for a granted room and no other push rule', async () => {
+      const rule = (room: string, kind = 'room'): string =>
+        `${HS}/pushrules/global/${kind}/${encodeRoom(room)}`;
+      for (const method of ['PUT', 'DELETE']) {
+        expect(sendRefusal(method, rule(ROOM), [ROOM])).toBe(null);
+        expect(sendRefusal(method, rule(OTHER), [ROOM]) !== null).toBe(true);
+        expect(sendRefusal(method, rule(ROOM, 'override'), [ROOM]) !== null).toBe(true);
+        expect(sendRefusal(method, rule(ROOM, 'sender'), [ROOM]) !== null).toBe(true);
+      }
+      expect(
+        sendRefusal('DELETE', `${HS}/rooms/${encodeRoom(ROOM)}/send/m.room.message/t1`, [ROOM]) !== null,
+      ).toBe(true);
+    });
+
+    await it('mutes a room with one PUT of an empty room rule and lifts it with a DELETE', async () => {
+      const calls: Call[] = [];
+      let status = 200;
+      const api = matrixSendApi({
+        homeserver: HOMESERVER,
+        accessToken: 'tok',
+        userId: ME,
+        fetch: (async (url: unknown, init?: RequestInit) => {
+          calls.push({
+            method: init?.method ?? 'GET',
+            url: String(url),
+            body: (init?.body as string) ?? null,
+          });
+          return new Response('{}', { status });
+        }) as typeof globalThis.fetch,
+      });
+      const sender = new MatrixSender(api, { account: 'matrix-me', addresses: [ROOM] }, async () => {});
+      expect(sender.features.chatFlags).toBe(true);
+      await sender.setChatFlags?.({ to: ROOM, mute: { muted: true, until: null } });
+      expect(calls[0].method).toBe('PUT');
+      expect(calls[0].url).toBe(`${HS}/pushrules/global/room/${encodeRoom(ROOM)}`);
+      expect(calls[0].body).toBe('{"actions":[]}');
+      await sender.setChatFlags?.({ to: ROOM, mute: { muted: false, until: null } });
+      expect(calls[1].method).toBe('DELETE');
+      // A rule that is already gone is the state asked for.
+      status = 404;
+      await sender.setChatFlags?.({ to: ROOM, mute: { muted: false, until: null } });
+      expect(
+        await refused(
+          sender.setChatFlags?.({ to: ROOM, mute: { muted: true, until: null } }) ?? Promise.resolve(),
+        ),
+      ).toBe(true);
+      expect(
+        await refused(
+          sender.setChatFlags?.({ to: OTHER, mute: { muted: true, until: null } }) ?? Promise.resolve(),
+        ),
+      ).toBe(true);
+    });
+
     await it('sends to a room id without a server part (room version 12)', async () => {
       await withRig(granted, async (rig) => {
         const v12 = '!31hneApxJ_1o-63DmFrpeqnkFfWppnzWso1JvH3ogLM';

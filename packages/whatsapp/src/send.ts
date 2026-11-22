@@ -45,6 +45,7 @@ import type {
   SendingEdit,
   SendingMessage,
   SendingReaction,
+  SendingChatFlags,
   SendingReadSync,
   SendPermit,
   SenderFeatures,
@@ -120,6 +121,7 @@ export class WhatsAppSender implements MessageSender {
     edits: true,
     deletes: true,
     readSync: true,
+    chatFlags: true,
   };
   private readonly socket: WaSendSocketHandle;
   private readonly mapper: WhatsAppMapper;
@@ -202,6 +204,20 @@ export class WhatsAppSender implements MessageSender {
     this.requireJournal();
     await this.socket.ready();
     await this.socket.markRead(to, sync.target.remoteId);
+  }
+
+  /**
+   * The person's mute of the chat (`chatModify`, no one is told). A pin is not mirrored, so
+   * `favourite` is ignored.
+   */
+  async setChatFlags(flags: SendingChatFlags): Promise<void> {
+    const to = this.recipient(flags.to);
+    if (flags.mute === undefined) return;
+    this.requireJournal();
+    await this.socket.ready();
+    const ends = flags.mute.until === null ? Number.NaN : Date.parse(flags.mute.until);
+    const until = !flags.mute.muted ? 0 : Number.isFinite(ends) ? ends : -1;
+    await this.socket.setMute(to, until);
   }
 
   async react(reaction: SendingReaction): Promise<void> {

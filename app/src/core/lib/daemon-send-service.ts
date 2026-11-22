@@ -24,6 +24,8 @@ import {
   type DaemonAccessRequest,
   type DaemonFetchAttachmentReply,
   type DaemonFetchAvatarsReply,
+  type DaemonSetChatFlagsReply,
+  type DaemonSetChatFlagsRequest,
   type DaemonSyncReadReply,
   type DaemonSyncReadRequest,
   type DaemonFetchAvatarsRequest,
@@ -35,6 +37,7 @@ import {
   parseDaemonAccessRequest,
   parseDaemonFetchAttachmentRequest,
   parseDaemonFetchAvatarsRequest,
+  parseDaemonSetChatFlagsRequest,
   parseDaemonSyncReadRequest,
   parseDaemonSendWire,
   planFdFiles,
@@ -52,6 +55,7 @@ export type DaemonFetchHandler = (request: DaemonFetchAttachmentRequest) => Prom
 export type DaemonAvatarsHandler = (request: DaemonFetchAvatarsRequest) => Promise<DaemonFetchAvatarsReply>;
 
 /** Answer one read-state sync. Never throws: every outcome is a reply. */
+export type DaemonSetChatFlagsHandler = (request: DaemonSetChatFlagsRequest) => Promise<DaemonSetChatFlagsReply>;
 export type DaemonSyncReadHandler = (request: DaemonSyncReadRequest) => Promise<DaemonSyncReadReply>;
 
 /** Answer one access question (ADR 0009). Never throws: every outcome is a reply. */
@@ -79,6 +83,8 @@ export interface PublishOptions {
   avatars?: DaemonAvatarsHandler;
   /** Serves `SyncRead`. Absent: the method answers `UnknownMethod`. */
   syncRead?: DaemonSyncReadHandler;
+  /** Serves `SetChatFlags`. Absent: the method answers `UnknownMethod`. */
+  setChatFlags?: DaemonSetChatFlagsHandler;
   /** A caller that asked left the bus: its session is over and so are its grants. */
   onSessionEnd?: (session: string) => void;
 }
@@ -184,6 +190,23 @@ export function publishDaemonSend(
         (reply) => invocation.return_value(new GLib.Variant('(s)', [JSON.stringify(reply)])),
         (error: unknown) => {
           log(`curlew-daemon: the read-sync handler threw — ${reasonOf(error)}`);
+          invocation.return_dbus_error('org.freedesktop.DBus.Error.Failed', reasonOf(error));
+        },
+      );
+      return;
+    }
+    if (method === 'SetChatFlags' && options.setChatFlags) {
+      let request: DaemonSetChatFlagsRequest;
+      try {
+        request = parseDaemonSetChatFlagsRequest((params.recursiveUnpack() as [string])[0]);
+      } catch (error) {
+        invocation.return_dbus_error('org.freedesktop.DBus.Error.InvalidArgs', reasonOf(error));
+        return;
+      }
+      options.setChatFlags(request).then(
+        (reply) => invocation.return_value(new GLib.Variant('(s)', [JSON.stringify(reply)])),
+        (error: unknown) => {
+          log(`curlew-daemon: the chat-flags handler threw — ${reasonOf(error)}`);
           invocation.return_dbus_error('org.freedesktop.DBus.Error.Failed', reasonOf(error));
         },
       );

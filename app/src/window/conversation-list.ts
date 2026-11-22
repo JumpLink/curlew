@@ -36,6 +36,10 @@ import {
   protocolIcon,
   protocolLabel,
   shortTime,
+  muteTooltip,
+  muteUntil,
+  type MuteChoice,
+  unreadLabel,
   unreadText,
   unreadTier,
 } from './conversation-list-model.ts';
@@ -47,6 +51,8 @@ export interface PeopleTools {
   unmerge(personIds: string[]): void;
   /** Mark the picked conversations read or unread; the window writes the index and refreshes. */
   setRead(entries: ListEntry[], read: boolean): void;
+  /** Mute (`until` an instant, or null = until unmuted) or unmute the picked conversations on every network. */
+  setMute(entries: ListEntry[], mute: { muted: boolean; until: string | null }): void;
   /** Open the merge assistant, from the banner. */
   review(): void;
   /** Open the picker for a conversation with someone who has none yet. */
@@ -137,6 +143,14 @@ function entryRow(
   time.add_css_class('dim-label');
   const titleLine = new Gtk.Box({ spacing: 6 });
   titleLine.append(title);
+  const muteNote = muteTooltip(entry);
+  if (muteNote !== null) {
+    const bell = new Gtk.Image({ iconName: 'notifications-disabled-symbolic', valign: Gtk.Align.CENTER });
+    bell.add_css_class('dim-label');
+    bell.set_tooltip_text(muteNote);
+    bell.update_property([Gtk.AccessibleProperty.LABEL], [muteNote]);
+    titleLine.append(bell);
+  }
   titleLine.append(time);
 
   // The protocol is the badge on the avatar, not text. The line shows the newest message; a row
@@ -156,7 +170,10 @@ function entryRow(
     const count = new Gtk.Label({ label: unreadText(entry.unread), valign: Gtk.Align.CENTER });
     count.add_css_class('numeric');
     count.add_css_class('caption-heading');
-    count.add_css_class('accent');
+    // Muted: the count stays (the chat is unread) but stops calling; the label says why.
+    if (muteNote === null) count.add_css_class('accent');
+    else count.add_css_class('dim-label');
+    count.update_property([Gtk.AccessibleProperty.LABEL], [unreadLabel(entry)]);
     subtitleLine.append(count);
   }
   const text = new Gtk.Box({
@@ -539,11 +556,51 @@ export function createConversationList(
   mergeButton.remove_css_class('flat');
   mergeButton.add_css_class('suggested-action');
   const unmergeButton = toolButton('edit-cut-symbolic', _('Separate'), _('Separate'));
+  const muteBox = new Gtk.Box({
+    orientation: Gtk.Orientation.VERTICAL,
+    spacing: 2,
+    halign: Gtk.Align.CENTER,
+  });
+  muteBox.append(new Gtk.Image({ iconName: 'notifications-disabled-symbolic' }));
+  const muteCaption = new Gtk.Label({ label: _('Mute'), ellipsize: 3 });
+  muteCaption.add_css_class('caption');
+  muteBox.append(muteCaption);
+  const muteButton = new Gtk.MenuButton({
+    child: muteBox,
+    tooltipText: _('Mute'),
+    hexpand: true,
+    direction: Gtk.ArrowType.UP,
+  });
+  muteButton.add_css_class('flat');
+  muteButton.update_property([Gtk.AccessibleProperty.LABEL], [_('Mute')]);
+  const mutePopover = new Gtk.Popover();
+  const muteChoices = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
+  const muteOptions: Array<[MuteChoice, string]> = [
+    ['hour', _('For 1 hour')],
+    ['day', _('For 1 day')],
+    ['week', _('For 1 week')],
+    ['always', _('Until I unmute')],
+  ];
+  for (const [choice, label] of muteOptions) {
+    const option = new Gtk.Button({ label });
+    option.add_css_class('flat');
+    option.connect('clicked', () => {
+      mutePopover.popdown();
+      setMute({ muted: true, until: muteUntil(choice) });
+    });
+    muteChoices.append(option);
+  }
+  mutePopover.set_child(muteChoices);
+  muteButton.set_popover(mutePopover);
+  const unmuteButton = toolButton('notifications-symbolic', _('Unmute'), _('Unmute'));
+  unmuteButton.set_visible(false);
   const readButton = toolButton('mail-read-symbolic', _('Read'), _('Mark as Read'));
   const unreadButton = toolButton('mail-unread-symbolic', _('Unread'), _('Mark as Unread'));
   const tools = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, spacing: 6, homogeneous: true });
   tools.append(readButton);
   tools.append(unreadButton);
+  tools.append(muteButton);
+  tools.append(unmuteButton);
   tools.append(unmergeButton);
   tools.append(mergeButton);
   const actions = new Gtk.ActionBar();
@@ -556,6 +613,9 @@ export function createConversationList(
     mergeButton.set_sensitive(state.canMerge);
     mergeButton.set_tooltip_text(state.mergeBlock);
     unmergeButton.set_visible(state.canUnmerge);
+    muteButton.set_visible(!state.allMuted);
+    muteButton.set_sensitive(picked.size > 0);
+    unmuteButton.set_visible(state.allMuted);
     readButton.set_sensitive(picked.size > 0);
     unreadButton.set_sensitive(picked.size > 0);
   };
@@ -641,6 +701,12 @@ export function createConversationList(
     setPicking(false);
     people.setRead(chosen, read);
   };
+  function setMute(mute: { muted: boolean; until: string | null }): void {
+    const chosen = picks();
+    setPicking(false);
+    people.setMute(chosen, mute);
+  }
+  unmuteButton.connect('clicked', () => setMute({ muted: false, until: null }));
   readButton.connect('clicked', () => setRead(true));
   unreadButton.connect('clicked', () => setRead(false));
   unmergeButton.connect('clicked', () => {

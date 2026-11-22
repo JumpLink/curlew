@@ -11,6 +11,7 @@ app/src/core/actions/autostart.ts
 app/src/core/actions/backends.ts
 app/src/core/actions/calendar.ts
 app/src/core/actions/chat-attachment.ts
+app/src/core/actions/chat-flags.ts
 app/src/core/actions/chat-thumbnail.ts
 app/src/core/actions/contacts.ts
 app/src/core/actions/conversations.ts
@@ -25,6 +26,7 @@ app/src/core/actions/limits.ts
 app/src/core/actions/mail.ts
 app/src/core/actions/message-access.ts
 app/src/core/actions/messaging.ts
+app/src/core/actions/mute.ts
 app/src/core/actions/omemo.ts
 app/src/core/actions/people.ts
 app/src/core/actions/react.ts
@@ -322,6 +324,7 @@ packages/store/src/account-data.ts
 packages/store/src/attachments.ts
 packages/store/src/changes.ts
 packages/store/src/chat-backfill.ts
+packages/store/src/chat-flags.ts
 packages/store/src/chat-sync.ts
 packages/store/src/classify.ts
 packages/store/src/conversation-totals.ts

@@ -17,6 +17,7 @@ import type {
 } from '@curlew/protocol';
 import { normalizeAddress, normalizeMentions } from '@curlew/protocol';
 import type { TgDialog, TgMedia, TgMessage, TgPeer, TgThumbnail } from './api.ts';
+import { MUTE_FOREVER } from './api.ts';
 import { strippedToJpeg } from './stripped-jpeg.ts';
 
 /** The store drops an inline preview above this (ADR 0017); a stripped JPEG is far below it. */
@@ -168,7 +169,16 @@ export function toChatInfo(dialog: TgDialog): ChatInfo {
     lastSeq: dialog.lastMessage?.id ?? null,
     readInboxSeq: dialog.lastReadIngoing || null,
     readOutboxSeq: dialog.lastReadOutgoing || null,
+    ...muteOf(dialog),
   };
+}
+
+/** The dialog's mute as the index keeps it; nothing when the account default applies. */
+function muteOf(dialog: TgDialog): Pick<ChatInfo, 'mute'> {
+  if (dialog.isMuted === undefined || dialog.isMuted === null) return {};
+  if (!dialog.isMuted) return { mute: { muted: false } };
+  const until = dialog.raw?.notifySettings?.muteUntil ?? 0;
+  return { mute: { muted: true, until: until <= 0 || until >= MUTE_FOREVER ? null : new Date(until * 1000).toISOString() } };
 }
 
 /**

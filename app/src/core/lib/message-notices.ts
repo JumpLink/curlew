@@ -8,7 +8,7 @@
  */
 
 import { _, _n, fmt, type ConversationMessage } from '@curlew/protocol';
-import { getConversation, type ChangeRow, type IndexDatabase } from '@curlew/store';
+import { getConversation, isMutedAt, loadChatFlags, type ChangeRow, type IndexDatabase } from '@curlew/store';
 
 /** What a notification may show: the text, only who wrote, or nothing at all. */
 export type NoticeMode = 'preview' | 'sender' | 'off';
@@ -65,6 +65,8 @@ export function planNotices(
   mode: NoticeMode,
   state: NoticeState,
   hiddenAccounts: readonly string[] = [],
+  ownIds: ReadonlyMap<string, readonly string[]> = new Map(),
+  now: Date = new Date(),
 ): Notice[] {
   if (mode === 'off') return [];
   const notices: Notice[] = [];
@@ -83,6 +85,19 @@ export function planNotices(
     if (already !== undefined) {
       const at = fresh.findIndex((m) => m.id === already);
       if (at !== -1) fresh = fresh.slice(at + 1);
+    }
+    // ADR 0020 §7: a muted chat is silent unless a message names the account itself.
+    if (isMutedAt(loadChatFlags(db, conversationId), now)) {
+      const own = ownIds.get(found.conversation.accountId) ?? [];
+      const names = (m: ConversationMessage): boolean =>
+        (m.mentions ?? []).some((x) => x.self === true || own.includes(x.userId));
+      const mentioned = fresh.filter(names);
+      if (mentioned.length === 0) {
+        const last = fresh[fresh.length - 1];
+        if (last) state.announced.set(conversationId, last.id);
+        continue;
+      }
+      fresh = mentioned;
     }
     const newest = fresh[fresh.length - 1];
     if (!newest) continue;

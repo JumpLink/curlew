@@ -25,6 +25,8 @@ export const WHATSAPP_MANIFEST: BackendManifest = {
     threads: false,
     // Sending read receipts (MessageSender.readReceipt) is not implemented; receiving read marks is separate.
     readReceipts: false,
+    // The per-chat mute arrives with the chat reports (`muteEndTime`) and is written with `chatModify`.
+    mutes: true,
     groups: true,
     // Every chat is end-to-end encrypted (Signal protocol); this device holds its own keys.
     e2ee: true,

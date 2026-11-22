@@ -340,6 +340,12 @@ export interface ChatInfo {
    * the peer was not asked or did not answer (unknown, not "none").
    */
   peerFeatures?: string[];
+  /**
+   * The network's own per-chat mute (ADR 0020), for a backend whose manifest says `mutes`. Absent =
+   * the network did not say. `until` is an ISO instant, `null` = until unmuted, and absent on a
+   * network without an expiry (Matrix): only `muted` is then compared.
+   */
+  mute?: { muted: boolean; until?: string | null };
 }
 
 /** The room facts a window shows next to a composer; null = unknown. */
@@ -661,6 +667,8 @@ export type DeliveryEvent =
   | { type: 'chat'; chat: DeliveryChat }
   /** The user read the chat on another device: all but the newest `unreadCount` incoming messages are read. */
   | { type: 'chat-read'; chatRemoteId: string; unreadCount: number }
+  /** The network reports the chat's mute (ADR 0020); `until` as in `ChatInfo.mute`. */
+  | { type: 'chat-mute'; chatRemoteId: string; mute: NonNullable<ChatInfo['mute']> }
   /**
    * Two chat ids turned out to be one chat (a network that addresses a person two ways, and
    * told which ids belong together only later): everything stored under `from` moves to
@@ -933,6 +941,11 @@ export interface SenderFeatures {
    * (`MessageSender.readSync`), without telling the peer. Absent means false.
    */
   readSync?: boolean;
+  /**
+   * The sender can write the person's per-chat mute and favourite to the network
+   * (`MessageSender.setChatFlags`, ADR 0020). Absent means false.
+   */
+  chatFlags?: boolean;
 }
 
 /** A file to send with a message, by absolute path. Only the sender that claims `attachments` reads it. */
@@ -1038,6 +1051,17 @@ export interface SendingReadSync {
   folder?: string;
 }
 
+/**
+ * The person muted or pinned a chat: the network's copy of the two flags (ADR 0020). A field left
+ * out is not touched. `until` is an absolute ISO instant, `null` = until the person unmutes; a
+ * network with no expiry gets the mute and the daemon lifts it itself.
+ */
+export interface SendingChatFlags {
+  to: string;
+  mute?: { muted: boolean; until: string | null };
+  favourite?: boolean;
+}
+
 /** What a send returned. `id` is the network's own id and what the write log records (ADR 0004 §7). */
 export interface SentMessage {
   /** The address it went to, exactly as the permit spelled it. */
@@ -1087,6 +1111,8 @@ export interface MessageSender {
   readReceipt?(receipt: SendingReadReceipt): Promise<void>;
   /** Present exactly when `features.readSync` is true. */
   readSync?(sync: SendingReadSync): Promise<void>;
+  /** Present exactly when `features.chatFlags` is true. */
+  setChatFlags?(flags: SendingChatFlags): Promise<void>;
   close(): Promise<void>;
 }
 

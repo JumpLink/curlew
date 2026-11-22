@@ -104,6 +104,7 @@ export function toChatInfo(room: MxRoom): ChatInfo {
     lastSeq: room.lastEventTs === null ? null : seqOf(room.lastEventTs),
     readInboxSeq: room.readUpToTs === null ? null : seqOf(room.readUpToTs),
     readOutboxSeq: room.peerReadUpToTs === null ? null : seqOf(room.peerReadUpToTs),
+    ...(room.muted === undefined || room.muted === null ? {} : { mute: { muted: room.muted } }),
   };
 }
 

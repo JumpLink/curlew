@@ -24,6 +24,7 @@ import {
   fmt,
   type MessageSender,
   probeMediaFile,
+  type SendingChatFlags,
   type SendingDeletion,
   type SendingEdit,
   type SendingMessage,
@@ -129,6 +130,11 @@ export interface MatrixSendApi {
   redact(roomId: string, eventId: string, txnId: string): Promise<void>;
   /** POST a PRIVATE read receipt (`m.read.private`) up to `eventId`: only the person's own devices see it. */
   sendPrivateReadReceipt(roomId: string, eventId: string): Promise<void>;
+  /**
+   * Mute the room for the person's account (a `room` push rule with no actions, id = room id), or
+   * lift it by deleting that rule. Matrix has no expiry: an end is kept by curlew alone.
+   */
+  setRoomMute(roomId: string, muted: boolean): Promise<void>;
 }
 
 /** One reaction of the person: the event that carries it and its emoji. */
@@ -222,6 +228,29 @@ export function matrixSendApi(session: MatrixSendSession): MatrixSendApi {
         const errcode = await errcodeOf(response);
         throw new Error(
           fmt(_('the homeserver refused the read marker in {room} ({reason})'), {
+            room: roomId,
+            reason: reasonOf(response, errcode),
+          }),
+        );
+      }
+    },
+    async setRoomMute(roomId, muted) {
+      const url = `${base}${V3}/pushrules/global/room/${encodeURIComponent(roomId)}`;
+      const response = await session.fetch(
+        url,
+        muted
+          ? {
+              method: 'PUT',
+              headers: { ...auth, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ actions: [] }),
+            }
+          : { method: 'DELETE', headers: auth },
+      );
+      // Lifting a mute that is not there is already the state asked for.
+      if (!response.ok && !(muted === false && response.status === 404)) {
+        const errcode = await errcodeOf(response);
+        throw new Error(
+          fmt(_('the homeserver refused the mute of {room} ({reason})'), {
             room: roomId,
             reason: reasonOf(response, errcode),
           }),
@@ -370,6 +399,7 @@ export class MatrixSender implements MessageSender {
     edits: true,
     deletes: true,
     readSync: true,
+    chatFlags: true,
   };
   private readonly api: MatrixSendApi;
   private readonly permit: SendPermit;
@@ -578,6 +608,16 @@ export class MatrixSender implements MessageSender {
       throw new Error(fmt(_('{id} is not a Matrix event id — nothing was sent'), { id: eventId }));
     }
     await this.api.sendPrivateReadReceipt(roomId, eventId);
+  }
+
+  /**
+   * The person's mute of the room, as a push rule of their own account. Matrix has no favourite
+   * curlew mirrors (`m.favourite` is a room tag, not synced here), so `favourite` is ignored.
+   */
+  async setChatFlags(flags: SendingChatFlags): Promise<void> {
+    const roomId = this.roomId(flags.to);
+    if (flags.mute === undefined) return;
+    await this.api.setRoomMute(roomId, flags.mute.muted);
   }
 
   async close(): Promise<void> {

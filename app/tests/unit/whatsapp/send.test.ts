@@ -408,6 +408,36 @@ export default async () => {
       });
     });
 
+    await it('mutes a granted chat with an end or without, unmutes it, and gates the rest', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [ANNA_LID],
+        });
+        expect(sender.features.chatFlags).toBe(true);
+        try {
+          await sender.setChatFlags?.({ to: ANNA_LID, mute: { muted: true, until: null } });
+          await sender.setChatFlags?.({
+            to: ANNA_LID,
+            mute: { muted: true, until: '2026-12-01T00:00:00.000Z' },
+          });
+          await sender.setChatFlags?.({ to: ANNA_LID, mute: { muted: false, until: null } });
+          await sender.setChatFlags?.({ to: ANNA_LID, favourite: true });
+          const [socket] = rig.senders;
+          expect(socket.mutes.map((m) => m.untilMs).join()).toBe(
+            `-1,${Date.parse('2026-12-01T00:00:00.000Z')},0`,
+          );
+          for (const to of [BEN_LID, GROUP]) {
+            const attempt = sender.setChatFlags?.({ to, mute: { muted: true, until: null } });
+            expect((await reasonOf(attempt as Promise<unknown>)).length > 0).toBe(true);
+          }
+          expect(socket.mutes.length).toBe(3);
+        } finally {
+          await sender.close();
+        }
+      });
+    });
+
     await it('refuses a reply that carries files, sending nothing', async () => {
       await withRig(GRANTED, async (rig) => {
         const doc = join(rig.dir, 'notes.pdf');

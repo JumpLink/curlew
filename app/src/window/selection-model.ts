@@ -5,7 +5,7 @@
 
 import { _, _n, fmt } from '@curlew/protocol';
 
-import { type ListEntry, carriersOf, protocolLabel } from './conversation-list-model.ts';
+import { type ListEntry, carriersOf, muteView, protocolLabel } from './conversation-list-model.ts';
 
 /** The header while rows are picked: "2 selected", de "2 ausgewählt". */
 export function selectionTitle(count: number): string {
@@ -20,6 +20,8 @@ export interface SelectionTools {
   mergeBlock: string | null;
   /** At least one picked row was merged by hand; unmerging undoes that grouping. */
   canUnmerge: boolean;
+  /** Every picked row is muted on every network it spans: the tool unmutes instead. */
+  allMuted: boolean;
   /** Every directory participant the picked rows stand for. */
   personIds: string[];
 }
@@ -32,6 +34,7 @@ export function selectionTools(picked: readonly ListEntry[]): SelectionTools {
     canMerge,
     mergeBlock: canMerge ? null : mergeBlockOf(picked),
     canUnmerge: picked.some((entry) => entry.manual),
+    allMuted: picked.length > 0 && picked.every((entry) => muteView(entry).all),
     personIds,
   };
 }

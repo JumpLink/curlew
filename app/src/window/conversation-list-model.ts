@@ -26,6 +26,8 @@ export interface ListEntry {
   accountId: string;
   kind: Conversation['kind'];
   unread: number;
+  /** Muted by the person (every thread of a merged row). Absent = not muted. */
+  muted?: boolean;
   lastMessageAt: string | null;
   /** Address the composer answers: the other person, or for a Matrix room its room id. */
   target: string | null;
@@ -337,6 +339,7 @@ export function toEntry(
     accountId: conversation.accountId,
     kind: conversation.kind,
     unread: Math.max(0, conversation.unreadCount),
+    ...(conversation.muted ? { muted: true } : {}),
     lastMessageAt: conversation.lastMessageAt,
     target:
       conversation.backend === 'matrix'
@@ -587,6 +590,7 @@ function mergeEntries(
     accountId: badge.accountId,
     kind: 'direct',
     unread: members.reduce((sum, m) => sum + m.unread, 0),
+    ...(members.every((m) => m.muted === true) ? { muted: true } : {}),
     lastMessageAt: newest.lastMessageAt,
     target: null,
     emailChat: members.some((m) => m.emailChat),
@@ -906,6 +910,55 @@ export function buildSections(entries: ListEntry[], filter: ListFilter = NO_FILT
       unread: rows.filter((entry) => entry.unread > 0).length,
     }))
     .filter((section) => section.entries.length > 0);
+}
+
+/**
+ * What the shell badge counts: unread chats that are not muted. The Unread view keeps a muted chat
+ * (it is what is unread); the badge exists to pull the person in, and a muted chat does not (ADR 0020 §7).
+ */
+export function shellBadgeCount(entries: readonly ListEntry[]): number {
+  return entries.filter((entry) => entry.unread > 0 && entry.muted !== true).length;
+}
+
+/** Which of a row's chats are muted; a merged contact is `all` only when every network's chat is. */
+export interface MuteView {
+  all: boolean;
+  /** The networks the mute is on, by label. */
+  on: string[];
+}
+
+export function muteView(entry: ListEntry): MuteView {
+  const parts = carriers(entry);
+  const muted = parts.filter((part) => part.muted === true);
+  return {
+    all: muted.length > 0 && muted.length === parts.length,
+    on: carriersOf(muted).map(protocolLabel).sort(),
+  };
+}
+
+/** What the bell on a row says; null when nothing of the row is muted. */
+export function muteTooltip(entry: ListEntry): string | null {
+  const view = muteView(entry);
+  if (view.on.length === 0) return null;
+  if (view.all) return _('Muted');
+  return fmt(_('Muted on {networks}'), { networks: view.on.join(', ') });
+}
+
+/** The unread count as a screen reader says it: the muted state is part of it, not only a dimmed colour. */
+export function unreadLabel(entry: ListEntry): string {
+  const text = fmt(_n('{count} unread message', '{count} unread messages', entry.unread), {
+    count: entry.unread,
+  });
+  const muted = muteTooltip(entry);
+  return muted === null ? text : `${text}, ${muted}`;
+}
+
+export type MuteChoice = 'hour' | 'day' | 'week' | 'always';
+
+/** The mute a choice stands for, as an absolute instant (null = until unmuted). */
+export function muteUntil(choice: MuteChoice, now: Date = new Date()): string | null {
+  const hours = { hour: 1, day: 24, week: 24 * 7 }[choice as 'hour' | 'day' | 'week'];
+  return choice === 'always' ? null : new Date(now.getTime() + hours * 3_600_000).toISOString();
 }
 
 /** Protocols present in the list, for the filter chips; one chip is no filter, so it is not offered. */

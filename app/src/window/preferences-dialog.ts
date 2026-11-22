@@ -77,6 +77,14 @@ export function presentPreferences(
     active: loadConfig(path).ui.syncReadState !== false,
   });
   group.add(syncRead);
+  const syncFlags = new Adw.SwitchRow({
+    title: _('Sync muted conversations with the network'),
+    subtitle: _(
+      'A conversation you mute here is muted on your other devices too, and the other way round. Nobody else is told',
+    ),
+    active: loadConfig(path).ui.syncChatFlags !== false,
+  });
+  group.add(syncFlags);
   const modes = ['preview', 'sender', 'off'] as const;
   const notifications = new Adw.ComboRow({
     title: _('Message notifications'),
@@ -136,6 +144,11 @@ export function presentPreferences(
   syncRead.connect('notify::active', () =>
     persist(path, overlay, (config) => {
       config.ui.syncReadState = syncRead.get_active();
+    }),
+  );
+  syncFlags.connect('notify::active', () =>
+    persist(path, overlay, (config) => {
+      config.ui.syncChatFlags = syncFlags.get_active();
     }),
   );
   videos.connect('notify::active', () =>

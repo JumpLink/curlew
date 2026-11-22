@@ -150,6 +150,8 @@ export interface WaChat {
   unreadCount?: number | null;
   pnJid?: string | null;
   lidJid?: string | null;
+  /** When the mute ends, ms since the epoch; -1 = without end, 0 or null = not muted. */
+  muteEndTime?: number | null;
 }
 
 export interface WaContact {
@@ -307,6 +309,11 @@ export interface WaSendSocketHandle {
    * blue ticks), so a sender only calls it while read receipts are on.
    */
   markRead(jid: string, id: string, participant?: string): Promise<void>;
+  /**
+   * Mute the chat until `untilMs` (ms since the epoch; -1 = without end), or lift the mute with 0.
+   * Account state (`chatModify`): the other person is told nothing.
+   */
+  setMute(jid: string, untilMs: number): Promise<void>;
   /** Close without logging out, exactly like `WaSocketHandle.end`. */
   end(): void;
 }

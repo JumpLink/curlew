@@ -220,6 +220,13 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
     readHistory: async (chatId, messageId) => {
       await client.readHistory(chatId, { maxId: messageId });
     },
+    setMute: async (chatId, until) => {
+      await client.call({
+        _: 'account.updateNotifySettings',
+        peer: { _: 'inputNotifyPeer', peer: await client.resolvePeer(chatId) },
+        settings: { _: 'inputPeerNotifySettings', muteUntil: until },
+      });
+    },
     deleteMessage: (chatId, messageId) => client.deleteMessagesById(chatId, [messageId], { revoke: true }),
     sendFile: (chatId, file) =>
       client.sendMedia(

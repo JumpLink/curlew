@@ -9,7 +9,7 @@
  * The RECEIVE socket (`createBaileysSocket`) is read-only, and why that holds (Baileys
  * 7.0.0-rc14, file references into its source):
  *   - No send path is reachable: `WaSocketHandle` exposes events, the pairing-code request and
- *     `end` — not `sendMessage`, `readMessages` (a granted send view has it, see `markRead`), `sendPresenceUpdate` or `chatModify`.
+ *     `end` — not `sendMessage`, `readMessages` (a granted send view has it, see `markRead`), `sendPresenceUpdate` or `chatModify` (a granted send view has it for the mute only, see `setMute`).
  *   - `markOnlineOnConnect: false`: on open, Baileys announces `unavailable` instead of
  *     `available` (Socket/chats.ts, the `connection.update` handler), so contacts never see
  *     this device online, and the phone keeps getting its notifications.
@@ -281,6 +281,9 @@ export const createBaileysConnection: ConnectionFactory = ({ auth, fullHistory =
       },
       markRead: async (jid, id, participant) => {
         await sock.readMessages([{ remoteJid: jid, id, fromMe: false, ...(participant ? { participant } : {}) }]);
+      },
+      setMute: async (jid, untilMs) => {
+        await sock.chatModify({ mute: untilMs === 0 ? null : untilMs }, jid);
       },
       // See `WaConnection.openSend`: the connection's owner closes it, never a send view.
       end: () => {},

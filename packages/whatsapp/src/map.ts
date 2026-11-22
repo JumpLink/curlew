@@ -426,6 +426,7 @@ export class WhatsAppMapper {
     if (typeof unread === 'number' && unread >= 0 && (absolute || unread === 0)) {
       events.push({ type: 'chat-read', chatRemoteId: chatId, unreadCount: unread });
     }
+    if (raw.muteEndTime !== undefined) events.push({ type: 'chat-mute', chatRemoteId: chatId, mute: muteOf(raw.muteEndTime) });
     return events;
   }
 
@@ -528,4 +529,11 @@ export class WhatsAppMapper {
     }
     return events;
   }
+}
+
+/** WhatsApp's `muteEndTime` (ms; -1 without end; 0 or null not muted) as the index keeps a mute. */
+export function muteOf(end: number | null | undefined, now: number = Date.now()): { muted: boolean; until: string | null } {
+  if (end === -1) return { muted: true, until: null };
+  if (typeof end !== 'number' || !Number.isFinite(end) || end <= now) return { muted: false, until: null };
+  return { muted: true, until: new Date(end).toISOString() };
 }

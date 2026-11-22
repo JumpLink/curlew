@@ -40,6 +40,7 @@ import storeClassify from './unit/store/classify.test.ts';
 import storeThreads from './unit/store/threads.test.ts';
 import storeConversations from './unit/store/conversations.test.ts';
 import storeLocalRead from './unit/store/local-read.test.ts';
+import storeChatFlags from './unit/store/chat-flags.test.ts';
 import storeReadReceipts from './unit/store/read-receipts.test.ts';
 import storeConversationTotals from './unit/store/conversation-totals.test.ts';
 import storeChatSync from './unit/store/chat-sync.test.ts';
@@ -169,6 +170,8 @@ import notifyQr from './unit/protocol/notify-qr.test.ts';
 import daemonFetch from './unit/core/daemon-fetch.test.ts';
 import daemonAvatars from './unit/core/daemon-avatars.test.ts';
 import readSync from './unit/core/read-sync.test.ts';
+import chatFlagsPush from './unit/core/chat-flags-push.test.ts';
+import muteTest from './unit/core/mute.test.ts';
 import chatAttachment from './unit/core/chat-attachment.test.ts';
 import conversationsAttachments from './unit/core/conversations-attachments.test.ts';
 import messageNotices from './unit/core/message-notices.test.ts';
@@ -225,6 +228,7 @@ run({
   storeConversations,
   storeReadReceipts,
   storeLocalRead,
+  storeChatFlags,
   storeConversationTotals,
   storeChatSync,
   storeChatBackfill,
@@ -337,6 +341,8 @@ run({
   daemonFetch,
   daemonAvatars,
   readSync,
+  chatFlagsPush,
+  muteTest,
   accountPrompter,
   accountAddModel,
   protocolsModel,

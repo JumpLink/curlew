@@ -21,6 +21,7 @@ export * from './search-key.ts';
 export * from './search-key-fill.ts';
 export * from './read-receipts.ts';
 export * from './local-read.ts';
+export * from './chat-flags.ts';
 export * from './conversation-totals.ts';
 export * from './secret-files.ts';
 export * from './secret-store.ts';

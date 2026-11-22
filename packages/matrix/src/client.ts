@@ -252,6 +252,14 @@ function directRoomIds(client: MatrixClient): Map<string, string> {
   return rooms;
 }
 
+/** Whether the account's own `room` push rule for the room is on and notifies nobody. */
+function mutedByRule(client: MatrixClient, roomId: string): boolean | null {
+  const rules = (client as { pushRules?: unknown }).pushRules;
+  if (rules === undefined || rules === null) return null;
+  const rule = client.getRoomPushRule('global', roomId);
+  return rule !== undefined && rule.enabled !== false && rule.actions.length === 0;
+}
+
 function toMxRoom(client: MatrixClient, room: Room, direct: Map<string, string>): MxRoom {
   const self = client.getSafeUserId();
   const others = room.getJoinedMembers().filter((m) => m.userId !== self);
@@ -276,6 +284,7 @@ function toMxRoom(client: MatrixClient, room: Room, direct: Map<string, string>)
     lastEventTs: last > 0 ? last : null,
     readUpToTs: receiptTs(room, self),
     peerReadUpToTs: peerRead.length > 0 ? Math.max(...peerRead) : null,
+    muted: mutedByRule(client, room.roomId),
   };
 }
 

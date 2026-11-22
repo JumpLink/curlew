@@ -112,6 +112,9 @@ export interface TgMessage {
   readonly reactions?: { readonly reactions: ReadonlyArray<TgReactionCount> } | null;
 }
 
+/** Telegram's "muted without an end": the largest 32-bit unix time. */
+export const MUTE_FOREVER = 2147483647;
+
 export interface TgDialog {
   readonly peer: TgPeer;
   readonly lastMessage: TgMessage | null;
@@ -119,6 +122,10 @@ export interface TgDialog {
   readonly lastReadIngoing: number;
   /** Everything the user sent at or below this id was read by the other side. */
   readonly lastReadOutgoing: number;
+  /** Whether the dialog is muted now; null = the account default applies. mtcute's `Dialog.isMuted`. */
+  readonly isMuted?: boolean | null;
+  /** The raw dialog, only for the mute expiry (unix seconds in `notifySettings.muteUntil`). */
+  readonly raw?: { readonly notifySettings?: { readonly muteUntil?: number } };
 }
 
 /**
@@ -264,6 +271,11 @@ export interface TelegramClientHandle extends TelegramApi {
    * so a sender only calls it while read receipts are on.
    */
   readHistory(chatId: number, messageId: number): Promise<void>;
+  /**
+   * Mute the chat's notifications until the unix time `until` (seconds; `MUTE_FOREVER` for no
+   * end), or unmute it with 0 (`account.updateNotifySettings`). Invisible to the other person.
+   */
+  setMute(chatId: number, until: number): Promise<void>;
   connect(): Promise<void>;
   /** Present only on a client made with `live: true`. */
   readonly live?: TelegramLive;

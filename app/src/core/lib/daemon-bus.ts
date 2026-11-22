@@ -47,6 +47,10 @@ export const DAEMON_INTERFACE_XML = `<node>
       <arg type="s" name="request_json" direction="in"/>
       <arg type="s" name="reply_json" direction="out"/>
     </method>
+    <method name="SetChatFlags">
+      <arg type="s" name="request_json" direction="in"/>
+      <arg type="s" name="reply_json" direction="out"/>
+    </method>
     <method name="RequestAccess">
       <arg type="s" name="request_json" direction="in"/>
       <arg type="s" name="reply_json" direction="out"/>
@@ -78,7 +82,7 @@ export const DAEMON_FETCH_TIMEOUT_MS = 120_000;
 export const DAEMON_SEND_TIMEOUT_MS = 120_000;
 
 /** The wire version. Bump it when a field stops being optional or changes meaning. */
-export const DAEMON_WIRE_VERSION = 8;
+export const DAEMON_WIRE_VERSION = 9;
 
 /**
  * The two sides of the bus speak different wire versions: a window that outlived an update talks
@@ -703,6 +707,87 @@ export function parseDaemonSyncReadReply(json: string): DaemonSyncReadReply {
       if (typeof reply.message !== 'string')
         throw new Error('the curlew daemon reported a problem without saying what it was');
       return reply as DaemonSyncReadReply;
+    default:
+      throw new Error(`the curlew daemon answered an unknown reply kind ${String(reply.kind)}`);
+  }
+}
+
+/**
+ * The person muted or pinned a chat: push it to the network through the session the daemon holds
+ * (ADR 0020 §5). New in wire version 9: an older daemon fails the version check, which the window
+ * explains ("one side must restart") instead of a raw unknown-method error.
+ */
+export interface DaemonSetChatFlagsRequest {
+  v: number;
+  backend: string;
+  account: string;
+  /** The chat, as the index holds it (`ListEntry.target`). */
+  to: string;
+  /** Absent = leave the network's mute alone. `until` is an ISO instant, `null` = indefinitely. */
+  mute?: { muted: boolean; until: string | null };
+  /** Absent = leave the network's favourite alone. */
+  favourite?: boolean;
+}
+
+export type DaemonSetChatFlagsReply =
+  | { v: number; kind: 'set' }
+  | { v: number; kind: 'not-followed' }
+  | { v: number; kind: 'refused'; message: string }
+  | { v: number; kind: 'failed'; message: string };
+
+/** Read a `SetChatFlags` request off the wire, or throw. */
+export function parseDaemonSetChatFlagsRequest(json: string): DaemonSetChatFlagsRequest {
+  let value: unknown;
+  try {
+    value = JSON.parse(json);
+  } catch (error) {
+    throw new Error('the chat-flags request is not JSON', { cause: error });
+  }
+  if (typeof value !== 'object' || value === null) throw new Error('the chat-flags request is not an object');
+  const request = value as Partial<DaemonSetChatFlagsRequest>;
+  if (request.v !== DAEMON_WIRE_VERSION)
+    throw new DaemonWireMismatchError('the chat-flags request speaks another protocol version', String(request.v));
+  for (const field of ['backend', 'account', 'to'] as const) {
+    if (typeof request[field] !== 'string' || request[field] === '')
+      throw new Error(`the chat-flags request has no ${field}`);
+  }
+  const { mute, favourite } = request;
+  if (mute !== undefined) {
+    if (
+      typeof mute !== 'object' ||
+      mute === null ||
+      typeof mute.muted !== 'boolean' ||
+      (mute.until !== null && typeof mute.until !== 'string')
+    )
+      throw new Error('the chat-flags request has a malformed mute');
+  }
+  if (favourite !== undefined && typeof favourite !== 'boolean')
+    throw new Error('the chat-flags request has a malformed favourite');
+  if (mute === undefined && favourite === undefined) throw new Error('the chat-flags request changes nothing');
+  return request as DaemonSetChatFlagsRequest;
+}
+
+/** Read a `SetChatFlags` reply off the wire, or throw. */
+export function parseDaemonSetChatFlagsReply(json: string): DaemonSetChatFlagsReply {
+  let value: unknown;
+  try {
+    value = JSON.parse(json);
+  } catch (error) {
+    throw new Error('the curlew daemon answered something that is not JSON', { cause: error });
+  }
+  if (typeof value !== 'object' || value === null) throw new Error('the curlew daemon answered no object');
+  const reply = value as Partial<DaemonSetChatFlagsReply> & { message?: unknown };
+  if (reply.v !== DAEMON_WIRE_VERSION)
+    throw new DaemonWireMismatchError('the running curlew daemon speaks another protocol version', String(reply.v));
+  switch (reply.kind) {
+    case 'set':
+    case 'not-followed':
+      return reply as DaemonSetChatFlagsReply;
+    case 'refused':
+    case 'failed':
+      if (typeof reply.message !== 'string')
+        throw new Error('the curlew daemon reported a problem without saying what it was');
+      return reply as DaemonSetChatFlagsReply;
     default:
       throw new Error(`the curlew daemon answered an unknown reply kind ${String(reply.kind)}`);
   }
