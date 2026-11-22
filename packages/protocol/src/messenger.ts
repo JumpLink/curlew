@@ -63,6 +63,14 @@ export interface BackendCapabilities {
   avatars?: boolean;
   /** Can send a recorded voice note as such (Delta Chat over mail); a thread narrows it further. */
   voiceNotes?: boolean;
+  /**
+   * The network keeps a per-chat mute the person can read and write (ADR 0020). Absent = false.
+   * An upper bound: the mute action is always offered, locally; this only says whether the network
+   * is told.
+   */
+  mutes?: boolean;
+  /** The network keeps a per-chat pin/favourite the person can read and write (ADR 0020). Absent = false. */
+  pins?: boolean;
 }
 
 export const CAPABILITY_NAMES: ReadonlyArray<keyof BackendCapabilities> = [

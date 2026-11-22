@@ -155,3 +155,21 @@ export function threadCan(
 ): boolean {
   return threadCapabilitiesOf(capabilities, facts)[feature];
 }
+
+/**
+ * Whether the network carries a mute / a favourite for ONE thread (ADR 0020 §9). Not part of
+ * `ThreadCapabilities`: the action is always offered because the local form always exists; this
+ * only decides the label ("muted everywhere" vs "muted in curlew") and whether a write is tried.
+ */
+export interface ChatFlagSupport {
+  mutes: boolean;
+  pins: boolean;
+}
+
+export function chatFlagSupportOf(capabilities: BackendCapabilities, facts: ThreadFacts): ChatFlagSupport {
+  let mutes = capabilities.mutes === true;
+  const pins = capabilities.pins === true;
+  // The person's own notes are no chat a network can notify about.
+  if (facts.self) mutes = false;
+  return { mutes, pins };
+}

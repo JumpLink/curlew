@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@gjsify/unit';
 
 import {
+  chatFlagSupportOf,
   NO_THREAD_CAPABILITIES,
   PINNED_FEATURES,
   THREAD_FEATURES,
@@ -119,6 +120,21 @@ export default async () => {
     await it('pins reaction, edit, delete and read receipt to their own network', async () => {
       expect([...PINNED_FEATURES].sort()).toStrictEqual(['deletes', 'edits', 'reactions', 'readReceipts']);
       for (const feature of PINNED_FEATURES) expect(THREAD_FEATURES.includes(feature)).toBe(true);
+    });
+
+    await it('carries mute and pin to the network only where the manifest says so, never for notes', async () => {
+      const both: BackendCapabilities = { ...chatty, mutes: true, pins: true };
+      expect(chatFlagSupportOf(both, { backend: 'telegram' })).toStrictEqual({ mutes: true, pins: true });
+      expect(chatFlagSupportOf(both, { backend: 'telegram', self: true })).toStrictEqual({
+        mutes: false,
+        pins: true,
+      });
+      for (const name of ['mail', 'signal', 'xmpp']) {
+        expect(chatFlagSupportOf(manifestOf(name), { backend: name })).toStrictEqual({
+          mutes: false,
+          pins: false,
+        });
+      }
     });
   });
 };
