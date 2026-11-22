@@ -3,17 +3,26 @@ import type { NodemailerError } from 'nodemailer/lib/errors';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 
 import { SmtpError } from './errors.ts';
+import { scrub, secretsOf, SUMMARY } from './scrub.ts';
 import type { SmtpErrorCode } from './errors.ts';
-import { composerOptions, readReceiptSource, resolveMessageId } from './message.ts';
+import { composerOptions, rawMessage, readReceiptSource, resolveMessageId } from './message.ts';
 import type { OutgoingMessage, SendResult, SmtpAccount } from './types.ts';
 import { validateAccount } from './validate.ts';
+import { sendOverWire, verifyOverWire } from './wire.ts';
+import type { WireOptions } from './wire.ts';
+import type { MailEndpointOpener } from '@curlew/protocol';
+
+/**
+ * Opt-in: speak SMTP ourselves over this opener instead of handing the connection to nodemailer
+ * (ADR 0018 amendment). Without it the nodemailer transport runs, as before.
+ */
+export interface WireTransport extends WireOptions {
+  open: MailEndpointOpener;
+}
 
 /** A dead server must end as an error, not as a hang. */
 const CONNECTION_TIMEOUT_MS = 15_000;
 const SOCKET_TIMEOUT_MS = 60_000;
-
-/** Longest server reply text that goes into an error message. */
-const MAX_REPLY_LENGTH = 200;
 
 const BY_LIBRARY_CODE: Record<string, SmtpErrorCode> = {
   EAUTH: 'auth',
@@ -32,27 +41,6 @@ const BY_LIBRARY_CODE: Record<string, SmtpErrorCode> = {
  * underlying code, so a refused certificate would read as "no connection". The text is what is left.
  */
 const TLS_FAILURE = /certificate|self[- ]signed|handshake|\bTLS\b|\bSSL\b|altnames|CERT_|ERR_TLS/i;
-
-const SUMMARY: Record<SmtpErrorCode, string> = {
-  auth: 'SMTP login failed',
-  tls: 'SMTP TLS handshake failed',
-  connect: 'SMTP connection failed',
-  rejected: 'SMTP server rejected the message',
-  config: 'SMTP configuration is invalid',
-};
-
-function secretsOf(account: SmtpAccount): string[] {
-  return account.auth.kind === 'password' ? [account.auth.password] : [account.auth.accessToken];
-}
-
-/** The reply text with every form of a secret removed, flattened to one bounded line. */
-function scrub(text: string, secrets: string[]): string {
-  let out = text;
-  for (const secret of secrets) {
-    for (const form of [secret, btoa(secret)]) out = out.split(form).join('[redacted]');
-  }
-  return out.replace(/[\u0000-\u001f\u007f-\u009f]+/g, ' ').trim().slice(0, MAX_REPLY_LENGTH);
-}
 
 /**
  * What the caller sees of a library error: a code, fixed text, the numeric reply code, and the
@@ -101,8 +89,9 @@ function transportFor(account: SmtpAccount) {
  * Connects and logs in, then hangs up: no MAIL FROM, nothing is sent. Resolves when the server
  * accepted the credentials; otherwise throws an SmtpError.
  */
-export async function verifyAccount(account: SmtpAccount): Promise<void> {
+export async function verifyAccount(account: SmtpAccount, wire?: WireTransport): Promise<void> {
   validateAccount(account);
+  if (wire) return verifyOverWire(account, wire.open, wire);
   const transport = transportFor(account);
   try {
     await transport.verify();
@@ -118,9 +107,24 @@ export async function verifyAccount(account: SmtpAccount): Promise<void> {
  * recipients the server refused while taking the rest — when it took none, that is an
  * SmtpError('rejected').
  */
-export async function sendMessage(account: SmtpAccount, message: OutgoingMessage): Promise<SendResult> {
+export async function sendMessage(
+  account: SmtpAccount,
+  message: OutgoingMessage,
+  wire?: WireTransport,
+): Promise<SendResult> {
   validateAccount(account);
   const messageId = resolveMessageId(message);
+  if (wire) {
+    const to = message.mdn === undefined ? [...message.to, ...(message.cc ?? [])] : message.to;
+    const result = await sendOverWire(
+      account,
+      { from: message.from, to },
+      await rawMessage(message, messageId),
+      wire.open,
+      wire,
+    );
+    return { messageId, ...result };
+  }
   const transport = transportFor(account);
   try {
     const info = await transport.sendMail(

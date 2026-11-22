@@ -7,7 +7,7 @@
 
 export { searchMail, getMessage, listFolders, listParts, fetchPart, type MailSource } from './messages.ts';
 export { ImapBackend } from './backend.ts';
-export { openTlsStream } from './transport.node.ts';
+export { openEndpointStream, openTlsStream } from './transport.node.ts';
 export { ImapClient } from './client.ts';
 export { isOwnMailAddress } from './own-address.ts';
 export { contentTypeFor, readAttachments } from './attachments.ts';

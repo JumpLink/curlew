@@ -5,5 +5,5 @@
  * Android shell cannot resolve yet. A shell that only needs to reach a mailbox imports this.
  */
 
-export { openTlsStream } from './transport.gjs.ts';
+export { openEndpointStream, openTlsStream } from './transport.gjs.ts';
 export { ImapClient } from './client.ts';

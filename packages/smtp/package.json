@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Sending one message with attachments over SMTP (nodemailer): message building, account validation, verify and send. A library capability only — no MCP tool, no credentials in logs, errors or DTOs. No gi://.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./wire": "./src/wire-entry.ts"
   },
   "scripts": {
     "check": "tsc --noEmit --project tsconfig.json"
@@ -14,6 +15,7 @@
     "src"
   ],
   "dependencies": {
+    "@curlew/protocol": "*",
     "nodemailer": "10.0.15"
   },
   "repository": {

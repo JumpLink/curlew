@@ -102,7 +102,11 @@ export function readReceiptSource(message: OutgoingMessage, messageId: string, n
  * or a test. An invalid message throws a `config` SmtpError.
  */
 export async function buildMessage(message: OutgoingMessage): Promise<Uint8Array> {
-  const messageId = resolveMessageId(message);
+  return rawMessage(message, resolveMessageId(message));
+}
+
+/** The bytes for an already validated message with its id: a read receipt, or the composed message. */
+export async function rawMessage(message: OutgoingMessage, messageId: string): Promise<Uint8Array> {
   if (message.mdn !== undefined) return new TextEncoder().encode(readReceiptSource(message, messageId));
   const raw = await new MailComposer(composerOptions(message, messageId)).compile().build();
   return new Uint8Array(raw);

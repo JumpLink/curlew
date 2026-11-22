@@ -317,9 +317,12 @@ packages/signal/src/upload.ts
 packages/smtp/src/errors.ts
 packages/smtp/src/index.ts
 packages/smtp/src/message.ts
+packages/smtp/src/scrub.ts
 packages/smtp/src/transport.ts
 packages/smtp/src/types.ts
 packages/smtp/src/validate.ts
+packages/smtp/src/wire-entry.ts
+packages/smtp/src/wire.ts
 packages/store/src/account-data.ts
 packages/store/src/attachments.ts
 packages/store/src/changes.ts
