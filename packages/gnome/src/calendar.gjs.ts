@@ -10,12 +10,12 @@
 
 import type ICalGLib from 'gi://ICalGLib?version=3.0';
 
-import { BackendUnavailableError, PimError, type CalendarBackend } from '@gjsify/pim';
+import { BackendUnavailableError, PimError, setPimTranslator, type CalendarBackend } from '@gjsify/pim';
 import { createEdsBackend } from '@gjsify/pim/eds';
 
 import { gnomeError, isGnomeFailure } from './errors.ts';
 import { ical } from './libs.gjs.ts';
-import { GnomeError, GnomeUnavailableError } from '@curlew/protocol';
+import { _, _n, GnomeError, GnomeUnavailableError } from '@curlew/protocol';
 import type { CalendarEventDTO, ListEventsOptions } from '@curlew/protocol';
 
 const DEFAULT_LIMIT = 100;
@@ -23,7 +23,11 @@ const DEFAULT_LIMIT = 100;
 let backend: CalendarBackend | null = null;
 
 function eds(): CalendarBackend {
-  backend ??= createEdsBackend();
+  if (!backend) {
+    // pim's messages ("no enabled calendar …") reach the user through curlew's catalogue.
+    setPimTranslator({ gettext: _, ngettext: _n });
+    backend = createEdsBackend();
+  }
   return backend;
 }
 

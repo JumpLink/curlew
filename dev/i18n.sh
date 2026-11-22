@@ -46,14 +46,24 @@ compile)
         printf 'dev/i18n.sh: msgfmt not found, skipping catalogues (the build stays English)\n' >&2
         exit 0
     fi
+    # @gjsify/pim (the calendar driver) binds no domain: it translates through curlew's `_`, so its
+    # shipped catalogue is merged into this one. Its npm build is minified, extract cannot see it.
+    pim_po="$(node -p "require('path').dirname(require.resolve('@gjsify/pim/po/LINGUAS'))" 2>/dev/null)" || {
+        printf 'dev/i18n.sh: @gjsify/pim ships no po/ directory: it needs a version with its catalogue\n' >&2
+        exit 1
+    }
     while read -r lang; do
         [ -n "$lang" ] || continue
         out="app/dist/locale/$lang/LC_MESSAGES"
         mkdir -p "$out"
         # `--check` refuses a catalogue whose placeholders do not match its msgid: a `{name}`
         # dropped in translation surfaces as literal braces to the user, not as a crash, which is
-        # exactly the sort of defect nobody reports.
-        msgfmt --check --output-file="$out/$DOMAIN.mo" "po/$lang.po"
+        # exactly the sort of defect nobody reports. `--use-first`: curlew's own msgstr wins.
+        if [ -f "$pim_po/$lang.po" ]; then
+            msgcat --use-first "po/$lang.po" "$pim_po/$lang.po" | msgfmt --check --output-file="$out/$DOMAIN.mo" -
+        else
+            msgfmt --check --output-file="$out/$DOMAIN.mo" "po/$lang.po"
+        fi
         printf 'compiled %-6s -> %s\n' "$lang" "$out/$DOMAIN.mo"
     done < po/LINGUAS
     ;;
