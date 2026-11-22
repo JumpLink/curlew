@@ -26,6 +26,8 @@ export interface ListEntry {
   accountId: string;
   kind: Conversation['kind'];
   unread: number;
+  /** Muted by the person (every thread of a merged row). Absent = not muted. */
+  muted?: boolean;
   lastMessageAt: string | null;
   /** Address the composer answers: the other person, or for a Matrix room its room id. */
   target: string | null;
@@ -337,6 +339,7 @@ export function toEntry(
     accountId: conversation.accountId,
     kind: conversation.kind,
     unread: Math.max(0, conversation.unreadCount),
+    ...(conversation.muted ? { muted: true } : {}),
     lastMessageAt: conversation.lastMessageAt,
     target:
       conversation.backend === 'matrix'
@@ -587,6 +590,7 @@ function mergeEntries(
     accountId: badge.accountId,
     kind: 'direct',
     unread: members.reduce((sum, m) => sum + m.unread, 0),
+    ...(members.every((m) => m.muted === true) ? { muted: true } : {}),
     lastMessageAt: newest.lastMessageAt,
     target: null,
     emailChat: members.some((m) => m.emailChat),
@@ -906,6 +910,14 @@ export function buildSections(entries: ListEntry[], filter: ListFilter = NO_FILT
       unread: rows.filter((entry) => entry.unread > 0).length,
     }))
     .filter((section) => section.entries.length > 0);
+}
+
+/**
+ * What the shell badge counts: unread chats that are not muted. The Unread view keeps a muted chat
+ * (it is what is unread); the badge exists to pull the person in, and a muted chat does not (ADR 0020 §7).
+ */
+export function shellBadgeCount(entries: readonly ListEntry[]): number {
+  return entries.filter((entry) => entry.unread > 0 && entry.muted !== true).length;
 }
 
 /** Protocols present in the list, for the filter chips; one chip is no filter, so it is not offered. */

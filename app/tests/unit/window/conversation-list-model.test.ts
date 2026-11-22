@@ -42,6 +42,7 @@ import {
   toEntry,
   unreadText,
   unreadTier,
+  shellBadgeCount,
 } from '../../../src/window/conversation-list-model.ts';
 
 // Synthetic conversations only.
@@ -570,6 +571,12 @@ export default async () => {
       expect(unreadTier(entry({ id: 'a', unread: 2 }))).toBe('count');
       expect(unreadTier(entry({ id: 'a' }))).toBe('none');
       expect(unreadText(7)).toBe('7');
+      const quiet = entry({ id: 'q', unread: 3, muted: true });
+      const loud = entry({ id: 'l', unread: 1 });
+      expect(shellBadgeCount([quiet, loud])).toBe(1);
+      const unreadSection = buildSections([quiet, loud]).find((x) => x.id === 'unread');
+      expect(unreadSection?.entries.length).toBe(2);
+      expect(toEntry(conversation({ id: 'm', muted: true, unreadCount: 2 })).muted).toBe(true);
       expect(unreadText(150)).toBe('99+');
     });
 

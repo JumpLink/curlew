@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@gjsify/unit';
 
-import type { ChangeRow } from '@curlew/store';
+import { setChatMuted, type ChangeRow } from '@curlew/store';
 import { freshDb } from '../store/fixtures.ts';
 import { MAX_NOTICES_PER_POLL, newNoticeState, planNotices } from '../../../src/core/lib/message-notices.ts';
 
@@ -17,6 +17,7 @@ interface Seed {
   presentation?: string;
   attachment?: boolean;
   sender?: string | null;
+  mentions?: string;
 }
 
 function chat(db: Db, id: string, title: string, kind: 'direct' | 'group', backend = 'telegram'): void {
@@ -48,6 +49,8 @@ function message(db: Db, conversationId: string, backend: string, seed: Seed): v
     seq,
     seed.body === undefined ? 'Hello there' : seed.body,
   );
+  if (seed.mentions !== undefined)
+    db.prepare('UPDATE conversation_messages SET mentions_json = ? WHERE id = ?').run(seed.mentions, seed.id);
 }
 
 function touched(...ids: string[]): ChangeRow[] {
@@ -205,6 +208,60 @@ export default async () => {
           { seq: 2, at: '', kind: 'messages', backend: 'telegram', accountId: 'acct', conversationId: null },
         ];
         expect(planNotices(db, rows, 'preview', newNoticeState(SINCE)).length).toBe(0);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('stays silent for a muted chat, but a mention of the account still notifies', async () => {
+      const db = freshDb();
+      try {
+        chat(db, 'c1', 'Group', 'group');
+        message(db, 'c1', 'telegram', { id: 'm1' });
+        setChatMuted(db, 'c1', { muted: true });
+        expect(planNotices(db, touched('c1'), 'preview', newNoticeState(SINCE)).length).toBe(0);
+        const own = JSON.stringify([{ start: 0, end: 5, userId: 'me-42' }]);
+        message(db, 'c1', 'telegram', {
+          id: 'm2',
+          at: '2026-11-08T10:06:00Z',
+          body: '@me hi',
+          mentions: own,
+        });
+        const state = newNoticeState(SINCE);
+        expect(planNotices(db, touched('c1'), 'preview', state).length).toBe(0);
+        const ids = new Map([['acct', ['me-42']]]);
+        const [notice] = planNotices(db, touched('c1'), 'preview', newNoticeState(SINCE), [], ids);
+        expect(notice.body).toBe('Alex Example: @me hi');
+        const flagged = JSON.stringify([{ start: 0, end: 5, userId: 'x', self: true }]);
+        message(db, 'c1', 'telegram', { id: 'm3', at: '2026-11-08T10:07:00Z', mentions: flagged });
+        expect(planNotices(db, touched('c1'), 'preview', newNoticeState(SINCE)).length).toBe(1);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('notifies again once a timed mute has lapsed', async () => {
+      const db = freshDb();
+      try {
+        chat(db, 'c1', 'Alex Example', 'direct');
+        message(db, 'c1', 'telegram', { id: 'm1' });
+        setChatMuted(db, 'c1', { muted: true, until: '2026-11-08T11:00:00.000Z' });
+        const state = newNoticeState(SINCE);
+        expect(
+          planNotices(db, touched('c1'), 'preview', state, [], new Map(), new Date('2026-11-08T10:30:00Z'))
+            .length,
+        ).toBe(0);
+        expect(
+          planNotices(
+            db,
+            touched('c1'),
+            'preview',
+            newNoticeState(SINCE),
+            [],
+            new Map(),
+            new Date('2026-11-08T12:00:00Z'),
+          ).length,
+        ).toBe(1);
       } finally {
         db.close();
       }
