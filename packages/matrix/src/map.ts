@@ -105,6 +105,7 @@ export function toChatInfo(room: MxRoom): ChatInfo {
     readInboxSeq: room.readUpToTs === null ? null : seqOf(room.readUpToTs),
     readOutboxSeq: room.peerReadUpToTs === null ? null : seqOf(room.peerReadUpToTs),
     ...(room.muted === undefined || room.muted === null ? {} : { mute: { muted: room.muted } }),
+    ...(room.favourite === undefined ? {} : { pin: room.favourite }),
   };
 }
 

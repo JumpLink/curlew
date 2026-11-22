@@ -52,6 +52,8 @@ export interface MxRoom {
   readonly readUpToTs: number | null;
   /** The account's `room` push rule for it silences the room; null when the rules were not synced. */
   readonly muted?: boolean | null;
+  /** Whether the room carries the account's `m.favourite` tag. */
+  readonly favourite?: boolean;
   /** How far the other side has read the user's messages, as a timestamp (null: unknown). */
   readonly peerReadUpToTs: number | null;
 }

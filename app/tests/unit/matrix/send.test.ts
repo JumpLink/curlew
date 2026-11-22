@@ -345,6 +345,26 @@ export default async () => {
       expect(calls[0].body).toBe('{"actions":[]}');
       await sender.setChatFlags?.({ to: ROOM, mute: { muted: false, until: null } });
       expect(calls[1].method).toBe('DELETE');
+      await sender.setChatFlags?.({ to: ROOM, favourite: true });
+      expect(calls[2].method).toBe('PUT');
+      expect(calls[2].url).toBe(
+        `${HS}/user/${encodeURIComponent(ME)}/rooms/${encodeRoom(ROOM)}/tags/m.favourite`,
+      );
+      expect(calls[2].body).toBe('{"order":0.5}');
+      await sender.setChatFlags?.({ to: ROOM, favourite: false });
+      expect(calls[3].method).toBe('DELETE');
+      expect(
+        sendRefusal(
+          'PUT',
+          `${HS}/user/${encodeURIComponent(ME)}/rooms/${encodeRoom(OTHER)}/tags/m.favourite`,
+          [ROOM],
+        ) !== null,
+      ).toBe(true);
+      expect(
+        sendRefusal('PUT', `${HS}/user/${encodeURIComponent(ME)}/rooms/${encodeRoom(ROOM)}/tags/u.work`, [
+          ROOM,
+        ]) !== null,
+      ).toBe(true);
       // A rule that is already gone is the state asked for.
       status = 404;
       await sender.setChatFlags?.({ to: ROOM, mute: { muted: false, until: null } });

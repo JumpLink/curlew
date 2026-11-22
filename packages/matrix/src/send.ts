@@ -135,6 +135,8 @@ export interface MatrixSendApi {
    * lift it by deleting that rule. Matrix has no expiry: an end is kept by curlew alone.
    */
   setRoomMute(roomId: string, muted: boolean): Promise<void>;
+  /** Tag the room `m.favourite` for the person's account, or take the tag back (`order` 0.5). */
+  setRoomFavourite(roomId: string, favourite: boolean): Promise<void>;
 }
 
 /** One reaction of the person: the event that carries it and its emoji. */
@@ -251,6 +253,28 @@ export function matrixSendApi(session: MatrixSendSession): MatrixSendApi {
         const errcode = await errcodeOf(response);
         throw new Error(
           fmt(_('the homeserver refused the mute of {room} ({reason})'), {
+            room: roomId,
+            reason: reasonOf(response, errcode),
+          }),
+        );
+      }
+    },
+    async setRoomFavourite(roomId, favourite) {
+      const url = `${base}${V3}/user/${encodeURIComponent(session.userId)}/rooms/${encodeURIComponent(roomId)}/tags/m.favourite`;
+      const response = await session.fetch(
+        url,
+        favourite
+          ? {
+              method: 'PUT',
+              headers: { ...auth, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ order: 0.5 }),
+            }
+          : { method: 'DELETE', headers: auth },
+      );
+      if (!response.ok && !(!favourite && response.status === 404)) {
+        const errcode = await errcodeOf(response);
+        throw new Error(
+          fmt(_('the homeserver refused the favourite of {room} ({reason})'), {
             room: roomId,
             reason: reasonOf(response, errcode),
           }),
@@ -611,13 +635,13 @@ export class MatrixSender implements MessageSender {
   }
 
   /**
-   * The person's mute of the room, as a push rule of their own account. Matrix has no favourite
-   * curlew mirrors (`m.favourite` is a room tag, not synced here), so `favourite` is ignored.
+   * The person's mute of the room, as a push rule of their own account, and their favourite, as
+   * the `m.favourite` tag of the room. Neither is visible to the other members.
    */
   async setChatFlags(flags: SendingChatFlags): Promise<void> {
     const roomId = this.roomId(flags.to);
-    if (flags.mute === undefined) return;
-    await this.api.setRoomMute(roomId, flags.mute.muted);
+    if (flags.mute !== undefined) await this.api.setRoomMute(roomId, flags.mute.muted);
+    if (flags.favourite !== undefined) await this.api.setRoomFavourite(roomId, flags.favourite);
   }
 
   async close(): Promise<void> {

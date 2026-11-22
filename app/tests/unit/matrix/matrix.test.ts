@@ -381,6 +381,9 @@ export default async () => {
       expect(toChatInfo({ ...room, muted: true }).mute?.until === undefined).toBe(true);
       expect(toChatInfo({ ...room, muted: false }).mute?.muted).toBe(false);
       expect(toChatInfo({ ...room, muted: null }).mute === undefined).toBe(true);
+      expect(toChatInfo(room).pin === undefined).toBe(true);
+      expect(toChatInfo({ ...room, favourite: true }).pin).toBe(true);
+      expect(toChatInfo({ ...room, favourite: false }).pin).toBe(false);
     });
   });
 
