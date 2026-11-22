@@ -1,7 +1,7 @@
 /**
  * @curlew/gnome entry — one implementation for every runtime.
  *
- * Accounts through `@gjsify/system-accounts` (libgoa or D-Bus); contacts and calendar over `gi://EDataServer`, `gi://EBook`, `gi://ECal`, …
+ * Accounts through `@gjsify/system-accounts` (libgoa or D-Bus); contacts over `gi://EDataServer` and `gi://EBook`, calendar through `@gjsify/pim/eds`,
  * returning the plain DTOs from @curlew/protocol. It runs unchanged on GJS (native `gi://`)
  * and on Node/Bun, where `gi://` resolves through `@gjsify/node-gi` with GJS semantics. What it
  * needs is a GNOME session with GOA/EDS running, not a particular JS runtime.

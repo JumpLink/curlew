@@ -4,7 +4,7 @@
   "license": "LGPL-3.0-or-later",
   "private": true,
   "type": "module",
-  "description": "GNOME Online Accounts (GOA) + Evolution Data Server binding: accounts, contacts, calendar, and the IMAP credentials the mail layer connects with. One implementation for every runtime (GJS native gi://, Node/Bun via @gjsify/node-gi); the GOA/EDS typelibs load on first use, and a host without them answers with GnomeUnavailableError. Needs a GNOME session with GOA/EDS running — nothing is bundled or published.",
+  "description": "GNOME Online Accounts (GOA) + Evolution Data Server binding: accounts, contacts, calendar (through @gjsify/pim), and the IMAP credentials the mail layer connects with. One implementation for every runtime (GJS native gi://, Node/Bun via @gjsify/node-gi); the GOA/EDS typelibs load on first use, and a host without them answers with GnomeUnavailableError. Needs a GNOME session with GOA/EDS running \u2014 nothing is bundled or published.",
   "exports": {
     ".": "./src/index.ts"
   },
@@ -15,13 +15,13 @@
     "src"
   ],
   "dependencies": {
+    "@curlew/protocol": "*",
     "@girs/ebook-1.2": "^4.1.0",
     "@girs/ebookcontacts-1.2": "^4.1.0",
-    "@girs/ecal-2.0": "^4.1.0",
     "@girs/edataserver-1.2": "^4.1.0",
     "@girs/icalglib-3.0": "^4.1.0",
     "@gjsify/node-gi": "0.64.54",
-    "@gjsify/system-accounts": "0.64.54",
-    "@curlew/protocol": "*"
+    "@gjsify/pim": "0.64.56",
+    "@gjsify/system-accounts": "0.64.54"
   }
 }

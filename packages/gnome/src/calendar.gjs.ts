@@ -1,43 +1,40 @@
 /**
- * Calendar via Evolution Data Server.
+ * Calendar via Evolution Data Server, through the EDS driver of `@gjsify/pim`.
  *
- * Reads CalDAV/local calendars EDS exposes (a Nextcloud GOA account yields a
- * CalDAV calendar here). Returns plain CalendarEventDTOs for events occurring in
- * a time window. Recurring events are returned as their series definition (the
- * occur-in-time-range filter selects series with an occurrence in the window);
- * per-occurrence expansion (generate_instances) is a possible future addition.
- * Runs unchanged on GJS and on Node/Bun via `@gjsify/node-gi` — see `index.ts`.
+ * Reads CalDAV/local calendars EDS exposes (a Nextcloud GOA account yields a CalDAV calendar
+ * here). The driver hands out iCalendar text; this file projects it into CalendarEventDTOs.
+ * Recurring events are returned as their series definition (the occur-in-time-range filter
+ * selects series with an occurrence in the window). Runs unchanged on GJS and on Node/Bun via
+ * `@gjsify/node-gi` — see `index.ts`.
  */
 
-import type ECal from 'gi://ECal?version=2.0';
-import type EDataServer from 'gi://EDataServer?version=1.2';
 import type ICalGLib from 'gi://ICalGLib?version=3.0';
 
-import { extractList, getRegistry, sourceGoaAccountId } from './eds.gjs.ts';
+import { BackendUnavailableError, PimError, type CalendarBackend } from '@gjsify/pim';
+import { createEdsBackend } from '@gjsify/pim/eds';
+
 import { gnomeError, isGnomeFailure } from './errors.ts';
-import { cal, eds } from './libs.gjs.ts';
-import { GnomeError } from '@curlew/protocol';
+import { ical } from './libs.gjs.ts';
+import { GnomeError, GnomeUnavailableError } from '@curlew/protocol';
 import type { CalendarEventDTO, ListEventsOptions } from '@curlew/protocol';
 
 const DEFAULT_LIMIT = 100;
-const CONNECT_WAIT_SECONDS = 15;
 
-/** Promise wrapper around the static async ECal.Client.connect (callback-only in @girs). */
-function connectCalendar(lib: typeof ECal, source: EDataServer.Source): Promise<ECal.Client> {
-  return new Promise((resolve, reject) => {
-    lib.Client.connect(source, lib.ClientSourceType.EVENTS, CONNECT_WAIT_SECONDS, null, (_src, res) => {
-      try {
-        const client = lib.Client.connect_finish(res);
-        if (!client) {
-          reject(new Error('ECal.Client.connect_finish returned null'));
-          return;
-        }
-        resolve(client as ECal.Client);
-      } catch (err) {
-        reject(err);
-      }
-    });
-  });
+let backend: CalendarBackend | null = null;
+
+function eds(): CalendarBackend {
+  backend ??= createEdsBackend();
+  return backend;
+}
+
+/** pim's errors → the ones every curlew frontend already reports (`GnomeUnavailableError` = no EDS here). */
+function fromPim(err: unknown): unknown {
+  if (err instanceof BackendUnavailableError) return new GnomeUnavailableError(err.message);
+  if (err instanceof PimError) {
+    const { domain, code } = err as { domain?: string; code?: number };
+    return new GnomeError(err.message, domain, code);
+  }
+  return err;
 }
 
 /** Parse an ISO date/datetime to epoch seconds. Bare YYYY-MM-DD is treated as UTC midnight. */
@@ -60,8 +57,21 @@ function timeToIso(time: ICalGLib.Time | null): string | null {
   return new Date(epoch * 1000).toISOString();
 }
 
-function mapComponent(lib: typeof ICalGLib, comp: ECal.Component, calendarUid: string): CalendarEventDTO | null {
-  const ical = comp.get_icalcomponent();
+/** iCalendar text → the VEVENT in it. EDS hands out the bare component, CalDAV a VCALENDAR. */
+function parseEvent(lib: typeof ICalGLib, text: string): ICalGLib.Component | null {
+  const comp = lib.Component.new_from_string(text);
+  if (!comp) return null;
+  if (comp.isa() === lib.ComponentKind.VEVENT_COMPONENT) return comp;
+  return comp.get_first_component(lib.ComponentKind.VEVENT_COMPONENT);
+}
+
+/** One iCalendar text (bare VEVENT or a VCALENDAR around one) → the DTO, or null without a start. */
+export function eventFromIcal(
+  lib: typeof ICalGLib,
+  text: string,
+  calendarUid: string,
+): CalendarEventDTO | null {
+  const ical = parseEvent(lib, text);
   if (!ical) return null;
   const dtstart = ical.get_dtstart();
   const start = timeToIso(dtstart);
@@ -95,53 +105,29 @@ function mapComponent(lib: typeof ICalGLib, comp: ECal.Component, calendarUid: s
 /** Do the work. Everything here may raise a native error; `listEvents` owns the boundary. */
 async function listEventsImpl(options: ListEventsOptions): Promise<CalendarEventDTO[]> {
   const { from, to, calendarUid, accountId, limit = DEFAULT_LIMIT } = options;
-  const { ECal: ecal, ICalGLib: icalLib } = await cal.get();
-  const EDS = await eds.get();
-  const startIso = ecal.isodate_from_time_t(toEpochSeconds(from));
-  const endIso = ecal.isodate_from_time_t(toEpochSeconds(to));
-  const sexp = `(occur-in-time-range? (make-time "${startIso}") (make-time "${endIso}"))`;
+  const window = {
+    from: new Date(toEpochSeconds(from) * 1000).toISOString(),
+    to: new Date(toEpochSeconds(to) * 1000).toISOString(),
+  };
+  const lib = await ical.get();
 
-  const reg = await getRegistry();
-  let sources: EDataServer.Source[];
-  try {
-    sources = reg.list_enabled(EDS.SOURCE_EXTENSION_CALENDAR);
-  } catch (err) {
-    throw gnomeError('list calendars', err);
+  let allowed: Set<string> | null = null;
+  if (accountId) {
+    const calendars = await eds().listCalendars('event');
+    allowed = new Set(calendars.filter((c) => c.accountId === accountId).map((c) => c.uid));
+    if (allowed.size === 0) return [];
   }
-  if (calendarUid) sources = sources.filter((s) => s.get_uid() === calendarUid);
-  if (accountId) sources = sources.filter((s) => sourceGoaAccountId(EDS, reg, s) === accountId);
 
+  // The driver skips calendars that fail to open and raises only when none opens.
+  const items = await eds().listItems({ kind: 'event', calendarUid, ...window });
   const events: CalendarEventDTO[] = [];
-  let opened = 0;
-  let lastError: unknown = null;
-
-  for (const source of sources) {
-    if (events.length >= limit) break;
-    let client: ECal.Client;
-    try {
-      client = await connectCalendar(ecal, source);
-      opened++;
-    } catch (err) {
-      lastError = err;
-      continue;
-    }
-    try {
-      const comps = extractList<ECal.Component>(await client.get_object_list_as_comps(sexp, null));
-      for (const comp of comps) {
-        const dto = mapComponent(icalLib, comp, source.get_uid());
-        if (dto) events.push(dto);
-        if (events.length >= limit) break;
-      }
-    } catch (err) {
-      throw gnomeError(`get_object_list_as_comps(${source.get_display_name()})`, err);
-    }
-  }
-
-  if (opened === 0 && sources.length > 0 && lastError) {
-    throw gnomeError('connect calendar', lastError);
+  for (const item of items) {
+    if (allowed && !allowed.has(item.calendarUid)) continue;
+    const dto = eventFromIcal(lib, item.ical, item.calendarUid);
+    if (dto) events.push(dto);
   }
   events.sort((a, b) => a.start.localeCompare(b.start));
-  return events;
+  return events.slice(0, limit);
 }
 
 /**
@@ -149,17 +135,16 @@ async function listEventsImpl(options: ListEventsOptions): Promise<CalendarEvent
  * calendar or one GOA account). Calendars that fail to open are skipped; if none
  * open, the last error is surfaced. Results are sorted by start ascending.
  *
- * The boundary for the whole EDS calendar path, for the same reason as `searchContacts`: the
- * `ECal` property reads (`isodate_from_time_t`, `getRegistry()`) each raise on their own, and
- * an unwrapped GLib.Error on GJS is a boxed GObject that JSON-serializes to `{}`. Only an
- * existing `GnomeError` / `GnomeUnavailableError` passes through, keeping the
- * `list calendars:` / `connect calendar:` prefixes.
+ * The boundary for the whole EDS calendar path: an unwrapped GLib.Error on GJS is a boxed
+ * GObject that JSON-serializes to `{}`, so everything leaves as `GnomeError` /
+ * `GnomeUnavailableError`.
  */
 export async function listEvents(options: ListEventsOptions): Promise<CalendarEventDTO[]> {
   try {
     return await listEventsImpl(options);
   } catch (err) {
-    if (isGnomeFailure(err)) throw err;
+    const mapped = fromPim(err);
+    if (isGnomeFailure(mapped)) throw mapped;
     throw gnomeError('listEvents', err);
   }
 }

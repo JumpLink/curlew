@@ -22,14 +22,5 @@ export const book = optionalNamespace('EBook', async () => {
   return { EBook, EBookContacts };
 });
 
-/** ECal + ICalGLib, with the Promise overload of `get_object_list_as_comps` installed. */
-export const cal = optionalNamespace('ECal', async () => {
-  const [{ default: Gio }, { default: ECal }, { default: ICalGLib }] = await Promise.all([
-    import('gi://Gio?version=2.0'),
-    import('gi://ECal?version=2.0'),
-    import('gi://ICalGLib?version=3.0'),
-  ]);
-  // get_object_list_as_comps has a Promise overload in the types; match the runtime.
-  Gio._promisify(ECal.Client.prototype, 'get_object_list_as_comps', 'get_object_list_as_comps_finish');
-  return { ECal, ICalGLib };
-});
+/** ICalGLib, to read the iCalendar text `@gjsify/pim` hands out. */
+export const ical = optionalNamespace('ICalGLib', async () => (await import('gi://ICalGLib?version=3.0')).default);

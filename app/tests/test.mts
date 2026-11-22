@@ -6,6 +6,7 @@ import { run } from '@gjsify/unit';
 import runtime from './unit/runtime.test.ts';
 import dispatch from './unit/dispatch.test.ts';
 import version from './unit/core/version.test.ts';
+import gnomeCalendarIcal from './unit/gnome/calendar-ical.test.ts';
 import gnomeOptional from './unit/gnome/optional.test.ts';
 import backends from './unit/backends.test.ts';
 
@@ -192,6 +193,7 @@ run({
   runtime,
   dispatch,
   gnomeOptional,
+  gnomeCalendarIcal,
   backends,
   imapParse,
   mimeParse,
