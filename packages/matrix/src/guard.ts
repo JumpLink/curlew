@@ -72,6 +72,13 @@ const REDACT = new RegExp(String.raw`${CLIENT}/rooms/([^/]+)/redact/[^/]+/[^/]+$
  */
 const PRIVATE_RECEIPT = new RegExp(String.raw`${CLIENT}/rooms/([^/]+)/receipt/m\.read\.private/[^/]+$`);
 
+/**
+ * The person's mute of one room (ADR 0020): a push rule of kind `room` whose id is the room id,
+ * written with PUT (empty actions: notify nobody) and taken back with DELETE. Nothing else under
+ * `/pushrules` is ever allowed, and the rule is private to the account — no member is told.
+ */
+const ROOM_MUTE_RULE = new RegExp(String.raw`${CLIENT}/pushrules/global/room/([^/]+)$`);
+
 /** The media upload: `POST /_matrix/media/v3/upload`, outside the `/client/` tree. */
 const UPLOAD = /^\/_matrix\/media\/(?:v3|r0|v1)\/upload$/;
 
@@ -104,13 +111,18 @@ export function sendRefusal(method: string, url: string, rooms: readonly string[
       return rooms.includes(decodeURIComponent(match[1])) ? null : 'a read marker in a room no grant names';
     }
   }
-  if (method.toUpperCase() === 'PUT') {
+  if (method.toUpperCase() === 'PUT' || method.toUpperCase() === 'DELETE') {
     let parsed: URL;
     try {
       parsed = new URL(url);
     } catch {
       return `not a URL: ${url}`;
     }
+    const mute = ROOM_MUTE_RULE.exec(parsed.pathname);
+    if (mute) {
+      return rooms.includes(decodeURIComponent(mute[1])) ? null : 'a mute of a room no grant names';
+    }
+    if (method.toUpperCase() === 'DELETE') return refusal(method, url);
     const match = SEND.exec(parsed.pathname) ?? REDACT.exec(parsed.pathname);
     if (match) {
       return rooms.includes(decodeURIComponent(match[1]))

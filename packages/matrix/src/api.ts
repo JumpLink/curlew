@@ -50,6 +50,8 @@ export interface MxRoom {
   readonly lastEventTs: number | null;
   /** How far the user has read, as a timestamp (null: unknown). */
   readonly readUpToTs: number | null;
+  /** The account's `room` push rule for it silences the room; null when the rules were not synced. */
+  readonly muted?: boolean | null;
   /** How far the other side has read the user's messages, as a timestamp (null: unknown). */
   readonly peerReadUpToTs: number | null;
 }

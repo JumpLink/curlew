@@ -367,6 +367,20 @@ export default async () => {
       });
       expect(group.kind).toBe('group');
       expect(group.members.length).toBe(0);
+      expect(group.mute === undefined).toBe(true);
+      const room = {
+        roomId: '!m:example.org',
+        name: null,
+        direct: false,
+        members: [],
+        lastEventTs: null,
+        readUpToTs: null,
+        peerReadUpToTs: null,
+      };
+      expect(toChatInfo({ ...room, muted: true }).mute?.muted).toBe(true);
+      expect(toChatInfo({ ...room, muted: true }).mute?.until === undefined).toBe(true);
+      expect(toChatInfo({ ...room, muted: false }).mute?.muted).toBe(false);
+      expect(toChatInfo({ ...room, muted: null }).mute === undefined).toBe(true);
     });
   });
 

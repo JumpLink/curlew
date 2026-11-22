@@ -27,6 +27,8 @@ export const MATRIX_MANIFEST: BackendManifest = {
     threads: true,
     // Sending read receipts (MessageSender.readReceipt) is not implemented; receiving read marks is separate.
     readReceipts: false,
+    // The per-chat mute is a `room` push rule of the account: read from the synced rules, written on request.
+    mutes: true,
     groups: true,
     // Megolm rooms are end-to-end encrypted, and this backend decrypts them where it holds the
     // room key (see the package's README section in AGENTS.md for which history that is).
