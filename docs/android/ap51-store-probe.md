@@ -16,8 +16,19 @@ paths and logs one `CURLEW-PROBE` line, next to the [AP5.2 probes](ap52-probe.md
 | `searchIndex({ query: "marz" })` on the body "…im März" | 1 hit (diacritics folded); a query with no match: 0 hits |
 
 Log line: `CURLEW-PROBE PASS store store:0 68ms :memory: open, migrate tables=28, probeFts5, insert messages=1, fts hits=1 (marz) miss=0`.
-All 6 probes pass, no FATAL or JS ERROR in logcat. One run; a file database (WAL, the busy timeout)
-is not measured here.
+All 6 probes pass, no FATAL or JS ERROR in logcat.
+
+## File database
+
+The `store-file` probe opens the real index in the app-private data dir: `knownFolders.documents()`
+is `getFilesDir()`, and the file path comes from the store's own `storePaths()` (platform-free,
+exported from `@curlew/store/index-db`; the shell passes its sandbox directories as `StoreDirs`).
+It runs `openIndexDb` (WAL, `INDEX_BUSY_TIMEOUT_MS`), `migrate`, `probeFts5`, inserts one message,
+closes, reopens, and checks the row, the FTS hit and `PRAGMA journal_mode`. The directory is removed afterwards.
+
+Log line: `CURLEW-PROBE PASS store-file store-file:0 77ms app-private files dir open journal=wal, insert messages=1, reopen messages=1 tables=28 fts hits=1 journal=wal`.
+7 of 7 probes pass on a first run and on a second cold start, no FATAL or JS ERROR in logcat.
+`storePaths()` bundles `node:path`, so the shell now lists `@gjsify/path` as a dependency.
 
 ## How SQLite is wired
 
@@ -38,5 +49,5 @@ None in gjsify. The probe needed no shim.
 
 ## Still open
 
-Login and the window layer (AP5.3) are unproven on Android. The store's data directory on Android
-(`StoreDirs`) and a file-backed index are not exercised yet.
+Login and the window layer (AP5.3) are unproven on Android. The shell does not yet derive
+the real `StoreDirs` (data, cache, config) for the app; the probe only exercises the data directory.

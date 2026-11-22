@@ -1,12 +1,12 @@
 import { type MailTarget, probeMediaFile } from "@curlew/protocol";
-import { File, knownFolders, path } from "@nativescript/core";
+import { File, Folder, knownFolders, path } from "@nativescript/core";
 import { ImapClient, openTlsStream } from "@curlew/imap/stream";
-import { migrate, openIndexDb, probeFts5, searchIndex, upsertAccount, upsertFolder, upsertMessages } from "@curlew/store/index-db";
+import { migrate, openIndexDb, probeFts5, searchIndex, storePaths, upsertAccount, upsertFolder, upsertMessages, type IndexDatabase } from "@curlew/store/index-db";
 
 export interface ProbeResult {
   host: string;
   port: number;
-  kind: "imap" | "reject" | "media" | "store";
+  kind: "imap" | "reject" | "media" | "store" | "store-file";
   ok: boolean;
   ms: number;
   detail: string;
@@ -91,6 +91,19 @@ export function probeMediaOnDisk(): ProbeResult {
 
 const STORE_BODY = "Energieberatung für das Dach, Termin im März";
 
+/** One synthetic message with an indexed body, through the real upsert functions. */
+function insertProbeMessage(db: IndexDatabase): void {
+  upsertAccount(db, { id: "probe", identity: "probe", provider: "probe" });
+  upsertFolder(db, { accountId: "probe", path: "INBOX", name: "INBOX", role: null });
+  upsertMessages(db, "probe", "INBOX", [{
+    uid: 1, messageId: "<probe@example.invalid>", subject: "Probe", sender: "a@example.invalid", recipients: "b@example.invalid",
+    date: "2026-11-21T10:00:00Z", internalDate: "2026-11-21T10:00:00Z", size: STORE_BODY.length, seen: false, flagged: false,
+    hasAttachment: false, attachments: [], bodyText: STORE_BODY,
+    from: [{ name: null, email: "a@example.invalid" }], to: [{ name: null, email: "b@example.invalid" }], cc: [],
+    inReplyTo: null, references: [], automation: { listId: null, listUnsubscribe: null, autoSubmitted: null, precedence: null }, emailChat: false,
+  }], "2026-11-21T10:00:00Z");
+}
+
 /** The real index code on `:memory:`: open, migrate, probeFts5, insert one message, FTS search. */
 export function probeStore(): ProbeResult {
   const t0 = Date.now();
@@ -103,15 +116,7 @@ export function probeStore(): ProbeResult {
     steps.push(`migrate tables=${tables}`);
     probeFts5(db);
     steps.push("probeFts5");
-    upsertAccount(db, { id: "probe", identity: "probe", provider: "probe" });
-    upsertFolder(db, { accountId: "probe", path: "INBOX", name: "INBOX", role: null });
-    upsertMessages(db, "probe", "INBOX", [{
-      uid: 1, messageId: "<probe@example.invalid>", subject: "Probe", sender: "a@example.invalid", recipients: "b@example.invalid",
-      date: "2026-11-21T10:00:00Z", internalDate: "2026-11-21T10:00:00Z", size: STORE_BODY.length, seen: false, flagged: false,
-      hasAttachment: false, attachments: [], bodyText: STORE_BODY,
-      from: [{ name: null, email: "a@example.invalid" }], to: [{ name: null, email: "b@example.invalid" }], cc: [],
-      inReplyTo: null, references: [], automation: { listId: null, listUnsubscribe: null, autoSubmitted: null, precedence: null }, emailChat: false,
-    }], "2026-11-21T10:00:00Z");
+    insertProbeMessage(db);
     const rows = (db.prepare("SELECT count(*) AS n FROM messages").get() as { n: number }).n;
     steps.push(`insert messages=${rows}`);
     const hits = searchIndex(db, { query: "marz" }).length;
@@ -121,6 +126,48 @@ export function probeStore(): ProbeResult {
     return { host: "store", port: 0, kind: "store", ok: rows === 1 && hits === 1 && miss === 0, ms: Date.now() - t0, detail: `:memory: ${steps.join(", ")}` };
   } catch (e) {
     return { host: "store", port: 0, kind: "store", ok: false, ms: Date.now() - t0, detail: `:memory: after [${steps.join(", ")}]: ${String((e as Error)?.stack ?? e)}` };
+  }
+}
+
+function count(db: IndexDatabase, table: string): number {
+  return (db.prepare(`SELECT count(*) AS n FROM ${table}`).get() as { n: number }).n;
+}
+
+function journalMode(db: IndexDatabase): string {
+  return String((db.prepare("PRAGMA journal_mode").get() as Record<string, unknown>).journal_mode);
+}
+
+/**
+ * The real index in a FILE in the app-private data dir (`getFilesDir()`, via `knownFolders.documents()`),
+ * located by the store's own `storePaths()`: open (WAL, busy timeout), migrate, insert, close, reopen, verify.
+ */
+export function probeStoreFile(): ProbeResult {
+  const t0 = Date.now();
+  const steps: string[] = [];
+  const dataDir = path.join(knownFolders.documents().path, "curlew-probe-store");
+  const dirs = { data: dataDir, cache: path.join(knownFolders.temp().path, "curlew-probe-store"), config: path.join(dataDir, "config") };
+  const file = storePaths(dirs).indexDbPath;
+  try {
+    Folder.fromPath(dataDir);
+    let db = openIndexDb(file);
+    steps.push(`open journal=${journalMode(db)}`);
+    migrate(db);
+    probeFts5(db);
+    insertProbeMessage(db);
+    steps.push(`insert messages=${count(db, "messages")}`);
+    db.close();
+    db = openIndexDb(file);
+    const rows = count(db, "messages");
+    const tables = count(db, "sqlite_master WHERE type = 'table'");
+    const hits = searchIndex(db, { query: "marz" }).length;
+    const journal = journalMode(db);
+    db.close();
+    steps.push(`reopen messages=${rows} tables=${tables} fts hits=${hits} journal=${journal}`);
+    return { host: "store-file", port: 0, kind: "store-file", ok: rows === 1 && hits === 1 && journal === "wal", ms: Date.now() - t0, detail: `app-private files dir ${steps.join(", ")}` };
+  } catch (e) {
+    return { host: "store-file", port: 0, kind: "store-file", ok: false, ms: Date.now() - t0, detail: `app-private files dir after [${steps.join(", ")}]: ${String((e as Error)?.stack ?? e)}` };
+  } finally {
+    try { Folder.fromPath(dataDir).removeSync(); } catch { /* best effort */ }
   }
 }
 
@@ -138,6 +185,7 @@ export async function runProbes(onResult: (line: string) => void): Promise<void>
   for (const host of ["expired.badssl.com", "self-signed.badssl.com"]) emit(await probeReject(host));
   emit(probeMediaOnDisk());
   emit(probeStore());
+  emit(probeStoreFile());
   console.log(`${PREFIX} DONE`);
   onResult(`${PREFIX} DONE`);
 }
