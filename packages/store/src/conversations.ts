@@ -22,6 +22,7 @@ import type {
 import { conversationVerdict, type MessageVerdict, type SenderOverrides } from './classify.ts';
 import type { IndexDatabase } from './db.ts';
 import { placeholders, seqColumn } from './db.ts';
+import { type ChatFlags, isMutedAt, loadAllChatFlags } from './chat-flags.ts';
 import { fillSearchKeys } from './search-key-fill.ts';
 import { findSearchMatches, normaliseSearchText } from './search-key.ts';
 import { messageBody } from './index-store.ts';
@@ -233,6 +234,7 @@ function rowToConversation(
   r: Record<string, unknown>,
   participants: Participant[],
   verdict: { classification: Classification; reason: ClassificationReason },
+  flags?: ChatFlags,
 ): Conversation {
   return {
     id: String(r.id),
@@ -249,6 +251,9 @@ function rowToConversation(
     unreadCount: Number(r.unread_count),
     hasAttachments: Number(r.has_attachments) === 1,
     emailChat: Number(r.email_chat) === 1,
+    muted: isMutedAt(flags),
+    mutedUntil: flags !== undefined && isMutedAt(flags) ? flags.mutedUntil : null,
+    favourite: flags?.favourite === true,
   };
 }
 
@@ -263,11 +268,13 @@ function hydrate(
   const ids = rows.map((r) => String(r.id));
   const participants = loadParticipants(db, ids);
   const verdicts = loadVerdicts(db, ids);
+  const flags = loadAllChatFlags(db);
   return rows.map((r) =>
     rowToConversation(
       r,
       participants.get(String(r.id)) ?? [],
       conversationVerdict(verdicts.get(String(r.id)) ?? [], overrides),
+      flags.get(String(r.id)),
     ),
   );
 }

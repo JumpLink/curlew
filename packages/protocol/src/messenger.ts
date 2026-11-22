@@ -237,6 +237,12 @@ export interface Conversation {
   hasAttachments: boolean;
   /** Mail only: at least one message carries `Chat-Version: 1.0`; always false for other backends. */
   emailChat: boolean;
+  /** The person muted it and the mute is in force (a lapsed `mutedUntil` counts as unmuted). Absent = false. */
+  muted?: boolean;
+  /** When the mute ends; null = until unmuted. */
+  mutedUntil?: string | null;
+  /** The person starred it. Absent = false. */
+  favourite?: boolean;
 }
 
 /**

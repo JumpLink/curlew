@@ -40,6 +40,7 @@ import storeClassify from './unit/store/classify.test.ts';
 import storeThreads from './unit/store/threads.test.ts';
 import storeConversations from './unit/store/conversations.test.ts';
 import storeLocalRead from './unit/store/local-read.test.ts';
+import storeChatFlags from './unit/store/chat-flags.test.ts';
 import storeReadReceipts from './unit/store/read-receipts.test.ts';
 import storeConversationTotals from './unit/store/conversation-totals.test.ts';
 import storeChatSync from './unit/store/chat-sync.test.ts';
@@ -225,6 +226,7 @@ run({
   storeConversations,
   storeReadReceipts,
   storeLocalRead,
+  storeChatFlags,
   storeConversationTotals,
   storeChatSync,
   storeChatBackfill,
