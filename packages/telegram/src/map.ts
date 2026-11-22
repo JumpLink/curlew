@@ -170,7 +170,28 @@ export function toChatInfo(dialog: TgDialog): ChatInfo {
     readInboxSeq: dialog.lastReadIngoing || null,
     readOutboxSeq: dialog.lastReadOutgoing || null,
     ...muteOf(dialog),
+    ...pinOf(dialog),
   };
+}
+
+/**
+ * How many dialogs the account may pin, from `help.getAppConfig` (core.telegram.org/api/config:
+ * `dialogs_pinned_limit_default`, `dialogs_pinned_limit_premium`). Null when the config says none.
+ */
+export function pinLimitOf(config: unknown, premium: boolean): number | null {
+  const want = premium ? 'dialogs_pinned_limit_premium' : 'dialogs_pinned_limit_default';
+  const entries = (config as { value?: unknown })?.value;
+  if (!Array.isArray(entries)) return null;
+  for (const entry of entries as Array<{ key?: unknown; value?: { _?: unknown; value?: unknown } }>) {
+    if (entry.key === want && entry.value?._ === 'jsonNumber' && typeof entry.value.value === 'number')
+      return entry.value.value;
+  }
+  return null;
+}
+
+/** The dialog's pin as the index keeps it. */
+function pinOf(dialog: TgDialog): Pick<ChatInfo, 'pin'> {
+  return dialog.isPinned === undefined ? {} : { pin: dialog.isPinned };
 }
 
 /** The dialog's mute as the index keeps it; nothing when the account default applies. */

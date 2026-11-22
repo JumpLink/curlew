@@ -124,6 +124,8 @@ export interface TgDialog {
   readonly lastReadOutgoing: number;
   /** Whether the dialog is muted now; null = the account default applies. mtcute's `Dialog.isMuted`. */
   readonly isMuted?: boolean | null;
+  /** Whether the dialog is pinned in the main folder. mtcute's `Dialog.isPinned`. */
+  readonly isPinned?: boolean;
   /** The raw dialog, only for the mute expiry (unix seconds in `notifySettings.muteUntil`). */
   readonly raw?: { readonly notifySettings?: { readonly muteUntil?: number } };
 }
@@ -276,6 +278,13 @@ export interface TelegramClientHandle extends TelegramApi {
    * end), or unmute it with 0 (`account.updateNotifySettings`). Invisible to the other person.
    */
   setMute(chatId: number, until: number): Promise<void>;
+  /**
+   * Pin or unpin the dialog in the main folder (`messages.toggleDialogPin`). Pinning beyond
+   * `pinSlots().limit` is refused by the network, so a caller asks first.
+   */
+  setPin(chatId: number, pinned: boolean): Promise<void>;
+  /** How many dialogs are pinned and how many the account may pin (the app config; null = unknown). */
+  pinSlots(): Promise<{ pinned: number; limit: number | null }>;
   connect(): Promise<void>;
   /** Present only on a client made with `live: true`. */
   readonly live?: TelegramLive;
