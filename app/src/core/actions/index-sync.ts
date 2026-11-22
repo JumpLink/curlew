@@ -41,6 +41,7 @@ import {
 import { builtinRegistry } from '../backends/builtin.ts';
 import { backendContext } from '../backends/context.ts';
 import { loadConfig } from '../config.ts';
+import { chatFlagsAllowed, retryMutePushes } from './mute.ts';
 import { chatOnlyAccountIds, hiddenAccountIds } from '../visibility.ts';
 import { chmodSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -286,17 +287,20 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
       } else if (isChatBackend(backend)) {
         // `--folder` names a mailbox; a chat backend has none, so a folder-scoped run skips it.
         if (params.folder) continue;
-        chats.push({
+        const chatRun = {
           backend: name,
           ...(await inPhase('chat', () =>
             syncChats(db, backend, {
               accountId: params.accountId,
               fullScan: params.fullScan,
+              applyChatFlags: chatFlagsAllowed(config),
               // A daemon following the account holds the lease: stand down for it.
               lease: { holder: accountHolder },
             }),
           )),
-        });
+        };
+        chats.push(chatRun);
+        await retryMutePushes(db, chatRun.accounts);
       } else if (isDeliveryBackend(backend)) {
         if (params.folder) continue;
         // `--full-scan` has nothing to re-take here: a delivery-only network keeps no history.
@@ -309,6 +313,7 @@ export async function indexSync(params: SyncParams = {}): Promise<IndexSyncResul
               accountId: params.accountId,
               mode: 'catch-up',
               holder: accountHolder,
+              applyChatFlags: chatFlagsAllowed(config),
             }),
           )),
         });

@@ -14,6 +14,7 @@ const FULL = {
     playVideosSilently: true,
     sendReadReceipts: true,
     syncReadState: true,
+    syncChatFlags: true,
     accentColor: 'teal',
     primaryColor: 'blue',
     colorScheme: 'dark',

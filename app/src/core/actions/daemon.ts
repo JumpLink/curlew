@@ -126,6 +126,7 @@ import { editThrough } from './edit.ts';
 import { reactThrough } from './react.ts';
 import { sendThrough } from './send.ts';
 import { chatFlagsThrough } from './chat-flags.ts';
+import { chatFlagsAllowed } from './mute.ts';
 import { readSyncThrough } from './read-sync.ts';
 import { storeThumbnail } from './chat-thumbnail.ts';
 
@@ -1128,6 +1129,7 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
               mode: 'follow',
               signal,
               accountId: params.accountId,
+              applyChatFlags: chatFlagsAllowed(loadConfig()),
               onProgress: (event) => {
                 if (event.type === 'batch') {
                   schedule();

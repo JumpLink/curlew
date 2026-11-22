@@ -17,6 +17,7 @@ export const UI_SETTINGS: Record<keyof UiConfig, SettingPlace> = {
   playVideosSilently: { kind: 'window', where: 'Preferences, Media' },
   sendReadReceipts: { kind: 'window', where: 'Preferences, Conversations' },
   syncReadState: { kind: 'window', where: 'Preferences, Conversations' },
+  syncChatFlags: { kind: 'window', where: 'Preferences, Conversations' },
   accentColor: { kind: 'window', where: 'Preferences, Appearance' },
   primaryColor: { kind: 'window', where: 'Preferences, Appearance' },
   colorScheme: { kind: 'window', where: 'Preferences, Appearance' },

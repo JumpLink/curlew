@@ -31,6 +31,8 @@ import {
 } from '@curlew/store';
 import type { SendPermit } from '@curlew/xmpp';
 import { appendWriteLog } from '../write-log.ts';
+import { loadConfig } from '../config.ts';
+import { chatFlagsAllowed } from './mute.ts';
 import { SEND_CAPABILITY } from './send.ts';
 
 /** The least time between two catch-ups of one account. */
@@ -202,7 +204,10 @@ export async function followAccount(deps: FollowDeps): Promise<FollowResult> {
                 const gap = lastEnd + minGap - Date.now();
                 if (gap > 0) await sleep(gap);
                 if (live.aborted) return;
-                const done = await syncChats(db, overLink, { accountId });
+                const done = await syncChats(db, overLink, {
+                  accountId,
+                  applyChatFlags: chatFlagsAllowed(loadConfig()),
+                });
                 lastEnd = Date.now();
                 result.catchUps += 1;
                 result.added += done.added;

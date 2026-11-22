@@ -66,6 +66,11 @@ export interface UiConfig {
    * Unset: on. Telegram and WhatsApp have no private form and follow `sendReadReceipts` instead.
    */
   syncReadState?: boolean;
+  /**
+   * Sync a conversation's mute with the network, where it keeps one (ADR 0020). Unset: on. Off:
+   * nothing is pushed or applied, and what was synced before stays where it is.
+   */
+  syncChatFlags?: boolean;
   /** The first-run welcome screen was finished or skipped. Unset: not yet, so it may show. */
   welcomeDone?: boolean;
   /**
@@ -333,6 +338,9 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   const syncReadState = (rawUi as Record<string, unknown>).syncReadState;
   if (syncReadState !== undefined && typeof syncReadState !== 'boolean')
     throw new Error('config.ui.syncReadState must be true or false');
+  const syncChatFlags = (rawUi as Record<string, unknown>).syncChatFlags;
+  if (syncChatFlags !== undefined && typeof syncChatFlags !== 'boolean')
+    throw new Error('config.ui.syncChatFlags must be true or false');
   const playVideosSilently = (rawUi as Record<string, unknown>).playVideosSilently;
   if (playVideosSilently !== undefined && typeof playVideosSilently !== 'boolean')
     throw new Error('config.ui.playVideosSilently must be true or false');
@@ -383,6 +391,7 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     ...(playVideosSilently === undefined ? {} : { playVideosSilently }),
     ...(sendReadReceipts === undefined ? {} : { sendReadReceipts }),
     ...(syncReadState === undefined ? {} : { syncReadState }),
+    ...(syncChatFlags === undefined ? {} : { syncChatFlags }),
     ...(accentColor === undefined ? {} : { accentColor }),
     ...(primaryColor === undefined ? {} : { primaryColor }),
     ...(colorScheme === undefined ? {} : { colorScheme }),
