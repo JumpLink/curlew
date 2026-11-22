@@ -206,6 +206,19 @@ export class FakeSendSocket extends FakeEvents implements WaSendSocketHandle {
     this.mutes.push({ jid, untilMs });
   }
 
+  /** Every `setPin`, in order. */
+  readonly pins: Array<{ jid: string; pinned: boolean }> = [];
+  /** The chats seen pinned: seed it to stage a full list. */
+  readonly pinnedNow: string[] = [];
+
+  async setPin(jid: string, pinned: boolean): Promise<void> {
+    this.pins.push({ jid, pinned });
+  }
+
+  pinnedJids(): ReadonlyArray<string> {
+    return this.pinnedNow;
+  }
+
   async deleteMessage(jid: string, id: string): Promise<WaSentMessage> {
     this.deleted.push({ jid, id });
     return { key: { remoteJid: jid, fromMe: true, id } };
@@ -340,6 +353,8 @@ export class FakeConnection implements WaConnection {
       deleteMessage: (jid, id) => send.deleteMessage(jid, id),
       markRead: (jid, id, participant) => send.markRead(jid, id, participant),
       setMute: (jid, untilMs) => send.setMute(jid, untilMs),
+      setPin: (jid, pinned) => send.setPin(jid, pinned),
+      pinnedJids: () => send.pinnedJids(),
       end: () => {
         this.sendViewEnds++;
       },

@@ -340,6 +340,16 @@ export default async () => {
       expect(mute(0) !== undefined).toBe(true);
     });
 
+    await it('reads the chat pin from the pinned timestamp', async () => {
+      const mapper = new WhatsAppMapper();
+      const pin = (pinned?: number | null) =>
+        mapper.chat({ id: ANNA_LID, pinned }, false).find((e) => e.type === 'chat-pin');
+      expect(pin() === undefined).toBe(true);
+      expect(pin(null)?.type === 'chat-pin' && pin(null)?.pinned === false).toBe(true);
+      const on = pin(1_700_000_000);
+      expect(on?.type === 'chat-pin' && on.pinned).toBe(true);
+    });
+
     await it('maps "delete for me" and "clear chat" from another device', async () => {
       const mapper = new WhatsAppMapper();
       expect(mapper.deletion({ keys: [{ remoteJid: ANNA_LID, id: 'A1' }] })[0].type).toBe('delete');

@@ -141,6 +141,20 @@ export const createBaileysConnection: ConnectionFactory = ({ auth, fullHistory =
   });
   sock.ev.on('creds.update', () => auth.saveCreds());
 
+  // WhatsApp keeps its pin limit on the client, so the one to refuse a fourth pin is us: the chats
+  // this connection has seen pinned, from the history and every later change.
+  const pinnedJids = new Set<string>();
+  const trackPins = (chats: ReadonlyArray<{ id?: string | null; pinned?: number | null }>) => {
+    for (const chat of chats) {
+      if (!chat.id || chat.pinned === undefined) continue;
+      if (chat.pinned) pinnedJids.add(chat.id);
+      else pinnedJids.delete(chat.id);
+    }
+  };
+  sock.ev.on('chats.upsert', trackPins);
+  sock.ev.on('chats.update', trackPins);
+  sock.ev.on('messaging-history.set', ({ chats }) => trackPins(chats));
+
   // Tracked for `openSend().ready()`: Baileys' `sendNode` throws `Connection Closed` while the
   // WebSocket is not open, so a send waits for `connection: 'open'` instead of racing it. Watched
   // from the moment the connection exists, because a send view may be opened long after.
@@ -285,6 +299,12 @@ export const createBaileysConnection: ConnectionFactory = ({ auth, fullHistory =
       setMute: async (jid, untilMs) => {
         await sock.chatModify({ mute: untilMs === 0 ? null : untilMs }, jid);
       },
+      setPin: async (jid, pinned) => {
+        await sock.chatModify({ pin: pinned }, jid);
+        if (pinned) pinnedJids.add(jid);
+        else pinnedJids.delete(jid);
+      },
+      pinnedJids: () => [...pinnedJids],
       // See `WaConnection.openSend`: the connection's owner closes it, never a send view.
       end: () => {},
     }),

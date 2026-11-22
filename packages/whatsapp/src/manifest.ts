@@ -27,6 +27,7 @@ export const WHATSAPP_MANIFEST: BackendManifest = {
     readReceipts: false,
     // The per-chat mute arrives with the chat reports (`muteEndTime`) and is written with `chatModify`.
     mutes: true,
+    pins: true,
     groups: true,
     // Every chat is end-to-end encrypted (Signal protocol); this device holds its own keys.
     e2ee: true,

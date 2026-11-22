@@ -35,7 +35,7 @@
  * connection: there the daemon's own receive loop is already journalling it (`journal: null`).
  */
 
-import { _, errText, fmt, probeMediaFile } from '@curlew/protocol';
+import { _, ChatPinLimitError, errText, fmt, probeMediaFile } from '@curlew/protocol';
 import type {
   ChatAttachment,
   DeliveryEvent,
@@ -84,6 +84,9 @@ export const WHATSAPP_MAX_CAPTION_CHARS = 1024;
 
 /** How long a send waits for WhatsApp's `SERVER_ACK` before it answers with a warning. */
 const DEFAULT_ACK_MS = 15_000;
+
+/** The chats WhatsApp lets a person pin (faq.whatsapp.com/645907560577342: "up to three chats"). */
+const WHATSAPP_PIN_LIMIT = 3;
 
 const UTF8 = new TextEncoder();
 
@@ -207,17 +210,25 @@ export class WhatsAppSender implements MessageSender {
   }
 
   /**
-   * The person's mute of the chat (`chatModify`, no one is told). A pin is not mirrored, so
-   * `favourite` is ignored.
+   * The person's mute (`chatModify`) and favourite (a pin, `chatModify`) of the chat; no one is
+   * told. WhatsApp allows three pins (faq.whatsapp.com/645907560577342): a fourth is refused
+   * (`ChatPinLimitError`) and nothing else is unpinned to make room (ADR 0020 §6).
    */
   async setChatFlags(flags: SendingChatFlags): Promise<void> {
     const to = this.recipient(flags.to);
-    if (flags.mute === undefined) return;
+    if (flags.mute === undefined && flags.favourite === undefined) return;
     this.requireJournal();
     await this.socket.ready();
-    const ends = flags.mute.until === null ? Number.NaN : Date.parse(flags.mute.until);
-    const until = !flags.mute.muted ? 0 : Number.isFinite(ends) ? ends : -1;
-    await this.socket.setMute(to, until);
+    if (flags.mute !== undefined) {
+      const ends = flags.mute.until === null ? Number.NaN : Date.parse(flags.mute.until);
+      const until = !flags.mute.muted ? 0 : Number.isFinite(ends) ? ends : -1;
+      await this.socket.setMute(to, until);
+    }
+    if (flags.favourite === undefined) return;
+    if (flags.favourite && this.socket.pinnedJids().filter((jid) => jid !== to).length >= WHATSAPP_PIN_LIMIT) {
+      throw new ChatPinLimitError(WHATSAPP_PIN_LIMIT);
+    }
+    await this.socket.setPin(to, flags.favourite);
   }
 
   async react(reaction: SendingReaction): Promise<void> {
