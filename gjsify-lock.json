@@ -46,7 +46,7 @@
     "@gjsify/node-runtime-darwin-x64@0.64.54",
     "@gjsify/node-runtime-win32-x64@0.64.54",
     "@gjsify/node-gi@0.64.54",
-    "@gjsify/pim@0.64.56",
+    "@gjsify/pim@0.64.58",
     "@gjsify/system-accounts@0.64.54",
     "@matrix-org/matrix-sdk-crypto-wasm@18.9.0",
     "loglevel@1.9.2",
@@ -6520,17 +6520,17 @@
       }
     },
     "node_modules/@gjsify/dav": {
-      "version": "0.64.56",
-      "resolved": "https://registry.npmjs.org/@gjsify/dav/-/dav-0.64.56.tgz",
-      "integrity": "sha512-5qfZdqj8J202aWnYzs4CQkfxN4drTV0UsuYyGjqgZf2Q2AY1Dy2qNSsqHsjEUgIDoBqXTiCrR0aWJKMK3Fs8hg==",
+      "version": "0.64.58",
+      "resolved": "https://registry.npmjs.org/@gjsify/dav/-/dav-0.64.58.tgz",
+      "integrity": "sha512-qGt7Odjke9n0Oi5DnRN39JXisZ96RQijroTg66b70xh4SD26+Z82fnU7EihZFYTZGDY93lNgYaa88XteMN/emQ==",
       "dependencies": {
-        "@gjsify/domparser": "0.64.56"
+        "@gjsify/domparser": "0.64.58"
       }
     },
     "node_modules/@gjsify/dav/node_modules/@gjsify/domparser": {
-      "version": "0.64.56",
-      "resolved": "https://registry.npmjs.org/@gjsify/domparser/-/domparser-0.64.56.tgz",
-      "integrity": "sha512-w/6w/RlBP/D4zUWSanFdsQl1wjpx3JjFCFZMdXOxPLYvec8+4q6ofdYZL7LXh2ushZua4l9cmI8unjznE+XUVg=="
+      "version": "0.64.58",
+      "resolved": "https://registry.npmjs.org/@gjsify/domparser/-/domparser-0.64.58.tgz",
+      "integrity": "sha512-Pl5RD8bVoJN6f7wR+xaNP5bY1gqvimM5EvBkbRUz6BFvw5N+c9ENOHVfeX4+pbf6GsVXXFr1Tse0/Gq9Hjl7nw=="
     },
     "node_modules/@gjsify/devtools": {
       "version": "0.64.54",
@@ -11223,11 +11223,11 @@
       }
     },
     "node_modules/@gjsify/pim": {
-      "version": "0.64.56",
-      "resolved": "https://registry.npmjs.org/@gjsify/pim/-/pim-0.64.56.tgz",
-      "integrity": "sha512-N0l443EqerYD0SLd8t4w+XWQGptahW8DasJi/gN+57A3spc2jeIxlWEuH7aTe0+jYcTULIwKJNeQUyFLgbtYjA==",
+      "version": "0.64.58",
+      "resolved": "https://registry.npmjs.org/@gjsify/pim/-/pim-0.64.58.tgz",
+      "integrity": "sha512-K3Pl8mV22MYhVc42tA6sv0oq+B1mMmLY7Q7ORz1LI7HXghp2nuN9io5OMDLQYlW3RlePwpIu/LrFlWTAGT4WSQ==",
       "dependencies": {
-        "@gjsify/dav": "0.64.56",
+        "@gjsify/dav": "0.64.58",
         "@girs/ecal-2.0": "5.4.0",
         "@girs/icalglib-3.0": "5.4.0",
         "@girs/edataserver-1.2": "5.4.0"
