@@ -1,7 +1,9 @@
 # ADR 0020 — mute and favourites sync with the protocol where it has them
 
-- **Status:** Proposed (2026-11-22). Decided by Pascal in chat; the choices below are the agreed
-  shape. No code in this change.
+- **Status:** Accepted (2026-11-22). Decided by Pascal in chat, who also confirmed the three
+  points left open in review: the WhatsApp pin limit is verified at implementation and nothing is
+  pushed beyond it (§6); a muted chat stays in Unread but leaves the shell badge (§7); muting from
+  a merged contact page mutes every network (§8).
 - **Scope:** `@curlew/store` (schema v30, a flags table), `@curlew/protocol` (two manifest flags,
   the per-thread narrowing), the backends that can carry it (`@curlew/telegram`,
   `@curlew/matrix`, `@curlew/whatsapp`), `app` (config, the daemon route, the notice decision, the

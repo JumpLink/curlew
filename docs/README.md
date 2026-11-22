@@ -61,7 +61,7 @@ Agent- and contributor-facing docs for the curlew repo. The hard rules that load
 - [`adr/0016-the-window-stays-in-the-background.md`](adr/0016-the-window-stays-in-the-background.md) — hold and hide the window only where the person can get it back (proposed)
 - [`adr/0017-media-thumbnails-at-sync.md`](adr/0017-media-thumbnails-at-sync.md) — store the preview the network ships with the message, so a big video is not a dark box (accepted)
 - [`adr/0018-mail-transport-is-a-byte-stream-port.md`](adr/0018-mail-transport-is-a-byte-stream-port.md) — the IMAP client talks to a byte-stream port, sending is its own entry, Android waits for Gio TLS (proposed)
-- [`adr/0020-mute-and-favourites-sync-with-the-protocol.md`](adr/0020-mute-and-favourites-sync-with-the-protocol.md) — mute and favourites are local first and sync with the protocol where it has them (proposed)
+- [`adr/0020-mute-and-favourites-sync-with-the-protocol.md`](adr/0020-mute-and-favourites-sync-with-the-protocol.md) — mute and favourites are local first and sync with the protocol where it has them
 
 ## Design and references
 
