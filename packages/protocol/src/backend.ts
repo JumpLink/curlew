@@ -933,6 +933,11 @@ export interface SenderFeatures {
    * (`MessageSender.readSync`), without telling the peer. Absent means false.
    */
   readSync?: boolean;
+  /**
+   * The sender can write the person's per-chat mute and favourite to the network
+   * (`MessageSender.setChatFlags`, ADR 0020). Absent means false.
+   */
+  chatFlags?: boolean;
 }
 
 /** A file to send with a message, by absolute path. Only the sender that claims `attachments` reads it. */
@@ -1038,6 +1043,17 @@ export interface SendingReadSync {
   folder?: string;
 }
 
+/**
+ * The person muted or pinned a chat: the network's copy of the two flags (ADR 0020). A field left
+ * out is not touched. `until` is an absolute ISO instant, `null` = until the person unmutes; a
+ * network with no expiry gets the mute and the daemon lifts it itself.
+ */
+export interface SendingChatFlags {
+  to: string;
+  mute?: { muted: boolean; until: string | null };
+  favourite?: boolean;
+}
+
 /** What a send returned. `id` is the network's own id and what the write log records (ADR 0004 §7). */
 export interface SentMessage {
   /** The address it went to, exactly as the permit spelled it. */
@@ -1087,6 +1103,8 @@ export interface MessageSender {
   readReceipt?(receipt: SendingReadReceipt): Promise<void>;
   /** Present exactly when `features.readSync` is true. */
   readSync?(sync: SendingReadSync): Promise<void>;
+  /** Present exactly when `features.chatFlags` is true. */
+  setChatFlags?(flags: SendingChatFlags): Promise<void>;
   close(): Promise<void>;
 }
 

@@ -26,6 +26,8 @@ import {
   type DaemonFetchAttachmentReply,
   type DaemonFetchAttachmentRequest,
   type DaemonFetchAvatarsReply,
+  type DaemonSetChatFlagsReply,
+  type DaemonSetChatFlagsRequest,
   type DaemonSyncReadReply,
   type DaemonSyncReadRequest,
   type DaemonFetchAvatarsRequest,
@@ -33,6 +35,7 @@ import {
   type DaemonSendRequest,
   parseDaemonFetchAttachmentReply,
   parseDaemonFetchAvatarsReply,
+  parseDaemonSetChatFlagsReply,
   parseDaemonSyncReadReply,
   parseDaemonSendReply,
   toDaemonWire,
@@ -55,6 +58,11 @@ export interface DaemonSendClient {
    * daemon, or it is too old to know the method: the position stays local, nothing is lost.
    */
   syncRead(request: DaemonSyncReadRequest): Promise<DaemonSyncReadReply | null>;
+  /**
+   * Ask the daemon to write a chat's mute or favourite to the network. `null` when there is no
+   * daemon: the flag stays local and the next sync reconciles it (ADR 0020 §4).
+   */
+  setChatFlags(request: DaemonSetChatFlagsRequest): Promise<DaemonSetChatFlagsReply | null>;
 }
 
 /**
@@ -283,6 +291,41 @@ export function gioDaemonSendClient(): DaemonSendClient {
         throw new Error(`the running curlew daemon did not answer the read sync (${reasonOf(error)})`);
       }
       return parseReporting(() => parseDaemonSyncReadReply(json));
+    },
+    setChatFlags: async (request) => {
+      let connection: Gio.DBusConnection;
+      try {
+        connection = Gio.bus_get_sync(Gio.BusType.SESSION, null);
+      } catch {
+        return null;
+      }
+      let json: string;
+      try {
+        json = await new Promise<string>((resolve, reject) => {
+          connection.call(
+            DAEMON_BUS_NAME,
+            DAEMON_OBJECT_PATH,
+            DAEMON_INTERFACE,
+            'SetChatFlags',
+            new GLib.Variant('(s)', [JSON.stringify(request)]),
+            new GLib.VariantType('(s)'),
+            Gio.DBusCallFlags.NO_AUTO_START,
+            DAEMON_FETCH_TIMEOUT_MS,
+            null,
+            (_source, result) => {
+              try {
+                resolve((connection.call_finish(result!).recursiveUnpack() as [string])[0]);
+              } catch (error) {
+                reject(error as Error);
+              }
+            },
+          );
+        });
+      } catch (error) {
+        if (meansNoDaemon(error) || reasonOf(error).includes('UnknownMethod')) return null;
+        throw new Error(`the running curlew daemon did not answer the chat-flags write (${reasonOf(error)})`);
+      }
+      return parseReporting(() => parseDaemonSetChatFlagsReply(json));
     },
   };
 }

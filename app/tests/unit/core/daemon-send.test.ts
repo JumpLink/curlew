@@ -181,6 +181,7 @@ function fakeClient(reply: Awaited<ReturnType<DaemonSendClient['send']>>): {
       fetchAttachment: async () => null,
       fetchAvatars: async () => null,
       syncRead: async () => null,
+      setChatFlags: async () => null,
     },
   };
 }

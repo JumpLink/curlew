@@ -103,6 +103,7 @@ import {
   type DaemonFetchHandler,
   type DaemonSendHandler,
   type DaemonSendService,
+  type DaemonSetChatFlagsHandler,
   type DaemonSyncReadHandler,
 } from '../lib/daemon-send-service.ts';
 import {
@@ -124,6 +125,7 @@ import { deleteThrough } from './delete.ts';
 import { editThrough } from './edit.ts';
 import { reactThrough } from './react.ts';
 import { sendThrough } from './send.ts';
+import { chatFlagsThrough } from './chat-flags.ts';
 import { readSyncThrough } from './read-sync.ts';
 import { storeThumbnail } from './chat-thumbnail.ts';
 
@@ -468,6 +470,48 @@ export function createDaemonSendHandler(options: DaemonSendHandlerOptions): Daem
       return { v: DAEMON_WIRE_VERSION, kind: 'failed', message: errText(error) } satisfies DaemonSendReply;
     } finally {
       // Only what this send opened: the session's own connection stays up and receiving.
+      await sender.close().catch(() => {});
+    }
+  };
+}
+
+/**
+ * Answer one `SetChatFlags` off the session bus (ADR 0020 §5): the person's mute or favourite of
+ * one chat, written to the network on the connection the daemon already holds. Same gates as a
+ * read sync: a paused account is refused, a session without a sender is handed back.
+ */
+export function createDaemonSetChatFlagsHandler(
+  options: DaemonSendHandlerOptions,
+): DaemonSetChatFlagsHandler {
+  const { log, sessions, isPaused } = options;
+  return async (request) => {
+    const who = sessionKey(request.backend, request.account);
+    if (isPaused?.(request.backend, request.account)) {
+      return { v: DAEMON_WIRE_VERSION, kind: 'refused', message: _('this account is paused') };
+    }
+    const session = sessions.get(who);
+    if (session === undefined || session.openSender === undefined) {
+      return { v: DAEMON_WIRE_VERSION, kind: 'not-followed' };
+    }
+    let sender: MessageSender;
+    try {
+      sender = await session.openSender({ account: request.account, addresses: [request.to] });
+    } catch (error) {
+      return { v: DAEMON_WIRE_VERSION, kind: 'failed', message: errText(error) };
+    }
+    try {
+      const done = await chatFlagsThrough(sender, {
+        to: request.to,
+        ...(request.mute === undefined ? {} : { mute: request.mute }),
+        ...(request.favourite === undefined ? {} : { favourite: request.favourite }),
+      });
+      if (!done) return { v: DAEMON_WIRE_VERSION, kind: 'failed', message: 'this network has no chat flags' };
+      log(`curlew-daemon: chat flags written for ${who} on its open connection`);
+      return { v: DAEMON_WIRE_VERSION, kind: 'set' };
+    } catch (error) {
+      log(`curlew-daemon: a chat-flags write for ${who} did not complete`);
+      return { v: DAEMON_WIRE_VERSION, kind: 'failed', message: errText(error) };
+    } finally {
       await sender.close().catch(() => {});
     }
   };
@@ -992,6 +1036,12 @@ export async function runDeliveryDaemon(params: DaemonParams = {}): Promise<Daem
               access: (request) => accessBroker.request(request),
               fetch: createDaemonFetchHandler({ db, fetchBackends, log }),
               avatars: createDaemonAvatarsHandler({ backends: fetchBackends, sessions, log }),
+              setChatFlags: createDaemonSetChatFlagsHandler({
+                sessions,
+                log,
+                isPaused: (backend, accountId) =>
+                  isAccountPaused(loadConfig(accessConfigPath), backend, accountId),
+              }),
               syncRead: createDaemonSyncReadHandler({
                 sessions,
                 log,
