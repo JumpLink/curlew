@@ -145,6 +145,25 @@ export default async () => {
       expect(peerAddresses(ORGA).length).toBe(0);
     });
 
+    await it('reads the dialog mute with its end, and says nothing for the account default', async () => {
+      const base = { peer: ANNA, lastMessage: null, lastReadIngoing: 0, lastReadOutgoing: 0 };
+      expect(toChatInfo(base).mute === undefined).toBe(true);
+      expect(toChatInfo({ ...base, isMuted: null }).mute === undefined).toBe(true);
+      expect(toChatInfo({ ...base, isMuted: false }).mute?.muted).toBe(false);
+      const forever = toChatInfo({
+        ...base,
+        isMuted: true,
+        raw: { notifySettings: { muteUntil: 2147483647 } },
+      });
+      expect(forever.mute?.until).toBe(null);
+      const timed = toChatInfo({
+        ...base,
+        isMuted: true,
+        raw: { notifySettings: { muteUntil: 1796083200 } },
+      });
+      expect(timed.mute?.until).toBe('2026-12-01T00:00:00.000Z');
+    });
+
     await it('maps dialogs to direct, group and broadcast chats with their read markers', async () => {
       const direct = toChatInfo({
         peer: ANNA,

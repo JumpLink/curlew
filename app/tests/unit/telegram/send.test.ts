@@ -7,6 +7,7 @@ import type { AccountPrompter, BackendContext, SendPermit } from '@curlew/protoc
 import { isSendBackend } from '@curlew/protocol';
 import { chatConversationId, getConversation } from '@curlew/store';
 import {
+  MUTE_FOREVER,
   TELEGRAM_MAX_CAPTION_CHARS,
   TELEGRAM_MAX_MESSAGE_CHARS,
   TELEGRAM_MANIFEST,
@@ -188,6 +189,29 @@ export default async () => {
         expect(client.sent[1].replyTo === undefined).toBe(true);
         expect(client.files[0].replyTo).toBe(7);
         expect(client.files[1].replyTo === undefined).toBe(true);
+        await sender.close();
+      });
+    });
+
+    await it('mutes and unmutes a chat of the grant, with an end or without', async () => {
+      await withRig(granted, async (rig) => {
+        const sender = await rig.backend.openSender(ACCOUNT, { account: ACCOUNT, addresses: ['1001'] });
+        expect(sender.features.chatFlags).toBe(true);
+        expect(rig.backend.manifest.capabilities?.mutes).toBe(true);
+        await sender.setChatFlags?.({ to: '1001', mute: { muted: true, until: null } });
+        await sender.setChatFlags?.({ to: '1001', mute: { muted: true, until: '2026-12-01T00:00:00.000Z' } });
+        await sender.setChatFlags?.({ to: '1001', mute: { muted: false, until: null } });
+        await sender.setChatFlags?.({ to: '1001', favourite: true });
+        const muted = rig.fake.clients[0].muted;
+        expect(muted.length).toBe(3);
+        expect(muted[0].until).toBe(MUTE_FOREVER);
+        expect(muted[1].until).toBe(Date.parse('2026-12-01T00:00:00.000Z') / 1000);
+        expect(muted[2].until).toBe(0);
+        expect(
+          await refused(
+            sender.setChatFlags?.({ to: '2002', mute: { muted: true, until: null } }) ?? Promise.resolve(),
+          ),
+        ).toBe(true);
         await sender.close();
       });
     });

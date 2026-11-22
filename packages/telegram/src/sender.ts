@@ -15,6 +15,7 @@ import {
   type MessageSender,
   probeMediaFile,
   type ReplyTarget,
+  type SendingChatFlags,
   type SendingDeletion,
   type SendingEdit,
   type SendingMessage,
@@ -26,7 +27,7 @@ import {
 } from '@curlew/protocol';
 import { inspectSendFiles } from '@curlew/store';
 import { readFileSync } from 'node:fs';
-import type { TelegramClientHandle } from './api.ts';
+import { MUTE_FOREVER, type TelegramClientHandle } from './api.ts';
 import { remoteMessageId, toChatAttachments } from './map.ts';
 
 /** Telegram's limit for one text message. curlew refuses longer text rather than split it. */
@@ -66,6 +67,7 @@ export class TelegramSender implements MessageSender {
     edits: true,
     deletes: true,
     readSync: true,
+    chatFlags: true,
   };
   private readonly client: TelegramClientHandle;
   private readonly permit: SendPermit;
@@ -167,6 +169,18 @@ export class TelegramSender implements MessageSender {
     const chatId = this.chatId(sync.to);
     if (sync.target.fromSelf === true) return;
     await this.client.readHistory(chatId, replyNumber(chatId, sync.target.remoteId));
+  }
+
+  /**
+   * The person's mute of the chat (`account.updateNotifySettings`, no one is told). Telegram's pin
+   * is a dialog order of the account, not a favourite curlew mirrors, so `favourite` is ignored.
+   */
+  async setChatFlags(flags: SendingChatFlags): Promise<void> {
+    const chatId = this.chatId(flags.to);
+    if (flags.mute === undefined) return;
+    if (!flags.mute.muted) return this.client.setMute(chatId, 0);
+    const until = flags.mute.until === null ? MUTE_FOREVER : Math.floor(Date.parse(flags.mute.until) / 1000);
+    await this.client.setMute(chatId, Number.isFinite(until) ? until : MUTE_FOREVER);
   }
 
   /** Deletes one of the person's own messages for everyone. */

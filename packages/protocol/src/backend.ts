@@ -340,6 +340,12 @@ export interface ChatInfo {
    * the peer was not asked or did not answer (unknown, not "none").
    */
   peerFeatures?: string[];
+  /**
+   * The network's own per-chat mute (ADR 0020), for a backend whose manifest says `mutes`. Absent =
+   * the network did not say. `until` is an ISO instant, `null` = until unmuted, and absent on a
+   * network without an expiry (Matrix): only `muted` is then compared.
+   */
+  mute?: { muted: boolean; until?: string | null };
 }
 
 /** The room facts a window shows next to a composer; null = unknown. */

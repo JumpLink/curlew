@@ -278,6 +278,14 @@ export class FakeClient implements TelegramClientHandle {
     this.read.push({ chatId, messageId });
   }
 
+  /** Every `setMute` call, in order. */
+  readonly muted: Array<{ chatId: number; until: number }> = [];
+
+  async setMute(chatId: number, until: number): Promise<void> {
+    this.calls.push(`setMute:${chatId}`);
+    this.muted.push({ chatId, until });
+  }
+
   async deleteMessage(chatId: number, messageId: number): Promise<void> {
     this.calls.push(`deleteMessage:${chatId}`);
     this.deleted.push({ chatId, messageId });

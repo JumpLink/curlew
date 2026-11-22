@@ -160,7 +160,8 @@ export function setChatFavourite(db: IndexDatabase, conversationId: string, inpu
 /** What the network reported for a conversation's mute. */
 export interface RemoteMute {
   muted: boolean;
-  until: string | null;
+  /** Absent: the network has no expiry, so only `muted` is compared and a local timer is kept. */
+  until?: string | null;
 }
 
 /**
@@ -206,6 +207,7 @@ export function resolveFlag<T>(input: ResolveInput<T>): FlagResolution {
 const sameMute = (a: RemoteMute, b: RemoteMute): boolean => {
   if (a.muted !== b.muted) return false;
   if (!a.muted) return true;
+  if (a.until === undefined || b.until === undefined) return true;
   return a.until === b.until || (a.until !== null && b.until !== null && Date.parse(a.until) === Date.parse(b.until));
 };
 
@@ -234,7 +236,7 @@ export function applyRemoteMute(
     const mirror = (): void => {
       db.prepare(
         'UPDATE conversation_flags SET remote_muted = ?, remote_muted_until = ?, remote_at = ? WHERE conversation_id = ?',
-      ).run(remote.muted ? 1 : 0, remote.muted ? remote.until : null, at, conversationId);
+      ).run(remote.muted ? 1 : 0, remote.muted ? (remote.until ?? null) : null, at, conversationId);
     };
     mirror();
     if (!options.apply) return { resolution: 'keep' as const };
@@ -253,7 +255,7 @@ export function applyRemoteMute(
       db.prepare(
         `UPDATE conversation_flags SET muted = ?, muted_until = ?, muted_at = ?, mute_pending_at = NULL
           WHERE conversation_id = ?`,
-      ).run(remote.muted ? 1 : 0, remote.muted ? remote.until : null, at, conversationId);
+      ).run(remote.muted ? 1 : 0, remote.muted ? (remote.until ?? null) : null, at, conversationId);
       journal(db, conversationId);
     }
     return { resolution };

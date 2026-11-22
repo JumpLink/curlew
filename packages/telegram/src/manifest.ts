@@ -31,6 +31,8 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
     threads: true,
     // Sending read receipts (MessageSender.readReceipt) is not implemented; receiving read marks is separate.
     readReceipts: false,
+    // The per-chat mute is read from the dialog list and written with `account.updateNotifySettings`.
+    mutes: true,
     groups: true,
     // Cloud chats are encrypted client–server only. Secret chats (end-to-end) are out of scope,
     // so claiming E2EE here would be false.

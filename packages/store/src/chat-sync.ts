@@ -47,6 +47,7 @@ import type { IndexDatabase } from './db.ts';
 import { fillSearchKeys } from './search-key-fill.ts';
 import { backfillAttachments } from './chat-backfill.ts';
 import { appendChanges } from './changes.ts';
+import { applyRemoteMute } from './chat-flags.ts';
 import { applyLocalRead } from './local-read.ts';
 import { conversationTotalsSql } from './conversation-totals.ts';
 import { insertMany, placeholders, runIn, seqColumn, type SqlValue, withTransaction } from './db.ts';
@@ -80,6 +81,11 @@ export interface ChatSyncOptions {
   /** Clock, injected so tests are deterministic. */
   now?: () => Date;
   /**
+   * Apply the mute a network reports to the local flag (`ui.syncChatFlags`, ADR 0020 §3). Off, the
+   * report only fills the `remote_*` mirror. Default true.
+   */
+  applyChatFlags?: boolean;
+  /**
    * Take the receive lease (ADR 0002 §4) around each account, and stand down for one somebody
    * else holds — BEFORE connecting, so no client and no crypto store is opened. A bounded
    * `curlew sync` passes it; the daemon's own catch-up already holds the lease and does not.
@@ -109,6 +115,11 @@ export interface ChatAccountSyncResult {
   removed: number;
   /** Chats whose fetch failed; their cursor stays where it was. */
   chatErrors: number;
+  /**
+   * Conversations whose pending mute the network contradicted: the caller pushes it once more
+   * (ADR 0020 §4). Absent when there are none.
+   */
+  flagRetries?: string[];
   /**
    * What those chat errors were, by fixed category — never the network's own text, which can
    * quote a chat. `rate-limited` is a `ChatRateLimitedError`, `other` is everything else.
@@ -245,6 +256,9 @@ class ChatBatch {
    * from `conversations` or `cursors`: a sync writes those for every chat it looked at.
    */
   readonly changed = new Set<string>();
+
+  /** The mutes the network reported, applied after the batch is written (the rows must exist). */
+  readonly remoteMutes: Array<[string, NonNullable<ChatInfo['mute']>]> = [];
 
   readonly backend: string;
   readonly accountId: string;
@@ -826,6 +840,7 @@ async function syncAccount(
         summary.reason,
       ]);
       for (const member of chat.members) batch.member(conversationId, member);
+      if (chat.mute) batch.remoteMutes.push([conversationId, chat.mute]);
       for (const m of fetched) {
         if (!m.fromSelf && m.sender) batch.member(conversationId, m.sender);
         const row = messageRow(batch, conversationId, chat, m);
@@ -889,6 +904,14 @@ async function syncAccount(
   } finally {
     // Whatever was fetched before a failure is written: its cursors cover exactly it.
     writeBatch(db, batch);
+    for (const [conversationId, mute] of batch.remoteMutes) {
+      try {
+        const outcome = applyRemoteMute(db, conversationId, mute, { apply: options.applyChatFlags });
+        if (outcome?.resolution === 'retry') (result.flagRetries ??= []).push(conversationId);
+      } catch (err) {
+        recordChatError(result, err);
+      }
+    }
     // After the write, so what this run stored is described too; not after a rate limit.
     if (result.rateLimited === null) {
       try {
@@ -981,6 +1004,7 @@ export async function syncChats(
     fullScan: options.fullScan ?? false,
     probeDepth: options.probeDepth ?? CHAT_PROBE_DEPTH,
     now: options.now ?? (() => new Date()),
+    applyChatFlags: options.applyChatFlags ?? true,
   };
   const budget = { total: resolved.maxMessages, remaining: resolved.maxMessages, exhausted: false };
   const accounts = (await backend.listAccounts()).filter(
