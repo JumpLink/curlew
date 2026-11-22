@@ -1074,7 +1074,7 @@ export function generateDemo(dir: string, now: number = Date.now(), lang: DemoLa
     const muted = db.prepare(
       'INSERT OR REPLACE INTO conversation_flags (conversation_id, muted, muted_at) VALUES (?, 1, ?)',
     );
-    for (const id of ['c22', 'c18']) muted.run(id, new Date(now).toISOString());
+    for (const id of ['c2', 'c22']) muted.run(id, new Date(now).toISOString());
 
     const cursor = db.prepare(
       `INSERT OR REPLACE INTO chat_cursors (conversation_id, backend, account_id, chat_id, kind,
