@@ -40,7 +40,12 @@ export default async () => {
     await it('sends over implicit TLS with the CA trusted', async () => {
       const server = await startDummyServer({ tls: 'implicit', rejectRecipients: ['gone@example.invalid'] });
       try {
-        const result = await sendOverWire(accountFor(server.port, 'tls', tlsCredentials().cert), ENVELOPE, RAW, openEndpointStream);
+        const result = await sendOverWire(
+          accountFor(server.port, 'tls', tlsCredentials().cert),
+          ENVELOPE,
+          RAW,
+          openEndpointStream,
+        );
         expect(result.accepted).toStrictEqual(['a@example.invalid']);
         expect(result.rejected).toStrictEqual(['gone@example.invalid']);
         expect(server.dialogue.messages).toStrictEqual(['Subject: hi\r\n\r\n..dot line\r\nbody\r\n']);
@@ -53,7 +58,12 @@ export default async () => {
     await it('upgrades with STARTTLS, says EHLO again, then sends', async () => {
       const server = await startDummyServer({ tls: 'starttls' });
       try {
-        await sendOverWire(accountFor(server.port, 'starttls', tlsCredentials().cert), ENVELOPE, RAW, openEndpointStream);
+        await sendOverWire(
+          accountFor(server.port, 'starttls', tlsCredentials().cert),
+          ENVELOPE,
+          RAW,
+          openEndpointStream,
+        );
         const verbs = server.dialogue.commands.map((c) => c.split(' ')[0]);
         expect(verbs.slice(0, 4)).toStrictEqual(['EHLO', 'STARTTLS', 'EHLO', 'AUTH']);
         expect(server.dialogue.messages.length).toBe(1);

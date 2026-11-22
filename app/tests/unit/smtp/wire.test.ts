@@ -86,7 +86,13 @@ class FakeServer implements UpgradableByteStream {
   private command(line: string): void {
     const verb = line.split(' ')[0].toUpperCase();
     if (verb === 'EHLO') {
-      this.push(this.answer('EHLO', this.options.ehlo ?? '250-fake\r\n250-AUTH PLAIN LOGIN\r\n250 8BITMIME\r\n', line));
+      this.push(
+        this.answer(
+          'EHLO',
+          this.options.ehlo ?? '250-fake\r\n250-AUTH PLAIN LOGIN\r\n250 8BITMIME\r\n',
+          line,
+        ),
+      );
     } else if (verb === 'STARTTLS') {
       this.push(this.answer('STARTTLS', '220 go ahead\r\n') + (this.options.injectAfterStarttls ?? ''));
     } else if (verb === 'MAIL' || verb === 'RCPT' || verb === 'HELO') {
@@ -158,7 +164,9 @@ export default async () => {
     });
     await it('handles an empty message and leaves non-ASCII bytes alone', async () => {
       expect(text(prepareData(new Uint8Array(0)))).toBe('.\r\n');
-      expect(Array.from(prepareData(Uint8Array.from([0xc3, 0xa4])))).toStrictEqual([0xc3, 0xa4, 13, 10, 46, 13, 10]);
+      expect(Array.from(prepareData(Uint8Array.from([0xc3, 0xa4])))).toStrictEqual([
+        0xc3, 0xa4, 13, 10, 46, 13, 10,
+      ]);
     });
   });
 
@@ -167,7 +175,12 @@ export default async () => {
 
     await it('sends over implicit TLS: EHLO, AUTH PLAIN, envelope, DATA, QUIT', async () => {
       const server = new FakeServer();
-      const result = await sendOverWire(accountOf({ security: 'tls', port: 465 }), ENVELOPE, RAW, opener(server));
+      const result = await sendOverWire(
+        accountOf({ security: 'tls', port: 465 }),
+        ENVELOPE,
+        RAW,
+        opener(server),
+      );
       expect(server.commands).toStrictEqual([
         'EHLO localhost',
         `AUTH PLAIN ${b64(`\u0000user@example.invalid\u0000${PASSWORD}`)}`,
@@ -220,7 +233,10 @@ export default async () => {
     });
 
     await it('refused STARTTLS (454) is a tls error with the reply code', async () => {
-      const server = new FakeServer({ ehlo: STARTTLS_EHLO, replies: { STARTTLS: '454 TLS not available\r\n' } });
+      const server = new FakeServer({
+        ehlo: STARTTLS_EHLO,
+        replies: { STARTTLS: '454 TLS not available\r\n' },
+      });
       const err = await failure(() => verifyOverWire(accountOf(), opener(server)));
       expect(err.code).toBe('tls');
       expect(err.responseCode).toBe(454);
@@ -244,7 +260,9 @@ export default async () => {
     });
 
     await it('falls back to HELO when EHLO is not understood', async () => {
-      const server = new FakeServer({ replies: { EHLO: '502 5.5.1 unrecognised\r\n', HELO: '250 hello\r\n' } });
+      const server = new FakeServer({
+        replies: { EHLO: '502 5.5.1 unrecognised\r\n', HELO: '250 hello\r\n' },
+      });
       const err = await failure(() => verifyOverWire(accountOf({ security: 'tls' }), opener(server)));
       expect(server.commands.slice(0, 2)).toStrictEqual(['EHLO localhost', 'HELO localhost']);
       expect(err.code).toBe('auth'); // HELO carries no AUTH capability
@@ -259,7 +277,11 @@ export default async () => {
         },
       });
       await verifyOverWire(accountOf({ security: 'tls' }), opener(server));
-      expect(server.commands.slice(1, 4)).toStrictEqual(['AUTH LOGIN', b64('user@example.invalid'), b64(PASSWORD)]);
+      expect(server.commands.slice(1, 4)).toStrictEqual([
+        'AUTH LOGIN',
+        b64('user@example.invalid'),
+        b64(PASSWORD),
+      ]);
     });
 
     await it('uses XOAUTH2 for a token and answers the error challenge', async () => {
@@ -268,7 +290,10 @@ export default async () => {
         replies: { AUTH: '334 eyJzdGF0dXMiOiI0MDAifQ==\r\n', STEP: '535 5.7.8 bad token\r\n' },
       });
       const err = await failure(() =>
-        verifyOverWire(accountOf({ security: 'tls', auth: { kind: 'oauth2', accessToken: TOKEN } }), opener(server)),
+        verifyOverWire(
+          accountOf({ security: 'tls', auth: { kind: 'oauth2', accessToken: TOKEN } }),
+          opener(server),
+        ),
       );
       expect(err.code).toBe('auth');
       expect(err.responseCode).toBe(535);
@@ -293,7 +318,9 @@ export default async () => {
     });
 
     await it('reads a multi-line reply and parses capabilities case-insensitively', async () => {
-      const server = new FakeServer({ ehlo: '250-fake\r\n250-auth plain\r\n250-SIZE 100\r\n250 ENHANCEDSTATUSCODES\r\n' });
+      const server = new FakeServer({
+        ehlo: '250-fake\r\n250-auth plain\r\n250-SIZE 100\r\n250 ENHANCEDSTATUSCODES\r\n',
+      });
       await verifyOverWire(accountOf({ security: 'tls' }), opener(server));
       expect(server.commands[1].startsWith('AUTH PLAIN')).toBe(true);
     });
@@ -320,7 +347,8 @@ export default async () => {
     await it('a connection that ends mid-dialogue is a connect error', async () => {
       const server = new FakeServer();
       const dying = {
-        read: (max: number) => (server.commands.length >= 1 ? Promise.resolve(new Uint8Array(0)) : server.read(max)),
+        read: (max: number) =>
+          server.commands.length >= 1 ? Promise.resolve(new Uint8Array(0)) : server.read(max),
         write: (b: Uint8Array) => server.write(b),
         close: () => server.close(),
         upgradeTls: () => server.upgradeTls(),
@@ -365,7 +393,9 @@ export default async () => {
 
     await it('all recipients refused is rejected, and DATA is never sent', async () => {
       const server = new FakeServer({ replies: { RCPT: '550 5.1.1 no such user\r\n' } });
-      const err = await failure(() => sendOverWire(accountOf({ security: 'tls' }), ENVELOPE, RAW, opener(server)));
+      const err = await failure(() =>
+        sendOverWire(accountOf({ security: 'tls' }), ENVELOPE, RAW, opener(server)),
+      );
       expect(err.code).toBe('rejected');
       expect(err.responseCode).toBe(550);
       expect(server.commands.includes('DATA')).toBe(false);
@@ -394,14 +424,18 @@ export default async () => {
 
     await it('a refused message after DATA is rejected with the reply code', async () => {
       const server = new FakeServer({ replies: { '.DONE': '554 5.7.1 spam\r\n' } });
-      const err = await failure(() => sendOverWire(accountOf({ security: 'tls' }), ENVELOPE, RAW, opener(server)));
+      const err = await failure(() =>
+        sendOverWire(accountOf({ security: 'tls' }), ENVELOPE, RAW, opener(server)),
+      );
       expect(err.code).toBe('rejected');
       expect(err.responseCode).toBe(554);
     });
 
     await it('a refused DATA command is rejected', async () => {
       const server = new FakeServer({ replies: { DATA: '503 5.5.1 bad sequence\r\n' } });
-      const err = await failure(() => sendOverWire(accountOf({ security: 'tls' }), ENVELOPE, RAW, opener(server)));
+      const err = await failure(() =>
+        sendOverWire(accountOf({ security: 'tls' }), ENVELOPE, RAW, opener(server)),
+      );
       expect(err.code).toBe('rejected');
     });
 
