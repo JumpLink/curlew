@@ -85,7 +85,8 @@ import { createReadSyncScheduler } from './read-sync-scheduler.ts';
 import { deltaChatEnabled } from '../core/actions/accounts.ts';
 import { editMessage } from '../core/actions/edit.ts';
 import { deleteMessage } from '../core/actions/delete.ts';
-import { configPath, indexDbPath } from '@curlew/store';
+import { configPath, indexDbPath, openIndexDb, setChatMuted } from '@curlew/store';
+import { setConversationMute } from '../core/actions/mute.ts';
 import { pollFiles, watchFiles } from './watch.ts';
 
 const COLLAPSE_AT = 'max-width: 720sp';
@@ -447,6 +448,33 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
     },
     (line) => console.warn(line),
   );
+  // The flag is written locally first (what the list shows), then pushed where the network keeps one.
+  const muteConversation = async (
+    e: ListEntry,
+    mute: { muted: boolean; until: string | null },
+  ): Promise<void> => {
+    const db = openIndexDb(indexDbPath(), { busyTimeoutMs: 300 });
+    try {
+      for (const id of e.conversationIds) {
+        if (e.target === null) {
+          setChatMuted(db, id, { muted: mute.muted, until: mute.until });
+          continue;
+        }
+        await setConversationMute({
+          db,
+          conversationId: id,
+          accountId: e.accountId,
+          to: e.target,
+          mute,
+          frontend: 'window',
+        });
+      }
+    } catch {
+      // A busy index must not break the list; the flag is local either way.
+    } finally {
+      db.close();
+    }
+  };
   const scheduleReadSync = (picked: readonly ListEntry[]): void => {
     if (loadConfig().ui.syncReadState === false) return;
     for (const e of picked.flatMap((p) => (p.members.length > 0 ? p.members : [p]))) {
@@ -535,6 +563,11 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
       if (!read && currentEntry && picked.some((e) => e.id === currentEntry?.id))
         keptUnread = currentEntry.id;
       refresh();
+    },
+    setMute: (picked, mute) => {
+      for (const e of picked.flatMap((p) => (p.members.length > 0 ? p.members : [p]))) {
+        void muteConversation(e, mute).then(refresh);
+      }
     },
     review: () => review(),
     compose: () => startConversation(),

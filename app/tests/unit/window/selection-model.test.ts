@@ -1,5 +1,11 @@
 import { describe, expect, it } from '@gjsify/unit';
 
+import {
+  muteTooltip,
+  muteUntil,
+  muteView,
+  unreadLabel,
+} from '../../../src/window/conversation-list-model.ts';
 import type { ListEntry } from '../../../src/window/conversation-list-model.ts';
 import {
   mergeSummary,
@@ -85,6 +91,33 @@ export default async () => {
       expect([...picked]).toStrictEqual(['b']);
       prunePicks(picked, [entry({ id: 'c' })]);
       expect(picked.size).toBe(0);
+    });
+
+    it('mutes a merged contact on every network and says where it is only partly muted', () => {
+      const signal = entry({ id: 's', backend: 'signal', accountId: 'signal-1', muted: true });
+      const telegram = entry({ id: 't', backend: 'telegram', accountId: 'telegram-1' });
+      const merged = entry({ id: 'm', members: [signal, telegram], unread: 2 });
+      expect(muteView(merged).all).toBe(false);
+      expect(muteView(merged).on.join()).toBe('Signal');
+      expect(muteTooltip(merged)).toBe('Muted on Signal');
+      expect(selectionTools([merged]).allMuted).toBe(false);
+      const both = entry({ id: 'm', members: [signal, { ...telegram, muted: true }], unread: 2 });
+      expect(muteView(both).all).toBe(true);
+      expect(muteTooltip(both)).toBe('Muted');
+      expect(selectionTools([both, signal]).allMuted).toBe(true);
+      expect(selectionTools([both, telegram]).allMuted).toBe(false);
+      expect(selectionTools([]).allMuted).toBe(false);
+      expect(muteTooltip(telegram)).toBe(null);
+      expect(unreadLabel({ ...both, unread: 3 })).toBe('3 unread messages, Muted');
+      expect(unreadLabel({ ...telegram, unread: 1 })).toBe('1 unread message');
+    });
+
+    it('turns a mute choice into an absolute end', () => {
+      const now = new Date('2026-11-01T00:00:00.000Z');
+      expect(muteUntil('hour', now)).toBe('2026-11-01T01:00:00.000Z');
+      expect(muteUntil('day', now)).toBe('2026-11-02T00:00:00.000Z');
+      expect(muteUntil('week', now)).toBe('2026-11-08T00:00:00.000Z');
+      expect(muteUntil('always', now)).toBe(null);
     });
   });
 };
