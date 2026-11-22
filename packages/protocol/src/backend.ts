@@ -346,6 +346,8 @@ export interface ChatInfo {
    * network without an expiry (Matrix): only `muted` is then compared.
    */
   mute?: { muted: boolean; until?: string | null };
+  /** The network's own pin of this chat (ADR 0020), for a backend whose manifest says `pins`. Absent = it did not say. */
+  pin?: boolean;
 }
 
 /** The room facts a window shows next to a composer; null = unknown. */
@@ -669,6 +671,8 @@ export type DeliveryEvent =
   | { type: 'chat-read'; chatRemoteId: string; unreadCount: number }
   /** The network reports the chat's mute (ADR 0020); `until` as in `ChatInfo.mute`. */
   | { type: 'chat-mute'; chatRemoteId: string; mute: NonNullable<ChatInfo['mute']> }
+  /** The network reports the chat's pin (ADR 0020). */
+  | { type: 'chat-pin'; chatRemoteId: string; pinned: boolean }
   /**
    * Two chat ids turned out to be one chat (a network that addresses a person two ways, and
    * told which ids belong together only later): everything stored under `from` moves to
@@ -1056,6 +1060,19 @@ export interface SendingReadSync {
  * out is not touched. `until` is an absolute ISO instant, `null` = until the person unmutes; a
  * network with no expiry gets the mute and the daemon lifts it itself.
  */
+/**
+ * The network keeps no more pins: the star stays in curlew and is not pushed (ADR 0020 §6).
+ * `limit` is the network's own number when it said one.
+ */
+export class ChatPinLimitError extends Error {
+  readonly limit: number | null;
+  constructor(limit: number | null) {
+    super('the network has no free pin left');
+    this.name = 'ChatPinLimitError';
+    this.limit = limit;
+  }
+}
+
 export interface SendingChatFlags {
   to: string;
   mute?: { muted: boolean; until: string | null };

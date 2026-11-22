@@ -47,7 +47,7 @@ import type { IndexDatabase } from './db.ts';
 import { fillSearchKeys } from './search-key-fill.ts';
 import { backfillAttachments } from './chat-backfill.ts';
 import { appendChanges } from './changes.ts';
-import { applyRemoteMute } from './chat-flags.ts';
+import { applyRemoteFavourite, applyRemoteMute } from './chat-flags.ts';
 import { applyLocalRead } from './local-read.ts';
 import { conversationTotalsSql } from './conversation-totals.ts';
 import { insertMany, placeholders, runIn, seqColumn, type SqlValue, withTransaction } from './db.ts';
@@ -259,6 +259,9 @@ class ChatBatch {
 
   /** The mutes the network reported, applied after the batch is written (the rows must exist). */
   readonly remoteMutes: Array<[string, NonNullable<ChatInfo['mute']>]> = [];
+
+  /** The pins the network reported, applied the same way. */
+  readonly remotePins: Array<[string, boolean]> = [];
 
   readonly backend: string;
   readonly accountId: string;
@@ -841,6 +844,7 @@ async function syncAccount(
       ]);
       for (const member of chat.members) batch.member(conversationId, member);
       if (chat.mute) batch.remoteMutes.push([conversationId, chat.mute]);
+      if (chat.pin !== undefined) batch.remotePins.push([conversationId, chat.pin]);
       for (const m of fetched) {
         if (!m.fromSelf && m.sender) batch.member(conversationId, m.sender);
         const row = messageRow(batch, conversationId, chat, m);
@@ -908,6 +912,15 @@ async function syncAccount(
       try {
         const outcome = applyRemoteMute(db, conversationId, mute, { apply: options.applyChatFlags });
         if (outcome?.resolution === 'retry') (result.flagRetries ??= []).push(conversationId);
+      } catch (err) {
+        recordChatError(result, err);
+      }
+    }
+    for (const [conversationId, pinned] of batch.remotePins) {
+      try {
+        const outcome = applyRemoteFavourite(db, conversationId, pinned, { apply: options.applyChatFlags });
+        if (outcome?.resolution === 'retry' && !(result.flagRetries ?? []).includes(conversationId))
+          (result.flagRetries ??= []).push(conversationId);
       } catch (err) {
         recordChatError(result, err);
       }
