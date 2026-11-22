@@ -89,6 +89,8 @@ import matrixSelfRoom from './unit/matrix/self-room.test.ts';
 import matrixAvatars from './unit/matrix/avatars.test.ts';
 import smtpMessage from './unit/smtp/message.test.ts';
 import smtpSend from './unit/smtp/send.test.ts';
+import smtpWire from './unit/smtp/wire.test.ts';
+import smtpWireNode from './unit/smtp/wire-node.test.ts';
 import mailSend from './unit/mail/send.test.ts';
 import mailImapClient from './unit/mail/imap-client.test.ts';
 import mailMessages from './unit/mail/messages.test.ts';
@@ -275,6 +277,8 @@ run({
   matrixAvatars,
   smtpMessage,
   smtpSend,
+  smtpWire,
+  smtpWireNode,
   mailSend,
   mailImapClient,
   mailMessages,

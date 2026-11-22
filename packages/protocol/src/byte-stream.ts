@@ -25,6 +25,34 @@ export interface ByteStream {
 /** Opens the encrypted connection to a target's IMAP server, or rejects naming why not. */
 export type MailStreamOpener = (target: MailTarget) => Promise<ByteStream>;
 
+/**
+ * Where a non-IMAP mail connection goes (SMTP, ADR 0018 amendment). `tls: 'implicit'` is TLS
+ * from the first byte; `'none'` is a plain socket the caller upgrades with STARTTLS, or keeps
+ * plain on loopback. `ca` is an extra trust anchor (PEM) for stacks that can take one; a stack
+ * that cannot rejects the open instead of ignoring it.
+ */
+export interface MailEndpoint {
+  host: string;
+  port: number;
+  tls: 'implicit' | 'none';
+  ca?: string;
+}
+
+/** A stream that can switch to TLS in place: the STARTTLS half of the port. */
+export interface UpgradableByteStream extends ByteStream {
+  /**
+   * Run the TLS handshake on the open connection, verified against the host it was opened for.
+   * Afterwards `read` and `write` carry the encrypted session. The caller has consumed
+   * everything the peer sent before (the reply to STARTTLS): unread plaintext rejects the
+   * upgrade. Rejects if the stream is already encrypted or the handshake fails (certificate
+   * included); the stream is unusable then and must be closed.
+   */
+  upgradeTls(): Promise<void>;
+}
+
+/** Opens a connection to an endpoint, encrypted from the start or upgradable later. */
+export type MailEndpointOpener = (endpoint: MailEndpoint) => Promise<UpgradableByteStream>;
+
 export const READ_CHUNK = 8192;
 
 /** Incremental latin1 line/byte reader over a byte stream. */
@@ -36,6 +64,11 @@ export class ByteReader {
 
   constructor(stream: Pick<ByteStream, 'read'>) {
     this.stream = stream;
+  }
+
+  /** Bytes read from the stream but not consumed yet. Must be 0 before a STARTTLS upgrade. */
+  get buffered(): number {
+    return this.buf.length;
   }
 
   private async fill(): Promise<boolean> {

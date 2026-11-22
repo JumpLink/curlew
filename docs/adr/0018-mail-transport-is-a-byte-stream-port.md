@@ -136,6 +136,35 @@ entry import it from `@curlew/imap/send`.
    a test CA, then against a public IMAP greeting. Record handshake time and APK size per ABI.
 4. STARTTLS stays rejected. Not part of this step.
 
+## Amendment (2026-11-23): SMTP rides the same port
+
+nodemailer's SMTP transport needs `node:net` and `node:tls`, which are `none` for NativeScript.
+Only the wire protocol has to be ours; MIME composition stays with nodemailer's `MailComposer`,
+which yields the RFC 5322 bytes.
+
+- **`@curlew/smtp/wire`** speaks SMTP over a `ByteStream`: EHLO with HELO fallback, capability
+  parsing, STARTTLS then EHLO again, AUTH PLAIN, LOGIN and XOAUTH2, the envelope with partial
+  recipient refusals, DATA with dot-stuffing and CRLF normalisation, timeouts, QUIT. Errors map to
+  the existing `SmtpError` codes. Nothing is logged and server text is scrubbed of the account's
+  secrets. The entry imports no nodemailer.
+- **STARTTLS needs a TLS upgrade on an open stream**, so the port grows (IMAP is unchanged):
+
+  ```ts
+  interface UpgradableByteStream extends ByteStream {
+    upgradeTls(): Promise<void>; // handshake in place, verified against the opened host
+  }
+  type MailEndpointOpener = (e: { host; port; tls: 'implicit' | 'none'; ca? }) => Promise<UpgradableByteStream>;
+  ```
+
+  `upgradeTls` rejects when plaintext is still unread (STARTTLS injection), when the stream is
+  already encrypted, or when the handshake fails; the stream is dead then. `ca` is a trust anchor
+  for stacks that take one; the Gio opener rejects it rather than ignore it.
+- Implemented in `transport.node.ts` (`tls.connect({ socket })`) and `transport.gjs.ts`
+  (`Gio.TlsClientConnection.new` + `handshake_async`). The Gio path is not run on a device yet.
+- `sendMessage` and `verifyAccount` take an optional `WireTransport`. Without it the nodemailer
+  path runs as before, so desktop behaviour is unchanged. Android wiring waits for the gjsify fix
+  that lets the composer be bundled.
+
 ## Alternatives considered
 
 - **A `node:net`/`node:tls` slot for NativeScript in gjsify, and the client on top of it.** Larger
