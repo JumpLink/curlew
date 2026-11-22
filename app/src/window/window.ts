@@ -118,6 +118,8 @@ export interface WindowOptions {
   protocol?: string;
   /** Open the search with this text (the screenshot hook `CURLEW_WINDOW_SEARCH`). */
   search?: string;
+  /** Start the selection mode with this many conversations picked (`CURLEW_WINDOW_SELECT`). */
+  select?: number;
   /** Also open the search scope menu (`CURLEW_WINDOW_OPEN_SCOPE`). */
   openScope?: boolean;
   /** Open this conversation at start (the screenshot hook `CURLEW_WINDOW_OPEN`). */
@@ -758,6 +760,12 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
       sidebar.showSearch(options.search!, options.openScope === true);
       return GLib.SOURCE_REMOVE;
     });
+  if (options.select)
+    GLib.timeout_add(
+      GLib.PRIORITY_DEFAULT,
+      800,
+      () => (sidebar.pickFirst(options.select!), GLib.SOURCE_REMOVE),
+    );
   // A notification, or the screenshot hook, names a chat by its conversation id or its row id.
   const openConversation = (id: string): void => {
     const match = (e: ListEntry) => e.id === id || e.conversationIds.includes(id);

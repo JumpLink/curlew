@@ -73,6 +73,7 @@ const application = new AdwaitaApp({
       protocol: process.env.CURLEW_WINDOW_FILTER || undefined,
       open: process.env.CURLEW_WINDOW_OPEN || undefined,
       search: process.env.CURLEW_WINDOW_SEARCH || undefined,
+      select: Number(process.env.CURLEW_WINDOW_SELECT) || undefined,
       openScope: process.env.CURLEW_WINDOW_OPEN_SCOPE === '1',
     });
     // The line CI waits for: the packaged macOS and Windows window got as far as being drawn.

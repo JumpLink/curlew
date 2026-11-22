@@ -2,7 +2,7 @@
 #
 # dev/screenshots.sh -- render the listing screenshots on the demo data: EN/DE x light/dark, window alone.
 #
-#   dev/screenshots.sh [--build] [--only <motif>] [--lang en|de] [--scheme light|dark] [--check]
+#   dev/screenshots.sh [--build] [--only <motif>] [--lang en|de] [--scheme light|dark] [--check] [--accent <name>]
 #
 # Needs a built window bundle (`gjsify workspace curlew-cli build`, or pass --build). Runs
 # `CURLEW_DEMO=1` (app/src/core/demo/) on scratch copies in a temp dir, never ~/.config/curlew or the
@@ -27,6 +27,8 @@ MOTIFS=(
   "conversation|900x640|demo|CURLEW_WINDOW_OPEN=c2"
   "conversation-narrow|360x740|demo|CURLEW_WINDOW_OPEN=c1"
   "conversations-narrow|360x740|demo|"
+  "select-narrow|360x740|demo|CURLEW_WINDOW_SELECT=2"
+  "search-narrow|360x740|demo|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_SEARCH=the"
   "contact|968x668|demo|CURLEW_WINDOW_OPEN=c1 CURLEW_WINDOW_OPEN_CONTACT=1"
   "group|968x668|demo|CURLEW_WINDOW_OPEN=c4 CURLEW_WINDOW_OPEN_CONTACT=1"
   "preferences|968x668|demo|CURLEW_WINDOW_OPEN_PREFERENCES=1"
@@ -47,11 +49,12 @@ MOTIFS=(
   "account-paused|900x640|paused|CURLEW_WINDOW_OPEN_ACCOUNT=whatsapp/whatsapp-demo1"
 )
 
-BUILD=0 CHECK=0 ONLY="" LANGS=(en de) SCHEMES=(light dark)
+BUILD=0 CHECK=0 ACCENT="" ONLY="" LANGS=(en de) SCHEMES=(light dark)
 while [ $# -gt 0 ]; do
   case "$1" in
     --build) BUILD=1 ;;
     --check) CHECK=1 ;;
+    --accent) ACCENT="${2:?}"; OUT="/tmp/curlew-shots-$ACCENT"; shift ;;
     --only) ONLY="${2:?}"; shift ;;
     --lang) LANGS=("${2:?}"); shift ;;
     --scheme) SCHEMES=("${2:?}"); shift ;;
@@ -94,6 +97,9 @@ for l in "${LANGS[@]}"; do
   cp -a "$W/demo/." "$W/paused/"
   jq '.disabledAccounts = ["whatsapp/whatsapp-demo1"]' "$W/demo/config.json" >"$W/paused/config.json"
   echo '{"ui":{"welcomeDone":true}}' >"$W/empty/config.json"
+  if [ -n "$ACCENT" ]; then
+    for c in "$W"/*/config.json; do jq --arg a "$ACCENT" '.ui.accentColor = $a' "$c" >"$c.new" && mv "$c.new" "$c"; done
+  fi
 done
 
 # One headless session for the whole run: the jobs go to dev/screenshots-session.sh, which waits for

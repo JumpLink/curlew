@@ -71,6 +71,8 @@ export interface ConversationList {
   chooseProtocol(backend: string): void;
   /** Open the search with this text and optionally the scope menu (the screenshot hook). */
   showSearch(text: string, openScope: boolean): void;
+  /** Start the selection mode with the first `count` conversations picked (the screenshot hook `CURLEW_WINDOW_SELECT`). */
+  pickFirst(count: number): void;
 }
 
 type RowRef = { kind: 'section'; id: string } | { kind: 'entry'; entry: ListEntry };
@@ -690,6 +692,10 @@ export function createConversationList(
       searchToggle.set_active(true);
       search.set_text(text);
       if (openScope) scopeButton.popup();
+    },
+    pickFirst(count) {
+      setPicking(true);
+      for (const entry of entries.slice(0, count)) if (!picked.has(entry.id)) pick(entry);
     },
     chooseProtocol(backend) {
       if (!entries.some((e) => e.backend === backend)) return;
