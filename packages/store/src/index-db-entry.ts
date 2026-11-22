@@ -5,6 +5,7 @@
  * only needs to prove the SQLite layer (the Android probe) imports this.
  */
 
-export { openIndexDb, probeFts5 } from './db.ts';
+export { openIndexDb, probeFts5, type IndexDatabase } from './db.ts';
+export { storePaths, type StoreDirs, type StorePaths } from './paths.ts';
 export { migrate } from './schema.ts';
 export { upsertAccount, upsertFolder, upsertMessages, searchIndex } from './index-store.ts';
