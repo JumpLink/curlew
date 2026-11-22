@@ -16,6 +16,7 @@ import {
   deliveredMessageId,
   getConversation,
   listConversations,
+  loadChatFlags,
   loadAttachmentHandle,
   loadAttachments,
   migrate,
@@ -356,6 +357,34 @@ export default async () => {
         );
         shown = getConversation(db, conv('d-anna'));
         expect(shown?.conversation.unreadCount).toBe(0);
+      } finally {
+        db.close();
+      }
+    });
+
+    await it('applies the mute a network reports, or only mirrors it when applying is off', async () => {
+      const db = freshDb();
+      try {
+        const muted = {
+          type: 'chat-mute' as const,
+          chatRemoteId: 'd-anna',
+          mute: { muted: true, until: null },
+        };
+        await receiveDeliveries(db, fakeBackend([[incoming('d-anna', msg('d-anna/1', 1, 'a')), muted]]), {
+          applyChatFlags: false,
+        });
+        let flags = loadChatFlags(db, conv('d-anna'));
+        expect(flags?.muted).toBe(false);
+        expect(flags?.remoteMuted).toBe(true);
+        await receiveDeliveries(db, fakeBackend([[muted]]));
+        flags = loadChatFlags(db, conv('d-anna'));
+        expect(flags?.muted).toBe(true);
+        expect(flags?.mutedUntil).toBe(null);
+        await receiveDeliveries(
+          db,
+          fakeBackend([[{ type: 'chat-mute', chatRemoteId: 'd-anna', mute: { muted: false, until: null } }]]),
+        );
+        expect(loadChatFlags(db, conv('d-anna'))?.muted).toBe(false);
       } finally {
         db.close();
       }

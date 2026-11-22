@@ -26,6 +26,7 @@ import {
   FileJournal,
   journalPath,
   JidResolver,
+  muteOf,
   ownAddressOf,
   parseJid,
   parsePairingPhone,
@@ -323,6 +324,20 @@ export default async () => {
       expect(mapper.chat({ id: ANNA_LID, unreadCount: 0 }, false).some((e) => e.type === 'chat-read')).toBe(
         true,
       );
+    });
+
+    await it('reads the chat mute from muteEndTime: with an end, without one, or not at all', async () => {
+      const now = Date.parse('2026-11-01T00:00:00Z');
+      expect(muteOf(-1, now).until).toBe(null);
+      expect(muteOf(-1, now).muted).toBe(true);
+      expect(muteOf(Date.parse('2026-12-01T00:00:00Z'), now).until).toBe('2026-12-01T00:00:00.000Z');
+      for (const none of [0, null, undefined, now - 1]) expect(muteOf(none, now).muted).toBe(false);
+      const mapper = new WhatsAppMapper();
+      const mute = (end?: number | null) =>
+        mapper.chat({ id: ANNA_LID, muteEndTime: end }, false).find((e) => e.type === 'chat-mute');
+      expect(mute() === undefined).toBe(true);
+      expect(mute(-1)?.type).toBe('chat-mute');
+      expect(mute(0) !== undefined).toBe(true);
     });
 
     await it('maps "delete for me" and "clear chat" from another device', async () => {

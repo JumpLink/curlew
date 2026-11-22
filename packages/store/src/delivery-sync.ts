@@ -31,6 +31,7 @@ import type {
   ParticipantAddress,
 } from '@curlew/protocol';
 import { appendChanges, appendChangesTransaction } from './changes.ts';
+import { applyRemoteMute } from './chat-flags.ts';
 import { chatConversationId, classifyChatMessage, LOCAL_ECHO_PREFIX } from './chat-sync.ts';
 import { adoptEchoAttachments } from './echo-attachments.ts';
 import { conversationTotalsSql } from './conversation-totals.ts';
@@ -82,6 +83,8 @@ export interface DeliverySyncOptions {
   sleep?: (ms: number) => Promise<void>;
   /** Every state change, for a log line. Never carries content — only names, counts and timings. */
   onProgress?: (event: DeliveryProgress) => void;
+  /** Apply the mute a network reports to the local flag (`ui.syncChatFlags`). Default true. */
+  applyChatFlags?: boolean;
   /**
    * The live session of one account, handed over as soon as it is connected and withdrawn with
    * `null` when it is gone — a reconnect is a `null` and then the new one. For a caller that must
@@ -679,6 +682,7 @@ function writeEvents(
   state: AccountState,
   events: readonly DeliveryEvent[],
   syncedAt: string,
+  applyChatFlags = true,
 ): { added: number; edited: number; removed: number } {
   const totals = { added: 0, edited: 0, removed: 0 };
   withTransaction(db, () => {
@@ -702,6 +706,17 @@ function writeEvents(
     flush();
     fillSearchKeys(db);
   });
+  // After the write: the conversation rows must exist, and the flag is its own transaction.
+  // The last report per chat wins; `ui.syncChatFlags` off still fills the `remote_*` mirror.
+  const mutes = new Map<string, Extract<DeliveryEvent, { type: 'chat-mute' }>['mute']>();
+  for (const event of events) if (event.type === 'chat-mute') mutes.set(event.chatRemoteId, event.mute);
+  for (const [chatRemoteId, mute] of mutes) {
+    try {
+      applyRemoteMute(db, chatConversationId(backend, accountId, chatRemoteId), mute, { apply: applyChatFlags });
+    } catch {
+      // A flag that did not land is reported again with the next chat update; the batch is written.
+    }
+  }
   return totals;
 }
 
@@ -777,6 +792,7 @@ async function runSession(
   signal: AbortSignal | undefined,
   onProgress: ((event: DeliveryProgress) => void) | undefined,
   onSession: DeliverySyncOptions['onSession'],
+  applyChatFlags: boolean,
   result: DeliveryAccountSyncResult,
   /** Why the last session ended, in a form that can be logged. Read after the call. */
   note: { reason: string | null },
@@ -829,7 +845,7 @@ async function runSession(
       if (events.length === 0) continue;
       // A failed write stops the account: asking for more would acknowledge messages that
       // then exist nowhere (and the session keeps the batch in its journal for the next run).
-      const written = writeEvents(db, name, account.id, state, events, now().toISOString());
+      const written = writeEvents(db, name, account.id, state, events, now().toISOString(), applyChatFlags);
       result.batches++;
       result.added += written.added;
       result.edited += written.edited;
@@ -1034,6 +1050,7 @@ async function receiveAccount(
           stop.signal,
           onProgress,
           options.onSession,
+          options.applyChatFlags !== false,
           result,
           note,
         );

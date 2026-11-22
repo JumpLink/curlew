@@ -263,6 +263,9 @@ export class DeliveryBatch {
         if (this.state.chats.has(event.chatRemoteId)) this.touchedChats.add(event.chatRemoteId);
         return;
       }
+      case 'chat-mute':
+        // Applied by `writeEvents` after the batch is written: the flag has its own transaction.
+        return;
       case 'chat-merged':
         // Handled by `writeEvents`, which splits the batch around it.
         return;

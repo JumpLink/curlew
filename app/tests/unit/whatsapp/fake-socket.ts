@@ -199,6 +199,13 @@ export class FakeSendSocket extends FakeEvents implements WaSendSocketHandle {
     this.marked.push({ jid, id, ...(participant ? { participant } : {}) });
   }
 
+  /** Every `setMute`, in order. */
+  readonly mutes: Array<{ jid: string; untilMs: number }> = [];
+
+  async setMute(jid: string, untilMs: number): Promise<void> {
+    this.mutes.push({ jid, untilMs });
+  }
+
   async deleteMessage(jid: string, id: string): Promise<WaSentMessage> {
     this.deleted.push({ jid, id });
     return { key: { remoteJid: jid, fromMe: true, id } };
@@ -332,6 +339,7 @@ export class FakeConnection implements WaConnection {
       editMessage: (jid, id, text) => send.editMessage(jid, id, text),
       deleteMessage: (jid, id) => send.deleteMessage(jid, id),
       markRead: (jid, id, participant) => send.markRead(jid, id, participant),
+      setMute: (jid, untilMs) => send.setMute(jid, untilMs),
       end: () => {
         this.sendViewEnds++;
       },

@@ -667,6 +667,8 @@ export type DeliveryEvent =
   | { type: 'chat'; chat: DeliveryChat }
   /** The user read the chat on another device: all but the newest `unreadCount` incoming messages are read. */
   | { type: 'chat-read'; chatRemoteId: string; unreadCount: number }
+  /** The network reports the chat's mute (ADR 0020); `until` as in `ChatInfo.mute`. */
+  | { type: 'chat-mute'; chatRemoteId: string; mute: NonNullable<ChatInfo['mute']> }
   /**
    * Two chat ids turned out to be one chat (a network that addresses a person two ways, and
    * told which ids belong together only later): everything stored under `from` moves to
