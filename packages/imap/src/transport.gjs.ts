@@ -30,20 +30,23 @@ class GioByteStream implements UpgradableByteStream {
   private encrypted: boolean;
   private readonly host: string;
   private readonly port: number;
+  private readonly ca: string | undefined;
 
-  constructor(conn: Gio.IOStream, encrypted: boolean, host = '', port = 0) {
+  constructor(conn: Gio.IOStream, encrypted: boolean, host = '', port = 0, ca?: string) {
     this.conn = conn;
     this.input = conn.get_input_stream();
     this.output = conn.get_output_stream();
     this.encrypted = encrypted;
     this.host = host;
     this.port = port;
+    this.ca = ca;
   }
 
   /** STARTTLS: wrap the open connection in a client TLS connection and handshake, in place. */
   async upgradeTls(): Promise<void> {
     if (this.encrypted) throw new GnomeError('stream is already encrypted');
     const secure = Gio.TlsClientConnection.new(this.conn, Gio.NetworkAddress.new(this.host, this.port));
+    if (this.ca !== undefined) secure.set_database(trustAnchor(this.ca));
     await secure.handshake_async(GLib.PRIORITY_DEFAULT, null);
     this.conn = secure;
     this.input = secure.get_input_stream();
@@ -81,11 +84,43 @@ export async function openTlsStream(target: MailTarget): Promise<ByteStream> {
   return new GioByteStream(await socketClient.connect_to_host_async(target.host, target.port, null), true);
 }
 
-/** Open a connection to an endpoint: TLS from the first byte, or plain and upgradable (SMTP). */
+/**
+ * A trust database holding only the PEM in `ca`: the connection trusts that anchor and nothing
+ * else, as `tls.ca` does on Node. Gio reads a file database from a path, so the PEM goes to a
+ * private temp file that is deleted again once the database has read it.
+ */
+function trustAnchor(ca: string): Gio.TlsDatabase {
+  const [fd, path] = GLib.file_open_tmp('curlew-ca-XXXXXX.pem');
+  try {
+    GLib.file_set_contents(path, new TextEncoder().encode(ca));
+    return Gio.TlsFileDatabase.new(path);
+  } finally {
+    GLib.close(fd);
+    GLib.unlink(path);
+  }
+}
+
+/**
+ * Open a connection to an endpoint: TLS from the first byte, or plain and upgradable (SMTP).
+ * With `ca` the TLS handshake is ours (plain connect, then the same upgrade STARTTLS uses), so
+ * the trust anchor can be set on the connection before it runs.
+ */
 export async function openEndpointStream(endpoint: MailEndpoint): Promise<UpgradableByteStream> {
-  if (endpoint.ca) throw new GnomeError('a custom CA is not supported by the Gio transport');
+  const { host, port, ca } = endpoint;
   const socketClient = new Gio.SocketClient();
-  socketClient.set_tls(endpoint.tls === 'implicit');
-  const conn = await socketClient.connect_to_host_async(endpoint.host, endpoint.port, null);
-  return new GioByteStream(conn, endpoint.tls === 'implicit', endpoint.host, endpoint.port);
+  const implicit = endpoint.tls === 'implicit';
+  if (implicit && ca === undefined) {
+    socketClient.set_tls(true);
+    return new GioByteStream(await socketClient.connect_to_host_async(host, port, null), true, host, port);
+  }
+  const stream = new GioByteStream(await socketClient.connect_to_host_async(host, port, null), false, host, port, ca);
+  if (implicit) {
+    try {
+      await stream.upgradeTls();
+    } catch (err) {
+      await stream.close();
+      throw err;
+    }
+  }
+  return stream;
 }

@@ -5,20 +5,14 @@ import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { SmtpError } from './errors.ts';
 import { scrub, secretsOf, SUMMARY } from './scrub.ts';
 import type { SmtpErrorCode } from './errors.ts';
-import { composerOptions, rawMessage, readReceiptSource, resolveMessageId } from './message.ts';
+import { composerOptions, readReceiptSource, resolveMessageId } from './message.ts';
 import type { OutgoingMessage, SendResult, SmtpAccount } from './types.ts';
 import { validateAccount } from './validate.ts';
-import { sendOverWire, verifyOverWire } from './wire.ts';
-import type { WireOptions } from './wire.ts';
-import type { MailEndpointOpener } from '@curlew/protocol';
+import { verifyOverWire } from './wire.ts';
+import { sendMessageOverWire } from './wire-send.ts';
+import type { WireTransport } from './wire-send.ts';
 
-/**
- * Opt-in: speak SMTP ourselves over this opener instead of handing the connection to nodemailer
- * (ADR 0018 amendment). Without it the nodemailer transport runs, as before.
- */
-export interface WireTransport extends WireOptions {
-  open: MailEndpointOpener;
-}
+export type { WireTransport } from './wire-send.ts';
 
 /** A dead server must end as an error, not as a hang. */
 const CONNECTION_TIMEOUT_MS = 15_000;
@@ -113,18 +107,8 @@ export async function sendMessage(
   wire?: WireTransport,
 ): Promise<SendResult> {
   validateAccount(account);
+  if (wire) return sendMessageOverWire(account, message, wire);
   const messageId = resolveMessageId(message);
-  if (wire) {
-    const to = message.mdn === undefined ? [...message.to, ...(message.cc ?? [])] : message.to;
-    const result = await sendOverWire(
-      account,
-      { from: message.from, to },
-      await rawMessage(message, messageId),
-      wire.open,
-      wire,
-    );
-    return { messageId, ...result };
-  }
   const transport = transportFor(account);
   try {
     const info = await transport.sendMail(

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 export interface TlsCredentials {
-  /** Self-signed for localhost and 127.0.0.1: the server's certificate, and what `tls.ca` pins. */
+  /** Self-signed for localhost, 127.0.0.1 and 10.0.2.2 (the host as an Android emulator sees it): the server's certificate, and what `tls.ca` pins. */
   cert: string;
   key: string;
   /** An unrelated self-signed certificate: a `tls.ca` that does not cover the server. */
@@ -45,7 +45,12 @@ export function tlsCredentials(): TlsCredentials {
   if (cached) return cached;
   const dir = mkdtempSync(join(tmpdir(), 'curlew-smtp-tls-'));
   try {
-    const server = generate(dir, 'server', '/CN=localhost', 'subjectAltName=DNS:localhost,IP:127.0.0.1');
+    const server = generate(
+      dir,
+      'server',
+      '/CN=localhost',
+      'subjectAltName=DNS:localhost,IP:127.0.0.1,IP:10.0.2.2',
+    );
     const other = generate(dir, 'other', '/CN=other', 'subjectAltName=DNS:other');
     cached = { ...server, otherCert: other.cert };
   } finally {

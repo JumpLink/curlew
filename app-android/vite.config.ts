@@ -14,6 +14,7 @@ export default defineNativescriptConfig(
         "@curlew/protocol": pkg("protocol/src/index.ts"),
         "@curlew/store/index-db": pkg("store/src/index-db-entry.ts"),
         "@curlew/imap/stream": pkg("imap/src/stream-entry.gjs.ts"),
+        "@curlew/smtp/wire-send": pkg("smtp/src/wire-send-entry.ts"),
       },
     },
   }
