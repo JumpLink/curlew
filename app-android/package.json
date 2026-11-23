@@ -17,6 +17,7 @@
     "@gjsify/gi-runtime-android": "^0.64.54",
     "@gjsify/native-fs-bridge": "^0.64.54",
     "@gjsify/gi-runtime-android-tls": "^0.64.54",
+    "@gjsify/native-secret-store-bridge": "0.64.59",
     "@gjsify/native-sqlite-bridge": "^0.64.54",
     "@gjsify/node-gi": "^0.64.54",
     "@gjsify/path": "^0.64.54",

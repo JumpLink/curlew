@@ -121,6 +121,10 @@
         "ICalGLib-3.0": {
           "deb": "gir1.2-ical-3.0",
           "rpm": "libical-glib"
+        },
+        "Secret-1": {
+          "deb": "gir1.2-secret-1",
+          "rpm": "libsecret"
         }
       },
       "categories": [

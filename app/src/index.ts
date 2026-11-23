@@ -5,6 +5,7 @@ import { hideBin } from 'yargs/helpers';
 import { pickHandover } from './dispatch.ts';
 import { initI18n } from './core/lib/i18n.ts';
 import { VERSION } from './core/version.ts';
+import './core/lib/keyring.gjs.ts';
 
 import {
   accountsCommand,

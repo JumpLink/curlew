@@ -2,6 +2,7 @@ import { describe, expect, it } from '@gjsify/unit';
 
 import { ImapBackend, fetchPart, getMessage, listFolders, listParts, searchMail } from '@curlew/imap';
 import { BufferSink, type MailStreamOpener, type MailTarget } from '@curlew/protocol';
+import { createMemoryDriver, useSecretStoreDriver } from '@gjsify/secret-store';
 
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -153,6 +154,7 @@ export default async () => {
 
   await describe('ImapBackend over an injected opener', async () => {
     await it('connects an own account through the opener, logs in and opens read-only', async () => {
+      useSecretStoreDriver(createMemoryDriver());
       const dir = join(mkdtempSync(join(tmpdir(), 'curlew-mail-')), 'mail');
       try {
         const account: OwnMailAccount = {
@@ -161,7 +163,7 @@ export default async () => {
           smtp: { host: 'smtp.example.org', port: 465, user: 'ada@example.org', security: 'tls' },
           password: 'synthetic-pw',
         };
-        const id = writeOwnAccount(dir, account).id;
+        const id = (await writeOwnAccount(dir, account)).id;
         const { opener, opened, streams } = server(() => undefined);
         const backend = new ImapBackend(opener, { secretsDir: dir });
 
