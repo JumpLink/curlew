@@ -37,6 +37,7 @@ import {
   protocolLabel,
   shortTime,
   muteTooltip,
+  favouriteLabel,
   muteUntil,
   type MuteChoice,
   unreadLabel,
@@ -53,6 +54,8 @@ export interface PeopleTools {
   setRead(entries: ListEntry[], read: boolean): void;
   /** Mute (`until` an instant, or null = until unmuted) or unmute the picked conversations on every network. */
   setMute(entries: ListEntry[], mute: { muted: boolean; until: string | null }): void;
+  /** Star or unstar the picked conversations (every thread of a merged contact). */
+  setFavourite(entries: ListEntry[], favourite: boolean): void;
   /** Open the merge assistant, from the banner. */
   review(): void;
   /** Open the picker for a conversation with someone who has none yet. */
@@ -143,6 +146,14 @@ function entryRow(
   time.add_css_class('dim-label');
   const titleLine = new Gtk.Box({ spacing: 6 });
   titleLine.append(title);
+  const starNote = favouriteLabel(entry);
+  if (starNote !== null) {
+    const star = new Gtk.Image({ iconName: 'starred-symbolic', valign: Gtk.Align.CENTER });
+    star.add_css_class('dim-label');
+    star.set_tooltip_text(starNote);
+    star.update_property([Gtk.AccessibleProperty.LABEL], [starNote]);
+    titleLine.append(star);
+  }
   const muteNote = muteTooltip(entry);
   if (muteNote !== null) {
     const bell = new Gtk.Image({ iconName: 'notifications-disabled-symbolic', valign: Gtk.Align.CENTER });
@@ -594,11 +605,16 @@ export function createConversationList(
   muteButton.set_popover(mutePopover);
   const unmuteButton = toolButton('notifications-symbolic', _('Unmute'), _('Unmute'));
   unmuteButton.set_visible(false);
+  const starButton = toolButton('non-starred-symbolic', _('Favourite'), _('Add to Favourites'));
+  const unstarButton = toolButton('starred-symbolic', _('Unfavourite'), _('Remove from Favourites'));
+  unstarButton.set_visible(false);
   const readButton = toolButton('mail-read-symbolic', _('Read'), _('Mark as Read'));
   const unreadButton = toolButton('mail-unread-symbolic', _('Unread'), _('Mark as Unread'));
   const tools = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, spacing: 6, homogeneous: true });
   tools.append(readButton);
   tools.append(unreadButton);
+  tools.append(starButton);
+  tools.append(unstarButton);
   tools.append(muteButton);
   tools.append(unmuteButton);
   tools.append(unmergeButton);
@@ -613,6 +629,9 @@ export function createConversationList(
     mergeButton.set_sensitive(state.canMerge);
     mergeButton.set_tooltip_text(state.mergeBlock);
     unmergeButton.set_visible(state.canUnmerge);
+    starButton.set_visible(!state.allFavourite);
+    starButton.set_sensitive(picked.size > 0);
+    unstarButton.set_visible(state.allFavourite);
     muteButton.set_visible(!state.allMuted);
     muteButton.set_sensitive(picked.size > 0);
     unmuteButton.set_visible(state.allMuted);
@@ -706,6 +725,13 @@ export function createConversationList(
     setPicking(false);
     people.setMute(chosen, mute);
   }
+  const setFavourite = (favourite: boolean) => {
+    const chosen = picks();
+    setPicking(false);
+    people.setFavourite(chosen, favourite);
+  };
+  starButton.connect('clicked', () => setFavourite(true));
+  unstarButton.connect('clicked', () => setFavourite(false));
   unmuteButton.connect('clicked', () => setMute({ muted: false, until: null }));
   readButton.connect('clicked', () => setRead(true));
   unreadButton.connect('clicked', () => setRead(false));

@@ -42,6 +42,7 @@ import {
   toEntry,
   unreadText,
   unreadTier,
+  favouriteLabel,
   shellBadgeCount,
 } from '../../../src/window/conversation-list-model.ts';
 
@@ -147,6 +148,20 @@ export default async () => {
         expect(singleChoice(pinned)?.backend).toBe('telegram');
         expect(canSend(pinned)).toBe(true);
         expect(entryProtocolSubtitle(pinned)).toBe('Only via Telegram');
+      });
+
+      it('stars a merged contact when any of its threads is starred', () => {
+        const list = mergePeople(
+          [
+            entry({ id: 'a', personIds: ['p-a'], backend: 'signal', favourite: true }),
+            entry({ id: 'b', personIds: ['p-a'], backend: 'xmpp' }),
+          ],
+          [],
+          {},
+        );
+        const row = list.find((e) => e.id === 'person:p-a');
+        expect(row?.favourite).toBe(true);
+        expect(row?.members.length).toBe(2);
       });
 
       it('lets the smallest id win a pin conflict and ignores a pin on a single chat', () => {
@@ -578,6 +593,20 @@ export default async () => {
       expect(unreadSection?.entries.length).toBe(2);
       expect(toEntry(conversation({ id: 'm', muted: true, unreadCount: 2 })).muted).toBe(true);
       expect(unreadText(150)).toBe('99+');
+    });
+
+    it('leads with the Favourites view and keeps a starred row in People or Groups too', () => {
+      const star = entry({ id: 's', favourite: true, kind: 'group' });
+      const plain = entry({ id: 'p' });
+      const sections = buildSections([plain, star]);
+      expect(sections.map((x) => x.id)).toStrictEqual(['favourites', 'people', 'groups']);
+      expect(ids(sections[0].entries)).toStrictEqual(['s']);
+      expect(ids(sections.find((x) => x.id === 'groups')!.entries)).toStrictEqual(['s']);
+      expect(buildSections([plain]).some((x) => x.id === 'favourites')).toBe(false);
+      expect(toEntry(conversation({ id: 'f', favourite: true })).favourite).toBe(true);
+      expect(toEntry(conversation({ id: 'f' })).favourite === undefined).toBe(true);
+      expect(favouriteLabel(star)).toBe('Favourite');
+      expect(favouriteLabel(plain)).toBe(null);
     });
 
     const mailWith = (id: string, person: string, over: Partial<Conversation> = {}): Conversation =>
