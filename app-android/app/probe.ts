@@ -1,12 +1,13 @@
 import { type MailTarget, probeMediaFile } from "@curlew/protocol";
 import { File, Folder, knownFolders, path } from "@nativescript/core";
 import { ImapClient, openTlsStream } from "@curlew/imap/stream";
+import { probeSmtp } from "./smtp-probe.ts";
 import { migrate, openIndexDb, probeFts5, searchIndex, storePaths, upsertAccount, upsertFolder, upsertMessages, type IndexDatabase } from "@curlew/store/index-db";
 
 export interface ProbeResult {
   host: string;
   port: number;
-  kind: "imap" | "reject" | "media" | "store" | "store-file";
+  kind: "imap" | "reject" | "media" | "store" | "store-file" | "smtp-implicit" | "smtp-starttls" | "smtp-untrusted";
   ok: boolean;
   ms: number;
   detail: string;
@@ -186,6 +187,7 @@ export async function runProbes(onResult: (line: string) => void): Promise<void>
   emit(probeMediaOnDisk());
   emit(probeStore());
   emit(probeStoreFile());
+  await probeSmtp(emit);
   console.log(`${PREFIX} DONE`);
   onResult(`${PREFIX} DONE`);
 }

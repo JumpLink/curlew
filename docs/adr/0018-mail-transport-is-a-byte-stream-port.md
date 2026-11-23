@@ -158,7 +158,8 @@ which yields the RFC 5322 bytes.
 
   `upgradeTls` rejects when plaintext is still unread (STARTTLS injection), when the stream is
   already encrypted, or when the handshake fails; the stream is dead then. `ca` is a trust anchor
-  for stacks that take one; the Gio opener rejects it rather than ignore it.
+  for stacks that take one. The Gio opener connects plain and runs the same in-place upgrade with a
+  `Gio.TlsFileDatabase` holding only that PEM, so the anchor is honoured, never ignored.
 - Implemented in `transport.node.ts` (`tls.connect({ socket })`) and `transport.gjs.ts`
   (`Gio.TlsClientConnection.new` + `handshake_async`). The Gio path is not run on a device yet.
 - `sendMessage` and `verifyAccount` take an optional `WireTransport`. Without it the nodemailer

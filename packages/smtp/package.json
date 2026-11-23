@@ -6,7 +6,8 @@
   "description": "Sending one message with attachments over SMTP (nodemailer): message building, account validation, verify and send. A library capability only — no MCP tool, no credentials in logs, errors or DTOs. No gi://.",
   "exports": {
     ".": "./src/index.ts",
-    "./wire": "./src/wire-entry.ts"
+    "./wire": "./src/wire-entry.ts",
+    "./wire-send": "./src/wire-send-entry.ts"
   },
   "scripts": {
     "check": "tsc --noEmit --project tsconfig.json"
