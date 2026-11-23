@@ -7,6 +7,7 @@
     "@gjsify/gi-runtime-android@^0.64.54",
     "@gjsify/native-fs-bridge@^0.64.54",
     "@gjsify/gi-runtime-android-tls@^0.64.54",
+    "@gjsify/native-secret-store-bridge@0.64.59",
     "@gjsify/native-sqlite-bridge@^0.64.54",
     "@gjsify/node-gi@^0.64.54",
     "@gjsify/path@^0.64.54",
@@ -1399,6 +1400,18 @@
         "@girs/freetype2-2.0": "^5.4.0"
       }
     },
+    "node_modules/@girs/secret-1": {
+      "version": "5.4.0",
+      "resolved": "https://registry.npmjs.org/@girs/secret-1/-/secret-1-5.4.0.tgz",
+      "integrity": "sha512-yZ87OpdZefcKKltRe1uuWPk2pyoi/yBlgtJjp5dfCf6JoLRUYuxoM0XoUijfnIG/I+O4TkbNm3/XlKq/bIgk5w==",
+      "dependencies": {
+        "@girs/gjs": "^5.4.0",
+        "@girs/gio-2.0": "^5.4.0",
+        "@girs/glib-2.0": "^5.4.0",
+        "@girs/gmodule-2.0": "^5.4.0",
+        "@girs/gobject-2.0": "^5.4.0"
+      }
+    },
     "node_modules/@girs/shumate-1.0": {
       "version": "5.4.0",
       "resolved": "https://registry.npmjs.org/@girs/shumate-1.0/-/shumate-1.0-5.4.0.tgz",
@@ -1641,6 +1654,28 @@
       "resolved": "https://registry.npmjs.org/@gjsify/native-platform/-/native-platform-0.64.54.tgz",
       "integrity": "sha512-v/owHsybgAVgqnYr13YJWJWG9aVI6FQJUMVDyyBAcdN+Hxzz5GNxmpzqXEESrXMoYHuh4FS7r+Tu2zSWsUqA3g=="
     },
+    "node_modules/@gjsify/native-secret-store-bridge": {
+      "version": "0.64.59",
+      "resolved": "https://registry.npmjs.org/@gjsify/native-secret-store-bridge/-/native-secret-store-bridge-0.64.59.tgz",
+      "integrity": "sha512-1K6uT9uG7vbC+Pb7lBWZUMCJgb5vrVEQUgtgyHU8hd2i+EUNvT1AK2KbWLj4ZiL3W2b2Y7Itk1eBIJtdvqX2+Q==",
+      "dependencies": {
+        "@gjsify/secret-store": "^0.64.59",
+        "@gjsify/native-platform": "^0.64.59"
+      },
+      "peerDependencies": {
+        "@nativescript/core": "*"
+      },
+      "peerDependenciesMeta": {
+        "@nativescript/core": {
+          "optional": true
+        }
+      }
+    },
+    "node_modules/@gjsify/native-secret-store-bridge/node_modules/@gjsify/native-platform": {
+      "version": "0.64.59",
+      "resolved": "https://registry.npmjs.org/@gjsify/native-platform/-/native-platform-0.64.59.tgz",
+      "integrity": "sha512-eUXVmTf4RFgtCTk4nTykHmweaSyb31rv05YdERIBHBTQskbKZ9kvgoxBO5qaDPFHSFnkc3HvFl/P83hZWbauWA=="
+    },
     "node_modules/@gjsify/native-sqlite-bridge": {
       "version": "0.64.55",
       "resolved": "https://registry.npmjs.org/@gjsify/native-sqlite-bridge/-/native-sqlite-bridge-0.64.55.tgz",
@@ -1801,6 +1836,18 @@
         "rolldown": {
           "optional": true
         }
+      }
+    },
+    "node_modules/@gjsify/secret-store": {
+      "version": "0.64.59",
+      "resolved": "https://registry.npmjs.org/@gjsify/secret-store/-/secret-store-0.64.59.tgz",
+      "integrity": "sha512-WLzxZLTto5GiHY0KoIfxCrnyeSTD+Te/5QQw5CHedvA+HDUu9joavTsfGS3JnWxnF2MREpVtwLNe9dTRZiOvCA==",
+      "dependencies": {
+        "@girs/gjs": "5.4.0",
+        "@girs/gio-2.0": "5.4.0",
+        "@girs/glib-2.0": "5.4.0",
+        "@girs/secret-1": "5.4.0",
+        "@girs/gobject-2.0": "5.4.0"
       }
     },
     "node_modules/@gjsify/sqlite": {

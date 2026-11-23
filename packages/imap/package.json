@@ -25,6 +25,7 @@
     "@girs/glib-2.0": "^4.1.0",
     "@curlew/protocol": "*",
     "@curlew/smtp": "*",
+    "@gjsify/secret-store": "0.64.59",
     "@gjsify/system-accounts": "0.64.54",
     "@curlew/store": "*"
   }

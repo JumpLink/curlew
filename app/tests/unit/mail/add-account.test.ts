@@ -1,4 +1,5 @@
 import { describe, expect, it } from '@gjsify/unit';
+import { createMemoryDriver, openSecretStore, useSecretStoreDriver } from '@gjsify/secret-store';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -24,6 +25,7 @@ const PUBLISHED = `<clientConfig version="1.1"><emailProvider id="example.org">
 </emailProvider></clientConfig>`;
 
 function withDir(run: (dir: string) => Promise<void>): Promise<void> {
+  useSecretStoreDriver(createMemoryDriver());
   const root = mkdtempSync(join(tmpdir(), 'curlew-add-'));
   return run(join(root, 'mail')).finally(() => rmSync(root, { recursive: true, force: true }));
 }
@@ -55,7 +57,7 @@ export default async () => {
         expect(logins[0].imap.user).toBe('ada@example.org');
         expect(logins[0].smtp.user).toBe('ada');
         const saved = readOwnAccounts(dir).get(account.id);
-        expect(saved?.password).toBe(PASSWORD);
+        expect(await (await openSecretStore(`curlew/mail/${account.id}`)).get('password')).toBe(PASSWORD);
         expect(saved?.smtp.security).toBe('starttls');
         // The fake records each answer next to its question; only what the flow itself said counts.
         const said = prompter.notified.filter((m) => !prompter.asked.some((q) => m.startsWith(q)));

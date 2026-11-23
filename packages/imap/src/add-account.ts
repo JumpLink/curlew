@@ -101,5 +101,5 @@ export async function addMailAccount(
     const reason = err instanceof Error ? err.message.replace(password, '…') : String(err);
     throw new Error(fmt(_('could not log in to {host}: {reason}'), { host: account.imap.host, reason }));
   }
-  return writeOwnAccount(dir, account);
+  return await writeOwnAccount(dir, account);
 }

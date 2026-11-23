@@ -148,3 +148,27 @@ work in the sandbox. Accounts set up on the host therefore appear in both builds
   not reachable from the Flatpak (ADR 0005).
 - Needs a `@gjsify/system-accounts` release that contains the D-Bus driver (gjsify PR #2668).
 
+
+## Addendum (2026-11-23): two kinds of secret, two stores
+
+The "Chat account secrets" row above covers one kind of secret. Curlew has two, and they do not
+share a store.
+
+**Session and ratchet state stays in `SecretStore`** (SQLite, one `<account>.db` per account, mode
+0600). It is a chat network's session, auth keys and OMEMO/Signal ratchets: the API is synchronous
+and the callers (~120) depend on it, a ratchet step needs `transaction()` to exclude the other
+curlew process, the blobs are large and written in batches, and the account scanners and
+`removeSecretFiles` work on the file. A keyring item per key would give up all four.
+
+**A password the person typed goes through `@gjsify/secret-store`** (gjsify ADR 0152): the IMAP/SMTP
+password of an account Curlew holds itself (`own-accounts.ts`). It is one small value per account
+and exactly the question that ADR answers, "where does this password live on this device".
+Namespace `curlew/mail/<account id>`, key `password`; the account file keeps the non-secret
+metadata, so listing and removal stay file-based. Drivers: libsecret (portal-secret in a Flatpak)
+on Linux through `@gjsify/secret-store/libsecret`; Android through
+`@gjsify/native-secret-store-bridge`, imported once in the Android app entry. Where there is no
+driver, saving an account throws, naming the platform: no plaintext fallback.
+
+Accounts written before this still hold the password in their file. The first read writes it to
+the keyring, reads it back, and only then deletes the file's copy; if the keyring is unreachable the
+old copy keeps working and the next read tries again.

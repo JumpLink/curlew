@@ -304,7 +304,7 @@ export class ImapBackend implements MailBackend {
 
   /** Unlink an own account. A system account is the system's to remove, not ours. */
   async removeAccount(accountId: string): Promise<void> {
-    removeOwnAccount(this.context.secretsDir, accountId);
+    await removeOwnAccount(this.context.secretsDir, accountId);
     this.targets = null;
   }
 
