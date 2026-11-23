@@ -152,6 +152,8 @@ export interface WaChat {
   lidJid?: string | null;
   /** When the mute ends, ms since the epoch; -1 = without end, 0 or null = not muted. */
   muteEndTime?: number | null;
+  /** When the chat was pinned (ms or s since the epoch, as Baileys reports it); null or 0 = not pinned. */
+  pinned?: number | null;
 }
 
 export interface WaContact {
@@ -314,6 +316,10 @@ export interface WaSendSocketHandle {
    * Account state (`chatModify`): the other person is told nothing.
    */
   setMute(jid: string, untilMs: number): Promise<void>;
+  /** Pin or unpin the chat at the top of the list (`chatModify`, account state: no one is told). */
+  setPin(jid: string, pinned: boolean): Promise<void>;
+  /** The chats this connection has seen pinned — WhatsApp's pin limit is checked client-side. */
+  pinnedJids(): ReadonlyArray<string>;
   /** Close without logging out, exactly like `WaSocketHandle.end`. */
   end(): void;
 }

@@ -112,6 +112,14 @@ export default async () => {
       expect(unreadLabel({ ...telegram, unread: 1 })).toBe('1 unread message');
     });
 
+    it('offers the star away only when every picked row is a favourite', () => {
+      const star = entry({ id: 'a', favourite: true });
+      const plain = entry({ id: 'b' });
+      expect(selectionTools([star]).allFavourite).toBe(true);
+      expect(selectionTools([star, plain]).allFavourite).toBe(false);
+      expect(selectionTools([]).allFavourite).toBe(false);
+    });
+
     it('turns a mute choice into an absolute end', () => {
       const now = new Date('2026-11-01T00:00:00.000Z');
       expect(muteUntil('hour', now)).toBe('2026-11-01T01:00:00.000Z');

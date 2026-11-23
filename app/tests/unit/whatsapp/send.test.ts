@@ -3,7 +3,7 @@ import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import type { SendPermit } from '@curlew/protocol';
-import { isSendBackend } from '@curlew/protocol';
+import { ChatPinLimitError, isSendBackend } from '@curlew/protocol';
 import {
   chatConversationId,
   getConversation,
@@ -422,7 +422,6 @@ export default async () => {
             mute: { muted: true, until: '2026-12-01T00:00:00.000Z' },
           });
           await sender.setChatFlags?.({ to: ANNA_LID, mute: { muted: false, until: null } });
-          await sender.setChatFlags?.({ to: ANNA_LID, favourite: true });
           const [socket] = rig.senders;
           expect(socket.mutes.map((m) => m.untilMs).join()).toBe(
             `-1,${Date.parse('2026-12-01T00:00:00.000Z')},0`,
@@ -432,6 +431,35 @@ export default async () => {
             expect((await reasonOf(attempt as Promise<unknown>)).length > 0).toBe(true);
           }
           expect(socket.mutes.length).toBe(3);
+        } finally {
+          await sender.close();
+        }
+      });
+    });
+
+    await it('pins a granted chat, and refuses a fourth pin without unpinning another', async () => {
+      await withRig(GRANTED, async (rig) => {
+        const sender = await rig.backend.openSender(rig.accountId, {
+          account: rig.accountId,
+          addresses: [ANNA_LID],
+        });
+        expect(rig.backend.manifest.capabilities?.pins).toBe(true);
+        try {
+          const [socket] = rig.senders;
+          await sender.setChatFlags?.({ to: ANNA_LID, favourite: true });
+          await sender.setChatFlags?.({ to: ANNA_LID, favourite: false });
+          expect(socket.pins.map((p) => p.pinned).join()).toBe('true,false');
+          const attempt = sender.setChatFlags?.({ to: BEN_LID, favourite: true });
+          expect((await reasonOf(attempt as Promise<unknown>)).length > 0).toBe(true);
+          socket.pinnedNow.push('a@s.whatsapp.net', 'b@s.whatsapp.net', 'c@s.whatsapp.net');
+          let limit: number | null = null;
+          try {
+            await sender.setChatFlags?.({ to: ANNA_LID, favourite: true });
+          } catch (error) {
+            limit = error instanceof ChatPinLimitError ? error.limit : -1;
+          }
+          expect(limit).toBe(3);
+          expect(socket.pins.length).toBe(2);
         } finally {
           await sender.close();
         }

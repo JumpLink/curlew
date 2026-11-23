@@ -22,6 +22,8 @@ export interface SelectionTools {
   canUnmerge: boolean;
   /** Every picked row is muted on every network it spans: the tool unmutes instead. */
   allMuted: boolean;
+  /** Every picked row is a favourite: the tool takes the star away instead. */
+  allFavourite: boolean;
   /** Every directory participant the picked rows stand for. */
   personIds: string[];
 }
@@ -35,6 +37,7 @@ export function selectionTools(picked: readonly ListEntry[]): SelectionTools {
     mergeBlock: canMerge ? null : mergeBlockOf(picked),
     canUnmerge: picked.some((entry) => entry.manual),
     allMuted: picked.length > 0 && picked.every((entry) => muteView(entry).all),
+    allFavourite: picked.length > 0 && picked.every((entry) => entry.favourite === true),
     personIds,
   };
 }

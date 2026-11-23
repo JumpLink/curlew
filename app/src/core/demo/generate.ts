@@ -1076,6 +1076,13 @@ export function generateDemo(dir: string, now: number = Date.now(), lang: DemoLa
     );
     for (const id of ['c2', 'c22']) muted.run(id, new Date(now).toISOString());
 
+    // Two starred chats, one of them unread: the list shows the Favourites view on top (#484).
+    const starred = db.prepare(
+      `INSERT INTO conversation_flags (conversation_id, favourite, favourite_at) VALUES (?, 1, ?)
+        ON CONFLICT(conversation_id) DO UPDATE SET favourite = 1, favourite_at = excluded.favourite_at`,
+    );
+    for (const id of ['c1', 'c2']) starred.run(id, new Date(now).toISOString());
+
     const cursor = db.prepare(
       `INSERT OR REPLACE INTO chat_cursors (conversation_id, backend, account_id, chat_id, kind,
          room_public, room_encrypted, room_members) VALUES (?, 'matrix', 'matrix-demo1', ?, ?, ?, ?, ?)`,

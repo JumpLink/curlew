@@ -14,7 +14,7 @@ import { choiceFor, groupKey, type ContactChoices } from '../core/contact-choice
 import type { SearchScope } from '../core/lib/search-scope.ts';
 import { carrierOf, DELTA_CHAT } from '../core/visibility.ts';
 
-export type SectionId = 'unread' | 'people' | 'groups';
+export type SectionId = 'favourites' | 'unread' | 'people' | 'groups';
 
 /** A conversation reduced to what a row needs. */
 export interface ListEntry {
@@ -28,6 +28,8 @@ export interface ListEntry {
   unread: number;
   /** Muted by the person (every thread of a merged row). Absent = not muted. */
   muted?: boolean;
+  /** Starred by the person (a merged row: any of its threads). Absent = not starred. */
+  favourite?: boolean;
   lastMessageAt: string | null;
   /** Address the composer answers: the other person, or for a Matrix room its room id. */
   target: string | null;
@@ -340,6 +342,7 @@ export function toEntry(
     kind: conversation.kind,
     unread: Math.max(0, conversation.unreadCount),
     ...(conversation.muted ? { muted: true } : {}),
+    ...(conversation.favourite ? { favourite: true } : {}),
     lastMessageAt: conversation.lastMessageAt,
     target:
       conversation.backend === 'matrix'
@@ -591,6 +594,7 @@ function mergeEntries(
     kind: 'direct',
     unread: members.reduce((sum, m) => sum + m.unread, 0),
     ...(members.every((m) => m.muted === true) ? { muted: true } : {}),
+    ...(members.some((m) => m.favourite === true) ? { favourite: true } : {}),
     lastMessageAt: newest.lastMessageAt,
     target: null,
     emailChat: members.some((m) => m.emailChat),
@@ -894,10 +898,11 @@ export function buildSections(entries: ListEntry[], filter: ListFilter = NO_FILT
       return field === undefined ? entry : { ...entry, preview: field };
     })
     .sort(newestFirst);
-  // Everything unread comes first, across protocols and merged contacts. Unread is a view on top,
+  // Starred chats lead, then everything unread, across protocols and merged contacts. Unread is a view on top,
   // not a home: the row stays in People or Groups too, so nobody has to look in two places for a
   // person (the same holds for favourites, #484).
   const defs: Array<{ id: SectionId; title: string; rows: ListEntry[] }> = [
+    { id: 'favourites', title: _('Favourites'), rows: shown.filter((entry) => entry.favourite === true) },
     { id: 'unread', title: _('Unread'), rows: shown.filter((entry) => entry.unread > 0) },
     { id: 'people', title: _('People'), rows: shown.filter((entry) => entry.kind === 'direct') },
     { id: 'groups', title: _('Groups'), rows: shown.filter((entry) => entry.kind === 'group') },
@@ -942,6 +947,11 @@ export function muteTooltip(entry: ListEntry): string | null {
   if (view.on.length === 0) return null;
   if (view.all) return _('Muted');
   return fmt(_('Muted on {networks}'), { networks: view.on.join(', ') });
+}
+
+/** What the star on a row says; null when the row is not a favourite. */
+export function favouriteLabel(entry: ListEntry): string | null {
+  return entry.favourite === true ? _('Favourite') : null;
 }
 
 /** The unread count as a screen reader says it: the muted state is part of it, not only a dimmed colour. */

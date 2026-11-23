@@ -427,6 +427,7 @@ export class WhatsAppMapper {
       events.push({ type: 'chat-read', chatRemoteId: chatId, unreadCount: unread });
     }
     if (raw.muteEndTime !== undefined) events.push({ type: 'chat-mute', chatRemoteId: chatId, mute: muteOf(raw.muteEndTime) });
+    if (raw.pinned !== undefined) events.push({ type: 'chat-pin', chatRemoteId: chatId, pinned: !!raw.pinned });
     return events;
   }
 

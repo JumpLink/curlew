@@ -17,6 +17,7 @@ import {
 } from '@mtcute/core';
 import { MemoryStorage, networkMiddlewares, TelegramClient, WebCryptoProvider, WebPlatform } from '@mtcute/web';
 import type { LoginPrompts, TelegramApi, TelegramClientHandle, TelegramLive, TgOutgoingFile, TgUser } from './api.ts';
+import { pinLimitOf } from './map.ts';
 import type { TelegramCredentials } from './credentials.ts';
 
 export interface ClientOptions {
@@ -226,6 +227,24 @@ export const createMtcuteClient: ClientFactory = ({ credentials, storage, live }
         peer: { _: 'inputNotifyPeer', peer: await client.resolvePeer(chatId) },
         settings: { _: 'inputPeerNotifySettings', muteUntil: until },
       });
+    },
+    setPin: async (chatId, pinned) => {
+      await client.call({
+        _: 'messages.toggleDialogPin',
+        pinned,
+        peer: { _: 'inputDialogPeer', peer: await client.resolvePeer(chatId) },
+      });
+    },
+    pinSlots: async () => {
+      const [config, dialogs, me] = await Promise.all([
+        client.call({ _: 'help.getAppConfig', hash: 0 }),
+        client.call({ _: 'messages.getPinnedDialogs', folderId: 0 }),
+        client.getMe(),
+      ]);
+      return {
+        pinned: dialogs.dialogs.length,
+        limit: config._ === 'help.appConfig' ? pinLimitOf(config.config, me.isPremium) : null,
+      };
     },
     deleteMessage: (chatId, messageId) => client.deleteMessagesById(chatId, [messageId], { revoke: true }),
     sendFile: (chatId, file) =>

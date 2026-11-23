@@ -285,6 +285,7 @@ function toMxRoom(client: MatrixClient, room: Room, direct: Map<string, string>)
     readUpToTs: receiptTs(room, self),
     peerReadUpToTs: peerRead.length > 0 ? Math.max(...peerRead) : null,
     muted: mutedByRule(client, room.roomId),
+    favourite: room.tags['m.favourite'] !== undefined,
   };
 }
 

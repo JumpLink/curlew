@@ -90,20 +90,25 @@ export async function retryMutePushes(
       const cursor = db
         .prepare('SELECT chat_id FROM chat_cursors WHERE conversation_id = ?')
         .get(conversationId) as { chat_id?: unknown } | undefined;
-      if (flags === null || flags.mutePendingAt === null || cursor?.chat_id === undefined) continue;
+      if (flags === null || cursor?.chat_id === undefined) continue;
+      if (flags.mutePendingAt === null && flags.favouritePendingAt === null) continue;
       try {
         const outcome = await pushChatFlags({
           ...push,
           accountId: account.accountId,
           to: String(cursor.chat_id),
-          mute: { muted: flags.muted, until: flags.mutedUntil },
+          ...(flags.mutePendingAt === null ? {} : { mute: { muted: flags.muted, until: flags.mutedUntil } }),
+          ...(flags.favouritePendingAt === null ? {} : { favourite: flags.favourite }),
           frontend: 'cli',
         });
         // The network's answer to this second push arrives with the next sync, which then
         // settles the flag by the rule instead of retrying again.
         if (outcome === 'pushed') retried++;
         clearFlagPending(db, conversationId, 'mute');
+        clearFlagPending(db, conversationId, 'favourite');
       } catch (error) {
+        clearFlagPending(db, conversationId, 'mute');
+        clearFlagPending(db, conversationId, 'favourite');
         console.warn(
           `curlew: mute retry failed for ${conversationId}: ${error instanceof Error ? error.message : error}`,
         );

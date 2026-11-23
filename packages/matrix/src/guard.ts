@@ -79,6 +79,12 @@ const PRIVATE_RECEIPT = new RegExp(String.raw`${CLIENT}/rooms/([^/]+)/receipt/m\
  */
 const ROOM_MUTE_RULE = new RegExp(String.raw`${CLIENT}/pushrules/global/room/([^/]+)$`);
 
+/**
+ * The person's favourite of one room (ADR 0020): the `m.favourite` tag of their own account,
+ * written with PUT and taken back with DELETE. No other tag is ever allowed.
+ */
+const ROOM_FAVOURITE_TAG = new RegExp(String.raw`${CLIENT}/user/[^/]+/rooms/([^/]+)/tags/m\.favourite$`);
+
 /** The media upload: `POST /_matrix/media/v3/upload`, outside the `/client/` tree. */
 const UPLOAD = /^\/_matrix\/media\/(?:v3|r0|v1)\/upload$/;
 
@@ -121,6 +127,10 @@ export function sendRefusal(method: string, url: string, rooms: readonly string[
     const mute = ROOM_MUTE_RULE.exec(parsed.pathname);
     if (mute) {
       return rooms.includes(decodeURIComponent(mute[1])) ? null : 'a mute of a room no grant names';
+    }
+    const tag = ROOM_FAVOURITE_TAG.exec(parsed.pathname);
+    if (tag) {
+      return rooms.includes(decodeURIComponent(tag[1])) ? null : 'a favourite of a room no grant names';
     }
     if (method.toUpperCase() === 'DELETE') return refusal(method, url);
     const match = SEND.exec(parsed.pathname) ?? REDACT.exec(parsed.pathname);

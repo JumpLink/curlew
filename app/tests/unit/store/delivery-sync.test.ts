@@ -390,6 +390,26 @@ export default async () => {
       }
     });
 
+    await it('applies the pin a network reports, or only mirrors it when applying is off', async () => {
+      const db = freshDb();
+      try {
+        const pin = (pinned: boolean) => ({ type: 'chat-pin' as const, chatRemoteId: 'd-anna', pinned });
+        await receiveDeliveries(db, fakeBackend([[incoming('d-anna', msg('d-anna/1', 1, 'a')), pin(true)]]), {
+          applyChatFlags: false,
+        });
+        let flags = loadChatFlags(db, conv('d-anna'));
+        expect(flags?.favourite).toBe(false);
+        expect(flags?.remoteFavourite).toBe(true);
+        await receiveDeliveries(db, fakeBackend([[pin(true)]]));
+        expect(loadChatFlags(db, conv('d-anna'))?.favourite).toBe(true);
+        await receiveDeliveries(db, fakeBackend([[pin(false)]]));
+        flags = loadChatFlags(db, conv('d-anna'));
+        expect(flags?.favourite).toBe(false);
+      } finally {
+        db.close();
+      }
+    });
+
     await it('applies a read receipt that names no chat, by the message alone', async () => {
       const db = freshDb();
       try {

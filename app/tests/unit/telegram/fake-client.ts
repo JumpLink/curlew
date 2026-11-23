@@ -286,6 +286,20 @@ export class FakeClient implements TelegramClientHandle {
     this.muted.push({ chatId, until });
   }
 
+  /** Every `setPin` call, in order. */
+  readonly pins: Array<{ chatId: number; pinned: boolean }> = [];
+  /** What `pinSlots` answers. */
+  pinSlotsReply: { pinned: number; limit: number | null } = { pinned: 0, limit: 5 };
+
+  async setPin(chatId: number, pinned: boolean): Promise<void> {
+    this.calls.push(`setPin:${chatId}`);
+    this.pins.push({ chatId, pinned });
+  }
+
+  async pinSlots(): Promise<{ pinned: number; limit: number | null }> {
+    return this.pinSlotsReply;
+  }
+
   async deleteMessage(chatId: number, messageId: number): Promise<void> {
     this.calls.push(`deleteMessage:${chatId}`);
     this.deleted.push({ chatId, messageId });

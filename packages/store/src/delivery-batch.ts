@@ -264,6 +264,7 @@ export class DeliveryBatch {
         return;
       }
       case 'chat-mute':
+      case 'chat-pin':
         // Applied by `writeEvents` after the batch is written: the flag has its own transaction.
         return;
       case 'chat-merged':

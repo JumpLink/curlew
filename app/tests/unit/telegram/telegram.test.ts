@@ -33,6 +33,7 @@ import {
   credentialsFromEnv,
   embeddedCredentials,
   parseCredentials,
+  pinLimitOf,
   PENDING_STALE_MS,
   refuseConfigCredentials,
   SecretStoreStorage,
@@ -162,6 +163,27 @@ export default async () => {
         raw: { notifySettings: { muteUntil: 1796083200 } },
       });
       expect(timed.mute?.until).toBe('2026-12-01T00:00:00.000Z');
+    });
+
+    await it('reads the dialog pin, and the pin limit from the app config', async () => {
+      const base = { peer: ANNA, lastMessage: null, lastReadIngoing: 0, lastReadOutgoing: 0 };
+      expect(toChatInfo(base).pin === undefined).toBe(true);
+      expect(toChatInfo({ ...base, isPinned: true }).pin).toBe(true);
+      expect(toChatInfo({ ...base, isPinned: false }).pin).toBe(false);
+      const config = {
+        _: 'jsonObject',
+        value: [
+          { _: 'jsonObjectValue', key: 'dialogs_pinned_limit_default', value: { _: 'jsonNumber', value: 5 } },
+          {
+            _: 'jsonObjectValue',
+            key: 'dialogs_pinned_limit_premium',
+            value: { _: 'jsonNumber', value: 10 },
+          },
+        ],
+      };
+      expect(pinLimitOf(config, false)).toBe(5);
+      expect(pinLimitOf(config, true)).toBe(10);
+      expect(pinLimitOf({ _: 'jsonObject', value: [] }, false) === null).toBe(true);
     });
 
     await it('maps dialogs to direct, group and broadcast chats with their read markers', async () => {

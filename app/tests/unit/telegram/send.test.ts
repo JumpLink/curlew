@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import type { AccountPrompter, BackendContext, SendPermit } from '@curlew/protocol';
-import { isSendBackend } from '@curlew/protocol';
+import { ChatPinLimitError, isSendBackend } from '@curlew/protocol';
 import { chatConversationId, getConversation } from '@curlew/store';
 import {
   MUTE_FOREVER,
@@ -212,6 +212,27 @@ export default async () => {
             sender.setChatFlags?.({ to: '2002', mute: { muted: true, until: null } }) ?? Promise.resolve(),
           ),
         ).toBe(true);
+        await sender.close();
+      });
+    });
+
+    await it('pins a chat of the grant, and refuses a pin beyond the limit without unpinning another', async () => {
+      await withRig(granted, async (rig) => {
+        const sender = await rig.backend.openSender(ACCOUNT, { account: ACCOUNT, addresses: ['1001'] });
+        expect(rig.backend.manifest.capabilities?.pins).toBe(true);
+        await sender.setChatFlags?.({ to: '1001', favourite: true });
+        await sender.setChatFlags?.({ to: '1001', favourite: false });
+        const client = rig.fake.clients[0];
+        expect(client.pins.map((p) => p.pinned)).toEqualArray([true, false]);
+        client.pinSlotsReply = { pinned: 5, limit: 5 };
+        let limit: number | null = null;
+        try {
+          await sender.setChatFlags?.({ to: '1001', favourite: true });
+        } catch (error) {
+          limit = error instanceof ChatPinLimitError ? error.limit : -1;
+        }
+        expect(limit).toBe(5);
+        expect(client.pins.length).toBe(2);
         await sender.close();
       });
     });

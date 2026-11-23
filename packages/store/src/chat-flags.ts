@@ -289,6 +289,9 @@ export function applyRemoteFavourite(
       retried: options.retried ?? false,
       equal: (a, b) => a === b,
     });
+    // A network that repeats what it said before has no news for a star the person set here: one that
+    // did not fit its pin limit (ADR 0020 §6) stays local instead of being taken back by the next sync.
+    if (resolution === 'apply' && current.favouriteAt !== null && current.remoteFavourite === remote) return { resolution: 'keep' as const };
     if (resolution === 'echo') {
       db.prepare('UPDATE conversation_flags SET favourite_pending_at = NULL WHERE conversation_id = ?').run(
         conversationId,

@@ -9,7 +9,7 @@ import Gdk from 'gi://Gdk?version=4.0';
 import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
 import Gtk from 'gi://Gtk?version=4.0';
-import { _ } from '@curlew/protocol';
+import { _, _n, fmt } from '@curlew/protocol';
 import { demoActive } from '../core/demo/active.ts';
 import type { ConversationMessage } from '@curlew/protocol';
 
@@ -85,7 +85,8 @@ import { createReadSyncScheduler } from './read-sync-scheduler.ts';
 import { deltaChatEnabled } from '../core/actions/accounts.ts';
 import { editMessage } from '../core/actions/edit.ts';
 import { deleteMessage } from '../core/actions/delete.ts';
-import { configPath, indexDbPath, openIndexDb, setChatMuted } from '@curlew/store';
+import { configPath, indexDbPath, openIndexDb, setChatFavourite, setChatMuted } from '@curlew/store';
+import { setConversationFavourite } from '../core/actions/favourite.ts';
 import { setConversationMute } from '../core/actions/mute.ts';
 import { pollFiles, watchFiles } from './watch.ts';
 
@@ -475,6 +476,51 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
       db.close();
     }
   };
+  // Starred like muted: local first, then the network's pin. A full network keeps the star here and
+  // says so once per run (ADR 0020 §6).
+  let toldPinsFull = false;
+  const favouriteConversation = async (e: ListEntry, favourite: boolean): Promise<void> => {
+    const db = openIndexDb(indexDbPath(), { busyTimeoutMs: 300 });
+    try {
+      for (const id of e.conversationIds) {
+        if (e.target === null) {
+          setChatFavourite(db, id, { favourite });
+          continue;
+        }
+        const outcome = await setConversationFavourite({
+          db,
+          conversationId: id,
+          accountId: e.accountId,
+          to: e.target,
+          favourite,
+          frontend: 'window',
+        });
+        if (outcome.kind === 'full' && !toldPinsFull) {
+          toldPinsFull = true;
+          toasts.add_toast(
+            new Adw.Toast({
+              title:
+                outcome.limit === null
+                  ? _('This network has no free pin left, so the favourite stays in Curlew only.')
+                  : fmt(
+                      _n(
+                        'This network allows {count} pinned chat, so the favourite stays in Curlew only.',
+                        'This network allows {count} pinned chats, so the favourite stays in Curlew only.',
+                        outcome.limit,
+                      ),
+                      { count: outcome.limit },
+                    ),
+              timeout: 6,
+            }),
+          );
+        }
+      }
+    } catch {
+      // A busy index must not break the list; the star is local either way.
+    } finally {
+      db.close();
+    }
+  };
   const scheduleReadSync = (picked: readonly ListEntry[]): void => {
     if (loadConfig().ui.syncReadState === false) return;
     for (const e of picked.flatMap((p) => (p.members.length > 0 ? p.members : [p]))) {
@@ -567,6 +613,11 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
     setMute: (picked, mute) => {
       for (const e of picked.flatMap((p) => (p.members.length > 0 ? p.members : [p]))) {
         void muteConversation(e, mute).then(refresh);
+      }
+    },
+    setFavourite: (picked, favourite) => {
+      for (const e of picked.flatMap((p) => (p.members.length > 0 ? p.members : [p]))) {
+        void favouriteConversation(e, favourite).then(refresh);
       }
     },
     review: () => review(),

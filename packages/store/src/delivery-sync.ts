@@ -31,7 +31,7 @@ import type {
   ParticipantAddress,
 } from '@curlew/protocol';
 import { appendChanges, appendChangesTransaction } from './changes.ts';
-import { applyRemoteMute } from './chat-flags.ts';
+import { applyRemoteFavourite, applyRemoteMute } from './chat-flags.ts';
 import { chatConversationId, classifyChatMessage, LOCAL_ECHO_PREFIX } from './chat-sync.ts';
 import { adoptEchoAttachments } from './echo-attachments.ts';
 import { conversationTotalsSql } from './conversation-totals.ts';
@@ -715,6 +715,15 @@ function writeEvents(
       applyRemoteMute(db, chatConversationId(backend, accountId, chatRemoteId), mute, { apply: applyChatFlags });
     } catch {
       // A flag that did not land is reported again with the next chat update; the batch is written.
+    }
+  }
+  const pins = new Map<string, boolean>();
+  for (const event of events) if (event.type === 'chat-pin') pins.set(event.chatRemoteId, event.pinned);
+  for (const [chatRemoteId, pinned] of pins) {
+    try {
+      applyRemoteFavourite(db, chatConversationId(backend, accountId, chatRemoteId), pinned, { apply: applyChatFlags });
+    } catch {
+      // Reported again with the next chat update.
     }
   }
   return totals;

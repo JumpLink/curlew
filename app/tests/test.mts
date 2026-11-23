@@ -174,6 +174,7 @@ import daemonAvatars from './unit/core/daemon-avatars.test.ts';
 import readSync from './unit/core/read-sync.test.ts';
 import chatFlagsPush from './unit/core/chat-flags-push.test.ts';
 import muteTest from './unit/core/mute.test.ts';
+import favouriteTest from './unit/core/favourite.test.ts';
 import chatAttachment from './unit/core/chat-attachment.test.ts';
 import conversationsAttachments from './unit/core/conversations-attachments.test.ts';
 import messageNotices from './unit/core/message-notices.test.ts';
@@ -347,6 +348,7 @@ run({
   readSync,
   chatFlagsPush,
   muteTest,
+  favouriteTest,
   accountPrompter,
   accountAddModel,
   protocolsModel,

@@ -19,6 +19,7 @@ app/src/core/actions/daemon.ts
 app/src/core/actions/delete.ts
 app/src/core/actions/deliveries.ts
 app/src/core/actions/edit.ts
+app/src/core/actions/favourite.ts
 app/src/core/actions/follow.ts
 app/src/core/actions/index-sync.ts
 app/src/core/actions/index.ts

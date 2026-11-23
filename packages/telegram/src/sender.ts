@@ -11,6 +11,7 @@
 import {
   _,
   fmt,
+  ChatPinLimitError,
   type ChatAttachment,
   type MessageSender,
   probeMediaFile,
@@ -172,15 +173,25 @@ export class TelegramSender implements MessageSender {
   }
 
   /**
-   * The person's mute of the chat (`account.updateNotifySettings`, no one is told). Telegram's pin
-   * is a dialog order of the account, not a favourite curlew mirrors, so `favourite` is ignored.
+   * The person's mute (`account.updateNotifySettings`) and favourite (`messages.toggleDialogPin`)
+   * of the chat; no one is told. A pin beyond the account's limit is not tried
+   * (`ChatPinLimitError`), and nothing else is ever unpinned to make room (ADR 0020 §6).
    */
   async setChatFlags(flags: SendingChatFlags): Promise<void> {
     const chatId = this.chatId(flags.to);
-    if (flags.mute === undefined) return;
-    if (!flags.mute.muted) return this.client.setMute(chatId, 0);
-    const until = flags.mute.until === null ? MUTE_FOREVER : Math.floor(Date.parse(flags.mute.until) / 1000);
-    await this.client.setMute(chatId, Number.isFinite(until) ? until : MUTE_FOREVER);
+    if (flags.mute !== undefined) {
+      if (!flags.mute.muted) await this.client.setMute(chatId, 0);
+      else {
+        const until = flags.mute.until === null ? MUTE_FOREVER : Math.floor(Date.parse(flags.mute.until) / 1000);
+        await this.client.setMute(chatId, Number.isFinite(until) ? until : MUTE_FOREVER);
+      }
+    }
+    if (flags.favourite === undefined) return;
+    if (flags.favourite) {
+      const slots = await this.client.pinSlots();
+      if (slots.limit !== null && slots.pinned >= slots.limit) throw new ChatPinLimitError(slots.limit);
+    }
+    await this.client.setPin(chatId, flags.favourite);
   }
 
   /** Deletes one of the person's own messages for everyone. */
