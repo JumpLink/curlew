@@ -1067,10 +1067,22 @@ export interface SendingReadSync {
 export class ChatPinLimitError extends Error {
   readonly limit: number | null;
   constructor(limit: number | null) {
-    super('the network has no free pin left');
+    super(limit === null ? CHAT_PIN_FULL : `${CHAT_PIN_FULL}: ${limit}`);
     this.name = 'ChatPinLimitError';
     this.limit = limit;
   }
+}
+
+/** The start of a `ChatPinLimitError` message: it crosses the daemon bus as text only. */
+export const CHAT_PIN_FULL = 'the network has no free pin left';
+
+/** The pin limit error behind `error`, also when it came back from the daemon as a message. */
+export function asChatPinLimit(error: unknown): ChatPinLimitError | null {
+  if (error instanceof ChatPinLimitError) return error;
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+  if (!message.startsWith(CHAT_PIN_FULL)) return null;
+  const limit = Number(/: (\d+)$/.exec(message)?.[1]);
+  return new ChatPinLimitError(Number.isFinite(limit) ? limit : null);
 }
 
 export interface SendingChatFlags {
