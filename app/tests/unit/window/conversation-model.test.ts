@@ -40,6 +40,7 @@ import {
   subjectLabels,
   toggleOwnReaction,
   withOwnReaction,
+  withPendingEdits,
   type ShownMessage,
 } from '../../../src/window/conversation-model.ts';
 
@@ -611,6 +612,18 @@ export default async () => {
       });
       expect(deleteHandleOf(chat({ id: 'y', fromSelf: false }), choices, () => true)).toBe(null);
       expect(deleteHandleOf(own, choices, () => false)).toBe(null);
+    });
+
+    await it('keeps an unconfirmed edit over a page that still has the old text', async () => {
+      const old = chat({ id: 'x', fromSelf: true });
+      const other = chat({ id: 'y', fromSelf: false });
+      const pending = new Map([['x', { bodyText: 'new', editedAt: '2026-01-01T10:05:00Z' }]]);
+      const shown = withPendingEdits([old, other], pending);
+      expect(shown[0].bodyText).toBe('new');
+      expect(shown[0].editedAt).toBe('2026-01-01T10:05:00Z');
+      expect(shown[1]).toBe(other);
+      expect(old.bodyText).not.toBe('new');
+      expect(withPendingEdits([old], new Map())[0]).toBe(old);
     });
   });
 

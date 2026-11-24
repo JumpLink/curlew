@@ -60,6 +60,8 @@ import {
   subjectLabels,
   toggleOwnReaction,
   withOwnReaction,
+  withPendingEdits,
+  type PendingEdit,
   type ProtocolRun,
   type Quote,
   type MessageHandle,
@@ -244,6 +246,8 @@ export function createConversationView(
   let composerBlocked = false;
   let generation = 0;
   const built = new Map<string, Built>();
+  // Edits on their way to the network, by message id: a page read meanwhile still has the old text.
+  const pendingEdits = new Map<string, PendingEdit>();
   // Paging state. `ready` is false until the first page is built and scrolled to the end;
   // `prepending` is true from the spinner until the older rows have been laid out.
   let ready = false;
@@ -1392,10 +1396,15 @@ export function createConversationView(
     const one = built.get(message.id);
     if (!one) return;
     const text = message.bodyText?.trim() ?? '';
+    // The new text goes where the old one was; without one, right above the time line.
+    let before: Gtk.Widget | null = one.meta.get_prev_sibling();
     if (one.body) {
       // Remove the old faded overlay; rebuilding it refreshes the "Show more" button state.
       const oldOverlay = one.body.get_parent()?.get_parent();
-      if (oldOverlay) one.bubble.remove(oldOverlay);
+      if (oldOverlay?.get_parent() === one.bubble) {
+        before = oldOverlay.get_prev_sibling();
+        one.bubble.remove(oldOverlay);
+      }
     }
     const preview = bubbleText(text);
     const body = new Gtk.Label({
@@ -1414,17 +1423,25 @@ export function createConversationView(
       clipMentions(trimmed.mentions, preview.text.length),
       hooks,
     );
-    one.bubble.insert_before(
+    // Gtk.Box.insert_child_after, not Gtk.Widget.insert_before: called on the bubble, the latter
+    // reparents the BUBBLE into the new label's box, fails its assertion, and leaves the bubble
+    // without any text until the row is rebuilt.
+    one.bubble.insert_child_after(
       padded(fadedOverlay(body, preview.clipped, () => setBodyText(body, text, trimmed.mentions, hooks))),
-      one.meta,
+      before,
     );
     one.body = body;
+    padTop(one.bubble);
     if (message.editedAt && !one.edited) {
       const edited = new Gtk.Label({ label: _('edited'), xalign: 1 });
       edited.add_css_class('caption');
       edited.add_css_class('dim-label');
       one.meta.insert_child_after(edited, one.badge);
       one.edited = edited;
+    } else if (!message.editedAt && one.edited) {
+      // A failed first edit goes back to a message that was never edited.
+      one.meta.remove(one.edited);
+      one.edited = null;
     }
   };
 
@@ -1602,16 +1619,20 @@ export function createConversationView(
       send.set_child(new Adw.Spinner());
       const { message, originalText, handle } = edit;
       const next = { ...message, bodyText: text, editedAt: new Date().toISOString() };
+      pendingEdits.set(message.id, { bodyText: text, editedAt: next.editedAt });
       updateBubbleText(next);
       clearEdit();
       void onEdit(next, handle, text)
         .then(() => {
+          pendingEdits.delete(message.id);
           message.bodyText = text;
           message.editedAt = next.editedAt;
           input.setText('');
         })
         .catch((err: unknown) => {
-          updateBubbleText({ ...message, bodyText: originalText });
+          pendingEdits.delete(message.id);
+          const shownNow = messages.find((m) => m.id === message.id) ?? message;
+          updateBubbleText({ ...shownNow, bodyText: originalText, editedAt: message.editedAt });
           input.setText(text);
           overlay.add_toast(
             new Adw.Toast({
@@ -1706,7 +1727,7 @@ export function createConversationView(
       const shownEntry = entry;
       if (!shownEntry) return 'rebuild';
       if (!ready || loading || prepending) return 'busy';
-      const diff = liveChanges(messages, foldAlbums(page));
+      const diff = liveChanges(messages, withPendingEdits(foldAlbums(page), pendingEdits));
       if (diff.rebuild) return 'rebuild';
       if (diff.added.length + diff.changed.length + diff.removed.length === 0) return 'applied';
       resolveQuotes(shownEntry, [...diff.added, ...diff.changed], [...messages, ...diff.added]);
@@ -1772,7 +1793,7 @@ export function createConversationView(
     show(nextEntry, nextMessages, nextLabels, keepComposer = false) {
       entry = nextEntry;
       rebuildRoute(nextEntry);
-      messages = foldAlbums(nextMessages);
+      messages = withPendingEdits(foldAlbums(nextMessages), pendingEdits);
       accountLabels = nextLabels;
       title.set_title(nextEntry.title);
       title.set_subtitle(entryProtocolSubtitle(nextEntry, nextLabels));
