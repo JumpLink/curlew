@@ -521,6 +521,28 @@ export function withOwnReaction(
   return rest.map((r, i) => (i === same ? { ...r, count: r.count + 1, own: true } : r));
 }
 
+/** An edit the person sent that the network has not confirmed yet. */
+export interface PendingEdit {
+  bodyText: string;
+  editedAt: string;
+}
+
+/**
+ * `messages` with each in-flight edit laid over its message. A page read from the index while the
+ * network still works on an edit holds the old text; shown as is, the bubble would jump back
+ * before the edit even failed.
+ */
+export function withPendingEdits<M extends ConversationMessage>(
+  messages: readonly M[],
+  pending: ReadonlyMap<string, PendingEdit>,
+): M[] {
+  if (pending.size === 0) return [...messages];
+  return messages.map((m) => {
+    const edit = pending.get(m.id);
+    return edit ? { ...m, bodyText: edit.bodyText, editedAt: edit.editedAt } : m;
+  });
+}
+
 /** The most parts a Telegram album has: a folded bubble lists all of them. */
 export const MAX_ALBUM_PARTS = 10;
 
