@@ -71,38 +71,87 @@ export function similarNames(a: string, b: string): boolean {
  * the person already declined is skipped, and a set that gained someone is a new set.
  */
 export function candidateSets(entries: readonly ListEntry[], declined: DeclinedSets = []): CandidateSet[] {
-  const named = entries
-    .filter((entry) => entry.kind === 'direct' && entry.personIds.length > 0)
-    .map((entry) => ({ entry, words: nameWords(entry.title) }))
-    .filter(({ words }) => words.length >= 2);
-  const folded = (words: readonly string[]) => [...words].sort().join(' ');
+  return setsOfRows(
+    entries.map(candidateRow).filter((row) => row !== null),
+    declined,
+  );
+}
+
+/** One row of the scan: a person worth comparing, with their name already folded. */
+export interface CandidateRow {
+  entry: ListEntry;
+  words: string[];
+  /** The words sorted and joined — equal keys mean the same words in any order. */
+  key: string;
+}
+
+/**
+ * The folded words of one row, or null when the row is not compared at all (a group, a person
+ * with no identity, a name of fewer than two words).
+ *
+ * Apart from {@link setsOfRows} because `nameWords` normalises, and on a list of thousands that
+ * normalising IS the scan: 222 ms of a 230 ms run on 10 500 conversations (#501). The window
+ * therefore folds the names in time-sliced chunks and compares them once they are all in.
+ */
+export function candidateRow(entry: ListEntry): CandidateRow | null {
+  if (entry.kind !== 'direct' || entry.personIds.length === 0) return null;
+  const words = nameWords(entry.title);
+  return words.length >= 2 ? { entry, words, key: [...words].sort().join(' ') } : null;
+}
+
+/**
+ * The second half of {@link candidateSets}, on rows whose names are already folded.
+ *
+ * Bucketing alone is not enough. Both rules need a shared word, but a first name is shared by
+ * very many people — 9 500 contacts over a few dozen first names is a bucket of hundreds, and
+ * comparing every pair in it is 1.7 million `similarWords` calls (222 ms, #501). So neither rule
+ * is evaluated pairwise:
+ *  - same words in any order: rows with the same {@link CandidateRow.key} match by definition,
+ *    so the bucket is joined in one pass. After the CROWD filter such a bucket holds at most two.
+ *  - the initial rule: it can only hold when one of the two last words is a SINGLE letter, so
+ *    only those rows drive a join, each against the rows whose last word begins with that letter.
+ * The relation that comes out is the one `similarWords` defines, pair for pair.
+ */
+export function setsOfRows(named: readonly CandidateRow[], declined: DeclinedSets = []): CandidateSet[] {
   const crowd = new Map<string, number>();
-  for (const { words } of named) crowd.set(folded(words), (crowd.get(folded(words)) ?? 0) + 1);
+  for (const { key } of named) crowd.set(key, (crowd.get(key) ?? 0) + 1);
   const rows = named.filter(
-    ({ words }) => !PLACEHOLDER_NAMES.has(words.join(' ')) && (crowd.get(folded(words)) ?? 0) < CROWD,
+    ({ words, key }) => !PLACEHOLDER_NAMES.has(words.join(' ')) && (crowd.get(key) ?? 0) < CROWD,
   );
   const people = rows.map(({ entry }) => entry);
   const parent = people.map((_, i) => i);
   const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i]!)));
-  // Both similarity rules need a shared word (the same set, or the same first word), so only
-  // rows in one bucket are compared: the list holds thousands of rows and a full pairwise scan
-  // froze the window each time it was activated.
-  const buckets = new Map<string, number[]>();
-  rows.forEach(({ words }, i) => {
-    for (const key of new Set([`f:${words[0]}`, `s:${folded(words)}`])) {
-      const bucket = buckets.get(key);
-      if (bucket) bucket.push(i);
-      else buckets.set(key, [i]);
-    }
+  const union = (i: number, j: number): void => {
+    const a = find(i);
+    const b = find(j);
+    if (a !== b) parent[b] = a;
+  };
+  const lastOf = (i: number): string => rows[i]!.words[rows[i]!.words.length - 1]!;
+  // Same words in any order: one pass per group of equal keys.
+  const sameWords = new Map<string, number>();
+  rows.forEach(({ key }, i) => {
+    const seen = sameWords.get(key);
+    if (seen === undefined) sameWords.set(key, i);
+    else union(seen, i);
   });
-  for (const members of buckets.values()) {
-    for (let a = 0; a < members.length; a++) {
-      for (let b = a + 1; b < members.length; b++) {
-        const i = members[a]!;
-        const j = members[b]!;
-        if (similarWords(rows[i]!.words, rows[j]!.words)) parent[find(j)] = find(i);
-      }
+  // The initial rule, within one first word: only a single-letter last word can match.
+  const byFirst = new Map<string, number[]>();
+  rows.forEach(({ words }, i) => {
+    const bucket = byFirst.get(words[0]!);
+    if (bucket) bucket.push(i);
+    else byFirst.set(words[0]!, [i]);
+  });
+  for (const members of byFirst.values()) {
+    const singles = members.filter((i) => lastOf(i).length === 1);
+    if (singles.length === 0) continue;
+    const byInitial = new Map<string, number[]>();
+    for (const i of members) {
+      const initial = lastOf(i)[0]!;
+      const bucket = byInitial.get(initial);
+      if (bucket) bucket.push(i);
+      else byInitial.set(initial, [i]);
     }
+    for (const i of singles) for (const j of byInitial.get(lastOf(i)) ?? []) if (i !== j) union(i, j);
   }
   const groups = new Map<number, ListEntry[]>();
   people.forEach((entry, i) => {

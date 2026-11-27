@@ -44,6 +44,8 @@ import {
   unreadTier,
   favouriteLabel,
   shellBadgeCount,
+  entryRowKey,
+  sectionRowKey,
 } from '../../../src/window/conversation-list-model.ts';
 
 // Synthetic conversations only.
@@ -1133,6 +1135,52 @@ export default async () => {
       );
       expect(group.groupMembers).toStrictEqual(['Ana', 'bo@example.org']);
       expect(toEntry(conversation({ id: 'd' })).groupMembers).toBeUndefined();
+    });
+
+    describe('row keys', () => {
+      // The keys decide which rows a refresh keeps (`list-diff-model.ts`). A key that misses a
+      // change leaves a stale row on screen; a key that moves when the drawing does not throws a
+      // good widget away, which is the cost #501 was about. So both halves are tested.
+      const now = new Date('2026-03-01T12:00:00Z');
+      const labels = new Map([['xmpp-abc123', 'Ana']]);
+      const key = (over: Partial<ListEntry> & { id: string }, picking = false, picked = false) =>
+        entryRowKey(entry(over), labels, picking, picked, now);
+
+      it('is the same for an entry that draws the same', () => {
+        expect(key({ id: 'a' })).toBe(key({ id: 'a' }));
+        // Nothing the row does not show may move it: the canonical thread ids are not drawn.
+        expect(key({ id: 'a', conversationIds: ['a'] })).toBe(key({ id: 'a', conversationIds: ['a', 'b'] }));
+      });
+
+      it('moves with everything the row shows', () => {
+        const base = key({ id: 'a' });
+        expect(key({ id: 'a', title: 'Bo' })).not.toBe(base);
+        expect(key({ id: 'a', unread: 3 })).not.toBe(base);
+        expect(key({ id: 'a', favourite: true })).not.toBe(base);
+        expect(key({ id: 'a', muted: true })).not.toBe(base);
+        expect(key({ id: 'a', preview: 'see you' })).not.toBe(base);
+        expect(key({ id: 'a', lastMessageAt: '2026-03-01T11:30:00Z' })).not.toBe(base);
+        expect(key({ id: 'a', backend: 'signal' })).not.toBe(base);
+        expect(key({ id: 'a' }, true)).not.toBe(base);
+        expect(key({ id: 'a' }, true, true)).not.toBe(key({ id: 'a' }, true));
+      });
+
+      it('tells an empty preview from no preview at all', () => {
+        // The row carries a tooltip only once it has a preview, so the two draw differently.
+        expect(key({ id: 'a', preview: '' })).not.toBe(key({ id: 'a' }));
+      });
+
+      it('moves when an account is renamed', () => {
+        const renamed = new Map([['xmpp-abc123', 'Ana B.']]);
+        expect(entryRowKey(entry({ id: 'a' }), renamed, false, false, now)).not.toBe(key({ id: 'a' }));
+      });
+
+      it('moves a section header with its count and its chevron', () => {
+        const section = { id: 'unread' as const, title: 'Unread', entries: [], unread: 2 };
+        expect(sectionRowKey(section, false)).toBe(sectionRowKey(section, false));
+        expect(sectionRowKey(section, true)).not.toBe(sectionRowKey(section, false));
+        expect(sectionRowKey({ ...section, unread: 3 }, false)).not.toBe(sectionRowKey(section, false));
+      });
     });
   });
 };

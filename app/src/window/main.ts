@@ -17,7 +17,7 @@ import { loadConfig } from '../core/config.ts';
 import { applyAccent, applyColorScheme, applyPrimary, installSurfaces } from './appearance.ts';
 import { applyChatBackground } from './chat-background.ts';
 import { demoActive, prepareDemo } from '../core/demo/index.ts';
-import { startStallProbe, timed } from './stall-probe.ts';
+import { sinceStart, startStallProbe, timed } from './stall-probe.ts';
 import { createWindow } from './window.ts';
 
 // This bundle carries its own copy of the gettext runtime, so the CLI bundle's catalogue is not
@@ -75,9 +75,13 @@ const application = new AdwaitaApp({
       search: process.env.CURLEW_WINDOW_SEARCH || undefined,
       select: Number(process.env.CURLEW_WINDOW_SELECT) || undefined,
       openScope: process.env.CURLEW_WINDOW_OPEN_SCOPE === '1',
+      // The perf harness drives a chat switch and search typing from here (#501).
+      switchTo: process.env.CURLEW_WINDOW_SWITCH?.split(',').filter((id) => id !== ''),
+      typeSearch: process.env.CURLEW_WINDOW_TYPE || undefined,
+      scriptMs: Number(process.env.CURLEW_WINDOW_SCRIPT_MS) || undefined,
     });
     // The line CI waits for: the packaged macOS and Windows window got as far as being drawn.
-    window.connect('map', () => console.log('curlew window: shown'));
+    window.connect('map', () => console.log(`curlew window: shown at ${sinceStart().toFixed(0)}`));
     // A notification opens a chat over the bus: `app.open-conversation` hands the id to the window.
     const open = new Gio.SimpleAction({
       name: 'open-conversation',

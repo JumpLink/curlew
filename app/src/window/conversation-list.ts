@@ -29,6 +29,8 @@ import {
   dropDeselectedAccounts,
   backendChoices,
   buildSections,
+  entryRowKey,
+  sectionRowKey,
   avatarSeed,
   initials,
   listSubtitle,
@@ -45,6 +47,10 @@ import {
   unreadTier,
 } from './conversation-list-model.ts';
 import { mergeSummary, prunePicks, selectionTitle, selectionTools, togglePick } from './selection-model.ts';
+import { runChunked, type CancelWork } from './idle-work.ts';
+import { diffKeys } from './list-diff-model.ts';
+import { createSkeletonRows } from './skeleton-rows.ts';
+import { timed } from './stall-probe.ts';
 
 /** What the selection mode's bottom bar does; the window writes the config and refreshes. */
 export interface PeopleTools {
@@ -74,6 +80,11 @@ export interface ConversationList {
   page: Adw.NavigationPage;
   /** Replace the entries; the selection and the filters stay. */
   setEntries(entries: ListEntry[], accountLabels: Map<string, string>): void;
+  /**
+   * A read of the index is running, or has stopped. Before the first one answers this is the
+   * placeholder rows; after it a marker in the header, with the rows left alone (#541).
+   */
+  setLoading(on: boolean): void;
   /** How many sets of similar people the assistant has to offer; the banner shows while it is above 0. */
   setSuggestions(count: number): void;
   /** Switch one protocol chip on, as a click would. */
@@ -85,6 +96,42 @@ export interface ConversationList {
 }
 
 type RowRef = { kind: 'section'; id: string } | { kind: 'entry'; entry: ListEntry };
+
+/**
+ * A row a rebuild means to show, flat in list order.
+ *
+ * Plain data, not a closure per row: a rebuild plans every row the filters allow but builds only
+ * the {@link PAGE} the person can see, and on a large index the planning itself was 15 of the
+ * 20 ms a background refresh cost.
+ */
+type PlannedRow =
+  | { kind: 'section'; section: Section; collapsed: boolean }
+  | { kind: 'entry'; entry: ListEntry };
+
+/** A row in the list: what it draws ({@link entryRowKey}), and for a conversation its check box. */
+interface RowSlot {
+  key: string;
+  row: Gtk.ListBoxRow;
+  /** The conversation the row stands for; null for a section header. */
+  id: string | null;
+  check: Gtk.CheckButton | null;
+}
+
+/**
+ * Conversation rows the list holds at once, and how many more a scroll towards the end adds.
+ *
+ * A `Gtk.ListBox` has no virtualization: every row is a widget, and handing GTK one costs a pass
+ * over the rows that are already there. Measured on a synthetic index of 10 500 conversations
+ * (`dev/perf.sh`): 0.9 ms at row 2 500, 4.5 ms at row 3 400, 6.9 ms at row 5 900 -- linear in the
+ * row count, so filling the whole list is quadratic. That is what burned five hours of CPU in
+ * under four and made GNOME offer to kill the window (#501); no amount of slicing fixes it,
+ * because the total work itself is the problem.
+ *
+ * So the list holds a window of rows and grows it while the person scrolls. 40 rows is about four
+ * screens at 360 px: inserting one costs GTK well under a tenth of a millisecond there, and a
+ * search that changes every row still only rebuilds forty.
+ */
+const PAGE = 40;
 
 const AVATAR_SIZE = 40;
 const BADGE_SIZE = 22;
@@ -256,8 +303,10 @@ export function createConversationList(
   let hits: ReadonlyMap<string, string> = new Map();
   let scope: SearchScope = people.searchScope();
   const refs = new Map<Gtk.ListBoxRow, RowRef>();
-  // One conversation can show in two sections (Unread and People), so an id maps to every row of it.
-  const checks = new Map<string, Array<{ row: Gtk.ListBoxRow; check: Gtk.CheckButton }>>();
+  // Mirrors the list's children exactly, in their order: a rebuild is applied one row at a time
+  // across main-loop turns and can be cancelled half-way, so this is kept in step with the widget
+  // rather than with the plan. One conversation can show in two sections (Unread and People).
+  const live: RowSlot[] = [];
   let picking = false;
   const picked = new Set<string>();
 
@@ -265,6 +314,9 @@ export function createConversationList(
   list.add_css_class('navigation-sidebar');
   const scroller = new Gtk.ScrolledWindow({ hscrollbarPolicy: Gtk.PolicyType.NEVER, vexpand: true });
   scroller.set_child(list);
+  const vadjust = scroller.get_vadjustment();
+  vadjust.connect('value-changed', () => extend());
+  vadjust.connect('changed', () => extend());
   const empty = new Adw.StatusPage({ iconName: 'view-dual-symbolic', vexpand: true });
   empty.add_css_class('compact');
   const addButton = new Gtk.Button({ label: _('Add an account'), marginTop: 12 });
@@ -274,6 +326,12 @@ export function createConversationList(
   const stack = new Gtk.Stack();
   stack.add_named(scroller, 'list');
   stack.add_named(empty, 'empty');
+  stack.add_named(createSkeletonRows(), 'loading');
+  // Until the first read comes back the list showed "No conversations yet", which on a large index
+  // is both wrong and the last thing a person needs to read (#541). Placeholder rows instead.
+  stack.set_visible_child_name('loading');
+  stack.update_state([Gtk.AccessibleState.BUSY], [true]);
+  stack.update_property([Gtk.AccessibleProperty.LABEL], [_('Loading conversations')]);
 
   const search = new Gtk.SearchEntry({ placeholderText: _('Search conversations'), hexpand: true });
   search.update_property([Gtk.AccessibleProperty.LABEL], [_('Search conversations')]);
@@ -337,10 +395,14 @@ export function createConversationList(
   const filter = (): ListFilter => ({ backends, accounts, query, hits, scope });
 
   const research = (): void => {
-    hits =
+    // A new search is a new list and a new scroll position, so the window of rows starts over:
+    // without this, clearing a search after scrolling deep would rebuild every row scrolled past.
+    shown = PAGE;
+    hits = timed('s text', () =>
       scope !== 'names' && query.trim().length >= MIN_TEXT_QUERY
         ? people.searchText(query.trim())
-        : new Map();
+        : new Map(),
+    );
     people.searchChanged(hits.size > 0 ? query.trim() : '');
     rebuild();
   };
@@ -435,15 +497,31 @@ export function createConversationList(
     updateFilterButton();
   }
 
-  let rebuildGeneration = 0;
-  const FIRST_ROWS = 40;
-  const ROWS_PER_IDLE = 40;
+  // The sliced runs filling the list, if any are still going: a new rebuild stops them all before
+  // they write into a list they no longer describe. A fill is two runs, one chained on the other,
+  // and the second may start while the first is still being set up -- hence a list and not a slot.
+  let running: CancelWork[] = [];
+  const stop = (): void => {
+    const runs = running;
+    running = [];
+    for (const cancel of runs) cancel();
+  };
+  const start = (steps: ReadonlyArray<() => void>, done?: () => void): void => {
+    running.push(runChunked(steps, done));
+  };
+  /** The index has been read at least once; until then the list shows placeholder rows. */
+  let read = false;
+  /** Every row the filters allow, built or not; the first {@link shown} of them are on screen. */
+  let planned: PlannedRow[] = [];
+  let shown = PAGE;
+  /** A build is in flight, so the growing content height is not mistaken for a scroll. */
+  let filling = false;
 
   function rebuild(): void {
-    list.remove_all();
-    refs.clear();
-    checks.clear();
-    const sections = buildSections(entries, filter());
+    stop();
+    // Nothing has been read yet, so there is nothing to say about what is or is not in the index.
+    if (!read) return;
+    const sections = timed('r sections', () => buildSections(entries, filter()));
     if (sections.length === 0) {
       const none = entries.length === 0;
       empty.set_title(none ? _('No conversations yet') : _('No matches'));
@@ -457,47 +535,124 @@ export function createConversationList(
           : _('Nothing fits the search and filters.'),
       );
       addButton.set_visible(none);
+      // The page is swapped first, so the rows go while they are off screen.
       stack.set_visible_child_name('empty');
+      planned = [];
+      apply([], []);
       return;
     }
     stack.set_visible_child_name('list');
-    // Thousands of rows built in one go blocked the main loop for over a second: the first batch
-    // is built now, the rest in idle batches that a newer rebuild cancels.
-    const queue: Array<() => void> = [];
+    const plan: PlannedRow[] = [];
     for (const section of sections) {
       const isCollapsed = collapsed.has(section.id);
-      queue.push(() => {
-        const header = sectionRow(section, isCollapsed);
-        refs.set(header, { kind: 'section', id: section.id });
-        list.append(header);
-      });
+      plan.push({ kind: 'section', section, collapsed: isCollapsed });
       if (isCollapsed) continue;
-      for (const entry of section.entries) {
-        queue.push(() => {
-          const { row, check } = entryRow(entry, labels, picking, picked.has(entry.id));
-          refs.set(row, { kind: 'entry', entry });
-          const seen = checks.get(entry.id);
-          if (seen) seen.push({ row, check });
-          else checks.set(entry.id, [{ row, check }]);
-          list.append(row);
-          // The first row of the open conversation carries the mark; a second one would steal it.
-          if (!picking && entry.id === selectedId && !seen) list.select_row(row);
-        });
-      }
+      for (const entry of section.entries) plan.push({ kind: 'entry', entry });
     }
-    const generation = ++rebuildGeneration;
-    let next = 0;
-    const build = (count: number) => {
-      const end = Math.min(next + count, queue.length);
-      for (; next < end; next++) queue[next]!();
-    };
-    build(FIRST_ROWS);
-    if (next < queue.length)
-      GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
-        if (generation !== rebuildGeneration) return GLib.SOURCE_REMOVE;
-        build(ROWS_PER_IDLE);
-        return next < queue.length ? GLib.SOURCE_CONTINUE : GLib.SOURCE_REMOVE;
+    planned = plan;
+    fill();
+  }
+
+  /** What the row would draw, so an identical one on screen can stay ({@link diffKeys}). */
+  function keyOf(planned: PlannedRow, now: Date): string {
+    return planned.kind === 'section'
+      ? sectionRowKey(planned.section, planned.collapsed)
+      : entryRowKey(planned.entry, labels, picking, picked.has(planned.entry.id), now);
+  }
+
+  function buildRow(planned: PlannedRow): RowSlot {
+    if (planned.kind === 'section') {
+      const header = sectionRow(planned.section, planned.collapsed);
+      refs.set(header, { kind: 'section', id: planned.section.id });
+      return { key: '', row: header, id: null, check: null };
+    }
+    const { entry } = planned;
+    const { row, check } = entryRow(entry, labels, picking, picked.has(entry.id));
+    refs.set(row, { kind: 'entry', entry });
+    // The open conversation is marked on its first row, and only while no row holds the mark
+    // already: a kept row brings its selection with it.
+    if (!picking && entry.id === selectedId && list.get_selected_row() === null) list.select_row(row);
+    return { key: '', row, id: entry.id, check };
+  }
+
+  /** Put the first {@link shown} planned rows on screen, keeping the ones that already fit. */
+  function fill(): void {
+    stop();
+    const plan = planned.slice(0, shown);
+    // One instant for the whole fill: the keys are folded across several turns, and a row whose
+    // "4 min ago" was folded a turn later would differ from one folded a turn earlier.
+    const now = new Date();
+    // Folding a few dozen keys is still more than a frame on a slow machine, so that pass is
+    // sliced too and the list is only touched once every key is in.
+    const keys: string[] = Array.from({ length: plan.length }, () => '');
+    filling = true;
+    start(
+      plan.map((row, i) => () => {
+        keys[i] = keyOf(row, now);
+      }),
+      () => {
+        apply(plan, keys);
+      },
+    );
+  }
+
+  /**
+   * Grow the window of rows while the end of the list is in reach.
+   *
+   * Driven by the scroll position rather than by a timer, so a list nobody scrolls never pays for
+   * rows nobody looks at. It also fires on `changed`, which is how the first screens fill: each
+   * finished batch makes the content taller, and that is a scroll event too until the list is
+   * taller than the two screens of slack below.
+   */
+  function extend(): void {
+    if (filling || shown >= planned.length) return;
+    const room = vadjust.get_page_size() * 2;
+    if (vadjust.get_value() + vadjust.get_page_size() + room < vadjust.get_upper()) return;
+    shown = Math.min(planned.length, shown + PAGE);
+    fill();
+  }
+
+  /**
+   * Make the list show `plan`, keeping every row that already draws what the plan asks for and
+   * building the rest across main-loop turns.
+   *
+   * Both halves matter. Building thousands of rows in one go blocked the loop for over a second,
+   * and throwing thousands away cost another 700 ms in a single atomic GTK pass (#501), so the
+   * work is both sliced and, as far as the keys allow, not done at all.
+   */
+  function apply(plan: ReadonlyArray<PlannedRow>, keys: readonly string[]): void {
+    const diff = timed('r diff', () =>
+      diffKeys(
+        live.map((slot) => slot.key),
+        keys,
+      ),
+    );
+    const steps: Array<() => void> = [];
+    // Dropped from the bottom up, so the position of every row still to drop stays where the diff
+    // said it was; then filled in from the top down, where each insert lands on its final index.
+    for (let i = diff.remove.length - 1; i >= 0; i--) {
+      const at = diff.remove[i]!;
+      steps.push(() => {
+        const [slot] = live.splice(at, 1);
+        if (slot === undefined) return;
+        refs.delete(slot.row);
+        list.remove(slot.row);
       });
+    }
+    for (const at of diff.insert) {
+      steps.push(() => {
+        const slot = buildRow(plan[at]!);
+        slot.key = keys[at]!;
+        live.splice(at, 0, slot);
+        if (at === live.length - 1) list.append(slot.row);
+        else list.insert(slot.row, at);
+      });
+    }
+    start(steps, () => {
+      filling = false;
+      // The rows just added made the list taller; if the end is still in reach, go on.
+      extend();
+    });
   }
 
   list.connect('row-activated', (_list: Gtk.ListBox, row: Gtk.ListBoxRow) => {
@@ -516,10 +671,17 @@ export function createConversationList(
     selectedId = ref.entry.id;
     onSelect(ref.entry);
   });
+  // Searching is the most expensive rebuild there is -- a full-text query over every message, then
+  // the sections folded again -- so it must not run per keystroke. It does not: `search-changed`
+  // is `Gtk.SearchEntry`'s own debounced signal (`search-delay`, 150 ms, restarted by each change),
+  // so touch-typing a name costs one rebuild and not nine. A second timer here would only add
+  // another 150 ms before the person sees an answer.
   search.connect('search-changed', () => {
     query = search.get_text();
     research();
   });
+  // A rebuild in flight outlives the widget otherwise, and its next turn would touch a dead list.
+  search.connect('destroy', () => stop());
 
   const searchToggle = new Gtk.ToggleButton({ iconName: 'system-search-symbolic' });
   searchToggle.set_tooltip_text(_('Search'));
@@ -535,6 +697,12 @@ export function createConversationList(
   header.pack_start(searchToggle);
   header.pack_start(filterButton);
   header.pack_end(new Gtk.MenuButton({ iconName: 'open-menu-symbolic', menuModel: menu, primary: true }));
+  // A reload while the list is already up changes a handful of rows: the rows stay as they are,
+  // stay clickable, and this says that more may arrive. Deliberately not a banner and not a
+  // progress bar over the list -- nothing that moves the rows the person is about to click.
+  const busy = new Adw.Spinner({ widthRequest: 16, heightRequest: 16, visible: false });
+  busy.update_property([Gtk.AccessibleProperty.LABEL], [_('Refreshing conversations')]);
+  header.pack_end(busy);
 
   // Selection mode swaps the whole header for one that only counts and cancels (Files, Fractal).
   const pickTitle = new Adw.WindowTitle({ title: '' });
@@ -643,20 +811,21 @@ export function createConversationList(
     if (!on) picked.clear();
     // Single selection marks the open conversation; a selection mode has no such mark.
     list.set_selection_mode(on ? Gtk.SelectionMode.NONE : Gtk.SelectionMode.SINGLE);
-    for (const [id, rows] of checks) {
-      for (const { check } of rows) {
-        check.set_visible(on);
-        check.set_active(picked.has(id));
-      }
-      if (!on && id === selectedId) list.select_row(rows[0]!.row);
+    for (const slot of live) {
+      if (slot.check === null || slot.id === null) continue;
+      slot.check.set_visible(on);
+      slot.check.set_active(picked.has(slot.id));
     }
+    // Leaving the mode gives the open conversation its mark back, on its first row.
+    const marked = on ? undefined : live.find((slot) => slot.id === selectedId);
+    if (marked) list.select_row(marked.row);
     bars.set_visible_child_name(on ? 'picking' : 'normal');
     toolbar.set_reveal_bottom_bars(on);
     refreshTools();
   };
   function pick(entry: ListEntry): void {
     togglePick(picked, entry.id);
-    for (const { check } of checks.get(entry.id) ?? []) check.set_active(picked.has(entry.id));
+    for (const slot of live) if (slot.id === entry.id) slot.check?.set_active(picked.has(entry.id));
     refreshTools();
   }
   const rowAt = (y: number): ListEntry | null => {
@@ -764,6 +933,10 @@ export function createConversationList(
     setEntries(next, accountLabels) {
       entries = next;
       labels = accountLabels;
+      // The index has answered, so the placeholder rows have said all they can -- from here the
+      // list shows what is there, including nothing.
+      read = true;
+      stack.update_state([Gtk.AccessibleState.BUSY], [false]);
       // A filter whose choice vanished (an account removed) must not hide everything.
       for (const key of backends) if (!entries.some((e) => e.backend === key)) backends.delete(key);
       for (const [backend, chosen] of accounts)
@@ -773,6 +946,16 @@ export function createConversationList(
       rebuildFilters();
       rebuild();
       if (picking) refreshTools();
+    },
+    setLoading(on) {
+      // A first read that ends without entries -- an unreadable or empty index -- still ends the
+      // placeholder: it is replaced by the empty state, which says what happened.
+      if (!on && !read) {
+        read = true;
+        stack.update_state([Gtk.AccessibleState.BUSY], [false]);
+        rebuild();
+      }
+      busy.set_visible(on && read);
     },
     setSuggestions(count) {
       banner.set_title(
