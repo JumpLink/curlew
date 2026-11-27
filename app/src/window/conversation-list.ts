@@ -45,6 +45,7 @@ import {
   unreadTier,
 } from './conversation-list-model.ts';
 import { mergeSummary, prunePicks, selectionTitle, selectionTools, togglePick } from './selection-model.ts';
+import { timed } from './stall-probe.ts';
 
 /** What the selection mode's bottom bar does; the window writes the config and refreshes. */
 export interface PeopleTools {
@@ -337,10 +338,11 @@ export function createConversationList(
   const filter = (): ListFilter => ({ backends, accounts, query, hits, scope });
 
   const research = (): void => {
-    hits =
+    hits = timed('s text', () =>
       scope !== 'names' && query.trim().length >= MIN_TEXT_QUERY
         ? people.searchText(query.trim())
-        : new Map();
+        : new Map(),
+    );
     people.searchChanged(hits.size > 0 ? query.trim() : '');
     rebuild();
   };
@@ -443,7 +445,7 @@ export function createConversationList(
     list.remove_all();
     refs.clear();
     checks.clear();
-    const sections = buildSections(entries, filter());
+    const sections = timed('r sections', () => buildSections(entries, filter()));
     if (sections.length === 0) {
       const none = entries.length === 0;
       empty.set_title(none ? _('No conversations yet') : _('No matches'));

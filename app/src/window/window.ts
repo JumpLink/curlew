@@ -38,7 +38,7 @@ import { choiceOfEntry, type ListEntry } from './conversation-list-model.ts';
 import { aiEnabled, deltaChatAccountIds, loadConfig, saveConfig } from '../core/config.ts';
 import { DEFAULT_SEARCH_SCOPE } from '../core/lib/search-scope.ts';
 import { candidateSets } from './merge-candidates-model.ts';
-import { timed } from './stall-probe.ts';
+import { sinceStart, timed } from './stall-probe.ts';
 import { hasContactPage, presentContactPage } from './contact-page.ts';
 import { mentionEntry, mentionName } from './mention-model.ts';
 import { presentMergeAssistant } from './merge-assistant.ts';
@@ -126,6 +126,47 @@ export interface WindowOptions {
   openScope?: boolean;
   /** Open this conversation at start (the screenshot hook `CURLEW_WINDOW_OPEN`). */
   open?: string;
+  /**
+   * Open these conversations in turn, one per {@link WindowOptions.scriptMs} (the perf hook
+   * `CURLEW_WINDOW_SWITCH`). Switching chat is the move that froze the window (#541), and
+   * opening one chat at start does not measure it: the list is still being built then.
+   */
+  switchTo?: readonly string[];
+  /** Type this into the search one character at a time (the perf hook `CURLEW_WINDOW_TYPE`). */
+  typeSearch?: string;
+  /** Milliseconds between the driven steps above (`CURLEW_WINDOW_SCRIPT_MS`). */
+  scriptMs?: number;
+}
+
+/** How long to wait for that frame before giving up on it (see `onNextPaint`). */
+const PAINT_WAIT_MS = 1000;
+
+/**
+ * Runs `done` once the next frame has actually been painted.
+ *
+ * There is no frame clock before the window is mapped, and a compositor that never maps it would
+ * leave `done` uncalled -- which a reader of the log cannot tell apart from a window that never
+ * came up. So the frame is waited for, but not forever.
+ */
+function onNextPaint(widget: Gtk.Widget, done: () => void): void {
+  let fired = false;
+  const once = () => {
+    if (fired) return;
+    fired = true;
+    done();
+  };
+  const clock = widget.get_frame_clock();
+  if (clock) {
+    const painted = clock.connect('after-paint', () => {
+      clock.disconnect(painted);
+      once();
+    });
+    widget.queue_draw();
+  }
+  GLib.timeout_add(GLib.PRIORITY_DEFAULT_IDLE, PAINT_WAIT_MS, () => {
+    once();
+    return GLib.SOURCE_REMOVE;
+  });
 }
 
 /**
@@ -833,7 +874,15 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
     GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
       pendingLoad.push(() => {
         if (options.protocol) sidebar.chooseProtocol(options.protocol);
-        resolve();
+        // The counterpart of `curlew window: shown`. The list now HOLDS what the index had, but
+        // holding is not showing: the frame that draws these rows is still to come, the person
+        // waits through it, and it is GTK's work rather than the list's -- 180 ms of it where
+        // there is no GPU. So cold start ends with that frame, not with the read, and the
+        // responsiveness budget applies to what the window does afterwards (dev/perf-report.mjs).
+        onNextPaint(window, () => {
+          console.log(`curlew window: ready at ${sinceStart().toFixed(0)}`);
+          resolve();
+        });
       });
       refresh();
       return GLib.SOURCE_REMOVE;
@@ -867,6 +916,31 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
     window.present();
   });
   window.add_action(openAction);
+  // The perf script: one move per tick, each named, so every stall the probe reports after it
+  // belongs to exactly one move (#501). Idle outside the measurement harness.
+  const steps: Array<[string, () => void]> = [
+    ...(options.switchTo ?? []).map((id): [string, () => void] => [
+      'switch chat',
+      () => openConversation(id),
+    ]),
+    ...[...(options.typeSearch ?? '')].map((_c, i): [string, () => void] => [
+      'search keystroke',
+      () => sidebar.showSearch(options.typeSearch!.slice(0, i + 1), false),
+    ]),
+  ];
+  let scriptHook = 0;
+  if (steps.length > 0) {
+    let at = 0;
+    scriptHook = GLib.timeout_add(GLib.PRIORITY_DEFAULT, options.scriptMs ?? 1200, () => {
+      const step = steps[at++];
+      if (step === undefined) {
+        scriptHook = 0;
+        return GLib.SOURCE_REMOVE;
+      }
+      timed(step[0], step[1]);
+      return GLib.SOURCE_CONTINUE;
+    });
+  }
   const contactAction = new Gio.SimpleAction({ name: 'open-contact' });
   contactAction.connect('activate', () => {
     if (currentEntry) openContact(currentEntry);
@@ -951,7 +1025,7 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   );
   window.connect('destroy', () => {
     // Nothing may fire into the destroyed window: the poll, the retries and the pending idles.
-    for (const id of [readPoll, liveRetry, searchHook, suggestionsIdle, activationIdle, liveIdle])
+    for (const id of [readPoll, liveRetry, searchHook, scriptHook, suggestionsIdle, activationIdle, liveIdle])
       if (id !== 0) GLib.source_remove(id);
     readSync.cancelAll();
     stopIndexWatch();
