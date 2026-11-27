@@ -24,6 +24,7 @@ import {
   isBackgroundChoice,
   isColorScheme,
 } from './lib/appearance.ts';
+import { isMicMode, MIC_MODES, type MicMode } from './lib/mic-mode.ts';
 import { isSearchScope, SEARCH_SCOPES, type SearchScope } from './lib/search-scope.ts';
 import { type AgentAccessPolicy, defaultAgentAccess, parseAgentAccess } from './agent-access.ts';
 import { type Grant, type ParseGrantsOptions, parseGrants } from './grants.ts';
@@ -85,6 +86,8 @@ export interface UiConfig {
   searchScope?: SearchScope;
   /** The emoji picked last, newest first (the picker's "Recent" row). Unset: none yet. */
   recentEmoji?: string[];
+  /** What the composer's microphone does: `voice` (a voice message) or `dictate`. Unset: `voice`. */
+  micMode?: MicMode;
 }
 
 export interface CurlewConfig {
@@ -384,6 +387,9 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
   const recentEmoji = Array.isArray(recentRaw)
     ? recentRaw.filter((one): one is string => typeof one === 'string')
     : undefined;
+  const micMode = (rawUi as Record<string, unknown>).micMode;
+  if (micMode !== undefined && !isMicMode(micMode))
+    throw new Error(`config.ui.micMode must be one of ${MIC_MODES.join(', ')}`);
   const ui: UiConfig = {
     showAllEmails,
     ...(ai === undefined ? {} : { ai }),
@@ -401,6 +407,7 @@ export function parseConfig(text: string, options: ParseGrantsOptions = {}): Cur
     ...(searchScope === undefined ? {} : { searchScope }),
     ...(sidebarWidth === undefined ? {} : { sidebarWidth: Math.round(sidebarWidth) }),
     ...(recentEmoji === undefined || recentEmoji.length === 0 ? {} : { recentEmoji }),
+    ...(micMode === undefined ? {} : { micMode }),
   };
 
   const senders: Record<string, Classification> = {};

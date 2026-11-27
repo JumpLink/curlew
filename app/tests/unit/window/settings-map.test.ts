@@ -25,6 +25,7 @@ const FULL = {
     searchScope: 'names',
     sidebarWidth: 420,
     recentEmoji: ['😀'],
+    micMode: 'dictate',
   },
   mailAccounts: { 'mail-a': { deltaChat: true } },
 };
