@@ -72,6 +72,7 @@ app/src/core/lib/i18n.ts
 app/src/core/lib/in-process-receive.ts
 app/src/core/lib/message-notices.ts
 app/src/core/lib/message-notifications.ts
+app/src/core/lib/mic-mode.ts
 app/src/core/lib/pull-sync.ts
 app/src/core/lib/restart-coalescer.ts
 app/src/core/lib/sandbox.ts
@@ -180,6 +181,8 @@ app/src/window/media-viewer.ts
 app/src/window/mention-model.ts
 app/src/window/merge-assistant.ts
 app/src/window/merge-candidates-model.ts
+app/src/window/microphone-model.ts
+app/src/window/microphone.ts
 app/src/window/mismatch-restart-model.ts
 app/src/window/mismatch-restart.ts
 app/src/window/new-conversation-model.ts

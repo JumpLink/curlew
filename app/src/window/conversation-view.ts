@@ -89,8 +89,7 @@ import {
 import { bubbleActionRow } from './bubble-menu.ts';
 import { guardTouchSelection, selectableForPointerOnly } from './bubble-select.ts';
 import { createComposerFiles } from './composer-files.ts';
-import { createVoiceRecorder } from './voice-recorder.ts';
-import { createDictation } from './dictation.ts';
+import { createMicrophone } from './microphone.ts';
 import { transcriptBlock } from './transcribe-ui.ts';
 import { createJob, dictationInsert, transcribableIndex, type Job } from './transcribe-model.ts';
 import { currentOffer, probeOffer, workerInstall, workerTranscribe } from './transcribe-worker.ts';
@@ -413,22 +412,18 @@ export function createConversationView(
     pasteInto: input.textView,
   });
   composer.addStart(files.button);
-  const recorder = createVoiceRecorder({
+  const microphone = createMicrophone({
     toast: (text) => overlay.add_toast(new Adw.Toast({ title: text, timeout: 4 })),
     onRecorded: (file) => files.addRecorded(file),
-  });
-  composer.addStart(recorder.button);
-  const dictation = createDictation({
-    toast: (text) => overlay.add_toast(new Adw.Toast({ title: text, timeout: 4 })),
     insert: (spoken) => {
       const before = input.getText();
       input.setText(before + dictationInsert(spoken, before));
       input.grabFocus();
     },
   });
-  composer.addStart(dictation.button);
+  composer.addStart(microphone.widget);
   // The buttons stay at the bottom edge while the field grows upward.
-  for (const part of [files.button, recorder.button, dictation.button]) part.set_valign(Gtk.Align.END);
+  files.button.set_valign(Gtk.Align.END);
   // Everything the person types into rides in one bottom bar, so the history can run beneath it.
   const compose = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
   // Each part is a card of its own, so it stays legible over the messages scrolling beneath it.
@@ -447,7 +442,7 @@ export function createConversationView(
     return card;
   };
   hint.set_margin_bottom(4);
-  for (const part of [hint, recorder.bar, files.strip, replyBar, editBar]) compose.append(floating(part));
+  for (const part of [hint, microphone.bar, files.strip, replyBar, editBar]) compose.append(floating(part));
   compose.append(composer);
   const toolbar = new Adw.ToolbarView({ extendContentToBottomEdge: true });
   toolbar.add_top_bar(header);
@@ -639,8 +634,10 @@ export function createConversationView(
   const updateAttachable = (): void => {
     const on =
       selectedChoice !== null && !composerBlocked && threadCan('attachments')(selectedChoice.backend);
-    recorder.setAvailable(on && selectedChoice !== null && threadCan('voiceNotes')(selectedChoice.backend));
-    dictation.setAvailable(!composerBlocked);
+    microphone.setAvailable({
+      voice: on && selectedChoice !== null && threadCan('voiceNotes')(selectedChoice.backend),
+      dictate: !composerBlocked,
+    });
     if (files.setAttachable(on) > 0) {
       overlay.add_toast(
         new Adw.Toast({
