@@ -37,7 +37,8 @@ import { loadSearchMatchIds } from './conversation-store.ts';
 import { choiceOfEntry, type ListEntry } from './conversation-list-model.ts';
 import { aiEnabled, deltaChatAccountIds, loadConfig, saveConfig } from '../core/config.ts';
 import { DEFAULT_SEARCH_SCOPE } from '../core/lib/search-scope.ts';
-import { candidateSets } from './merge-candidates-model.ts';
+import { candidateRow, candidateSets, setsOfRows, type CandidateRow } from './merge-candidates-model.ts';
+import { runChunked, type CancelWork } from './idle-work.ts';
 import { sinceStart, timed } from './stall-probe.ts';
 import { hasContactPage, presentContactPage } from './contact-page.ts';
 import { mentionEntry, mentionName } from './mention-model.ts';
@@ -772,7 +773,8 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   let labelled = false;
   let shown: ListEntry[] = [];
   let stamp = '';
-  let suggestionsIdle = 0;
+  /** The running duplicate scan, if any: a newer refresh replaces it. */
+  let scanning: CancelWork = () => {};
   let activationIdle = 0;
   let refreshRun = 0;
   let loading = false;
@@ -796,15 +798,21 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
       if (loaded === null) return;
       shown = loaded;
       timed('set entries', () => sidebar.setEntries(shown, labels));
-      // The duplicate scan is only a banner: it runs when the loop is idle, once per burst of refreshes.
-      if (suggestionsIdle) GLib.source_remove(suggestionsIdle);
-      suggestionsIdle = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
-        suggestionsIdle = 0;
-        timed('candidate sets', () =>
-          sidebar.setSuggestions(candidateSets(shown, loadConfig(configPath()).declinedMerges).length),
-        );
-        return GLib.SOURCE_REMOVE;
-      });
+      // The duplicate scan is only a banner: it runs when the loop is idle, once per burst of
+      // refreshes, and the name folding that is nearly all of its cost runs in budgeted turns.
+      scanning();
+      const rows: CandidateRow[] = [];
+      const entries = shown;
+      scanning = runChunked(
+        entries.map((entry) => () => {
+          const row = candidateRow(entry);
+          if (row) rows.push(row);
+        }),
+        () =>
+          timed('candidate sets', () =>
+            sidebar.setSuggestions(setsOfRows(rows, loadConfig(configPath()).declinedMerges).length),
+          ),
+      );
       pendingLoad.forEach((done) => done());
       pendingLoad.length = 0;
       if (liveNext) {
@@ -969,7 +977,9 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   })();
   // The index changes as the daemon syncs; coming back to the window is the cheap moment to look.
   window.connect('notify::is-active', () => {
-    if (!window.is_active || listStamp() === stamp || activationIdle) return;
+    // `loading` also covers the very first load, whose stamp is still the empty one: becoming
+    // active then started a SECOND full read of the list on top of the first (#501).
+    if (!window.is_active || loading || listStamp() === stamp || activationIdle) return;
     // Let the window paint and take its first click before the list is reloaded.
     activationIdle = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
       activationIdle = 0;
@@ -1025,8 +1035,9 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   );
   window.connect('destroy', () => {
     // Nothing may fire into the destroyed window: the poll, the retries and the pending idles.
-    for (const id of [readPoll, liveRetry, searchHook, scriptHook, suggestionsIdle, activationIdle, liveIdle])
+    for (const id of [readPoll, liveRetry, searchHook, scriptHook, activationIdle, liveIdle])
       if (id !== 0) GLib.source_remove(id);
+    scanning();
     readSync.cancelAll();
     stopIndexWatch();
     stopConfigWatch();

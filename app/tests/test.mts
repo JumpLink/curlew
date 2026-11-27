@@ -130,6 +130,8 @@ import windowMismatchRestart from './unit/window/mismatch-restart.test.ts';
 import windowConversationList from './unit/window/conversation-list-model.test.ts';
 import windowSearchScope from './unit/window/search-scope.test.ts';
 import windowCandidates from './unit/window/merge-candidates-model.test.ts';
+import windowListDiff from './unit/window/list-diff-model.test.ts';
+import windowIdleWork from './unit/window/idle-work-model.test.ts';
 import windowListStamp from './unit/window/list-stamp.test.ts';
 import windowStallProbeModel from './unit/window/stall-probe-model.test.ts';
 import windowEmojiModel from './unit/window/emoji-model.test.ts';
@@ -322,6 +324,8 @@ run({
   windowSearchScope,
   windowSelection,
   windowCandidates,
+  windowListDiff,
+  windowIdleWork,
   windowListStamp,
   windowStallProbeModel,
   windowEmojiModel,

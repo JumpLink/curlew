@@ -1027,3 +1027,43 @@ export function initials(title: string): string {
 export function avatarSeed(entry: Pick<ListEntry, 'title' | 'self'>): string {
   return entry.self === true || entry.title === _('Note to self') ? NOTE_TO_SELF_ID : entry.title;
 }
+
+/**
+ * Everything a conversation row draws, in one string: two rows with the same key render the same
+ * pixels, so a refresh keeps the widget instead of building it again (`list-diff-model.ts`).
+ *
+ * It is spelled out field by field rather than hashing the whole entry, because the entry carries
+ * more than the row shows and a key that moves when the drawing does not would throw the widget
+ * away for nothing. Everything `entryRow` in `conversation-list.ts` reads appears here.
+ */
+export function entryRowKey(
+  entry: ListEntry,
+  accountLabels: ReadonlyMap<string, string>,
+  picking: boolean,
+  picked: boolean,
+  now: Date = new Date(),
+): string {
+  return [
+    entry.id,
+    entry.title,
+    unreadTier(entry),
+    unreadText(entry.unread),
+    unreadLabel(entry),
+    shortTime(entry.lastMessageAt, now),
+    favouriteLabel(entry) ?? '',
+    muteTooltip(entry) ?? '',
+    // The row has a tooltip only once it has a preview, so no preview and an empty one differ.
+    entry.preview === undefined ? '' : `=${entry.preview}`,
+    listSubtitle(entry, accountLabels),
+    avatarSeed(entry),
+    initials(entry.title),
+    protocolIcon(entryCarrier(entry)),
+    picking ? 'pick' : '',
+    picked ? 'on' : '',
+  ].join('\u0000');
+}
+
+/** The same for a section header. */
+export function sectionRowKey(section: Section, collapsed: boolean): string {
+  return [section.id, section.title, String(section.unread), collapsed ? 'shut' : ''].join('\u0000');
+}

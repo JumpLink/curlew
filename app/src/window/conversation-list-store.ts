@@ -217,15 +217,22 @@ export async function loadConversationEntriesAsync(
         MAIL_LIMIT,
       );
       if (isStale()) return null;
+      // The three lookups are read before the fold, so the reads and the fold are two dispatches
+      // rather than one long one.
+      const identities = accountIdentities(db);
+      const rooms = chatRooms(db);
+      const features = listPeerFeatures(db, 'xmpp');
+      await nextTurn();
+      if (isStale()) return null;
       const entries = toEntries(
         conversations.filter((conversation) => !switchedOff(conversation.backend)),
         ui.showAllEmails,
-        accountIdentities(db),
-        chatRooms(db),
+        identities,
+        rooms,
         mergedPeople,
         pins,
         contactChoices,
-        listPeerFeatures(db, 'xmpp'),
+        features,
       );
       const ids = entries.flatMap((e) => e.conversationIds);
       const previews = new Map<string, MessagePreview>();
