@@ -49,6 +49,7 @@ import {
 import { mergeSummary, prunePicks, selectionTitle, selectionTools, togglePick } from './selection-model.ts';
 import { runChunked, type CancelWork } from './idle-work.ts';
 import { diffKeys } from './list-diff-model.ts';
+import { createSkeletonRows } from './skeleton-rows.ts';
 import { timed } from './stall-probe.ts';
 
 /** What the selection mode's bottom bar does; the window writes the config and refreshes. */
@@ -79,6 +80,11 @@ export interface ConversationList {
   page: Adw.NavigationPage;
   /** Replace the entries; the selection and the filters stay. */
   setEntries(entries: ListEntry[], accountLabels: Map<string, string>): void;
+  /**
+   * A read of the index is running, or has stopped. Before the first one answers this is the
+   * placeholder rows; after it a marker in the header, with the rows left alone (#541).
+   */
+  setLoading(on: boolean): void;
   /** How many sets of similar people the assistant has to offer; the banner shows while it is above 0. */
   setSuggestions(count: number): void;
   /** Switch one protocol chip on, as a click would. */
@@ -320,6 +326,12 @@ export function createConversationList(
   const stack = new Gtk.Stack();
   stack.add_named(scroller, 'list');
   stack.add_named(empty, 'empty');
+  stack.add_named(createSkeletonRows(), 'loading');
+  // Until the first read comes back the list showed "No conversations yet", which on a large index
+  // is both wrong and the last thing a person needs to read (#541). Placeholder rows instead.
+  stack.set_visible_child_name('loading');
+  stack.update_state([Gtk.AccessibleState.BUSY], [true]);
+  stack.update_property([Gtk.AccessibleProperty.LABEL], [_('Loading conversations')]);
 
   const search = new Gtk.SearchEntry({ placeholderText: _('Search conversations'), hexpand: true });
   search.update_property([Gtk.AccessibleProperty.LABEL], [_('Search conversations')]);
@@ -497,6 +509,8 @@ export function createConversationList(
   const start = (steps: ReadonlyArray<() => void>, done?: () => void): void => {
     running.push(runChunked(steps, done));
   };
+  /** The index has been read at least once; until then the list shows placeholder rows. */
+  let read = false;
   /** Every row the filters allow, built or not; the first {@link shown} of them are on screen. */
   let planned: PlannedRow[] = [];
   let shown = PAGE;
@@ -505,6 +519,8 @@ export function createConversationList(
 
   function rebuild(): void {
     stop();
+    // Nothing has been read yet, so there is nothing to say about what is or is not in the index.
+    if (!read) return;
     const sections = timed('r sections', () => buildSections(entries, filter()));
     if (sections.length === 0) {
       const none = entries.length === 0;
@@ -681,6 +697,13 @@ export function createConversationList(
   header.pack_start(searchToggle);
   header.pack_start(filterButton);
   header.pack_end(new Gtk.MenuButton({ iconName: 'open-menu-symbolic', menuModel: menu, primary: true }));
+  // A reload while the list is already up changes a handful of rows: the rows stay as they are,
+  // stay clickable, and this says that more may arrive. Deliberately not a banner and not a
+  // progress bar over the list -- nothing that moves the rows the person is about to click.
+  const busy = new Adw.Spinner({ widthRequest: 16, heightRequest: 16, visible: false });
+  busy.update_property([Gtk.AccessibleProperty.LABEL], [_('Refreshing conversations')]);
+  header.pack_end(busy);
+
   // Selection mode swaps the whole header for one that only counts and cancels (Files, Fractal).
   const pickTitle = new Adw.WindowTitle({ title: '' });
   const pickHeader = new Adw.HeaderBar({ showEndTitleButtons: false, titleWidget: pickTitle });
@@ -910,6 +933,10 @@ export function createConversationList(
     setEntries(next, accountLabels) {
       entries = next;
       labels = accountLabels;
+      // The index has answered, so the placeholder rows have said all they can -- from here the
+      // list shows what is there, including nothing.
+      read = true;
+      stack.update_state([Gtk.AccessibleState.BUSY], [false]);
       // A filter whose choice vanished (an account removed) must not hide everything.
       for (const key of backends) if (!entries.some((e) => e.backend === key)) backends.delete(key);
       for (const [backend, chosen] of accounts)
@@ -919,6 +946,16 @@ export function createConversationList(
       rebuildFilters();
       rebuild();
       if (picking) refreshTools();
+    },
+    setLoading(on) {
+      // A first read that ends without entries -- an unreadable or empty index -- still ends the
+      // placeholder: it is replaced by the empty state, which says what happened.
+      if (!on && !read) {
+        read = true;
+        stack.update_state([Gtk.AccessibleState.BUSY], [false]);
+        rebuild();
+      }
+      busy.set_visible(on && read);
     },
     setSuggestions(count) {
       banner.set_title(

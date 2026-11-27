@@ -787,10 +787,13 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
     stamp = listStamp();
     const run = ++refreshRun;
     loading = true;
+    sidebar.setLoading(true);
     // Read in slices so the window keeps painting; a newer refresh abandons this one.
     void loadConversationEntriesAsync(() => run !== refreshRun).then((loaded) => {
+      // A newer refresh has taken over, and with it the loading state: this one says nothing.
       if (run !== refreshRun) return;
       loading = false;
+      sidebar.setLoading(false);
       if (changedWhileLoading) {
         changedWhileLoading = false;
         GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => (indexChanged(), GLib.SOURCE_REMOVE));
