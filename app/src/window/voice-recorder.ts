@@ -1,18 +1,25 @@
-/** The record button of the composer: GStreamer to an Ogg/Opus file in the private cache, then a chip. */
+/** The record button of the composer and its recording bar: timer, level, cancel and finish. */
 
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
 
-import Adw from 'gi://Adw?version=1';
+import Gdk from 'gi://Gdk?version=4.0';
 import Gio from 'gi://Gio?version=2.0';
 import GLib from 'gi://GLib?version=2.0';
-import Gst from 'gi://Gst?version=1.0';
 import Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 import { ensurePrivateDir, previewsDir } from '@curlew/store';
 
 import type { PickedFile } from './composer-files-model.ts';
-import { judgeRecording, MAX_VOICE_MS, recordingLabel, voiceNoteName } from './voice-recorder-model.ts';
+import { startVoicePipeline, type VoicePipeline } from './voice-pipeline.ts';
+import {
+  judgeRecording,
+  levelFraction,
+  MAX_VOICE_MS,
+  recordingKeyAction,
+  recordingLabel,
+  voiceNoteName,
+} from './voice-recorder-model.ts';
 
 export interface VoiceRecorderOptions {
   toast(text: string): void;
@@ -21,64 +28,69 @@ export interface VoiceRecorderOptions {
 }
 
 export interface VoiceRecorder {
+  /** The microphone: starts a recording, and finishes it while one runs. */
   button: Gtk.Button;
+  /** Timer, level, cancel and finish; visible only while recording. */
+  bar: Gtk.Widget;
   /** Offered or not; turning it off while recording throws the recording away. */
   setAvailable(on: boolean): void;
 }
 
 interface Running {
-  pipeline: Gst.Pipeline;
+  pipeline: VoicePipeline;
   path: string;
   startedAt: number;
 }
 
-/** Microphone sources in order of preference; each is tried until one starts. */
-const SOURCES = ['pulsesrc', 'pipewiresrc'];
-
-function begin(path: string): Running | null {
-  Gst.init([]);
-  for (const name of SOURCES) {
-    const chain = [
-      Gst.ElementFactory.make(name, null),
-      Gst.ElementFactory.make('audioconvert', null),
-      Gst.ElementFactory.make('audioresample', null),
-      Gst.ElementFactory.make('capsfilter', null),
-      Gst.ElementFactory.make('opusenc', null),
-      Gst.ElementFactory.make('oggmux', null),
-      Gst.ElementFactory.make('filesink', null),
-    ];
-    if (chain.some((element) => element === null)) continue;
-    const elements = chain as Gst.Element[];
-    elements[3]!.set_property('caps', Gst.Caps.from_string('audio/x-raw,rate=48000,channels=1'));
-    elements[4]!.set_property('bitrate', 32000);
-    elements[6]!.set_property('location', path);
-    const pipeline = new Gst.Pipeline();
-    for (const element of elements) pipeline.add(element);
-    let linked = true;
-    for (let i = 0; i < elements.length - 1; i++) linked = elements[i]!.link(elements[i + 1]!) && linked;
-    if (linked && pipeline.set_state(Gst.State.PLAYING) !== Gst.StateChangeReturn.FAILURE) {
-      return { pipeline, path, startedAt: GLib.get_monotonic_time() };
-    }
-    pipeline.set_state(Gst.State.NULL);
-  }
-  return null;
-}
-
-/** Ends the file cleanly (EOS lets the muxer write its last page); returns the length in ms. */
-function finish(run: Running): number {
-  const ms = (GLib.get_monotonic_time() - run.startedAt) / 1000;
-  run.pipeline.send_event(Gst.Event.new_eos());
-  run.pipeline.get_bus()?.timed_pop_filtered(Gst.SECOND, Gst.MessageType.EOS | Gst.MessageType.ERROR);
-  run.pipeline.set_state(Gst.State.NULL);
-  return ms;
-}
+const MIC = _('Record a voice message');
 
 export function createVoiceRecorder(options: VoiceRecorderOptions): VoiceRecorder {
-  const content = new Adw.ButtonContent({ iconName: 'audio-input-microphone-symbolic' });
-  const button = new Gtk.Button({ child: content, tooltipText: _('Record a voice message'), visible: false });
+  const button = new Gtk.Button({
+    iconName: 'audio-input-microphone-symbolic',
+    tooltipText: MIC,
+    visible: false,
+  });
   button.add_css_class('flat');
   button.add_css_class('circular');
-  button.update_property([Gtk.AccessibleProperty.LABEL], [_('Record a voice message')]);
+  button.update_property([Gtk.AccessibleProperty.LABEL], [MIC]);
+
+  const cancel = new Gtk.Button({
+    iconName: 'user-trash-symbolic',
+    tooltipText: _('Discard the recording'),
+    valign: Gtk.Align.CENTER,
+  });
+  cancel.add_css_class('flat');
+  cancel.add_css_class('circular');
+  cancel.update_property([Gtk.AccessibleProperty.LABEL], [_('Discard the recording')]);
+  const level = new Gtk.LevelBar({
+    minValue: 0,
+    maxValue: 1,
+    value: 0,
+    hexpand: true,
+    valign: Gtk.Align.CENTER,
+  });
+  level.update_property([Gtk.AccessibleProperty.LABEL], [_('Microphone level')]);
+  const timer = new Gtk.Label({ label: recordingLabel(0), xalign: 1 });
+  timer.add_css_class('numeric');
+  timer.add_css_class('heading');
+  const finish = new Gtk.Button({
+    iconName: 'media-playback-stop-symbolic',
+    tooltipText: _('Stop and keep the recording'),
+    valign: Gtk.Align.CENTER,
+  });
+  finish.add_css_class('suggested-action');
+  finish.add_css_class('circular');
+  finish.update_property([Gtk.AccessibleProperty.LABEL], [_('Stop and keep the recording')]);
+
+  const bar = new Gtk.Box({
+    spacing: 6,
+    marginStart: 8,
+    marginEnd: 8,
+    marginTop: 4,
+    marginBottom: 4,
+    visible: false,
+  });
+  for (const part of [cancel, level, timer, finish]) bar.append(part);
 
   let running: Running | null = null;
   let tick = 0;
@@ -87,62 +99,76 @@ export function createVoiceRecorder(options: VoiceRecorderOptions): VoiceRecorde
     if (tick) GLib.source_remove(tick);
     tick = 0;
     running = null;
-    content.set_icon_name('audio-input-microphone-symbolic');
-    content.set_label('');
-    button.remove_css_class('destructive-action');
-    button.add_css_class('flat');
-    button.set_tooltip_text(_('Record a voice message'));
+    bar.set_visible(false);
+    level.set_value(0);
+    timer.set_label(recordingLabel(0));
+    button.set_sensitive(true);
+  };
+
+  const elapsed = (run: Running): number => (GLib.get_monotonic_time() - run.startedAt) / 1000;
+
+  const discard = (run: Running): void => {
+    run.pipeline.abort();
+    rmSync(run.path, { force: true });
   };
 
   const stop = (keep: boolean): void => {
     const run = running;
     if (!run) return;
-    const ms = finish(run);
     idle();
-    const verdict = judgeRecording(ms);
-    if (!keep || !verdict.keep) {
-      rmSync(run.path, { force: true });
-      if (keep) options.toast(_('The recording was too short'));
+    if (!keep) {
+      discard(run);
       return;
     }
-    const size = Gio.File.new_for_path(run.path).query_info('standard::size', 0, null).get_size();
-    options.onRecorded({
-      path: run.path,
-      name: run.path.split('/').pop() ?? 'voice.ogg',
-      size,
-      temporary: true,
-      voiceMs: verdict.durationMs,
+    void run.pipeline.stop().then((ms) => {
+      const verdict = judgeRecording(ms);
+      if (!verdict.keep) {
+        rmSync(run.path, { force: true });
+        options.toast(_('The recording was too short'));
+        return;
+      }
+      const size = Gio.File.new_for_path(run.path).query_info('standard::size', 0, null).get_size();
+      options.onRecorded({
+        path: run.path,
+        name: run.path.split('/').pop() ?? 'voice.ogg',
+        size,
+        temporary: true,
+        voiceMs: verdict.durationMs,
+      });
     });
   };
 
-  button.connect('clicked', () => {
-    if (running) {
-      stop(true);
-      return;
-    }
+  const start = (): void => {
     const dir = join(previewsDir(), 'voice');
     ensurePrivateDir(dir);
     const path = join(dir, voiceNoteName(new Date()));
-    let started: Running | null = null;
+    let pipeline: VoicePipeline | null = null;
     try {
-      started = begin(path);
+      pipeline = startVoicePipeline({
+        path,
+        onLevel: (db) => level.set_value(levelFraction(db)),
+        onError: () => {
+          if (running?.path !== path) return;
+          const run = running;
+          idle();
+          discard(run);
+          options.toast(_('No microphone could be opened'));
+        },
+      });
     } catch {
-      started = null;
+      pipeline = null;
     }
-    if (!started) {
+    if (!pipeline) {
       options.toast(_('No microphone could be opened'));
       return;
     }
-    running = started;
-    content.set_icon_name('media-playback-stop-symbolic');
-    content.set_label(recordingLabel(0));
-    button.remove_css_class('flat');
-    button.add_css_class('destructive-action');
-    button.set_tooltip_text(_('Stop and keep the recording'));
+    running = { pipeline, path, startedAt: GLib.get_monotonic_time() };
+    bar.set_visible(true);
+    finish.grab_focus();
     tick = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 250, () => {
       if (!running) return GLib.SOURCE_REMOVE;
-      const ms = (GLib.get_monotonic_time() - running.startedAt) / 1000;
-      content.set_label(recordingLabel(ms));
+      const ms = elapsed(running);
+      timer.set_label(recordingLabel(ms));
       if (ms >= MAX_VOICE_MS) {
         tick = 0;
         stop(true);
@@ -150,10 +176,25 @@ export function createVoiceRecorder(options: VoiceRecorderOptions): VoiceRecorde
       }
       return GLib.SOURCE_CONTINUE;
     });
+  };
+
+  button.connect('clicked', () => (running ? stop(true) : start()));
+  cancel.connect('clicked', () => stop(false));
+  finish.connect('clicked', () => stop(true));
+
+  // Escape throws the note away from anywhere in the bar; Enter and Space already press the focused button.
+  const keys = new Gtk.EventControllerKey();
+  keys.connect('key-pressed', (_c, keyval) => {
+    const action = recordingKeyAction(keyval === Gdk.KEY_Escape ? 'Escape' : '');
+    if (action !== 'cancel') return false;
+    stop(false);
+    return true;
   });
+  bar.add_controller(keys);
 
   return {
     button,
+    bar,
     setAvailable(on) {
       if (!on) stop(false);
       button.set_visible(on);

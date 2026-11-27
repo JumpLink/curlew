@@ -2,6 +2,10 @@ import { describe, expect, it } from '@gjsify/unit';
 
 import {
   judgeRecording,
+  levelFraction,
+  parseLevelDb,
+  recordingKeyAction,
+  recordingSeconds,
   MAX_VOICE_MS,
   MIN_VOICE_MS,
   recordingLabel,
@@ -33,6 +37,34 @@ export default async () => {
     await it('reads the running time as m:ss', async () => {
       expect(recordingLabel(0)).toBe('0:00');
       expect(recordingLabel(7000)).toBe('0:07');
+    });
+
+    await it('maps dB readings to a bar fraction', async () => {
+      expect(levelFraction(0)).toBe(1);
+      expect(levelFraction(-30)).toBe(0.5);
+      expect(levelFraction(-90)).toBe(0);
+      expect(levelFraction(-Infinity)).toBe(0);
+      expect(levelFraction(NaN)).toBe(0);
+      expect(levelFraction(12)).toBe(1);
+    });
+
+    await it('binds Escape to cancel and Enter or Space to stop', async () => {
+      expect(recordingKeyAction('Escape')).toBe('cancel');
+      expect(recordingKeyAction('Enter')).toBe('stop');
+      expect(recordingKeyAction('Space')).toBe('stop');
+      expect(recordingKeyAction('a')).toBe(null);
+    });
+
+    await it('reads the rms from a level message', async () => {
+      expect(parseLevelDb('level, rms=(GValueArray)< -4.94 >, peak=(GValueArray)< -1.9 >;')).toBe(-4.94);
+      expect(parseLevelDb('level, rms=(GValueArray)< -inf >;')).toBe(-Infinity);
+      expect(parseLevelDb('level, peak=(GValueArray)< -1 >;')).toBe(null);
+    });
+
+    await it('counts whole seconds', async () => {
+      expect(recordingSeconds(2999)).toBe(2);
+      expect(recordingSeconds(-5)).toBe(0);
+      expect(recordingSeconds(NaN)).toBe(0);
     });
 
     await it('sends a voice note only for a lone recording', async () => {
