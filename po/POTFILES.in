@@ -178,6 +178,7 @@ app/src/window/mismatch-restart-model.ts
 app/src/window/mismatch-restart.ts
 app/src/window/new-conversation-model.ts
 app/src/window/new-conversation.ts
+app/src/window/pending-send-model.ts
 app/src/window/preferences-dialog.ts
 app/src/window/preview-cache-model.ts
 app/src/window/protocols-page.ts

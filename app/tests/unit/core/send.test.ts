@@ -756,7 +756,7 @@ export default async () => {
   });
 
   await describe('sendMessage formats', async () => {
-    const run = async (params: { text: string; format?: 'plain' | 'markdown' }) => {
+    const run = async (params: { text: string; format?: 'plain' | 'markdown'; clientId?: string }) => {
       const dir = mkdtempSync(join(tmpdir(), 'curlew-fmt-'));
       try {
         const configPath = join(dir, 'config.json');
@@ -787,20 +787,29 @@ export default async () => {
     };
 
     await it('sends plain text unchanged by default, without parts', async () => {
-      const { out, sent } = await run({ text: '**not bold**' });
+      // XMPP honours the caller's own name for the send (ADR 0021 §2), so the origin-id is that
+      // name and not the session's next minted id.
+      const { out, sent } = await run({ text: '**not bold**', clientId: 'c-1' });
       expect(sent.length).toBe(1);
       expect(sent[0][2]).toBe('**not bold**');
       expect('parts' in out).toBe(false);
       expect('originIds' in out).toBe(false);
-      expect(out.originId).toBe('id-1');
+      expect(out.originId).toBe('c-1');
+      expect(out.clientId).toBe('c-1');
+    });
+
+    await it('mints a name for a send that brought none', async () => {
+      const { out } = await run({ text: 'hi' });
+      expect(out.clientId.length > 0).toBe(true);
+      expect(out.originId).toBe(out.clientId);
     });
 
     await it('markdown renders, reports parts and the first id as originId', async () => {
-      const { out, sent } = await run({ text: '**bold**', format: 'markdown' });
+      const { out, sent } = await run({ text: '**bold**', format: 'markdown', clientId: 'c-2' });
       expect(sent.length).toBe(1);
       expect(sent[0][2]).toBe('*bold*');
       expect(out.parts).toBe(1);
-      expect(out.originIds?.join()).toBe('id-1');
+      expect(out.originIds?.join()).toBe('c-2');
     });
 
     await it('markdown splits an over-long text into several messages', async () => {

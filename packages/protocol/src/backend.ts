@@ -950,6 +950,13 @@ export interface SenderFeatures {
    * (`MessageSender.setChatFlags`, ADR 0020). Absent means false.
    */
   chatFlags?: boolean;
+  /**
+   * `SendingMessage.clientId` goes out as the id the network will report back on the sent message
+   * (`ChatMessage.clientId`), so the delivered copy is an exact match for the echo the caller is
+   * showing (ADR 0021 §2). True only for XMPP, whose `origin-id` (XEP-0359) is exactly that.
+   * Absent means false: the sender ignores the field and the caller matches by content instead.
+   */
+  clientIds?: boolean;
 }
 
 /** A file to send with a message, by absolute path. Only the sender that claims `attachments` reads it. */
@@ -998,6 +1005,13 @@ export interface SendingMessage {
    * Set only when the person allowed read receipts and the thread can do them.
    */
   readReceipt?: boolean;
+  /**
+   * The caller's own name for this send (ADR 0021 §2), so it can match the delivered copy to what
+   * it is already showing. A sender that claims `features.clientIds` puts it on the wire as the
+   * id the network will report back (XMPP's `origin-id`); every other sender IGNORES it — the
+   * field is the caller's bookkeeping, never a requirement on the protocol.
+   */
+  clientId?: string;
 }
 
 /** One reaction handed to a sender: the person's emoji on a message of the chat `to`. */

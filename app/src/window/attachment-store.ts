@@ -39,8 +39,14 @@ export interface AttachmentSource {
   info: AttachmentInfo;
 }
 
-/** The path of a part already in the previews cache, else null; the view's cue to show a large video's frame. */
+/**
+ * The path of a part whose bytes are already on this machine — the file a pending send carries
+ * (ADR 0021 §4), else the previews cache — and null when they are not. The view's cue that it may
+ * show a large video's frame without fetching anything.
+ */
 export function cachedAttachment(source: AttachmentSource, root = previewsDir()): string | null {
+  const { localPath } = source.info;
+  if (localPath !== undefined && localPath !== '') return localPath;
   return cachedPath(source, root);
 }
 
@@ -178,6 +184,8 @@ export function fetchAttachment(
   maxBytes: number = ATTACHMENT_BYTES.max,
 ): Promise<string> {
   const { ref, info } = source;
+  // A pending send's file is already here (ADR 0021 §4): no fetch, no cache copy, no network.
+  if (info.localPath !== undefined && info.localPath !== '') return Promise.resolve(info.localPath);
   const dir = partDir(source, root);
   const hit = cachedFile(dir);
   if (hit) return Promise.resolve(join(dir, hit));

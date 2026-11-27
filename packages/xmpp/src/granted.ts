@@ -135,11 +135,17 @@ export class GrantedXmppSession {
     text: string,
     now: () => Date = () => new Date(),
     answers?: { id: string; fromSelf: boolean },
+    /**
+     * The `origin-id` to send under instead of a fresh one (ADR 0021 §2): the caller's own name for
+     * the send, so the archive's copy matches the echo it is showing — and so a retry of a send
+     * whose acknowledgement was lost is the same message to the archive, not a second one.
+     */
+    originIdGiven?: string,
   ): Promise<SentChat> {
     const chatJid = this.recipient(to);
     if (text.trim().length === 0) throw new Error(MESSAGES.emptyText);
     if (text.length > MAX_TEXT_CHARS) throw new Error(MESSAGES.tooLong(MAX_TEXT_CHARS));
-    const originId = this.newId();
+    const originId = originIdGiven ?? this.newId();
     // XEP-0461 names the author of the answered message: the person, or the one this chat is with.
     const reply = answers && { id: answers.id, author: answers.fromSelf ? bareJid(this.link.jid) : chatJid };
     const encrypted = await this.omemo?.encrypt(chatJid, text);

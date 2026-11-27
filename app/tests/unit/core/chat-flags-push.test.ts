@@ -53,8 +53,8 @@ async function failure(promise: Promise<unknown>): Promise<string | null> {
 
 export default async () => {
   await describe('chat flags on the daemon route', async () => {
-    await it('parses the wire request strictly and speaks version 9', async () => {
-      expect(DAEMON_WIRE_VERSION).toBe(9);
+    await it('parses the wire request strictly and speaks version 10', async () => {
+      expect(DAEMON_WIRE_VERSION).toBe(10);
       const wire = {
         v: DAEMON_WIRE_VERSION,
         backend: 'telegram',

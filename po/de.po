@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-27 10:25+0100\n"
+"POT-Creation-Date: 2026-11-27 11:46+0100\n"
 "PO-Revision-Date: 2026-10-12 19:30+0200\n"
 "Last-Translator: Curlew contributors\n"
 "Language-Team: German\n"
@@ -14,7 +14,7 @@ msgstr ""
 
 #: app-android/app/window.ts:18 app/src/window/about.ts:37
 #: app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:265 app/src/window/window.ts:113
+#: app/src/window/conversation-view.ts:278 app/src/window/window.ts:113
 #: app/src/window/window.ts:245
 msgid "Curlew"
 msgstr "Curlew"
@@ -161,7 +161,7 @@ msgid "systemctl --user {verb} exited {code}"
 msgstr "systemctl --user {verb} endete mit {code}"
 
 #: app/src/core/actions/chat-attachment.ts:140
-#: app/src/core/actions/daemon.ts:666
+#: app/src/core/actions/daemon.ts:675
 msgid "the attachment was not found in the index"
 msgstr "Der Anhang wurde im Index nicht gefunden"
 
@@ -181,7 +181,7 @@ msgstr "{backend} kann keine Anhänge abrufen"
 
 #: app/src/core/actions/chat-thumbnail.ts:109
 #: app/src/core/actions/chat-thumbnail.ts:150
-#: app/src/core/actions/daemon.ts:641
+#: app/src/core/actions/daemon.ts:650
 msgid "the attachment has no thumbnail to fetch"
 msgstr "Der Anhang hat kein abrufbares Vorschaubild"
 
@@ -204,11 +204,11 @@ msgstr ""
 "Der laufende curlew-Daemon konnte keinen Sender öffnen ({reason}) — es wurde "
 "nichts gesendet"
 
-#: app/src/core/actions/daemon.ts:491 app/src/core/actions/daemon.ts:531
+#: app/src/core/actions/daemon.ts:500 app/src/core/actions/daemon.ts:540
 msgid "this account is paused"
 msgstr "Dieses Konto ist pausiert"
 
-#: app/src/core/actions/daemon.ts:579
+#: app/src/core/actions/daemon.ts:588
 msgid "the download stalled — try again"
 msgstr "Der Download ist hängen geblieben — versuche es noch einmal"
 
@@ -259,8 +259,8 @@ msgstr "Kein XMPP-Konto {account} — `curlew accounts list` zeigt sie an"
 msgid "{backend} cannot send a reaction"
 msgstr "{backend} kann keine Reaktion senden"
 
-#: app/src/core/actions/read-receipt.ts:49 app/src/core/actions/send.ts:474
-#: app/src/core/actions/send.ts:534 app/src/core/actions/sender-write.ts:52
+#: app/src/core/actions/read-receipt.ts:49 app/src/core/actions/send.ts:495
+#: app/src/core/actions/send.ts:555 app/src/core/actions/sender-write.ts:52
 msgid "no account {account} — `curlew accounts list` shows them"
 msgstr "Kein Konto {account} — `curlew accounts list` zeigt sie an"
 
@@ -276,7 +276,7 @@ msgstr ""
 "mit include_bodies oder mail_get_message), um gefragt zu werden, oder füge "
 "eine Leseregel zu config.agentAccess.rules hinzu"
 
-#: app/src/core/actions/send.ts:190 app/src/core/actions/send.ts:203
+#: app/src/core/actions/send.ts:204 app/src/core/actions/send.ts:217
 msgid ""
 "the message index is busy, so curlew cannot tell whether {account} is in use "
 "elsewhere — nothing was sent; try again in a moment"
@@ -285,7 +285,7 @@ msgstr ""
 "{account} anderswo in Benutzung ist — es wurde nichts gesendet; versuche es "
 "gleich noch einmal"
 
-#: app/src/core/actions/send.ts:209
+#: app/src/core/actions/send.ts:223
 msgid ""
 "{account} is being received by {holder} right now, {backend} cannot send and "
 "receive at the same time, and that process did not take the send over — "
@@ -297,44 +297,44 @@ msgstr ""
 "übernommen — es wurde nichts gesendet; beende ihn (`curlew daemon stop`) und "
 "sende erneut, oder sende von deinem Telefon"
 
-#: app/src/core/actions/send.ts:288
+#: app/src/core/actions/send.ts:302
 msgid "account {account} is paused — switch it on in Accounts to send from it"
 msgstr ""
 "Konto {account} ist pausiert — schalte es unter Konten ein, um davon zu "
 "senden"
 
-#: app/src/core/actions/send.ts:361
+#: app/src/core/actions/send.ts:377
 msgid "{backend} cannot send an image — give text and leave image_url out"
 msgstr "{backend} kann kein Bild senden — gib Text an und lass image_url weg"
 
-#: app/src/core/actions/send.ts:371
+#: app/src/core/actions/send.ts:387
 msgid "nothing to send: the text is empty after rendering"
 msgstr "Nichts zu senden: Der Text ist nach dem Rendern leer"
 
-#: app/src/core/actions/send.ts:374 app/src/core/actions/send.ts:566
+#: app/src/core/actions/send.ts:390 app/src/core/actions/send.ts:587
 msgid "{backend} cannot send attachments"
 msgstr "{backend} kann keine Anhänge senden"
 
-#: app/src/core/actions/send.ts:378
+#: app/src/core/actions/send.ts:394
 msgid "{backend} cannot send a reply"
 msgstr "{backend} kann keine Antwort senden"
 
-#: app/src/core/actions/send.ts:518
+#: app/src/core/actions/send.ts:539
 msgid ""
 "this person is pinned to {pinned}: a message through {backend} is refused"
 msgstr ""
 "Diese Person ist auf {pinned} festgelegt: eine Nachricht über {backend} wird "
 "abgelehnt"
 
-#: app/src/core/actions/send.ts:528 app/src/core/actions/sender-write.ts:47
+#: app/src/core/actions/send.ts:549 app/src/core/actions/sender-write.ts:47
 msgid "Demo mode: nothing is sent."
 msgstr "Demo-Modus: Es wird nichts gesendet."
 
-#: app/src/core/actions/send.ts:541 app/src/core/actions/sender-write.ts:57
+#: app/src/core/actions/send.ts:562 app/src/core/actions/sender-write.ts:57
 msgid "{backend} cannot send"
 msgstr "{backend} kann nicht senden"
 
-#: app/src/core/actions/send.ts:547
+#: app/src/core/actions/send.ts:568
 msgid ""
 "account {account} is not opted into Delta Chat — switch on \"Use for Delta "
 "Chat\" on its page in Accounts (or set mailAccounts.{account}.deltaChat to "
@@ -345,15 +345,15 @@ msgstr ""
 "mailAccounts.{account}.deltaChat in der Konfiguration auf true), um eine E-"
 "Mail-Chat-Nachricht zu senden"
 
-#: app/src/core/actions/send.ts:556
+#: app/src/core/actions/send.ts:577
 msgid "nothing to send: give text, an image URL or an attachment"
 msgstr "Nichts zu senden: Gib Text, eine Bild-URL oder einen Anhang an"
 
-#: app/src/core/actions/send.ts:558
+#: app/src/core/actions/send.ts:579
 msgid "{backend} messages carry no subject"
 msgstr "Nachrichten von {backend} haben keinen Betreff"
 
-#: app/src/core/actions/send.ts:561
+#: app/src/core/actions/send.ts:582
 msgid "{backend} cannot send email chat headers"
 msgstr "{backend} kann keine E-Mail-Chat-Kopfzeilen senden"
 
@@ -994,7 +994,7 @@ msgstr ""
 "Der laufende curlew-Daemon hat die Zugriffsrückfrage nicht beantwortet "
 "({reason})"
 
-#: app/src/core/lib/daemon-bus.ts:273
+#: app/src/core/lib/daemon-bus.ts:290
 msgid ""
 "the running curlew daemon speaks send protocol {theirs} and this curlew "
 "speaks {ours} — nothing was sent; restart it with `systemctl --user restart "
@@ -1004,7 +1004,7 @@ msgstr ""
 "spricht {ours} — es wurde nichts gesendet; starte ihn mit `systemctl --user "
 "restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:311
+#: app/src/core/lib/daemon-bus.ts:334
 msgid ""
 "the caller speaks send protocol {theirs} and this curlew daemon speaks "
 "{ours} — nothing was sent; restart it with `systemctl --user restart curlew-"
@@ -1014,7 +1014,7 @@ msgstr ""
 "{ours} — es wurde nichts gesendet; starte ihn mit `systemctl --user restart "
 "curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:488
+#: app/src/core/lib/daemon-bus.ts:518
 msgid ""
 "the caller speaks attachment protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -1022,7 +1022,7 @@ msgstr ""
 "Der Aufrufer spricht Anhangsprotokoll {theirs}, dieser curlew-Daemon spricht "
 "{ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:520
+#: app/src/core/lib/daemon-bus.ts:550
 msgid ""
 "the running curlew daemon speaks attachment protocol {theirs} and this "
 "curlew speaks {ours} — restart it with `systemctl --user restart curlew-"
@@ -1031,7 +1031,7 @@ msgstr ""
 "Der laufende curlew-Daemon spricht Anhangsprotokoll {theirs}, dieses curlew "
 "spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:826
+#: app/src/core/lib/daemon-bus.ts:856
 msgid ""
 "the caller speaks access protocol {theirs} and this curlew daemon speaks "
 "{ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -1039,7 +1039,7 @@ msgstr ""
 "Der Aufrufer spricht Zugriffsprotokoll {theirs}, dieser curlew-Daemon "
 "spricht {ours} — starte ihn mit `systemctl --user restart curlew-daemon` neu"
 
-#: app/src/core/lib/daemon-bus.ts:864
+#: app/src/core/lib/daemon-bus.ts:894
 msgid ""
 "the running curlew daemon speaks access protocol {theirs} and this curlew "
 "speaks {ours} — restart it with `systemctl --user restart curlew-daemon`"
@@ -2034,7 +2034,7 @@ msgstr "Dieses Konto pausieren?"
 #: app/src/window/agent-access-page.ts:233
 #: app/src/window/conversation-list.ts:542
 #: app/src/window/conversation-list.ts:706
-#: app/src/window/conversation-view.ts:992 app/src/window/protocols-page.ts:66
+#: app/src/window/conversation-view.ts:1005 app/src/window/protocols-page.ts:66
 #: app/src/window/protocols-page.ts:142
 msgid "Cancel"
 msgstr "Abbrechen"
@@ -2547,7 +2547,7 @@ msgstr "Chat-Hintergrund"
 msgid "A quiet pattern behind the messages"
 msgstr "Ein dezentes Muster hinter den Nachrichten"
 
-#: app/src/window/attachment-store.ts:81
+#: app/src/window/attachment-store.ts:87
 msgid "the account is signed out"
 msgstr "das Konto ist abgemeldet"
 
@@ -2579,8 +2579,8 @@ msgstr "Der Anhang konnte nicht abgerufen werden: {error}"
 
 #: app/src/window/attachment-view.ts:184 app/src/window/attachment-view.ts:193
 #: app/src/window/conversation-list-model.ts:532
-#: app/src/window/conversation-model.ts:318
-#: app/src/window/conversation-model.ts:323
+#: app/src/window/conversation-model.ts:324
+#: app/src/window/conversation-model.ts:329
 msgid "Attachment"
 msgstr "Anhang"
 
@@ -2597,7 +2597,7 @@ msgid "Sign in again to load this video"
 msgstr "Melde dich erneut an, um dieses Video zu laden"
 
 #: app/src/window/attachment-view.ts:624
-#: app/src/window/conversation-model.ts:326
+#: app/src/window/conversation-model.ts:332
 msgid "and {n} more attachment"
 msgid_plural "and {n} more attachments"
 msgstr[0] "und {n} weiterer Anhang"
@@ -2627,27 +2627,27 @@ msgstr "Melde dich erneut an, um dies abzuspielen"
 msgid "Could not play the attachment: {error}"
 msgstr "Der Anhang konnte nicht abgespielt werden: {error}"
 
-#: app/src/window/composer-files.ts:75
+#: app/src/window/composer-files.ts:83
 msgid "Remove {file}"
 msgstr "{file} entfernen"
 
-#: app/src/window/composer-files.ts:91
+#: app/src/window/composer-files.ts:99
 msgid "Attach a file"
 msgstr "Datei anhängen"
 
-#: app/src/window/composer-files.ts:136
+#: app/src/window/composer-files.ts:144
 msgid "At most {max} files per message"
 msgstr "Höchstens {max} Dateien pro Nachricht"
 
-#: app/src/window/composer-files.ts:149
+#: app/src/window/composer-files.ts:157
 msgid "{file} is not a file that can be attached"
 msgstr "{file} lässt sich nicht anhängen"
 
-#: app/src/window/composer-files.ts:157
+#: app/src/window/composer-files.ts:165
 msgid "Attach files"
 msgstr "Dateien anhängen"
 
-#: app/src/window/composer-files.ts:184
+#: app/src/window/composer-files.ts:192
 msgid "The picture could not be saved"
 msgstr "Das Bild konnte nicht gespeichert werden"
 
@@ -2772,7 +2772,7 @@ msgstr "Nicht verschlüsselt"
 msgid "Members the app knows"
 msgstr "Mitglieder, die die App kennt"
 
-#: app/src/window/contact-page.ts:403 app/src/window/conversation-model.ts:360
+#: app/src/window/contact-page.ts:403 app/src/window/conversation-model.ts:366
 msgid "{count} person"
 msgid_plural "{count} people"
 msgstr[0] "{count} Person"
@@ -3021,8 +3021,8 @@ msgid "Remove from Favourites"
 msgstr "Aus Favoriten entfernen"
 
 #: app/src/window/conversation-list.ts:611
-#: app/src/window/conversation-view.ts:1281
-#: app/src/window/conversation-view.ts:1282
+#: app/src/window/conversation-view.ts:1311
+#: app/src/window/conversation-view.ts:1312
 msgid "Read"
 msgstr "Gelesen"
 
@@ -3062,7 +3062,7 @@ msgstr[0] "{count} mögliches Duplikat"
 msgstr[1] "{count} mögliche Duplikate"
 
 #: app/src/window/conversation-model.ts:144
-#: app/src/window/conversation-view.ts:1674
+#: app/src/window/conversation-view.ts:1662
 msgid "Continuing via {protocol}"
 msgstr "Weiter über {protocol}"
 
@@ -3070,200 +3070,204 @@ msgstr "Weiter über {protocol}"
 msgid "Unknown sender"
 msgstr "Unbekannter Absender"
 
-#: app/src/window/conversation-model.ts:309
+#: app/src/window/conversation-model.ts:315
 msgid "{kind}: {name}"
 msgstr "{kind}: {name}"
 
-#: app/src/window/conversation-model.ts:314
+#: app/src/window/conversation-model.ts:320
 msgid "Image"
 msgstr "Bild"
 
-#: app/src/window/conversation-model.ts:315
+#: app/src/window/conversation-model.ts:321
 msgid "Video"
 msgstr "Video"
 
-#: app/src/window/conversation-model.ts:316
+#: app/src/window/conversation-model.ts:322
 msgid "Audio"
 msgstr "Audio"
 
-#: app/src/window/conversation-model.ts:317
+#: app/src/window/conversation-model.ts:323
 msgid "File"
 msgstr "Datei"
 
-#: app/src/window/conversation-model.ts:358
+#: app/src/window/conversation-model.ts:364
 msgid "You and {count} other"
 msgid_plural "You and {count} others"
 msgstr[0] "Du und {count} weitere Person"
 msgstr[1] "Du und {count} weitere Personen"
 
-#: app/src/window/conversation-model.ts:359
-#: app/src/window/conversation-model.ts:372
-#: app/src/window/conversation-view.ts:976
+#: app/src/window/conversation-model.ts:365
+#: app/src/window/conversation-model.ts:378
+#: app/src/window/conversation-view.ts:989
 msgid "You"
 msgstr "Du"
 
-#: app/src/window/conversation-view.ts:271
+#: app/src/window/conversation-view.ts:284
 msgid "Choose how to reach this person"
 msgstr "Erreichbarkeit dieser Person wählen"
 
-#: app/src/window/conversation-view.ts:284
-#: app/src/window/conversation-view.ts:1801
+#: app/src/window/conversation-view.ts:297
+#: app/src/window/conversation-view.ts:1922
 msgid "Contact details"
 msgstr "Kontaktdetails"
 
-#: app/src/window/conversation-view.ts:303
+#: app/src/window/conversation-view.ts:316
 msgid "No messages yet"
 msgstr "Noch keine Nachrichten"
 
-#: app/src/window/conversation-view.ts:314
-#: app/src/window/conversation-view.ts:315
-#: app/src/window/conversation-view.ts:652
+#: app/src/window/conversation-view.ts:327
+#: app/src/window/conversation-view.ts:328
+#: app/src/window/conversation-view.ts:665
 msgid "Write a message"
 msgstr "Nachricht schreiben"
 
-#: app/src/window/conversation-view.ts:329
+#: app/src/window/conversation-view.ts:342
 msgid "Send message"
 msgstr "Nachricht senden"
 
-#: app/src/window/conversation-view.ts:345
+#: app/src/window/conversation-view.ts:358
 msgid "Cancel reply"
 msgstr "Antwort abbrechen"
 
-#: app/src/window/conversation-view.ts:358
+#: app/src/window/conversation-view.ts:371
 msgid "Cancel editing"
 msgstr "Bearbeiten abbrechen"
 
-#: app/src/window/conversation-view.ts:371
+#: app/src/window/conversation-view.ts:384
 msgid "Got It"
 msgstr "Verstanden"
 
-#: app/src/window/conversation-view.ts:442
-#: app/src/window/conversation-view.ts:446
+#: app/src/window/conversation-view.ts:455
+#: app/src/window/conversation-view.ts:459
 msgid "Next match"
 msgstr "Nächster Treffer"
 
-#: app/src/window/conversation-view.ts:449
-#: app/src/window/conversation-view.ts:453
+#: app/src/window/conversation-view.ts:462
+#: app/src/window/conversation-view.ts:466
 msgid "Previous match"
 msgstr "Vorheriger Treffer"
 
-#: app/src/window/conversation-view.ts:456
-#: app/src/window/conversation-view.ts:460
+#: app/src/window/conversation-view.ts:469
+#: app/src/window/conversation-view.ts:473
 msgid "Stop stepping through matches"
 msgstr "Trefferliste beenden"
 
-#: app/src/window/conversation-view.ts:472
+#: app/src/window/conversation-view.ts:485
 msgid "Conversation"
 msgstr "Unterhaltung"
 
-#: app/src/window/conversation-view.ts:618
+#: app/src/window/conversation-view.ts:631
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 "{protocol} kann keine Dateien senden; die angehängten Dateien wurden entfernt"
 
-#: app/src/window/conversation-view.ts:670
+#: app/src/window/conversation-view.ts:683
 msgid "Send via {protocol}"
 msgstr "Senden über {protocol}"
 
-#: app/src/window/conversation-view.ts:775
+#: app/src/window/conversation-view.ts:788
 msgid "Show the quoted message"
 msgstr "Zitierte Nachricht anzeigen"
 
-#: app/src/window/conversation-view.ts:782
-#: app/src/window/conversation-view.ts:922
+#: app/src/window/conversation-view.ts:795
+#: app/src/window/conversation-view.ts:935
 msgid "Reply to {author}: {excerpt}"
 msgstr "Antwort auf {author}: {excerpt}"
 
-#: app/src/window/conversation-view.ts:797
+#: app/src/window/conversation-view.ts:810
 msgid "The quoted message is no longer in the history"
 msgstr "Die zitierte Nachricht ist nicht mehr im Verlauf"
 
-#: app/src/window/conversation-view.ts:861
+#: app/src/window/conversation-view.ts:874
 msgid "{current} of {total}"
 msgstr "{current} von {total}"
 
-#: app/src/window/conversation-view.ts:947
+#: app/src/window/conversation-view.ts:960
 msgid "Reaction not sent: {error}"
 msgstr "Reaktion nicht gesendet: {error}"
 
-#: app/src/window/conversation-view.ts:975
+#: app/src/window/conversation-view.ts:988
 msgid "Edit message"
 msgstr "Nachricht bearbeiten"
 
-#: app/src/window/conversation-view.ts:979
+#: app/src/window/conversation-view.ts:992
 msgid "Editing your message: {excerpt}"
 msgstr "Eigene Nachricht bearbeiten: {excerpt}"
 
-#: app/src/window/conversation-view.ts:987
+#: app/src/window/conversation-view.ts:1000
 msgid "Delete message?"
 msgstr "Nachricht löschen?"
 
-#: app/src/window/conversation-view.ts:988
+#: app/src/window/conversation-view.ts:1001
 msgid "This will remove the message for everyone in the chat."
 msgstr "Dadurch wird die Nachricht für alle im Chat entfernt."
 
-#: app/src/window/conversation-view.ts:993
+#: app/src/window/conversation-view.ts:1006
 msgid "Delete for everyone"
 msgstr "Für alle löschen"
 
-#: app/src/window/conversation-view.ts:1010
+#: app/src/window/conversation-view.ts:1023
 msgid "Message not deleted: {error}"
 msgstr "Nachricht nicht gelöscht: {error}"
 
-#: app/src/window/conversation-view.ts:1067
+#: app/src/window/conversation-view.ts:1085
 msgid "Reply"
 msgstr "Antworten"
 
-#: app/src/window/conversation-view.ts:1068
+#: app/src/window/conversation-view.ts:1086
 msgid "Edit"
 msgstr "Bearbeiten"
 
-#: app/src/window/conversation-view.ts:1069
+#: app/src/window/conversation-view.ts:1087
 msgid "Copy"
 msgstr "Kopieren"
 
-#: app/src/window/conversation-view.ts:1070
+#: app/src/window/conversation-view.ts:1088
 msgid "Delete"
 msgstr "Löschen"
 
-#: app/src/window/conversation-view.ts:1209
-msgid "Forwarded from {sender}"
-msgstr "Weitergeleitet von {sender}"
-
-#: app/src/window/conversation-view.ts:1210
-msgid "Forwarded"
-msgstr "Weitergeleitet"
-
-#: app/src/window/conversation-view.ts:1224
-msgid "Encrypted message: it cannot be shown here"
-msgstr "Verschlüsselte Nachricht: Sie kann hier nicht angezeigt werden"
-
-#: app/src/window/conversation-view.ts:1225
-msgid "No text body"
-msgstr "Kein Textinhalt"
-
-#: app/src/window/conversation-view.ts:1271
-#: app/src/window/conversation-view.ts:1436
-msgid "edited"
-msgstr "bearbeitet"
-
-#: app/src/window/conversation-view.ts:1534
-msgid "Could not load older messages: {error}"
-msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
-
-#: app/src/window/conversation-view.ts:1639
-msgid "Message not edited: {error}"
-msgstr "Nachricht nicht bearbeitet: {error}"
-
-#: app/src/window/conversation-view.ts:1686
-msgid "Message not sent: {error}"
-msgstr "Nachricht nicht gesendet: {error}"
-
-#: app/src/window/conversation-view.ts:1689
+#: app/src/window/conversation-view.ts:1089
 msgid "Retry"
 msgstr "Erneut versuchen"
 
-#: app/src/window/conversation-view.ts:1801
+#: app/src/window/conversation-view.ts:1091
+msgid "Discard"
+msgstr "Verwerfen"
+
+#: app/src/window/conversation-view.ts:1232
+msgid "Forwarded from {sender}"
+msgstr "Weitergeleitet von {sender}"
+
+#: app/src/window/conversation-view.ts:1233
+msgid "Forwarded"
+msgstr "Weitergeleitet"
+
+#: app/src/window/conversation-view.ts:1247
+msgid "Encrypted message: it cannot be shown here"
+msgstr "Verschlüsselte Nachricht: Sie kann hier nicht angezeigt werden"
+
+#: app/src/window/conversation-view.ts:1248
+msgid "No text body"
+msgstr "Kein Textinhalt"
+
+#: app/src/window/conversation-view.ts:1301
+#: app/src/window/conversation-view.ts:1466
+msgid "edited"
+msgstr "bearbeitet"
+
+#: app/src/window/conversation-view.ts:1564
+msgid "Could not load older messages: {error}"
+msgstr "Ältere Nachrichten konnten nicht geladen werden: {error}"
+
+#: app/src/window/conversation-view.ts:1709
+msgid "Message not sent: {error}"
+msgstr "Nachricht nicht gesendet: {error}"
+
+#: app/src/window/conversation-view.ts:1777
+msgid "Message not edited: {error}"
+msgstr "Nachricht nicht bearbeitet: {error}"
+
+#: app/src/window/conversation-view.ts:1922
 msgid "Group details"
 msgstr "Gruppendetails"
 
@@ -3466,6 +3470,14 @@ msgstr "Kontakte suchen"
 msgid "The address book could not be read"
 msgstr "Das Adressbuch konnte nicht gelesen werden"
 
+#: app/src/window/pending-send-model.ts:67
+msgid "Not sent"
+msgstr "Nicht gesendet"
+
+#: app/src/window/pending-send-model.ts:67
+msgid "Sending…"
+msgstr "Wird gesendet …"
+
 #: app/src/window/preferences-dialog.ts:57
 msgid "Show all emails"
 msgstr "Alle E-Mails anzeigen"
@@ -3564,7 +3576,7 @@ msgstr "Einstellungen"
 msgid "Accept and Turn On"
 msgstr "Zustimmen und einschalten"
 
-#: app/src/window/protocols-page.ts:83 app/src/window/window.ts:435
+#: app/src/window/protocols-page.ts:83 app/src/window/window.ts:437
 msgid "Close"
 msgstr "Schließen"
 
@@ -3826,17 +3838,17 @@ msgstr "Beenden"
 msgid "This conversation has no recipient address."
 msgstr "Diese Unterhaltung hat keine Empfängeradresse."
 
-#: app/src/window/window.ts:433
+#: app/src/window/window.ts:435
 msgid "No further details are known about this person."
 msgstr "Über diese Person ist nichts Weiteres bekannt."
 
-#: app/src/window/window.ts:504
+#: app/src/window/window.ts:506
 msgid ""
 "This network has no free pin left, so the favourite stays in Curlew only."
 msgstr ""
 "Dieses Netzwerk hat keinen freien Pin mehr, der Favorit bleibt nur in Curlew."
 
-#: app/src/window/window.ts:507
+#: app/src/window/window.ts:509
 msgid ""
 "This network allows {count} pinned chat, so the favourite stays in Curlew "
 "only."
@@ -3850,15 +3862,15 @@ msgstr[1] ""
 "Dieses Netzwerk erlaubt {count} angeheftete Unterhaltungen, der Favorit "
 "bleibt nur in Curlew."
 
-#: app/src/window/window.ts:668
+#: app/src/window/window.ts:670
 msgid "Curlew (demo)"
 msgstr "Curlew (Demo)"
 
-#: app/src/window/window.ts:671
+#: app/src/window/window.ts:673
 msgid "Demo data — nothing here is real"
 msgstr "Demo-Daten – nichts hier ist echt"
 
-#: app/src/window/window.ts:820
+#: app/src/window/window.ts:822
 msgid "No contacts to merge"
 msgstr "Keine Kontakte zum Zusammenführen"
 

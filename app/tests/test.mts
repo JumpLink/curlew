@@ -147,6 +147,7 @@ import windowVideoPreview from './unit/window/video-preview-model.test.ts';
 import windowConversation from './unit/window/conversation-model.test.ts';
 import windowNewConversation from './unit/window/new-conversation-model.test.ts';
 import windowComposerFiles from './unit/window/composer-files-model.test.ts';
+import windowPendingSend from './unit/window/pending-send-model.test.ts';
 import windowVoiceRecorder from './unit/window/voice-recorder-model.test.ts';
 import encryption from './unit/core/encryption.test.ts';
 import capabilities from './unit/core/capabilities.test.ts';
@@ -325,6 +326,7 @@ run({
   windowConversation,
   windowNewConversation,
   windowComposerFiles,
+  windowPendingSend,
   windowVoiceRecorder,
   windowAttachment,
   windowMediaGrid,
