@@ -122,6 +122,10 @@
         "ICalGLib-3.0": {
           "deb": "gir1.2-ical-3.0",
           "rpm": "libical-glib"
+        },
+        "GstApp-1.0": {
+          "deb": "gir1.2-gst-plugins-base-1.0",
+          "rpm": "gstreamer1-plugins-base"
         }
       },
       "categories": [
