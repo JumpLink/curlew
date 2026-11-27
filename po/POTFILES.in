@@ -195,6 +195,7 @@ app/src/window/update-banner.ts
 app/src/window/video-preview-model.ts
 app/src/window/video-preview.ts
 app/src/window/viewer-model.ts
+app/src/window/voice-pipeline.ts
 app/src/window/voice-recorder-model.ts
 app/src/window/voice-recorder.ts
 app/src/window/watch.ts

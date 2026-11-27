@@ -419,7 +419,7 @@ export function createConversationView(
     return card;
   };
   hint.set_margin_bottom(4);
-  for (const part of [hint, files.strip, replyBar, editBar]) compose.append(floating(part));
+  for (const part of [hint, recorder.bar, files.strip, replyBar, editBar]) compose.append(floating(part));
   compose.append(composer);
   const toolbar = new Adw.ToolbarView({ extendContentToBottomEdge: true });
   toolbar.add_top_bar(header);

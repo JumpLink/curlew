@@ -45,7 +45,7 @@ table (the manifest is generated from `gjsify.ship.flatpak.finishArgs` in `app/p
 | `--share=network` | every protocol (IMAP/SMTP, Telegram, Signal, Matrix, XMPP, WhatsApp) talks to servers |
 | `--share=ipc` | X11 shared memory for the `fallback-x11` case |
 | `--socket=wayland`, `--socket=fallback-x11` | the GTK window |
-| `--socket=pulseaudio` | voice notes: `voice-recorder.ts` records through GStreamer `pulsesrc`/`pipewiresrc`, and `Gtk.MediaFile` plays voice notes and attachments. PipeWire serves the PulseAudio socket, so this is the one audio permission. Microphone access is then gated by the desktop's own prompt. |
+| `--socket=pulseaudio` | voice notes: `voice-pipeline.ts` records through GStreamer `pulsesrc`/`pipewiresrc`, and `Gtk.MediaFile` plays voice notes and attachments. PipeWire serves the PulseAudio socket, so this is the one audio permission. Microphone access is then gated by the desktop's own prompt. |
 | `--device=dri` | GPU rendering for GTK 4 |
 
 Deliberately absent:

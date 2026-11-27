@@ -37,6 +37,9 @@ export const XMPP_MANIFEST: BackendManifest = {
     // `aesgcm://` links: `openAttachments` fetches one after a tap, and a send uploads the file
     // to the server's HTTP File Upload service and sends the link.
     attachments: true,
+    // A recording goes out as the network's voice note where it has one (Ogg Opus mono, see
+    // probeMediaFile), else as an audio file.
+    voiceNotes: true,
     attachmentsRead: true,
     // The picture in a contact's vCard (XEP-0054).
     avatars: true,

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-24 16:40+0100\n"
+"POT-Creation-Date: 2026-11-27 10:25+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3279,21 +3279,28 @@ msgstr ""
 msgid "I understand and accept the risk for my account"
 msgstr ""
 
-#: app/src/window/voice-recorder.ts:78 app/src/window/voice-recorder.ts:81
-#: app/src/window/voice-recorder.ts:94
+#: app/src/window/voice-recorder.ts:45
 msgid "Record a voice message"
 msgstr ""
 
-#: app/src/window/voice-recorder.ts:105
+#: app/src/window/voice-recorder.ts:59 app/src/window/voice-recorder.ts:64
+msgid "Discard the recording"
+msgstr ""
+
+#: app/src/window/voice-recorder.ts:72
+msgid "Microphone level"
+msgstr ""
+
+#: app/src/window/voice-recorder.ts:78 app/src/window/voice-recorder.ts:83
+msgid "Stop and keep the recording"
+msgstr ""
+
+#: app/src/window/voice-recorder.ts:127
 msgid "The recording was too short"
 msgstr ""
 
-#: app/src/window/voice-recorder.ts:133
+#: app/src/window/voice-recorder.ts:155 app/src/window/voice-recorder.ts:162
 msgid "No microphone could be opened"
-msgstr ""
-
-#: app/src/window/voice-recorder.ts:141
-msgid "Stop and keep the recording"
 msgstr ""
 
 #: app/src/window/welcome-model.ts:40
@@ -3900,7 +3907,7 @@ msgid ""
 "is received, and the phone sends the contact list on its own."
 msgstr ""
 
-#: packages/signal/src/manifest.ts:54
+#: packages/signal/src/manifest.ts:57
 msgid ""
 "Curlew connects to Signal as a linked device, like Signal Desktop. It is not "
 "an official Signal client and Signal does not support it, so Signal could "
@@ -4205,7 +4212,7 @@ msgid ""
 "again."
 msgstr ""
 
-#: packages/telegram/src/manifest.ts:63
+#: packages/telegram/src/manifest.ts:66
 msgid ""
 "Curlew connects to Telegram as a third-party client through the official "
 "API, using the API credentials of Curlew's own registered app. You can use "
@@ -4336,7 +4343,7 @@ msgid ""
 "to the first connection that takes it, once."
 msgstr ""
 
-#: packages/whatsapp/src/manifest.ts:58
+#: packages/whatsapp/src/manifest.ts:61
 msgid ""
 "Curlew connects to WhatsApp as a linked device through Baileys, an "
 "unofficial client. This violates WhatsApp's Terms of Service, so WhatsApp "

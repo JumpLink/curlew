@@ -61,7 +61,7 @@ export interface BackendCapabilities {
   replies: boolean;
   /** The backend can fetch the profile picture of a chat or person (`openAvatars`). */
   avatars?: boolean;
-  /** Can send a recorded voice note as such (Delta Chat over mail); a thread narrows it further. */
+  /** Can send a recorded voice note: the network's own voice note, or an audio file where it has none; a thread narrows it further. */
   voiceNotes?: boolean;
   /**
    * The network keeps a per-chat mute the person can read and write (ADR 0020). Absent = false.

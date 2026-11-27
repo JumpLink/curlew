@@ -43,6 +43,9 @@ export const TELEGRAM_MANIFEST: BackendManifest = {
     // `openAttachments` downloads a photo, file or voice note a person tapped; the sender uploads
     // one file per message the person picked in the window.
     attachments: true,
+    // A recording goes out as the network's voice note where it has one (Ogg Opus mono, see
+    // probeMediaFile), else as an audio file.
+    voiceNotes: true,
     attachmentsRead: true,
     // `openAvatars` fetches the small profile picture of a chat for the list.
     avatars: true,
