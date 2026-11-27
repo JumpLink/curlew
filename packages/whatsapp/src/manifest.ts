@@ -35,6 +35,9 @@ export const WHATSAPP_MANIFEST: BackendManifest = {
     folders: false,
     // `openAttachments` downloads and decrypts a file a person tapped; the sender uploads one.
     attachments: true,
+    // A recording goes out as the network's voice note where it has one (Ogg Opus mono, see
+    // probeMediaFile), else as an audio file.
+    voiceNotes: true,
     attachmentsRead: true,
     // Asked on the receiver's own connection (a second login would collide with it).
     avatars: true,

@@ -38,14 +38,16 @@ export default async () => {
         replies: true,
         attachments: true,
         readReceipts: false,
-        voiceNotes: false,
+        voiceNotes: true,
       });
     });
 
-    await it('offers voice notes only in a Delta Chat mail thread', async () => {
+    await it('offers voice notes on every chat protocol and in a Delta Chat mail thread only', async () => {
       expect(threadCan(chatty, { backend: 'mail', emailChat: true }, 'voiceNotes')).toBe(true);
       expect(threadCan(chatty, { backend: 'mail', emailChat: false }, 'voiceNotes')).toBe(false);
-      expect(threadCan(manifestOf('telegram'), { backend: 'telegram' }, 'voiceNotes')).toBe(false);
+      for (const backend of ['telegram', 'signal', 'whatsapp', 'matrix', 'xmpp']) {
+        expect(threadCan(manifestOf(backend), { backend }, 'voiceNotes')).toBe(true);
+      }
     });
 
     await it('offers chat features in a mail thread whose peer sent Chat-Version', async () => {

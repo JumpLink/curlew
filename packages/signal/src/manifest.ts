@@ -32,6 +32,9 @@ export const SIGNAL_MANIFEST: BackendManifest = {
     // `openAttachments` downloads and decrypts a file a person tapped; a granted send encrypts a
     // file, uploads it to the CDN and sends its pointer (`upload.ts`).
     attachments: true,
+    // A recording goes out as the network's voice note where it has one (Ogg Opus mono, see
+    // probeMediaFile), else as an audio file.
+    voiceNotes: true,
     attachmentsRead: true,
     replies: true,
   },

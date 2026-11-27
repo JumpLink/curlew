@@ -39,6 +39,9 @@ export const MATRIX_MANIFEST: BackendManifest = {
     // Unencrypted files only, both ways: `openAttachments` downloads an `mxc://` file a person
     // tapped, and a send uploads one to the media repository and posts it as `m.image`/`m.file`.
     attachments: true,
+    // A recording goes out as the network's voice note where it has one (Ogg Opus mono, see
+    // probeMediaFile), else as an audio file.
+    voiceNotes: true,
     attachmentsRead: true,
     // A room's or a direct chat's picture, as a thumbnail from the homeserver.
     avatars: true,
