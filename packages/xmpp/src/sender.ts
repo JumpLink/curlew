@@ -80,6 +80,7 @@ export class XmppSender implements MessageSender {
     edits: true,
     deletes: true,
     readSync: true,
+    clientIds: true,
   };
   private readonly session: GrantedXmppSession;
 
@@ -91,6 +92,12 @@ export class XmppSender implements MessageSender {
    * Files first, one message each, then the text: a file's stanza is a bare link and cannot carry
    * a caption, so the text follows as a message of its own. The result is the first message sent
    * (the file, else the text); the others reach the index with the next sync.
+   *
+   * `message.clientId` becomes the `origin-id` of a text-only send (ADR 0021 §2), which is the one
+   * case where the id this method RETURNS is the id the caller asked for. A send with files is
+   * several stanzas with ids of their own and the first of them is a file, so the caller's id
+   * would name a message other than the result: it is left unused there and the caller matches
+   * its echo by content instead.
    */
   async send(message: SendingMessage): Promise<SentMessage> {
     const files = inspectSendFiles(message.attachments ?? [], {
@@ -101,7 +108,8 @@ export class XmppSender implements MessageSender {
     if (answers && files.length > 0 && message.text.trim().length === 0) {
       throw new Error(MESSAGES.replyNeedsText);
     }
-    if (files.length === 0) return sent(await this.session.send(message.to, message.text, undefined, answers));
+    if (files.length === 0)
+      return sent(await this.session.send(message.to, message.text, undefined, answers, message.clientId));
     let first: SentMessage | undefined;
     for (const file of files) {
       const chat = await this.session.sendFile(message.to, {

@@ -81,6 +81,7 @@ import { appendWriteLog, type WriteFrontend } from '../write-log.ts';
 import { openIndex } from './index-sync.ts';
 import { requireEncryptionFor } from './omemo.ts';
 import { _, fmt, type ReplyTarget } from '@curlew/protocol';
+import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { basename } from 'node:path';
 
@@ -113,6 +114,13 @@ export interface SendParams {
   replyTo?: ReplyTarget;
   /** `plain` (default) sends `text` as is; `markdown` renders it per chat protocol and splits long texts. */
   format?: MessageFormat;
+  /**
+   * The caller's own name for this send (ADR 0021 §2): what the window matches its pending bubble
+   * by, and — on a backend whose sender claims `clientIds` — the id the message goes out under, so
+   * a retry after a lost acknowledgement is the same message rather than a second one. Minted here
+   * when the caller has no use for it.
+   */
+  clientId?: string;
   frontend: WriteFrontend;
   /** Agent path only: which session asks and where the prompt goes. Defaults to this process's. */
   agent?: Pick<AgentAccess, 'session' | 'port'>;
@@ -158,6 +166,12 @@ export interface SendResult {
   attachments?: { filename: string; size: number }[];
   /** The message went out, but something around it did not — the backend's one sentence for it. */
   sendWarning?: string;
+  /**
+   * The name this send was made under (ADR 0021 §2) — the caller's own when it passed one, the
+   * minted one otherwise. Always set, so a caller showing a pending message can match the answer
+   * to it without having kept its own id.
+   */
+  clientId: string;
 }
 
 /**
@@ -315,6 +329,8 @@ export interface SendRequest {
   references?: string[];
   replyTo?: ReplyTarget;
   format?: MessageFormat;
+  /** The caller's own name for this send (ADR 0021 §2); a sender without `clientIds` ignores it. */
+  clientId?: string;
 }
 
 export interface SendOutcome {
@@ -399,6 +415,11 @@ export async function sendThrough(
                 ...(request.inReplyTo ? { inReplyTo: request.inReplyTo } : {}),
                 ...(request.references ? { references: request.references } : {}),
                 ...(request.replyTo === undefined || index !== firstText ? {} : { replyTo: request.replyTo }),
+                // Like the files and the reply link: the caller named ONE message, which is the
+                // first text. A split long text must not put the same origin-id on every chunk.
+                ...(request.clientId === undefined || index !== firstText
+                  ? {}
+                  : { clientId: request.clientId }),
                 ...(attachments.length === 0 || index !== firstText
                   ? {}
                   : { attachments: attachments.map((path) => ({ path })) }),
@@ -571,8 +592,12 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
 
   const permit: SendPermit = { account: params.accountId, addresses: [params.to] };
   const dbPath = params.dbPath ?? indexDbPath();
+  // Every send has a name, whether or not the caller asked for one (ADR 0021 §2): the daemon
+  // route requires it, and a CLI send that never looks at it costs one UUID.
+  const clientId = params.clientId ?? randomUUID();
   const request: SendRequest = {
     to: params.to,
+    clientId,
     ...(text === undefined ? {} : { text }),
     ...(imageUrl === undefined ? {} : { imageUrl }),
     ...(params.subject === undefined ? {} : { subject: params.subject }),
@@ -679,6 +704,7 @@ export async function sendMessage(params: SendParams): Promise<SendResult> {
       ? {}
       : { attachments: first.sent.attachments }),
     ...(warnings.length === 0 ? {} : { sendWarning: warnings.join(' ') }),
+    clientId,
   };
 }
 

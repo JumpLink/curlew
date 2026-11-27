@@ -57,6 +57,8 @@ export function attachmentKind(info: Pick<AttachmentInfo, 'filename' | 'mimeType
 
 /** True when the part can be opened/saved: mail has a section, chat is fetchable and its backend can fetch (ADR 0010). */
 export function isOpenable(info: AttachmentInfo): boolean {
+  // The file of a pending send is already on this machine (ADR 0021 §4): it needs no network at all.
+  if (info.localPath !== undefined && info.localPath !== '') return true;
   if (info.section !== undefined && info.section !== '') return true;
   return info.fetchable === true && info.backendCanFetch === true;
 }
@@ -128,6 +130,9 @@ export function showsVideoBox(info: AttachmentInfo): boolean {
 /** Whether the bubble shows the picture itself (true) or a tile (false). */
 export function showsInline(info: AttachmentInfo): boolean {
   if (!isOpenable(info) || attachmentKind(info) !== 'image') return false;
+  // A local file costs no fetch at all; only the decoding cap applies, as for a mail part.
+  if (info.localPath !== undefined && info.localPath !== '')
+    return info.size === null || info.size === undefined || info.size <= INLINE_IMAGE_MAX_BYTES;
   // Showing the picture means fetching it unasked, which a chat part may only do when small.
   if (info.section === undefined || info.section === '') return shouldAutoFetch(info);
   return info.size === null || info.size === undefined || info.size <= INLINE_IMAGE_MAX_BYTES;

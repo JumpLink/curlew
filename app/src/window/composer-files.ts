@@ -39,6 +39,14 @@ export interface ComposerFiles {
   /** Empties the list; the pasted pictures it made are deleted. */
   clear(): void;
   /**
+   * Empties the list and hands the files over, deleting nothing (ADR 0021 §5): a send that is
+   * still reading them keeps them, and the caller owns the temporary ones from here on — it must
+   * pass them to {@link ComposerFiles.dispose} once that send has settled.
+   */
+  release(): PickedFile[];
+  /** Deletes the pasted pictures among files taken over by `release`; a picked file is left alone. */
+  dispose(files: readonly PickedFile[]): void;
+  /**
    * False for a carrier that cannot attach: the paperclip goes and so does everything picked.
    * Returns how many files that dropped, so the caller can say so.
    */
@@ -225,6 +233,16 @@ export function createComposerFiles(options: ComposerFilesOptions): ComposerFile
       for (const file of picked) discard(file);
       picked = [];
       render();
+    },
+    release() {
+      const handed = picked;
+      picked = [];
+      render();
+      options.onChange();
+      return handed;
+    },
+    dispose(files) {
+      for (const file of files) discard(file);
     },
     addRecorded(file) {
       const { files } = mergePicked(picked, [file]);

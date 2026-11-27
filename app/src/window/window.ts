@@ -312,7 +312,7 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
   let keptUnread: string | null = null;
   let currentMessages: ConversationMessage[] = [];
   const conversation = createConversationView(
-    async (text, choice, files, replyTo) => {
+    async (text, choice, files, clientId, replyTo) => {
       const entry = currentEntry;
       if (!entry) throw new Error(_('This conversation has no recipient address.'));
       // The carrier's own last message: a mail reply must not thread onto a Signal note.
@@ -343,6 +343,8 @@ function createWindowInner(app: Adw.Application, options: WindowOptions): Adw.Ap
         to: choice.target,
         text,
         frontend: 'window',
+        // The name the pending bubble is keyed by (ADR 0021 §2), so the answer finds it again.
+        clientId,
         ...(files.length > 0 ? { attachments: files.map((f) => f.path) } : {}),
         ...(replyTo && mail === null ? { replyTo } : {}),
         ...mail,

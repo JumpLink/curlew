@@ -282,6 +282,12 @@ export interface AttachmentInfo {
   ref?: MessageRef;
   /** IMAP section (mail only): the key to fetch the bytes with. */
   section?: string;
+  /**
+   * The bytes are already on this machine, at this path: the file a pending send is carrying
+   * (ADR 0021 §4). Nothing is fetched for such a part — the picture the person picked is shown
+   * from their own disk — and nothing deletes it: the pending send owns it.
+   */
+  localPath?: string;
   /** True when the chat backend has a non-empty handle for this attachment (ADR 0010). */
   fetchable?: boolean;
   /**

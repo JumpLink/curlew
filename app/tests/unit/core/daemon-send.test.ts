@@ -61,6 +61,8 @@ const BACKEND = 'signal';
 const ACCOUNT = 'shared-1';
 const PEER = '+491510000002';
 const CAPABILITY = `${BACKEND}.send`;
+/** The caller's own name for a send (wire v10, ADR 0021 §2); fixed here so assertions can name it. */
+const CLIENT_ID = 'c-0001';
 const ACCOUNT_INFO: BackendAccount = { id: ACCOUNT, identity: ACCOUNT, provider: 'Fake' };
 const GRANTS = [{ capability: CAPABILITY, target: `${ACCOUNT}/${PEER}` }];
 
@@ -231,8 +233,8 @@ async function withWorld(config: unknown, body: (world: World) => Promise<void>)
   }
 }
 
-/** One step shaped the way the daemon puts it on the wire. */
-const step = (id: string, body: string) => ({
+/** One step shaped the way the daemon puts it on the wire, naming the send it answers (wire v10). */
+const step = (id: string, body: string, clientId = CLIENT_ID) => ({
   sent: {
     target: PEER,
     id,
@@ -241,6 +243,7 @@ const step = (id: string, body: string) => ({
     encrypted: true,
   },
   body,
+  clientId,
 });
 
 /** A session the daemon is holding, with or without a way to send on it. */
@@ -725,6 +728,7 @@ export default async () => {
       account: ACCOUNT,
       capability: CAPABILITY,
       to: PEER,
+      clientId: CLIENT_ID,
       text: 'hi',
       ...over,
     });

@@ -78,6 +78,14 @@ import { hasRichText, richMarkup } from './rich-text-model.ts';
 import type { AttachmentSource } from './attachment-store.ts';
 import { fadedOverlay } from './fade-bin.ts';
 import { bubbleMenuEntries } from './bubble-menu-model.ts';
+import {
+  pendingClientId,
+  pendingRow,
+  sendStateLabel,
+  settledByPage,
+  withPendingSends,
+  type PendingSend,
+} from './pending-send-model.ts';
 import { bubbleActionRow } from './bubble-menu.ts';
 import { guardTouchSelection, selectableForPointerOnly } from './bubble-select.ts';
 import { createComposerFiles } from './composer-files.ts';
@@ -187,6 +195,8 @@ export function createConversationView(
     text: string,
     choice: ProtocolChoice,
     files: PickedFile[],
+    /** The name this send is made under (ADR 0021 §2); the pending bubble is keyed by it. */
+    clientId: string,
     replyTo?: ReplyTarget,
   ) => Promise<ConversationMessage>,
   threadCapabilities: (facts: ThreadFacts) => ThreadCapabilities,
@@ -248,6 +258,9 @@ export function createConversationView(
   const built = new Map<string, Built>();
   // Edits on their way to the network, by message id: a page read meanwhile still has the old text.
   const pendingEdits = new Map<string, PendingEdit>();
+  // Sends on their way out, by client id (ADR 0021 §1): shown as bubbles no page read holds yet.
+  // In this window's memory only — closing it loses the bubble, never the send.
+  const pendingSends = new Map<string, PendingSend<ProtocolChoice>>();
   // Paging state. `ready` is false until the first page is built and scrolled to the end;
   // `prepending` is true from the spinner until the older rows have been laid out.
   let ready = false;
@@ -1034,16 +1047,21 @@ export function createConversationView(
   const attachBubbleActions = (card: Gtk.Box, message: ShownMessage, showReactions: () => void): void => {
     const open = (gesture: Gtk.Gesture | null, x: number, y: number): void => {
       const usable = composer.get_visible() && !composerBlocked;
-      const draft = usable ? replyDraftOf(message, carriers, threadCan('replies')) : null;
-      const handle = usable ? reactHandleOf(message, carriers, reactable) : null;
-      const editHandle = usable
-        ? editHandleOf(message, carriers, changeable(threadCan('edits'), message))
-        : null;
-      const deleteHandle = usable
-        ? deleteHandleOf(message, carriers, changeable(threadCan('deletes'), message))
-        : null;
+      // A send of this window's own: there is no message on any network to reply to, react to or
+      // edit, so the menu offers only what applies to a send that failed (ADR 0021 §5). While it
+      // is still pending it offers neither — nothing can withdraw a send in progress.
+      const ownSend = pendingSends.get(pendingClientId(message.id) ?? '');
+      const draft = ownSend ? null : usable ? replyDraftOf(message, carriers, threadCan('replies')) : null;
+      const handle = ownSend ? null : usable ? reactHandleOf(message, carriers, reactable) : null;
+      const editHandle =
+        ownSend || !usable ? null : editHandleOf(message, carriers, changeable(threadCan('edits'), message));
+      const deleteHandle =
+        ownSend || !usable
+          ? null
+          : deleteHandleOf(message, carriers, changeable(threadCan('deletes'), message));
+      const retry = ownSend?.state === 'failed' ? ownSend.clientId : null;
       const text = message.bodyText?.trim() ?? '';
-      if (!draft && !handle && !editHandle && !deleteHandle && !text) return;
+      if (!draft && !handle && !editHandle && !deleteHandle && !retry && !text) return;
       gesture?.set_state(Gtk.EventSequenceState.CLAIMED);
       const box = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
       const popover = new Gtk.Popover({ autohide: true, hasArrow: false, child: box });
@@ -1068,11 +1086,16 @@ export function createConversationView(
         edit: [_('Edit'), () => editHandle && startEdit(message, editHandle)],
         copy: [_('Copy'), () => card.get_clipboard().set(text)],
         delete: [_('Delete'), () => deleteHandle && confirmDelete(message, deleteHandle)],
+        retry: [_('Retry'), () => retry && retryPending(retry)],
+        // Not "Delete": nothing is deleted anywhere, the send is taken off this screen.
+        discard: [_('Discard'), () => retry && discardPending(retry)],
       };
       const entries = bubbleMenuEntries({
         reply: !!draft,
         edit: !!editHandle,
         delete: !!deleteHandle,
+        retry: !!retry,
+        discard: !!retry,
         copy: !!text,
       }).map((entry) => {
         const [label, action] = run[entry.id]!;
@@ -1256,9 +1279,16 @@ export function createConversationView(
       );
     }
     showReactions();
-    const time = new Gtk.Label({ label: clockTime(message.sentAt), xalign: 1 });
+    // A send still on its way says so where its clock will be, and that text is the row's
+    // accessible name too (ADR 0021 §4): a screen reader announces the state, not an empty time.
+    const inFlight = pendingSends.get(pendingClientId(message.id) ?? '');
+    const time = new Gtk.Label({
+      label: inFlight ? sendStateLabel(inFlight.state) : clockTime(message.sentAt),
+      xalign: 1,
+    });
     time.add_css_class('caption');
-    time.add_css_class('dim-label');
+    time.add_css_class(inFlight?.state === 'failed' ? 'error' : 'dim-label');
+    if (inFlight) time.update_property([Gtk.AccessibleProperty.LABEL], [sendStateLabel(inFlight.state)]);
     const meta = new Gtk.Box({ spacing: 6, halign: Gtk.Align.END });
     let badge: Gtk.Image | null = null;
     if (run) {
@@ -1608,6 +1638,114 @@ export function createConversationView(
   });
   adjustment.connect('notify::page-size', () => schedulePass());
 
+  /** True when this send's bubble belongs in the conversation `shown` stands for. */
+  const belongsTo = (send: PendingSend<ProtocolChoice>, shown: ListEntry): boolean =>
+    send.conversations.some((id) => shown.conversationIds.includes(id) || id === shown.id);
+
+  /** The sends in flight whose bubbles the open conversation shows, oldest first. */
+  const sendsHere = (): PendingSend<ProtocolChoice>[] => {
+    const shown = entry;
+    if (!shown || pendingSends.size === 0) return [];
+    return [...pendingSends.values()].filter((send) => belongsTo(send, shown));
+  };
+
+  /** One message onto the end of the shown history, with the separators its position asks for. */
+  const appendMessage = (message: ShownMessage): void => {
+    const previous = messages[messages.length - 1] ?? null;
+    const previousDay = dayOf(previous ?? message);
+    messages.push(message);
+    const day = dayOf(message);
+    const run =
+      previous === null || previous.backend !== message.backend ? { backend: message.backend } : undefined;
+    const divider =
+      previous && previous.backend !== message.backend
+        ? fmt(_('Continuing via {protocol}'), { protocol: protocolLabel(message.backend) })
+        : undefined;
+    // The person's own message starts no sender run, and the next one from another starts its own.
+    addRow(message, undefined, undefined, run, divider, day !== '' && day !== previousDay, -1);
+  };
+
+  /** One row rebuilt where it stands: a pending bubble that has become a failed one. */
+  const replaceRow = (next: ShownMessage): void => {
+    const shown = entry;
+    const index = messages.findIndex((m) => m.id === next.id);
+    if (index !== -1) messages[index] = next;
+    const one = built.get(next.id);
+    if (!one || !shown) return;
+    const position = (one.separator ?? one.protocolDivider ?? one.row).get_index();
+    if (one.separator) history.remove(one.separator);
+    if (one.protocolDivider) history.remove(one.protocolDivider);
+    history.remove(one.row);
+    built.delete(next.id);
+    addRow(
+      next,
+      subjectLabels(messages).get(next.id),
+      senderRunStarts(messages, shown.kind === 'group').get(next.id),
+      protocolRunStarts(messages).get(next.id),
+      protocolDividers(messages).get(next.id),
+      dayStarts(messages).has(next.id),
+      position,
+    );
+  };
+
+  /** The send is over: its entry and its temporary files go, and so does its bubble. */
+  const dropPending = (clientId: string): PendingSend<ProtocolChoice> | null => {
+    const send = pendingSends.get(clientId);
+    if (!send) return null;
+    pendingSends.delete(clientId);
+    files.dispose(send.files);
+    const row = messages.find((m) => pendingClientId(m.id) === clientId);
+    if (row) removeMessage(row);
+    return send;
+  };
+
+  /** The send did not get out (ADR 0021 §5): the bubble says so and offers Retry and Delete. */
+  const failPending = (clientId: string, error: string): void => {
+    const send = pendingSends.get(clientId);
+    if (!send || send.state === 'failed') return;
+    const next: PendingSend<ProtocolChoice> = { ...send, state: 'failed', error };
+    pendingSends.set(clientId, next);
+    replaceRow(pendingRow(next));
+    overlay.add_toast(new Adw.Toast({ title: fmt(_('Message not sent: {error}'), { error }), timeout: 6 }));
+  };
+
+  /**
+   * Hand one pending send to the network and wait for it. A resolved send swaps its own bubble for
+   * the message it became; a send the index got to first (§3) finds its entry already gone and
+   * leaves the row that replaced it alone.
+   */
+  const runPending = (send: PendingSend<ProtocolChoice>): void => {
+    void onSend(send.text, send.choice, [...send.files], send.clientId, send.replyTo)
+      .then((message) => {
+        const live = pendingSends.get(send.clientId);
+        if (!live) return;
+        const shown = entry;
+        dropPending(send.clientId);
+        if (shown && belongsTo(live, shown)) {
+          appendMessage(message);
+          if (atEnd) scrollToEnd();
+        }
+      })
+      .catch((err: unknown) => failPending(send.clientId, errorMessage(err)));
+  };
+
+  /** Send it again under the same name (§5): on XMPP the archive sees one message, not two. */
+  const retryPending = (clientId: string): void => {
+    const send = pendingSends.get(clientId);
+    if (!send || send.state !== 'failed') return;
+    const next: PendingSend<ProtocolChoice> = { ...send, state: 'pending' };
+    delete next.error;
+    pendingSends.set(clientId, next);
+    replaceRow(pendingRow(next));
+    runPending(next);
+  };
+
+  /** Take a failed send off this screen (§5). It says nothing about the network. */
+  const discardPending = (clientId: string): void => {
+    if (pendingSends.get(clientId)?.state !== 'failed') return;
+    dropPending(clientId);
+  };
+
   const submit = () => {
     const text = input.getText().trim();
     const picked = files.files();
@@ -1652,53 +1790,29 @@ export function createConversationView(
         });
       return;
     }
-    if ((!text && picked.length === 0) || sending || !entry || !selectedChoice) return;
-    sending = true;
-    setInputSensitive(false);
-    send.set_sensitive(false);
-    // An upload takes a while: the button shows that something is happening.
-    send.set_child(new Adw.Spinner());
-    const replyTo = reply && sameCarrier(reply.choice, selectedChoice) ? reply.target : undefined;
-    void onSend(text, selectedChoice, picked, replyTo)
-      .then((message) => {
-        const previous = messages[messages.length - 1] ?? null;
-        const previousDay = dayOf(previous ?? message);
-        messages.push(message);
-        const day = dayOf(message);
-        const run =
-          previous === null || previous.backend !== message.backend
-            ? { backend: message.backend }
-            : undefined;
-        const divider =
-          previous && previous.backend !== message.backend
-            ? fmt(_('Continuing via {protocol}'), { protocol: protocolLabel(message.backend) })
-            : undefined;
-        // The person's own message starts no sender run, and the next one from another starts its own.
-        addRow(message, undefined, undefined, run, divider, day !== '' && day !== previousDay, -1);
-        input.setText('');
-        files.clear();
-        clearReply();
-        scrollToEnd();
-      })
-      .catch((err: unknown) => {
-        // The text and the files stay where they are, so "Retry" sends the same message again.
-        const toast = new Adw.Toast({
-          title: fmt(_('Message not sent: {error}'), {
-            error: errorMessage(err),
-          }),
-          buttonLabel: _('Retry'),
-          timeout: 10,
-        });
-        toast.connect('button-clicked', submit);
-        overlay.add_toast(toast);
-      })
-      .finally(() => {
-        sending = false;
-        setInputSensitive(true);
-        send.set_sensitive(true);
-        send.setAction(SEND_ACTION);
-        input.grabFocus();
-      });
+    if ((!text && picked.length === 0) || !entry || !selectedChoice) return;
+    // The bubble appears now and the composer is free again at once (ADR 0021 §4): the person can
+    // write the next message while this one is still on its way out. Nothing waits on the network.
+    const pending: PendingSend<ProtocolChoice> = {
+      clientId: GLib.uuid_string_random(),
+      choice: selectedChoice,
+      backend: selectedChoice.backend,
+      accountId: selectedChoice.accountId,
+      conversations: entry.conversationIds.length > 0 ? [...entry.conversationIds] : [entry.id],
+      text,
+      // Taken over from the composer: a pasted picture must outlive the chip it was shown as.
+      files: files.release(),
+      ...(reply && sameCarrier(reply.choice, selectedChoice) ? { replyTo: reply.target } : {}),
+      startedAt: new Date().toISOString(),
+      state: 'pending',
+    };
+    pendingSends.set(pending.clientId, pending);
+    appendMessage(pendingRow(pending));
+    input.setText('');
+    clearReply();
+    scrollToEnd();
+    input.grabFocus();
+    runPending(pending);
   };
   send.connect('clicked', submit);
   // A signal registered through `registerClass` is not in the generated signatures.
@@ -1727,7 +1841,12 @@ export function createConversationView(
       const shownEntry = entry;
       if (!shownEntry) return 'rebuild';
       if (!ready || loading || prepending) return 'busy';
-      const diff = liveChanges(messages, withPendingEdits(foldAlbums(page), pendingEdits));
+      const fresh = withPendingEdits(foldAlbums(page), pendingEdits);
+      // A send whose real message this page holds is over (ADR 0021 §3). Its bubble goes BEFORE
+      // the diff: the confirmed row is then appended after the last real message instead of
+      // landing above a pending bubble, which the diff would read as a late arrival and rebuild.
+      for (const clientId of settledByPage(sendsHere(), fresh).keys()) dropPending(clientId);
+      const diff = liveChanges(messages, withPendingSends(fresh, sendsHere()));
       if (diff.rebuild) return 'rebuild';
       if (diff.added.length + diff.changed.length + diff.removed.length === 0) return 'applied';
       resolveQuotes(shownEntry, [...diff.added, ...diff.changed], [...messages, ...diff.added]);
@@ -1793,7 +1912,9 @@ export function createConversationView(
     show(nextEntry, nextMessages, nextLabels, keepComposer = false) {
       entry = nextEntry;
       rebuildRoute(nextEntry);
-      messages = withPendingEdits(foldAlbums(nextMessages), pendingEdits);
+      // A rebuild keeps the sends in flight: the bubble is this window's, not the index's, so a
+      // chat shown anew shows them again (ADR 0021 §1).
+      messages = withPendingSends(withPendingEdits(foldAlbums(nextMessages), pendingEdits), sendsHere());
       accountLabels = nextLabels;
       title.set_title(nextEntry.title);
       title.set_subtitle(entryProtocolSubtitle(nextEntry, nextLabels));

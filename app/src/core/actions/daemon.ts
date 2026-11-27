@@ -461,11 +461,20 @@ export function createDaemonSendHandler(options: DaemonSendHandlerOptions): Daem
             : { attachments: request.attachments }),
           ...(request.replyTo === undefined ? {} : { replyTo: request.replyTo }),
           ...(request.format === undefined ? {} : { format: request.format }),
+          ...(request.clientId === undefined ? {} : { clientId: request.clientId }),
         },
         request.backend,
       );
       log(`curlew-daemon: sent ${outcome.steps.length} message(s) for ${who} on its open connection`);
-      return { v: DAEMON_WIRE_VERSION, kind: 'sent', markdown: outcome.markdown, steps: outcome.steps };
+      return {
+        v: DAEMON_WIRE_VERSION,
+        kind: 'sent',
+        markdown: outcome.markdown,
+        // Every step names the request it answers (ADR 0021 §2), so the caller can match its
+        // pending bubble without counting steps. `parseDaemonSendWire` already refused a message
+        // send without one.
+        steps: outcome.steps.map((step) => ({ ...step, clientId: request.clientId! })),
+      };
     } catch (error) {
       log(`curlew-daemon: a send for ${who} did not complete`);
       return { v: DAEMON_WIRE_VERSION, kind: 'failed', message: errText(error) } satisfies DaemonSendReply;

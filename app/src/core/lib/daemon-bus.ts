@@ -82,7 +82,7 @@ export const DAEMON_FETCH_TIMEOUT_MS = 120_000;
 export const DAEMON_SEND_TIMEOUT_MS = 120_000;
 
 /** The wire version. Bump it when a field stops being optional or changes meaning. */
-export const DAEMON_WIRE_VERSION = 9;
+export const DAEMON_WIRE_VERSION = 10;
 
 /**
  * The two sides of the bus speak different wire versions: a window that outlived an update talks
@@ -133,6 +133,17 @@ export interface DaemonSendRequest {
   account: string;
   capability: string;
   to: string;
+  /**
+   * The caller's own name for this send (ADR 0021 §2), echoed back on every step of a `sent`
+   * reply.
+   *
+   * Required on a MESSAGE send since v10, and checked as such by `parseDaemonSendWire`: without
+   * it the caller cannot tell which of its pending bubbles an answer belongs to, and a request
+   * that simply left it out would lose that link silently rather than be refused — so the version
+   * check refuses the older side instead. An edit, deletion or reaction carries no pending bubble
+   * and needs none.
+   */
+  clientId?: string;
   text?: string;
   imageUrl?: string;
   subject?: string;
@@ -186,6 +197,12 @@ export interface DaemonSendStep {
     attachments?: Array<{ filename: string; size: number }>;
   };
   body: string;
+  /**
+   * The `clientId` of the request this step answers (ADR 0021 §2), repeated on every step so the
+   * caller can match a reply to the pending bubble it is showing without relying on the order the
+   * steps arrive in.
+   */
+  clientId: string;
 }
 
 /**
@@ -278,10 +295,16 @@ export function parseDaemonSendReply(json: string): DaemonSendReply {
     );
   }
   switch (reply.kind) {
-    case 'sent':
-      if (!Array.isArray((reply as { steps?: unknown }).steps))
+    case 'sent': {
+      const steps = (reply as { steps?: unknown }).steps;
+      if (!Array.isArray(steps))
         throw new Error('the curlew daemon reported a send without the messages it sent');
+      // Every step names the request it answers (ADR 0021 §2). A step without it would leave the
+      // caller's pending bubble unmatched, which is a defect on the daemon's side, not a user path.
+      if (steps.some((s: unknown) => typeof (s as { clientId?: unknown })?.clientId !== 'string'))
+        throw new Error('the curlew daemon reported a sent message without the client id it was sent under');
       return reply as DaemonSendReply;
+    }
     case 'not-followed':
       return reply as DaemonSendReply;
     case 'refused':
@@ -319,6 +342,13 @@ export function parseDaemonSendWire(json: string): DaemonSendWire {
     if (typeof request[field] !== 'string' || request[field] === '')
       throw new Error(`the send request has no ${field}`);
   }
+  // A message send names itself (ADR 0021 §2); an edit, deletion or reaction has nothing to name.
+  const sendsMessage =
+    request.edit === undefined && request.delete === undefined && request.reaction === undefined;
+  if (sendsMessage && (typeof request.clientId !== 'string' || request.clientId === ''))
+    throw new Error('the send request has no clientId');
+  if (!sendsMessage && request.clientId !== undefined && typeof request.clientId !== 'string')
+    throw new Error('the send request has a malformed clientId');
   const files = request.attachments;
   if (
     files !== undefined &&
