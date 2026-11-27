@@ -44,7 +44,13 @@ jobs:
       # gettext is `msgfmt`, which `build` runs over `po/` into `dist/locale`. The compile step
       # only warns when it is missing — but `gjsify ship` then REFUSES a `gjsify.ship.localeDir`
       # with no `.mo` in it, so without this the packaging steps below fail instead.
-      - name: Install system prerequisites (gjs + GOA/EDS typelibs + libgda + openssl + msitools + gettext)
+      # The last four are the responsiveness gate (`dev/perf.sh`, #501), which is the only step
+      # here that OPENS the window: gtk4 and libadwaita because the window bundle imports Gtk, Gdk,
+      # Gsk and Adw at module load, gstreamer1 because `voice-pipeline.ts` imports Gst the same way
+      # (a missing typelib there fails the import, not a call), and mutter plus a software renderer
+      # as the compositor `dev/headless.sh` starts for it. Measured in a fedora:44 container: the
+      # window maps with "surfaceless renderer without GPU", so no /dev/dri is needed.
+      - name: Install system prerequisites (gjs + GOA/EDS typelibs + libgda + openssl + msitools + gettext + a headless compositor)
         run: >
           dnf install -y --setopt=install_weak_deps=False
           git tar xz findutils gjs
@@ -54,6 +60,8 @@ jobs:
           msitools
           gettext
           glib2-devel
+          gtk4 libadwaita gstreamer1
+          mutter mesa-dri-drivers dbus-daemon
 
       - uses: actions/checkout@v4
 
@@ -149,6 +157,26 @@ jobs:
       - name: Tests (gjs + node)
         timeout-minutes: 15
         run: gjsify workspace curlew-cli test
+
+      # The responsiveness gate (#501). Nothing else here ever opens the window, and the
+      # bug this repo shipped — switching chat froze the app long enough for GNOME to offer to kill
+      # it — was invisible to every check above: the list code it came from is unit-tested and
+      # green. So this builds a synthetic index (made-up names and bodies; the real one is never an
+      # input) and plays four scenarios on it in a private mutter. `--small` is 1 200 conversations
+      # / 12 000 messages, about 80 seconds; the 10 500 / 100 000 that first reproduced the freeze
+      # is a local run. Two scenarios carry a documented higher budget pointing at the issue that
+      # owns the remaining cost (#547, #548) — never silence, and dev/perf-report.mjs prints both.
+      #
+      # WHAT THIS RUNNER CAN PROVE. There is no GPU here, so GTK paints through llvmpipe, where an
+      # EMPTY window needs ~460 ms for its first frame — nine times the budget before any of our
+      # code runs. A raw main-loop block therefore says as much about the renderer as about the
+      # app, and the run measures that floor (dev/perf-floor.js) rather than assuming it: what it
+      # enforces here is the work the window NAMES, which is this code's own, and it says in its
+      # output which half it enforced. The blocks a person actually feels are gated on a machine
+      # with a GPU, which is docs/project/responsiveness.md.
+      - name: Responsiveness budget (headless window on a synthetic index)
+        timeout-minutes: 10
+        run: ./dev/perf.sh --small
 
       # The read-only gate, asserted END-TO-END rather than against a stub. The unit suite tests
       # `applyReadOnlyGate` through a fake recorder, which cannot see the failure that matters
