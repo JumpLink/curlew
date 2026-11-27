@@ -270,7 +270,7 @@ every config key and where it is changed; its types follow `UiConfig` and `Curle
 | `encryption` | Account page (XMPP): Require encryption (whole account; single-peer entries stay file-only) |
 | `agentAccess`, `grants` | Agent access dialog |
 | `mergedPeople`, `declinedMerges`, `pins`, `contactChoices` | Contact page, merge assistant, protocol picker |
-| `ui.welcomeDone`, `ui.emailChatHintSeen`, `unknown` | State the app keeps; no row |
+| `ui.welcomeDone`, `ui.emailChatHintSeen`, `ui.micMode`, `unknown` | State the app keeps; no row |
 
 File-only on purpose: `senders` (`curlew conversations classify`) and `backends.<name>.settings`
 (a backend's own non-secret options).
@@ -335,3 +335,14 @@ and mushrooms, Dusk moon, stars, clouds and a penguin, Sunrise sun, palm, waves 
 petals and flowers, Graphite plain geometry. Tiles are one colour at 10 % opacity, follow light/dark
 and the accent, and repeat seamlessly. The person can pick any pattern separately (preferences, or per
 chat). Mascot licences: ADR 0013, amendment of 2026-11-12.
+
+## Composer microphone
+
+One control, never two: an `Adw.SplitButton` (`app/src/window/microphone.ts`). The main part runs the
+remembered mode, the arrow lists the modes this chat offers: *Voice message* (`audio-input-microphone-symbolic`,
+protocols with voice notes) and *Dictate* (`dictate-symbolic`, where `probeOffer` says the machine can
+transcribe). The choice is `ui.micMode` (per person, default `voice`); a mode that is not offered falls
+back without rewriting it. One mode left: a plain button. While something records it is the stop
+control and the arrow is gone. Keys: Ctrl+Shift+R voice message, Ctrl+Shift+D dictate. Logic and
+tests: `microphone-model.ts`. `dictate-symbolic` lives in `app/data/ui-icons`, not `data/icons`,
+because `gjsify ship` reads every SVG under `icon` as the app icon.

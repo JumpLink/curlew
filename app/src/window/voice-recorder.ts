@@ -1,4 +1,4 @@
-/** The record button of the composer and its recording bar: timer, level, cancel and finish. */
+/** The voice-message recording of the composer and its bar: timer, level, cancel and finish. */
 
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
@@ -11,6 +11,7 @@ import { _ } from '@curlew/protocol';
 import { ensurePrivateDir, previewsDir } from '@curlew/store';
 
 import type { PickedFile } from './composer-files-model.ts';
+import type { MicBusy } from './microphone-model.ts';
 import { startVoicePipeline, type VoicePipeline } from './voice-pipeline.ts';
 import {
   judgeRecording,
@@ -25,11 +26,19 @@ export interface VoiceRecorderOptions {
   toast(text: string): void;
   /** A finished recording, ready to be a chip in the composer. */
   onRecorded(file: PickedFile): void;
+  /** What the shared microphone control shows: the stop control while recording, null when idle. */
+  onLook(look: MicBusy): void;
+  /** Offered or not changed. */
+  onOfferChange(): void;
 }
 
 export interface VoiceRecorder {
-  /** The microphone: starts a recording, and finishes it while one runs. */
-  button: Gtk.Button;
+  /** The microphone was pressed: starts a recording, and finishes it while one runs. */
+  press(): void;
+  /** A recording runs. */
+  busy(): boolean;
+  /** The protocol takes voice notes here. */
+  offered(): boolean;
   /** Timer, level, cancel and finish; visible only while recording. */
   bar: Gtk.Widget;
   /** Offered or not; turning it off while recording throws the recording away. */
@@ -42,18 +51,7 @@ interface Running {
   startedAt: number;
 }
 
-const MIC = _('Record a voice message');
-
 export function createVoiceRecorder(options: VoiceRecorderOptions): VoiceRecorder {
-  const button = new Gtk.Button({
-    iconName: 'audio-input-microphone-symbolic',
-    tooltipText: MIC,
-    visible: false,
-  });
-  button.add_css_class('flat');
-  button.add_css_class('circular');
-  button.update_property([Gtk.AccessibleProperty.LABEL], [MIC]);
-
   const cancel = new Gtk.Button({
     iconName: 'user-trash-symbolic',
     tooltipText: _('Discard the recording'),
@@ -102,7 +100,7 @@ export function createVoiceRecorder(options: VoiceRecorderOptions): VoiceRecorde
     bar.set_visible(false);
     level.set_value(0);
     timer.set_label(recordingLabel(0));
-    button.set_sensitive(true);
+    options.onLook(null);
   };
 
   const elapsed = (run: Running): number => (GLib.get_monotonic_time() - run.startedAt) / 1000;
@@ -164,6 +162,11 @@ export function createVoiceRecorder(options: VoiceRecorderOptions): VoiceRecorde
     }
     running = { pipeline, path, startedAt: GLib.get_monotonic_time() };
     bar.set_visible(true);
+    options.onLook({
+      icon: 'media-playback-stop-symbolic',
+      label: _('Stop and keep the recording'),
+      suggested: true,
+    });
     finish.grab_focus();
     tick = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 250, () => {
       if (!running) return GLib.SOURCE_REMOVE;
@@ -178,7 +181,6 @@ export function createVoiceRecorder(options: VoiceRecorderOptions): VoiceRecorde
     });
   };
 
-  button.connect('clicked', () => (running ? stop(true) : start()));
   cancel.connect('clicked', () => stop(false));
   finish.connect('clicked', () => stop(true));
 
@@ -192,12 +194,17 @@ export function createVoiceRecorder(options: VoiceRecorderOptions): VoiceRecorde
   });
   bar.add_controller(keys);
 
+  let offered = false;
   return {
-    button,
+    press: () => (running ? stop(true) : start()),
+    busy: () => running !== null,
+    offered: () => offered,
     bar,
     setAvailable(on) {
       if (!on) stop(false);
-      button.set_visible(on);
+      if (on === offered) return;
+      offered = on;
+      options.onOfferChange();
     },
   };
 }

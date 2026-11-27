@@ -49,12 +49,15 @@ install -Dm644 "$here/app/data/eu.jumplink.curlew.metainfo.xml" \
 if [ "$icons" = remove ]; then
 	rm -f "$root/icons/hicolor/scalable/apps/eu.jumplink.curlew.svg" \
 		"$root/icons/hicolor/symbolic/apps/eu.jumplink.curlew-symbolic.svg" \
+		"$root/icons/hicolor/symbolic/apps/dictate-symbolic.svg" \
 		"$root"/icons/hicolor/scalable/apps/curlew-protocol-*.svg
 elif [ "$icons" = install ]; then
 	install -Dm644 "$here/app/data/icons/hicolor/scalable/apps/eu.jumplink.curlew.svg" \
 		"$root/icons/hicolor/scalable/apps/eu.jumplink.curlew.svg"
 	install -Dm644 "$here/app/data/icons/hicolor/symbolic/apps/eu.jumplink.curlew-symbolic.svg" \
 		"$root/icons/hicolor/symbolic/apps/eu.jumplink.curlew-symbolic.svg"
+	install -Dm644 "$here/app/data/ui-icons/hicolor/symbolic/apps/dictate-symbolic.svg" \
+		"$root/icons/hicolor/symbolic/apps/dictate-symbolic.svg"
 	for protocol_icon in "$here"/app/data/protocol-icons/hicolor/scalable/apps/curlew-protocol-*.svg; do
 		install -Dm644 "$protocol_icon" "$root/icons/hicolor/scalable/apps/$(basename "$protocol_icon")"
 	done

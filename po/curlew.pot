@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: curlew\n"
 "Report-Msgid-Bugs-To: https://github.com/JumpLink/curlew/issues\n"
-"POT-Creation-Date: 2026-11-27 17:50+0100\n"
+"POT-Creation-Date: 2026-11-27 18:33+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,7 +20,7 @@ msgstr ""
 
 #: app-android/app/window.ts:18 app/src/window/about.ts:37
 #: app/src/window/appearance-rows.ts:126
-#: app/src/window/conversation-view.ts:284 app/src/window/window.ts:114
+#: app/src/window/conversation-view.ts:283 app/src/window/window.ts:114
 #: app/src/window/window.ts:287
 msgid "Curlew"
 msgstr ""
@@ -1766,7 +1766,7 @@ msgstr ""
 #: app/src/window/agent-access-page.ts:233
 #: app/src/window/conversation-list.ts:710
 #: app/src/window/conversation-list.ts:875
-#: app/src/window/conversation-view.ts:1021 app/src/window/protocols-page.ts:66
+#: app/src/window/conversation-view.ts:1018 app/src/window/protocols-page.ts:66
 #: app/src/window/protocols-page.ts:142 app/src/window/transcribe-ui.ts:23
 msgid "Cancel"
 msgstr ""
@@ -2724,8 +2724,8 @@ msgid "Remove from Favourites"
 msgstr ""
 
 #: app/src/window/conversation-list.ts:779
-#: app/src/window/conversation-view.ts:1372
-#: app/src/window/conversation-view.ts:1373
+#: app/src/window/conversation-view.ts:1369
+#: app/src/window/conversation-view.ts:1370
 msgid "Read"
 msgstr ""
 
@@ -2763,7 +2763,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:144
-#: app/src/window/conversation-view.ts:1723
+#: app/src/window/conversation-view.ts:1720
 msgid "Continuing via {protocol}"
 msgstr ""
 
@@ -2799,204 +2799,200 @@ msgstr[1] ""
 
 #: app/src/window/conversation-model.ts:365
 #: app/src/window/conversation-model.ts:378
-#: app/src/window/conversation-view.ts:1005
+#: app/src/window/conversation-view.ts:1002
 msgid "You"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:290
+#: app/src/window/conversation-view.ts:289
 msgid "Choose how to reach this person"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:303
-#: app/src/window/conversation-view.ts:1983
+#: app/src/window/conversation-view.ts:302
+#: app/src/window/conversation-view.ts:1980
 msgid "Contact details"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:322
+#: app/src/window/conversation-view.ts:321
 msgid "No messages yet"
 msgstr ""
 
+#: app/src/window/conversation-view.ts:332
 #: app/src/window/conversation-view.ts:333
-#: app/src/window/conversation-view.ts:334
-#: app/src/window/conversation-view.ts:681
+#: app/src/window/conversation-view.ts:678
 msgid "Write a message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:348
+#: app/src/window/conversation-view.ts:347
 msgid "Send message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:364
+#: app/src/window/conversation-view.ts:363
 msgid "Cancel reply"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:377
+#: app/src/window/conversation-view.ts:376
 msgid "Cancel editing"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:390
+#: app/src/window/conversation-view.ts:389
 msgid "Got It"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:470
-#: app/src/window/conversation-view.ts:474
+#: app/src/window/conversation-view.ts:465
+#: app/src/window/conversation-view.ts:469
 msgid "Next match"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:477
-#: app/src/window/conversation-view.ts:481
+#: app/src/window/conversation-view.ts:472
+#: app/src/window/conversation-view.ts:476
 msgid "Previous match"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:484
-#: app/src/window/conversation-view.ts:488
+#: app/src/window/conversation-view.ts:479
+#: app/src/window/conversation-view.ts:483
 msgid "Stop stepping through matches"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:500
+#: app/src/window/conversation-view.ts:495
 msgid "Conversation"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:647
+#: app/src/window/conversation-view.ts:644
 msgid "{protocol} cannot send files; the attached files were removed"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:699
+#: app/src/window/conversation-view.ts:696
 msgid "Send via {protocol}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:804
+#: app/src/window/conversation-view.ts:801
 msgid "Show the quoted message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:811
-#: app/src/window/conversation-view.ts:951
+#: app/src/window/conversation-view.ts:808
+#: app/src/window/conversation-view.ts:948
 msgid "Reply to {author}: {excerpt}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:826
+#: app/src/window/conversation-view.ts:823
 msgid "The quoted message is no longer in the history"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:890
+#: app/src/window/conversation-view.ts:887
 msgid "{current} of {total}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:976
+#: app/src/window/conversation-view.ts:973
 msgid "Reaction not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1004
+#: app/src/window/conversation-view.ts:1001
 msgid "Edit message"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1008
+#: app/src/window/conversation-view.ts:1005
 msgid "Editing your message: {excerpt}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1016
+#: app/src/window/conversation-view.ts:1013
 msgid "Delete message?"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1017
+#: app/src/window/conversation-view.ts:1014
 msgid "This will remove the message for everyone in the chat."
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1022
+#: app/src/window/conversation-view.ts:1019
 msgid "Delete for everyone"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1039
+#: app/src/window/conversation-view.ts:1036
 msgid "Message not deleted: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1142
+#: app/src/window/conversation-view.ts:1139
 msgid "Reply"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1143
+#: app/src/window/conversation-view.ts:1140
 msgid "Edit"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1144
+#: app/src/window/conversation-view.ts:1141
 msgid "Copy"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1145
+#: app/src/window/conversation-view.ts:1142
 msgid "Delete"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1146
+#: app/src/window/conversation-view.ts:1143
 msgid "Retry"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1148
+#: app/src/window/conversation-view.ts:1145
 msgid "Discard"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1149
+#: app/src/window/conversation-view.ts:1146
 msgid "Transcribe"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1291
+#: app/src/window/conversation-view.ts:1288
 msgid "Forwarded from {sender}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1292
+#: app/src/window/conversation-view.ts:1289
 msgid "Forwarded"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1306
+#: app/src/window/conversation-view.ts:1303
 msgid "Encrypted message: it cannot be shown here"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1307
+#: app/src/window/conversation-view.ts:1304
 msgid "No text body"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1362
-#: app/src/window/conversation-view.ts:1527
+#: app/src/window/conversation-view.ts:1359
+#: app/src/window/conversation-view.ts:1524
 msgid "edited"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1625
+#: app/src/window/conversation-view.ts:1622
 msgid "Could not load older messages: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1770
+#: app/src/window/conversation-view.ts:1767
 msgid "Message not sent: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1838
+#: app/src/window/conversation-view.ts:1835
 msgid "Message not edited: {error}"
 msgstr ""
 
-#: app/src/window/conversation-view.ts:1983
+#: app/src/window/conversation-view.ts:1980
 msgid "Group details"
 msgstr ""
 
-#: app/src/window/dictation.ts:37
-msgid "Dictate a message"
-msgstr ""
-
-#: app/src/window/dictation.ts:82
+#: app/src/window/dictation.ts:81
 msgid "Cancel dictation"
 msgstr ""
 
-#: app/src/window/dictation.ts:102 app/src/window/transcribe-ui.ts:107
+#: app/src/window/dictation.ts:101 app/src/window/transcribe-ui.ts:107
 msgid "No speech found"
 msgstr ""
 
-#: app/src/window/dictation.ts:130 app/src/window/voice-recorder.ts:127
+#: app/src/window/dictation.ts:129 app/src/window/voice-recorder.ts:125
 msgid "The recording was too short"
 msgstr ""
 
-#: app/src/window/dictation.ts:150 app/src/window/dictation.ts:157
-#: app/src/window/voice-recorder.ts:155 app/src/window/voice-recorder.ts:162
+#: app/src/window/dictation.ts:149 app/src/window/dictation.ts:156
+#: app/src/window/voice-recorder.ts:153 app/src/window/voice-recorder.ts:160
 msgid "No microphone could be opened"
 msgstr ""
 
-#: app/src/window/dictation.ts:164
+#: app/src/window/dictation.ts:161
 msgid "Stop dictating"
 msgstr ""
 
@@ -3166,6 +3162,26 @@ msgstr ""
 
 #: app/src/window/merge-assistant.ts:119 app/src/window/welcome.ts:134
 msgid "Skip"
+msgstr ""
+
+#: app/src/window/microphone-model.ts:53
+msgid "Record a voice message"
+msgstr ""
+
+#: app/src/window/microphone-model.ts:54
+msgid "Voice message"
+msgstr ""
+
+#: app/src/window/microphone-model.ts:56
+msgid "Dictate a message"
+msgstr ""
+
+#: app/src/window/microphone-model.ts:56
+msgid "Dictate"
+msgstr ""
+
+#: app/src/window/microphone-model.ts:63
+msgid "Choose what the microphone does"
 msgstr ""
 
 #: app/src/window/new-conversation-model.ts:136
@@ -3382,19 +3398,16 @@ msgstr ""
 msgid "Transcribing…"
 msgstr ""
 
-#: app/src/window/voice-recorder.ts:45
-msgid "Record a voice message"
-msgstr ""
-
-#: app/src/window/voice-recorder.ts:59 app/src/window/voice-recorder.ts:64
+#: app/src/window/voice-recorder.ts:57 app/src/window/voice-recorder.ts:62
 msgid "Discard the recording"
 msgstr ""
 
-#: app/src/window/voice-recorder.ts:72
+#: app/src/window/voice-recorder.ts:70
 msgid "Microphone level"
 msgstr ""
 
-#: app/src/window/voice-recorder.ts:78 app/src/window/voice-recorder.ts:83
+#: app/src/window/voice-recorder.ts:76 app/src/window/voice-recorder.ts:81
+#: app/src/window/voice-recorder.ts:167
 msgid "Stop and keep the recording"
 msgstr ""
 

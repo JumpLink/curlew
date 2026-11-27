@@ -31,6 +31,7 @@ export const UI_SETTINGS: Record<keyof UiConfig, SettingPlace> = {
     why: 'set when the edge of the conversation list is dragged; double-click resets it',
   },
   recentEmoji: { kind: 'state', why: 'set when an emoji is picked in the emoji picker' },
+  micMode: { kind: 'state', why: 'set when the composer microphone menu changes what it does' },
 };
 
 export const CONFIG_SETTINGS: Record<keyof CurlewConfig, SettingPlace> = {

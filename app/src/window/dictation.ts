@@ -1,11 +1,10 @@
-/** The dictation button of the composer: record with the voice-note pipeline, transcribe locally, put the text into the entry. */
+/** The dictation of the composer: record with the voice-note pipeline, transcribe locally, put the text into the entry. */
 
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
 
-import Gdk from 'gi://Gdk?version=4.0';
 import GLib from 'gi://GLib?version=2.0';
-import Gtk from 'gi://Gtk?version=4.0';
+import type Gtk from 'gi://Gtk?version=4.0';
 import { _ } from '@curlew/protocol';
 import { ensurePrivateDir, previewsDir } from '@curlew/store';
 
@@ -20,32 +19,35 @@ import {
 import { askDownload } from './transcribe-ui.ts';
 import { probeOffer, workerInstall, workerTranscribe } from './transcribe-worker.ts';
 import { startVoicePipeline, type VoicePipeline } from './voice-pipeline.ts';
+import type { MicBusy } from './microphone-model.ts';
 import { judgeRecording, MAX_VOICE_MS } from './voice-recorder-model.ts';
 
 export interface DictationOptions {
   toast(text: string): void;
   /** The words the person spoke; the caller puts them into the entry and sends nothing. */
   insert(text: string): void;
+  /** What the shared microphone control shows while dictating; null when idle. */
+  onLook(look: MicBusy): void;
+  /** Offered or not changed. */
+  onOfferChange(): void;
+  /** Where the download question anchors. */
+  anchor(): Gtk.Widget;
 }
 
 export interface Dictation {
-  button: Gtk.Button;
-  /** Whether the composer offers dictation at all; the button also stays hidden where the machine cannot transcribe. */
+  /** The microphone was pressed: starts, stops or cancels, by the phase. */
+  press(): void;
+  /** Escape: true when it cancelled something. */
+  escape(): boolean;
+  /** Recording or transcribing. */
+  busy(): boolean;
+  /** The composer takes it and this machine can transcribe. */
+  offered(): boolean;
+  /** Whether the composer offers dictation at all; it also stays off where the machine cannot transcribe. */
   setAvailable(on: boolean): void;
 }
 
-const IDLE_TIP = _('Dictate a message');
-
 export function createDictation(options: DictationOptions): Dictation {
-  const button = new Gtk.Button({
-    iconName: 'microphone-sensitivity-high-symbolic',
-    tooltipText: IDLE_TIP,
-    visible: false,
-  });
-  button.add_css_class('flat');
-  button.add_css_class('circular');
-  button.update_property([Gtk.AccessibleProperty.LABEL], [IDLE_TIP]);
-
   let wanted = false;
   let fits = false;
   let phase: DictationPhase = 'idle';
@@ -53,10 +55,11 @@ export function createDictation(options: DictationOptions): Dictation {
   let job: Job | null = null;
   let limit = 0;
 
-  const refresh = (): void => button.set_visible(wanted && fits);
-  const label = (text: string): void => {
-    button.set_tooltip_text(text);
-    button.update_property([Gtk.AccessibleProperty.LABEL], [text]);
+  let shown = false;
+  const refresh = (): void => {
+    if (shown === (wanted && fits)) return;
+    shown = wanted && fits;
+    options.onOfferChange();
   };
   const reset = (path?: string): void => {
     if (limit) GLib.source_remove(limit);
@@ -65,9 +68,7 @@ export function createDictation(options: DictationOptions): Dictation {
     phase = 'idle';
     recording = null;
     job = null;
-    button.remove_css_class('suggested-action');
-    button.set_icon_name('microphone-sensitivity-high-symbolic');
-    label(IDLE_TIP);
+    options.onLook(null);
   };
 
   void probeOffer().then((offer) => {
@@ -77,9 +78,7 @@ export function createDictation(options: DictationOptions): Dictation {
 
   const transcribe = (path: string): void => {
     phase = 'transcribing';
-    button.remove_css_class('suggested-action');
-    button.set_icon_name('process-stop-symbolic');
-    label(_('Cancel dictation'));
+    options.onLook({ icon: 'process-stop-symbolic', label: _('Cancel dictation'), suggested: false });
     let asked = false;
     const own = createJob({
       status: probeOffer,
@@ -92,7 +91,7 @@ export function createDictation(options: DictationOptions): Dictation {
       if (job !== own) return;
       if (state.kind === 'confirming' && !asked) {
         asked = true;
-        askDownload(button, state.bytes, (yes) => {
+        askDownload(options.anchor(), state.bytes, (yes) => {
           if (yes) void own.confirm();
           else own.cancel();
         });
@@ -159,9 +158,7 @@ export function createDictation(options: DictationOptions): Dictation {
     }
     recording = { pipeline, path };
     phase = 'recording';
-    button.add_css_class('suggested-action');
-    button.set_icon_name('media-playback-stop-symbolic');
-    label(_('Stop dictating'));
+    options.onLook({ icon: 'media-playback-stop-symbolic', label: _('Stop dictating'), suggested: true });
     limit = GLib.timeout_add(GLib.PRIORITY_DEFAULT, MAX_VOICE_MS, () => {
       limit = 0;
       stop(true);
@@ -169,25 +166,26 @@ export function createDictation(options: DictationOptions): Dictation {
     });
   };
 
-  button.connect('clicked', () => {
+  const press = (): void => {
     const { action } = dictationPress(phase);
     if (action === 'start') start();
     else if (action === 'stop') stop(true);
     else job?.cancel();
-  });
+  };
 
-  const keys = new Gtk.EventControllerKey();
-  keys.connect('key-pressed', (_c, keyval) => {
-    if (dictationKeyAction(keyval === Gdk.KEY_Escape ? 'Escape' : '') !== 'cancel') return false;
+  const escape = (): boolean => {
+    if (dictationKeyAction('Escape') !== 'cancel') return false;
     if (phase === 'recording') stop(false);
     else if (phase === 'transcribing') job?.cancel();
     else return false;
     return true;
-  });
-  button.add_controller(keys);
+  };
 
   return {
-    button,
+    press,
+    escape,
+    busy: () => phase !== 'idle',
+    offered: () => shown,
     setAvailable(on) {
       wanted = on;
       if (!on && phase === 'recording') stop(false);

@@ -153,6 +153,7 @@ import windowComposerFiles from './unit/window/composer-files-model.test.ts';
 import windowPendingSend from './unit/window/pending-send-model.test.ts';
 import windowTranscribeModel from './unit/window/transcribe-model.test.ts';
 import windowVoiceRecorder from './unit/window/voice-recorder-model.test.ts';
+import windowMicrophone from './unit/window/microphone-model.test.ts';
 import encryption from './unit/core/encryption.test.ts';
 import capabilities from './unit/core/capabilities.test.ts';
 import send from './unit/core/send.test.ts';
@@ -336,6 +337,7 @@ run({
   windowPendingSend,
   windowTranscribeModel,
   windowVoiceRecorder,
+  windowMicrophone,
   windowAttachment,
   windowMediaGrid,
   windowPreviewCache,
