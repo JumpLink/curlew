@@ -26,6 +26,7 @@ import { type ChatFlags, isMutedAt, loadAllChatFlags } from './chat-flags.ts';
 import { fillSearchKeys } from './search-key-fill.ts';
 import { findSearchMatches, normaliseSearchText } from './search-key.ts';
 import { messageBody } from './index-store.ts';
+import { pruneTranscripts } from './transcripts.ts';
 import { parseParticipantAddresses, str, tri } from './row.ts';
 import { MAIL_BACKEND, PENDING_DELETE, setOwnReaction } from './conversations-shared.ts';
 export { setOwnReaction };
@@ -808,5 +809,6 @@ export function deleteOwnMessage(db: IndexDatabase, messageId: string): boolean 
     );
   }
   db.prepare('DELETE FROM conversation_messages WHERE id = ?').run(messageId);
+  pruneTranscripts(db);
   return true;
 }

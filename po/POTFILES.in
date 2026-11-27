@@ -76,6 +76,7 @@ app/src/core/lib/pull-sync.ts
 app/src/core/lib/restart-coalescer.ts
 app/src/core/lib/sandbox.ts
 app/src/core/lib/search-scope.ts
+app/src/core/lib/transcribe-local.ts
 app/src/core/lib/window-launch.ts
 app/src/core/lib/wire-mismatch.ts
 app/src/core/markdown.ts
@@ -105,6 +106,7 @@ app/src/frontends/cli/output.ts
 app/src/frontends/cli/prompt.ts
 app/src/frontends/cli/send.ts
 app/src/frontends/cli/setup.ts
+app/src/frontends/cli/transcribe.ts
 app/src/frontends/cli/wasm-canary.ts
 app/src/frontends/cli/watch.ts
 app/src/frontends/cli/window.ts
@@ -163,6 +165,7 @@ app/src/window/conversation-list.ts
 app/src/window/conversation-model.ts
 app/src/window/conversation-store.ts
 app/src/window/conversation-view.ts
+app/src/window/dictation.ts
 app/src/window/email-chat-model.ts
 app/src/window/emoji-data.ts
 app/src/window/emoji-model.ts
@@ -192,6 +195,9 @@ app/src/window/signed-out-model.ts
 app/src/window/stall-probe-model.ts
 app/src/window/stall-probe.ts
 app/src/window/terms-widgets.ts
+app/src/window/transcribe-model.ts
+app/src/window/transcribe-ui.ts
+app/src/window/transcribe-worker.ts
 app/src/window/update-banner.ts
 app/src/window/video-preview-model.ts
 app/src/window/video-preview.ts
@@ -363,6 +369,7 @@ packages/store/src/send-files.ts
 packages/store/src/sync.ts
 packages/store/src/threads.ts
 packages/store/src/thumbnails.ts
+packages/store/src/transcripts.ts
 packages/telegram/src/accounts.ts
 packages/telegram/src/api.ts
 packages/telegram/src/attachments.ts

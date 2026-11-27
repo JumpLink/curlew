@@ -90,6 +90,12 @@ import { bubbleActionRow } from './bubble-menu.ts';
 import { guardTouchSelection, selectableForPointerOnly } from './bubble-select.ts';
 import { createComposerFiles } from './composer-files.ts';
 import { createVoiceRecorder } from './voice-recorder.ts';
+import { createDictation } from './dictation.ts';
+import { transcriptBlock } from './transcribe-ui.ts';
+import { createJob, dictationInsert, transcribableIndex, type Job } from './transcribe-model.ts';
+import { currentOffer, probeOffer, workerInstall, workerTranscribe } from './transcribe-worker.ts';
+import { loadCachedTranscript, recordTranscript } from './conversation-store.ts';
+import { fetchAttachment } from './attachment-store.ts';
 import { createEmojiButton } from './composer-input.ts';
 import { timed } from './stall-probe.ts';
 import type { PickedFile } from './composer-files-model.ts';
@@ -412,8 +418,17 @@ export function createConversationView(
     onRecorded: (file) => files.addRecorded(file),
   });
   composer.addStart(recorder.button);
+  const dictation = createDictation({
+    toast: (text) => overlay.add_toast(new Adw.Toast({ title: text, timeout: 4 })),
+    insert: (spoken) => {
+      const before = input.getText();
+      input.setText(before + dictationInsert(spoken, before));
+      input.grabFocus();
+    },
+  });
+  composer.addStart(dictation.button);
   // The buttons stay at the bottom edge while the field grows upward.
-  for (const part of [files.button, recorder.button]) part.set_valign(Gtk.Align.END);
+  for (const part of [files.button, recorder.button, dictation.button]) part.set_valign(Gtk.Align.END);
   // Everything the person types into rides in one bottom bar, so the history can run beneath it.
   const compose = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
   // Each part is a card of its own, so it stays legible over the messages scrolling beneath it.
@@ -625,6 +640,7 @@ export function createConversationView(
     const on =
       selectedChoice !== null && !composerBlocked && threadCan('attachments')(selectedChoice.backend);
     recorder.setAvailable(on && selectedChoice !== null && threadCan('voiceNotes')(selectedChoice.backend));
+    dictation.setAvailable(!composerBlocked);
     if (files.setAttachable(on) > 0) {
       overlay.add_toast(
         new Adw.Toast({
@@ -1044,6 +1060,46 @@ export function createConversationView(
   // The emoji row, "Reply", "Edit", "Delete" and "Copy" for one bubble. Long press (touch) and right
   // click (pointer) open it; both run before the selectable text, which would otherwise keep the press.
   let openNewestBubble: () => void = () => {};
+  // One job per voice note shown, so the menu and the block under the bubble share its state.
+  const transcripts = new Map<string, Job>();
+  const canTranscribe = (message: ShownMessage): boolean => {
+    const job = transcripts.get(message.id);
+    if (!job || (job.state.kind !== 'idle' && job.state.kind !== 'failed')) return false;
+    const offer = currentOffer().kind;
+    return offer === 'ready' || offer === 'needs-download';
+  };
+  const transcriptOf = (message: ShownMessage): Gtk.Widget | null => {
+    // A send still pending or failed has no stored message yet: nothing to cache a transcript under.
+    if (pendingClientId(message.id)) return null;
+    const index = transcribableIndex(message.attachments);
+    const info = message.attachments?.find((a) => (a.index ?? 0) === index);
+    if (index === null || !info) return null;
+    let cached: string | null = null;
+    try {
+      cached = loadCachedTranscript(message.id, index);
+    } catch {
+      cached = null;
+    }
+    const source = { ref: info.ref ?? message.ref, info };
+    const job = createJob(
+      {
+        status: probeOffer,
+        download: workerInstall,
+        run: async (signal) => workerTranscribe(await fetchAttachment(source), signal),
+        save: (result) => {
+          try {
+            recordTranscript(message.id, index, result);
+          } catch {
+            // The text is still shown; only the cache missed.
+          }
+        },
+      },
+      cached,
+    );
+    transcripts.set(message.id, job);
+    return transcriptBlock(job);
+  };
+
   const attachBubbleActions = (card: Gtk.Box, message: ShownMessage, showReactions: () => void): void => {
     const open = (gesture: Gtk.Gesture | null, x: number, y: number): void => {
       const usable = composer.get_visible() && !composerBlocked;
@@ -1061,7 +1117,8 @@ export function createConversationView(
           : deleteHandleOf(message, carriers, changeable(threadCan('deletes'), message));
       const retry = ownSend?.state === 'failed' ? ownSend.clientId : null;
       const text = message.bodyText?.trim() ?? '';
-      if (!draft && !handle && !editHandle && !deleteHandle && !retry && !text) return;
+      if (!draft && !handle && !editHandle && !deleteHandle && !retry && !text && !canTranscribe(message))
+        return;
       gesture?.set_state(Gtk.EventSequenceState.CLAIMED);
       const box = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL });
       const popover = new Gtk.Popover({ autohide: true, hasArrow: false, child: box });
@@ -1089,6 +1146,7 @@ export function createConversationView(
         retry: [_('Retry'), () => retry && retryPending(retry)],
         // Not "Delete": nothing is deleted anywhere, the send is taken off this screen.
         discard: [_('Discard'), () => retry && discardPending(retry)],
+        transcribe: [_('Transcribe'), () => void transcripts.get(message.id)?.request()],
       };
       const entries = bubbleMenuEntries({
         reply: !!draft,
@@ -1097,6 +1155,7 @@ export function createConversationView(
         retry: !!retry,
         discard: !!retry,
         copy: !!text,
+        transcribe: canTranscribe(message),
       }).map((entry) => {
         const [label, action] = run[entry.id]!;
         return {
@@ -1255,6 +1314,8 @@ export function createConversationView(
     const listed = shown.length > 0;
     const generic = message.hasAttachments && !listed;
     if (listed || generic) bubble.append(attachmentList(message.ref, shown, more, handlers, generic));
+    const transcript = listed ? transcriptOf(message) : null;
+    if (transcript) bubble.append(padded(transcript));
     // Text under a picture wraps at the picture's width, so the bubble does not grow past it.
     const textWidth = leadsWithMedia(shown) ? 30 : 56;
     let body: Gtk.Label | null = null;

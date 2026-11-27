@@ -20,5 +20,6 @@ export * from './omemo.ts';
 export * from './output.ts';
 export * from './send.ts';
 export * from './setup.ts';
+export * from './transcribe.ts';
 export * from './watch.ts';
 export * from './window.ts';

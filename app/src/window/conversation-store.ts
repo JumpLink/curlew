@@ -15,6 +15,9 @@ import {
   type MessageCursor,
   indexDbPath,
   loadAttachments,
+  loadTranscript,
+  saveTranscript,
+  type TranscriptInput,
   mailReplyTarget,
   markConversationRead,
   markConversationUnread,
@@ -197,5 +200,36 @@ export function loadSearchMatchIds(entry: ListEntry, text: string, dbPath = inde
     }
   } catch {
     return [];
+  }
+}
+
+/** The cached transcript text of one voice note, or null when none was made yet. */
+export function loadCachedTranscript(
+  messageId: string,
+  index: number,
+  dbPath = indexDbPath(),
+): string | null {
+  const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
+  try {
+    return loadTranscript(db, messageId, index)?.text ?? null;
+  } catch {
+    return null;
+  } finally {
+    db.close();
+  }
+}
+
+/** Keeps a finished transcript so a second look costs no CPU. */
+export function recordTranscript(
+  messageId: string,
+  index: number,
+  transcript: TranscriptInput,
+  dbPath = indexDbPath(),
+): void {
+  const db = openIndexDb(dbPath, { busyTimeoutMs: 300 });
+  try {
+    saveTranscript(db, messageId, index, transcript);
+  } finally {
+    db.close();
   }
 }

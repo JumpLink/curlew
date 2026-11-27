@@ -23,7 +23,7 @@ import { type IndexDatabase, withTransaction } from './db.ts';
 import { LOCAL_ECHO_PREFIX } from './local-echo.ts';
 import { SEARCH_KEY_MISSING_INDEX } from './search-key-fill.ts';
 
-export const SCHEMA_VERSION = 30;
+export const SCHEMA_VERSION = 31;
 
 /**
  * The FTS5 DDL. Defined once so the baseline and any future rebuild cannot drift.
@@ -532,6 +532,18 @@ const UPGRADES: Record<number, readonly UpgradeStep[]> = {
        remote_favourite INTEGER,
        remote_at TEXT)`,
     'CREATE INDEX IF NOT EXISTS conversation_flags_favourite ON conversation_flags (favourite)',
+  ],
+  // v31: transcripts of voice notes (ADR 0012), a table of its own because `message_attachments` is
+  // rewritten at every re-sync and a transcript, which costs minutes of CPU, must survive that.
+  31: [
+    `CREATE TABLE IF NOT EXISTS attachment_transcripts (
+       message_id TEXT NOT NULL,
+       idx INTEGER NOT NULL,
+       text TEXT NOT NULL,
+       language TEXT,
+       engine TEXT NOT NULL,
+       created_at TEXT NOT NULL,
+       PRIMARY KEY (message_id, idx))`,
   ],
 };
 

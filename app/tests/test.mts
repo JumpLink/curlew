@@ -54,6 +54,7 @@ import storeConcurrency from './unit/store/concurrency.test.ts';
 import storeAccountData from './unit/store/account-data.test.ts';
 import storeUpgradeBaseline from './unit/store/upgrade-baseline.test.ts';
 import storeThumbnails from './unit/store/thumbnails.test.ts';
+import storeTranscripts from './unit/store/transcripts.test.ts';
 
 import telegram from './unit/telegram/telegram.test.ts';
 import signal from './unit/signal/signal.test.ts';
@@ -148,6 +149,7 @@ import windowConversation from './unit/window/conversation-model.test.ts';
 import windowNewConversation from './unit/window/new-conversation-model.test.ts';
 import windowComposerFiles from './unit/window/composer-files-model.test.ts';
 import windowPendingSend from './unit/window/pending-send-model.test.ts';
+import windowTranscribeModel from './unit/window/transcribe-model.test.ts';
 import windowVoiceRecorder from './unit/window/voice-recorder-model.test.ts';
 import encryption from './unit/core/encryption.test.ts';
 import capabilities from './unit/core/capabilities.test.ts';
@@ -245,6 +247,7 @@ run({
   storeAccountData,
   storeUpgradeBaseline,
   storeThumbnails,
+  storeTranscripts,
   telegram,
   signal,
   signalSend,
@@ -327,6 +330,7 @@ run({
   windowNewConversation,
   windowComposerFiles,
   windowPendingSend,
+  windowTranscribeModel,
   windowVoiceRecorder,
   windowAttachment,
   windowMediaGrid,

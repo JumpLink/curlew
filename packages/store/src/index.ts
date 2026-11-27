@@ -15,6 +15,7 @@ export * from './threads.ts';
 export * from './mail-reply.ts';
 export * from './attachments.ts';
 export * from './thumbnails.ts';
+export * from './transcripts.ts';
 export * from './send-files.ts';
 export * from './conversations.ts';
 export * from './search-key.ts';

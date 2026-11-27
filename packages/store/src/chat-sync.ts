@@ -62,6 +62,7 @@ import {
   type LeaseTake,
 } from './receive-lease.ts';
 import { flag, num } from './row.ts';
+import { pruneTranscripts } from './transcripts.ts';
 import { sweepThumbnailsOf, thumbnailColumns, sweepThumbnails } from './thumbnails.ts';
 import { stableId } from './threads.ts';
 
@@ -433,6 +434,7 @@ function writeBatchRows(db: IndexDatabase, batch: ChatBatch): void {
     sweepThumbnailsOf(db, batch.deletedMessages);
     runIn(db, (p) => `DELETE FROM message_attachments WHERE message_id IN (${p})`, batch.deletedMessages);
     runIn(db, (p) => `DELETE FROM message_reactions WHERE message_id IN (${p})`, batch.deletedMessages);
+    pruneTranscripts(db);
   }
   // The rows hanging off a message go first: the subqueries find them through the messages.
   if (batch.deletedConversations.length > 0) {
