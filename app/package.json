@@ -209,7 +209,10 @@
     "zod": "^4.4.3",
     "@gjsify/adwaita-app": "0.64.54",
     "@gjsify/adwaita-extended": "0.64.54",
-    "@gjsify/distribution": "0.64.54"
+    "@gjsify/distribution": "0.64.54",
+    "@gjsify/machine-fit": "0.64.54",
+    "@gjsify/model-store": "0.64.54",
+    "@gjsify/speech-recognition": "0.64.54"
   },
   "devDependencies": {
     "@gjsify/cli": "0.64.54",
