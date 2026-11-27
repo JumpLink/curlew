@@ -5,15 +5,15 @@ import { bubbleMenuEntries, selectableFor } from '../../../src/window/bubble-men
 export default async () => {
   describe('bubbleMenuEntries', () => {
     it('orders Reply, Edit, Copy, Delete', () => {
-      const all = { reply: true, edit: true, delete: true, copy: true };
+      const all = { reply: true, edit: true, delete: true, copy: true, transcribe: true };
       expect(
         bubbleMenuEntries(all)
           .map((e) => e.id)
           .join(','),
-      ).toBe('reply,edit,copy,delete');
+      ).toBe('reply,edit,copy,transcribe,delete');
     });
     it('drops what does not apply', () => {
-      const some = { reply: false, edit: false, delete: false, copy: true };
+      const some = { reply: false, edit: false, delete: false, copy: true, transcribe: false };
       expect(
         bubbleMenuEntries(some)
           .map((e) => e.id)
@@ -21,7 +21,7 @@ export default async () => {
       ).toBe('copy');
     });
     it('marks only Delete destructive', () => {
-      const all = { reply: true, edit: true, delete: true, copy: true };
+      const all = { reply: true, edit: true, delete: true, copy: true, transcribe: true };
       expect(
         bubbleMenuEntries(all)
           .filter((e) => e.destructive)

@@ -1,6 +1,6 @@
 /** The entries of a message's long-press menu, in the order they are shown. */
 
-export type BubbleMenuId = 'reply' | 'edit' | 'retry' | 'delete' | 'discard' | 'copy';
+export type BubbleMenuId = 'reply' | 'edit' | 'retry' | 'delete' | 'discard' | 'copy' | 'transcribe';
 
 export interface BubbleMenuEntry {
   id: BubbleMenuId;
@@ -15,6 +15,7 @@ const ENTRIES: readonly BubbleMenuEntry[] = [
   { id: 'retry', icon: 'view-refresh-symbolic', destructive: false },
   { id: 'copy', icon: 'edit-copy-symbolic', destructive: false },
   { id: 'discard', icon: 'edit-clear-symbolic', destructive: true },
+  { id: 'transcribe', icon: 'insert-text-symbolic', destructive: false },
   { id: 'delete', icon: 'user-trash-symbolic', destructive: true },
 ];
 

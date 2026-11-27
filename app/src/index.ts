@@ -29,6 +29,7 @@ import {
   sendCommand,
   setupCommand,
   syncCommand,
+  transcribeCommand,
   watchCommand,
   windowCommand,
 } from './frontends/cli/index.ts';
@@ -70,6 +71,7 @@ const parseArgs = () =>
     .command(saveCommand)
     .command(foldersCommand)
     .command(syncCommand)
+    .command(transcribeCommand)
     .command(sendCommand)
     .command(omemoCommand)
     .command(daemonCommand)
